@@ -1,0 +1,11 @@
+# Ignore virtual environment and site-packages directories
+**/.venv/**
+**/venv/**
+**/site-packages/**
+**/node_modules/**
+**/dist/**
+**/build/**
+**/__pycache__/**
+*.pyc
+*.pyo
+*.pyd
