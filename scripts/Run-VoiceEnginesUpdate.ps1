@@ -76,13 +76,28 @@ function Apply-Pending {
 
 function Handle-HandshakeObject([object]$obj) {
   if (-not $obj) { return }
-  if ($obj.batches) {
-    foreach ($b in $obj.batches) {
-      if ($b -is [string]) { [int]$bi = [int]$b } else { $bi = [int]$b }
-      Write-Host "Handshake requested Batch $bi"
-      $null = Invoke-Batch -batch $bi
-      Mark-BatchApplied -batch $bi
-    }
+  if (-not $obj.batches) { return }
+
+  # Coerce to int array, de-duplicate, and skip already-applied
+  $incoming = @()
+  foreach ($b in $obj.batches) {
+    if ($null -eq $b) { continue }
+    try { $incoming += [int]$b } catch { Write-Warning "Ignoring non-integer batch id: $b" }
+  }
+  if (-not $incoming) { return }
+  $incoming = $incoming | Sort-Object -Unique
+
+  $applied = Get-AppliedBatches
+  $toApply = $incoming | Where-Object { $applied -notcontains $_ } | Sort-Object
+  if (-not $toApply) { Write-Host "No new batches from handshake."; return }
+
+  foreach ($bi in $toApply) {
+    Write-Host "Handshake applying Batch $bi"
+    $code = Invoke-Batch -batch $bi
+    if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) { throw "Batch $bi failed with exit code $LASTEXITCODE" }
+    if ($code -ne 0) { throw "Batch $bi failed with code $code" }
+    Mark-BatchApplied -batch $bi
+    Write-Host "Batch $bi applied."
   }
 }
 
