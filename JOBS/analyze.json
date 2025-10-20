@@ -1,0 +1,13 @@
+{
+  "job": {
+    "id": "VSJ-LOCAL-ANALYZE",
+    "type": "Audio.Analyze",
+    "io": {
+      "in": "C:\\VoiceStudio\\projects\\demo\\tts\\hello.wav",
+      "out": "C:\\VoiceStudio\\projects\\demo\\tts\\hello.heatmap.json"
+    },
+    "args": {
+      "latency_budget_ms": 50
+    }
+  }
+}

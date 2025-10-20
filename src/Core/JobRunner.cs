@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -37,8 +38,8 @@ public class JobRunner
 
     static string Q(string s) => $"\"{s}\"";
 
-    private static string PyExe  => @"C:\VoiceStudio\workers\python\vsdml\.venv\Scripts\python.exe";
-    private static string PyRoot => @"C:\VoiceStudio\workers\python\vsdml";
+    private static string PyExe  => GetPythonExecutable();
+    private static string PyRoot => GetPythonRoot();
 
     public async Task<(bool ok, string? code, string? message, string[]? outputs)> RunAsync(Job job)
     {
@@ -46,6 +47,13 @@ public class JobRunner
         {
             case "Audio.Convert":
                 return await RunCmd($@"ffmpeg -y -hide_banner -loglevel error -i ""{job.InPath}"" -ac 1 -ar 48000 -vn -map_metadata -1 -sample_fmt s16 ""{job.OutPath}""");
+
+            case "Audio.Analyze":
+                // Generate heatmap JSON at OutPath for visualization
+                return await RunPy(
+                    "analyze_heatmap.py",
+                    $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --latency-ms {GetArg(job, "latency_budget_ms", "50")}"
+                );
 
             case "Dataset.VAD":
                 return await RunPy("vad.py", $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --aggr 2 --min 0.6");
@@ -65,6 +73,13 @@ public class JobRunner
 
             case "VC.Convert":
                 return await RunPy("vc_pitch.py", $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --semitones {GetArg(job, "semitones", "3")}");
+
+            case "Voice.Clone":
+                // Create profile directory at OutPath and return produced files
+                return await RunPy(
+                    "clone_profile.py",
+                    $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --owner {QuoteArg(GetArg(job, "owner", ""))} --source {QuoteArg(GetArg(job, "source", "Self"))}"
+                );
 
             default:
                 return (false, "E_NOT_IMPLEMENTED", $"Job type '{job.Type}' not implemented", null);
@@ -92,10 +107,11 @@ public class JobRunner
 
     private async Task<(bool, string?, string?, string[]?)> RunCmd(string cmd)
     {
+        var isWindows = OperatingSystem.IsWindows();
         var psi = new ProcessStartInfo
         {
-            FileName = "cmd.exe",
-            Arguments = $@"/C {cmd}",
+            FileName = isWindows ? "cmd.exe" : "/bin/bash",
+            Arguments = isWindows ? $@"/C {cmd}" : $"-lc \"{cmd}\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

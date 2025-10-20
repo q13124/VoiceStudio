@@ -1,0 +1,14 @@
+{
+  "job": {
+    "id": "VSJ-LOCAL-CLONE",
+    "type": "Voice.Clone",
+    "io": {
+      "in": "C:\\VoiceStudio\\projects\\demo\\dataset\\speaker.wav",
+      "out": "C:\\VoiceStudio\\profiles\\demo_speaker"
+    },
+    "args": {
+      "owner": "Demo User",
+      "source": "Self"
+    }
+  }
+}
