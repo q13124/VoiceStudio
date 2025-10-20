@@ -1,0 +1,7 @@
+{
+  "Id": "",
+  "Type": "Clone.CreateProfile",
+  "InPath": "C:\\VoiceStudio\\data\\audio\\sample.wav",
+  "OutPath": "C:\\ProgramData\\VoiceStudio\\profiles\\SampleProfile",
+  "ArgsJson": "{\"opts_json\": {\"owner\": \"Test User\", \"source\": \"Self\", \"consent\": true}}"
+}

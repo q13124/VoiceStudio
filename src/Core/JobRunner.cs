@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.InteropServices;
 using VoiceStudio.IPC;
 
 namespace VoiceStudio.CoreRuntime;
@@ -37,8 +38,64 @@ public class JobRunner
 
     static string Q(string s) => $"\"{s}\"";
 
-    private static string PyExe  => @"C:\VoiceStudio\workers\python\vsdml\.venv\Scripts\python.exe";
-    private static string PyRoot => @"C:\VoiceStudio\workers\python\vsdml";
+    private static string DetectRepoRoot()
+    {
+        var envRoot = Environment.GetEnvironmentVariable("VOICESTUDIO_ROOT");
+        if (!string.IsNullOrWhiteSpace(envRoot) && Directory.Exists(envRoot))
+            return envRoot!;
+
+        var candidates = new[]
+        {
+            @"C:\\VoiceStudio",
+            @"/workspace",
+            AppContext.BaseDirectory,
+        };
+        foreach (var c in candidates)
+        {
+            try { if (!string.IsNullOrWhiteSpace(c) && Directory.Exists(c)) return c!; } catch { }
+        }
+        return Directory.GetCurrentDirectory();
+    }
+
+    private static string RepoRoot => DetectRepoRoot();
+
+    private static string DetectPythonExe()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var winCandidates = new[]
+            {
+                Path.Combine(RepoRoot, "workers", "python", "vsdml", ".venv", "Scripts", "python.exe"),
+                @"C:\\Python311\\python.exe",
+                @"C:\\Python310\\python.exe",
+                @"C:\\Windows\\py.exe"
+            };
+            foreach (var c in winCandidates)
+            {
+                try { if (File.Exists(c)) return c; } catch { }
+            }
+            return "python";
+        }
+        else
+        {
+            var nixCandidates = new[]
+            {
+                Path.Combine(RepoRoot, "workers", "python", "vsdml", ".venv", "bin", "python"),
+                "/usr/bin/python3",
+                "/usr/local/bin/python3",
+                "python3",
+                "python"
+            };
+            foreach (var c in nixCandidates)
+            {
+                try { if (File.Exists(c) || c.Contains("python")) return c; } catch { }
+            }
+            return "python3";
+        }
+    }
+
+    private static string PyExe => DetectPythonExe();
+    private static string PyRoot => Path.Combine(RepoRoot, "workers", "python", "vsdml");
 
     public async Task<(bool ok, string? code, string? message, string[]? outputs)> RunAsync(Job job)
     {
@@ -66,6 +123,19 @@ public class JobRunner
             case "VC.Convert":
                 return await RunPy("vc_pitch.py", $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --semitones {GetArg(job, "semitones", "3")}");
 
+            case "Analyze.Heatmap":
+            {
+                var latency = GetArg(job, "latency_ms", "50");
+                var outJson = job.OutPath;
+                return await RunPy("analyze_heatmap.py", $@"--in ""{job.InPath}"" --out ""{outJson}"" --latency_ms {latency}");
+            }
+
+            case "Clone.CreateProfile":
+            {
+                var optsJson = GetArg(job, "opts_json", job.ArgsJson ?? "{}");
+                return await RunPy("clone_profile.py", $@"--ref ""{job.InPath}"" --out ""{job.OutPath}"" --opts {QuoteArg(optsJson)}");
+            }
+
             default:
                 return (false, "E_NOT_IMPLEMENTED", $"Job type '{job.Type}' not implemented", null);
         }
@@ -92,15 +162,32 @@ public class JobRunner
 
     private async Task<(bool, string?, string?, string[]?)> RunCmd(string cmd)
     {
-        var psi = new ProcessStartInfo
+        ProcessStartInfo psi;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            FileName = "cmd.exe",
-            Arguments = $@"/C {cmd}",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        };
+            psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $@"/C {cmd}",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+        }
+        else
+        {
+            var escaped = cmd.Replace("\"", "\\\"");
+            psi = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                Arguments = $"-lc \"{escaped}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+        }
         using var p = Process.Start(psi)!;
         string stderr = await p.StandardError.ReadToEndAsync();
         string stdout = await p.StandardOutput.ReadToEndAsync();

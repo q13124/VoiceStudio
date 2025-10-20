@@ -2,7 +2,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-var logDir = @"C:\VoiceStudio\logs";
+var repoRoot = Environment.GetEnvironmentVariable("VOICESTUDIO_ROOT");
+if (string.IsNullOrWhiteSpace(repoRoot))
+{
+    // Try to be portable between dev Windows \ C:\VoiceStudio and Linux /workspace
+    repoRoot = System.IO.Directory.Exists(@"C:\\VoiceStudio") ? @"C:\\VoiceStudio" : "/workspace";
+}
+var logDir = System.IO.Path.Combine(repoRoot!, "logs");
 System.IO.Directory.CreateDirectory(logDir);
 
 Log.Logger = new LoggerConfiguration()

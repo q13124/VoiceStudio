@@ -1,0 +1,7 @@
+{
+  "Id": "",
+  "Type": "Analyze.Heatmap",
+  "InPath": "C:\\VoiceStudio\\data\\audio\\sample.wav",
+  "OutPath": "C:\\VoiceStudio\\data\\audio\\sample.heatmap.json",
+  "ArgsJson": "{\"latency_ms\": 50}"
+}

@@ -1,0 +1,13 @@
+{
+  "profile": "SampleProfile",
+  "owner": "Demo",
+  "source": "Self",
+  "consent": true,
+  "timestamp": "2025-10-20T21:09:28.954211+00:00",
+  "input_file": "/workspace/projects/demo/tts/SampleProfile/sample.wav",
+  "provenance": {
+    "tool": "VoiceStudio",
+    "version": "0.1.0",
+    "method": "clone_profile_ref_audio_only"
+  }
+}
