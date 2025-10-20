@@ -1,0 +1,9 @@
+# Upload ZIP Handling (Mobile / iPhone)
+- Treat any user-uploaded folder as a **.zip** package for import.
+- Create `uploads/<date>/<zip_name>/` and unzip there; block path traversal.
+- Detect whether the zip is a repo root (has `pins.json` or `/app/`); otherwise keep in uploads.
+- Before overwriting existing files, print a *dry-run merge plan* and require explicit confirmation.
+- Stay offline unless FETCH_OK is true and the user initiates a download.
+
+# Governance Toggle (runtime)
+- If `STATE/governance.off` exists OR env `ULTRACLONE_GOVERNANCE=off`, skip strict governance enforcement but keep safety/consent and offline-by-default rules.

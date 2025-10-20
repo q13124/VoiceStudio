@@ -1,0 +1,2 @@
+,
+"cursor_governance_enabled":{"type":"boolean","description":"If false, Cursor governance is disabled; safety rules remain."}

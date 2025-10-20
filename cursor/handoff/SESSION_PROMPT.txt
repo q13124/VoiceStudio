@@ -1,0 +1,7 @@
+# APPENDIX — Handling iPhone Folder Uploads (ZIP)
+1) Do not fetch from the internet; this is a local import.
+2) Create `uploads/<yyyy-mm-dd>/<zip_name>/` in the workspace; unzip there (block `..` and absolute paths).
+3) Detect repo root: if the zip has a single top-level folder with `pins.json` or `/app/`, use that root.
+4) Print a short tree (top 2 levels) and confirm placement with the user.
+5) For merges, propose a DRY-RUN plan and wait for explicit approval.
+6) If `toolchain/Verify-Env.ps1` exists, run it; then continue.
