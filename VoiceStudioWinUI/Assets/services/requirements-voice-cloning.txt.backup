@@ -1,0 +1,78 @@
+# VoiceStudio Complete Requirements
+# Includes all dependencies for voice cloning and existing services
+
+# Core FastAPI dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Audio processing dependencies
+librosa>=0.10.0
+soundfile>=0.13.0
+numpy>=1.24.0
+scipy>=1.11.0
+pydub>=0.25.0
+
+# Machine learning dependencies
+torch>=2.0.0
+torchaudio>=2.0.0
+scikit-learn>=1.3.0
+pyannote-audio>=3.1.0
+whisperx>=3.1.0
+
+# Database and async support
+aiofiles>=23.0.0
+aiosqlite>=0.19.0
+sqlite3
+
+# WebSocket support
+websockets>=12.0
+
+# HTTP client
+aiohttp>=3.9.0
+requests>=2.31.0
+
+# Data processing
+pandas>=2.0.0
+pydantic>=2.0.0
+
+# Caching and performance
+cachetools>=5.3.0
+joblib>=1.3.0
+psutil>=5.9.0
+
+# Security and JWT
+PyJWT>=2.8.0
+cryptography>=3.4.8
+
+# Standard library enhancements
+typing-extensions>=4.0.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Voice cloning specific dependencies (optional)
+# Uncomment the models you want to use:
+
+# GPT-SoVITS (if using)
+# gpt-sovits>=1.0.0
+
+# OpenVoice (if using)
+# openvoice>=1.0.0
+
+# Coqui XTTS (if using)
+# TTS>=0.22.0
+
+# Tortoise TTS (if using)
+# tortoise-tts>=2.4.0
+
+# RVC (if using)
+# rvc-python>=1.0.0
+
+# Additional optional dependencies
+# redis>=4.0  # For Redis caching
+# celery>=5.3.0  # For distributed task processing

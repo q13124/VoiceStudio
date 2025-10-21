@@ -1,0 +1,291 @@
+syntax = "proto3";
+
+package voicestudio.engine;
+
+option csharp_namespace = "VoiceStudio.Contracts";
+
+// VoiceStudio Engine Service Definition
+service VoiceStudioEngine {
+  // Voice cloning operations
+  rpc CloneVoice(CloneVoiceRequest) returns (CloneVoiceResponse);
+  rpc CloneVoiceStream(CloneVoiceRequest) returns (stream CloneVoiceResponse);
+
+  // Text-to-Speech operations
+  rpc TextToSpeech(TextToSpeechRequest) returns (TextToSpeechResponse);
+  rpc TextToSpeechStream(TextToSpeechRequest) returns (stream TextToSpeechResponse);
+
+  // Audio analysis operations
+  rpc AnalyzeAudio(AnalyzeAudioRequest) returns (AnalyzeAudioResponse);
+
+  // Audio conversion operations
+  rpc ConvertAudio(ConvertAudioRequest) returns (ConvertAudioResponse);
+
+  // System operations
+  rpc GetSystemStatus(GetSystemStatusRequest) returns (GetSystemStatusResponse);
+  rpc GetAvailableModels(GetAvailableModelsRequest) returns (GetAvailableModelsResponse);
+
+  // Job queue operations
+  rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+  rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
+}
+
+// Voice Cloning Messages
+message CloneVoiceRequest {
+  string job_id = 1;
+  string reference_audio_path = 2;
+  string target_text = 3;
+  string model_id = 4;
+  VoiceSettings voice_settings = 5;
+  ProcessingOptions processing_options = 6;
+  bool real_time = 7;
+}
+
+message CloneVoiceResponse {
+  string job_id = 1;
+  bool success = 2;
+  string output_audio_path = 3;
+  string error_message = 4;
+  ProcessingMetrics metrics = 5;
+  string model_used = 6;
+  double processing_time = 7;
+}
+
+// Text-to-Speech Messages
+message TextToSpeechRequest {
+  string job_id = 1;
+  string text = 2;
+  string model_id = 3;
+  VoiceSettings voice_settings = 4;
+  ProcessingOptions processing_options = 5;
+}
+
+message TextToSpeechResponse {
+  string job_id = 1;
+  bool success = 2;
+  string output_audio_path = 3;
+  string error_message = 4;
+  ProcessingMetrics metrics = 5;
+}
+
+// Audio Analysis Messages
+message AnalyzeAudioRequest {
+  string job_id = 1;
+  string audio_path = 2;
+  AnalysisOptions analysis_options = 3;
+}
+
+message AnalyzeAudioResponse {
+  string job_id = 1;
+  bool success = 2;
+  AudioAnalysis analysis = 3;
+  string error_message = 4;
+}
+
+// Audio Conversion Messages
+message ConvertAudioRequest {
+  string job_id = 1;
+  string input_audio_path = 2;
+  string output_format = 3;
+  ConversionOptions conversion_options = 4;
+}
+
+message ConvertAudioResponse {
+  string job_id = 1;
+  bool success = 2;
+  string output_audio_path = 3;
+  string error_message = 4;
+}
+
+// System Status Messages
+message GetSystemStatusRequest {
+  bool include_worker_details = 1;
+}
+
+message GetSystemStatusResponse {
+  SystemStatus status = 1;
+  repeated WorkerStatus workers = 2;
+  SystemMetrics metrics = 3;
+}
+
+message GetAvailableModelsRequest {
+  string model_type = 1; // "tts", "voice_cloning", "all"
+}
+
+message GetAvailableModelsResponse {
+  repeated ModelInfo models = 1;
+}
+
+// Job Queue Messages
+message SubmitJobRequest {
+  JobType job_type = 1;
+  string job_data = 2; // JSON serialized job parameters
+  int32 priority = 3;
+  string client_id = 4;
+}
+
+message SubmitJobResponse {
+  string job_id = 1;
+  bool success = 2;
+  string error_message = 3;
+  int32 estimated_wait_time = 4;
+}
+
+message GetJobStatusRequest {
+  string job_id = 1;
+}
+
+message GetJobStatusResponse {
+  string job_id = 1;
+  JobStatus status = 2;
+  int32 progress_percentage = 3;
+  string result_data = 4; // JSON serialized result
+  string error_message = 5;
+  ProcessingMetrics metrics = 6;
+}
+
+message CancelJobRequest {
+  string job_id = 1;
+}
+
+message CancelJobResponse {
+  string job_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+// Supporting Messages
+message VoiceSettings {
+  string emotion = 1;
+  string accent = 2;
+  string quality_preset = 3;
+  double speed = 4;
+  double pitch = 5;
+  double volume = 6;
+  string language = 7;
+}
+
+message ProcessingOptions {
+  bool use_gpu = 1;
+  int32 max_workers = 2;
+  int32 timeout_seconds = 3;
+  bool enable_caching = 4;
+  string quality_mode = 5; // "fast", "balanced", "high_quality"
+}
+
+message ProcessingMetrics {
+  double processing_time = 1;
+  int32 cpu_usage_percent = 2;
+  int64 memory_usage_bytes = 3;
+  int32 gpu_usage_percent = 4;
+  int32 workers_used = 5;
+  string agent_used = 6;
+}
+
+message AnalysisOptions {
+  bool analyze_emotion = 1;
+  bool analyze_accent = 2;
+  bool analyze_quality = 3;
+  bool extract_features = 4;
+  bool detect_speaker = 5;
+}
+
+message AudioAnalysis {
+  double duration_seconds = 1;
+  int32 sample_rate = 2;
+  int32 channels = 3;
+  string format = 4;
+  double average_volume = 5;
+  string detected_emotion = 6;
+  string detected_accent = 7;
+  double quality_score = 8;
+  repeated double features = 9;
+  string detected_speaker = 10;
+}
+
+message ConversionOptions {
+  int32 target_sample_rate = 1;
+  int32 target_channels = 2;
+  string target_bitrate = 3;
+  bool normalize_audio = 4;
+  bool remove_silence = 5;
+}
+
+message SystemStatus {
+  bool is_healthy = 1;
+  int32 total_workers = 2;
+  int32 active_workers = 3;
+  int32 queued_jobs = 4;
+  int32 processing_jobs = 5;
+  string version = 6;
+  int64 uptime_seconds = 7;
+}
+
+message WorkerStatus {
+  string worker_id = 1;
+  string agent_type = 2;
+  WorkerState state = 3;
+  int32 assigned_jobs = 4;
+  int32 completed_jobs = 5;
+  double cpu_usage = 6;
+  int64 memory_usage = 7;
+  string current_job_id = 8;
+}
+
+message SystemMetrics {
+  double cpu_usage_percent = 1;
+  int64 memory_usage_bytes = 2;
+  int64 disk_usage_bytes = 3;
+  double gpu_usage_percent = 4;
+  int32 network_connections = 5;
+  double average_response_time = 6;
+}
+
+message ModelInfo {
+  string model_id = 1;
+  string model_name = 2;
+  string model_type = 3;
+  string version = 4;
+  bool is_loaded = 5;
+  int64 model_size_bytes = 6;
+  repeated string supported_languages = 7;
+  repeated string supported_emotions = 8;
+  ModelCapabilities capabilities = 9;
+}
+
+message ModelCapabilities {
+  bool supports_real_time = 1;
+  bool supports_streaming = 2;
+  bool supports_batch_processing = 3;
+  bool supports_custom_voices = 4;
+  bool supports_emotion_control = 5;
+  bool supports_accent_control = 6;
+}
+
+// Enums
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  JOB_TYPE_CLONE_VOICE = 1;
+  JOB_TYPE_TEXT_TO_SPEECH = 2;
+  JOB_TYPE_ANALYZE_AUDIO = 3;
+  JOB_TYPE_CONVERT_AUDIO = 4;
+  JOB_TYPE_CONVERT_TEXT = 5;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_QUEUED = 1;
+  JOB_STATUS_PROCESSING = 2;
+  JOB_STATUS_COMPLETED = 3;
+  JOB_STATUS_FAILED = 4;
+  JOB_STATUS_CANCELLED = 5;
+  JOB_STATUS_TIMEOUT = 6;
+}
+
+enum WorkerState {
+  WORKER_STATE_UNSPECIFIED = 0;
+  WORKER_STATE_IDLE = 1;
+  WORKER_STATE_BUSY = 2;
+  WORKER_STATE_ERROR = 3;
+  WORKER_STATE_OFFLINE = 4;
+}

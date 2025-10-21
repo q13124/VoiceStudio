@@ -1,0 +1,14 @@
+{
+  "voice_cloning_service": {
+    "port": 5083,
+    "enabled": true
+  },
+  "web_interface": {
+    "port": 8080,
+    "enabled": true
+  },
+  "database": {
+    "path": "voicestudio.db",
+    "enabled": true
+  }
+}

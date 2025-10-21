@@ -1,0 +1,12 @@
+{
+  "voice_cloning": {
+    "port": 5083,
+    "host": "localhost",
+    "max_workers": 8,
+    "cache_size": 4000
+  },
+  "web_interface": {
+    "port": 8080,
+    "host": "localhost"
+  }
+}

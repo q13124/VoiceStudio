@@ -1,0 +1,37 @@
+{
+  "monitoring": {
+    "enabled": true,
+    "metrics": {
+      "voice_cloning": {
+        "processing_time": true,
+        "quality_score": true,
+        "similarity_score": true,
+        "model_performance": true
+      },
+      "system": {
+        "cpu_usage": true,
+        "memory_usage": true,
+        "gpu_usage": true,
+        "disk_usage": true,
+        "network_usage": true
+      },
+      "performance": {
+        "throughput": true,
+        "latency": true,
+        "error_rate": true,
+        "cache_hit_rate": true
+      }
+    },
+    "alerts": {
+      "cpu_threshold": 85,
+      "memory_threshold": 85,
+      "disk_threshold": 90,
+      "error_rate_threshold": 5
+    },
+    "retention": {
+      "metrics_days": 30,
+      "logs_days": 7,
+      "performance_reports_days": 90
+    }
+  }
+}

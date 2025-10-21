@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceStudio - Voice Cloning Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .header p {
+            color: #718096;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.processing {
+            background: #fef5e7;
+            color: #d69e2e;
+        }
+        
+        .status.completed {
+            background: #f0fff4;
+            color: #38a169;
+        }
+        
+        .status.failed {
+            background: #fed7d7;
+            color: #e53e3e;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-card h3 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        
+        .result-card p {
+            color: #718096;
+            margin-bottom: 5px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #e53e3e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #f0fff4;
+            color: #38a169;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 VoiceStudio</h1>
+            <p>Advanced Voice Cloning Platform with Real-time Processing</p>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h2>🎯 Voice Cloning</h2>
+                <form id="cloneForm">
+                    <div class="form-group">
+                        <label for="speakerId">Speaker ID:</label>
+                        <input type="text" id="speakerId" name="speakerId" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="referenceAudio">Reference Audio File:</label>
+                        <input type="file" id="referenceAudio" name="referenceAudio" accept="audio/*" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetText">Target Text:</label>
+                        <textarea id="targetText" name="targetText" rows="4" required placeholder="Enter the text you want to clone..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modelType">Model Type:</label>
+                        <select id="modelType" name="modelType">
+                            <option value="gpt_sovits">GPT-SoVITS</option>
+                            <option value="openvoice">OpenVoice</option>
+                            <option value="coqui_xtts">Coqui XTTS</option>
+                            <option value="tortoise_tts">Tortoise TTS</option>
+                            <option value="rvc">RVC</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="cloneBtn">🚀 Start Voice Cloning</button>
+                </form>
+                
+                <div id="progressContainer" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="status processing" id="statusText">Processing...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📊 System Status</h2>
+                <div id="systemStatus">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading system status...</p>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px;">📈 Performance Metrics</h3>
+                <div id="metricsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading metrics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🎵 Recent Results</h2>
+            <div id="resultsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading recent results...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class VoiceStudioApp {
+            constructor() {
+                this.currentSessionId = null;
+                this.statusCheckInterval = null;
+                this.init();
+            }
+            
+            init() {
+                this.loadSystemStatus();
+                this.loadMetrics();
+                this.loadRecentResults();
+                this.setupEventListeners();
+                
+                // Refresh data every 30 seconds
+                setInterval(() => {
+                    this.loadSystemStatus();
+                    this.loadMetrics();
+                    this.loadRecentResults();
+                }, 30000);
+            }
+            
+            setupEventListeners() {
+                document.getElementById('cloneForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.startVoiceCloning();
+                });
+            }
+            
+            async startVoiceCloning() {
+                const formData = new FormData();
+                const speakerId = document.getElementById('speakerId').value;
+                const targetText = document.getElementById('targetText').value;
+                const modelType = document.getElementById('modelType').value;
+                const audioFile = document.getElementById('referenceAudio').files[0];
+                
+                if (!audioFile) {
+                    this.showError('Please select an audio file');
+                    return;
+                }
+                
+                // Upload file first
+                try {
+                    const uploadResult = await this.uploadFile(audioFile);
+                    if (uploadResult.error) {
+                        this.showError(uploadResult.error);
+                        return;
+                    }
+                    
+                    // Start cloning
+                    const cloneData = {
+                        speaker_id: speakerId,
+                        reference_audio_path: uploadResult.path,
+                        target_text: targetText,
+                        model_type: modelType
+                    };
+                    
+                    const response = await fetch('/api/clone', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(cloneData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        this.showError(result.error);
+                        return;
+                    }
+                    
+                    this.currentSessionId = result.session_id;
+                    this.showProgress();
+                    this.startStatusCheck();
+                    
+                } catch (error) {
+                    this.showError('Failed to start voice cloning: ' + error.message);
+                }
+            }
+            
+            async uploadFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                return await response.json();
+            }
+            
+            showProgress() {
+                document.getElementById('progressContainer').style.display = 'block';
+                document.getElementById('cloneBtn').disabled = true;
+                document.getElementById('cloneBtn').textContent = 'Processing...';
+            }
+            
+            hideProgress() {
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('cloneBtn').disabled = false;
+                document.getElementById('cloneBtn').textContent = '🚀 Start Voice Cloning';
+            }
+            
+            startStatusCheck() {
+                if (this.statusCheckInterval) {
+                    clearInterval(this.statusCheckInterval);
+                }
+                
+                this.statusCheckInterval = setInterval(async () => {
+                    if (this.currentSessionId) {
+                        await this.checkSessionStatus();
+                    }
+                }, 2000);
+            }
+            
+            async checkSessionStatus() {
+                try {
+                    const response = await fetch(`/api/session/status?session_id=${this.currentSessionId}`);
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        this.showError(result.error);
+                        this.hideProgress();
+                        clearInterval(this.statusCheckInterval);
+                        return;
+                    }
+                    
+                    const progress = result.progress || 0;
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    
+                    const statusText = document.getElementById('statusText');
+                    statusText.textContent = result.status;
+                    statusText.className = `status ${result.status}`;
+                    
+                    if (result.status === 'completed' || result.status === 'failed') {
+                        this.hideProgress();
+                        clearInterval(this.statusCheckInterval);
+                        
+                        if (result.status === 'completed') {
+                            this.showSuccess('Voice cloning completed successfully!');
+                            this.loadRecentResults(); // Refresh results
+                        } else {
+                            this.showError('Voice cloning failed: ' + (result.error_message || 'Unknown error'));
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Status check failed:', error);
+                }
+            }
+            
+            async loadSystemStatus() {
+                try {
+                    const response = await fetch('/api/services');
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        document.getElementById('systemStatus').innerHTML = 
+                            `<div class="error">Failed to load system status: ${result.error}</div>`;
+                        return;
+                    }
+                    
+                    const services = result.services || [];
+                    const statusHtml = services.map(service => `
+                        <div class="metric-card">
+                            <div class="metric-value">${service.status === 'healthy' ? '✅' : '❌'}</div>
+                            <div class="metric-label">${service.name}</div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('systemStatus').innerHTML = statusHtml;
+                    
+                } catch (error) {
+                    document.getElementById('systemStatus').innerHTML = 
+                        `<div class="error">Failed to load system status: ${error.message}</div>`;
+                }
+            }
+            
+            async loadMetrics() {
+                try {
+                    const response = await fetch('/api/metrics?hours=24');
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        document.getElementById('metricsContainer').innerHTML = 
+                            `<div class="error">Failed to load metrics: ${result.error}</div>`;
+                        return;
+                    }
+                    
+                    const metrics = result.metrics_summary || {};
+                    const metricsHtml = Object.entries(metrics).map(([key, value]) => `
+                        <div class="metric-card">
+                            <div class="metric-value">${value.average ? value.average.toFixed(2) : 'N/A'}</div>
+                            <div class="metric-label">${key.replace(/_/g, ' ').toUpperCase()}</div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('metricsContainer').innerHTML = metricsHtml;
+                    
+                } catch (error) {
+                    document.getElementById('metricsContainer').innerHTML = 
+                        `<div class="error">Failed to load metrics: ${error.message}</div>`;
+                }
+            }
+            
+            async loadRecentResults() {
+                try {
+                    const response = await fetch('/api/results?limit=6');
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        document.getElementById('resultsContainer').innerHTML = 
+                            `<div class="error">Failed to load results: ${result.error}</div>`;
+                        return;
+                    }
+                    
+                    const results = result.results || [];
+                    
+                    if (results.length === 0) {
+                        document.getElementById('resultsContainer').innerHTML = 
+                            `<p style="text-align: center; color: #718096; padding: 40px;">No results yet. Start voice cloning to see results here!</p>`;
+                        return;
+                    }
+                    
+                    const resultsHtml = results.map(result => `
+                        <div class="result-card">
+                            <h3>${result.speaker_id}</h3>
+                            <p><strong>Model:</strong> ${result.model_type}</p>
+                            <p><strong>Quality Score:</strong> ${result.quality_score ? result.quality_score.toFixed(2) : 'N/A'}</p>
+                            <p><strong>Similarity Score:</strong> ${result.similarity_score ? result.similarity_score.toFixed(2) : 'N/A'}</p>
+                            <p><strong>Processing Time:</strong> ${result.processing_time ? result.processing_time.toFixed(2) + 's' : 'N/A'}</p>
+                            <p><strong>Created:</strong> ${new Date(result.created_at).toLocaleString()}</p>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('resultsContainer').innerHTML = `<div class="results-grid">${resultsHtml}</div>`;
+                    
+                } catch (error) {
+                    document.getElementById('resultsContainer').innerHTML = 
+                        `<div class="error">Failed to load results: ${error.message}</div>`;
+                }
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                
+                // Remove existing messages
+                const existingMessages = document.querySelectorAll('.error, .success');
+                existingMessages.forEach(msg => msg.remove());
+                
+                // Add new message
+                document.querySelector('.card').appendChild(errorDiv);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+            
+            showSuccess(message) {
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success';
+                successDiv.textContent = message;
+                
+                // Remove existing messages
+                const existingMessages = document.querySelectorAll('.error, .success');
+                existingMessages.forEach(msg => msg.remove());
+                
+                // Add new message
+                document.querySelector('.card').appendChild(successDiv);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => successDiv.remove(), 5000);
+            }
+        }
+        
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new VoiceStudioApp();
+        });
+    </script>
+</body>
+</html>

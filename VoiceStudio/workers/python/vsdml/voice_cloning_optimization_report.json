@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-10-18T15:27:19.990511",
+  "system_info": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "cpu_count": 16,
+    "memory_total_gb": 31.15,
+    "memory_available_gb": 8.26,
+    "torch_version": "2.8.0+cpu",
+    "cuda_available": false,
+    "tts_version": "0.22.0",
+    "transformers_version": "4.49.0"
+  },
+  "performance_metrics": {
+    "voice_synthesis_benchmarks": {
+      "tts_models/en/ljspeech/tacotron2-DDC": {
+        "load_time": 0.41,
+        "synthesis_time": 1.03,
+        "rtf": 0.19,
+        "faster_than_realtime": true
+      },
+      "tts_models/multilingual/multi-dataset/xtts_v2": {
+        "error": "Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.\n\t(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.\n\tWeightsUnpickler error: Unsupported global: GLOBAL TTS.tts.configs.xtts_config.XttsConfig was not an allowed global by default. Please use `torch.serialization.add_safe_globals([TTS.tts.configs.xtts_config.XttsConfig])` or the `torch.serialization.safe_globals([TTS.tts.configs.xtts_config.XttsConfig])` context manager to allowlist this global if you trust this class/function.\n\nCheck the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html."
+      }
+    }
+  },
+  "optimization_results": {
+    "dependencies": {
+      "torch": {
+        "status": "INSTALLED",
+        "version": "2.8.0+cpu"
+      },
+      "torchaudio": {
+        "status": "INSTALLED",
+        "version": "2.8.0+cpu"
+      },
+      "TTS": {
+        "status": "INSTALLED",
+        "version": "0.22.0"
+      },
+      "transformers": {
+        "status": "INSTALLED",
+        "version": "4.49.0"
+      },
+      "numpy": {
+        "status": "INSTALLED",
+        "version": "2.0.2"
+      },
+      "pandas": {
+        "status": "INSTALLED",
+        "version": "2.2.3"
+      },
+      "soundfile": {
+        "status": "INSTALLED",
+        "version": "0.13.1"
+      },
+      "librosa": {
+        "status": "INSTALLED",
+        "version": "0.11.0"
+      },
+      "av": {
+        "status": "INSTALLED",
+        "version": "15.1.0"
+      },
+      "ctranslate2": {
+        "status": "INSTALLED",
+        "version": "4.6.0"
+      },
+      "faster_whisper": {
+        "status": "INSTALLED",
+        "version": "1.2.0"
+      },
+      "nltk": {
+        "status": "INSTALLED",
+        "version": "3.9.2"
+      },
+      "scipy": {
+        "status": "INSTALLED",
+        "version": "1.16.2"
+      },
+      "scikit-learn": {
+        "status": "MISSING",
+        "version": null
+      }
+    },
+    "memory_optimization": "SUCCESS"
+  },
+  "recommendations": [
+    {
+      "category": "Performance",
+      "priority": "HIGH",
+      "recommendation": "Install CUDA-enabled PyTorch for GPU acceleration",
+      "command": "pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121"
+    },
+    {
+      "category": "Dependencies",
+      "priority": "HIGH",
+      "recommendation": "Install missing dependencies: scikit-learn",
+      "command": "pip install scikit-learn"
+    }
+  ]
+}

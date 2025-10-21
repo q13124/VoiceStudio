@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceStudio Ultimate - Professional Voice Cloning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .system-status {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online .status-dot {
+            background: #16a34a;
+        }
+
+        .status-offline .status-dot {
+            background: #dc2626;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tab-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #667eea;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab-button.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: #4c51bf;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4c51bf;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .file-upload {
+            border: 2px dashed rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .render-queue {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .queue-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .queue-info {
+            flex: 1;
+        }
+
+        .queue-title {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .queue-details {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .queue-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .live-meters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .meter {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .meter-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .meter-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.1s ease;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .agent-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .agent-name {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-status {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-performance {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preset-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .preset-name {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .preset-description {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: #10b981;
+        }
+
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+
+        .notification.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .notification-title {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-message {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-success {
+            color: #10b981;
+        }
+
+        .text-error {
+            color: #ef4444;
+        }
+
+        .text-warning {
+            color: #f59e0b;
+        }
+
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .tab-nav {
+                flex-wrap: wrap;
+            }
+            
+            .tab-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.85rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .system-status {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                🎤 VoiceStudio Ultimate
+            </div>
+            <div class="system-status">
+                <div class="status-indicator status-online">
+                    <div class="status-dot"></div>
+                    <span>15 ChatGPT Plus Agents</span>
+                </div>
+                <div class="status-indicator status-online">
+                    <div class="status-dot"></div>
+                    <span>272 Workers Active</span>
+                </div>
+                <div class="status-indicator status-online">
+                    <div class="status-dot"></div>
+                    <span>System Online</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="tab-container">
+            <div class="tab-nav">
+                <button class="tab-button active" onclick="showTab('dashboard')">📊 Dashboard</button>
+                <button class="tab-button" onclick="showTab('profiles')">👤 Profiles</button>
+                <button class="tab-button" onclick="showTab('studio-tts')">🎙️ Studio TTS</button>
+                <button class="tab-button" onclick="showTab('multi-voice')">🎭 Multi-Voice Pro</button>
+                <button class="tab-button" onclick="showTab('reference-builder')">🔧 Reference Builder</button>
+                <button class="tab-button" onclick="showTab('transcribe')">📝 Transcribe</button>
+                <button class="tab-button" onclick="showTab('library')">📚 Library</button>
+                <button class="tab-button" onclick="showTab('effects')">🎛️ Effects</button>
+                <button class="tab-button" onclick="showTab('settings')">⚙️ Settings</button>
+                <button class="tab-button" onclick="showTab('logs')">📋 Logs/Diagnostics</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2>System Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-title">🎤 Active Agents</div>
+                        <div class="metric-value" id="active-agents">15</div>
+                        <div class="metric-label">ChatGPT Plus Agents</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-title">⚡ Workers</div>
+                        <div class="metric-value" id="active-workers">272</div>
+                        <div class="metric-label">Maximum Performance</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-title">🎯 Tasks Completed</div>
+                        <div class="metric-value" id="completed-tasks">0</div>
+                        <div class="metric-label">Total Processed</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-title">📊 System Performance</div>
+                        <div class="metric-value" id="system-performance">100%</div>
+                        <div class="metric-label">Ultimate Performance</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="live-meters">
+                    <div class="meter">
+                        <div class="meter-label">CPU Usage</div>
+                        <div class="meter-value" id="cpu-usage">0%</div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="cpu-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-label">Memory Usage</div>
+                        <div class="meter-value" id="memory-usage">0%</div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="memory-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-label">GPU Usage</div>
+                        <div class="meter-value" id="gpu-usage">0%</div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="gpu-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-label">Network I/O</div>
+                        <div class="meter-value" id="network-io">0 MB/s</div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="network-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="render-queue">
+                    <h3>Render Queue</h3>
+                    <div id="queue-items">
+                        <div class="queue-item">
+                            <div class="queue-info">
+                                <div class="queue-title">System Initialization</div>
+                                <div class="queue-details">Starting all 15 ChatGPT Plus agents...</div>
+                            </div>
+                            <div class="queue-actions">
+                                <button class="btn btn-secondary" disabled>
+                                    <div class="loading-spinner"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profiles Tab -->
+            <div id="profiles" class="tab-content">
+                <h2>Voice Profiles</h2>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="createVoiceProfile()">
+                        ➕ Create New Profile
+                    </button>
+                </div>
+                <div id="profiles-list" class="preset-grid">
+                    <!-- Profiles will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Studio TTS Tab -->
+            <div id="studio-tts" class="tab-content">
+                <h2>Studio TTS</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Text Input</h3>
+                        <div class="form-group">
+                            <label class="form-label">Text to Synthesize</label>
+                            <textarea class="form-input form-textarea" id="tts-text" placeholder="Enter text to synthesize..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Voice Profile</label>
+                            <select class="form-input form-select" id="tts-voice">
+                                <option value="">Select voice profile...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Emotion</label>
+                            <select class="form-input form-select" id="tts-emotion">
+                                <option value="neutral">Neutral</option>
+                                <option value="happy">Happy</option>
+                                <option value="sad">Sad</option>
+                                <option value="angry">Angry</option>
+                                <option value="excited">Excited</option>
+                                <option value="calm">Calm</option>
+                                <option value="whisper">Whisper</option>
+                                <option value="shout">Shout</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="synthesizeSpeech()">
+                            🎤 Synthesize Speech
+                        </button>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Audio Output</h3>
+                        <div id="audio-player" class="text-center">
+                            <p class="text-muted">Audio will appear here after synthesis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Voice Pro Tab -->
+            <div id="multi-voice" class="tab-content">
+                <h2>Multi-Voice Pro</h2>
+                <div class="form-group">
+                    <label class="form-label">Dialogue Script</label>
+                    <textarea class="form-input form-textarea" id="dialogue-script" placeholder="Enter dialogue script..."></textarea>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="synthesizeDialogue()">
+                        🎭 Synthesize Dialogue
+                    </button>
+                </div>
+                <div id="dialogue-results"></div>
+            </div>
+
+            <!-- Reference Builder Tab -->
+            <div id="reference-builder" class="tab-content">
+                <h2>Reference Builder</h2>
+                <div class="file-upload" id="audio-upload" onclick="document.getElementById('audio-file').click()">
+                    <p>📁 Click to upload reference audio</p>
+                    <p class="text-muted">Supports WAV, MP3, FLAC, M4A</p>
+                    <input type="file" id="audio-file" accept="audio/*" style="display: none;" onchange="handleAudioUpload(event)">
+                </div>
+                <div id="upload-progress" class="hidden">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="upload-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcribe Tab -->
+            <div id="transcribe" class="tab-content">
+                <h2>Transcribe</h2>
+                <div class="file-upload" id="transcribe-upload" onclick="document.getElementById('transcribe-file').click()">
+                    <p>📁 Click to upload audio for transcription</p>
+                    <p class="text-muted">Supports WAV, MP3, FLAC, M4A</p>
+                    <input type="file" id="transcribe-file" accept="audio/*" style="display: none;" onchange="handleTranscribeUpload(event)">
+                </div>
+                <div id="transcription-results"></div>
+            </div>
+
+            <!-- Library Tab -->
+            <div id="library" class="tab-content">
+                <h2>Audio Library</h2>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="library-search" placeholder="Search library...">
+                </div>
+                <div id="library-items" class="preset-grid">
+                    <!-- Library items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Effects Tab -->
+            <div id="effects" class="tab-content">
+                <h2>Audio Effects</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Noise Reduction</h3>
+                        <div class="form-group">
+                            <label class="form-label">Reduction Level</label>
+                            <input type="range" class="form-input" id="noise-reduction" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>EQ Presets</h3>
+                        <div class="form-group">
+                            <select class="form-input form-select" id="eq-preset">
+                                <option value="vocal">Vocal</option>
+                                <option value="bright">Bright</option>
+                                <option value="warm">Warm</option>
+                                <option value="neutral">Neutral</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <h2>Settings</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Performance Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Max Workers</label>
+                            <input type="number" class="form-input" id="max-workers" value="272" min="1" max="272">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cache Size</label>
+                            <input type="number" class="form-input" id="cache-size" value="20000" min="1000" max="100000">
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Audio Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Sample Rate</label>
+                            <select class="form-input form-select" id="sample-rate">
+                                <option value="22050">22050 Hz</option>
+                                <option value="44100">44100 Hz</option>
+                                <option value="48000">48000 Hz</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Audio Quality</label>
+                            <select class="form-input form-select" id="audio-quality">
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        💾 Save Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logs/Diagnostics Tab -->
+            <div id="logs" class="tab-content">
+                <h2>Logs & Diagnostics</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>System Logs</h3>
+                        <div id="system-logs" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem;">
+                            <!-- Logs will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Agent Status</h3>
+                        <div id="agent-status" class="agent-grid">
+                            <!-- Agent status will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let websocket = null;
+        let systemStatus = {
+            activeAgents: 15,
+            activeWorkers: 272,
+            completedTasks: 0,
+            systemPerformance: 100
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWebSocket();
+            startSystemMonitoring();
+            loadInitialData();
+        });
+
+        // WebSocket connection
+        function initializeWebSocket() {
+            try {
+                websocket = new WebSocket('ws://localhost:8080/ws');
+                
+                websocket.onopen = function(event) {
+                    console.log('WebSocket connected');
+                    showNotification('Connected to VoiceStudio Ultimate', 'success');
+                };
+                
+                websocket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                websocket.onclose = function(event) {
+                    console.log('WebSocket disconnected');
+                    showNotification('Disconnected from VoiceStudio Ultimate', 'warning');
+                    // Attempt to reconnect
+                    setTimeout(initializeWebSocket, 5000);
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    showNotification('Connection error', 'error');
+                };
+            } catch (error) {
+                console.error('Failed to initialize WebSocket:', error);
+                showNotification('Failed to connect to system', 'error');
+            }
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(data) {
+            if (data.type === 'system_status') {
+                updateSystemStatus(data.data);
+            } else if (data.type === 'task_completed') {
+                handleTaskCompleted(data.data);
+            } else if (data.type === 'agent_update') {
+                updateAgentStatus(data.data);
+            } else if (data.type === 'log_message') {
+                addLogMessage(data.data);
+            }
+        }
+
+        // System monitoring
+        function startSystemMonitoring() {
+            setInterval(updateSystemMetrics, 1000);
+            setInterval(updateAgentStatus, 5000);
+        }
+
+        function updateSystemMetrics() {
+            // Simulate system metrics updates
+            const cpuUsage = Math.random() * 100;
+            const memoryUsage = Math.random() * 100;
+            const gpuUsage = Math.random() * 100;
+            const networkIO = Math.random() * 100;
+
+            document.getElementById('cpu-usage').textContent = Math.round(cpuUsage) + '%';
+            document.getElementById('cpu-bar').style.width = cpuUsage + '%';
+
+            document.getElementById('memory-usage').textContent = Math.round(memoryUsage) + '%';
+            document.getElementById('memory-bar').style.width = memoryUsage + '%';
+
+            document.getElementById('gpu-usage').textContent = Math.round(gpuUsage) + '%';
+            document.getElementById('gpu-bar').style.width = gpuUsage + '%';
+
+            document.getElementById('network-io').textContent = Math.round(networkIO) + ' MB/s';
+            document.getElementById('network-bar').style.width = networkIO + '%';
+        }
+
+        function updateSystemStatus(data) {
+            systemStatus = { ...systemStatus, ...data };
+            
+            document.getElementById('active-agents').textContent = systemStatus.activeAgents;
+            document.getElementById('active-workers').textContent = systemStatus.activeWorkers;
+            document.getElementById('completed-tasks').textContent = systemStatus.completedTasks;
+            document.getElementById('system-performance').textContent = systemStatus.systemPerformance + '%';
+        }
+
+        function updateAgentStatus(data) {
+            const agentStatusContainer = document.getElementById('agent-status');
+            if (!agentStatusContainer) return;
+
+            agentStatusContainer.innerHTML = '';
+            
+            data.agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card';
+                agentCard.innerHTML = `
+                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-status">${agent.status}</div>
+                    <div class="agent-performance">
+                        <span>Tasks: ${agent.tasks_completed}</span>
+                        <span>Score: ${agent.performance_score.toFixed(1)}</span>
+                    </div>
+                `;
+                agentStatusContainer.appendChild(agentCard);
+            });
+        }
+
+        function handleTaskCompleted(data) {
+            systemStatus.completedTasks++;
+            updateSystemStatus(systemStatus);
+            
+            showNotification(`Task completed: ${data.task_type}`, 'success');
+        }
+
+        function addLogMessage(data) {
+            const logsContainer = document.getElementById('system-logs');
+            if (!logsContainer) return;
+
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #6b7280;">[${data.timestamp}]</span> <span style="color: ${data.level === 'error' ? '#ef4444' : data.level === 'warning' ? '#f59e0b' : '#10b981'};">${data.level.toUpperCase()}</span> ${data.message}`;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab button
+            event.target.classList.add('active');
+        }
+
+        // Voice profile management
+        function createVoiceProfile() {
+            showNotification('Voice profile creation feature coming soon', 'info');
+        }
+
+        // TTS functionality
+        function synthesizeSpeech() {
+            const text = document.getElementById('tts-text').value;
+            const voice = document.getElementById('tts-voice').value;
+            const emotion = document.getElementById('tts-emotion').value;
+
+            if (!text || !voice) {
+                showNotification('Please enter text and select a voice', 'warning');
+                return;
+            }
+
+            // Send TTS request
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'tts_request',
+                    data: {
+                        text: text,
+                        voice_id: voice,
+                        emotion: emotion
+                    }
+                }));
+            }
+
+            showNotification('Synthesizing speech...', 'info');
+        }
+
+        function synthesizeDialogue() {
+            const script = document.getElementById('dialogue-script').value;
+            if (!script) {
+                showNotification('Please enter dialogue script', 'warning');
+                return;
+            }
+
+            showNotification('Dialogue synthesis feature coming soon', 'info');
+        }
+
+        // File upload handling
+        function handleAudioUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showNotification(`Uploading ${file.name}...`, 'info');
+            
+            // Simulate upload progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                document.getElementById('upload-progress').classList.remove('hidden');
+                document.getElementById('upload-progress-fill').style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    showNotification('Audio uploaded successfully', 'success');
+                }
+            }, 200);
+        }
+
+        function handleTranscribeUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showNotification(`Transcribing ${file.name}...`, 'info');
+            
+            // Simulate transcription
+            setTimeout(() => {
+                showNotification('Transcription completed', 'success');
+            }, 3000);
+        }
+
+        // Settings management
+        function saveSettings() {
+            const maxWorkers = document.getElementById('max-workers').value;
+            const cacheSize = document.getElementById('cache-size').value;
+            const sampleRate = document.getElementById('sample-rate').value;
+            const audioQuality = document.getElementById('audio-quality').value;
+
+            // Send settings to server
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'settings_update',
+                    data: {
+                        max_workers: parseInt(maxWorkers),
+                        cache_size: parseInt(cacheSize),
+                        sample_rate: parseInt(sampleRate),
+                        audio_quality: audioQuality
+                    }
+                }));
+            }
+
+            showNotification('Settings saved successfully', 'success');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                <div class="notification-message">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 5000);
+        }
+
+        // Load initial data
+        function loadInitialData() {
+            // Load voice profiles
+            loadVoiceProfiles();
+            
+            // Load library items
+            loadLibraryItems();
+            
+            // Load agent status
+            loadAgentStatus();
+        }
+
+        function loadVoiceProfiles() {
+            const voiceSelect = document.getElementById('tts-voice');
+            const profiles = [
+                { id: 'voice_1', name: 'John Doe' },
+                { id: 'voice_2', name: 'Jane Smith' },
+                { id: 'voice_3', name: 'Alex Johnson' }
+            ];
+
+            profiles.forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile.id;
+                option.textContent = profile.name;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        function loadLibraryItems() {
+            const libraryContainer = document.getElementById('library-items');
+            const items = [
+                { name: 'Sample Audio 1', type: 'WAV', duration: '2:30' },
+                { name: 'Sample Audio 2', type: 'MP3', duration: '1:45' },
+                { name: 'Sample Audio 3', type: 'FLAC', duration: '3:15' }
+            ];
+
+            items.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'preset-card';
+                itemCard.innerHTML = `
+                    <div class="preset-name">${item.name}</div>
+                    <div class="preset-description">${item.type} • ${item.duration}</div>
+                `;
+                libraryContainer.appendChild(itemCard);
+            });
+        }
+
+        function loadAgentStatus() {
+            // Simulate agent status data
+            const agents = [
+                { name: 'TTS Master Agent', status: 'Active', tasks_completed: 15, performance_score: 9.8 },
+                { name: 'Training Specialist', status: 'Active', tasks_completed: 8, performance_score: 9.5 },
+                { name: 'Real-time Conversion', status: 'Idle', tasks_completed: 12, performance_score: 9.2 },
+                { name: 'Audio Processing', status: 'Active', tasks_completed: 20, performance_score: 9.7 },
+                { name: 'UI Development', status: 'Active', tasks_completed: 5, performance_score: 9.0 },
+                { name: 'Integration Expert', status: 'Idle', tasks_completed: 10, performance_score: 8.9 },
+                { name: 'Installation Specialist', status: 'Idle', tasks_completed: 3, performance_score: 9.1 },
+                { name: 'Plugin System', status: 'Active', tasks_completed: 7, performance_score: 8.8 },
+                { name: 'Diagnostics Expert', status: 'Active', tasks_completed: 25, performance_score: 9.6 },
+                { name: 'Performance Engineer', status: 'Active', tasks_completed: 18, performance_score: 9.9 },
+                { name: 'Database Manager', status: 'Idle', tasks_completed: 6, performance_score: 9.3 },
+                { name: 'Security Specialist', status: 'Idle', tasks_completed: 4, performance_score: 9.4 },
+                { name: 'Network Expert', status: 'Active', tasks_completed: 14, performance_score: 9.1 },
+                { name: 'Quality Assurance', status: 'Active', tasks_completed: 22, performance_score: 9.7 },
+                { name: 'System Orchestrator', status: 'Active', tasks_completed: 30, performance_score: 9.8 }
+            ];
+
+            updateAgentStatus({ agents: agents });
+        }
+
+        // Error handling
+        window.addEventListener('error', function(event) {
+            console.error('JavaScript error:', event.error);
+            showNotification('An error occurred', 'error');
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (websocket) {
+                websocket.close();
+            }
+        });
+    </script>
+</body>
+</html>

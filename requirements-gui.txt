@@ -1,0 +1,86 @@
+# VoiceStudio God-Tier Service Health Dashboard GUI Requirements
+# PyQt6 GUI Dependencies for Ultimate Service Health Monitoring
+
+# Core GUI Framework
+PyQt6>=6.5.0
+
+# HTTP Requests for Service Health Checks
+requests>=2.31.0
+
+# Async Support
+asyncio
+
+# Data Classes and Typing
+dataclasses
+typing
+
+# Logging and System Monitoring
+logging
+threading
+multiprocessing
+
+# Date and Time Handling
+datetime
+
+# Path Handling
+pathlib
+
+# System Information
+psutil>=5.9.0
+
+# JSON Processing
+json
+
+# OS Integration
+os
+sys
+subprocess
+time
+
+# Mathematical Operations
+math
+
+# File System Operations
+shutil
+glob
+
+# Regular Expressions
+re
+
+# Collections and Utilities
+collections
+functools
+itertools
+
+# Network and Web
+urllib3
+socket
+
+# Data Processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Optional: Enhanced GUI Features
+PyQt6-tools>=6.5.0
+PyQt6-Qt6>=6.5.0
+
+# Optional: System Tray Support
+PyQt6-sip>=13.5.0
+
+# Optional: Enhanced Styling
+qdarkstyle>=3.1.0
+
+# Optional: Charts and Graphs
+PyQtChart>=6.5.0
+
+# Optional: Multimedia Support
+PyQt6-multimedia>=6.5.0
+
+# Optional: Network Support
+PyQt6-network>=6.5.0
+
+# Optional: SQL Support
+PyQt6-sql>=6.5.0
+
+# Optional: WebEngine Support
+PyQt6-webengine>=6.5.0

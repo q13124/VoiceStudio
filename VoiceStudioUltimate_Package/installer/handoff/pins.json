@@ -1,0 +1,12 @@
+{
+  "python": "3.10.*",
+  "dotnet_sdk": "8.*",
+  "torch": "2.2.2",
+  "torchaudio": "2.2.2",
+  "coqui_tts": "0.24.1",
+  "transformers": "4.55.4",
+  "faster_whisper": "1.0.3",
+  "nv_driver_min": "546.00",
+  "cuda_toolkit": "12.1",
+  "ffmpeg": ">=6.0"
+}

@@ -1,0 +1,1339 @@
+VoiceStudio Ultimate - PyTorch 2.9 + RVC + Coqui TTS Upgrade Log\n======================================================================\n\nVoiceStudio Ultimate - PyTorch 2.9 + RVC + Coqui TTS Upgrade\n======================================================================\n============================================================\nINSTALLING PYTORCH 2.9\n============================================================\nCleaning up corrupted packages...\nRunning: Removing corrupted package: ~ympy\nRunning: Removing corrupted package: ~umpy\nRunning: Removing corrupted package: ~ympy\nRunning: Removing corrupted package: ~numpy\nRunning: Clearing pip cache\nOutput: Files removed: 2881 (12274.8 MB)\nChecking for PyTorch 2.9 wheel files...\nRunning: Getting Python version\nOutput: Python 3.11.9\nPython version: Python 3.11.9\n  ✗ Incompatible Python version: torchaudio-2.9.0-cp314-cp314t-win_amd64 (1).whl\n  ✗ Incompatible Python version: torchaudio-2.9.0-cp314-cp314t-win_amd64.whl\nFound 2 PyTorch 2.9 wheel files:\n  - torchaudio-2.9.0-cp314-cp314t-win_amd64 (1).whl\n  - torchaudio-2.9.0-cp314-cp314t-win_amd64.whl\nNo compatible wheel files found for current Python version\nWill install from online source instead\nInstalling PyTorch 2.9 from online source...\nAttempting PyTorch 2.9 with CUDA 12.1...\nRunning: Installing PyTorch 2.9 with CUDA 12.1\nERROR in Installing PyTorch 2.9 with CUDA 12.1: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'torch==2.9.0', 'torchaudio==2.9.0', 'torchvision==0.24.0', '--index-url', 'https://download.pytorch.org/whl/cu121', '--force-reinstall']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not find a version that satisfies the requirement torch==2.9.0 (from versions: 2.1.0+cu121, 2.1.1+cu121, 2.1.2+cu121, 2.2.0+cu121, 2.2.1+cu121, 2.2.2+cu121, 2.3.0+cu121, 2.3.1+cu121, 2.4.0+cu121, 2.4.1+cu121, 2.5.0+cu121, 2.5.1+cu121)
+ERROR: No matching distribution found for torch==2.9.0
+\nCUDA 12.1 failed, trying CUDA 11.8...\nRunning: Installing PyTorch 2.9 with CUDA 11.8\nERROR in Installing PyTorch 2.9 with CUDA 11.8: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'torch==2.9.0', 'torchaudio==2.9.0', 'torchvision==0.24.0', '--index-url', 'https://download.pytorch.org/whl/cu118', '--force-reinstall']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not find a version that satisfies the requirement torch==2.9.0 (from versions: 2.0.0+cu118, 2.0.1+cu118, 2.1.0+cu118, 2.1.1+cu118, 2.1.2+cu118, 2.2.0+cu118, 2.2.1+cu118, 2.2.2+cu118, 2.3.0+cu118, 2.3.1+cu118, 2.4.0+cu118, 2.4.1+cu118, 2.5.0+cu118, 2.5.1+cu118, 2.6.0+cu118, 2.7.0+cu118, 2.7.1+cu118)
+ERROR: No matching distribution found for torch==2.9.0
+\nCUDA versions failed, trying CPU version...\nRunning: Installing PyTorch 2.9 CPU version\nOutput: Looking in indexes: https://download.pytorch.org/whl/cpu
+Collecting torch==2.9.0
+  Downloading https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp311-cp311-win_amd64.whl.metadata (29 kB)
+Collecting torchaudio==2.9.0
+  Downloading https://download.pytorch.org/whl/cpu/torchaudio-2.9.0%2Bcpu-cp311-cp311-win_amd64.whl.metadata (7.0 kB)
+Collecting torchvision==0.24.0
+  Downloading https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp311-cp311-win_amd64.whl.metadata (6.1 kB)
+Collecting filelock (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/filelock-3.19.1-py3-none-any.whl.metadata (2.1 kB)
+Collecting typing-extensions>=4.10.0 (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting sympy>=1.13.3 (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting networkx>=2.5.1 (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/networkx-3.5-py3-none-any.whl.metadata (6.3 kB)
+Collecting jinja2 (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec>=0.8.5 (from torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/fsspec-2025.9.0-py3-none-any.whl.metadata (10 kB)
+Collecting numpy (from torchvision==0.24.0)
+  Downloading https://download.pytorch.org/whl/numpy-2.3.3-cp311-cp311-win_amd64.whl.metadata (60 kB)
+Collecting pillow!=8.3.*,>=5.3.0 (from torchvision==0.24.0)
+  Downloading https://download.pytorch.org/whl/pillow-11.3.0-cp311-cp311-win_amd64.whl.metadata (9.2 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/mpmath-1.3.0-py3-none-any.whl (536 kB)
+     ---------------------------------------- 536.2/536.2 kB 8.8 MB/s  0:00:00
+Collecting MarkupSafe>=2.0 (from jinja2->torch==2.9.0)
+  Downloading https://download.pytorch.org/whl/MarkupSafe-2.1.5-cp311-cp311-win_amd64.whl (17 kB)
+Downloading https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp311-cp311-win_amd64.whl (109.2 MB)
+   ---------------------------------------- 109.2/109.2 MB 54.9 MB/s  0:00:02
+Downloading https://download.pytorch.org/whl/cpu/torchaudio-2.9.0%2Bcpu-cp311-cp311-win_amd64.whl (662 kB)
+   ---------------------------------------- 662.4/662.4 kB 26.7 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp311-cp311-win_amd64.whl (4.0 MB)
+   ---------------------------------------- 4.0/4.0 MB 60.7 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/fsspec-2025.9.0-py3-none-any.whl (199 kB)
+Downloading https://download.pytorch.org/whl/networkx-3.5-py3-none-any.whl (2.0 MB)
+   ---------------------------------------- 2.0/2.0 MB 55.4 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/pillow-11.3.0-cp311-cp311-win_amd64.whl (7.0 MB)
+   ---------------------------------------- 7.0/7.0 MB 53.8 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ---------------------------------------- 6.3/6.3 MB 54.9 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Downloading https://download.pytorch.org/whl/filelock-3.19.1-py3-none-any.whl (15 kB)
+Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading https://download.pytorch.org/whl/numpy-2.3.3-cp311-cp311-win_amd64.whl (13.1 MB)
+   ---------------------------------------- 13.1/13.1 MB 54.8 MB/s  0:00:00
+Installing collected packages: mpmath, typing-extensions, sympy, pillow, numpy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch, torchvision, torchaudio
+  Attempting uninstall: mpmath
+    Found existing installation: mpmath 1.3.0
+    Uninstalling mpmath-1.3.0:
+      Successfully uninstalled mpmath-1.3.0
+  Attempting uninstall: typing-extensions
+    Found existing installation: typing_extensions 4.15.0
+    Uninstalling typing_extensions-4.15.0:
+      Successfully uninstalled typing_extensions-4.15.0
+  Attempting uninstall: sympy
+    Found existing installation: sympy 1.13.1
+    Uninstalling sympy-1.13.1:
+      Successfully uninstalled sympy-1.13.1
+  Attempting uninstall: pillow
+    Found existing installation: pillow 11.3.0
+    Uninstalling pillow-11.3.0:
+      Successfully uninstalled pillow-11.3.0
+  Attempting uninstall: numpy
+    Found existing installation: numpy 2.3.3
+    Uninstalling numpy-2.3.3:
+      Successfully uninstalled numpy-2.3.3
+  Attempting uninstall: networkx
+    Found existing installation: networkx 3.5
+    Uninstalling networkx-3.5:
+      Successfully uninstalled networkx-3.5
+  Attempting uninstall: MarkupSafe
+    Found existing installation: MarkupSafe 2.1.5
+    Uninstalling MarkupSafe-2.1.5:
+      Successfully uninstalled MarkupSafe-2.1.5
+  Attempting uninstall: fsspec
+    Found existing installation: fsspec 2025.9.0
+    Uninstalling fsspec-2025.9.0:
+      Successfully uninstalled fsspec-2025.9.0
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.19.1
+    Uninstalling filelock-3.19.1:
+      Successfully uninstalled filelock-3.19.1
+  Attempting uninstall: jinja2
+    Found existing installation: Jinja2 3.1.6
+    Uninstalling Jinja2-3.1.6:
+      Successfully uninstalled Jinja2-3.1.6
+  Attempting uninstall: torch
+    Found existing installation: torch 2.9.0
+    Uninstalling torch-2.9.0:
+      Successfully uninstalled torch-2.9.0
+  Attempting uninstall: torchvision
+    Found existing installation: torchvision 0.20.1+cu121
+    Uninstalling torchvision-0.20.1+cu121:
+      Successfully uninstalled torchvision-0.20.1+cu121
+  Attempting uninstall: torchaudio
+    Found existing installation: torchaudio 2.9.0
+    Uninstalling torchaudio-2.9.0:
+      Successfully uninstalled torchaudio-2.9.0
+
+Successfully installed MarkupSafe-2.1.5 filelock-3.19.1 fsspec-2025.9.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.5 numpy-2.3.3 pillow-11.3.0 sympy-1.14.0 torch-2.9.0+cpu torchaudio-2.9.0+cpu torchvision-0.24.0+cpu typing-extensions-4.15.0\n============================================================\nUPGRADING COMPATIBLE PACKAGES\n============================================================\nRunning: Upgrading numpy\nOutput: Collecting numpy<2.0.0,>=1.24.0
+  Downloading numpy-1.26.4-cp311-cp311-win_amd64.whl.metadata (61 kB)
+Downloading numpy-1.26.4-cp311-cp311-win_amd64.whl (15.8 MB)
+   ---------------------------------------- 15.8/15.8 MB 45.2 MB/s  0:00:00
+Installing collected packages: numpy
+  Attempting uninstall: numpy
+    Found existing installation: numpy 2.3.3
+    Uninstalling numpy-2.3.3:
+      Successfully uninstalled numpy-2.3.3
+Successfully installed numpy-1.26.4\nRunning: Upgrading scipy\nOutput: Requirement already satisfied: scipy<2.0.0,>=1.11.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (1.16.2)
+Requirement already satisfied: numpy<2.6,>=1.25.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scipy<2.0.0,>=1.11.0) (1.26.4)\nRunning: Upgrading scikit-learn\nOutput: Requirement already satisfied: scikit-learn<2.0.0,>=1.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (1.7.2)
+Requirement already satisfied: numpy>=1.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.3.0) (1.26.4)
+Requirement already satisfied: scipy>=1.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.3.0) (1.16.2)
+Requirement already satisfied: joblib>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.3.0) (1.5.2)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.3.0) (3.6.0)\nRunning: Upgrading librosa\nOutput: Requirement already satisfied: librosa<1.0.0,>=0.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.11.0)
+Requirement already satisfied: audioread>=2.1.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (3.0.1)
+Requirement already satisfied: numba>=0.51.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (0.62.1)
+Requirement already satisfied: numpy>=1.22.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.26.4)
+Requirement already satisfied: scipy>=1.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.16.2)
+Requirement already satisfied: scikit-learn>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.7.2)
+Requirement already satisfied: joblib>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.5.2)
+Requirement already satisfied: decorator>=4.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (5.2.1)
+Requirement already satisfied: soundfile>=0.12.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (0.13.1)
+Requirement already satisfied: pooch>=1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.8.2)
+Requirement already satisfied: soxr>=0.3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.0.0)
+Requirement already satisfied: typing_extensions>=4.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (4.15.0)
+Requirement already satisfied: lazy_loader>=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (0.4)
+Requirement already satisfied: msgpack>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa<1.0.0,>=0.10.0) (1.1.2)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lazy_loader>=0.1->librosa<1.0.0,>=0.10.0) (25.0)
+Requirement already satisfied: llvmlite<0.46,>=0.45.0dev0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from numba>=0.51.0->librosa<1.0.0,>=0.10.0) (0.45.1)
+Requirement already satisfied: platformdirs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.1->librosa<1.0.0,>=0.10.0) (4.5.0)
+Requirement already satisfied: requests>=2.19.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.1->librosa<1.0.0,>=0.10.0) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.1->librosa<1.0.0,>=0.10.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.1->librosa<1.0.0,>=0.10.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.1->librosa<1.0.0,>=0.10.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.1->librosa<1.0.0,>=0.10.0) (2025.10.5)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.1.0->librosa<1.0.0,>=0.10.0) (3.6.0)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile>=0.12.1->librosa<1.0.0,>=0.10.0) (2.0.0)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile>=0.12.1->librosa<1.0.0,>=0.10.0) (2.23)\nRunning: Upgrading soundfile\nOutput: Requirement already satisfied: soundfile<1.0.0,>=0.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.13.1)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile<1.0.0,>=0.13.0) (2.0.0)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile<1.0.0,>=0.13.0) (1.26.4)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile<1.0.0,>=0.13.0) (2.23)\nRunning: Upgrading pydub\nOutput: Requirement already satisfied: pydub<1.0.0,>=0.25.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.25.1)\nRunning: Upgrading transformers\nOutput: Requirement already satisfied: transformers<5.0.0,>=4.30.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.55.4)
+Collecting transformers<5.0.0,>=4.30.0
+  Downloading transformers-4.57.1-py3-none-any.whl.metadata (43 kB)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (3.19.1)
+Requirement already satisfied: huggingface-hub<1.0,>=0.34.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (0.35.3)
+Requirement already satisfied: numpy>=1.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (1.26.4)
+Requirement already satisfied: packaging>=20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (6.0.3)
+Requirement already satisfied: regex!=2019.12.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (2025.9.18)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (2.32.5)
+Collecting tokenizers<=0.23.0,>=0.22.0 (from transformers<5.0.0,>=4.30.0)
+  Downloading tokenizers-0.22.1-cp39-abi3-win_amd64.whl.metadata (6.9 kB)
+Requirement already satisfied: safetensors>=0.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (0.6.2)
+Requirement already satisfied: tqdm>=4.27 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers<5.0.0,>=4.30.0) (4.67.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0,>=0.34.0->transformers<5.0.0,>=4.30.0) (2025.9.0)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0,>=0.34.0->transformers<5.0.0,>=4.30.0) (4.15.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.27->transformers<5.0.0,>=4.30.0) (0.4.6)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->transformers<5.0.0,>=4.30.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->transformers<5.0.0,>=4.30.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->transformers<5.0.0,>=4.30.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->transformers<5.0.0,>=4.30.0) (2025.10.5)
+Downloading transformers-4.57.1-py3-none-any.whl (12.0 MB)
+   ---------------------------------------- 12.0/12.0 MB 28.8 MB/s  0:00:00
+Downloading tokenizers-0.22.1-cp39-abi3-win_amd64.whl (2.7 MB)
+   ---------------------------------------- 2.7/2.7 MB 38.3 MB/s  0:00:00
+Installing collected packages: tokenizers, transformers
+  Attempting uninstall: tokenizers
+    Found existing installation: tokenizers 0.21.4
+    Uninstalling tokenizers-0.21.4:
+      Successfully uninstalled tokenizers-0.21.4
+  Attempting uninstall: transformers
+    Found existing installation: transformers 4.55.4
+    Uninstalling transformers-4.55.4:
+      Successfully uninstalled transformers-4.55.4
+
+Successfully installed tokenizers-0.22.1 transformers-4.57.1\nRunning: Upgrading accelerate\nOutput: Collecting accelerate<1.0.0,>=0.20.0
+  Downloading accelerate-0.34.2-py3-none-any.whl.metadata (19 kB)
+Requirement already satisfied: numpy<3.0.0,>=1.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (1.26.4)
+Requirement already satisfied: packaging>=20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (25.0)
+Requirement already satisfied: psutil in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (7.1.0)
+Requirement already satisfied: pyyaml in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (6.0.3)
+Requirement already satisfied: torch>=1.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (2.9.0+cpu)
+Requirement already satisfied: huggingface-hub>=0.21.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (0.35.3)
+Requirement already satisfied: safetensors>=0.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from accelerate<1.0.0,>=0.20.0) (0.6.2)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (3.19.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (2025.9.0)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (2.32.5)
+Requirement already satisfied: tqdm>=4.42.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (4.67.1)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (4.15.0)
+Requirement already satisfied: sympy>=1.13.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.10.0->accelerate<1.0.0,>=0.20.0) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.10.0->accelerate<1.0.0,>=0.20.0) (3.5)
+Requirement already satisfied: jinja2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.10.0->accelerate<1.0.0,>=0.20.0) (3.1.6)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy>=1.13.3->torch>=1.10.0->accelerate<1.0.0,>=0.20.0) (1.3.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.42.1->huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (0.4.6)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2->torch>=1.10.0->accelerate<1.0.0,>=0.20.0) (2.1.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.21.0->accelerate<1.0.0,>=0.20.0) (2025.10.5)
+Downloading accelerate-0.34.2-py3-none-any.whl (324 kB)
+Installing collected packages: accelerate
+  Attempting uninstall: accelerate
+    Found existing installation: accelerate 1.10.1
+    Uninstalling accelerate-1.10.1:
+      Successfully uninstalled accelerate-1.10.1
+Successfully installed accelerate-0.34.2\nRunning: Upgrading datasets\nOutput: Collecting datasets<3.0.0,>=2.12.0
+  Downloading datasets-2.21.0-py3-none-any.whl.metadata (21 kB)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (3.19.1)
+Requirement already satisfied: numpy>=1.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (1.26.4)
+Requirement already satisfied: pyarrow>=15.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (21.0.0)
+Collecting dill<0.3.9,>=0.3.0 (from datasets<3.0.0,>=2.12.0)
+  Downloading dill-0.3.8-py3-none-any.whl.metadata (10 kB)
+Requirement already satisfied: pandas in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (2.2.3)
+Requirement already satisfied: requests>=2.32.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (2.32.5)
+Requirement already satisfied: tqdm>=4.66.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (4.67.1)
+Requirement already satisfied: xxhash in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (3.6.0)
+Requirement already satisfied: multiprocess in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (0.70.16)
+Collecting fsspec<=2024.6.1,>=2023.1.0 (from fsspec[http]<=2024.6.1,>=2023.1.0->datasets<3.0.0,>=2.12.0)
+  Downloading fsspec-2024.6.1-py3-none-any.whl.metadata (11 kB)
+Requirement already satisfied: aiohttp in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (3.13.0)
+Requirement already satisfied: huggingface-hub>=0.21.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (0.35.3)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from datasets<3.0.0,>=2.12.0) (6.0.3)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp->datasets<3.0.0,>=2.12.0) (1.22.0)
+Requirement already satisfied: idna>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yarl<2.0,>=1.17.0->aiohttp->datasets<3.0.0,>=2.12.0) (3.11)
+Requirement already satisfied: typing-extensions>=4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiosignal>=1.4.0->aiohttp->datasets<3.0.0,>=2.12.0) (4.15.0)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.32.2->datasets<3.0.0,>=2.12.0) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.32.2->datasets<3.0.0,>=2.12.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.32.2->datasets<3.0.0,>=2.12.0) (2025.10.5)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.66.3->datasets<3.0.0,>=2.12.0) (0.4.6)
+Requirement already satisfied: python-dateutil>=2.8.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->datasets<3.0.0,>=2.12.0) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->datasets<3.0.0,>=2.12.0) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->datasets<3.0.0,>=2.12.0) (2025.2)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.8.2->pandas->datasets<3.0.0,>=2.12.0) (1.17.0)
+Downloading datasets-2.21.0-py3-none-any.whl (527 kB)
+   ---------------------------------------- 527.3/527.3 kB 4.3 MB/s  0:00:00
+Downloading dill-0.3.8-py3-none-any.whl (116 kB)
+Downloading fsspec-2024.6.1-py3-none-any.whl (177 kB)
+Installing collected packages: fsspec, dill, datasets
+  Attempting uninstall: fsspec
+    Found existing installation: fsspec 2025.9.0
+    Uninstalling fsspec-2025.9.0:
+      Successfully uninstalled fsspec-2025.9.0
+  Attempting uninstall: dill
+    Found existing installation: dill 0.4.0
+    Uninstalling dill-0.4.0:
+      Successfully uninstalled dill-0.4.0
+  Attempting uninstall: datasets
+    Found existing installation: datasets 4.2.0
+    Uninstalling datasets-4.2.0:
+      Successfully uninstalled datasets-4.2.0
+
+Successfully installed datasets-2.21.0 dill-0.3.8 fsspec-2024.6.1\nRunning: Upgrading tokenizers\nOutput: Requirement already satisfied: tokenizers<1.0.0,>=0.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.22.1)
+Requirement already satisfied: huggingface-hub<2.0,>=0.16.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tokenizers<1.0.0,>=0.13.0) (0.35.3)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (3.19.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (2024.6.1)
+Requirement already satisfied: packaging>=20.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (6.0.3)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (2.32.5)
+Requirement already satisfied: tqdm>=4.42.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (4.67.1)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (4.15.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.42.1->huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (0.4.6)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<2.0,>=0.16.4->tokenizers<1.0.0,>=0.13.0) (2025.10.5)\nRunning: Upgrading safetensors\nOutput: Requirement already satisfied: safetensors<1.0.0,>=0.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.6.2)\nRunning: Upgrading huggingface-hub\nOutput: Requirement already satisfied: huggingface-hub<1.0.0,>=0.15.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.35.3)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (3.19.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (2024.6.1)
+Requirement already satisfied: packaging>=20.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (6.0.3)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (2.32.5)
+Requirement already satisfied: tqdm>=4.42.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (4.67.1)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub<1.0.0,>=0.15.0) (4.15.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.42.1->huggingface-hub<1.0.0,>=0.15.0) (0.4.6)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<1.0.0,>=0.15.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<1.0.0,>=0.15.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<1.0.0,>=0.15.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub<1.0.0,>=0.15.0) (2025.10.5)\nRunning: Upgrading einops\nOutput: Requirement already satisfied: einops<1.0.0,>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.8.1)\nRunning: Upgrading omegaconf\nOutput: Requirement already satisfied: omegaconf<3.0.0,>=2.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.3.0)
+Requirement already satisfied: antlr4-python3-runtime==4.9.* in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf<3.0.0,>=2.3.0) (4.9.3)
+Requirement already satisfied: PyYAML>=5.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf<3.0.0,>=2.3.0) (6.0.3)\nRunning: Upgrading hydra-core\nOutput: Collecting hydra-core<2.0.0,>=1.3.0
+  Downloading hydra_core-1.3.2-py3-none-any.whl.metadata (5.5 kB)
+Requirement already satisfied: omegaconf<2.4,>=2.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from hydra-core<2.0.0,>=1.3.0) (2.3.0)
+Requirement already satisfied: antlr4-python3-runtime==4.9.* in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from hydra-core<2.0.0,>=1.3.0) (4.9.3)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from hydra-core<2.0.0,>=1.3.0) (25.0)
+Requirement already satisfied: PyYAML>=5.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf<2.4,>=2.2->hydra-core<2.0.0,>=1.3.0) (6.0.3)
+Downloading hydra_core-1.3.2-py3-none-any.whl (154 kB)
+Installing collected packages: hydra-core
+Successfully installed hydra-core-1.3.2\nRunning: Upgrading wandb\nOutput: Collecting wandb<1.0.0,>=0.15.0
+  Downloading wandb-0.22.2-py3-none-win_amd64.whl.metadata (10 kB)
+Requirement already satisfied: click>=8.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (8.3.0)
+Collecting gitpython!=3.1.29,>=1.0.0 (from wandb<1.0.0,>=0.15.0)
+  Downloading gitpython-3.1.45-py3-none-any.whl.metadata (13 kB)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (25.0)
+Requirement already satisfied: platformdirs in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (4.5.0)
+Requirement already satisfied: protobuf!=4.21.0,!=5.28.0,<7,>=3.19.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (5.29.5)
+Requirement already satisfied: pydantic<3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (2.12.3)
+Requirement already satisfied: pyyaml in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (6.0.3)
+Requirement already satisfied: requests<3,>=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (2.32.5)
+Collecting sentry-sdk>=2.0.0 (from wandb<1.0.0,>=0.15.0)
+  Downloading sentry_sdk-2.42.0-py2.py3-none-any.whl.metadata (10 kB)
+Requirement already satisfied: typing-extensions<5,>=4.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from wandb<1.0.0,>=0.15.0) (4.15.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3->wandb<1.0.0,>=0.15.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3->wandb<1.0.0,>=0.15.0) (2.41.4)
+Requirement already satisfied: typing-inspection>=0.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3->wandb<1.0.0,>=0.15.0) (0.4.2)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.0.0->wandb<1.0.0,>=0.15.0) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.0.0->wandb<1.0.0,>=0.15.0) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.0.0->wandb<1.0.0,>=0.15.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.0.0->wandb<1.0.0,>=0.15.0) (2025.10.5)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from click>=8.0.1->wandb<1.0.0,>=0.15.0) (0.4.6)
+Collecting gitdb<5,>=4.0.1 (from gitpython!=3.1.29,>=1.0.0->wandb<1.0.0,>=0.15.0)
+  Downloading gitdb-4.0.12-py3-none-any.whl.metadata (1.2 kB)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb<1.0.0,>=0.15.0)
+  Downloading smmap-5.0.2-py3-none-any.whl.metadata (4.3 kB)
+Downloading wandb-0.22.2-py3-none-win_amd64.whl (19.1 MB)
+   ---------------------------------------- 19.1/19.1 MB 48.2 MB/s  0:00:00
+Downloading gitpython-3.1.45-py3-none-any.whl (208 kB)
+Downloading gitdb-4.0.12-py3-none-any.whl (62 kB)
+Downloading smmap-5.0.2-py3-none-any.whl (24 kB)
+Downloading sentry_sdk-2.42.0-py2.py3-none-any.whl (379 kB)
+Installing collected packages: smmap, sentry-sdk, gitdb, gitpython, wandb
+
+Successfully installed gitdb-4.0.12 gitpython-3.1.45 sentry-sdk-2.42.0 smmap-5.0.2 wandb-0.22.2\nRunning: Upgrading tensorboard\nOutput: Requirement already satisfied: tensorboard<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.20.0)
+Requirement already satisfied: absl-py>=0.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (2.3.1)
+Requirement already satisfied: grpcio>=1.48.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (1.64.0)
+Requirement already satisfied: markdown>=2.6.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (3.9)
+Requirement already satisfied: numpy>=1.12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (1.26.4)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (25.0)
+Requirement already satisfied: pillow in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (11.3.0)
+Requirement already satisfied: protobuf!=4.24.0,>=3.19.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (5.29.5)
+Requirement already satisfied: setuptools>=41.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (80.9.0)
+Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (0.7.2)
+Requirement already satisfied: werkzeug>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (3.1.3)
+Requirement already satisfied: MarkupSafe>=2.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from werkzeug>=1.0.1->tensorboard<3.0.0,>=2.13.0) (2.1.5)\nRunning: Upgrading matplotlib\nOutput: Requirement already satisfied: matplotlib<4.0.0,>=3.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.10.7)
+Requirement already satisfied: contourpy>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (1.4.9)
+Requirement already satisfied: numpy>=1.23 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (1.26.4)
+Requirement already satisfied: packaging>=20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (25.0)
+Requirement already satisfied: pillow>=8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (11.3.0)
+Requirement already satisfied: pyparsing>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (3.2.5)
+Requirement already satisfied: python-dateutil>=2.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.0) (2.9.0.post0)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.7->matplotlib<4.0.0,>=3.7.0) (1.17.0)\nRunning: Upgrading seaborn\nOutput: Collecting seaborn<1.0.0,>=0.12.0
+  Downloading seaborn-0.13.2-py3-none-any.whl.metadata (5.4 kB)
+Requirement already satisfied: numpy!=1.24.0,>=1.20 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from seaborn<1.0.0,>=0.12.0) (1.26.4)
+Requirement already satisfied: pandas>=1.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from seaborn<1.0.0,>=0.12.0) (2.2.3)
+Requirement already satisfied: matplotlib!=3.6.1,>=3.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from seaborn<1.0.0,>=0.12.0) (3.10.7)
+Requirement already satisfied: contourpy>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (1.4.9)
+Requirement already satisfied: packaging>=20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (25.0)
+Requirement already satisfied: pillow>=8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (11.3.0)
+Requirement already satisfied: pyparsing>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (3.2.5)
+Requirement already satisfied: python-dateutil>=2.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas>=1.2->seaborn<1.0.0,>=0.12.0) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas>=1.2->seaborn<1.0.0,>=0.12.0) (2025.2)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.7->matplotlib!=3.6.1,>=3.4->seaborn<1.0.0,>=0.12.0) (1.17.0)
+Downloading seaborn-0.13.2-py3-none-any.whl (294 kB)
+Installing collected packages: seaborn
+Successfully installed seaborn-0.13.2\nRunning: Upgrading plotly\nOutput: Collecting plotly<6.0.0,>=5.15.0
+  Downloading plotly-5.24.1-py3-none-any.whl.metadata (7.3 kB)
+Collecting tenacity>=6.2.0 (from plotly<6.0.0,>=5.15.0)
+  Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from plotly<6.0.0,>=5.15.0) (25.0)
+Downloading plotly-5.24.1-py3-none-any.whl (19.1 MB)
+   ---------------------------------------- 19.1/19.1 MB 1.5 MB/s  0:00:12
+Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+Installing collected packages: tenacity, plotly
+
+Successfully installed plotly-5.24.1 tenacity-9.1.2\nRunning: Upgrading pandas\nOutput: Requirement already satisfied: pandas<3.0.0,>=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.2.3)
+Collecting pandas<3.0.0,>=2.0.0
+  Downloading pandas-2.3.3-cp311-cp311-win_amd64.whl.metadata (19 kB)
+Requirement already satisfied: numpy>=1.23.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas<3.0.0,>=2.0.0) (2.3.3)
+Requirement already satisfied: python-dateutil>=2.8.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas<3.0.0,>=2.0.0) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas<3.0.0,>=2.0.0) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas<3.0.0,>=2.0.0) (2025.2)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.8.2->pandas<3.0.0,>=2.0.0) (1.17.0)
+Downloading pandas-2.3.3-cp311-cp311-win_amd64.whl (11.3 MB)
+   ---------------------------------------- 11.3/11.3 MB 44.3 MB/s  0:00:00
+Installing collected packages: pandas
+  Attempting uninstall: pandas
+    Found existing installation: pandas 2.2.3
+    Uninstalling pandas-2.2.3:
+      Successfully uninstalled pandas-2.2.3
+Successfully installed pandas-2.3.3\nRunning: Upgrading pillow\nOutput: Collecting pillow<11.0.0,>=10.0.0
+  Downloading pillow-10.4.0-cp311-cp311-win_amd64.whl.metadata (9.3 kB)
+Downloading pillow-10.4.0-cp311-cp311-win_amd64.whl (2.6 MB)
+   ---------------------------------------- 2.6/2.6 MB 9.8 MB/s  0:00:00
+Installing collected packages: pillow
+  Attempting uninstall: pillow
+    Found existing installation: pillow 11.3.0
+    Uninstalling pillow-11.3.0:
+      Successfully uninstalled pillow-11.3.0
+Successfully installed pillow-10.4.0\nRunning: Upgrading opencv-python\nOutput: Collecting opencv-python<5.0.0,>=4.8.0
+  Downloading opencv_python-4.12.0.88-cp37-abi3-win_amd64.whl.metadata (19 kB)
+Collecting numpy<2.3.0,>=2 (from opencv-python<5.0.0,>=4.8.0)
+  Downloading numpy-2.2.6-cp311-cp311-win_amd64.whl.metadata (60 kB)
+Downloading opencv_python-4.12.0.88-cp37-abi3-win_amd64.whl (39.0 MB)
+   ---------------------------------------- 39.0/39.0 MB 49.6 MB/s  0:00:00
+Downloading numpy-2.2.6-cp311-cp311-win_amd64.whl (12.9 MB)
+   ---------------------------------------- 12.9/12.9 MB 57.7 MB/s  0:00:00
+Installing collected packages: numpy, opencv-python
+  Attempting uninstall: numpy
+    Found existing installation: numpy 1.26.4
+    Uninstalling numpy-1.26.4:
+      Successfully uninstalled numpy-1.26.4
+
+Successfully installed numpy-2.2.6 opencv-python-4.12.0.88\nRunning: Upgrading imageio\nOutput: Collecting imageio<3.0.0,>=2.31.0
+  Downloading imageio-2.37.0-py3-none-any.whl.metadata (5.2 kB)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from imageio<3.0.0,>=2.31.0) (2.2.6)
+Requirement already satisfied: pillow>=8.3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from imageio<3.0.0,>=2.31.0) (10.4.0)
+Downloading imageio-2.37.0-py3-none-any.whl (315 kB)
+Installing collected packages: imageio
+Successfully installed imageio-2.37.0\nRunning: Upgrading tqdm\nOutput: Requirement already satisfied: tqdm<5.0.0,>=4.65.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.67.1)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm<5.0.0,>=4.65.0) (0.4.6)\nRunning: Upgrading rich\nOutput: Collecting rich<14.0.0,>=13.0.0
+  Downloading rich-13.9.4-py3-none-any.whl.metadata (18 kB)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich<14.0.0,>=13.0.0) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich<14.0.0,>=13.0.0) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from markdown-it-py>=2.2.0->rich<14.0.0,>=13.0.0) (0.1.2)
+Downloading rich-13.9.4-py3-none-any.whl (242 kB)
+Installing collected packages: rich
+  Attempting uninstall: rich
+    Found existing installation: rich 14.2.0
+    Uninstalling rich-14.2.0:
+      Successfully uninstalled rich-14.2.0
+Successfully installed rich-13.9.4\nRunning: Upgrading click\nOutput: Requirement already satisfied: click<9.0.0,>=8.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (8.3.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from click<9.0.0,>=8.1.0) (0.4.6)\nRunning: Upgrading pyyaml\nOutput: Requirement already satisfied: pyyaml<7.0.0,>=6.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (6.0.3)\nRunning: Upgrading toml\nOutput: Collecting toml<1.0.0,>=0.10.0
+  Downloading toml-0.10.2-py2.py3-none-any.whl.metadata (7.1 kB)
+Downloading toml-0.10.2-py2.py3-none-any.whl (16 kB)
+Installing collected packages: toml
+Successfully installed toml-0.10.2\nRunning: Upgrading jsonschema\nOutput: Requirement already satisfied: jsonschema<5.0.0,>=4.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.25.1)
+Requirement already satisfied: attrs>=22.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jsonschema<5.0.0,>=4.17.0) (25.4.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jsonschema<5.0.0,>=4.17.0) (2025.9.1)
+Requirement already satisfied: referencing>=0.28.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jsonschema<5.0.0,>=4.17.0) (0.37.0)
+Requirement already satisfied: rpds-py>=0.7.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jsonschema<5.0.0,>=4.17.0) (0.27.1)
+Requirement already satisfied: typing-extensions>=4.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from referencing>=0.28.4->jsonschema<5.0.0,>=4.17.0) (4.15.0)\nRunning: Upgrading pydantic\nOutput: Requirement already satisfied: pydantic<3.0.0,>=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.12.3)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3.0.0,>=2.0.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3.0.0,>=2.0.0) (2.41.4)
+Requirement already satisfied: typing-extensions>=4.14.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3.0.0,>=2.0.0) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic<3.0.0,>=2.0.0) (0.4.2)\nRunning: Upgrading fastapi\nOutput: Requirement already satisfied: fastapi<1.0.0,>=0.104.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.119.0)
+Requirement already satisfied: starlette<0.49.0,>=0.40.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from fastapi<1.0.0,>=0.104.0) (0.48.0)
+Requirement already satisfied: pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from fastapi<1.0.0,>=0.104.0) (2.12.3)
+Requirement already satisfied: typing-extensions>=4.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from fastapi<1.0.0,>=0.104.0) (4.15.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi<1.0.0,>=0.104.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi<1.0.0,>=0.104.0) (2.41.4)
+Requirement already satisfied: typing-inspection>=0.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi<1.0.0,>=0.104.0) (0.4.2)
+Requirement already satisfied: anyio<5,>=3.6.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from starlette<0.49.0,>=0.40.0->fastapi<1.0.0,>=0.104.0) (4.11.0)
+Requirement already satisfied: idna>=2.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio<5,>=3.6.2->starlette<0.49.0,>=0.40.0->fastapi<1.0.0,>=0.104.0) (3.11)
+Requirement already satisfied: sniffio>=1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio<5,>=3.6.2->starlette<0.49.0,>=0.40.0->fastapi<1.0.0,>=0.104.0) (1.3.1)\nRunning: Upgrading uvicorn[standard]\nOutput: Requirement already satisfied: uvicorn<1.0.0,>=0.24.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn[standard]<1.0.0,>=0.24.0) (0.38.0)
+Requirement already satisfied: click>=7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn<1.0.0,>=0.24.0->uvicorn[standard]<1.0.0,>=0.24.0) (8.3.0)
+Requirement already satisfied: h11>=0.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn<1.0.0,>=0.24.0->uvicorn[standard]<1.0.0,>=0.24.0) (0.16.0)
+Requirement already satisfied: colorama>=0.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn[standard]<1.0.0,>=0.24.0) (0.4.6)
+Collecting httptools>=0.6.3 (from uvicorn[standard]<1.0.0,>=0.24.0)
+  Downloading httptools-0.7.1-cp311-cp311-win_amd64.whl.metadata (3.6 kB)
+Requirement already satisfied: python-dotenv>=0.13 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn[standard]<1.0.0,>=0.24.0) (1.1.1)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn[standard]<1.0.0,>=0.24.0) (6.0.3)
+Collecting watchfiles>=0.13 (from uvicorn[standard]<1.0.0,>=0.24.0)
+  Downloading watchfiles-1.1.1-cp311-cp311-win_amd64.whl.metadata (5.0 kB)
+Requirement already satisfied: websockets>=10.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn[standard]<1.0.0,>=0.24.0) (15.0.1)
+Requirement already satisfied: anyio>=3.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from watchfiles>=0.13->uvicorn[standard]<1.0.0,>=0.24.0) (4.11.0)
+Requirement already satisfied: idna>=2.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio>=3.0.0->watchfiles>=0.13->uvicorn[standard]<1.0.0,>=0.24.0) (3.11)
+Requirement already satisfied: sniffio>=1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio>=3.0.0->watchfiles>=0.13->uvicorn[standard]<1.0.0,>=0.24.0) (1.3.1)
+Requirement already satisfied: typing_extensions>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio>=3.0.0->watchfiles>=0.13->uvicorn[standard]<1.0.0,>=0.24.0) (4.15.0)
+Downloading httptools-0.7.1-cp311-cp311-win_amd64.whl (86 kB)
+Downloading watchfiles-1.1.1-cp311-cp311-win_amd64.whl (287 kB)
+Installing collected packages: httptools, watchfiles
+
+Successfully installed httptools-0.7.1 watchfiles-1.1.1\nRunning: Upgrading websockets\nOutput: Collecting websockets<13.0,>=12.0
+  Downloading websockets-12.0-cp311-cp311-win_amd64.whl.metadata (6.8 kB)
+Downloading websockets-12.0-cp311-cp311-win_amd64.whl (124 kB)
+Installing collected packages: websockets
+  Attempting uninstall: websockets
+    Found existing installation: websockets 15.0.1
+    Uninstalling websockets-15.0.1:
+      Successfully uninstalled websockets-15.0.1
+Successfully installed websockets-12.0\nRunning: Upgrading aiohttp\nOutput: Requirement already satisfied: aiohttp<4.0.0,>=3.9.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.13.0)
+Collecting aiohttp<4.0.0,>=3.9.0
+  Downloading aiohttp-3.13.1-cp311-cp311-win_amd64.whl.metadata (8.4 kB)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp<4.0.0,>=3.9.0) (1.22.0)
+Requirement already satisfied: idna>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yarl<2.0,>=1.17.0->aiohttp<4.0.0,>=3.9.0) (3.11)
+Requirement already satisfied: typing-extensions>=4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiosignal>=1.4.0->aiohttp<4.0.0,>=3.9.0) (4.15.0)
+Downloading aiohttp-3.13.1-cp311-cp311-win_amd64.whl (454 kB)
+Installing collected packages: aiohttp
+  Attempting uninstall: aiohttp
+    Found existing installation: aiohttp 3.13.0
+    Uninstalling aiohttp-3.13.0:
+      Successfully uninstalled aiohttp-3.13.0
+Successfully installed aiohttp-3.13.1\nRunning: Upgrading aiofiles\nOutput: Requirement already satisfied: aiofiles<24.0.0,>=23.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (23.2.1)\nRunning: Upgrading aiosqlite\nOutput: Requirement already satisfied: aiosqlite<1.0.0,>=0.19.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.21.0)
+Requirement already satisfied: typing_extensions>=4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiosqlite<1.0.0,>=0.19.0) (4.15.0)\nRunning: Upgrading redis\nOutput: Requirement already satisfied: redis<5.0.0,>=4.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.6.0)\nRunning: Upgrading celery\nOutput: Collecting celery<6.0.0,>=5.3.0
+  Downloading celery-5.5.3-py3-none-any.whl.metadata (22 kB)
+Collecting billiard<5.0,>=4.2.1 (from celery<6.0.0,>=5.3.0)
+  Downloading billiard-4.2.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting kombu<5.6,>=5.5.2 (from celery<6.0.0,>=5.3.0)
+  Downloading kombu-5.5.4-py3-none-any.whl.metadata (3.5 kB)
+Collecting vine<6.0,>=5.1.0 (from celery<6.0.0,>=5.3.0)
+  Downloading vine-5.1.0-py3-none-any.whl.metadata (2.7 kB)
+Requirement already satisfied: click<9.0,>=8.1.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from celery<6.0.0,>=5.3.0) (8.3.0)
+Collecting click-didyoumean>=0.3.0 (from celery<6.0.0,>=5.3.0)
+  Downloading click_didyoumean-0.3.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting click-repl>=0.2.0 (from celery<6.0.0,>=5.3.0)
+  Downloading click_repl-0.3.0-py3-none-any.whl.metadata (3.6 kB)
+Collecting click-plugins>=1.1.1 (from celery<6.0.0,>=5.3.0)
+  Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl.metadata (6.5 kB)
+Requirement already satisfied: python-dateutil>=2.8.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from celery<6.0.0,>=5.3.0) (2.9.0.post0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from click<9.0,>=8.1.2->celery<6.0.0,>=5.3.0) (0.4.6)
+Collecting amqp<6.0.0,>=5.1.1 (from kombu<5.6,>=5.5.2->celery<6.0.0,>=5.3.0)
+  Downloading amqp-5.3.1-py3-none-any.whl.metadata (8.9 kB)
+Requirement already satisfied: tzdata>=2025.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from kombu<5.6,>=5.5.2->celery<6.0.0,>=5.3.0) (2025.2)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from kombu<5.6,>=5.5.2->celery<6.0.0,>=5.3.0) (25.0)
+Collecting prompt-toolkit>=3.0.36 (from click-repl>=0.2.0->celery<6.0.0,>=5.3.0)
+  Downloading prompt_toolkit-3.0.52-py3-none-any.whl.metadata (6.4 kB)
+Collecting wcwidth (from prompt-toolkit>=3.0.36->click-repl>=0.2.0->celery<6.0.0,>=5.3.0)
+  Downloading wcwidth-0.2.14-py2.py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.8.2->celery<6.0.0,>=5.3.0) (1.17.0)
+Downloading celery-5.5.3-py3-none-any.whl (438 kB)
+Downloading billiard-4.2.2-py3-none-any.whl (86 kB)
+Downloading kombu-5.5.4-py3-none-any.whl (210 kB)
+Downloading vine-5.1.0-py3-none-any.whl (9.6 kB)
+Downloading amqp-5.3.1-py3-none-any.whl (50 kB)
+Downloading click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl (11 kB)
+Downloading click_repl-0.3.0-py3-none-any.whl (10 kB)
+Downloading prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+Downloading wcwidth-0.2.14-py2.py3-none-any.whl (37 kB)
+Installing collected packages: wcwidth, vine, billiard, prompt-toolkit, click-plugins, click-didyoumean, amqp, kombu, click-repl, celery
+
+Successfully installed amqp-5.3.1 billiard-4.2.2 celery-5.5.3 click-didyoumean-0.3.1 click-plugins-1.1.1.2 click-repl-0.3.0 kombu-5.5.4 prompt-toolkit-3.0.52 vine-5.1.0 wcwidth-0.2.14\nRunning: Upgrading psutil\nOutput: Collecting psutil<6.0.0,>=5.9.0
+  Downloading psutil-5.9.8-cp37-abi3-win_amd64.whl.metadata (22 kB)
+Downloading psutil-5.9.8-cp37-abi3-win_amd64.whl (255 kB)
+Installing collected packages: psutil
+  Attempting uninstall: psutil
+    Found existing installation: psutil 7.1.0
+    Uninstalling psutil-7.1.0:
+      Successfully uninstalled psutil-7.1.0
+Successfully installed psutil-5.9.8\nRunning: Upgrading py-cpuinfo\nOutput: Collecting py-cpuinfo<10.0.0,>=9.0.0
+  Downloading py_cpuinfo-9.0.0-py3-none-any.whl.metadata (794 bytes)
+Downloading py_cpuinfo-9.0.0-py3-none-any.whl (22 kB)
+Installing collected packages: py-cpuinfo
+Successfully installed py-cpuinfo-9.0.0\nRunning: Upgrading GPUtil\nOutput: Collecting GPUtil<2.0.0,>=1.4.0
+  Downloading GPUtil-1.4.0.tar.gz (5.5 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Building wheels for collected packages: GPUtil
+  Building wheel for GPUtil (setup.py): started
+  Building wheel for GPUtil (setup.py): finished with status 'done'
+  Created wheel for GPUtil: filename=gputil-1.4.0-py3-none-any.whl size=7444 sha256=921717d5032e5033fb556b19ea70790fbd0f17cb87a56c4967b1ed3032d129e4
+  Stored in directory: c:\users\tyler\appdata\local\pip\cache\wheels\2b\4d\8f\55fb4f7b9b591891e8d3f72977c4ec6c7763b39c19f0861595
+Successfully built GPUtil
+Installing collected packages: GPUtil
+Successfully installed GPUtil-1.4.0\nRunning: Upgrading nvidia-ml-py\nOutput: Collecting nvidia-ml-py<12.0.0,>=11.0.0
+  Downloading nvidia_ml_py-11.525.150-py3-none-any.whl.metadata (8.6 kB)
+Downloading nvidia_ml_py-11.525.150-py3-none-any.whl (35 kB)
+Installing collected packages: nvidia-ml-py
+Successfully installed nvidia-ml-py-11.525.150\n============================================================\nINSTALLING RVC DEPENDENCIES\n============================================================\nRunning: Installing RVC dependency: numba==0.58.1\nERROR in Installing RVC dependency: numba==0.58.1: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'numba==0.58.1']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Lib\\site-packages\\llvmlite-0.41.1.dist-info\\INSTALLERldjb715q.tmp'
+
+\nWarning: Failed to install numba==0.58.1\nRunning: Installing RVC dependency: numpy==1.24.3\nOutput: Collecting numpy==1.24.3
+  Downloading numpy-1.24.3-cp311-cp311-win_amd64.whl.metadata (5.6 kB)
+Downloading numpy-1.24.3-cp311-cp311-win_amd64.whl (14.8 MB)
+   ---------------------------------------- 14.8/14.8 MB 37.3 MB/s  0:00:00
+Installing collected packages: numpy
+  Attempting uninstall: numpy
+    Found existing installation: numpy 1.26.4
+    Uninstalling numpy-1.26.4:
+      Successfully uninstalled numpy-1.26.4
+Successfully installed numpy-1.24.3\nRunning: Installing RVC dependency: scipy==1.11.1\nERROR in Installing RVC dependency: scipy==1.11.1: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'scipy==1.11.1']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Lib\\site-packages\\scipy-1.11.1.dist-info\\INSTALLER1qce64h7.tmp'
+
+\nWarning: Failed to install scipy==1.11.1\nRunning: Installing RVC dependency: librosa==0.10.1\nOutput: Collecting librosa==0.10.1
+  Using cached librosa-0.10.1-py3-none-any.whl.metadata (8.3 kB)
+Requirement already satisfied: audioread>=2.1.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (3.0.1)
+Requirement already satisfied: numpy!=1.22.0,!=1.22.1,!=1.22.2,>=1.20.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.24.3)
+Requirement already satisfied: scipy>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.11.1)
+Requirement already satisfied: scikit-learn>=0.20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.7.2)
+Requirement already satisfied: joblib>=0.14 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.5.2)
+Requirement already satisfied: decorator>=4.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (5.2.1)
+Requirement already satisfied: numba>=0.51.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (0.58.1)
+Requirement already satisfied: soundfile>=0.12.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (0.13.1)
+Requirement already satisfied: pooch>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.8.2)
+Requirement already satisfied: soxr>=0.3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.0.0)
+Requirement already satisfied: typing-extensions>=4.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (4.15.0)
+Requirement already satisfied: lazy-loader>=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (0.4)
+Requirement already satisfied: msgpack>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa==0.10.1) (1.1.2)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lazy-loader>=0.1->librosa==0.10.1) (25.0)
+Requirement already satisfied: llvmlite<0.42,>=0.41.0dev0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from numba>=0.51.0->librosa==0.10.1) (0.41.1)
+Requirement already satisfied: platformdirs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.0->librosa==0.10.1) (4.5.0)
+Requirement already satisfied: requests>=2.19.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.0->librosa==0.10.1) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa==0.10.1) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa==0.10.1) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa==0.10.1) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa==0.10.1) (2025.10.5)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=0.20.0->librosa==0.10.1) (3.6.0)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile>=0.12.1->librosa==0.10.1) (2.0.0)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile>=0.12.1->librosa==0.10.1) (2.23)
+Using cached librosa-0.10.1-py3-none-any.whl (253 kB)
+Installing collected packages: librosa
+  Attempting uninstall: librosa
+    Found existing installation: librosa 0.10.1
+    Uninstalling librosa-0.10.1:
+      Successfully uninstalled librosa-0.10.1
+Successfully installed librosa-0.10.1\nRunning: Installing RVC dependency: llvmlite==0.40.1\nOutput: Collecting llvmlite==0.40.1
+  Using cached llvmlite-0.40.1-cp311-cp311-win_amd64.whl.metadata (4.8 kB)
+Downloading llvmlite-0.40.1-cp311-cp311-win_amd64.whl (27.7 MB)
+   ---------------------------------------- 27.7/27.7 MB 36.6 MB/s  0:00:00
+Installing collected packages: llvmlite
+  Attempting uninstall: llvmlite
+    Found existing installation: llvmlite 0.41.1
+    Uninstalling llvmlite-0.41.1:
+      Successfully uninstalled llvmlite-0.41.1
+Successfully installed llvmlite-0.40.1\nRunning: Installing RVC dependency: fairseq==0.12.2\nERROR in Installing RVC dependency: fairseq==0.12.2: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'fairseq==0.12.2']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring version 2.0.6 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/d0/eb/9d63ce09dd8aa85767c65668d5414958ea29648a0eec80a4a7d311ec2684/omegaconf-2.0.6-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.5 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/e5/f6/043b6d255dd6fbf2025110cea35b87f4c5100a181681d8eab496269f0d5b/omegaconf-2.0.5-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.4 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/92/b1/4f3023143436f12c98bab53f0b3db617bd18a7d223627d5030e13a7b4fc2/omegaconf-2.0.4-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.3 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/29/08/a88210c2c1aa0a3f65f05d8a6c98939ccb84b6fb982aa6567dec4e6773f9/omegaconf-2.0.3-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.2 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/72/fe/f8d162aa059fb4f327fd75144dd69aa7e8acbb6d8d37013e4638c8490e0b/omegaconf-2.0.2-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.1 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/86/ec/605805e60abdb025b06664d107335031bb8ebdc52e0a90bdbad6a7130279/omegaconf-2.0.1-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.6 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/d0/eb/9d63ce09dd8aa85767c65668d5414958ea29648a0eec80a4a7d311ec2684/omegaconf-2.0.6-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+WARNING: Ignoring version 2.0.5 of omegaconf since it has invalid metadata:
+Requested omegaconf<2.1 from https://files.pythonhosted.org/packages/e5/f6/043b6d255dd6fbf2025110cea35b87f4c5100a181681d8eab496269f0d5b/omegaconf-2.0.5-py3-none-any.whl (from fairseq==0.12.2) has invalid metadata: .* suffix can only be used with `==` or `!=` operators
+    PyYAML (>=5.1.*)
+            ~~~~~~^
+Please use pip<24.1 if you need to use this version.
+ERROR: Cannot install fairseq and fairseq==0.12.2 because these package versions have conflicting dependencies.
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+\nWarning: Failed to install fairseq==0.12.2\nRunning: Installing RVC dependency: faiss-cpu==1.7.4\nOutput: Collecting faiss-cpu==1.7.4
+  Downloading faiss_cpu-1.7.4-cp311-cp311-win_amd64.whl.metadata (1.4 kB)
+Downloading faiss_cpu-1.7.4-cp311-cp311-win_amd64.whl (10.8 MB)
+   ---------------------------------------- 10.8/10.8 MB 21.0 MB/s  0:00:00
+Installing collected packages: faiss-cpu
+Successfully installed faiss-cpu-1.7.4\nRunning: Installing RVC dependency: gradio>=4.0.0,<5.0.0\nERROR in Installing RVC dependency: gradio>=4.0.0,<5.0.0: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'gradio>=4.0.0,<5.0.0']' returned non-zero exit status 2.\nError details: WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Exception:
+Traceback (most recent call last):
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\cli\base_command.py", line 107, in _run_wrapper
+    status = _inner_run()
+             ^^^^^^^^^^^^
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\cli\base_command.py", line 98, in _inner_run
+    return self.run(options, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\cli\req_command.py", line 71, in wrapper
+    return func(self, options, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\commands\install.py", line 460, in run
+    installed = install_given_reqs(
+                ^^^^^^^^^^^^^^^^^^^
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\req\__init__.py", line 85, in install_given_reqs
+    requirement.install(
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\req\req_install.py", line 870, in install
+    install_wheel(
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\operations\install\wheel.py", line 737, in install_wheel
+    _install_wheel(
+  File "C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages\pip\_internal\operations\install\wheel.py", line 626, in _install_wheel
+    assert os.path.exists(pyc_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+\nWarning: Failed to install gradio>=4.0.0,<5.0.0\nRunning: Installing RVC dependency: cython>=0.29.0,<1.0.0\nERROR in Installing RVC dependency: cython>=0.29.0,<1.0.0: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'cython>=0.29.0,<1.0.0']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'c:\\voicestudio\\workers\\python\\vsdml\\.venv\\lib\\site-packages\\__pycache__\\cython.cpython-311.pyc'
+
+\nWarning: Failed to install cython>=0.29.0,<1.0.0\nRunning: Installing RVC dependency: future>=0.18.3,<1.0.0\nOutput: Collecting future<1.0.0,>=0.18.3
+  Downloading future-0.18.3.tar.gz (840 kB)
+     ---------------------------------------- 840.9/840.9 kB 7.4 MB/s  0:00:00
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Building wheels for collected packages: future
+  Building wheel for future (setup.py): started
+  Building wheel for future (setup.py): finished with status 'done'
+  Created wheel for future: filename=future-0.18.3-py3-none-any.whl size=492139 sha256=9331b489f57c97adb85c9578b46c2774f70aaa2ce9dcd8e11bb617fd06d6f97c
+  Stored in directory: c:\users\tyler\appdata\local\pip\cache\wheels\da\19\ca\9d8c44cd311a955509d7e13da3f0bea42400c469ef825b580b
+Successfully built future
+Installing collected packages: future
+Successfully installed future-0.18.3\nRunning: Installing RVC dependency: pydub>=0.25.1,<1.0.0\nOutput: Requirement already satisfied: pydub<1.0.0,>=0.25.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.25.1)\nRunning: Installing RVC dependency: soundfile>=0.12.1,<1.0.0\nOutput: Requirement already satisfied: soundfile<1.0.0,>=0.12.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.13.1)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile<1.0.0,>=0.12.1) (2.0.0)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile<1.0.0,>=0.12.1) (1.24.3)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile<1.0.0,>=0.12.1) (2.23)\nRunning: Installing RVC dependency: ffmpeg-python>=0.2.0,<1.0.0\nOutput: Requirement already satisfied: ffmpeg-python<1.0.0,>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.2.0)
+Requirement already satisfied: future in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from ffmpeg-python<1.0.0,>=0.2.0) (0.18.3)\nRunning: Installing RVC dependency: tensorboardX>=2.6.0,<3.0.0\nOutput: Requirement already satisfied: tensorboardX<3.0.0,>=2.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.6.4)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboardX<3.0.0,>=2.6.0) (1.24.3)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboardX<3.0.0,>=2.6.0) (25.0)
+Requirement already satisfied: protobuf>=3.20 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboardX<3.0.0,>=2.6.0) (5.29.5)\nRunning: Installing RVC dependency: functorch>=2.0.0,<3.0.0\nOutput: Collecting functorch<3.0.0,>=2.0.0
+  Using cached functorch-2.0.0-py2.py3-none-any.whl.metadata (346 bytes)
+Collecting torch<2.1,>=2.0 (from functorch<3.0.0,>=2.0.0)
+  Using cached torch-2.0.1-cp311-cp311-win_amd64.whl.metadata (24 kB)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (3.19.1)
+Requirement already satisfied: typing-extensions in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (4.15.0)
+Requirement already satisfied: sympy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (1.13.1)
+Requirement already satisfied: networkx in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (3.5)
+Requirement already satisfied: jinja2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (3.1.6)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2->torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (2.1.5)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy->torch<2.1,>=2.0->functorch<3.0.0,>=2.0.0) (1.3.0)
+Using cached functorch-2.0.0-py2.py3-none-any.whl (2.1 kB)
+Downloading torch-2.0.1-cp311-cp311-win_amd64.whl (172.3 MB)
+   ---------------------------------------- 172.3/172.3 MB 7.6 MB/s  0:00:23
+Installing collected packages: torch, functorch
+  Attempting uninstall: torch
+    Found existing installation: torch 2.0.1
+    Uninstalling torch-2.0.1:
+      Successfully uninstalled torch-2.0.1
+
+Successfully installed functorch-2.0.0 torch-2.0.1\nRunning: Installing RVC dependency: jinja2>=3.1.2,<4.0.0\nOutput: Requirement already satisfied: jinja2<4.0.0,>=3.1.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.1.6)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2<4.0.0,>=3.1.2) (2.1.5)\nRunning: Installing RVC dependency: json5>=0.9.11,<1.0.0\nOutput: Requirement already satisfied: json5<1.0.0,>=0.9.11 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.12.1)\nRunning: Installing RVC dependency: markdown>=3.4.0,<4.0.0\nOutput: Requirement already satisfied: markdown<4.0.0,>=3.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.9)\nRunning: Installing RVC dependency: matplotlib>=3.7.1,<4.0.0\nOutput: Requirement already satisfied: matplotlib<4.0.0,>=3.7.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.10.7)
+Requirement already satisfied: contourpy>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (1.4.9)
+Requirement already satisfied: numpy>=1.23 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (2.3.4)
+Requirement already satisfied: packaging>=20.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (25.0)
+Requirement already satisfied: pillow>=8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (10.4.0)
+Requirement already satisfied: pyparsing>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (3.2.5)
+Requirement already satisfied: python-dateutil>=2.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib<4.0.0,>=3.7.1) (2.9.0.post0)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.7->matplotlib<4.0.0,>=3.7.1) (1.17.0)\nRunning: Installing RVC dependency: matplotlib-inline>=0.1.6,<1.0.0\nOutput: Requirement already satisfied: matplotlib-inline<1.0.0,>=0.1.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.1.7)
+Requirement already satisfied: traitlets in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib-inline<1.0.0,>=0.1.6) (5.14.3)\nRunning: Installing RVC dependency: praat-parselmouth>=0.4.3,<1.0.0\nOutput: Requirement already satisfied: praat-parselmouth<1.0.0,>=0.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.4.6)
+Requirement already satisfied: numpy>=1.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from praat-parselmouth<1.0.0,>=0.4.3) (2.3.4)\nRunning: Installing RVC dependency: pillow>=9.1.1,<11.0.0\nOutput: Requirement already satisfied: pillow<11.0.0,>=9.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (10.4.0)\nRunning: Installing RVC dependency: pyworld==0.3.2\nOutput: Collecting pyworld==0.3.2
+  Using cached pyworld-0.3.2.tar.gz (214 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyworld==0.3.2) (2.3.4)
+Requirement already satisfied: cython in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyworld==0.3.2) (0.29.37)
+Building wheels for collected packages: pyworld
+  Building wheel for pyworld (pyproject.toml): started
+  Building wheel for pyworld (pyproject.toml): finished with status 'done'
+  Created wheel for pyworld: filename=pyworld-0.3.2-cp311-cp311-win_amd64.whl size=175436 sha256=85f222177f43d6ed51909f5fd8f6e62b3d09ab3a49ec44e2ac11249c83aeea30
+  Stored in directory: c:\users\tyler\appdata\local\pip\cache\wheels\48\f7\e9\b48a0c98b529d91c81c3fd1f33f422ffd1797a2aa714fba503
+Successfully built pyworld
+Installing collected packages: pyworld
+  Attempting uninstall: pyworld
+    Found existing installation: pyworld 0.3.2
+    Uninstalling pyworld-0.3.2:
+      Successfully uninstalled pyworld-0.3.2
+Successfully installed pyworld-0.3.2\nRunning: Installing RVC dependency: resampy>=0.4.2,<1.0.0\nOutput: Requirement already satisfied: resampy<1.0.0,>=0.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.4.3)
+Requirement already satisfied: numpy>=1.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from resampy<1.0.0,>=0.4.2) (1.26.4)
+Requirement already satisfied: numba>=0.53 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from resampy<1.0.0,>=0.4.2) (0.58.1)
+Requirement already satisfied: llvmlite<0.42,>=0.41.0dev0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from numba>=0.53->resampy<1.0.0,>=0.4.2) (0.41.1)\nRunning: Installing RVC dependency: scikit-learn>=1.2.2,<2.0.0\nOutput: Requirement already satisfied: scikit-learn<2.0.0,>=1.2.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (1.7.2)
+Requirement already satisfied: numpy>=1.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.2.2) (1.26.4)
+Requirement already satisfied: scipy>=1.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.2.2) (1.11.1)
+Requirement already satisfied: joblib>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.2.2) (1.5.2)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn<2.0.0,>=1.2.2) (3.6.0)\nRunning: Installing RVC dependency: starlette>=0.26.1,<1.0.0\nOutput: Requirement already satisfied: starlette<1.0.0,>=0.26.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.48.0)
+Requirement already satisfied: anyio<5,>=3.6.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from starlette<1.0.0,>=0.26.1) (4.11.0)
+Requirement already satisfied: typing-extensions>=4.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from starlette<1.0.0,>=0.26.1) (4.15.0)
+Requirement already satisfied: idna>=2.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio<5,>=3.6.2->starlette<1.0.0,>=0.26.1) (3.11)
+Requirement already satisfied: sniffio>=1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from anyio<5,>=3.6.2->starlette<1.0.0,>=0.26.1) (1.3.1)\nRunning: Installing RVC dependency: tensorboard>=2.13.0,<3.0.0\nOutput: Requirement already satisfied: tensorboard<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2.20.0)
+Requirement already satisfied: absl-py>=0.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (2.3.1)
+Requirement already satisfied: grpcio>=1.48.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (1.64.0)
+Requirement already satisfied: markdown>=2.6.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (3.9)
+Requirement already satisfied: numpy>=1.12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (1.26.4)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (25.0)
+Requirement already satisfied: pillow in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (10.4.0)
+Requirement already satisfied: protobuf!=4.24.0,>=3.19.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (5.29.5)
+Requirement already satisfied: setuptools>=41.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (80.9.0)
+Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (0.7.2)
+Requirement already satisfied: werkzeug>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard<3.0.0,>=2.13.0) (3.1.3)
+Requirement already satisfied: MarkupSafe>=2.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from werkzeug>=1.0.1->tensorboard<3.0.0,>=2.13.0) (2.1.5)\nRunning: Installing RVC dependency: tensorboard-data-server>=0.7.0,<1.0.0\nOutput: Requirement already satisfied: tensorboard-data-server<1.0.0,>=0.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.7.2)\nRunning: Installing RVC dependency: tensorboard-plugin-wit>=1.8.0,<2.0.0\nOutput: Requirement already satisfied: tensorboard-plugin-wit<2.0.0,>=1.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (1.8.1)\nRunning: Installing RVC dependency: torchgen>=0.0.1,<1.0.0\nOutput: Collecting torchgen<1.0.0,>=0.0.1
+  Downloading torchgen-0.0.1-py3-none-any.whl.metadata (2.9 kB)
+Downloading torchgen-0.0.1-py3-none-any.whl (3.4 kB)
+Installing collected packages: torchgen
+Successfully installed torchgen-0.0.1\nRunning: Installing RVC dependency: tqdm>=4.65.0,<5.0.0\nOutput: Requirement already satisfied: tqdm<5.0.0,>=4.65.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.67.1)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm<5.0.0,>=4.65.0) (0.4.6)\nRunning: Installing RVC dependency: tornado>=6.2,<7.0.0\nOutput: Collecting tornado<7.0.0,>=6.2
+  Downloading tornado-6.5.2-cp39-abi3-win_amd64.whl.metadata (2.9 kB)
+Downloading tornado-6.5.2-cp39-abi3-win_amd64.whl (445 kB)
+Installing collected packages: tornado
+Successfully installed tornado-6.5.2\nRunning: Installing RVC dependency: werkzeug>=2.2.3,<3.0.0\nERROR in Installing RVC dependency: werkzeug>=2.2.3,<3.0.0: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'werkzeug>=2.2.3,<3.0.0']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'c:\\voicestudio\\workers\\python\\vsdml\\.venv\\lib\\site-packages\\werkzeug\\exceptions.py'
+
+\nWarning: Failed to install werkzeug>=2.2.3,<3.0.0\nRunning: Installing RVC dependency: uc-micro-py>=1.0.1,<2.0.0\nOutput: Collecting uc-micro-py<2.0.0,>=1.0.1
+  Downloading uc_micro_py-1.0.3-py3-none-any.whl.metadata (2.0 kB)
+Downloading uc_micro_py-1.0.3-py3-none-any.whl (6.2 kB)
+Installing collected packages: uc-micro-py
+Successfully installed uc-micro-py-1.0.3\nRunning: Installing RVC dependency: sympy>=1.11.1,<2.0.0\nOutput: Requirement already satisfied: sympy<2.0.0,>=1.11.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (1.13.1)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy<2.0.0,>=1.11.1) (1.3.0)\nRunning: Installing RVC dependency: tabulate>=0.9.0,<1.0.0\nOutput: Requirement already satisfied: tabulate<1.0.0,>=0.9.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.9.0)\nRunning: Installing RVC dependency: pyyaml>=6.0,<7.0.0\nOutput: Requirement already satisfied: pyyaml<7.0.0,>=6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (6.0.3)\nRunning: Installing RVC dependency: pyasn1>=0.4.8,<1.0.0\nERROR in Installing RVC dependency: pyasn1>=0.4.8,<1.0.0: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'pyasn1>=0.4.8,<1.0.0']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Lib\\site-packages\\pyasn1\\compat\\integer.py'
+Check the permissions.
+
+\nWarning: Failed to install pyasn1>=0.4.8,<1.0.0\nRunning: Installing RVC dependency: pyasn1-modules>=0.2.8,<1.0.0\nOutput: Collecting pyasn1-modules<1.0.0,>=0.2.8
+  Downloading pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+Requirement already satisfied: pyasn1<0.7.0,>=0.6.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyasn1-modules<1.0.0,>=0.2.8) (0.6.1)
+Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+Installing collected packages: pyasn1-modules
+Successfully installed pyasn1-modules-0.4.2\nRunning: Installing RVC dependency: fsspec>=2023.3.0,<2024.0.0\nOutput: Requirement already satisfied: fsspec<2024.0.0,>=2023.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2023.12.2)\nRunning: Installing RVC dependency: absl-py>=1.4.0,<2.0.0\nOutput: Collecting absl-py<2.0.0,>=1.4.0
+  Downloading absl_py-1.4.0-py3-none-any.whl.metadata (2.3 kB)
+Downloading absl_py-1.4.0-py3-none-any.whl (126 kB)
+Installing collected packages: absl-py
+  Attempting uninstall: absl-py
+    Found existing installation: absl-py 2.3.1
+    Uninstalling absl-py-2.3.1:
+      Successfully uninstalled absl-py-2.3.1
+Successfully installed absl-py-1.4.0\nRunning: Installing RVC dependency: audioread>=3.0.0,<4.0.0\nOutput: Requirement already satisfied: audioread<4.0.0,>=3.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.0.1)\nRunning: Installing RVC dependency: uvicorn>=0.21.1,<1.0.0\nOutput: Requirement already satisfied: uvicorn<1.0.0,>=0.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.38.0)
+Requirement already satisfied: click>=7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn<1.0.0,>=0.21.1) (8.3.0)
+Requirement already satisfied: h11>=0.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from uvicorn<1.0.0,>=0.21.1) (0.16.0)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from click>=7.0->uvicorn<1.0.0,>=0.21.1) (0.4.6)\nRunning: Installing RVC dependency: colorama>=0.4.6,<1.0.0\nOutput: Requirement already satisfied: colorama<1.0.0,>=0.4.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (0.4.6)\nRunning: Installing RVC dependency: edge-tts>=6.1.0,<7.0.0\nERROR in Installing RVC dependency: edge-tts>=6.1.0,<7.0.0: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'edge-tts>=6.1.0,<7.0.0']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Lib\\site-packages\\edge_tts\\version.py'
+Check the permissions.
+
+\nWarning: Failed to install edge-tts>=6.1.0,<7.0.0\nRunning: Installing RVC dependency: demucs>=4.0.0,<5.0.0\nOutput: Collecting demucs<5.0.0,>=4.0.0
+  Downloading demucs-4.0.1.tar.gz (1.2 MB)
+     ---------------------------------------- 1.2/1.2 MB 15.3 MB/s  0:00:00
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting dora-search (from demucs<5.0.0,>=4.0.0)
+  Downloading dora_search-0.1.12.tar.gz (87 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: einops in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (0.8.1)
+Requirement already satisfied: julius>=0.2.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (0.2.7)
+Collecting lameenc>=1.2 (from demucs<5.0.0,>=4.0.0)
+  Downloading lameenc-1.8.1-cp311-cp311-win_amd64.whl.metadata (10 kB)
+Collecting openunmix (from demucs<5.0.0,>=4.0.0)
+  Downloading openunmix-1.3.0-py3-none-any.whl.metadata (17 kB)
+Requirement already satisfied: pyyaml in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (6.0.3)
+Requirement already satisfied: torch>=1.8.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (2.0.1)
+Requirement already satisfied: torchaudio>=0.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (2.5.1+cu121)
+Requirement already satisfied: tqdm in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from demucs<5.0.0,>=4.0.0) (4.67.1)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (3.19.1)
+Requirement already satisfied: typing-extensions in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (4.15.0)
+Requirement already satisfied: sympy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (1.13.1)
+Requirement already satisfied: networkx in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (3.5)
+Requirement already satisfied: jinja2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (3.1.6)
+INFO: pip is looking at multiple versions of torchaudio to determine which version is compatible with other requirements. This could take a while.
+Collecting torchaudio>=0.8 (from demucs<5.0.0,>=4.0.0)
+  Downloading torchaudio-2.9.0-cp311-cp311-win_amd64.whl.metadata (6.9 kB)
+Collecting torch>=1.8.1 (from demucs<5.0.0,>=4.0.0)
+  Downloading torch-2.9.0-cp311-cp311-win_amd64.whl.metadata (30 kB)
+Collecting sympy>=1.13.3 (from torch>=1.8.1->demucs<5.0.0,>=4.0.0)
+  Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Requirement already satisfied: fsspec>=0.8.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=1.8.1->demucs<5.0.0,>=4.0.0) (2023.12.2)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy>=1.13.3->torch>=1.8.1->demucs<5.0.0,>=4.0.0) (1.3.0)
+Requirement already satisfied: omegaconf in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from dora-search->demucs<5.0.0,>=4.0.0) (2.3.0)
+Collecting retrying (from dora-search->demucs<5.0.0,>=4.0.0)
+  Downloading retrying-1.4.2-py3-none-any.whl.metadata (5.5 kB)
+Collecting submitit (from dora-search->demucs<5.0.0,>=4.0.0)
+  Downloading submitit-1.5.3-py3-none-any.whl.metadata (7.9 kB)
+Collecting treetable (from dora-search->demucs<5.0.0,>=4.0.0)
+  Downloading treetable-0.2.6-py3-none-any.whl.metadata (5.3 kB)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2->torch>=1.8.1->demucs<5.0.0,>=4.0.0) (2.1.5)
+Requirement already satisfied: antlr4-python3-runtime==4.9.* in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf->dora-search->demucs<5.0.0,>=4.0.0) (4.9.3)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from openunmix->demucs<5.0.0,>=4.0.0) (1.26.4)
+Collecting cloudpickle>=1.2.1 (from submitit->dora-search->demucs<5.0.0,>=4.0.0)
+  Downloading cloudpickle-3.1.1-py3-none-any.whl.metadata (7.1 kB)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm->demucs<5.0.0,>=4.0.0) (0.4.6)
+Downloading lameenc-1.8.1-cp311-cp311-win_amd64.whl (152 kB)
+Downloading torchaudio-2.9.0-cp311-cp311-win_amd64.whl (664 kB)
+   ---------------------------------------- 664.7/664.7 kB 25.2 MB/s  0:00:00
+Downloading torch-2.9.0-cp311-cp311-win_amd64.whl (109.3 MB)
+   ---------------------------------------- 109.3/109.3 MB 33.1 MB/s  0:00:03
+Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ---------------------------------------- 6.3/6.3 MB 32.1 MB/s  0:00:00
+Downloading openunmix-1.3.0-py3-none-any.whl (40 kB)
+Downloading retrying-1.4.2-py3-none-any.whl (10 kB)
+Downloading submitit-1.5.3-py3-none-any.whl (75 kB)
+Downloading cloudpickle-3.1.1-py3-none-any.whl (20 kB)
+Downloading treetable-0.2.6-py3-none-any.whl (7.4 kB)
+Building wheels for collected packages: demucs, dora-search
+  Building wheel for demucs (setup.py): started
+  Building wheel for demucs (setup.py): finished with status 'done'
+  Created wheel for demucs: filename=demucs-4.0.1-py3-none-any.whl size=78552 sha256=3ff43db5f56bf2bf63af47bfcde58cb13389873ac906444c2f817d42c98d5570
+  Stored in directory: c:\users\tyler\appdata\local\pip\cache\wheels\bb\06\a3\83489d50c9f015fa981a2a7bb08fcede75120a0de56775353f
+  Building wheel for dora-search (pyproject.toml): started
+  Building wheel for dora-search (pyproject.toml): finished with status 'done'
+  Created wheel for dora-search: filename=dora_search-0.1.12-py3-none-any.whl size=75319 sha256=b4dd4ce4099ec36cd399b5ec50128d32eb7f075adfd096065272cb445930c053
+  Stored in directory: c:\users\tyler\appdata\local\pip\cache\wheels\e3\f3\a9\2fd1ebbd64c4b2a1e53c81bf25282567a80802ceedfedcab4a
+Successfully built demucs dora-search
+Installing collected packages: lameenc, treetable, sympy, retrying, cloudpickle, torch, submitit, torchaudio, dora-search, openunmix, demucs
+  Attempting uninstall: sympy
+    Found existing installation: sympy 1.13.1
+    Uninstalling sympy-1.13.1:
+      Successfully uninstalled sympy-1.13.1
+  Attempting uninstall: torch
+    Found existing installation: torch 2.0.1
+    Uninstalling torch-2.0.1:
+      Successfully uninstalled torch-2.0.1
+  Attempting uninstall: torchaudio
+    Found existing installation: torchaudio 2.5.1+cu121
+    Uninstalling torchaudio-2.5.1+cu121:
+      Successfully uninstalled torchaudio-2.5.1+cu121
+
+Successfully installed cloudpickle-3.1.1 demucs-4.0.1 dora-search-0.1.12 lameenc-1.8.1 openunmix-1.3.0 retrying-1.4.2 submitit-1.5.3 sympy-1.14.0 torch-2.9.0 torchaudio-2.9.0 treetable-0.2.6\nRunning: Installing RVC dependency: yt-dlp>=2023.7.6,<2024.0.0\nOutput: Requirement already satisfied: yt-dlp<2024.0.0,>=2023.7.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (2023.12.30)
+Requirement already satisfied: mutagen in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (1.47.0)
+Requirement already satisfied: pycryptodomex in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (3.23.0)
+Requirement already satisfied: certifi in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (2025.10.5)
+Requirement already satisfied: requests<3,>=2.31.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (2.32.5)
+Requirement already satisfied: urllib3<3,>=1.26.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (2.5.0)
+Requirement already satisfied: websockets>=12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (12.0)
+Requirement already satisfied: brotli in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yt-dlp<2024.0.0,>=2023.7.6) (1.1.0)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.31.0->yt-dlp<2024.0.0,>=2023.7.6) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests<3,>=2.31.0->yt-dlp<2024.0.0,>=2023.7.6) (3.11)\n============================================================\nINSTALLING COQUI TTS\n============================================================\nRunning: Installing Coqui TTS\nERROR in Installing Coqui TTS: Command '['C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', 'TTS>=0.22.0,<1.0.0']' returned non-zero exit status 1.\nError details: WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+  DEPRECATION: Building 'jieba' using the legacy setup.py bdist_wheel mechanism, which will be removed in a future version. pip 25.3 will enforce this behaviour change. A possible replacement is to use the standardized build interface by setting the `--use-pep517` option, (possibly combined with `--no-build-isolation`), or adding a `pyproject.toml` file to the source tree of 'jieba'. Discussion can be found at https://github.com/pypa/pip/issues/6334
+WARNING: Ignoring invalid distribution ~cipy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~erkzeug (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~umpy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+WARNING: Ignoring invalid distribution ~ympy (C:\VoiceStudio\workers\python\vsdml\.venv\Lib\site-packages)
+ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'C:\\VoiceStudio\\workers\\python\\vsdml\\.venv\\Lib\\site-packages\\pandas-1.5.3.dist-info\\INSTALLERh3qzd2a2.tmp'
+
+\nFailed to install Coqui TTS, trying without version constraint...\nRunning: Installing Coqui TTS (latest)\nOutput: Collecting TTS
+  Using cached tts-0.22.0-cp311-cp311-win_amd64.whl
+Requirement already satisfied: numpy>=1.24.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (1.26.4)
+Requirement already satisfied: cython>=0.29.30 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.29.37)
+Requirement already satisfied: scipy>=1.11.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (1.16.2)
+Requirement already satisfied: torch>=2.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (2.9.0)
+Requirement already satisfied: torchaudio in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (2.9.0)
+Requirement already satisfied: soundfile>=0.12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.13.1)
+Requirement already satisfied: librosa>=0.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.10.1)
+Requirement already satisfied: scikit-learn>=1.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (1.7.2)
+Requirement already satisfied: numba>=0.57.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.58.1)
+Requirement already satisfied: inflect>=5.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (7.5.0)
+Requirement already satisfied: tqdm>=4.64.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (4.67.1)
+Requirement already satisfied: anyascii>=0.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.3.3)
+Requirement already satisfied: pyyaml>=6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (6.0.3)
+Requirement already satisfied: fsspec>=2023.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (2023.12.2)
+Requirement already satisfied: aiohttp>=3.8.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (3.13.1)
+Requirement already satisfied: packaging>=23.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (25.0)
+Collecting flask>=2.0.1 (from TTS)
+  Using cached flask-3.1.2-py3-none-any.whl.metadata (3.2 kB)
+Requirement already satisfied: pysbd>=0.3.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.3.4)
+Requirement already satisfied: umap-learn>=0.5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.5.9.post2)
+Collecting pandas<2.0,>=1.4 (from TTS)
+  Using cached pandas-1.5.3-cp311-cp311-win_amd64.whl.metadata (12 kB)
+Requirement already satisfied: matplotlib>=3.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (3.10.7)
+Collecting trainer>=0.0.32 (from TTS)
+  Using cached trainer-0.0.36-py3-none-any.whl.metadata (8.1 kB)
+Requirement already satisfied: coqpit>=0.0.16 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.0.17)
+Requirement already satisfied: jieba in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.42.1)
+Requirement already satisfied: pypinyin in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.55.0)
+Requirement already satisfied: hangul_romanize in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.1.0)
+Collecting gruut==2.2.3 (from gruut[de,es,fr]==2.2.3->TTS)
+  Using cached gruut-2.2.3-py3-none-any.whl
+Requirement already satisfied: jamo in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.4.1)
+Requirement already satisfied: nltk in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (3.9.2)
+Collecting g2pkk>=0.1.1 (from TTS)
+  Using cached g2pkk-0.1.2-py3-none-any.whl.metadata (2.0 kB)
+Requirement already satisfied: bangla in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.0.5)
+Requirement already satisfied: bnnumerizer in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.0.2)
+Requirement already satisfied: bnunicodenormalizer in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.1.7)
+Requirement already satisfied: einops>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.8.1)
+Requirement already satisfied: transformers>=4.33.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (4.57.1)
+Requirement already satisfied: encodec>=0.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.1.1)
+Requirement already satisfied: unidecode>=1.3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (1.4.0)
+Requirement already satisfied: num2words in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from TTS) (0.5.14)
+Requirement already satisfied: spacy>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy[ja]>=3->TTS) (3.8.7)
+Requirement already satisfied: Babel<3.0.0,>=2.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2.17.0)
+Requirement already satisfied: dateparser~=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (1.1.8)
+Requirement already satisfied: gruut-ipa<1.0,>=0.12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (0.13.0)
+Requirement already satisfied: gruut_lang_en~=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2.0.1)
+Requirement already satisfied: jsonlines~=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (1.2.0)
+Requirement already satisfied: networkx<3.0.0,>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2.8.8)
+Requirement already satisfied: python-crfsuite~=0.9.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (0.9.11)
+Requirement already satisfied: gruut_lang_de~=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut[de,es,fr]==2.2.3->TTS) (2.0.1)
+Requirement already satisfied: gruut_lang_es~=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut[de,es,fr]==2.2.3->TTS) (2.0.1)
+Requirement already satisfied: gruut_lang_fr~=2.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from gruut[de,es,fr]==2.2.3->TTS) (2.0.2)
+Requirement already satisfied: python-dateutil in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from dateparser~=1.1.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2.9.0.post0)
+Requirement already satisfied: pytz in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from dateparser~=1.1.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2025.2)
+Requirement already satisfied: regex!=2019.02.19,!=2021.8.27 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from dateparser~=1.1.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2025.9.18)
+Requirement already satisfied: tzlocal in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from dateparser~=1.1.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (5.3.1)
+Requirement already satisfied: six in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jsonlines~=1.2.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (1.17.0)
+Requirement already satisfied: docopt>=0.6.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from num2words->TTS) (0.6.2)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp>=3.8.1->TTS) (1.22.0)
+Requirement already satisfied: idna>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yarl<2.0,>=1.17.0->aiohttp>=3.8.1->TTS) (3.11)
+Requirement already satisfied: typing-extensions>=4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiosignal>=1.4.0->aiohttp>=3.8.1->TTS) (4.15.0)
+Requirement already satisfied: blinker>=1.9.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (1.9.0)
+Requirement already satisfied: click>=8.1.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (8.3.0)
+Requirement already satisfied: itsdangerous>=2.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (2.2.0)
+Requirement already satisfied: jinja2>=3.1.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (3.1.6)
+Requirement already satisfied: markupsafe>=2.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (2.1.5)
+Requirement already satisfied: werkzeug>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from flask>=2.0.1->TTS) (3.1.3)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from click>=8.1.3->flask>=2.0.1->TTS) (0.4.6)
+Requirement already satisfied: more_itertools>=8.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from inflect>=5.6.0->TTS) (10.8.0)
+Requirement already satisfied: typeguard>=4.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from inflect>=5.6.0->TTS) (4.4.4)
+Requirement already satisfied: audioread>=2.1.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (3.0.1)
+Requirement already satisfied: joblib>=0.14 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (1.5.2)
+Requirement already satisfied: decorator>=4.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (5.2.1)
+Requirement already satisfied: pooch>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (1.8.2)
+Requirement already satisfied: soxr>=0.3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (1.0.0)
+Requirement already satisfied: lazy-loader>=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (0.4)
+Requirement already satisfied: msgpack>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from librosa>=0.10.0->TTS) (1.1.2)
+Requirement already satisfied: contourpy>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (1.4.9)
+Requirement already satisfied: pillow>=8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (10.4.0)
+Requirement already satisfied: pyparsing>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.7.0->TTS) (3.2.5)
+Requirement already satisfied: llvmlite<0.42,>=0.41.0dev0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from numba>=0.57.0->TTS) (0.41.1)
+Requirement already satisfied: platformdirs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.0->librosa>=0.10.0->TTS) (4.5.0)
+Requirement already satisfied: requests>=2.19.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pooch>=1.0->librosa>=0.10.0->TTS) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa>=0.10.0->TTS) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa>=0.10.0->TTS) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests>=2.19.0->pooch>=1.0->librosa>=0.10.0->TTS) (2025.10.5)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.3.0->TTS) (3.6.0)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile>=0.12.0->TTS) (2.0.0)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile>=0.12.0->TTS) (2.23)
+Requirement already satisfied: spacy-legacy<3.1.0,>=3.0.11 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (3.0.12)
+Requirement already satisfied: spacy-loggers<2.0.0,>=1.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (1.0.5)
+Requirement already satisfied: murmurhash<1.1.0,>=0.28.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (1.0.13)
+Requirement already satisfied: cymem<2.1.0,>=2.0.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (2.0.11)
+Requirement already satisfied: preshed<3.1.0,>=3.0.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (3.0.10)
+Requirement already satisfied: thinc<8.4.0,>=8.3.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (8.3.4)
+Requirement already satisfied: wasabi<1.2.0,>=0.9.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (1.1.3)
+Requirement already satisfied: srsly<3.0.0,>=2.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (2.5.1)
+Requirement already satisfied: catalogue<2.1.0,>=2.0.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (2.0.10)
+Requirement already satisfied: weasel<0.5.0,>=0.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (0.4.1)
+Requirement already satisfied: typer<1.0.0,>=0.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (0.19.2)
+Requirement already satisfied: pydantic!=1.8,!=1.8.1,<3.0.0,>=1.7.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (2.12.3)
+Requirement already satisfied: setuptools in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (80.9.0)
+Requirement already satisfied: langcodes<4.0.0,>=3.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy>=3->spacy[ja]>=3->TTS) (3.5.0)
+Requirement already satisfied: language-data>=1.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from langcodes<4.0.0,>=3.2.0->spacy>=3->spacy[ja]>=3->TTS) (1.3.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,<3.0.0,>=1.7.4->spacy>=3->spacy[ja]>=3->TTS) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,<3.0.0,>=1.7.4->spacy>=3->spacy[ja]>=3->TTS) (2.41.4)
+Requirement already satisfied: typing-inspection>=0.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pydantic!=1.8,!=1.8.1,<3.0.0,>=1.7.4->spacy>=3->spacy[ja]>=3->TTS) (0.4.2)
+Requirement already satisfied: blis<1.3.0,>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from thinc<8.4.0,>=8.3.4->spacy>=3->spacy[ja]>=3->TTS) (1.2.1)
+Requirement already satisfied: confection<1.0.0,>=0.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from thinc<8.4.0,>=8.3.4->spacy>=3->spacy[ja]>=3->TTS) (0.1.5)
+Requirement already satisfied: shellingham>=1.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from typer<1.0.0,>=0.3.0->spacy>=3->spacy[ja]>=3->TTS) (1.5.4)
+Requirement already satisfied: rich>=10.11.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from typer<1.0.0,>=0.3.0->spacy>=3->spacy[ja]>=3->TTS) (13.9.4)
+Requirement already satisfied: cloudpathlib<1.0.0,>=0.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from weasel<0.5.0,>=0.1.0->spacy>=3->spacy[ja]>=3->TTS) (0.23.0)
+Requirement already satisfied: smart-open<8.0.0,>=5.2.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from weasel<0.5.0,>=0.1.0->spacy>=3->spacy[ja]>=3->TTS) (7.3.1)
+Requirement already satisfied: wrapt in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from smart-open<8.0.0,>=5.2.1->weasel<0.5.0,>=0.1.0->spacy>=3->spacy[ja]>=3->TTS) (1.17.3)
+Requirement already satisfied: marisa-trie>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from language-data>=1.2->langcodes<4.0.0,>=3.2.0->spacy>=3->spacy[ja]>=3->TTS) (1.3.1)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=10.11.0->typer<1.0.0,>=0.3.0->spacy>=3->spacy[ja]>=3->TTS) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=10.11.0->typer<1.0.0,>=0.3.0->spacy>=3->spacy[ja]>=3->TTS) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer<1.0.0,>=0.3.0->spacy>=3->spacy[ja]>=3->TTS) (0.1.2)
+Requirement already satisfied: sudachipy!=0.6.1,>=0.5.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy[ja]>=3->TTS) (0.6.10)
+Requirement already satisfied: sudachidict_core>=20211220 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from spacy[ja]>=3->TTS) (20250825)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2.1->TTS) (3.19.1)
+Requirement already satisfied: sympy>=1.13.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2.1->TTS) (1.14.0)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy>=1.13.3->torch>=2.1->TTS) (1.3.0)
+Requirement already satisfied: psutil in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from trainer>=0.0.32->TTS) (5.9.8)
+Requirement already satisfied: tensorboard in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from trainer>=0.0.32->TTS) (2.20.0)
+Requirement already satisfied: huggingface-hub<1.0,>=0.34.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers>=4.33.0->TTS) (0.35.3)
+Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers>=4.33.0->TTS) (0.22.1)
+Requirement already satisfied: safetensors>=0.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers>=4.33.0->TTS) (0.6.2)
+Requirement already satisfied: pynndescent>=0.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from umap-learn>=0.5.1->TTS) (0.5.13)
+Requirement already satisfied: absl-py>=0.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard->trainer>=0.0.32->TTS) (1.4.0)
+Requirement already satisfied: grpcio>=1.48.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard->trainer>=0.0.32->TTS) (1.64.0)
+Requirement already satisfied: markdown>=2.6.8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard->trainer>=0.0.32->TTS) (3.9)
+Requirement already satisfied: protobuf!=4.24.0,>=3.19.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard->trainer>=0.0.32->TTS) (5.29.5)
+Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tensorboard->trainer>=0.0.32->TTS) (0.7.2)
+Requirement already satisfied: tzdata in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tzlocal->dateparser~=1.1.0->gruut==2.2.3->gruut[de,es,fr]==2.2.3->TTS) (2025.2)
+Using cached pandas-1.5.3-cp311-cp311-win_amd64.whl (10.3 MB)
+Using cached flask-3.1.2-py3-none-any.whl (103 kB)
+Using cached g2pkk-0.1.2-py3-none-any.whl (25 kB)
+Using cached trainer-0.0.36-py3-none-any.whl (51 kB)
+Installing collected packages: pandas, flask, trainer, gruut, g2pkk, TTS
+  Attempting uninstall: pandas
+    Found existing installation: pandas 2.3.3
+    Uninstalling pandas-2.3.3:
+      Successfully uninstalled pandas-2.3.3
+  Attempting uninstall: gruut
+    Found existing installation: gruut 2.4.0
+    Uninstalling gruut-2.4.0:
+      Successfully uninstalled gruut-2.4.0
+
+Successfully installed TTS-0.22.0 flask-3.1.2 g2pkk-0.1.2 gruut-2.2.3 pandas-1.5.3 trainer-0.0.36\n============================================================\nINSTALLING PYANNOTE-AUDIO\n============================================================\nRunning: Installing pyannote-audio 4.0+\nOutput: Requirement already satisfied: pyannote.audio<5.0.0,>=4.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (4.0.1)
+Requirement already satisfied: asteroid-filterbanks>=0.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.4.0)
+Requirement already satisfied: einops>=0.8.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.8.1)
+Requirement already satisfied: huggingface-hub>=0.28.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.35.3)
+Requirement already satisfied: lightning>=2.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (2.5.5)
+Requirement already satisfied: matplotlib>=3.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (3.10.7)
+Requirement already satisfied: opentelemetry-api>=1.34.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: opentelemetry-exporter-otlp>=1.34.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: opentelemetry-sdk>=1.34.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: pyannote-core>=6.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (6.0.1)
+Requirement already satisfied: pyannote-database>=6.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (6.1.0)
+Requirement already satisfied: pyannote-metrics>=4.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (4.0.0)
+Requirement already satisfied: pyannote-pipeline>=4.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (4.0.0)
+Requirement already satisfied: pyannoteai-sdk>=0.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.3.0)
+Requirement already satisfied: pytorch-metric-learning>=2.8.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (2.9.0)
+Requirement already satisfied: rich>=13.9.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (13.9.4)
+Requirement already satisfied: safetensors>=0.5.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.6.2)
+Requirement already satisfied: soundfile>=0.13.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.13.1)
+Requirement already satisfied: torch-audiomentations>=0.12.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.12.0)
+Requirement already satisfied: torch>=2.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (2.9.0)
+Requirement already satisfied: torchaudio>=2.8.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (2.9.0)
+Requirement already satisfied: torchcodec>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (0.8.0)
+Requirement already satisfied: torchmetrics>=1.6.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio<5.0.0,>=4.0.0) (1.8.2)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from asteroid-filterbanks>=0.4.0->pyannote.audio<5.0.0,>=4.0.0) (1.26.4)
+Requirement already satisfied: typing-extensions in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from asteroid-filterbanks>=0.4.0->pyannote.audio<5.0.0,>=4.0.0) (4.15.0)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (3.19.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (2023.12.2)
+Requirement already satisfied: packaging>=20.9 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (6.0.3)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (2.32.5)
+Requirement already satisfied: tqdm>=4.42.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (4.67.1)
+Requirement already satisfied: lightning-utilities<2.0,>=0.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (0.15.2)
+Requirement already satisfied: pytorch-lightning in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (2.5.5)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (3.13.1)
+Requirement already satisfied: setuptools in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lightning-utilities<2.0,>=0.10.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (80.9.0)
+Requirement already satisfied: sympy>=1.13.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2.8.0->pyannote.audio<5.0.0,>=4.0.0) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2.8.0->pyannote.audio<5.0.0,>=4.0.0) (2.8.8)
+Requirement already satisfied: jinja2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2.8.0->pyannote.audio<5.0.0,>=4.0.0) (3.1.6)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm>=4.42.1->huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (0.4.6)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (1.22.0)
+Requirement already satisfied: idna>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yarl<2.0,>=1.17.0->aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.4->pyannote.audio<5.0.0,>=4.0.0) (3.11)
+Requirement already satisfied: contourpy>=1.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (1.4.9)
+Requirement already satisfied: pillow>=8 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (10.4.0)
+Requirement already satisfied: pyparsing>=3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (3.2.5)
+Requirement already satisfied: python-dateutil>=2.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (2.9.0.post0)
+Requirement already satisfied: importlib-metadata<8.8.0,>=6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-api>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (8.7.0)
+Requirement already satisfied: zipp>=3.20 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (3.23.0)
+Requirement already satisfied: opentelemetry-exporter-otlp-proto-grpc==1.38.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: opentelemetry-exporter-otlp-proto-http==1.38.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: googleapis-common-protos~=1.57 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp-proto-grpc==1.38.0->opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.70.0)
+Requirement already satisfied: grpcio<2.0.0,>=1.63.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp-proto-grpc==1.38.0->opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.64.0)
+Requirement already satisfied: opentelemetry-exporter-otlp-proto-common==1.38.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp-proto-grpc==1.38.0->opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: opentelemetry-proto==1.38.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-exporter-otlp-proto-grpc==1.38.0->opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (1.38.0)
+Requirement already satisfied: protobuf<7.0,>=5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-proto==1.38.0->opentelemetry-exporter-otlp-proto-grpc==1.38.0->opentelemetry-exporter-otlp>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (5.29.5)
+Requirement already satisfied: opentelemetry-semantic-conventions==0.59b0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from opentelemetry-sdk>=1.34.0->pyannote.audio<5.0.0,>=4.0.0) (0.59b0)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.28.1->pyannote.audio<5.0.0,>=4.0.0) (2025.10.5)
+Collecting numpy (from asteroid-filterbanks>=0.4.0->pyannote.audio<5.0.0,>=4.0.0)
+  Using cached numpy-2.3.4-cp311-cp311-win_amd64.whl.metadata (60 kB)
+Collecting pandas>=2.2.3 (from pyannote-core>=6.0.1->pyannote.audio<5.0.0,>=4.0.0)
+  Using cached pandas-2.3.3-cp311-cp311-win_amd64.whl.metadata (19 kB)
+Requirement already satisfied: sortedcontainers>=2.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote-core>=6.0.1->pyannote.audio<5.0.0,>=4.0.0) (2.4.0)
+Requirement already satisfied: pytz>=2020.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas>=2.2.3->pyannote-core>=6.0.1->pyannote.audio<5.0.0,>=4.0.0) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas>=2.2.3->pyannote-core>=6.0.1->pyannote.audio<5.0.0,>=4.0.0) (2025.2)
+Requirement already satisfied: scikit-learn>=1.6.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote-metrics>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (1.7.2)
+Requirement already satisfied: scipy>=1.15.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote-metrics>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (1.16.2)
+Requirement already satisfied: optuna>=4.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (4.5.0)
+Requirement already satisfied: alembic>=1.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (1.17.0)
+Requirement already satisfied: colorlog in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (6.9.0)
+Requirement already satisfied: sqlalchemy>=1.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (2.0.44)
+Requirement already satisfied: Mako in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from alembic>=1.5.0->optuna>=4.2.0->pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (1.3.10)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.7->matplotlib>=3.10.0->pyannote.audio<5.0.0,>=4.0.0) (1.17.0)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=13.9.4->pyannote.audio<5.0.0,>=4.0.0) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=13.9.4->pyannote.audio<5.0.0,>=4.0.0) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from markdown-it-py>=2.2.0->rich>=13.9.4->pyannote.audio<5.0.0,>=4.0.0) (0.1.2)
+Requirement already satisfied: joblib>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.6.1->pyannote-metrics>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (1.5.2)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.6.1->pyannote-metrics>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (3.6.0)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile>=0.13.1->pyannote.audio<5.0.0,>=4.0.0) (2.0.0)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile>=0.13.1->pyannote.audio<5.0.0,>=4.0.0) (2.23)
+Requirement already satisfied: greenlet>=1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sqlalchemy>=1.4.2->optuna>=4.2.0->pyannote-pipeline>=4.0.0->pyannote.audio<5.0.0,>=4.0.0) (3.2.4)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy>=1.13.3->torch>=2.8.0->pyannote.audio<5.0.0,>=4.0.0) (1.3.0)
+Requirement already satisfied: julius<0.3,>=0.2.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-audiomentations>=0.12.0->pyannote.audio<5.0.0,>=4.0.0) (0.2.7)
+Requirement already satisfied: torch-pitch-shift>=1.2.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-audiomentations>=0.12.0->pyannote.audio<5.0.0,>=4.0.0) (1.2.5)
+Requirement already satisfied: primePy>=1.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-pitch-shift>=1.2.2->torch-audiomentations>=0.12.0->pyannote.audio<5.0.0,>=4.0.0) (1.3)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2->torch>=2.8.0->pyannote.audio<5.0.0,>=4.0.0) (2.1.5)
+Using cached numpy-2.3.4-cp311-cp311-win_amd64.whl (13.1 MB)
+Using cached pandas-2.3.3-cp311-cp311-win_amd64.whl (11.3 MB)
+Installing collected packages: numpy, pandas
+  Attempting uninstall: numpy
+    Found existing installation: numpy 1.26.4
+    Uninstalling numpy-1.26.4:
+      Successfully uninstalled numpy-1.26.4
+  Attempting uninstall: pandas
+    Found existing installation: pandas 1.5.3
+    Uninstalling pandas-1.5.3:
+      Successfully uninstalled pandas-1.5.3
+
+Successfully installed numpy-2.3.4 pandas-2.3.3\n============================================================\nINSTALLING WHISPERX\n============================================================\nRunning: Installing WhisperX\nOutput: Requirement already satisfied: whisperx<4.0.0,>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (3.1.1)
+Requirement already satisfied: torch>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (2.9.0)
+Requirement already satisfied: torchaudio>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (2.9.0)
+Requirement already satisfied: faster-whisper>=0.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (1.2.0)
+Requirement already satisfied: transformers in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (4.57.1)
+Requirement already satisfied: pandas in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (2.3.3)
+Requirement already satisfied: setuptools>=65 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (80.9.0)
+Requirement already satisfied: nltk in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from whisperx<4.0.0,>=3.1.0) (3.9.2)
+Collecting pyannote.audio==3.1.1 (from whisperx<4.0.0,>=3.1.0)
+  Downloading pyannote.audio-3.1.1-py2.py3-none-any.whl.metadata (9.3 kB)
+Requirement already satisfied: asteroid-filterbanks>=0.4 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.4.0)
+Requirement already satisfied: einops>=0.6.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.8.1)
+Requirement already satisfied: huggingface-hub>=0.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.35.3)
+Requirement already satisfied: lightning>=2.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.5.5)
+Requirement already satisfied: omegaconf<3.0,>=2.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.3.0)
+Requirement already satisfied: pyannote.core>=5.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (6.0.1)
+Requirement already satisfied: pyannote.database>=5.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (6.1.0)
+Requirement already satisfied: pyannote.metrics>=3.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.0.0)
+Requirement already satisfied: pyannote.pipeline>=3.0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.0.0)
+Requirement already satisfied: pytorch-metric-learning>=2.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.9.0)
+Requirement already satisfied: rich>=12.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (13.9.4)
+Requirement already satisfied: semver>=3.0.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.0.4)
+Requirement already satisfied: soundfile>=0.12.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.13.1)
+Requirement already satisfied: speechbrain>=0.5.14 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.0.3)
+Requirement already satisfied: tensorboardX>=2.6 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.6.4)
+Requirement already satisfied: torch-audiomentations>=0.11.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.12.0)
+Requirement already satisfied: torchmetrics>=0.11.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.8.2)
+Requirement already satisfied: antlr4-python3-runtime==4.9.* in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf<3.0,>=2.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.9.3)
+Requirement already satisfied: PyYAML>=5.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from omegaconf<3.0,>=2.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (6.0.3)
+Requirement already satisfied: numpy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from asteroid-filterbanks>=0.4->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.3.4)
+Requirement already satisfied: typing-extensions in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from asteroid-filterbanks>=0.4->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.15.0)
+Requirement already satisfied: ctranslate2<5,>=4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (4.4.0)
+Requirement already satisfied: tokenizers<1,>=0.13 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (0.22.1)
+Requirement already satisfied: onnxruntime<2,>=1.14 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (1.23.1)
+Requirement already satisfied: av>=11 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (15.1.0)
+Requirement already satisfied: tqdm in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (4.67.1)
+Requirement already satisfied: coloredlogs in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (15.0.1)
+Requirement already satisfied: flatbuffers in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (25.9.23)
+Requirement already satisfied: packaging in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (25.0)
+Requirement already satisfied: protobuf in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (5.29.5)
+Requirement already satisfied: sympy in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (1.14.0)
+Requirement already satisfied: filelock in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.19.1)
+Requirement already satisfied: fsspec>=2023.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2023.12.2)
+Requirement already satisfied: requests in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.32.5)
+Requirement already satisfied: lightning-utilities<2.0,>=0.10.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.15.2)
+Requirement already satisfied: pytorch-lightning in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.5.5)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.13.1)
+Requirement already satisfied: networkx>=2.5.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2->whisperx<4.0.0,>=3.1.0) (2.8.8)
+Requirement already satisfied: jinja2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch>=2->whisperx<4.0.0,>=3.1.0) (3.1.6)
+Requirement already satisfied: colorama in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from tqdm->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (0.4.6)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.22.0)
+Requirement already satisfied: idna>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from yarl<2.0,>=1.17.0->aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2027.0,>=2022.5.0->lightning>=2.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.11)
+Requirement already satisfied: sortedcontainers>=2.4.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.core>=5.0.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.4.0)
+Requirement already satisfied: python-dateutil>=2.8.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->whisperx<4.0.0,>=3.1.0) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->whisperx<4.0.0,>=3.1.0) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pandas->whisperx<4.0.0,>=3.1.0) (2025.2)
+Requirement already satisfied: scikit-learn>=1.6.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.metrics>=3.2->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.7.2)
+Requirement already satisfied: scipy>=1.15.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.metrics>=3.2->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.16.2)
+Requirement already satisfied: optuna>=4.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.5.0)
+Requirement already satisfied: alembic>=1.5.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.17.0)
+Requirement already satisfied: colorlog in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (6.9.0)
+Requirement already satisfied: sqlalchemy>=1.4.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from optuna>=4.2.0->pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.0.44)
+Requirement already satisfied: Mako in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from alembic>=1.5.0->optuna>=4.2.0->pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.3.10)
+Requirement already satisfied: six>=1.5 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from python-dateutil>=2.8.2->pandas->whisperx<4.0.0,>=3.1.0) (1.17.0)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=12.0.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from rich>=12.0.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from markdown-it-py>=2.2.0->rich>=12.0.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.1.2)
+Requirement already satisfied: joblib>=1.2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.6.1->pyannote.metrics>=3.2->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.5.2)
+Requirement already satisfied: threadpoolctl>=3.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from scikit-learn>=1.6.1->pyannote.metrics>=3.2->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.6.0)
+Requirement already satisfied: cffi>=1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from soundfile>=0.12.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.0.0)
+Requirement already satisfied: pycparser in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from cffi>=1.0->soundfile>=0.12.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.23)
+Requirement already satisfied: hyperpyyaml in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from speechbrain>=0.5.14->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.2.2)
+Requirement already satisfied: sentencepiece in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from speechbrain>=0.5.14->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.2.1)
+Requirement already satisfied: greenlet>=1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sqlalchemy>=1.4.2->optuna>=4.2.0->pyannote.pipeline>=3.0.1->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.2.4)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from sympy->onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (1.3.0)
+Requirement already satisfied: julius<0.3,>=0.2.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-audiomentations>=0.11.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.2.7)
+Requirement already satisfied: torch-pitch-shift>=1.2.2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-audiomentations>=0.11.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.2.5)
+Requirement already satisfied: primePy>=1.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from torch-pitch-shift>=1.2.2->torch-audiomentations>=0.11.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (1.3)
+Requirement already satisfied: humanfriendly>=9.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from coloredlogs->onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (10.0)
+Requirement already satisfied: pyreadline3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from humanfriendly>=9.1->coloredlogs->onnxruntime<2,>=1.14->faster-whisper>=0.10.0->whisperx<4.0.0,>=3.1.0) (3.5.4)
+Requirement already satisfied: ruamel.yaml>=0.17.28 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from hyperpyyaml->speechbrain>=0.5.14->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.18.15)
+Requirement already satisfied: ruamel.yaml.clib>=0.2.7 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from ruamel.yaml>=0.17.28->hyperpyyaml->speechbrain>=0.5.14->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (0.2.14)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from jinja2->torch>=2->whisperx<4.0.0,>=3.1.0) (2.1.5)
+Requirement already satisfied: click in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from nltk->whisperx<4.0.0,>=3.1.0) (8.3.0)
+Requirement already satisfied: regex>=2021.8.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from nltk->whisperx<4.0.0,>=3.1.0) (2025.9.18)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from requests->huggingface-hub>=0.13.0->pyannote.audio==3.1.1->whisperx<4.0.0,>=3.1.0) (2025.10.5)
+Requirement already satisfied: safetensors>=0.4.3 in c:\voicestudio\workers\python\vsdml\.venv\lib\site-packages (from transformers->whisperx<4.0.0,>=3.1.0) (0.6.2)
+Downloading pyannote.audio-3.1.1-py2.py3-none-any.whl (208 kB)
+Installing collected packages: pyannote.audio
+  Attempting uninstall: pyannote.audio
+    Found existing installation: pyannote-audio 4.0.1
+    Uninstalling pyannote-audio-4.0.1:
+      Successfully uninstalled pyannote-audio-4.0.1
+Successfully installed pyannote.audio-3.1.1\n============================================================\nCREATING RVC INTEGRATION\n============================================================\nRVC service created at: C:\Users\Tyler\VoiceStudio\services\voice_cloning\rvc_service.py\n============================================================\nCREATING COQUI TTS INTEGRATION\n============================================================\nCoqui TTS service created at: C:\Users\Tyler\VoiceStudio\services\voice_cloning\coqui_tts_service.py\n============================================================\nUPDATING REQUIREMENTS FILES\n============================================================\nUpdated requirements file: C:\Users\Tyler\VoiceStudio\services\requirements-pytorch-2.9-rvc-coqui.txt\nBacked up services/requirements.txt to C:\Users\Tyler\VoiceStudio\services\requirements.txt.backup\nUpdated services/requirements.txt\nBacked up services/requirements-voice-cloning.txt to C:\Users\Tyler\VoiceStudio\services\requirements-voice-cloning.txt.backup\nUpdated services/requirements-voice-cloning.txt\nBacked up services/requirements-optimized.txt to C:\Users\Tyler\VoiceStudio\services\requirements-optimized.txt.backup\nUpdated services/requirements-optimized.txt\n============================================================\nVERIFYING INSTALLATION\n============================================================\nRunning: Verifying installation\nOutput: Python version: 3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]
+[OK] PyTorch: 2.9.0+cpu
+[OK] CUDA available: False
+[OK] TorchAudio: 2.9.0+cpu\nInstallation verification:\nWarnings/Errors:\n

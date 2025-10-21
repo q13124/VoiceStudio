@@ -1,0 +1,56 @@
+# Core dependencies for VSDML audio processing - Essential Version
+# Focused on essential dependencies for voice cloning functionality
+
+# Core ML dependencies with optimized versions
+torch>=2.0.0,<3.0.0
+torchaudio>=2.0.0,<3.0.0
+
+# Audio processing with performance optimizations
+pyannote-audio>=4.0.0,<5.0.0
+whisperx>=3.0.0,<4.0.0
+soundfile>=0.13.0,<1.0.0
+pydub>=0.25.0,<1.0.0
+librosa>=0.10.0,<1.0.0
+webrtcvad>=2.0.10,<3.0.0
+
+# Data processing with optimized versions
+numpy>=1.20.0,<2.0.0
+pandas>=1.3.0,<3.0.0
+scipy>=1.7.0,<2.0.0
+
+# Machine learning utilities
+scikit-learn>=1.0.0,<2.0.0
+huggingface-hub>=0.15.0,<1.0.0
+
+# Async processing for better performance
+aiofiles>=23.0.0,<24.0.0
+aiohttp>=3.8.0,<4.0.0
+
+# Caching and optimization
+cachetools>=5.0.0,<6.0.0
+joblib>=1.2.0,<2.0.0
+
+# Memory optimization
+psutil>=5.9.0,<6.0.0
+
+# Security and SSL/TLS support
+cryptography>=3.4.8,<42.0.0
+
+# Cache dependencies (for pip vendor packages)
+redis>=4.0.0,<5.0.0
+
+# Development and testing (optional - install separately if needed)
+# pytest>=7.0.0,<8.0.0
+# pytest-asyncio>=0.21.0,<1.0.0
+# pytest-cov>=4.0.0,<5.0.0
+# black>=22.0.0,<24.0.0
+# flake8>=5.0.0,<7.0.0
+# mypy>=1.0.0,<2.0.0
+
+# Documentation generation (optional - install separately if needed)
+# docutils>=0.20.0,<1.0.0
+# sphinx>=8.0.0,<9.0.0
+# jinja2>=3.0.0,<4.0.0
+
+# Platform-specific dependencies (optional)
+# jnius>=1.4.0  # Uncomment if you need Android development support

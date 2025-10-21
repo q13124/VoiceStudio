@@ -1,0 +1,9 @@
+{
+  "gpu_acceleration": {
+    "enabled": true,
+    "gpu_name": "NVIDIA GeForce RTX 3060",
+    "memory_fraction": 0.8,
+    "allow_growth": true,
+    "mixed_precision": true
+  }
+}

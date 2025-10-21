@@ -1,0 +1,9 @@
+﻿
+Path                                            Reason          Bytes Action    
+----                                            ------          ----- ------    
+C:\VoiceStudio                                  duplicate 32256132010 Quarantine
+C:\Users\Tyler\AppData\Local\VoiceStudio        engine           4096 Quarantine
+C:\Users\Tyler\AppData\Local\VoiceStudioGodTier engine                Quarantine
+
+
+

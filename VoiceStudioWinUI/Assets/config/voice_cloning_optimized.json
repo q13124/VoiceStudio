@@ -1,0 +1,26 @@
+{
+  "voice_cloning": {
+    "max_workers": 8,
+    "cache_size": 4000,
+    "voice_profile_cache_ttl": 1800,
+    "model_cache_size": 100,
+    "batch_size": 4,
+    "background_processing": true,
+    "real_time_updates": true
+  },
+  "audio_processing": {
+    "sample_rate": 22050,
+    "chunk_size": 2048,
+    "parallel_processing": true,
+    "memory_limit": 0.8
+  },
+  "performance": {
+    "monitoring_enabled": true,
+    "metrics_retention": 3600,
+    "auto_cleanup": true,
+    "resource_limits": {
+      "max_concurrent_sessions": 10,
+      "max_audio_file_size": 104857600
+    }
+  }
+}
