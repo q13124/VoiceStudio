@@ -74,13 +74,13 @@ class Program
             var channel = GrpcChannel.ForAddress("http://127.0.0.1:5071");
             var client  = new Core.CoreClient(channel);
 
-            var health = await client.HealthAsync(new Empty());
+            var health = await TryWithRetryAsync(() => client.HealthAsync(new Empty()));
             Console.WriteLine($"Health: {health.Status} v{health.Version}");
 
             bool stream = args.Any(a => a == "--stream");
             if (!stream)
             {
-                var res = await client.RunAsync(new RunRequest { Job = job });
+                var res = await TryWithRetryAsync(() => client.RunAsync(new RunRequest { Job = job }));
                 Console.WriteLine($"Run status: {res.Status}, code: {res.Code}");
                 if (!string.IsNullOrWhiteSpace(res.Message))
                     Console.WriteLine("Message:\n" + res.Message.Trim());
@@ -131,6 +131,20 @@ class Program
     static void PrintUsage()
     {
         Console.WriteLine("Usage:\n  --job <job.json> [--stream]\n  --spectrogram <input.wav> <output.png> [--fft N] [--hop H]");
+    }
+
+    static async Task<T> TryWithRetryAsync<T>(Func<Task<T>> f, int max = 3)
+    {
+        var rnd = new Random();
+        for (int i = 1; i <= max; i++)
+        {
+            try { return await f(); }
+            catch (Exception) when (i < max)
+            {
+                await Task.Delay(250 * i + rnd.Next(0, 250));
+            }
+        }
+        return await f();
     }
 
     static int GetIntFlag(string[] args, string name, int defValue)
