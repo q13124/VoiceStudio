@@ -26,7 +26,16 @@ message RunResponse {
   repeated string outputs = 4; // file paths
 }
 
+// Server-streaming update for long-running jobs
+message RunUpdate {
+  string status = 1;   // "starting" | "running" | "ok" | "error"
+  string code = 2;     // error code if any
+  string message = 3;  // informational message or final error message
+  repeated string outputs = 4; // discovered output files (only at end typically)
+}
+
 service Core {
   rpc Health(Empty) returns (HealthReply);
   rpc Run(RunRequest) returns (RunResponse);
+  rpc RunStream(RunRequest) returns (stream RunUpdate);
 }
