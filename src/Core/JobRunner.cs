@@ -66,6 +66,25 @@ public class JobRunner
             case "VC.Convert":
                 return await RunPy("vc_pitch.py", $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --semitones {GetArg(job, "semitones", "3")}");
 
+            case "Audio.ArtifactRepair":
+            {
+                var heat = GetArg(job, "heat", System.IO.Path.ChangeExtension(job.InPath, ".heat.json"));
+                var threshold = GetArg(job, "threshold", "0.75");
+                return await RunPy(
+                    "artifact_repair.py",
+                    $@"--in ""{job.InPath}"" --heat ""{heat}"" --out ""{job.OutPath}"" --threshold {threshold}"
+                );
+            }
+
+            case "Audio.Watermark":
+            {
+                var key = GetArg(job, "key", "policy");
+                return await RunPy(
+                    "op_watermark.py",
+                    $@"--in ""{job.InPath}"" --out ""{job.OutPath}"" --key {QuoteArg(key)}"
+                );
+            }
+
             default:
                 return (false, "E_NOT_IMPLEMENTED", $"Job type '{job.Type}' not implemented", null);
         }
