@@ -2,15 +2,21 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-var logDir = @"C:\VoiceStudio\logs";
+// Structured JSON logging to common app data, cross-platform
+var commonData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData);
+var logDir = System.IO.Path.Combine(commonData, "VoiceStudio", "logs");
 System.IO.Directory.CreateDirectory(logDir);
 
 Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
     .MinimumLevel.Debug()
-    .WriteTo.File(System.IO.Path.Combine(logDir, "core.log"),
-                  rollingInterval: RollingInterval.Day,
-                  retainedFileCountLimit: 7,
-                  shared: true)
+    .WriteTo.File(
+        path: System.IO.Path.Combine(logDir, "core-.json"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 10,
+        shared: true,
+        formatter: new Serilog.Formatting.Json.JsonFormatter()
+    )
     .WriteTo.Console()
     .CreateLogger();
 
@@ -18,6 +24,7 @@ try
 {
     Log.Information("Booting VoiceStudio.Core...");
     var builder = WebApplication.CreateBuilder(args);
+    builder.Logging.ClearProviders();
     builder.Host.UseSerilog();
     builder.Services.AddGrpc();
 
