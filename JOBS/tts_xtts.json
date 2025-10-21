@@ -1,0 +1,15 @@
+{
+  "job": {
+    "id": "VSJ-LOCAL-TTS-XTTS",
+    "type": "TTS.Synthesize",
+    "io": {
+      "out": "C:\\VoiceStudio\\projects\\demo\\tts\\hello_xtts.wav"
+    },
+    "args": {
+      "engine": "xtts",
+      "text": "Hello from VoiceStudio using XTTS",
+      "speaker": "C:\\VoiceStudio\\projects\\demo\\raw\\seed.wav",
+      "lang": "en"
+    }
+  }
+}
