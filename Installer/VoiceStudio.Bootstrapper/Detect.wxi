@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?define VCRedistReg = "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" ?>
+<?define FFMpegPath = "[ProgramFilesFolder]ffmpeg\\bin\\ffmpeg.exe" ?>
+
+<!-- Include to set VCREDISTX64_EXISTS / FFMPEG_EXISTS vars -->
+<?if RegistrySearch?>
+<?endif?>
