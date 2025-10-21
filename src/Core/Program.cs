@@ -1,17 +1,34 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Formatting.Json;
 
-var logDir = @"C:\VoiceStudio\logs";
-System.IO.Directory.CreateDirectory(logDir);
+// Determine base data directory (ProgramData on Windows)
+var programDataEnv = Environment.GetEnvironmentVariable("PROGRAMDATA");
+string baseDir;
+if (!string.IsNullOrWhiteSpace(programDataEnv))
+{
+    baseDir = Path.Combine(programDataEnv, "VoiceStudio");
+}
+else
+{
+    var commonData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+    if (string.IsNullOrWhiteSpace(commonData))
+        commonData = AppContext.BaseDirectory;
+    baseDir = Path.Combine(commonData, "VoiceStudio");
+}
+
+var logDir = Path.Combine(baseDir, "logs");
+Directory.CreateDirectory(logDir);
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
-    .WriteTo.File(System.IO.Path.Combine(logDir, "core.log"),
+    .Enrich.FromLogContext()
+    .WriteTo.File(new JsonFormatter(), Path.Combine(logDir, "core.json"),
                   rollingInterval: RollingInterval.Day,
                   retainedFileCountLimit: 7,
                   shared: true)
-    .WriteTo.Console()
+    .WriteTo.Console(new JsonFormatter())
     .CreateLogger();
 
 try

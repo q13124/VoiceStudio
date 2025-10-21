@@ -1,0 +1,45 @@
+@page "/ABCompare"
+@model VoiceStudio.UI.Pages.ABComparePageModel
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>A/B Compare</title>
+</head>
+<body>
+    <h2>A/B Compare</h2>
+    <p>Eval folder: @Model.EvalDir</p>
+
+    <div>
+        <div>
+            <strong>A.wav</strong> (@(Model.AExists ? "found" : "missing"))
+            @if (Model.AExists)
+            {
+                <audio controls src="/eval/A.wav"></audio>
+            }
+        </div>
+        <div style="margin-top:10px;">
+            <strong>B.wav</strong> (@(Model.BExists ? "found" : "missing"))
+            @if (Model.BExists)
+            {
+                <audio controls src="/eval/B.wav"></audio>
+            }
+        </div>
+    </div>
+
+    <form method="post" asp-page-handler="Null" style="margin-top:20px;">
+        <button type="submit">Compute Null Diff</button>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <p>@Model.Message</p>
+    }
+
+    @if (Model.DiffExists)
+    {
+        <p><a href="/eval/diff.wav">Download diff.wav</a></p>
+        <audio controls src="/eval/diff.wav"></audio>
+    }
+</body>
+</html>
