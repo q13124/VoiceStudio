@@ -1,0 +1,12 @@
+<Page
+  x:Class="VoiceStudioWinUI.Pages.MasteringRackPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:VoiceStudioWinUI.Controls">
+  <Grid Padding="16">
+    <StackPanel>
+      <TextBlock Text="Mastering Rack" FontSize="24" FontWeight="Bold"/>
+      <local:MasteringRackControl/>
+    </StackPanel>
+  </Grid>
+</Page>

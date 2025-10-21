@@ -1,0 +1,69 @@
+<UserControl
+  x:Class="VoiceStudioWinUI.Controls.MasteringRackControl"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="12">
+    <StackPanel>
+      <TextBlock Text="Mastering & AI Tuning" FontSize="20" Margin="0,0,0,6"/>
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Engine"/>
+        <ComboBox Width="160" SelectedItem="{Binding Engine, Mode=TwoWay}">
+          <x:String>xtts</x:String><x:String>openvoice</x:String><x:String>cosyvoice</x:String>
+        </ComboBox>
+        <TextBlock Text="Language" Margin="12,0,0,0"/>
+        <ComboBox Width="100" SelectedItem="{Binding Language, Mode=TwoWay}">
+          <x:String>en</x:String><x:String>ja</x:String><x:String>es</x:String><x:String>de</x:String>
+        </ComboBox>
+        <Button Content="Render with current tuning" Click="OnRenderClick" Margin="12,0,0,0"/>
+      </StackPanel>
+
+      <!-- AI -->
+      <StackPanel Orientation="Horizontal">
+        <Slider Header="Stability" Minimum="0" Maximum="1" Value="{Binding Stability, Mode=TwoWay}" Width="200"/>
+        <Slider Header="Articulation" Minimum="0" Maximum="1" Value="{Binding Articulation, Mode=TwoWay}" Width="200"/>
+        <Slider Header="Pause Variation" Minimum="0" Maximum="1" Value="{Binding PauseVariation, Mode=TwoWay}" Width="200"/>
+        <ComboBox Header="Breath" Width="160" SelectedItem="{Binding BreathStyle, Mode=TwoWay}">
+          <x:String>Neutral</x:String><x:String>Podcast</x:String><x:String>ASMR</x:String><x:String>CinematicWhisper</x:String>
+        </ComboBox>
+        <ComboBox Header="Voice Age" Width="100" SelectedItem="{Binding VoiceAge, Mode=TwoWay}">
+          <x:String>17</x:String><x:String>25</x:String><x:String>40</x:String><x:String>65</x:String>
+        </ComboBox>
+      </StackPanel>
+
+      <!-- Accent morph -->
+      <StackPanel Orientation="Horizontal">
+        <Slider Header="Accent X" Minimum="0" Maximum="1" Value="{Binding AccentX, Mode=TwoWay}" Width="200"/>
+        <Slider Header="Accent Y" Minimum="0" Maximum="1" Value="{Binding AccentY, Mode=TwoWay}" Width="200"/>
+      </StackPanel>
+
+      <!-- DSP -->
+      <StackPanel Orientation="Horizontal">
+        <Slider Header="De-esser" Minimum="0" Maximum="1" Value="{Binding DeEsser, Mode=TwoWay}" Width="200"/>
+        <Slider Header="EQ High" Minimum="0" Maximum="1" Value="{Binding EQHigh, Mode=TwoWay}" Width="200"/>
+        <Slider Header="Compressor" Minimum="0" Maximum="1" Value="{Binding Compressor, Mode=TwoWay}" Width="200"/>
+        <Slider Header="Proximity" Minimum="0" Maximum="1" Value="{Binding Proximity, Mode=TwoWay}" Width="200"/>
+        <StackPanel>
+          <TextBlock Text="LUFS Target"/>
+          <TextBox Width="90" Text="{Binding LUFSTarget, Mode=TwoWay}"/>
+        </StackPanel>
+        <ComboBox Header="Output Mode" Width="160" SelectedItem="{Binding OutputMode, Mode=TwoWay}">
+          <x:String>Broadcast</x:String><x:String>ASMR</x:String><x:String>Game</x:String><x:String>DialogueStem</x:String>
+        </ComboBox>
+      </StackPanel>
+
+      <!-- JSON editors (optional) -->
+      <StackPanel Orientation="Horizontal">
+        <StackPanel Width="400">
+          <TextBlock Text="Emotion Curve JSON"/>
+          <TextBox Text="{Binding EmotionCurveJson, Mode=TwoWay}" AcceptsReturn="True" Height="80"/>
+        </StackPanel>
+        <StackPanel Width="400">
+          <TextBlock Text="Phoneme Overrides JSON"/>
+          <TextBox Text="{Binding PhonemeOverridesJson, Mode=TwoWay}" AcceptsReturn="True" Height="80"/>
+        </StackPanel>
+      </StackPanel>
+
+      <TextBlock x:Name="OptionsPreview" Text="{}" TextWrapping="Wrap" Opacity="0.7"/>
+    </StackPanel>
+  </Grid>
+</UserControl>

@@ -10,7 +10,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -20,263 +19,175 @@
             </StackPanel>
         </Border>
 
-        <!-- Main Content -->
-        <ScrollViewer Grid.Row="1" Padding="20">
-            <StackPanel Spacing="20">
+        <!-- Navigation and Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Voice Cloning Section -->
-                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8">
-                    <StackPanel Spacing="15">
-                        <TextBlock Text="Voice Cloning" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+            <!-- Navigation Pane -->
+            <Border Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Width="200" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Navigation" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                        <!-- Model Selection -->
-                        <StackPanel>
-                            <TextBlock Text="Select AI Model:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <ComboBox x:Name="ModelComboBox" PlaceholderText="Choose your AI model">
-                                <ComboBoxItem Content="GPT-SoVITS 2.0 Real AI" Tag="gpt_sovits_2"/>
-                                <ComboBoxItem Content="Coqui XTTS 3.0 Real AI" Tag="coqui_xtts_3"/>
-                                <ComboBoxItem Content="RVC 4.0 Real AI" Tag="rvc_4"/>
-                                <ComboBoxItem Content="OpenVoice 2.0 Real AI" Tag="openvoice_2"/>
-                            </ComboBox>
-                        </StackPanel>
+                    <Button x:Name="DashboardButton" Content="📊 Dashboard" Click="NavigateToPage" Tag="Dashboard"
+                            Style="{StaticResource NavigationButtonStyle}" Margin="0,2"/>
+                    <Button x:Name="VoiceCloningButton" Content="🎤 Voice Cloning" Click="NavigateToPage" Tag="VoiceCloning"
+                            Style="{StaticResource NavigationButtonStyle}" Margin="0,2"/>
+                    <Button x:Name="MasteringRackButton" Content="🎛️ Mastering Rack" Click="NavigateToPage" Tag="MasteringRack"
+                            Style="{StaticResource NavigationButtonStyle}" Margin="0,2"/>
+                    <Button x:Name="RealTimeButton" Content="⚡ Real-Time" Click="NavigateToPage" Tag="RealTime"
+                            Style="{StaticResource NavigationButtonStyle}" Margin="0,2"/>
+                    <Button x:Name="SettingsButton" Content="⚙️ Settings" Click="NavigateToPage" Tag="Settings"
+                            Style="{StaticResource NavigationButtonStyle}" Margin="0,2"/>
 
-                        <!-- Reference Audio -->
-                        <StackPanel>
-                            <TextBlock Text="Reference Audio:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Button x:Name="SelectAudioButton" Content="Select Audio File" Click="SelectAudioButton_Click"/>
-                                <TextBlock x:Name="SelectedAudioText" Text="No file selected" VerticalAlignment="Center"/>
+                    <Separator Margin="0,10"/>
+
+                    <Button x:Name="SBOMButton" Content="📋 Generate SBOM" Click="OnGenSbom"
+                            Style="{StaticResource AccentButtonStyle}" Margin="0,5"/>
+                    <Button x:Name="OpenSBOMButton" Content="📁 Open SBOM Folder" Click="OnOpenSbomFolder"
+                            Margin="0,2"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Content Area -->
+            <Frame x:Name="ContentFrame" Grid.Column="1" Padding="20" NavigationFailed="ContentFrame_NavigationFailed">
+                <!-- Default content - Voice Cloning -->
+                <ScrollViewer>
+                    <StackPanel>
+                        <!-- Advanced Voice Cloning Section -->
+                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="Advanced Voice Cloning" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                <!-- Model Selection with Advanced Options -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock Text="AI Model:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <ComboBox x:Name="ModelComboBox" PlaceholderText="Choose your AI model">
+                                            <ComboBoxItem Content="GPT-SoVITS 2.0 Real AI" Tag="gpt_sovits_2"/>
+                                            <ComboBoxItem Content="Coqui XTTS 3.0 Real AI" Tag="coqui_xtts_3"/>
+                                            <ComboBoxItem Content="RVC 4.0 Real AI" Tag="rvc_4"/>
+                                            <ComboBoxItem Content="OpenVoice 2.0 Real AI" Tag="openvoice_2"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,0">
+                                        <TextBlock Text="Quality Preset:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <ComboBox x:Name="QualityComboBox" SelectedIndex="2">
+                                            <ComboBoxItem Content="Fast" Tag="fast"/>
+                                            <ComboBoxItem Content="Balanced" Tag="balanced"/>
+                                            <ComboBoxItem Content="High Quality" Tag="high_quality"/>
+                                            <ComboBoxItem Content="Ultimate" Tag="ultimate"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,10,0,0">
+                                        <CheckBox x:Name="RealTimeCheckBox" Content="Real-time Processing" IsChecked="False"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,10,0,0">
+                                        <CheckBox x:Name="GPUAccelerationCheckBox" Content="GPU Acceleration" IsChecked="True"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Reference Audio with Preview -->
+                                <StackPanel Margin="0,15,0,0">
+                                    <TextBlock Text="Reference Audio:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="SelectedAudioText" Text="No file selected" VerticalAlignment="Center" Grid.Column="0"/>
+                                        <Button x:Name="SelectAudioButton" Content="Select" Click="SelectAudioButton_Click" Grid.Column="1" Margin="10,0,5,0"/>
+                                        <Button x:Name="PreviewAudioButton" Content="Preview" Click="PreviewAudioButton_Click" Grid.Column="2" IsEnabled="False"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Target Text with Advanced Options -->
+                                <StackPanel Margin="0,15,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Target Text:" FontWeight="SemiBold" Margin="0,0,0,5" Grid.Column="0"/>
+                                        <Button x:Name="TextAnalysisButton" Content="Analyze Text" Click="TextAnalysisButton_Click" Grid.Column="1" IsEnabled="False"/>
+                                    </Grid>
+                                    <TextBox x:Name="TargetTextBox"
+                                             PlaceholderText="Enter text to clone voice for..."
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             Height="120"
+                                             TextChanged="TargetTextBox_TextChanged"/>
+                                    <TextBlock x:Name="TextAnalysisResult" Text="" FontStyle="Italic" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <!-- Action Buttons -->
+                                <Grid Margin="0,15,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button x:Name="CloneButton"
+                                            Content="Clone Voice"
+                                            Grid.Column="0"
+                                            Click="CloneButton_Click"
+                                            Style="{StaticResource AccentButtonStyle}"/>
+                                    <Button x:Name="BatchCloneButton"
+                                            Content="Batch Clone"
+                                            Grid.Column="1"
+                                            Margin="10,0,5,0"
+                                            Click="BatchCloneButton_Click"/>
+                                    <Button x:Name="CancelButton"
+                                            Content="Cancel"
+                                            Grid.Column="2"
+                                            Margin="5,0,0,0"
+                                            Click="CancelButton_Click"
+                                            IsEnabled="False"/>
+                                </Grid>
                             </StackPanel>
-                        </StackPanel>
+                        </Border>
 
-                        <!-- Target Text -->
-                        <StackPanel>
-                            <TextBlock Text="Target Text:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="TargetTextBox"
-                                     PlaceholderText="Enter text to clone voice for..."
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     Height="100"/>
-                        </StackPanel>
-
-                        <!-- Clone Button -->
-                        <Button x:Name="CloneButton"
-                                Content="Clone Voice"
-                                HorizontalAlignment="Stretch"
-                                Click="CloneButton_Click"
-                                Style="{StaticResource AccentButtonStyle}"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Status Section -->
-                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Status" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Ellipse x:Name="StatusIndicator" Width="12" Height="12" Fill="Gray"/>
-                            <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ProgressBar x:Name="ProgressBar" IsIndeterminate="False" Visibility="Collapsed"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- AI Agent Monitoring Dashboard -->
-                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8">
-                    <StackPanel Spacing="15">
-                        <TextBlock Text="AI Agent Monitoring Dashboard" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-
-                        <!-- System Overview -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0" Background="{ThemeResource SystemAccentColor}" Padding="15" CornerRadius="6">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="332" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Total Workers" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                        <!-- Status Section -->
+                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Status" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="StatusIndicator" Width="12" Height="12" Fill="Gray"/>
+                                    <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </StackPanel>
-                            </Border>
+                                <ProgressBar x:Name="ProgressBar" IsIndeterminate="False" Visibility="Collapsed" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
 
-                            <Border Grid.Column="1" Background="{ThemeResource SystemAccentColor}" Padding="15" CornerRadius="6">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="15" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="AI Agents" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                        <!-- Output Section -->
+                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Output" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" IsEnabled="False"/>
+                                    <Button x:Name="SaveButton" Content="Save" Click="SaveButton_Click" IsEnabled="False" Margin="10,0,0,0"/>
                                 </StackPanel>
-                            </Border>
-
-                            <Border Grid.Column="2" Background="{ThemeResource SystemAccentColor}" Padding="15" CornerRadius="6">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <Ellipse x:Name="SystemStatusIndicator" Width="16" Height="16" Fill="LimeGreen" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="System Active" FontSize="12" Foreground="White" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-
-                        <!-- Agent Status Grid -->
-                        <TextBlock Text="Agent Status" FontSize="16" FontWeight="SemiBold" Margin="0,10,0,5"/>
-                        <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
-                            <Grid x:Name="AgentStatusGrid">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <!-- Row 1 -->
-                                <Border Grid.Row="0" Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Voice Cloning" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="32 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="0" Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Real-Time Processor" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="48 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="0" Grid.Column="2" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Quality Enhancer" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="32 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Row 2 -->
-                                <Border Grid.Row="1" Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="ChatGPT Agent" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="32 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="1" Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="AI Coordinator" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="1" Grid.Column="2" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="AI Creator" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="48 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Row 3 -->
-                                <Border Grid.Row="2" Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Performance Optimizer" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="8 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="2" Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Monitoring Agent" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="2" Grid.Column="2" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Cache Manager" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Row 4 -->
-                                <Border Grid.Row="3" Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="AI Analyzer" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="32 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="3" Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="AI Optimizer" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="3" Grid.Column="2" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="AI Validator" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Row 5 -->
-                                <Border Grid.Row="4" Grid.Column="0" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Upgrade Manager" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="4 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="4" Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" Padding="10" Margin="2" CornerRadius="4">
-                                    <StackPanel>
-                                        <TextBlock Text="Speculative Generator" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="16 Workers" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        <Ellipse Width="8" Height="8" Fill="LimeGreen" HorizontalAlignment="Left" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-                        </ScrollViewer>
-
-                        <!-- Refresh Button -->
-                        <Button x:Name="RefreshAgentsButton" Content="Refresh Agent Status" HorizontalAlignment="Center" Click="RefreshAgentsButton_Click"/>
+                                <TextBlock x:Name="OutputText" Text="No output generated yet" FontStyle="Italic" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
-
-                <!-- Output Section -->
-                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20" CornerRadius="8">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Output" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" IsEnabled="False"/>
-                            <Button x:Name="SaveButton" Content="Save" Click="SaveButton_Click" IsEnabled="False"/>
-                        </StackPanel>
-                        <TextBlock x:Name="OutputText" Text="No output generated yet" FontStyle="Italic"/>
-                    </StackPanel>
-                </Border>
-
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- Footer -->
-        <Border Grid.Row="2" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="20">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
-                <TextBlock Text="VoiceStudio Ultimate v3.0.0" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-            </StackPanel>
-        </Border>
-
+                </ScrollViewer>
+            </Frame>
+        </Grid>
     </Grid>
 </Window>

@@ -1,0 +1,14 @@
+<Page
+  x:Class="VoiceStudioWinUI.Pages.DashboardPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="16">
+    <StackPanel>
+      <TextBlock Text="Dashboard (Native)" FontSize="24"/>
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Generate SBOM" Click="OnGenSbom"/>
+        <Button Content="Open SBOM Folder" Click="OnOpenSbomFolder"/>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</Page>

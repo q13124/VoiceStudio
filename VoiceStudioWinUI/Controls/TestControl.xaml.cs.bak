@@ -1,0 +1,12 @@
+using Microsoft.UI.Xaml.Controls;
+
+namespace VoiceStudioWinUI.Controls
+{
+  public sealed partial class TestControl : UserControl
+  {
+    public TestControl()
+    {
+      this.InitializeComponent();
+    }
+  }
+}

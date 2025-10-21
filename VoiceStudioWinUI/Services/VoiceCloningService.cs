@@ -104,6 +104,19 @@ namespace VoiceStudioWinUI.Services
                 formData.Add(new StringContent(request.QualityPreset ?? "ultimate"), "quality_preset");
                 formData.Add(new StringContent(request.RealTime.ToString().ToLower()), "real_time");
 
+                // Add advanced voice settings
+                formData.Add(new StringContent(request.VoiceSettings.Speed.ToString()), "speed");
+                formData.Add(new StringContent(request.VoiceSettings.Pitch.ToString()), "pitch");
+                formData.Add(new StringContent(request.VoiceSettings.Volume.ToString()), "volume");
+                formData.Add(new StringContent(request.VoiceSettings.Language ?? "en"), "language");
+
+                // Add processing options
+                formData.Add(new StringContent(request.ProcessingOptions.UseGpu.ToString().ToLower()), "use_gpu");
+                formData.Add(new StringContent(request.ProcessingOptions.MaxWorkers.ToString()), "max_workers");
+                formData.Add(new StringContent(request.ProcessingOptions.TimeoutSeconds.ToString()), "timeout_seconds");
+                formData.Add(new StringContent(request.ProcessingOptions.EnableCaching.ToString().ToLower()), "enable_caching");
+                formData.Add(new StringContent(request.ProcessingOptions.QualityMode ?? "balanced"), "quality_mode");
+
                 var response = await _httpClient.PostAsync($"{_baseUrl}/api/clone/ultimate", formData);
 
                 if (response.IsSuccessStatusCode)
@@ -183,6 +196,23 @@ namespace VoiceStudioWinUI.Services
         }
     }
 
+    public class VoiceSettings
+    {
+        public double Speed { get; set; } = 1.0;
+        public double Pitch { get; set; } = 1.0;
+        public double Volume { get; set; } = 1.0;
+        public string Language { get; set; } = "en";
+    }
+
+    public class ProcessingOptions
+    {
+        public bool UseGpu { get; set; } = true;
+        public int MaxWorkers { get; set; } = 8;
+        public int TimeoutSeconds { get; set; } = 300;
+        public bool EnableCaching { get; set; } = true;
+        public string QualityMode { get; set; } = "balanced";
+    }
+
     public class CloneRequest
     {
         public string AudioPath { get; set; }
@@ -192,6 +222,8 @@ namespace VoiceStudioWinUI.Services
         public string Accent { get; set; }
         public string QualityPreset { get; set; }
         public bool RealTime { get; set; }
+        public VoiceSettings VoiceSettings { get; set; } = new VoiceSettings();
+        public ProcessingOptions ProcessingOptions { get; set; } = new ProcessingOptions();
     }
 
     public class CloneResult

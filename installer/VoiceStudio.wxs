@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="VoiceStudio Ultimate"
+           Language="1033"
+           Version="1.0.0"
+           Manufacturer="VoiceStudio Team"
+           UpgradeCode="PUT-GUID-HERE">
+
+    <Package InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="VoiceStudio Ultimate Voice Cloning Application"
+             Comments="Professional voice cloning application with real-time capabilities"
+             Manufacturer="VoiceStudio Team" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- System Requirements -->
+    <Condition Message="This application requires Windows 10 version 19041 or later.">
+      <![CDATA[Installed OR (VersionNT >= 603 AND ServicePackLevel >= 0)]]>
+    </Condition>
+
+    <!-- Features -->
+    <Feature Id="ProductFeature" Title="VoiceStudio Ultimate" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="RegistryEntries" />
+      <ComponentRef Id="WindowsService" />
+    </Feature>
+
+    <!-- Directory Structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="VoiceStudio">
+          <Directory Id="BinFolder" Name="bin" />
+          <Directory Id="ServicesFolder" Name="services" />
+          <Directory Id="ConfigFolder" Name="config" />
+          <Directory Id="LogsFolder" Name="logs" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramDataFolder">
+        <Directory Id="DataFolder" Name="VoiceStudio">
+          <Directory Id="WorkersFolder" Name="workers" />
+          <Directory Id="ModelsFolder" Name="models" />
+          <Directory Id="CacheFolder" Name="cache" />
+        </Directory>
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="VoiceStudio" />
+      </Directory>
+    </Directory>
+
+    <!-- Components -->
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+
+      <!-- Main Application Files -->
+      <Component Id="MainExecutable" Guid="*">
+        <File Id="VoiceStudioExe"
+              Name="VoiceStudio.exe"
+              Source="$(var.VoiceStudioWinUI.TargetDir)VoiceStudioWinUI.exe"
+              KeyPath="yes" />
+      </Component>
+
+      <!-- Service Manager -->
+      <Component Id="ServiceManager" Guid="*">
+        <File Id="ServiceManagerExe"
+              Name="ServiceManager.exe"
+              Source="$(var.VoiceStudioWinUI.TargetDir)ServiceManager.exe" />
+      </Component>
+
+      <!-- Configuration Files -->
+      <Component Id="ConfigFiles" Guid="*">
+        <File Id="ConfigFile"
+              Name="voice_studio_config.json"
+              Source="config\voice_studio_config.json" />
+        <File Id="AppSettingsFile"
+              Name="appsettings.json"
+              Source="config\appsettings.json" />
+      </Component>
+
+      <!-- Service Scripts -->
+      <Component Id="ServiceScripts" Guid="*">
+        <File Id="WebServerScript"
+              Name="ultimate_web_server.py"
+              Source="services\voice_cloning\ultimate_web_server.py" />
+        <File Id="RealtimeApiScript"
+              Name="realtime_api.py"
+              Source="services\voice_cloning\realtime_api.py" />
+        <File Id="ParallelLauncherScript"
+              Name="ultimate_parallel_launcher.py"
+              Source="services\voice_cloning\ultimate_parallel_launcher.py" />
+      </Component>
+
+      <!-- Worker Scripts -->
+      <Component Id="WorkerScripts" Guid="*">
+        <File Id="WorkerRouterScript"
+              Name="worker_router.py"
+              Source="C:\ProgramData\VoiceStudio\workers\worker_router.py" />
+        <File Id="CloneWorkerScript"
+              Name="op_clone.py"
+              Source="C:\ProgramData\VoiceStudio\workers\ops\op_clone.py" />
+        <File Id="TTSWorkerScript"
+              Name="op_tts.py"
+              Source="C:\ProgramData\VoiceStudio\workers\ops\op_tts.py" />
+        <File Id="AnalyzeWorkerScript"
+              Name="op_analyze.py"
+              Source="C:\ProgramData\VoiceStudio\workers\ops\op_analyze.py" />
+        <File Id="ConvertAudioWorkerScript"
+              Name="op_convert_audio.py"
+              Source="C:\ProgramData\VoiceStudio\workers\ops\op_convert_audio.py" />
+        <File Id="ConvertTextWorkerScript"
+              Name="op_convert_text.py"
+              Source="C:\ProgramData\VoiceStudio\workers\ops\op_convert_text.py" />
+      </Component>
+
+      <!-- Solution Files -->
+      <Component Id="SolutionFiles" Guid="*">
+        <File Id="SolutionFile"
+              Name="VoiceStudio.sln"
+              Source="VoiceStudio.sln" />
+        <File Id="ContractsProject"
+              Name="VoiceStudio.Contracts.csproj"
+              Source="VoiceStudio.Contracts\VoiceStudio.Contracts.csproj" />
+        <File Id="EngineServiceProject"
+              Name="UltraClone.EngineService.csproj"
+              Source="UltraClone.EngineService\UltraClone.EngineService.csproj" />
+        <File Id="ProtoFile"
+              Name="engine.proto"
+              Source="VoiceStudio.Contracts\engine.proto" />
+      </Component>
+
+      <!-- Documentation -->
+      <Component Id="Documentation" Guid="*">
+        <File Id="ReadmeFile"
+              Name="README.md"
+              Source="README.md" />
+        <File Id="InstallationGuide"
+              Name="INSTALLATION_GUIDE.md"
+              Source="installer\INSTALLATION_GUIDE.md" />
+      </Component>
+
+    </ComponentGroup>
+
+    <!-- Desktop Shortcut -->
+    <Component Id="ApplicationShortcut" Directory="DesktopFolder" Guid="*">
+      <Shortcut Id="ApplicationDesktopShortcut"
+                Name="VoiceStudio Ultimate"
+                Description="VoiceStudio Ultimate Voice Cloning Application"
+                Target="[#VoiceStudioExe]"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="ApplicationDesktopShortcut" On="uninstall" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\VoiceStudio"
+                     Name="installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Start Menu Shortcut -->
+    <Component Id="StartMenuShortcut" Directory="ProgramMenuDir" Guid="*">
+      <Shortcut Id="ApplicationStartMenuShortcut"
+                Name="VoiceStudio Ultimate"
+                Description="VoiceStudio Ultimate Voice Cloning Application"
+                Target="[#VoiceStudioExe]"
+                WorkingDirectory="INSTALLFOLDER" />
+      <Shortcut Id="ServiceManagerStartMenuShortcut"
+                Name="Service Manager"
+                Description="VoiceStudio Service Manager"
+                Target="[#ServiceManagerExe]"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\VoiceStudio"
+                     Name="installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Registry Entries -->
+    <Component Id="RegistryEntries" Directory="INSTALLFOLDER" Guid="*">
+      <RegistryKey Root="HKLM" Key="SOFTWARE\VoiceStudio">
+        <RegistryValue Name="InstallPath"
+                       Type="string"
+                       Value="[INSTALLFOLDER]" />
+        <RegistryValue Name="Version"
+                       Type="string"
+                       Value="1.0.0" />
+        <RegistryValue Name="DataPath"
+                       Type="string"
+                       Value="[DataFolder]" />
+      </RegistryKey>
+
+      <!-- File Associations -->
+      <RegistryKey Root="HKCR" Key=".vsproj">
+        <RegistryValue Name="" Type="string" Value="VoiceStudio.Project" />
+      </RegistryKey>
+
+      <RegistryKey Root="HKCR" Key="VoiceStudio.Project">
+        <RegistryValue Name="" Type="string" Value="VoiceStudio Project File" />
+        <RegistryValue Name="DefaultIcon"
+                       Type="string"
+                       Value="[#VoiceStudioExe],0" />
+      </RegistryKey>
+    </Component>
+
+    <!-- Windows Service -->
+    <Component Id="WindowsService" Directory="INSTALLFOLDER" Guid="*">
+      <File Id="ServiceScript"
+            Name="voice_studio_service.py"
+            Source="voice_studio_service.py" />
+
+      <ServiceInstall Id="VoiceStudioService"
+                      Type="ownProcess"
+                      Name="VoiceStudio"
+                      DisplayName="VoiceStudio Ultimate Service"
+                      Description="VoiceStudio Ultimate Voice Cloning Service"
+                      Start="auto"
+                      Account="LocalSystem"
+                      ErrorControl="normal"
+                      Interactive="no">
+        <ServiceDependency Id="Tcpip" />
+      </ServiceInstall>
+
+      <ServiceControl Id="VoiceStudioService"
+                      Start="install"
+                      Stop="both"
+                      Remove="uninstall"
+                      Name="VoiceStudio"
+                      Wait="yes" />
+    </Component>
+
+    <!-- Custom Actions -->
+    <CustomAction Id="InstallPythonPackages"
+                  ExeCommand="python -m pip install fastapi uvicorn numpy torch transformers tokenizers psutil websockets aiohttp"
+                  Directory="INSTALLFOLDER"
+                  Execute="deferred"
+                  Impersonate="no" />
+
+    <CustomAction Id="CreateDirectories"
+                  ExeCommand="mkdir &quot;[DataFolder]\workers\ops&quot; &quot;[DataFolder]\models&quot; &quot;[DataFolder]\cache&quot;"
+                  Directory="INSTALLFOLDER"
+                  Execute="deferred"
+                  Impersonate="no" />
+
+    <CustomAction Id="BuildSolution"
+                  ExeCommand="dotnet build VoiceStudio.sln --configuration Release"
+                  Directory="INSTALLFOLDER"
+                  Execute="deferred"
+                  Impersonate="no" />
+
+    <!-- Installation Sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="InstallPythonPackages" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="CreateDirectories" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="BuildSolution" After="InstallFiles">NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+    <!-- UI -->
+    <UIRef Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+
+    <!-- Properties -->
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+  </Product>
+</Wix>
