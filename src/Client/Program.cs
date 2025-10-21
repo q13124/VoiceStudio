@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
+using Grpc.Core;
 using VoiceStudio.IPC;
 using VoiceStudio.ClientApp;
 
