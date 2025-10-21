@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>VoiceStudio A/B Compare</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;color:#111}
+    .row{display:flex;gap:8px;align-items:center}
+    input[type=text]{width:520px;padding:8px}
+    button{padding:8px 12px}
+    .col{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+    audio{width:520px}
+    .note{color:#555}
+  </style>
+</head>
+<body>
+  <div class="row">
+    <input id="t" type="text" value="VoiceStudio A/B test line." />
+    <button id="ra">Render A</button>
+    <button id="rb">Render B</button>
+    <button id="nt">Null Test</button>
+  </div>
+  <div class="col">
+    <div id="res" class="note"></div>
+    <audio id="aA" controls></audio>
+    <audio id="aB" controls></audio>
+    <audio id="aD" controls></audio>
+  </div>
+  <script>
+    const q = sel => document.querySelector(sel);
+    const post = (url, body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+    const res = q('#res');
+    q('#ra').onclick = async ()=>{
+      res.textContent = 'Rendering A...';
+      const r = await post('/api/tts', { text: q('#t').value, variant: 'A' });
+      if(r.error){ res.textContent = 'Error: '+r.error; return; }
+      q('#aA').src = r.path + '?v=' + Date.now(); res.textContent = 'A ready';
+    };
+    q('#rb').onclick = async ()=>{
+      res.textContent = 'Rendering B...';
+      const r = await post('/api/tts', { text: q('#t').value, variant: 'B' });
+      if(r.error){ res.textContent = 'Error: '+r.error; return; }
+      q('#aB').src = r.path + '?v=' + Date.now(); res.textContent = 'B ready';
+    };
+    q('#nt').onclick = async ()=>{
+      res.textContent = 'Computing null-diff...';
+      const r = await post('/api/null', {});
+      if(r.error){ res.textContent = 'Error: '+r.error; return; }
+      q('#aD').src = r.path + '?v=' + Date.now(); res.textContent = 'Null diff ready';
+    };
+  </script>
+</body>
+</html>
