@@ -4,13 +4,10 @@ VoiceStudio Ultimate - Test Data Generator
 Generate comprehensive test data for voice cloning accuracy testing
 """
 
-import os
 import json
 import numpy as np
-import librosa
 from pathlib import Path
 import random
-import string
 
 
 class TestDataGenerator:
@@ -18,6 +15,10 @@ class TestDataGenerator:
         self.test_data_path = Path(test_data_path)
         self.reference_path = self.test_data_path / "reference_audio"
         self.text_path = self.test_data_path / "test_texts"
+        # Ensure directories exist
+        self.reference_path.mkdir(parents=True, exist_ok=True)
+        self.text_path.mkdir(parents=True, exist_ok=True)
+        (self.test_data_path / "expected_outputs").mkdir(parents=True, exist_ok=True)
 
     def generate_reference_audio(self, count=10):
         """Generate synthetic reference audio for testing"""
@@ -190,7 +191,9 @@ class TestDataGenerator:
 
 
 def main():
-    test_data_path = "C:/Users/Tyler/VoiceStudio/tests/data"
+    # Use repo-relative path for CI compatibility
+    repo_root = Path(__file__).parent.parent
+    test_data_path = repo_root / "tests" / "data"
     generator = TestDataGenerator(test_data_path)
 
     print("VoiceStudio Ultimate - Test Data Generator")
