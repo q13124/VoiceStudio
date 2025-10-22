@@ -1,0 +1,59 @@
+name: handshake-director
+on:
+  schedule: [{ cron: "*/15 * * * *" }]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  direct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Compute next Cursor tasks from latest report + plan
+        id: build
+        env:
+          PLAN_FILE: ${{ vars.STATUS_PLAN_FILE || 'docs/START_HERE_EXACT_PLAN.md' }}
+          ALT_PLAN_FILE: ${{ vars.STATUS_ALT_PLAN_FILE || 'docs/15_MINUTE_WORKFLOW.md' }}
+          REPORT_FILE: docs/CURSOR_RUN_REPORT.json
+        run: |
+          set -euo pipefail
+          latest="OK: no report yet"
+          if [ -f "$REPORT_FILE" ]; then latest=$(tail -c 20000 "$REPORT_FILE" || true); fi
+
+          # naive heuristics to pick next tasks
+          pick_tasks() {
+            # If tests failed -> run python tests only; if success -> do full preset
+            if echo "$latest" | grep -qi '"rc": [^0]'; then
+              echo "- make test-python"
+            else
+              echo "- make test-all"
+            fi
+          }
+
+          mkdir -p docs
+          {
+            echo "# Cursor Build Instructions"
+            echo "## Generated: $(date -u +'%Y-%m-%d %H:%MZ')"
+            echo
+            echo "### context:"
+            echo "- last-report: $(date -u +'%Y-%m-%d %H:%MZ')"
+            echo
+            echo "### tasks:"
+            pick_tasks
+          } > docs/CURSOR_INSTRUCTIONS.md
+
+      - name: Commit & push instructions (if changed)
+        run: |
+          git config user.name  "VS Director Bot"
+          git config user.email "director@users.noreply.github.com"
+          if ! git diff --quiet -- docs/CURSOR_INSTRUCTIONS.md; then
+            git add docs/CURSOR_INSTRUCTIONS.md
+            git commit -m "director: next Cursor tasks [skip ci]"
+            git push
+          else
+            echo "No change to Cursor instructions."
+          fi
