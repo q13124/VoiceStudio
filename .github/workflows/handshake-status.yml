@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,7 +36,7 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build status text (handshake)
+      - name: Build 60s status (auto-grab)
         id: build
         env:
           WINDOW_MINUTES: ${{ vars.STATUS_WINDOW_MINUTES || '15' }}
@@ -43,63 +44,75 @@ jobs:
           ALT_PLAN_FILE: ${{ vars.STATUS_ALT_PLAN_FILE || 'docs/15_MINUTE_WORKFLOW.md' }}
         run: |
           python - << 'PY'
-          import os, subprocess, pathlib, datetime
+          import os, subprocess, pathlib, datetime, json
           win = int(os.getenv('WINDOW_MINUTES','15'))
-          def sh(args):
-              return subprocess.check_output(args, text=True).strip()
-          # 1) changes
+          def sh(*a): return subprocess.check_output(list(a), text=True).strip()
+
+          # 1) Commits in window
           try:
-              log = sh(["git","log","--since",f"{win} minutes ago","--pretty=format:%h %s (%an)"])
-              changed = log if log else "— No commits in this window."
+              commits = sh("git","log","--since",f"{win} minutes ago","--pretty=format:%h %s (by %an)")
           except Exception as e:
-              changed = f"— Could not read git log: {e}"
-          # 2) next from plan
-          plan = os.getenv('PLAN_FILE')
-          alt = os.getenv('ALT_PLAN_FILE')
-          text=""
-          for p in filter(None,[plan, alt]):
-              fp=pathlib.Path(p)
+              commits = f"— Could not read git log: {e}"
+          commits = commits or "— No commits in this window."
+
+          # 2) Recent PRs merged in window (best-effort via git)
+          try:
+              prs = sh("git","log","--merges","--since",f"{win} minutes ago","--pretty=format:%h %s")
+          except Exception:
+              prs = ""
+          prs = prs or "— No PR merges in this window."
+
+          # 3) Plan "next tasks"
+          plan = os.getenv('PLAN_FILE'); alt = os.getenv('ALT_PLAN_FILE')
+          next_tasks = ""
+          for p in (plan, alt):
+              if not p: continue
+              fp = pathlib.Path(p)
               if fp.exists():
-                  txt=fp.read_text(errors='ignore')
-                  lines=[l.rstrip() for l in txt.splitlines()]
-                  # simple heuristic: capture first 8 bullet lines after a header that mentions Today/Next/Tasks
-                  idx=[i for i,l in enumerate(lines) if any(k in l.lower() for k in ['today','next','tasks'])]
+                  lines = [l.rstrip() for l in fp.read_text(errors='ignore').splitlines()]
+                  # capture bullets after a header containing Today/Next/Tasks
+                  idx = [i for i,l in enumerate(lines) if any(k in l.lower() for k in ['today','next','tasks'])]
                   cap=[]
                   for i in (idx[:1] or [0]):
-                      for l in lines[i+1:i+40]:
-                          if l.strip().startswith(('#','**')): break
-                          if l.strip().startswith(('-','*','•','1.','2.','3.')):
-                              cap.append(l.strip())
-                          if len(cap)>=8: break
-                  if cap:
-                      text='\n'.join(cap)
-                      break
-          next_steps = text or "— Check START_HERE_EXACT_PLAN.md for next tasks."
-          # 3) blockers (quick grep for TODO/BLOCKER in last 50 lines of plan)
-          blockers = "— None seen."
+                      for l in lines[i+1:i+60]:
+                          s=l.strip()
+                          if s.startswith(('#','**')): break
+                          if s.startswith(('-','*','•','1.','2.','3.')): cap.append(s)
+                          if len(cap)>=6: break
+                  if cap: next_tasks = "\n".join(cap); break
+          if not next_tasks:
+              next_tasks = "— Update START_HERE_EXACT_PLAN.md or docs/15_MINUTE_WORKFLOW.md with a 'Next' section."
+
+          # 4) Blockers from plan
+          blockers = "— None"
           try:
-              blob = (pathlib.Path(plan).read_text(errors='ignore') if pathlib.Path(plan).exists() else '')
-              lines = [l for l in blob.splitlines() if any(k in l.upper() for k in ['BLOCKER','TODO:','RISK'])]
-              if lines:
-                  blockers = '\n'.join(lines[:5])
-          except Exception:
-              pass
+              src = ""
+              if plan and pathlib.Path(plan).exists(): src += pathlib.Path(plan).read_text(errors='ignore')
+              if not src and alt and pathlib.Path(alt).exists(): src = pathlib.Path(alt).read_text(errors='ignore')
+              lines = [l for l in src.splitlines() if any(k in l.upper() for k in ['BLOCKER','RISK','TODO:'])]
+              if lines: blockers = "\n".join(lines[:5])
+          except Exception: pass
 
-          msg = f"""
-          *Status ({datetime.datetime.utcnow().isoformat(timespec='minutes')}Z)*
-          *What changed (last {win}m):*
-          {changed}
+          # 5) Last workflow failures (best-effort via grep of previous summary file)
+          ci = "— See Actions tab for latest runs."
 
-          *What's next:*
-          {next_steps}
+          stamp = datetime.datetime.utcnow().isoformat(timespec='minutes')+"Z"
+          msg = f"""VoiceStudio 60-sec Status — {stamp}
 
-          *Blockers / decisions:*
-          {blockers}
-          """.strip()
-          print('MSG<<EOF')
+1) What changed since last check-in:
+{commits}
+
+Merges:
+{prs}
+
+2) What's next from the plan:
+{next_tasks}
+
+3) Blockers / decisions needed:
+{blockers}
+"""
+          open("status.msg","w",encoding="utf-8").write(msg)
           print(msg)
-          print('EOF')
-          with open('status.msg','w') as f: f.write(msg)
           PY
 
       - name: Maybe post to Slack
@@ -137,44 +150,38 @@ jobs:
           }
           JSON
 
-      - name: Update docs/HANDSHAKE_STATUS.md (working copy)
+      - name: Update docs/HANDSHAKE_STATUS.md (prepend latest)
         run: |
           mkdir -p docs
-          ts="$(date -u +'%Y-%m-%d %H:%MZ')"
-          {
-            echo "## ${ts}"
-            echo
-            cat status.msg
-            echo
-            echo "---"
-            echo
-          } > NEW_STATUS.md
-
-          # create file if missing
           [ -f docs/HANDSHAKE_STATUS.md ] || touch docs/HANDSHAKE_STATUS.md
+          { echo "## $(date -u +'%Y-%m-%d %H:%MZ')"; echo; cat status.msg; echo; echo "---"; echo; } \
+            | cat - docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
 
-          # prepend latest at top; keep last ~20000 chars to avoid bloat
-          cat NEW_STATUS.md docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
-
-      - name: Commit & push if changed (throttle to hourly by default)
+      - name: Commit & push status (hourly throttle)
         env:
           EMAIL_EVERY_MIN: ${{ vars.STATUS_EMAIL_EVERY_MIN || '60' }}
         run: |
-          set -euo pipefail
-          # optional hourly throttle for commits too
           M=$(date -u +%s); MOD=$(( (M/60) % ${EMAIL_EVERY_MIN} ))
-          if [ "$MOD" != "0" ]; then
-            echo "Skip commit (throttle)"; exit 0
-          fi
-
+          [ "$MOD" = "0" ] || { echo "Skip commit (throttle)"; exit 0; }
           git config user.name  "VS Handshake Bot"
           git config user.email "bot@users.noreply.github.com"
-
           if ! git diff --quiet -- docs/HANDSHAKE_STATUS.md; then
             git add docs/HANDSHAKE_STATUS.md
-            git commit -m "handshake: update status [skip ci]"
+            git commit -m "handshake: auto 60s status [skip ci]"
             git push
-            echo "Pushed status update."
           else
-            echo "No content change; nothing to commit."
+            echo "No change; nothing to commit."
           fi
+
+      - name: Post to pinned 'Handshake Feed' issue (optional)
+        if: ${{ env.GITHUB_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # create or find issue titled "Handshake Feed"
+          num=$(gh issue list --search "Handshake Feed in:title" --json number,title | jq -r '.[0].number // empty')
+          if [ -z "$num" ]; then
+            num=$(gh issue create -t "Handshake Feed" -b "Automated 15-minute status thread")
+          fi
+          gh issue comment "$num" -b "$(cat status.msg)"

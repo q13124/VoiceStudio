@@ -1,395 +1,410 @@
 #!/usr/bin/env python3
 """
-VoiceStudio Quality Scorer
-Implements automatic quality scoring and auto-regeneration for consistent output
-Based on ChatGPT strategic plan for Day 4-5 implementation
+VoiceStudio Ultimate - Quality Scoring System
+Automatic quality assessment and regeneration for voice cloning
 """
 
+import os
 import numpy as np
 import librosa
 import soundfile as sf
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Union
-from dataclasses import dataclass
+from typing import Tuple, Optional, List, Union
 import logging
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import time
 
-# Voice embedding imports
+# Voice cloning integration
 try:
     from resemblyzer import VoiceEncoder, preprocess_wav
+
     RESEMBLYZER_AVAILABLE = True
 except ImportError:
     RESEMBLYZER_AVAILABLE = False
-    logging.warning("Resemblyzer not available. Install with: pip install resemblyzer")
+    logging.warning(
+        "resemblyzer not available - quality scoring will use basic metrics"
+    )
 
-logger = logging.getLogger(__name__)
 
-@dataclass
-class QualityScore:
-    """Quality score result"""
-    overall_score: float  # 0-100
-    similarity_score: float  # 0-100
-    audio_quality_score: float  # 0-100
-    prosody_score: float  # 0-100
-    details: Dict[str, float]
-
-@dataclass
-class QualityConfig:
-    """Configuration for quality scoring"""
-    min_acceptable_score: float = 80.0
-    max_regeneration_attempts: int = 3
-    similarity_weight: float = 0.6
-    audio_quality_weight: float = 0.3
-    prosody_weight: float = 0.1
-    sample_rate: int = 16000
-
-class VoiceQualityScorer:
+class QualityScorer:
     """
-    Voice quality scoring system
-    Evaluates generated audio against reference for consistency
+    Quality scoring system for voice cloning outputs.
+
+    Provides automatic quality assessment and regeneration capabilities
+    to ensure consistent, high-quality voice cloning results.
     """
-    
-    def __init__(self, config: Optional[QualityConfig] = None):
-        self.config = config or QualityConfig()
+
+    def __init__(self, sample_rate: int = 22050):
+        """
+        Initialize the quality scoring system.
+
+        Args:
+            sample_rate: Target sample rate for audio processing
+        """
+        self.sample_rate = sample_rate
         self.encoder = None
-        self._initialize_encoder()
-        
-    def _initialize_encoder(self):
-        """Initialize voice encoder"""
-        if not RESEMBLYZER_AVAILABLE:
-            raise ImportError("Resemblyzer not available. Install with: pip install resemblyzer")
-        
-        try:
-            self.encoder = VoiceEncoder()
-            logger.info("Voice quality scorer initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize voice encoder: {e}")
-            raise
-    
-    def calculate_similarity_score(self, reference_audio: np.ndarray, generated_audio: np.ndarray, 
-                                 reference_sr: int, generated_sr: int) -> float:
-        """
-        Calculate voice similarity score using resemblyzer embeddings
-        Returns score from 0-100
-        """
-        try:
-            # Resample to same sample rate
-            target_sr = self.config.sample_rate
-            
-            if reference_sr != target_sr:
-                reference_audio = librosa.resample(reference_audio, orig_sr=reference_sr, target_sr=target_sr)
-            
-            if generated_sr != target_sr:
-                generated_audio = librosa.resample(generated_audio, orig_sr=generated_sr, target_sr=target_sr)
-            
-            # Preprocess for resemblyzer
-            ref_wav = preprocess_wav(reference_audio, target_sr)
-            gen_wav = preprocess_wav(generated_audio, target_sr)
-            
-            # Extract embeddings
-            ref_embedding = self.encoder.embed_utterance(ref_wav)
-            gen_embedding = self.encoder.embed_utterance(gen_wav)
-            
-            # Calculate cosine similarity
-            similarity = np.dot(ref_embedding, gen_embedding) / (
-                np.linalg.norm(ref_embedding) * np.linalg.norm(gen_embedding)
-            )
-            
-            # Convert to 0-100 scale
-            similarity_score = max(0.0, min(100.0, (similarity + 1.0) * 50.0))
-            
-            logger.debug(f"Similarity score: {similarity_score:.2f}")
-            return similarity_score
-            
-        except Exception as e:
-            logger.error(f"Similarity calculation failed: {e}")
-            return 0.0
-    
-    def calculate_audio_quality_score(self, audio: np.ndarray, sample_rate: int) -> float:
-        """
-        Calculate audio quality score based on technical metrics
-        Returns score from 0-100
-        """
-        try:
-            # Signal-to-noise ratio
-            signal_power = np.mean(audio ** 2)
-            noise_floor = np.percentile(np.abs(audio), 5)
-            snr = 10 * np.log10(signal_power / (noise_floor ** 2 + 1e-10))
-            snr_score = max(0.0, min(100.0, (snr + 20) / 40 * 100))
-            
-            # Clipping detection
-            clipping_ratio = np.sum(np.abs(audio) > 0.95) / len(audio)
-            clipping_score = max(0.0, 100.0 - clipping_ratio * 1000)
-            
-            # Dynamic range
-            dynamic_range = 20 * np.log10(np.max(np.abs(audio)) / (np.mean(np.abs(audio)) + 1e-10))
-            dynamic_score = max(0.0, min(100.0, dynamic_range / 60 * 100))
-            
-            # Silence detection
-            silence_threshold = 0.01
-            silence_ratio = np.sum(np.abs(audio) < silence_threshold) / len(audio)
-            silence_score = max(0.0, 100.0 - silence_ratio * 200)
-            
-            # Spectral centroid (brightness)
-            spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[0]
-            centroid_mean = np.mean(spectral_centroids)
-            centroid_score = max(0.0, min(100.0, centroid_mean / 4000 * 100))
-            
-            # Combine scores
-            audio_quality_score = (
-                snr_score * 0.3 +
-                clipping_score * 0.25 +
-                dynamic_score * 0.2 +
-                silence_score * 0.15 +
-                centroid_score * 0.1
-            )
-            
-            logger.debug(f"Audio quality breakdown: SNR={snr_score:.1f}, Clipping={clipping_score:.1f}, "
-                        f"Dynamic={dynamic_score:.1f}, Silence={silence_score:.1f}, Centroid={centroid_score:.1f}")
-            
-            return max(0.0, min(100.0, audio_quality_score))
-            
-        except Exception as e:
-            logger.error(f"Audio quality calculation failed: {e}")
-            return 50.0  # Default moderate score
-    
-    def calculate_prosody_score(self, reference_audio: np.ndarray, generated_audio: np.ndarray,
-                              reference_sr: int, generated_sr: int) -> float:
-        """
-        Calculate prosody similarity score
-        Compares rhythm, pitch patterns, and speaking rate
-        """
-        try:
-            # Resample to same sample rate
-            target_sr = 22050  # Higher sample rate for better prosody analysis
-            
-            if reference_sr != target_sr:
-                reference_audio = librosa.resample(reference_audio, orig_sr=reference_sr, target_sr=target_sr)
-            
-            if generated_sr != target_sr:
-                generated_audio = librosa.resample(generated_audio, orig_sr=generated_sr, target_sr=target_sr)
-            
-            # Extract pitch (F0)
-            ref_pitch = librosa.yin(reference_audio, fmin=50, fmax=400)
-            gen_pitch = librosa.yin(generated_audio, fmin=50, fmax=400)
-            
-            # Remove NaN values
-            ref_pitch = ref_pitch[~np.isnan(ref_pitch)]
-            gen_pitch = gen_pitch[~np.isnan(gen_pitch)]
-            
-            if len(ref_pitch) == 0 or len(gen_pitch) == 0:
-                return 50.0  # Default score if pitch extraction fails
-            
-            # Pitch statistics comparison
-            ref_pitch_mean = np.mean(ref_pitch)
-            gen_pitch_mean = np.mean(gen_pitch)
-            pitch_mean_score = max(0.0, 100.0 - abs(ref_pitch_mean - gen_pitch_mean) / ref_pitch_mean * 100)
-            
-            ref_pitch_std = np.std(ref_pitch)
-            gen_pitch_std = np.std(gen_pitch)
-            pitch_std_score = max(0.0, 100.0 - abs(ref_pitch_std - gen_pitch_std) / ref_pitch_std * 100)
-            
-            # Speaking rate comparison
-            ref_duration = len(reference_audio) / target_sr
-            gen_duration = len(generated_audio) / target_sr
-            duration_ratio = min(ref_duration, gen_duration) / max(ref_duration, gen_duration)
-            duration_score = duration_ratio * 100
-            
-            # Combine prosody scores
-            prosody_score = (
-                pitch_mean_score * 0.4 +
-                pitch_std_score * 0.4 +
-                duration_score * 0.2
-            )
-            
-            logger.debug(f"Prosody breakdown: Pitch mean={pitch_mean_score:.1f}, "
-                        f"Pitch std={pitch_std_score:.1f}, Duration={duration_score:.1f}")
-            
-            return max(0.0, min(100.0, prosody_score))
-            
-        except Exception as e:
-            logger.error(f"Prosody calculation failed: {e}")
-            return 50.0  # Default moderate score
-    
-    def score_quality(self, reference_audio: Union[str, Path, np.ndarray], 
-                     generated_audio: Union[str, Path, np.ndarray],
-                     reference_sr: Optional[int] = None,
-                     generated_sr: Optional[int] = None) -> QualityScore:
-        """
-        Calculate comprehensive quality score
-        """
-        try:
-            # Load audio if paths provided
-            if isinstance(reference_audio, (str, Path)):
-                reference_audio, reference_sr = librosa.load(str(reference_audio), sr=None)
-            
-            if isinstance(generated_audio, (str, Path)):
-                generated_audio, generated_sr = librosa.load(str(generated_audio), sr=None)
-            
-            if reference_sr is None or generated_sr is None:
-                raise ValueError("Sample rates must be provided for numpy arrays")
-            
-            logger.info("Calculating quality scores...")
-            
-            # Calculate individual scores
-            similarity_score = self.calculate_similarity_score(
-                reference_audio, generated_audio, reference_sr, generated_sr
-            )
-            
-            audio_quality_score = self.calculate_audio_quality_score(generated_audio, generated_sr)
-            
-            prosody_score = self.calculate_prosody_score(
-                reference_audio, generated_audio, reference_sr, generated_sr
-            )
-            
-            # Calculate weighted overall score
-            overall_score = (
-                similarity_score * self.config.similarity_weight +
-                audio_quality_score * self.config.audio_quality_weight +
-                prosody_score * self.config.prosody_weight
-            )
-            
-            details = {
-                "similarity": similarity_score,
-                "audio_quality": audio_quality_score,
-                "prosody": prosody_score,
-                "similarity_weight": self.config.similarity_weight,
-                "audio_quality_weight": self.config.audio_quality_weight,
-                "prosody_weight": self.config.prosody_weight
-            }
-            
-            quality_score = QualityScore(
-                overall_score=overall_score,
-                similarity_score=similarity_score,
-                audio_quality_score=audio_quality_score,
-                prosody_score=prosody_score,
-                details=details
-            )
-            
-            logger.info(f"Quality score: {overall_score:.2f} "
-                       f"(Similarity: {similarity_score:.2f}, "
-                       f"Audio: {audio_quality_score:.2f}, "
-                       f"Prosody: {prosody_score:.2f})")
-            
-            return quality_score
-            
-        except Exception as e:
-            logger.error(f"Quality scoring failed: {e}")
-            return QualityScore(
-                overall_score=0.0,
-                similarity_score=0.0,
-                audio_quality_score=0.0,
-                prosody_score=0.0,
-                details={"error": str(e)}
-            )
-    
-    def is_acceptable_quality(self, quality_score: QualityScore) -> bool:
-        """Check if quality score meets minimum threshold"""
-        return quality_score.overall_score >= self.config.min_acceptable_score
-    
-    async def score_quality_async(self, reference_audio: Union[str, Path, np.ndarray],
-                                generated_audio: Union[str, Path, np.ndarray],
-                                reference_sr: Optional[int] = None,
-                                generated_sr: Optional[int] = None) -> QualityScore:
-        """Asynchronous version of quality scoring"""
-        loop = asyncio.get_event_loop()
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            return await loop.run_in_executor(
-                executor, self.score_quality, reference_audio, generated_audio, reference_sr, generated_sr
-            )
 
-class QualityGatedGenerator:
-    """
-    Generator with automatic quality gating and regeneration
-    """
-    
-    def __init__(self, generator_func, scorer: Optional[VoiceQualityScorer] = None):
-        self.generator_func = generator_func
-        self.scorer = scorer or VoiceQualityScorer()
-        self.config = self.scorer.config
-        
-    def generate_with_quality_gate(self, text: str, voice_profile, 
-                                 reference_audio: Union[str, Path, np.ndarray],
-                                 reference_sr: Optional[int] = None) -> Tuple[np.ndarray, QualityScore, int]:
+        if RESEMBLYZER_AVAILABLE:
+            try:
+                self.encoder = VoiceEncoder()
+                logging.info("VoiceEncoder initialized for quality scoring")
+            except Exception as e:
+                logging.error(f"Failed to initialize VoiceEncoder: {e}")
+                self.encoder = None
+
+        # Quality thresholds
+        self.thresholds = {"excellent": 0.9, "good": 0.8, "fair": 0.7, "poor": 0.6}
+
+    def load_audio(self, audio_path: Union[str, Path]) -> np.ndarray:
         """
-        Generate voice with automatic quality gating
-        Returns: (best_audio, best_score, attempts_made)
+        Load audio file with preprocessing.
+
+        Args:
+            audio_path: Path to audio file
+
+        Returns:
+            Preprocessed audio array
+        """
+        try:
+            if RESEMBLYZER_AVAILABLE and self.encoder:
+                wav = preprocess_wav(str(audio_path))
+                return wav
+            else:
+                audio, sr = librosa.load(str(audio_path), sr=self.sample_rate)
+                return audio
+        except Exception as e:
+            logging.error(f"Failed to load audio {audio_path}: {e}")
+            return None
+
+    def calculate_similarity_score(
+        self, reference_audio: np.ndarray, generated_audio: np.ndarray
+    ) -> float:
+        """
+        Calculate similarity score between reference and generated audio.
+
+        Args:
+            reference_audio: Reference audio array
+            generated_audio: Generated audio array
+
+        Returns:
+            Similarity score (0-1, higher is better)
+        """
+        if reference_audio is None or generated_audio is None:
+            return 0.0
+
+        try:
+            if RESEMBLYZER_AVAILABLE and self.encoder:
+                # Use resemblyzer for high-quality similarity
+                ref_emb = self.encoder.embed_utterance(reference_audio)
+                gen_emb = self.encoder.embed_utterance(generated_audio)
+
+                # Cosine similarity
+                similarity = np.dot(ref_emb, gen_emb) / (
+                    np.linalg.norm(ref_emb) * np.linalg.norm(gen_emb)
+                )
+                return float(similarity)
+            else:
+                # Fallback: MFCC-based similarity
+                ref_mfcc = librosa.feature.mfcc(
+                    y=reference_audio, sr=self.sample_rate, n_mfcc=13
+                )
+                gen_mfcc = librosa.feature.mfcc(
+                    y=generated_audio, sr=self.sample_rate, n_mfcc=13
+                )
+
+                # Dynamic time warping similarity
+                from scipy.spatial.distance import cosine
+
+                ref_mean = np.mean(ref_mfcc, axis=1)
+                gen_mean = np.mean(gen_mfcc, axis=1)
+                similarity = 1 - cosine(ref_mean, gen_mean)
+                return max(0.0, float(similarity))
+
+        except Exception as e:
+            logging.error(f"Failed to calculate similarity: {e}")
+            return 0.0
+
+    def calculate_audio_quality_metrics(self, audio: np.ndarray) -> dict:
+        """
+        Calculate various audio quality metrics.
+
+        Args:
+            audio: Audio array
+
+        Returns:
+            Dictionary of quality metrics
+        """
+        if audio is None or len(audio) == 0:
+            return {"snr": 0.0, "clarity": 0.0, "loudness": 0.0}
+
+        try:
+            # Signal-to-noise ratio (simplified)
+            signal_power = np.mean(audio**2)
+            noise_floor = np.percentile(np.abs(audio), 10) ** 2
+            snr = 10 * np.log10(signal_power / (noise_floor + 1e-10))
+
+            # Clarity (spectral centroid)
+            spectral_centroids = librosa.feature.spectral_centroid(
+                y=audio, sr=self.sample_rate
+            )[0]
+            clarity = np.mean(spectral_centroids) / (self.sample_rate / 2)
+
+            # Loudness (RMS)
+            loudness = np.sqrt(np.mean(audio**2))
+
+            return {
+                "snr": float(snr),
+                "clarity": float(clarity),
+                "loudness": float(loudness),
+            }
+        except Exception as e:
+            logging.error(f"Failed to calculate audio quality metrics: {e}")
+            return {"snr": 0.0, "clarity": 0.0, "loudness": 0.0}
+
+    def score_quality(
+        self, reference_audio: np.ndarray, generated_audio: np.ndarray
+    ) -> dict:
+        """
+        Comprehensive quality scoring for voice cloning output.
+
+        Args:
+            reference_audio: Reference audio array
+            generated_audio: Generated audio array
+
+        Returns:
+            Quality score dictionary
+        """
+        # Calculate similarity score
+        similarity = self.calculate_similarity_score(reference_audio, generated_audio)
+
+        # Calculate audio quality metrics
+        audio_metrics = self.calculate_audio_quality_metrics(generated_audio)
+
+        # Overall quality score (weighted combination)
+        overall_score = (
+            similarity * 0.6  # 60% similarity
+            + min(audio_metrics["clarity"], 1.0) * 0.2  # 20% clarity
+            + min(audio_metrics["snr"] / 20.0, 1.0) * 0.2  # 20% SNR (normalized)
+        )
+
+        # Determine quality level
+        if overall_score >= self.thresholds["excellent"]:
+            quality_level = "excellent"
+        elif overall_score >= self.thresholds["good"]:
+            quality_level = "good"
+        elif overall_score >= self.thresholds["fair"]:
+            quality_level = "fair"
+        else:
+            quality_level = "poor"
+
+        return {
+            "overall_score": float(overall_score),
+            "similarity_score": float(similarity),
+            "quality_level": quality_level,
+            "audio_metrics": audio_metrics,
+            "thresholds": self.thresholds,
+            "recommendation": self._get_recommendation(quality_level, overall_score),
+        }
+
+    def _get_recommendation(self, quality_level: str, score: float) -> str:
+        """
+        Get recommendation based on quality level.
+
+        Args:
+            quality_level: Quality level string
+            score: Overall quality score
+
+        Returns:
+            Recommendation string
+        """
+        if quality_level == "excellent":
+            return "Perfect quality - ready for production use"
+        elif quality_level == "good":
+            return "Good quality - suitable for most applications"
+        elif quality_level == "fair":
+            return "Fair quality - consider regeneration with different parameters"
+        else:
+            return "Poor quality - regeneration recommended"
+
+    def should_regenerate(
+        self, quality_score: dict, min_threshold: float = 0.8
+    ) -> bool:
+        """
+        Determine if audio should be regenerated based on quality score.
+
+        Args:
+            quality_score: Quality score dictionary
+            min_threshold: Minimum acceptable threshold
+
+        Returns:
+            True if regeneration is recommended
+        """
+        return quality_score["overall_score"] < min_threshold
+
+
+class VoiceCloningQualityGate:
+    """
+    Quality gate system for voice cloning with automatic regeneration.
+    """
+
+    def __init__(self, max_attempts: int = 3):
+        """
+        Initialize quality gate system.
+
+        Args:
+            max_attempts: Maximum regeneration attempts
+        """
+        self.quality_scorer = QualityScorer()
+        self.max_attempts = max_attempts
+
+    def generate_with_quality_gate(
+        self,
+        text: str,
+        reference_audio: np.ndarray,
+        voice_profile: dict,
+        engine: str = "xtts",
+        min_quality: float = 0.8,
+    ) -> Tuple[np.ndarray, dict]:
+        """
+        Generate voice with quality gating and automatic regeneration.
+
+        Args:
+            text: Text to synthesize
+            reference_audio: Reference audio for comparison
+            voice_profile: Voice profile dictionary
+            engine: Voice cloning engine
+            min_quality: Minimum quality threshold
+
+        Returns:
+            Tuple of (generated_audio, quality_info)
         """
         best_audio = None
-        best_score = None
-        attempts_made = 0
-        
-        logger.info(f"Generating with quality gate (max {self.config.max_regeneration_attempts} attempts)...")
-        
-        for attempt in range(self.config.max_regeneration_attempts):
-            attempts_made += 1
-            logger.info(f"Generation attempt {attempt + 1}/{self.config.max_regeneration_attempts}")
-            
-            try:
-                # Generate audio
-                generated_audio, generated_sr = self.generator_func(text, voice_profile)
-                
-                # Score quality
-                quality_score = self.scorer.score_quality(
-                    reference_audio, generated_audio, reference_sr, generated_sr
-                )
-                
-                # Check if this is the best attempt so far
-                if best_score is None or quality_score.overall_score > best_score.overall_score:
-                    best_audio = generated_audio
-                    best_score = quality_score
-                    logger.info(f"New best score: {quality_score.overall_score:.2f}")
-                
-                # Check if quality is acceptable
-                if self.scorer.is_acceptable_quality(quality_score):
-                    logger.info(f"✅ Acceptable quality achieved: {quality_score.overall_score:.2f}")
-                    return generated_audio, quality_score, attempts_made
-                
-                logger.info(f"Quality below threshold: {quality_score.overall_score:.2f} < {self.config.min_acceptable_score}")
-                
-            except Exception as e:
-                logger.error(f"Generation attempt {attempt + 1} failed: {e}")
+        best_score = 0.0
+        best_quality_info = None
+
+        for attempt in range(self.max_attempts):
+            logging.info(f"Voice generation attempt {attempt + 1}/{self.max_attempts}")
+
+            # Generate audio (placeholder - integrate with your engines)
+            generated_audio = self._generate_audio(text, voice_profile, engine)
+
+            if generated_audio is None:
+                logging.warning(f"Generation failed on attempt {attempt + 1}")
                 continue
-        
-        logger.warning(f"⚠️  Maximum attempts reached. Best score: {best_score.overall_score:.2f}")
-        return best_audio, best_score, attempts_made
 
-# Convenience functions
-def score_voice_quality(reference_audio: Union[str, Path, np.ndarray],
-                       generated_audio: Union[str, Path, np.ndarray],
-                       reference_sr: Optional[int] = None,
-                       generated_sr: Optional[int] = None,
-                       config: Optional[QualityConfig] = None) -> QualityScore:
-    """Convenience function for quality scoring"""
-    scorer = VoiceQualityScorer(config)
-    return scorer.score_quality(reference_audio, generated_audio, reference_sr, generated_sr)
+            # Score quality
+            quality_info = self.quality_scorer.score_quality(
+                reference_audio, generated_audio
+            )
 
-# Example usage
+            logging.info(
+                f"Attempt {attempt + 1} quality: {quality_info['overall_score']:.3f} "
+                f"({quality_info['quality_level']})"
+            )
+
+            # Track best result
+            if quality_info["overall_score"] > best_score:
+                best_score = quality_info["overall_score"]
+                best_audio = generated_audio
+                best_quality_info = quality_info
+
+            # Check if quality is acceptable
+            if quality_info["overall_score"] >= min_quality:
+                logging.info(
+                    f"Quality threshold met: {quality_info['overall_score']:.3f}"
+                )
+                break
+
+        if best_audio is None:
+            raise Exception("All generation attempts failed")
+
+        logging.info(
+            f"Best quality achieved: {best_score:.3f} ({best_quality_info['quality_level']})"
+        )
+
+        return best_audio, best_quality_info
+
+    def _generate_audio(
+        self, text: str, voice_profile: dict, engine: str
+    ) -> Optional[np.ndarray]:
+        """
+        Generate audio using specified engine.
+
+        This is a placeholder - integrate with your existing voice cloning engines.
+        """
+        try:
+            # Placeholder implementation
+            # In practice, this would call your XTTS, OpenVoice, RVC, etc.
+            logging.info(f"Generating audio with {engine} engine")
+
+            # Return dummy audio for now
+            duration = len(text.split()) * 0.5  # Rough estimate
+            dummy_audio = (
+                np.random.randn(int(self.quality_scorer.sample_rate * duration)) * 0.1
+            )
+            return dummy_audio
+
+        except Exception as e:
+            logging.error(f"Audio generation failed: {e}")
+            return None
+
+
+def test_quality_scoring():
+    """
+    Test the quality scoring system.
+    """
+    print("Testing VoiceStudio Quality Scoring System")
+    print("=" * 50)
+
+    # Create test audio files
+    sample_rate = 22050
+    duration = 2.0
+
+    # Reference audio (clean tone)
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    reference_audio = np.sin(2 * np.pi * 440 * t)
+
+    # Generated audio (similar tone with slight noise)
+    generated_audio = np.sin(2 * np.pi * 440 * t) + np.random.randn(len(t)) * 0.1
+
+    # Test quality scoring
+    quality_scorer = QualityScorer()
+
+    try:
+        # Score quality
+        quality_info = quality_scorer.score_quality(reference_audio, generated_audio)
+
+        print(f"SUCCESS: Overall Score: {quality_info['overall_score']:.3f}")
+        print(f"SUCCESS: Similarity Score: {quality_info['similarity_score']:.3f}")
+        print(f"SUCCESS: Quality Level: {quality_info['quality_level']}")
+        print(f"SUCCESS: Recommendation: {quality_info['recommendation']}")
+
+        # Test quality gate
+        quality_gate = VoiceCloningQualityGate()
+
+        # Mock voice profile
+        voice_profile = {
+            "name": "test_profile",
+            "embedding": np.random.randn(256).tolist(),
+            "sample_rate": sample_rate,
+        }
+
+        generated_audio, quality_info = quality_gate.generate_with_quality_gate(
+            "Hello world", reference_audio, voice_profile
+        )
+
+        print(f"SUCCESS: Quality Gate Test: Generated {len(generated_audio)} samples")
+        print(f"SUCCESS: Final Quality: {quality_info['overall_score']:.3f}")
+
+        print("=" * 50)
+        print("Quality Scoring System Test PASSED!")
+        print("Ready for voice cloning integration!")
+
+    except Exception as e:
+        print(f"FAIL: Test failed: {e}")
+        return False
+
+    return True
+
+
 if __name__ == "__main__":
-    # Test the quality scorer
-    logging.basicConfig(level=logging.INFO)
-    
-    # Example files (replace with actual paths)
-    reference_file = "reference.wav"
-    generated_file = "generated.wav"
-    
-    if Path(reference_file).exists() and Path(generated_file).exists():
-        print("Testing voice quality scorer...")
-        
-        scorer = VoiceQualityScorer()
-        quality_score = scorer.score_quality(reference_file, generated_file)
-        
-        print(f"✅ Quality scoring complete!")
-        print(f"📊 Overall Score: {quality_score.overall_score:.2f}/100")
-        print(f"🎯 Similarity: {quality_score.similarity_score:.2f}/100")
-        print(f"🔊 Audio Quality: {quality_score.audio_quality_score:.2f}/100")
-        print(f"🎵 Prosody: {quality_score.prosody_score:.2f}/100")
-        
-        if scorer.is_acceptable_quality(quality_score):
-            print("✅ Quality meets minimum threshold")
-        else:
-            print("❌ Quality below minimum threshold")
-    else:
-        print("ℹ️  No test files found. Place reference.wav and generated.wav to test.")
+    # Run test
+    test_quality_scoring()

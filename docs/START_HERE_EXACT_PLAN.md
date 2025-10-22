@@ -62,7 +62,7 @@
 **EVERYTHING GOES TO VOICESTUDIO VOICE CLONING PROGRAM ONLY**
 
 - ALL user inputs → Integrate into voice cloning program
-- ALL ChatGPT suggestions → Integrate into voice cloning program  
+- ALL ChatGPT suggestions → Integrate into voice cloning program
 - ALL feature requests → Integrate into voice cloning program
 - ALL improvements → Integrate into voice cloning program
 - ALL bug fixes → Integrate into voice cloning program
