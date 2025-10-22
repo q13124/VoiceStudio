@@ -31,6 +31,7 @@ jobs:
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           sudo apt update
           sudo apt install gh -y
+        continue-on-error: true
 
       - name: Detect changes in last window
         id: changes
@@ -183,9 +184,15 @@ Merges:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
+          # Check if gh is available
+          if ! command -v gh &> /dev/null; then
+            echo "GitHub CLI not available, skipping issue posting"
+            exit 0
+          fi
           # create or find issue titled "Handshake Feed"
           num=$(gh issue list --search "Handshake Feed in:title" --json number,title | jq -r '.[0].number // empty')
           if [ -z "$num" ]; then
             num=$(gh issue create -t "Handshake Feed" -b "Automated 15-minute status thread")
           fi
           gh issue comment "$num" -b "$(cat status.msg)"
+        continue-on-error: true
