@@ -9,6 +9,11 @@ permissions:
 jobs:
   status:
     runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      STATUS_EMAIL_FROM: ${{ secrets.STATUS_EMAIL_FROM }}
+      STATUS_EMAIL_TO: ${{ secrets.STATUS_EMAIL_TO }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -49,4 +54,25 @@ jobs:
             git push
           else
             echo "No change; nothing to commit."
+          fi
+
+      - name: Optional Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"VoiceStudio Handshake: $(cat NEW_STATUS.md | head -5 | tail -4 | tr '\n' ' ')\"}" \
+            $SLACK_WEBHOOK_URL || echo "Slack notification failed"
+
+      - name: Optional email notification (hourly)
+        if: env.SENDGRID_API_KEY != '' && env.STATUS_EMAIL_FROM != '' && env.STATUS_EMAIL_TO != ''
+        run: |
+          # Only send email on the hour (every 60 minutes)
+          MIN=$(date +%M)
+          if [ "$MIN" = "00" ]; then
+            curl -X POST "https://api.sendgrid.com/v3/mail/send" \
+              -H "Authorization: Bearer $SENDGRID_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"personalizations\":[{\"to\":[{\"email\":\"$STATUS_EMAIL_TO\"}]}],\"from\":{\"email\":\"$STATUS_EMAIL_FROM\",\"name\":\"VS Handshake\"},\"subject\":\"VoiceStudio Hourly Status\",\"content\":[{\"type\":\"text/plain\",\"value\":\"$(cat NEW_STATUS.md)\"}]}" || echo "Email notification failed"
+          else
+            echo "Skipping email (not on the hour)"
           fi
