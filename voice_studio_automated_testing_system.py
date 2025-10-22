@@ -179,7 +179,8 @@ class TestDataGenerator:
             
             # Save audio
             output_path = self.reference_path / f"reference_{i:03d}.wav"
-            librosa.output.write_wav(str(output_path), signal, sample_rate)
+            import soundfile as sf
+            sf.write(str(output_path), signal, sample_rate)
             
         print(f"Generated {count} reference audio files")
         

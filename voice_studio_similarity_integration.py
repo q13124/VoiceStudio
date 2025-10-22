@@ -514,9 +514,9 @@ class TestVoiceSimilarityAnalyzer:
 
     def save_test_audio(self, audio, filename):
         """Save test audio to temporary file"""
-        import librosa
+        import soundfile as sf
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-        librosa.output.write_wav(temp_file.name, audio, 22050)
+        sf.write(temp_file.name, audio, 22050)
         return temp_file.name
 
     def teardown_method(self):
