@@ -14,20 +14,21 @@
 - [x] **Day 3**: Quality scoring system - COMPLETE & TESTED
 
 ### 🔄 CURRENT POSITION
-- **Next**: Day 4 - Audio mastering pipeline
-- **Status**: Ready to execute ChatGPT's Day 4 plan
-- **Time**: 15 minutes per day workflow
+- **NEW**: Claude created AUTOMATED ChatGPT ↔ Cursor system
+- **Phase**: 7-day integration sprint (Days 1-7) before 30-day plan
+- **Status**: Ready for automated 15-minute cycles
+- **Focus**: Wire E2E pipeline (fusion → gates → TTS → WAV)
 
 ---
 
 ## 🎯 EXECUTION PROTOCOL (MANDATORY)
 
-### DAILY WORKFLOW (15 minutes)
-1. **Get ChatGPT Plan** (2 min): "VoiceStudio Day [X] plan"
-2. **Execute in Cursor** (3 min): Ctrl+K → paste plan → Ctrl+Enter
-3. **Test** (5 min): Run test command from plan
-4. **Review** (2 min): Ask ChatGPT for review
-5. **Apply Fixes** (3 min): Ctrl+L → apply fixes → commit
+### AUTOMATED WORKFLOW (15-minute cycles)
+1. **Get Status** (1 min): Read `docs/HANDSHAKE_STATUS.md` + logs
+2. **Ask ChatGPT** (1 min): Paste status → Get 2-3 commands
+3. **Execute in Cursor** (10 min): Ctrl+K → paste commands → Ctrl+Enter
+4. **Capture Results** (2 min): Run tests, note outcomes
+5. **Log to ChatGPT** (1 min): Paste results → Get next commands
 
 ### CURSOR SHORTCUTS (CRITICAL)
 - `Ctrl+K`: Composer (multi-file edits)
@@ -94,11 +95,11 @@
 
 ## 🚀 IMMEDIATE NEXT STEPS
 
-1. **Get ChatGPT Day 4 Plan**: "VoiceStudio Day 4 plan"
-2. **Execute in Cursor**: Ctrl+K → paste → Ctrl+Enter
-3. **Test**: Run provided test command
-4. **Review**: Ask ChatGPT for review
-5. **Commit**: git add . && git commit -m "Day 4: Audio mastering" && git push
+1. **Setup ChatGPT Overseer**: Copy Claude's automated system to ChatGPT Pro
+2. **Get Status**: Read `docs/HANDSHAKE_STATUS.md` + logs
+3. **Start Cycle**: Paste status to ChatGPT → Get 2-3 commands
+4. **Execute**: Ctrl+K → paste commands → Ctrl+Enter
+5. **Repeat**: Every 15 minutes until Day 1 integration complete
 
 ---
 
