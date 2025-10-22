@@ -25,16 +25,29 @@ jobs:
           COMMITS="$(git log --since "${WIN} minutes ago" --pretty=format:'%h %s (by %an)' || true)"
           [ -n "$COMMITS" ] || COMMITS="— No commits in this window."
           TS="$(date -u +'%Y-%m-%d %H:%MZ')"
+
+          # Check if there are any commits from AI assistant (me)
+          AI_COMMITS="$(git log --since "${WIN} minutes ago" --pretty=format:'%h %s (by %an)' | grep -E '(by wtsteward11|by VS Handshake Bot)' || true)"
+          EXECUTION_STATUS=""
+          if [ -n "$AI_COMMITS" ]; then
+            EXECUTION_STATUS="🤖 AI ASSISTANT EXECUTING: Recent commits show active work"
+          else
+            EXECUTION_STATUS="⏳ WAITING: No recent AI assistant activity"
+          fi
+
           {
             echo "## ${TS}"
             echo
             echo "1) What changed since last check-in:"
             echo "$COMMITS"
             echo
-            echo "2) What's next from the plan:"
+            echo "2) AI Assistant Status:"
+            echo "$EXECUTION_STATUS"
+            echo
+            echo "3) What's next from ChatGPT:"
             echo "— Update docs/START_HERE_EXACT_PLAN.md → 'Next' bullets"
             echo
-            echo "3) Blockers / decisions needed:"
+            echo "4) Blockers / decisions needed:"
             echo "— None"
             echo
             echo "---"
@@ -59,8 +72,10 @@ jobs:
       - name: Optional Slack notification
         if: env.SLACK_WEBHOOK_URL != ''
         run: |
+          AI_STATUS=$(grep "AI Assistant Status:" NEW_STATUS.md | cut -d: -f2- | xargs)
+          COMMITS_SUMMARY=$(git log --since "15 minutes ago" --pretty=format:'%h %s' | head -3 | tr '\n' '; ')
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"VoiceStudio Handshake: $(cat NEW_STATUS.md | head -5 | tail -4 | tr '\n' ' ')\"}" \
+            --data "{\"text\":\"🤖 VoiceStudio: $AI_STATUS | Recent: $COMMITS_SUMMARY\"}" \
             $SLACK_WEBHOOK_URL || echo "Slack notification failed"
 
       - name: Optional email notification (hourly)
