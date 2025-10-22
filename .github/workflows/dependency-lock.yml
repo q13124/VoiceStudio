@@ -41,7 +41,9 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Generate lockfile with uv (no upgrade)
-      run: bash tooling/lock/generate_uv_lock.sh
+      run: |
+        chmod +x tooling/lock/generate_uv_lock.sh
+        bash tooling/lock/generate_uv_lock.sh
 
     - name: Verify lockfile drift
       run: git diff --exit-code -- requirements.lock.txt
