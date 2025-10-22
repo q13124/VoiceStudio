@@ -30,9 +30,9 @@ jobs:
           AI_COMMITS="$(git log --since "${WIN} minutes ago" --pretty=format:'%h %s (by %an)' | grep -E '(by wtsteward11|by VS Handshake Bot)' || true)"
           EXECUTION_STATUS=""
           if [ -n "$AI_COMMITS" ]; then
-            EXECUTION_STATUS="🤖 AI ASSISTANT EXECUTING: Recent commits show active work"
+            EXECUTION_STATUS="AI ASSISTANT EXECUTING: Recent commits show active work"
           else
-            EXECUTION_STATUS="⏳ WAITING: No recent AI assistant activity"
+            EXECUTION_STATUS="WAITING: No recent AI assistant activity"
           fi
 
           {
