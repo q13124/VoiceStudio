@@ -1,0 +1,45 @@
+name: simple-handshake
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:
+
+jobs:
+  handshake:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate 60-second status
+        run: |
+          echo "VoiceStudio 60-sec Status — $(date -u +'%Y-%m-%dT%H:%MZ')" > status.txt
+          echo "" >> status.txt
+          echo "1) What changed since last check-in:" >> status.txt
+          git log --since "15 minutes ago" --pretty=format:"%h %s (by %an)" >> status.txt || echo "— No commits in this window." >> status.txt
+          echo "" >> status.txt
+          echo "2) What's next from ChatGPT:" >> status.txt
+          echo "— Waiting for ChatGPT instructions..." >> status.txt
+          echo "" >> status.txt
+          echo "3) Blockers / decisions needed:" >> status.txt
+          echo "— None" >> status.txt
+
+      - name: Update status file
+        run: |
+          mkdir -p docs
+          echo "## $(date -u +'%Y-%m-%d %H:%MZ')" > docs/HANDSHAKE_STATUS.md
+          cat status.txt >> docs/HANDSHAKE_STATUS.md
+          echo "" >> docs/HANDSHAKE_STATUS.md
+          echo "---" >> docs/HANDSHAKE_STATUS.md
+          echo "" >> docs/HANDSHAKE_STATUS.md
+
+      - name: Commit status
+        run: |
+          git config user.name "VoiceStudio Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add docs/HANDSHAKE_STATUS.md
+          git commit -m "handshake: 60s status [skip ci]" || echo "No changes to commit"
+          git push || echo "Push failed but continuing"
