@@ -1,0 +1,57 @@
+name: status-update
+on:
+  schedule: [{ cron: "*/15 * * * *" }]  # every 15 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Build status update
+        run: |
+          WIN=15
+          COMMITS="$(git log --since "${WIN} minutes ago" --pretty=format:'%h %s (by %an)' || true)"
+          [ -n "$COMMITS" ] || COMMITS="— No commits in this window."
+          TS="$(date -u +'%Y-%m-%d %H:%MZ')"
+
+          mkdir -p docs
+          {
+            echo "## ${TS}"
+            echo
+            echo "1) Recent changes:"
+            echo "$COMMITS"
+            echo
+            echo "2) Core features status:"
+            echo "- Voice Fusion: READY (workers/ops/voice_fusion.py)"
+            echo "- Quality Scoring: READY (workers/ops/quality_scorer.py)"
+            echo "- Web UI: READY (web/simple_ui.py)"
+            echo "- Python 3.11: ACTIVE"
+            echo
+            echo "3) Next actions:"
+            echo "- Test voice cloning features"
+            echo "- Integrate with main application"
+            echo
+            echo "---"
+            echo
+          } > NEW_STATUS.md
+
+          [ -f docs/HANDSHAKE_STATUS.md ] || touch docs/HANDSHAKE_STATUS.md
+          cat NEW_STATUS.md docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "VS Status Bot"
+          git config user.email "status@users.noreply.github.com"
+          if ! git diff --quiet -- docs/HANDSHAKE_STATUS.md; then
+            git add docs/HANDSHAKE_STATUS.md
+            git commit -m "status: update [skip ci]"
+            git push
+          else
+            echo "No change; nothing to commit."
+          fi

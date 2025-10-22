@@ -1,4 +1,4 @@
-.PHONY: help install dev prod test clean migrate backup restore docker-up docker-down day-plan day-exec day-test day-review day-fix day-commit day-all exporter-build exporter-run exporter-stop exporter-logs agent-run agent-stop agent-logs prober-run prober-push db-upgrade db-revise test-python test-frontend test-api test-all day-preset cursor-agent cursor-agent-optimal
+.PHONY: help install dev prod test clean migrate backup restore docker-up docker-down day-plan day-exec day-test day-review day-fix day-commit day-all db-upgrade db-revise test-python test-frontend test-api test-all day-preset
 
 # Default target
 help:
@@ -19,17 +19,6 @@ help:
 	@echo "  docker-up    - Start all Docker services"
 	@echo "  docker-down  - Stop all Docker services"
 	@echo ""
-	@echo "Monitoring:"
-	@echo "  exporter-build - Build SQLite metrics exporter Docker image"
-	@echo "  exporter-run   - Start SQLite metrics exporter"
-	@echo "  exporter-stop  - Stop SQLite metrics exporter"
-	@echo "  exporter-logs  - View exporter logs"
-	@echo "  agent-run      - Start Grafana Agent"
-	@echo "  agent-stop     - Stop Grafana Agent"
-	@echo "  agent-logs     - View agent logs"
-	@echo "  prober-run     - Run synthetic health probe"
-	@echo "  prober-push    - Push probe metrics to Pushgateway"
-	@echo ""
 	@echo "Testing:"
 	@echo "  test-python    - Run Python tests"
 	@echo "  test-frontend  - Run frontend tests"
@@ -43,8 +32,6 @@ help:
 	@echo "Utilities:"
 	@echo "  clean        - Clean temporary files"
 	@echo "  client-test  - Test A/B ingest client"
-	@echo "  cursor-agent - Run Cursor agent for automated task execution"
-	@echo "  cursor-agent-optimal - Run optimized Cursor agent with smart file detection"
 	@echo ""
 	@echo "Daily Workflow (15-min sprints):"
 	@echo "  day-plan     - Show ChatGPT prompt template"
@@ -190,61 +177,6 @@ day-commit:
 # all-in-one skeleton (expects DAY, FEATURE, TEST env vars)
 day-all: day-plan day-exec day-test day-review day-fix day-commit
 
-# ===== SQLite → Prometheus exporter =====
-.PHONY: exporter-build exporter-run exporter-stop exporter-logs
-
-exporter-build:
-	@docker build -t voicestudio-sqlite-exporter:latest ops/sqlite_metrics_exporter
-
-exporter-run:
-	@DB_URL?=sqlite:///./app.db
-	@docker rm -f voicestudio-sqlite-exporter >/dev/null 2>&1 || true
-	@docker run -d --name voicestudio-sqlite-exporter \
-		-e DB_URL=$(DB_URL) \
-		-p 8001:8001 \
-		-v $$(pwd)/app.db:/app/app.db \
-		voicestudio-sqlite-exporter:latest
-	@echo "Exporter on http://localhost:8001/metrics"
-
-exporter-stop:
-	@docker rm -f voicestudio-sqlite-exporter >/dev/null 2>&1 || true
-
-exporter-logs:
-	@docker logs -f voicestudio-sqlite-exporter
-
-# ===== Grafana Agent (scrapes API + exporter) =====
-.PHONY: agent-run agent-stop agent-logs
-
-agent-run:
-	@REMOTE_USER?=user
-	@REMOTE_PASS?=pass
-	@docker rm -f voicestudio-agent >/dev/null 2>&1 || true
-	@docker run -d --name voicestudio-agent \
-		-p 12345:12345 \
-		-e REMOTE_USER=$(REMOTE_USER) -e REMOTE_PASS=$(REMOTE_PASS) \
-		-v $$(pwd)/ops/agent/agent.yaml:/etc/agent/agent.yaml \
-		grafana/agent:latest \
-		--config.file=/etc/agent/agent.yaml
-	@echo "Agent running. Remote write per ops/agent/agent.yaml"
-
-agent-stop:
-	@docker rm -f voicestudio-agent >/dev/null 2>&1 || true
-
-agent-logs:
-	@docker logs -f voicestudio-agent
-
-# ===== Synthetic prober =====
-.PHONY: prober-run prober-push
-
-prober-run:
-	@API_BASE?=http://localhost:8000
-	@TEXT?=Hello\, this is a health probe.
-	python ops/synth_prober/prober.py --api $$API_BASE --text "$$TEXT"
-
-prober-push:
-	@API_BASE?=http://localhost:8000
-	@PUSHGATEWAY_URL?=http://localhost:9091
-	python ops/synth_prober/prober.py --api $$API_BASE --pushgateway $$PUSHGATEWAY_URL --text "Hello from CI"
 
 # ===== DB Migrations convenience =====
 .PHONY: db-upgrade db-revise
@@ -307,12 +239,3 @@ endef
 
 day-preset:
 	@$(value _pick_test)
-
-# ===== Cursor Agent =====
-.PHONY: cursor-agent
-
-cursor-agent:
-	@python scripts/cursor_agent.py --file docs/CURSOR_INSTRUCTIONS.md --interval 20 --push
-
-cursor-agent-optimal:
-	@python scripts/cursor_agent/agent.py --interval 60 --push
