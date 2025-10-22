@@ -164,9 +164,9 @@ Merges:
           { echo "## $(date -u +'%Y-%m-%d %H:%MZ')"; echo; cat status.msg; echo; echo "---"; echo; } \
             | cat - docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
 
-      - name: Commit & push status (hourly throttle)
+      - name: Commit & push status (throttled)
         run: |
-          M=$(date -u +%s); MOD=$(( (M/60) % 60 ))
+          M=$(date -u +%s); MOD=$(( (M/60) % 15 ))
           [ "$MOD" = "0" ] || { echo "Skip commit (throttle)"; exit 0; }
           git config user.name  "VS Handshake Bot"
           git config user.email "bot@users.noreply.github.com"
