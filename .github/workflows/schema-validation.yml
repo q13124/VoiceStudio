@@ -9,66 +9,66 @@ on:
 jobs:
   schema-validation:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openapi-spec-validator httpx
-        
+
     - name: Start VoiceStudio API server
       run: |
         python -m uvicorn services.main:app --host 0.0.0.0 --port 8000 &
         sleep 10  # Wait for server to start
-        
+
     - name: Fetch OpenAPI schema
       run: |
         curl -o openapi.json http://localhost:8000/openapi.json
-        
+
     - name: Validate OpenAPI 3.1 schema
       run: |
         python -c "
         import json
         from openapi_spec_validator import validate_spec
-        
+
         with open('openapi.json', 'r') as f:
             spec = json.load(f)
-            
+
         # Validate against OpenAPI 3.1
         validate_spec(spec)
         print('✅ OpenAPI schema is valid')
-        
+
         # Check version
         assert spec.get('openapi') == '3.1.0', f'Expected OpenAPI 3.1.0, got {spec.get(\"openapi\")}'
         print('✅ OpenAPI version is 3.1.0')
-        
+
         # Check for required fields
         assert 'info' in spec, 'Missing info section'
         assert 'paths' in spec, 'Missing paths section'
         print('✅ Required sections present')
-        
+
         # Check TTS endpoint exists
         assert '/v1/generate' in spec.get('paths', {}), 'Missing /v1/generate endpoint'
         print('✅ TTS endpoint present')
         "
-        
+
     - name: Check for breaking changes
       run: |
         python -c "
         import json
-        
+
         with open('openapi.json', 'r') as f:
             spec = json.load(f)
-            
+
         # Check that output_chain field exists in TTS request
         tts_path = spec.get('paths', {}).get('/v1/generate', {})
         post_method = tts_path.get('post', {})
@@ -77,12 +77,12 @@ jobs:
         json_content = content.get('application/json', {})
         schema = json_content.get('schema', {})
         properties = schema.get('properties', {})
-        
+
         if 'output_chain' not in properties:
             print('⚠️  output_chain field missing from TTS request')
         else:
             print('✅ output_chain field present')
-            
+
         # Check that metrics field exists in TTS response
         responses = post_method.get('responses', {})
         success_response = responses.get('200', {})
@@ -93,19 +93,19 @@ jobs:
         items_property = response_properties.get('items', {})
         items_schema = items_property.get('items', {})
         item_properties = items_schema.get('properties', {})
-        
+
         if 'metrics' not in item_properties:
             print('⚠️  metrics field missing from TTS response items')
         else:
             print('✅ metrics field present')
         "
-        
+
     - name: Upload schema for review
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: openapi-schema
         path: openapi.json
-        
+
     - name: Stop server
       run: |
         pkill -f uvicorn || true
