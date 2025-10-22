@@ -1,4 +1,4 @@
-.PHONY: help install dev prod test clean migrate backup restore docker-up docker-down day-plan day-exec day-test day-review day-fix day-commit day-all exporter-build exporter-run exporter-stop exporter-logs agent-run agent-stop agent-logs prober-run prober-push db-upgrade db-revise test-python test-frontend test-api test-all day-preset
+.PHONY: help install dev prod test clean migrate backup restore docker-up docker-down day-plan day-exec day-test day-review day-fix day-commit day-all exporter-build exporter-run exporter-stop exporter-logs agent-run agent-stop agent-logs prober-run prober-push db-upgrade db-revise test-python test-frontend test-api test-all day-preset cursor-agent cursor-agent-optimal
 
 # Default target
 help:
@@ -43,6 +43,8 @@ help:
 	@echo "Utilities:"
 	@echo "  clean        - Clean temporary files"
 	@echo "  client-test  - Test A/B ingest client"
+	@echo "  cursor-agent - Run Cursor agent for automated task execution"
+	@echo "  cursor-agent-optimal - Run optimized Cursor agent with smart file detection"
 	@echo ""
 	@echo "Daily Workflow (15-min sprints):"
 	@echo "  day-plan     - Show ChatGPT prompt template"
@@ -305,3 +307,12 @@ endef
 
 day-preset:
 	@$(value _pick_test)
+
+# ===== Cursor Agent =====
+.PHONY: cursor-agent
+
+cursor-agent:
+	@python scripts/cursor_agent.py --file docs/CURSOR_INSTRUCTIONS.md --interval 20 --push
+
+cursor-agent-optimal:
+	@python scripts/cursor_agent/agent.py --interval 60 --push
