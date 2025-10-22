@@ -320,16 +320,16 @@ def test_voice_fusion():
         fused_embedding = fusion_system.fuse_audio_files(test_files)
         print(f"SUCCESS: Successfully fused {len(test_files)} audio files")
         print(f"SUCCESS: Embedding dimension: {len(fused_embedding)}")
-        
+
         # Create voice profile
         voice_profile = fusion_system.create_voice_profile(test_files, "test_profile")
         print(f"SUCCESS: Created voice profile: {voice_profile['name']}")
-        
+
         # Test integration
         integration = VoiceCloningIntegration()
         generated_audio = integration.clone_voice_with_fusion("Hello world", test_files)
         print(f"SUCCESS: Generated audio length: {len(generated_audio)} samples")
-        
+
         print("=" * 50)
         print("Voice Fusion System Test PASSED!")
         print("Ready for voice cloning integration!")

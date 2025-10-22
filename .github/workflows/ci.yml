@@ -47,6 +47,7 @@ jobs:
       - name: Run Alembic migrations (SQLite)
         env:
           DB_URL: sqlite:///./test.db
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           alembic upgrade head
           echo "SQLite migrations completed"
@@ -54,6 +55,7 @@ jobs:
       - name: Run Alembic migrations (PostgreSQL)
         env:
           DB_URL: postgresql+psycopg://postgres:postgres@localhost:5432/voicestudio_test
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           alembic upgrade head
           echo "PostgreSQL migrations completed"
@@ -61,4 +63,5 @@ jobs:
       - name: Run tests
         env:
           DB_URL: sqlite:///./test.db
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest -q
