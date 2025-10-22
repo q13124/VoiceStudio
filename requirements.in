@@ -43,3 +43,7 @@ ffmpeg-python>=0.2.0
 sqlalchemy>=2.0.0
 alembic>=1.13.0
 psycopg2-binary>=2.9.0  # PostgreSQL adapter
+
+# Voice cloning and quality assessment
+resemblyzer>=0.1.1
+pyloudnorm>=0.1.1

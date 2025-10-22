@@ -46,9 +46,9 @@ jobs:
       - name: Build 60s status (auto-grab)
         id: build
         env:
-          WINDOW_MINUTES: ${{ vars.STATUS_WINDOW_MINUTES || '15' }}
-          PLAN_FILE: ${{ vars.STATUS_PLAN_FILE || 'docs/START_HERE_EXACT_PLAN.md' }}
-          ALT_PLAN_FILE: ${{ vars.STATUS_ALT_PLAN_FILE || 'docs/15_MINUTE_WORKFLOW.md' }}
+          WINDOW_MINUTES: 15
+          PLAN_FILE: docs/START_HERE_EXACT_PLAN.md
+          ALT_PLAN_FILE: docs/15_MINUTE_WORKFLOW.md
         run: |
           python - << 'PY'
           import os, subprocess, pathlib, datetime, json
@@ -139,11 +139,10 @@ Merges:
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           STATUS_EMAIL_TO:  ${{ secrets.STATUS_EMAIL_TO }}
           STATUS_EMAIL_FROM: ${{ secrets.STATUS_EMAIL_FROM }}
-          EMAIL_EVERY_MIN: ${{ vars.STATUS_EMAIL_EVERY_MIN || '60' }}
         run: |
-          # Gate to ~hourly: only when minute % EMAIL_EVERY_MIN == 0
+          # Gate to ~hourly: only when minute % 60 == 0
           M=$(date -u +%s)
-          MOD=$(( (M/60) % ${EMAIL_EVERY_MIN} ))
+          MOD=$(( (M/60) % 60 ))
           if [ "$MOD" != "0" ]; then echo "Skip email (throttle)"; exit 0; fi
           curl -sS --fail -X POST https://api.sendgrid.com/v3/mail/send \
             -H "Authorization: Bearer $SENDGRID_API_KEY" \
@@ -165,10 +164,8 @@ Merges:
             | cat - docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
 
       - name: Commit & push status (hourly throttle)
-        env:
-          EMAIL_EVERY_MIN: ${{ vars.STATUS_EMAIL_EVERY_MIN || '60' }}
         run: |
-          M=$(date -u +%s); MOD=$(( (M/60) % ${EMAIL_EVERY_MIN} ))
+          M=$(date -u +%s); MOD=$(( (M/60) % 60 ))
           [ "$MOD" = "0" ] || { echo "Skip commit (throttle)"; exit 0; }
           git config user.name  "VS Handshake Bot"
           git config user.email "bot@users.noreply.github.com"
