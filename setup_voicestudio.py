@@ -27,8 +27,8 @@ def run_command(cmd, description):
 def check_python_version():
     """Check if Python version is compatible"""
     version = sys.version_info
-    if version.major != 3 or version.minor < 10:
-        print(f"❌ Python 3.10+ required, found {version.major}.{version.minor}")
+    if version.major != 3 or version.minor < 11:
+        print(f"❌ Python 3.11+ required, found {version.major}.{version.minor}")
         return False
     print(f"✅ Python {version.major}.{version.minor} detected")
     return True

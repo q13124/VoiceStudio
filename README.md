@@ -129,7 +129,7 @@ print(f"Fallback options: {chain}")
 - **OS**: Windows 10 or later
 - **RAM**: 8GB minimum (16GB recommended)
 - **Storage**: 10GB free space
-- **Python**: 3.10 or later
+- **Python**: 3.11 or later
 
 ### **Recommended Requirements**
 - **OS**: Windows 11
