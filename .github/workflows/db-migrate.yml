@@ -39,6 +39,9 @@ jobs:
           pip install -r requirements.txt
           pip install alembic psycopg[binary]
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
