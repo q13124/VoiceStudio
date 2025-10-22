@@ -1,0 +1,77 @@
+{
+  "title": "VoiceStudio A/B (Postgres)",
+  "schemaVersion": 39,
+  "editable": true,
+  "tags": ["voicestudio","ab","postgres"],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "pg",
+        "query": "postgres",
+        "current": {"selected": true},
+        "hide": 0
+      },
+      {
+        "type": "query",
+        "name": "engine",
+        "datasource": {"type": "postgres", "uid": "$pg"},
+        "refresh": 1,
+        "query": "SELECT DISTINCT engine FROM eval_runs ORDER BY engine",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Win Rate by Engine",
+      "datasource": {"type": "postgres", "uid": "$pg"},
+      "targets": [
+        {
+          "format":  "time_series",
+          "rawSql":  "SELECT date AS time, wr AS value, engine AS metric FROM eval_runs WHERE $__timeFilter(date) AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine' = 'All') ORDER BY date",
+          "refId":   "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Clip Rate",
+      "datasource": {"type": "postgres", "uid": "$pg"},
+      "targets": [
+        {
+          "format":  "time_series",
+          "rawSql":  "SELECT date AS time, clip_rate AS value, engine AS metric FROM eval_runs WHERE $__timeFilter(date) AND clip_rate IS NOT NULL AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine' = 'All') ORDER BY date",
+          "refId":   "B"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p50 / p95 (ms)",
+      "datasource": {"type": "postgres", "uid": "$pg"},
+      "targets": [
+        {"format": "time_series", "rawSql": "SELECT date AS time, latency_p50 AS value, engine || ' p50' AS metric FROM eval_runs WHERE $__timeFilter(date) AND latency_p50 IS NOT NULL AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine'='All') ORDER BY date", "refId": "C"},
+        {"format": "time_series", "rawSql": "SELECT date AS time, latency_p95 AS value, engine || ' p95' AS metric FROM eval_runs WHERE $__timeFilter(date) AND latency_p95 IS NOT NULL AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine'='All') ORDER BY date", "refId": "D"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ms"}}
+    },
+    {
+      "type": "table",
+      "title": "A/B Summary (Latest Day)",
+      "datasource": {"type": "postgres", "uid": "$pg"},
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest AS (SELECT MAX(date) AS d FROM eval_runs) SELECT engine, AVG(wr) AS wr, AVG(clip_rate) AS clip_rate, AVG(latency_p50) AS p50, AVG(latency_p95) AS p95 FROM eval_runs, latest WHERE date = latest.d GROUP BY engine ORDER BY wr DESC",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    }
+  ]
+}

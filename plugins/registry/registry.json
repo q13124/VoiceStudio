@@ -1,0 +1,5 @@
+{
+  "plugins": [],
+  "scopes": ["voice-adapter","dsp-filter","exporter","analyzer"],
+  "hot_reload": true
+}

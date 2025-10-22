@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProsodyTransform",
+  "description": "Maps emotion + intensity to acoustic modifiers used by the engine",
+  "type": "object",
+  "properties": {
+    "emotion": {
+      "type": "string",
+      "enum": ["neutral","happy","sad","angry","surprised","fearful","disgusted"]
+    },
+    "intensity": {"type": "number", "minimum": 0, "maximum": 1},
+    "pitch_semitones": {"type": "number", "minimum": -12, "maximum": 12},
+    "energy_db": {"type": "number", "minimum": -24, "maximum": 24},
+    "tempo": {"type": "number", "minimum": 0.25, "maximum": 2.0},
+    "style_weight": {"type": "number", "minimum": 0, "maximum": 1},
+    "stability": {"type": "number", "minimum": 0, "maximum": 1},
+    "clarity": {"type": "number", "minimum": 0, "maximum": 1}
+  },
+  "required": ["emotion", "intensity"],
+  "additionalProperties": false
+}

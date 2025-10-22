@@ -1,0 +1,11 @@
+groups:
+  - name: slo-budget
+    rules:
+      - record: job:http_request_error_ratio
+        expr: sum(rate(http_requests_total{status=~"5..|4.."}[5m])) / sum(rate(http_requests_total[5m]))
+
+      - record: job:slo_fast_burn
+        expr: job:http_request_error_ratio / 0.001
+
+      - record: job:slo_slow_burn
+        expr: avg_over_time(job:http_request_error_ratio[1h]) / 0.001

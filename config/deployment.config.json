@@ -1,0 +1,14 @@
+{
+  "$schema": "https://example.com/deployment.schema.json",
+  "environment": "dev",
+  "service_port": 5188,
+  "gpu": {
+    "allow_mixed_precision": true,
+    "min_free_mb": 512
+  },
+  "paths": {
+    "programdata": "C:/ProgramData/VoiceStudio",
+    "logs": "C:/ProgramData/VoiceStudio/logs",
+    "telemetry": "C:/ProgramData/VoiceStudio/telemetry"
+  }
+}

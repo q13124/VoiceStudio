@@ -1,0 +1,48 @@
+# VoiceStudio Development Environment Configuration
+# Overrides for development environment
+
+# Development-specific router settings
+router:
+  port: 5090
+  debug: true
+  log_level: "debug"
+
+# Development web UI settings
+web_ui:
+  dev_server: true
+  hot_reload: true
+  debug_mode: true
+
+# Relaxed security for development
+security:
+  rate_limits:
+    api_requests_per_minute: 1000
+    clones_per_day_per_user: 1000
+  input_validation:
+    max_text_length: 10000
+  encryption:
+    voice_profiles_at_rest: false
+
+# Development testing settings
+testing:
+  mock_engines: true
+  unit_test_coverage_threshold: 60
+  integration_test_timeout: 60
+  e2e_test_timeout: 300
+
+# Development telemetry
+telemetry:
+  enabled: true
+  retention_days: 7
+  metrics_export:
+    prometheus:
+      enabled: false
+
+# Development plugin settings
+plugins:
+  hot_reload: true
+  debug_mode: true
+  plugin_directories:
+    - "plugins/engines"
+    - "plugins/effects"
+    - "plugins/analyzers"

@@ -1,0 +1,35 @@
+# VoiceStudio Constraints
+# Optional upper/lower bounds for dependency resolution
+# These are additive constraints that don't override requirements.in
+
+# Core framework constraints
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+pydantic>=2.5.0,<3.0.0
+
+# Audio processing constraints
+soundfile>=0.12.1,<1.0.0
+pyloudnorm>=0.1.1,<1.0.0
+noisereduce>=3.0.0,<4.0.0
+scipy>=1.11.0,<2.0.0
+numpy>=1.24.0,<2.0.0
+
+# Voice synthesis constraints
+TTS>=0.22.0,<1.0.0
+torch>=2.1.0,<3.0.0
+torchaudio>=2.1.0,<3.0.0
+
+# Monitoring constraints
+prometheus-fastapi-instrumentator>=6.1.0,<7.0.0
+prometheus-client>=0.19.0,<1.0.0
+
+# Testing constraints
+pytest>=7.4.0,<8.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+httpx>=0.24.0,<1.0.0
+openapi-spec-validator>=0.7.0,<1.0.0
+
+# Upper bounds to avoid known-bad versions (examples)
+# numpy<2.0.0
+# fastapi<0.115
+# pydantic<2.8

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VoicePreset",
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "stability": {"type": "number", "minimum": 0, "maximum": 1},
+    "clarity": {"type": "number", "minimum": 0, "maximum": 1},
+    "style": {"type": "number", "minimum": 0, "maximum": 1},
+    "speaker_boost": {"type": "boolean"},
+    "emotion": {"type": "string", "enum": ["neutral","happy","sad","angry","surprised","fearful","disgusted"]},
+    "intensity": {"type": "number", "minimum": 0, "maximum": 1},
+    "speed": {"type": "number", "minimum": 0.25, "maximum": 2.0, "default": 1.0},
+    "pitch_semitones": {"type": "number", "minimum": -12, "maximum": 12, "default": 0},
+    "format": {"type": "string", "enum": ["wav", "mp3", "flac", "ogg"], "default": "wav"}
+  },
+  "additionalProperties": false
+}

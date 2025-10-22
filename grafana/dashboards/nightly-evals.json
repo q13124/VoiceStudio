@@ -1,0 +1,109 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "VoiceStudio Nightly Evaluations",
+    "tags": ["voicestudio", "evals"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Win Rate Trends",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "voicestudio_eval_win_rate{job=\"voicestudio_api\"}",
+            "legendFormat": "{{engine}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Latency P95",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "voicestudio_eval_latency_p95{job=\"voicestudio_api\"}",
+            "legendFormat": "{{engine}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Clip Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "voicestudio_eval_clip_rate{job=\"voicestudio_api\"}",
+            "legendFormat": "{{engine}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "LUFS Median",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "voicestudio_eval_lufs_med{job=\"voicestudio_api\"}",
+            "legendFormat": "{{engine}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Engine Performance Summary",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "voicestudio_eval_win_rate{job=\"voicestudio_api\"}",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "table"
+            }
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-30d",
+      "to": "now"
+    },
+    "refresh": "5m",
+    "schemaVersion": 30,
+    "version": 1
+  }
+}

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="VoiceStudio" Language="1033" Version="1.0.0.0" Manufacturer="UltraClone" UpgradeCode="D8B8D2D7-1A40-42E8-9F77-1B3E8C1EAA10">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MediaTemplate />
+    <Feature Id="Main" Title="VoiceStudio" Level="1">
+      <ComponentGroupRef Id="UI.Files" />
+      <ComponentGroupRef Id="Service.Files" />
+      <ComponentRef Id="ServiceInstall" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+
+    <Property Id="WixShellExecTarget" Value="[UIFOLDER]VoiceStudio.UI.exe"/>
+    <UIRef Id="WixUI_InstallDir"/>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="VoiceStudio">
+          <Directory Id="UIFOLDER" Name="UI" />
+          <Directory Id="SVCFOLDER" Name="Service" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="VoiceStudio" />
+      </Directory>
+    </Directory>
+
+    <ComponentGroup Id="UI.Files" Directory="UIFOLDER">
+      <!-- harvested at build via -dUiOut -->
+      <Component Id="UIExe" Guid="*">
+        <File Source="$(var.UiOut)\VoiceStudio.UI.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="UIDeps" Guid="*">
+        <File Source="$(var.UiOut)\*.dll" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Service.Files" Directory="SVCFOLDER">
+      <Component Id="SvcExe" Guid="*">
+        <File Source="$(var.SvcOut)\UltraClone.EngineService.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="SvcDeps" Guid="*">
+        <File Source="$(var.SvcOut)\*.dll" />
+      </Component>
+    </ComponentGroup>
+
+    <Component Id="ServiceInstall" Guid="*" Directory="SVCFOLDER">
+      <File Source="$(var.SvcOut)\UltraClone.EngineService.exe" KeyPath="yes" />
+      <ServiceInstall Id="VSvc" Name="UltraClone.EngineService" DisplayName="UltraClone Engine Service" Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" />
+      <ServiceControl Id="VSvcControl" Name="UltraClone.EngineService" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+    </Component>
+
+    <Component Id="StartMenuShortcut" Guid="*" Directory="ProgramMenuDir">
+      <Shortcut Id="AppShortcut" Name="VoiceStudio" Target="[UIFOLDER]VoiceStudio.UI.exe" WorkingDirectory="UIFOLDER" />
+      <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\VoiceStudio" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+  </Product>
+</Wix>

@@ -1,0 +1,556 @@
+# VoiceStudio UI/UX Modernization Specification
+
+## 🎨 Design Philosophy
+
+**Core Principles**:
+- **Simplicity First**: Complex features hidden behind progressive disclosure
+- **Speed Matters**: <100ms UI response time, instant feedback
+- **Visual Hierarchy**: Clear information architecture
+- **Accessibility**: WCAG 2.1 AA compliance
+- **Dark Mode Native**: Optimized for extended use
+
+---
+
+## 🖥️ Web Dashboard Redesign
+
+### Technology Stack
+```
+Frontend: React 18 + TypeScript
+Styling: Tailwind CSS + shadcn/ui
+State: Zustand
+Real-time: WebSocket (Socket.io)
+Charts: Recharts
+Build: Vite
+```
+
+### Component Architecture
+```
+src/
+├── components/
+│   ├── Dashboard/
+│   │   ├── ServiceStatusGrid.tsx
+│   │   ├── MetricsChart.tsx
+│   │   └── QuickActions.tsx
+│   ├── VoiceCloning/
+│   │   ├── AudioUploader.tsx
+│   │   ├── EngineSelector.tsx
+│   │   ├── ProcessingQueue.tsx
+│   │   └── VoiceProfileCard.tsx
+│   ├── Settings/
+│   │   ├── EngineConfig.tsx
+│   │   └── SystemPreferences.tsx
+│   └── shared/
+│       ├── Button.tsx
+│       ├── Card.tsx
+│       └── ProgressBar.tsx
+├── hooks/
+│   ├── useWebSocket.ts
+│   ├── useVoiceCloning.ts
+│   └── useServiceStatus.ts
+├── stores/
+│   ├── voiceStore.ts
+│   └── settingsStore.ts
+└── App.tsx
+```
+
+### Dashboard Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│ VoiceStudio Ultimate          [Search] [@user] [Settings] │
+├────────────────────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
+│ │ Services │ │ Cloning  │ │ Profiles │ │ Analytics│      │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────┘      │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  System Status                          [View All]        │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ ● Assistant      Running    CPU: 12%   Mem: 256MB   │ │
+│  │ ● Orchestrator   Running    CPU: 8%    Mem: 128MB   │ │
+│  │ ● XTTS Engine    Running    GPU: 45%   VRAM: 2.1GB  │ │
+│  │ ● OpenVoice      Running    GPU: 23%   VRAM: 1.8GB  │ │
+│  │ ○ RVC Engine     Stopped    -          -            │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Active Jobs (3)                        [View Queue]      │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ #1234 │ XTTS    │ [████████░░] 80% │ ETA: 30s       │ │
+│  │ #1235 │ OpenV2  │ [███░░░░░░░] 30% │ ETA: 1m 20s    │ │
+│  │ #1236 │ XTTS    │ [█░░░░░░░░░] 10% │ ETA: 2m 45s    │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Performance Metrics (Last 24h)                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │     Requests                                          │ │
+│  │ 500 │                    ╱╲                          │ │
+│  │     │                  ╱    ╲                        │ │
+│  │ 250 │      ╱╲        ╱        ╲                      │ │
+│  │     │    ╱    ╲    ╱            ╲                    │ │
+│  │   0 └────────────────────────────────────            │ │
+│  │     0h   6h   12h  18h  24h                          │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Quick Actions                                            │
+│  [+ New Voice Clone] [📊 View Analytics] [⚙️ Settings]   │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎙️ Voice Cloning Interface
+
+### Main Cloning Page
+```
+┌────────────────────────────────────────────────────────────┐
+│ Voice Cloning Studio                                       │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Step 1: Upload Reference Audio                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │                                                       │ │
+│  │         🎤 Drag & Drop Audio Files Here              │ │
+│  │                                                       │ │
+│  │         or click to browse                           │ │
+│  │                                                       │ │
+│  │  Supported: WAV, MP3, FLAC, OGG (max 100MB)         │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Uploaded Files (2)                                       │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ ▶ speaker_001.wav    [Waveform ▁▃▅▇▅▃▁]    [×]     │ │
+│  │   Duration: 0:45  |  Sample Rate: 48kHz              │ │
+│  │   [Trim] [Enhance] [Preview]                         │ │
+│  │                                                       │ │
+│  │ ▶ speaker_002.wav    [Waveform ▁▂▄▆▄▂▁]    [×]     │ │
+│  │   Duration: 1:23  |  Sample Rate: 44.1kHz            │ │
+│  │   [Trim] [Enhance] [Preview]                         │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Step 2: Enter Target Text                                │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Enter the text you want to synthesize...             │ │
+│  │                                                       │ │
+│  │                                                       │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  Character count: 0 | Estimated duration: 0:00           │
+│                                                            │
+│  Step 3: Select Engine & Quality                          │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
+│  │ XTTS-2  │ │ OpenV2  │ │   RVC   │ │  Auto   │        │
+│  │ ✓ Fast  │ │ Quality │ │ Convert │ │ Smart   │        │
+│  │ Multi   │ │ Emotion │ │ Pitch   │ │ Select  │        │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
+│                                                            │
+│  Quality Settings                                          │
+│  Speed ●────────○────── Quality                           │
+│  [Show Advanced Settings ▼]                               │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ [▶ Generate Voice]                                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Advanced Settings Panel (Collapsible)
+```
+┌────────────────────────────────────────────────────────────┐
+│ Advanced Settings                                [Hide ▲] │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Audio Processing                                          │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Sample Rate:  [48000 Hz ▼]                           │ │
+│  │ Bit Depth:    [16-bit ▼]                             │ │
+│  │ Channels:     [Mono ▼]                               │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Voice Characteristics                                     │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Pitch:        ●──────○────── (+0 semitones)          │ │
+│  │ Speed:        ●──────○────── (1.0x)                  │ │
+│  │ Energy:       ●──────○────── (Normal)                │ │
+│  │ Emotion:      [Neutral ▼]                            │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Post-Processing                                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ ☑ Noise Reduction                                    │ │
+│  │ ☑ Normalization                                      │ │
+│  │ ☐ Reverb                                             │ │
+│  │ ☐ Compression                                        │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  [Save as Preset]  [Load Preset ▼]  [Reset to Default]   │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Processing View
+```
+┌────────────────────────────────────────────────────────────┐
+│ Processing Voice Clone #1234                               │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Status: Generating audio...                              │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ [████████████████░░░░░░░░░░░░] 65%                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  ETA: 45 seconds                                          │
+│                                                            │
+│  Live Waveform Preview                                    │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │     ▁▂▃▅▇▅▃▂▁  ▁▃▅▇▅▃▁  ▁▂▄▆▄▂▁                      │ │
+│  │  ▁▃▅▇▅▃▁      ▁▃▅▇▅▃▁      ▁▃▅▇▅▃▁                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Processing Steps                                          │
+│  ✓ Audio preprocessing complete                           │
+│  ✓ Voice profile extracted                                │
+│  ⟳ Generating speech (65%)                                │
+│  ○ Post-processing                                        │
+│  ○ Finalizing output                                      │
+│                                                            │
+│  [⏸ Pause]  [× Cancel]                                    │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Results View
+```
+┌────────────────────────────────────────────────────────────┐
+│ Voice Clone Complete! #1234                                │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Generated Audio                                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ ▶ output_1234.wav                                    │ │
+│  │ [Waveform ▁▂▃▅▇▅▃▂▁▂▃▅▇▅▃▂▁]                         │ │
+│  │ Duration: 0:42  |  Size: 2.3 MB                      │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Quality Metrics                                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Voice Similarity:  ████████░░ 85%                    │ │
+│  │ Audio Quality:     █████████░ 92%                    │ │
+│  │ Naturalness:       ████████░░ 88%                    │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Actions                                                   │
+│  [⬇ Download]  [🔄 Regenerate]  [⭐ Save Profile]         │
+│  [📤 Share]    [✏️ Edit]        [🗑️ Delete]              │
+│                                                            │
+│  Compare with Original                                     │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Original:  ▶ [Waveform]                              │ │
+│  │ Generated: ▶ [Waveform]                              │ │
+│  │ [Play Both] [A/B Compare]                            │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Rate this result: ☆☆☆☆☆                                  │
+│  [Clone Another Voice]                                    │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎭 Voice Profile Manager
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Voice Profile Library                    [+ New Profile]  │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  [Search profiles...]              [Sort: Recent ▼] [⚙️]  │
+│                                                            │
+│  My Profiles (12)                                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│  │   👤     │ │   👤     │ │   👤     │ │   👤     │    │
+│  │          │ │          │ │          │ │          │    │
+│  │ Speaker1 │ │ Speaker2 │ │ Speaker3 │ │ Speaker4 │    │
+│  │ ⭐⭐⭐⭐⭐ │ │ ⭐⭐⭐⭐☆ │ │ ⭐⭐⭐☆☆ │ │ ⭐⭐⭐⭐⭐ │    │
+│  │ English  │ │ Spanish  │ │ French   │ │ English  │    │
+│  │ 5 uses   │ │ 12 uses  │ │ 3 uses   │ │ 8 uses   │    │
+│  │ [▶][✏️] │ │ [▶][✏️] │ │ [▶][✏️] │ │ [▶][✏️] │    │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘    │
+│                                                            │
+│  Community Profiles (Featured)                             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                  │
+│  │   👤     │ │   👤     │ │   👤     │                  │
+│  │          │ │          │ │          │                  │
+│  │ Morgan   │ │ Alex     │ │ Sam      │                  │
+│  │ ⭐⭐⭐⭐⭐ │ │ ⭐⭐⭐⭐☆ │ │ ⭐⭐⭐⭐⭐ │                  │
+│  │ 1.2k ⬇  │ │ 856 ⬇   │ │ 2.3k ⬇  │                  │
+│  │ [Preview]│ │ [Preview]│ │ [Preview]│                  │
+│  └──────────┘ └──────────┘ └──────────┘                  │
+│                                                            │
+│  [Browse Marketplace →]                                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Profile Detail View
+```
+┌────────────────────────────────────────────────────────────┐
+│ ← Back to Library          Speaker1 Profile                │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ┌──────────┐  Speaker1                                   │
+│  │   👤     │  ⭐⭐⭐⭐⭐ (5.0)                              │
+│  │          │  English (US) | Male | Adult                │
+│  │          │  Created: Jan 15, 2024                      │
+│  └──────────┘  Last used: 2 hours ago                     │
+│                                                            │
+│  Voice Characteristics                                     │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ Pitch:        ████████░░ Medium-Low                  │ │
+│  │ Tone:         ████████░░ Warm                        │ │
+│  │ Pace:         ██████░░░░ Moderate                    │ │
+│  │ Clarity:      █████████░ Excellent                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Reference Audio (3 files)                                 │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ ▶ reference_01.wav  [Waveform]  0:45  [×]           │ │
+│  │ ▶ reference_02.wav  [Waveform]  1:23  [×]           │ │
+│  │ ▶ reference_03.wav  [Waveform]  0:58  [×]           │ │
+│  │ [+ Add More Audio]                                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Usage Statistics                                          │
+│  Total clones: 5  |  Success rate: 100%                   │
+│  Avg quality: 4.8/5  |  Preferred engine: XTTS-2          │
+│                                                            │
+│  Tags                                                      │
+│  [Professional] [Clear] [Narrator] [+ Add Tag]            │
+│                                                            │
+│  Actions                                                   │
+│  [🎤 Use for Cloning]  [✏️ Edit]  [📤 Share]  [🗑️ Delete] │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 Analytics Dashboard
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Analytics & Insights                  [Last 30 days ▼]    │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Overview                                                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│  │   245    │ │   98.2%  │ │   4.7s   │ │   12     │    │
+│  │  Clones  │ │ Success  │ │ Avg Time │ │ Profiles │    │
+│  │  +12%    │ │  +2.1%   │ │  -0.8s   │ │  +3      │    │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘    │
+│                                                            │
+│  Usage Over Time                                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 50 │                              ╱╲                 │ │
+│  │    │                            ╱    ╲               │ │
+│  │ 25 │        ╱╲              ╱        ╲             │ │
+│  │    │      ╱    ╲          ╱            ╲           │ │
+│  │  0 └────────────────────────────────────────        │ │
+│  │    Week 1  Week 2  Week 3  Week 4                   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Engine Performance                                        │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ XTTS-2     ████████████████░░ 145 uses  4.2s avg    │ │
+│  │ OpenVoice  ██████████░░░░░░░░  78 uses  6.8s avg    │ │
+│  │ RVC        ████░░░░░░░░░░░░░░  22 uses  3.1s avg    │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  Quality Ratings                                           │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 5 stars: ████████████████████ 156 (64%)             │ │
+│  │ 4 stars: ████████░░░░░░░░░░░░  62 (25%)             │ │
+│  │ 3 stars: ███░░░░░░░░░░░░░░░░░  18 (7%)              │ │
+│  │ 2 stars: █░░░░░░░░░░░░░░░░░░░   6 (2%)              │ │
+│  │ 1 star:  ░░░░░░░░░░░░░░░░░░░░   3 (1%)              │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  [Export Report]  [View Detailed Analytics →]             │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Settings Interface
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Settings                                                   │
+├────────────────────────────────────────────────────────────┤
+│ ┌──────────┐                                               │
+│ │ General  │  General Settings                             │
+│ │ Engines  │  ┌──────────────────────────────────────────┐│
+│ │ Audio    │  │ Language:        [English ▼]             ││
+│ │ Advanced │  │ Theme:           [Dark ▼]                ││
+│ │ About    │  │ Auto-save:       [☑ Enabled]             ││
+│ └──────────┘  │ Notifications:   [☑ Enabled]             ││
+│               │ Telemetry:       [☑ Anonymous usage]     ││
+│               └──────────────────────────────────────────┘│
+│                                                            │
+│               Default Engine Settings                      │
+│               ┌──────────────────────────────────────────┐│
+│               │ Preferred Engine:  [Auto-select ▼]      ││
+│               │ Quality Preset:    [Balanced ▼]         ││
+│               │ Auto-enhance:      [☑ Enabled]          ││
+│               └──────────────────────────────────────────┘│
+│                                                            │
+│               Storage                                      │
+│               ┌──────────────────────────────────────────┐│
+│               │ Output Directory:  C:\Users\...\Output   ││
+│               │                    [Browse]              ││
+│               │ Cache Size:        2.3 GB / 5.0 GB      ││
+│               │                    [Clear Cache]         ││
+│               └──────────────────────────────────────────┘│
+│                                                            │
+│               [Save Changes]  [Reset to Defaults]         │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎯 Key UX Improvements
+
+### 1. Drag-and-Drop Everywhere
+- Audio files
+- Text files
+- Voice profiles
+- Presets
+
+### 2. Real-time Feedback
+- Live waveform preview during generation
+- Instant quality estimates
+- Progress with ETA
+- WebSocket updates
+
+### 3. Smart Defaults
+- Auto-detect language
+- Auto-select best engine
+- Remember user preferences
+- Suggest optimal settings
+
+### 4. Progressive Disclosure
+- Simple mode by default
+- Advanced settings collapsible
+- Expert mode toggle
+- Contextual help
+
+### 5. Keyboard Shortcuts
+```
+Ctrl+N: New voice clone
+Ctrl+O: Open audio file
+Ctrl+S: Save profile
+Space:  Play/Pause preview
+Esc:    Cancel operation
+```
+
+### 6. Accessibility
+- Screen reader support
+- Keyboard navigation
+- High contrast mode
+- Adjustable font sizes
+- ARIA labels
+
+### 7. Performance
+- Lazy loading
+- Virtual scrolling for lists
+- Optimistic UI updates
+- Background processing
+- Service worker caching
+
+---
+
+## 📱 Responsive Design
+
+### Desktop (1920x1080)
+- Full dashboard with all panels
+- Side-by-side comparisons
+- Multi-column layouts
+
+### Tablet (1024x768)
+- Collapsible sidebar
+- Stacked panels
+- Touch-optimized controls
+
+### Mobile (375x667)
+- Bottom navigation
+- Single column
+- Swipe gestures
+- Simplified interface
+
+---
+
+## 🎨 Animation & Transitions
+
+### Micro-interactions
+```css
+/* Button hover */
+transition: all 0.2s ease;
+
+/* Card expand */
+transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* Progress bar */
+transition: width 0.5s ease-out;
+
+/* Fade in */
+animation: fadeIn 0.3s ease-in;
+```
+
+### Loading States
+- Skeleton screens
+- Shimmer effects
+- Spinner for quick operations
+- Progress bars for long operations
+
+### Success/Error States
+- Toast notifications
+- Inline validation
+- Success animations
+- Error shake effect
+
+---
+
+## 🔔 Notification System
+
+### Types
+1. **Success**: Green, checkmark icon, 3s auto-dismiss
+2. **Error**: Red, X icon, manual dismiss
+3. **Warning**: Yellow, ! icon, 5s auto-dismiss
+4. **Info**: Blue, i icon, 3s auto-dismiss
+
+### Placement
+- Top-right corner
+- Stack multiple notifications
+- Slide-in animation
+- Click to dismiss
+
+---
+
+## 🎯 Implementation Priority
+
+### Phase 1 (Week 1-2)
+1. ✅ Set up React + TypeScript + Vite
+2. ✅ Implement component library (shadcn/ui)
+3. ✅ Create dashboard layout
+4. ✅ Add service status grid
+5. ✅ Implement WebSocket connection
+
+### Phase 2 (Week 3-4)
+1. ✅ Build voice cloning interface
+2. ✅ Add drag-drop audio upload
+3. ✅ Implement processing queue
+4. ✅ Create results view
+5. ✅ Add A/B comparison
+
+### Phase 3 (Week 5-6)
+1. ✅ Build voice profile manager
+2. ✅ Add analytics dashboard
+3. ✅ Implement settings page
+4. ✅ Add keyboard shortcuts
+5. ✅ Optimize performance
+
+---
+
+**This specification provides a complete blueprint for modernizing VoiceStudio's UI/UX to professional standards.**

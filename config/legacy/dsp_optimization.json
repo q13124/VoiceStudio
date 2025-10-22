@@ -1,0 +1,66 @@
+{
+  "dsp_chain": {
+    "realtime_mode": {
+      "enabled": true,
+      "max_latency_ms": 50,
+      "buffer_size": 512,
+      "sample_rate": 22050
+    },
+    "modules": {
+      "deesser": {
+        "enabled": true,
+        "priority": "high",
+        "optimized": true
+      },
+      "eq": {
+        "enabled": true,
+        "priority": "medium",
+        "bands_limit": 3,
+        "optimized": true
+      },
+      "compressor": {
+        "enabled": true,
+        "priority": "medium",
+        "lookahead_ms": 5,
+        "optimized": true
+      },
+      "proximity": {
+        "enabled": true,
+        "priority": "low",
+        "optimized": true
+      },
+      "lufs": {
+        "enabled": false,
+        "priority": "low",
+        "reason": "Disabled for real-time performance"
+      }
+    }
+  },
+  "performance": {
+    "monitoring": {
+      "enabled": true,
+      "frequency_hz": 10,
+      "history_size": 1000
+    },
+    "thresholds": {
+      "cpu_usage_percent": 80,
+      "memory_usage_percent": 85,
+      "gpu_usage_percent": 90,
+      "audio_latency_ms": 50,
+      "processing_time_ms": 20
+    },
+    "optimization": {
+      "auto_optimize": true,
+      "reduce_quality_on_high_load": true,
+      "disable_heavy_modules": true
+    }
+  },
+  "voice_cloning": {
+    "realtime_optimization": {
+      "batch_size": 1,
+      "max_workers": 2,
+      "cuda_memory_fraction": 0.7,
+      "enable_mixed_precision": true
+    }
+  }
+}

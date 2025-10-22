@@ -1,0 +1,180 @@
+name: handshake-status
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install deps (requests)
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Detect changes in last window
+        id: changes
+        shell: bash
+        run: |
+          WINDOW_MINUTES=${WINDOW_MINUTES:-15}
+          if git log --since "${WINDOW_MINUTES} minutes ago" --pretty=oneline | grep -q .; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build status text (handshake)
+        id: build
+        env:
+          WINDOW_MINUTES: ${{ vars.STATUS_WINDOW_MINUTES || '15' }}
+          PLAN_FILE: ${{ vars.STATUS_PLAN_FILE || 'docs/START_HERE_EXACT_PLAN.md' }}
+          ALT_PLAN_FILE: ${{ vars.STATUS_ALT_PLAN_FILE || 'docs/15_MINUTE_WORKFLOW.md' }}
+        run: |
+          python - << 'PY'
+          import os, subprocess, pathlib, datetime
+          win = int(os.getenv('WINDOW_MINUTES','15'))
+          def sh(args):
+              return subprocess.check_output(args, text=True).strip()
+          # 1) changes
+          try:
+              log = sh(["git","log","--since",f"{win} minutes ago","--pretty=format:%h %s (%an)"])
+              changed = log if log else "— No commits in this window."
+          except Exception as e:
+              changed = f"— Could not read git log: {e}"
+          # 2) next from plan
+          plan = os.getenv('PLAN_FILE')
+          alt = os.getenv('ALT_PLAN_FILE')
+          text=""
+          for p in filter(None,[plan, alt]):
+              fp=pathlib.Path(p)
+              if fp.exists():
+                  txt=fp.read_text(errors='ignore')
+                  lines=[l.rstrip() for l in txt.splitlines()]
+                  # simple heuristic: capture first 8 bullet lines after a header that mentions Today/Next/Tasks
+                  idx=[i for i,l in enumerate(lines) if any(k in l.lower() for k in ['today','next','tasks'])]
+                  cap=[]
+                  for i in (idx[:1] or [0]):
+                      for l in lines[i+1:i+40]:
+                          if l.strip().startswith(('#','**')): break
+                          if l.strip().startswith(('-','*','•','1.','2.','3.')):
+                              cap.append(l.strip())
+                          if len(cap)>=8: break
+                  if cap:
+                      text='\n'.join(cap)
+                      break
+          next_steps = text or "— Check START_HERE_EXACT_PLAN.md for next tasks."
+          # 3) blockers (quick grep for TODO/BLOCKER in last 50 lines of plan)
+          blockers = "— None seen."
+          try:
+              blob = (pathlib.Path(plan).read_text(errors='ignore') if pathlib.Path(plan).exists() else '')
+              lines = [l for l in blob.splitlines() if any(k in l.upper() for k in ['BLOCKER','TODO:','RISK'])]
+              if lines:
+                  blockers = '\n'.join(lines[:5])
+          except Exception:
+              pass
+
+          msg = f"""
+          *Status ({datetime.datetime.utcnow().isoformat(timespec='minutes')}Z)*
+          *What changed (last {win}m):*
+          {changed}
+
+          *What's next:*
+          {next_steps}
+
+          *Blockers / decisions:*
+          {blockers}
+          """.strip()
+          print('MSG<<EOF')
+          print(msg)
+          print('EOF')
+          with open('status.msg','w') as f: f.write(msg)
+          PY
+
+      - name: Maybe post to Slack
+        if: steps.changes.outputs.changed == 'true' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -sS -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-type: application/json' \
+            --data-binary @- <<'JSON'
+          {"text": "$(cat status.msg | sed 's/"/\\"/g')"}
+          JSON
+
+      - name: Maybe send email (hourly max)
+        if: steps.changes.outputs.changed == 'true' && env.SENDGRID_API_KEY != '' && env.STATUS_EMAIL_TO != '' && env.STATUS_EMAIL_FROM != ''
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          STATUS_EMAIL_TO:  ${{ secrets.STATUS_EMAIL_TO }}
+          STATUS_EMAIL_FROM: ${{ secrets.STATUS_EMAIL_FROM }}
+          EMAIL_EVERY_MIN: ${{ vars.STATUS_EMAIL_EVERY_MIN || '60' }}
+        run: |
+          # Gate to ~hourly: only when minute % EMAIL_EVERY_MIN == 0
+          M=$(date -u +%s)
+          MOD=$(( (M/60) % ${EMAIL_EVERY_MIN} ))
+          if [ "$MOD" != "0" ]; then echo "Skip email (throttle)"; exit 0; fi
+          curl -sS --fail -X POST https://api.sendgrid.com/v3/mail/send \
+            -H "Authorization: Bearer $SENDGRID_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d @- <<JSON
+          {
+            "personalizations": [{"to": [{"email": "${STATUS_EMAIL_TO}"}]}],
+            "from": {"email": "${STATUS_EMAIL_FROM}", "name": "VS Handshake"},
+            "subject": "VS Handshake Status",
+            "content": [{"type": "text/plain", "value": $(cat status.msg | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))') }]
+          }
+          JSON
+
+      - name: Update docs/HANDSHAKE_STATUS.md (working copy)
+        run: |
+          mkdir -p docs
+          ts="$(date -u +'%Y-%m-%d %H:%MZ')"
+          {
+            echo "## ${ts}"
+            echo
+            cat status.msg
+            echo
+            echo "---"
+            echo
+          } > NEW_STATUS.md
+
+          # create file if missing
+          [ -f docs/HANDSHAKE_STATUS.md ] || touch docs/HANDSHAKE_STATUS.md
+
+          # prepend latest at top; keep last ~20000 chars to avoid bloat
+          cat NEW_STATUS.md docs/HANDSHAKE_STATUS.md | head -c 200000 > docs/HANDSHAKE_STATUS.md
+
+      - name: Commit & push if changed (throttle to hourly by default)
+        env:
+          EMAIL_EVERY_MIN: ${{ vars.STATUS_EMAIL_EVERY_MIN || '60' }}
+        run: |
+          set -euo pipefail
+          # optional hourly throttle for commits too
+          M=$(date -u +%s); MOD=$(( (M/60) % ${EMAIL_EVERY_MIN} ))
+          if [ "$MOD" != "0" ]; then
+            echo "Skip commit (throttle)"; exit 0
+          fi
+
+          git config user.name  "VS Handshake Bot"
+          git config user.email "bot@users.noreply.github.com"
+
+          if ! git diff --quiet -- docs/HANDSHAKE_STATUS.md; then
+            git add docs/HANDSHAKE_STATUS.md
+            git commit -m "handshake: update status [skip ci]"
+            git push
+            echo "Pushed status update."
+          else
+            echo "No content change; nothing to commit."
+          fi

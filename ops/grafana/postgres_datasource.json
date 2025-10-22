@@ -1,0 +1,44 @@
+{
+  "datasource": {
+    "id": 1,
+    "orgId": 1,
+    "name": "VoiceStudio PostgreSQL",
+    "type": "postgres",
+    "typeName": "PostgreSQL",
+    "typeLogoUrl": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
+    "access": "proxy",
+    "url": "postgres:5432",
+    "password": "",
+    "user": "voicestudio",
+    "database": "voicestudio",
+    "basicAuth": false,
+    "basicAuthUser": "",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {
+      "postgresVersion": 1600,
+      "sslmode": "disable",
+      "timescaledb": false,
+      "maxOpenConns": 0,
+      "maxIdleConns": 2,
+      "connMaxLifetime": 14400,
+      "maxIdleConnsAuto": true,
+      "connMaxLifetimeAuto": true,
+      "tlsAuth": false,
+      "tlsAuthWithCACert": false,
+      "tlsSkipVerify": false,
+      "tlsConfigurationMethod": "file-content",
+      "logLevel": "error",
+      "secureJsonData": {
+        "password": "secret"
+      }
+    },
+    "secureJsonFields": {
+      "password": true
+    },
+    "readOnly": false,
+    "uid": "voicestudio-postgres",
+    "version": 1
+  }
+}

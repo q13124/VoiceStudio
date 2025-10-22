@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-10-21 03:10:57",
+  "system_info": {
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "pytorch_version": "2.9.0+cu130",
+    "torchaudio_version": "2.9.0+cu130"
+  },
+  "engine_status": {
+    "cuda": {
+      "status": "available",
+      "output": "CUDA available: True\nCUDA device count: 1\nCUDA device name: NVIDIA GeForce RTX 3060\nCUDA memory allocated: 0.0 GB\nCUDA memory cached: 0.0 GB"
+    },
+    "xtts": {
+      "status": "failed",
+      "error": "C:\\Users\\Tyler\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\jieba\\_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.\n  import pkg_resources"
+    },
+    "openvoice": {
+      "status": "failed",
+      "error": ""
+    },
+    "cosyvoice": {
+      "status": "failed",
+      "error": ""
+    },
+    "whisper": {
+      "status": "working",
+      "output": "Faster Whisper import successful\nWhisper model loaded successfully\nWhisper ASR capability: Available"
+    },
+    "pyannote": {
+      "status": "failed",
+      "error": ""
+    },
+    "workflow": {
+      "status": "failed",
+      "error": "C:\\Users\\Tyler\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\jieba\\_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.\n  import pkg_resources"
+    }
+  },
+  "summary": {
+    "total_engines": 7,
+    "working_engines": 1,
+    "failed_engines": 5,
+    "error_engines": 0
+  }
+}

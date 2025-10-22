@@ -1,0 +1,25 @@
+[
+  {
+    "input_path": "input_1.wav",
+    "output_path": "output_1.wav",
+    "parameters": {
+      "operation_type": "voice_cloning",
+      "text": "First voice cloning operation",
+      "reference_audio": "input_1.wav",
+      "engine": "xtts"
+    }
+  },
+  {
+    "input_path": "input_2.wav",
+    "output_path": "output_2.wav",
+    "parameters": {
+      "operation_type": "audio_processing",
+      "dsp_chain": {
+        "compressor": {
+          "enabled": true
+        }
+      },
+      "output_format": "wav"
+    }
+  }
+]

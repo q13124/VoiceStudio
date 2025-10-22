@@ -1,0 +1,14 @@
+<Page x:Class="VoiceStudio.UI.Pages.TuningPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.UI.Controls">
+    <Grid Padding="16">
+        <StackPanel Spacing="12">
+            <TextBlock Text="Accent Designer" FontSize="18"/>
+            <local:AccentWheelControl x:Name="Wheel" />
+            <TextBlock x:Name="AX" Text="X=0.5, Y=0.5" />
+            <Separator/>
+            <local:PhonemeGridControl/>
+        </StackPanel>
+    </Grid>
+</Page>

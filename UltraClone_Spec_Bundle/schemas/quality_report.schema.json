@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QualityReport",
+  "type": "object",
+  "required": ["duration_sec", "lufs_i", "clip_percent", "dc_offset", "silence_percent"],
+  "properties": {
+    "duration_sec": {"type": "number", "minimum": 0},
+    "lufs_i": {"type": "number"},
+    "clip_percent": {"type": "number", "minimum": 0, "maximum": 100},
+    "dc_offset": {"type": "number"},
+    "silence_percent": {"type": "number", "minimum": 0, "maximum": 100},
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

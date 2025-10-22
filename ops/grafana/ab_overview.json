@@ -1,0 +1,7 @@
+{
+  "title": "VoiceStudio A/B Overview",
+  "panels": [
+    { "type": "stat", "title": "WR (xtts)", "targets": [{"expr": "avg_over_time(eval_runs_wr{engine=\"xtts\"}[7d])"}] },
+    { "type": "stat", "title": "Clip rate (xtts)", "targets": [{"expr": "avg_over_time(eval_runs_clip_rate{engine=\"xtts\"}[7d])"}] }
+  ]
+}

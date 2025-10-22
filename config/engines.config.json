@@ -1,0 +1,41 @@
+{
+  "$schema": "https://example.com/engines.schema.json",
+  "routing_policy": {
+    "prefer": {
+      "en": "xtts",
+      "ja": "cosyvoice2",
+      "zh": "cosyvoice2",
+      "multi": "openvoice"
+    },
+    "fallback": [
+      "xtts",
+      "openvoice",
+      "cosyvoice2",
+      "coqui"
+    ]
+  },
+  "xtts": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/xtts"
+  },
+  "openvoice": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/openvoice"
+  },
+  "cosyvoice2": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/cosyvoice2"
+  },
+  "coqui": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/coqui"
+  },
+  "whisper": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/whisper"
+  },
+  "pyannote": {
+    "provider": "local",
+    "model_dir": "%ProgramData%/VoiceStudio/models/pyannote"
+  }
+}

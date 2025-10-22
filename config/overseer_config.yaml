@@ -1,0 +1,15 @@
+
+meta:
+  name: VoiceStudio Overseer Config
+  version: 1.0.0
+schedule:
+  frequency: "PT15M"
+  timezone: "America/Chicago"
+  delivery: "in_app"
+  title_prefix: "[OVERSEER]"
+alignment:
+  enabled: true
+escalation:
+  tier: 2
+report:
+  sections: ["alignment_check","cursor_actions_diffs","repo_build_status","pipelines_jobs","security_tunnel","next_actions_1_3","alignment_status"]

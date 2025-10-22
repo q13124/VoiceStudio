@@ -1,0 +1,16 @@
+{
+  "xtts": {
+    "wr": 0.62,
+    "latency_p50": 180,
+    "latency_p95": 420,
+    "clip_rate": 0.01,
+    "lufs_med": -23.1
+  },
+  "openvoice": {
+    "wr": 0.38,
+    "latency_p50": 220,
+    "latency_p95": 480,
+    "clip_rate": 0.03,
+    "lufs_med": -21.8
+  }
+}

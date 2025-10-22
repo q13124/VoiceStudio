@@ -1,0 +1,34 @@
+{
+  "installer": {
+    "name": "VoiceStudio Ultimate",
+    "version": "1.0.0.0",
+    "manufacturer": "UltraClone Technologies",
+    "upgrade_code": "B6C8CDA7-2B4D-4B6A-893C-9E8D3B9E22B9"
+  },
+  "prerequisites": {
+    "vc_redist": {
+      "name": "Microsoft Visual C++ 2015-2022 Redistributable (x64)",
+      "url": "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+      "install_command": "/quiet /norestart",
+      "detection_key": "HKLM:\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64"
+    },
+    "ffmpeg": {
+      "name": "FFmpeg for Windows (x64)",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+      "install_command": "/S",
+      "detection_command": "ffmpeg -version"
+    },
+    "python": {
+      "name": "Python 3.11 Runtime",
+      "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe",
+      "install_command": "/quiet InstallAllUsers=1 PrependPath=1",
+      "detection_command": "python --version"
+    }
+  },
+  "requirements": {
+    "os": "Windows 10 or later",
+    "ram": "8GB minimum (16GB recommended)",
+    "disk_space": "10GB free space",
+    "gpu": "CUDA-compatible GPU (recommended)"
+  }
+}

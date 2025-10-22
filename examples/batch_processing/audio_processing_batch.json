@@ -1,0 +1,43 @@
+[
+  {
+    "input_path": "input_audio_1.wav",
+    "output_path": "processed_audio_1.wav",
+    "parameters": {
+      "dsp_chain": {
+        "deesser": {
+          "enabled": true,
+          "threshold": -20.0
+        },
+        "eq": {
+          "enabled": true,
+          "bands": []
+        },
+        "compressor": {
+          "enabled": true,
+          "threshold": -18.0
+        }
+      },
+      "output_format": "wav"
+    }
+  },
+  {
+    "input_path": "input_audio_2.wav",
+    "output_path": "processed_audio_2.wav",
+    "parameters": {
+      "dsp_chain": {
+        "deesser": {
+          "enabled": false
+        },
+        "eq": {
+          "enabled": true,
+          "bands": []
+        },
+        "compressor": {
+          "enabled": true,
+          "threshold": -15.0
+        }
+      },
+      "output_format": "wav"
+    }
+  }
+]

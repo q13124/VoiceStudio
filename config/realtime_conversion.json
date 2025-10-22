@@ -1,0 +1,38 @@
+{
+  "realtime_voice_conversion": {
+    "enabled": true,
+    "max_latency_ms": 50,
+    "buffer_size": 512,
+    "chunk_size": 256,
+    "sample_rate": 22050,
+    "channels": 1,
+    "format": "float32",
+    "engine": "xtts",
+    "quality": "high",
+    "latency_mode": "ultra"
+  },
+  "audio_devices": {
+    "input_device": null,
+    "output_device": null,
+    "auto_detect": true
+  },
+  "performance": {
+    "max_workers": 4,
+    "thread_priority": "high",
+    "cpu_affinity": "auto",
+    "memory_limit_mb": 1024
+  },
+  "websocket_server": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 8765,
+    "max_clients": 10,
+    "timeout_seconds": 30
+  },
+  "monitoring": {
+    "enable_stats": true,
+    "stats_interval_ms": 1000,
+    "log_level": "INFO",
+    "performance_alerts": true
+  }
+}

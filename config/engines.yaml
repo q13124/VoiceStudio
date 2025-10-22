@@ -1,0 +1,270 @@
+# VoiceStudio Engine Configuration
+# Engine-specific settings, model paths, and performance tuning
+
+# XTTS Engine Configuration
+xtts:
+  enabled: true
+  priority: 1
+  # Coqui model id or absolute path to local model folder
+  model_id: "tts_models/multilingual/multi-dataset/xtts_v2"
+  # Device preference; adapter will fall back automatically
+  device_preference: [cuda, cpu]
+  # Default language if not provided
+  default_language: "en"
+  # If voice_profile is empty, these are used (can be a single WAV or list)
+  default_speaker_refs: []
+  # Audio output
+  sample_rate: 22050
+  # Performance knobs (safe defaults)
+  use_half_precision: true
+  gpu_memory_fraction: 0.85
+  languages:
+    - "en"
+    - "es"
+    - "fr"
+    - "de"
+    - "it"
+    - "pt"
+    - "zh"
+    - "ja"
+    - "ko"
+    - "ru"
+    - "ar"
+  quality_tiers:
+    fast:
+      sample_rate: 16000
+      stability: 0.5
+      similarity_boost: 0.7
+    balanced:
+      sample_rate: 22050
+      stability: 0.6
+      similarity_boost: 0.8
+    quality:
+      sample_rate: 24000
+      stability: 0.7
+      similarity_boost: 0.9
+  gpu_settings:
+    device: "cuda"
+    precision: "fp16"
+    batch_size: 1
+  performance:
+    max_concurrent_jobs: 4
+    timeout_seconds: 30
+    memory_limit_mb: 2048
+
+# OpenVoice Engine Configuration
+openvoice:
+  enabled: true
+  priority: 2
+  # Model paths for OpenVoice
+  model_path: "checkpoints/base_speakers/EN/config.json"
+  converter_path: "checkpoints/base_speakers/EN/config.json"
+  # Device preference; adapter will fall back automatically
+  device_preference: [cuda, cpu]
+  # Default language if not provided
+  default_language: "en"
+  # If voice_profile is empty, these are used (can be a single WAV or list)
+  default_speaker_refs: []
+  # Audio output
+  sample_rate: 22050
+  languages:
+    - "en"
+    - "es"
+    - "fr"
+    - "de"
+    - "it"
+    - "pt"
+  quality_tiers:
+    fast:
+      sample_rate: 16000
+      stability: 0.4
+      similarity_boost: 0.6
+    balanced:
+      sample_rate: 22050
+      stability: 0.5
+      similarity_boost: 0.7
+    quality:
+      sample_rate: 24000
+      stability: 0.6
+      similarity_boost: 0.8
+  gpu_settings:
+    device: "cuda"
+    precision: "fp16"
+    batch_size: 2
+  performance:
+    max_concurrent_jobs: 6
+    timeout_seconds: 25
+    memory_limit_mb: 1536
+
+# Coqui TTS Engine Configuration
+coqui:
+  enabled: true
+  priority: 3
+  # Coqui TTS model name
+  model_name: "tts_models/en/ljspeech/tacotron2-DDC"
+  # Device preference; adapter will fall back automatically
+  device_preference: [cuda, cpu]
+  # Default language if not provided
+  default_language: "en"
+  # Audio output
+  sample_rate: 22050
+  languages:
+    - "en"
+    - "es"
+    - "fr"
+    - "de"
+    - "it"
+    - "pt"
+    - "zh"
+    - "ja"
+  quality_tiers:
+    fast:
+      sample_rate: 16000
+      stability: 0.3
+      similarity_boost: 0.5
+    balanced:
+      sample_rate: 22050
+      stability: 0.4
+      similarity_boost: 0.6
+    quality:
+      sample_rate: 24000
+      stability: 0.5
+      similarity_boost: 0.7
+  gpu_settings:
+    device: "cuda"
+    precision: "fp32"
+    batch_size: 4
+  performance:
+    max_concurrent_jobs: 8
+    timeout_seconds: 20
+    memory_limit_mb: 1024
+
+# Tortoise TTS Engine Configuration
+tortoise:
+  enabled: true
+  priority: 4
+  # Device preference; adapter will fall back automatically
+  device_preference: [cuda, cpu]
+  # Default language if not provided
+  default_language: "en"
+  # Default voice samples for cloning
+  default_voice_samples: []
+  # Audio output
+  sample_rate: 22050
+  languages:
+    - "en"
+  quality_tiers:
+    fast:
+      sample_rate: 22050
+      stability: 0.4
+      similarity_boost: 0.6
+    balanced:
+      sample_rate: 24000
+      stability: 0.5
+      similarity_boost: 0.7
+    quality:
+      sample_rate: 48000
+      stability: 0.6
+      similarity_boost: 0.8
+  gpu_settings:
+    device: "cuda"
+    precision: "fp16"
+    batch_size: 1
+  performance:
+    max_concurrent_jobs: 2
+    timeout_seconds: 60
+    memory_limit_mb: 4096
+
+# RVC (Retrieval-based Voice Conversion) Configuration
+rvc:
+  enabled: true
+  priority: 5
+  model_path: "C:\\ProgramData\\VoiceStudio\\models\\rvc"
+  default_model: "rvc-v2"
+  languages:
+    - "en"
+    - "zh"
+    - "ja"
+  quality_tiers:
+    fast:
+      sample_rate: 16000
+      stability: 0.4
+      similarity_boost: 0.6
+    balanced:
+      sample_rate: 22050
+      stability: 0.5
+      similarity_boost: 0.7
+    quality:
+      sample_rate: 24000
+      stability: 0.6
+      similarity_boost: 0.8
+  gpu_settings:
+    device: "cuda"
+    precision: "fp16"
+    batch_size: 1
+  performance:
+    max_concurrent_jobs: 3
+    timeout_seconds: 45
+    memory_limit_mb: 3072
+
+# CosyVoice Configuration
+cosyvoice:
+  enabled: true
+  priority: 6
+  model_path: "C:\\ProgramData\\VoiceStudio\\models\\cosyvoice"
+  default_model: "cosyvoice-v2"
+  languages:
+    - "en"
+    - "zh"
+    - "ja"
+    - "ko"
+  quality_tiers:
+    fast:
+      sample_rate: 16000
+      stability: 0.4
+      similarity_boost: 0.6
+    balanced:
+      sample_rate: 22050
+      stability: 0.5
+      similarity_boost: 0.7
+    quality:
+      sample_rate: 24000
+      stability: 0.6
+      similarity_boost: 0.8
+  gpu_settings:
+    device: "cuda"
+    precision: "fp16"
+    batch_size: 2
+  performance:
+    max_concurrent_jobs: 4
+    timeout_seconds: 35
+    memory_limit_mb: 2560
+
+# Global Engine Settings
+global:
+  # Fallback behavior
+  fallback_enabled: true
+  max_fallback_attempts: 3
+  fallback_delay_ms: 1000
+
+  # Quality prediction
+  quality_prediction_enabled: true
+  learning_enabled: true
+  historical_weight_days: 7
+
+  # Performance monitoring
+  health_check_interval_seconds: 30
+  load_averaging_window_minutes: 5
+  performance_history_days: 30
+
+  # Resource management
+  max_total_memory_gb: 16
+  max_total_gpu_memory_gb: 8
+  cpu_usage_threshold: 0.8
+  gpu_usage_threshold: 0.9
+
+  # Error handling
+  retry_attempts: 3
+  retry_delay_ms: 2000
+  circuit_breaker_threshold: 5
+  circuit_breaker_timeout_seconds: 60

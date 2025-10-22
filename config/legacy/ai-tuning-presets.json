@@ -1,0 +1,14 @@
+{
+  "presets": [
+    { "name": "Netflix Drama", "dsp": { "deesser": 0.35, "eq_high": 0.1, "compressor": 0.45, "proximity": 0.2, "lufs": -23.0 }, "ai": { "stability": 0.62, "breath_style": "Podcast", "articulation": 0.55, "emotion_curve": {"neutral":0.8,"warmth":0.2}, "pause_variation": 0.15 } },
+    { "name": "Anime Dub",     "dsp": { "deesser": 0.25, "eq_high": 0.25, "compressor": 0.35, "proximity": 0.1, "lufs": -20.0 }, "ai": { "stability": 0.48, "breath_style": "CinematicWhisper", "articulation": 0.72, "emotion_curve":{"happy":0.5,"energetic":0.4}, "pause_variation": 0.25 } },
+    { "name": "AAA Cinematic", "dsp": { "deesser": 0.3,  "eq_high": 0.18, "compressor": 0.5,  "proximity": 0.28,"lufs": -24.0 }, "ai": { "stability": 0.68, "breath_style": "CinematicWhisper", "articulation": 0.6,  "emotion_curve":{"serious":0.6,"dark":0.2}, "pause_variation": 0.12 } },
+    { "name": "Radio Host",    "dsp": { "deesser": 0.4,  "eq_high": 0.12, "compressor": 0.55, "proximity": 0.22,"lufs": -16.0 }, "ai": { "stability": 0.7,  "breath_style": "Podcast", "articulation": 0.52, "emotion_curve":{"warmth":0.5}, "pause_variation": 0.1 } },
+    { "name": "ASMR",          "dsp": { "deesser": 0.2,  "eq_high": 0.15, "compressor": 0.2,  "proximity": 0.05,"lufs": -28.0 }, "ai": { "stability": 0.4,  "breath_style": "ASMR", "articulation": 0.35, "emotion_curve":{"whisper":0.8}, "pause_variation": 0.3 } },
+    { "name": "Game Mode",     "dsp": { "deesser": 0.3,  "eq_high": 0.2,  "compressor": 0.45, "proximity": 0.18,"lufs": -19.0 }, "ai": { "stability": 0.58, "breath_style": "Neutral", "articulation": 0.6,  "emotion_curve":{"intense":0.4}, "pause_variation": 0.18 } }
+  ],
+  "breath_styles": ["ASMR","Podcast","CinematicWhisper","Neutral"],
+  "accent_wheel": ["US","UK","AU","Anime","NeutralAI"],
+  "output_modes": ["Broadcast","ASMR","Game","DialogueStem"],
+  "voice_age": [ "17","25","40","65" ]
+}

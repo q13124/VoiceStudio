@@ -1,0 +1,18 @@
+{
+  "performance": {
+    "cuda_memory_fraction": 0.8,
+    "max_workers": 4,
+    "batch_size": 1,
+    "enable_mixed_precision": true,
+    "enable_cudnn_benchmark": true
+  },
+  "voice_cloning": {
+    "default_engine": "xtts",
+    "fallback_engines": [
+      "openvoice",
+      "cosyvoice"
+    ],
+    "quality_threshold": 0.95,
+    "max_audio_length": 3600
+  }
+}

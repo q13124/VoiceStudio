@@ -1,0 +1,60 @@
+groups:
+  - name: voicestudio-api
+    rules:
+      # 1) Error rate > 1% over 10m
+      - alert: VS_ApiHighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5..|4.."}[10m])) / sum(rate(http_requests_total[10m])) > 0.01
+        for: 5m
+        labels:
+          severity: page
+          service: voicestudio
+        annotations:
+          summary: "VoiceStudio API error rate high (>1%)"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 10m."
+
+      # 2) p95 latency SLO breach (> 500ms over 10m)
+      - alert: VS_ApiHighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[10m])) by (le)) > 0.5
+        for: 10m
+        labels:
+          severity: ticket
+          service: voicestudio
+        annotations:
+          summary: "VoiceStudio API p95 latency > 500ms"
+          description: "p95 latency is {{ $value | humanize }}s (SLO 500ms)."
+
+      # 3) Throughput sudden drop (>60% fall vs. yesterday same time window)
+        # requires recording rules or external signals; simplified rolling comparison:
+      - alert: VS_ApiTrafficDrop
+        expr: sum(rate(http_requests_total[5m])) < 0.4 * sum(rate(http_requests_total[1h]))
+        for: 15m
+        labels:
+          severity: warning
+          service: voicestudio
+        annotations:
+          summary: "VoiceStudio API traffic dropped"
+          description: "Current 5m rate is <40% of the last hour average."
+
+  - name: voicestudio-evals
+    rules:
+      # SQLite exporter metrics (clip rate regression)
+      - alert: VS_EvalClipRateRegression
+        expr: avg_over_time(voicestudio_clip_rate[1d]) > 0.1
+        for: 30m
+        labels:
+          severity: ticket
+          service: voicestudio
+        annotations:
+          summary: "Clip rate > 10% on daily average"
+          description: "Daily avg clip rate is {{ $value | humanizePercentage }}"
+
+      # Win rate significant drop (7d avg < 50%)
+      - alert: VS_EvalWRDrop
+        expr: avg_over_time(voicestudio_wr[7d]) < 0.5
+        for: 1h
+        labels:
+          severity: warning
+          service: voicestudio
+        annotations:
+          summary: "Win rate dropped (<50% 7-day average)"
+          description: "7-day average WR is {{ $value | humanizePercentage }}"

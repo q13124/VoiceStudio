@@ -1,0 +1,10 @@
+<UserControl x:Class="VoiceStudio.UI.Controls.AccentWheelControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Canvas x:Name="Wheel" Background="Transparent" Width="220" Height="220" PointerPressed="OnPress" PointerMoved="OnMove">
+            <Ellipse Width="220" Height="220" Stroke="Gray" StrokeThickness="1"/>
+            <Ellipse Width="6" Height="6" Fill="Orange" x:Name="Dot"/>
+        </Canvas>
+    </Grid>
+</UserControl>

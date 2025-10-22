@@ -1,0 +1,43 @@
+{
+  "engines": {
+    "xtts": {
+      "enabled": true,
+      "model": "tts_models/multilingual/multi-dataset/xtts_v2",
+      "language": "en",
+      "use_cuda": true
+    },
+    "openvoice": {
+      "enabled": true,
+      "model": "openvoice_v2",
+      "use_cuda": true
+    },
+    "cosyvoice": {
+      "enabled": true,
+      "model": "cosyvoice_2",
+      "use_cuda": true
+    },
+    "whisper": {
+      "enabled": true,
+      "model": "base",
+      "compute_type": "float16",
+      "use_cuda": true
+    },
+    "pyannote": {
+      "enabled": true,
+      "model": "pyannote/speaker-diarization",
+      "use_cuda": true
+    }
+  },
+  "performance": {
+    "cuda_memory_fraction": 0.8,
+    "max_workers": 4,
+    "batch_size": 1,
+    "enable_mixed_precision": true
+  },
+  "quality": {
+    "similarity_threshold": 0.95,
+    "max_audio_length": 3600,
+    "sample_rate": 22050,
+    "bit_depth": 16
+  }
+}

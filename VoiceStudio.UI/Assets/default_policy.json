@@ -1,0 +1,6 @@
+{
+  "name": "Default Policy",
+  "require_watermark_for_export": true,
+  "allow_commercial_use": false,
+  "notes": "Edit per-profile to override."
+}

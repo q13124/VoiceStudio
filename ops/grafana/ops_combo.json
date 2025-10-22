@@ -1,0 +1,64 @@
+{
+  "title": "VoiceStudio Ops Combo",
+  "schemaVersion": 39,
+  "editable": true,
+  "tags": ["voicestudio","ops","combo"],
+  "templating": {
+    "list": [
+      { "type": "datasource", "name": "prom", "query": "prometheus", "current": {"selected": true} },
+      { "type": "datasource", "name": "pg",   "query": "postgres",   "current": {"selected": true} },
+      { "type": "query", "name": "engine", "datasource": {"type":"postgres","uid":"$pg"}, "refresh": 1,
+        "query": "SELECT DISTINCT engine FROM eval_runs ORDER BY engine", "multi": true, "includeAll": true }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Latency (p95, seconds) & Win Rate (percent)",
+      "datasource": { "type": "mixed" },
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "line" } },
+        "overrides": [
+          { "matcher": {"id":"byName","options":"http p95"}, "properties": [{"id":"custom.axisPlacement","value":"left"},{"id":"unit","value":"s"}] },
+          { "matcher": {"id":"byName","options":"WR"},       "properties": [{"id":"custom.axisPlacement","value":"right"},{"id":"unit","value":"percentunit"}] }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {"type":"prometheus","uid":"$prom"},
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "http p95"
+        },
+        {
+          "datasource": {"type":"postgres","uid":"$pg"},
+          "refId": "B",
+          "format": "time_series",
+          "rawSql": "SELECT date AS time, wr AS value, engine AS metric FROM eval_runs WHERE $__timeFilter(date) AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine' = 'All') ORDER BY date",
+          "legendFormat": "WR"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Clip Rate (Postgres) & Request Rate (Prom)",
+      "datasource": { "type": "mixed" },
+      "targets": [
+        {
+          "datasource": {"type":"postgres","uid":"$pg"},
+          "refId": "C",
+          "format": "time_series",
+          "rawSql": "SELECT date AS time, clip_rate AS value, engine AS metric FROM eval_runs WHERE $__timeFilter(date) AND clip_rate IS NOT NULL AND (engine = ANY(string_to_array('$engine', ',')) OR '$engine' = 'All') ORDER BY date",
+          "legendFormat": "clip"
+        },
+        {
+          "datasource": {"type":"prometheus","uid":"$prom"},
+          "refId": "D",
+          "expr": "sum(rate(http_requests_total[5m]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    }
+  ]
+}

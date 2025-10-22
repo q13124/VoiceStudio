@@ -1,0 +1,5 @@
+[
+  { "id":"micro_pause_variance_low", "threshold": 0.75, "message": "Suggested: Increase micro-pause variance for realism." },
+  { "id":"sibilance_high", "threshold": 0.65, "message": "De-esser may be too low for this segment." },
+  { "id":"flat_prosody", "threshold": 0.70, "message": "Add emotion curve points to avoid flat delivery." }
+]

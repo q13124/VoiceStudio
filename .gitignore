@@ -62,3 +62,8 @@ obj/
 # Temporary files
 *.tmp
 *.temp
+
+# pip-tools artifacts
+requirements-*.txt.bak
+*.txt.bak
+pip-compile.log

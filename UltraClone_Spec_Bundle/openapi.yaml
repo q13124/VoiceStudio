@@ -1,0 +1,202 @@
+openapi: 3.1.0
+info:
+  title: UltraClone Voice API
+  version: 0.1.0
+  description: >
+    API for Instant Cloning, Text-to-Speech, Voice Library, Batch jobs, and Quality reports.
+    Streaming is provided via WebSocket (`wss://.../v1/stream/{voice_id}`) that sends PCM chunks.
+servers:
+  - url: http://localhost:5071
+paths:
+  /v1/voices:
+    get:
+      summary: List voices
+      operationId: listVoices
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceProfile'
+    post:
+      summary: Add a new voice (Instant Clone)
+      operationId: addVoice
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                reference_audio:
+                  type: string
+                  format: binary
+                notes:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceProfile'
+  /v1/voices/{voice_id}:
+    get:
+      summary: Get voice details
+      operationId: getVoice
+      parameters:
+        - name: voice_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceProfile'
+  /v1/text-to-speech/{voice_id}:
+    post:
+      summary: Generate speech (TTS) for a voice
+      operationId: tts
+      parameters:
+        - name: voice_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                stability:
+                  type: number
+                  minimum: 0.0
+                  maximum: 1.0
+                clarity:
+                  type: number
+                  minimum: 0.0
+                  maximum: 1.0
+                style:
+                  type: number
+                  minimum: 0.0
+                  maximum: 1.0
+                speaker_boost:
+                  type: boolean
+                emotion:
+                  type: string
+                  enum: [neutral, happy, sad, angry, surprised, fearful, disgusted]
+                intensity:
+                  type: number
+                  minimum: 0.0
+                  maximum: 1.0
+                speed:
+                  type: number
+                  minimum: 0.25
+                  maximum: 2.0
+                  default: 1.0
+                pitch_semitones:
+                  type: number
+                  minimum: -12
+                  maximum: 12
+                  default: 0
+                format:
+                  type: string
+                  enum: [wav, mp3, flac, ogg]
+                  default: wav
+                preset_id:
+                  type: string
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/wav: {}
+            audio/mpeg: {}
+            audio/flac: {}
+            audio/ogg: {}
+  /v1/batch:
+    post:
+      summary: Submit a batch CSV render job
+      operationId: submitBatch
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [csv]
+              properties:
+                csv:
+                  type: string
+                  format: binary
+                default_voice_id:
+                  type: string
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchJob'
+  /v1/batch/{job_id}:
+    get:
+      summary: Get batch job status
+      operationId: getBatch
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchJob'
+  /v1/quality/report:
+    post:
+      summary: Analyze an audio file and return objective metrics
+      operationId: qualityReport
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityReport'
+components:
+  schemas:
+    VoiceProfile:
+      $ref: './schemas/voice_profile.schema.json'
+    VoicePreset:
+      $ref: './schemas/voice_preset.schema.json'
+    BatchJob:
+      $ref: './schemas/batch_job.schema.json'
+    QualityReport:
+      $ref: './schemas/quality_report.schema.json'

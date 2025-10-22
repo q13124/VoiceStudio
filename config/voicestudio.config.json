@@ -1,0 +1,33 @@
+{
+  "$schema": "https://example.com/voicestudio.schema.json",
+  "programdata": "C:/ProgramData/VoiceStudio",
+  "service_port": 5188,
+  "ui": {
+    "theme": "dark",
+    "language": "en-US"
+  },
+  "logging": {
+    "level": "Information",
+    "json": true
+  },
+  "features": {
+    "plugin_hot_reload": true,
+    "dashboard_default": true
+  },
+  "legacy_merge": {
+    "files": [
+      "ai-tuning-presets.json",
+      "appsettings.json",
+      "default_voice_cloning_project.json",
+      "deployment_config.json",
+      "dsp_optimization.json",
+      "gpu_optimization.json",
+      "memory_optimization.json",
+      "monitoring_config.json",
+      "optimization.json",
+      "voice_cloning_engines.json",
+      "voice_cloning_optimized.json",
+      "voice_studio_config.json"
+    ]
+  }
+}

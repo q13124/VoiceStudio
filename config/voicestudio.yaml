@@ -1,0 +1,59 @@
+router:
+  host: 127.0.0.1
+  port: 5090
+  models_dir: "C:/ProgramData/UltraClone/models"
+  cache_dir:  "%APPDATA%/UltraClone/cache"
+  quality_preference:
+    fast: 1
+    balanced: 2
+    quality: 3
+  fallback_order: [xtts, openvoice, coqui, tortoise, rvc]
+
+engines:
+  xtts:
+    model_id: "tts_models/multilingual/multi-dataset/xtts_v2"
+    device_preference: [cuda, cpu]
+    default_language: "en"
+    default_speaker_refs: []
+    sample_rate: 22050
+    use_half_precision: true
+
+  openvoice:
+    model_id: "openvoice/openvoice_24k"
+    device_preference: [cuda, cpu]
+    default_language: "en"
+    sample_rate: 24000
+
+  coqui:
+    model_id: "tts_models/en/ljspeech/tacotron2-DDC"
+    device_preference: [cuda, cpu]
+    default_language: "en"
+    sample_rate: 22050
+
+  tortoise:
+    model_id: "tortoise-tts"
+    device_preference: [cuda, cpu]
+    default_language: "en"
+    sample_rate: 22050
+
+  rvc:
+    model_id: "rvc"
+    device_preference: [cuda, cpu]
+    default_language: "en"
+    sample_rate: 40000
+
+  output_chain:
+    enabled: false
+    target_lufs: -16.0
+    deess: false
+    noise_reduction: false
+
+telemetry:
+  enabled: true
+  database_path: "voicestudio_telemetry.db"
+  retention_days: 30
+
+api:
+  cors_origins: ["http://localhost:3000", "http://127.0.0.1:3000"]
+  rate_limit_per_minute: 60
+  max_text_length: 1000

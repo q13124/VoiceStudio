@@ -1,0 +1,58 @@
+{
+  "batch_processing": {
+    "enabled": true,
+    "max_workers": 8,
+    "max_concurrent_jobs": 3,
+    "chunk_size": 10,
+    "timeout_seconds": 300,
+    "retry_attempts": 3,
+    "retry_delay": 5,
+    "auto_cleanup": true,
+    "cleanup_interval_hours": 24
+  },
+  "job_types": {
+    "voice_cloning": {
+      "enabled": true,
+      "max_items": 100,
+      "timeout_per_item": 60
+    },
+    "audio_processing": {
+      "enabled": true,
+      "max_items": 200,
+      "timeout_per_item": 30
+    },
+    "similarity_analysis": {
+      "enabled": true,
+      "max_items": 50,
+      "timeout_per_item": 45
+    },
+    "quality_assessment": {
+      "enabled": true,
+      "max_items": 100,
+      "timeout_per_item": 20
+    },
+    "feature_extraction": {
+      "enabled": true,
+      "max_items": 150,
+      "timeout_per_item": 25
+    },
+    "mixed_operations": {
+      "enabled": true,
+      "max_items": 75,
+      "timeout_per_item": 90
+    }
+  },
+  "storage": {
+    "batch_dir": "batch",
+    "output_dir": "outputs",
+    "temp_dir": "temp",
+    "max_storage_gb": 10,
+    "cleanup_threshold_gb": 8
+  },
+  "monitoring": {
+    "enable_metrics": true,
+    "metrics_interval_seconds": 30,
+    "log_level": "INFO",
+    "performance_alerts": true
+  }
+}

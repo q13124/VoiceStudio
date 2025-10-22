@@ -1,0 +1,22 @@
+<UserControl
+  x:Class="VoiceStudio.UI.Controls.AlignmentLaneControl"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <DataGrid x:Name="Grid" AutoGenerateColumns="False" CanUserAddRows="True" HeadersVisibility="Column" Height="260">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Word" Binding="{Binding Word}" Width="*" />
+        <DataGridTextColumn Header="Start (s)" Binding="{Binding Start}" Width="80"/>
+        <DataGridTextColumn Header="Dur (s)" Binding="{Binding Dur}" Width="80"/>
+        <DataGridTextColumn Header="Pitch" Binding="{Binding Pitch}" Width="80"/>
+        <DataGridTextColumn Header="Speed" Binding="{Binding Speed}" Width="80"/>
+        <DataGridTextColumn Header="Energy" Binding="{Binding Energy}" Width="80"/>
+      </DataGrid.Columns>
+    </DataGrid>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Background="#22222288" Padding="6" Spacing="8">
+      <Button Content="Load from .words.json" Click="OnLoad"/>
+      <Button Content="Save Overrides" Click="OnSave"/>
+      <TextBlock x:Name="Status" Opacity="0.8"/>
+    </StackPanel>
+  </Grid>
+</UserControl>

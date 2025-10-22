@@ -1,0 +1,40 @@
+<Page
+  x:Class="VoiceStudio.UI.Pages.WaveformLabPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d">
+  <Grid Padding="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <TextBlock Text="Source audio"/>
+      <TextBox x:Name="SrcPath" Width="420" IsReadOnly="True"/>
+      <Button Content="Browse…" Click="OnPickSrc"/>
+      <Button Content="Analyze" Click="OnAnalyze" Margin="12,0,0,0"/>
+      <TextBlock Text="Latency (ms)"/>
+      <TextBox x:Name="LatencyBudget" Width="80" Text="50"/>
+    </StackPanel>
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Border BorderBrush="Gray" BorderThickness="1" Margin="0,8,8,8">
+        <Image x:Name="SpectroImg" Stretch="Uniform"/>
+      </Border>
+      <StackPanel Grid.Column="1" Width="12"/>
+      <Border BorderBrush="Gray" BorderThickness="1" Margin="8,8,0,8">
+        <Image x:Name="HeatmapImg" Stretch="Uniform"/>
+      </Border>
+    </Grid>
+
+    <TextBlock Grid.Row="2" x:Name="Status" Text="Ready" Opacity="0.8"/>
+  </Grid>
+</Page>

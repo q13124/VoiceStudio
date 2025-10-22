@@ -1,0 +1,201 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "VoiceStudio Monitoring",
+    "tags": ["voicestudio", "voice-cloning", "gpu", "node-exporter"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Request Rate (per second)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"voicestudio_api\"}[5m])",
+            "legendFormat": "{{method}} {{handler}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "yAxes": [
+          {
+            "label": "requests/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "API Latency Histogram",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_request_duration_seconds_bucket{job=\"voicestudio_api\"}[5m])) by (le)",
+            "legendFormat": "{{le}}s"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "yAxes": [
+          {
+            "label": "requests/sec",
+            "min": 0,
+            "logBase": 1
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "GPU Utilization %",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "DCGM_FI_DEV_GPU_UTIL{job=\"gpu_dcgm\"}",
+            "legendFormat": "GPU {{gpu}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "yAxes": [
+          {
+            "label": "%",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "GPU VRAM Used (bytes)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "DCGM_FI_DEV_FB_USED{job=\"gpu_dcgm\"}",
+            "legendFormat": "GPU {{gpu}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "yAxes": [
+          {
+            "label": "bytes",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "GPU Power Draw (Watts)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "DCGM_FI_DEV_POWER_USAGE{job=\"gpu_dcgm\"}",
+            "legendFormat": "GPU {{gpu}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "yAxes": [
+          {
+            "label": "Watts",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "CPU Usage %",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU {{instance}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "yAxes": [
+          {
+            "label": "%",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+            "legendFormat": "Used {{instance}}"
+          },
+          {
+            "expr": "node_memory_MemTotal_bytes",
+            "legendFormat": "Total {{instance}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "yAxes": [
+          {
+            "label": "bytes",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Disk Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "node_filesystem_size_bytes - node_filesystem_free_bytes",
+            "legendFormat": "Used {{instance}} {{mountpoint}}"
+          },
+          {
+            "expr": "node_filesystem_size_bytes",
+            "legendFormat": "Total {{instance}} {{mountpoint}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "yAxes": [
+          {
+            "label": "bytes",
+            "min": 0
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "annotations": {
+      "list": [
+        {
+          "name": "VoiceStudio Events",
+          "enable": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "type": "tags",
+          "tags": ["voicestudio"]
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "job",
+          "type": "query",
+          "query": "label_values(job)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        },
+        {
+          "name": "instance",
+          "type": "query",
+          "query": "label_values(instance)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        }
+      ]
+    }
+  }
+}

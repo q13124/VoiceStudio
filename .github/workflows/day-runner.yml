@@ -1,0 +1,68 @@
+name: day-runner
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "Day number"
+        required: true
+        default: "1"
+      feature:
+        description: "Feature label"
+        required: true
+        default: "TBD"
+      test_preset:
+        description: "python|frontend|api|all"
+        required: true
+        default: "python"
+  schedule:
+    - cron: "0 15 * * 1-5"   # 10:00 AM CDT weekdays
+
+jobs:
+  run-day:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend deps (optional)
+        run: |
+          if [ -f web/frontend/package.json ]; then (cd web/frontend && npm ci || npm i); else echo "no frontend"; fi
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.lock.txt ]; then pip install --require-hashes -r requirements.lock.txt; elif [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Compute test command from preset
+        id: cmd
+        run: |
+          chmod +x scripts/tests/presets.sh || true
+          if [ -x scripts/tests/presets.sh ]; then
+            echo "cmd=$(scripts/tests/presets.sh '${{ github.event.inputs.test_preset || 'python' }}' | tr -d '\n')" >> $GITHUB_OUTPUT
+          else
+            echo "cmd=pytest -q" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests
+        run: |
+          echo "Day ${{ github.event.inputs.day || 'N/A' }}: ${{ github.event.inputs.feature || 'TBD' }}"
+          echo "CMD: ${{ steps.cmd.outputs.cmd }}"
+          bash -lc "${{ steps.cmd.outputs.cmd }}"
+
+      - name: Upload summary
+        if: always()
+        run: |
+          echo "### Day Runner" >> $GITHUB_STEP_SUMMARY
+          echo "* Day: ${{ github.event.inputs.day }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Feature: ${{ github.event.inputs.feature }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Preset: ${{ github.event.inputs.test_preset }}" >> $GITHUB_STEP_SUMMARY

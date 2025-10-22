@@ -1,0 +1,65 @@
+{
+  "dashboard": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8050,
+    "refresh_interval": 30,
+    "max_data_points": 1000,
+    "auto_refresh": true,
+    "theme": "bootstrap"
+  },
+  "quality_thresholds": {
+    "excellent": 0.9,
+    "good": 0.8,
+    "fair": 0.7,
+    "poor": 0.6,
+    "very_poor": 0.0
+  },
+  "chart_types": {
+    "voice_similarity": "line",
+    "audio_quality": "bar",
+    "processing_time": "histogram",
+    "success_rate": "gauge",
+    "engine_performance": "scatter",
+    "user_satisfaction": "pie"
+  },
+  "alert_thresholds": {
+    "low_quality": 0.6,
+    "slow_processing": 60.0,
+    "low_success_rate": 0.8,
+    "high_error_rate": 0.1
+  },
+  "metrics": {
+    "voice_similarity": {
+      "enabled": true,
+      "weight": 0.4,
+      "description": "Voice similarity score"
+    },
+    "audio_quality": {
+      "enabled": true,
+      "weight": 0.3,
+      "description": "Audio quality assessment"
+    },
+    "processing_time": {
+      "enabled": true,
+      "weight": 0.1,
+      "description": "Processing time in seconds"
+    },
+    "success_rate": {
+      "enabled": true,
+      "weight": 0.2,
+      "description": "Operation success rate"
+    }
+  },
+  "storage": {
+    "db_path": "voicestudio.db",
+    "backup_interval_hours": 24,
+    "retention_days": 30
+  },
+  "monitoring": {
+    "enable_alerts": true,
+    "alert_email": null,
+    "alert_webhook": null,
+    "log_level": "INFO"
+  }
+}

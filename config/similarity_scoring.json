@@ -1,0 +1,49 @@
+{
+  "similarity_scoring": {
+    "enabled": true,
+    "sample_rate": 22050,
+    "hop_length": 512,
+    "n_fft": 2048,
+    "n_mfcc": 13,
+    "n_formants": 4,
+    "weights": {
+      "spectral": 0.25,
+      "mfcc": 0.25,
+      "pitch": 0.2,
+      "prosody": 0.15,
+      "timbre": 0.15
+    }
+  },
+  "analysis_settings": {
+    "min_audio_duration": 1.0,
+    "max_audio_duration": 60.0,
+    "frame_length_ms": 25,
+    "hop_length_ms": 10,
+    "pitch_range_hz": [
+      50,
+      500
+    ],
+    "formant_range_hz": [
+      200,
+      4000
+    ]
+  },
+  "quality_thresholds": {
+    "excellent": 0.9,
+    "good": 0.8,
+    "fair": 0.7,
+    "poor": 0.6,
+    "very_poor": 0.5
+  },
+  "batch_processing": {
+    "max_concurrent_analyses": 5,
+    "timeout_seconds": 300,
+    "retry_attempts": 3
+  },
+  "output_formats": {
+    "detailed": true,
+    "summary": true,
+    "confidence_scores": true,
+    "feature_breakdown": true
+  }
+}

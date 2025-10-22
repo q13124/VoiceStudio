@@ -1,0 +1,24 @@
+[
+  {
+    "input_path": "reference_voice_1.wav",
+    "output_path": "cloned_voice_1.wav",
+    "parameters": {
+      "text": "Hello, this is VoiceStudio Ultimate!",
+      "reference_audio": "reference_voice_1.wav",
+      "engine": "xtts",
+      "language": "en",
+      "quality": "high"
+    }
+  },
+  {
+    "input_path": "reference_voice_2.wav",
+    "output_path": "cloned_voice_2.wav",
+    "parameters": {
+      "text": "Welcome to the future of voice cloning!",
+      "reference_audio": "reference_voice_2.wav",
+      "engine": "openvoice",
+      "language": "en",
+      "quality": "high"
+    }
+  }
+]

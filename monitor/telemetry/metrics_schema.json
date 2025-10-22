@@ -1,0 +1,9 @@
+{
+  "session_id": "guid",
+  "ts_iso": "2025-01-01T12:00:00Z",
+  "event": "render_done|error|queue_enqueue|gpu_sample",
+  "engine": "xtts|openvoice|cosyvoice2|coqui",
+  "latency_ms": 0,
+  "vram_used_mb": 0,
+  "error": null
+}

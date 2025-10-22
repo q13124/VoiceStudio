@@ -1,0 +1,55 @@
+# VoiceStudio Production Environment Configuration
+# Overrides for production environment
+
+# Production-specific router settings
+router:
+  port: 5090
+  debug: false
+  log_level: "warning"
+
+# Production web UI settings
+web_ui:
+  dev_server: false
+  hot_reload: false
+  debug_mode: false
+
+# Production security settings
+security:
+  rate_limits:
+    api_requests_per_minute: 100
+    clones_per_day_per_user: 50
+  input_validation:
+    max_text_length: 5000
+  encryption:
+    voice_profiles_at_rest: true
+  audit_logging: true
+
+# Production testing settings
+testing:
+  mock_engines: false
+  unit_test_coverage_threshold: 80
+  integration_test_timeout: 20
+  e2e_test_timeout: 60
+
+# Production telemetry
+telemetry:
+  enabled: true
+  retention_days: 30
+  metrics_export:
+    prometheus:
+      enabled: true
+      port: 9090
+    grafana:
+      enabled: true
+      dashboard_url: "http://localhost:3000"
+
+# Production plugin settings
+plugins:
+  hot_reload: false
+  debug_mode: false
+
+# Production performance settings
+performance:
+  max_concurrent_jobs: 16
+  memory_limit_gb: 32
+  gpu_memory_limit_gb: 16
