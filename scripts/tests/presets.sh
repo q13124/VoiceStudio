@@ -10,7 +10,7 @@ from services.main import app
 c = TestClient(app)
 r = c.post('/v1/generate', json={'text':'hello'})
 print('status', r.status_code)
-assert r.status_code in (200, 422), 'endpoint reachable'
+image.pngimage.pngassert r.status_code in (200, 422), 'endpoint reachable'
 print('API test passed!')
 PY
 PY
