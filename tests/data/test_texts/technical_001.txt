@@ -1,0 +1,1 @@
+Quantization techniques reduce model size while maintaining quality, enabling efficient deployment on various hardware configurations.

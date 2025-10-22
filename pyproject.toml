@@ -14,6 +14,10 @@ dependencies = [
   "loguru>=0.7"
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "services*"]
+
 [project.optional-dependencies]
 voice-cloning = [
   "torch>=2.4.0",

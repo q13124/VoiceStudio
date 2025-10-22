@@ -1,0 +1,1 @@
+Hello, this is English text for testing voice cloning accuracy.

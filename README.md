@@ -1,15 +1,33 @@
-# VoiceStudio Ultimate
+<!-- VoiceStudio • Project Overview -->
 
-<!-- VoiceStudio Handshake & Automation Badges -->
+> Ultra-fast voice generation & evaluation platform with plugin-API, A/B testing, and production-grade observability.
+> Architected to the Claude "master plan" and our governance rules (SemVer, schema stability, additive changes).
+
+<!-- Handshake & Automation Badges -->
 [![Handshake Status](https://img.shields.io/github/actions/workflow/status/wsteward11/VoiceStudio/handshake-status.yml?label=handshake%20(15m)&logo=github)](https://github.com/wsteward11/VoiceStudio/actions/workflows/handshake-status.yml)
 [![Day Runner](https://img.shields.io/github/actions/workflow/status/wsteward11/VoiceStudio/day-runner.yml?label=day%20runner&logo=github)](https://github.com/wsteward11/VoiceStudio/actions/workflows/day-runner.yml)
 [![Daily Nudge](https://img.shields.io/github/actions/workflow/status/wsteward11/VoiceStudio/daily-nudge.yml?label=daily%20nudge&logo=github)](https://github.com/wsteward11/VoiceStudio/actions/workflows/daily-nudge.yml)
 [![Status File](https://img.shields.io/badge/status-HANDSHAKE__STATUS.md-1f6feb?logo=markdown)](https://github.com/wsteward11/VoiceStudio/blob/main/docs/HANDSHAKE_STATUS.md)
 ![Status last updated](https://img.shields.io/github/last-commit/wsteward11/VoiceStudio?path=docs/HANDSHAKE_STATUS.md&label=status%20last%20update)
 
-## 🎯 Professional Voice Cloning Platform
+### What is VoiceStudio?
+- **A/B Eval & Golden-set:** blind A/B runner with CI bars, win-rate CIs, clip/LUFS flags, and nightly eval sweeps.
+- **Plugin-API & Schema Governance:** OpenAPI + strict validation; additive, minor-safe extensions.
+- **Observability:** Prometheus/Grafana metrics (HTTP latency, GPU, eval WR/clip), alerting, and synthetic prober.
+- **Dev Speed Loop:** Cursor executes; 15-minute handshake keeps plan ↔ code synced; day-runner nudges.
 
-VoiceStudio Ultimate is a comprehensive, professional-grade voice cloning platform that combines cutting-edge AI technology with advanced audio processing capabilities. Built for creators, developers, and professionals who demand the highest quality voice synthesis.
+### Quick Start
+```bash
+# 1) Local smoke (adjust to your paths)
+make test-python
+make test-frontend
+make test-api
+
+# 2) Handshake loop (GitHub Actions)
+#   - Push to main, the workflow posts every 15 minutes and updates docs/HANDSHAKE_STATUS.md
+
+# 3) "Day runner" (manual from Actions UI or 10:00 AM CT weekdays)
+#   - Runs your chosen preset tests and posts a run summary
 
 ## ✨ Key Features
 

@@ -1,0 +1,1 @@
+Speaker embedding extraction uses deep learning methods to capture unique vocal characteristics and enable accurate voice cloning.

@@ -1,0 +1,1 @@
+The alignment lane feature allows precise control over word-level prosody, enabling creators to fine-tune timing, pitch, speed, and energy for each word in their content.
