@@ -14,21 +14,21 @@
 - [x] **Day 3**: Quality scoring system - COMPLETE & TESTED
 
 ### 🔄 CURRENT POSITION
-- **NEW**: Claude created AUTOMATED ChatGPT ↔ Cursor system
+- **NEW**: FREE handshake automation system (ChatGPT Plus + Cursor + Windows Task Scheduler)
 - **Phase**: 7-day integration sprint (Days 1-7) before 30-day plan
-- **Status**: Ready for automated 15-minute cycles
+- **Status**: Ready to setup automation (zero additional cost)
 - **Focus**: Wire E2E pipeline (fusion → gates → TTS → WAV)
 
 ---
 
 ## 🎯 EXECUTION PROTOCOL (MANDATORY)
 
-### AUTOMATED WORKFLOW (15-minute cycles)
-1. **Get Status** (1 min): Read `docs/HANDSHAKE_STATUS.md` + logs
-2. **Ask ChatGPT** (1 min): Paste status → Get 2-3 commands
-3. **Execute in Cursor** (10 min): Ctrl+K → paste commands → Ctrl+Enter
-4. **Capture Results** (2 min): Run tests, note outcomes
-5. **Log to ChatGPT** (1 min): Paste results → Get next commands
+### FREE HANDSHAKE AUTOMATION (15-minute cycles)
+1. **ChatGPT Plus** writes `CURSOR_EXECUTE Block [N]:` to handshake
+2. **Windows Task Scheduler** runs `.cursor/auto_execute.py` every 15 min
+3. **Cursor script** reads handshake, executes commands, writes `CURSOR_RESULTS Block [N]:`
+4. **You** read results, paste to ChatGPT Plus (5 min every 15 min)
+5. **ChatGPT Plus** writes next block, loop repeats
 
 ### CURSOR SHORTCUTS (CRITICAL)
 - `Ctrl+K`: Composer (multi-file edits)
@@ -95,11 +95,11 @@
 
 ## 🚀 IMMEDIATE NEXT STEPS
 
-1. **Setup ChatGPT Overseer**: Copy Claude's automated system to ChatGPT Pro
-2. **Get Status**: Read `docs/HANDSHAKE_STATUS.md` + logs
-3. **Start Cycle**: Paste status to ChatGPT → Get 2-3 commands
-4. **Execute**: Ctrl+K → paste commands → Ctrl+Enter
-5. **Repeat**: Every 15 minutes until Day 1 integration complete
+1. **Setup Cursor Script**: Create `.cursor/auto_execute.py` (from FREE_HANDSHAKE_AUTOMATION.md)
+2. **Setup Task Scheduler**: Run `setup_cursor_automation.ps1`
+3. **Initialize ChatGPT Plus**: Give PART 3 instructions to ChatGPT Plus
+4. **Start Block 1**: ChatGPT writes first `CURSOR_EXECUTE Block 1:` to handshake
+5. **Let it run**: Cursor executes automatically every 15 minutes
 
 ---
 
@@ -112,6 +112,8 @@
 - **All work must integrate into Windows desktop app**
 - **🚨 NO INDEPENDENT INSTALLATIONS OR JUMPING AHEAD**
 - **🚨 ONLY EXECUTE WHAT CHATGPT SPECIFICALLY ORDERS**
+- **💰 ZERO ADDITIONAL COST** (uses existing ChatGPT Plus + Cursor + GitHub)
+- **⏰ 5 MINUTES EVERY 15 MINUTES** (you coordinate, Cursor executes)
 
 ---
 
