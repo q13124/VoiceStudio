@@ -56,11 +56,14 @@ jobs:
       - name: Run migrations (upgrade head)
         env:
           DB_URL: ${{ env.DB_URL }}
+          PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           alembic upgrade head
 
       - name: Smoke import models
-        env: { DB_URL: ${{ env.DB_URL }} }
+        env:
+          DB_URL: ${{ env.DB_URL }}
+          PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           python - <<'PY'
           from app.core.db import engine, Base
