@@ -41,5 +41,5 @@ jobs:
           git config user.name "VoiceStudio Bot"
           git config user.email "bot@users.noreply.github.com"
           git add docs/HANDSHAKE_STATUS.md
-          git commit -m "handshake: 60s status [skip ci]" || echo "No changes to commit"
+          git commit -m "handshake: 60s status" || echo "No changes to commit"
           git push || echo "Push failed but continuing"
