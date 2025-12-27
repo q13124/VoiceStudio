@@ -55,3 +55,7 @@ models/**/*.onnx
 models/**/*.bin
 models/**/*.safetensors
 models/**/*.ckpt
+
+# Cursor workspace metadata (IDE/assistant)
+.cursor/
+openmemory.md
