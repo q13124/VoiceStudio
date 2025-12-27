@@ -1,0 +1,9 @@
+<Project>
+  <!-- Suppress RuntimeIdentifier errors for WindowsAppSDK in .NET 10 SDK -->
+  <PropertyGroup>
+    <_SuppressWinRTError>true</_SuppressWinRTError>
+    <DisableImplicitFrameworkReferences>false</DisableImplicitFrameworkReferences>
+    <!-- Clear invalid RuntimeIdentifiers that cause build errors -->
+    <RuntimeIdentifiers></RuntimeIdentifiers>
+  </PropertyGroup>
+</Project>

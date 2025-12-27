@@ -1,0 +1,790 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
+using VoiceStudio.App.Utilities;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using VoiceGenerationResultDataModel = VoiceStudio.App.ViewModels.MultiVoiceGeneratorViewModel.VoiceGenerationResultData;
+
+namespace VoiceStudio.App.ViewModels
+{
+    /// <summary>
+    /// ViewModel for the MultiVoiceGeneratorView panel - Generate multiple voice synthesis jobs simultaneously.
+    /// </summary>
+    public partial class MultiVoiceGeneratorViewModel : BaseViewModel, IPanelView
+    {
+        private readonly IBackendClient _backendClient;
+
+        public string PanelId => "multi-voice-generator";
+        public string DisplayName => ResourceHelper.GetString("Panel.MultiVoiceGenerator.DisplayName", "Multi-Voice Generator");
+        public PanelRegion Region => PanelRegion.Center;
+
+        [ObservableProperty]
+        private ObservableCollection<VoiceGenerationItem> generationQueue = new();
+
+        [ObservableProperty]
+        private VoiceGenerationItem? selectedQueueItem;
+
+        [ObservableProperty]
+        private string? newItemProfileId;
+
+        [ObservableProperty]
+        private string? newItemText;
+
+        [ObservableProperty]
+        private string? newItemEngine = "xtts";
+
+        [ObservableProperty]
+        private string? newItemQualityMode = "standard";
+
+        [ObservableProperty]
+        private string? newItemLanguage = "en";
+
+        [ObservableProperty]
+        private string? newItemEmotion;
+
+        [ObservableProperty]
+        private ObservableCollection<string> availableEngines = new() { "xtts", "chatterbox", "tortoise" };
+
+        [ObservableProperty]
+        private ObservableCollection<string> qualityModes = new() { "fast", "standard", "high", "ultra" };
+
+        [ObservableProperty]
+        private string? currentJobId;
+
+        [ObservableProperty]
+        private string? currentJobName;
+
+        [ObservableProperty]
+        private float jobProgress;
+
+        [ObservableProperty]
+        private string? jobStatus;
+
+        [ObservableProperty]
+        private ObservableCollection<VoiceGenerationResultItem> results = new();
+
+        [ObservableProperty]
+        private string resultsViewMode = "grid"; // grid, list, comparison
+
+        [ObservableProperty]
+        private ObservableCollection<string> selectedAudioIdsForComparison = new();
+
+        public MultiVoiceGeneratorViewModel(IBackendClient backendClient)
+        {
+            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+
+            AddToQueueCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("AddToQueue");
+                await AddToQueueAsync(ct);
+            }, () => !string.IsNullOrWhiteSpace(NewItemProfileId) && !string.IsNullOrWhiteSpace(NewItemText));
+            RemoveFromQueueCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("RemoveFromQueue");
+                await RemoveFromQueueAsync(ct);
+            }, () => SelectedQueueItem != null);
+            ClearQueueCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("ClearQueue");
+                await ClearQueueAsync(ct);
+            }, () => GenerationQueue.Count > 0);
+            ImportCSVCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("ImportCSV");
+                await ImportCSVAsync(ct);
+            });
+            ExportCSVCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("ExportCSV");
+                await ExportCSVAsync(ct);
+            }, () => Results.Count > 0);
+            StartGenerationCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("StartGeneration");
+                await StartGenerationAsync(ct);
+            }, () => GenerationQueue.Count > 0 && !string.IsNullOrWhiteSpace(CurrentJobName));
+            LoadJobStatusCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("LoadJobStatus");
+                await LoadJobStatusAsync(ct);
+            }, () => !string.IsNullOrWhiteSpace(CurrentJobId));
+            LoadResultsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("LoadResults");
+                await LoadResultsAsync(ct);
+            }, () => !string.IsNullOrWhiteSpace(CurrentJobId));
+            CompareVoicesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("CompareVoices");
+                await CompareVoicesAsync(ct);
+            }, () => SelectedAudioIdsForComparison.Count >= 2);
+            RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("Refresh");
+                await RefreshAsync(ct);
+            });
+        }
+
+        public IAsyncRelayCommand AddToQueueCommand { get; }
+        public IAsyncRelayCommand RemoveFromQueueCommand { get; }
+        public IAsyncRelayCommand ClearQueueCommand { get; }
+        public IAsyncRelayCommand ImportCSVCommand { get; }
+        public IAsyncRelayCommand ExportCSVCommand { get; }
+        public IAsyncRelayCommand StartGenerationCommand { get; }
+        public IAsyncRelayCommand LoadJobStatusCommand { get; }
+        public IAsyncRelayCommand LoadResultsCommand { get; }
+        public IAsyncRelayCommand CompareVoicesCommand { get; }
+        public IAsyncRelayCommand RefreshCommand { get; }
+
+        partial void OnNewItemProfileIdChanged(string? value)
+        {
+            AddToQueueCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnNewItemTextChanged(string? value)
+        {
+            AddToQueueCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnSelectedQueueItemChanged(VoiceGenerationItem? value)
+        {
+            RemoveFromQueueCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnGenerationQueueChanged(ObservableCollection<VoiceGenerationItem> value)
+        {
+            ClearQueueCommand.NotifyCanExecuteChanged();
+            StartGenerationCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnCurrentJobNameChanged(string? value)
+        {
+            StartGenerationCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnCurrentJobIdChanged(string? value)
+        {
+            LoadJobStatusCommand.NotifyCanExecuteChanged();
+            LoadResultsCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnResultsChanged(ObservableCollection<VoiceGenerationResultItem> value)
+        {
+            ExportCSVCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnSelectedAudioIdsForComparisonChanged(ObservableCollection<string> value)
+        {
+            CompareVoicesCommand.NotifyCanExecuteChanged();
+        }
+
+        private async Task AddToQueueAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(NewItemProfileId) || string.IsNullOrWhiteSpace(NewItemText))
+            {
+                return;
+            }
+
+            if (GenerationQueue.Count >= 20)
+            {
+                ErrorMessage = ResourceHelper.GetString("MultiVoiceGenerator.MaxQueueItems", "Maximum 20 items allowed in queue");
+                return;
+            }
+
+            var item = new VoiceGenerationItem
+            {
+                ItemId = Guid.NewGuid().ToString(),
+                ProfileId = NewItemProfileId,
+                Text = NewItemText,
+                Engine = NewItemEngine ?? "xtts",
+                QualityMode = NewItemQualityMode ?? "standard",
+                Language = NewItemLanguage ?? "en",
+                Emotion = NewItemEmotion,
+                Status = ResourceHelper.GetString("MultiVoiceGenerator.StatusPending", "pending")
+            };
+
+            GenerationQueue.Add(item);
+
+            // Clear form
+            NewItemProfileId = null;
+            NewItemText = null;
+            NewItemEngine = "xtts";
+            NewItemQualityMode = "standard";
+            NewItemLanguage = "en";
+            NewItemEmotion = null;
+
+            StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.ItemAddedToQueue", "Item added to queue");
+        }
+
+        private async Task RemoveFromQueueAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (SelectedQueueItem != null)
+            {
+                GenerationQueue.Remove(SelectedQueueItem);
+                SelectedQueueItem = null;
+                StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.ItemRemoved", "Item removed from queue");
+            }
+        }
+
+        private async Task ClearQueueAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            GenerationQueue.Clear();
+            SelectedQueueItem = null;
+            StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.QueueCleared", "Queue cleared");
+        }
+
+        private async Task ImportCSVAsync(CancellationToken cancellationToken)
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var picker = new FileOpenPicker();
+                picker.ViewMode = PickerViewMode.List;
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".csv");
+
+                var file = await picker.PickSingleFileAsync();
+                if (file != null)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Read CSV content
+                    var csvContent = await FileIO.ReadTextAsync(file);
+
+                    // Send to backend for parsing
+                    var importRequest = new Dictionary<string, object> { { "csv_content", csvContent } };
+                    var response = await _backendClient.SendRequestAsync<Dictionary<string, object>, CSVImportResponse>(
+                        "/api/voice/multi/import",
+                        importRequest,
+                        System.Net.Http.HttpMethod.Post,
+                        cancellationToken
+                    );
+
+                    if (response != null && response.Items != null)
+                    {
+                        GenerationQueue.Clear();
+                        foreach (var itemData in response.Items)
+                        {
+                            var item = new VoiceGenerationItem
+                            {
+                                ItemId = Guid.NewGuid().ToString(),
+                                ProfileId = itemData.ProfileId,
+                                Text = itemData.Text,
+                                Engine = itemData.Engine,
+                                QualityMode = itemData.QualityMode,
+                                Language = itemData.Language,
+                                Emotion = itemData.Emotion,
+                                Status = ResourceHelper.GetString("MultiVoiceGenerator.StatusPending", "pending")
+                            };
+                            GenerationQueue.Add(item);
+                        }
+
+                        StatusMessage = ResourceHelper.FormatString("MultiVoiceGenerator.ImportedFromCSV", response.Count);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.ImportCSVFailed", ex.Message);
+                await HandleErrorAsync(ex, "ImportCSV");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task ExportCSVAsync(CancellationToken cancellationToken)
+        {
+            if (Results.Count == 0)
+            {
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeChoices.Add("CSV File", new[] { ".csv" });
+                picker.SuggestedFileName = $"multi_voice_results_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+                var file = await picker.PickSaveFileAsync();
+                if (file != null)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Get CSV from backend
+                    var response = await _backendClient.SendRequestAsync<object, CSVExportResponse>(
+                        $"/api/voice/multi/export?job_id={Uri.EscapeDataString(CurrentJobId ?? "")}",
+                        new { },
+                        System.Net.Http.HttpMethod.Post,
+                        cancellationToken
+                    );
+
+                    if (response != null && !string.IsNullOrWhiteSpace(response.CsvContent))
+                    {
+                        await FileIO.WriteTextAsync(file, response.CsvContent);
+                        StatusMessage = ResourceHelper.FormatString("MultiVoiceGenerator.ExportedToCSV", Results.Count);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.ExportCSVFailed", ex.Message);
+                await HandleErrorAsync(ex, "ExportCSV");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task StartGenerationAsync(CancellationToken cancellationToken = default)
+        {
+            if (GenerationQueue.Count == 0 || string.IsNullOrWhiteSpace(CurrentJobName))
+            {
+                return;
+            }
+
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = null;
+
+                // Convert queue items to request format
+                var items = new List<Dictionary<string, object>>();
+                foreach (var item in GenerationQueue)
+                {
+                    var itemDict = new Dictionary<string, object>
+                    {
+                        { "profile_id", item.ProfileId },
+                        { "text", item.Text },
+                        { "engine", item.Engine },
+                        { "quality_mode", item.QualityMode },
+                        { "language", item.Language }
+                    };
+                    if (!string.IsNullOrWhiteSpace(item.Emotion))
+                    {
+                        itemDict["emotion"] = item.Emotion;
+                    }
+                    items.Add(itemDict);
+                }
+
+                var request = new MultiVoiceGenerateRequest
+                {
+                    Name = CurrentJobName,
+                    Items = items
+                };
+
+                var response = await _backendClient.SendRequestAsync<MultiVoiceGenerateRequest, MultiVoiceGenerateResponse>(
+                    "/api/voice/multi/generate",
+                    request,
+                    System.Net.Http.HttpMethod.Post,
+                    cancellationToken
+                );
+
+                if (response != null)
+                {
+                    CurrentJobId = response.JobId;
+                    JobStatus = response.Status;
+                    StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.GenerationStarted", "Generation started");
+
+                    // Start polling for status
+                    _ = PollJobStatusAsync(CancellationToken.None);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.StartGenerationFailed", ex.Message);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task PollJobStatusAsync(CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentJobId))
+            {
+                return;
+            }
+
+            try
+            {
+                while ((JobStatus == "processing" || JobStatus == "pending") && !cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(1000, cancellationToken); // Poll every second
+
+                    var status = await _backendClient.SendRequestAsync<object, MultiVoiceJobStatusResponse>(
+                        $"/api/voice/multi/{Uri.EscapeDataString(CurrentJobId)}/status",
+                        null,
+                        System.Net.Http.HttpMethod.Get,
+                        cancellationToken
+                    );
+
+                    if (status != null)
+                    {
+                        JobProgress = status.Progress;
+                        JobStatus = status.Status;
+
+                        // Update queue items with status
+                        foreach (var statusItem in status.Items)
+                        {
+                            var queueItem = GenerationQueue.FirstOrDefault(q => q.ItemId == statusItem.ItemId);
+                            if (queueItem != null)
+                            {
+                                queueItem.Status = statusItem.Status;
+                                queueItem.Progress = statusItem.Progress;
+                                queueItem.AudioId = statusItem.AudioId;
+                                queueItem.AudioUrl = statusItem.AudioUrl;
+                                queueItem.QualityScore = statusItem.QualityScore;
+                            }
+                        }
+
+                        if (status.Status == "completed")
+                        {
+                            await LoadResultsAsync(cancellationToken);
+                            StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.GenerationCompleted", "Generation completed");
+                            break;
+                        }
+                        else if (status.Status == "failed")
+                        {
+                            ErrorMessage = ResourceHelper.GetString("MultiVoiceGenerator.GenerationFailed", "Generation failed");
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Polling cancelled - expected behavior
+                return;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.PollJobStatusFailed", ex.Message);
+                await HandleErrorAsync(ex, "PollJobStatus");
+            }
+        }
+
+        private async Task LoadJobStatusAsync(CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentJobId))
+            {
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var status = await _backendClient.SendRequestAsync<object, MultiVoiceJobStatusResponse>(
+                    $"/api/voice/multi/{Uri.EscapeDataString(CurrentJobId)}/status",
+                    null,
+                    System.Net.Http.HttpMethod.Get,
+                    cancellationToken
+                );
+
+                if (status != null)
+                {
+                    JobProgress = status.Progress;
+                    JobStatus = status.Status;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.LoadJobStatusFailed", ex.Message);
+                await HandleErrorAsync(ex, "LoadJobStatus");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task LoadResultsAsync(CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentJobId))
+            {
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var results = await _backendClient.SendRequestAsync<object, MultiVoiceResultsResponse>(
+                    $"/api/voice/multi/{Uri.EscapeDataString(CurrentJobId)}/results",
+                    null,
+                    System.Net.Http.HttpMethod.Get,
+                    cancellationToken
+                );
+
+                if (results != null)
+                {
+                    Results.Clear();
+                    foreach (var item in results.Items)
+                    {
+                        Results.Add(new VoiceGenerationResultItem(item));
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.LoadResultsFailed", ex.Message);
+                await HandleErrorAsync(ex, "LoadResults");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task CompareVoicesAsync(CancellationToken cancellationToken = default)
+        {
+            if (SelectedAudioIdsForComparison.Count < 2)
+            {
+                return;
+            }
+
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = null;
+
+                var request = new MultiVoiceCompareRequest
+                {
+                    AudioIds = SelectedAudioIdsForComparison.ToList(),
+                    ComparisonType = "quality"
+                };
+
+                var response = await _backendClient.SendRequestAsync<MultiVoiceCompareRequest, MultiVoiceCompareResponse>(
+                    "/api/voice/multi/compare",
+                    request,
+                    System.Net.Http.HttpMethod.Post,
+                    cancellationToken
+                );
+
+                if (response != null)
+                {
+                    StatusMessage = ResourceHelper.FormatString("MultiVoiceGenerator.BestAudio", response.BestAudioId, response.BestScore);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("MultiVoiceGenerator.CompareVoicesFailed", ex.Message);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task RefreshAsync(CancellationToken cancellationToken)
+        {
+            if (!string.IsNullOrWhiteSpace(CurrentJobId))
+            {
+                await LoadJobStatusAsync(cancellationToken);
+                await LoadResultsAsync(cancellationToken);
+            }
+            StatusMessage = ResourceHelper.GetString("MultiVoiceGenerator.Refreshed", "Refreshed");
+        }
+
+        // Request/Response models
+        private class MultiVoiceGenerateRequest
+        {
+            public string Name { get; set; } = string.Empty;
+            public List<Dictionary<string, object>> Items { get; set; } = new();
+        }
+
+        private class MultiVoiceGenerateResponse
+        {
+            public string JobId { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public int TotalItems { get; set; }
+            public string Status { get; set; } = string.Empty;
+        }
+
+        private class MultiVoiceJobStatusResponse
+        {
+            public string JobId { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public float Progress { get; set; }
+            public int TotalItems { get; set; }
+            public int CompletedCount { get; set; }
+            public int FailedCount { get; set; }
+            public List<VoiceGenerationStatusItem> Items { get; set; } = new();
+        }
+
+        private class VoiceGenerationStatusItem
+        {
+            public string ItemId { get; set; } = string.Empty;
+            public string ProfileId { get; set; } = string.Empty;
+            public string Text { get; set; } = string.Empty;
+            public string Engine { get; set; } = string.Empty;
+            public string QualityMode { get; set; } = string.Empty;
+            public string Language { get; set; } = string.Empty;
+            public string? Emotion { get; set; }
+            public string Status { get; set; } = string.Empty;
+            public float Progress { get; set; }
+            public string? AudioId { get; set; }
+            public string? AudioUrl { get; set; }
+            public float? QualityScore { get; set; }
+            public Dictionary<string, object>? QualityMetrics { get; set; }
+            public string? ErrorMessage { get; set; }
+        }
+
+        private class MultiVoiceResultsResponse
+        {
+            public string JobId { get; set; } = string.Empty;
+            public List<VoiceGenerationResultData> Items { get; set; } = new();
+        }
+
+        public class VoiceGenerationResultData
+        {
+            public string ItemId { get; set; } = string.Empty;
+            public string ProfileId { get; set; } = string.Empty;
+            public string Text { get; set; } = string.Empty;
+            public string Engine { get; set; } = string.Empty;
+            public string QualityMode { get; set; } = string.Empty;
+            public string Language { get; set; } = string.Empty;
+            public string? Emotion { get; set; }
+            public string? AudioId { get; set; }
+            public string? AudioUrl { get; set; }
+            public float? QualityScore { get; set; }
+            public Dictionary<string, object>? QualityMetrics { get; set; }
+        }
+
+        private class CSVImportResponse
+        {
+            public List<CSVItem> Items { get; set; } = new();
+            public int Count { get; set; }
+        }
+
+        private class CSVItem
+        {
+            public string ProfileId { get; set; } = string.Empty;
+            public string Text { get; set; } = string.Empty;
+            public string Engine { get; set; } = string.Empty;
+            public string QualityMode { get; set; } = string.Empty;
+            public string Language { get; set; } = string.Empty;
+            public string? Emotion { get; set; }
+        }
+
+        private class CSVExportResponse
+        {
+            public string JobId { get; set; } = string.Empty;
+            public string CsvContent { get; set; } = string.Empty;
+            public string Filename { get; set; } = string.Empty;
+        }
+
+        private class MultiVoiceCompareRequest
+        {
+            public List<string> AudioIds { get; set; } = new();
+            public string ComparisonType { get; set; } = "quality";
+        }
+
+        private class MultiVoiceCompareResponse
+        {
+            public List<Dictionary<string, object>> Comparisons { get; set; } = new();
+            public string? BestAudioId { get; set; }
+            public float? BestScore { get; set; }
+        }
+    }
+
+    // Data models
+    public class VoiceGenerationItem : ObservableObject
+    {
+        public string ItemId { get; set; }
+        public string ProfileId { get; set; }
+        public string Text { get; set; }
+        public string Engine { get; set; }
+        public string QualityMode { get; set; }
+        public string Language { get; set; }
+        public string? Emotion { get; set; }
+        public string Status { get; set; }
+        public float Progress { get; set; }
+        public string? AudioId { get; set; }
+        public string? AudioUrl { get; set; }
+        public float? QualityScore { get; set; }
+
+        public string StatusDisplay => Status.ToUpper();
+        public string ProgressDisplay => $"{Progress:P0}";
+        public string QualityScoreDisplay => QualityScore.HasValue ? $"{QualityScore.Value:F2}" : "N/A";
+    }
+
+    public class VoiceGenerationResultItem : ObservableObject
+    {
+        public string ItemId { get; set; }
+        public string ProfileId { get; set; }
+        public string Text { get; set; }
+        public string Engine { get; set; }
+        public string QualityMode { get; set; }
+        public string Language { get; set; }
+        public string? Emotion { get; set; }
+        public string? AudioId { get; set; }
+        public string? AudioUrl { get; set; }
+        public float? QualityScore { get; set; }
+        public Dictionary<string, object>? QualityMetrics { get; set; }
+
+        public string QualityScoreDisplay => QualityScore.HasValue ? $"{QualityScore.Value:F2}" : "N/A";
+        public string TextPreview => Text.Length > 50 ? Text.Substring(0, 50) + "..." : Text;
+
+        public VoiceGenerationResultItem(VoiceGenerationResultDataModel data)
+        {
+            ItemId = data.ItemId;
+            ProfileId = data.ProfileId;
+            Text = data.Text;
+            Engine = data.Engine;
+            QualityMode = data.QualityMode;
+            Language = data.Language;
+            Emotion = data.Emotion;
+            AudioId = data.AudioId;
+            AudioUrl = data.AudioUrl;
+            QualityScore = data.QualityScore;
+            QualityMetrics = data.QualityMetrics;
+        }
+    }
+}
+
+

@@ -1,0 +1,48 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.MiniTimelineView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:controls="using:VoiceStudio.App.Controls"
+  xmlns:converters="using:VoiceStudio.App.Converters">
+  <UserControl.Resources>
+    <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+  </UserControl.Resources>
+  <Grid Height="{StaticResource VSQ.Control.Height.Large}" Background="{StaticResource VSQ.Panel.BackgroundBrush}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="{StaticResource VSQ.Control.Height.Small}"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="{StaticResource VSQ.Control.Height.Large}"/>
+    </Grid.RowDefinitions>
+    <!-- Time Ruler -->
+    <Border Grid.Row="0" Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1">
+      <Canvas x:Name="TimeRulerCanvas" Height="{StaticResource VSQ.Control.Height.Small}" Background="Transparent">
+        <!-- Time markers will be drawn here -->
+      </Canvas>
+    </Border>
+    <!-- Timeline Scrub Area -->
+    <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background.DarkBrush}" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1">
+      <Grid>
+        <!-- Background timeline area -->
+        <Canvas x:Name="TimelineCanvas" Background="Transparent" PointerPressed="TimelineCanvas_PointerPressed" PointerMoved="TimelineCanvas_PointerMoved" PointerReleased="TimelineCanvas_PointerReleased">
+          <!-- Timeline background -->
+          <Rectangle x:Name="TimelineBackground" Fill="{StaticResource VSQ.Panel.BackgroundBrush}" Height="{StaticResource VSQ.Control.Height.Large}"/>
+        </Canvas>
+        <!-- Playhead Indicator -->
+        <Line x:Name="PlayheadLine" X1="{x:Bind ViewModel.PlayheadPosition, Mode=OneWay}" Y1="0" X2="{x:Bind ViewModel.PlayheadPosition, Mode=OneWay}" Y2="32" Stroke="{StaticResource VSQ.Accent.CyanBrush}" StrokeThickness="2" Opacity="0.9" Visibility="{x:Bind ViewModel.IsPlayheadVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" IsHitTestVisible="False"/>
+      </Grid>
+    </Border>
+    <!-- Transport Controls -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="{StaticResource VSQ.Spacing.Value.Small}" Margin="0">
+      <!-- Time Display -->
+      <TextBlock Text="{x:Bind ViewModel.CurrentTimeDisplay, Mode=OneWay}" VerticalAlignment="Center" Margin="0" FontSize="{StaticResource VSQ.FontSize.Caption}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" MinWidth="{StaticResource VSQ.Input.Width.Standard}" TextAlignment="Right" AutomationProperties.Name="Current time" AutomationProperties.LiveSetting="Polite"/>
+      <!-- Play/Pause Button -->
+      <Button x:Name="PlayPauseButton" Content="{x:Bind ViewModel.PlayPauseButtonText, Mode=OneWay}" Command="{x:Bind ViewModel.PlayPauseCommand}" Width="{StaticResource VSQ.Input.Width.Standard}" Height="{StaticResource VSQ.Control.Height.Small}" ToolTipService.ToolTip="{x:Bind ViewModel.PlayPauseTooltip, Mode=OneWay}" Style="{StaticResource VSQ.Button.FocusStyle}" AutomationProperties.Name="{x:Bind ViewModel.PlayPauseTooltip, Mode=OneWay}" AutomationProperties.HelpText="Play or pause playback" AutomationProperties.AutomationId="MiniTimeline_PlayPauseButton"/>
+      <!-- Stop Button -->
+      <Button Content="⏹" Command="{x:Bind ViewModel.StopCommand}" Width="{StaticResource VSQ.Icon.Size.Large}" Height="{StaticResource VSQ.Control.Height.Small}" ToolTipService.ToolTip="Stop playback" Style="{StaticResource VSQ.Button.FocusStyle}" AutomationProperties.Name="Stop playback" AutomationProperties.HelpText="Stop playback" AutomationProperties.AutomationId="MiniTimeline_StopButton"/>
+      <!-- Zoom Controls -->
+      <Button Content="−" Command="{x:Bind ViewModel.ZoomOutCommand}" Width="{StaticResource VSQ.Icon.Size.Medium}" Height="{StaticResource VSQ.Icon.Size.Medium}" ToolTipService.ToolTip="Zoom out" Margin="0" Style="{StaticResource VSQ.Button.FocusStyle}" AutomationProperties.Name="Zoom out" AutomationProperties.HelpText="Zoom out timeline" AutomationProperties.AutomationId="MiniTimeline_ZoomOutButton"/>
+      <Button Content="+" Command="{x:Bind ViewModel.ZoomInCommand}" Width="{StaticResource VSQ.Icon.Size.Medium}" Height="{StaticResource VSQ.Icon.Size.Medium}" ToolTipService.ToolTip="Zoom in" Style="{StaticResource VSQ.Button.FocusStyle}" AutomationProperties.Name="Zoom in" AutomationProperties.HelpText="Zoom in timeline" AutomationProperties.AutomationId="MiniTimeline_ZoomInButton"/>
+      <!-- Duration Display -->
+      <TextBlock Text="{x:Bind ViewModel.DurationDisplay, Mode=OneWay}" VerticalAlignment="Center" Margin="0" FontSize="{StaticResource VSQ.FontSize.Caption}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" MinWidth="{StaticResource VSQ.Input.Width.Standard}" TextAlignment="Left" AutomationProperties.Name="Duration" AutomationProperties.LiveSetting="Polite"/>
+    </StackPanel>
+  </Grid>
+</UserControl>

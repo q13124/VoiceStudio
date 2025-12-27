@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?define ProductName = "VoiceStudio Quantum+" ?>
+  <?define ProductVersion = "1.0.0" ?>
+  <?define Manufacturer = "VoiceStudio" ?>
+  <?define ProductCode = "A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D" ?>
+  <?define UpgradeCode = "B2C3D4E5-F6A7-5B6C-9D0E-1F2A3B4C5D6E" ?>
+  
+  <Product Id="$(var.ProductCode)"
+           Name="$(var.ProductName)"
+           Language="1033"
+           Version="$(var.ProductVersion)"
+           Manufacturer="$(var.Manufacturer)"
+           UpgradeCode="$(var.UpgradeCode)">
+    
+    <Package InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="VoiceStudio Quantum+ - Professional Voice Cloning Studio"
+             Comments="VoiceStudio Quantum+ Installer"
+             Manufacturer="VoiceStudio" />
+    
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    
+    <!-- Installation Directory -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="VoiceStudio">
+          <!-- Application Files -->
+          <Directory Id="AppFolder" Name="App">
+            <Component Id="AppExecutable" Guid="C1D2E3F4-A5B6-4C7D-8E9F-0A1B2C3D4E5F">
+              <File Id="VoiceStudioApp.exe"
+                    Source="$(var.VoiceStudio.App.TargetPath)"
+                    KeyPath="yes" />
+            </Component>
+            
+            <!-- Application DLLs and Resources -->
+            <Component Id="AppDlls" Guid="D2E3F4A5-B6C7-4D8E-9F0A-1B2C3D4E5F6A">
+              <File Source="$(var.VoiceStudio.App.TargetDir)\*.dll" />
+              <File Source="$(var.VoiceStudio.App.TargetDir)\*.pdb" />
+              <File Source="$(var.VoiceStudio.App.TargetDir)\*.json" />
+            </Component>
+            
+            <!-- Application Resources -->
+            <Component Id="AppResources" Guid="E3F4A5B6-C7D8-4E9F-0A1B-2C3D4E5F6A7B">
+              <File Source="$(var.VoiceStudio.App.TargetDir)\Resources\*.*" />
+            </Component>
+          </Directory>
+          
+          <!-- Backend Files -->
+          <Directory Id="BackendFolder" Name="Backend">
+            <Component Id="BackendFiles" Guid="F4A5B6C7-D8E9-4F0A-1B2C-3D4E5F6A7B8C">
+              <File Source="backend\api\main.py" />
+              <File Source="backend\api\*.py" />
+              <File Source="backend\api\routes\*.py" />
+              <File Source="backend\api\ws\*.py" />
+            </Component>
+            
+            <!-- Backend Dependencies -->
+            <Component Id="BackendDependencies" Guid="A5B6C7D8-E9F0-4A1B-2C3D-4E5F6A7B8C9D">
+              <File Source="backend\requirements.txt" />
+            </Component>
+          </Directory>
+          
+          <!-- Core Engine Files -->
+          <Directory Id="CoreFolder" Name="Core">
+            <Component Id="CoreFiles" Guid="B6C7D8E9-F0A1-4B2C-3D4E-5F6A7B8C9D0E">
+              <File Source="app\core\engines\*.py" />
+              <File Source="app\core\audio\*.py" />
+              <File Source="app\core\runtime\*.py" />
+              <File Source="app\core\training\*.py" />
+            </Component>
+          </Directory>
+          
+          <!-- Engine Manifests -->
+          <Directory Id="EnginesFolder" Name="Engines">
+            <Component Id="EngineManifests" Guid="C7D8E9F0-A1B2-4C3D-4E5F-6A7B8C9D0E1F">
+              <File Source="engines\audio\*\engine.manifest.json" />
+              <File Source="engines\image\*\engine.manifest.json" />
+              <File Source="engines\video\*\engine.manifest.json" />
+            </Component>
+          </Directory>
+          
+          <!-- Documentation -->
+          <Directory Id="DocsFolder" Name="Docs">
+            <Component Id="Documentation" Guid="D8E9F0A1-B2C3-4D4E-5F6A-7B8C9D0E1F2A">
+              <File Source="docs\user\*.md" />
+              <File Source="docs\api\*.md" />
+              <File Source="docs\developer\*.md" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+      
+      <!-- Start Menu Shortcuts -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="VoiceStudio">
+          <Component Id="StartMenuShortcut" Guid="E9F0A1B2-C3D4-4E5F-6A7B-8C9D0E1F2A3B">
+            <Shortcut Id="ApplicationShortcut"
+                      Name="VoiceStudio Quantum+"
+                      Description="Professional Voice Cloning Studio"
+                      Target="[INSTALLFOLDER]App\VoiceStudioApp.exe"
+                      WorkingDirectory="INSTALLFOLDER" />
+            <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+            <RegistryValue Root="HKCU"
+                          Key="Software\VoiceStudio"
+                          Name="Installed"
+                          Type="integer"
+                          Value="1"
+                          KeyPath="yes" />
+          </Component>
+          
+          <!-- Documentation Shortcuts -->
+          <Component Id="DocsShortcuts" Guid="F0A1B2C3-D4E5-4F6A-7B8C-9D0E1F2A3B4C">
+            <Shortcut Id="UserManualShortcut"
+                      Name="User Manual"
+                      Target="[INSTALLFOLDER]Docs\USER_MANUAL.md" />
+            <Shortcut Id="GettingStartedShortcut"
+                      Name="Getting Started"
+                      Target="[INSTALLFOLDER]Docs\GETTING_STARTED.md" />
+            <Shortcut Id="APIDocsShortcut"
+                      Name="API Documentation"
+                      Target="[INSTALLFOLDER]Docs\API_REFERENCE.md" />
+          </Component>
+        </Directory>
+      </Directory>
+      
+      <!-- Desktop Shortcut (Optional) -->
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="DesktopShortcut" Guid="A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D">
+          <Shortcut Id="DesktopShortcut"
+                    Name="VoiceStudio Quantum+"
+                    Description="Professional Voice Cloning Studio"
+                    Target="[INSTALLFOLDER]App\VoiceStudioApp.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="DesktopFolder" On="uninstall" />
+          <RegistryValue Root="HKCU"
+                        Key="Software\VoiceStudio"
+                        Name="DesktopShortcut"
+                        Type="integer"
+                        Value="1"
+                        KeyPath="yes" />
+        </Component>
+      </Directory>
+    </Directory>
+    
+    <!-- File Associations -->
+    <Component Id="FileAssociations" Guid="B2C3D4E5-F6A7-4B8C-9D0E-1F2A3B4C5D6E">
+      <RegistryKey Root="HKCR"
+                   Key=".voiceproj"
+                   ForceCreateOnInstall="yes"
+                   ForceDeleteOnUninstall="yes">
+        <RegistryValue Type="string" Value="VoiceStudio.Project" />
+      </RegistryKey>
+      
+      <RegistryKey Root="HKCR"
+                   Key="VoiceStudio.Project"
+                   ForceCreateOnInstall="yes"
+                   ForceDeleteOnUninstall="yes">
+        <RegistryValue Type="string" Value="VoiceStudio Project File" />
+        <RegistryKey Key="DefaultIcon">
+          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudioApp.exe,0" />
+        </RegistryKey>
+        <RegistryKey Key="shell">
+          <RegistryKey Key="open">
+            <RegistryKey Key="command">
+              <RegistryValue Type="string"
+                            Value="&quot;[INSTALLFOLDER]App\VoiceStudioApp.exe&quot; &quot;%1&quot;" />
+            </RegistryKey>
+          </RegistryKey>
+        </RegistryKey>
+      </RegistryKey>
+      
+      <RegistryKey Root="HKCR"
+                   Key=".vprofile"
+                   ForceCreateOnInstall="yes"
+                   ForceDeleteOnUninstall="yes">
+        <RegistryValue Type="string" Value="VoiceStudio.Profile" />
+      </RegistryKey>
+      
+      <RegistryKey Root="HKCR"
+                   Key="VoiceStudio.Profile"
+                   ForceCreateOnInstall="yes"
+                   ForceDeleteOnUninstall="yes">
+        <RegistryValue Type="string" Value="VoiceStudio Voice Profile" />
+        <RegistryKey Key="DefaultIcon">
+          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudioApp.exe,1" />
+        </RegistryKey>
+        <RegistryKey Key="shell">
+          <RegistryKey Key="open">
+            <RegistryKey Key="command">
+              <RegistryValue Type="string"
+                            Value="&quot;[INSTALLFOLDER]App\VoiceStudioApp.exe&quot; &quot;%1&quot;" />
+            </RegistryKey>
+          </RegistryKey>
+        </RegistryKey>
+      </RegistryKey>
+    </Component>
+    
+    <!-- Feature Tree -->
+    <Feature Id="ProductFeature" Title="VoiceStudio Quantum+" Level="1">
+      <ComponentRef Id="AppExecutable" />
+      <ComponentRef Id="AppDlls" />
+      <ComponentRef Id="AppResources" />
+      <ComponentRef Id="BackendFiles" />
+      <ComponentRef Id="BackendDependencies" />
+      <ComponentRef Id="CoreFiles" />
+      <ComponentRef Id="EngineManifests" />
+      <ComponentRef Id="Documentation" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DocsShortcuts" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="FileAssociations" />
+    </Feature>
+    
+    <!-- UI -->
+    <UIRef Id="WixUI_Minimal" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    
+    <!-- Launch Conditions -->
+    <Condition Message="This application requires Windows 10 version 1903 or later.">
+      <![CDATA[Installed OR (VersionNT >= 1000 AND VersionNT64)]]>
+    </Condition>
+    
+    <!-- .NET 8 Runtime Check -->
+    <Property Id="DOTNETFRAMEWORK">
+      <RegistrySearch Id="DotNetFramework"
+                     Root="HKLM"
+                     Key="SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedhost"
+                     Name="Version"
+                     Type="raw" />
+    </Property>
+    <Condition Message="This application requires .NET 8.0 Runtime. Please install it from https://dotnet.microsoft.com/download/dotnet/8.0">
+      <![CDATA[Installed OR DOTNETFRAMEWORK]]>
+    </Condition>
+    
+    <!-- Python Runtime Check (Warning Only) -->
+    <Property Id="PYTHONINSTALLED">
+      <RegistrySearch Id="PythonInstallation"
+                     Root="HKLM"
+                     Key="SOFTWARE\Python\PythonCore\3.10\InstallPath"
+                     Name="ExecutablePath"
+                     Type="raw" />
+    </Property>
+    
+    <!-- Custom Actions for Python Setup -->
+    <CustomAction Id="CheckPython"
+                  Property="PYTHONINSTALLED"
+                  Value="[PYTHONINSTALLED]" />
+    
+    <!-- Install Python Packages -->
+    <CustomAction Id="InstallPythonPackages"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="python -m pip install -r backend\requirements.txt"
+                  Execute="deferred"
+                  Impersonate="no" />
+    
+    <!-- Set Environment Variables -->
+    <SetProperty Id="SetPythonPath"
+                 Before="InstallPythonPackages"
+                 Sequence="execute"
+                 Value="[INSTALLFOLDER]Backend" />
+    
+    <!-- Create User Data Directories -->
+    <CustomAction Id="CreateUserDataDirs"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="powershell -Command &quot;New-Item -ItemType Directory -Force -Path $env:APPDATA\VoiceStudio&quot;"
+                  Execute="deferred"
+                  Impersonate="yes" />
+    
+    <!-- Install Sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="CheckPython" Before="InstallFiles" />
+      <Custom Action="CreateUserDataDirs" After="InstallFiles" />
+      <Custom Action="InstallPythonPackages" After="CreateUserDataDirs" />
+    </InstallExecuteSequence>
+    
+    <!-- Uninstall Sequence -->
+    <InstallExecuteSequence>
+      <RemoveShortcuts Sequence="1" />
+      <RemoveFiles Sequence="2" />
+      <RemoveFolders Sequence="3" />
+      <RemoveRegistryValues Sequence="4" />
+    </InstallExecuteSequence>
+  </Product>
+</Wix>
+

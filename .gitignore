@@ -1,0 +1,57 @@
+# Build output (dotnet)
+**/bin/
+**/obj/
+artifacts/
+*.binlog
+*.log
+
+# Visual Studio / tooling caches
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Python caches / virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Node / web tooling caches
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# XAML/compiler diagnostics and extracted dumps
+.buildlogs/
+xaml_bisect_tmp/
+xc_stdout.txt
+xc_stderr.txt
+xaml_debug_chunk.txt
+xaml_debug_include_*.txt
+
+# Local diagnostic captures (repo root)
+_build_output.txt
+_corecompile_errors.txt
+build_errors.txt
+build-output.log
+build.log
+msbuild.log
+msbuild.binlog
+build_diag.binlog
+
+# Temporary working directory
+temp/
+
+# Local model binaries (do not commit)
+models/**/*.pth
+models/**/*.pt
+models/**/*.onnx
+models/**/*.bin
+models/**/*.safetensors
+models/**/*.ckpt

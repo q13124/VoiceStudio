@@ -1,0 +1,53 @@
+{
+  "engine_id": "realesrgan",
+  "name": "Real-ESRGAN",
+  "type": "image",
+  "subtype": "upscaling",
+  "version": "1.0",
+  "description": "Practical image restoration and upscaling",
+  "author": "xinntao",
+  "license": "BSD-3-Clause",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "realesrgan": ">=0.3.0",
+    "basicsr": ">=1.4.2"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\realesrgan",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\realesrgan\\models"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "image_upscaling",
+    "face_enhancement",
+    "anime_upscaling",
+    "general_restoration"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 2,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.realesrgan_engine.RealESRGANEngine",
+  "config_schema": {
+    "model_name": {
+      "type": "string",
+      "default": "RealESRGAN_x4plus",
+      "enum": ["RealESRGAN_x4plus", "RealESRGAN_x4plus_anime", "RealESRNet_x4plus"],
+      "description": "Real-ESRGAN model to use"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "scale": {
+      "type": "integer",
+      "default": 4,
+      "enum": [2, 4],
+      "description": "Upscaling factor"
+    }
+  }
+}
+

@@ -1,0 +1,354 @@
+# VoiceStudio Engine Dependencies
+# Complete dependency list for all 44 engines
+# Last Updated: 2025-01-28
+# 
+# ⚠️ ALL DEPENDENCIES ARE REQUIRED - NO OPTIONAL DOWNLOADS
+# User has 1TB M.2 SSD dedicated to this project
+# Everything that can run locally is included and required
+# 
+# COMPATIBILITY MATRIX: See docs/design/COMPATIBILITY_MATRIX.md
+# VERSION LOCK: See version_lock.json
+# 
+# ⚠️ CRITICAL: These versions are locked for compatibility
+# Do not upgrade librosa, numpy, or transformers without testing XTTS v2
+
+# ============================================================================
+# Core ML/AI Dependencies (LOCKED VERSIONS - Production Ready)
+# ============================================================================
+# Python 3.11.9 recommended (3.10.15 minimum)
+# PyTorch 2.2.2+cu121 (required for compatibility with other software)
+torch==2.2.2+cu121  # Must install from: --index-url https://download.pytorch.org/whl/cu121
+torchaudio==2.2.2+cu121  # Must match Torch exactly
+transformers==4.55.4  # Stable with XTTS v2 and PyTorch 2.2.2
+huggingface_hub==0.36.0  # Matches Transformers 4.55+ API
+tokenizers==0.22.1  # Required by Transformers 4.55
+safetensors==0.6.2  # Fast checkpoint I/O
+hf-xet==1.2.0  # XetHub remote dataset backend (installed by hub)
+fsspec==2025.9.0  # For remote asset loading
+diffusers>=0.21.0
+scipy>=1.9.0
+
+# ============================================================================
+# Audio Processing (LOCKED VERSIONS - Critical Compatibility)
+# ============================================================================
+# ⚠️ DO NOT UPGRADE: librosa > 0.11.0 breaks PyTorch 2.2.2 compatibility
+# ⚠️ DO NOT UPGRADE: numpy > 1.26.4 breaks Librosa 0.11 compatibility
+librosa==0.11.0  # Audio feature extraction for XTTS and QC
+numpy==1.26.4  # Perfect bridge between PyTorch 2.2.2 and Librosa 0.11
+soundfile==0.12.1  # WAV/FLAC I/O
+faster-whisper==1.0.3  # Whisper variant; GPU-ready (compatible with PyTorch 2.2.2)
+pyloudnorm==0.1.1  # LUFS metering
+noisereduce==3.0.2  # NR chain
+pydub>=0.25.0
+speechbrain>=0.5.0
+resemblyzer>=0.1.1
+
+# ============================================================================
+# Image Processing (Required for all image engines)
+# ============================================================================
+pillow>=9.0.0
+opencv-python>=4.5.0
+imageio>=2.9.0
+imageio-ffmpeg>=0.4.0
+
+# ============================================================================
+# Video Processing (Required for all video engines)
+# ============================================================================
+moviepy>=1.0.3
+ffmpeg-python==0.2.0  # Audio/video conversion
+
+# ============================================================================
+# TTS Engines (Worker 1)
+# ============================================================================
+# Coqui TTS (XTTS v2) - PRIMARY ENGINE
+coqui-tts==0.27.2  # Current release w/ XTTS v2 engine
+coqui-tts-trainer==0.3.1  # Finetuning & dataset manager
+
+# Tortoise TTS - LEGACY (isolate in separate venv if needed)
+# tortoise-tts>=2.4.0  # Use separate venv - conflicts with Torch 2.9 stack
+
+# Piper TTS - Already have
+piper-tts>=1.0.0
+
+# OpenVoice - Already have
+openvoice>=1.0.0
+
+# F5-TTS
+# Note: F5-TTS may require custom installation from source
+# pip install git+https://github.com/suno-ai/f5-tts.git
+
+# Parakeet (PaddlePaddle)
+paddlepaddle>=2.4.0
+paddlespeech>=1.2.0
+
+# Silero Models
+# Note: Silero is included in torchaudio, but may need additional models
+# Models downloaded automatically on first use
+
+# ============================================================================
+# STT Engines (Worker 1)
+# ============================================================================
+# OpenAI Whisper (Python)
+openai-whisper>=20230314
+# faster-whisper==1.2.0  # Upgraded - see Audio Processing section above
+
+# whisper.cpp - Requires compiled binary (not Python package)
+# Download from: https://github.com/ggerganov/whisper.cpp/releases
+
+# ============================================================================
+# Voice Conversion Engines (Worker 1 & 3)
+# ============================================================================
+# GPT-SoVITS - Optional but recommended for full functionality
+# Installation option 1: pip install git+https://github.com/RVC-Boss/GPT-SoVITS.git
+# Installation option 2: Use GPT-SoVITS API server (separate installation)
+# Note: Engine has implementation - works with API server or fallback if package not installed
+
+# MockingBird - Optional but recommended for full functionality
+# Installation: pip install git+https://github.com/babysor/MockingBird.git
+# Note: Engine has implementation - uses fallback methods if package not installed
+
+# Voice.ai - May require API key (prefer local inference)
+# Lyrebird/Descript - May require API key (prefer local inference)
+
+# ============================================================================
+# Alignment/Subtitle Engines (Worker 1)
+# ============================================================================
+aeneas>=1.7.3
+
+# ============================================================================
+# Legacy TTS Engines (Worker 2)
+# ============================================================================
+# MaryTTS - Requires server installation (not Python package)
+# Festival/Flite - Requires system installation (not Python package)
+# eSpeak NG - Requires system installation (not Python package)
+# RHVoice - Requires system installation (not Python package)
+# Note: These require system-level installation, not pip install
+
+# ============================================================================
+# Image Generation Engines (Worker 2)
+# ============================================================================
+# Stable Diffusion (via diffusers - already included above)
+# xformers for AUTOMATIC1111, SD.Next
+xformers>=0.0.20
+
+# ComfyUI - Requires separate installation
+# AUTOMATIC1111 - Requires separate installation
+# SD.Next - Requires separate installation
+# InvokeAI - Requires separate installation
+# Fooocus - Requires separate installation
+# Note: These are typically installed as separate applications, accessed via HTTP API
+
+# Real-ESRGAN
+# pip install realesrgan
+# Or: pip install git+https://github.com/xinntao/Real-ESRGAN.git
+
+# ============================================================================
+# Video Generation Engines (Worker 3)
+# ============================================================================
+# Stable Video Diffusion - via diffusers (already included)
+
+# Deforum - Requires custom installation
+# pip install git+https://github.com/deforum-art/deforum-stable-diffusion.git
+
+# First Order Motion Model (FOMM)
+face-alignment>=1.3.0
+
+# SadTalker
+gfpgan>=1.3.0
+
+# DeepFaceLab
+tensorflow>=2.8.0
+
+# MoviePy - Already included above
+# FFmpeg - Requires system installation (not Python package)
+# Note: FFmpeg must be installed separately: choco install ffmpeg -y
+
+# ============================================================================
+# Utilities
+# ============================================================================
+requests>=2.28.0
+aiohttp>=3.8.0
+httpx>=0.24.0
+
+# ============================================================================
+# Required Dependencies (All Local Processing)
+# ============================================================================
+# ONNX Runtime (for FastSD CPU)
+onnxruntime>=1.15.0
+
+# ============================================================================
+# Audio Quality Enhancement Libraries (All Required)
+# ============================================================================
+# Advanced audio analysis
+essentia-tensorflow>=1.1.1  # Note: May require manual installation from source
+
+# Noise reduction & enhancement
+voicefixer>=0.1.2
+deepfilternet>=0.5.0  # Note: Package name is 'DeepFilterNet' but import as 'deepfilternet' (lowercase)
+
+# Source separation (extract voice from music)
+spleeter>=2.3.0  # Note: May have TensorFlow version conflicts - use with caution
+
+# Professional effects
+pedalboard>=0.7.0
+
+# Audio augmentation (for dataset creation)
+audiomentations>=0.43.0  # Note: Latest version is 0.43.1 (1.7.0 not available)
+
+# High-quality resampling
+resampy>=0.4.2
+pyrubberband>=0.3.0
+
+# Quality metrics (CRITICAL for quality benchmarking)
+pesq>=0.0.4
+pystoi>=0.3.3
+
+# ============================================================================
+# RVC & Voice Conversion Dependencies (All Required)
+# ============================================================================
+# RVC core dependencies
+# fairseq==0.12.2  # Note: Has dependency conflicts with newer pip (omegaconf metadata issues) - needs special handling
+faiss-cpu==1.7.4
+pyworld==0.3.2
+praat-parselmouth>=0.4.3
+
+# RVC Engine - Optional but recommended for full functionality:
+# rvc-python>=1.0.0  # Provides SynthesizerTrn model classes for RVC inference
+# Installation: pip install rvc-python
+# Note: Engine works with fallback methods if package not installed
+
+# ============================================================================
+# Performance Monitoring (All Required)
+# ============================================================================
+py-cpuinfo>=9.0.0
+GPUtil>=1.4.0
+nvidia-ml-py>=11.0.0
+wandb>=0.15.0
+tensorboard>=2.20.0
+
+# ============================================================================
+# Advanced Utilities (All Required)
+# ============================================================================
+webrtcvad>=2.0.10  # Voice activity detection
+umap-learn>=0.5.9  # Dimensionality reduction
+spacy[ja]>=3.8.7  # NLP processing (large download, but required)
+
+# ============================================================================
+# Metrics & Monitoring (All Required)
+# ============================================================================
+prometheus-client>=0.23.1
+prometheus-fastapi-instrumentator>=6.1.0
+
+# ============================================================================
+# Deepfake & Video Processing (All Required)
+# ============================================================================
+insightface>=0.7.3
+opencv-contrib-python>=4.8.0
+
+# ============================================================================
+# FREE Libraries Integration (All Required)
+# ============================================================================
+# Pitch tracking
+crepe>=0.0.16
+
+# Audio resampling (high-quality)
+soxr>=1.0.0
+
+# Audio metadata
+mutagen>=1.47.0
+
+# Wavelet transforms
+pywavelets>=1.9.0
+
+# Data analysis and processing
+pandas>=2.0.0
+
+# Performance optimization
+numba>=0.58.0
+
+# Parallel processing
+joblib>=1.3.0
+
+# Machine learning utilities
+scikit-learn>=1.3.0
+
+# Hyperparameter optimization
+optuna>=4.5.0
+ray[tune]>=2.52.0
+hyperopt>=0.2.7
+
+# Model explainability
+shap>=0.50.0
+lime>=0.2.0
+
+# Visualization
+yellowbrick>=1.5
+
+# Voice & Speech
+vosk>=0.3.45
+silero-vad>=6.2.0
+phonemizer>=3.3.0
+gruut>=2.4.0
+
+# Performance & Optimization
+dask>=2025.11.0
+
+# Note: Libraries not available but alternatives exist:
+# - soundstretch: pyrubberband provides time-stretching
+# - visqol: pesq and pystoi provide perceptual quality metrics
+# - mosnet: quality metrics framework provides MOS-like scoring
+# - pyAudioAnalysis: librosa provides audio feature extraction
+# - madmom: librosa provides similar MIR functionality
+
+# ============================================================================
+# Legacy Engine Isolation
+# ============================================================================
+# ⚠️ IMPORTANT: These engines conflict with the modern stack and should be
+# isolated in separate virtual environments under /plugins/legacy_engines/
+#
+# - MyShell OpenVoice: 0.0.0 (patched) - conflicts w/ NumPy 1.26+ & PyTorch 2.2.2
+# - Tortoise-TTS: 3.0.0 (Transformers 4.31 lock) - use separate venv
+# - Melotts: 0.1.2 (requires PyTorch 2.0 stack) - legacy, not needed for XTTS v2
+# - WhisperX: 3.7.4 - works if PyTorch ≈ 2.8, but use Faster-Whisper 1.0.3 instead
+#
+# All modern VoiceStudio tasks run best on the Coqui XTTS v2 stack above.
+
+# ============================================================================
+# Installation Notes
+# ============================================================================
+# Some engines require custom installation:
+# 1. Higgs Audio - Check GitHub for installation instructions
+# 2. F5-TTS - May require source installation
+# 3. GPT-SoVITS - Requires custom installation
+# 4. MockingBird - Requires custom installation
+# 5. ComfyUI, AUTOMATIC1111, etc. - Separate applications accessed via HTTP
+# 6. whisper.cpp - Requires compiled binary
+# 7. Festival, eSpeak NG, RHVoice - System-level installation
+# 8. FFmpeg - System-level installation
+
+# ============================================================================
+# Installation Instructions
+# ============================================================================
+# Step 1: Create virtual environment
+#   python -m venv .venv
+#   .\.venv\Scripts\Activate.ps1
+#   pip install --upgrade pip wheel setuptools
+#
+# Step 2: Install PyTorch (CUDA 12.1) - CRITICAL: Must be first
+#   pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
+#
+# Step 3: Install this requirements file
+#   pip install -r requirements_engines.txt
+#
+# For complete installation guide, see: docs/design/COMPATIBILITY_MATRIX.md
+
+# ============================================================================
+# System Requirements
+# ============================================================================
+# Python: 3.11.9 recommended (3.10.15 minimum)
+# GPU: NVIDIA RTX 30/40 series recommended (CUDA 12.1)
+# RAM: 8GB minimum, 16GB recommended
+# VRAM: 4GB minimum for GPU engines, 8GB+ recommended
+# Disk: 1TB M.2 SSD dedicated to project (all dependencies required)
+# OS: Windows 11 Build 26100+ (Windows 10 1903+ minimum)
+

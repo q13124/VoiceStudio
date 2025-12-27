@@ -1,0 +1,139 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace VoiceStudio.ContractTests
+{
+    /// <summary>
+    /// Base class for contract tests that validates API contracts against OpenAPI schema.
+    /// </summary>
+    public abstract class ContractTestBase
+    {
+        protected static readonly JsonDocument OpenApiSchema;
+        protected static readonly string SchemaPath;
+
+        static ContractTestBase()
+        {
+            // Find project root by looking for the solution file or .git directory
+            var currentDir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (currentDir != null && !File.Exists(Path.Combine(currentDir.FullName, "VoiceStudio.sln")) && 
+                   !Directory.Exists(Path.Combine(currentDir.FullName, ".git")))
+            {
+                currentDir = currentDir.Parent;
+            }
+
+            if (currentDir == null)
+            {
+                // Fallback: try relative path from test output directory
+                currentDir = new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+            }
+
+            SchemaPath = Path.Combine(currentDir.FullName, "docs", "api", "openapi.json");
+
+            // Load OpenAPI schema
+            if (!File.Exists(SchemaPath))
+            {
+                throw new FileNotFoundException($"OpenAPI schema not found at: {SchemaPath}. Searched from: {AppContext.BaseDirectory}");
+            }
+
+            var schemaJson = File.ReadAllText(SchemaPath);
+            OpenApiSchema = JsonDocument.Parse(schemaJson);
+        }
+
+        /// <summary>
+        /// Gets a path definition from the OpenAPI schema.
+        /// </summary>
+        protected JsonElement GetPathDefinition(string path)
+        {
+            if (!OpenApiSchema.RootElement.TryGetProperty("paths", out var paths))
+            {
+                throw new InvalidOperationException("OpenAPI schema missing 'paths' section");
+            }
+
+            if (!paths.TryGetProperty(path, out var pathDefinition))
+            {
+                throw new InvalidOperationException($"Path '{path}' not found in OpenAPI schema");
+            }
+
+            return pathDefinition;
+        }
+
+        /// <summary>
+        /// Gets a schema definition from the OpenAPI schema.
+        /// </summary>
+        protected JsonElement GetSchemaDefinition(string schemaName)
+        {
+            if (!OpenApiSchema.RootElement.TryGetProperty("components", out var components))
+            {
+                throw new InvalidOperationException("OpenAPI schema missing 'components' section");
+            }
+
+            if (!components.TryGetProperty("schemas", out var schemas))
+            {
+                throw new InvalidOperationException("OpenAPI schema missing 'schemas' section");
+            }
+
+            if (!schemas.TryGetProperty(schemaName, out var schema))
+            {
+                throw new InvalidOperationException($"Schema '{schemaName}' not found in OpenAPI schema");
+            }
+
+            return schema;
+        }
+
+        /// <summary>
+        /// Validates that a property exists in a schema.
+        /// </summary>
+        protected void AssertPropertyExists(JsonElement schema, string propertyName)
+        {
+            if (!schema.TryGetProperty("properties", out var properties))
+            {
+                throw new InvalidOperationException("Schema missing 'properties' section");
+            }
+
+            Assert.True(
+                properties.TryGetProperty(propertyName, out _),
+                $"Property '{propertyName}' not found in schema"
+            );
+        }
+
+        /// <summary>
+        /// Validates that a property has the expected type.
+        /// </summary>
+        protected void AssertPropertyType(JsonElement schema, string propertyName, string expectedType)
+        {
+            if (!schema.TryGetProperty("properties", out var properties))
+            {
+                throw new InvalidOperationException("Schema missing 'properties' section");
+            }
+
+            if (!properties.TryGetProperty(propertyName, out var property))
+            {
+                throw new InvalidOperationException($"Property '{propertyName}' not found");
+            }
+
+            var actualType = property.TryGetProperty("type", out var typeElement)
+                ? typeElement.GetString()
+                : null;
+
+            Assert.Equal(expectedType, actualType);
+        }
+
+        /// <summary>
+        /// Validates that a property is required.
+        /// </summary>
+        protected void AssertPropertyRequired(JsonElement schema, string propertyName)
+        {
+            if (!schema.TryGetProperty("required", out var required))
+            {
+                throw new InvalidOperationException("Schema missing 'required' section");
+            }
+
+            var isRequired = required.EnumerateArray().Any(p => p.GetString() == propertyName);
+            Assert.True(isRequired, $"Property '{propertyName}' should be required");
+        }
+    }
+}

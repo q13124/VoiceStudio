@@ -1,0 +1,16 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Example plugin demonstrating the VoiceStudio plugin system",
+  "capabilities": {
+    "backend_routes": true,
+    "ui_panels": [],
+    "mcp_integration": false
+  },
+  "dependencies": [],
+  "entry_points": {
+    "backend": "plugin.register"
+  }
+}
+

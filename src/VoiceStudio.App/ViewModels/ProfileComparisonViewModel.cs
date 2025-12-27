@@ -1,0 +1,369 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
+using VoiceStudio.App.Services;
+using VoiceStudio.App.Utilities;
+
+namespace VoiceStudio.App.ViewModels
+{
+    /// <summary>
+    /// ViewModel for the ProfileComparisonView panel - Voice Profile Comparison Tool.
+    /// Implements IDEA 24: Voice Profile Comparison Tool.
+    /// </summary>
+    public partial class ProfileComparisonViewModel : BaseViewModel, IPanelView
+    {
+        private readonly IBackendClient _backendClient;
+        private readonly IAudioPlayerService _audioPlayer;
+        private readonly ToastNotificationService? _toastNotificationService;
+
+        public string PanelId => "profile-comparison";
+        public string DisplayName => ResourceHelper.GetString("Panel.ProfileComparison.DisplayName", "Profile Comparison");
+        public PanelRegion Region => PanelRegion.Center;
+
+        [ObservableProperty]
+        private ObservableCollection<VoiceProfile> availableProfiles = new();
+
+        [ObservableProperty]
+        private VoiceProfile? selectedProfileA;
+
+        [ObservableProperty]
+        private VoiceProfile? selectedProfileB;
+
+        [ObservableProperty]
+        private ProfileComparisonData? comparisonData;
+
+        [ObservableProperty]
+        private bool isComparing;
+
+        [ObservableProperty]
+        private bool isPlayingA;
+
+        [ObservableProperty]
+        private bool isPlayingB;
+
+        [ObservableProperty]
+        private string? previewText = ResourceHelper.GetString("ProfileComparison.PreviewTextDefault", "Hello, this is a comparison of two voice profiles.");
+
+        [ObservableProperty]
+        private string? audioUrlA;
+
+        [ObservableProperty]
+        private string? audioUrlB;
+
+        public ProfileComparisonViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+        {
+            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+            _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
+
+            // Get toast notification service
+            try
+            {
+                _toastNotificationService = ServiceProvider.GetToastNotificationService();
+            }
+            catch
+            {
+                _toastNotificationService = null;
+            }
+
+            LoadProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("LoadProfiles");
+                await LoadProfilesAsync(ct);
+            }, () => !IsLoading);
+            CompareProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("CompareProfiles");
+                await CompareProfilesAsync(ct);
+            }, () => SelectedProfileA != null && SelectedProfileB != null && !IsComparing && !IsLoading);
+            PlayProfileACommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("PlayProfileA");
+                await PlayProfileAAsync(ct);
+            }, () => SelectedProfileA != null && !string.IsNullOrEmpty(AudioUrlA) && !IsPlayingA && !IsLoading);
+            PlayProfileBCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                using var profiler = PerformanceProfiler.StartCommand("PlayProfileB");
+                await PlayProfileBAsync(ct);
+            }, () => SelectedProfileB != null && !string.IsNullOrEmpty(AudioUrlB) && !IsPlayingB && !IsLoading);
+            StopPlaybackCommand = new RelayCommand(StopPlayback, () => IsPlayingA || IsPlayingB);
+
+            // Load initial data
+            _ = LoadProfilesAsync(CancellationToken.None);
+        }
+
+        public IAsyncRelayCommand LoadProfilesCommand { get; }
+        public IAsyncRelayCommand CompareProfilesCommand { get; }
+        public IAsyncRelayCommand PlayProfileACommand { get; }
+        public IAsyncRelayCommand PlayProfileBCommand { get; }
+        public IRelayCommand StopPlaybackCommand { get; }
+
+        partial void OnSelectedProfileAChanged(VoiceProfile? value)
+        {
+            CompareProfilesCommand.NotifyCanExecuteChanged();
+            PlayProfileACommand.NotifyCanExecuteChanged();
+            if (value != null && SelectedProfileB != null)
+            {
+                _ = CompareProfilesAsync(CancellationToken.None);
+            }
+        }
+
+        partial void OnSelectedProfileBChanged(VoiceProfile? value)
+        {
+            CompareProfilesCommand.NotifyCanExecuteChanged();
+            PlayProfileBCommand.NotifyCanExecuteChanged();
+            if (value != null && SelectedProfileA != null)
+            {
+                _ = CompareProfilesAsync(CancellationToken.None);
+            }
+        }
+
+        partial void OnAudioUrlAChanged(string? value)
+        {
+            PlayProfileACommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnAudioUrlBChanged(string? value)
+        {
+            PlayProfileBCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnIsPlayingAChanged(bool value)
+        {
+            PlayProfileACommand.NotifyCanExecuteChanged();
+            StopPlaybackCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnIsPlayingBChanged(bool value)
+        {
+            PlayProfileBCommand.NotifyCanExecuteChanged();
+            StopPlaybackCommand.NotifyCanExecuteChanged();
+        }
+
+        private async Task LoadProfilesAsync(CancellationToken cancellationToken)
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
+
+                AvailableProfiles.Clear();
+                foreach (var profile in profiles)
+                {
+                    AvailableProfiles.Add(profile);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "LoadProfiles");
+                _toastNotificationService?.ShowError(
+                    ResourceHelper.GetString("Toast.Title.LoadProfilesFailed", "Load Profiles Failed"),
+                    ResourceHelper.FormatString("ProfileComparison.LoadProfilesFailed", ex.Message));
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task CompareProfilesAsync(CancellationToken cancellationToken)
+        {
+            if (SelectedProfileA == null || SelectedProfileB == null || string.IsNullOrEmpty(PreviewText))
+                return;
+
+            IsComparing = true;
+            ErrorMessage = null;
+            ((System.Windows.Input.ICommand)CompareProfilesCommand).NotifyCanExecuteChanged();
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Generate audio for both profiles using the same text
+                var text = PreviewText;
+
+                // Generate audio for Profile A
+                var requestA = new VoiceSynthesisRequest
+                {
+                    ProfileId = SelectedProfileA.Id,
+                    Text = text,
+                    Engine = "xtts", // Default engine
+                    Language = SelectedProfileA.Language ?? "en"
+                };
+
+                var responseA = await _backendClient.SendRequestAsync<VoiceSynthesisRequest, VoiceSynthesisResponse>(
+                    "/api/voice/synthesize",
+                    requestA,
+                    System.Net.Http.HttpMethod.Post,
+                    cancellationToken
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Generate audio for Profile B
+                var requestB = new VoiceSynthesisRequest
+                {
+                    ProfileId = SelectedProfileB.Id,
+                    Text = text,
+                    Engine = "xtts", // Default engine
+                    Language = SelectedProfileB.Language ?? "en"
+                };
+
+                var responseB = await _backendClient.SendRequestAsync<VoiceSynthesisRequest, VoiceSynthesisResponse>(
+                    "/api/voice/synthesize",
+                    requestB,
+                    System.Net.Http.HttpMethod.Post,
+                    cancellationToken
+                );
+
+                AudioUrlA = responseA?.AudioUrl;
+                AudioUrlB = responseB?.AudioUrl;
+
+                // Create comparison data
+                ComparisonData = new ProfileComparisonData
+                {
+                    ProfileA = SelectedProfileA,
+                    ProfileB = SelectedProfileB,
+                    QualityMetricsA = responseA?.QualityMetrics,
+                    QualityMetricsB = responseB?.QualityMetrics,
+                    QualityScoreA = responseA?.QualityScore ?? 0,
+                    QualityScoreB = responseB?.QualityScore ?? 0,
+                    AudioUrlA = AudioUrlA,
+                    AudioUrlB = AudioUrlB
+                };
+
+                _toastNotificationService?.ShowSuccess(
+                    ResourceHelper.GetString("ProfileComparison.ComparisonCompleted", "Profile comparison completed"),
+                    ResourceHelper.GetString("Toast.Title.ComparisonComplete", "Comparison Complete"));
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "CompareProfiles");
+                _toastNotificationService?.ShowError(
+                    ResourceHelper.GetString("Toast.Title.ComparisonFailed", "Comparison Failed"),
+                    ResourceHelper.FormatString("ProfileComparison.CompareProfilesFailed", ex.Message));
+            }
+            finally
+            {
+                IsComparing = false;
+                ((System.Windows.Input.ICommand)CompareProfilesCommand).NotifyCanExecuteChanged();
+            }
+        }
+
+        private async Task PlayProfileAAsync(CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(AudioUrlA))
+                return;
+
+            IsPlayingA = true;
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                // Note: IAudioPlayerService.PlayAsync may not support CancellationToken directly
+                // Play the audio file
+                await _audioPlayer.PlayFileAsync(AudioUrlA);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "PlayProfileA");
+                _toastNotificationService?.ShowError(
+                    ResourceHelper.GetString("Toast.Title.PlaybackFailed", "Playback Failed"),
+                    ResourceHelper.FormatString("ProfileComparison.PlayAudioFailed", ex.Message));
+            }
+            finally
+            {
+                IsPlayingA = false;
+            }
+        }
+
+        private async Task PlayProfileBAsync(CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(AudioUrlB))
+                return;
+
+            IsPlayingB = true;
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                // Play the audio file
+                await _audioPlayer.PlayFileAsync(AudioUrlB);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "PlayProfileB");
+                _toastNotificationService?.ShowError(
+                    ResourceHelper.GetString("Toast.Title.PlaybackFailed", "Playback Failed"),
+                    ResourceHelper.FormatString("ProfileComparison.PlayAudioFailed", ex.Message));
+            }
+            finally
+            {
+                IsPlayingB = false;
+            }
+        }
+
+        private void StopPlayback()
+        {
+            _audioPlayer.Stop();
+            IsPlayingA = false;
+            IsPlayingB = false;
+        }
+    }
+
+    /// <summary>
+    /// Data model for profile comparison results.
+    /// </summary>
+    public class ProfileComparisonData : ObservableObject
+    {
+        public VoiceProfile? ProfileA { get; set; }
+        public VoiceProfile? ProfileB { get; set; }
+        public QualityMetrics? QualityMetricsA { get; set; }
+        public QualityMetrics? QualityMetricsB { get; set; }
+        public double QualityScoreA { get; set; }
+        public double QualityScoreB { get; set; }
+        public string? AudioUrlA { get; set; }
+        public string? AudioUrlB { get; set; }
+
+        // Comparison helpers
+        public string QualityScoreADisplay => $"{QualityScoreA:F2}/5.0";
+        public string QualityScoreBDisplay => $"{QualityScoreB:F2}/5.0";
+        public string QualityScoreDifference => $"{(QualityScoreA - QualityScoreB):+0.00;-0.00;0.00}";
+        public bool ProfileAIsBetter => QualityScoreA > QualityScoreB;
+        public bool ProfileBIsBetter => QualityScoreB > QualityScoreA;
+
+        public string? MosScoreA => QualityMetricsA?.MosScore?.ToString("F2");
+        public string? MosScoreB => QualityMetricsB?.MosScore?.ToString("F2");
+        public string? SimilarityA => QualityMetricsA?.Similarity?.ToString("P1");
+        public string? SimilarityB => QualityMetricsB?.Similarity?.ToString("P1");
+        public string? NaturalnessA => QualityMetricsA?.Naturalness?.ToString("P1");
+        public string? NaturalnessB => QualityMetricsB?.Naturalness?.ToString("P1");
+        public string? SnrDbA => QualityMetricsA?.SnrDb?.ToString("F1");
+        public string? SnrDbB => QualityMetricsB?.SnrDb?.ToString("F1");
+    }
+}
+

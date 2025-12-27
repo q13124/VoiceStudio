@@ -1,0 +1,67 @@
+{
+  "engine_id": "deforum",
+  "name": "Deforum",
+  "type": "video",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Keyframed Stable Diffusion animations for video generation",
+  "author": "Deforum Community",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "diffusers": ">=0.21.0",
+    "torch": ">=2.0.0",
+    "transformers": ">=4.30.0",
+    "deforum": ">=0.7.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\deforum",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\deforum\\checkpoints"
+  },
+  "supported_formats": ["mp4", "gif", "webm"],
+  "capabilities": [
+    "keyframed_animation",
+    "video_generation",
+    "style_transfer",
+    "motion_effects"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 8,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.deforum_engine.DeforumEngine",
+  "config_schema": {
+    "model_id": {
+      "type": "string",
+      "default": "runwayml/stable-diffusion-v1-5",
+      "description": "Stable Diffusion model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "num_frames": {
+      "type": "integer",
+      "default": 120,
+      "minimum": 1,
+      "maximum": 1000,
+      "description": "Number of frames to generate"
+    },
+    "fps": {
+      "type": "integer",
+      "default": 24,
+      "description": "Frames per second"
+    },
+    "keyframe_strength": {
+      "type": "number",
+      "default": 0.7,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Keyframe interpolation strength"
+    }
+  }
+}
+

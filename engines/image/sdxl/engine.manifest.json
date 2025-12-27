@@ -1,0 +1,65 @@
+{
+  "engine_id": "sdxl",
+  "name": "Stable Diffusion XL",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Stable Diffusion XL - High-resolution image generation (1024x1024+)",
+  "author": "Stability AI",
+  "license": "CreativeML Open RAIL++-M",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "diffusers": ">=0.21.0",
+    "torch": ">=2.0.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\checkpoints",
+    "refiner": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\refiner"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "high_resolution",
+    "refiner_support",
+    "1024x1024_plus"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 8,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.sdxl_engine.SDXLEngine",
+  "config_schema": {
+    "model_id": {
+      "type": "string",
+      "default": "stabilityai/stable-diffusion-xl-base-1.0",
+      "description": "SDXL model identifier"
+    },
+    "refiner_id": {
+      "type": "string",
+      "default": "stabilityai/stable-diffusion-xl-refiner-1.0",
+      "description": "SDXL refiner model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "use_refiner": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use refiner for higher quality"
+    },
+    "resolution": {
+      "type": "string",
+      "default": "1024x1024",
+      "enum": ["1024x1024", "1152x896", "896x1152", "1216x832", "832x1216", "1344x768", "768x1344", "1536x640", "640x1536"],
+      "description": "Output resolution"
+    }
+  }
+}
+

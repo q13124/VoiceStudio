@@ -1,0 +1,598 @@
+"""
+AUTOMATIC1111 WebUI Engine for VoiceStudio
+Popular Stable Diffusion WebUI integration
+
+AUTOMATIC1111 WebUI is a popular web interface for Stable Diffusion
+with extensive features and a comprehensive API.
+
+Compatible with:
+- Python 3.10+
+- AUTOMATIC1111 WebUI server (requires separate installation)
+- HTTP API for image generation
+"""
+
+import base64
+import hashlib
+import logging
+import os
+import time
+from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
+
+import requests
+from PIL import Image
+
+try:
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
+    HTTPAdapter = None
+    Retry = None
+
+logger = logging.getLogger(__name__)
+
+# Import base protocol
+try:
+    from .protocols import EngineProtocol
+except ImportError:
+    try:
+        from .base import EngineProtocol
+    except ImportError:
+        from abc import ABC, abstractmethod
+
+        class EngineProtocol(ABC):
+            def __init__(self, device=None, gpu=True):
+                self.device = device or ("cuda" if gpu else "cpu")
+                self._initialized = False
+
+            @abstractmethod
+            def initialize(self):
+                pass
+
+            @abstractmethod
+            def cleanup(self):
+                pass
+
+            def is_initialized(self):
+                return self._initialized
+
+            def get_device(self):
+                return self.device
+
+
+class Automatic1111Engine(EngineProtocol):
+    """
+    AUTOMATIC1111 WebUI Engine for Stable Diffusion image generation.
+
+    Supports:
+    - Text-to-image generation
+    - Image-to-image transformation
+    - Inpainting and outpainting
+    - ControlNet
+    - LoRA loading
+    - Embedding loading
+    - Upscaling
+    - Face restoration
+    """
+
+    # Supported image formats
+    SUPPORTED_FORMATS = ["png", "jpg", "webp"]
+
+    def __init__(
+        self,
+        webui_url: str = "http://127.0.0.1:7860",
+        api_endpoint: str = "/sdapi/v1",
+        sampler: str = "Euler a",
+        steps: int = 20,
+        cfg_scale: float = 7.0,
+        device: Optional[str] = None,
+        gpu: bool = True,
+        enable_cache: bool = True,
+        cache_size: int = 100,
+        max_retries: int = 3,
+        backoff_factor: float = 0.3,
+        pool_connections: int = 10,
+        pool_maxsize: int = 20,
+        batch_size: int = 4,
+    ):
+        """
+        Initialize AUTOMATIC1111 WebUI engine.
+
+        Args:
+            webui_url: URL of AUTOMATIC1111 WebUI server (default: http://127.0.0.1:7860)
+            api_endpoint: API endpoint path (default: /sdapi/v1)
+            sampler: Default sampling method
+            steps: Default number of steps
+            cfg_scale: Default CFG scale
+            device: Device parameter (server handles device)
+            gpu: GPU parameter (server handles GPU)
+            enable_cache: Enable LRU response cache
+            cache_size: Maximum cache size
+            max_retries: Maximum number of retries for failed requests
+            backoff_factor: Backoff factor for retries
+            pool_connections: Number of connection pools
+            pool_maxsize: Maximum pool size
+            batch_size: Default batch size for parallel processing
+        """
+        super().__init__(device=device, gpu=gpu)
+
+        self.webui_url = webui_url.rstrip("/")
+        self.api_endpoint = api_endpoint.rstrip("/")
+        self.api_url = f"{self.webui_url}{self.api_endpoint}"
+        self.default_sampler = sampler
+        self.default_steps = steps
+        self.default_cfg_scale = cfg_scale
+
+        # Performance optimizations
+        self.enable_cache = enable_cache
+        self.cache_size = max(cache_size, 200)  # Increased default cache size
+        self.batch_size = max(batch_size, 8)  # Increased default batch size
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+        self.pool_connections = max(pool_connections, 20)  # Increased pool size
+        self.pool_maxsize = max(pool_maxsize, 40)  # Increased max pool size
+
+        # LRU response cache
+        self._response_cache: OrderedDict[str, Image.Image] = OrderedDict()
+        self._cache_stats = {
+            "hits": 0,
+            "misses": 0,
+        }
+
+        # Setup session with connection pooling and retries
+        self.session = requests.Session()
+        self.session.timeout = 300
+
+        if HAS_RETRY:
+            retries = Retry(
+                total=max_retries,
+                backoff_factor=backoff_factor,
+                status_forcelist=[429, 500, 502, 503, 504],
+                allowed_methods=frozenset(["GET", "POST"]),
+            )
+            adapter = HTTPAdapter(
+                max_retries=retries,
+                pool_connections=self.pool_connections,
+                pool_maxsize=self.pool_maxsize,
+            )
+            self.session.mount("http://", adapter)
+            self.session.mount("https://", adapter)
+
+    def initialize(self) -> bool:
+        """Initialize the AUTOMATIC1111 WebUI engine by connecting to server."""
+        try:
+            if self._initialized:
+                return True
+
+            logger.info(f"Connecting to AUTOMATIC1111 WebUI server: {self.webui_url}")
+
+            try:
+                # Test connection by getting options
+                response = self.session.get(f"{self.api_url}/options", timeout=5)
+                if response.status_code == 200:
+                    logger.info("AUTOMATIC1111 WebUI server connection successful")
+                    self._initialized = True
+                    return True
+                else:
+                    logger.error(
+                        f"AUTOMATIC1111 WebUI server returned status {response.status_code}"
+                    )
+                    self._initialized = False
+                    return False
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Failed to connect to AUTOMATIC1111 WebUI server: {e}")
+                logger.error(
+                    f"Make sure AUTOMATIC1111 WebUI server is running at {self.webui_url}"
+                )
+                logger.error(
+                    "Install from: https://github.com/AUTOMATIC1111/stable-diffusion-webui"
+                )
+                self._initialized = False
+                return False
+
+        except Exception as e:
+            logger.error(f"Failed to initialize AUTOMATIC1111 WebUI engine: {e}")
+            self._initialized = False
+            return False
+
+    def _generate_cache_key(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        width: int,
+        height: int,
+        steps: Optional[int],
+        cfg_scale: Optional[float],
+        sampler: Optional[str],
+        seed: Optional[int],
+        **kwargs,
+    ) -> str:
+        """Generate cache key from generation parameters."""
+        import json
+
+        cache_data = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "width": width,
+            "height": height,
+            "steps": steps if steps is not None else self.default_steps,
+            "cfg_scale": cfg_scale if cfg_scale is not None else self.default_cfg_scale,
+            "sampler": sampler if sampler else self.default_sampler,
+            "seed": seed if seed is not None else -1,
+            "kwargs": {k: v for k, v in kwargs.items() if k not in ["image", "mask"]},
+        }
+        cache_str = json.dumps(cache_data, sort_keys=True)
+        return hashlib.sha256(cache_str.encode()).hexdigest()
+
+    def generate(
+        self,
+        prompt: str,
+        negative_prompt: str = "",
+        width: int = 512,
+        height: int = 512,
+        steps: Optional[int] = None,
+        cfg_scale: Optional[float] = None,
+        sampler: Optional[str] = None,
+        seed: Optional[int] = None,
+        output_path: Optional[Union[str, Path]] = None,
+        **kwargs,
+    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+        """
+        Generate image from text prompt using AUTOMATIC1111 WebUI.
+
+        Args:
+            prompt: Text prompt for image generation
+            negative_prompt: Negative prompt
+            width: Image width
+            height: Image height
+            steps: Number of sampling steps (uses default if None)
+            cfg_scale: Classifier-free guidance scale (uses default if None)
+            sampler: Sampling method (uses default if None)
+            seed: Random seed (None for random)
+            output_path: Optional path to save output image
+            **kwargs: Additional generation parameters
+                - image: Input image for img2img (base64 or path)
+                - mask: Mask for inpainting (base64 or path)
+                - controlnet: ControlNet settings
+                - lora: LoRA model to use
+                - embedding: Textual inversion embedding
+
+        Returns:
+            PIL Image or None if generation failed
+        """
+        if not self._initialized:
+            if not self.initialize():
+                return None
+
+        # Check cache (only for txt2img without image input)
+        cache_key = None
+        if self.enable_cache and "image" not in kwargs:
+            cache_key = self._generate_cache_key(
+                prompt,
+                negative_prompt,
+                width,
+                height,
+                steps,
+                cfg_scale,
+                sampler,
+                seed,
+                **kwargs,
+            )
+            if cache_key in self._response_cache:
+                cached_image = self._response_cache[cache_key]
+                # LRU update
+                self._response_cache.move_to_end(cache_key)
+                self._cache_stats["hits"] += 1
+                logger.debug("Using cached AUTOMATIC1111 generation result")
+                if output_path:
+                    cached_image.save(output_path)
+                return cached_image
+            else:
+                self._cache_stats["misses"] += 1
+
+        try:
+            # Prepare generation parameters
+            payload = {
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "width": width,
+                "height": height,
+                "steps": steps if steps is not None else self.default_steps,
+                "cfg_scale": (
+                    cfg_scale if cfg_scale is not None else self.default_cfg_scale
+                ),
+                "sampler_name": sampler if sampler else self.default_sampler,
+                "seed": seed if seed is not None else -1,  # -1 for random
+                "batch_size": 1,
+                "n_iter": 1,
+            }
+
+            # Add img2img parameters if image provided
+            if "image" in kwargs:
+                image_input = kwargs["image"]
+                if isinstance(image_input, str):
+                    if os.path.exists(image_input):
+                        # Read image file and encode
+                        with open(image_input, "rb") as f:
+                            image_data = base64.b64encode(f.read()).decode("utf-8")
+                    else:
+                        # Assume base64 string
+                        image_data = image_input
+                elif isinstance(image_input, Image.Image):
+                    # Convert PIL Image to base64
+                    buffer = BytesIO()
+                    image_input.save(buffer, format="PNG")
+                    image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                else:
+                    image_data = str(image_input)
+
+                payload["init_images"] = [image_data]
+                payload["denoising_strength"] = kwargs.get("denoising_strength", 0.7)
+
+                # Use img2img endpoint
+                endpoint = f"{self.api_url}/img2img"
+            else:
+                # Use txt2img endpoint
+                endpoint = f"{self.api_url}/txt2img"
+
+            # Add inpainting mask if provided
+            if "mask" in kwargs:
+                mask_input = kwargs["mask"]
+                if isinstance(mask_input, str):
+                    if os.path.exists(mask_input):
+                        with open(mask_input, "rb") as f:
+                            mask_data = base64.b64encode(f.read()).decode("utf-8")
+                    else:
+                        mask_data = mask_input
+                elif isinstance(mask_input, Image.Image):
+                    buffer = BytesIO()
+                    mask_input.save(buffer, format="PNG")
+                    mask_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                else:
+                    mask_data = str(mask_input)
+
+                payload["mask"] = mask_data
+                payload["inpainting_fill"] = kwargs.get("inpainting_fill", 1)
+                payload["inpaint_full_res"] = kwargs.get("inpaint_full_res", False)
+
+            # Add ControlNet if provided
+            if "controlnet" in kwargs:
+                payload["alwayson_scripts"] = {
+                    "controlnet": {"args": [kwargs["controlnet"]]}
+                }
+
+            # Request generation
+            response = self.session.post(endpoint, json=payload, timeout=300)
+
+            if response.status_code != 200:
+                logger.error(f"AUTOMATIC1111 generation failed: {response.text}")
+                return None
+
+            result = response.json()
+
+            # Extract image from response
+            if "images" in result and len(result["images"]) > 0:
+                image_data = result["images"][0]
+                image_bytes = base64.b64decode(image_data)
+                image = Image.open(BytesIO(image_bytes))
+
+                # Cache result (only for txt2img without image input)
+                if self.enable_cache and cache_key is not None:
+                    # Evict oldest if cache full
+                    if len(self._response_cache) >= self.cache_size:
+                        self._response_cache.popitem(last=False)
+                    self._response_cache[cache_key] = image.copy()
+                    # LRU update
+                    self._response_cache.move_to_end(cache_key)
+
+                if output_path:
+                    image.save(output_path)
+                    logger.info(f"Image saved to: {output_path}")
+                    return image
+
+                return image
+            else:
+                logger.error("No images in response")
+                return None
+
+        except Exception as e:
+            logger.error(f"AUTOMATIC1111 generation failed: {e}")
+            return None
+
+    def batch_generate(
+        self,
+        prompts: List[str],
+        negative_prompt: str = "",
+        width: int = 512,
+        height: int = 512,
+        steps: Optional[int] = None,
+        cfg_scale: Optional[float] = None,
+        sampler: Optional[str] = None,
+        seeds: Optional[List[Optional[int]]] = None,
+        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
+        batch_size: Optional[int] = None,
+        **kwargs,
+    ) -> List[Optional[Image.Image]]:
+        """
+        Generate multiple images in parallel using batch processing.
+
+        Args:
+            prompts: List of text prompts for image generation
+            negative_prompt: Negative prompt (applied to all)
+            width: Image width
+            height: Image height
+            steps: Number of sampling steps (uses default if None)
+            cfg_scale: Classifier-free guidance scale (uses default if None)
+            sampler: Sampling method (uses default if None)
+            seeds: List of random seeds (None for random)
+            output_paths: Optional list of paths to save output images
+            batch_size: Batch size for parallel processing
+            **kwargs: Additional generation parameters
+
+        Returns:
+            List of PIL Images or None for failed generations
+        """
+        if not prompts:
+            return []
+
+        if not self._initialized:
+            if not self.initialize():
+                return [None] * len(prompts)
+
+        actual_batch_size = batch_size if batch_size is not None else self.batch_size
+
+        def generate_single(args):
+            idx, prompt, seed, output_path = args
+            try:
+                # Record processing time if metrics available
+                start_time = time.perf_counter()
+                result = self.generate(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    width=width,
+                    height=height,
+                    steps=steps,
+                    cfg_scale=cfg_scale,
+                    sampler=sampler,
+                    seed=seed,
+                    output_path=output_path,
+                    **kwargs,
+                )
+                # Record metrics if available
+                duration = time.perf_counter() - start_time
+                try:
+                    from .performance_metrics import get_engine_metrics
+
+                    metrics = get_engine_metrics()
+                    metrics.record_synthesis_time(
+                        "automatic1111", duration, cached=False
+                    )
+                except Exception:
+                    pass  # Metrics not available, skip
+                return result
+            except Exception as e:
+                logger.error(f"Batch generation failed for prompt {idx}: {e}")
+                # Record error if metrics available
+                try:
+                    from .performance_metrics import get_engine_metrics
+
+                    metrics = get_engine_metrics()
+                    metrics.record_error("automatic1111", "generation_error")
+                except Exception:
+                    pass
+                return None
+
+        # Prepare arguments
+        if seeds is None:
+            seeds = [None] * len(prompts)
+        if output_paths is None:
+            output_paths = [None] * len(prompts)
+
+        args_list = [
+            (i, prompt, seed, output_path)
+            for i, (prompt, seed, output_path) in enumerate(
+                zip(prompts, seeds, output_paths)
+            )
+        ]
+
+        # Optimize batch processing with better chunking
+        results = []
+        for i in range(0, len(args_list), actual_batch_size):
+            batch_args = args_list[i : i + actual_batch_size]
+
+            with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
+                batch_results = list(executor.map(generate_single, batch_args))
+            results.extend(batch_results)
+
+        return results
+
+    def clear_cache(self):
+        """Clear the response cache (enhanced)."""
+        if self.enable_cache:
+            self._response_cache.clear()
+            self._cache_stats = {"hits": 0, "misses": 0}
+            logger.info("AUTOMATIC1111 response cache cleared")
+
+    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+        """Get cache statistics (enhanced)."""
+        if not self.enable_cache:
+            return {"enabled": False}
+
+        total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
+        hit_rate = (
+            (self._cache_stats["hits"] / total_requests * 100)
+            if total_requests > 0
+            else 0.0
+        )
+
+        return {
+            "enabled": True,
+            "size": len(self._response_cache),
+            "max_size": self.cache_size,
+            "cache_hits": self._cache_stats["hits"],
+            "cache_misses": self._cache_stats["misses"],
+            "hit_rate": f"{hit_rate:.2f}%",
+        }
+
+    def cleanup(self):
+        """Clean up resources."""
+        try:
+            # Clear cache
+            if self.enable_cache:
+                self._response_cache.clear()
+
+            if hasattr(self, "session"):
+                self.session.close()
+            self._initialized = False
+            logger.info("AUTOMATIC1111 WebUI engine cleaned up")
+        except Exception as e:
+            logger.warning(f"Error during cleanup: {e}")
+
+    def get_info(self) -> Dict:
+        """Get engine information."""
+        info = super().get_info()
+        cache_stats = self.get_cache_stats()
+        info.update(
+            {
+                "webui_url": self.webui_url,
+                "api_endpoint": self.api_endpoint,
+                "default_sampler": self.default_sampler,
+                "default_steps": self.default_steps,
+                "default_cfg_scale": self.default_cfg_scale,
+                "supported_formats": self.SUPPORTED_FORMATS,
+                "cache_enabled": self.enable_cache,
+                "cache_size": cache_stats.get("size", 0),
+                "cache_max_size": cache_stats.get("max_size", 0),
+                "batch_size": self.batch_size,
+                "max_retries": self.max_retries,
+                "connection_pooling": HAS_RETRY,
+            }
+        )
+        return info
+
+
+def create_automatic1111_engine(
+    webui_url: str = "http://127.0.0.1:7860",
+    api_endpoint: str = "/sdapi/v1",
+    sampler: str = "Euler a",
+    steps: int = 20,
+    cfg_scale: float = 7.0,
+    device: Optional[str] = None,
+    gpu: bool = True,
+) -> Automatic1111Engine:
+    """Factory function to create an AUTOMATIC1111 WebUI engine instance."""
+    return Automatic1111Engine(
+        webui_url=webui_url,
+        api_endpoint=api_endpoint,
+        sampler=sampler,
+        steps=steps,
+        cfg_scale=cfg_scale,
+        device=device,
+        gpu=gpu,
+    )

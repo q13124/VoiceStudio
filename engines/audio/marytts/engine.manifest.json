@@ -1,0 +1,47 @@
+{
+  "engine_id": "marytts",
+  "name": "MaryTTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "MaryTTS - Classic open-source multilingual TTS system",
+  "author": "MaryTTS Team",
+  "license": "LGPL-3.0",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\marytts",
+    "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\marytts\\voices"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "multilingual",
+    "classic_tts",
+    "multiple_voices"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.marytts_engine.MaryTTSEngine",
+  "config_schema": {
+    "server_url": {
+      "type": "string",
+      "default": "http://localhost:59125",
+      "description": "MaryTTS server URL"
+    },
+    "voice": {
+      "type": "string",
+      "default": "cmu-slt-hsmm",
+      "description": "Voice name"
+    },
+    "locale": {
+      "type": "string",
+      "default": "en_US",
+      "description": "Locale code"
+    }
+  }
+}
+

@@ -1,0 +1,50 @@
+{
+  "engine_id": "invokeai",
+  "name": "InvokeAI",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "InvokeAI - Professional Stable Diffusion pipeline with advanced features",
+  "author": "InvokeAI Team",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "invokeai": ">=3.0.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\invokeai",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\invokeai\\models",
+    "loras": "%PROGRAMDATA%\\VoiceStudio\\models\\invokeai\\loras"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "outpainting",
+    "controlnet",
+    "lora_loading",
+    "img2img",
+    "upscaling"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.invokeai_engine.InvokeAIEngine",
+  "config_schema": {
+    "server_url": {
+      "type": "string",
+      "default": "http://127.0.0.1:9090",
+      "description": "InvokeAI server URL"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  }
+}
+

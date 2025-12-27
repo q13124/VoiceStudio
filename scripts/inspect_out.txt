@@ -1,0 +1,10 @@
+Path: C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\6.0.36\System.Security.Permissions.dll
+  Name: System.Security.Permissions
+  Version: 6.0.0.0
+  PublicKeyToken: cc7b13ffcd2ddd51
+
+Path: C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk\1.5.240627000\tools\net6.0\Microsoft.UI.Xaml.Markup.Compiler.dll
+  Name: Microsoft.UI.Xaml.Markup.Compiler
+  Version: 3.0.0.2406
+  PublicKeyToken: de31ebe4ad15742b
+

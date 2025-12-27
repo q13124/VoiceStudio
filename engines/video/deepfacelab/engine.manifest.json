@@ -1,0 +1,60 @@
+{
+  "engine_id": "deepfacelab",
+  "name": "DeepFaceLab",
+  "type": "video",
+  "subtype": "face_swap",
+  "version": "1.0",
+  "description": "Face replacement/swap in videos (gated with consent/watermark)",
+  "author": "iperov",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "tensorflow": ">=2.8.0",
+    "opencv-python": ">=4.5.0",
+    "numpy": ">=1.21.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\deepfacelab",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\deepfacelab\\checkpoints",
+    "workspace": "%PROGRAMDATA%\\VoiceStudio\\models\\deepfacelab\\workspace"
+  },
+  "supported_formats": ["mp4", "avi", "mov"],
+  "capabilities": [
+    "face_swap",
+    "face_replacement",
+    "face_extraction",
+    "face_training"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 6,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.deepfacelab_engine.DeepFaceLabEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "model_type": {
+      "type": "string",
+      "default": "SAEHD",
+      "enum": ["SAEHD", "Quick96", "H128", "H64"],
+      "description": "DeepFaceLab model type"
+    },
+    "resolution": {
+      "type": "integer",
+      "default": 256,
+      "enum": [128, 256, 512],
+      "description": "Face resolution"
+    }
+  },
+  "policy": {
+    "consent_required": true,
+    "watermark_default": true,
+    "audit_log": true
+  }
+}
+

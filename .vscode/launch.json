@@ -1,0 +1,81 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C#: <project-name> Debug",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/<relative-path-to-project-folder><project-name>.csproj"
+    },
+    {
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "name": "Launch Extension",
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm",
+      "request": "launch",
+      "type": "extensionHost"
+    },
+    {
+      "name": "Default (Full App)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/VoiceStudio.App/bin/Debug/net8.0-windows10.0.19041.0/VoiceStudio.App.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/VoiceStudio.App",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "VOICESTUDIO_BACKEND_URL": "http://localhost:8000",
+        "VOICESTUDIO_LOG_LEVEL": "INFO",
+        "VOICESTUDIO_ENABLE_ANALYTICS": "false",
+        "VOICESTUDIO_ENABLE_PERFORMANCE_PROFILING": "false"
+      }
+    },
+    {
+      "name": "Lightweight (Skip Heavy Panels)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/VoiceStudio.App/bin/Debug/net8.0-windows10.0.19041.0/VoiceStudio.App.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/VoiceStudio.App",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "VOICESTUDIO_BACKEND_URL": "http://localhost:8000",
+        "VOICESTUDIO_LOG_LEVEL": "INFO",
+        "VOICESTUDIO_SKIP_HEAVY_PANELS": "true",
+        "VOICESTUDIO_ENABLE_ANALYTICS": "false",
+        "VOICESTUDIO_ENABLE_PERFORMANCE_PROFILING": "false"
+      }
+    },
+    {
+      "name": "Stress Test Mode",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/VoiceStudio.App/bin/Debug/net8.0-windows10.0.19041.0/VoiceStudio.App.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/VoiceStudio.App",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "VOICESTUDIO_BACKEND_URL": "http://localhost:8000",
+        "VOICESTUDIO_LOG_LEVEL": "DEBUG",
+        "VOICESTUDIO_STRESS_TEST": "true",
+        "VOICESTUDIO_ENABLE_ANALYTICS": "true",
+        "VOICESTUDIO_ENABLE_PERFORMANCE_PROFILING": "true"
+      }
+    },
+    {
+      "name": ".NET Core Attach",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

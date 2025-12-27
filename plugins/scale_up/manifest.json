@@ -1,0 +1,42 @@
+{
+  "name": "scale_up",
+  "version": "3.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Advanced voice cloning quality enhancement with multi-stage processing, AI upscaling, and professional voice restoration",
+  "capabilities": {
+    "backend_routes": true,
+    "ui_panels": false,
+    "mcp_integration": false
+  },
+  "dependencies": [],
+  "entry_points": {
+    "backend": "plugin.register"
+  },
+  "processing_modes": {
+    "scale_up": {
+      "name": "Scale Up 1.25x",
+      "description": "Gradual quality enhancement",
+      "strength": 1.25
+    },
+    "scale_up_2": {
+      "name": "Scale Up 1.5x",
+      "description": "Moderate quality enhancement",
+      "strength": 1.5
+    },
+    "scale_up_max": {
+      "name": "Scale Up MAX",
+      "description": "Maximum quality enhancement",
+      "strength": 2.0
+    },
+    "preserve": {
+      "name": "Preserve Mode",
+      "description": "Maintain original characteristics while enhancing",
+      "strength": 1.1
+    },
+    "enhance": {
+      "name": "Enhance Mode",
+      "description": "Aggressive quality restoration",
+      "strength": 1.75
+    }
+  }
+}

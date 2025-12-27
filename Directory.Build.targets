@@ -1,0 +1,27 @@
+<Project>
+  <!-- 
+    This file is imported AFTER all PackageReference targets are imported.
+    This ensures our XAML compilation overrides happen AFTER NuGet targets.
+    Directory.Build.targets is automatically imported by MSBuild at the end.
+  -->
+
+  <!-- XAML compilation should run normally (no bypass import here). -->
+  <!-- Ensure XAML compiler has resolved reference assemblies (dotnet build) -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <MarkupCompilePass1DependsOn>ResolveReferences;$(MarkupCompilePass1DependsOn)</MarkupCompilePass1DependsOn>
+    <!-- Force CoreCompile to run before Pass2 so LocalAssembly exists for validation -->
+    <!-- NOTE: Pass 2 requires a valid LocalAssembly. If CoreCompile fails, Pass 2 will also fail. -->
+    <!-- Solution: Fix C# compilation errors to allow CoreCompile to succeed. -->
+    <MarkupCompilePass2DependsOn>CoreCompile;$(MarkupCompilePass2DependsOn)</MarkupCompilePass2DependsOn>
+
+    <!-- ROOT CAUSE FIX: XamlGeneratedOutputPath defaults to IntermediateOutputPath which ends with
+    \ -->
+    <!-- When targets file does $(XamlGeneratedOutputPath)\input.json, it becomes path\\input.json
+    (double backslash) -->
+    <!-- This breaks the Exec task command for XamlCompiler.exe -->
+    <!-- FIX: Set XamlGeneratedOutputPath without trailing backslash so concatenation works
+    correctly -->
+    <XamlGeneratedOutputPath>$(IntermediateOutputPath.TrimEnd('\'))</XamlGeneratedOutputPath>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceStudio Layout Theme Schema",
+  "description": "Schema for LayoutTheme.json - layout persistence",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version"
+    },
+    "layoutTheme": {
+      "type": "string",
+      "enum": ["Compact", "Standard", "Spacious"],
+      "description": "Current layout theme"
+    },
+    "colorTheme": {
+      "type": "string",
+      "enum": ["Dark", "Light", "HighContrast"],
+      "description": "Current color theme"
+    },
+    "regions": {
+      "type": "array",
+      "description": "Panel layout per region",
+      "items": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "enum": ["Left", "Center", "Right", "Bottom"]
+          },
+          "activePanelId": { "type": "string" },
+          "panelStack": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "panelId": { "type": "string" },
+                "displayName": { "type": "string" },
+                "isVisible": { "type": "boolean" }
+              }
+            }
+          },
+          "width": { "type": "number" },
+          "height": { "type": "number" },
+          "isCollapsed": { "type": "boolean" }
+        }
+      }
+    },
+    "floatingWindows": {
+      "type": "array",
+      "description": "Floating panel windows",
+      "items": {
+        "type": "object",
+        "properties": {
+          "panelId": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" }
+        }
+      }
+    }
+  },
+  "required": ["version", "layoutTheme", "colorTheme", "regions"]
+}
+

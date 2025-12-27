@@ -1,0 +1,46 @@
+{
+  "engine_id": "festival",
+  "name": "Festival / Flite",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Festival/Flite - Legacy open-source TTS system (Festival framework with Flite runtime)",
+  "author": "Festival/Flite Team",
+  "license": "BSD",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\festival",
+    "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\festival\\voices"
+  },
+  "supported_formats": ["wav"],
+  "capabilities": [
+    "text_to_speech",
+    "legacy_tts",
+    "accessibility",
+    "lightweight"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 1
+  },
+  "entry_point": "app.core.engines.festival_flite_engine.FestivalFliteEngine",
+  "config_schema": {
+    "executable_path": {
+      "type": "string",
+      "default": "festival",
+      "description": "Path to Festival/Flite executable"
+    },
+    "voice": {
+      "type": "string",
+      "default": "kal_diphone",
+      "description": "Voice name"
+    },
+    "use_flite": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use Flite (lightweight) instead of full Festival"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<UserControl x:Class="VoiceStudio.App.Controls.UserCursorIndicator"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Canvas>
+    <!-- Cursor -->
+    <Path x:Name="CursorPath" Data="M 0,0 L 8,12 L 4,12 L 4,20 L 0,20 Z" Fill="{Binding Color, Converter={StaticResource StringToBrushConverter}}" Stroke="White" StrokeThickness="1" Canvas.Left="{Binding X}" Canvas.Top="{Binding Y}">
+      <Path.RenderTransform>
+        <TranslateTransform X="0" Y="0"/>
+      </Path.RenderTransform>
+    </Path>
+    <!-- User Name Label -->
+    <Border x:Name="UserNameLabel" Background="{Binding Color, Converter={StaticResource StringToBrushConverter}}" CornerRadius="4" Padding="4,2" Canvas.Left="{Binding X}" Canvas.Top="{Binding Y, Converter={StaticResource SubtractConverter}, ConverterParameter=20}">
+      <TextBlock Text="{Binding UserName}" FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+    </Border>
+  </Canvas>
+</UserControl>

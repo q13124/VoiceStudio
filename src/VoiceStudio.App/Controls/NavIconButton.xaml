@@ -1,0 +1,6 @@
+<ToggleButton x:Class="VoiceStudio.App.Controls.NavIconButton"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               Style="{StaticResource VSQ.Button.NavToggle}">
+    <FontIcon x:Name="Icon" FontSize="20"/>
+</ToggleButton>

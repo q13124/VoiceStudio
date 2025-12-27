@@ -1,0 +1,54 @@
+{
+  "engine_id": "f5_tts",
+  "name": "F5-TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "F5-TTS - Modern expressive neural TTS with emotion control",
+  "author": "F5-TTS Team",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "torch": ">=1.9.0",
+    "transformers": ">=4.20.0",
+    "numpy": ">=1.21.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\f5_tts",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\f5_tts\\checkpoints"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "expressive_speech",
+    "emotion_control",
+    "voice_cloning",
+    "neural_tts"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.f5_tts_engine.F5TTSEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "model_id": {
+      "type": "string",
+      "default": "suno/f5-tts",
+      "description": "F5-TTS model identifier"
+    },
+    "emotion": {
+      "type": "string",
+      "default": "neutral",
+      "enum": ["neutral", "happy", "sad", "angry", "fearful", "disgusted", "surprised"],
+      "description": "Emotion for speech synthesis"
+    }
+  }
+}
+

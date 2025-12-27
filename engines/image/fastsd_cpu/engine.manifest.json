@@ -1,0 +1,62 @@
+{
+  "engine_id": "fastsd_cpu",
+  "name": "FastSD CPU",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "FastSD CPU - Fast Stable Diffusion inference optimized for CPU",
+  "author": "Various",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "diffusers": ">=0.21.0",
+    "torch": ">=2.0.0",
+    "onnxruntime": ">=1.15.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\fastsd_cpu",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\fastsd_cpu\\checkpoints",
+    "onnx": "%PROGRAMDATA%\\VoiceStudio\\models\\fastsd_cpu\\onnx"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "cpu_optimized",
+    "fast_inference",
+    "onnx_runtime"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.fastsd_cpu_engine.FastSDCPUEngine",
+  "config_schema": {
+    "model_id": {
+      "type": "string",
+      "default": "runwayml/stable-diffusion-v1-5",
+      "description": "Stable Diffusion model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cpu",
+      "enum": ["cpu"],
+      "description": "Device (CPU only)"
+    },
+    "use_onnx": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use ONNX runtime for faster inference"
+    },
+    "num_threads": {
+      "type": "integer",
+      "default": 4,
+      "minimum": 1,
+      "maximum": 16,
+      "description": "Number of CPU threads to use"
+    }
+  }
+}
+

@@ -1,0 +1,114 @@
+[
+  {
+    "id": "test-profile-001",
+    "name": "Test Voice Profile 1 - Male English",
+    "language": "en",
+    "emotion": "neutral",
+    "quality_score": 0.85,
+    "tags": [
+      "test",
+      "male",
+      "english",
+      "neutral"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_001.wav"
+  },
+  {
+    "id": "test-profile-002",
+    "name": "Test Voice Profile 2 - Female English",
+    "language": "en",
+    "emotion": "happy",
+    "quality_score": 0.88,
+    "tags": [
+      "test",
+      "female",
+      "english",
+      "happy"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_002.wav"
+  },
+  {
+    "id": "test-profile-003",
+    "name": "Test Voice Profile 3 - Male Spanish",
+    "language": "es",
+    "emotion": "neutral",
+    "quality_score": 0.82,
+    "tags": [
+      "test",
+      "male",
+      "spanish",
+      "neutral"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_003.wav"
+  },
+  {
+    "id": "test-profile-004",
+    "name": "Test Voice Profile 4 - Female French",
+    "language": "fr",
+    "emotion": "neutral",
+    "quality_score": 0.87,
+    "tags": [
+      "test",
+      "female",
+      "french",
+      "neutral"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_004.wav"
+  },
+  {
+    "id": "test-profile-005",
+    "name": "Test Voice Profile 5 - Male English Sad",
+    "language": "en",
+    "emotion": "sad",
+    "quality_score": 0.83,
+    "tags": [
+      "test",
+      "male",
+      "english",
+      "sad"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_005.wav"
+  },
+  {
+    "id": "test-profile-006",
+    "name": "Test Voice Profile 6 - Female English Excited",
+    "language": "en",
+    "emotion": "excited",
+    "quality_score": 0.9,
+    "tags": [
+      "test",
+      "female",
+      "english",
+      "excited"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_006.wav"
+  },
+  {
+    "id": "test-profile-007",
+    "name": "Test Voice Profile 7 - Male German",
+    "language": "de",
+    "emotion": "neutral",
+    "quality_score": 0.81,
+    "tags": [
+      "test",
+      "male",
+      "german",
+      "neutral"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_007.wav"
+  },
+  {
+    "id": "test-profile-008",
+    "name": "Test Voice Profile 8 - Female Italian",
+    "language": "it",
+    "emotion": "neutral",
+    "quality_score": 0.86,
+    "tags": [
+      "test",
+      "female",
+      "italian",
+      "neutral"
+    ],
+    "reference_audio_url": "audio/reference/test_ref_008.wav"
+  }
+]

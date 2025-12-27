@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceProfile",
+  "type": "object",
+  "description": "Voice profile schema for voice cloning and synthesis",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique profile identifier",
+      "example": "profile-123"
+    },
+    "name": {
+      "type": "string",
+      "description": "Profile name",
+      "minLength": 1,
+      "maxLength": 100,
+      "example": "My Voice Profile"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language code (ISO 639-1)",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "example": "en"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Profile tags for organization",
+      "items": {
+        "type": "string"
+      },
+      "example": ["male", "professional", "narrator"]
+    },
+    "reference_audio": {
+      "type": "string",
+      "description": "Path to reference audio file",
+      "format": "uri",
+      "example": "/path/to/reference.wav"
+    },
+    "engine": {
+      "type": "string",
+      "description": "Preferred engine for this profile",
+      "enum": ["xtts_v2", "chatterbox", "tortoise"],
+      "example": "chatterbox"
+    },
+    "quality_metrics": {
+      "type": "object",
+      "description": "Quality metrics for this profile",
+      "properties": {
+        "mos_score": {
+          "type": "number",
+          "description": "Mean Opinion Score (1.0-5.0)",
+          "minimum": 1.0,
+          "maximum": 5.0
+        },
+        "similarity": {
+          "type": "number",
+          "description": "Voice similarity score (0.0-1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "naturalness": {
+          "type": "number",
+          "description": "Naturalness score (0.0-1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Profile creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Profile last update timestamp"
+    }
+  },
+  "required": ["id", "name", "language"],
+  "additionalProperties": false
+}
+

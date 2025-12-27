@@ -1,0 +1,48 @@
+{
+  "engine_id": "voice_ai",
+  "name": "Voice.ai",
+  "type": "audio",
+  "subtype": "vc",
+  "version": "1.0",
+  "description": "Voice.ai - Real-time voice conversion and cloning (local inference if available)",
+  "author": "Voice.ai Team",
+  "license": "Proprietary",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\voice_ai",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\voice_ai\\models"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "voice_conversion",
+    "voice_cloning",
+    "real_time_conversion"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.voice_ai_engine.VoiceAIEngine",
+  "config_schema": {
+    "api_key": {
+      "type": "string",
+      "default": "",
+      "description": "Voice.ai API key (if using cloud, otherwise leave empty for local)"
+    },
+    "use_local": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use local inference if available"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  },
+  "note": "Voice.ai may require API key for cloud services. Local inference preferred for 100% local-first architecture."
+}
+

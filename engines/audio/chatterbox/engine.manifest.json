@@ -1,0 +1,70 @@
+{
+  "engine_id": "chatterbox",
+  "name": "Chatterbox TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Resemble AI Chatterbox TTS for state-of-the-art zero-shot voice cloning and text-to-speech synthesis",
+  "author": "Resemble AI",
+  "license": "Apache-2.0",
+  "python_version": ">=3.11",
+  "dependencies": {
+    "chatterbox-tts": ">=1.0.0",
+    "torch": ">=2.2.2",
+    "numpy": ">=1.24.0",
+    "soundfile": ">=0.12.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\chatterbox",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\chatterbox\\cache"
+  },
+  "supported_languages": [
+    "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl",
+    "cs", "ar", "zh-cn", "ja", "ko", "hi", "sv", "da", "no", "fi",
+    "el", "hu", "ro"
+  ],
+  "capabilities": [
+    "voice_cloning",
+    "zero_shot_cloning",
+    "multi_language_tts",
+    "emotion_control",
+    "expressive_speech",
+    "high_quality_synthesis"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.chatterbox_engine.ChatterboxEngine",
+  "config_schema": {
+    "model_name": {
+      "type": "string",
+      "default": "chatterbox-tts/base",
+      "description": "Chatterbox model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    },
+    "emotion": {
+      "type": "string",
+      "default": "neutral",
+      "enum": ["neutral", "happy", "sad", "angry", "excited", "calm", "fearful", "disgusted", "surprised"],
+      "description": "Emotion/style control for synthesis"
+    }
+  },
+  "quality_features": {
+    "mos_estimate": "4.5-5.0",
+    "similarity_score": "high",
+    "naturalness": "very_high",
+    "zero_shot_capability": true
+  }
+}

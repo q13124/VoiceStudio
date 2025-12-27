@@ -1,0 +1,1135 @@
+# Architecture Diagrams for Premium Windows Voice Cloning
+## Comprehensive System Architecture for VoiceStudio
+
+**Version:** 1.0  
+**Purpose:** Visual and textual architecture diagrams for premium Windows voice cloning application  
+**Last Updated:** 2025-01-27  
+**Focus:** Native Windows, high-performance, scalable architecture
+
+---
+
+## 📊 Executive Summary
+
+This document provides comprehensive architecture diagrams and descriptions for VoiceStudio's premium Windows voice cloning application. Includes system architecture, component diagrams, data flow, and integration patterns.
+
+**Architecture Levels:**
+1. **System Architecture** (High-level overview)
+2. **Component Architecture** (Detailed components)
+3. **Data Flow Architecture** (Request/response flows)
+4. **Deployment Architecture** (Production deployment)
+5. **Integration Architecture** (External integrations)
+
+---
+
+## 1. SYSTEM ARCHITECTURE (High-Level)
+
+### 1.1 Overall System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         VoiceStudio Application                          │
+│                         (Native Windows Desktop)                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+        ┌───────────▼──────────┐        ┌───────────▼──────────┐
+        │   WinUI 3 Frontend   │        │   Python Backend     │
+        │   (C# / .NET 8.0)    │◄───────┤   (FastAPI)          │
+        │                       │  HTTP  │                      │
+        │  - MainWindow         │  /WS   │  - Voice Engines     │
+        │  - Panels (100+)      │        │  - Audio Processing  │
+        │  - ViewModels         │        │  - Quality Metrics   │
+        │  - Services           │        │  - Model Management  │
+        └───────────────────────┘        └──────────────────────┘
+                    │                               │
+                    │                               │
+        ┌───────────▼──────────┐        ┌───────────▼──────────┐
+        │   Windows APIs       │        │   Python Libraries   │
+        │   - NAudio           │        │   - PyTorch          │
+        │   - WASAPI           │        │   - Librosa          │
+        │   - Win2D            │        │   - FFmpeg          │
+        │   - WinUI 3          │        │   - Coqui TTS        │
+        └──────────────────────┘        └──────────────────────┘
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    │
+                    ┌───────────────▼───────────────┐
+                    │      GPU Acceleration         │
+                    │   - CUDA (NVIDIA)             │
+                    │   - DirectML (AMD/Intel)       │
+                    │   - TensorRT (Optimization)    │
+                    └───────────────────────────────┘
+```
+
+### 1.2 Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                        │
+│  ────────────────────────────────────────────────────────  │
+│  WinUI 3 Views (XAML)                                       │
+│  - Panels (100+ panels)                                     │
+│  - Controls (Custom controls)                                │
+│  - Themes (Design tokens)                                   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ Data Binding
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    ViewModel Layer                          │
+│  ────────────────────────────────────────────────────────  │
+│  ViewModels (C#)                                            │
+│  - Business Logic                                           │
+│  - State Management                                          │
+│  - Command Handling                                          │
+│  - Property Notifications                                    │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ Service Calls
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Service Layer                            │
+│  ────────────────────────────────────────────────────────  │
+│  Services (C#)                                               │
+│  - IBackendClient (API communication)                      │
+│  - IAudioPlayerService (Playback)                           │
+│  - IProjectService (Project management)                     │
+│  - IProfileService (Voice profiles)                         │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ HTTP/WebSocket
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    API Layer                                 │
+│  ────────────────────────────────────────────────────────  │
+│  FastAPI Backend (Python)                                   │
+│  - REST Endpoints                                            │
+│  - WebSocket Endpoints                                       │
+│  - Request Validation                                        │
+│  - Error Handling                                            │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ Function Calls
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Engine Layer                              │
+│  ────────────────────────────────────────────────────────  │
+│  Voice Cloning Engines (Python)                              │
+│  - XTTS Engine                                               │
+│  - Chatterbox Engine                                         │
+│  - Tortoise Engine                                           │
+│  - OpenVoice Engine                                          │
+│  - RVC Engine                                                │
+│  - Engine Router (Selection)                                │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ Model Loading
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Model Layer                               │
+│  ────────────────────────────────────────────────────────  │
+│  AI Models                                                   │
+│  - PyTorch Models                                            │
+│  - ONNX Models (Optimized)                                   │
+│  - TensorRT Engines (NVIDIA)                                 │
+│  - Model Cache                                               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ GPU/CPU
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Hardware Layer                            │
+│  ────────────────────────────────────────────────────────  │
+│  - NVIDIA GPU (CUDA)                                         │
+│  - AMD/Intel GPU (DirectML)                                  │
+│  - CPU (Fallback)                                           │
+│  - RAM (Model storage)                                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. COMPONENT ARCHITECTURE
+
+### 2.1 Frontend Component Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      MainWindow                              │
+│  ────────────────────────────────────────────────────────  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ Command  │  │  Nav     │  │  Panel   │  │  Status  │    │
+│  │  Deck    │  │  Rail    │  │  Hosts   │  │   Bar    │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
+│  Left Panel    │  │  Center Panel  │  │  Right Panel   │
+│  Host          │  │  Host          │  │  Host          │
+│  ────────────  │  │  ────────────  │  │  ────────────  │
+│  PanelStack    │  │  PanelStack    │  │  PanelStack    │
+│  ┌──────────┐  │  │  ┌──────────┐  │  │  ┌──────────┐  │
+│  │ Profiles │  │  │  │ Timeline │  │  │  │  Mixer   │  │
+│  │  View    │  │  │  │   View   │  │  │  │   View   │  │
+│  └──────────┘  │  │  └──────────┘  │  │  └──────────┘  │
+│  ┌──────────┐  │  │  ┌──────────┐  │  │  ┌──────────┐  │
+│  │ Library  │  │  │  │  Voice  │  │  │  │ Effects  │  │
+│  │  View    │  │  │  │ Synthesis│  │  │  │   View   │  │
+│  └──────────┘  │  │  └──────────┘  │  │  └──────────┘  │
+└────────────────┘  └────────────────┘  └────────────────┘
+```
+
+### 2.2 Backend Component Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FastAPI Application                       │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │              Middleware Stack                        │   │
+│  │  - CORS                                              │   │
+│  │  - Request ID                                        │   │
+│  │  - Performance Profiling                             │   │
+│  │  - Rate Limiting                                     │   │
+│  │  - Error Handling                                    │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │              Route Handlers                          │   │
+│  │  - /api/voice/* (Voice cloning)                     │   │
+│  │  - /api/profiles/* (Profile management)             │   │
+│  │  - /api/projects/* (Project management)             │   │
+│  │  - /api/training/* (Model training)                 │   │
+│  │  - /api/effects/* (Audio effects)                   │   │
+│  │  - /api/analyze/* (Quality analysis)                │   │
+│  │  - /ws/* (WebSocket endpoints)                      │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │              Engine Router                           │   │
+│  │  - Engine Registration                               │   │
+│  │  - Engine Selection                                 │   │
+│  │  - Quality-based Routing                            │   │
+│  │  - Engine Caching                                   │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │              Voice Engines                           │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │   │
+│  │  │   XTTS   │  │Chatterbox│  │ Tortoise │          │   │
+│  │  │  Engine  │  │  Engine  │  │  Engine  │          │   │
+│  │  └──────────┘  └──────────┘  └──────────┘          │   │
+│  │  ┌──────────┐  ┌──────────┐                        │   │
+│  │  │OpenVoice │  │   RVC    │                        │   │
+│  │  │  Engine  │  │  Engine  │                        │   │
+│  │  └──────────┘  └──────────┘                        │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │              Support Services                        │   │
+│  │  - Quality Metrics                                   │   │
+│  │  - Audio Processing                                  │   │
+│  │  - Model Management                                  │   │
+│  │  - Watermarking                                      │   │
+│  │  - Deepfake Detection                                │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2.3 Engine System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Engine Router                             │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         Engine Registry                             │   │
+│  │  - Load from Manifests                              │   │
+│  │  - Dynamic Registration                              │   │
+│  │  - Engine Metadata                                  │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │ Get Engine                     │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         Engine Factory                              │   │
+│  │  - Create Engine Instance                           │   │
+│  │  - Initialize Engine                                │   │
+│  │  - Cache Engine                                     │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │ Engine Instance                │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         Engine Protocol                            │   │
+│  │  ────────────────────────────────────────────────  │   │
+│  │  interface EngineProtocol:                         │   │
+│  │    - initialize() -> bool                          │   │
+│  │    - synthesize(text, voice) -> audio              │   │
+│  │    - cleanup()                                     │   │
+│  │    - get_info() -> dict                            │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│        ┌───────────────────┼───────────────────┐           │
+│        │                   │                   │           │
+│  ┌─────▼─────┐    ┌───────▼──────┐   ┌───────▼──────┐   │
+│  │  XTTS     │    │  Chatterbox   │   │  Tortoise    │   │
+│  │  Engine   │    │  Engine       │   │  Engine      │   │
+│  └───────────┘    └───────────────┘   └──────────────┘   │
+│  ┌───────────┐    ┌───────────────┐                     │
+│  │ OpenVoice │    │  RVC Engine    │                     │
+│  │  Engine   │    │                │                     │
+│  └───────────┘    └───────────────┘                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. DATA FLOW ARCHITECTURE
+
+### 3.1 Voice Synthesis Flow
+
+```
+User Input (Text + Voice Profile)
+        │
+        ▼
+┌───────────────────┐
+│  VoiceSynthesisView│
+│  (WinUI 3)         │
+└───────────────────┘
+        │
+        │ User clicks "Synthesize"
+        ▼
+┌───────────────────┐
+│ VoiceSynthesisVM  │
+│ (ViewModel)       │
+└───────────────────┘
+        │
+        │ IBackendClient.SynthesizeAsync()
+        ▼
+┌───────────────────┐
+│  BackendClient    │
+│  (C# Service)     │
+└───────────────────┘
+        │
+        │ HTTP POST /api/voice/synthesize
+        ▼
+┌───────────────────┐
+│  FastAPI Router    │
+│  /api/voice        │
+└───────────────────┘
+        │
+        │ Validate Request
+        ▼
+┌───────────────────┐
+│  Engine Router     │
+│  Select Engine     │
+└───────────────────┘
+        │
+        │ Get Engine Instance
+        ▼
+┌───────────────────┐
+│  Voice Engine      │
+│  (e.g., XTTS)      │
+└───────────────────┘
+        │
+        │ Load Model (if needed)
+        ▼
+┌───────────────────┐
+│  PyTorch Model     │
+│  (GPU/CPU)         │
+└───────────────────┘
+        │
+        │ Inference
+        ▼
+┌───────────────────┐
+│  Audio Array       │
+│  (numpy)           │
+└───────────────────┘
+        │
+        │ Quality Enhancement (optional)
+        ▼
+┌───────────────────┐
+│  Quality Metrics   │
+│  Calculation       │
+└───────────────────┘
+        │
+        │ Save Audio File
+        ▼
+┌───────────────────┐
+│  Audio Storage     │
+│  (File System)     │
+└───────────────────┘
+        │
+        │ Return Response
+        ▼
+┌───────────────────┐
+│  JSON Response     │
+│  {audio_id, url}  │
+└───────────────────┘
+        │
+        │ HTTP Response
+        ▼
+┌───────────────────┐
+│  BackendClient    │
+│  (C#)             │
+└───────────────────┘
+        │
+        │ Update ViewModel
+        ▼
+┌───────────────────┐
+│  VoiceSynthesisVM │
+│  (Property Update)│
+└───────────────────┘
+        │
+        │ Data Binding
+        ▼
+┌───────────────────┐
+│  VoiceSynthesisView│
+│  (UI Update)      │
+└───────────────────┘
+        │
+        │ Play Audio
+        ▼
+┌───────────────────┐
+│  NAudio Player     │
+│  (Playback)        │
+└───────────────────┘
+```
+
+### 3.2 Real-Time Voice Conversion Flow
+
+```
+Live Audio Input (Microphone/Stream)
+        │
+        ▼
+┌───────────────────┐
+│  WASAPI Capture    │
+│  (NAudio)          │
+└───────────────────┘
+        │
+        │ Audio Chunks (real-time)
+        ▼
+┌───────────────────┐
+│  RVC Engine       │
+│  (Real-time)      │
+└───────────────────┘
+        │
+        │ Convert Voice (<50ms)
+        ▼
+┌───────────────────┐
+│  Converted Audio   │
+│  (numpy array)     │
+└───────────────────┘
+        │
+        │ Stream to Output
+        ▼
+┌───────────────────┐
+│  WASAPI Playback   │
+│  (NAudio)          │
+└───────────────────┘
+        │
+        │ Real-time Output
+        ▼
+┌───────────────────┐
+│  Speaker/Headphones│
+└───────────────────┘
+```
+
+### 3.3 WebSocket Real-Time Updates Flow
+
+```
+Backend Process (e.g., Training)
+        │
+        │ Progress Update
+        ▼
+┌───────────────────┐
+│  WebSocket Server  │
+│  (FastAPI)         │
+└───────────────────┘
+        │
+        │ WebSocket Message
+        │ {type: "progress", value: 75}
+        ▼
+┌───────────────────┐
+│  WebSocket Client  │
+│  (C#)              │
+└───────────────────┘
+        │
+        │ Event Raised
+        ▼
+┌───────────────────┐
+│  ViewModel         │
+│  (Property Update) │
+└───────────────────┘
+        │
+        │ Data Binding
+        ▼
+┌───────────────────┐
+│  View (UI)         │
+│  (Progress Bar)    │
+└───────────────────┘
+```
+
+---
+
+## 4. DEPLOYMENT ARCHITECTURE
+
+### 4.1 Single-User Deployment
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Windows Desktop PC                        │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         VoiceStudio Application                     │   │
+│  │  ────────────────────────────────────────────────  │   │
+│  │  WinUI 3 Frontend (C#)                             │   │
+│  │  Python Backend (FastAPI)                          │   │
+│  │  Voice Engines (Python)                            │   │
+│  │  Models (Local Storage)                             │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         Local Storage                                 │   │
+│  │  - Voice Profiles                                     │   │
+│  │  - Projects                                           │   │
+│  │  - Audio Files                                        │   │
+│  │  - Models Cache                                       │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │         GPU (NVIDIA/AMD/Intel)                       │   │
+│  │  - CUDA (NVIDIA)                                      │   │
+│  │  - DirectML (AMD/Intel)                               │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.2 Enterprise Deployment
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Client Workstation                       │
+│  ────────────────────────────────────────────────────────  │
+│  VoiceStudio Client (WinUI 3)                               │
+│  - UI Only                                                   │
+│  - Lightweight                                               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ HTTP/WebSocket
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Server                        │
+│  ────────────────────────────────────────────────────────  │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  FastAPI Backend                                     │   │
+│  │  - API Endpoints                                      │   │
+│  │  - WebSocket Server                                   │   │
+│  │  - Request Routing                                    │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Engine Workers (Multiple)                          │   │
+│  │  - XTTS Worker                                       │   │
+│  │  - Chatterbox Worker                                 │   │
+│  │  - Tortoise Worker                                   │   │
+│  │  - Load Balancing                                    │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
+│  GPU Server 1  │  │  GPU Server 2  │  │  GPU Server 3  │
+│  (NVIDIA)      │  │  (NVIDIA)       │  │  (NVIDIA)      │
+│  - Models      │  │  - Models       │  │  - Models      │
+│  - Inference   │  │  - Inference    │  │  - Inference   │
+└────────────────┘  └────────────────┘  └────────────────┘
+                            │
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Database Server                           │
+│  ────────────────────────────────────────────────────────  │
+│  PostgreSQL                                                  │
+│  - Voice Profiles                                            │
+│  - Projects                                                  │
+│  - User Data                                                 │
+│  - Consent Records                                           │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Storage Server                            │
+│  ────────────────────────────────────────────────────────  │
+│  File Storage                                                │
+│  - Audio Files                                               │
+│  - Model Files                                               │
+│  - Project Files                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. INTEGRATION ARCHITECTURE
+
+### 5.1 Python-C# Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    C# Frontend (.NET 8.0)                   │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Python.NET Runtime                                 │   │
+│  │  - PythonEngine.Initialize()                        │   │
+│  │  - Py.GIL() Context                                 │   │
+│  │  - Type Conversion                                  │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │ Direct Call                    │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Python Runtime (Embedded)                         │   │
+│  │  - Python 3.10.15                                  │   │
+│  │  - PyTorch                                          │   │
+│  │  - Voice Engines                                    │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │ Shared Memory                  │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  GPU Memory (CUDA)                                 │   │
+│  │  - Model Weights                                    │   │
+│  │  - Inference Buffers                                │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+
+Alternative: HTTP/WebSocket (Current)
+┌──────────────────┐         HTTP          ┌──────────────────┐
+│  C# Frontend      │ ◄──────────────────► │  Python Backend   │
+│  BackendClient    │      WebSocket        │  FastAPI Server   │
+└──────────────────┘                       └──────────────────┘
+```
+
+### 5.2 Engine Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Engine Router                            │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Manifest Loader                                    │   │
+│  │  - Scan engines/ directory                          │   │
+│  │  - Load engine.manifest.json                        │   │
+│  │  - Validate dependencies                            │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│                            │ Dynamic Import                 │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Engine Factory                                     │   │
+│  │  - Create Engine Instance                           │   │
+│  │  - Initialize with Config                           │   │
+│  │  - Register in Router                               │   │
+│  └────────────────────────────────────────────────────┘   │
+│                            │                                │
+│        ┌───────────────────┼───────────────────┐           │
+│        │                   │                   │           │
+│  ┌─────▼─────┐    ┌───────▼──────┐   ┌───────▼──────┐   │
+│  │  XTTS     │    │  OpenVoice   │   │  RVC          │   │
+│  │  Engine   │    │  Engine      │   │  Engine       │   │
+│  │           │    │              │   │               │   │
+│  │  ┌─────┐  │    │  ┌─────┐    │   │  ┌─────┐     │   │
+│  │  │Model│  │    │  │Model│    │   │  │Model│     │   │
+│  │  │Cache│  │    │  │Cache│    │   │  │Cache│     │   │
+│  │  └─────┘  │    │  └─────┘    │   │  └─────┘     │   │
+│  └───────────┘    └─────────────┘   └──────────────┘   │
+│        │                   │                   │           │
+│        └───────────────────┼───────────────────┘           │
+│                            │                                │
+│                            │ GPU/CPU                        │
+│                            ▼                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Hardware Layer                                      │   │
+│  │  - CUDA (NVIDIA)                                     │   │
+│  │  - DirectML (AMD/Intel)                              │   │
+│  │  - CPU (Fallback)                                    │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 5.3 Quality Metrics Integration
+
+```
+Voice Synthesis Output
+        │
+        ▼
+┌───────────────────┐
+│  Quality Metrics   │
+│  Module            │
+└───────────────────┘
+        │
+        ├──────────────────┬──────────────────┐
+        │                   │                  │
+        ▼                   ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  MOS Score   │  │  Similarity  │  │ Naturalness  │
+│  Calculator  │  │  Calculator  │  │  Calculator  │
+└──────────────┘  └──────────────┘  └──────────────┘
+        │                   │                  │
+        └───────────────────┼──────────────────┘
+                            │
+                            ▼
+┌───────────────────┐
+│  Quality Report   │
+│  - MOS: 4.2       │
+│  - Similarity: 0.87│
+│  - Naturalness: 0.82│
+│  - SNR: 28.5 dB   │
+└───────────────────┘
+        │
+        │ Return to API
+        ▼
+┌───────────────────┐
+│  API Response      │
+│  (JSON)            │
+└───────────────────┘
+```
+
+---
+
+## 6. PERFORMANCE ARCHITECTURE
+
+### 6.1 Caching Architecture
+
+```
+Request for Engine
+        │
+        ▼
+┌───────────────────┐
+│  Engine Router     │
+└───────────────────┘
+        │
+        │ Check Cache
+        ▼
+┌───────────────────┐      Yes      ┌───────────────────┐
+│  Engine Cache      │ ◄─────────────┤  Return Cached    │
+│  (In-Memory)       │               │  Engine Instance  │
+└───────────────────┘               └───────────────────┘
+        │
+        │ No
+        ▼
+┌───────────────────┐
+│  Create Engine     │
+│  Instance          │
+└───────────────────┘
+        │
+        │ Initialize
+        ▼
+┌───────────────────┐
+│  Load Model        │
+│  (GPU/CPU)         │
+└───────────────────┘
+        │
+        │ Cache Engine
+        ▼
+┌───────────────────┐
+│  Store in Cache    │
+└───────────────────┘
+```
+
+### 6.2 Model Loading Architecture
+
+```
+Engine Initialization
+        │
+        ▼
+┌───────────────────┐
+│  Check Model Cache│
+└───────────────────┘
+        │
+        ├─────────────── Yes ────────────┐
+        │                                 │
+        │ No                              │
+        ▼                                 │
+┌───────────────────┐                    │
+│  Model Loader      │                    │
+│  - Check ONNX      │                    │
+│  - Check PyTorch   │                    │
+│  - Check TensorRT  │                    │
+└───────────────────┘                    │
+        │                                 │
+        │ Load Model                      │
+        ▼                                 │
+┌───────────────────┐                    │
+│  Model Instance    │                    │
+│  (GPU/CPU)         │                    │
+└───────────────────┘                    │
+        │                                 │
+        │ Cache Model                     │
+        ▼                                 │
+┌───────────────────┐                    │
+│  Model Cache       │◄───────────────────┘
+│  (Memory/GPU)      │
+└───────────────────┘
+```
+
+### 6.3 GPU Memory Management
+
+```
+GPU Memory Pool
+        │
+        ├──────────────────┬──────────────────┐
+        │                  │                  │
+┌───────▼──────┐  ┌────────▼────────┐  ┌────▼─────┐
+│  Model       │  │  Inference       │  │  Buffer  │
+│  Weights     │  │  Buffers         │  │  Pool    │
+│  (Large)     │  │  (Medium)        │  │  (Small) │
+└──────────────┘  └──────────────────┘  └──────────┘
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                           │ Memory Management
+                           ▼
+                ┌──────────────────┐
+                │  Memory Allocator  │
+                │  - Allocation      │
+                │  - Deallocation    │
+                │  - Defragmentation │
+                └──────────────────┘
+```
+
+---
+
+## 7. SECURITY ARCHITECTURE
+
+### 7.1 Security Layers
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Layer                         │
+│  ────────────────────────────────────────────────────────  │
+│  - User Authentication                                       │
+│  - Role-Based Access Control                                 │
+│  - Consent Verification                                      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    API Layer                                 │
+│  ────────────────────────────────────────────────────────  │
+│  - API Key Authentication                                    │
+│  - Rate Limiting                                             │
+│  - Request Validation                                        │
+│  - HTTPS/TLS                                                 │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Layer                                │
+│  ────────────────────────────────────────────────────────  │
+│  - Encryption at Rest                                        │
+│  - Secure Storage                                            │
+│  - Access Logging                                            │
+│  - Audit Trails                                              │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                    Output Layer                              │
+│  ────────────────────────────────────────────────────────  │
+│  - Audio Watermarking                                        │
+│  - Deepfake Detection                                        │
+│  - Usage Tracking                                            │
+│  - Forensic Markers                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 Consent Flow Architecture
+
+```
+Voice Cloning Request
+        │
+        ▼
+┌───────────────────┐
+│  Consent Check     │
+└───────────────────┘
+        │
+        ├─────────────── Valid ────────────┐
+        │                                  │
+        │ Invalid/Expired                  │
+        ▼                                  │
+┌───────────────────┐                      │
+│  Request Consent  │                      │
+│  - Show Form       │                      │
+│  - Digital Sig     │                      │
+│  - Store Record    │                      │
+└───────────────────┘                      │
+        │                                  │
+        │ Consent Granted                  │
+        └──────────────────────────────────┘
+                            │
+                            ▼
+                ┌──────────────────┐
+                │  Proceed with     │
+                │  Voice Cloning    │
+                └──────────────────┘
+```
+
+---
+
+## 8. SCALABILITY ARCHITECTURE
+
+### 8.1 Horizontal Scaling
+
+```
+                    Load Balancer
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
+│  API Server 1  │  │  API Server 2  │  │  API Server 3  │
+│  (FastAPI)     │  │  (FastAPI)     │  │  (FastAPI)     │
+└────────────────┘  └────────────────┘  └────────────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+                    ┌───────▼────────┐
+                    │  Shared State   │
+                    │  - Redis Cache  │
+                    │  - Message Queue│
+                    └─────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────┐
+│  Worker Pool 1 │  │  Worker Pool 2 │  │  Worker Pool 3 │
+│  (GPU Servers) │  │  (GPU Servers) │  │  (GPU Servers) │
+└────────────────┘  └────────────────┘  └────────────────┘
+```
+
+### 8.2 Vertical Scaling
+
+```
+Single High-Performance Server
+        │
+        ├─────────────────── GPU 1 (NVIDIA A100)
+        ├─────────────────── GPU 2 (NVIDIA A100)
+        ├─────────────────── GPU 3 (NVIDIA A100)
+        ├─────────────────── GPU 4 (NVIDIA A100)
+        │
+        ├─────────────────── CPU (128 cores)
+        ├─────────────────── RAM (512GB)
+        └─────────────────── Storage (NVMe SSD)
+```
+
+---
+
+## 9. DATA ARCHITECTURE
+
+### 9.1 Data Storage Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Storage Layer                         │
+│  ────────────────────────────────────────────────────────  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Relational Database (PostgreSQL/SQLite)           │   │
+│  │  - Voice Profiles                                   │   │
+│  │  - Projects                                         │   │
+│  │  - User Data                                        │   │
+│  │  - Consent Records                                  │   │
+│  │  - Settings                                         │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  File Storage (Local/Network)                       │   │
+│  │  - Audio Files (WAV, MP3, FLAC)                     │   │
+│  │  - Model Files (PyTorch, ONNX)                     │   │
+│  │  - Project Files (.voiceproj)                      │   │
+│  │  - Cache Files                                      │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Vector Database (Chroma/Qdrant)                    │   │
+│  │  - Voice Embeddings                                 │   │
+│  │  - Similarity Search                                │   │
+│  │  - Recommendation Data                              │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Cache Layer (Redis/Memory)                        │   │
+│  │  - Engine Instances                                 │   │
+│  │  - Model Cache                                      │   │
+│  │  - API Response Cache                               │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 9.2 Data Flow Architecture
+
+```
+User Action
+        │
+        ▼
+┌───────────────────┐
+│  ViewModel         │
+│  (State Change)    │
+└───────────────────┘
+        │
+        │ API Call
+        ▼
+┌───────────────────┐
+│  Backend API       │
+│  (FastAPI)         │
+└───────────────────┘
+        │
+        │ Process
+        ▼
+┌───────────────────┐
+│  Business Logic    │
+│  (Engines)         │
+└───────────────────┘
+        │
+        │ Read/Write
+        ▼
+┌───────────────────┐
+│  Data Access       │
+│  Layer             │
+└───────────────────┘
+        │
+        ├──────────────┬──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Database │  │  Files    │  │  Cache   │
+└──────────┘  └──────────┘  └──────────┘
+        │              │              │
+        └──────────────┼──────────────┘
+                       │
+                       │ Response
+                       ▼
+            ┌──────────────────┐
+            │  API Response     │
+            └──────────────────┘
+                       │
+                       │ Update UI
+                       ▼
+            ┌──────────────────┐
+            │  ViewModel        │
+            │  (Property Update)│
+            └──────────────────┘
+```
+
+---
+
+## 10. ERROR HANDLING ARCHITECTURE
+
+### 10.1 Error Flow
+
+```
+Error Occurs
+        │
+        ▼
+┌───────────────────┐
+│  Error Handler     │
+│  (Backend)         │
+└───────────────────┘
+        │
+        ├──────────────┬──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Log      │  │  Notify  │  │  Return  │
+│  Error    │  │  User    │  │  Response│
+└──────────┘  └──────────┘  └──────────┘
+        │              │              │
+        │              │              │
+        ▼              ▼              ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Error    │  │  User    │  │  Error   │
+│  Log      │  │  Message │  │  Dialog  │
+│  File     │  │  (Toast) │  │  (UI)    │
+└──────────┘  └──────────┘  └──────────┘
+```
+
+---
+
+## 📊 ARCHITECTURE SUMMARY
+
+### Key Architectural Principles
+
+1. **Separation of Concerns**
+   - Frontend (WinUI 3) - UI only
+   - Backend (FastAPI) - Business logic
+   - Engines (Python) - AI/ML processing
+
+2. **Modularity**
+   - Engine system (pluggable engines)
+   - Panel system (modular UI)
+   - Service layer (reusable services)
+
+3. **Performance**
+   - GPU acceleration
+   - Model caching
+   - Streaming synthesis
+   - Optimized inference
+
+4. **Scalability**
+   - Horizontal scaling (multiple servers)
+   - Vertical scaling (powerful hardware)
+   - Load balancing
+   - Caching layers
+
+5. **Security**
+   - Encryption at rest
+   - Secure communication
+   - Consent management
+   - Watermarking
+
+6. **Maintainability**
+   - Clear interfaces
+   - Documentation
+   - Testing
+   - Version control
+
+---
+
+## 🎯 ARCHITECTURE DECISIONS
+
+### Technology Stack Decisions
+
+| Layer | Technology | Rationale |
+|-------|-----------|-----------|
+| Frontend | WinUI 3 | Native Windows, modern UI |
+| Backend | FastAPI | High performance, async, Python |
+| Engines | Python | AI/ML ecosystem |
+| Interop | Python.NET + HTTP | Balance of performance and simplicity |
+| Audio | NAudio | Native Windows audio |
+| GPU | CUDA + DirectML | NVIDIA + AMD/Intel support |
+| Database | SQLite (local) / PostgreSQL (enterprise) | Flexible deployment |
+| Caching | In-memory + Redis | Performance optimization |
+
+### Architecture Patterns
+
+1. **MVVM Pattern** - Frontend separation
+2. **Repository Pattern** - Data access abstraction
+3. **Factory Pattern** - Engine creation
+4. **Strategy Pattern** - Engine selection
+5. **Observer Pattern** - Real-time updates
+6. **Singleton Pattern** - Engine router
+
+---
+
+**This document provides comprehensive architecture diagrams for VoiceStudio. All diagrams show the relationships between components and data flow through the system.**
+

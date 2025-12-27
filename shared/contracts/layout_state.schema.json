@@ -1,0 +1,24 @@
+{
+  "title": "LayoutState",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "region": { "type": "string" },
+          "activePanelId": { "type": "string" },
+          "openedPanels": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["region", "activePanelId"]
+      }
+    }
+  },
+  "required": ["version", "regions"]
+}
+

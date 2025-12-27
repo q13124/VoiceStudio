@@ -1,0 +1,54 @@
+{
+  "python": "3.11.9",
+  "torch": "2.2.2+cu121",
+  "torchaudio": "2.2.2+cu121",
+  "coqui-tts": "0.27.2",
+  "coqui-tts-trainer": "0.3.1",
+  "transformers": "4.55.4",
+  "huggingface_hub": "0.36.0",
+  "hf-xet": "1.2.0",
+  "fsspec": "2025.9.0",
+  "librosa": "0.11.0",
+  "numpy": "1.26.4",
+  "faster-whisper": "1.2.0",
+  "pyloudnorm": "0.1.1",
+  "noisereduce": "3.0.2",
+  "soundfile": "0.12.1",
+  "ffmpeg-python": "0.2.0",
+  "tokenizers": "0.22.1",
+  "safetensors": "0.6.2",
+  "notes": {
+    "python": "Latest tested with PyTorch 2.2.2 + Transformers 4.55.4",
+    "torch": "2.2.2+cu121 - Required for compatibility with other software",
+    "torchaudio": "Must match Torch exactly (2.2.2+cu121)",
+    "coqui-tts": "Current release w/ XTTS v2 engine",
+    "coqui-tts-trainer": "Finetuning & dataset manager",
+    "transformers": "Stable with XTTS v2 and PyTorch 2.2.2",
+    "huggingface_hub": "Matches Transformers 4.55+ API",
+    "librosa": "Audio feature extraction for XTTS and QC",
+    "numpy": "Perfect bridge between PyTorch 2.2.2 and Librosa 0.11",
+    "faster-whisper": "Whisper variant; GPU-ready (compatible with PyTorch 2.2.2)",
+    "legacy_engines": {
+      "openvoice": "Keep isolated in own venv - conflicts with NumPy 1.26+ & PyTorch 2.2.2",
+      "tortoise-tts": "Use separate venv if needed for legacy tests",
+      "melotts": "Legacy; not needed for XTTS v2",
+      "whisperx": "Stay on Faster-Whisper 1.0.3 instead"
+    },
+    "windows_ui": {
+      "dotnet_sdk": "8.0.303",
+      "winui3": "1.5.0",
+      "winappsdk": "1.5.0",
+      "communitytoolkit": "8.1.2409",
+      "pyside6": "6.8.0.1",
+      "qfluentwidgets": "1.4.3"
+    },
+    "warnings": [
+      "Do not downgrade librosa, numpy, or transformers - XTTS will break",
+      "Legacy engines must be isolated in separate venvs",
+      "Torch and Torchaudio versions must match exactly",
+      "PyTorch 2.2.2+cu121 is the standard for compatibility with other software",
+      "Do not upgrade PyTorch without testing all engines and dependencies"
+    ]
+  }
+}
+

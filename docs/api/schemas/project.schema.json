@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project",
+  "type": "object",
+  "description": "Project schema for audio projects",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique project identifier",
+      "example": "project-789"
+    },
+    "name": {
+      "type": "string",
+      "description": "Project name",
+      "minLength": 1,
+      "maxLength": 200,
+      "example": "My Audio Project"
+    },
+    "description": {
+      "type": "string",
+      "description": "Project description",
+      "maxLength": 1000,
+      "example": "Voice cloning project for narration"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "description": "Project sample rate (Hz)",
+      "enum": [22050, 44100, 48000],
+      "default": 44100
+    },
+    "bit_depth": {
+      "type": "integer",
+      "description": "Project bit depth",
+      "enum": [16, 24, 32],
+      "default": 24
+    },
+    "channels": {
+      "type": "integer",
+      "description": "Number of audio channels",
+      "enum": [1, 2],
+      "default": 2
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Project creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Project last update timestamp"
+    }
+  },
+  "required": ["id", "name"],
+  "additionalProperties": false
+}
+

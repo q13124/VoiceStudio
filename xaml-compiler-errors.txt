@@ -1,0 +1,26 @@
+
+    Determining projects to restore...
+    All projects are up-to-date for restore.
+    VoiceStudio.Core -> E:\VoiceStudio\src\VoiceStudio.Core\bin\Debug\net8.0\VoiceStudio.Core.dll
+> C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk\1.5.240627000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: The command ""C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk\1.5.240627000\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\Debug\net8.0-windows10.0.19041.0\\input.json" "obj\Debug\net8.0-windows10.0.19041.0\\output.json"" exited with code 1. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+  
+  Build FAILED.
+  
+> C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk\1.5.240627000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: The command ""C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk\1.5.240627000\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\Debug\net8.0-windows10.0.19041.0\\input.json" "obj\Debug\net8.0-windows10.0.19041.0\\output.json"" exited with code 1. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+      0 Warning(s)
+>     1 Error(s)
+  
+  Time Elapsed 00:00:07.11
+
+
+=== SUMMARY ===
+The XAML compiler exits with code 1 but produces no visible output.
+This usually means:
+1. Errors are written to output.json (check that file)
+2. Errors might be in Visual Studio Error List
+3. A XAML file has a syntax error that prevents compilation
+
+Next steps:
+- Open the solution in Visual Studio and check the Error List window
+- Look for errors mentioning .xaml files with line numbers
+- Share those specific error lines for fixing

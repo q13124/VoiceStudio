@@ -1,0 +1,61 @@
+{
+  "engine_id": "ffmpeg_ai",
+  "name": "FFmpeg with AI Plugins",
+  "type": "video",
+  "subtype": "utility",
+  "version": "1.0",
+  "description": "Video transcoding, muxing, filters with AI enhancements (upscaling, denoising, enhancement)",
+  "author": "FFmpeg Community",
+  "license": "LGPL-2.1",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "ffmpeg-python": ">=0.2.0"
+  },
+  "model_paths": {
+    "ai_models": "%PROGRAMDATA%\\VoiceStudio\\models\\ffmpeg_ai"
+  },
+  "supported_formats": ["mp4", "avi", "mov", "mkv", "webm", "flv", "wav", "mp3", "aac"],
+  "capabilities": [
+    "transcoding",
+    "muxing",
+    "demuxing",
+    "filtering",
+    "ai_upscaling",
+    "ai_denoising",
+    "ai_enhancement",
+    "format_conversion",
+    "audio_extraction",
+    "video_compression"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.ffmpeg_ai_engine.FFmpegAIEngine",
+  "config_schema": {
+    "ffmpeg_path": {
+      "type": "string",
+      "default": "ffmpeg",
+      "description": "Path to FFmpeg executable"
+    },
+    "use_ai_filters": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable AI-powered filters (upscaling, denoising)"
+    },
+    "ai_model": {
+      "type": "string",
+      "default": "realesrgan",
+      "enum": ["realesrgan", "waifu2x", "esrgan"],
+      "description": "AI upscaling model"
+    },
+    "preset": {
+      "type": "string",
+      "default": "medium",
+      "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"],
+      "description": "Encoding preset"
+    }
+  }
+}
+

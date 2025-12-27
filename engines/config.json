@@ -1,0 +1,17 @@
+{
+  "defaults": {
+    "tts": "xtts_v2",
+    "image_gen": "sdxl_comfy",
+    "video_gen": "svd"
+  },
+  "overrides": {},
+  "installed": [
+    "xtts_v2",
+    "piper",
+    "openvoice",
+    "sdxl_comfy",
+    "realesrgan",
+    "svd"
+  ]
+}
+

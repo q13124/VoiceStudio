@@ -1,0 +1,12 @@
+{
+  "title": "McpOperationRequest",
+  "type": "object",
+  "properties": {
+    "requestId": { "type": "string" },
+    "operation": { "type": "string" },
+    "source": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "required": ["requestId", "operation", "payload"]
+}
+

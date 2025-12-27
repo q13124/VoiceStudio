@@ -1,0 +1,1193 @@
+{
+  "generated_at_utc": "2025-12-27T20:14:41.261703+00:00",
+  "repo_root": "E:\\VoiceStudio",
+  "engines_root": "E:\\VoiceStudio\\engines",
+  "counts": {
+    "engine_manifest": 44,
+    "runtime_manifest": 1
+  },
+  "records": [
+    {
+      "kind": "engine_manifest",
+      "engine_id": "aeneas",
+      "display_name": "Aeneas",
+      "type": "audio",
+      "subtype": "alignment",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\aeneas\\engine.manifest.json",
+      "entry_point": "app.core.engines.aeneas_engine.AeneasEngine",
+      "entry_module": "app.core.engines.aeneas_engine",
+      "entry_symbol": "AeneasEngine",
+      "entry_repo_path": "app/core/engines/aeneas_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "audio_text_alignment",
+        "subtitle_generation",
+        "srt_export",
+        "vtt_export",
+        "word_level_alignment",
+        "phrase_level_alignment"
+      ],
+      "dependencies": {
+        "aeneas": ">=1.7.3",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "chatterbox",
+      "display_name": "Chatterbox TTS",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\chatterbox\\engine.manifest.json",
+      "entry_point": "app.core.engines.chatterbox_engine.ChatterboxEngine",
+      "entry_module": "app.core.engines.chatterbox_engine",
+      "entry_symbol": "ChatterboxEngine",
+      "entry_repo_path": "app/core/engines/chatterbox_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "zero_shot_cloning",
+        "multi_language_tts",
+        "emotion_control",
+        "expressive_speech",
+        "high_quality_synthesis"
+      ],
+      "dependencies": {
+        "chatterbox-tts": ">=1.0.0",
+        "torch": ">=2.2.2",
+        "numpy": ">=1.24.0",
+        "soundfile": ">=0.12.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "espeak_ng",
+      "display_name": "eSpeak NG",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\espeak_ng\\engine.manifest.json",
+      "entry_point": "app.core.engines.espeak_ng_engine.ESpeakNGEngine",
+      "entry_module": "app.core.engines.espeak_ng_engine",
+      "entry_symbol": "ESpeakNGEngine",
+      "entry_repo_path": "app/core/engines/espeak_ng_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "multilingual",
+        "accessibility",
+        "lightweight",
+        "many_languages"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "f5_tts",
+      "display_name": "F5-TTS",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\f5_tts\\engine.manifest.json",
+      "entry_point": "app.core.engines.f5_tts_engine.F5TTSEngine",
+      "entry_module": "app.core.engines.f5_tts_engine",
+      "entry_symbol": "F5TTSEngine",
+      "entry_repo_path": "app/core/engines/f5_tts_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "expressive_speech",
+        "emotion_control",
+        "voice_cloning",
+        "neural_tts"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "transformers": ">=4.20.0",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "festival",
+      "display_name": "Festival / Flite",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\festival\\engine.manifest.json",
+      "entry_point": "app.core.engines.festival_flite_engine.FestivalFliteEngine",
+      "entry_module": "app.core.engines.festival_flite_engine",
+      "entry_symbol": "FestivalFliteEngine",
+      "entry_repo_path": "app/core/engines/festival_flite_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "legacy_tts",
+        "accessibility",
+        "lightweight"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "gpt_sovits",
+      "display_name": "GPT-SoVITS",
+      "type": "audio",
+      "subtype": "vc",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\gpt_sovits\\engine.manifest.json",
+      "entry_point": "app.core.engines.gpt_sovits_engine.GPTSovitsEngine",
+      "entry_module": "app.core.engines.gpt_sovits_engine",
+      "entry_symbol": "GPTSovitsEngine",
+      "entry_repo_path": "app/core/engines/gpt_sovits_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_conversion",
+        "voice_cloning",
+        "fine_tuning",
+        "real_time_conversion"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "transformers": ">=4.20.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "higgs_audio",
+      "display_name": "Higgs Audio",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\higgs_audio\\engine.manifest.json",
+      "entry_point": "app.core.engines.higgs_audio_engine.HiggsAudioEngine",
+      "entry_module": "app.core.engines.higgs_audio_engine",
+      "entry_symbol": "HiggsAudioEngine",
+      "entry_repo_path": "app/core/engines/higgs_audio_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "zero_shot_cloning",
+        "high_fidelity",
+        "voice_cloning"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "torchaudio": ">=0.9.0",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "lyrebird",
+      "display_name": "Lyrebird (Descript)",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\lyrebird\\engine.manifest.json",
+      "entry_point": "app.core.engines.lyrebird_engine.LyrebirdEngine",
+      "entry_module": "app.core.engines.lyrebird_engine",
+      "entry_symbol": "LyrebirdEngine",
+      "entry_repo_path": "app/core/engines/lyrebird_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "text_to_speech",
+        "high_quality"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "marytts",
+      "display_name": "MaryTTS",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\marytts\\engine.manifest.json",
+      "entry_point": "app.core.engines.marytts_engine.MaryTTSEngine",
+      "entry_module": "app.core.engines.marytts_engine",
+      "entry_symbol": "MaryTTSEngine",
+      "entry_repo_path": "app/core/engines/marytts_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "multilingual",
+        "classic_tts",
+        "multiple_voices"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "mockingbird",
+      "display_name": "MockingBird Clone",
+      "type": "audio",
+      "subtype": "vc",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\mockingbird\\engine.manifest.json",
+      "entry_point": "app.core.engines.mockingbird_engine.MockingBirdEngine",
+      "entry_module": "app.core.engines.mockingbird_engine",
+      "entry_symbol": "MockingBirdEngine",
+      "entry_repo_path": "app/core/engines/mockingbird_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "voice_conversion",
+        "real_time_cloning",
+        "high_quality"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "librosa": ">=0.9.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "openvoice",
+      "display_name": "OpenVoice",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\openvoice\\engine.manifest.json",
+      "entry_point": "app.core.engines.openvoice_engine.OpenVoiceEngine",
+      "entry_module": "app.core.engines.openvoice_engine",
+      "entry_symbol": "OpenVoiceEngine",
+      "entry_repo_path": "app/core/engines/openvoice_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "zero_shot_cloning",
+        "cross_lingual_cloning",
+        "style_control",
+        "emotion_control",
+        "accent_control",
+        "rhythm_control",
+        "pause_control",
+        "intonation_control",
+        "real_time_synthesis",
+        "streaming_synthesis"
+      ],
+      "dependencies": {
+        "openvoice": ">=1.0.0",
+        "torch": ">=2.0.0",
+        "numpy": ">=1.21.0",
+        "soundfile": ">=0.12.0",
+        "librosa": ">=0.10.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "parakeet",
+      "display_name": "Parakeet",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\parakeet\\engine.manifest.json",
+      "entry_point": "app.core.engines.parakeet_engine.ParakeetEngine",
+      "entry_module": "app.core.engines.parakeet_engine",
+      "entry_symbol": "ParakeetEngine",
+      "entry_repo_path": "app/core/engines/parakeet_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "fast_synthesis",
+        "multilingual",
+        "multiple_models"
+      ],
+      "dependencies": {
+        "paddlepaddle": ">=2.4.0",
+        "paddlespeech": ">=1.2.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "piper",
+      "display_name": "Piper TTS",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\piper\\engine.manifest.json",
+      "entry_point": "app.core.engines.piper_engine.PiperEngine",
+      "entry_module": "app.core.engines.piper_engine",
+      "entry_symbol": "PiperEngine",
+      "entry_repo_path": "app/core/engines/piper_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "fast_tts",
+        "low_latency",
+        "offline",
+        "multi_voice"
+      ],
+      "dependencies": {
+        "piper-tts": ">=1.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "rhvoice",
+      "display_name": "RHVoice",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\rhvoice\\engine.manifest.json",
+      "entry_point": "app.core.engines.rhvoice_engine.RHVoiceEngine",
+      "entry_module": "app.core.engines.rhvoice_engine",
+      "entry_symbol": "RHVoiceEngine",
+      "entry_repo_path": "app/core/engines/rhvoice_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "multilingual",
+        "high_quality_voices",
+        "russian_optimized"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "rvc",
+      "display_name": "RVC (Retrieval-based Voice Conversion)",
+      "type": "audio",
+      "subtype": "voice_conversion",
+      "version": "1.0.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\rvc\\engine.manifest.json",
+      "entry_point": "app.core.engines.rvc_engine.RVCEngine",
+      "entry_module": "app.core.engines.rvc_engine",
+      "entry_symbol": "RVCEngine",
+      "entry_repo_path": "app/core/engines/rvc_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_conversion",
+        "real_time_conversion",
+        "pitch_shifting",
+        "low_latency",
+        "high_quality"
+      ],
+      "dependencies": {
+        "rvc-python": ">=1.0.0",
+        "fairseq": ">=0.12.0",
+        "librosa": ">=0.10.0",
+        "torch": ">=2.0.0",
+        "soundfile": ">=0.12.0",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "silero",
+      "display_name": "Silero Models",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\silero\\engine.manifest.json",
+      "entry_point": "app.core.engines.silero_engine.SileroEngine",
+      "entry_module": "app.core.engines.silero_engine",
+      "entry_symbol": "SileroEngine",
+      "entry_repo_path": "app/core/engines/silero_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "multilingual",
+        "fast_inference",
+        "high_quality",
+        "many_languages",
+        "many_voices"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "torchaudio": ">=0.9.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "tortoise",
+      "display_name": "Tortoise TTS",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\tortoise\\engine.manifest.json",
+      "entry_point": "app.core.engines.tortoise_engine.TortoiseEngine",
+      "entry_module": "app.core.engines.tortoise_engine",
+      "entry_symbol": "TortoiseEngine",
+      "entry_repo_path": "app/core/engines/tortoise_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "multi_voice_synthesis",
+        "high_quality_synthesis",
+        "ultra_quality_mode",
+        "prosody_control",
+        "natural_speech"
+      ],
+      "dependencies": {
+        "tortoise-tts": ">=2.0.0",
+        "torch": ">=2.2.2",
+        "numpy": ">=1.24.0",
+        "transformers": ">=4.30.0",
+        "scipy": ">=1.10.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "voice_ai",
+      "display_name": "Voice.ai",
+      "type": "audio",
+      "subtype": "vc",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\voice_ai\\engine.manifest.json",
+      "entry_point": "app.core.engines.voice_ai_engine.VoiceAIEngine",
+      "entry_module": "app.core.engines.voice_ai_engine",
+      "entry_symbol": "VoiceAIEngine",
+      "entry_repo_path": "app/core/engines/voice_ai_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_conversion",
+        "voice_cloning",
+        "real_time_conversion"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "voxcpm",
+      "display_name": "VoxCPM",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\voxcpm\\engine.manifest.json",
+      "entry_point": "app.core.engines.voxcpm_engine.VoxCPMEngine",
+      "entry_module": "app.core.engines.voxcpm_engine",
+      "entry_symbol": "VoxCPMEngine",
+      "entry_repo_path": "app/core/engines/voxcpm_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_speech",
+        "multilingual",
+        "chinese_tts",
+        "voice_cloning"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "transformers": ">=4.20.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "whisper",
+      "display_name": "Whisper STT",
+      "type": "audio",
+      "subtype": "stt",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\whisper\\engine.manifest.json",
+      "entry_point": "app.core.engines.whisper_engine.WhisperEngine",
+      "entry_module": "app.core.engines.whisper_engine",
+      "entry_symbol": "WhisperEngine",
+      "entry_repo_path": "app/core/engines/whisper_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [
+        "transcribe",
+        "stt",
+        "speech_to_text",
+        "language_detection"
+      ],
+      "capabilities": [
+        "speech_to_text",
+        "transcription",
+        "language_detection",
+        "word_timestamps",
+        "multi_language_stt"
+      ],
+      "dependencies": {
+        "faster-whisper": "==1.0.3",
+        "torch": ">=2.2.2"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "whisper_cpp",
+      "display_name": "whisper.cpp",
+      "type": "audio",
+      "subtype": "stt",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\whisper_cpp\\engine.manifest.json",
+      "entry_point": "app.core.engines.whisper_cpp_engine.WhisperCPPEngine",
+      "entry_module": "app.core.engines.whisper_cpp_engine",
+      "entry_symbol": "WhisperCPPEngine",
+      "entry_repo_path": "app/core/engines/whisper_cpp_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "speech_to_text",
+        "transcription",
+        "srt_generation",
+        "vtt_generation",
+        "word_timestamps",
+        "language_detection"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "whisper_ui",
+      "display_name": "Whisper UI",
+      "type": "audio",
+      "subtype": "stt",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\whisper_ui\\engine.manifest.json",
+      "entry_point": "app.core.engines.whisper_ui_engine.WhisperUIEngine",
+      "entry_module": "app.core.engines.whisper_ui_engine",
+      "entry_symbol": "WhisperUIEngine",
+      "entry_repo_path": "app/core/engines/whisper_ui_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "speech_to_text",
+        "transcription",
+        "translation",
+        "word_timestamps",
+        "language_detection",
+        "gui_interface"
+      ],
+      "dependencies": {
+        "openai-whisper": ">=20230314",
+        "faster-whisper": ">=1.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "xtts_v2",
+      "display_name": "XTTS v2",
+      "type": "audio",
+      "subtype": "tts",
+      "version": "2.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\xtts_v2\\engine.manifest.json",
+      "entry_point": "app.core.engines.xtts_engine.XTTSEngine",
+      "entry_module": "app.core.engines.xtts_engine",
+      "entry_symbol": "XTTSEngine",
+      "entry_repo_path": "app/core/engines/xtts_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "voice_cloning",
+        "multi_language_tts",
+        "emotion_control",
+        "style_transfer"
+      ],
+      "dependencies": {
+        "coqui-tts": "==0.27.2",
+        "torch": ">=2.2.2",
+        "transformers": ">=4.55.4"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "automatic1111",
+      "display_name": "AUTOMATIC1111 WebUI",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\automatic1111\\engine.manifest.json",
+      "entry_point": "app.core.engines.automatic1111_engine.Automatic1111Engine",
+      "entry_module": "app.core.engines.automatic1111_engine",
+      "entry_symbol": "Automatic1111Engine",
+      "entry_repo_path": "app/core/engines/automatic1111_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "outpainting",
+        "img2img",
+        "controlnet",
+        "lora_loading",
+        "embedding_loading",
+        "upscaling",
+        "face_restoration"
+      ],
+      "dependencies": {
+        "xformers": ">=0.0.20"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "comfyui",
+      "display_name": "ComfyUI",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\comfyui\\engine.manifest.json",
+      "entry_point": "app.core.engines.comfyui_engine.ComfyUIEngine",
+      "entry_module": "app.core.engines.comfyui_engine",
+      "entry_symbol": "ComfyUIEngine",
+      "entry_repo_path": "app/core/engines/comfyui_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "controlnet",
+        "lora_loading",
+        "workflow_execution",
+        "node_based_workflows",
+        "batch_processing",
+        "video_generation"
+      ],
+      "dependencies": {
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "fastsd_cpu",
+      "display_name": "FastSD CPU",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\fastsd_cpu\\engine.manifest.json",
+      "entry_point": "app.core.engines.fastsd_cpu_engine.FastSDCPUEngine",
+      "entry_module": "app.core.engines.fastsd_cpu_engine",
+      "entry_symbol": "FastSDCPUEngine",
+      "entry_repo_path": "app/core/engines/fastsd_cpu_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "cpu_optimized",
+        "fast_inference",
+        "onnx_runtime"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0",
+        "onnxruntime": ">=1.15.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "fooocus",
+      "display_name": "Fooocus",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\fooocus\\engine.manifest.json",
+      "entry_point": "app.core.engines.fooocus_engine.FooocusEngine",
+      "entry_module": "app.core.engines.fooocus_engine",
+      "entry_symbol": "FooocusEngine",
+      "entry_repo_path": "app/core/engines/fooocus_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "lora_loading",
+        "quality_optimization",
+        "simplified_interface"
+      ],
+      "dependencies": {
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "invokeai",
+      "display_name": "InvokeAI",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\invokeai\\engine.manifest.json",
+      "entry_point": "app.core.engines.invokeai_engine.InvokeAIEngine",
+      "entry_module": "app.core.engines.invokeai_engine",
+      "entry_symbol": "InvokeAIEngine",
+      "entry_repo_path": "app/core/engines/invokeai_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "outpainting",
+        "controlnet",
+        "lora_loading",
+        "img2img",
+        "upscaling"
+      ],
+      "dependencies": {
+        "invokeai": ">=3.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "localai",
+      "display_name": "LocalAI",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\localai\\engine.manifest.json",
+      "entry_point": "app.core.engines.localai_engine.LocalAIEngine",
+      "entry_module": "app.core.engines.localai_engine",
+      "entry_symbol": "LocalAIEngine",
+      "entry_repo_path": "app/core/engines/localai_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "multiple_model_support",
+        "api_compatible",
+        "local_inference"
+      ],
+      "dependencies": {}
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "openjourney",
+      "display_name": "OpenJourney",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\openjourney\\engine.manifest.json",
+      "entry_point": "app.core.engines.openjourney_engine.OpenJourneyEngine",
+      "entry_module": "app.core.engines.openjourney_engine",
+      "entry_symbol": "OpenJourneyEngine",
+      "entry_repo_path": "app/core/engines/openjourney_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "midjourney_style",
+        "artistic"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "realesrgan",
+      "display_name": "Real-ESRGAN",
+      "type": "image",
+      "subtype": "upscaling",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\upscalers\\realesrgan\\engine.manifest.json",
+      "entry_point": "app.core.engines.realesrgan_engine.RealESRGANEngine",
+      "entry_module": "app.core.engines.realesrgan_engine",
+      "entry_symbol": "RealESRGANEngine",
+      "entry_repo_path": "app/core/engines/realesrgan_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "image_upscaling",
+        "face_enhancement",
+        "anime_upscaling",
+        "general_restoration"
+      ],
+      "dependencies": {
+        "realesrgan": ">=0.3.0",
+        "basicsr": ">=1.4.2"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "realistic_vision",
+      "display_name": "Realistic Vision",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\realistic_vision\\engine.manifest.json",
+      "entry_point": "app.core.engines.realistic_vision_engine.RealisticVisionEngine",
+      "entry_module": "app.core.engines.realistic_vision_engine",
+      "entry_symbol": "RealisticVisionEngine",
+      "entry_repo_path": "app/core/engines/realistic_vision_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "photorealistic",
+        "high_quality"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "sd_cpu",
+      "display_name": "Stable Diffusion CPU-only",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\sd_cpu\\engine.manifest.json",
+      "entry_point": "app.core.engines.sd_cpu_engine.SDCPUEngine",
+      "entry_module": "app.core.engines.sd_cpu_engine",
+      "entry_symbol": "SDCPUEngine",
+      "entry_repo_path": "app/core/engines/sd_cpu_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "cpu_only",
+        "low_resource"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "sdnext",
+      "display_name": "SD.Next",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\sdnext\\engine.manifest.json",
+      "entry_point": "app.core.engines.sdnext_engine.SDNextEngine",
+      "entry_module": "app.core.engines.sdnext_engine",
+      "entry_symbol": "SDNextEngine",
+      "entry_repo_path": "app/core/engines/sdnext_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "controlnet",
+        "lora_loading",
+        "embedding_loading",
+        "advanced_samplers",
+        "performance_optimizations"
+      ],
+      "dependencies": {
+        "xformers": ">=0.0.20"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "sdxl",
+      "display_name": "Stable Diffusion XL",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\sdxl\\engine.manifest.json",
+      "entry_point": "app.core.engines.sdxl_engine.SDXLEngine",
+      "entry_module": "app.core.engines.sdxl_engine",
+      "entry_symbol": "SDXLEngine",
+      "entry_repo_path": "app/core/engines/sdxl_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "high_resolution",
+        "refiner_support",
+        "1024x1024_plus"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "sdxl_comfy",
+      "display_name": "SDXL ComfyUI",
+      "type": "image",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\image\\sdxl_comfy\\engine.manifest.json",
+      "entry_point": "app.core.engines.sdxl_comfy_engine.SDXLComfyEngine",
+      "entry_module": "app.core.engines.sdxl_comfy_engine",
+      "entry_symbol": "SDXLComfyEngine",
+      "entry_repo_path": "app/core/engines/sdxl_comfy_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "text_to_image",
+        "image_to_image",
+        "inpainting",
+        "controlnet",
+        "lora_loading"
+      ],
+      "dependencies": {
+        "comfyui": ">=1.0.0",
+        "torch": ">=2.0.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "deepfacelab",
+      "display_name": "DeepFaceLab",
+      "type": "video",
+      "subtype": "face_swap",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\deepfacelab\\engine.manifest.json",
+      "entry_point": "app.core.engines.deepfacelab_engine.DeepFaceLabEngine",
+      "entry_module": "app.core.engines.deepfacelab_engine",
+      "entry_symbol": "DeepFaceLabEngine",
+      "entry_repo_path": "app/core/engines/deepfacelab_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "face_swap",
+        "face_replacement",
+        "face_extraction",
+        "face_training"
+      ],
+      "dependencies": {
+        "tensorflow": ">=2.8.0",
+        "opencv-python": ">=4.5.0",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "deforum",
+      "display_name": "Deforum",
+      "type": "video",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\deforum\\engine.manifest.json",
+      "entry_point": "app.core.engines.deforum_engine.DeforumEngine",
+      "entry_module": "app.core.engines.deforum_engine",
+      "entry_symbol": "DeforumEngine",
+      "entry_repo_path": "app/core/engines/deforum_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "keyframed_animation",
+        "video_generation",
+        "style_transfer",
+        "motion_effects"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0",
+        "transformers": ">=4.30.0",
+        "deforum": ">=0.7.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "ffmpeg_ai",
+      "display_name": "FFmpeg with AI Plugins",
+      "type": "video",
+      "subtype": "utility",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\ffmpeg_ai\\engine.manifest.json",
+      "entry_point": "app.core.engines.ffmpeg_ai_engine.FFmpegAIEngine",
+      "entry_module": "app.core.engines.ffmpeg_ai_engine",
+      "entry_symbol": "FFmpegAIEngine",
+      "entry_repo_path": "app/core/engines/ffmpeg_ai_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "transcoding",
+        "muxing",
+        "demuxing",
+        "filtering",
+        "ai_upscaling",
+        "ai_denoising",
+        "ai_enhancement",
+        "format_conversion",
+        "audio_extraction",
+        "video_compression"
+      ],
+      "dependencies": {
+        "ffmpeg-python": ">=0.2.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "fomm",
+      "display_name": "First Order Motion Model",
+      "type": "video",
+      "subtype": "avatar",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\fomm\\engine.manifest.json",
+      "entry_point": "app.core.engines.fomm_engine.FOMMEngine",
+      "entry_module": "app.core.engines.fomm_engine",
+      "entry_symbol": "FOMMEngine",
+      "entry_repo_path": "app/core/engines/fomm_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "motion_transfer",
+        "avatar_animation",
+        "face_animation",
+        "video_generation"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "torchvision": ">=0.10.0",
+        "opencv-python": ">=4.5.0",
+        "face-alignment": ">=1.3.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "moviepy",
+      "display_name": "MoviePy",
+      "type": "video",
+      "subtype": "editing",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\moviepy\\engine.manifest.json",
+      "entry_point": "app.core.engines.moviepy_engine.MoviePyEngine",
+      "entry_module": "app.core.engines.moviepy_engine",
+      "entry_symbol": "MoviePyEngine",
+      "entry_repo_path": "app/core/engines/moviepy_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "video_editing",
+        "cutting",
+        "concatenation",
+        "effects",
+        "compositing",
+        "audio_sync",
+        "transitions"
+      ],
+      "dependencies": {
+        "moviepy": ">=1.0.3",
+        "imageio": ">=2.9.0",
+        "imageio-ffmpeg": ">=0.4.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "sadtalker",
+      "display_name": "SadTalker",
+      "type": "video",
+      "subtype": "avatar",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\sadtalker\\engine.manifest.json",
+      "entry_point": "app.core.engines.sadtalker_engine.SadTalkerEngine",
+      "entry_module": "app.core.engines.sadtalker_engine",
+      "entry_symbol": "SadTalkerEngine",
+      "entry_repo_path": "app/core/engines/sadtalker_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "talking_head",
+        "lip_sync",
+        "avatar_generation",
+        "audio_driven_animation"
+      ],
+      "dependencies": {
+        "torch": ">=1.9.0",
+        "torchvision": ">=0.10.0",
+        "opencv-python": ">=4.5.0",
+        "face-alignment": ">=1.3.0",
+        "gfpgan": ">=1.3.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "svd",
+      "display_name": "Stable Video Diffusion",
+      "type": "video",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\svd\\engine.manifest.json",
+      "entry_point": "app.core.engines.svd_engine.SVDEngine",
+      "entry_module": "app.core.engines.svd_engine",
+      "entry_symbol": "SVDEngine",
+      "entry_repo_path": "app/core/engines/svd_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "image_to_video",
+        "video_generation",
+        "temporal_consistency"
+      ],
+      "dependencies": {
+        "diffusers": ">=0.21.0",
+        "torch": ">=2.0.0",
+        "transformers": ">=4.30.0"
+      }
+    },
+    {
+      "kind": "engine_manifest",
+      "engine_id": "video_creator",
+      "display_name": "Video Creator",
+      "type": "video",
+      "subtype": "generation",
+      "version": "1.0",
+      "manifest_path": "E:\\VoiceStudio\\engines\\video\\video_creator\\engine.manifest.json",
+      "entry_point": "app.core.engines.video_creator_engine.VideoCreatorEngine",
+      "entry_module": "app.core.engines.video_creator_engine",
+      "entry_symbol": "VideoCreatorEngine",
+      "entry_repo_path": "app/core/engines/video_creator_engine.py",
+      "entry_repo_path_exists": true,
+      "tasks": [],
+      "capabilities": [
+        "image_to_video",
+        "audio_sync",
+        "video_creation",
+        "multimedia_composition"
+      ],
+      "dependencies": {
+        "moviepy": ">=1.0.3",
+        "pillow": ">=9.0.0",
+        "numpy": ">=1.21.0"
+      }
+    },
+    {
+      "kind": "runtime_manifest",
+      "engine_id": "xtts_v2",
+      "display_name": "Coqui XTTS v2",
+      "type": "audio_tts",
+      "subtype": null,
+      "version": null,
+      "manifest_path": "E:\\VoiceStudio\\engines\\audio\\xtts_v2\\runtime.manifest.json",
+      "entry_point": null,
+      "entry_module": null,
+      "entry_symbol": null,
+      "entry_repo_path": null,
+      "entry_repo_path_exists": null,
+      "tasks": [
+        "tts",
+        "clone_infer",
+        "embed_voice"
+      ],
+      "capabilities": [],
+      "dependencies": {}
+    }
+  ],
+  "errors": []
+}

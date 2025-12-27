@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceStudio AI Context Schema",
+  "description": "Schema for ai_context.json - all AI logic must use this format",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version"
+    },
+    "supervisorAI": {
+      "type": "object",
+      "description": "Overseer AI configuration",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "endpoint": { "type": "string" },
+        "optimizationMode": { "type": "string", "enum": ["quality", "performance", "balanced"] },
+        "updateCheckInterval": { "type": "number" },
+        "guidancePanelEnabled": { "type": "boolean" }
+      }
+    },
+    "learningAIs": {
+      "type": "array",
+      "description": "Array of 3 learning AIs",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["AutoUXAI", "InferenceAI", "InsightAI"] },
+          "enabled": { "type": "boolean" },
+          "endpoint": { "type": "string" },
+          "qualityWeight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "learningRate": { "type": "number" }
+        }
+      }
+    },
+    "qualityMetrics": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "updateInterval": { "type": "number" },
+        "thresholds": {
+          "type": "object",
+          "properties": {
+            "minQuality": { "type": "number" },
+            "targetQuality": { "type": "number" },
+            "excellentQuality": { "type": "number" }
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "description": "AI routing configuration",
+      "properties": {
+        "defaultAI": { "type": "string" },
+        "fallbackAI": { "type": "string" },
+        "loadBalancing": { "type": "boolean" }
+      }
+    }
+  },
+  "required": ["version", "supervisorAI", "learningAIs"]
+}
+

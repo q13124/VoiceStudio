@@ -1,0 +1,52 @@
+{
+  "engine_id": "realistic_vision",
+  "name": "Realistic Vision",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Realistic Vision - High-quality Stable Diffusion model optimized for photorealistic images",
+  "author": "SG161222",
+  "license": "CreativeML Open RAIL-M",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "diffusers": ">=0.21.0",
+    "torch": ">=2.0.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\realistic_vision",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\realistic_vision\\checkpoints"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "photorealistic",
+    "high_quality"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.realistic_vision_engine.RealisticVisionEngine",
+  "config_schema": {
+    "model_id": {
+      "type": "string",
+      "default": "SG161222/Realistic_Vision_V5.1_noVAE",
+      "description": "Realistic Vision model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "vae": {
+      "type": "string",
+      "default": "vae-ft-mse-840000-ema-pruned",
+      "description": "VAE model to use"
+    }
+  }
+}
+

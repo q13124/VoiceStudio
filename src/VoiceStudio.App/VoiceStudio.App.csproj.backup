@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>VoiceStudio.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <Platforms>x64</Platforms>
+    <!-- Suppress RuntimeIdentifier errors for unsupported RIDs -->
+    <_SuppressWinRTError>true</_SuppressWinRTError>
+    <!-- Disable RID resolution to avoid invalid RID errors -->
+    <EnableDefaultRuntimeIdentifier>false</EnableDefaultRuntimeIdentifier>
+    <RuntimeIdentifier></RuntimeIdentifier>
+    <RuntimeIdentifiers></RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- Suppress RuntimeIdentifier resolution errors -->
+  <Target Name="SuppressRuntimeIdentifierErrors" BeforeTargets="ProcessFrameworkReferences">
+    <PropertyGroup>
+      <RuntimeIdentifier></RuntimeIdentifier>
+      <RuntimeIdentifiers></RuntimeIdentifiers>
+      <_SuppressWinRTError>true</_SuppressWinRTError>
+    </PropertyGroup>
+  </Target>
+
+  <!-- Capture XAML compiler errors to file -->
+  <Target Name="CaptureXamlErrors" AfterTargets="MarkupCompilePass1" Condition="'$(BuildingProject)' == 'true'">
+    <PropertyGroup>
+      <XamlErrorLogFile>$(MSBuildProjectDirectory)\..\..\xaml-compiler-errors.txt</XamlErrorLogFile>
+    </PropertyGroup>
+    <Message Text="XAML compilation completed. Check $(XamlErrorLogFile) for errors." Importance="high" Condition="Exists('$(XamlErrorLogFile)')" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+    <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\Panels\**\*.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\**\*.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Controls\**\*.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.manifest" />
+  </ItemGroup>
+
+</Project>

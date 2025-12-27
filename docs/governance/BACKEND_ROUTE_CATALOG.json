@@ -1,0 +1,5281 @@
+{
+  "generated_at_utc": "2025-12-27T20:16:13.757846+00:00",
+  "routes_root": "E:\\VoiceStudio\\backend\\api\\routes",
+  "module_count": 101,
+  "modules": [
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\huggingface_fix.py",
+      "router_prefix": null,
+      "router_tags": [],
+      "endpoint_counts": {
+        "http": {},
+        "websocket": 0,
+        "total": 0
+      },
+      "endpoints": []
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\adr.py",
+      "router_prefix": "/api/adr",
+      "router_tags": [
+        "adr"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/align",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\advanced_settings.py",
+      "router_prefix": "/api/advanced-settings",
+      "router_tags": [
+        "advanced-settings"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/reset",
+          "line": 167
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/category/{category}",
+          "line": 188
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\advanced_spectrogram.py",
+      "router_prefix": "/api/advanced-spectrogram",
+      "router_tags": [
+        "advanced-spectrogram"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 2,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/generate",
+          "line": 83
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/views/{view_id}",
+          "line": 260
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/compare",
+          "line": 282
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/view-types",
+          "line": 430
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/views/{view_id}",
+          "line": 447
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export/{view_id}",
+          "line": 458
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\analytics.py",
+      "router_prefix": "/api/analytics",
+      "router_tags": [
+        "analytics"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 7
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 108
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics/{category}",
+          "line": 239
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories",
+          "line": 363
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/explain-quality",
+          "line": 377
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/visualize-quality",
+          "line": 646
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export/summary",
+          "line": 877
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export/metrics/{category}",
+          "line": 973
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\api_key_manager.py",
+      "router_prefix": "/api/api-keys",
+      "router_tags": [
+        "api-keys"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{key_id}",
+          "line": 121
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{key_id}",
+          "line": 368
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{key_id}",
+          "line": 421
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{key_id}/validate",
+          "line": 442
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/services/list",
+          "line": 580
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\articulation.py",
+      "router_prefix": "/api/articulation",
+      "router_tags": [
+        "articulation"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\ai_production_assistant.py",
+      "router_prefix": "/api/assistant",
+      "router_tags": [
+        "ai-production-assistant"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/query",
+          "line": 91
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/execute",
+          "line": 232
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/context",
+          "line": 301
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/session/{session_id}",
+          "line": 329
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/session/{session_id}",
+          "line": 367
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\assistant.py",
+      "router_prefix": "/api/assistant",
+      "router_tags": [
+        "assistant"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/chat",
+          "line": 72
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/conversations",
+          "line": 134
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/conversations/{conversation_id}",
+          "line": 141
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/conversations/{conversation_id}",
+          "line": 152
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/suggest-tasks",
+          "line": 165
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\assistant_run.py",
+      "router_prefix": "/api/assistant",
+      "router_tags": [
+        "assistant"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/run",
+          "line": 55
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/actions",
+          "line": 223
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/actions/{action_id}",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\audio.py",
+      "router_prefix": "/api/audio",
+      "router_tags": [
+        "audio"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 6
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/waveform",
+          "line": 219
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/spectrogram",
+          "line": 298
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/loudness",
+          "line": 410
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/meters",
+          "line": 576
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/radar",
+          "line": 664
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/phase",
+          "line": 780
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\audio_analysis.py",
+      "router_prefix": "/api/audio-analysis",
+      "router_tags": [
+        "audio-analysis"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 5,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}",
+          "line": 125
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{audio_id}/analyze",
+          "line": 469
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}/compare",
+          "line": 506
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}/pitch",
+          "line": 598
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}/metadata",
+          "line": 664
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}/wavelet",
+          "line": 693
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\audio_audit.py",
+      "router_prefix": "/api/audio/audit",
+      "router_tags": [
+        "audio"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/all",
+          "line": 37
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 82
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/needing-attention",
+          "line": 105
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/report",
+          "line": 152
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\auth.py",
+      "router_prefix": "/api/auth",
+      "router_tags": [
+        "authentication"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 5
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/login",
+          "line": 83
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/refresh",
+          "line": 164
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/me",
+          "line": 206
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/users",
+          "line": 222
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/api-keys/generate",
+          "line": 270
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/api-keys/revoke",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\automation.py",
+      "router_prefix": "/api/automation",
+      "router_tags": [
+        "automation"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 2
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{curve_id}",
+          "line": 109
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{curve_id}",
+          "line": 171
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{curve_id}",
+          "line": 223
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{curve_id}/points",
+          "line": 233
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{curve_id}/points/{point_index}",
+          "line": 280
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/tracks/{track_id}/parameters",
+          "line": 299
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\backup.py",
+      "router_prefix": "/api/backup",
+      "router_tags": [
+        "backup"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{backup_id}",
+          "line": 163
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{backup_id}/download",
+          "line": 392
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{backup_id}/restore",
+          "line": 412
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/upload",
+          "line": 504
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{backup_id}",
+          "line": 628
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\batch.py",
+      "router_prefix": "/api/batch",
+      "router_tags": [
+        "batch"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 6,
+          "POST": 4,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 11
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/jobs",
+          "line": 190
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs",
+          "line": 239
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}",
+          "line": 268
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/jobs/{job_id}",
+          "line": 294
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/jobs/{job_id}/start",
+          "line": 326
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/jobs/{job_id}/cancel",
+          "line": 378
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/queue/status",
+          "line": 423
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}/quality",
+          "line": 1004
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}/quality-report",
+          "line": 1035
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/quality/statistics",
+          "line": 1070
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/jobs/{job_id}/retry-with-quality",
+          "line": 1101
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\dataset.py",
+      "router_prefix": "/api/dataset",
+      "router_tags": [
+        "dataset"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 5
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/score",
+          "line": 39
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/cull",
+          "line": 172
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/validate",
+          "line": 410
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 436
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/export",
+          "line": 590
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\dataset_editor.py",
+      "router_prefix": "/api/dataset-editor",
+      "router_tags": [
+        "dataset-editor"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{dataset_id}",
+          "line": 73
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{dataset_id}/audio",
+          "line": 94
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{dataset_id}/validate",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\deepfake_creator.py",
+      "router_prefix": "/api/deepfake-creator",
+      "router_tags": [
+        "deepfake-creator"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/create",
+          "line": 77
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}",
+          "line": 203
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs",
+          "line": 233
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/jobs/{job_id}",
+          "line": 259
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/queue/status",
+          "line": 432
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines",
+          "line": 451
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\docs.py",
+      "router_prefix": "/api/docs",
+      "router_tags": [
+        "documentation"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/openapi.json",
+          "line": 31
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/validate",
+          "line": 50
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/stats",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\dubbing.py",
+      "router_prefix": "/api/dub",
+      "router_tags": [
+        "dub"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/translate",
+          "line": 17
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/sync",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\text_speech_editor.py",
+      "router_prefix": "/api/edit",
+      "router_tags": [
+        "text-speech-editor"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 7
+        },
+        "websocket": 0,
+        "total": 8
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/align",
+          "line": 170
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/merge",
+          "line": 319
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/remove-filler-words",
+          "line": 436
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/insert-text",
+          "line": 483
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/replace-word",
+          "line": 635
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 791
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/session/create",
+          "line": 923
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/session/{session_id}",
+          "line": 952
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\effects.py",
+      "router_prefix": "/api/effects",
+      "router_tags": [
+        "effects"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 3,
+          "PUT": 1,
+          "DELETE": 2
+        },
+        "websocket": 0,
+        "total": 9
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/chains",
+          "line": 132
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/chains/{chain_id}",
+          "line": 162
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/chains",
+          "line": 204
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/chains/{chain_id}",
+          "line": 257
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/chains/{chain_id}",
+          "line": 316
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/chains/{chain_id}/process",
+          "line": 357
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets",
+          "line": 516
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/presets",
+          "line": 543
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/presets/{preset_id}",
+          "line": 591
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\embedding_explorer.py",
+      "router_prefix": "/api/embedding-explorer",
+      "router_tags": [
+        "embedding-explorer"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 4,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/extract",
+          "line": 74
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/embeddings",
+          "line": 107
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/embeddings/{embedding_id}",
+          "line": 120
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/embeddings/{embedding_id}",
+          "line": 129
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/compare",
+          "line": 140
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualize",
+          "line": 176
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/cluster",
+          "line": 224
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\emotion.py",
+      "router_prefix": "/api/emotion",
+      "router_tags": [
+        "emotion"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 4,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 9
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/list",
+          "line": 102
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 109
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 357
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply-extended",
+          "line": 369
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/preset/save",
+          "line": 527
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/preset/list",
+          "line": 600
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/preset/{preset_id}",
+          "line": 629
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/preset/{preset_id}",
+          "line": 662
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/preset/{preset_id}",
+          "line": 733
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\emotion_style.py",
+      "router_prefix": "/api/emotion-style",
+      "router_tags": [
+        "emotion-style"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/emotions",
+          "line": 102
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/styles",
+          "line": 118
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 133
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\engine.py",
+      "router_prefix": "/api/engine",
+      "router_tags": [
+        "engine",
+        "telemetry"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/telemetry",
+          "line": 24
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/telemetry/history",
+          "line": 151
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/telemetry/record",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\engines.py",
+      "router_prefix": "/api/engines",
+      "router_tags": [
+        "engines"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 6,
+          "POST": 2,
+          "PUT": 3
+        },
+        "websocket": 0,
+        "total": 11
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/list",
+          "line": 108
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/recommend",
+          "line": 123
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/compare",
+          "line": 331
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config",
+          "line": 407
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config/{engine_id}",
+          "line": 430
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/config/{engine_id}",
+          "line": 456
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config/gpu/settings",
+          "line": 495
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/config/gpu/settings",
+          "line": 518
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config/defaults",
+          "line": 557
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/config/defaults/{task_type}",
+          "line": 580
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/config/validate",
+          "line": 607
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\engine_audit.py",
+      "router_prefix": "/api/engines/audit",
+      "router_tags": [
+        "engines"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/all",
+          "line": 20
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 70
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/needing-attention",
+          "line": 97
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/report",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\ensemble.py",
+      "router_prefix": "/api/ensemble",
+      "router_tags": [
+        "ensemble"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{job_id}",
+          "line": 178
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{job_id}",
+          "line": 234
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/multi-engine",
+          "line": 379
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/multi-engine/{job_id}",
+          "line": 461
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\eval_abx.py",
+      "router_prefix": "/api/eval/abx",
+      "router_tags": [
+        "eval",
+        "abx"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 50
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/results",
+          "line": 121
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/submit",
+          "line": 174
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/sessions/{session_id}",
+          "line": 253
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/sessions/{session_id}/complete",
+          "line": 272
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\formant.py",
+      "router_prefix": "/api/formant",
+      "router_tags": [
+        "formant"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 27
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 250
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\gpu_status.py",
+      "router_prefix": "/api/gpu-status",
+      "router_tags": [
+        "gpu-status"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/devices",
+          "line": 152
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/devices/{device_id}",
+          "line": 160
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\granular.py",
+      "router_prefix": "/api/granular",
+      "router_tags": [
+        "granular"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/render",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\health.py",
+      "router_prefix": "/api/health",
+      "router_tags": [
+        "health"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 9
+        },
+        "websocket": 0,
+        "total": 9
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/",
+          "line": 152
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/simple",
+          "line": 241
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/detailed",
+          "line": 413
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/readiness",
+          "line": 453
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/liveness",
+          "line": 495
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/resources",
+          "line": 510
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines",
+          "line": 535
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/performance",
+          "line": 566
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/performance/{endpoint:path}",
+          "line": 603
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\help.py",
+      "router_prefix": "/api/help",
+      "router_tags": [
+        "help"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 6
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/topics",
+          "line": 265
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/topics/{topic_id}",
+          "line": 286
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/search",
+          "line": 296
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/shortcuts",
+          "line": 343
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories",
+          "line": 364
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/panel/{panel_id}",
+          "line": 377
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\image_gen.py",
+      "router_prefix": "/api/image",
+      "router_tags": [
+        "image",
+        "generation"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/generate",
+          "line": 275
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/upscale",
+          "line": 405
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/enhance-face",
+          "line": 491
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{image_id}",
+          "line": 655
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines/list",
+          "line": 670
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\image_search.py",
+      "router_prefix": "/api/image-search",
+      "router_tags": [
+        "image-search"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/search",
+          "line": 79
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/sources",
+          "line": 180
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/history",
+          "line": 215
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/history",
+          "line": 236
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories",
+          "line": 250
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/colors",
+          "line": 272
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\img_sampler.py",
+      "router_prefix": "/api/img/sampler",
+      "router_tags": [
+        "img",
+        "sampler"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/render",
+          "line": 48
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/samplers",
+          "line": 257
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/samplers/{sampler_name}",
+          "line": 267
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\jobs.py",
+      "router_prefix": "/api/jobs",
+      "router_tags": [
+        "jobs"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{job_id}",
+          "line": 124
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 151
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{job_id}/cancel",
+          "line": 179
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{job_id}/pause",
+          "line": 201
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{job_id}/resume",
+          "line": 217
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{job_id}",
+          "line": 233
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\lexicon.py",
+      "router_prefix": "/api/lexicon",
+      "router_tags": [
+        "lexicon"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 5,
+          "PUT": 3,
+          "DELETE": 3
+        },
+        "websocket": 0,
+        "total": 15
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/lexicons",
+          "line": 72
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/lexicons",
+          "line": 105
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/lexicons/{lexicon_id}",
+          "line": 121
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/lexicons/{lexicon_id}",
+          "line": 133
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/lexicons/{lexicon_id}",
+          "line": 155
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/lexicons/{lexicon_id}/entries",
+          "line": 168
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/lexicons/{lexicon_id}/entries",
+          "line": 207
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/lexicons/{lexicon_id}/entries/{word}",
+          "line": 231
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/lexicons/{lexicon_id}/entries/{word}",
+          "line": 269
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/search",
+          "line": 298
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/add",
+          "line": 339
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/update",
+          "line": 402
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/remove/{word}",
+          "line": 468
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/list",
+          "line": 514
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/phoneme",
+          "line": 545
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\library.py",
+      "router_prefix": "/api/library",
+      "router_tags": [
+        "library"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 8
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/folders",
+          "line": 140
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/folders",
+          "line": 153
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/assets",
+          "line": 192
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/assets/{asset_id}",
+          "line": 245
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/assets",
+          "line": 257
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/assets/{asset_id}",
+          "line": 305
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/assets/{asset_id}",
+          "line": 346
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/types",
+          "line": 368
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\macros.py",
+      "router_prefix": "/api/macros",
+      "router_tags": [
+        "macros"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 3,
+          "PUT": 2,
+          "DELETE": 3
+        },
+        "websocket": 0,
+        "total": 12
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{macro_id}",
+          "line": 286
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{macro_id}",
+          "line": 368
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{macro_id}",
+          "line": 423
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{macro_id}/execute",
+          "line": 456
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{macro_id}/status",
+          "line": 768
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{macro_id}/schedule",
+          "line": 832
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{macro_id}/schedule",
+          "line": 990
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{macro_id}/schedule",
+          "line": 1031
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/automation/curves",
+          "line": 1069
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/automation/curves",
+          "line": 1099
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/automation/curves/{curve_id}",
+          "line": 1158
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/automation/curves/{curve_id}",
+          "line": 1216
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\markers.py",
+      "router_prefix": "/api/markers",
+      "router_tags": [
+        "markers"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{marker_id}",
+          "line": 178
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{marker_id}",
+          "line": 262
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{marker_id}",
+          "line": 310
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories/list",
+          "line": 334
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\mcp_dashboard.py",
+      "router_prefix": "/api/mcp-dashboard",
+      "router_tags": [
+        "mcp-dashboard"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/servers",
+          "line": 144
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/servers/{server_id}",
+          "line": 175
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/servers",
+          "line": 210
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/servers/{server_id}",
+          "line": 255
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/servers/{server_id}/connect",
+          "line": 302
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/servers/{server_id}",
+          "line": 387
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/server-types",
+          "line": 449
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\mix_assistant.py",
+      "router_prefix": "/api/mix-assistant",
+      "router_tags": [
+        "mix-assistant"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 8,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 11
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 64
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/suggestions",
+          "line": 148
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/suggestions/{suggestion_id}",
+          "line": 178
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 187
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/suggestions/{suggestion_id}",
+          "line": 212
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/presets/generate",
+          "line": 223
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/mix/analyze",
+          "line": 259
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/mix/suggest",
+          "line": 279
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/mix/apply",
+          "line": 293
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/master/analyze",
+          "line": 335
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/master/apply",
+          "line": 382
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\mix_scene.py",
+      "router_prefix": "/api/mix/scene",
+      "router_tags": [
+        "mix",
+        "scene"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\mixer.py",
+      "router_prefix": "/api/mixer",
+      "router_tags": [
+        "mixer"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 7,
+          "PUT": 6,
+          "DELETE": 4
+        },
+        "websocket": 0,
+        "total": 21
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/state/{project_id}",
+          "line": 133
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/state/{project_id}",
+          "line": 147
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/state/{project_id}/reset",
+          "line": 174
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/state/{project_id}/sends",
+          "line": 190
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/state/{project_id}/sends/{send_id}",
+          "line": 215
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/state/{project_id}/sends/{send_id}",
+          "line": 243
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/state/{project_id}/returns",
+          "line": 265
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/state/{project_id}/returns/{return_id}",
+          "line": 290
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/state/{project_id}/returns/{return_id}",
+          "line": 318
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/state/{project_id}/subgroups",
+          "line": 343
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/state/{project_id}/subgroups/{subgroup_id}",
+          "line": 368
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/state/{project_id}/subgroups/{subgroup_id}",
+          "line": 396
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/state/{project_id}/master",
+          "line": 421
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets/{project_id}",
+          "line": 491
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets/{project_id}/{preset_id}",
+          "line": 505
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/presets/{project_id}",
+          "line": 519
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/presets/{project_id}/{preset_id}",
+          "line": 539
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/presets/{project_id}/{preset_id}",
+          "line": 559
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/presets/{project_id}/{preset_id}/apply",
+          "line": 574
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/meters/{project_id}",
+          "line": 643
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/meters/{project_id}/simulate",
+          "line": 678
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\ml_optimization.py",
+      "router_prefix": "/api/ml-optimization",
+      "router_tags": [
+        "ml-optimization"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/optimize",
+          "line": 64
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/explain",
+          "line": 139
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/methods",
+          "line": 234
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\model_inspect.py",
+      "router_prefix": "/api/model",
+      "router_tags": [
+        "model",
+        "inspect"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/inspect",
+          "line": 21
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/inspect/layers",
+          "line": 318
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\models.py",
+      "router_prefix": "/api/models",
+      "router_tags": [
+        "models"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 8
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{engine}/{model_name}",
+          "line": 119
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{engine}/{model_name}/verify",
+          "line": 154
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{engine}/{model_name}/update-checksum",
+          "line": 177
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{engine}/{model_name}",
+          "line": 192
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/stats/storage",
+          "line": 207
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/stats/cache",
+          "line": 219
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{engine}/{model_name}/export",
+          "line": 238
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/import",
+          "line": 309
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\monitoring.py",
+      "router_prefix": "/api/monitoring",
+      "router_tags": [
+        "monitoring"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 7,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 9
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics",
+          "line": 22
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics/counters",
+          "line": 35
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics/gauges",
+          "line": 48
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics/timers/{name}",
+          "line": 65
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/metrics/histograms/{name}",
+          "line": 84
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/metrics/clear",
+          "line": 103
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/errors",
+          "line": 116
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/errors/{error_type}",
+          "line": 129
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/errors/clear",
+          "line": 160
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\multilingual.py",
+      "router_prefix": "/api/multilingual",
+      "router_tags": [
+        "multilingual"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/languages",
+          "line": 68
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/languages/{config_id}",
+          "line": 89
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize",
+          "line": 108
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/translate",
+          "line": 130
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/supported",
+          "line": 271
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\nr.py",
+      "router_prefix": "/api/nr",
+      "router_tags": [
+        "nr"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 26
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/noise-print/create",
+          "line": 170
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/noise-prints",
+          "line": 268
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\pdf.py",
+      "router_prefix": "/api/pdf",
+      "router_tags": [
+        "pdf"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/read",
+          "line": 70
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/extract-text",
+          "line": 111
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/page-count",
+          "line": 156
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/health",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\plugins.py",
+      "router_prefix": "/api/plugins",
+      "router_tags": [
+        "plugins"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 2,
+          "PUT": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{plugin_id}",
+          "line": 229
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{plugin_id}/manifest",
+          "line": 283
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{plugin_id}/load",
+          "line": 322
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{plugin_id}/unload",
+          "line": 378
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{plugin_id}/config",
+          "line": 432
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{plugin_id}/config",
+          "line": 477
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\presets.py",
+      "router_prefix": "/api/presets",
+      "router_tags": [
+        "presets"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{preset_id}",
+          "line": 191
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{preset_id}",
+          "line": 262
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{preset_id}",
+          "line": 298
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{preset_id}/apply",
+          "line": 317
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/types",
+          "line": 352
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories/{preset_type}",
+          "line": 368
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\profiles.py",
+      "router_prefix": "/api/profiles",
+      "router_tags": [
+        "profiles"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{profile_id}",
+          "line": 166
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{profile_id}",
+          "line": 240
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{profile_id}",
+          "line": 279
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\projects.py",
+      "router_prefix": "/api/projects",
+      "router_tags": [
+        "projects"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{project_id}",
+          "line": 115
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{project_id}",
+          "line": 184
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{project_id}",
+          "line": 219
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{project_id}/audio/save",
+          "line": 264
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{project_id}/audio",
+          "line": 378
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{project_id}/audio/{filename}",
+          "line": 442
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\tracks.py",
+      "router_prefix": "/api/projects/{project_id}/tracks",
+      "router_tags": [
+        "tracks"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1,
+          "PUT": 2,
+          "DELETE": 2
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{track_id}",
+          "line": 151
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{track_id}",
+          "line": 228
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{track_id}",
+          "line": 265
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{track_id}/clips",
+          "line": 305
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{track_id}/clips/{clip_id}",
+          "line": 367
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{track_id}/clips/{clip_id}",
+          "line": 417
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\prosody.py",
+      "router_prefix": "/api/prosody",
+      "router_tags": [
+        "prosody"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/configs",
+          "line": 93
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs",
+          "line": 124
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs/{config_id}",
+          "line": 131
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/configs/{config_id}",
+          "line": 141
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/configs/{config_id}",
+          "line": 164
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/phonemes/analyze",
+          "line": 175
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 252
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\quality.py",
+      "router_prefix": "/api/quality",
+      "router_tags": [
+        "quality"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 11,
+          "POST": 18
+        },
+        "websocket": 0,
+        "total": 29
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets",
+          "line": 242
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets/{preset_name}",
+          "line": 275
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 313
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/optimize",
+          "line": 355
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/compare",
+          "line": 388
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engine-recommendation",
+          "line": 453
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/benchmark",
+          "line": 507
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/dashboard",
+          "line": 695
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/history",
+          "line": 937
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/history/{profile_id}",
+          "line": 988
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/history/{profile_id}/trends",
+          "line": 1041
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze-text",
+          "line": 1208
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/recommend-quality",
+          "line": 1234
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/degradation/{profile_id}",
+          "line": 1322
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/baseline/{profile_id}",
+          "line": 1398
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/consistency/standard",
+          "line": 1507
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/consistency/record",
+          "line": 1542
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/consistency/{project_id}",
+          "line": 1589
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/consistency/all",
+          "line": 1616
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/consistency/{project_id}/trends",
+          "line": 1657
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/heatmap",
+          "line": 1758
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/correlations",
+          "line": 1788
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/anomalies",
+          "line": 1814
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/predict",
+          "line": 1853
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/insights",
+          "line": 1897
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/export/heatmap",
+          "line": 1931
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/export/correlations",
+          "line": 2003
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/export/anomalies",
+          "line": 2068
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/visualization/export/insights",
+          "line": 2157
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\quality_pipelines.py",
+      "router_prefix": "/api/quality/pipelines",
+      "router_tags": [
+        "quality-pipelines"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 3
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines/{engine_id}/presets",
+          "line": 69
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/engines/{engine_id}/apply",
+          "line": 108
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/engines/{engine_id}/preview",
+          "line": 188
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/engines/{engine_id}/compare",
+          "line": 286
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\realtime_converter.py",
+      "router_prefix": "/api/realtime-converter",
+      "router_tags": [
+        "realtime-converter"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 4,
+          "DELETE": 1
+        },
+        "websocket": 1,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 53
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{session_id}",
+          "line": 109
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{session_id}/pause",
+          "line": 125
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{session_id}/resume",
+          "line": 136
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{session_id}/stop",
+          "line": 147
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{session_id}",
+          "line": 158
+        },
+        {
+          "kind": "websocket",
+          "path": "/{session_id}/stream",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\realtime_visualizer.py",
+      "router_prefix": "/api/realtime-visualizer",
+      "router_tags": [
+        "realtime-visualizer"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2,
+          "DELETE": 1
+        },
+        "websocket": 1,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 64
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{session_id}",
+          "line": 103
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{session_id}/stop",
+          "line": 123
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{session_id}",
+          "line": 136
+        },
+        {
+          "kind": "websocket",
+          "path": "/{session_id}/stream",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\recording.py",
+      "router_prefix": "/api/recording",
+      "router_tags": [
+        "recording"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 80
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{recording_id}/status",
+          "line": 148
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{recording_id}/chunk",
+          "line": 174
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{recording_id}/stop",
+          "line": 227
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{recording_id}",
+          "line": 298
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/devices",
+          "line": 332
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\repair.py",
+      "router_prefix": "/api/repair",
+      "router_tags": [
+        "repair"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/clipping",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\reward.py",
+      "router_prefix": "/api/rm",
+      "router_tags": [
+        "reward"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/train",
+          "line": 27
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/predict",
+          "line": 123
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/models",
+          "line": 233
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}",
+          "line": 253
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\rvc.py",
+      "router_prefix": "/api/rvc",
+      "router_tags": [
+        "rvc"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 4
+        },
+        "websocket": 1,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/convert",
+          "line": 76
+        },
+        {
+          "kind": "websocket",
+          "path": "/convert/realtime",
+          "line": 185
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/models",
+          "line": 311
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/models/upload",
+          "line": 354
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/audio/{audio_id}",
+          "line": 402
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 425
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/stop",
+          "line": 464
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\safety.py",
+      "router_prefix": "/api/safety",
+      "router_tags": [
+        "safety"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 2
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/scan",
+          "line": 39
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\scenes.py",
+      "router_prefix": "/api/scenes",
+      "router_tags": [
+        "scenes"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 2
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{scene_id}",
+          "line": 121
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{scene_id}",
+          "line": 189
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{scene_id}",
+          "line": 247
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{scene_id}/tracks",
+          "line": 257
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{scene_id}/tracks/{track_id}",
+          "line": 305
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{scene_id}/apply",
+          "line": 321
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\script_editor.py",
+      "router_prefix": "/api/script-editor",
+      "router_tags": [
+        "script-editor"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 2
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{script_id}",
+          "line": 131
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{script_id}",
+          "line": 238
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{script_id}",
+          "line": 313
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{script_id}/segments",
+          "line": 336
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{script_id}/segments/{segment_id}",
+          "line": 404
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{script_id}/synthesize",
+          "line": 448
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\search.py",
+      "router_prefix": "/api/search",
+      "router_tags": [
+        "search"
+      ],
+      "endpoint_counts": {
+        "http": {},
+        "websocket": 0,
+        "total": 0
+      },
+      "endpoints": []
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\settings.py",
+      "router_prefix": "/api/settings",
+      "router_tags": [
+        "settings"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1,
+          "PUT": 1
+        },
+        "websocket": 0,
+        "total": 3
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{category}",
+          "line": 347
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{category}",
+          "line": 419
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/reset",
+          "line": 486
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\shortcuts.py",
+      "router_prefix": "/api/shortcuts",
+      "router_tags": [
+        "shortcuts"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{shortcut_id}",
+          "line": 228
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{shortcut_id}",
+          "line": 238
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{shortcut_id}",
+          "line": 307
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{shortcut_id}/reset",
+          "line": 321
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/reset-all",
+          "line": 336
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/check-conflict",
+          "line": 350
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories",
+          "line": 368
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\sonography.py",
+      "router_prefix": "/api/sonography",
+      "router_tags": [
+        "sonography"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/generate",
+          "line": 68
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}",
+          "line": 220
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/perspectives",
+          "line": 230
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/color-schemes",
+          "line": 244
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\spatial_audio.py",
+      "router_prefix": "/api/spatial-audio",
+      "router_tags": [
+        "spatial-audio"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 7,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 11
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/configs",
+          "line": 79
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs",
+          "line": 118
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs/{config_id}",
+          "line": 128
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/configs/{config_id}",
+          "line": 138
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/configs/{config_id}",
+          "line": 169
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 180
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/preview",
+          "line": 396
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/position",
+          "line": 520
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/environment",
+          "line": 566
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/process",
+          "line": 585
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/binaural",
+          "line": 634
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\spectral.py",
+      "router_prefix": "/api/spectral",
+      "router_tags": [
+        "spectral"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "POST": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/inpaint",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\spectrogram.py",
+      "router_prefix": "/api/spectrogram",
+      "router_tags": [
+        "spectrogram"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 5,
+          "PUT": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config/{audio_id}",
+          "line": 123
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/config/{audio_id}",
+          "line": 134
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/data/{audio_id}",
+          "line": 161
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/compare",
+          "line": 356
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export/{audio_id}",
+          "line": 473
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/color-schemes",
+          "line": 584
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\ssml.py",
+      "router_prefix": "/api/ssml",
+      "router_tags": [
+        "ssml"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{document_id}",
+          "line": 123
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{document_id}",
+          "line": 180
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{document_id}",
+          "line": 219
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/validate",
+          "line": 236
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/preview",
+          "line": 349
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\style_transfer.py",
+      "router_prefix": "/api/style-transfer",
+      "router_tags": [
+        "style-transfer"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 5,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 9
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/transfer",
+          "line": 58
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs",
+          "line": 96
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}",
+          "line": 113
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/jobs/{job_id}",
+          "line": 122
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/presets",
+          "line": 133
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/presets",
+          "line": 148
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/style/extract",
+          "line": 241
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/style/analyze",
+          "line": 351
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize/style",
+          "line": 499
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\tags.py",
+      "router_prefix": "/api/tags",
+      "router_tags": [
+        "tags"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 3,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 8
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{tag_id}",
+          "line": 234
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{tag_id}",
+          "line": 321
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{tag_id}",
+          "line": 379
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{tag_id}/usage",
+          "line": 433
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{tag_id}/increment-usage",
+          "line": 488
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{tag_id}/decrement-usage",
+          "line": 507
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories/list",
+          "line": 528
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/merge",
+          "line": 541
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\templates.py",
+      "router_prefix": "/api/templates",
+      "router_tags": [
+        "templates"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{template_id}",
+          "line": 191
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{template_id}",
+          "line": 258
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{template_id}",
+          "line": 302
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{template_id}/apply",
+          "line": 319
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories/list",
+          "line": 346
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\text_highlighting.py",
+      "router_prefix": "/api/text-highlighting",
+      "router_tags": [
+        "text-highlighting"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{session_id}",
+          "line": 118
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{session_id}",
+          "line": 135
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/sync",
+          "line": 170
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{session_id}",
+          "line": 209
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/sessions",
+          "line": 220
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{session_id}/persist",
+          "line": 251
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\todo_panel.py",
+      "router_prefix": "/api/todo-panel",
+      "router_tags": [
+        "todo-panel"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 5,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 7
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{todo_id}",
+          "line": 475
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{todo_id}",
+          "line": 572
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{todo_id}",
+          "line": 650
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/categories/list",
+          "line": 677
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/tags/list",
+          "line": 696
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/stats/summary",
+          "line": 714
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export",
+          "line": 741
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\training.py",
+      "router_prefix": "/api/training",
+      "router_tags": [
+        "training"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 6,
+          "POST": 5,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 12
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/datasets",
+          "line": 197
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/datasets",
+          "line": 233
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/datasets/{dataset_id}",
+          "line": 252
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 579
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/status/{training_id}",
+          "line": 1077
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/status",
+          "line": 1128
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/cancel/{training_id}",
+          "line": 1227
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/logs/{training_id}",
+          "line": 1273
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{training_id}",
+          "line": 1316
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/export",
+          "line": 1370
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/import",
+          "line": 1455
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/exports/{export_id}/download",
+          "line": 1567
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\training_audit.py",
+      "router_prefix": "/api/training/audit",
+      "router_tags": [
+        "training"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/all",
+          "line": 33
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 79
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/needing-attention",
+          "line": 102
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/report",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\transcribe.py",
+      "router_prefix": "/api/transcribe",
+      "router_tags": [
+        "transcribe"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 3,
+          "POST": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/languages",
+          "line": 173
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/",
+          "line": 243
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{transcription_id}",
+          "line": 463
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/",
+          "line": 473
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{transcription_id}",
+          "line": 500
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\ultimate_dashboard.py",
+      "router_prefix": "/api/ultimate-dashboard",
+      "router_tags": [
+        "ultimate-dashboard"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/summary",
+          "line": 312
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/quick-stats",
+          "line": 329
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/recent-activities",
+          "line": 346
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/alerts",
+          "line": 363
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\upscaling.py",
+      "router_prefix": "/api/upscaling",
+      "router_tags": [
+        "upscaling"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "POST": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/upscale",
+          "line": 80
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs/{job_id}",
+          "line": 150
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/jobs",
+          "line": 183
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/jobs/{job_id}",
+          "line": 212
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/export/{job_id}",
+          "line": 235
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines",
+          "line": 303
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\video_gen.py",
+      "router_prefix": "/api/video",
+      "router_tags": [
+        "video",
+        "generation"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 4
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/generate",
+          "line": 82
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/upscale",
+          "line": 234
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/temporal-consistency",
+          "line": 339
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{video_id}",
+          "line": 518
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/voice/convert",
+          "line": 533
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/engines/list",
+          "line": 632
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\video_edit.py",
+      "router_prefix": "/api/video/edit",
+      "router_tags": [
+        "video",
+        "editing"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1
+        },
+        "websocket": 0,
+        "total": 1
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/info",
+          "line": 459
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\voice.py",
+      "router_prefix": "/api/voice",
+      "router_tags": [
+        "voice"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 10
+        },
+        "websocket": 1,
+        "total": 12
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize",
+          "line": 209
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize/multipass",
+          "line": 771
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/analyze",
+          "line": 963
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/remove-artifacts",
+          "line": 1135
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/prosody-control",
+          "line": 1571
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/post-process",
+          "line": 1686
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/clone",
+          "line": 2213
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/audio/{audio_id}",
+          "line": 2443
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize/style",
+          "line": 2472
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/ab-test",
+          "line": 2607
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/synthesize/cross-lingual",
+          "line": 2736
+        },
+        {
+          "kind": "websocket",
+          "path": "/synthesize/stream",
+          "line": 2842
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\voice_browser.py",
+      "router_prefix": "/api/voice-browser",
+      "router_tags": [
+        "voice-browser"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/voices",
+          "line": 69
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/voices/{voice_id}",
+          "line": 138
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/languages",
+          "line": 163
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/tags",
+          "line": 176
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\voice_morph.py",
+      "router_prefix": "/api/voice-morph",
+      "router_tags": [
+        "voice-morph"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 6,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 10
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/configs",
+          "line": 59
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs",
+          "line": 104
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/configs/{config_id}",
+          "line": 110
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/configs/{config_id}",
+          "line": 119
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/configs/{config_id}",
+          "line": 158
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/apply",
+          "line": 169
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/voice/blend",
+          "line": 300
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/voice/morph",
+          "line": 482
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/voice/embedding",
+          "line": 513
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/voice/preview",
+          "line": 771
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\voice_speech.py",
+      "router_prefix": "/api/voice-speech",
+      "router_tags": [
+        "voice-speech"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 2
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{audio_id}/voice-activity",
+          "line": 67
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/phonemize",
+          "line": 115
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/recognize",
+          "line": 154
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/backends",
+          "line": 203
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\voice_cloning_wizard.py",
+      "router_prefix": "/api/voice/clone/wizard",
+      "router_tags": [
+        "voice-cloning-wizard"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 4,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 6
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/validate-audio",
+          "line": 111
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/start",
+          "line": 327
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{job_id}/status",
+          "line": 366
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{job_id}/process",
+          "line": 397
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{job_id}/finalize",
+          "line": 538
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{job_id}",
+          "line": 586
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\multi_voice_generator.py",
+      "router_prefix": "/api/voice/multi",
+      "router_tags": [
+        "multi-voice-generator"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 2,
+          "POST": 3
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{job_id}/status",
+          "line": 233
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{job_id}/results",
+          "line": 286
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/export",
+          "line": 331
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/compare",
+          "line": 399
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/import",
+          "line": 459
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\waveform.py",
+      "router_prefix": "/api/waveform",
+      "router_tags": [
+        "waveform"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 4,
+          "PUT": 1
+        },
+        "websocket": 0,
+        "total": 5
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/config/{audio_id}",
+          "line": 63
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/config/{audio_id}",
+          "line": 76
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/data/{audio_id}",
+          "line": 85
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/analysis/{audio_id}",
+          "line": 207
+        },
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/compare",
+          "line": 299
+        }
+      ]
+    },
+    {
+      "file_path": "E:\\VoiceStudio\\backend\\api\\routes\\workflows.py",
+      "router_prefix": "/api/workflows",
+      "router_tags": [
+        "workflows"
+      ],
+      "endpoint_counts": {
+        "http": {
+          "GET": 1,
+          "POST": 1,
+          "PUT": 1,
+          "DELETE": 1
+        },
+        "websocket": 0,
+        "total": 4
+      },
+      "endpoints": [
+        {
+          "kind": "http",
+          "method": "GET",
+          "path": "/{workflow_id}",
+          "line": 269
+        },
+        {
+          "kind": "http",
+          "method": "PUT",
+          "path": "/{workflow_id}",
+          "line": 341
+        },
+        {
+          "kind": "http",
+          "method": "DELETE",
+          "path": "/{workflow_id}",
+          "line": 399
+        },
+        {
+          "kind": "http",
+          "method": "POST",
+          "path": "/{workflow_id}/execute",
+          "line": 421
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

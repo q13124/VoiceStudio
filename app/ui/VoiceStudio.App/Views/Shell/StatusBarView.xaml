@@ -1,0 +1,67 @@
+<UserControl x:Class="VoiceStudio.App.Views.Shell.StatusBarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Height="26">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Status text -->
+        <TextBlock Grid.Column="0"
+                  x:Name="StatusText"
+                  Text="Ready"
+                  Style="{StaticResource VSQ.Text.Caption}"
+                  VerticalAlignment="Center"
+                  Margin="8,0"/>
+
+        <!-- Center: Active job + progress -->
+        <StackPanel Grid.Column="1" 
+                   Orientation="Horizontal"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center">
+            <TextBlock x:Name="ActiveJobText"
+                      Text=""
+                      Style="{StaticResource VSQ.Text.Caption}"
+                      Margin="0,0,8,0"
+                      Visibility="Collapsed"/>
+            <ProgressBar x:Name="JobProgress"
+                        Width="200"
+                        Height="8"
+                        Visibility="Collapsed"/>
+        </StackPanel>
+
+        <!-- Right: CPU/GPU/RAM mini meters + clock -->
+        <StackPanel Grid.Column="2"
+                   Orientation="Horizontal"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Center"
+                   Margin="8,0">
+            <!-- CPU Meter -->
+            <StackPanel Orientation="Horizontal" Margin="4,0">
+                <TextBlock Text="CPU:" Style="{StaticResource VSQ.Text.Caption}" Margin="0,0,4,0"/>
+                <ProgressBar x:Name="CpuMeter" Width="30" Height="6" Value="30"/>
+            </StackPanel>
+            
+            <!-- GPU Meter -->
+            <StackPanel Orientation="Horizontal" Margin="4,0">
+                <TextBlock Text="GPU:" Style="{StaticResource VSQ.Text.Caption}" Margin="0,0,4,0"/>
+                <ProgressBar x:Name="GpuMeter" Width="30" Height="6" Value="45"/>
+            </StackPanel>
+            
+            <!-- RAM Meter -->
+            <StackPanel Orientation="Horizontal" Margin="4,0">
+                <TextBlock Text="RAM:" Style="{StaticResource VSQ.Text.Caption}" Margin="0,0,4,0"/>
+                <ProgressBar x:Name="RamMeter" Width="30" Height="6" Value="60"/>
+            </StackPanel>
+            
+            <!-- Clock -->
+            <TextBlock x:Name="ClockText"
+                      Text="12:00 PM"
+                      Style="{StaticResource VSQ.Text.Caption}"
+                      Margin="8,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
+

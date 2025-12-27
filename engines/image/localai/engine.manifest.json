@@ -1,0 +1,49 @@
+{
+  "engine_id": "localai",
+  "name": "LocalAI",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "LocalAI - Local inference server for AI models (Stable Diffusion, LLMs, etc.)",
+  "author": "LocalAI Community",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\localai",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\localai\\models"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "multiple_model_support",
+    "api_compatible",
+    "local_inference"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.localai_engine.LocalAIEngine",
+  "config_schema": {
+    "server_url": {
+      "type": "string",
+      "default": "http://127.0.0.1:8080",
+      "description": "LocalAI server URL"
+    },
+    "model_name": {
+      "type": "string",
+      "default": "stable-diffusion",
+      "description": "Model name to use"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  }
+}
+

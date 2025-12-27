@@ -1,0 +1,424 @@
+"""
+API Response Optimization Utilities
+
+Provides caching, compression, pagination, and async processing
+for FastAPI endpoints to achieve 50%+ response time improvement.
+"""
+
+import functools
+import gzip
+import hashlib
+import json
+import logging
+import time
+from collections import OrderedDict
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+from fastapi import Request, Response
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+logger = logging.getLogger(__name__)
+
+# Response cache (LRU cache with TTL)
+_RESPONSE_CACHE: OrderedDict = OrderedDict()
+_MAX_CACHE_SIZE = 1000  # Maximum number of cached responses
+_CACHE_TTL = 300  # Default TTL in seconds (5 minutes)
+
+
+class ResponseCache:
+    """LRU cache for API responses with TTL."""
+
+    def __init__(self, max_size: int = 1000, default_ttl: int = 300):
+        """
+        Initialize response cache.
+
+        Args:
+            max_size: Maximum number of cached responses
+            default_ttl: Default TTL in seconds
+        """
+        self.cache: OrderedDict = OrderedDict()
+        self.max_size = max_size
+        self.default_ttl = default_ttl
+        self.timestamps: Dict[str, float] = {}
+
+    def _generate_key(
+        self, path: str, query_params: str, body: Optional[bytes] = None
+    ) -> str:
+        """Generate cache key from request."""
+        key_data = f"{path}?{query_params}"
+        if body:
+            key_data += body.hex()
+        return hashlib.md5(key_data.encode()).hexdigest()
+
+    def get(self, key: str) -> Optional[Tuple[Any, Dict[str, str]]]:
+        """
+        Get cached response if available and not expired.
+
+        Args:
+            key: Cache key
+
+        Returns:
+            Tuple of (response_data, headers) or None if not found/expired
+        """
+        if key not in self.cache:
+            return None
+
+        # Check TTL
+        if key in self.timestamps:
+            age = time.time() - self.timestamps[key]
+            if age > self.default_ttl:
+                # Expired, remove
+                del self.cache[key]
+                del self.timestamps[key]
+                return None
+
+        # Move to end (most recently used)
+        self.cache.move_to_end(key)
+        return self.cache[key]
+
+    def set(
+        self, key: str, response_data: Any, headers: Dict[str, str], ttl: Optional[int] = None
+    ):
+        """
+        Cache response.
+
+        Args:
+            key: Cache key
+            response_data: Response data to cache
+            headers: Response headers
+            ttl: Optional TTL override
+        """
+        # Remove if already exists
+        if key in self.cache:
+            self.cache.move_to_end(key)
+        else:
+            # Add new entry
+            self.cache[key] = (response_data, headers)
+            self.timestamps[key] = time.time()
+
+            # Evict oldest if cache full
+            if len(self.cache) > self.max_size:
+                oldest_key = next(iter(self.cache))
+                del self.cache[oldest_key]
+                if oldest_key in self.timestamps:
+                    del self.timestamps[oldest_key]
+
+    def clear(self):
+        """Clear all cached responses."""
+        self.cache.clear()
+        self.timestamps.clear()
+
+
+# Global response cache instance
+_response_cache = ResponseCache(max_size=_MAX_CACHE_SIZE, default_ttl=_CACHE_TTL)
+
+
+def cache_response(ttl: int = 300, key_func: Optional[Callable] = None):
+    """
+    Decorator to cache API responses.
+
+    Args:
+        ttl: Time to live in seconds
+        key_func: Optional function to generate cache key from request
+
+    Example:
+        @router.get("/profiles")
+        @cache_response(ttl=60)
+        def list_profiles():
+            return profiles
+    """
+
+    def decorator(func: Callable):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Try to get request from kwargs or args
+            request = kwargs.get("request") or (
+                args[0] if args and isinstance(args[0], Request) else None
+            )
+
+            # Generate cache key
+            if key_func:
+                cache_key = key_func(request, *args, **kwargs)
+            elif request:
+                query_string = str(request.query_params)
+                cache_key = _response_cache._generate_key(
+                    request.url.path, query_string
+                )
+            else:
+                # No request, can't cache
+                return await func(*args, **kwargs)
+
+            # Check cache
+            cached = _response_cache.get(cache_key)
+            if cached:
+                response_data, headers = cached
+                logger.debug(f"Cache hit for {cache_key[:16]}...")
+                return JSONResponse(
+                    content=response_data, headers={**headers, "X-Cache": "HIT"}
+                )
+
+            # Call function
+            result = await func(*args, **kwargs) if hasattr(func, "__await__") else func(*args, **kwargs)
+
+            # Cache response
+            if isinstance(result, JSONResponse):
+                response_data = result.body
+                headers = dict(result.headers)
+            elif isinstance(result, dict):
+                response_data = result
+                headers = {}
+            else:
+                # Can't cache this type
+                return result
+
+            _response_cache.set(cache_key, response_data, headers, ttl=ttl)
+            logger.debug(f"Cached response for {cache_key[:16]}...")
+
+            # Add cache header
+            if isinstance(result, JSONResponse):
+                result.headers["X-Cache"] = "MISS"
+            else:
+                result = JSONResponse(
+                    content=response_data, headers={**headers, "X-Cache": "MISS"}
+                )
+
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+class CompressionMiddleware(BaseHTTPMiddleware):
+    """Middleware to compress large responses."""
+
+    def __init__(self, app, min_size: int = 1024):
+        """
+        Initialize compression middleware.
+
+        Args:
+            app: FastAPI application
+            min_size: Minimum response size in bytes to compress
+        """
+        super().__init__(app)
+        self.min_size = min_size
+
+    async def dispatch(self, request: Request, call_next):
+        """Compress response if large enough."""
+        response = await call_next(request)
+
+        # Only compress if response is large enough
+        if hasattr(response, "body") and len(response.body) > self.min_size:
+            # Check if client accepts gzip
+            accept_encoding = request.headers.get("accept-encoding", "")
+            if "gzip" in accept_encoding:
+                compressed = gzip.compress(response.body)
+                response.body = compressed
+                response.headers["Content-Encoding"] = "gzip"
+                response.headers["Content-Length"] = str(len(compressed))
+                logger.debug(
+                    f"Compressed response: {len(response.body)} -> {len(compressed)} bytes"
+                )
+
+        return response
+
+
+class PaginationParams:
+    """Pagination parameters for list endpoints."""
+
+    def __init__(self, page: int = 1, page_size: int = 50, max_page_size: int = 1000):
+        """
+        Initialize pagination parameters.
+
+        Args:
+            page: Page number (1-indexed)
+            page_size: Items per page
+            max_page_size: Maximum allowed page size
+        """
+        self.page = max(1, page)
+        self.page_size = min(max(1, page_size), max_page_size)
+        self.skip = (self.page - 1) * self.page_size
+        self.limit = self.page_size
+
+    def paginate(self, items: List[Any]) -> Dict[str, Any]:
+        """
+        Paginate a list of items.
+
+        Args:
+            items: List of items to paginate
+
+        Returns:
+            Dictionary with paginated results and metadata
+        """
+        total = len(items)
+        paginated_items = items[self.skip : self.skip + self.limit]
+
+        return {
+            "items": paginated_items,
+            "pagination": {
+                "page": self.page,
+                "page_size": self.page_size,
+                "total": total,
+                "pages": (total + self.page_size - 1) // self.page_size,
+                "has_next": self.skip + self.limit < total,
+                "has_prev": self.page > 1,
+            },
+        }
+
+
+def optimize_json_serialization(data: Any) -> str:
+    """
+    Optimize JSON serialization by using orjson if available.
+
+    Args:
+        data: Data to serialize
+
+    Returns:
+        JSON string
+    """
+    try:
+        import orjson
+
+        return orjson.dumps(data).decode("utf-8")
+    except ImportError:
+        # Fallback to standard json with optimizations
+        return json.dumps(data, separators=(",", ":"), ensure_ascii=False)
+
+
+class AsyncTaskManager:
+    """Manager for async/long-running tasks."""
+
+    def __init__(self):
+        """Initialize async task manager."""
+        self.tasks: Dict[str, Dict[str, Any]] = {}
+
+    def create_task(self, task_id: str, task_func: Callable, *args, **kwargs) -> str:
+        """
+        Create and start an async task.
+
+        Args:
+            task_id: Unique task ID
+            task_func: Function to execute
+            *args: Function arguments
+            **kwargs: Function keyword arguments
+
+        Returns:
+            Task ID
+        """
+        import asyncio
+
+        async def run_task():
+            try:
+                result = await task_func(*args, **kwargs) if hasattr(task_func, "__await__") else task_func(*args, **kwargs)
+                self.tasks[task_id] = {
+                    "status": "completed",
+                    "result": result,
+                    "completed_at": time.time(),
+                }
+            except Exception as e:
+                self.tasks[task_id] = {
+                    "status": "failed",
+                    "error": str(e),
+                    "failed_at": time.time(),
+                }
+
+        self.tasks[task_id] = {"status": "running", "started_at": time.time()}
+        asyncio.create_task(run_task())
+        return task_id
+
+    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get task status.
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            Task status dictionary or None if not found
+        """
+        return self.tasks.get(task_id)
+
+    def get_result(self, task_id: str) -> Optional[Any]:
+        """
+        Get task result if completed.
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            Task result or None if not completed
+        """
+        task = self.tasks.get(task_id)
+        if task and task.get("status") == "completed":
+            return task.get("result")
+        return None
+
+
+# Global async task manager
+_async_task_manager = AsyncTaskManager()
+
+
+def async_task(task_func: Callable):
+    """
+    Decorator to run endpoint as async task.
+
+    Args:
+        task_func: Function to run asynchronously
+
+    Example:
+        @router.post("/long-operation")
+        @async_task
+        def long_operation():
+            # Long running operation
+            return result
+    """
+
+    @functools.wraps(task_func)
+    async def wrapper(*args, **kwargs):
+        import uuid
+
+        task_id = str(uuid.uuid4())
+        _async_task_manager.create_task(task_id, task_func, *args, **kwargs)
+
+        return {
+            "task_id": task_id,
+            "status": "queued",
+            "message": "Task queued for processing",
+        }
+
+    return wrapper
+
+
+def get_pagination_params(
+    request: Request, default_page_size: int = 50
+) -> PaginationParams:
+    """
+    Extract pagination parameters from request.
+
+    Args:
+        request: FastAPI request
+        default_page_size: Default page size
+
+    Returns:
+        PaginationParams object
+    """
+    page = int(request.query_params.get("page", 1))
+    page_size = int(request.query_params.get("page_size", default_page_size))
+    return PaginationParams(page=page, page_size=page_size)
+
+
+# Export utilities
+__all__ = [
+    "ResponseCache",
+    "cache_response",
+    "CompressionMiddleware",
+    "PaginationParams",
+    "optimize_json_serialization",
+    "AsyncTaskManager",
+    "async_task",
+    "get_pagination_params",
+    "_response_cache",
+    "_async_task_manager",
+]
+

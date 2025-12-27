@@ -1,0 +1,186 @@
+{
+  "recommendations": [
+    // Python development
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    
+    // C# / .NET development
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    
+    // XAML / WinUI 3
+    "jchannon.csharpextensions",
+    
+    // Hugging Face / ML/AI
+    "huggingface.huggingface-vscode",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.vscode-jupyter-cell-tags",
+    
+    // JSON / YAML
+    "redhat.vscode-yaml",
+    
+    // Markdown (for docs)
+    "yzhang.markdown-all-in-one",
+    
+    // PowerShell
+    "ms-vscode.powershell",
+    
+    // Git
+    "eamodio.gitlens",
+    
+    // General utilities
+    "editorconfig.editorconfig",
+    "ms-vscode.vscode-json",
+    
+    // Python formatting & linting
+    "ms-python.black-formatter",
+    "ms-python.isort",
+    "ms-python.flake8"
+  ],
+  "unwantedRecommendations": [
+    // Web development (not needed for WinUI 3)
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ritwickdey.liveserver",
+    
+    // React/Next.js (not using)
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+    
+    // Vue (not using)
+    "vue.volar",
+    
+    // Docker/Containers (optional, not core)
+    "ms-azuretools.vscode-docker",
+    "ms-azuretools.vscode-containers",
+    
+    // Remote development (not needed locally)
+    "ms-vscode-remote.remote-ssh",
+    
+    // Java (not using)
+    "vscjava.vscode-java-pack",
+    "vscjava.vscode-java-debug",
+    "vscjava.vscode-java-dependency",
+    "vscjava.vscode-java-test",
+    "vscjava.vscode-maven",
+    "vscjava.vscode-gradle",
+    "redhat.java",
+    "edwinkofler.vscode-hyperupcall-pack-java",
+    "vmware.vscode-spring-boot",
+    
+    // Go (not using)
+    "golang.go",
+    "ethan-reesor.exp-vscode-go",
+    
+    // Rust (not using)
+    "rust-lang.rust-analyzer",
+    
+    // PHP (not using)
+    "bmewburn.vscode-intelephense-client",
+    
+    // Dart/Flutter (not using)
+    "dart-code.dart-code",
+    "dart-code.flutter",
+    
+    // Kotlin (not using)
+    "fwcd.kotlin",
+    
+    // R (not using)
+    "reditorsupport.r",
+    "reditorsupport.r-syntax",
+    
+    // OCaml (not using)
+    "release-candidate.vscode-ocaml-expect-inline",
+    
+    // Solidity (not using)
+    "solidityscan.solidityscan",
+    
+    // Salesforce (not using)
+    "salesforce.salesforcedx-vscode-core",
+    "salesforce.salesforcedx-vscode-soql",
+    
+    // Terraform (not using)
+    "hashicorp.terraform",
+    
+    // Database tools (not using)
+    "cweijan.dbclient-jdbc",
+    "cweijan.vscode-mysql-client2",
+    "ms-mssql.mssql",
+    "mtxr.sqltools",
+    "qwtel.sqlite-viewer",
+    
+    // Testing frameworks (not using)
+    "hbenl.vscode-mocha-test-adapter",
+    "hbenl.vscode-test-explorer",
+    "littlefoxteam.vscode-python-test-adapter",
+    "matepek.vscode-catch2-test-adapter",
+    "ms-vscode.test-adapter-converter",
+    "syntaf.vscode-pytest-runner",
+    "vitest.explorer",
+    
+    // Jupyter (keeping only core, excluding renderers/slideshow)
+    "ms-toolsai.jupyter-renderers",
+    "ms-toolsai.vscode-jupyter-slideshow",
+    
+    // C/C++ (not using)
+    "eclipse-cdt.cdt-gdb-vscode",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "vadimcn.vscode-lldb",
+    "ms-vscode.makefile-tools",
+    
+    // AWS (not using)
+    "amazonwebservices.amazon-q-vscode",
+    "amazonwebservices.aws-toolkit-vscode",
+    
+    // GitHub Actions (not using)
+    "github.vscode-github-actions",
+    
+    // Diagramming tools (not using)
+    "hediet.vscode-drawio",
+    "jebbs.plantuml",
+    
+    // MDX (not using)
+    "unifiedjs.vscode-mdx",
+    
+    // Prisma (not using)
+    "prisma.prisma",
+    "prisma.prisma-insider",
+    
+    // API Testing (not using)
+    "rangav.vscode-thunder-client",
+    "linuxsuren.api-testing",
+    
+    // Browser debugging (not using)
+    "firefox-devtools.vscode-firefox-debug",
+    "ms-edgedevtools.vscode-edge-devtools",
+    "kylinideteam.js-debug",
+    
+    // AI assistants (keeping CursorPyright, disabling others)
+    "openai.chatgpt",
+    "saoudrizwan.claude-dev",
+    "saoudrizwan.cline-nightly",
+    "robertpiosik.gemini-coder",
+    "google.geminicodeassist",
+    "ukaisi.inspect-ai",
+    
+    // Other utilities (not needed)
+    "alefragnani.project-manager",
+    "donjayamanne.githistory",
+    "mechatroner.rainbow-csv",
+    "rafacmur.retina",
+    "lukaspatschil.repl-scooper",
+    "christian-kohler.npm-intellisense",
+    "dotjoshjohnson.xml",
+    "bierner.markdown-mermaid",
+    "bierner.markdown-preview-github-styles",
+    "ms-vscode.notepadplusplus-keybindings",
+    "edwinkofler.vscode-hyperupcall-pack-markdown",
+    "redhat.vscode-debug-adapter-apache-camel",
+    "github.vscode-pull-request-github"
+  ]
+}
+
+
+

@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"terminal.integrated.defaultLocation": "editor",
+		"files.associations": {
+			"*.xaml": "xml",
+			"*.csproj": "xml",
+			"*.props": "xml",
+			"*.targets": "xml"
+		},
+		"extensions.ignoreRecommendations": false
+	}
+}

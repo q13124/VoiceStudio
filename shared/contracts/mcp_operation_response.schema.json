@@ -1,0 +1,12 @@
+{
+  "title": "McpOperationResponse",
+  "type": "object",
+  "properties": {
+    "requestId": { "type": "string" },
+    "status": { "type": "string", "enum": ["ok", "error"] },
+    "data": { "type": "object" },
+    "error": { "type": "string" }
+  },
+  "required": ["requestId", "status"]
+}
+

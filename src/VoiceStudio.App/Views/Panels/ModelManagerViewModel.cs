@@ -1,0 +1,441 @@
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
+using VoiceStudio.App.Services;
+using VoiceStudio.App.Services.UndoableActions;
+using VoiceStudio.App.Utilities;
+using VoiceStudio.App.ViewModels;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+
+namespace VoiceStudio.App.Views.Panels
+{
+    public partial class ModelManagerViewModel : BaseViewModel, IPanelView
+    {
+        private readonly IBackendClient _backendClient;
+        private readonly UndoRedoService? _undoRedoService;
+
+        public string PanelId => "model_manager";
+        public string DisplayName => ResourceHelper.GetString("Panel.ModelManager.DisplayName", "Model Manager");
+        public PanelRegion Region => PanelRegion.Right;
+
+        [ObservableProperty]
+        private ObservableCollection<ModelInfo> models = new();
+
+        [ObservableProperty]
+        private ModelInfo? selectedModel;
+
+        [ObservableProperty]
+        private string? selectedEngine;
+
+        [ObservableProperty]
+        private bool isLoading;
+
+        [ObservableProperty]
+        private string? errorMessage;
+
+        [ObservableProperty]
+        private string? statusMessage;
+
+        [ObservableProperty]
+        private StorageStats? storageStats;
+
+        [ObservableProperty]
+        private bool isVerifying;
+
+        [ObservableProperty]
+        private string? verificationResult;
+
+        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+        public ObservableCollection<string> Engines { get; } = new()
+        {
+            "xtts_v2",
+            "chatterbox",
+            "tortoise",
+            "piper",
+            "openvoice",
+            "sdxl",
+            "realesrgan",
+            "svd"
+        };
+
+        public ModelManagerViewModel(IBackendClient backendClient)
+        {
+            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+            
+            // Get undo/redo service (may be null if not initialized)
+            try
+            {
+                _undoRedoService = ServiceProvider.GetUndoRedoService();
+            }
+            catch
+            {
+                // Service may not be initialized yet - that's okay
+                _undoRedoService = null;
+            }
+            
+            LoadModelsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                await LoadModelsAsync(ct);
+            }, () => !IsLoading);
+            RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                await RefreshAsync(ct);
+            }, () => !IsLoading);
+            VerifyModelCommand = new EnhancedAsyncRelayCommand<ModelInfo>(async (model, ct) =>
+            {
+                await VerifyModelAsync(model, ct);
+            }, model => model != null && !IsVerifying);
+            UpdateChecksumCommand = new EnhancedAsyncRelayCommand<ModelInfo>(async (model, ct) =>
+            {
+                await UpdateChecksumAsync(model, ct);
+            }, model => model != null && !IsLoading);
+            DeleteModelCommand = new EnhancedAsyncRelayCommand<ModelInfo>(async (model, ct) =>
+            {
+                await DeleteModelAsync(model, ct);
+            }, model => model != null && !IsLoading);
+            LoadStorageStatsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                await LoadStorageStatsAsync(ct);
+            }, () => !IsLoading);
+            ExportModelCommand = new EnhancedAsyncRelayCommand<ModelInfo>(async (model, ct) =>
+            {
+                await ExportModelAsync(model, ct);
+            }, model => model != null && !IsLoading);
+            ImportModelCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+            {
+                await ImportModelAsync(ct);
+            }, () => !IsLoading);
+        }
+
+        public IAsyncRelayCommand LoadModelsCommand { get; }
+        public IAsyncRelayCommand RefreshCommand { get; }
+        public IAsyncRelayCommand<ModelInfo> VerifyModelCommand { get; }
+        public IAsyncRelayCommand<ModelInfo> UpdateChecksumCommand { get; }
+        public IAsyncRelayCommand<ModelInfo> DeleteModelCommand { get; }
+        public IAsyncRelayCommand LoadStorageStatsCommand { get; }
+        public IAsyncRelayCommand<ModelInfo> ExportModelCommand { get; }
+        public IAsyncRelayCommand ImportModelCommand { get; }
+
+        partial void OnSelectedEngineChanged(string? value)
+        {
+            _ = LoadModelsAsync(CancellationToken.None);
+        }
+
+        private async Task LoadModelsAsync(CancellationToken cancellationToken)
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var modelsList = await _backendClient.GetModelsAsync(SelectedEngine, cancellationToken);
+                
+                Models.Clear();
+                foreach (var model in modelsList.OrderBy(m => m.Engine).ThenBy(m => m.ModelName))
+                {
+                    Models.Add(model);
+                }
+                StatusMessage = ResourceHelper.FormatString("ModelManager.ModelsLoaded", Models.Count);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to load models: {ex.Message}";
+                await HandleErrorAsync(ex, "LoadModels");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task RefreshAsync(CancellationToken cancellationToken)
+        {
+            await LoadModelsAsync(cancellationToken);
+            await LoadStorageStatsAsync(cancellationToken);
+        }
+
+        private async Task VerifyModelAsync(ModelInfo? model, CancellationToken cancellationToken)
+        {
+            if (model == null)
+                return;
+
+            IsVerifying = true;
+            VerificationResult = null;
+            ErrorMessage = null;
+
+            try
+            {
+                var result = await _backendClient.VerifyModelAsync(model.Engine, model.ModelName, cancellationToken);
+                
+                if (result.IsValid)
+                {
+                    VerificationResult = ResourceHelper.GetString("ModelManager.VerificationSuccess", "✓ Model checksum verified successfully");
+                    StatusMessage = ResourceHelper.GetString("ModelManager.VerificationSuccessStatus", "Model checksum verified successfully");
+                }
+                else
+                {
+                    VerificationResult = ResourceHelper.FormatString("ModelManager.VerificationFailed", result.ErrorMessage);
+                    ErrorMessage = result.ErrorMessage;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                VerificationResult = ResourceHelper.FormatString("ModelManager.VerificationError", ex.Message);
+                ErrorMessage = ex.Message;
+                await HandleErrorAsync(ex, "VerifyModel");
+            }
+            finally
+            {
+                IsVerifying = false;
+            }
+        }
+
+        private async Task UpdateChecksumAsync(ModelInfo? model, CancellationToken cancellationToken)
+        {
+            if (model == null)
+                return;
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                var updated = await _backendClient.UpdateModelChecksumAsync(model.Engine, model.ModelName, cancellationToken);
+                
+                // Update the model in the list
+                var index = Models.IndexOf(model);
+                if (index >= 0)
+                {
+                    Models[index] = updated;
+                }
+
+                VerificationResult = ResourceHelper.GetString("ModelManager.ChecksumUpdatedSuccess", "✓ Checksum updated successfully");
+                StatusMessage = ResourceHelper.GetString("ModelManager.ChecksumUpdatedStatus", "Checksum updated successfully");
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("ModelManager.UpdateChecksumFailed", ex.Message);
+                await HandleErrorAsync(ex, "UpdateChecksum");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task DeleteModelAsync(ModelInfo? model, CancellationToken cancellationToken)
+        {
+            if (model == null)
+                return;
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                await _backendClient.DeleteModelAsync(model.Engine, model.ModelName, cancellationToken);
+                
+                // Track original index before removal
+                var originalIndex = Models.IndexOf(model);
+                
+                // Remove from list
+                Models.Remove(model);
+                var previousSelected = SelectedModel;
+                if (SelectedModel?.Engine == model.Engine && SelectedModel?.ModelName == model.ModelName)
+                {
+                    SelectedModel = null;
+                }
+
+                // Refresh stats
+                await LoadStorageStatsAsync(cancellationToken);
+                
+                StatusMessage = ResourceHelper.FormatString("ModelManager.ModelDeletedSuccess", model.ModelName);
+                
+                // Register undo action
+                // Note: Undo will restore the UI state, but won't re-register the model with the backend
+                // The model files may still exist on disk, but it won't appear in the backend registry
+                if (_undoRedoService != null)
+                {
+                    var action = new DeleteModelAction(
+                        Models,
+                        _backendClient,
+                        model,
+                        originalIndex,
+                        onUndo: (m) =>
+                        {
+                            SelectedModel = m;
+                        },
+                        onRedo: (m) =>
+                        {
+                            if (SelectedModel?.Engine == m.Engine && SelectedModel?.ModelName == m.ModelName)
+                            {
+                                SelectedModel = null;
+                            }
+                        });
+                    _undoRedoService.RegisterAction(action);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("ModelManager.DeleteModelFailed", ex.Message);
+                await HandleErrorAsync(ex, "DeleteModel");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task LoadStorageStatsAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                StorageStats = await _backendClient.GetStorageStatsAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to load storage stats: {ex.Message}";
+                await HandleErrorAsync(ex, "LoadStorageStats");
+            }
+        }
+
+        public string FormatSize(long bytes)
+        {
+            if (bytes < 1024)
+                return $"{bytes} B";
+            if (bytes < 1024 * 1024)
+                return $"{bytes / 1024.0:F2} KB";
+            if (bytes < 1024 * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0):F2} MB";
+            return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+        }
+
+        // Helper property for binding
+        public string GetFormattedSize(long bytes) => FormatSize(bytes);
+
+        private async Task ExportModelAsync(ModelInfo? model, CancellationToken cancellationToken)
+        {
+            if (model == null)
+                return;
+
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                // Get export stream from backend
+                using var stream = await _backendClient.ExportModelAsync(model.Engine, model.ModelName, cancellationToken);
+
+                // Show file save picker
+                var savePicker = new FileSavePicker();
+                savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                savePicker.FileTypeChoices.Add("ZIP Archive", new[] { ".zip" });
+                savePicker.SuggestedFileName = $"{model.Engine}_{model.ModelName}";
+
+                var file = await savePicker.PickSaveFileAsync();
+                if (file != null)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Write stream to file
+                    using var fileStream = await file.OpenStreamForWriteAsync();
+                    await stream.CopyToAsync(fileStream, cancellationToken);
+                    await fileStream.FlushAsync(cancellationToken);
+
+                    VerificationResult = ResourceHelper.FormatString("ModelManager.ModelExportedSuccess", file.Name);
+                    StatusMessage = ResourceHelper.FormatString("ModelManager.ModelExportedStatus", file.Name);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("ModelManager.ExportModelFailed", ex.Message);
+                await HandleErrorAsync(ex, "ExportModel");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task ImportModelAsync(CancellationToken cancellationToken)
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            try
+            {
+                // Show file open picker
+                var openPicker = new FileOpenPicker();
+                openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                openPicker.FileTypeFilter.Add(".zip");
+
+                var file = await openPicker.PickSingleFileAsync();
+                if (file != null)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Read file stream
+                    using var fileStream = await file.OpenStreamForReadAsync();
+                    
+                    // Import model
+                    var importedModel = await _backendClient.ImportModelAsync(fileStream, cancellationToken: cancellationToken);
+
+                    // Refresh models list
+                    await LoadModelsAsync(cancellationToken);
+                    await LoadStorageStatsAsync(cancellationToken);
+
+                    VerificationResult = $"✓ Model imported: {importedModel.Engine}/{importedModel.ModelName}";
+                    StatusMessage = $"Model imported: {importedModel.Engine}/{importedModel.ModelName}";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return; // User cancelled
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ResourceHelper.FormatString("ModelManager.ImportModelFailed", ex.Message);
+                await HandleErrorAsync(ex, "ImportModel");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+    }
+}
+

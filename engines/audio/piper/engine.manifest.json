@@ -1,0 +1,45 @@
+{
+  "engine_id": "piper",
+  "name": "Piper TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Fast, local neural text-to-speech engine",
+  "author": "rhasspy",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "piper-tts": ">=1.0.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\piper",
+    "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\piper\\voices"
+  },
+  "supported_languages": ["en", "es", "fr", "de", "it", "pt", "pl", "ru", "zh", "ja"],
+  "capabilities": [
+    "fast_tts",
+    "low_latency",
+    "offline",
+    "multi_voice"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.piper_engine.PiperEngine",
+  "config_schema": {
+    "voice": {
+      "type": "string",
+      "default": "en_US-lessac-medium",
+      "description": "Voice model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cpu",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  }
+}
+

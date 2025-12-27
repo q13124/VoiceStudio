@@ -1,0 +1,52 @@
+{
+  "engine_id": "xtts_v2",
+  "name": "XTTS v2",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "2.0",
+  "description": "Coqui TTS XTTS v2 for voice cloning and text-to-speech synthesis",
+  "author": "Coqui",
+  "license": "MPL-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "coqui-tts": "==0.27.2",
+    "torch": ">=2.2.2",
+    "transformers": ">=4.55.4"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2\\cache"
+  },
+  "supported_languages": ["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja"],
+  "capabilities": [
+    "voice_cloning",
+    "multi_language_tts",
+    "emotion_control",
+    "style_transfer"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.xtts_engine.XTTSEngine",
+  "config_schema": {
+    "model_name": {
+      "type": "string",
+      "default": "tts_models/multilingual/multi-dataset/xtts_v2",
+      "description": "XTTS model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    }
+  }
+}
+

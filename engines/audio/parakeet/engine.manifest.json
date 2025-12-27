@@ -1,0 +1,52 @@
+{
+  "engine_id": "parakeet",
+  "name": "Parakeet",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Parakeet - Fast and efficient TTS with multiple model options",
+  "author": "PaddlePaddle",
+  "license": "Apache-2.0",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "paddlepaddle": ">=2.4.0",
+    "paddlespeech": ">=1.2.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\parakeet",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\parakeet\\checkpoints"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "fast_synthesis",
+    "multilingual",
+    "multiple_models"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.parakeet_engine.ParakeetEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cpu",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "model": {
+      "type": "string",
+      "default": "fastspeech2",
+      "enum": ["fastspeech2", "tacotron2", "transformer_tts"],
+      "description": "Parakeet model type"
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Language code"
+    }
+  }
+}
+

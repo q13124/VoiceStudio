@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "VoiceStudio.App.Tests": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "remoteDebugEnabled": true
+    }
+  }
+}

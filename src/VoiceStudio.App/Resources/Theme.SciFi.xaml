@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <SolidColorBrush x:Key="VSQ.Background" Color="#0B0F15"/>
+  <SolidColorBrush x:Key="VSQ.Panel"      Color="#0F141D"/>
+  <SolidColorBrush x:Key="VSQ.Surface"    Color="#121A26"/>
+  <SolidColorBrush x:Key="VSQ.Border"     Color="#1E2B3B"/>
+  <SolidColorBrush x:Key="VSQ.Text"       Color="#E5F7FF"/>
+  <SolidColorBrush x:Key="VSQ.SubtleText" Color="#8FB4C9"/>
+  <SolidColorBrush x:Key="VSQ.Accent"     Color="#1FE1F5"/>
+  <SolidColorBrush x:Key="VSQ.AccentAlt"  Color="#8B5CF6"/>
+  <SolidColorBrush x:Key="VSQ.Warn"       Color="#00FFC3"/>
+  <SolidColorBrush x:Key="VSQ.Danger"     Color="#FF4D67"/>
+  <x:Double x:Key="VSQ.CornerRadius">14</x:Double>
+</ResourceDictionary>

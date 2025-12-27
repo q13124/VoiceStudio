@@ -1,0 +1,130 @@
+using System;
+using System.Text.Json;
+using Xunit;
+
+namespace VoiceStudio.ContractTests
+{
+    /// <summary>
+    /// Tests that validate the OpenAPI schema structure and consistency.
+    /// </summary>
+    public class SchemaValidationTests : ContractTestBase
+    {
+        [Fact]
+        public void Schema_HasRequiredSections()
+        {
+            // Verify schema has required OpenAPI sections
+            Assert.True(OpenApiSchema.RootElement.TryGetProperty("openapi", out _), "Schema missing 'openapi' version");
+            Assert.True(OpenApiSchema.RootElement.TryGetProperty("info", out _), "Schema missing 'info' section");
+            Assert.True(OpenApiSchema.RootElement.TryGetProperty("paths", out _), "Schema missing 'paths' section");
+        }
+
+        [Fact]
+        public void Schema_HasValidVersion()
+        {
+            var version = OpenApiSchema.RootElement.GetProperty("openapi").GetString();
+            Assert.NotNull(version);
+            Assert.StartsWith("3.", version);
+        }
+
+        [Fact]
+        public void Schema_HasInfoSection()
+        {
+            var info = OpenApiSchema.RootElement.GetProperty("info");
+            Assert.True(info.TryGetProperty("title", out _), "Info missing 'title'");
+            Assert.True(info.TryGetProperty("version", out _), "Info missing 'version'");
+        }
+
+        [Fact]
+        public void Schema_HasPaths()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            Assert.True(paths.ValueKind == JsonValueKind.Object, "Paths should be an object");
+            
+            // Verify at least some expected paths exist
+            var pathNames = paths.EnumerateObject();
+            var hasPaths = false;
+            foreach (var path in pathNames)
+            {
+                hasPaths = true;
+                break;
+            }
+            Assert.True(hasPaths, "Schema should have at least one path");
+        }
+
+        [Fact]
+        public void Schema_PathsHaveOperations()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+                var hasOperation = pathValue.TryGetProperty("get", out _) ||
+                                 pathValue.TryGetProperty("post", out _) ||
+                                 pathValue.TryGetProperty("put", out _) ||
+                                 pathValue.TryGetProperty("delete", out _);
+                
+                Assert.True(hasOperation, $"Path '{path.Name}' should have at least one operation");
+            }
+        }
+
+        [Fact]
+        public void Schema_OperationsHaveResponses()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+                
+                // Check each operation type
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        Assert.True(
+                            operation.TryGetProperty("responses", out _),
+                            $"Operation {operationType} on path '{path.Name}' missing 'responses'"
+                        );
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void Schema_ComponentsSectionExists()
+        {
+            // Components section is optional but useful for reusable schemas
+            var hasComponents = OpenApiSchema.RootElement.TryGetProperty("components", out var components);
+            
+            if (hasComponents)
+            {
+                Assert.True(components.ValueKind == JsonValueKind.Object, "Components should be an object");
+            }
+        }
+
+        [Fact]
+        public void Schema_SchemasHaveProperties()
+        {
+            if (!OpenApiSchema.RootElement.TryGetProperty("components", out var components))
+                return; // Components optional
+            
+            if (!components.TryGetProperty("schemas", out var schemas))
+                return; // Schemas optional
+            
+            foreach (var schema in schemas.EnumerateObject())
+            {
+                var schemaValue = schema.Value;
+                
+                // Schema should have properties or be a reference
+                var hasProperties = schemaValue.TryGetProperty("properties", out _);
+                var isReference = schemaValue.TryGetProperty("$ref", out _);
+                
+                Assert.True(
+                    hasProperties || isReference,
+                    $"Schema '{schema.Name}' should have properties or be a reference"
+                );
+            }
+        }
+    }
+}

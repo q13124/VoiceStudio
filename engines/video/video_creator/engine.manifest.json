@@ -1,0 +1,54 @@
+{
+  "engine_id": "video_creator",
+  "name": "Video Creator",
+  "type": "video",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Video creation from images and audio - automates multimedia content creation",
+  "author": "prakashdk",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "moviepy": ">=1.0.3",
+    "pillow": ">=9.0.0",
+    "numpy": ">=1.21.0"
+  },
+  "model_paths": {},
+  "supported_formats": ["mp4", "avi", "mov", "gif"],
+  "capabilities": [
+    "image_to_video",
+    "audio_sync",
+    "video_creation",
+    "multimedia_composition"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.video_creator_engine.VideoCreatorEngine",
+  "config_schema": {
+    "fps": {
+      "type": "integer",
+      "default": 24,
+      "description": "Output video FPS"
+    },
+    "transition_duration": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Transition duration between images (seconds)"
+    },
+    "transition_type": {
+      "type": "string",
+      "default": "fade",
+      "enum": ["fade", "crossfade", "slide", "none"],
+      "description": "Transition type between images"
+    },
+    "image_duration": {
+      "type": "number",
+      "default": 3.0,
+      "description": "Duration each image is displayed (seconds)"
+    }
+  }
+}
+

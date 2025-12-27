@@ -1,0 +1,57 @@
+{
+  "engine_id": "espeak_ng",
+  "name": "eSpeak NG",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "eSpeak NG - Compact open-source TTS for many languages, optimized for accessibility",
+  "author": "eSpeak NG Team",
+  "license": "GPL-3.0",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\espeak_ng",
+    "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\espeak_ng\\voices"
+  },
+  "supported_formats": ["wav"],
+  "capabilities": [
+    "text_to_speech",
+    "multilingual",
+    "accessibility",
+    "lightweight",
+    "many_languages"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 1
+  },
+  "entry_point": "app.core.engines.espeak_ng_engine.ESpeakNGEngine",
+  "config_schema": {
+    "executable_path": {
+      "type": "string",
+      "default": "espeak-ng",
+      "description": "Path to eSpeak NG executable"
+    },
+    "voice": {
+      "type": "string",
+      "default": "en",
+      "description": "Voice/language code"
+    },
+    "speed": {
+      "type": "integer",
+      "default": 175,
+      "minimum": 80,
+      "maximum": 450,
+      "description": "Speech speed (words per minute)"
+    },
+    "pitch": {
+      "type": "integer",
+      "default": 50,
+      "minimum": 0,
+      "maximum": 99,
+      "description": "Pitch (0-99)"
+    }
+  }
+}
+

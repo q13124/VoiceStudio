@@ -1,0 +1,1121 @@
+{
+  "generated_at_utc": "2025-12-27T20:04:51.879621+00:00",
+  "root": "E:\\",
+  "max_depth": 2,
+  "follow_symlinks": false,
+  "root_stats": {
+    "file_count": 36980,
+    "dir_count": 3998,
+    "total_bytes": 1294386576,
+    "ext_counts": {
+      ".json": 21455,
+      ".js": 6439,
+      ".txt": 2598,
+      ".md": 2058,
+      ".cs": 1105,
+      ".py": 709,
+      ".pyc": 639,
+      "<none>": 370,
+      ".backup": 285,
+      ".xaml": 169,
+      ".ts": 163,
+      ".cjs": 133,
+      ".cts": 98,
+      ".svg": 98,
+      ".png": 83,
+      ".pak": 58,
+      ".mjs": 49,
+      ".dll": 43,
+      ".ico": 34,
+      ".ps1": 32,
+      ".mp3": 27,
+      ".css": 21,
+      ".node": 20,
+      ".woff2": 20,
+      ".html": 16,
+      ".log": 16,
+      ".cache": 15,
+      ".code-snippets": 15,
+      ".sh": 15,
+      ".exe": 13,
+      ".wasm": 11,
+      ".yml": 11,
+      ".bin": 8,
+      ".proto": 8,
+      ".mts": 7,
+      ".tsx": 6,
+      ".vsidx": 6,
+      ".binlog": 5,
+      ".csproj": 5,
+      ".editorconfig": 5,
+      ".props": 5,
+      ".scm": 5,
+      ".targets": 5,
+      ".pdb": 4,
+      ".pdf": 4,
+      ".v2": 4,
+      ".zsh": 4,
+      ".csv": 3,
+      ".filters": 3,
+      ".template": 3,
+      ".vcxproj": 3,
+      ".xml": 3,
+      ".bak": 2,
+      ".bat": 2,
+      ".cmd": 2,
+      ".code-workspace": 2,
+      ".config": 2,
+      ".dat": 2,
+      ".flow": 2,
+      ".ini": 2,
+      ".lock": 2,
+      ".manifest": 2,
+      ".pyx": 2,
+      ".resw": 2,
+      ".scpt": 2,
+      ".sln": 2,
+      ".tag": 2,
+      ".tests": 2,
+      ".toml": 2,
+      ".ttf": 2,
+      ".yaml": 2,
+      ".21812": 1,
+      ".adml": 1,
+      ".admx": 1,
+      ".apache2": 1,
+      ".apk": 1,
+      ".asar": 1,
+      ".bnf": 1,
+      ".bsd": 1,
+      ".buildwithskipanalyzers": 1,
+      ".conf": 1,
+      ".fish": 1,
+      ".gif": 1,
+      ".iss": 1,
+      ".jsdoc": 1,
+      ".lastbuildstate": 1,
+      ".lcov": 1,
+      ".mit": 1,
+      ".nbc": 1,
+      ".nbi": 1,
+      ".nix": 1,
+      ".njs": 1,
+      ".patch": 1,
+      ".pth": 1,
+      ".recipe": 1,
+      ".tlog": 1,
+      ".tmlanguage": 1,
+      ".woff": 1,
+      ".wxs": 1
+    },
+    "latest_mtime_utc": "2025-12-27T20:04:37.109801+00:00"
+  },
+  "entries": [
+    {
+      "bucket_path": "E:\\",
+      "kind": "directory_bucket",
+      "depth": 0,
+      "classification": "root",
+      "stats": {
+        "file_count": 36980,
+        "dir_count": 3998,
+        "total_bytes": 1294386576,
+        "ext_counts": {
+          ".json": 21455,
+          ".js": 6439,
+          ".txt": 2598,
+          ".md": 2058,
+          ".cs": 1105,
+          ".py": 709,
+          ".pyc": 639,
+          "<none>": 370,
+          ".backup": 285,
+          ".xaml": 169,
+          ".ts": 163,
+          ".cjs": 133,
+          ".cts": 98,
+          ".svg": 98,
+          ".png": 83,
+          ".pak": 58,
+          ".mjs": 49,
+          ".dll": 43,
+          ".ico": 34,
+          ".ps1": 32,
+          ".mp3": 27,
+          ".css": 21,
+          ".node": 20,
+          ".woff2": 20,
+          ".html": 16,
+          ".log": 16,
+          ".cache": 15,
+          ".code-snippets": 15,
+          ".sh": 15,
+          ".exe": 13,
+          ".wasm": 11,
+          ".yml": 11,
+          ".bin": 8,
+          ".proto": 8,
+          ".mts": 7,
+          ".tsx": 6,
+          ".vsidx": 6,
+          ".binlog": 5,
+          ".csproj": 5,
+          ".editorconfig": 5,
+          ".props": 5,
+          ".scm": 5,
+          ".targets": 5,
+          ".pdb": 4,
+          ".pdf": 4,
+          ".v2": 4,
+          ".zsh": 4,
+          ".csv": 3,
+          ".filters": 3,
+          ".template": 3,
+          ".vcxproj": 3,
+          ".xml": 3,
+          ".bak": 2,
+          ".bat": 2,
+          ".cmd": 2,
+          ".code-workspace": 2,
+          ".config": 2,
+          ".dat": 2,
+          ".flow": 2,
+          ".ini": 2,
+          ".lock": 2,
+          ".manifest": 2,
+          ".pyx": 2,
+          ".resw": 2,
+          ".scpt": 2,
+          ".sln": 2,
+          ".tag": 2,
+          ".tests": 2,
+          ".toml": 2,
+          ".ttf": 2,
+          ".yaml": 2,
+          ".21812": 1,
+          ".adml": 1,
+          ".admx": 1,
+          ".apache2": 1,
+          ".apk": 1,
+          ".asar": 1,
+          ".bnf": 1,
+          ".bsd": 1,
+          ".buildwithskipanalyzers": 1,
+          ".conf": 1,
+          ".fish": 1,
+          ".gif": 1,
+          ".iss": 1,
+          ".jsdoc": 1,
+          ".lastbuildstate": 1,
+          ".lcov": 1,
+          ".mit": 1,
+          ".nbc": 1,
+          ".nbi": 1,
+          ".nix": 1,
+          ".njs": 1,
+          ".patch": 1,
+          ".pth": 1,
+          ".recipe": 1,
+          ".tlog": 1,
+          ".tmlanguage": 1,
+          ".woff": 1,
+          ".wxs": 1
+        },
+        "latest_mtime_utc": "2025-12-27T20:04:37.109801+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\$RECYCLE.BIN",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "system",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 2,
+        "total_bytes": 129,
+        "ext_counts": {
+          ".ini": 1
+        },
+        "latest_mtime_utc": "2025-11-21T04:40:53.937464+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\::ROOT_FILES",
+      "kind": "root_files_bucket",
+      "depth": 1,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 11,
+        "dir_count": 0,
+        "total_bytes": 386714,
+        "ext_counts": {
+          ".md": 10,
+          ".txt": 1
+        },
+        "latest_mtime_utc": "2025-12-25T08:47:51.277972+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\cursor",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "tooling_cache",
+      "stats": {
+        "file_count": 8770,
+        "dir_count": 2101,
+        "total_bytes": 612506449,
+        "ext_counts": {
+          ".js": 6438,
+          ".json": 911,
+          "<none>": 356,
+          ".ts": 163,
+          ".cjs": 133,
+          ".cts": 98,
+          ".svg": 98,
+          ".png": 83,
+          ".pak": 58,
+          ".txt": 57,
+          ".mjs": 49,
+          ".md": 43,
+          ".ico": 34,
+          ".mp3": 27,
+          ".css": 21,
+          ".node": 20,
+          ".woff2": 20,
+          ".code-snippets": 15,
+          ".html": 15,
+          ".sh": 15,
+          ".wasm": 11,
+          ".dll": 9,
+          ".exe": 8,
+          ".proto": 8,
+          ".yml": 8,
+          ".mts": 7,
+          ".tsx": 6,
+          ".scm": 5,
+          ".zsh": 4,
+          ".bin": 3,
+          ".filters": 3,
+          ".vcxproj": 3,
+          ".bat": 2,
+          ".cmd": 2,
+          ".dat": 2,
+          ".flow": 2,
+          ".scpt": 2,
+          ".ttf": 2,
+          ".xml": 2,
+          ".adml": 1,
+          ".admx": 1,
+          ".apache2": 1,
+          ".apk": 1,
+          ".asar": 1,
+          ".bak": 1,
+          ".bnf": 1,
+          ".bsd": 1,
+          ".config": 1,
+          ".csv": 1,
+          ".fish": 1,
+          ".gif": 1,
+          ".jsdoc": 1,
+          ".lastbuildstate": 1,
+          ".lcov": 1,
+          ".lock": 1,
+          ".mit": 1,
+          ".nix": 1,
+          ".njs": 1,
+          ".patch": 1,
+          ".ps1": 1,
+          ".recipe": 1,
+          ".sln": 1,
+          ".tlog": 1,
+          ".tmlanguage": 1,
+          ".toml": 1,
+          ".woff": 1
+        },
+        "latest_mtime_utc": "2025-12-27T10:05:39.733648+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\Error Audits",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "audit_bundle",
+      "stats": {
+        "file_count": 19,
+        "dir_count": 1,
+        "total_bytes": 20097726,
+        "ext_counts": {
+          ".md": 7,
+          ".txt": 7,
+          ".log": 2,
+          ".pdf": 2,
+          ".binlog": 1
+        },
+        "latest_mtime_utc": "2025-12-25T08:47:08.294354+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\System Volume Information",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "system",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 1,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-11-22T00:32:51.447379+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\testdisk-7.2-WIP",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 43,
+        "dir_count": 3,
+        "total_bytes": 84433548,
+        "ext_counts": {
+          ".dll": 27,
+          ".txt": 6,
+          ".exe": 4,
+          "<none>": 2,
+          ".conf": 1,
+          ".html": 1,
+          ".log": 1,
+          ".pdf": 1
+        },
+        "latest_mtime_utc": "2025-12-05T09:42:14.581932+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio",
+      "kind": "directory_bucket",
+      "depth": 1,
+      "classification": "product_source",
+      "stats": {
+        "file_count": 28136,
+        "dir_count": 1889,
+        "total_bytes": 576962010,
+        "ext_counts": {
+          ".json": 20544,
+          ".txt": 2527,
+          ".md": 1998,
+          ".cs": 1105,
+          ".py": 709,
+          ".pyc": 639,
+          ".backup": 285,
+          ".xaml": 169,
+          ".ps1": 31,
+          ".cache": 15,
+          ".log": 13,
+          "<none>": 12,
+          ".dll": 7,
+          ".vsidx": 6,
+          ".bin": 5,
+          ".csproj": 5,
+          ".editorconfig": 5,
+          ".props": 5,
+          ".targets": 5,
+          ".binlog": 4,
+          ".pdb": 4,
+          ".v2": 4,
+          ".template": 3,
+          ".yml": 3,
+          ".code-workspace": 2,
+          ".csv": 2,
+          ".manifest": 2,
+          ".pyx": 2,
+          ".resw": 2,
+          ".tag": 2,
+          ".tests": 2,
+          ".yaml": 2,
+          ".21812": 1,
+          ".bak": 1,
+          ".buildwithskipanalyzers": 1,
+          ".config": 1,
+          ".exe": 1,
+          ".ini": 1,
+          ".iss": 1,
+          ".js": 1,
+          ".lock": 1,
+          ".nbc": 1,
+          ".nbi": 1,
+          ".pdf": 1,
+          ".pth": 1,
+          ".sln": 1,
+          ".toml": 1,
+          ".wxs": 1,
+          ".xml": 1
+        },
+        "latest_mtime_utc": "2025-12-27T20:04:37.109801+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\$RECYCLE.BIN\\S-1-5-21-1679174251-1397833178-564913168-1001",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 1,
+        "total_bytes": 129,
+        "ext_counts": {
+          ".ini": 1
+        },
+        "latest_mtime_utc": "2025-11-21T04:40:53.937464+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\cursor\\locales",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 55,
+        "dir_count": 1,
+        "total_bytes": 44562121,
+        "ext_counts": {
+          ".pak": 55
+        },
+        "latest_mtime_utc": "2025-12-27T10:05:25.535674+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\cursor\\policies",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 2,
+        "dir_count": 2,
+        "total_bytes": 8832,
+        "ext_counts": {
+          ".adml": 1,
+          ".admx": 1
+        },
+        "latest_mtime_utc": "2025-12-27T10:05:25.537685+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\cursor\\resources",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 8694,
+        "dir_count": 2096,
+        "total_bytes": 298610466,
+        "ext_counts": {
+          ".js": 6438,
+          ".json": 910,
+          "<none>": 356,
+          ".ts": 163,
+          ".cjs": 133,
+          ".cts": 98,
+          ".svg": 98,
+          ".png": 83,
+          ".txt": 57,
+          ".mjs": 49,
+          ".md": 43,
+          ".ico": 34,
+          ".mp3": 27,
+          ".css": 21,
+          ".node": 20,
+          ".woff2": 20,
+          ".code-snippets": 15,
+          ".sh": 15,
+          ".html": 14,
+          ".wasm": 11,
+          ".proto": 8,
+          ".yml": 8,
+          ".mts": 7,
+          ".tsx": 6,
+          ".exe": 5,
+          ".scm": 5,
+          ".zsh": 4,
+          ".dll": 3,
+          ".filters": 3,
+          ".vcxproj": 3,
+          ".bat": 2,
+          ".cmd": 2,
+          ".flow": 2,
+          ".scpt": 2,
+          ".ttf": 2,
+          ".apache2": 1,
+          ".apk": 1,
+          ".asar": 1,
+          ".bak": 1,
+          ".bin": 1,
+          ".bnf": 1,
+          ".bsd": 1,
+          ".config": 1,
+          ".csv": 1,
+          ".fish": 1,
+          ".gif": 1,
+          ".jsdoc": 1,
+          ".lastbuildstate": 1,
+          ".lcov": 1,
+          ".lock": 1,
+          ".mit": 1,
+          ".nix": 1,
+          ".njs": 1,
+          ".patch": 1,
+          ".ps1": 1,
+          ".recipe": 1,
+          ".sln": 1,
+          ".tlog": 1,
+          ".tmlanguage": 1,
+          ".toml": 1,
+          ".woff": 1,
+          ".xml": 1
+        },
+        "latest_mtime_utc": "2025-12-27T10:05:35.939066+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\cursor\\tools",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 1,
+        "total_bytes": 3057128,
+        "ext_counts": {
+          ".exe": 1
+        },
+        "latest_mtime_utc": "2025-12-27T10:05:35.632769+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\testdisk-7.2-WIP\\63",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 1,
+        "total_bytes": 1518,
+        "ext_counts": {
+          "<none>": 1
+        },
+        "latest_mtime_utc": "2025-12-05T09:36:25.423782+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\testdisk-7.2-WIP\\platforms",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 1,
+        "total_bytes": 1344156,
+        "ext_counts": {
+          ".dll": 1
+        },
+        "latest_mtime_utc": "2025-12-05T09:36:25.440000+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.buildlogs",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 459,
+        "dir_count": 18,
+        "total_bytes": 19877149,
+        "ext_counts": {
+          ".cs": 298,
+          ".backup": 142,
+          ".txt": 10,
+          ".log": 5,
+          ".json": 2,
+          ".binlog": 1,
+          ".targets": 1
+        },
+        "latest_mtime_utc": "2025-12-25T07:32:05.523055+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.continue",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 2,
+        "dir_count": 3,
+        "total_bytes": 796,
+        "ext_counts": {
+          ".yaml": 2
+        },
+        "latest_mtime_utc": "2025-12-24T01:37:33.287219+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.cursor",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 2,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-12-24T00:08:38.612310+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.github",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 6,
+        "dir_count": 3,
+        "total_bytes": 2722999,
+        "ext_counts": {
+          ".yml": 3,
+          ".csv": 1,
+          ".json": 1,
+          ".md": 1
+        },
+        "latest_mtime_utc": "2025-12-24T12:45:58.551292+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.mypy_cache",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 20447,
+        "dir_count": 1479,
+        "total_bytes": 453611323,
+        "ext_counts": {
+          ".json": 20445,
+          ".tag": 1,
+          "<none>": 1
+        },
+        "latest_mtime_utc": "2025-12-27T20:04:37.109801+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.pytest_cache",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 5,
+        "dir_count": 3,
+        "total_bytes": 639451,
+        "ext_counts": {
+          "<none>": 3,
+          ".md": 1,
+          ".tag": 1
+        },
+        "latest_mtime_utc": "2025-12-24T06:52:47.027129+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.vs",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 10,
+        "dir_count": 6,
+        "total_bytes": 2131752,
+        "ext_counts": {
+          ".bin": 4,
+          ".json": 2,
+          ".v2": 2,
+          ".vsidx": 1,
+          "<none>": 1
+        },
+        "latest_mtime_utc": "2025-12-26T17:39:44.524000+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\.vscode",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 4,
+        "dir_count": 1,
+        "total_bytes": 11790,
+        "ext_counts": {
+          ".json": 4
+        },
+        "latest_mtime_utc": "2025-12-24T21:20:47.964596+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\app",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 365,
+        "dir_count": 61,
+        "total_bytes": 6073712,
+        "ext_counts": {
+          ".py": 168,
+          ".pyc": 160,
+          ".cs": 18,
+          ".xaml": 12,
+          ".json": 2,
+          ".pyx": 2,
+          ".nbc": 1,
+          ".nbi": 1,
+          ".txt": 1
+        },
+        "latest_mtime_utc": "2025-12-27T19:50:02.422005+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\artifacts",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1,
+        "dir_count": 1,
+        "total_bytes": 568195,
+        "ext_counts": {
+          ".binlog": 1
+        },
+        "latest_mtime_utc": "2025-12-22T19:10:40.764563+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\backend",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 315,
+        "dir_count": 27,
+        "total_bytes": 5108836,
+        "ext_counts": {
+          ".py": 155,
+          ".pyc": 150,
+          ".md": 4,
+          "<none>": 3,
+          ".json": 1,
+          ".lock": 1,
+          ".toml": 1
+        },
+        "latest_mtime_utc": "2025-12-24T06:50:41.873518+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\backups",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 1,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-12-14T17:57:26.997161+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\data",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 3,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-12-10T06:45:55.772624+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\docs",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1962,
+        "dir_count": 29,
+        "total_bytes": 17975445,
+        "ext_counts": {
+          ".md": 1930,
+          ".py": 16,
+          ".json": 13,
+          ".code-workspace": 1,
+          ".js": 1,
+          ".txt": 1
+        },
+        "latest_mtime_utc": "2025-12-26T19:48:58.293297+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\engines",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 48,
+        "dir_count": 49,
+        "total_bytes": 85571,
+        "ext_counts": {
+          ".json": 47,
+          ".md": 1
+        },
+        "latest_mtime_utc": "2025-12-23T19:19:52.766876+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\installer",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 8,
+        "dir_count": 1,
+        "total_bytes": 60513,
+        "ext_counts": {
+          ".ps1": 5,
+          ".iss": 1,
+          ".md": 1,
+          ".wxs": 1
+        },
+        "latest_mtime_utc": "2025-12-15T01:41:36.150482+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\models",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 4,
+        "dir_count": 3,
+        "total_bytes": 2248,
+        "ext_counts": {
+          ".json": 2,
+          ".md": 1,
+          ".pth": 1
+        },
+        "latest_mtime_utc": "2025-12-15T14:50:27.040097+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\plugins",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 7,
+        "dir_count": 4,
+        "total_bytes": 31218,
+        "ext_counts": {
+          ".json": 3,
+          ".py": 3,
+          ".md": 1
+        },
+        "latest_mtime_utc": "2025-12-07T04:03:31.281084+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\Recovery Plan",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 3,
+        "dir_count": 1,
+        "total_bytes": 29456,
+        "ext_counts": {
+          ".md": 3
+        },
+        "latest_mtime_utc": "2025-12-26T21:18:22.799049+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\runtime",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 1,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-12-11T06:26:52.716155+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\scripts",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 17,
+        "dir_count": 1,
+        "total_bytes": 72588,
+        "ext_counts": {
+          ".ps1": 9,
+          ".py": 7,
+          ".txt": 1
+        },
+        "latest_mtime_utc": "2025-12-17T03:05:43.838151+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\shared",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 4,
+        "dir_count": 2,
+        "total_bytes": 1448,
+        "ext_counts": {
+          ".json": 4
+        },
+        "latest_mtime_utc": "2025-11-21T05:08:06.289137+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\src",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 1159,
+        "dir_count": 91,
+        "total_bytes": 26473612,
+        "ext_counts": {
+          ".cs": 783,
+          ".xaml": 156,
+          ".backup": 143,
+          ".cache": 15,
+          ".json": 11,
+          ".dll": 7,
+          ".editorconfig": 5,
+          ".vsidx": 5,
+          ".pdb": 4,
+          ".props": 4,
+          ".txt": 4,
+          ".csproj": 3,
+          ".targets": 3,
+          ".manifest": 2,
+          ".resw": 2,
+          ".tests": 2,
+          ".v2": 2,
+          "<none>": 2,
+          ".bak": 1,
+          ".bin": 1,
+          ".buildwithskipanalyzers": 1,
+          ".exe": 1,
+          ".md": 1,
+          ".xml": 1
+        },
+        "latest_mtime_utc": "2025-12-27T19:49:29.545637+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\temp",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 10,
+        "dir_count": 2,
+        "total_bytes": 8845512,
+        "ext_counts": {
+          ".txt": 7,
+          ".csv": 1,
+          ".json": 1,
+          ".xaml": 1
+        },
+        "latest_mtime_utc": "2025-12-25T09:36:30.866974+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\tests",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 706,
+        "dir_count": 91,
+        "total_bytes": 10190924,
+        "ext_counts": {
+          ".py": 347,
+          ".pyc": 328,
+          ".md": 15,
+          ".cs": 6,
+          ".json": 4,
+          ".template": 3,
+          ".csproj": 2,
+          ".21812": 1
+        },
+        "latest_mtime_utc": "2025-12-24T20:07:10.597419+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\toolchain",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 0,
+        "dir_count": 2,
+        "total_bytes": 0,
+        "ext_counts": {},
+        "latest_mtime_utc": "2025-11-21T04:49:05.795150+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\tools",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 20,
+        "dir_count": 2,
+        "total_bytes": 138492,
+        "ext_counts": {
+          ".ps1": 10,
+          ".py": 9,
+          ".pyc": 1
+        },
+        "latest_mtime_utc": "2025-12-27T20:04:31.030000+00:00"
+      }
+    },
+    {
+      "bucket_path": "E:\\VoiceStudio\\xaml_bisect_tmp",
+      "kind": "directory_bucket",
+      "depth": 2,
+      "classification": "unclassified",
+      "stats": {
+        "file_count": 2485,
+        "dir_count": 1,
+        "total_bytes": 2838840,
+        "ext_counts": {
+          ".txt": 2485
+        },
+        "latest_mtime_utc": "2025-12-22T18:33:50.207111+00:00"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "path": "E:\\System Volume Information",
+      "error": "PermissionError",
+      "detail": "[WinError 5] Access is denied: 'E:\\\\System Volume Information'"
+    }
+  ]
+}

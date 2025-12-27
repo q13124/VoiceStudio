@@ -1,0 +1,58 @@
+{
+  "engine_id": "moviepy",
+  "name": "MoviePy",
+  "type": "video",
+  "subtype": "editing",
+  "version": "1.0",
+  "description": "Programmable video editing - cutting, concatenating, effects, compositing",
+  "author": "Zulko",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "moviepy": ">=1.0.3",
+    "imageio": ">=2.9.0",
+    "imageio-ffmpeg": ">=0.4.0"
+  },
+  "model_paths": {},
+  "supported_formats": ["mp4", "avi", "mov", "gif", "webm"],
+  "capabilities": [
+    "video_editing",
+    "cutting",
+    "concatenation",
+    "effects",
+    "compositing",
+    "audio_sync",
+    "transitions"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.moviepy_engine.MoviePyEngine",
+  "config_schema": {
+    "fps": {
+      "type": "integer",
+      "default": 24,
+      "description": "Output video FPS"
+    },
+    "codec": {
+      "type": "string",
+      "default": "libx264",
+      "enum": ["libx264", "libx265", "mpeg4"],
+      "description": "Video codec"
+    },
+    "audio_codec": {
+      "type": "string",
+      "default": "aac",
+      "enum": ["aac", "mp3", "pcm_s16le"],
+      "description": "Audio codec"
+    },
+    "bitrate": {
+      "type": "string",
+      "default": "5000k",
+      "description": "Video bitrate"
+    }
+  }
+}
+

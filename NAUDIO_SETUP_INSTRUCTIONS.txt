@@ -1,0 +1,38 @@
+================================================================================
+NAUDIO PACKAGE SETUP - Quick Instructions
+================================================================================
+
+STATUS: AudioPlayerService is fully implemented, but NAudio package needs to be added.
+
+QUICK SETUP (Choose one method):
+
+Method 1: Visual Studio
+-----------------------
+1. Open VoiceStudio solution in Visual Studio
+2. Right-click VoiceStudio.App project → Manage NuGet Packages
+3. Search "NAudio" → Install latest version (2.2.1+)
+4. Build solution
+
+Method 2: Command Line
+----------------------
+cd src/VoiceStudio.App
+dotnet add package NAudio
+dotnet restore
+dotnet build
+
+Method 3: Manual Edit
+---------------------
+Add to VoiceStudio.App.csproj:
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+VERIFICATION:
+- Build should succeed
+- AudioPlayerService.cs should compile
+- Audio playback should work in all views
+
+ESTIMATED TIME: 5 minutes
+
+================================================================================
+

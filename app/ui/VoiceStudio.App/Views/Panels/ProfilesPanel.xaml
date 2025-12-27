@@ -1,0 +1,61 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.ProfilesPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:VoiceStudio.App.Controls"
+             xmlns:vm="using:VoiceStudio.App.Views.Panels"
+             xmlns:converters="using:VoiceStudio.App.Converters"
+             xmlns:muxc="using:Microsoft.UI.Xaml.Controls">
+    <UserControl.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    </UserControl.Resources>
+    <UserControl.DataContext>
+        <vm:ProfilesViewModel x:Name="ViewModel"/>
+    </UserControl.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search and Filters -->
+        <Border Grid.Row="0" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1" Padding="{StaticResource VSQ.Spacing.Medium},{StaticResource VSQ.Spacing.Value.Small}" Background="{StaticResource VSQ.Panel.Background.DarkBrush}" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay}" PlaceholderText="Search profiles..." Margin="0,0,{StaticResource VSQ.Spacing.Medium},0"/>
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.FilteredCount, Mode=OneWay, StringFormat='{}{0} profiles'}" Style="{StaticResource VSQ.Text.Caption}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Profiles Grid -->
+        <Grid Grid.Row="1">
+            <controls:LoadingOverlay IsLoading="{x:Bind ViewModel.IsLoading, Mode=OneWay}" LoadingMessage="Loading profiles..."/>
+            <ScrollViewer>
+                <controls:EmptyState Icon="👤" Title="No Profiles" Message="No voice profiles found. Create your first profile to get started." Visibility="{x:Bind ViewModel.HasProfiles, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                <muxc:ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredProfiles, Mode=OneWay}" Visibility="{x:Bind ViewModel.HasProfiles, Mode=OneWay}">
+                    <muxc:ItemsRepeater.Layout>
+                        <muxc:UniformGridLayout Orientation="Horizontal" MinItemWidth="180" MinItemHeight="120" MaximumRowsOrColumns="0"/>
+                    </muxc:ItemsRepeater.Layout>
+                    <muxc:ItemsRepeater.ItemTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="{StaticResource VSQ.CornerRadius.Panel}" Margin="{StaticResource VSQ.Spacing.Medium}" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1" Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" Padding="{StaticResource VSQ.Spacing.Value.Small}">
+                                <StackPanel>
+                                    <Ellipse Width="48" Height="48" Fill="{StaticResource VSQ.Accent.CyanBrush}" Margin="0,0,0,{StaticResource VSQ.Spacing.Value.Small}"/>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource VSQ.Text.Body}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Tags, StringFormat='Tags: {0}'}" Style="{StaticResource VSQ.Text.Caption}" Foreground="{StaticResource VSQ.EmptyState.TextBrush}" TextTrimming="CharacterEllipsis"/>
+                                    <Border Background="{StaticResource VSQ.Accent.LimeBrush}" CornerRadius="4" Padding="4,2" Margin="0,{StaticResource VSQ.Spacing.Value.Small},0,0" Visibility="{Binding QualityScore, Converter={StaticResource NullToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding QualityScore, StringFormat='Quality: {0:P0}'}" Style="{StaticResource VSQ.Text.Caption}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </muxc:ItemsRepeater.ItemTemplate>
+                </muxc:ItemsRepeater>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
+

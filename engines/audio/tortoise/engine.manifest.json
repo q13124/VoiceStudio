@@ -1,0 +1,71 @@
+{
+  "engine_id": "tortoise",
+  "name": "Tortoise TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Tortoise TTS for ultra-realistic high-quality voice synthesis (optimized for quality over speed)",
+  "author": "Tortoise TTS Team",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "tortoise-tts": ">=2.0.0",
+    "torch": ">=2.2.2",
+    "numpy": ">=1.24.0",
+    "transformers": ">=4.30.0",
+    "scipy": ">=1.10.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\tortoise",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\tortoise\\cache"
+  },
+  "supported_languages": [
+    "en"
+  ],
+  "capabilities": [
+    "voice_cloning",
+    "multi_voice_synthesis",
+    "high_quality_synthesis",
+    "ultra_quality_mode",
+    "prosody_control",
+    "natural_speech"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 6,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.tortoise_engine.TortoiseEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    },
+    "quality_preset": {
+      "type": "string",
+      "default": "high_quality",
+      "enum": ["ultra_fast", "fast", "standard", "high_quality", "ultra_quality"],
+      "description": "Quality preset (higher quality = slower synthesis)"
+    }
+  },
+  "quality_features": {
+    "mos_estimate": "4.8-5.0",
+    "similarity_score": "very_high",
+    "naturalness": "ultra_high",
+    "use_case": "hq_render_mode",
+    "quality_presets": {
+      "ultra_fast": "fast synthesis, moderate quality",
+      "fast": "balanced speed/quality",
+      "standard": "good quality",
+      "high_quality": "high quality (default)",
+      "ultra_quality": "maximum quality, slow synthesis"
+    }
+  }
+}

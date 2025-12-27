@@ -1,0 +1,56 @@
+{
+  "engine_id": "whisper_cpp",
+  "name": "whisper.cpp",
+  "type": "audio",
+  "subtype": "stt",
+  "version": "1.0",
+  "description": "C++ implementation of Whisper - fast local STT with SRT/VTT subtitle output",
+  "author": "ggerganov",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\whisper_cpp",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\whisper_cpp\\models"
+  },
+  "supported_formats": ["wav", "mp3", "m4a", "flac", "ogg"],
+  "capabilities": [
+    "speech_to_text",
+    "transcription",
+    "srt_generation",
+    "vtt_generation",
+    "word_timestamps",
+    "language_detection"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.whisper_cpp_engine.WhisperCPPEngine",
+  "config_schema": {
+    "executable_path": {
+      "type": "string",
+      "default": "tools\\whispercpp\\whisper.exe",
+      "description": "Path to whisper.cpp executable"
+    },
+    "model": {
+      "type": "string",
+      "default": "base",
+      "enum": ["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"],
+      "description": "Whisper model size"
+    },
+    "language": {
+      "type": "string",
+      "default": "auto",
+      "description": "Language code (auto for auto-detect)"
+    },
+    "output_format": {
+      "type": "string",
+      "default": "srt",
+      "enum": ["txt", "srt", "vtt", "json"],
+      "description": "Output subtitle format"
+    }
+  }
+}
+

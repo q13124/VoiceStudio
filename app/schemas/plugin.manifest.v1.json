@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceStudio Plugin Manifest",
+  "description": "Schema for VoiceStudio plugin manifest.json files",
+  "type": "object",
+  "required": ["name", "version", "author", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin name (must be unique, lowercase, alphanumeric + underscores)",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Plugin version (semver format)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "author": {
+      "type": "string",
+      "description": "Plugin author name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Plugin description"
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Plugin capabilities",
+      "properties": {
+        "backend_routes": {
+          "type": "boolean",
+          "description": "Whether plugin provides backend API routes"
+        },
+        "ui_panels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of UI panel names provided by plugin"
+        },
+        "mcp_integration": {
+          "type": ["boolean", "string"],
+          "description": "MCP server name if plugin provides MCP integration, false otherwise"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of plugin dependencies (other plugin names)"
+    },
+    "entry_points": {
+      "type": "object",
+      "description": "Plugin entry points",
+      "properties": {
+        "backend": {
+          "type": "string",
+          "description": "Backend entry point (module.function format)"
+        },
+        "ui": {
+          "type": "string",
+          "description": "UI entry point (namespace.class format)"
+        }
+      }
+    }
+  }
+}
+

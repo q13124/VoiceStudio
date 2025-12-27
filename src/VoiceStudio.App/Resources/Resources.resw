@@ -1,0 +1,4358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    VoiceStudio Quantum+ Resource File
+    This file contains all localizable strings for the application.
+    Format: ResourceKey.Description (e.g., Button.Save, Error.ProfileNotFound)
+  -->
+  
+  <!-- Button Verbs -->
+  <data name="Button.Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Button.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Button.Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Button.Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Button.Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Button.Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Button.Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Button.Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Button.Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Button.Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Button.Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  
+  <!-- Panel Titles -->
+  <data name="Panel.Profiles.Title" xml:space="preserve">
+    <value>Voice Profiles</value>
+  </data>
+  <data name="Panel.Profiles.DisplayName" xml:space="preserve">
+    <value>Voice Profiles</value>
+  </data>
+  <data name="Panel.Timeline.Title" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="Panel.Timeline.DisplayName" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="Panel.QualityControl.Title" xml:space="preserve">
+    <value>Quality Control</value>
+  </data>
+  <data name="Panel.QualityControl.DisplayName" xml:space="preserve">
+    <value>Quality Control</value>
+  </data>
+  <data name="Panel.QualityDashboard.Title" xml:space="preserve">
+    <value>Quality Dashboard</value>
+  </data>
+  <data name="Panel.QualityDashboard.DisplayName" xml:space="preserve">
+    <value>Quality Dashboard</value>
+  </data>
+  <data name="Panel.Analyzer.DisplayName" xml:space="preserve">
+    <value>Analyzer</value>
+  </data>
+  <data name="Panel.APIKeyManager.DisplayName" xml:space="preserve">
+    <value>API Key Manager</value>
+  </data>
+  <data name="Panel.BackupRestore.DisplayName" xml:space="preserve">
+    <value>Backup &amp; Restore</value>
+  </data>
+  <data name="Panel.KeyboardShortcuts.DisplayName" xml:space="preserve">
+    <value>Keyboard Shortcuts</value>
+  </data>
+  <data name="Panel.Library.DisplayName" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="Panel.Assistant.DisplayName" xml:space="preserve">
+    <value>AI Production Assistant</value>
+  </data>
+  <data name="Panel.Diagnostics.DisplayName" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="Panel.TextSpeechEditor.DisplayName" xml:space="preserve">
+    <value>Text Speech Editor</value>
+  </data>
+  <data name="Panel.TextHighlighting.DisplayName" xml:space="preserve">
+    <value>Text Highlighting</value>
+  </data>
+  <data name="Panel.VoiceStyleTransfer.DisplayName" xml:space="preserve">
+    <value>Voice Style Transfer</value>
+  </data>
+  <data name="Panel.Help.DisplayName" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="Panel.PronunciationLexicon.DisplayName" xml:space="preserve">
+    <value>Pronunciation Lexicon</value>
+  </data>
+  <data name="Panel.EmotionStyleControl.DisplayName" xml:space="preserve">
+    <value>Emotion &amp; Style Control</value>
+  </data>
+  <data name="Panel.Recording.DisplayName" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="Panel.Lexicon.DisplayName" xml:space="preserve">
+    <value>Pronunciation Lexicon</value>
+  </data>
+  <data name="Panel.JobProgress.DisplayName" xml:space="preserve">
+    <value>Job Progress</value>
+  </data>
+  <data name="Panel.MCPDashboard.DisplayName" xml:space="preserve">
+    <value>MCP Dashboard</value>
+  </data>
+  <data name="Panel.ScriptEditor.DisplayName" xml:space="preserve">
+    <value>Script Editor</value>
+  </data>
+  <data name="Panel.TagManager.DisplayName" xml:space="preserve">
+    <value>Tag Manager</value>
+  </data>
+  <data name="Panel.SpatialStage.DisplayName" xml:space="preserve">
+    <value>Spatial Audio</value>
+  </data>
+  <data name="Panel.QualityOptimizationWizard.DisplayName" xml:space="preserve">
+    <value>Quality Optimization Wizard</value>
+  </data>
+  <data name="Panel.Prosody.DisplayName" xml:space="preserve">
+    <value>Prosody &amp; Phoneme Control</value>
+  </data>
+  <data name="Panel.VoiceMorph.DisplayName" xml:space="preserve">
+    <value>Voice Morphing</value>
+  </data>
+  <data name="Panel.MultiVoiceGenerator.DisplayName" xml:space="preserve">
+    <value>Multi-Voice Generator</value>
+  </data>
+  <data name="Panel.TextBasedSpeechEditor.DisplayName" xml:space="preserve">
+    <value>Text-Based Speech Editor</value>
+  </data>
+  <data name="Panel.QualityControl.DisplayName" xml:space="preserve">
+    <value>Quality Control</value>
+  </data>
+  <data name="Panel.AdvancedSpectrogram.DisplayName" xml:space="preserve">
+    <value>Advanced Spectrogram</value>
+  </data>
+  <data name="Panel.MixAssistant.DisplayName" xml:space="preserve">
+    <value>AI Mix Assistant</value>
+  </data>
+  <data name="Panel.MultilingualSupport.DisplayName" xml:space="preserve">
+    <value>Multilingual Support</value>
+  </data>
+  <data name="Panel.EmbeddingExplorer.DisplayName" xml:space="preserve">
+    <value>Speaker Embedding Explorer</value>
+  </data>
+  <data name="Panel.GPUStatus.DisplayName" xml:space="preserve">
+    <value>GPU Status</value>
+  </data>
+  <data name="Panel.MarkerManager.DisplayName" xml:space="preserve">
+    <value>Marker Manager</value>
+  </data>
+  <data name="Panel.EnsembleSynthesis.DisplayName" xml:space="preserve">
+    <value>Ensemble Synthesis</value>
+  </data>
+  
+  <!-- Error Messages -->
+  <data name="Error.ProfileNotFound" xml:space="preserve">
+    <value>Profile not found. Please check the profile ID and try again.</value>
+  </data>
+  <data name="Error.ProjectNotFound" xml:space="preserve">
+    <value>Project not found. Please check the project ID and try again.</value>
+  </data>
+  <data name="Error.BackendUnavailable" xml:space="preserve">
+    <value>Unable to connect to the backend. Please check your connection and try again.</value>
+  </data>
+  <data name="Error.BackendTimeout" xml:space="preserve">
+    <value>The request timed out. Please try again.</value>
+  </data>
+  <data name="Error.ValidationFailed" xml:space="preserve">
+    <value>Validation failed. Please check your input and try again.</value>
+  </data>
+  <data name="Error.LoadFailed" xml:space="preserve">
+    <value>Failed to load data. Please try again.</value>
+  </data>
+  <data name="Error.SaveFailed" xml:space="preserve">
+    <value>Failed to save. Please try again.</value>
+  </data>
+  <data name="Error.DeleteFailed" xml:space="preserve">
+    <value>Failed to delete. Please try again.</value>
+  </data>
+  
+  <!-- Success Messages -->
+  <data name="Success.ProfileCreated" xml:space="preserve">
+    <value>Profile created successfully</value>
+  </data>
+  <data name="Success.ProfileUpdated" xml:space="preserve">
+    <value>Profile updated successfully</value>
+  </data>
+  <data name="Success.ProfileDeleted" xml:space="preserve">
+    <value>Profile deleted successfully</value>
+  </data>
+  <data name="Success.ProjectCreated" xml:space="preserve">
+    <value>Project created successfully</value>
+  </data>
+  <data name="Success.Saved" xml:space="preserve">
+    <value>Saved successfully</value>
+  </data>
+  
+  <!-- Toast Messages -->
+  <data name="Toast.Success.ProfileCreated" xml:space="preserve">
+    <value>Profile created successfully</value>
+  </data>
+  <data name="Toast.Error.LoadFailed" xml:space="preserve">
+    <value>Failed to load data. Please try again.</value>
+  </data>
+  <data name="Toast.Warning.UnsavedChanges" xml:space="preserve">
+    <value>You have unsaved changes. Save before continuing?</value>
+  </data>
+  <data name="Toast.Info.Processing" xml:space="preserve">
+    <value>Processing... This may take a few moments.</value>
+  </data>
+  
+  <!-- Status Messages -->
+  <data name="Status.Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Status.Saving" xml:space="preserve">
+    <value>Saving...</value>
+  </data>
+  <data name="Status.Processing" xml:space="preserve">
+    <value>Processing...</value>
+  </data>
+  <data name="Status.Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  
+  <!-- Empty States -->
+  <data name="EmptyState.NoProfiles.Title" xml:space="preserve">
+    <value>No Profiles</value>
+  </data>
+  <data name="EmptyState.NoProfiles.Message" xml:space="preserve">
+    <value>Create your first voice profile to get started.</value>
+  </data>
+  <data name="EmptyState.NoProjects.Title" xml:space="preserve">
+    <value>No Projects</value>
+  </data>
+  <data name="EmptyState.NoProjects.Message" xml:space="preserve">
+    <value>Create your first project to get started.</value>
+  </data>
+  
+  <!-- Tooltips -->
+  <data name="Tooltip.Save" xml:space="preserve">
+    <value>Save changes (Ctrl+S)</value>
+  </data>
+  <data name="Tooltip.Delete" xml:space="preserve">
+    <value>Delete selected item</value>
+  </data>
+  <data name="Tooltip.Refresh" xml:space="preserve">
+    <value>Refresh data (F5)</value>
+  </data>
+  
+  <!-- Additional Panel Display Names -->
+  <data name="Panel.VoiceSynthesis.DisplayName" xml:space="preserve">
+    <value>Voice Synthesis</value>
+  </data>
+  <data name="Panel.EffectsMixer.DisplayName" xml:space="preserve">
+    <value>Effects &amp; Mixer</value>
+  </data>
+
+  <!-- Profile Messages -->
+  <data name="Profile.Unnamed" xml:space="preserve">
+    <value>Unnamed Profile</value>
+  </data>
+  <data name="Profile.LoadFailed" xml:space="preserve">
+    <value>Failed to load profiles</value>
+  </data>
+  <data name="Profile.CreateFailed" xml:space="preserve">
+    <value>Failed to create profile</value>
+  </data>
+  <data name="Profile.DeleteFailed" xml:space="preserve">
+    <value>Failed to delete profile</value>
+  </data>
+  <data name="Profile.PreviewFailed" xml:space="preserve">
+    <value>Failed to preview profile</value>
+  </data>
+  <data name="Profile.StopPreviewFailed" xml:space="preserve">
+    <value>Failed to stop preview</value>
+  </data>
+  <data name="Profile.EnhancementFailed" xml:space="preserve">
+    <value>Failed to enhance reference audio</value>
+  </data>
+  <data name="Profile.EnhancementComplete" xml:space="preserve">
+    <value>Enhancement complete. Quality improved by {0:P0}</value>
+  </data>
+  <data name="Profile.EnhancementApplied" xml:space="preserve">
+    <value>Enhanced reference audio has been applied to the profile</value>
+  </data>
+  <data name="Profile.PreviewEnhancedFailed" xml:space="preserve">
+    <value>Failed to preview enhanced audio</value>
+  </data>
+  <data name="Profile.ApplyEnhancedFailed" xml:space="preserve">
+    <value>Failed to apply enhanced audio</value>
+  </data>
+  <data name="Profile.QualityDegradationAlert" xml:space="preserve">
+    <value>Quality Degradation Alert</value>
+  </data>
+  <data name="Profile.QualityDegradationCritical" xml:space="preserve">
+    <value>Critical quality degradation detected: {0} critical alert(s), {1} warning(s)</value>
+  </data>
+  <data name="Profile.QualityDegradationWarning" xml:space="preserve">
+    <value>Quality degradation detected: {0} warning(s)</value>
+  </data>
+  <data name="Profile.BatchDeleteComplete" xml:space="preserve">
+    <value>Deleted {0} profile(s)</value>
+  </data>
+  <data name="Profile.BatchDeletePartial" xml:space="preserve">
+    <value>Some profiles could not be deleted ({0}/{1} succeeded)</value>
+  </data>
+  <data name="Profile.BatchDeleteFailed" xml:space="preserve">
+    <value>Failed to delete profiles</value>
+  </data>
+
+  <!-- Project Messages -->
+  <data name="Project.Unnamed" xml:space="preserve">
+    <value>Unnamed Project</value>
+  </data>
+  <data name="Project.LoadFailed" xml:space="preserve">
+    <value>Failed to load projects</value>
+  </data>
+  <data name="Project.CreateFailed" xml:space="preserve">
+    <value>Failed to create project</value>
+  </data>
+  <data name="Project.DeleteFailed" xml:space="preserve">
+    <value>Failed to delete project</value>
+  </data>
+  <data name="Project.TrackLoadFailed" xml:space="preserve">
+    <value>Failed to load tracks</value>
+  </data>
+  <data name="Project.TrackCreateFailed" xml:space="preserve">
+    <value>Failed to create track</value>
+  </data>
+  <data name="Project.AudioLoadFailed" xml:space="preserve">
+    <value>Failed to load project audio files</value>
+  </data>
+  <data name="Project.AudioPlayFailed" xml:space="preserve">
+    <value>Failed to play audio file</value>
+  </data>
+  <data name="Project.ClipAddFailed" xml:space="preserve">
+    <value>Failed to add clip to track</value>
+  </data>
+  <data name="Project.ClipDeleteFailed" xml:space="preserve">
+    <value>Failed to delete clips</value>
+  </data>
+  <data name="Project.ClipSaveWarning" xml:space="preserve">
+    <value>Warning: Failed to save clip to backend: {0}. Clip added locally.</value>
+  </data>
+  <data name="Project.AudioSaveWarning" xml:space="preserve">
+    <value>Warning: Failed to save audio to project: {0}</value>
+  </data>
+  <data name="Project.SynthesisSaveWarning" xml:space="preserve">
+    <value>Synthesis succeeded but failed to save to project: {0}</value>
+  </data>
+  <data name="Project.ClipsDeleted" xml:space="preserve">
+    <value>Deleted {0} clip(s)</value>
+  </data>
+  <data name="Project.ClipsDeletePartial" xml:space="preserve">
+    <value>Some clips could not be deleted ({0}/{1} succeeded)</value>
+  </data>
+
+  <!-- Timeline Messages -->
+  <data name="Timeline.PlaybackFailed" xml:space="preserve">
+    <value>Failed to play audio</value>
+  </data>
+  <data name="Timeline.PlaybackStopFailed" xml:space="preserve">
+    <value>Failed to stop playback</value>
+  </data>
+  <data name="Timeline.PlaybackPauseFailed" xml:space="preserve">
+    <value>Failed to pause playback</value>
+  </data>
+  <data name="Timeline.PlaybackResumeFailed" xml:space="preserve">
+    <value>Failed to resume playback</value>
+  </data>
+  <data name="Timeline.SynthesisComplete" xml:space="preserve">
+    <value>Voice synthesis completed</value>
+  </data>
+  <data name="Timeline.SynthesisFailed" xml:space="preserve">
+    <value>Failed to synthesize voice</value>
+  </data>
+  <data name="Timeline.TrackCreated" xml:space="preserve">
+    <value>Track '{0}' created</value>
+  </data>
+  <data name="Timeline.ClipAdded" xml:space="preserve">
+    <value>Clip '{0}' added to track</value>
+  </data>
+  <data name="Timeline.CreateTrackFailed" xml:space="preserve">
+    <value>Failed to create track: {0}</value>
+  </data>
+  <data name="Timeline.CreateTrackFailedError" xml:space="preserve">
+    <value>Failed to create track</value>
+  </data>
+  <data name="Timeline.StopPlaybackFailed" xml:space="preserve">
+    <value>Failed to stop playback: {0}</value>
+  </data>
+  <data name="Timeline.LoadProjectAudioFailed" xml:space="preserve">
+    <value>Failed to load project audio files</value>
+  </data>
+  <data name="Timeline.PlayAudioFileFailed" xml:space="preserve">
+    <value>Failed to play audio file</value>
+  </data>
+  <data name="Timeline.TrackName" xml:space="preserve">
+    <value>Track {0}</value>
+  </data>
+
+  <!-- Voice Synthesis Messages -->
+  <data name="VoiceSynthesis.ProfilesLoaded" xml:space="preserve">
+    <value>Profiles Loaded</value>
+  </data>
+  <data name="VoiceSynthesis.ProfilesLoadedCount" xml:space="preserve">
+    <value>Loaded {0} voice profile(s)</value>
+  </data>
+  <data name="VoiceSynthesis.ProfilesLoadFailed" xml:space="preserve">
+    <value>Failed to Load Profiles</value>
+  </data>
+  <data name="VoiceSynthesis.SynthesisComplete" xml:space="preserve">
+    <value>Synthesis Complete</value>
+  </data>
+  <data name="VoiceSynthesis.SynthesisCompleteDetail" xml:space="preserve">
+    <value>Voice synthesis complete! Duration: {0:F2}s, Quality: {1}</value>
+  </data>
+  <data name="VoiceSynthesis.SynthesisFailed" xml:space="preserve">
+    <value>Synthesis Failed</value>
+  </data>
+  <data name="VoiceSynthesis.SynthesisFailedDetail" xml:space="preserve">
+    <value>Synthesis failed: {0}</value>
+  </data>
+  <data name="VoiceSynthesis.SynthesisCancelled" xml:space="preserve">
+    <value>Synthesis cancelled</value>
+  </data>
+  <data name="VoiceSynthesis.PlaybackLoading" xml:space="preserve">
+    <value>Loading audio for playback...</value>
+  </data>
+  <data name="VoiceSynthesis.PlaybackPlaying" xml:space="preserve">
+    <value>Playing audio...</value>
+  </data>
+  <data name="VoiceSynthesis.PlaybackCancelled" xml:space="preserve">
+    <value>Playback cancelled</value>
+  </data>
+  <data name="VoiceSynthesis.PlaybackStopped" xml:space="preserve">
+    <value>Playback stopped</value>
+  </data>
+  <data name="VoiceSynthesis.PlaybackFailed" xml:space="preserve">
+    <value>Failed to play audio</value>
+  </data>
+  <data name="VoiceSynthesis.StopPlaybackFailed" xml:space="preserve">
+    <value>Failed to stop playback</value>
+  </data>
+  <data name="VoiceSynthesis.TextAnalysisFailed" xml:space="preserve">
+    <value>Text Analysis Failed</value>
+  </data>
+  <data name="VoiceSynthesis.QualityRecommendationFailed" xml:space="preserve">
+    <value>Quality Recommendation Failed</value>
+  </data>
+  <data name="VoiceSynthesis.RecommendationsApplied" xml:space="preserve">
+    <value>Recommendations Applied</value>
+  </data>
+  <data name="VoiceSynthesis.RecommendationsAppliedDetail" xml:space="preserve">
+    <value>Engine: {0}, Enhance Quality: {1}</value>
+  </data>
+  <data name="VoiceSynthesis.ApplyRecommendationsFailed" xml:space="preserve">
+    <value>Failed to Apply Recommendations</value>
+  </data>
+  <data name="VoiceSynthesis.EnsembleStarted" xml:space="preserve">
+    <value>Ensemble Started</value>
+  </data>
+  <data name="VoiceSynthesis.EnsembleStartedDetail" xml:space="preserve">
+    <value>Multi-engine ensemble synthesis started with {0} engine(s)</value>
+  </data>
+  <data name="VoiceSynthesis.EnsembleFailed" xml:space="preserve">
+    <value>Ensemble Failed</value>
+  </data>
+  <data name="VoiceSynthesis.EnsembleComplete" xml:space="preserve">
+    <value>Ensemble Complete</value>
+  </data>
+  <data name="VoiceSynthesis.EnsembleCompleteDetail" xml:space="preserve">
+    <value>Best engine selected. Quality: {0:P0}</value>
+  </data>
+  <data name="VoiceSynthesis.CheckStatusFailed" xml:space="preserve">
+    <value>Failed to Check Status</value>
+  </data>
+  <data name="VoiceSynthesis.PipelinesLoadFailed" xml:space="preserve">
+    <value>Failed to Load Pipelines</value>
+  </data>
+  <data name="VoiceSynthesis.PipelinePreview" xml:space="preserve">
+    <value>Pipeline Preview</value>
+  </data>
+  <data name="VoiceSynthesis.PreviewFailed" xml:space="preserve">
+    <value>Preview Failed</value>
+  </data>
+  <data name="VoiceSynthesis.ComparisonFailed" xml:space="preserve">
+    <value>Comparison Failed</value>
+  </data>
+  <data name="VoiceSynthesis.PipelineComparison" xml:space="preserve">
+    <value>Pipeline Comparison</value>
+  </data>
+
+  <!-- Effects Mixer Messages -->
+  <data name="EffectsMixer.EffectChainsLoaded" xml:space="preserve">
+    <value>Effect Chains Loaded</value>
+  </data>
+  <data name="EffectsMixer.EffectChainsLoadedCount" xml:space="preserve">
+    <value>Loaded {0} effect chain(s)</value>
+  </data>
+  <data name="EffectsMixer.EffectChainsLoadFailed" xml:space="preserve">
+    <value>Failed to Load Effect Chains</value>
+  </data>
+  <data name="EffectsMixer.EffectPresetsLoaded" xml:space="preserve">
+    <value>Effect Presets Loaded</value>
+  </data>
+  <data name="EffectsMixer.EffectPresetsLoadedCount" xml:space="preserve">
+    <value>Loaded {0} preset(s)</value>
+  </data>
+  <data name="EffectsMixer.EffectPresetsLoadFailed" xml:space="preserve">
+    <value>Failed to Load Effect Presets</value>
+  </data>
+  <data name="EffectsMixer.EffectChainCreated" xml:space="preserve">
+    <value>Effect Chain Created</value>
+  </data>
+  <data name="EffectsMixer.EffectChainCreatedDetail" xml:space="preserve">
+    <value>Effect chain '{0}' created successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectChainCreateFailed" xml:space="preserve">
+    <value>Failed to Create Effect Chain</value>
+  </data>
+  <data name="EffectsMixer.EffectChainDeleted" xml:space="preserve">
+    <value>Effect Chain Deleted</value>
+  </data>
+  <data name="EffectsMixer.EffectChainDeletedDetail" xml:space="preserve">
+    <value>Effect chain '{0}' deleted successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectChainDeleteFailed" xml:space="preserve">
+    <value>Failed to Delete Effect Chain</value>
+  </data>
+  <data name="EffectsMixer.EffectChainApplied" xml:space="preserve">
+    <value>Effect Chain Applied</value>
+  </data>
+  <data name="EffectsMixer.EffectChainAppliedDetail" xml:space="preserve">
+    <value>Effect chain '{0}' applied successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectChainApplyFailed" xml:space="preserve">
+    <value>Failed to Apply Effect Chain</value>
+  </data>
+  <data name="EffectsMixer.EffectAdded" xml:space="preserve">
+    <value>Effect Added</value>
+  </data>
+  <data name="EffectsMixer.EffectAddedDetail" xml:space="preserve">
+    <value>Effect '{0}' added to chain successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectAddFailed" xml:space="preserve">
+    <value>Failed to Add Effect</value>
+  </data>
+  <data name="EffectsMixer.EffectRemoved" xml:space="preserve">
+    <value>Effect Removed</value>
+  </data>
+  <data name="EffectsMixer.EffectRemovedDetail" xml:space="preserve">
+    <value>Effect removed from chain successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectRemoveFailed" xml:space="preserve">
+    <value>Failed to Remove Effect</value>
+  </data>
+  <data name="EffectsMixer.EffectChainSaved" xml:space="preserve">
+    <value>Effect Chain Saved</value>
+  </data>
+  <data name="EffectsMixer.EffectChainSavedDetail" xml:space="preserve">
+    <value>Effect chain '{0}' saved successfully</value>
+  </data>
+  <data name="EffectsMixer.EffectChainSaveFailed" xml:space="preserve">
+    <value>Failed to Save Effect Chain</value>
+  </data>
+  <data name="EffectsMixer.MixerStateLoadFailed" xml:space="preserve">
+    <value>Failed to load mixer state</value>
+  </data>
+  <data name="EffectsMixer.MixerStateSaveFailed" xml:space="preserve">
+    <value>Failed to save mixer state</value>
+  </data>
+  <data name="EffectsMixer.MixerStateResetFailed" xml:space="preserve">
+    <value>Failed to reset mixer state</value>
+  </data>
+  <data name="EffectsMixer.MixerPresetsLoadFailed" xml:space="preserve">
+    <value>Failed to load mixer presets</value>
+  </data>
+  <data name="EffectsMixer.MixerPresetCreateFailed" xml:space="preserve">
+    <value>Failed to create mixer preset</value>
+  </data>
+  <data name="EffectsMixer.MixerPresetApplyFailed" xml:space="preserve">
+    <value>Failed to apply mixer preset</value>
+  </data>
+  <data name="EffectsMixer.SendCreateFailed" xml:space="preserve">
+    <value>Failed to create send</value>
+  </data>
+  <data name="EffectsMixer.ReturnCreateFailed" xml:space="preserve">
+    <value>Failed to create return</value>
+  </data>
+  <data name="EffectsMixer.SubGroupCreateFailed" xml:space="preserve">
+    <value>Failed to create sub-group</value>
+  </data>
+  <data name="EffectsMixer.SubGroupDeleteFailed" xml:space="preserve">
+    <value>Failed to delete sub-group</value>
+  </data>
+  <data name="EffectsMixer.SubGroupUpdateFailed" xml:space="preserve">
+    <value>Failed to update sub-group</value>
+  </data>
+  <data name="EffectsMixer.SendUpdateFailed" xml:space="preserve">
+    <value>Failed to update send</value>
+  </data>
+  <data name="EffectsMixer.ReturnUpdateFailed" xml:space="preserve">
+    <value>Failed to update return</value>
+  </data>
+  <data name="EffectsMixer.SendDeleteFailed" xml:space="preserve">
+    <value>Failed to delete send</value>
+  </data>
+  <data name="EffectsMixer.ReturnDeleteFailed" xml:space="preserve">
+    <value>Failed to delete return</value>
+  </data>
+  <data name="EffectsMixer.MoveEffectFailed" xml:space="preserve">
+    <value>Failed to move effect</value>
+  </data>
+  <data name="EffectsMixer.SendName" xml:space="preserve">
+    <value>Send {0}</value>
+  </data>
+  <data name="EffectsMixer.ReturnName" xml:space="preserve">
+    <value>Return {0}</value>
+  </data>
+  <data name="EffectsMixer.SubGroupName" xml:space="preserve">
+    <value>Sub-Group {0}</value>
+  </data>
+  <data name="EffectsMixer.ChannelName" xml:space="preserve">
+    <value>Ch {0}</value>
+  </data>
+
+  <!-- Quality Dashboard Messages -->
+  <data name="QualityDashboard.OverviewLoaded" xml:space="preserve">
+    <value>Quality overview loaded successfully.</value>
+  </data>
+  <data name="QualityDashboard.OverviewLoadFailed" xml:space="preserve">
+    <value>Failed to load quality overview</value>
+  </data>
+  <data name="QualityDashboard.OverviewLoadFailedDetail" xml:space="preserve">
+    <value>Failed to load quality overview: {0}</value>
+  </data>
+  <data name="QualityDashboard.PresetsLoaded" xml:space="preserve">
+    <value>Loaded {0} quality presets.</value>
+  </data>
+  <data name="QualityDashboard.PresetsLoadFailed" xml:space="preserve">
+    <value>Failed to load quality presets</value>
+  </data>
+  <data name="QualityDashboard.PresetsLoadFailedDetail" xml:space="preserve">
+    <value>Failed to load quality presets: {0}</value>
+  </data>
+  <data name="QualityDashboard.TrendsLoaded" xml:space="preserve">
+    <value>Loaded {0} quality trend data points.</value>
+  </data>
+  <data name="QualityDashboard.TrendsLoadFailed" xml:space="preserve">
+    <value>Failed to load quality trends</value>
+  </data>
+  <data name="QualityDashboard.TrendsLoadFailedDetail" xml:space="preserve">
+    <value>Failed to load quality trends: {0}</value>
+  </data>
+  <data name="QualityDashboard.RefreshComplete" xml:space="preserve">
+    <value>Quality dashboard refreshed successfully.</value>
+  </data>
+  <data name="QualityDashboard.RefreshFailed" xml:space="preserve">
+    <value>Failed to refresh</value>
+  </data>
+  <data name="QualityDashboard.RefreshFailedDetail" xml:space="preserve">
+    <value>Failed to refresh: {0}</value>
+  </data>
+  <data name="QualityDashboard.StatusMessage" xml:space="preserve">
+    <value>Quality dashboard requires database integration for full functionality. Basic quality metrics and presets are available.</value>
+  </data>
+  <data name="QualityDashboard.StatusMessageBasic" xml:space="preserve">
+    <value>Full quality dashboard requires database integration. Showing available quality metrics and presets.</value>
+  </data>
+  <data name="QualityDashboard.StatusMessageSuccess" xml:space="preserve">
+    <value>Quality dashboard data loaded successfully.</value>
+  </data>
+
+  <!-- Analyzer Messages -->
+  <data name="Analyzer.AnalysisComplete" xml:space="preserve">
+    <value>Analysis Complete</value>
+  </data>
+  <data name="Analyzer.AnalysisLoadedSuccess" xml:space="preserve">
+    <value>{0} analysis loaded successfully</value>
+  </data>
+  <data name="Analyzer.AnalysisFailed" xml:space="preserve">
+    <value>Analysis Failed</value>
+  </data>
+  <data name="Analyzer.LoadVisualizationFailed" xml:space="preserve">
+    <value>Failed to load visualization data: {0}</value>
+  </data>
+
+  <!-- Model Manager Messages -->
+  <data name="ModelManager.ModelsLoaded" xml:space="preserve">
+    <value>Loaded {0} model(s)</value>
+  </data>
+  <data name="ModelManager.LoadModelsFailed" xml:space="preserve">
+    <value>Failed to load models: {0}</value>
+  </data>
+  <data name="ModelManager.VerificationSuccess" xml:space="preserve">
+    <value>✓ Model checksum verified successfully</value>
+  </data>
+  <data name="ModelManager.VerificationSuccessStatus" xml:space="preserve">
+    <value>Model checksum verified successfully</value>
+  </data>
+  <data name="ModelManager.VerificationFailed" xml:space="preserve">
+    <value>✗ Verification failed: {0}</value>
+  </data>
+  <data name="ModelManager.VerificationError" xml:space="preserve">
+    <value>✗ Verification error: {0}</value>
+  </data>
+  <data name="ModelManager.ChecksumUpdatedSuccess" xml:space="preserve">
+    <value>✓ Checksum updated successfully</value>
+  </data>
+  <data name="ModelManager.ChecksumUpdatedStatus" xml:space="preserve">
+    <value>Checksum updated successfully</value>
+  </data>
+  <data name="ModelManager.UpdateChecksumFailed" xml:space="preserve">
+    <value>Failed to update checksum: {0}</value>
+  </data>
+  <data name="ModelManager.ModelDeletedSuccess" xml:space="preserve">
+    <value>Model '{0}' deleted successfully</value>
+  </data>
+  <data name="ModelManager.DeleteModelFailed" xml:space="preserve">
+    <value>Failed to delete model: {0}</value>
+  </data>
+  <data name="ModelManager.LoadStorageStatsFailed" xml:space="preserve">
+    <value>Failed to load storage stats: {0}</value>
+  </data>
+  <data name="ModelManager.ModelExportedSuccess" xml:space="preserve">
+    <value>✓ Model exported to {0}</value>
+  </data>
+  <data name="ModelManager.ModelExportedStatus" xml:space="preserve">
+    <value>Model exported to {0}</value>
+  </data>
+  <data name="ModelManager.ExportModelFailed" xml:space="preserve">
+    <value>Failed to export model: {0}</value>
+  </data>
+  <data name="ModelManager.ModelImportedSuccess" xml:space="preserve">
+    <value>✓ Model imported: {0}/{1}</value>
+  </data>
+  <data name="ModelManager.ModelImportedStatus" xml:space="preserve">
+    <value>Model imported: {0}/{1}</value>
+  </data>
+  <data name="ModelManager.ImportModelFailed" xml:space="preserve">
+    <value>Failed to import model: {0}</value>
+  </data>
+
+  <!-- API Key Manager Messages -->
+  <data name="APIKeyManager.LoadKeysFailed" xml:space="preserve">
+    <value>Failed to load API keys: {0}</value>
+  </data>
+  <data name="APIKeyManager.ServiceNameAndKeyRequired" xml:space="preserve">
+    <value>Service name and key value are required</value>
+  </data>
+  <data name="APIKeyManager.KeyCreatedSuccess" xml:space="preserve">
+    <value>API key for {0} created successfully</value>
+  </data>
+  <data name="APIKeyManager.CreateKeyFailed" xml:space="preserve">
+    <value>Failed to create API key: {0}</value>
+  </data>
+  <data name="APIKeyManager.KeyUpdatedSuccess" xml:space="preserve">
+    <value>API key updated successfully</value>
+  </data>
+  <data name="APIKeyManager.UpdateKeyFailed" xml:space="preserve">
+    <value>Failed to update API key: {0}</value>
+  </data>
+  <data name="APIKeyManager.KeyDeletedSuccess" xml:space="preserve">
+    <value>API key deleted successfully</value>
+  </data>
+  <data name="APIKeyManager.DeleteKeyFailed" xml:space="preserve">
+    <value>Failed to delete API key: {0}</value>
+  </data>
+  <data name="APIKeyManager.KeyValid" xml:space="preserve">
+    <value>API key is valid</value>
+  </data>
+  <data name="APIKeyManager.ValidationFailed" xml:space="preserve">
+    <value>API key validation failed</value>
+  </data>
+  <data name="APIKeyManager.ValidateKeyFailed" xml:space="preserve">
+    <value>Failed to validate API key: {0}</value>
+  </data>
+  <data name="APIKeyManager.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="APIKeyManager.LoadServicesFailed" xml:space="preserve">
+    <value>Failed to load supported services: {0}</value>
+  </data>
+  <data name="APIKeyManager.StatusActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="APIKeyManager.StatusInactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="APIKeyManager.Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+
+  <!-- Backup & Restore Messages -->
+  <data name="BackupRestore.LoadBackupsFailed" xml:space="preserve">
+    <value>Failed to load backups: {0}</value>
+  </data>
+  <data name="BackupRestore.BackupNameRequired" xml:space="preserve">
+    <value>Backup name is required</value>
+  </data>
+  <data name="BackupRestore.BackupCreatedSuccess" xml:space="preserve">
+    <value>Backup '{0}' created successfully</value>
+  </data>
+  <data name="BackupRestore.CreateBackupFailed" xml:space="preserve">
+    <value>Failed to create backup: {0}</value>
+  </data>
+  <data name="BackupRestore.DownloadingBackup" xml:space="preserve">
+    <value>Downloading backup '{0}'...</value>
+  </data>
+  <data name="BackupRestore.BackupDownloaded" xml:space="preserve">
+    <value>Backup '{0}' downloaded to {1}</value>
+  </data>
+  <data name="BackupRestore.DownloadCancelled" xml:space="preserve">
+    <value>Download cancelled</value>
+  </data>
+  <data name="BackupRestore.DownloadBackupFailed" xml:space="preserve">
+    <value>Failed to download backup: {0}</value>
+  </data>
+  <data name="BackupRestore.BackupRestoredSuccess" xml:space="preserve">
+    <value>Backup '{0}' restored successfully</value>
+  </data>
+  <data name="BackupRestore.RestoreBackupFailed" xml:space="preserve">
+    <value>Failed to restore backup: {0}</value>
+  </data>
+  <data name="BackupRestore.BackupDeleted" xml:space="preserve">
+    <value>Backup '{0}' deleted</value>
+  </data>
+  <data name="BackupRestore.DeleteBackupFailed" xml:space="preserve">
+    <value>Failed to delete backup: {0}</value>
+  </data>
+  <data name="BackupRestore.SelectingBackupFile" xml:space="preserve">
+    <value>Selecting backup file...</value>
+  </data>
+  <data name="BackupRestore.UploadingBackup" xml:space="preserve">
+    <value>Uploading backup '{0}'...</value>
+  </data>
+  <data name="BackupRestore.BackupUploadedSuccess" xml:space="preserve">
+    <value>Backup '{0}' uploaded successfully</value>
+  </data>
+  <data name="BackupRestore.UploadCancelled" xml:space="preserve">
+    <value>Upload cancelled</value>
+  </data>
+  <data name="BackupRestore.UploadBackupFailed" xml:space="preserve">
+    <value>Failed to upload backup: {0}</value>
+  </data>
+
+  <!-- Voice Cloning Wizard Messages -->
+  <data name="VoiceCloningWizard.AudioValidatedSuccess" xml:space="preserve">
+    <value>Audio validated successfully</value>
+  </data>
+  <data name="VoiceCloningWizard.AudioValidationFoundIssues" xml:space="preserve">
+    <value>Audio validation found issues</value>
+  </data>
+  <data name="VoiceCloningWizard.AudioValidated" xml:space="preserve">
+    <value>Audio Validated</value>
+  </data>
+  <data name="VoiceCloningWizard.AudioValidationPassed" xml:space="preserve">
+    <value>Audio file validation passed</value>
+  </data>
+  <data name="VoiceCloningWizard.ValidationFailed" xml:space="preserve">
+    <value>Validation Failed</value>
+  </data>
+  <data name="VoiceCloningWizard.ValidationFoundIssues" xml:space="preserve">
+    <value>Found {0} issue(s) with the audio file</value>
+  </data>
+  <data name="VoiceCloningWizard.ValidateAudioFailed" xml:space="preserve">
+    <value>Failed to validate audio: {0}</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingStarted" xml:space="preserve">
+    <value>Processing Started</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingStartedDetail" xml:space="preserve">
+    <value>Voice cloning processing has started</value>
+  </data>
+  <data name="VoiceCloningWizard.StartProcessingFailed" xml:space="preserve">
+    <value>Failed to start processing: {0}</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingFailed" xml:space="preserve">
+    <value>Processing Failed</value>
+  </data>
+  <data name="VoiceCloningWizard.UnknownProfile" xml:space="preserve">
+    <value>Unknown Profile</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingComplete" xml:space="preserve">
+    <value>Processing Complete</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingCompleteDetail" xml:space="preserve">
+    <value>Voice cloning completed for '{0}'</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingFailedStatus" xml:space="preserve">
+    <value>Processing failed</value>
+  </data>
+  <data name="VoiceCloningWizard.ProcessingFailedDetail" xml:space="preserve">
+    <value>Voice cloning processing failed</value>
+  </data>
+  <data name="VoiceCloningWizard.PollStatusFailed" xml:space="preserve">
+    <value>Failed to poll processing status: {0}</value>
+  </data>
+  <data name="VoiceCloningWizard.ProfileCreatedSuccess" xml:space="preserve">
+    <value>Profile '{0}' created successfully</value>
+  </data>
+  <data name="VoiceCloningWizard.WizardComplete" xml:space="preserve">
+    <value>Wizard Complete</value>
+  </data>
+  <data name="VoiceCloningWizard.FinalizeWizardFailed" xml:space="preserve">
+    <value>Failed to finalize wizard: {0}</value>
+  </data>
+  <data name="VoiceCloningWizard.FinalizationFailed" xml:space="preserve">
+    <value>Finalization Failed</value>
+  </data>
+  <data name="VoiceCloningWizard.BrowseAudioFileFailed" xml:space="preserve">
+    <value>Failed to browse audio file: {0}</value>
+  </data>
+  <data name="VoiceCloningWizard.UploadAudioFileFailed" xml:space="preserve">
+    <value>Failed to upload audio file: {0}</value>
+  </data>
+
+  <!-- Keyboard Shortcuts Messages -->
+  <data name="KeyboardShortcuts.LoadShortcutsFailed" xml:space="preserve">
+    <value>Failed to load shortcuts: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.ShortcutUpdated" xml:space="preserve">
+    <value>Shortcut updated</value>
+  </data>
+  <data name="KeyboardShortcuts.UpdateShortcutFailed" xml:space="preserve">
+    <value>Failed to update shortcut: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.ShortcutResetToDefault" xml:space="preserve">
+    <value>Shortcut reset to default</value>
+  </data>
+  <data name="KeyboardShortcuts.ResetShortcutFailed" xml:space="preserve">
+    <value>Failed to reset shortcut: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.AllShortcutsReset" xml:space="preserve">
+    <value>All shortcuts reset to defaults</value>
+  </data>
+  <data name="KeyboardShortcuts.ResetAllFailed" xml:space="preserve">
+    <value>Failed to reset shortcuts: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.SaveShortcutFailed" xml:space="preserve">
+    <value>Failed to save shortcut: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.ConflictsWith" xml:space="preserve">
+    <value>Conflicts with: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.CheckConflictError" xml:space="preserve">
+    <value>Error checking conflict: {0}</value>
+  </data>
+  <data name="KeyboardShortcuts.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+
+  <!-- Library Messages -->
+  <data name="Library.LoadFoldersFailed" xml:space="preserve">
+    <value>Failed to load folders: {0}</value>
+  </data>
+  <data name="Library.SearchAssetsFailed" xml:space="preserve">
+    <value>Failed to search assets: {0}</value>
+  </data>
+  <data name="Library.FolderCreated" xml:space="preserve">
+    <value>Folder created</value>
+  </data>
+  <data name="Library.FolderCreatedSuccess" xml:space="preserve">
+    <value>Folder '{0}' created</value>
+  </data>
+  <data name="Library.CreateFolderFailed" xml:space="preserve">
+    <value>Failed to create folder: {0}</value>
+  </data>
+  <data name="Library.AssetDeleted" xml:space="preserve">
+    <value>Asset deleted</value>
+  </data>
+  <data name="Library.AssetDeletedSuccess" xml:space="preserve">
+    <value>Asset '{0}' deleted</value>
+  </data>
+  <data name="Library.DeleteAssetFailed" xml:space="preserve">
+    <value>Failed to delete asset: {0}</value>
+  </data>
+  <data name="Library.LibraryRefreshed" xml:space="preserve">
+    <value>Library refreshed</value>
+  </data>
+  <data name="Library.LoadAssetTypesFailed" xml:space="preserve">
+    <value>Failed to load asset types: {0}</value>
+  </data>
+  <data name="Library.EnterFolderName" xml:space="preserve">
+    <value>Enter folder name</value>
+  </data>
+  <data name="Library.NewFolder" xml:space="preserve">
+    <value>New Folder</value>
+  </data>
+  <data name="Library.CreateNewFolder" xml:space="preserve">
+    <value>Create New Folder</value>
+  </data>
+  <data name="Library.FolderNameInvalidChars" xml:space="preserve">
+    <value>Folder name contains invalid characters</value>
+  </data>
+  <data name="Library.UnnamedAsset" xml:space="preserve">
+    <value>Unnamed Asset</value>
+  </data>
+  <data name="Library.AssetsDeleted" xml:space="preserve">
+    <value>{0} asset(s) deleted</value>
+  </data>
+  <data name="Library.AssetsDeletedSuccess" xml:space="preserve">
+    <value>Deleted {0} asset(s)</value>
+  </data>
+  <data name="Library.AssetsDeletePartial" xml:space="preserve">
+    <value>Some assets could not be deleted ({0}/{1} succeeded)</value>
+  </data>
+  <data name="Library.DeleteAssetsFailed" xml:space="preserve">
+    <value>Failed to delete assets: {0}</value>
+  </data>
+
+  <!-- Assistant Messages -->
+  <data name="Assistant.MessageSent" xml:space="preserve">
+    <value>Message sent</value>
+  </data>
+  <data name="Assistant.SendMessageFailed" xml:space="preserve">
+    <value>Failed to send message: {0}</value>
+  </data>
+  <data name="Assistant.LoadConversationsFailed" xml:space="preserve">
+    <value>Failed to load conversations: {0}</value>
+  </data>
+  <data name="Assistant.LoadConversationFailed" xml:space="preserve">
+    <value>Failed to load conversation: {0}</value>
+  </data>
+  <data name="Assistant.NoConversationSelected" xml:space="preserve">
+    <value>No conversation selected</value>
+  </data>
+  <data name="Assistant.ConversationDeleted" xml:space="preserve">
+    <value>Conversation deleted</value>
+  </data>
+  <data name="Assistant.DeleteConversationFailed" xml:space="preserve">
+    <value>Failed to delete conversation: {0}</value>
+  </data>
+  <data name="Assistant.ProjectMustBeSelected" xml:space="preserve">
+    <value>Project must be selected</value>
+  </data>
+  <data name="Assistant.ProjectDoesNotExist" xml:space="preserve">
+    <value>Selected project does not exist. Please refresh and select a valid project.</value>
+  </data>
+  <data name="Assistant.TaskSuggestionsGenerated" xml:space="preserve">
+    <value>Generated {0} task suggestions</value>
+  </data>
+  <data name="Assistant.SuggestTasksFailed" xml:space="preserve">
+    <value>Failed to suggest tasks: {0}</value>
+  </data>
+  <data name="Assistant.ProjectNoLongerExists" xml:space="preserve">
+    <value>Previously selected project no longer exists</value>
+  </data>
+  <data name="Assistant.ProjectsLoaded" xml:space="preserve">
+    <value>Loaded {0} project(s)</value>
+  </data>
+  <data name="Assistant.LoadProjectsFailed" xml:space="preserve">
+    <value>Failed to load projects: {0}</value>
+  </data>
+  <data name="Assistant.NoProjectSelected" xml:space="preserve">
+    <value>No project selected</value>
+  </data>
+  <data name="Assistant.ProjectDoesNotExistShort" xml:space="preserve">
+    <value>Selected project does not exist</value>
+  </data>
+  <data name="Assistant.SelectedProjectDoesNotExist" xml:space="preserve">
+    <value>Selected project does not exist</value>
+  </data>
+  <data name="Assistant.ProjectLoaded" xml:space="preserve">
+    <value>Loaded project: {0}</value>
+  </data>
+  <data name="Assistant.ProjectNotFound" xml:space="preserve">
+    <value>Project not found</value>
+  </data>
+  <data name="Assistant.LoadProjectFailed" xml:space="preserve">
+    <value>Failed to load project: {0}</value>
+  </data>
+  <data name="Assistant.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Assistant.EstimatedTime" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Assistant.NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+
+  <!-- Training Messages -->
+  <data name="Training.DatasetsLoaded" xml:space="preserve">
+    <value>Loaded {0} dataset(s)</value>
+  </data>
+  <data name="Training.LoadDatasetsFailed" xml:space="preserve">
+    <value>Failed to load datasets: {0}</value>
+  </data>
+  <data name="Training.DatasetCreatedSuccess" xml:space="preserve">
+    <value>Dataset '{0}' created successfully</value>
+  </data>
+  <data name="Training.CreateDatasetFailed" xml:space="preserve">
+    <value>Failed to create dataset: {0}</value>
+  </data>
+  <data name="Training.TrainingStarted" xml:space="preserve">
+    <value>Training job started for profile {0} using {1} engine</value>
+  </data>
+  <data name="Training.StartTrainingFailed" xml:space="preserve">
+    <value>Failed to start training: {0}</value>
+  </data>
+  <data name="Training.TrainingJobsLoaded" xml:space="preserve">
+    <value>Loaded {0} training job(s)</value>
+  </data>
+  <data name="Training.LoadTrainingJobsFailed" xml:space="preserve">
+    <value>Failed to load training jobs: {0}</value>
+  </data>
+  <data name="Training.TrainingCancelled" xml:space="preserve">
+    <value>Training job {0} cancelled successfully</value>
+  </data>
+  <data name="Training.CancelTrainingFailed" xml:space="preserve">
+    <value>Failed to cancel training: {0}</value>
+  </data>
+  <data name="Training.TrainingJobDeleted" xml:space="preserve">
+    <value>Training job {0} deleted successfully</value>
+  </data>
+  <data name="Training.DeleteTrainingJobFailed" xml:space="preserve">
+    <value>Failed to delete training job: {0}</value>
+  </data>
+  <data name="Training.LoadTrainingLogsFailed" xml:space="preserve">
+    <value>Failed to load training logs: {0}</value>
+  </data>
+  <data name="Training.Calculating" xml:space="preserve">
+    <value>Calculating...</value>
+  </data>
+  <data name="Training.AlmostDone" xml:space="preserve">
+    <value>Almost done</value>
+  </data>
+  <data name="Training.TimeRemainingHours" xml:space="preserve">
+    <value>~{0:F1}h remaining</value>
+  </data>
+  <data name="Training.TimeRemainingMinutes" xml:space="preserve">
+    <value>~{0:F0}m remaining</value>
+  </data>
+  <data name="Training.TimeRemainingSeconds" xml:space="preserve">
+    <value>~{0:F0}s remaining</value>
+  </data>
+  <data name="Training.NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+
+  <!-- Diagnostics Messages -->
+  <data name="Diagnostics.ConnectionStatusUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Diagnostics.ConnectionStatusOffline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Diagnostics.ConnectionStatusCircuitOpen" xml:space="preserve">
+    <value>Circuit Open (Temporarily Unavailable)</value>
+  </data>
+  <data name="Diagnostics.ConnectionStatusTesting" xml:space="preserve">
+    <value>Testing Connection...</value>
+  </data>
+  <data name="Diagnostics.ConnectionStatusConnected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Diagnostics.ConnectionStatusDisconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="Diagnostics.BackendHealthy" xml:space="preserve">
+    <value>Backend API is healthy</value>
+  </data>
+  <data name="Diagnostics.BackendNotResponding" xml:space="preserve">
+    <value>Backend API is not responding</value>
+  </data>
+  <data name="Diagnostics.BackendHealthyAndResponding" xml:space="preserve">
+    <value>Backend API is healthy and responding</value>
+  </data>
+  <data name="Diagnostics.BackendNotRespondingCheckConnection" xml:space="preserve">
+    <value>Backend API is not responding. Check connection and try again.</value>
+  </data>
+  <data name="Diagnostics.HealthCheckCompleted" xml:space="preserve">
+    <value>Health check completed</value>
+  </data>
+  <data name="Diagnostics.ErrorCheckingHealth" xml:space="preserve">
+    <value>Error checking health</value>
+  </data>
+  <data name="Diagnostics.CheckHealthFailed" xml:space="preserve">
+    <value>Failed to check health: {0}</value>
+  </data>
+  <data name="Diagnostics.HealthCheckFailed" xml:space="preserve">
+    <value>Health check failed: {0}</value>
+  </data>
+  <data name="Diagnostics.TelemetryRefreshed" xml:space="preserve">
+    <value>System telemetry data has been refreshed</value>
+  </data>
+  <data name="Diagnostics.LoadTelemetryFailed" xml:space="preserve">
+    <value>Failed to load telemetry: {0}</value>
+  </data>
+  <data name="Diagnostics.VramCritical" xml:space="preserve">
+    <value>⚠️ CRITICAL: VRAM usage is very high. Close other applications or reduce audio processing load.</value>
+  </data>
+  <data name="Diagnostics.VramWarning" xml:space="preserve">
+    <value>⚠️ WARNING: VRAM usage is high. Consider closing other GPU applications.</value>
+  </data>
+  <data name="Diagnostics.VramElevated" xml:space="preserve">
+    <value>ℹ️ VRAM usage is elevated. Monitor usage if you experience performance issues.</value>
+  </data>
+  <data name="Diagnostics.LogsCleared" xml:space="preserve">
+    <value>Removed {0} log entr{1}</value>
+  </data>
+  <data name="Diagnostics.ErrorLoggingServiceNotAvailable" xml:space="preserve">
+    <value>Error logging service not available</value>
+  </data>
+  <data name="Diagnostics.ErrorLogsExported" xml:space="preserve">
+    <value>Error logs exported to {0}</value>
+  </data>
+  <data name="Diagnostics.ExportErrorLogsFailed" xml:space="preserve">
+    <value>Failed to export error logs: {0}</value>
+  </data>
+  <data name="Diagnostics.ErrorLogsCleared" xml:space="preserve">
+    <value>Removed {0} error log entr{1}</value>
+  </data>
+  <data name="Diagnostics.LogsDeleted" xml:space="preserve">
+    <value>Removed {0} selected log entr{1}</value>
+  </data>
+  <data name="Diagnostics.SelectedErrorLogsExported" xml:space="preserve">
+    <value>Exported {0} selected error log{1} to {2}</value>
+  </data>
+  <data name="Diagnostics.ExportSelectedErrorLogsFailed" xml:space="preserve">
+    <value>Failed to export selected error logs: {0}</value>
+  </data>
+  <data name="Diagnostics.ErrorLogsDeleted" xml:space="preserve">
+    <value>Removed {0} selected error log entr{1}</value>
+  </data>
+  <data name="Diagnostics.NoDescriptionAvailable" xml:space="preserve">
+    <value>No description available</value>
+  </data>
+  <data name="Diagnostics.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Diagnostics.EnvAppVersion" xml:space="preserve">
+    <value>App Version</value>
+  </data>
+  <data name="Diagnostics.EnvDotNetVersion" xml:space="preserve">
+    <value>.NET Version</value>
+  </data>
+  <data name="Diagnostics.EnvOSVersion" xml:space="preserve">
+    <value>OS Version</value>
+  </data>
+  <data name="Diagnostics.EnvOSArchitecture" xml:space="preserve">
+    <value>OS Architecture</value>
+  </data>
+  <data name="Diagnostics.EnvProcessArchitecture" xml:space="preserve">
+    <value>Process Architecture</value>
+  </data>
+  <data name="Diagnostics.EnvMachineName" xml:space="preserve">
+    <value>Machine Name</value>
+  </data>
+  <data name="Diagnostics.EnvUserName" xml:space="preserve">
+    <value>User Name</value>
+  </data>
+  <data name="Diagnostics.EnvWorkingSet" xml:space="preserve">
+    <value>Working Set</value>
+  </data>
+  <data name="Diagnostics.EnvProcessorCount" xml:space="preserve">
+    <value>Processor Count</value>
+  </data>
+  <data name="Diagnostics.FileTypeJSON" xml:space="preserve">
+    <value>JSON File</value>
+  </data>
+  <data name="Diagnostics.FileTypeKeyValue" xml:space="preserve">
+    <value>Key-Value File</value>
+  </data>
+  <data name="Diagnostics.FileTypeText" xml:space="preserve">
+    <value>Text File</value>
+  </data>
+
+  <!-- Quality Benchmark Messages -->
+  <data name="QualityBenchmark.LoadProfilesFailed" xml:space="preserve">
+    <value>Failed to load profiles: {0}</value>
+  </data>
+  <data name="QualityBenchmark.BenchmarkFailed" xml:space="preserve">
+    <value>Benchmark failed: {0}</value>
+  </data>
+  <data name="QualityBenchmark.BenchmarkComplete" xml:space="preserve">
+    <value>Benchmark complete: {0}/{1} engines successful</value>
+  </data>
+  <data name="QualityBenchmark.Success" xml:space="preserve">
+    <value>✓ Success</value>
+  </data>
+  <data name="QualityBenchmark.Failed" xml:space="preserve">
+    <value>✗ Failed: {0}</value>
+  </data>
+  <data name="QualityBenchmark.NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="QualityBenchmark.TimeDisplay" xml:space="preserve">
+    <value>{0:F2}s</value>
+  </data>
+
+  <!-- Text Speech Editor Messages -->
+  <data name="TextSpeechEditor.LoadSessionsFailed" xml:space="preserve">
+    <value>Failed to load sessions: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.SessionTitleRequired" xml:space="preserve">
+    <value>Session title is required</value>
+  </data>
+  <data name="TextSpeechEditor.SessionCreated" xml:space="preserve">
+    <value>Session created</value>
+  </data>
+  <data name="TextSpeechEditor.CreateSessionFailed" xml:space="preserve">
+    <value>Failed to create session: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.NoSessionSelected" xml:space="preserve">
+    <value>No session selected</value>
+  </data>
+  <data name="TextSpeechEditor.SessionUpdated" xml:space="preserve">
+    <value>Session updated</value>
+  </data>
+  <data name="TextSpeechEditor.UpdateSessionFailed" xml:space="preserve">
+    <value>Failed to update session: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.SessionDeleted" xml:space="preserve">
+    <value>Session deleted</value>
+  </data>
+  <data name="TextSpeechEditor.DeleteSessionFailed" xml:space="preserve">
+    <value>Failed to delete session: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.VoiceProfileRequired" xml:space="preserve">
+    <value>Voice profile must be selected</value>
+  </data>
+  <data name="TextSpeechEditor.SynthesisComplete" xml:space="preserve">
+    <value>Synthesis complete: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.SynthesizeFailed" xml:space="preserve">
+    <value>Failed to synthesize: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.PreviewRequirements" xml:space="preserve">
+    <value>Transcript and voice profile are required for preview</value>
+  </data>
+  <data name="TextSpeechEditor.PreviewGenerated" xml:space="preserve">
+    <value>Preview generated successfully</value>
+  </data>
+  <data name="TextSpeechEditor.GeneratePreviewFailed" xml:space="preserve">
+    <value>Failed to generate preview: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="TextSpeechEditor.LoadProjectsFailed" xml:space="preserve">
+    <value>Failed to load projects: {0}</value>
+  </data>
+  <data name="TextSpeechEditor.LoadVoiceProfilesFailed" xml:space="preserve">
+    <value>Failed to load voice profiles: {0}</value>
+  </data>
+
+  <!-- Macro Messages -->
+  <data name="Macro.Calculating" xml:space="preserve">
+    <value>Calculating...</value>
+  </data>
+  <data name="Macro.AlmostDone" xml:space="preserve">
+    <value>Almost done</value>
+  </data>
+  <data name="Macro.TimeRemainingHours" xml:space="preserve">
+    <value>~{0:F1}h remaining</value>
+  </data>
+  <data name="Macro.TimeRemainingMinutes" xml:space="preserve">
+    <value>~{0:F0}m remaining</value>
+  </data>
+  <data name="Macro.TimeRemainingSeconds" xml:space="preserve">
+    <value>~{0:F0}s remaining</value>
+  </data>
+  <data name="Macro.MacrosLoaded" xml:space="preserve">
+    <value>Loaded {0} macro(s)</value>
+  </data>
+  <data name="Macro.LoadMacrosFailed" xml:space="preserve">
+    <value>Failed to load macros: {0}</value>
+  </data>
+  <data name="Macro.MacroCreatedSuccess" xml:space="preserve">
+    <value>Macro '{0}' created successfully</value>
+  </data>
+  <data name="Macro.CreateMacroFailed" xml:space="preserve">
+    <value>Failed to create macro: {0}</value>
+  </data>
+  <data name="Macro.UnnamedMacro" xml:space="preserve">
+    <value>Unnamed Macro</value>
+  </data>
+  <data name="Macro.MacroDeletedSuccess" xml:space="preserve">
+    <value>Macro '{0}' deleted successfully</value>
+  </data>
+  <data name="Macro.DeleteMacroFailed" xml:space="preserve">
+    <value>Failed to delete macro: {0}</value>
+  </data>
+  <data name="Macro.ExecuteMacroFailed" xml:space="preserve">
+    <value>Failed to execute macro: {0}</value>
+  </data>
+  <data name="Macro.UnknownMacro" xml:space="preserve">
+    <value>Unknown Macro</value>
+  </data>
+  <data name="Macro.MacroExecutionStarted" xml:space="preserve">
+    <value>Executing macro '{0}'</value>
+  </data>
+  <data name="Macro.StartMacroExecutionFailed" xml:space="preserve">
+    <value>Failed to start macro execution: {0}</value>
+  </data>
+  <data name="Macro.MacroExecutionFailed" xml:space="preserve">
+    <value>Macro execution failed: {0}</value>
+  </data>
+  <data name="Macro.MacroExecutedSuccessfully" xml:space="preserve">
+    <value>Macro executed successfully</value>
+  </data>
+  <data name="Macro.AutomationCurvesLoaded" xml:space="preserve">
+    <value>Loaded {0} automation curve(s)</value>
+  </data>
+  <data name="Macro.LoadAutomationCurvesFailed" xml:space="preserve">
+    <value>Failed to load automation curves: {0}</value>
+  </data>
+  <data name="Macro.NewAutomationCurve" xml:space="preserve">
+    <value>New Automation Curve</value>
+  </data>
+  <data name="Macro.AutomationCurveCreatedSuccess" xml:space="preserve">
+    <value>Automation curve '{0}' created successfully</value>
+  </data>
+  <data name="Macro.CreateAutomationCurveFailed" xml:space="preserve">
+    <value>Failed to create automation curve: {0}</value>
+  </data>
+  <data name="Macro.UnnamedCurve" xml:space="preserve">
+    <value>Unnamed Curve</value>
+  </data>
+  <data name="Macro.AutomationCurveDeletedSuccess" xml:space="preserve">
+    <value>Automation curve '{0}' deleted successfully</value>
+  </data>
+  <data name="Macro.DeleteAutomationCurveFailed" xml:space="preserve">
+    <value>Failed to delete automation curve: {0}</value>
+  </data>
+  <data name="Macro.MacrosDeleted" xml:space="preserve">
+    <value>Deleted {0} macro(s)</value>
+  </data>
+  <data name="Macro.DeleteMacrosFailed" xml:space="preserve">
+    <value>Failed to delete macros: {0}</value>
+  </data>
+  <data name="Macro.AutomationCurvesDeleted" xml:space="preserve">
+    <value>Deleted {0} automation curve(s)</value>
+  </data>
+  <data name="Macro.DeleteAutomationCurvesFailed" xml:space="preserve">
+    <value>Failed to delete automation curves: {0}</value>
+  </data>
+
+  <!-- Filter Options -->
+  <data name="Filter.All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="Filter.QualityHigh" xml:space="preserve">
+    <value>High (4.0+)</value>
+  </data>
+  <data name="Filter.QualityGood" xml:space="preserve">
+    <value>Good (3.0-4.0)</value>
+  </data>
+  <data name="Filter.QualityFair" xml:space="preserve">
+    <value>Fair (2.0-3.0)</value>
+  </data>
+  <data name="Filter.QualityLow" xml:space="preserve">
+    <value>Low (&lt;2.0)</value>
+  </data>
+
+  <!-- Video Generation Messages -->
+  <data name="VideoGen.QualityOptimized" xml:space="preserve">
+    <value>Quality optimized to High preset</value>
+  </data>
+  <data name="VideoGen.GeneratingVideo" xml:space="preserve">
+    <value>Generating video...</value>
+  </data>
+  <data name="VideoGen.VideoGeneratedSuccess" xml:space="preserve">
+    <value>Video generated successfully!</value>
+  </data>
+  <data name="VideoGen.VideoGenerated" xml:space="preserve">
+    <value>Video generated: {0:F1}s, {1}x{2}</value>
+  </data>
+  <data name="VideoGen.GenerateVideoFailed" xml:space="preserve">
+    <value>Failed to generate video: {0}</value>
+  </data>
+  <data name="VideoGen.ImageSelected" xml:space="preserve">
+    <value>Image selected: {0}</value>
+  </data>
+  <data name="VideoGen.SelectImageFailed" xml:space="preserve">
+    <value>Failed to select image: {0}</value>
+  </data>
+  <data name="VideoGen.AudioSelected" xml:space="preserve">
+    <value>Audio selected: {0}</value>
+  </data>
+  <data name="VideoGen.SelectAudioFailed" xml:space="preserve">
+    <value>Failed to select audio</value>
+  </data>
+  <data name="VideoGen.UpscalingVideo" xml:space="preserve">
+    <value>Upscaling video...</value>
+  </data>
+  <data name="VideoGen.VideoUpscaledSuccess" xml:space="preserve">
+    <value>Video upscaled to {0}x{1} successfully!</value>
+  </data>
+  <data name="VideoGen.VideoUpscaled" xml:space="preserve">
+    <value>Video upscaled to {0}x{1}</value>
+  </data>
+  <data name="VideoGen.UpscaleVideoFailed" xml:space="preserve">
+    <value>Failed to upscale video: {0}</value>
+  </data>
+  <data name="VideoGen.QualityMetricsFormat" xml:space="preserve">
+    <value>{0}×{1} @ {2}fps, {3:F1}Mbps, {4}</value>
+  </data>
+  <data name="VideoGen.VideoResolutionFormat" xml:space="preserve">
+    <value>{0}×{1}</value>
+  </data>
+
+  <!-- Video Edit Messages -->
+  <data name="VideoEdit.VideoSelected" xml:space="preserve">
+    <value>Video selected: {0}</value>
+  </data>
+  <data name="VideoEdit.LoadVideoInfoFailed" xml:space="preserve">
+    <value>Failed to load video info: {0}</value>
+  </data>
+  <data name="VideoEdit.TrimmingVideo" xml:space="preserve">
+    <value>Trimming video...</value>
+  </data>
+  <data name="VideoEdit.VideoTrimmedSuccess" xml:space="preserve">
+    <value>Video trimmed successfully!</value>
+  </data>
+  <data name="VideoEdit.TrimVideoFailed" xml:space="preserve">
+    <value>Failed to trim video</value>
+  </data>
+  <data name="VideoEdit.SplittingVideo" xml:space="preserve">
+    <value>Splitting video...</value>
+  </data>
+  <data name="VideoEdit.VideoSplitSuccess" xml:space="preserve">
+    <value>Video split successfully!</value>
+  </data>
+  <data name="VideoEdit.SplitVideoFailed" xml:space="preserve">
+    <value>Failed to split video</value>
+  </data>
+  <data name="VideoEdit.ApplyingEffect" xml:space="preserve">
+    <value>Applying effect: {0}...</value>
+  </data>
+  <data name="VideoEdit.EffectAppliedSuccess" xml:space="preserve">
+    <value>Effect '{0}' applied successfully!</value>
+  </data>
+  <data name="VideoEdit.ApplyEffectFailed" xml:space="preserve">
+    <value>Failed to apply effect: {0}</value>
+  </data>
+  <data name="VideoEdit.ApplyEffectError" xml:space="preserve">
+    <value>Failed to apply effect: {0}</value>
+  </data>
+  <data name="VideoEdit.ApplyingTransition" xml:space="preserve">
+    <value>Applying transition: {0}...</value>
+  </data>
+  <data name="VideoEdit.TransitionAppliedSuccess" xml:space="preserve">
+    <value>Transition '{0}' applied successfully!</value>
+  </data>
+  <data name="VideoEdit.ApplyTransitionFailed" xml:space="preserve">
+    <value>Failed to apply transition: {0}</value>
+  </data>
+  <data name="VideoEdit.ExportingVideo" xml:space="preserve">
+    <value>Exporting video as {0}...</value>
+  </data>
+  <data name="VideoEdit.VideoExportedSuccess" xml:space="preserve">
+    <value>Video exported as {0} successfully!</value>
+  </data>
+  <data name="VideoEdit.ExportVideoFailed" xml:space="preserve">
+    <value>Failed to export video as {0}</value>
+  </data>
+
+  <!-- Help Messages -->
+  <data name="Help.LoadTopicsFailed" xml:space="preserve">
+    <value>Failed to load help topics: {0}</value>
+  </data>
+  <data name="Help.SearchFailed" xml:space="preserve">
+    <value>Failed to search help: {0}</value>
+  </data>
+  <data name="Help.LoadShortcutsFailed" xml:space="preserve">
+    <value>Failed to load shortcuts: {0}</value>
+  </data>
+  <data name="Help.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+  <data name="Help.LoadPanelHelpFailed" xml:space="preserve">
+    <value>Failed to load panel help: {0}</value>
+  </data>
+  <data name="Help.Refreshed" xml:space="preserve">
+    <value>Help refreshed</value>
+  </data>
+
+  <!-- Pronunciation Lexicon Messages -->
+  <data name="PronunciationLexicon.EntriesLoaded" xml:space="preserve">
+    <value>Loaded {0} entries</value>
+  </data>
+  <data name="PronunciationLexicon.LoadEntriesFailed" xml:space="preserve">
+    <value>Failed to load entries: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.FixValidationErrors" xml:space="preserve">
+    <value>Please fix validation errors before adding entry</value>
+  </data>
+  <data name="PronunciationLexicon.EntryAdded" xml:space="preserve">
+    <value>Added entry: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.AddEntryFailed" xml:space="preserve">
+    <value>Failed to add entry: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.FixValidationErrorsUpdate" xml:space="preserve">
+    <value>Please fix validation errors before updating entry</value>
+  </data>
+  <data name="PronunciationLexicon.EntryUpdated" xml:space="preserve">
+    <value>Updated entry: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.UpdateEntryFailed" xml:space="preserve">
+    <value>Failed to update entry: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.EntryDeleted" xml:space="preserve">
+    <value>Entry deleted</value>
+  </data>
+  <data name="PronunciationLexicon.DeleteEntryFailed" xml:space="preserve">
+    <value>Failed to delete entry: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.PronunciationEstimated" xml:space="preserve">
+    <value>Estimated pronunciation (confidence: {0:P0})</value>
+  </data>
+  <data name="PronunciationLexicon.EstimatePhonemesFailed" xml:space="preserve">
+    <value>Failed to estimate phonemes: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.NoProfilesForTesting" xml:space="preserve">
+    <value>No voice profiles available for testing</value>
+  </data>
+  <data name="PronunciationLexicon.PronunciationTested" xml:space="preserve">
+    <value>Tested pronunciation of '{0}' using lexicon</value>
+  </data>
+  <data name="PronunciationLexicon.TestPronunciationFailed" xml:space="preserve">
+    <value>Failed to test pronunciation: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="PronunciationLexicon.EntriesExported" xml:space="preserve">
+    <value>Exported {0} entries to {1}</value>
+  </data>
+  <data name="PronunciationLexicon.ExportLexiconFailed" xml:space="preserve">
+    <value>Failed to export lexicon: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.ImportFileEmpty" xml:space="preserve">
+    <value>Import file contains no entries</value>
+  </data>
+  <data name="PronunciationLexicon.EntriesImported" xml:space="preserve">
+    <value>Imported {0} entries, skipped {1}</value>
+  </data>
+  <data name="PronunciationLexicon.ImportLexiconFailed" xml:space="preserve">
+    <value>Failed to import lexicon: {0}</value>
+  </data>
+  <data name="PronunciationLexicon.ValidationIPAFormat" xml:space="preserve">
+    <value>Pronunciation should be in IPA format (/.../) or phoneme notation</value>
+  </data>
+  <data name="PronunciationLexicon.ValidationInvalidChars" xml:space="preserve">
+    <value>Pronunciation contains invalid characters</value>
+  </data>
+  <data name="PronunciationLexicon.ValidationEmpty" xml:space="preserve">
+    <value>Pronunciation cannot be empty</value>
+  </data>
+  <data name="PronunciationLexicon.ValidationTooLong" xml:space="preserve">
+    <value>Pronunciation is too long (maximum 200 characters)</value>
+  </data>
+  <data name="PronunciationLexicon.ConflictMultipleEntries" xml:space="preserve">
+    <value>Multiple entries for '{0}': {1}</value>
+  </data>
+
+  <!-- Emotion Style Control Messages -->
+  <data name="EmotionStyleControl.LoadEmotionPresetsFailed" xml:space="preserve">
+    <value>Failed to load emotion presets: {0}</value>
+  </data>
+  <data name="EmotionStyleControl.LoadStylePresetsFailed" xml:space="preserve">
+    <value>Failed to load style presets: {0}</value>
+  </data>
+  <data name="EmotionStyleControl.ProfileRequired" xml:space="preserve">
+    <value>Profile must be selected</value>
+  </data>
+  <data name="EmotionStyleControl.TextRequired" xml:space="preserve">
+    <value>Text is required</value>
+  </data>
+  <data name="EmotionStyleControl.EmotionStyleApplied" xml:space="preserve">
+    <value>Emotion/style applied</value>
+  </data>
+  <data name="EmotionStyleControl.ApplyFailed" xml:space="preserve">
+    <value>Failed to apply emotion/style: {0}</value>
+  </data>
+  <data name="EmotionStyleControl.PresetsRefreshed" xml:space="preserve">
+    <value>Presets refreshed</value>
+  </data>
+
+  <!-- Recording Messages -->
+  <data name="Recording.RecordingStarted" xml:space="preserve">
+    <value>Recording started</value>
+  </data>
+  <data name="Recording.RecordingStartedDetail" xml:space="preserve">
+    <value>Recording started: {0}Hz, {1} channel(s)</value>
+  </data>
+  <data name="Recording.StartRecordingFailed" xml:space="preserve">
+    <value>Failed to start recording: {0}</value>
+  </data>
+  <data name="Recording.StartRecordingFailedTitle" xml:space="preserve">
+    <value>Failed to start recording</value>
+  </data>
+  <data name="Recording.RecordingStopped" xml:space="preserve">
+    <value>Recording stopped. Duration: {0:F2}s</value>
+  </data>
+  <data name="Recording.RecordingStoppedDetail" xml:space="preserve">
+    <value>Recording stopped: {0:F2}s</value>
+  </data>
+  <data name="Recording.StopRecordingFailed" xml:space="preserve">
+    <value>Failed to stop recording: {0}</value>
+  </data>
+  <data name="Recording.StopRecordingFailedTitle" xml:space="preserve">
+    <value>Failed to stop recording</value>
+  </data>
+  <data name="Recording.RecordingCancelled" xml:space="preserve">
+    <value>Recording cancelled</value>
+  </data>
+  <data name="Recording.CancelRecordingFailed" xml:space="preserve">
+    <value>Failed to cancel recording: {0}</value>
+  </data>
+  <data name="Recording.CancelRecordingFailedTitle" xml:space="preserve">
+    <value>Failed to cancel recording</value>
+  </data>
+  <data name="Recording.LoadDevicesFailed" xml:space="preserve">
+    <value>Failed to load recording devices: {0}</value>
+  </data>
+  <data name="Recording.LoadDevicesFailedTitle" xml:space="preserve">
+    <value>Failed to load recording devices</value>
+  </data>
+
+  <!-- Lexicon Messages -->
+  <data name="Lexicon.LoadLexiconsFailed" xml:space="preserve">
+    <value>Failed to load lexicons: {0}</value>
+  </data>
+  <data name="Lexicon.LexiconNameRequired" xml:space="preserve">
+    <value>Lexicon name is required</value>
+  </data>
+  <data name="Lexicon.LexiconCreated" xml:space="preserve">
+    <value>Lexicon created</value>
+  </data>
+  <data name="Lexicon.CreateLexiconFailed" xml:space="preserve">
+    <value>Failed to create lexicon: {0}</value>
+  </data>
+  <data name="Lexicon.NoLexiconSelected" xml:space="preserve">
+    <value>No lexicon selected</value>
+  </data>
+  <data name="Lexicon.LexiconUpdated" xml:space="preserve">
+    <value>Lexicon updated</value>
+  </data>
+  <data name="Lexicon.UpdateLexiconFailed" xml:space="preserve">
+    <value>Failed to update lexicon: {0}</value>
+  </data>
+  <data name="Lexicon.LexiconDeleted" xml:space="preserve">
+    <value>Lexicon deleted</value>
+  </data>
+  <data name="Lexicon.DeleteLexiconFailed" xml:space="preserve">
+    <value>Failed to delete lexicon: {0}</value>
+  </data>
+  <data name="Lexicon.LoadEntriesFailed" xml:space="preserve">
+    <value>Failed to load entries: {0}</value>
+  </data>
+  <data name="Lexicon.WordAndPronunciationRequired" xml:space="preserve">
+    <value>Word and pronunciation are required</value>
+  </data>
+  <data name="Lexicon.EntryCreated" xml:space="preserve">
+    <value>Entry created</value>
+  </data>
+  <data name="Lexicon.CreateEntryFailed" xml:space="preserve">
+    <value>Failed to create entry: {0}</value>
+  </data>
+  <data name="Lexicon.NoEntrySelected" xml:space="preserve">
+    <value>No entry selected</value>
+  </data>
+  <data name="Lexicon.EntryUpdated" xml:space="preserve">
+    <value>Entry updated</value>
+  </data>
+  <data name="Lexicon.UpdateEntryFailed" xml:space="preserve">
+    <value>Failed to update entry: {0}</value>
+  </data>
+  <data name="Lexicon.EntryDeleted" xml:space="preserve">
+    <value>Entry deleted</value>
+  </data>
+  <data name="Lexicon.DeleteEntryFailed" xml:space="preserve">
+    <value>Failed to delete entry: {0}</value>
+  </data>
+  <data name="Lexicon.SearchQueryRequired" xml:space="preserve">
+    <value>Search query is required</value>
+  </data>
+  <data name="Lexicon.SearchResultsFound" xml:space="preserve">
+    <value>Found {0} results</value>
+  </data>
+  <data name="Lexicon.SearchFailed" xml:space="preserve">
+    <value>Failed to search: {0}</value>
+  </data>
+  <data name="Lexicon.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Lexicon.EntryCountDisplay" xml:space="preserve">
+    <value>{0} entries</value>
+  </data>
+  <data name="Lexicon.NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+
+  <!-- Job Progress Messages -->
+  <data name="JobProgress.JobsRefreshed" xml:space="preserve">
+    <value>Jobs refreshed</value>
+  </data>
+  <data name="JobProgress.LoadSummaryFailed" xml:space="preserve">
+    <value>Failed to load job summary: {0}</value>
+  </data>
+  <data name="JobProgress.JobCancelled" xml:space="preserve">
+    <value>Job '{0}' cancelled</value>
+  </data>
+  <data name="JobProgress.JobPaused" xml:space="preserve">
+    <value>Job '{0}' paused</value>
+  </data>
+  <data name="JobProgress.JobResumed" xml:space="preserve">
+    <value>Job '{0}' resumed</value>
+  </data>
+  <data name="JobProgress.ResumeJobFailed" xml:space="preserve">
+    <value>Failed to resume job: {0}</value>
+  </data>
+  <data name="JobProgress.JobDeleted" xml:space="preserve">
+    <value>Job '{0}' deleted</value>
+  </data>
+  <data name="JobProgress.CompletedJobsCleared" xml:space="preserve">
+    <value>Completed jobs cleared</value>
+  </data>
+  <data name="JobProgress.ClearCompletedFailed" xml:space="preserve">
+    <value>Failed to clear completed jobs: {0}</value>
+  </data>
+
+  <!-- Filter Values -->
+  <data name="Filter.JobType.Batch" xml:space="preserve">
+    <value>batch</value>
+  </data>
+  <data name="Filter.JobType.Training" xml:space="preserve">
+    <value>training</value>
+  </data>
+  <data name="Filter.JobType.Synthesis" xml:space="preserve">
+    <value>synthesis</value>
+  </data>
+  <data name="Filter.JobType.Export" xml:space="preserve">
+    <value>export</value>
+  </data>
+  <data name="Filter.JobType.Import" xml:space="preserve">
+    <value>import</value>
+  </data>
+  <data name="Filter.JobType.Other" xml:space="preserve">
+    <value>other</value>
+  </data>
+  <data name="Filter.Status.Pending" xml:space="preserve">
+    <value>pending</value>
+  </data>
+  <data name="Filter.Status.Running" xml:space="preserve">
+    <value>running</value>
+  </data>
+  <data name="Filter.Status.Completed" xml:space="preserve">
+    <value>completed</value>
+  </data>
+  <data name="Filter.Status.Failed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="Filter.Status.Cancelled" xml:space="preserve">
+    <value>cancelled</value>
+  </data>
+  <data name="Filter.Status.Paused" xml:space="preserve">
+    <value>paused</value>
+  </data>
+
+  <!-- MCP Dashboard Messages -->
+  <data name="MCPDashboard.ServerCreated" xml:space="preserve">
+    <value>MCP server created successfully</value>
+  </data>
+  <data name="MCPDashboard.ServerUpdated" xml:space="preserve">
+    <value>MCP server updated successfully</value>
+  </data>
+  <data name="MCPDashboard.ServerConnected" xml:space="preserve">
+    <value>Connected to MCP server</value>
+  </data>
+  <data name="MCPDashboard.ServerDisconnected" xml:space="preserve">
+    <value>Disconnected from MCP server</value>
+  </data>
+  <data name="MCPDashboard.ServerDeleted" xml:space="preserve">
+    <value>MCP server deleted successfully</value>
+  </data>
+  <data name="MCPDashboard.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- Script Editor Messages -->
+  <data name="ScriptEditor.ScriptsLoaded" xml:space="preserve">
+    <value>Loaded {0} script(s)</value>
+  </data>
+  <data name="ScriptEditor.ProjectRequired" xml:space="preserve">
+    <value>Project must be selected</value>
+  </data>
+  <data name="ScriptEditor.ScriptNameRequired" xml:space="preserve">
+    <value>Script name is required</value>
+  </data>
+  <data name="ScriptEditor.ScriptCreated" xml:space="preserve">
+    <value>Script created</value>
+  </data>
+  <data name="ScriptEditor.ScriptCreatedSuccess" xml:space="preserve">
+    <value>Script '{0}' created successfully</value>
+  </data>
+  <data name="ScriptEditor.ScriptUpdated" xml:space="preserve">
+    <value>Script updated</value>
+  </data>
+  <data name="ScriptEditor.ScriptUpdatedSuccess" xml:space="preserve">
+    <value>Script '{0}' updated successfully</value>
+  </data>
+  <data name="ScriptEditor.UpdateScriptFailed" xml:space="preserve">
+    <value>Failed to update script: {0}</value>
+  </data>
+  <data name="ScriptEditor.ScriptDeleted" xml:space="preserve">
+    <value>Script deleted</value>
+  </data>
+  <data name="ScriptEditor.UnknownScript" xml:space="preserve">
+    <value>Unknown Script</value>
+  </data>
+  <data name="ScriptEditor.ScriptDeletedSuccess" xml:space="preserve">
+    <value>Script '{0}' deleted successfully</value>
+  </data>
+  <data name="ScriptEditor.ScriptSynthesized" xml:space="preserve">
+    <value>Script synthesized: {0}</value>
+  </data>
+  <data name="ScriptEditor.ScriptSynthesizedSuccess" xml:space="preserve">
+    <value>Script '{0}' synthesized successfully. Audio ID: {1}</value>
+  </data>
+  <data name="ScriptEditor.SynthesizeScriptFailed" xml:space="preserve">
+    <value>Failed to synthesize script: {0}</value>
+  </data>
+  <data name="ScriptEditor.NoScriptSelected" xml:space="preserve">
+    <value>No script selected</value>
+  </data>
+  <data name="ScriptEditor.NewSegment" xml:space="preserve">
+    <value>New segment</value>
+  </data>
+  <data name="ScriptEditor.SegmentAdded" xml:space="preserve">
+    <value>Segment added</value>
+  </data>
+  <data name="ScriptEditor.SegmentAddedSuccess" xml:space="preserve">
+    <value>Segment added to script successfully</value>
+  </data>
+  <data name="ScriptEditor.SegmentRemoved" xml:space="preserve">
+    <value>Segment removed</value>
+  </data>
+  <data name="ScriptEditor.SegmentRemovedSuccess" xml:space="preserve">
+    <value>Segment removed from script successfully</value>
+  </data>
+  <data name="ScriptEditor.RemoveSegmentFailed" xml:space="preserve">
+    <value>Failed to remove segment: {0}</value>
+  </data>
+  <data name="ScriptEditor.ScriptsDeleted" xml:space="preserve">
+    <value>Deleted {0} script(s)</value>
+  </data>
+  <data name="ScriptEditor.PartialDeleteWarning" xml:space="preserve">
+    <value>Some scripts could not be deleted ({0}/{1} succeeded)</value>
+  </data>
+
+  <!-- Tag Manager Messages -->
+  <data name="TagManager.TagsLoaded" xml:space="preserve">
+    <value>Loaded {0} tag(s)</value>
+  </data>
+  <data name="TagManager.LoadTagsFailed" xml:space="preserve">
+    <value>Failed to load tags: {0}</value>
+  </data>
+  <data name="TagManager.NewTag" xml:space="preserve">
+    <value>New Tag</value>
+  </data>
+  <data name="TagManager.TagCreated" xml:space="preserve">
+    <value>Tag created</value>
+  </data>
+  <data name="TagManager.TagCreatedSuccess" xml:space="preserve">
+    <value>Tag '{0}' created successfully</value>
+  </data>
+  <data name="TagManager.TagUpdated" xml:space="preserve">
+    <value>Tag updated</value>
+  </data>
+  <data name="TagManager.TagUpdatedSuccess" xml:space="preserve">
+    <value>Tag '{0}' updated successfully</value>
+  </data>
+  <data name="TagManager.TagDeleted" xml:space="preserve">
+    <value>Tag deleted</value>
+  </data>
+  <data name="TagManager.UnknownTag" xml:space="preserve">
+    <value>Unknown Tag</value>
+  </data>
+  <data name="TagManager.TagDeletedSuccess" xml:space="preserve">
+    <value>Tag '{0}' deleted successfully</value>
+  </data>
+  <data name="TagManager.DeleteTagFailed" xml:space="preserve">
+    <value>Failed to delete tag: {0}</value>
+  </data>
+  <data name="TagManager.TagSavedSuccess" xml:space="preserve">
+    <value>Tag '{0}' saved successfully</value>
+  </data>
+  <data name="TagManager.SaveTagFailed" xml:space="preserve">
+    <value>Failed to save tag: {0}</value>
+  </data>
+  <data name="TagManager.TagsMerged" xml:space="preserve">
+    <value>Tags merged into '{0}'</value>
+  </data>
+  <data name="TagManager.TagsMergedSuccess" xml:space="preserve">
+    <value>Tags merged into '{0}' successfully</value>
+  </data>
+  <data name="TagManager.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+  <data name="TagManager.TagsDeleted" xml:space="preserve">
+    <value>Deleted {0} tag(s)</value>
+  </data>
+  <data name="TagManager.PartialDeleteWarning" xml:space="preserve">
+    <value>Some tags could not be deleted ({0}/{1} succeeded)</value>
+  </data>
+  <data name="TagManager.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+
+  <!-- Spatial Stage Messages -->
+  <data name="SpatialStage.ConfigNameRequired" xml:space="preserve">
+    <value>Config name is required</value>
+  </data>
+  <data name="SpatialStage.AudioRequired" xml:space="preserve">
+    <value>Audio must be selected</value>
+  </data>
+  <data name="SpatialStage.ConfigCreated" xml:space="preserve">
+    <value>Config created</value>
+  </data>
+  <data name="SpatialStage.NoConfigSelected" xml:space="preserve">
+    <value>No config selected</value>
+  </data>
+  <data name="SpatialStage.ConfigUpdated" xml:space="preserve">
+    <value>Config updated</value>
+  </data>
+  <data name="SpatialStage.ConfigDeleted" xml:space="preserve">
+    <value>Config deleted</value>
+  </data>
+  <data name="SpatialStage.SpatialAudioApplied" xml:space="preserve">
+    <value>Spatial audio applied: {0}</value>
+  </data>
+  <data name="SpatialStage.PreviewAvailable" xml:space="preserve">
+    <value>Preview available</value>
+  </data>
+  <data name="SpatialStage.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="SpatialStage.PositionDisplay" xml:space="preserve">
+    <value>({0:F2}, {1:F2}, {2:F2})</value>
+  </data>
+
+  <!-- Quality Optimization Wizard Messages -->
+  <data name="QualityOptimizationWizard.LoadProfilesFailed" xml:space="preserve">
+    <value>Failed to load profiles: {0}</value>
+  </data>
+  <data name="QualityOptimizationWizard.GetQualityMetricsFailed" xml:space="preserve">
+    <value>Failed to get quality metrics from synthesis</value>
+  </data>
+  <data name="QualityOptimizationWizard.AnalysisCompleted" xml:space="preserve">
+    <value>Quality analysis completed</value>
+  </data>
+  <data name="QualityOptimizationWizard.OptimizationCompleted" xml:space="preserve">
+    <value>Quality optimization completed</value>
+  </data>
+  <data name="QualityOptimizationWizard.OptimizeQualityFailed" xml:space="preserve">
+    <value>Failed to optimize quality: {0}</value>
+  </data>
+  <data name="QualityOptimizationWizard.QualityScoreDisplay" xml:space="preserve">
+    <value>{0:F2}/5.0</value>
+  </data>
+  <data name="QualityOptimizationWizard.DeficiencyDisplay" xml:space="preserve">
+    <value>{0}: {1:F2} (target: {2:F2})</value>
+  </data>
+
+  <!-- Prosody Messages -->
+  <data name="Prosody.ConfigNameRequired" xml:space="preserve">
+    <value>Config name is required</value>
+  </data>
+  <data name="Prosody.ConfigUpdated" xml:space="preserve">
+    <value>Config updated</value>
+  </data>
+  <data name="Prosody.TextRequired" xml:space="preserve">
+    <value>Text is required</value>
+  </data>
+  <data name="Prosody.PhonemesAnalyzed" xml:space="preserve">
+    <value>Analyzed {0} phonemes</value>
+  </data>
+  <data name="Prosody.ProsodyApplied" xml:space="preserve">
+    <value>Prosody applied: {0}</value>
+  </data>
+  <data name="Prosody.ApplyProsodyFailed" xml:space="preserve">
+    <value>Failed to apply prosody: {0}</value>
+  </data>
+  <data name="Prosody.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- Voice Morph Messages -->
+  <data name="VoiceMorph.LoadConfigsFailed" xml:space="preserve">
+    <value>Failed to load configs: {0}</value>
+  </data>
+  <data name="VoiceMorph.VoiceProfileRequired" xml:space="preserve">
+    <value>Voice profile must be selected</value>
+  </data>
+  <data name="VoiceMorph.VoiceMorphingApplied" xml:space="preserve">
+    <value>Voice morphing applied: {0}</value>
+  </data>
+  <data name="VoiceMorph.LoadAudioFilesFailed" xml:space="preserve">
+    <value>Failed to load audio files: {0}</value>
+  </data>
+
+  <!-- Multi-Voice Generator Messages -->
+  <data name="MultiVoiceGenerator.MaxQueueItems" xml:space="preserve">
+    <value>Maximum 20 items allowed in queue</value>
+  </data>
+  <data name="MultiVoiceGenerator.ItemAddedToQueue" xml:space="preserve">
+    <value>Item added to queue</value>
+  </data>
+  <data name="MultiVoiceGenerator.ItemRemoved" xml:space="preserve">
+    <value>Item removed from queue</value>
+  </data>
+  <data name="MultiVoiceGenerator.QueueCleared" xml:space="preserve">
+    <value>Queue cleared</value>
+  </data>
+  <data name="MultiVoiceGenerator.ImportedFromCSV" xml:space="preserve">
+    <value>Imported {0} items from CSV</value>
+  </data>
+  <data name="MultiVoiceGenerator.ImportCSVFailed" xml:space="preserve">
+    <value>Failed to import CSV: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.ExportedToCSV" xml:space="preserve">
+    <value>Exported {0} results to CSV</value>
+  </data>
+  <data name="MultiVoiceGenerator.ExportCSVFailed" xml:space="preserve">
+    <value>Failed to export CSV: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.GenerationStarted" xml:space="preserve">
+    <value>Generation started</value>
+  </data>
+  <data name="MultiVoiceGenerator.StartGenerationFailed" xml:space="preserve">
+    <value>Failed to start generation: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.GenerationCompleted" xml:space="preserve">
+    <value>Generation completed</value>
+  </data>
+  <data name="MultiVoiceGenerator.GenerationFailed" xml:space="preserve">
+    <value>Generation failed</value>
+  </data>
+  <data name="MultiVoiceGenerator.PollJobStatusFailed" xml:space="preserve">
+    <value>Failed to poll job status: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.LoadJobStatusFailed" xml:space="preserve">
+    <value>Failed to load job status: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.LoadResultsFailed" xml:space="preserve">
+    <value>Failed to load results: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.BestAudio" xml:space="preserve">
+    <value>Best audio: {0} (score: {1:F2})</value>
+  </data>
+  <data name="MultiVoiceGenerator.CompareVoicesFailed" xml:space="preserve">
+    <value>Failed to compare voices: {0}</value>
+  </data>
+  <data name="MultiVoiceGenerator.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- Text-Based Speech Editor Messages -->
+  <data name="TextBasedSpeechEditor.TranscribeFailed" xml:space="preserve">
+    <value>Failed to transcribe audio: {0}</value>
+  </data>
+  <data name="TextBasedSpeechEditor.TranscriptAligned" xml:space="preserve">
+    <value>Transcript aligned (confidence: {0:P0})</value>
+  </data>
+  <data name="TextBasedSpeechEditor.DeleteWordFailed" xml:space="preserve">
+    <value>Failed to delete word: {0}</value>
+  </data>
+  <data name="TextBasedSpeechEditor.InsertTextFailed" xml:space="preserve">
+    <value>Failed to insert text: {0}</value>
+  </data>
+  <data name="TextBasedSpeechEditor.FillerWordsRemoved" xml:space="preserve">
+    <value>Removed {0} filler words</value>
+  </data>
+  <data name="TextBasedSpeechEditor.EditsApplied" xml:space="preserve">
+    <value>Edits applied! {0} operations processed</value>
+  </data>
+  <data name="TextBasedSpeechEditor.ApplyEditsFailed" xml:space="preserve">
+    <value>Failed to apply edits: {0}</value>
+  </data>
+
+  <!-- Quality Control Messages -->
+  <data name="QualityControl.LoadPresetsFailed" xml:space="preserve">
+    <value>Failed to load quality presets: {0}</value>
+  </data>
+  <data name="QualityControl.AnalyzeQualityFailed" xml:space="preserve">
+    <value>Failed to analyze quality: {0}</value>
+  </data>
+  <data name="QualityControl.OptimizeQualityFailed" xml:space="preserve">
+    <value>Failed to optimize quality: {0}</value>
+  </data>
+  <data name="QualityControl.GetEngineRecommendationFailed" xml:space="preserve">
+    <value>Failed to get engine recommendation: {0}</value>
+  </data>
+  <data name="QualityControl.CheckProjectConsistencyFailed" xml:space="preserve">
+    <value>Failed to check project consistency: {0}</value>
+  </data>
+  <data name="QualityControl.CheckAllProjectsConsistencyFailed" xml:space="preserve">
+    <value>Failed to check all projects consistency: {0}</value>
+  </data>
+  <data name="QualityControl.GetProjectTrendsFailed" xml:space="preserve">
+    <value>Failed to get project trends: {0}</value>
+  </data>
+  <data name="QualityControl.SetQualityStandardFailed" xml:space="preserve">
+    <value>Failed to set quality standard: {0}</value>
+  </data>
+  <data name="QualityControl.GenerateHeatmapFailed" xml:space="preserve">
+    <value>Failed to generate heatmap: {0}</value>
+  </data>
+  <data name="QualityControl.AnalyzeCorrelationsFailed" xml:space="preserve">
+    <value>Failed to analyze correlations: {0}</value>
+  </data>
+  <data name="QualityControl.DetectAnomaliesFailed" xml:space="preserve">
+    <value>Failed to detect anomalies: {0}</value>
+  </data>
+  <data name="QualityControl.PredictQualityFailed" xml:space="preserve">
+    <value>Failed to predict quality: {0}</value>
+  </data>
+  <data name="QualityControl.GetInsightsFailed" xml:space="preserve">
+    <value>Failed to get insights: {0}</value>
+  </data>
+  <data name="QualityControl.ExportReportFailed" xml:space="preserve">
+    <value>Failed to export report: {0}</value>
+  </data>
+
+  <!-- Advanced Spectrogram Messages -->
+  <data name="AdvancedSpectrogram.GenerateSpectrogramFailed" xml:space="preserve">
+    <value>Failed to generate spectrogram: {0}</value>
+  </data>
+  <data name="AdvancedSpectrogram.LoadAudioFilesFailed" xml:space="preserve">
+    <value>Failed to load audio files: {0}</value>
+  </data>
+  <data name="Spectrogram.LoadColorSchemesFailed" xml:space="preserve">
+    <value>Failed to load color schemes: {0}</value>
+  </data>
+
+  <!-- Mix Assistant Messages -->
+  <data name="MixAssistant.ProjectRequired" xml:space="preserve">
+    <value>Project must be selected</value>
+  </data>
+  <data name="MixAssistant.SuggestionsGenerated" xml:space="preserve">
+    <value>Generated {0} suggestions</value>
+  </data>
+  <data name="MixAssistant.AllSuggestionsApplied" xml:space="preserve">
+    <value>All suggestions applied</value>
+  </data>
+
+  <!-- Multilingual Support Messages -->
+  <data name="MultilingualSupport.TextRequired" xml:space="preserve">
+    <value>Text is required</value>
+  </data>
+  <data name="MultilingualSupport.SourceAndTargetRequired" xml:space="preserve">
+    <value>Source and target languages must be selected</value>
+  </data>
+  <data name="MultilingualSupport.TargetLanguageRequired" xml:space="preserve">
+    <value>Target language must be selected</value>
+  </data>
+  <data name="MultilingualSupport.AtLeastOneTargetRequired" xml:space="preserve">
+    <value>At least one target language must be selected</value>
+  </data>
+  <data name="MultilingualSupport.TranslationComplete" xml:space="preserve">
+    <value>Translated from {0} to {1}</value>
+  </data>
+  <data name="MultilingualSupport.TranslationCompleteDetail" xml:space="preserve">
+    <value>Translated from {0} to {1}</value>
+  </data>
+  <data name="MultilingualSupport.LanguagesLoadedDetail" xml:space="preserve">
+    <value>Loaded {0} supported languages</value>
+  </data>
+  <data name="MultilingualSupport.SynthesisCompleteDetail" xml:space="preserve">
+    <value>Generated {0} multilingual audio(s)</value>
+  </data>
+  <data name="MultilingualSupport.LanguagesRefreshed" xml:space="preserve">
+    <value>Languages refreshed</value>
+  </data>
+  <data name="MultilingualSupport.LanguagesRefreshedSuccessfully" xml:space="preserve">
+    <value>Languages refreshed successfully</value>
+  </data>
+  <data name="MultilingualSupport.SynthesisFailed" xml:space="preserve">
+    <value>Failed to synthesize: {0}</value>
+  </data>
+
+  <!-- Embedding Explorer Messages -->
+  <data name="EmbeddingExplorer.LoadAudioFilesFailed" xml:space="preserve">
+    <value>Failed to load audio files: {0}</value>
+  </data>
+  <data name="EmbeddingExplorer.VoiceProfilesLoaded" xml:space="preserve">
+    <value>Loaded {0} voice profile(s)</value>
+  </data>
+  <data name="EmbeddingExplorer.LoadVoiceProfilesFailed" xml:space="preserve">
+    <value>Failed to load voice profiles: {0}</value>
+  </data>
+  <data name="EmbeddingExplorer.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="EmbeddingExplorer.NoEmbeddingsToExport" xml:space="preserve">
+    <value>No embeddings to export</value>
+  </data>
+  <data name="EmbeddingExplorer.EmbeddingsExported" xml:space="preserve">
+    <value>Exported {0} embedding(s)</value>
+  </data>
+  <data name="EmbeddingExplorer.EmbeddingsExportedDetail" xml:space="preserve">
+    <value>Exported {0} embedding(s) to {1}</value>
+  </data>
+  <data name="EmbeddingExplorer.ExportEmbeddingsFailed" xml:space="preserve">
+    <value>Failed to export embeddings: {0}</value>
+  </data>
+  <data name="EmbeddingExplorer.VisualizationExported" xml:space="preserve">
+    <value>Exported visualization data ({0} points)</value>
+  </data>
+  <data name="EmbeddingExplorer.VisualizationExportedDetail" xml:space="preserve">
+    <value>Exported visualization data to {0}</value>
+  </data>
+  <data name="EmbeddingExplorer.NoVisualizationDataToExport" xml:space="preserve">
+    <value>No visualization data to export</value>
+  </data>
+
+  <!-- Marker Manager Messages -->
+  <data name="MarkerManager.CreateMarkerFailed" xml:space="preserve">
+    <value>Failed to create marker: {0}</value>
+  </data>
+  <data name="MarkerManager.DeleteMarkerFailed" xml:space="preserve">
+    <value>Failed to delete marker: {0}</value>
+  </data>
+
+  <!-- GPU Status Messages -->
+  <data name="GPUStatus.Updated" xml:space="preserve">
+    <value>Updated: {0:HH:mm:ss}</value>
+  </data>
+  <data name="GPUStatus.LoadStatusFailed" xml:space="preserve">
+    <value>Failed to load GPU status: {0}</value>
+  </data>
+  <data name="GPUStatus.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - GPUStatusView -->
+  <data name="GPUStatusView_Header.Text" xml:space="preserve">
+    <value>GPU Status</value>
+  </data>
+  <data name="GPUStatusView_HelpButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Show help for GPU Status (F1)</value>
+  </data>
+  <data name="GPUStatusView_SummaryHeader.Text" xml:space="preserve">
+    <value>GPU Summary</value>
+  </data>
+  <data name="GPUStatusView_TotalDevices.Text" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="GPUStatusView_AvailableDevices.Text" xml:space="preserve">
+    <value>Available: {0}</value>
+  </data>
+  <data name="GPUStatusView_AutoRefreshLabel.Text" xml:space="preserve">
+    <value>Auto-Refresh</value>
+  </data>
+  <data name="GPUStatusView_AutoRefreshCheckBox.Content" xml:space="preserve">
+    <value>Auto-Refresh</value>
+  </data>
+  <data name="GPUStatusView_AutoRefreshCheckBox.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Automatically refresh GPU status</value>
+  </data>
+  <data name="GPUStatusView_RefreshIntervalLabel.Text" xml:space="preserve">
+    <value>Refresh Interval</value>
+  </data>
+  <data name="GPUStatusView_RefreshIntervalNumberBox.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Refresh interval in seconds (1-60)</value>
+  </data>
+  <data name="GPUStatusView_RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="GPUStatusView_RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Refresh GPU status now (F5)</value>
+  </data>
+  <data name="GPUStatusView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Loading GPU status...</value>
+  </data>
+  <data name="GPUStatusView_DeviceInformationHeader.Text" xml:space="preserve">
+    <value>Device Information</value>
+  </data>
+  <data name="GPUStatusView_VendorLabel.Text" xml:space="preserve">
+    <value>Vendor:</value>
+  </data>
+  <data name="GPUStatusView_DeviceIdLabel.Text" xml:space="preserve">
+    <value>Device ID:</value>
+  </data>
+  <data name="GPUStatusView_StatusLabel.Text" xml:space="preserve">
+    <value>Status:</value>
+  </data>
+  <data name="GPUStatusView_DriverLabel.Text" xml:space="preserve">
+    <value>Driver:</value>
+  </data>
+  <data name="GPUStatusView_ComputeLabel.Text" xml:space="preserve">
+    <value>Compute:</value>
+  </data>
+  <data name="GPUStatusView_MemoryHeader.Text" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="GPUStatusView_MemoryTotalLabel.Text" xml:space="preserve">
+    <value>Total:</value>
+  </data>
+  <data name="GPUStatusView_MemoryUsedLabel.Text" xml:space="preserve">
+    <value>Used:</value>
+  </data>
+  <data name="GPUStatusView_MemoryFreeLabel.Text" xml:space="preserve">
+    <value>Free:</value>
+  </data>
+  <data name="GPUStatusView_MemoryUsageLabel.Text" xml:space="preserve">
+    <value>Usage:</value>
+  </data>
+  <data name="GPUStatusView_PerformanceHeader.Text" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="GPUStatusView_UtilizationLabel.Text" xml:space="preserve">
+    <value>Utilization:</value>
+  </data>
+  <data name="GPUStatusView_TemperatureLabel.Text" xml:space="preserve">
+    <value>Temperature:</value>
+  </data>
+  <data name="GPUStatusView_PowerLabel.Text" xml:space="preserve">
+    <value>Power:</value>
+  </data>
+  <data name="GPUStatusView_NoDeviceSelectedTitle.Text" xml:space="preserve">
+    <value>No GPU Selected</value>
+  </data>
+  <data name="GPUStatusView_NoDeviceSelectedMessage.Text" xml:space="preserve">
+    <value>Select a GPU device from the list to view details</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - MarkerManagerView -->
+  <data name="MarkerManagerView_Header.Text" xml:space="preserve">
+    <value>Marker Manager</value>
+  </data>
+  <data name="MarkerManagerView_HelpButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Show help for Marker Manager</value>
+  </data>
+  <data name="MarkerManagerView_ProjectFilterLabel.Text" xml:space="preserve">
+    <value>Project Filter</value>
+  </data>
+  <data name="MarkerManagerView_ProjectFilterComboBox.PlaceholderText" xml:space="preserve">
+    <value>Select Project</value>
+  </data>
+  <data name="MarkerManagerView_CategoryFilterLabel.Text" xml:space="preserve">
+    <value>Category Filter</value>
+  </data>
+  <data name="MarkerManagerView_CategoryFilterComboBox.PlaceholderText" xml:space="preserve">
+    <value>All Categories</value>
+  </data>
+  <data name="MarkerManagerView_CreateMarkerButton.Content" xml:space="preserve">
+    <value>Create Marker</value>
+  </data>
+  <data name="MarkerManagerView_RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="MarkerManagerView_SelectedCount.Text" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="MarkerManagerView_DeleteSelectedButton.Content" xml:space="preserve">
+    <value>Delete Selected</value>
+  </data>
+  <data name="MarkerManagerView_SelectAllButton.Content" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="MarkerManagerView_ClearSelectionButton.Content" xml:space="preserve">
+    <value>Clear Selection</value>
+  </data>
+  <data name="MarkerManagerView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Loading markers...</value>
+  </data>
+  <data name="MarkerManagerView_EmptyStateTitle.Text" xml:space="preserve">
+    <value>No markers</value>
+  </data>
+  <data name="MarkerManagerView_EmptyStateMessage.Text" xml:space="preserve">
+    <value>Create a marker to get started</value>
+  </data>
+  <data name="MarkerManagerView_DetailsHeader.Text" xml:space="preserve">
+    <value>Marker Details</value>
+  </data>
+  <data name="MarkerManagerView_NameLabel.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="MarkerManagerView_TimeLabel.Text" xml:space="preserve">
+    <value>Time (s)</value>
+  </data>
+  <data name="MarkerManagerView_ColorLabel.Text" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MarkerManagerView_ColorTextBox.PlaceholderText" xml:space="preserve">
+    <value>#00FFFF</value>
+  </data>
+  <data name="MarkerManagerView_CategoryLabel.Text" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="MarkerManagerView_CategoryTextBox.PlaceholderText" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="MarkerManagerView_DescriptionLabel.Text" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="MarkerManagerView_DescriptionTextBox.PlaceholderText" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="MarkerManagerView_SaveButton.Content" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="MarkerManagerView_DeleteButton.Content" xml:space="preserve">
+    <value>Delete Marker</value>
+  </data>
+  <data name="MarkerManagerView_NoSelectionTitle.Text" xml:space="preserve">
+    <value>Select a marker</value>
+  </data>
+  <data name="MarkerManagerView_NoSelectionMessage.Text" xml:space="preserve">
+    <value>to view details</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - EnsembleSynthesisView -->
+  <data name="EnsembleSynthesisView_Header.Text" xml:space="preserve">
+    <value>Ensemble Synthesis</value>
+  </data>
+  <data name="EnsembleSynthesisView_HelpButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Show help for Ensemble Synthesis</value>
+  </data>
+  <data name="EnsembleSynthesisView_ProjectLabel.Text" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="EnsembleSynthesisView_ProjectComboBox.PlaceholderText" xml:space="preserve">
+    <value>Project (Optional)</value>
+  </data>
+  <data name="EnsembleSynthesisView_MixModeLabel.Text" xml:space="preserve">
+    <value>Mix Mode</value>
+  </data>
+  <data name="EnsembleSynthesisView_OutputFormatLabel.Text" xml:space="preserve">
+    <value>Output Format</value>
+  </data>
+  <data name="EnsembleSynthesisView_SynthesizeButton.Content" xml:space="preserve">
+    <value>Synthesize</value>
+  </data>
+  <data name="EnsembleSynthesisView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Synthesizing ensemble...</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoicesHeader.Text" xml:space="preserve">
+    <value>Voices</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceCount.Text" xml:space="preserve">
+    <value>({0})</value>
+  </data>
+  <data name="EnsembleSynthesisView_AddVoiceButton.Content" xml:space="preserve">
+    <value>Add Voice</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceProfileComboBox.PlaceholderText" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceEngineComboBox.PlaceholderText" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceLanguageTextBox.PlaceholderText" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceEmotionTextBox.PlaceholderText" xml:space="preserve">
+    <value>Emotion (optional)</value>
+  </data>
+  <data name="EnsembleSynthesisView_VoiceTextTextBox.PlaceholderText" xml:space="preserve">
+    <value>Text to synthesize...</value>
+  </data>
+  <data name="EnsembleSynthesisView_RemoveVoiceButton.Content" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="EnsembleSynthesisView_NoVoicesEmptyState.Title" xml:space="preserve">
+    <value>No Voices Added</value>
+  </data>
+  <data name="EnsembleSynthesisView_NoVoicesEmptyState.Message" xml:space="preserve">
+    <value>Add voices to create ensemble synthesis. Click 'Add Voice' to select voice profiles and configure their settings for multi-voice synthesis.</value>
+  </data>
+  <data name="EnsembleSynthesisView_JobsHeader.Text" xml:space="preserve">
+    <value>Synthesis Jobs</value>
+  </data>
+  <data name="EnsembleSynthesisView_SelectedJobCount.Text" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="EnsembleSynthesisView_DeleteSelectedButton.Content" xml:space="preserve">
+    <value>Delete Selected</value>
+  </data>
+  <data name="EnsembleSynthesisView_SelectAllButton.Content" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="EnsembleSynthesisView_ClearSelectionButton.Content" xml:space="preserve">
+    <value>Clear Selection</value>
+  </data>
+  <data name="EnsembleSynthesisView_RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="EnsembleSynthesisView_NoJobsEmptyState.Title" xml:space="preserve">
+    <value>No Synthesis Jobs</value>
+  </data>
+  <data name="EnsembleSynthesisView_NoJobsEmptyState.Message" xml:space="preserve">
+    <value>Start an ensemble synthesis job to see it appear here. Configure your voices above and click 'Start Synthesis' to begin.</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - AnalyzerView -->
+  <data name="AnalyzerView_WaveformTab.Header" xml:space="preserve">
+    <value>Waveform</value>
+  </data>
+  <data name="AnalyzerView_SpectralTab.Header" xml:space="preserve">
+    <value>Spectral</value>
+  </data>
+  <data name="AnalyzerView_RadarTab.Header" xml:space="preserve">
+    <value>Radar</value>
+  </data>
+  <data name="AnalyzerView_LoudnessTab.Header" xml:space="preserve">
+    <value>Loudness</value>
+  </data>
+  <data name="AnalyzerView_PhaseTab.Header" xml:space="preserve">
+    <value>Phase</value>
+  </data>
+  <data name="AnalyzerView_AudioOrbsTab.Header" xml:space="preserve">
+    <value>AudioOrbs</value>
+  </data>
+  <data name="AnalyzerView_AudioIdLabel.Text" xml:space="preserve">
+    <value>Audio ID:</value>
+  </data>
+  <data name="AnalyzerView_AudioIdTextBox.PlaceholderText" xml:space="preserve">
+    <value>Enter audio ID or filename</value>
+  </data>
+  <data name="AnalyzerView_LoadButton.Content" xml:space="preserve">
+    <value>Load</value>
+  </data>
+  <data name="AnalyzerView_ZoomLabel.Text" xml:space="preserve">
+    <value>Zoom:</value>
+  </data>
+  <data name="AnalyzerView_ResetZoomButton.Content" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="AnalyzerView_MouseControls.Text" xml:space="preserve">
+    <value>Mouse wheel: Zoom | Drag: Pan | Click: Seek</value>
+  </data>
+  <data name="AnalyzerView_ErrorMessage.Title" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="AnalyzerView_ErrorMessage.ActionText" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="AnalyzerView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Loading audio analysis...</value>
+  </data>
+  <data name="AnalyzerView_NoVisualization.Text" xml:space="preserve">
+    <value>No visualization available for this tab</value>
+  </data>
+
+  <!-- Common Toast Titles -->
+  <data name="Toast.Title.ProfileCreated" xml:space="preserve">
+    <value>Profile Created</value>
+  </data>
+  <data name="Toast.Title.ProfileDeleted" xml:space="preserve">
+    <value>Profile Deleted</value>
+  </data>
+  <data name="Toast.Title.ProjectCreated" xml:space="preserve">
+    <value>Project Created</value>
+  </data>
+  <data name="Toast.Title.CreateTrackFailed" xml:space="preserve">
+    <value>Create Track Failed</value>
+  </data>
+  <data name="Toast.Title.ProjectDeleted" xml:space="preserve">
+    <value>Project Deleted</value>
+  </data>
+  <data name="Toast.Title.TrackCreated" xml:space="preserve">
+    <value>Track Created</value>
+  </data>
+  <data name="Toast.Title.EnhancementComplete" xml:space="preserve">
+    <value>Enhancement Complete</value>
+  </data>
+  <data name="Toast.Title.EnhancementApplied" xml:space="preserve">
+    <value>Enhancement Applied</value>
+  </data>
+  <data name="Toast.Title.BatchDeleteComplete" xml:space="preserve">
+    <value>Batch Delete Complete</value>
+  </data>
+  <data name="Toast.Title.PartialDelete" xml:space="preserve">
+    <value>Partial Delete</value>
+  </data>
+  <data name="Toast.Title.DeleteFailed" xml:space="preserve">
+    <value>Delete Failed</value>
+  </data>
+  <data name="Toast.Title.CreateFailed" xml:space="preserve">
+    <value>Create Failed</value>
+  </data>
+  <data name="Toast.Title.CreateMarkerFailed" xml:space="preserve">
+    <value>Failed to Create Marker</value>
+  </data>
+  <data name="Toast.Title.DeleteMarkerFailed" xml:space="preserve">
+    <value>Failed to Delete Marker</value>
+  </data>
+  <data name="Toast.Title.LoadFailed" xml:space="preserve">
+    <value>Load Failed</value>
+  </data>
+  <data name="Toast.Title.SaveFailed" xml:space="preserve">
+    <value>Save Failed</value>
+  </data>
+  <data name="Toast.Title.ClipsDeleted" xml:space="preserve">
+    <value>Clips Deleted</value>
+  </data>
+  <data name="Toast.Title.DeleteClipsFailed" xml:space="preserve">
+    <value>Delete Clips Failed</value>
+  </data>
+  <data name="Toast.Title.CreateTrackFailed" xml:space="preserve">
+    <value>Create Track Failed</value>
+  </data>
+  <data name="Toast.Title.FolderCreated" xml:space="preserve">
+    <value>Folder Created</value>
+  </data>
+  <data name="Toast.Title.CreateFolderFailed" xml:space="preserve">
+    <value>Create Folder Failed</value>
+  </data>
+  <data name="Toast.Title.AssetDeleted" xml:space="preserve">
+    <value>Asset Deleted</value>
+  </data>
+  <data name="Toast.Title.DeleteAssetFailed" xml:space="preserve">
+    <value>Delete Asset Failed</value>
+  </data>
+  <data name="Toast.Title.AssetsDeleted" xml:space="preserve">
+    <value>Assets Deleted</value>
+  </data>
+  <data name="Toast.Title.PartialDelete" xml:space="preserve">
+    <value>Partial Delete</value>
+  </data>
+  <data name="Toast.Title.BatchDeleteFailed" xml:space="preserve">
+    <value>Batch Delete Failed</value>
+  </data>
+  <data name="Toast.Title.DatasetsLoaded" xml:space="preserve">
+    <value>Datasets Loaded</value>
+  </data>
+  <data name="Toast.Title.DatasetCreated" xml:space="preserve">
+    <value>Dataset Created</value>
+  </data>
+  <data name="Toast.Title.TrainingStarted" xml:space="preserve">
+    <value>Training Started</value>
+  </data>
+  <data name="Toast.Title.TrainingJobsLoaded" xml:space="preserve">
+    <value>Training Jobs Loaded</value>
+  </data>
+  <data name="Toast.Title.TrainingCancelled" xml:space="preserve">
+    <value>Training Cancelled</value>
+  </data>
+  <data name="Toast.Title.TrainingJobDeleted" xml:space="preserve">
+    <value>Training Job Deleted</value>
+  </data>
+  <data name="Toast.Title.HealthCheck" xml:space="preserve">
+    <value>Health Check</value>
+  </data>
+  <data name="Toast.Title.TelemetryUpdated" xml:space="preserve">
+    <value>Telemetry Updated</value>
+  </data>
+  <data name="Toast.Title.LogsCleared" xml:space="preserve">
+    <value>Logs Cleared</value>
+  </data>
+  <data name="Toast.Title.ExportComplete" xml:space="preserve">
+    <value>Export Complete</value>
+  </data>
+  <data name="Toast.Title.ErrorLogsCleared" xml:space="preserve">
+    <value>Error Logs Cleared</value>
+  </data>
+  <data name="Toast.Title.LogsDeleted" xml:space="preserve">
+    <value>Logs Deleted</value>
+  </data>
+  <data name="Toast.Title.ErrorLogsDeleted" xml:space="preserve">
+    <value>Error Logs Deleted</value>
+  </data>
+  <data name="Toast.Title.MacrosLoaded" xml:space="preserve">
+    <value>Macros Loaded</value>
+  </data>
+  <data name="Toast.Title.MacroCreated" xml:space="preserve">
+    <value>Macro Created</value>
+  </data>
+  <data name="Toast.Title.MacroDeleted" xml:space="preserve">
+    <value>Macro Deleted</value>
+  </data>
+  <data name="Toast.Title.MacroExecutionStarted" xml:space="preserve">
+    <value>Macro Execution Started</value>
+  </data>
+  <data name="Toast.Title.MacroExecutionFailed" xml:space="preserve">
+    <value>Macro Execution Failed</value>
+  </data>
+  <data name="Toast.Title.MacroExecutionComplete" xml:space="preserve">
+    <value>Macro Execution Complete</value>
+  </data>
+  <data name="Toast.Title.AutomationCurvesLoaded" xml:space="preserve">
+    <value>Automation Curves Loaded</value>
+  </data>
+  <data name="Toast.Title.AutomationCurveCreated" xml:space="preserve">
+    <value>Automation Curve Created</value>
+  </data>
+  <data name="Toast.Title.AutomationCurveDeleted" xml:space="preserve">
+    <value>Automation Curve Deleted</value>
+  </data>
+  <data name="Toast.Title.MacrosDeleted" xml:space="preserve">
+    <value>Macros Deleted</value>
+  </data>
+  <data name="Toast.Title.AutomationCurvesDeleted" xml:space="preserve">
+    <value>Automation Curves Deleted</value>
+  </data>
+  <data name="Toast.Title.SessionCreated" xml:space="preserve">
+    <value>Session Created</value>
+  </data>
+  <data name="Toast.Title.SyncComplete" xml:space="preserve">
+    <value>Sync Complete</value>
+  </data>
+  <data name="Toast.Title.SyncFailed" xml:space="preserve">
+    <value>Sync Failed</value>
+  </data>
+  <data name="Toast.Title.SessionUpdated" xml:space="preserve">
+    <value>Session Updated</value>
+  </data>
+  <data name="Toast.Title.SessionDeleted" xml:space="preserve">
+    <value>Session Deleted</value>
+  </data>
+  <data name="Toast.Title.SessionSaved" xml:space="preserve">
+    <value>Session Saved</value>
+  </data>
+  <data name="Toast.Title.SessionLoaded" xml:space="preserve">
+    <value>Session Loaded</value>
+  </data>
+  <data name="Toast.Title.SaveFailed" xml:space="preserve">
+    <value>Save Failed</value>
+  </data>
+  <data name="Toast.Title.AutoOptimize" xml:space="preserve">
+    <value>Auto-Optimize</value>
+  </data>
+  <data name="Toast.Title.GenerationComplete" xml:space="preserve">
+    <value>Generation Complete</value>
+  </data>
+  <data name="Toast.Title.GenerationFailed" xml:space="preserve">
+    <value>Generation Failed</value>
+  </data>
+  <data name="Toast.Title.UpscaleComplete" xml:space="preserve">
+    <value>Upscale Complete</value>
+  </data>
+  <data name="Toast.Title.UpscaleFailed" xml:space="preserve">
+    <value>Upscale Failed</value>
+  </data>
+  <data name="Toast.Title.StyleExtractionComplete" xml:space="preserve">
+    <value>Style Extraction Complete</value>
+  </data>
+  <data name="Toast.Title.StyleAnalysisComplete" xml:space="preserve">
+    <value>Style Analysis Complete</value>
+  </data>
+  <data name="Toast.Title.StyleTransferComplete" xml:space="preserve">
+    <value>Style Transfer Complete</value>
+  </data>
+  <data name="Toast.Title.ProfilesLoaded" xml:space="preserve">
+    <value>Profiles Loaded</value>
+  </data>
+  <data name="Toast.Title.RecordingStarted" xml:space="preserve">
+    <value>Recording Started</value>
+  </data>
+  <data name="Toast.Title.RecordingComplete" xml:space="preserve">
+    <value>Recording Complete</value>
+  </data>
+  <data name="Toast.Title.RecordingCancelled" xml:space="preserve">
+    <value>Recording Cancelled</value>
+  </data>
+  <data name="Toast.Title.StartFailed" xml:space="preserve">
+    <value>Start Failed</value>
+  </data>
+  <data name="Toast.Title.StopFailed" xml:space="preserve">
+    <value>Stop Failed</value>
+  </data>
+  <data name="Toast.Title.CancelFailed" xml:space="preserve">
+    <value>Cancel Failed</value>
+  </data>
+  <data name="Toast.Title.ScriptsLoaded" xml:space="preserve">
+    <value>Scripts Loaded</value>
+  </data>
+  <data name="Toast.Title.ScriptCreated" xml:space="preserve">
+    <value>Script Created</value>
+  </data>
+  <data name="Toast.Title.ScriptUpdated" xml:space="preserve">
+    <value>Script Updated</value>
+  </data>
+  <data name="Toast.Title.UpdateScriptFailed" xml:space="preserve">
+    <value>Failed to Update Script</value>
+  </data>
+  <data name="Toast.Title.ScriptDeleted" xml:space="preserve">
+    <value>Script Deleted</value>
+  </data>
+  <data name="Toast.Title.ScriptSynthesized" xml:space="preserve">
+    <value>Script Synthesized</value>
+  </data>
+  <data name="Toast.Title.SynthesisFailed" xml:space="preserve">
+    <value>Synthesis Failed</value>
+  </data>
+  <data name="Toast.Title.SegmentAdded" xml:space="preserve">
+    <value>Segment Added</value>
+  </data>
+  <data name="Toast.Title.SegmentRemoved" xml:space="preserve">
+    <value>Segment Removed</value>
+  </data>
+  <data name="Toast.Title.RemoveSegmentFailed" xml:space="preserve">
+    <value>Failed to Remove Segment</value>
+  </data>
+  <data name="Toast.Title.BatchDeleteComplete" xml:space="preserve">
+    <value>Batch Delete Complete</value>
+  </data>
+  <data name="Toast.Title.PartialDelete" xml:space="preserve">
+    <value>Partial Delete</value>
+  </data>
+  <data name="Toast.Title.TagsLoaded" xml:space="preserve">
+    <value>Tags Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadTagsFailed" xml:space="preserve">
+    <value>Failed to Load Tags</value>
+  </data>
+  <data name="Toast.Title.TagCreated" xml:space="preserve">
+    <value>Tag Created</value>
+  </data>
+  <data name="Toast.Title.TagUpdated" xml:space="preserve">
+    <value>Tag Updated</value>
+  </data>
+  <data name="Toast.Title.TagDeleted" xml:space="preserve">
+    <value>Tag Deleted</value>
+  </data>
+  <data name="Toast.Title.DeleteTagFailed" xml:space="preserve">
+    <value>Failed to Delete Tag</value>
+  </data>
+  <data name="Toast.Title.TagSaved" xml:space="preserve">
+    <value>Tag Saved</value>
+  </data>
+  <data name="Toast.Title.SaveTagFailed" xml:space="preserve">
+    <value>Failed to Save Tag</value>
+  </data>
+  <data name="Toast.Title.TagsMerged" xml:space="preserve">
+    <value>Tags Merged</value>
+  </data>
+  <data name="Toast.Title.LoadProfilesFailed" xml:space="preserve">
+    <value>Load Profiles Failed</value>
+  </data>
+  <data name="Toast.Title.AnalysisComplete" xml:space="preserve">
+    <value>Analysis Complete</value>
+  </data>
+  <data name="Toast.Title.OptimizationComplete" xml:space="preserve">
+    <value>Optimization Complete</value>
+  </data>
+  <data name="Toast.Title.OptimizationFailed" xml:space="preserve">
+    <value>Optimization Failed</value>
+  </data>
+  <data name="Toast.Title.LanguagesLoaded" xml:space="preserve">
+    <value>Languages Loaded</value>
+  </data>
+  <data name="Toast.Title.TranslationComplete" xml:space="preserve">
+    <value>Translation Complete</value>
+  </data>
+  <data name="Toast.Title.SynthesisComplete" xml:space="preserve">
+    <value>Synthesis Complete</value>
+  </data>
+  <data name="Toast.Title.SynthesisFailed" xml:space="preserve">
+    <value>Synthesis Failed</value>
+  </data>
+  <data name="Toast.Title.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Toast.Title.ExportComplete" xml:space="preserve">
+    <value>Export Complete</value>
+  </data>
+  <data name="Toast.Title.ExportFailed" xml:space="preserve">
+    <value>Export Failed</value>
+  </data>
+  <data name="Toast.Title.MarkersLoaded" xml:space="preserve">
+    <value>Markers Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadMarkersFailed" xml:space="preserve">
+    <value>Failed to Load Markers</value>
+  </data>
+  <data name="Toast.Title.MarkerCreated" xml:space="preserve">
+    <value>Marker Created</value>
+  </data>
+  <data name="Toast.Title.CreateMarkerFailed" xml:space="preserve">
+    <value>Failed to Create Marker</value>
+  </data>
+  <data name="Toast.Title.MarkerUpdated" xml:space="preserve">
+    <value>Marker Updated</value>
+  </data>
+  <data name="Toast.Title.UpdateMarkerFailed" xml:space="preserve">
+    <value>Failed to Update Marker</value>
+  </data>
+  <data name="Toast.Title.MarkerDeleted" xml:space="preserve">
+    <value>Marker Deleted</value>
+  </data>
+  <data name="Toast.Title.DeleteMarkerFailed" xml:space="preserve">
+    <value>Failed to Delete Marker</value>
+  </data>
+  <data name="Toast.Title.BatchDeleteComplete" xml:space="preserve">
+    <value>Batch Delete Complete</value>
+  </data>
+  <data name="Toast.Title.PartialDelete" xml:space="preserve">
+    <value>Partial Delete</value>
+  </data>
+  <data name="Toast.Title.BatchDeleteFailed" xml:space="preserve">
+    <value>Batch Delete Failed</value>
+  </data>
+  <data name="Toast.Title.EnsembleSynthesisStarted" xml:space="preserve">
+    <value>Ensemble Synthesis Started</value>
+  </data>
+  <data name="Toast.Title.JobsLoaded" xml:space="preserve">
+    <value>Jobs Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadJobsFailed" xml:space="preserve">
+    <value>Failed to Load Jobs</value>
+  </data>
+  <data name="Toast.Title.JobDeleted" xml:space="preserve">
+    <value>Job Deleted</value>
+  </data>
+  <data name="Toast.Title.DeleteFailed" xml:space="preserve">
+    <value>Delete Failed</value>
+  </data>
+  <data name="Toast.Title.EnginesLoaded" xml:space="preserve">
+    <value>Engines Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadFailed" xml:space="preserve">
+    <value>Load Failed</value>
+  </data>
+  <data name="Toast.Title.UpscalingStarted" xml:space="preserve">
+    <value>Upscaling Started</value>
+  </data>
+  <data name="Toast.Title.StartFailed" xml:space="preserve">
+    <value>Start Failed</value>
+  </data>
+  <data name="Toast.Title.LoadDatasetsFailed" xml:space="preserve">
+    <value>Failed to Load Datasets</value>
+  </data>
+  <data name="Toast.Title.DatasetLoaded" xml:space="preserve">
+    <value>Dataset Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadDatasetFailed" xml:space="preserve">
+    <value>Failed to Load Dataset</value>
+  </data>
+  <data name="Toast.Title.AudioAdded" xml:space="preserve">
+    <value>Audio Added</value>
+  </data>
+  <data name="Toast.Title.AddAudioFailed" xml:space="preserve">
+    <value>Failed to Add Audio</value>
+  </data>
+  <data name="Toast.Title.UpdateAudioFailed" xml:space="preserve">
+    <value>Failed to Update Audio</value>
+  </data>
+  <data name="Toast.Title.RemoveAudioFailed" xml:space="preserve">
+    <value>Failed to Remove Audio</value>
+  </data>
+  <data name="Toast.Title.DatasetValid" xml:space="preserve">
+    <value>Dataset Valid</value>
+  </data>
+  <data name="Toast.Title.DatasetValidationFailed" xml:space="preserve">
+    <value>Dataset Validation Failed</value>
+  </data>
+
+  <!-- Status Messages (Detailed) -->
+  <data name="Status.Synthesizing" xml:space="preserve">
+    <value>Synthesizing voice...</value>
+  </data>
+  <data name="Status.SynthesisComplete" xml:space="preserve">
+    <value>Synthesis complete! Duration: {0:F2}s, Quality: {1:P0}</value>
+  </data>
+  <data name="Status.SynthesisCancelled" xml:space="preserve">
+    <value>Synthesis cancelled</value>
+  </data>
+  <data name="Status.LoadingAudio" xml:space="preserve">
+    <value>Loading audio for playback...</value>
+  </data>
+  <data name="Status.PlayingAudio" xml:space="preserve">
+    <value>Playing audio...</value>
+  </data>
+  <data name="Status.PlaybackCancelled" xml:space="preserve">
+    <value>Playback cancelled</value>
+  </data>
+  <data name="Status.PlaybackStopped" xml:space="preserve">
+    <value>Playback stopped</value>
+  </data>
+  <data name="Status.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- Additional Error Messages -->
+  <data name="Error.CreateProjectFailed" xml:space="preserve">
+    <value>Failed to create project</value>
+  </data>
+  <data name="Error.DeleteProjectFailed" xml:space="preserve">
+    <value>Failed to delete project</value>
+  </data>
+  <data name="Error.LoadProfilesFailed" xml:space="preserve">
+    <value>Failed to load profiles</value>
+  </data>
+  <data name="Error.SynthesizeFailed" xml:space="preserve">
+    <value>Failed to synthesize voice</value>
+  </data>
+  <data name="Error.PlayAudioFailed" xml:space="preserve">
+    <value>Failed to play audio</value>
+  </data>
+  <data name="Error.StopPlaybackFailed" xml:space="preserve">
+    <value>Failed to stop playback</value>
+  </data>
+  <data name="Error.PausePlaybackFailed" xml:space="preserve">
+    <value>Failed to pause playback</value>
+  </data>
+  <data name="Error.ResumePlaybackFailed" xml:space="preserve">
+    <value>Failed to resume playback</value>
+  </data>
+  <data name="Error.LoadTracksFailed" xml:space="preserve">
+    <value>Failed to load tracks</value>
+  </data>
+  <data name="Error.CreateTrackFailed" xml:space="preserve">
+    <value>Failed to create track</value>
+  </data>
+  <data name="Error.AddClipFailed" xml:space="preserve">
+    <value>Failed to add clip to track</value>
+  </data>
+  <data name="Error.DeleteClipsFailed" xml:space="preserve">
+    <value>Failed to delete clips</value>
+  </data>
+  <data name="Error.PreviewEnhancedFailed" xml:space="preserve">
+    <value>Failed to preview enhanced audio</value>
+  </data>
+  <data name="Error.ApplyEnhancedFailed" xml:space="preserve">
+    <value>Failed to apply enhanced audio</value>
+  </data>
+  <data name="EffectsMixer.UnknownChain" xml:space="preserve">
+    <value>Unknown Chain</value>
+  </data>
+  <data name="VoiceSynthesis.PreviewGenerated" xml:space="preserve">
+    <value>Preview generated successfully</value>
+  </data>
+  <data name="VoiceSynthesis.ComparisonCompleted" xml:space="preserve">
+    <value>Comparison completed</value>
+  </data>
+  <data name="VoiceSynthesis.AudioPlayback" xml:space="preserve">
+    <value>Audio Playback</value>
+  </data>
+
+  <!-- Additional Panel Display Names -->
+  <data name="Panel.VoiceCloningWizard.DisplayName" xml:space="preserve">
+    <value>Voice Cloning Wizard</value>
+  </data>
+  <data name="Panel.TodoPanel.DisplayName" xml:space="preserve">
+    <value>Todo Panel</value>
+  </data>
+  <data name="Panel.ModelManager.DisplayName" xml:space="preserve">
+    <value>Model Manager</value>
+  </data>
+  <data name="Panel.DeepfakeCreator.DisplayName" xml:space="preserve">
+    <value>Deepfake Creator</value>
+  </data>
+  <data name="Panel.Upscaling.DisplayName" xml:space="preserve">
+    <value>Upscaling</value>
+  </data>
+  <data name="Panel.TrainingDatasetEditor.DisplayName" xml:space="preserve">
+    <value>Dataset Editor</value>
+  </data>
+  <data name="Panel.Automation.DisplayName" xml:space="preserve">
+    <value>Automation</value>
+  </data>
+  <data name="Panel.AdvancedSettings.DisplayName" xml:space="preserve">
+    <value>Advanced Settings</value>
+  </data>
+  <data name="Panel.AdvancedWaveform.DisplayName" xml:space="preserve">
+    <value>Advanced Waveform</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.AudioRequired" xml:space="preserve">
+    <value>Audio must be selected</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.LoadAudioFilesFailed" xml:space="preserve">
+    <value>Failed to load audio files: {0}</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.LoadWaveformDataFailed" xml:space="preserve">
+    <value>Failed to load waveform data: {0}</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.ConfigurationUpdated" xml:space="preserve">
+    <value>Configuration updated</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.UpdateConfigFailed" xml:space="preserve">
+    <value>Failed to update config: {0}</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.WaveformAnalyzed" xml:space="preserve">
+    <value>Waveform analyzed</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.AnalyzeWaveformFailed" xml:space="preserve">
+    <value>Failed to analyze waveform: {0}</value>
+  </data>
+  <data name="AdvancedWaveformVisualization.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Panel.SonographyVisualization.DisplayName" xml:space="preserve">
+    <value>Sonography Visualization</value>
+  </data>
+  <data name="Panel.Analyzer.DisplayName" xml:space="preserve">
+    <value>Analyzer</value>
+  </data>
+  <data name="Panel.Training.DisplayName" xml:space="preserve">
+    <value>Training</value>
+  </data>
+  <data name="Panel.Transcribe.DisplayName" xml:space="preserve">
+    <value>Transcribe</value>
+  </data>
+  <data name="Panel.ImageGeneration.DisplayName" xml:space="preserve">
+    <value>Image Generation</value>
+  </data>
+  <data name="Panel.Diagnostics.DisplayName" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="Panel.Macros.DisplayName" xml:space="preserve">
+    <value>Macros</value>
+  </data>
+  <data name="Panel.QualityBenchmarking.DisplayName" xml:space="preserve">
+    <value>Quality Benchmarking</value>
+  </data>
+  <data name="Panel.EngineRecommendations.DisplayName" xml:space="preserve">
+    <value>Engine Recommendations</value>
+  </data>
+  <data name="Panel.ABTesting.DisplayName" xml:space="preserve">
+    <value>A/B Testing</value>
+  </data>
+  <data name="Panel.MiniTimeline.DisplayName" xml:space="preserve">
+    <value>Mini Timeline</value>
+  </data>
+  <data name="Panel.BatchProcessing.DisplayName" xml:space="preserve">
+    <value>Batch Processing</value>
+  </data>
+
+  <!-- XAML UI Strings - ProfilesView -->
+  <data name="ProfilesView.ProfilesTab" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="ProfilesView.LibraryTab" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="ProfilesView.SearchLabel" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ProfilesView.SearchPlaceholder" xml:space="preserve">
+    <value>Search profiles...</value>
+  </data>
+  <data name="ProfilesView.LanguageLabel" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="ProfilesView.LanguagePlaceholder" xml:space="preserve">
+    <value>All Languages</value>
+  </data>
+  <data name="ProfilesView.EmotionLabel" xml:space="preserve">
+    <value>Emotion</value>
+  </data>
+  <data name="ProfilesView.EmotionPlaceholder" xml:space="preserve">
+    <value>All Emotions</value>
+  </data>
+  <data name="ProfilesView.QualityLabel" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="ProfilesView.QualityPlaceholder" xml:space="preserve">
+    <value>All Quality</value>
+  </data>
+  <data name="ProfilesView.ProfilesCount" xml:space="preserve">
+    <value>{0} profiles</value>
+  </data>
+  <data name="ProfilesView.SelectedCount" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="ProfilesView.DeleteSelected" xml:space="preserve">
+    <value>Delete Selected</value>
+  </data>
+  <data name="ProfilesView.ExportSelected" xml:space="preserve">
+    <value>Export Selected</value>
+  </data>
+  <data name="ProfilesView.LoadingProfiles" xml:space="preserve">
+    <value>Loading profiles...</value>
+  </data>
+  <data name="ProfilesView.NoProfilesTitle" xml:space="preserve">
+    <value>No Voice Profiles</value>
+  </data>
+  <data name="ProfilesView.NoProfilesMessage" xml:space="preserve">
+    <value>Get started by creating your first voice profile. Click 'Create Profile' to begin.</value>
+  </data>
+  <data name="ProfilesView.CreateProfile" xml:space="preserve">
+    <value>Create Profile</value>
+  </data>
+  <data name="ProfilesView.ProfileDetails" xml:space="preserve">
+    <value>Profile Details</value>
+  </data>
+  <data name="ProfilesView.LanguagePrefix" xml:space="preserve">
+    <value>Language: </value>
+  </data>
+  <data name="ProfilesView.EmotionPrefix" xml:space="preserve">
+    <value>Emotion: </value>
+  </data>
+  <data name="ProfilesView.QualityScorePrefix" xml:space="preserve">
+    <value>Quality Score: </value>
+  </data>
+  <data name="ProfilesView.TagsLabel" xml:space="preserve">
+    <value>Tags:</value>
+  </data>
+  <data name="ProfilesView.PreviewQualityMetrics" xml:space="preserve">
+    <value>Preview Quality Metrics</value>
+  </data>
+  <data name="ProfilesView.PreviewProfile" xml:space="preserve">
+    <value>Preview Profile</value>
+  </data>
+  <data name="ProfilesView.StopPreview" xml:space="preserve">
+    <value>⏹ Stop</value>
+  </data>
+  <data name="ProfilesView.Previewing" xml:space="preserve">
+    <value>Previewing...</value>
+  </data>
+  <data name="ProfilesView.ReferenceAudioEnhancement" xml:space="preserve">
+    <value>Reference Audio Enhancement</value>
+  </data>
+  <data name="ProfilesView.EnhancementDescription" xml:space="preserve">
+    <value>Enhance reference audio quality before cloning</value>
+  </data>
+  <data name="ProfilesView.AutoEnhance" xml:space="preserve">
+    <value>Auto-enhance (noise reduction, normalization)</value>
+  </data>
+  <data name="ProfilesView.SelectOptimalSegments" xml:space="preserve">
+    <value>Select optimal segments</value>
+  </data>
+  <data name="ProfilesView.EnhanceReferenceAudio" xml:space="preserve">
+    <value>Enhance Reference Audio</value>
+  </data>
+  <data name="ProfilesView.EnhancementResults" xml:space="preserve">
+    <value>Enhancement Results</value>
+  </data>
+  <data name="ProfilesView.ImprovementsApplied" xml:space="preserve">
+    <value>Improvements Applied:</value>
+  </data>
+  <data name="ProfilesView.Degradation" xml:space="preserve">
+    <value>Degradation</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - ProfilesView -->
+  <data name="ProfilesView_ProfilesTab.Content" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="ProfilesView_LibraryTab.Content" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="ProfilesView_SelectedCount.Text" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="ProfilesView_DeleteSelected.Content" xml:space="preserve">
+    <value>Delete Selected</value>
+  </data>
+  <data name="ProfilesView_ExportSelected.Content" xml:space="preserve">
+    <value>Export Selected</value>
+  </data>
+  <data name="ProfilesView_SearchLabel.Text" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ProfilesView_SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Search profiles...</value>
+  </data>
+  <data name="ProfilesView_LanguageLabel.Text" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="ProfilesView_LanguageFilterComboBox.PlaceholderText" xml:space="preserve">
+    <value>All Languages</value>
+  </data>
+  <data name="ProfilesView_EmotionLabel.Text" xml:space="preserve">
+    <value>Emotion</value>
+  </data>
+  <data name="ProfilesView_EmotionFilterComboBox.PlaceholderText" xml:space="preserve">
+    <value>All Emotions</value>
+  </data>
+  <data name="ProfilesView_QualityLabel.Text" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="ProfilesView_QualityFilterComboBox.PlaceholderText" xml:space="preserve">
+    <value>All Quality</value>
+  </data>
+  <data name="ProfilesView_ProfilesCount.Text" xml:space="preserve">
+    <value>{0} profiles</value>
+  </data>
+  <data name="ProfilesView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Loading profiles...</value>
+  </data>
+  <data name="ProfilesView_EmptyState.Title" xml:space="preserve">
+    <value>No Voice Profiles</value>
+  </data>
+  <data name="ProfilesView_EmptyState.Message" xml:space="preserve">
+    <value>Get started by creating your first voice profile. Click 'Create Profile' to begin.</value>
+  </data>
+  <data name="ProfilesView_EmptyState.ActionText" xml:space="preserve">
+    <value>Create Profile</value>
+  </data>
+  <data name="ProfilesView_ProfileDetails.Text" xml:space="preserve">
+    <value>Profile Details</value>
+  </data>
+  <data name="ProfilesView_LanguagePrefix.Text" xml:space="preserve">
+    <value>Language: </value>
+  </data>
+  <data name="ProfilesView_EmotionPrefix.Text" xml:space="preserve">
+    <value>Emotion: </value>
+  </data>
+  <data name="ProfilesView_QualityScorePrefix.Text" xml:space="preserve">
+    <value>Quality Score: </value>
+  </data>
+  <data name="ProfilesView_TagsLabel.Text" xml:space="preserve">
+    <value>Tags:</value>
+  </data>
+  <data name="ProfilesView_PreviewQualityMetrics.Text" xml:space="preserve">
+    <value>Preview Quality Metrics</value>
+  </data>
+  <data name="ProfilesView_StopPreview.Content" xml:space="preserve">
+    <value>⏹ Stop</value>
+  </data>
+  <data name="ProfilesView_Previewing.Text" xml:space="preserve">
+    <value>Previewing...</value>
+  </data>
+  <data name="ProfilesView_ReferenceAudioEnhancement.Text" xml:space="preserve">
+    <value>Reference Audio Enhancement</value>
+  </data>
+  <data name="ProfilesView_EnhancementDescription.Text" xml:space="preserve">
+    <value>Enhance reference audio quality before cloning</value>
+  </data>
+  <data name="ProfilesView_AutoEnhance.Content" xml:space="preserve">
+    <value>Auto-enhance (noise reduction, normalization)</value>
+  </data>
+  <data name="ProfilesView_SelectOptimalSegments.Content" xml:space="preserve">
+    <value>Select optimal segments</value>
+  </data>
+  <data name="ProfilesView_EnhanceReferenceAudio.Text" xml:space="preserve">
+    <value>Enhance Reference Audio</value>
+  </data>
+  <data name="ProfilesView_EnhancementResults.Text" xml:space="preserve">
+    <value>Enhancement Results</value>
+  </data>
+  <data name="ProfilesView_ImprovementsApplied.Text" xml:space="preserve">
+    <value>Improvements Applied:</value>
+  </data>
+
+  <!-- XAML x:Uid Resource Keys - TimelineView -->
+  <data name="TimelineView_AddTrack.Content" xml:space="preserve">
+    <value>Add Track</value>
+  </data>
+  <data name="TimelineView_Play.Content" xml:space="preserve">
+    <value>▶ Play</value>
+  </data>
+  <data name="TimelineView_Pause.Content" xml:space="preserve">
+    <value>⏸ Pause</value>
+  </data>
+  <data name="TimelineView_Stop.Content" xml:space="preserve">
+    <value>⏹ Stop</value>
+  </data>
+  <data name="TimelineView_ZoomIn.Content" xml:space="preserve">
+    <value>Zoom In</value>
+  </data>
+  <data name="TimelineView_ZoomOut.Content" xml:space="preserve">
+    <value>Zoom Out</value>
+  </data>
+  <data name="TimelineView_SelectedClipsCount.Text" xml:space="preserve">
+    <value>{0} clips selected</value>
+  </data>
+  <data name="TimelineView_DeleteSelected.Content" xml:space="preserve">
+    <value>Delete Selected</value>
+  </data>
+  <data name="TimelineView_LoadingOverlay.LoadingMessage" xml:space="preserve">
+    <value>Loading timeline...</value>
+  </data>
+  <data name="TimelineView_ErrorMessage.Title" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="TimelineView_ErrorMessage.ActionText" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="TimelineView_EmptyState.Title" xml:space="preserve">
+    <value>No Tracks</value>
+  </data>
+  <data name="TimelineView_EmptyState.Message" xml:space="preserve">
+    <value>Get started by adding your first track. Click 'Add Track' to create a new audio track.</value>
+  </data>
+  <data name="TimelineView_EmptyState.ActionText" xml:space="preserve">
+    <value>Add Track</value>
+  </data>
+  <data name="TimelineView_EnginePrefix.Text" xml:space="preserve">
+    <value>Engine: {0}</value>
+  </data>
+  <data name="TimelineView_ProjectAudioFiles.Text" xml:space="preserve">
+    <value>Project Audio Files</value>
+  </data>
+  <data name="TimelineView_Refresh.Content" xml:space="preserve">
+    <value>🔄 Refresh</value>
+  </data>
+  <data name="TimelineView_Visualization.Text" xml:space="preserve">
+    <value>Visualization</value>
+  </data>
+  <data name="TimelineView_Spectrogram.Content" xml:space="preserve">
+    <value>Spectrogram</value>
+  </data>
+  <data name="TimelineView_Waveform.Content" xml:space="preserve">
+    <value>Waveform</value>
+  </data>
+
+  <!-- Profile Health Dashboard Messages -->
+  <data name="ProfileHealthDashboard.Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="ProfileHealthDashboard.LoadingHealthData" xml:space="preserve">
+    <value>Loading profile health data...</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthDataLoaded" xml:space="preserve">
+    <value>Loaded {0} profiles. {1} healthy, {2} degraded, {3} critical.</value>
+  </data>
+  <data name="ProfileHealthDashboard.LoadHealthDataFailed" xml:space="preserve">
+    <value>Error loading health data: {0}</value>
+  </data>
+  <data name="ProfileHealthDashboard.CheckingHealth" xml:space="preserve">
+    <value>Checking health for {0}...</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthCheckComplete" xml:space="preserve">
+    <value>Health check complete for {0}.</value>
+  </data>
+  <data name="ProfileHealthDashboard.CheckHealthFailed" xml:space="preserve">
+    <value>Error checking profile health: {0}</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthStatusHealthy" xml:space="preserve">
+    <value>Healthy</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthStatusDegraded" xml:space="preserve">
+    <value>Degraded</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthStatusCritical" xml:space="preserve">
+    <value>Critical</value>
+  </data>
+  <data name="ProfileHealthDashboard.HealthStatusUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+
+  <!-- SSML Control Messages -->
+  <data name="SSMLControl.DisplayName" xml:space="preserve">
+    <value>SSML Editor</value>
+  </data>
+  <data name="Panel.SSMLControl.DisplayName" xml:space="preserve">
+    <value>SSML Editor</value>
+  </data>
+  <data name="SSMLControl.LoadDocumentsFailed" xml:space="preserve">
+    <value>Failed to load documents: {0}</value>
+  </data>
+  <data name="SSMLControl.ContentRequired" xml:space="preserve">
+    <value>SSML content is required</value>
+  </data>
+  <data name="SSMLControl.DocumentCreated" xml:space="preserve">
+    <value>Document created</value>
+  </data>
+  <data name="SSMLControl.CreateDocumentFailed" xml:space="preserve">
+    <value>Failed to create document: {0}</value>
+  </data>
+  <data name="SSMLControl.DocumentUpdated" xml:space="preserve">
+    <value>Document updated</value>
+  </data>
+  <data name="SSMLControl.DocumentUpdatedDetail" xml:space="preserve">
+    <value>SSML document updated</value>
+  </data>
+  <data name="SSMLControl.UpdateDocumentFailed" xml:space="preserve">
+    <value>Failed to update document: {0}</value>
+  </data>
+  <data name="SSMLControl.DocumentDeleted" xml:space="preserve">
+    <value>Document deleted</value>
+  </data>
+  <data name="SSMLControl.DocumentDeletedDetail" xml:space="preserve">
+    <value>SSML document '{0}' deleted</value>
+  </data>
+  <data name="SSMLControl.DeleteDocumentFailed" xml:space="preserve">
+    <value>Failed to delete document: {0}</value>
+  </data>
+  <data name="SSMLControl.ValidationPassed" xml:space="preserve">
+    <value>SSML is valid</value>
+  </data>
+  <data name="SSMLControl.ValidationFailed" xml:space="preserve">
+    <value>SSML validation failed</value>
+  </data>
+  <data name="SSMLControl.ValidationFailedDetail" xml:space="preserve">
+    <value>SSML validation failed: {0} error(s)</value>
+  </data>
+  <data name="SSMLControl.ValidateFailed" xml:space="preserve">
+    <value>Failed to validate SSML: {0}</value>
+  </data>
+  <data name="SSMLControl.PreviewSynthesized" xml:space="preserve">
+    <value>Preview synthesized</value>
+  </data>
+  <data name="SSMLControl.PreviewFailed" xml:space="preserve">
+    <value>Failed to preview SSML: {0}</value>
+  </data>
+  <data name="SSMLControl.DocumentsRefreshed" xml:space="preserve">
+    <value>Documents refreshed</value>
+  </data>
+  <data name="Toast.Title.DocumentCreated" xml:space="preserve">
+    <value>Document Created</value>
+  </data>
+  <data name="Toast.Title.DocumentUpdated" xml:space="preserve">
+    <value>Document Updated</value>
+  </data>
+  <data name="Toast.Title.DocumentDeleted" xml:space="preserve">
+    <value>Document Deleted</value>
+  </data>
+  <data name="Toast.Title.CreationFailed" xml:space="preserve">
+    <value>Creation Failed</value>
+  </data>
+  <data name="Toast.Title.UpdateFailed" xml:space="preserve">
+    <value>Update Failed</value>
+  </data>
+  <data name="Toast.Title.DeleteFailed" xml:space="preserve">
+    <value>Delete Failed</value>
+  </data>
+  <data name="Toast.Title.ValidationSuccess" xml:space="preserve">
+    <value>Validation Success</value>
+  </data>
+  <data name="Toast.Title.ValidationFailed" xml:space="preserve">
+    <value>Validation Failed</value>
+  </data>
+  <data name="Toast.Title.PreviewReady" xml:space="preserve">
+    <value>Preview Ready</value>
+  </data>
+  <data name="Toast.Title.PreviewFailed" xml:space="preserve">
+    <value>Preview Failed</value>
+  </data>
+
+  <!-- Template Library Messages -->
+  <data name="TemplateLibrary.LoadTemplatesFailed" xml:space="preserve">
+    <value>Failed to load templates: {0}</value>
+  </data>
+  <data name="TemplateLibrary.TemplateNameRequired" xml:space="preserve">
+    <value>Template name is required</value>
+  </data>
+  <data name="TemplateLibrary.TemplateCreated" xml:space="preserve">
+    <value>Template created</value>
+  </data>
+  <data name="TemplateLibrary.CreateTemplateFailed" xml:space="preserve">
+    <value>Failed to create template: {0}</value>
+  </data>
+  <data name="TemplateLibrary.TemplateUpdated" xml:space="preserve">
+    <value>Template updated</value>
+  </data>
+  <data name="TemplateLibrary.UpdateTemplateFailed" xml:space="preserve">
+    <value>Failed to update template: {0}</value>
+  </data>
+  <data name="TemplateLibrary.TemplateDeleted" xml:space="preserve">
+    <value>Template deleted</value>
+  </data>
+  <data name="TemplateLibrary.DeleteTemplateFailed" xml:space="preserve">
+    <value>Failed to delete template: {0}</value>
+  </data>
+  <data name="TemplateLibrary.ProjectNameFromTemplate" xml:space="preserve">
+    <value>Project from {0}</value>
+  </data>
+  <data name="TemplateLibrary.TemplateApplied" xml:space="preserve">
+    <value>Template '{0}' applied</value>
+  </data>
+  <data name="TemplateLibrary.ApplyTemplateFailed" xml:space="preserve">
+    <value>Failed to apply template: {0}</value>
+  </data>
+  <data name="TemplateLibrary.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+  <data name="TemplateLibrary.TemplatesRefreshed" xml:space="preserve">
+    <value>Templates refreshed</value>
+  </data>
+
+  <!-- Preset Library Messages -->
+  <data name="PresetLibrary.SearchPresetsFailed" xml:space="preserve">
+    <value>Failed to search presets: {0}</value>
+  </data>
+  <data name="PresetLibrary.PresetCreated" xml:space="preserve">
+    <value>Preset created</value>
+  </data>
+  <data name="PresetLibrary.CreatePresetFailed" xml:space="preserve">
+    <value>Failed to create preset: {0}</value>
+  </data>
+  <data name="PresetLibrary.PresetUpdated" xml:space="preserve">
+    <value>Preset updated</value>
+  </data>
+  <data name="PresetLibrary.UpdatePresetFailed" xml:space="preserve">
+    <value>Failed to update preset: {0}</value>
+  </data>
+  <data name="PresetLibrary.PresetDeleted" xml:space="preserve">
+    <value>Preset deleted</value>
+  </data>
+  <data name="PresetLibrary.DeletePresetFailed" xml:space="preserve">
+    <value>Failed to delete preset: {0}</value>
+  </data>
+  <data name="PresetLibrary.PresetApplied" xml:space="preserve">
+    <value>Preset '{0}' applied</value>
+  </data>
+  <data name="PresetLibrary.ApplyPresetFailed" xml:space="preserve">
+    <value>Failed to apply preset: {0}</value>
+  </data>
+  <data name="PresetLibrary.PresetsRefreshed" xml:space="preserve">
+    <value>Presets refreshed</value>
+  </data>
+  <data name="PresetLibrary.LoadPresetTypesFailed" xml:space="preserve">
+    <value>Failed to load preset types: {0}</value>
+  </data>
+  <data name="PresetLibrary.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+
+  <!-- Scene Builder Messages -->
+  <data name="SceneBuilder.LoadScenesFailed" xml:space="preserve">
+    <value>Failed to load scenes: {0}</value>
+  </data>
+  <data name="SceneBuilder.ProjectRequired" xml:space="preserve">
+    <value>Project must be selected</value>
+  </data>
+  <data name="SceneBuilder.NewSceneName" xml:space="preserve">
+    <value>New Scene</value>
+  </data>
+  <data name="SceneBuilder.SceneCreated" xml:space="preserve">
+    <value>Scene created</value>
+  </data>
+  <data name="SceneBuilder.CreateSceneFailed" xml:space="preserve">
+    <value>Failed to create scene: {0}</value>
+  </data>
+  <data name="SceneBuilder.SceneUpdated" xml:space="preserve">
+    <value>Scene updated</value>
+  </data>
+  <data name="SceneBuilder.UpdateSceneFailed" xml:space="preserve">
+    <value>Failed to update scene: {0}</value>
+  </data>
+  <data name="SceneBuilder.SceneDeleted" xml:space="preserve">
+    <value>Scene deleted</value>
+  </data>
+  <data name="SceneBuilder.DeleteSceneFailed" xml:space="preserve">
+    <value>Failed to delete scene: {0}</value>
+  </data>
+  <data name="SceneBuilder.SceneAndProjectRequired" xml:space="preserve">
+    <value>Scene and project must be selected</value>
+  </data>
+  <data name="SceneBuilder.SceneApplied" xml:space="preserve">
+    <value>Scene applied</value>
+  </data>
+  <data name="SceneBuilder.ApplySceneFailed" xml:space="preserve">
+    <value>Failed to apply scene: {0}</value>
+  </data>
+  <data name="SceneBuilder.ScenesRefreshed" xml:space="preserve">
+    <value>Scenes refreshed</value>
+  </data>
+
+  <!-- Training Quality Visualization Messages -->
+  <data name="TrainingQualityVisualization.LoadTrainingJobsFailed" xml:space="preserve">
+    <value>Failed to load training jobs: {0}</value>
+  </data>
+  <data name="TrainingQualityVisualization.TrainingJobRequired" xml:space="preserve">
+    <value>Please select a training job</value>
+  </data>
+  <data name="TrainingQualityVisualization.QualityMetricsLoaded" xml:space="preserve">
+    <value>Loaded {0} quality metrics</value>
+  </data>
+  <data name="TrainingQualityVisualization.NoQualityHistoryData" xml:space="preserve">
+    <value>No quality history data available for this training job</value>
+  </data>
+  <data name="TrainingQualityVisualization.LoadQualityHistoryFailed" xml:space="preserve">
+    <value>Failed to load quality history: {0}</value>
+  </data>
+  <data name="TrainingQualityVisualization.EpochLabel" xml:space="preserve">
+    <value>Epoch {0}</value>
+  </data>
+  <data name="Toast.Title.LoadTrainingJobsFailed" xml:space="preserve">
+    <value>Load Training Jobs Failed</value>
+  </data>
+  <data name="Toast.Title.QualityHistoryLoaded" xml:space="preserve">
+    <value>Quality History Loaded</value>
+  </data>
+  <data name="Toast.Title.LoadQualityHistoryFailed" xml:space="preserve">
+    <value>Load Quality History Failed</value>
+  </data>
+
+  <!-- Sonography Visualization Messages -->
+  <data name="SonographyVisualization.AudioRequired" xml:space="preserve">
+    <value>Audio must be selected</value>
+  </data>
+  <data name="SonographyVisualization.DataGenerated" xml:space="preserve">
+    <value>Sonography data generated</value>
+  </data>
+  <data name="SonographyVisualization.GenerateSonographyFailed" xml:space="preserve">
+    <value>Failed to generate sonography: {0}</value>
+  </data>
+  <data name="SonographyVisualization.LoadPerspectivesFailed" xml:space="preserve">
+    <value>Failed to load perspectives: {0}</value>
+  </data>
+  <data name="SonographyVisualization.LoadColorSchemesFailed" xml:space="preserve">
+    <value>Failed to load color schemes: {0}</value>
+  </data>
+  <data name="SonographyVisualization.LoadAudioFilesFailed" xml:space="preserve">
+    <value>Failed to load audio files: {0}</value>
+  </data>
+  <data name="SonographyVisualization.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- AI Mixing & Mastering Messages -->
+  <data name="AIMixingMastering.AnalysisComplete" xml:space="preserve">
+    <value>Analysis complete: {0} suggestions</value>
+  </data>
+  <data name="AIMixingMastering.AnalysisCompleteDetail" xml:space="preserve">
+    <value>Generated {0} mixing suggestions</value>
+  </data>
+  <data name="AIMixingMastering.AnalyzeMixFailed" xml:space="preserve">
+    <value>Failed to analyze mix: {0}</value>
+  </data>
+  <data name="AIMixingMastering.AppliedSuggestion" xml:space="preserve">
+    <value>Applied suggestion: {0}</value>
+  </data>
+  <data name="AIMixingMastering.AppliedSuggestionDetail" xml:space="preserve">
+    <value>Applied suggestion: {0}</value>
+  </data>
+  <data name="AIMixingMastering.ApplySuggestionFailed" xml:space="preserve">
+    <value>Failed to apply suggestion: {0}</value>
+  </data>
+  <data name="AIMixingMastering.AppliedSuggestions" xml:space="preserve">
+    <value>Applied {0} suggestions</value>
+  </data>
+  <data name="AIMixingMastering.AppliedSuggestionsDetail" xml:space="preserve">
+    <value>Applied {0} suggestions</value>
+  </data>
+  <data name="AIMixingMastering.ApplySuggestionsFailed" xml:space="preserve">
+    <value>Failed to apply suggestions: {0}</value>
+  </data>
+  <data name="AIMixingMastering.Previewing" xml:space="preserve">
+    <value>Previewing: {0}</value>
+  </data>
+  <data name="AIMixingMastering.PreviewSuggestionFailed" xml:space="preserve">
+    <value>Failed to preview suggestion: {0}</value>
+  </data>
+  <data name="AIMixingMastering.MasteringAnalysisComplete" xml:space="preserve">
+    <value>Mastering analysis complete</value>
+  </data>
+  <data name="AIMixingMastering.MasteringAnalysisCompleteDetail" xml:space="preserve">
+    <value>Mastering analysis complete</value>
+  </data>
+  <data name="AIMixingMastering.AnalyzeMasteringFailed" xml:space="preserve">
+    <value>Failed to analyze mastering: {0}</value>
+  </data>
+  <data name="AIMixingMastering.MasteringApplied" xml:space="preserve">
+    <value>Mastering applied (loudness: {0} LUFS)</value>
+  </data>
+  <data name="AIMixingMastering.MasteringAppliedDetail" xml:space="preserve">
+    <value>Mastering applied (loudness: {0} LUFS)</value>
+  </data>
+  <data name="AIMixingMastering.ApplyMasteringFailed" xml:space="preserve">
+    <value>Failed to apply mastering: {0}</value>
+  </data>
+  <data name="AIMixingMastering.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Toast.Title.MixAnalysisComplete" xml:space="preserve">
+    <value>Mix Analysis Complete</value>
+  </data>
+  <data name="Toast.Title.SuggestionApplied" xml:space="preserve">
+    <value>Suggestion Applied</value>
+  </data>
+  <data name="Toast.Title.SuggestionsApplied" xml:space="preserve">
+    <value>Suggestions Applied</value>
+  </data>
+  <data name="Toast.Title.AnalysisComplete" xml:space="preserve">
+    <value>Analysis Complete</value>
+  </data>
+  <data name="Toast.Title.MasteringApplied" xml:space="preserve">
+    <value>Mastering Applied</value>
+  </data>
+
+  <!-- Plugin Management Messages -->
+  <data name="PluginManagement.PluginManagerNotAvailable" xml:space="preserve">
+    <value>Plugin Manager is not available</value>
+  </data>
+  <data name="PluginManagement.LoadingPlugins" xml:space="preserve">
+    <value>Loading plugins...</value>
+  </data>
+  <data name="PluginManagement.PluginsLoaded" xml:space="preserve">
+    <value>Loaded {0} plugins</value>
+  </data>
+  <data name="PluginManagement.LoadPluginsFailed" xml:space="preserve">
+    <value>Failed to load plugins: {0}</value>
+  </data>
+  <data name="PluginManagement.PluginsRefreshed" xml:space="preserve">
+    <value>Plugins refreshed</value>
+  </data>
+  <data name="PluginManagement.PluginStatusInitialized" xml:space="preserve">
+    <value>Initialized</value>
+  </data>
+  <data name="PluginManagement.PluginStatusNotInitialized" xml:space="preserve">
+    <value>Not Initialized</value>
+  </data>
+  <data name="PluginManagement.PluginStatusUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="PluginManagement.PluginEnabled" xml:space="preserve">
+    <value>Plugin '{0}' enabled</value>
+  </data>
+  <data name="PluginManagement.EnablePluginFailed" xml:space="preserve">
+    <value>Failed to enable plugin: {0}</value>
+  </data>
+  <data name="PluginManagement.PluginDisabled" xml:space="preserve">
+    <value>Plugin '{0}' disabled</value>
+  </data>
+  <data name="PluginManagement.DisablePluginFailed" xml:space="preserve">
+    <value>Failed to disable plugin: {0}</value>
+  </data>
+  <data name="PluginManagement.ReloadingPlugin" xml:space="preserve">
+    <value>Reloading plugin '{0}'...</value>
+  </data>
+  <data name="PluginManagement.ReloadPluginFailed" xml:space="preserve">
+    <value>Failed to reload plugin: {0}</value>
+  </data>
+
+  <!-- Upscaling Messages -->
+  <data name="Upscaling.EnginesLoadedDetail" xml:space="preserve">
+    <value>Loaded {0} upscaling engines</value>
+  </data>
+  <data name="Upscaling.LoadEnginesFailed" xml:space="preserve">
+    <value>Failed to load engines: {0}</value>
+  </data>
+  <data name="Upscaling.SelectionRequired" xml:space="preserve">
+    <value>Please select a file and engine</value>
+  </data>
+  <data name="Upscaling.FileDoesNotExist" xml:space="preserve">
+    <value>Selected file does not exist</value>
+  </data>
+  <data name="Upscaling.FileSizeExceeded" xml:space="preserve">
+    <value>File size exceeds maximum allowed size ({0:F1} MB)</value>
+  </data>
+  <data name="Upscaling.InvalidFileFormat" xml:space="preserve">
+    <value>Invalid file format. Supported formats: {0}</value>
+  </data>
+  <data name="Upscaling.UpscalingStarted" xml:space="preserve">
+    <value>Upscaling started ({0}x {1})</value>
+  </data>
+  <data name="Upscaling.UpscalingStartedDetail" xml:space="preserve">
+    <value>Upscaling started ({0}x {1})</value>
+  </data>
+  <data name="Upscaling.StartUpscalingFailed" xml:space="preserve">
+    <value>Failed to start upscaling: {0}</value>
+  </data>
+  <data name="Upscaling.JobDeleted" xml:space="preserve">
+    <value>Job deleted successfully</value>
+  </data>
+  <data name="Upscaling.JobDeletedDetail" xml:space="preserve">
+    <value>Upscaling job deleted</value>
+  </data>
+  <data name="Upscaling.DeleteJobFailed" xml:space="preserve">
+    <value>Failed to delete job: {0}</value>
+  </data>
+  <data name="Upscaling.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+  <data name="Upscaling.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+
+  <!-- Training Dataset Editor Messages -->
+  <data name="TrainingDatasetEditor.LoadDatasetsFailed" xml:space="preserve">
+    <value>Failed to load datasets: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetRequired" xml:space="preserve">
+    <value>Dataset must be selected</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetLoadedDetail" xml:space="preserve">
+    <value>Dataset '{0}' loaded</value>
+  </data>
+  <data name="TrainingDatasetEditor.LoadDatasetFailed" xml:space="preserve">
+    <value>Failed to load dataset: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioIdRequired" xml:space="preserve">
+    <value>Audio ID is required</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioAdded" xml:space="preserve">
+    <value>Audio added to dataset</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioAddedDetail" xml:space="preserve">
+    <value>Audio file added to dataset successfully</value>
+  </data>
+  <data name="TrainingDatasetEditor.AddAudioFailed" xml:space="preserve">
+    <value>Failed to add audio: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioUpdated" xml:space="preserve">
+    <value>Audio updated</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioUpdatedDetail" xml:space="preserve">
+    <value>Audio file updated successfully</value>
+  </data>
+  <data name="TrainingDatasetEditor.UpdateAudioFailed" xml:space="preserve">
+    <value>Failed to update audio: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioRemoved" xml:space="preserve">
+    <value>Audio removed from dataset</value>
+  </data>
+  <data name="TrainingDatasetEditor.AudioRemovedDetail" xml:space="preserve">
+    <value>Audio file removed from dataset successfully</value>
+  </data>
+  <data name="TrainingDatasetEditor.RemoveAudioFailed" xml:space="preserve">
+    <value>Failed to remove audio: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetValid" xml:space="preserve">
+    <value>Dataset is valid</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetValidationFailed" xml:space="preserve">
+    <value>Dataset validation failed</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetValidDetail" xml:space="preserve">
+    <value>Dataset is valid ({0} files)</value>
+  </data>
+  <data name="TrainingDatasetEditor.ValidationFailedDetail" xml:space="preserve">
+    <value>Validation failed with {0} error(s)</value>
+  </data>
+  <data name="TrainingDatasetEditor.ValidateDatasetFailed" xml:space="preserve">
+    <value>Failed to validate dataset: {0}</value>
+  </data>
+  <data name="TrainingDatasetEditor.DatasetRefreshed" xml:space="preserve">
+    <value>Dataset refreshed</value>
+  </data>
+  <data name="TrainingDatasetEditor.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Toast.Title.AudioRemoved" xml:space="preserve">
+    <value>Audio Removed</value>
+  </data>
+
+  <!-- Profile Comparison Messages -->
+  <data name="ProfileComparison.PreviewTextDefault" xml:space="preserve">
+    <value>Hello, this is a comparison of two voice profiles.</value>
+  </data>
+  <data name="ProfileComparison.LoadProfilesFailed" xml:space="preserve">
+    <value>Failed to load profiles: {0}</value>
+  </data>
+  <data name="ProfileComparison.ComparisonCompleted" xml:space="preserve">
+    <value>Profile comparison completed</value>
+  </data>
+  <data name="ProfileComparison.CompareProfilesFailed" xml:space="preserve">
+    <value>Failed to compare profiles: {0}</value>
+  </data>
+  <data name="ProfileComparison.PlayAudioFailed" xml:space="preserve">
+    <value>Failed to play audio: {0}</value>
+  </data>
+  <data name="Toast.Title.LoadProfilesFailed" xml:space="preserve">
+    <value>Load Profiles Failed</value>
+  </data>
+  <data name="Toast.Title.ComparisonComplete" xml:space="preserve">
+    <value>Comparison Complete</value>
+  </data>
+  <data name="Toast.Title.ComparisonFailed" xml:space="preserve">
+    <value>Comparison Failed</value>
+  </data>
+  <data name="Toast.Title.PlaybackFailed" xml:space="preserve">
+    <value>Playback Failed</value>
+  </data>
+
+  <!-- Voice Morphing & Blending Messages -->
+  <data name="VoiceMorphingBlending.PreviewTextDefault" xml:space="preserve">
+    <value>Hello, this is a preview of the blended voice.</value>
+  </data>
+  <data name="VoiceMorphingBlending.ProfilesLoaded" xml:space="preserve">
+    <value>Loaded {0} voice profiles</value>
+  </data>
+  <data name="VoiceMorphingBlending.LoadProfilesFailed" xml:space="preserve">
+    <value>Failed to load profiles: {0}</value>
+  </data>
+  <data name="VoiceMorphingBlending.PreviewGenerated" xml:space="preserve">
+    <value>Preview generated ({0}s)</value>
+  </data>
+  <data name="VoiceMorphingBlending.PreviewGeneratedDetail" xml:space="preserve">
+    <value>Preview generated ({0}s)</value>
+  </data>
+  <data name="VoiceMorphingBlending.PreviewBlendFailed" xml:space="preserve">
+    <value>Failed to preview blend: {0}</value>
+  </data>
+  <data name="VoiceMorphingBlending.BlendedVoiceSavedAsProfile" xml:space="preserve">
+    <value>Blended voice saved as profile: {0}</value>
+  </data>
+  <data name="VoiceMorphingBlending.BlendedVoiceCreated" xml:space="preserve">
+    <value>Blended voice created successfully</value>
+  </data>
+  <data name="VoiceMorphingBlending.BlendVoicesFailed" xml:space="preserve">
+    <value>Failed to blend voices: {0}</value>
+  </data>
+  <data name="VoiceMorphingBlending.VoiceMorphed" xml:space="preserve">
+    <value>Voice morphed ({0}s)</value>
+  </data>
+  <data name="VoiceMorphingBlending.VoiceMorphedDetail" xml:space="preserve">
+    <value>Voice morphed ({0}s)</value>
+  </data>
+  <data name="VoiceMorphingBlending.MorphVoiceFailed" xml:space="preserve">
+    <value>Failed to morph voice: {0}</value>
+  </data>
+  <data name="Toast.Title.ProfilesLoaded" xml:space="preserve">
+    <value>Profiles Loaded</value>
+  </data>
+  <data name="Toast.Title.BlendComplete" xml:space="preserve">
+    <value>Blend Complete</value>
+  </data>
+  <data name="Toast.Title.BlendFailed" xml:space="preserve">
+    <value>Blend Failed</value>
+  </data>
+  <data name="Toast.Title.MorphComplete" xml:space="preserve">
+    <value>Morph Complete</value>
+  </data>
+  <data name="Toast.Title.MorphFailed" xml:space="preserve">
+    <value>Morph Failed</value>
+  </data>
+
+  <!-- Update Messages -->
+  <data name="Update.CheckForUpdatesFailed" xml:space="preserve">
+    <value>Failed to check for updates: {0}</value>
+  </data>
+  <data name="Update.PreparingDownload" xml:space="preserve">
+    <value>Preparing download...</value>
+  </data>
+  <data name="Update.Downloading" xml:space="preserve">
+    <value>Downloading {0}</value>
+  </data>
+  <data name="Update.DownloadComplete" xml:space="preserve">
+    <value>Download complete!</value>
+  </data>
+  <data name="Update.DownloadFailed" xml:space="preserve">
+    <value>Download failed</value>
+  </data>
+  <data name="Update.DownloadUpdateFailed" xml:space="preserve">
+    <value>Failed to download update: {0}</value>
+  </data>
+  <data name="Update.NoUpdateFileAvailable" xml:space="preserve">
+    <value>No update file available</value>
+  </data>
+  <data name="Update.FailedToStartInstaller" xml:space="preserve">
+    <value>Failed to start update installer</value>
+  </data>
+  <data name="Update.InstallUpdateFailed" xml:space="preserve">
+    <value>Failed to install update: {0}</value>
+  </data>
+  <data name="Update.ReleaseNotesNotAvailable" xml:space="preserve">
+    <value>Release notes not available</value>
+  </data>
+  <data name="Update.UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+  <data name="Update.DownloadSpeed" xml:space="preserve">
+    <value>{0} Mbps</value>
+  </data>
+  <data name="Update.DownloadingWithProgress" xml:space="preserve">
+    <value>Downloading {0} {1}</value>
+  </data>
+
+  <!-- Voice Browser Messages -->
+  <data name="VoiceBrowser.VoicesFound" xml:space="preserve">
+    <value>Found {0} voices</value>
+  </data>
+  <data name="VoiceBrowser.SearchVoicesFailed" xml:space="preserve">
+    <value>Failed to search voices: {0}</value>
+  </data>
+  <data name="VoiceBrowser.LoadLanguagesFailed" xml:space="preserve">
+    <value>Failed to load languages: {0}</value>
+  </data>
+  <data name="VoiceBrowser.LoadTagsFailed" xml:space="preserve">
+    <value>Failed to load tags: {0}</value>
+  </data>
+  <data name="VoiceBrowser.SearchRefreshed" xml:space="preserve">
+    <value>Search refreshed</value>
+  </data>
+
+  <!-- Automation Messages -->
+  <data name="Automation.LoadCurvesFailed" xml:space="preserve">
+    <value>Failed to load automation curves: {0}</value>
+  </data>
+  <data name="Automation.TrackAndParameterRequired" xml:space="preserve">
+    <value>Track and parameter must be selected</value>
+  </data>
+  <data name="Automation.CurveCreated" xml:space="preserve">
+    <value>Automation curve created</value>
+  </data>
+  <data name="Automation.CurveCreatedDetail" xml:space="preserve">
+    <value>Automation curve '{0}' created</value>
+  </data>
+  <data name="Automation.CreateCurveFailed" xml:space="preserve">
+    <value>Failed to create automation curve: {0}</value>
+  </data>
+  <data name="Automation.CurveUpdated" xml:space="preserve">
+    <value>Automation curve updated</value>
+  </data>
+  <data name="Automation.CurveUpdatedDetail" xml:space="preserve">
+    <value>Automation curve '{0}' updated</value>
+  </data>
+  <data name="Automation.UpdateCurveFailed" xml:space="preserve">
+    <value>Failed to update automation curve: {0}</value>
+  </data>
+  <data name="Automation.CurveDeleted" xml:space="preserve">
+    <value>Automation curve deleted</value>
+  </data>
+  <data name="Automation.CurveDeletedDetail" xml:space="preserve">
+    <value>Automation curve '{0}' deleted</value>
+  </data>
+  <data name="Automation.DeleteCurveFailed" xml:space="preserve">
+    <value>Failed to delete automation curve: {0}</value>
+  </data>
+  <data name="Automation.LoadParametersFailed" xml:space="preserve">
+    <value>Failed to load parameters: {0}</value>
+  </data>
+  <data name="Automation.CurvesRefreshed" xml:space="preserve">
+    <value>Automation curves refreshed</value>
+  </data>
+  <data name="Toast.Title.CreationFailed" xml:space="preserve">
+    <value>Creation Failed</value>
+  </data>
+  <data name="Toast.Title.CurveCreated" xml:space="preserve">
+    <value>Curve Created</value>
+  </data>
+  <data name="Toast.Title.CurveUpdated" xml:space="preserve">
+    <value>Curve Updated</value>
+  </data>
+  <data name="Toast.Title.CurveDeleted" xml:space="preserve">
+    <value>Curve Deleted</value>
+  </data>
+  <data name="Toast.Title.UpdateFailed" xml:space="preserve">
+    <value>Update Failed</value>
+  </data>
+  <data name="Toast.Title.DeleteFailed" xml:space="preserve">
+    <value>Delete Failed</value>
+  </data>
+
+  <!-- Deepfake Creator Messages -->
+  <data name="DeepfakeCreator.LoadEnginesFailed" xml:space="preserve">
+    <value>Failed to load deepfake engines: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.SelectionRequired" xml:space="preserve">
+    <value>Please select source face, target media, and engine</value>
+  </data>
+  <data name="DeepfakeCreator.ConsentRequired" xml:space="preserve">
+    <value>Consent is required for deepfake creation</value>
+  </data>
+  <data name="DeepfakeCreator.FilesDoNotExist" xml:space="preserve">
+    <value>Selected files do not exist</value>
+  </data>
+  <data name="DeepfakeCreator.SourceFaceFormatInvalid" xml:space="preserve">
+    <value>Source face file must be an image. Supported formats: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.SourceFaceSizeExceeded" xml:space="preserve">
+    <value>Source face file size exceeds maximum allowed size (10MB)</value>
+  </data>
+  <data name="DeepfakeCreator.TargetImageFormatInvalid" xml:space="preserve">
+    <value>Target image file format not supported. Supported formats: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.TargetImageSizeExceeded" xml:space="preserve">
+    <value>Target image file size exceeds maximum allowed size (500MB)</value>
+  </data>
+  <data name="DeepfakeCreator.TargetVideoFormatInvalid" xml:space="preserve">
+    <value>Target video file format not supported. Supported formats: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.TargetVideoSizeExceeded" xml:space="preserve">
+    <value>Target video file size exceeds maximum allowed size (2GB)</value>
+  </data>
+  <data name="DeepfakeCreator.CreationStarted" xml:space="preserve">
+    <value>Deepfake creation started: {0} quality</value>
+  </data>
+  <data name="DeepfakeCreator.CreateFailed" xml:space="preserve">
+    <value>Failed to create deepfake: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.LoadJobsFailed" xml:space="preserve">
+    <value>Failed to load deepfake jobs: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.JobDeleted" xml:space="preserve">
+    <value>Job deleted successfully</value>
+  </data>
+  <data name="DeepfakeCreator.DeleteJobFailed" xml:space="preserve">
+    <value>Failed to delete job: {0}</value>
+  </data>
+  <data name="DeepfakeCreator.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+  <!-- Spatial Audio Messages -->
+  <data name="SpatialAudio.PositionSet" xml:space="preserve">
+    <value>Position set: X={0:F2}, Y={1:F2}, Z={2:F2}, Distance={3:F2}m</value>
+  </data>
+  <data name="SpatialAudio.SetPositionFailed" xml:space="preserve">
+    <value>Failed to set position: {0}</value>
+  </data>
+  <data name="SpatialAudio.EnvironmentConfigured" xml:space="preserve">
+    <value>Environment configured: {0} room, size={1:F2}</value>
+  </data>
+  <data name="SpatialAudio.ConfigureEnvironmentFailed" xml:space="preserve">
+    <value>Failed to configure environment: {0}</value>
+  </data>
+  <data name="SpatialAudio.ProcessingCompleted" xml:space="preserve">
+    <value>Spatial audio processing completed</value>
+  </data>
+  <data name="SpatialAudio.ProcessAudioFailed" xml:space="preserve">
+    <value>Failed to process audio: {0}</value>
+  </data>
+  <data name="SpatialAudio.PreviewStarted" xml:space="preserve">
+    <value>Preview started (requires spatial audio libraries)</value>
+  </data>
+  <data name="SpatialAudio.PreviewAudioFailed" xml:space="preserve">
+    <value>Failed to preview audio: {0}</value>
+  </data>
+  <data name="SpatialAudio.PresetApplied" xml:space="preserve">
+    <value>Preset '{0}' applied</value>
+  </data>
+  <data name="SpatialAudio.ApplyPresetFailed" xml:space="preserve">
+    <value>Failed to apply preset: {0}</value>
+  </data>
+  <data name="SpatialAudio.ResetToDefaults" xml:space="preserve">
+    <value>Reset to defaults</value>
+  </data>
+
+  <!-- Dataset QA Messages -->
+  <data name="DatasetQA.LoadDatasetsFailed" xml:space="preserve">
+    <value>Failed to load datasets: {0}</value>
+  </data>
+  <data name="DatasetQA.DatasetRequired" xml:space="preserve">
+    <value>Please select a dataset</value>
+  </data>
+  <data name="DatasetQA.DatasetNotFoundOrEmpty" xml:space="preserve">
+    <value>Dataset not found or has no audio files</value>
+  </data>
+  <data name="DatasetQA.QAReportGenerated" xml:space="preserve">
+    <value>QA report generated: {0}/{1} clips pass quality thresholds</value>
+  </data>
+  <data name="DatasetQA.RunQAFailed" xml:space="preserve">
+    <value>Failed to run QA analysis: {0}</value>
+  </data>
+  <data name="DatasetQA.ClipsCulled" xml:space="preserve">
+    <value>Low-quality clips culled from dataset</value>
+  </data>
+  <data name="DatasetQA.CullClipsFailed" xml:space="preserve">
+    <value>Failed to cull low-quality clips: {0}</value>
+  </data>
+
+  <!-- Analytics Dashboard Messages -->
+  <data name="AnalyticsDashboard.LoadSummaryFailed" xml:space="preserve">
+    <value>Failed to load analytics summary: {0}</value>
+  </data>
+  <data name="AnalyticsDashboard.LoadCategoryMetricsFailed" xml:space="preserve">
+    <value>Failed to load category metrics: {0}</value>
+  </data>
+  <data name="AnalyticsDashboard.LoadCategoriesFailed" xml:space="preserve">
+    <value>Failed to load categories: {0}</value>
+  </data>
+  <data name="AnalyticsDashboard.Refreshed" xml:space="preserve">
+    <value>Refreshed</value>
+  </data>
+
+</root>

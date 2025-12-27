@@ -1,0 +1,57 @@
+{
+  "defaults": {
+    "tts": "xtts_v2",
+    "image_gen": "sdxl_comfy",
+    "video_gen": "svd",
+    "stt": "whisper"
+  },
+  "overrides": {},
+  "installed": [],
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models",
+    "engines": {}
+  },
+  "gpu_settings": {
+    "enabled": true,
+    "device": "cuda",
+    "fallback_to_cpu": true,
+    "memory_fraction": 0.9
+  },
+  "engine_configs": {
+    "xtts_v2": {
+      "model_paths": {
+        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2",
+        "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2\\cache"
+      },
+      "parameters": {
+        "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "chatterbox": {
+      "model_paths": {
+        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\chatterbox"
+      },
+      "parameters": {
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "tortoise": {
+      "model_paths": {
+        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\tortoise"
+      },
+      "parameters": {
+        "device": "cuda",
+        "gpu": true,
+        "high_quality": true
+      }
+    }
+  },
+  "global_settings": {
+    "auto_download_models": true,
+    "model_cache_enabled": true,
+    "parallel_engine_limit": 2
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "engine_id": "sdxl_comfy",
+  "name": "SDXL ComfyUI",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Stable Diffusion XL via ComfyUI workflow engine",
+  "author": "ComfyUI Community",
+  "license": "AGPL-3.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "comfyui": ">=1.0.0",
+    "torch": ">=2.0.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\checkpoints",
+    "loras": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\loras",
+    "vae": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\vae"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "controlnet",
+    "lora_loading"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 8,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.sdxl_comfy_engine.SDXLComfyEngine",
+  "config_schema": {
+    "checkpoint": {
+      "type": "string",
+      "default": "sd_xl_base_1.0.safetensors",
+      "description": "SDXL checkpoint filename"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "workflow_path": {
+      "type": "string",
+      "default": "workflows/sdxl_basic.json",
+      "description": "ComfyUI workflow JSON path"
+    }
+  }
+}
+

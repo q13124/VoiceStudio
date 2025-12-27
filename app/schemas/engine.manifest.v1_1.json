@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Engine Manifest v1.1",
+  "description": "Enhanced engine manifest schema with lifecycle, hooks, logging, and security",
+  "type": "object",
+  "required": ["engine_id", "name", "type", "version"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema reference",
+      "default": "app/schemas/engine.manifest.v1_1.json"
+    },
+    "protocol": {
+      "type": "string",
+      "description": "Manifest protocol version",
+      "enum": ["v1.0", "v1.1"],
+      "default": "v1.1"
+    },
+    "engine_id": {
+      "type": "string",
+      "description": "Unique engine identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable engine name"
+    },
+    "type": {
+      "type": "string",
+      "description": "Engine type",
+      "enum": ["audio", "image", "video", "other"]
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Engine subtype (e.g., 'tts', 'vc', 'stt')"
+    },
+    "version": {
+      "type": "string",
+      "description": "Engine version"
+    },
+    "description": {
+      "type": "string",
+      "description": "Engine description"
+    },
+    "author": {
+      "type": "string",
+      "description": "Engine author"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier"
+    },
+    "python_version": {
+      "type": "string",
+      "description": "Required Python version (e.g., '>=3.10')"
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Python package dependencies",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "model_paths": {
+      "type": "object",
+      "description": "Model file paths (supports env vars like %PROGRAMDATA%)",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "List of capabilities",
+      "items": {
+        "type": "string"
+      }
+    },
+    "device_requirements": {
+      "type": "object",
+      "description": "Device requirements",
+      "properties": {
+        "gpu": {
+          "type": "string",
+          "enum": ["required", "recommended", "optional"]
+        },
+        "vram_min_gb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ram_min_gb": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "entry_point": {
+      "type": "string",
+      "description": "Python class path for class-based engines"
+    },
+    "entry": {
+      "type": "object",
+      "description": "Entry point for runtime engines",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["python", "executable"]
+        },
+        "exe": {
+          "type": "string",
+          "description": "Executable path"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "description": "Health check configuration",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["http", "tcp", "process"]
+        },
+        "url": {
+          "type": "string",
+          "description": "Health check URL (for http kind)"
+        },
+        "port": {
+          "type": "integer",
+          "description": "Health check port (for tcp kind)"
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Supported tasks",
+      "items": {
+        "type": "string"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "description": "Resource requirements",
+      "properties": {
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vram_gb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ram_gb": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "description": "Lifecycle configuration",
+      "properties": {
+        "pool_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Pool size for fast engines (1 = singleton)"
+        },
+        "idle_timeout_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Idle timeout before auto-shutdown"
+        },
+        "startup_timeout_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum startup time"
+        }
+      }
+    },
+    "preHooks": {
+      "type": "array",
+      "description": "Pre-execution hooks",
+      "items": {
+        "type": "string"
+      }
+    },
+    "postHooks": {
+      "type": "array",
+      "description": "Post-execution hooks",
+      "items": {
+        "type": "string"
+      }
+    },
+    "log": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "stderr_to_file": {
+          "type": "boolean",
+          "description": "Redirect stderr to log file"
+        },
+        "stdout_to_file": {
+          "type": "boolean",
+          "description": "Redirect stdout to log file"
+        },
+        "rotate_mb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Log rotation size in MB"
+        },
+        "log_dir": {
+          "type": "string",
+          "description": "Log directory (default: runtime/logs)"
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "description": "Security policy",
+      "properties": {
+        "allow_net": {
+          "type": "boolean",
+          "description": "Allow network access",
+          "default": false
+        },
+        "allow_fs_roots": {
+          "type": "array",
+          "description": "Allowed file system root paths (supports env vars)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_hosts": {
+          "type": "array",
+          "description": "Allowed network hosts (if allow_net is true)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_ports": {
+          "type": "array",
+          "description": "Allowed network ports (if allow_net is true)",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "description": "Workspace configuration",
+      "properties": {
+        "directories": {
+          "type": "array",
+          "description": "Required workspace directories",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "config_schema": {
+      "type": "object",
+      "description": "Configuration schema",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

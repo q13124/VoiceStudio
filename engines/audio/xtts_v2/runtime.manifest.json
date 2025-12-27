@@ -1,0 +1,29 @@
+{
+  "id": "xtts_v2",
+  "type": "audio_tts",
+  "displayName": "Coqui XTTS v2",
+  "entry": {
+    "kind": "python",
+    "exe": "..\\..\\..\\.venv\\Scripts\\python.exe",
+    "args": [
+      "-m",
+      "TTS.bin.tts_server",
+      "--model_name",
+      "tts_models/multilingual/multi-dataset/xtts_v2"
+    ]
+  },
+  "health": {
+    "kind": "http",
+    "url": "http://127.0.0.1:8021/health"
+  },
+  "tasks": [
+    "tts",
+    "clone_infer",
+    "embed_voice"
+  ],
+  "resources": {
+    "needs": ["cuda_optional"],
+    "vram_gb": 4
+  }
+}
+

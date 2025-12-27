@@ -1,0 +1,1850 @@
+================================================================================
+PLACEHOLDER VERIFICATION REPORT (IMPROVED)
+================================================================================
+Generated: 2025-12-07T07:37:17.229976
+Total files with violations: 187
+
+Total violations found: 877
+
+CRITICAL VIOLATIONS (Must Fix):
+
+
+File: app\cli\benchmark_engines.py
+  Violations: 3
+
+  Line 108: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+  Line 108: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+  Line 147: Found 'pass'
+    pass
+
+File: app\core\PanelRegistry.Auto.cs
+  Violations: 1
+
+  Line 91: Found 'TODO'
+    "src/VoiceStudio.App/Views/Panels/TodoPanelView.xaml",
+
+File: app\core\audio\advanced_quality_enhancement.py
+  Violations: 2
+
+  Line 210: Found 'for now'
+    # For now, apply gentle pitch correction
+  Line 217: Found 'placeholder'
+    pass  # Placeholder for full implementation
+
+File: app\core\audio\audio_utils.py
+  Violations: 1
+
+  Line 647: Found 'pass'
+    pass
+
+File: app\core\engines\aeneas_engine.py
+  Violations: 15
+
+  Line 52: Found 'pass'
+    def initialize(self): pass
+  Line 54: Found 'pass'
+    def cleanup(self): pass
+  Line 175: Found 'pass'
+    pass
+  Line 262: Found 'temporary'
+    # Create temporary text file
+  Line 262: Found 'temporary'
+    # Create temporary text file
+  Line 263: Found 'temporary'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as tmp_tex
+  Line 263: Found 'temporary'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as tmp_tex
+  Line 267: Found 'temporary'
+    # Create temporary output file
+  Line 267: Found 'temporary'
+    # Create temporary output file
+  Line 271: Found 'temporary'
+    output_file = tempfile.NamedTemporaryFile(suffix=f'.{output_format}', delete=False)
+  ... and 5 more violations
+
+File: app\core\engines\automatic1111_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\base.py
+  Violations: 2
+
+  Line 40: Found 'pass'
+    pass
+  Line 47: Found 'pass'
+    pass
+
+File: app\core\engines\chatterbox_engine.py
+  Violations: 2
+
+  Line 65: Found 'pass'
+    def initialize(self): pass
+  Line 67: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\comfyui_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\deepfacelab_engine.py
+  Violations: 2
+
+  Line 166: Found 'pass'
+    pass
+  Line 304: Found 'for now'
+    # For now, resize source face to match target and return
+
+File: app\core\engines\espeak_ng_engine.py
+  Violations: 8
+
+  Line 63: Found 'pass'
+    def initialize(self): pass
+  Line 65: Found 'pass'
+    def cleanup(self): pass
+  Line 258: Found 'temporary'
+    # Create temporary output file
+  Line 258: Found 'temporary'
+    # Create temporary output file
+  Line 259: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 259: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 346: Found 'temporary'
+    # Cleanup temporary files
+  Line 346: Found 'temporary'
+    # Cleanup temporary files
+
+File: app\core\engines\f5_tts_engine.py
+  Violations: 2
+
+  Line 62: Found 'pass'
+    def initialize(self): pass
+  Line 64: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\fastsd_cpu_engine.py
+  Violations: 2
+
+  Line 54: Found 'pass'
+    def initialize(self): pass
+  Line 56: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\festival_flite_engine.py
+  Violations: 12
+
+  Line 63: Found 'pass'
+    def initialize(self): pass
+  Line 65: Found 'pass'
+    def cleanup(self): pass
+  Line 261: Found 'temporary'
+    # Create temporary output file
+  Line 261: Found 'temporary'
+    # Create temporary output file
+  Line 262: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 262: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 279: Found 'temporary'
+    # Create temporary scheme script
+  Line 279: Found 'temporary'
+    # Create temporary scheme script
+  Line 286: Found 'temporary'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.scm', delete=False) as scm_file:
+  Line 286: Found 'temporary'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.scm', delete=False) as scm_file:
+  ... and 2 more violations
+
+File: app\core\engines\ffmpeg_ai_engine.py
+  Violations: 1
+
+  Line 269: Found 'pass'
+    pass
+
+File: app\core\engines\fomm_engine.py
+  Violations: 3
+
+  Line 99: Found 'for now'
+    # For now, we'll implement a basic structure
+  Line 284: Found 'placeholder'
+    # For now, return source image (placeholder implementation)
+  Line 284: Found 'for now'
+    # For now, return source image (placeholder implementation)
+
+File: app\core\engines\fooocus_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\gpt_sovits_engine.py
+  Violations: 6
+
+  Line 425: Found 'temporary'
+    # Save to temporary file
+  Line 425: Found 'temporary'
+    # Save to temporary file
+  Line 453: Found 'temporary'
+    # Clean up temporary file
+  Line 453: Found 'temporary'
+    # Clean up temporary file
+  Line 458: Found 'pass'
+    pass
+  Line 511: Found 'pass'
+    pass
+
+File: app\core\engines\higgs_audio_engine.py
+  Violations: 2
+
+  Line 62: Found 'pass'
+    def initialize(self): pass
+  Line 64: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\invokeai_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\localai_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\lyrebird_engine.py
+  Violations: 3
+
+  Line 101: Found 'placeholder'
+    # Placeholder for local model loading
+  Line 184: Found 'placeholder'
+    # For now, return placeholder
+  Line 184: Found 'for now'
+    # For now, return placeholder
+
+File: app\core\engines\manifest_loader.py
+  Violations: 3
+
+  Line 123: Found 'TODO'
+    "python_version": True,  # TODO: Check Python version
+  Line 124: Found 'TODO'
+    "dependencies": True,     # TODO: Check installed packages
+  Line 125: Found 'TODO'
+    "device": True            # TODO: Check GPU/VRAM
+
+File: app\core\engines\marytts_engine.py
+  Violations: 2
+
+  Line 65: Found 'pass'
+    def initialize(self): pass
+  Line 67: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\mockingbird_engine.py
+  Violations: 4
+
+  Line 228: Found 'placeholder'
+    # This is a placeholder for the actual MockingBird loading logic
+  Line 228: Found 'mock'
+    # This is a placeholder for the actual MockingBird loading logic
+  Line 259: Found 'dummy'
+    # Generate dummy audio for now (in real implementation, use model)
+  Line 259: Found 'for now'
+    # Generate dummy audio for now (in real implementation, use model)
+
+File: app\core\engines\openjourney_engine.py
+  Violations: 2
+
+  Line 42: Found 'pass'
+    def initialize(self): pass
+  Line 44: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\parakeet_engine.py
+  Violations: 6
+
+  Line 61: Found 'pass'
+    def initialize(self): pass
+  Line 63: Found 'pass'
+    def cleanup(self): pass
+  Line 253: Found 'temporary'
+    # Synthesize to temporary file then read
+  Line 253: Found 'temporary'
+    # Synthesize to temporary file then read
+  Line 255: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 255: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+
+File: app\core\engines\piper_engine.py
+  Violations: 6
+
+  Line 70: Found 'pass'
+    pass
+  Line 74: Found 'pass'
+    pass
+  Line 295: Found 'temporary'
+    # Create temporary output file if needed
+  Line 295: Found 'temporary'
+    # Create temporary output file if needed
+  Line 301: Found 'temporary'
+    output_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+  Line 301: Found 'temporary'
+    output_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+
+File: app\core\engines\protocols.py
+  Violations: 2
+
+  Line 40: Found 'pass'
+    pass
+  Line 47: Found 'pass'
+    pass
+
+File: app\core\engines\realesrgan_engine.py
+  Violations: 2
+
+  Line 52: Found 'pass'
+    pass
+  Line 56: Found 'pass'
+    pass
+
+File: app\core\engines\realistic_vision_engine.py
+  Violations: 2
+
+  Line 42: Found 'pass'
+    def initialize(self): pass
+  Line 44: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\rhvoice_engine.py
+  Violations: 8
+
+  Line 63: Found 'pass'
+    def initialize(self): pass
+  Line 65: Found 'pass'
+    def cleanup(self): pass
+  Line 263: Found 'temporary'
+    # Create temporary output file
+  Line 263: Found 'temporary'
+    # Create temporary output file
+  Line 264: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 264: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+  Line 391: Found 'temporary'
+    # Cleanup temporary files
+  Line 391: Found 'temporary'
+    # Cleanup temporary files
+
+File: app\core\engines\router.py
+  Violations: 1
+
+  Line 340: Found 'pass'
+    pass
+
+File: app\core\engines\rvc_engine.py
+  Violations: 2
+
+  Line 88: Found 'pass'
+    pass
+  Line 92: Found 'pass'
+    pass
+
+File: app\core\engines\sadtalker_engine.py
+  Violations: 4
+
+  Line 315: Found 'placeholder'
+    # For now, return placeholder features
+  Line 315: Found 'for now'
+    # For now, return placeholder features
+  Line 339: Found 'placeholder'
+    # For now, return face image (placeholder)
+  Line 339: Found 'for now'
+    # For now, return face image (placeholder)
+
+File: app\core\engines\sd_cpu_engine.py
+  Violations: 2
+
+  Line 41: Found 'pass'
+    def initialize(self): pass
+  Line 43: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\sdnext_engine.py
+  Violations: 2
+
+  Line 38: Found 'pass'
+    def initialize(self): pass
+  Line 40: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\sdxl_comfy_engine.py
+  Violations: 2
+
+  Line 39: Found 'pass'
+    def initialize(self): pass
+  Line 41: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\sdxl_engine.py
+  Violations: 2
+
+  Line 46: Found 'pass'
+    def initialize(self): pass
+  Line 48: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\silero_engine.py
+  Violations: 3
+
+  Line 61: Found 'pass'
+    def initialize(self): pass
+  Line 63: Found 'pass'
+    def cleanup(self): pass
+  Line 261: Found 'pass'
+    pass
+
+File: app\core\engines\tortoise_engine.py
+  Violations: 2
+
+  Line 61: Found 'pass'
+    def initialize(self): pass
+  Line 63: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\voice_ai_engine.py
+  Violations: 3
+
+  Line 95: Found 'placeholder'
+    # Placeholder for local model loading
+  Line 169: Found 'placeholder'
+    # For now, return input path (placeholder)
+  Line 169: Found 'for now'
+    # For now, return input path (placeholder)
+
+File: app\core\engines\voxcpm_engine.py
+  Violations: 2
+
+  Line 62: Found 'pass'
+    def initialize(self): pass
+  Line 64: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\whisper_cpp_engine.py
+  Violations: 1
+
+  Line 125: Found 'pass'
+    pass
+
+File: app\core\engines\whisper_engine.py
+  Violations: 2
+
+  Line 49: Found 'pass'
+    def initialize(self): pass
+  Line 51: Found 'pass'
+    def cleanup(self): pass
+
+File: app\core\engines\whisper_ui_engine.py
+  Violations: 7
+
+  Line 206: Found 'temporary'
+    # Cleanup temporary file if created
+  Line 206: Found 'temporary'
+    # Cleanup temporary file if created
+  Line 211: Found 'pass'
+    pass
+  Line 272: Found 'temporary'
+    # Save to temporary file
+  Line 272: Found 'temporary'
+    # Save to temporary file
+  Line 275: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+  Line 275: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+
+File: app\core\engines\xtts_engine.py
+  Violations: 2
+
+  Line 84: Found 'pass'
+    pass
+  Line 88: Found 'pass'
+    pass
+
+File: app\core\plugins_api\base.py
+  Violations: 1
+
+  Line 115: Found 'NotImplementedError'
+    raise NotImplementedError(
+
+File: app\core\runtime\engine_lifecycle.py
+  Violations: 7
+
+  Line 322: Found 'TODO'
+    # TODO: Start actual process (integrate with RuntimeEngine)
+  Line 323: Found 'for now'
+    # For now, simulate startup
+  Line 352: Found 'TODO'
+    # TODO: Stop actual process
+  Line 370: Found 'TODO'
+    # TODO: Implement actual health check based on manifest
+  Line 371: Found 'for now'
+    # For now, simulate health check
+  Line 406: Found 'TODO'
+    # TODO: Write to audit log
+  Line 423: Found 'pass'
+    pass
+
+File: app\core\runtime\hooks.py
+  Violations: 3
+
+  Line 118: Found 'for now'
+    # For now, just warn
+  Line 171: Found 'TODO'
+    # TODO: Implement thumbnail generation based on file type
+  Line 172: Found 'for now'
+    # For now, just return True
+
+File: app\core\security\database.py
+  Violations: 12
+
+  Line 35: Found 'TODO'
+    # TODO: Initialize database schema (Week 5)
+  Line 40: Found 'TODO'
+    # TODO: Implement database initialization (Week 5)
+  Line 42: Found 'pass'
+    pass
+  Line 53: Found 'TODO'
+    # TODO: Implement watermark storage (Week 5)
+  Line 54: Found 'NotImplementedError'
+    raise NotImplementedError("Watermark storage not yet implemented. See Phase 18 roadmap.")
+  Line 54: Found 'not yet'
+    raise NotImplementedError("Watermark storage not yet implemented. See Phase 18 roadmap.")
+  Line 58: Found 'TODO'
+    # TODO: Implement watermark retrieval (Week 5)
+  Line 59: Found 'NotImplementedError'
+    raise NotImplementedError("Watermark retrieval not yet implemented. See Phase 18 roadmap.")
+  Line 59: Found 'not yet'
+    raise NotImplementedError("Watermark retrieval not yet implemented. See Phase 18 roadmap.")
+  Line 69: Found 'TODO'
+    # TODO: Implement verification logging (Week 5)
+  ... and 2 more violations
+
+File: app\core\security\deepfake_detector.py
+  Violations: 8
+
+  Line 35: Found 'TODO'
+    # TODO: Load models (Week 4-5)
+  Line 56: Found 'TODO'
+    # TODO: Implement deepfake detection
+  Line 58: Found 'NotImplementedError'
+    raise NotImplementedError("Deepfake detection not yet implemented. See Phase 18 roadmap.")
+  Line 58: Found 'fake'
+    raise NotImplementedError("Deepfake detection not yet implemented. See Phase 18 roadmap.")
+  Line 58: Found 'not yet'
+    raise NotImplementedError("Deepfake detection not yet implemented. See Phase 18 roadmap.")
+  Line 71: Found 'TODO'
+    # TODO: Implement batch detection
+  Line 72: Found 'NotImplementedError'
+    raise NotImplementedError("Batch detection not yet implemented. See Phase 18 roadmap.")
+  Line 72: Found 'not yet'
+    raise NotImplementedError("Batch detection not yet implemented. See Phase 18 roadmap.")
+
+File: app\core\security\watermarking.py
+  Violations: 9
+
+  Line 83: Found 'TODO'
+    # TODO: Implement watermark embedding
+  Line 85: Found 'NotImplementedError'
+    raise NotImplementedError("Watermark embedding not yet implemented. See Phase 18 roadmap.")
+  Line 85: Found 'not yet'
+    raise NotImplementedError("Watermark embedding not yet implemented. See Phase 18 roadmap.")
+  Line 110: Found 'TODO'
+    # TODO: Implement watermark extraction
+  Line 111: Found 'NotImplementedError'
+    raise NotImplementedError("Watermark extraction not yet implemented. See Phase 18 roadmap.")
+  Line 111: Found 'not yet'
+    raise NotImplementedError("Watermark extraction not yet implemented. See Phase 18 roadmap.")
+  Line 125: Found 'TODO'
+    # TODO: Implement tampering detection
+  Line 126: Found 'NotImplementedError'
+    raise NotImplementedError("Tampering detection not yet implemented. See Phase 18 roadmap.")
+  Line 126: Found 'not yet'
+    raise NotImplementedError("Tampering detection not yet implemented. See Phase 18 roadmap.")
+
+File: app\core\training\xtts_trainer.py
+  Violations: 2
+
+  Line 270: Found 'for now'
+    run_eval=False,  # Skip eval for now
+  Line 348: Found 'for now'
+    # For now, simulate training with proper structure
+
+File: app\ui\VoiceStudio.App\Views\Controls\PanelHost.xaml.cs
+  Violations: 1
+
+  Line 79: Found 'TODO'
+    // TODO: Implement floating window functionality
+
+File: app\ui\VoiceStudio.App\Views\Shell\MainWindow.xaml.cs
+  Violations: 1
+
+  Line 66: Found 'placeholder'
+    // Placeholder for future Batch panel
+
+File: backend\api\main.py
+  Violations: 2
+
+  Line 106: Found 'TODO'
+    todo_panel,
+  Line 367: Found 'TODO'
+    app.include_router(todo_panel.router)
+
+File: backend\api\routes\assistant.py
+  Violations: 2
+
+  Line 120: Found 'not yet'
+    "AI assistant chat is not yet fully implemented. "
+  Line 189: Found 'not yet'
+    "AI task suggestion is not yet fully implemented. "
+
+File: backend\api\routes\audio.py
+  Violations: 5
+
+  Line 119: Found 'temporary'
+    1. Voice route temporary storage (_audio_storage)
+  Line 119: Found 'temporary'
+    1. Voice route temporary storage (_audio_storage)
+  Line 434: Found 'sample'
+    if len(block_audio) < block_samples * 0.5:  # Skip incomplete blocks
+  Line 434: Found 'incomplete'
+    if len(block_audio) < block_samples * 0.5:  # Skip incomplete blocks
+  Line 482: Found 'pass'
+    pass
+
+File: backend\api\routes\audio_analysis.py
+  Violations: 4
+
+  Line 388: Found 'not yet'
+    This endpoint is not yet fully implemented. Please implement
+  Line 407: Found 'not yet'
+    f"Audio analysis queueing is not yet fully implemented. "
+  Line 426: Found 'not yet'
+    This feature is not yet fully implemented. Please ensure
+  Line 448: Found 'not yet'
+    f"Audio comparison is not yet fully implemented. "
+
+File: backend\api\routes\automation.py
+  Violations: 1
+
+  Line 304: Found 'for now'
+    # For now, return common parameters
+
+File: backend\api\routes\backup.py
+  Violations: 10
+
+  Line 21: Found 'not yet'
+    # Logger not yet defined, will log later if needed
+  Line 21: Found 'later'
+    # Logger not yet defined, will log later if needed
+  Line 220: Found 'temporary'
+    # Create temporary directory for backup contents
+  Line 220: Found 'temporary'
+    # Create temporary directory for backup contents
+  Line 364: Found 'temporary'
+    # Clean up temporary directory
+  Line 364: Found 'temporary'
+    # Clean up temporary directory
+  Line 416: Found 'temporary'
+    # Create temporary directory for extraction
+  Line 416: Found 'temporary'
+    # Create temporary directory for extraction
+  Line 490: Found 'temporary'
+    # Clean up temporary directory
+  Line 490: Found 'temporary'
+    # Clean up temporary directory
+
+File: backend\api\routes\batch.py
+  Violations: 5
+
+  Line 597: Found 'temporary'
+    # Use temporary file or project directory
+  Line 597: Found 'temporary'
+    # Use temporary file or project directory
+  Line 625: Found 'temporary'
+    error_msg = f"Failed to create temporary file: {str(e)}"
+  Line 625: Found 'temporary'
+    error_msg = f"Failed to create temporary file: {str(e)}"
+  Line 786: Found 'for now'
+    # For now, we'll just mark it but not fail
+
+File: backend\api\routes\dataset.py
+  Violations: 6
+
+  Line 46: Found 'placeholder'
+    # For now, return placeholder results with proper structure
+  Line 46: Found 'for now'
+    # For now, return placeholder results with proper structure
+  Line 49: Found 'placeholder'
+    # using audio processing libraries. For now, return placeholder data.
+  Line 49: Found 'for now'
+    # using audio processing libraries. For now, return placeholder data.
+  Line 125: Found 'placeholder'
+    # thresholds, and remove them from the dataset. For now, placeholder implementation.
+  Line 125: Found 'for now'
+    # thresholds, and remove them from the dataset. For now, placeholder implementation.
+
+File: backend\api\routes\deepfake_creator.py
+  Violations: 1
+
+  Line 132: Found 'for now'
+    # For now, simulate immediate completion
+
+File: backend\api\routes\effects.py
+  Violations: 3
+
+  Line 382: Found 'placeholder'
+    # in sequence and generating the output audio. For now, return a placeholder response.
+  Line 382: Found 'for now'
+    # in sequence and generating the output audio. For now, return a placeholder response.
+  Line 393: Found 'not yet'
+    message="Audio processing queued (not yet implemented)",
+
+File: backend\api\routes\embedding_explorer.py
+  Violations: 4
+
+  Line 81: Found 'not yet'
+    characteristics from audio. This feature is not yet implemented.
+  Line 99: Found 'not yet'
+    "Speaker embedding extraction is not yet fully implemented. "
+  Line 216: Found 'not yet'
+    "Embedding visualization is not yet fully implemented. "
+  Line 264: Found 'not yet'
+    "Embedding clustering is not yet fully implemented. "
+
+File: backend\api\routes\emotion.py
+  Violations: 2
+
+  Line 138: Found 'placeholder'
+    # and classify emotions using ML models. For now, return placeholder data.
+  Line 138: Found 'for now'
+    # and classify emotions using ML models. For now, return placeholder data.
+
+File: backend\api\routes\engines.py
+  Violations: 3
+
+  Line 192: Found 'pass'
+    pass
+  Line 199: Found 'pass'
+    pass
+  Line 206: Found 'pass'
+    pass
+
+File: backend\api\routes\ensemble.py
+  Violations: 4
+
+  Line 548: Found 'for now'
+    # For now, implement basic "voting" mode (select best quality engine)
+  Line 549: Found 'TODO'
+    # TODO: Implement segment-level selection and fusion in future enhancement
+  Line 574: Found 'for now'
+    # For now, fallback to voting for other modes
+  Line 575: Found 'TODO'
+    # TODO: Implement hybrid and fusion modes
+
+File: backend\api\routes\gpu_status.py
+  Violations: 2
+
+  Line 50: Found 'not yet'
+    # 2. pyamdgpuinfo for AMD GPUs (not yet implemented)
+  Line 120: Found 'pass'
+    pass
+
+File: backend\api\routes\image_gen.py
+  Violations: 4
+
+  Line 311: Found 'temporary'
+    # Create temporary output file
+  Line 311: Found 'temporary'
+    # Create temporary output file
+  Line 605: Found 'not yet'
+    # Return error indicating video processing not yet implemented
+  Line 608: Found 'not yet'
+    detail="Video face enhancement is not yet implemented. "
+
+File: backend\api\routes\image_search.py
+  Violations: 2
+
+  Line 98: Found 'placeholder'
+    # search local image libraries. For now, return placeholder results.
+  Line 98: Found 'for now'
+    # search local image libraries. For now, return placeholder results.
+
+File: backend\api\routes\macros.py
+  Violations: 1
+
+  Line 380: Found 'for now'
+    # error recovery, and progress tracking. For now, mark as completed immediately.
+
+File: backend\api\routes\mcp_dashboard.py
+  Violations: 1
+
+  Line 303: Found 'for now'
+    # to the MCP server. For now, simulate connection.
+
+File: backend\api\routes\mix_assistant.py
+  Violations: 3
+
+  Line 71: Found 'not yet'
+    is not yet fully implemented.
+  Line 234: Found 'not yet'
+    This feature is not yet fully implemented.
+  Line 250: Found 'not yet'
+    "AI mix preset generation is not yet fully implemented. "
+
+File: backend\api\routes\models.py
+  Violations: 2
+
+  Line 196: Found 'temporary'
+    # Create temporary ZIP file
+  Line 196: Found 'temporary'
+    # Create temporary ZIP file
+
+File: backend\api\routes\profiles.py
+  Violations: 2
+
+  Line 326: Found 'pass'
+    pass
+  Line 336: Found 'pass'
+    pass
+
+File: backend\api\routes\prosody.py
+  Violations: 4
+
+  Line 152: Found 'not yet'
+    This feature is not yet implemented.
+  Line 157: Found 'not yet'
+    # Phoneme analysis not yet implemented
+  Line 165: Found 'not yet'
+    "Phoneme analysis is not yet implemented. "
+  Line 196: Found 'not yet'
+    "Prosody application is not yet fully integrated with "
+
+File: backend\api\routes\quality.py
+  Violations: 9
+
+  Line 408: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as ref_file:
+  Line 408: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as ref_file:
+  Line 415: Found 'temporary'
+    # Save to temporary file
+  Line 415: Found 'temporary'
+    # Save to temporary file
+  Line 416: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 416: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 638: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+  Line 638: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+  Line 723: Found 'not yet'
+    "Quality dashboard is not yet fully implemented. "
+
+File: backend\api\routes\quality_pipelines.py
+  Violations: 2
+
+  Line 167: Found 'temporary'
+    # Save to temporary location
+  Line 167: Found 'temporary'
+    # Save to temporary location
+
+File: backend\api\routes\realtime_converter.py
+  Violations: 7
+
+  Line 222: Found 'temporary'
+    # Save chunk to temporary file for RVC processing
+  Line 222: Found 'temporary'
+    # Save chunk to temporary file for RVC processing
+  Line 223: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_input:
+  Line 223: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_input:
+  Line 228: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_output:
+  Line 228: Found 'temporary'
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_output:
+  Line 249: Found 'pass'
+    pass
+
+File: backend\api\routes\recording.py
+  Violations: 1
+
+  Line 360: Found 'pass'
+    pass
+
+File: backend\api\routes\rvc.py
+  Violations: 2
+
+  Line 302: Found 'pass'
+    pass
+  Line 307: Found 'pass'
+    pass
+
+File: backend\api\routes\script_editor.py
+  Violations: 1
+
+  Line 457: Found 'not yet'
+    f"Script synthesis is not yet fully implemented. "
+
+File: backend\api\routes\settings.py
+  Violations: 3
+
+  Line 281: Found 'temporary'
+    # Save settings atomically using a temporary file
+  Line 281: Found 'temporary'
+    # Save settings atomically using a temporary file
+  Line 304: Found 'pass'
+    pass
+
+File: backend\api\routes\spatial_audio.py
+  Violations: 7
+
+  Line 197: Found 'not yet'
+    This feature is not yet fully implemented. Please install spatial audio
+  Line 226: Found 'not yet'
+    f"Spatial audio processing is not yet fully implemented. "
+  Line 253: Found 'not yet'
+    This feature is not yet implemented. Please install spatial audio libraries
+  Line 273: Found 'not yet'
+    "Spatial audio preview is not yet implemented. "
+  Line 399: Found 'temporary'
+    # Create temporary config and apply
+  Line 399: Found 'temporary'
+    # Create temporary config and apply
+  Line 444: Found 'for now'
+    # For now, return preview endpoint info
+
+File: backend\api\routes\spectrogram.py
+  Violations: 2
+
+  Line 393: Found 'not yet'
+    f"Spectrogram comparison is not yet fully implemented. "
+  Line 445: Found 'not yet'
+    f"Spectrogram export is not yet fully implemented. "
+
+File: backend\api\routes\ssml.py
+  Violations: 1
+
+  Line 234: Found 'for now'
+    # For now, basic validation
+
+File: backend\api\routes\style_transfer.py
+  Violations: 2
+
+  Line 96: Found 'not yet'
+    # Style transfer processing is not yet implemented.
+  Line 101: Found 'not yet'
+    f"Created style transfer job: {job_id} " f"(processing not yet implemented)"
+
+File: backend\api\routes\todo_panel.py
+  Violations: 149
+
+  Line 2: Found 'TODO'
+    Todo Panel Routes
+  Line 4: Found 'TODO'
+    Endpoints for todo/task management.
+  Line 16: Found 'TODO'
+    router = APIRouter(prefix="/api/todo-panel", tags=["todo-panel"])
+  Line 18: Found 'TODO'
+    # In-memory storage for todos (replace with database in production)
+  Line 19: Found 'TODO'
+    _todos: Dict[str, "Todo"] = {}
+  Line 22: Found 'TODO'
+    class Todo(BaseModel):
+  Line 23: Found 'TODO'
+    """Todo item information."""
+  Line 25: Found 'TODO'
+    todo_id: str
+  Line 39: Found 'TODO'
+    class TodoCreateRequest(BaseModel):
+  Line 40: Found 'TODO'
+    """Request to create a new todo."""
+  ... and 139 more violations
+
+File: backend\api\routes\training.py
+  Violations: 1
+
+  Line 334: Found 'pass'
+    pass
+
+File: backend\api\routes\transcribe.py
+  Violations: 1
+
+  Line 268: Found 'pass'
+    pass
+
+File: backend\api\routes\upscaling.py
+  Violations: 1
+
+  Line 128: Found 'for now'
+    # For now, simulate immediate completion
+
+File: backend\api\routes\video_gen.py
+  Violations: 8
+
+  Line 140: Found 'temporary'
+    # Create temporary output file
+  Line 140: Found 'temporary'
+    # Create temporary output file
+  Line 274: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
+  Line 274: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
+  Line 583: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 583: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 621: Found 'pass'
+    pass
+  Line 626: Found 'for now'
+    # Store audio path (reuse video storage for now)
+
+File: backend\api\routes\voice.py
+  Violations: 15
+
+  Line 270: Found 'for now'
+    # URL - would need to download, but for now check local path
+  Line 757: Found 'pass'
+    pass
+  Line 796: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 796: Found 'temporary'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+  Line 812: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+  Line 812: Found 'temporary'
+    with tempfile.NamedTemporaryFile(
+  Line 1064: Found 'pass'
+    pass
+  Line 1084: Found 'pass'
+    pass
+  Line 1102: Found 'pass'
+    pass
+  Line 1689: Found 'for now'
+    # For now, apply slight smoothing
+  ... and 5 more violations
+
+File: backend\api\routes\voice_cloning_wizard.py
+  Violations: 2
+
+  Line 123: Found 'for now'
+    # For now, simulate validation
+  Line 263: Found 'for now'
+    # For now, just mark as completed after a delay
+
+File: backend\api\routes\voice_morph.py
+  Violations: 2
+
+  Line 181: Found 'not yet'
+    This feature is not yet fully implemented. Please install required
+  Line 215: Found 'not yet'
+    f"Voice morphing is not yet fully implemented. "
+
+File: backend\api\routes\workflows.py
+  Violations: 10
+
+  Line 364: Found 'TODO'
+    # TODO: Call actual synthesis API
+  Line 365: Found 'placeholder'
+    # For now, return placeholder
+  Line 365: Found 'for now'
+    # For now, return placeholder
+  Line 400: Found 'TODO'
+    # TODO: Call actual effect API
+  Line 401: Found 'placeholder'
+    # For now, return placeholder
+  Line 401: Found 'for now'
+    # For now, return placeholder
+  Line 434: Found 'TODO'
+    # TODO: Call actual export API
+  Line 435: Found 'placeholder'
+    # For now, return placeholder
+  Line 435: Found 'for now'
+    # For now, return placeholder
+  Line 461: Found 'TODO'
+    # TODO: Implement conditional logic
+
+File: backend\api\utils\quality_batch.py
+  Violations: 1
+
+  Line 147: Found 'pass'
+    pass
+
+File: backend\api\ws\events.py
+  Violations: 1
+
+  Line 17: Found 'pass'
+    pass
+
+File: src\VoiceStudio.App\Controls\PanelHost.xaml.cs
+  Violations: 3
+
+  Line 237: Found 'later'
+    // For now, just save basic state (can be extended later)
+  Line 237: Found 'for now'
+    // For now, just save basic state (can be extended later)
+  Line 270: Found 'for now'
+    // For now, basic restoration (can be extended with IPanelStatePersistable interface)
+
+File: src\VoiceStudio.App\Controls\WaveformControl.xaml.cs
+  Violations: 2
+
+  Line 270: Found 'sample'
+    // For now, use the number of samples as a proxy for duration
+  Line 270: Found 'for now'
+    // For now, use the number of samples as a proxy for duration
+
+File: src\VoiceStudio.App\Converters\BooleanToBrushConverter.cs
+  Violations: 1
+
+  Line 34: Found 'NotImplementedException'
+    throw new NotImplementedException("BooleanToBrushConverter does not support ConvertBack");
+
+File: src\VoiceStudio.App\Converters\BooleanToOpacityConverter.cs
+  Violations: 1
+
+  Line 20: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\CountToVisibilityConverter.cs
+  Violations: 1
+
+  Line 23: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\DictionaryValueConverter.cs
+  Violations: 1
+
+  Line 30: Found 'NotImplementedException'
+    throw new NotImplementedException("Dictionary updates should be handled in code-behind");
+
+File: src\VoiceStudio.App\Converters\FirstLetterConverter.cs
+  Violations: 1
+
+  Line 22: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\IsSelectedConverter.cs
+  Violations: 2
+
+  Line 18: Found 'for now'
+    // For now, return false - the actual check will be done via method binding in XAML
+  Line 24: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\NullToBooleanConverter.cs
+  Violations: 1
+
+  Line 23: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\NullToVisibilityConverter.cs
+  Violations: 1
+
+  Line 19: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\SizeConverter.cs
+  Violations: 1
+
+  Line 28: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\StringToBrushConverter.cs
+  Violations: 1
+
+  Line 54: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\Converters\SubtractConverter.cs
+  Violations: 1
+
+  Line 27: Found 'NotImplementedException'
+    throw new NotImplementedException();
+
+File: src\VoiceStudio.App\MainWindow.xaml.cs
+  Violations: 7
+
+  Line 108: Found 'temporary'
+    // Temporary content assignment (will be replaced with panel registry later)
+  Line 108: Found 'later'
+    // Temporary content assignment (will be replaced with panel registry later)
+  Line 108: Found 'temporary'
+    // Temporary content assignment (will be replaced with panel registry later)
+  Line 122: Found 'for now'
+    // For now, show MacroView (MiniTimeline can be toggled via View menu)
+  Line 771: Found 'not yet'
+    () => { /* Record functionality not yet implemented */ },
+  Line 1391: Found 'not yet'
+    // For now, always use defaults as panel registry is not yet implemented
+  Line 1391: Found 'for now'
+    // For now, always use defaults as panel registry is not yet implemented
+
+File: src\VoiceStudio.App\Services\AudioPlaybackService.cs
+  Violations: 3
+
+  Line 120: Found 'for now'
+    // For now, treat FLAC as unsupported
+  Line 139: Found 'temporary'
+    // For format-specific readers, create a temporary file for AudioFileReader
+  Line 139: Found 'temporary'
+    // For format-specific readers, create a temporary file for AudioFileReader
+
+File: src\VoiceStudio.App\Services\StatusBarActivityService.cs
+  Violations: 1
+
+  Line 136: Found 'for now'
+    // For now, assume ready if connected
+
+File: src\VoiceStudio.App\ViewModels\AdvancedSpectrogramVisualizationViewModel.cs
+  Violations: 2
+
+  Line 233: Found 'placeholder'
+    // For now, placeholder
+  Line 233: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\ViewModels\AdvancedWaveformVisualizationViewModel.cs
+  Violations: 2
+
+  Line 114: Found 'placeholder'
+    // For now, placeholder
+  Line 114: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\ViewModels\MultilingualSupportViewModel.cs
+  Violations: 1
+
+  Line 140: Found 'for now'
+    // Translate to first target language (for now)
+
+File: src\VoiceStudio.App\ViewModels\PronunciationLexiconViewModel.cs
+  Violations: 2
+
+  Line 336: Found 'for now'
+    // For now, we'll just show a status message
+  Line 339: Found 'for now'
+    // For now, just show a message
+
+File: src\VoiceStudio.App\ViewModels\QualityControlViewModel.cs
+  Violations: 1
+
+  Line 582: Found 'for now'
+    // For now, return empty list - in production, this would fetch from consistency monitor
+
+File: src\VoiceStudio.App\ViewModels\QualityDashboardViewModel.cs
+  Violations: 1
+
+  Line 195: Found 'for now'
+    // For now, show empty trends with a message
+
+File: src\VoiceStudio.App\ViewModels\SonographyVisualizationViewModel.cs
+  Violations: 2
+
+  Line 187: Found 'placeholder'
+    // For now, placeholder
+  Line 187: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\ViewModels\SpatialStageViewModel.cs
+  Violations: 2
+
+  Line 363: Found 'placeholder'
+    // For now, placeholder
+  Line 363: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\ViewModels\StyleTransferViewModel.cs
+  Violations: 4
+
+  Line 96: Found 'placeholder'
+    // For now, placeholder
+  Line 96: Found 'for now'
+    // For now, placeholder
+  Line 110: Found 'placeholder'
+    // For now, placeholder
+  Line 110: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\ViewModels\TodoPanelViewModel.cs
+  Violations: 141
+
+  Line 14: Found 'TODO'
+    /// ViewModel for the TodoPanelView panel - Todo/task management.
+  Line 16: Found 'TODO'
+    public partial class TodoPanelViewModel : BaseViewModel, IPanelView
+  Line 20: Found 'TODO'
+    public string PanelId => "todo-panel";
+  Line 21: Found 'TODO'
+    public string DisplayName => "Todo Panel";
+  Line 25: Found 'TODO'
+    private ObservableCollection<TodoItem> todos = new();
+  Line 28: Found 'TODO'
+    private TodoItem? selectedTodo;
+  Line 37: Found 'TODO'
+    private string? newTodoTitle;
+  Line 40: Found 'TODO'
+    private string? newTodoDescription;
+  Line 43: Found 'TODO'
+    private string newTodoPriority = "medium";
+  Line 52: Found 'TODO'
+    private string? newTodoCategory;
+  ... and 131 more violations
+
+File: src\VoiceStudio.App\ViewModels\VideoGenViewModel.cs
+  Violations: 1
+
+  Line 483: Found 'for now'
+    // For now, set to High quality preset
+
+File: src\VoiceStudio.App\ViewModels\VoiceCloningWizardViewModel.cs
+  Violations: 6
+
+  Line 196: Found 'for now'
+    // For now, simulate validation
+  Line 271: Found 'for now'
+    // For now, simulate with file name
+  Line 574: Found 'TODO'
+    MosScore = Convert.ToDouble(mos);
+  Line 578: Found 'TODO'
+    Similarity = Convert.ToDouble(sim);
+  Line 582: Found 'TODO'
+    Naturalness = Convert.ToDouble(nat);
+  Line 586: Found 'TODO'
+    SnrDb = Convert.ToDouble(snr);
+
+File: src\VoiceStudio.App\ViewModels\VoiceMorphViewModel.cs
+  Violations: 4
+
+  Line 365: Found 'placeholder'
+    // For now, placeholder
+  Line 365: Found 'for now'
+    // For now, placeholder
+  Line 379: Found 'placeholder'
+    // For now, placeholder
+  Line 379: Found 'for now'
+    // For now, placeholder
+
+File: src\VoiceStudio.App\Views\GlobalSearchView.xaml.cs
+  Violations: 1
+
+  Line 89: Found 'for now'
+    // For now, just hide the search view
+
+File: src\VoiceStudio.App\Views\KeyboardShortcutsView.xaml.cs
+  Violations: 1
+
+  Line 151: Found 'TODO'
+    // TODO: Implement print functionality
+
+File: src\VoiceStudio.App\Views\Panels\ABTestingViewModel.cs
+  Violations: 4
+
+  Line 222: Found 'placeholder'
+    // For now, this is a placeholder
+  Line 222: Found 'for now'
+    // For now, this is a placeholder
+  Line 241: Found 'placeholder'
+    // For now, this is a placeholder
+  Line 241: Found 'for now'
+    // For now, this is a placeholder
+
+File: src\VoiceStudio.App\Views\Panels\APIKeyManagerView.xaml.cs
+  Violations: 1
+
+  Line 131: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\AdvancedRealTimeVisualizationViewModel.cs
+  Violations: 4
+
+  Line 124: Found 'TODO'
+    // TODO: Subscribe to playback events
+  Line 128: Found 'TODO'
+    // TODO: Unsubscribe from playback events
+  Line 244: Found 'TODO'
+    // TODO: Update visualization data
+  Line 258: Found 'TODO'
+    // TODO: Get current playback position
+
+File: src\VoiceStudio.App\Views\Panels\AdvancedSearchView.xaml.cs
+  Violations: 2
+
+  Line 68: Found 'TODO'
+    // TODO: Navigate to result
+  Line 76: Found 'TODO'
+    // TODO: Open result in appropriate panel
+
+File: src\VoiceStudio.App\Views\Panels\AdvancedSearchViewModel.cs
+  Violations: 2
+
+  Line 70: Found 'TODO'
+    // TODO: Load from storage
+  Line 283: Found 'TODO'
+    // TODO: Export search results to file
+
+File: src\VoiceStudio.App\Views\Panels\AutomationView.xaml.cs
+  Violations: 2
+
+  Line 153: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 156: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\BackupRestoreView.xaml.cs
+  Violations: 1
+
+  Line 119: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\DeepfakeCreatorView.xaml.cs
+  Violations: 1
+
+  Line 166: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\DiagnosticsViewModel.cs
+  Violations: 2
+
+  Line 453: Found 'for now'
+    // For now, use heuristics based on process memory
+  Line 650: Found 'for now'
+    // For now, we'll just update counts
+
+File: src\VoiceStudio.App\Views\Panels\EmbeddingExplorerView.xaml.cs
+  Violations: 3
+
+  Line 148: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Compare", "Compare functionality coming soon");
+  Line 154: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 206: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export Cluster", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\EmotionControlView.xaml.cs
+  Violations: 1
+
+  Line 118: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\EmotionStyleControlView.xaml.cs
+  Violations: 2
+
+  Line 146: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 199: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\EmotionStylePresetEditorViewModel.cs
+  Violations: 2
+
+  Line 368: Found 'placeholder'
+    // For now, this is a placeholder - would need a profile selected and synthesis endpoint
+  Line 368: Found 'for now'
+    // For now, this is a placeholder - would need a profile selected and synthesis endpoint
+
+File: src\VoiceStudio.App\Views\Panels\EngineParameterTuningView.xaml
+  Violations: 2
+
+  Line 159: Found 'coming soon'
+    <TextBlock Text="Visualization coming soon" FontSize="{StaticResource VSQ.FontSize.Caption}" Foregro
+  Line 160: Found 'TODO'
+    <!-- TODO: Add chart visualization -->
+
+File: src\VoiceStudio.App\Views\Panels\EngineParameterTuningView.xaml.cs
+  Violations: 1
+
+  Line 37: Found 'TODO'
+    // TODO: Show parameter information dialog
+
+File: src\VoiceStudio.App\Views\Panels\EngineParameterTuningViewModel.cs
+  Violations: 2
+
+  Line 343: Found 'TODO'
+    // TODO: Auto-optimize parameters to achieve target quality metrics
+  Line 359: Found 'TODO'
+    // TODO: Apply parameters to engine configuration
+
+File: src\VoiceStudio.App\Views\Panels\EnsembleSynthesisView.xaml.cs
+  Violations: 2
+
+  Line 81: Found 'for now'
+    // For now, create blocks based on job progress
+  Line 150: Found 'for now'
+    // For now, we'll check if ViewModel has QualityMetrics property via reflection
+
+File: src\VoiceStudio.App\Views\Panels\ImageGenView.xaml.cs
+  Violations: 5
+
+  Line 108: Found 'TODO'
+    // TODO: Open quality settings dialog for fine-tuning
+  Line 109: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Quality Settings", "Quality settings dialog coming soon");
+  Line 123: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 126: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Upscale", "Upscale functionality coming soon");
+  Line 129: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\ImageGenViewModel.cs
+  Violations: 3
+
+  Line 180: Found 'TODO'
+    // TODO: Calculate or load quality metrics from backend
+  Line 181: Found 'for now'
+    // For now, calculate based on image properties
+  Line 386: Found 'for now'
+    // For now, use default engines list
+
+File: src\VoiceStudio.App\Views\Panels\ImageVideoEnhancementPipelineView.xaml.cs
+  Violations: 1
+
+  Line 38: Found 'TODO'
+    // TODO: Open configuration dialog for step
+
+File: src\VoiceStudio.App\Views\Panels\ImageVideoEnhancementPipelineViewModel.cs
+  Violations: 3
+
+  Line 284: Found 'TODO'
+    // TODO: Apply pipeline to selected files
+  Line 290: Found 'TODO'
+    // TODO: Open file picker for batch processing
+  Line 296: Found 'TODO'
+    // TODO: Preview pipeline on sample file
+
+File: src\VoiceStudio.App\Views\Panels\LexiconView.xaml.cs
+  Violations: 2
+
+  Line 145: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 198: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\LibraryView.xaml.cs
+  Violations: 1
+
+  Line 257: Found 'not yet'
+    _toastService?.ShowToast(ToastType.Warning, "Playback", "Remote audio playback not yet supported");
+
+File: src\VoiceStudio.App\Views\Panels\MiniTimelineViewModel.cs
+  Violations: 2
+
+  Line 101: Found 'for now'
+    // For now, we'll update from audio player position
+  Line 188: Found 'for now'
+    // For now, we'll just update the state
+
+File: src\VoiceStudio.App\Views\Panels\MultiVoiceGeneratorView.xaml.cs
+  Violations: 3
+
+  Line 155: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 207: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 210: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\MultilingualSupportView.xaml.cs
+  Violations: 2
+
+  Line 122: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 125: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\PresetLibraryView.xaml.cs
+  Violations: 2
+
+  Line 126: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 129: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\ProfilesViewModel.cs
+  Violations: 3
+
+  Line 555: Found 'temporary'
+    // Save to temporary file
+  Line 555: Found 'temporary'
+    // Save to temporary file
+  Line 1004: Found 'for now'
+    // For now, we'll just show a success message and reload profiles
+
+File: src\VoiceStudio.App\Views\Panels\PronunciationLexiconView.xaml.cs
+  Violations: 1
+
+  Line 140: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\ProsodyView.xaml.cs
+  Violations: 1
+
+  Line 120: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\QualityBenchmarkView.xaml.cs
+  Violations: 1
+
+  Line 66: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\RealTimeVoiceConverterView.xaml.cs
+  Violations: 1
+
+  Line 126: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\SSMLControlView.xaml.cs
+  Violations: 1
+
+  Line 130: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\SceneBuilderView.xaml.cs
+  Violations: 2
+
+  Line 127: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 130: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\SonographyVisualizationView.xaml
+  Violations: 1
+
+  Line 134: Found 'placeholder'
+    <!-- Sonography Display (placeholder for 3D visualization control) -->
+
+File: src\VoiceStudio.App\Views\Panels\SonographyVisualizationView.xaml.cs
+  Violations: 1
+
+  Line 107: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\SpectrogramView.xaml.cs
+  Violations: 1
+
+  Line 62: Found 'for now'
+    // For now, we'll set the frames directly if SpectrogramControl supports it
+
+File: src\VoiceStudio.App\Views\Panels\StyleTransferView.xaml.cs
+  Violations: 1
+
+  Line 114: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TagOrganizationView.xaml.cs
+  Violations: 3
+
+  Line 49: Found 'TODO'
+    // TODO: Implement tag-based filtering
+  Line 59: Found 'TODO'
+    // TODO: Implement tag-based filtering
+  Line 69: Found 'TODO'
+    // TODO: Open tag editor
+
+File: src\VoiceStudio.App\Views\Panels\TemplateLibraryView.xaml.cs
+  Violations: 2
+
+  Line 135: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 138: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TextBasedSpeechEditorView.xaml.cs
+  Violations: 1
+
+  Line 127: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TextHighlightingView.xaml.cs
+  Violations: 1
+
+  Line 119: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TextSpeechEditorView.xaml.cs
+  Violations: 3
+
+  Line 149: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+  Line 152: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 205: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TimelineViewModel.cs
+  Violations: 2
+
+  Line 508: Found 'temporary'
+    // Save to temporary file
+  Line 508: Found 'temporary'
+    // Save to temporary file
+
+File: src\VoiceStudio.App\Views\Panels\TodoPanelView.xaml
+  Violations: 30
+
+  Line 1: Found 'TODO'
+    <UserControl x:Class="VoiceStudio.App.Views.Panels.TodoPanelView"
+  Line 27: Found 'TODO'
+    <TextBlock Grid.Column="0" Text="Todo Panel" Style="{StaticResource VSQ.Text.Subtitle}" FontWeight="
+  Line 28: Found 'TODO'
+    <Button Grid.Column="1" Content="?" Width="24" Height="24" FontSize="{StaticResource VSQ.FontSize.Ca
+  Line 36: Found 'TODO'
+    <controls:LoadingOverlay IsLoading="{x:Bind ViewModel.IsLoading, Mode=OneWay}" LoadingMessage="Loadi
+  Line 122: Found 'TODO'
+    <!-- Create Todo -->
+  Line 125: Found 'TODO'
+    <TextBlock Text="Create Todo" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+  Line 127: Found 'TODO'
+    <TextBox Text="{x:Bind ViewModel.NewTodoTitle, Mode=TwoWay}" PlaceholderText="Title *" AutomationPro
+  Line 128: Found 'TODO'
+    <TextBox Text="{x:Bind ViewModel.NewTodoDescription, Mode=TwoWay}" PlaceholderText="Description (opt
+  Line 135: Found 'TODO'
+    <ComboBox Grid.Column="0" ItemsSource="{x:Bind ViewModel.AvailablePriorities, Mode=OneWay}" Selected
+  Line 136: Found 'TODO'
+    <ComboBox Grid.Column="1" ItemsSource="{x:Bind ViewModel.AvailableCategories, Mode=OneWay}" Selected
+  ... and 20 more violations
+
+File: src\VoiceStudio.App\Views\Panels\TodoPanelView.xaml.cs
+  Violations: 42
+
+  Line 12: Found 'TODO'
+    /// TodoPanelView panel for todo/task management.
+  Line 14: Found 'TODO'
+    public sealed partial class TodoPanelView : UserControl
+  Line 16: Found 'TODO'
+    public TodoPanelViewModel ViewModel { get; }
+  Line 21: Found 'TODO'
+    public TodoPanelView()
+  Line 24: Found 'TODO'
+    ViewModel = new TodoPanelViewModel(
+  Line 37: Found 'TODO'
+    if (e.PropertyName == nameof(TodoPanelViewModel.ErrorMessage) && !string.IsNullOrEmpty(ViewModel.Err
+  Line 39: Found 'TODO'
+    _toastService?.ShowToast(ToastType.Error, "Todo Panel Error", ViewModel.ErrorMessage);
+  Line 41: Found 'TODO'
+    else if (e.PropertyName == nameof(TodoPanelViewModel.StatusMessage) && !string.IsNullOrEmpty(ViewMod
+  Line 43: Found 'TODO'
+    _toastService?.ShowToast(ToastType.Success, "Todo Panel", ViewModel.StatusMessage);
+  Line 50: Found 'TODO'
+    HelpOverlay.Title = "Todo Panel Help";
+  ... and 32 more violations
+
+File: src\VoiceStudio.App\Views\Panels\TrainingDatasetEditorView.xaml.cs
+  Violations: 1
+
+  Line 112: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\TrainingView.xaml.cs
+  Violations: 2
+
+  Line 355: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", $"Export functionality for '{dataset.Name}' comin
+  Line 417: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", $"Export functionality for training job coming so
+
+File: src\VoiceStudio.App\Views\Panels\UpscalingView.xaml.cs
+  Violations: 1
+
+  Line 151: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\VideoGenView.xaml.cs
+  Violations: 5
+
+  Line 46: Found 'TODO'
+    // TODO: Open quality settings dialog for fine-tuning
+  Line 47: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Quality Settings", "Quality settings dialog coming soon");
+  Line 124: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+  Line 127: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Upscale", "Upscale functionality coming soon");
+  Line 130: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\VoiceBrowserView.xaml.cs
+  Violations: 2
+
+  Line 115: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Compare", "Compare functionality coming soon");
+  Line 118: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Export", "Export functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\VoiceMorphView.xaml.cs
+  Violations: 1
+
+  Line 138: Found 'coming soon'
+    _toastService?.ShowToast(ToastType.Info, "Duplicate", "Duplicate functionality coming soon");
+
+File: src\VoiceStudio.App\Views\Panels\VoiceSynthesisViewModel.cs
+  Violations: 6
+
+  Line 647: Found 'temporary'
+    // Save to temporary file
+  Line 647: Found 'temporary'
+    // Save to temporary file
+  Line 912: Found 'TODO'
+    ? Convert.ToDouble(status.EnsembleQuality["quality_score"])
+  Line 915: Found 'TODO'
+    ? Convert.ToDouble(status.EnsembleQuality["mos_score"])
+  Line 918: Found 'TODO'
+    ? Convert.ToDouble(status.EnsembleQuality["similarity"])
+  Line 921: Found 'TODO'
+    ? Convert.ToDouble(status.EnsembleQuality["naturalness"])
+
+File: tools\download_all_free_models.py
+  Violations: 4
+
+  Line 242: Found 'incomplete'
+    logger.error(f"Incomplete model definition: {model}")
+  Line 255: Found 'temporary'
+    # Download to temporary file
+  Line 255: Found 'temporary'
+    # Download to temporary file
+  Line 340: Found 'not yet'
+    logger.info("Index update not yet implemented")
+
+File: tools\overseer_monitor.py
+  Violations: 4
+
+  Line 173: Found 'TODO'
+    # TODO: Implement checklist analysis
+  Line 198: Found 'TODO'
+    # TODO: Provide guidance for blockers
+  Line 210: Found 'TODO'
+    # TODO: Generate quick review report
+  Line 219: Found 'TODO'
+    # TODO: Generate comprehensive review report
+
+================================================================================

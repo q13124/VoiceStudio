@@ -1,0 +1,47 @@
+{
+  "engine_id": "higgs_audio",
+  "name": "Higgs Audio",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Higgs Audio - High-fidelity, zero-shot TTS (Open Source)",
+  "author": "Higgs Audio Team",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "torch": ">=1.9.0",
+    "torchaudio": ">=0.9.0",
+    "numpy": ">=1.21.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\higgs_audio",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\higgs_audio\\checkpoints"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "zero_shot_cloning",
+    "high_fidelity",
+    "voice_cloning"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.higgs_audio_engine.HiggsAudioEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "model_id": {
+      "type": "string",
+      "default": "higgs/higgs-tts",
+      "description": "Higgs Audio model identifier"
+    }
+  }
+}
+

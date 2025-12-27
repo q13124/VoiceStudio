@@ -1,0 +1,163 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 2.1 Colors -->
+    <Color x:Key="VSQ.Background.Darker">#FF0A0F15</Color>
+    <Color x:Key="VSQ.Background.Dark">#FF121A24</Color>
+    <Color x:Key="VSQ.Accent.Cyan">#FF00B7C2</Color>
+    <Color x:Key="VSQ.Accent.CyanGlow">#3030E0FF</Color>
+    <Color x:Key="VSQ.Accent.Lime">#FF9AFF33</Color>
+    <Color x:Key="VSQ.Accent.Magenta">#FFB040FF</Color>
+    <Color x:Key="VSQ.Text.Primary">#FFCDD9E5</Color>
+    <Color x:Key="VSQ.Text.Secondary">#FF8A9BB3</Color>
+    <Color x:Key="VSQ.Border.Subtle">#26FFFFFF</Color>
+    <Color x:Key="VSQ.Warn">#FFFFB540</Color>
+    <Color x:Key="VSQ.Error">#FFFF4060</Color>
+    <Color x:Key="VSQ.Background.Hover">#FF1A2530</Color>
+    <Color x:Key="VSQ.Background.Pressed">#FF0F151A</Color>
+    <Color x:Key="VSQ.Border.Hover">#FF00B7C2</Color>
+
+    <!-- 2.2 Brushes (glass + gradients) -->
+    <LinearGradientBrush x:Key="VSQ.Window.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource VSQ.Background.Darker}" Offset="0.0" />
+        <GradientStop Color="{StaticResource VSQ.Background.Dark}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="VSQ.Text.PrimaryBrush" Color="{StaticResource VSQ.Text.Primary}" />
+    <SolidColorBrush x:Key="VSQ.Text.SecondaryBrush" Color="{StaticResource VSQ.Text.Secondary}" />
+    <SolidColorBrush x:Key="VSQ.Accent.CyanBrush" Color="{StaticResource VSQ.Accent.Cyan}" />
+    <SolidColorBrush x:Key="VSQ.Accent.LimeBrush" Color="{StaticResource VSQ.Accent.Lime}" />
+    <SolidColorBrush x:Key="VSQ.Accent.MagentaBrush" Color="{StaticResource VSQ.Accent.Magenta}" />
+    <SolidColorBrush x:Key="VSQ.Panel.BorderBrush" Color="{StaticResource VSQ.Border.Subtle}" />
+    <SolidColorBrush x:Key="VSQ.Panel.BackgroundBrush" Color="{StaticResource VSQ.Background.Dark}" />
+    <SolidColorBrush x:Key="VSQ.Background.HoverBrush" Color="{StaticResource VSQ.Background.Hover}" />
+    <SolidColorBrush x:Key="VSQ.Background.PressedBrush" Color="{StaticResource VSQ.Background.Pressed}" />
+    <SolidColorBrush x:Key="VSQ.Border.HoverBrush" Color="{StaticResource VSQ.Border.Hover}" />
+    <SolidColorBrush x:Key="VSQ.WarnBrush" Color="{StaticResource VSQ.Warn}" />
+    <SolidColorBrush x:Key="VSQ.ErrorBrush" Color="{StaticResource VSQ.Error}" />
+
+    <!-- Note: Acrylic/Mica brushes using WinUI 3 BackdropMaterial for glassmorphism to be added later -->
+
+    <!-- 2.3 Typography -->
+    <!-- Primary font: Inter (or Segoe UI as fallback) -->
+    <!-- Sizes -->
+    <x:Double x:Key="VSQ.Font.Caption">10</x:Double>
+    <x:Double x:Key="VSQ.Font.Body">12</x:Double>
+    <x:Double x:Key="VSQ.Font.Title">16</x:Double>
+    <x:Double x:Key="VSQ.Font.Heading">20</x:Double>
+
+    <!-- TextBlock Styles -->
+    <Style x:Key="VSQ.Text.Body" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource VSQ.Font.Body}"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+    </Style>
+
+    <Style x:Key="VSQ.Text.Caption" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource VSQ.Font.Caption}"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+    </Style>
+
+    <Style x:Key="VSQ.Text.Title" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource VSQ.Font.Title}"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+    </Style>
+
+    <Style x:Key="VSQ.Text.Heading" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource VSQ.Font.Heading}"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+    </Style>
+
+    <!-- 2.4 Corner Radius & Shadows -->
+    <x:Double x:Key="VSQ.CornerRadius.Panel">8</x:Double>
+    <x:Double x:Key="VSQ.CornerRadius.Button">4</x:Double>
+    <x:Double x:Key="VSQ.Animation.Duration.Fast">100</x:Double>
+    <x:Double x:Key="VSQ.Animation.Duration.Medium">150</x:Double>
+
+    <!-- Button Styles -->
+    <Style x:Key="VSQ.Button.Style" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource VSQ.Background.Darker}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="MinWidth" Value="80"/>
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsPointerOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource VSQ.Background.HoverBrush}"/>
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource VSQ.Border.HoverBrush}"/>
+                            <Setter TargetName="ButtonBorder" Property="BorderThickness" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource VSQ.Background.PressedBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="VSQ.Button.Icon" TargetType="Button" BasedOn="{StaticResource VSQ.Button.Style}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="MinWidth" Value="32"/>
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}"/>
+    </Style>
+
+    <!-- Toggle Button Style for Nav Icons -->
+    <Style x:Key="VSQ.Button.NavToggle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="MinWidth" Value="48"/>
+        <Setter Property="MinHeight" Value="48"/>
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="ToggleBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Button}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsPointerOver" Value="True">
+                            <Setter TargetName="ToggleBorder" Property="Background" Value="{StaticResource VSQ.Background.HoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ToggleBorder" Property="Background" Value="{StaticResource VSQ.Background.PressedBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ToggleBorder" Property="Background" Value="{StaticResource VSQ.Background.HoverBrush}"/>
+                            <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{StaticResource VSQ.Accent.CyanBrush}"/>
+                            <Setter TargetName="ToggleBorder" Property="BorderThickness" Value="2"/>
+                            <Setter Property="Foreground" Value="{StaticResource VSQ.Accent.CyanBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
+

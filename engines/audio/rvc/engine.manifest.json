@@ -1,0 +1,71 @@
+{
+  "engine_id": "rvc",
+  "name": "RVC (Retrieval-based Voice Conversion)",
+  "type": "audio",
+  "subtype": "voice_conversion",
+  "version": "1.0.0",
+  "description": "Real-time voice conversion with low latency and high quality",
+  "author": "RVC Project",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "rvc-python": ">=1.0.0",
+    "fairseq": ">=0.12.0",
+    "librosa": ">=0.10.0",
+    "torch": ">=2.0.0",
+    "soundfile": ">=0.12.0",
+    "numpy": ">=1.21.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\rvc",
+    "hubert": "%PROGRAMDATA%\\VoiceStudio\\models\\rvc\\hubert"
+  },
+  "capabilities": [
+    "voice_conversion",
+    "real_time_conversion",
+    "pitch_shifting",
+    "low_latency",
+    "high_quality"
+  ],
+  "quality_features": {
+    "mos_estimate": "4.0-4.5",
+    "similarity_score": "very_high",
+    "naturalness": "high",
+    "speed": "very_fast",
+    "latency": "very_low"
+  },
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 2,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.rvc_engine.RVCEngine",
+  "config_schema": {
+    "model_path": {
+      "type": "string",
+      "default": null,
+      "description": "Path to RVC model directory"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "default": 40000,
+      "description": "Sample rate for processing"
+    },
+    "hop_length": {
+      "type": "integer",
+      "default": 128,
+      "description": "Hop length for processing"
+    }
+  }
+}

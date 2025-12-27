@@ -1,0 +1,14 @@
+{
+  "title": "AnalyzeVoiceRequest",
+  "type": "object",
+  "properties": {
+    "profileId": { "type": "string" },
+    "clipId": { "type": "string" },
+    "analysisModes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["profileId", "clipId"]
+}
+

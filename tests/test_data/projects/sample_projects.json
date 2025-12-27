@@ -1,0 +1,160 @@
+[
+  {
+    "id": "test-project-001",
+    "name": "Test Project 1 - Simple",
+    "description": "Simple test project with one track",
+    "created_at": "2025-11-27T12:04:31.928349+00:00",
+    "updated_at": "2025-11-27T12:04:31.928349+00:00",
+    "voice_profile_ids": [
+      "test-profile-001"
+    ],
+    "tracks": [
+      {
+        "id": "track-001-01",
+        "name": "Track 1",
+        "project_id": "test-project-001",
+        "track_number": 1,
+        "clips": []
+      }
+    ]
+  },
+  {
+    "id": "test-project-002",
+    "name": "Test Project 2 - Multiple Tracks",
+    "description": "Test project with multiple tracks",
+    "created_at": "2025-11-27T12:04:31.928349+00:00",
+    "updated_at": "2025-11-27T12:04:31.928349+00:00",
+    "voice_profile_ids": [
+      "test-profile-001",
+      "test-profile-002"
+    ],
+    "tracks": [
+      {
+        "id": "track-002-01",
+        "name": "Track 1",
+        "project_id": "test-project-002",
+        "track_number": 1,
+        "clips": []
+      },
+      {
+        "id": "track-002-02",
+        "name": "Track 2",
+        "project_id": "test-project-002",
+        "track_number": 2,
+        "clips": []
+      },
+      {
+        "id": "track-002-03",
+        "name": "Track 3",
+        "project_id": "test-project-002",
+        "track_number": 3,
+        "clips": []
+      }
+    ]
+  },
+  {
+    "id": "test-project-003",
+    "name": "Test Project 3 - Effects",
+    "description": "Test project with effects",
+    "created_at": "2025-11-27T12:04:31.928349+00:00",
+    "updated_at": "2025-11-27T12:04:31.928349+00:00",
+    "voice_profile_ids": [
+      "test-profile-001",
+      "test-profile-002",
+      "test-profile-003"
+    ],
+    "tracks": [
+      {
+        "id": "track-003-01",
+        "name": "Track 1",
+        "project_id": "test-project-003",
+        "track_number": 1,
+        "clips": []
+      },
+      {
+        "id": "track-003-02",
+        "name": "Track 2",
+        "project_id": "test-project-003",
+        "track_number": 2,
+        "clips": []
+      }
+    ]
+  },
+  {
+    "id": "test-project-004",
+    "name": "Test Project 4 - Macros",
+    "description": "Test project with macros",
+    "created_at": "2025-11-27T12:04:31.928349+00:00",
+    "updated_at": "2025-11-27T12:04:31.928349+00:00",
+    "voice_profile_ids": [
+      "test-profile-001",
+      "test-profile-002"
+    ],
+    "tracks": [
+      {
+        "id": "track-004-01",
+        "name": "Track 1",
+        "project_id": "test-project-004",
+        "track_number": 1,
+        "clips": []
+      },
+      {
+        "id": "track-004-02",
+        "name": "Track 2",
+        "project_id": "test-project-004",
+        "track_number": 2,
+        "clips": []
+      }
+    ]
+  },
+  {
+    "id": "test-project-005",
+    "name": "Test Project 5 - Complex",
+    "description": "Complex test project with all features",
+    "created_at": "2025-11-27T12:04:31.928349+00:00",
+    "updated_at": "2025-11-27T12:04:31.928349+00:00",
+    "voice_profile_ids": [
+      "test-profile-001",
+      "test-profile-002",
+      "test-profile-003",
+      "test-profile-004"
+    ],
+    "tracks": [
+      {
+        "id": "track-005-01",
+        "name": "Track 1",
+        "project_id": "test-project-005",
+        "track_number": 1,
+        "clips": []
+      },
+      {
+        "id": "track-005-02",
+        "name": "Track 2",
+        "project_id": "test-project-005",
+        "track_number": 2,
+        "clips": []
+      },
+      {
+        "id": "track-005-03",
+        "name": "Track 3",
+        "project_id": "test-project-005",
+        "track_number": 3,
+        "clips": []
+      },
+      {
+        "id": "track-005-04",
+        "name": "Track 4",
+        "project_id": "test-project-005",
+        "track_number": 4,
+        "clips": []
+      },
+      {
+        "id": "track-005-05",
+        "name": "Track 5",
+        "project_id": "test-project-005",
+        "track_number": 5,
+        "clips": []
+      }
+    ]
+  }
+]

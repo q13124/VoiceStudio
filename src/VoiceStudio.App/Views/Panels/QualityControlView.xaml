@@ -1,0 +1,454 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.QualityControlView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:vm="using:VoiceStudio.App.ViewModels"
+    xmlns:converters="using:VoiceStudio.App.Converters">
+    <UserControl.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:StringFormatConverter x:Key="StringFormatConverter" />
+        <converters:NumberFormatConverter x:Key="F2FormatConverter" Format="F2" />
+        <converters:NumberFormatConverter x:Key="F1FormatConverter" Format="F1" />
+        <converters:NumberFormatConverter x:Key="F0FormatConverter" Format="F0" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+            Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
+            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="{StaticResource VSQ.Spacing.Medium}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                    Text="Quality Control"
+                    Style="{StaticResource VSQ.Text.Title}"
+                    VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                    <Button Content="Refresh"
+                        Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" />
+                    <Button Content="Export"
+                        Command="{x:Bind ViewModel.ExportReportCommand, Mode=OneWay}" />
+                    <Button Content="?"
+                        Click="HelpButton_Click"
+                        Style="{StaticResource VSQ.Button.Icon}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main content with tabs -->
+        <TabView Grid.Row="1">
+            <!-- Quality Analysis & Optimization Tab -->
+            <TabViewItem Header="Analysis &amp; Optimization">
+                <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                        <!-- Quality Metrics Input -->
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Quality Metrics"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <TextBlock Text="MOS Score:" Width="120"
+                                            Style="{StaticResource VSQ.Text.Body}"
+                                            VerticalAlignment="Center" />
+                                        <NumberBox Value="{x:Bind ViewModel.MosScore, Mode=TwoWay}"
+                                            Minimum="1" Maximum="5"
+                                            SmallChange="0.1"
+                                            Width="150" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <TextBlock Text="Similarity:" Width="120"
+                                            Style="{StaticResource VSQ.Text.Body}"
+                                            VerticalAlignment="Center" />
+                                        <NumberBox
+                                            Value="{x:Bind ViewModel.Similarity, Mode=TwoWay}"
+                                            Minimum="0" Maximum="1"
+                                            SmallChange="0.01"
+                                            Width="150" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <TextBlock Text="Naturalness:" Width="120"
+                                            Style="{StaticResource VSQ.Text.Body}"
+                                            VerticalAlignment="Center" />
+                                        <NumberBox
+                                            Value="{x:Bind ViewModel.Naturalness, Mode=TwoWay}"
+                                            Minimum="0" Maximum="1"
+                                            SmallChange="0.01"
+                                            Width="150" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <TextBlock Text="SNR (dB):" Width="120"
+                                            Style="{StaticResource VSQ.Text.Body}"
+                                            VerticalAlignment="Center" />
+                                        <NumberBox Value="{x:Bind ViewModel.SnrDb, Mode=TwoWay}"
+                                            Minimum="0" Maximum="100"
+                                            SmallChange="1"
+                                            Width="150" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <TextBlock Text="Target Tier:" Width="120"
+                                            Style="{StaticResource VSQ.Text.Body}"
+                                            VerticalAlignment="Center" />
+                                        <ComboBox Text="{x:Bind ViewModel.TargetTier, Mode=TwoWay}"
+                                            Width="150">
+                                            <x:String>standard</x:String>
+                                            <x:String>premium</x:String>
+                                            <x:String>professional</x:String>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                        <Button Content="Analyze Quality"
+                                            Command="{x:Bind ViewModel.AnalyzeQualityCommand, Mode=OneWay}" />
+                                        <Button Content="Optimize Quality"
+                                            Command="{x:Bind ViewModel.OptimizeQualityCommand, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Analysis Results -->
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}"
+                            Visibility="{x:Bind ViewModel.CurrentAnalysis, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Analysis Results"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Meets Target:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.CurrentAnalysis.MeetsTarget, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Quality Score:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.CurrentAnalysis.QualityScore, Mode=OneWay, Converter={StaticResource F2FormatConverter}}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <TextBlock Text="Recommendations:"
+                                    Style="{StaticResource VSQ.Text.Body}" FontWeight="SemiBold" />
+                                <ItemsControl
+                                    ItemsSource="{x:Bind ViewModel.CurrentAnalysis.Recommendations, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                Style="{StaticResource VSQ.Text.Caption}"
+                                                Margin="20,0,0,0" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Optimization Results -->
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}"
+                            Visibility="{x:Bind ViewModel.CurrentOptimization, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Optimization Results"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Expected Improvement:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.CurrentOptimization.ExpectedImprovement, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <TextBlock Text="Optimized Parameters:"
+                                    Style="{StaticResource VSQ.Text.Body}" FontWeight="SemiBold" />
+                                <ItemsControl
+                                    ItemsSource="{x:Bind ViewModel.CurrentOptimization.OptimizedParameters, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Style="{StaticResource VSQ.Text.Caption}"
+                                                Margin="20,0,0,0">
+                                                <Run Text="{Binding Key}" />: <Run
+                                                    Text="{Binding Value}" />
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <!-- Engine Recommendations Tab -->
+            <TabViewItem Header="Engine Recommendations">
+                <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Engine Recommendation"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <ToggleSwitch IsOn="{x:Bind ViewModel.PreferSpeed, Mode=TwoWay}"
+                                        OffContent="Prefer Quality"
+                                        OnContent="Prefer Speed" />
+                                </StackPanel>
+
+                                <Button Content="Get Recommendation"
+                                    Command="{x:Bind ViewModel.GetEngineRecommendationCommand, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Recommendation Results -->
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}"
+                            Visibility="{x:Bind ViewModel.CurrentRecommendation, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Recommended Engine"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Engine:" Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.CurrentRecommendation.RecommendedEngine, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Reason:" Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.CurrentRecommendation.Reason, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <!-- Project Consistency Tab -->
+            <TabViewItem Header="Project Consistency">
+                <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Project Consistency Monitoring"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <TextBlock Text="Project ID:" Width="120"
+                                        Style="{StaticResource VSQ.Text.Body}"
+                                        VerticalAlignment="Center" />
+                                    <TextBox
+                                        Text="{x:Bind ViewModel.SelectedProjectId, Mode=TwoWay}"
+                                        Width="200"
+                                        PlaceholderText="Enter project ID" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <TextBlock Text="Time Period (days):" Width="120"
+                                        Style="{StaticResource VSQ.Text.Body}"
+                                        VerticalAlignment="Center" />
+                                    <NumberBox
+                                        Value="{x:Bind ViewModel.ConsistencyTimePeriodDays, Mode=TwoWay}"
+                                        Minimum="1" Maximum="365"
+                                        Width="150" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <TextBlock Text="Quality Standard:" Width="120"
+                                        Style="{StaticResource VSQ.Text.Body}"
+                                        VerticalAlignment="Center" />
+                                    <ComboBox Text="{x:Bind ViewModel.QualityStandard, Mode=TwoWay}"
+                                        Width="150">
+                                        <x:String>standard</x:String>
+                                        <x:String>premium</x:String>
+                                        <x:String>professional</x:String>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <Button Content="Check Project"
+                                        Command="{x:Bind ViewModel.CheckProjectConsistencyCommand, Mode=OneWay}" />
+                                    <Button Content="Check All Projects"
+                                        Command="{x:Bind ViewModel.CheckAllProjectsConsistencyCommand, Mode=OneWay}" />
+                                    <Button Content="Get Trends"
+                                        Command="{x:Bind ViewModel.GetProjectTrendsCommand, Mode=OneWay}" />
+                                    <Button Content="Set Standard"
+                                        Command="{x:Bind ViewModel.SetQualityStandardCommand, Mode=OneWay}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Consistency Results -->
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}"
+                            Visibility="{x:Bind ViewModel.SelectedProjectReport, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Consistency Report"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Project:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedProjectReport.ProjectId, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Consistency Score:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedProjectReport.ConsistencyScore, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Is Consistent:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedProjectReport.IsConsistent, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Total Samples:"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.SelectedProjectReport.TotalSamples, Mode=OneWay}"
+                                        Style="{StaticResource VSQ.Text.Body}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <!-- Advanced Visualizations Tab -->
+            <TabViewItem Header="Visualizations">
+                <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                            Padding="{StaticResource VSQ.Spacing.Medium}">
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock Text="Advanced Quality Visualizations"
+                                    Style="{StaticResource VSQ.Text.Heading}"
+                                    Margin="0,0,0,4" />
+
+                                <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <Button Content="Generate Heatmap"
+                                        Command="{x:Bind ViewModel.GenerateHeatmapCommand, Mode=OneWay}" />
+                                    <Button Content="Analyze Correlations"
+                                        Command="{x:Bind ViewModel.AnalyzeCorrelationsCommand, Mode=OneWay}" />
+                                    <Button Content="Detect Anomalies"
+                                        Command="{x:Bind ViewModel.DetectAnomaliesCommand, Mode=OneWay}" />
+                                    <Button Content="Predict Quality"
+                                        Command="{x:Bind ViewModel.PredictQualityCommand, Mode=OneWay}" />
+                                    <Button Content="Get Insights"
+                                        Command="{x:Bind ViewModel.GetInsightsCommand, Mode=OneWay}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Visualization Results -->
+                        <TextBlock Text="Visualization results will be displayed here"
+                            Style="{StaticResource VSQ.Text.Body}"
+                            Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                            HorizontalAlignment="Center"
+                            Margin="0,16,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+        </TabView>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2"
+            Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
+            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="{StaticResource VSQ.Spacing.Medium}">
+            <TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Style="{StaticResource VSQ.Text.Caption}"
+                Foreground="Red"
+                Visibility="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
+        </Border>
+
+        <!-- Help Overlay -->
+        <controls:HelpOverlay x:Name="HelpOverlay"
+            IsVisible="False"
+            Visibility="Collapsed" />
+    </Grid>
+</UserControl>

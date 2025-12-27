@@ -1,0 +1,48 @@
+{
+  "engine_id": "lyrebird",
+  "name": "Lyrebird (Descript)",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Lyrebird/Descript - High-quality voice cloning (local inference if available)",
+  "author": "Descript/Lyrebird",
+  "license": "Proprietary",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\lyrebird",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\lyrebird\\models"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "voice_cloning",
+    "text_to_speech",
+    "high_quality"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.lyrebird_engine.LyrebirdEngine",
+  "config_schema": {
+    "api_key": {
+      "type": "string",
+      "default": "",
+      "description": "Descript API key (if using cloud, otherwise leave empty for local)"
+    },
+    "use_local": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use local inference if available"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  },
+  "note": "Lyrebird/Descript may require API key for cloud services. Local inference preferred for 100% local-first architecture."
+}
+

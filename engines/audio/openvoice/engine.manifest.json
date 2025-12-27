@@ -1,0 +1,81 @@
+{
+  "engine_id": "openvoice",
+  "name": "OpenVoice",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0.0",
+  "description": "Zero-shot voice cloning with cross-lingual support and granular style control",
+  "author": "MyShell AI",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "openvoice": ">=1.0.0",
+    "torch": ">=2.0.0",
+    "numpy": ">=1.21.0",
+    "soundfile": ">=0.12.0",
+    "librosa": ">=0.10.0"
+  },
+  "model_paths": {
+    "base_speakers": "%PROGRAMDATA%\\VoiceStudio\\models\\openvoice\\base_speakers",
+    "converter": "%PROGRAMDATA%\\VoiceStudio\\models\\openvoice\\converter"
+  },
+  "supported_languages": [
+    "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl",
+    "cs", "ar", "zh", "ja", "ko", "hi", "th", "vi", "id", "ms"
+  ],
+  "capabilities": [
+    "voice_cloning",
+    "zero_shot_cloning",
+    "cross_lingual_cloning",
+    "style_control",
+    "emotion_control",
+    "accent_control",
+    "rhythm_control",
+    "pause_control",
+    "intonation_control",
+    "real_time_synthesis",
+    "streaming_synthesis"
+  ],
+  "quality_features": {
+    "mos_estimate": "4.0-4.5",
+    "similarity_score": "high",
+    "naturalness": "high",
+    "speed": "fast",
+    "latency": "low"
+  },
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 2,
+    "ram_min_gb": 4
+  },
+  "entry_point": "app.core.engines.openvoice_engine.OpenVoiceEngine",
+  "config_schema": {
+    "base_speaker_model": {
+      "type": "string",
+      "default": "checkpoints/base_speakers/EN",
+      "description": "Path to base speaker TTS model"
+    },
+    "tone_color_converter_model": {
+      "type": "string",
+      "default": "checkpoints/converter",
+      "description": "Path to tone color converter model"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    },
+    "enable_style_control": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable granular style control features"
+    }
+  }
+}
+

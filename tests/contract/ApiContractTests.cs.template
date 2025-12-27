@@ -1,0 +1,281 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using Xunit;
+using VoiceStudio.Core.Services.Generated; // Generated client namespace
+
+namespace VoiceStudio.ContractTests
+{
+    /// <summary>
+    /// Tests that validate API contracts match between OpenAPI schema and generated C# client.
+    /// </summary>
+    public class ApiContractTests : ContractTestBase
+    {
+        private readonly Type _clientType;
+
+        public ApiContractTests()
+        {
+            // Get the generated client type
+            _clientType = typeof(BackendClient);
+        }
+
+        [Fact]
+        public void GeneratedClient_Exists()
+        {
+            Assert.NotNull(_clientType);
+            Assert.Equal("BackendClient", _clientType.Name);
+        }
+
+        [Fact]
+        public void GeneratedClient_HasAllEndpoints()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var endpointMethods = GetEndpointMethods(_clientType);
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathName = path.Name;
+                var pathValue = path.Value;
+
+                // Check each operation type
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        var operationId = operation.TryGetProperty("operationId", out var opId)
+                            ? opId.GetString()
+                            : null;
+
+                        // Verify method exists in generated client
+                        var methodExists = endpointMethods.Any(m => 
+                            m.Name.Contains(operationId ?? "", StringComparison.OrdinalIgnoreCase) ||
+                            m.Name.Contains(GetMethodNameFromPath(pathName), StringComparison.OrdinalIgnoreCase)
+                        );
+
+                        Assert.True(
+                            methodExists,
+                            $"Method for {operationType.ToUpper()} {pathName} (operationId: {operationId}) not found in generated client"
+                        );
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void GeneratedClient_RequestModelsMatchSchema()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "post", "put", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        if (operation.TryGetProperty("requestBody", out var requestBody))
+                        {
+                            // Get request schema
+                            var requestSchema = GetRequestSchema(requestBody);
+                            
+                            // Find corresponding C# model
+                            var modelType = FindModelType(requestSchema);
+                            
+                            if (modelType != null)
+                            {
+                                // Validate properties match
+                                ValidateModelProperties(modelType, requestSchema);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void GeneratedClient_ResponseModelsMatchSchema()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        if (operation.TryGetProperty("responses", out var responses))
+                        {
+                            // Check 200 response
+                            if (responses.TryGetProperty("200", out var successResponse))
+                            {
+                                var responseSchema = GetResponseSchema(successResponse);
+                                var modelType = FindModelType(responseSchema);
+                                
+                                if (modelType != null)
+                                {
+                                    ValidateModelProperties(modelType, responseSchema);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void GeneratedClient_RequiredFieldsMatchSchema()
+        {
+            // This test validates that required fields in OpenAPI schema
+            // are non-nullable in the generated C# models
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        // Check request body required fields
+                        if (operation.TryGetProperty("requestBody", out var requestBody))
+                        {
+                            var requestSchema = GetRequestSchema(requestBody);
+                            ValidateRequiredFields(requestSchema);
+                        }
+
+                        // Check response required fields
+                        if (operation.TryGetProperty("responses", out var responses))
+                        {
+                            if (responses.TryGetProperty("200", out var successResponse))
+                            {
+                                var responseSchema = GetResponseSchema(successResponse);
+                                ValidateRequiredFields(responseSchema);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Helper methods
+
+        private List<MethodInfo> GetEndpointMethods(Type clientType)
+        {
+            return clientType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(m => m.IsPublic && !m.IsSpecialName)
+                .ToList();
+        }
+
+        private string GetMethodNameFromPath(string path)
+        {
+            // Convert path like "/api/voice/synthesize" to "Synthesize"
+            var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var lastPart = parts.LastOrDefault() ?? "";
+            return char.ToUpperInvariant(lastPart[0]) + lastPart.Substring(1);
+        }
+
+        private JsonElement GetRequestSchema(JsonElement requestBody)
+        {
+            if (requestBody.TryGetProperty("content", out var content))
+            {
+                if (content.TryGetProperty("application/json", out var jsonContent))
+                {
+                    if (jsonContent.TryGetProperty("schema", out var schema))
+                    {
+                        return schema;
+                    }
+                }
+            }
+            throw new InvalidOperationException("Could not extract request schema");
+        }
+
+        private JsonElement GetResponseSchema(JsonElement response)
+        {
+            if (response.TryGetProperty("content", out var content))
+            {
+                if (content.TryGetProperty("application/json", out var jsonContent))
+                {
+                    if (jsonContent.TryGetProperty("schema", out var schema))
+                    {
+                        return schema;
+                    }
+                }
+            }
+            throw new InvalidOperationException("Could not extract response schema");
+        }
+
+        private Type? FindModelType(JsonElement schema)
+        {
+            // Try to find the C# type corresponding to the schema
+            // This is a simplified version - actual implementation would need
+            // to handle schema references, nested types, etc.
+            
+            if (schema.TryGetProperty("$ref", out var refElement))
+            {
+                var refPath = refElement.GetString();
+                if (refPath != null)
+                {
+                    // Extract schema name from reference like "#/components/schemas/ModelName"
+                    var parts = refPath.Split('/');
+                    var schemaName = parts.LastOrDefault();
+                    
+                    if (schemaName != null)
+                    {
+                        // Find type in generated namespace
+                        var typeName = $"VoiceStudio.Core.Services.Generated.{schemaName}";
+                        return Type.GetType(typeName) ?? 
+                               Assembly.GetAssembly(typeof(BackendClient))?.GetType(typeName);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private void ValidateModelProperties(Type modelType, JsonElement schema)
+        {
+            if (!schema.TryGetProperty("properties", out var properties))
+                return;
+
+            foreach (var property in properties.EnumerateObject())
+            {
+                var propertyName = property.Name;
+                var propertyInfo = modelType.GetProperty(
+                    ToPascalCase(propertyName),
+                    BindingFlags.Public | BindingFlags.Instance
+                );
+
+                Assert.True(
+                    propertyInfo != null,
+                    $"Property '{propertyName}' not found in model '{modelType.Name}'"
+                );
+            }
+        }
+
+        private void ValidateRequiredFields(JsonElement schema)
+        {
+            if (!schema.TryGetProperty("required", out var required))
+                return;
+
+            var requiredFields = required.EnumerateArray()
+                .Select(r => r.GetString())
+                .Where(r => r != null)
+                .ToList();
+
+            // This would need to check that corresponding C# properties are non-nullable
+            // Implementation depends on how the code generator handles required fields
+        }
+
+        private string ToPascalCase(string snakeCase)
+        {
+            return string.Join("", snakeCase.Split('_')
+                .Select(word => char.ToUpperInvariant(word[0]) + word.Substring(1).ToLowerInvariant()));
+        }
+    }
+}

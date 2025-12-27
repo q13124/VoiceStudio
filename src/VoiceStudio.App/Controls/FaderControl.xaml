@@ -1,0 +1,54 @@
+<UserControl
+    x:Class="VoiceStudio.App.Controls.FaderControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <!-- Fader Track -->
+        <Border Grid.Column="0"
+                Background="#2A2F38"
+                BorderBrush="#3A3F48"
+                BorderThickness="1"
+                CornerRadius="2"
+                Margin="0,4"
+                VerticalAlignment="Stretch">
+            <Grid>
+                <!-- Fader Background (darker section at bottom) -->
+                <Border x:Name="FaderBackground"
+                        Background="#1A1F28"
+                        VerticalAlignment="Bottom"
+                        Height="0"/>
+                <!-- Fader Knob -->
+                <Border x:Name="FaderKnob"
+                        Background="#4A9EFF"
+                        BorderBrush="#6AB4FF"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        Width="32"
+                        Height="20"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,-10"
+                        PointerPressed="FaderKnob_PointerPressed"
+                        PointerMoved="FaderKnob_PointerMoved"
+                        PointerReleased="FaderKnob_PointerReleased">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="FaderKnobTransform" Y="0"/>
+                    </Border.RenderTransform>
+                </Border>
+            </Grid>
+        </Border>
+        <!-- Value Display -->
+        <TextBlock Grid.Column="1"
+                   x:Name="ValueTextBlock"
+                   Text="0.0dB"
+                   FontSize="9"
+                   FontFamily="Consolas"
+                   Margin="4,0,0,0"
+                   VerticalAlignment="Center"
+                   Foreground="#AAAAAA"
+                   Width="36"/>
+    </Grid>
+</UserControl>

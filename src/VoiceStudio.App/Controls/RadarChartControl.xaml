@@ -1,0 +1,11 @@
+<UserControl x:Class="VoiceStudio.App.Controls.RadarChartControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <TextBlock Text="Radar chart temporarily disabled (XAML compiler stability)"
+            TextWrapping="Wrap"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Opacity="0.7" />
+    </Grid>
+</UserControl>

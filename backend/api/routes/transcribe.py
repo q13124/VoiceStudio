@@ -1,0 +1,509 @@
+"""
+Transcription Routes
+
+Endpoints for audio transcription using Whisper or other ASR engines.
+Supports multiple languages, word timestamps, and diarization.
+"""
+
+import logging
+import os
+import time
+import uuid
+from datetime import datetime
+from typing import List, Optional
+
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
+
+from ..models import ApiOk
+from ..optimization import cache_response
+from ..voice_speech import VoiceActivityDetector
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/transcribe", tags=["transcribe"])
+
+# In-memory storage (replace with database in production)
+_transcriptions: dict[str, dict] = {}
+_MAX_TRANSCRIPTIONS = 1000  # Maximum number of transcriptions
+_TRANSCRIPTION_CACHE_TTL = 86400  # Cache TTL in seconds (24 hours)
+_transcription_timestamps: dict[str, float] = {}  # transcription_id -> creation_time
+
+
+def _cleanup_old_transcriptions():
+    """
+    Clean up old transcriptions from storage to prevent memory accumulation.
+
+    Removes:
+    - Transcriptions older than TRANSCRIPTION_CACHE_TTL
+    - Transcriptions beyond MAX_TRANSCRIPTIONS (oldest first)
+    """
+    current_time = time.time()
+    to_remove = []
+
+    # Find transcriptions that are too old
+    for transcription_id, timestamp in _transcription_timestamps.items():
+        age = current_time - timestamp
+        if age > _TRANSCRIPTION_CACHE_TTL:
+            to_remove.append(transcription_id)
+
+    # If storage is too large, remove oldest transcriptions
+    if len(_transcriptions) > _MAX_TRANSCRIPTIONS:
+        # Sort by timestamp (oldest first)
+        sorted_items = sorted(
+            _transcription_timestamps.items(),
+            key=lambda x: x[1],
+        )
+        # Remove oldest transcriptions until we're under the limit
+        excess = len(_transcriptions) - _MAX_TRANSCRIPTIONS
+        for transcription_id, _ in sorted_items[:excess]:
+            if transcription_id not in to_remove:
+                to_remove.append(transcription_id)
+
+    # Remove transcriptions
+    for transcription_id in to_remove:
+        if transcription_id in _transcriptions:
+            del _transcriptions[transcription_id]
+        if transcription_id in _transcription_timestamps:
+            del _transcription_timestamps[transcription_id]
+
+    if to_remove:
+        logger.info(f"Cleaned up {len(to_remove)} old transcriptions from cache")
+
+
+# STT engine router (for dynamic discovery)
+STT_ENGINE_AVAILABLE = False
+engine_router = None
+
+try:
+    # Try to import engine router if available
+    import sys
+
+    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
+    if os.path.exists(app_path) and app_path not in sys.path:
+        sys.path.insert(0, app_path)
+
+    from app.core.engines import router as engine_router
+    from app.core.engines.whisper_engine import WhisperEngine
+
+    STT_ENGINE_AVAILABLE = True
+
+    # Auto-load all engines from manifests (preferred method)
+    try:
+        if engine_router:
+            engine_router.load_all_engines("engines")
+            loaded_engines = engine_router.list_engines()
+            logger.info(
+                f"Engine router initialized. Auto-loaded "
+                f"{len(loaded_engines)} engines from manifests: "
+                f"{', '.join(loaded_engines)}"
+            )
+    except Exception as e:
+        logger.warning(f"Failed to auto-load engines from manifests: {e}")
+        # Fallback: Manual registration if auto-load fails
+        try:
+            if engine_router:
+                engine_router.register_engine("whisper", WhisperEngine)
+                logger.info(
+                    "Engine router initialized with manual registration "
+                    "(fallback mode)"
+                )
+        except Exception as reg_error:
+            logger.error(f"Failed to register Whisper engine manually: {reg_error}")
+
+except (ImportError, ModuleNotFoundError) as e:
+    logger.warning(
+        f"Engine router not available: {e}. "
+        "STT engines will not be dynamically discovered. "
+        "Install with: pip install faster-whisper==1.0.3"
+    )
+    STT_ENGINE_AVAILABLE = False
+
+
+class WordTimestamp(BaseModel):
+    """Word with timestamp information."""
+
+    word: str
+    start: float
+    end: float
+    confidence: Optional[float] = None
+
+
+class TranscriptionSegment(BaseModel):
+    """Segment of transcription with timestamps."""
+
+    text: str
+    start: float
+    end: float
+    words: Optional[List[WordTimestamp]] = None
+
+
+class TranscriptionRequest(BaseModel):
+    """Request for transcription."""
+
+    audio_id: str
+    engine: str = "whisper"  # whisper, whisperx, whisper-cpp, vosk
+    language: Optional[str] = None  # Auto-detect if None
+    word_timestamps: bool = False
+    diarization: bool = False  # Speaker diarization (WhisperX only)
+    use_vad: bool = False  # Use voice activity detection
+
+
+class TranscriptionResponse(BaseModel):
+    """Response from transcription."""
+
+    id: str
+    audio_id: str
+    text: str
+    language: str
+    duration: float
+    segments: List[TranscriptionSegment]
+    word_timestamps: List[WordTimestamp]
+    created: datetime
+    engine: str
+
+
+class SupportedLanguage(BaseModel):
+    """Supported language for transcription."""
+
+    code: str
+    name: str
+
+
+@router.get("/languages", response_model=List[SupportedLanguage])
+@cache_response(ttl=600)  # Cache for 10 minutes (supported languages are static)
+async def get_supported_languages():
+    """Get list of supported languages for transcription."""
+    # If engine router is available, try to get languages from registered engine
+    if STT_ENGINE_AVAILABLE and engine_router:
+        try:
+            # Try to get whisper engine (default STT engine)
+            whisper_engine = engine_router.get_engine("whisper", gpu=True)
+            if whisper_engine and hasattr(whisper_engine, "get_supported_languages"):
+                supported = whisper_engine.get_supported_languages()
+                # Map language codes to names
+                language_names = {
+                    "auto": "Auto-detect",
+                    "en": "English",
+                    "es": "Spanish",
+                    "fr": "French",
+                    "de": "German",
+                    "it": "Italian",
+                    "pt": "Portuguese",
+                    "ru": "Russian",
+                    "ja": "Japanese",
+                    "ko": "Korean",
+                    "zh": "Chinese",
+                    "ar": "Arabic",
+                    "hi": "Hindi",
+                    "nl": "Dutch",
+                    "pl": "Polish",
+                    "tr": "Turkish",
+                    "sv": "Swedish",
+                    "no": "Norwegian",
+                    "fi": "Finnish",
+                    "da": "Danish",
+                }
+
+                return [
+                    SupportedLanguage(
+                        code=code, name=language_names.get(code, code.title())
+                    )
+                    for code in supported
+                ]
+        except Exception as e:
+            logger.debug(f"Failed to get languages from engine: {e}")
+
+    # Fallback to common languages
+    languages = [
+        {"code": "auto", "name": "Auto-detect"},
+        {"code": "en", "name": "English"},
+        {"code": "es", "name": "Spanish"},
+        {"code": "fr", "name": "French"},
+        {"code": "de", "name": "German"},
+        {"code": "it", "name": "Italian"},
+        {"code": "pt", "name": "Portuguese"},
+        {"code": "ru", "name": "Russian"},
+        {"code": "ja", "name": "Japanese"},
+        {"code": "ko", "name": "Korean"},
+        {"code": "zh", "name": "Chinese"},
+        {"code": "ar", "name": "Arabic"},
+        {"code": "hi", "name": "Hindi"},
+        {"code": "nl", "name": "Dutch"},
+        {"code": "pl", "name": "Polish"},
+        {"code": "tr", "name": "Turkish"},
+        {"code": "sv", "name": "Swedish"},
+        {"code": "no", "name": "Norwegian"},
+        {"code": "fi", "name": "Finnish"},
+        {"code": "da", "name": "Danish"},
+    ]
+    return languages
+
+
+@router.post("/", response_model=TranscriptionResponse)
+async def transcribe_audio(
+    request: TranscriptionRequest,
+    project_id: Optional[str] = Query(
+        None, description="Project ID to associate transcription with"
+    ),
+):
+    """
+    Transcribe audio file using Whisper or other STT engines.
+
+    Steps:
+    1. Load audio file from audio_id (via audio API)
+    2. Use Whisper/WhisperX/other engine to transcribe
+    3. Return transcription with timestamps
+    """
+    try:
+        transcription_id = str(uuid.uuid4())
+
+        # Get engine instance - try router first, fallback to direct creation
+        stt_engine = None
+
+        # Try to get from engine router first
+        if STT_ENGINE_AVAILABLE and engine_router:
+            try:
+                # Try loading engines from manifests if not already loaded
+                valid_engines = engine_router.list_engines()
+                if not valid_engines:
+                    try:
+                        engine_router.load_all_engines("engines")
+                        valid_engines = engine_router.list_engines()
+                    except Exception as e:
+                        logger.debug(f"Could not auto-load engines: {e}")
+
+                # Try to get engine from router
+                if valid_engines:
+                    if request.engine in valid_engines:
+                        stt_engine = engine_router.get_engine(request.engine, gpu=True)
+                    else:
+                        logger.warning(
+                            f"Engine '{request.engine}' not in router. "
+                            f"Available: {valid_engines}. Will try direct creation."
+                        )
+                else:
+                    # Try to get anyway (might be registered but not in list)
+                    try:
+                        stt_engine = engine_router.get_engine(request.engine, gpu=True)
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.debug(f"Could not get engine from router: {e}")
+
+        # If not found and requesting whisper, create directly
+        if not stt_engine and request.engine == "whisper":
+            try:
+                from app.core.engines.whisper_engine import create_whisper_engine
+
+                logger.info(
+                    "Creating Whisper engine directly (not available in router)"
+                )
+                stt_engine = create_whisper_engine(model_name="base", gpu=True)
+            except ImportError as e:
+                logger.error(f"Whisper engine not available: {e}.")
+                raise HTTPException(
+                    status_code=503,
+                    detail=(
+                        f"Transcription engine '{request.engine}' is not available. "
+                        "Please ensure the engine is properly installed. "
+                        "For Whisper engine, install with: pip install faster-whisper==1.0.3"
+                    ),
+                )
+            except Exception as e:
+                logger.error(f"Failed to create Whisper engine: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to initialize Whisper engine: {str(e)}",
+                )
+        elif not stt_engine:
+            # Engine not available - return proper error
+            logger.error(f"Engine '{request.engine}' not available.")
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Transcription engine '{request.engine}' is not available. "
+                    "Please ensure the engine is properly installed and configured."
+                ),
+            )
+
+        # Get audio file path from audio_id using helper function
+        from .audio import _get_audio_path
+
+        audio_path = _get_audio_path(request.audio_id)
+
+        # If not found and project_id provided, try project audio specifically
+        if not audio_path and project_id:
+            try:
+                from .projects import _ensure_project_dir
+
+                project_dir = _ensure_project_dir(project_id)
+                audio_dir = os.path.join(project_dir, "audio")
+
+                # Check if audio_id matches a filename in project audio directory
+                if os.path.exists(audio_dir):
+                    potential_path = os.path.join(audio_dir, request.audio_id)
+                    if os.path.exists(potential_path):
+                        audio_path = potential_path
+                    else:
+                        # Try matching by filename (without extension)
+                        for filename in os.listdir(audio_dir):
+                            base_name = os.path.splitext(filename)[0]
+                            if (
+                                base_name == request.audio_id
+                                or filename == request.audio_id
+                            ):
+                                audio_path = os.path.join(audio_dir, filename)
+                                break
+            except Exception as e:
+                logger.debug(f"Could not load from project audio: {e}")
+
+        # Final check - if still no audio path, raise error
+        if not audio_path or not os.path.exists(audio_path):
+            error_msg = f"Audio file not found for audio_id: {request.audio_id}. "
+            if project_id:
+                error_msg += f"Checked project '{project_id}' audio directory. "
+            error_msg += (
+                "Please ensure the audio has been synthesized or uploaded first."
+            )
+            raise HTTPException(status_code=404, detail=error_msg)
+
+        # Transcribe using Whisper engine
+        logger.info(f"Transcribing audio: {audio_path} with engine: {request.engine}")
+
+        # Ensure engine is initialized
+        if not stt_engine.is_initialized():
+            logger.info("Initializing Whisper engine...")
+            stt_engine.initialize()
+
+        # Prepare language (handle "auto" as None for auto-detection)
+        language = request.language
+        if language == "auto" or language == "":
+            language = None
+
+        # Transcribe audio
+        result = stt_engine.transcribe(
+            audio=audio_path, language=language, word_timestamps=request.word_timestamps
+        )
+
+        # Convert result to response format
+        segments = [
+            TranscriptionSegment(
+                text=seg["text"],
+                start=seg["start"],
+                end=seg["end"],
+                words=(
+                    [
+                        WordTimestamp(
+                            word=w["word"],
+                            start=w["start"],
+                            end=w["end"],
+                            confidence=w.get("probability"),
+                        )
+                        for w in result.get("word_timestamps", [])
+                        if seg["start"] <= w["start"] < seg["end"]
+                    ]
+                    if request.word_timestamps
+                    else None
+                ),
+            )
+            for seg in result["segments"]
+        ]
+
+        # Flatten word timestamps if requested
+        word_timestamps = []
+        if request.word_timestamps and "word_timestamps" in result:
+            word_timestamps = [
+                WordTimestamp(
+                    word=w["word"],
+                    start=w["start"],
+                    end=w["end"],
+                    confidence=w.get("probability"),
+                )
+                for w in result["word_timestamps"]
+            ]
+
+        transcription = TranscriptionResponse(
+            id=transcription_id,
+            audio_id=request.audio_id,
+            text=result["text"],
+            language=result["language"],
+            duration=result.get("duration", 0.0),
+            segments=segments,
+            word_timestamps=word_timestamps,
+            created=datetime.utcnow(),
+            engine=request.engine,
+        )
+
+        # Store transcription (with project_id if provided)
+        transcription_data = transcription.model_dump()
+        if project_id:
+            transcription_data["project_id"] = project_id
+        _transcriptions[transcription_id] = transcription_data
+        _transcription_timestamps[transcription_id] = time.time()
+
+        # Clean up old transcriptions if needed
+        if len(_transcriptions) > _MAX_TRANSCRIPTIONS:
+            _cleanup_old_transcriptions()
+
+        logger.info(
+            f"Transcription complete: {transcription_id}, "
+            f"language={transcription.language}, "
+            f"duration={transcription.duration:.2f}s"
+        )
+        return transcription
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Transcription error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+
+@router.get("/{transcription_id}", response_model=TranscriptionResponse)
+@cache_response(ttl=300)  # Cache for 5 minutes (transcription results are static)
+async def get_transcription(transcription_id: str):
+    """Get transcription by ID."""
+    if transcription_id not in _transcriptions:
+        raise HTTPException(status_code=404, detail="Transcription not found")
+
+    return TranscriptionResponse(**_transcriptions[transcription_id])
+
+
+@router.get("/", response_model=List[TranscriptionResponse])
+@cache_response(
+    ttl=30
+)  # Cache for 30 seconds (transcription list may change frequently)
+async def list_transcriptions(
+    audio_id: Optional[str] = Query(None, description="Filter by audio ID"),
+    project_id: Optional[str] = Query(None, description="Filter by project ID"),
+):
+    """List transcriptions, optionally filtered by audio ID or project ID."""
+    transcriptions = list(_transcriptions.values())
+
+    # Filter by audio_id
+    if audio_id:
+        transcriptions = [t for t in transcriptions if t.get("audio_id") == audio_id]
+
+    # Filter by project_id (if stored in transcription)
+    if project_id:
+        transcriptions = [
+            t for t in transcriptions if t.get("project_id") == project_id
+        ]
+
+    # Sort by created time (most recent first)
+    transcriptions.sort(key=lambda x: x.get("created", datetime.min), reverse=True)
+
+    return [TranscriptionResponse(**t) for t in transcriptions]
+
+
+@router.delete("/{transcription_id}", response_model=ApiOk)
+async def delete_transcription(transcription_id: str):
+    """Delete transcription."""
+    if transcription_id not in _transcriptions:
+        raise HTTPException(status_code=404, detail="Transcription not found")
+
+    del _transcriptions[transcription_id]
+    if transcription_id in _transcription_timestamps:
+        del _transcription_timestamps[transcription_id]
+    return ApiOk(message="Transcription deleted")

@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceSynthesizeRequest",
+  "type": "object",
+  "description": "Request schema for voice synthesis",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Voice profile ID",
+      "example": "profile-123"
+    },
+    "text": {
+      "type": "string",
+      "description": "Text to synthesize",
+      "minLength": 1,
+      "maxLength": 10000,
+      "example": "Hello, this is a test of voice synthesis."
+    },
+    "engine": {
+      "type": "string",
+      "description": "Engine to use (optional, uses profile default if not specified)",
+      "enum": ["xtts_v2", "chatterbox", "tortoise"],
+      "example": "chatterbox"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language code (optional, uses profile language if not specified)",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "example": "en"
+    },
+    "emotion": {
+      "type": "string",
+      "description": "Emotion for synthesis (if engine supports)",
+      "enum": ["neutral", "happy", "sad", "angry", "excited", "calm"],
+      "example": "neutral"
+    },
+    "speed": {
+      "type": "number",
+      "description": "Speech speed multiplier",
+      "minimum": 0.5,
+      "maximum": 2.0,
+      "default": 1.0,
+      "example": 1.0
+    },
+    "pitch": {
+      "type": "number",
+      "description": "Pitch adjustment",
+      "minimum": -12,
+      "maximum": 12,
+      "default": 0,
+      "example": 0
+    },
+    "calculate_quality": {
+      "type": "boolean",
+      "description": "Whether to calculate quality metrics",
+      "default": false
+    },
+    "enhance_quality": {
+      "type": "boolean",
+      "description": "Whether to apply quality enhancement",
+      "default": false
+    }
+  },
+  "required": ["profile_id", "text"],
+  "additionalProperties": false
+}
+

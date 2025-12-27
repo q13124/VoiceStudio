@@ -1,0 +1,56 @@
+{
+  "engine_id": "sdnext",
+  "name": "SD.Next",
+  "type": "image",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "SD.Next - Advanced fork of AUTOMATIC1111 with enhanced features and performance",
+  "author": "vladmandic",
+  "license": "AGPL-3.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "xformers": ">=0.0.20"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\sdnext",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\sdnext\\models\\checkpoints",
+    "loras": "%PROGRAMDATA%\\VoiceStudio\\models\\sdnext\\models\\loras",
+    "embeddings": "%PROGRAMDATA%\\VoiceStudio\\models\\sdnext\\embeddings"
+  },
+  "supported_formats": ["png", "jpg", "webp"],
+  "capabilities": [
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "controlnet",
+    "lora_loading",
+    "embedding_loading",
+    "advanced_samplers",
+    "performance_optimizations"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.sdnext_engine.SDNextEngine",
+  "config_schema": {
+    "webui_url": {
+      "type": "string",
+      "default": "http://127.0.0.1:7860",
+      "description": "SD.Next WebUI server URL"
+    },
+    "api_endpoint": {
+      "type": "string",
+      "default": "/sdapi/v1",
+      "description": "API endpoint path"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    }
+  }
+}
+

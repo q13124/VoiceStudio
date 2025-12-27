@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-01-XX",
+  "failedModules": [
+    {
+      "moduleId": "example_module_1",
+      "worker": "Worker 3",
+      "task": "Panel Scaffolding",
+      "failureReason": "Compilation error in PanelRegistry.cs",
+      "errorDetails": "Missing using statement",
+      "retryCount": 0,
+      "maxRetries": 3,
+      "status": "pending",
+      "assignedTo": null,
+      "priority": "high",
+      "blocking": true
+    }
+  ],
+  "retrySchedule": [
+    {
+      "moduleId": "example_module_1",
+      "scheduledRetry": "2025-01-XX",
+      "assignedWorker": "Worker 3",
+      "notes": "Fix missing using statement"
+    }
+  ]
+}
+

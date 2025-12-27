@@ -1,0 +1,58 @@
+{
+  "engine_id": "svd",
+  "name": "Stable Video Diffusion",
+  "type": "video",
+  "subtype": "generation",
+  "version": "1.0",
+  "description": "Stable Video Diffusion for image-to-video generation",
+  "author": "Stability AI",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "diffusers": ">=0.21.0",
+    "torch": ">=2.0.0",
+    "transformers": ">=4.30.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\svd",
+    "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\svd\\checkpoints"
+  },
+  "supported_formats": ["mp4", "gif", "webm"],
+  "capabilities": [
+    "image_to_video",
+    "video_generation",
+    "temporal_consistency"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 12,
+    "ram_min_gb": 16
+  },
+  "entry_point": "app.core.engines.svd_engine.SVDEngine",
+  "config_schema": {
+    "model_id": {
+      "type": "string",
+      "default": "stabilityai/stable-video-diffusion-img2vid",
+      "description": "SVD model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "num_frames": {
+      "type": "integer",
+      "default": 14,
+      "minimum": 14,
+      "maximum": 25,
+      "description": "Number of video frames to generate"
+    },
+    "fps": {
+      "type": "integer",
+      "default": 7,
+      "description": "Frames per second"
+    }
+  }
+}
+

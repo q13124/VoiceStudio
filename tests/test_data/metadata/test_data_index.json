@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-11-27T12:04:31.929607+00:00",
+  "audio_files": [
+    {
+      "id": "audio-ref-001",
+      "path": "audio/reference/test_ref_001.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 5.5,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 550000
+    },
+    {
+      "id": "audio-ref-002",
+      "path": "audio/reference/test_ref_002.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 6.0,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 600000
+    },
+    {
+      "id": "audio-ref-003",
+      "path": "audio/reference/test_ref_003.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 6.5,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 650000
+    },
+    {
+      "id": "audio-ref-004",
+      "path": "audio/reference/test_ref_004.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 7.0,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 700000
+    },
+    {
+      "id": "audio-ref-005",
+      "path": "audio/reference/test_ref_005.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 7.5,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 750000
+    },
+    {
+      "id": "audio-ref-006",
+      "path": "audio/reference/test_ref_006.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 8.0,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 800000
+    },
+    {
+      "id": "audio-ref-007",
+      "path": "audio/reference/test_ref_007.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 8.5,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 850000
+    },
+    {
+      "id": "audio-ref-008",
+      "path": "audio/reference/test_ref_008.wav",
+      "format": "wav",
+      "category": "reference",
+      "duration": 9.0,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 900000
+    },
+    {
+      "id": "audio-synth-001",
+      "path": "audio/synthesized/test_synth_001.wav",
+      "format": "wav",
+      "category": "synthesized",
+      "duration": 3.3,
+      "sample_rate": 22050,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 220000
+    },
+    {
+      "id": "audio-synth-002",
+      "path": "audio/synthesized/test_synth_002.wav",
+      "format": "wav",
+      "category": "synthesized",
+      "duration": 3.6,
+      "sample_rate": 22050,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 240000
+    },
+    {
+      "id": "audio-synth-003",
+      "path": "audio/synthesized/test_synth_003.wav",
+      "format": "wav",
+      "category": "synthesized",
+      "duration": 3.9,
+      "sample_rate": 22050,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 260000
+    },
+    {
+      "id": "audio-synth-004",
+      "path": "audio/synthesized/test_synth_004.wav",
+      "format": "wav",
+      "category": "synthesized",
+      "duration": 4.2,
+      "sample_rate": 22050,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 280000
+    },
+    {
+      "id": "audio-synth-005",
+      "path": "audio/synthesized/test_synth_005.wav",
+      "format": "wav",
+      "category": "synthesized",
+      "duration": 4.5,
+      "sample_rate": 22050,
+      "channels": 1,
+      "bit_depth": 16,
+      "size_bytes": 300000
+    }
+  ],
+  "profiles": [
+    {
+      "id": "test-profile-001",
+      "name": "Test Voice Profile 1 - Male English",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-002",
+      "name": "Test Voice Profile 2 - Female English",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-003",
+      "name": "Test Voice Profile 3 - Male Spanish",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-004",
+      "name": "Test Voice Profile 4 - Female French",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-005",
+      "name": "Test Voice Profile 5 - Male English Sad",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-006",
+      "name": "Test Voice Profile 6 - Female English Excited",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-007",
+      "name": "Test Voice Profile 7 - Male German",
+      "path": "profiles/sample_profiles.json"
+    },
+    {
+      "id": "test-profile-008",
+      "name": "Test Voice Profile 8 - Female Italian",
+      "path": "profiles/sample_profiles.json"
+    }
+  ],
+  "projects": [
+    {
+      "id": "test-project-001",
+      "name": "Test Project 1 - Simple",
+      "path": "projects/sample_projects.json"
+    },
+    {
+      "id": "test-project-002",
+      "name": "Test Project 2 - Multiple Tracks",
+      "path": "projects/sample_projects.json"
+    },
+    {
+      "id": "test-project-003",
+      "name": "Test Project 3 - Effects",
+      "path": "projects/sample_projects.json"
+    },
+    {
+      "id": "test-project-004",
+      "name": "Test Project 4 - Macros",
+      "path": "projects/sample_projects.json"
+    },
+    {
+      "id": "test-project-005",
+      "name": "Test Project 5 - Complex",
+      "path": "projects/sample_projects.json"
+    }
+  ]
+}

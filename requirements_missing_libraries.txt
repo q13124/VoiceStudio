@@ -1,0 +1,109 @@
+# VoiceStudio - Missing Libraries from Old Projects
+# These libraries were found in old VoiceStudio projects but are missing from current requirements_engines.txt
+# Install with: pip install -r requirements_missing_libraries.txt
+#
+# Last Updated: 2025-01-28
+# Priority: CRITICAL for audio quality features
+
+# ============================================================================
+# CRITICAL: Audio Quality Enhancement Libraries
+# ============================================================================
+# These are essential for advanced audio quality features
+
+# Advanced audio analysis
+essentia-tensorflow>=1.1.1
+
+# Noise reduction & enhancement
+voicefixer>=0.1.2
+deepfilternet>=0.5.0
+
+# Source separation (extract voice from music)
+spleeter>=2.3.0
+
+# Professional effects
+pedalboard>=0.7.0
+
+# Audio augmentation (for dataset creation)
+audiomentations>=1.7.0
+
+# High-quality resampling
+resampy>=0.4.2
+pyrubberband>=0.3.0
+
+# Quality metrics (CRITICAL for quality benchmarking)
+pesq>=0.0.4
+pystoi>=0.3.3
+
+# ============================================================================
+# CRITICAL: RVC & Voice Conversion Dependencies
+# ============================================================================
+# Required for RVC engine to work properly
+
+# RVC core dependencies
+fairseq==0.12.2
+faiss-cpu==1.7.4
+pyworld==0.3.2
+praat-parselmouth>=0.4.3
+
+# Note: numba and llvmlite versions should match your Python version
+# Check compatibility before installing
+# numba==0.58.1  # Uncomment if compatible
+# llvmlite==0.40.1  # Uncomment if compatible
+
+# ============================================================================
+# HIGH PRIORITY: Additional Audio Processing
+# ============================================================================
+# Additional effects and processing tools
+
+pedalo>=0.4.0  # Additional audio effects
+
+# ============================================================================
+# MEDIUM PRIORITY: Performance Monitoring
+# ============================================================================
+# Useful for performance monitoring and optimization
+
+py-cpuinfo>=9.0.0
+GPUtil>=1.4.0
+nvidia-ml-py>=11.0.0
+wandb>=0.15.0  # Experiment tracking (optional)
+
+# ============================================================================
+# MEDIUM PRIORITY: Advanced Utilities
+# ============================================================================
+
+webrtcvad>=2.0.10  # Voice activity detection
+umap-learn>=0.5.9  # Dimensionality reduction
+spacy[ja]>=3.8.7  # NLP processing (optional, large download)
+tensorboard>=2.20.0  # Training visualization
+
+# ============================================================================
+# OPTIONAL: Metrics & Monitoring (for FastAPI backend)
+# ============================================================================
+
+prometheus-client>=0.23.1
+prometheus-fastapi-instrumentator>=6.1.0
+
+# ============================================================================
+# OPTIONAL: Deepfake & Video Processing (for future features)
+# ============================================================================
+# Uncomment if you want to add deepfake/video features
+
+# insightface>=0.7.3
+# opencv-contrib-python>=4.8.0
+
+# ============================================================================
+# Installation Notes
+# ============================================================================
+# 1. Install PyTorch first (from requirements_engines.txt)
+# 2. Some packages may require system dependencies:
+#    - faiss-cpu: May need conda or specific build
+#    - fairseq: May need C++ compiler
+#    - pyworld: May need C++ compiler
+# 3. Test each package after installation
+# 4. If conflicts occur, install in separate virtual environment
+
+# ============================================================================
+# Quick Install (after main requirements)
+# ============================================================================
+# pip install -r requirements_missing_libraries.txt
+

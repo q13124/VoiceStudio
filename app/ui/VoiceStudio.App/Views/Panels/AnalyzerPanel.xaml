@@ -1,0 +1,76 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.AnalyzerPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:VoiceStudio.App.Controls"
+             xmlns:vm="using:VoiceStudio.App.Views.Panels"
+             xmlns:converters="using:VoiceStudio.App.Converters">
+    <UserControl.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    <UserControl.DataContext>
+        <vm:AnalyzerViewModel x:Name="ViewModel"/>
+    </UserControl.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TabView Grid.Row="0" x:Name="TabView" SelectionChanged="TabView_SelectionChanged">
+            <TabViewItem Header="Waveform" x:Name="WaveformTab"/>
+            <TabViewItem Header="Spectral" x:Name="SpectralTab"/>
+            <TabViewItem Header="Radar" x:Name="RadarTab"/>
+            <TabViewItem Header="Loudness" x:Name="LoudnessTab"/>
+            <TabViewItem Header="Phase" x:Name="PhaseTab"/>
+        </TabView>
+
+        <Border Grid.Row="1" Margin="0,8,0,0" CornerRadius="{StaticResource VSQ.CornerRadius.Panel}" 
+                BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1" 
+                Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
+            <Grid>
+                <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" 
+                             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}" 
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                
+                <controls:WaveformControl x:Name="WaveformControl" 
+                                        Visibility="{x:Bind ViewModel.IsWaveformTab, Mode=OneWay}" 
+                                        Samples="{x:Bind ViewModel.WaveformSamples, Mode=OneWay}" 
+                                        Mode="peak" WaveformColor="Cyan" 
+                                        PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}"/>
+
+                <controls:SpectrogramControl x:Name="SpectrogramControl" 
+                                           Visibility="{x:Bind ViewModel.IsSpectralTab, Mode=OneWay}" 
+                                           Frames="{x:Bind ViewModel.SpectrogramFrames, Mode=OneWay}" 
+                                           PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}"/>
+
+                <controls:RadarChartControl x:Name="RadarChartControl" 
+                                          Visibility="{x:Bind ViewModel.IsRadarTab, Mode=OneWay}" 
+                                          Data="{x:Bind ViewModel.RadarData, Mode=OneWay}" 
+                                          RadarColor="{StaticResource VSQ.Accent.Cyan}"/>
+
+                <controls:LoudnessChartControl x:Name="LoudnessChartControl" 
+                                             Visibility="{x:Bind ViewModel.IsLoudnessTab, Mode=OneWay}" 
+                                             Times="{x:Bind ViewModel.LoudnessTimes, Mode=OneWay}" 
+                                             LufsValues="{x:Bind ViewModel.LoudnessLufsValues, Mode=OneWay}" 
+                                             IntegratedLufs="{x:Bind ViewModel.LoudnessIntegratedLufs, Mode=OneWay}" 
+                                             PeakLufs="{x:Bind ViewModel.LoudnessPeakLufs, Mode=OneWay}" 
+                                             Duration="{x:Bind ViewModel.LoudnessDuration, Mode=OneWay}" 
+                                             LineColor="Orange" 
+                                             PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}"/>
+
+                <controls:PhaseAnalysisControl x:Name="PhaseAnalysisControl" 
+                                             Visibility="{x:Bind ViewModel.IsPhaseTab, Mode=OneWay}" 
+                                             Data="{x:Bind ViewModel.PhaseData, Mode=OneWay}" 
+                                             PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}"/>
+
+                <TextBlock Text="Select a tab to view audio analysis. Load audio data to see visualizations." 
+                          Style="{StaticResource VSQ.Text.Body}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                          Visibility="{x:Bind ViewModel.HasAudioData, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+

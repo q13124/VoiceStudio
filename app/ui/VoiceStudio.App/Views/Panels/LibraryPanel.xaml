@@ -1,0 +1,47 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.LibraryPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- TreeView for folders -->
+        <TreeView Grid.Column="0" Margin="0,0,8,0">
+            <TreeViewItem Header="Voice Profiles" IsExpanded="True">
+                <TreeViewItem Header="Male Voices"/>
+                <TreeViewItem Header="Female Voices"/>
+            </TreeViewItem>
+            <TreeViewItem Header="Asset Library">
+                <TreeViewItem Header="Samples"/>
+                <TreeViewItem Header="Presets"/>
+            </TreeViewItem>
+            <TreeViewItem Header="Batch Presets"/>
+            <TreeViewItem Header="Model Templates"/>
+        </TreeView>
+        
+        <!-- ListView for items -->
+        <ListView Grid.Column="1">
+            <ListViewItem>
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE8A5;" FontSize="24" Margin="0,0,12,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Voice Profile 1" Style="{StaticResource VSQ.Text.Body}"/>
+                        <TextBlock Text="High Quality" Style="{StaticResource VSQ.Text.Caption}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ListViewItem>
+            <ListViewItem>
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE8A5;" FontSize="24" Margin="0,0,12,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Voice Profile 2" Style="{StaticResource VSQ.Text.Body}"/>
+                        <TextBlock Text="Medium Quality" Style="{StaticResource VSQ.Text.Caption}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ListViewItem>
+        </ListView>
+    </Grid>
+</UserControl>
+

@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>VoiceStudio.App.Tests</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <UseWinUI>true</UseWinUI>
+    <Platforms>x64</Platforms>
+    <!-- Suppress Win2D platform warning - we're building as x64 -->
+    <Win2DWarnNoPlatform>true</Win2DWarnNoPlatform>
+    <!-- Suppress RuntimeIdentifier errors for unsupported RIDs -->
+    <_SuppressWinRTError>true</_SuppressWinRTError>
+    <!-- Disable RID resolution to avoid invalid RID errors -->
+    <EnableDefaultRuntimeIdentifier>false</EnableDefaultRuntimeIdentifier>
+    <RuntimeIdentifier></RuntimeIdentifier>
+    <RuntimeIdentifiers></RuntimeIdentifiers>
+    <!-- Suppress duplicate AssemblyAttributes warning -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Suppress RuntimeIdentifier resolution errors -->
+  <Target Name="SuppressRuntimeIdentifierErrors" BeforeTargets="ProcessFrameworkReferences">
+    <PropertyGroup>
+      <RuntimeIdentifier></RuntimeIdentifier>
+      <RuntimeIdentifiers></RuntimeIdentifiers>
+      <_SuppressWinRTError>true</_SuppressWinRTError>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.4.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.4.3" />
+    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.12.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceStudio.App\VoiceStudio.App.csproj"
+      Condition="Exists('..\VoiceStudio.App\VoiceStudio.App.csproj')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.manifest" />
+  </ItemGroup>
+
+</Project>

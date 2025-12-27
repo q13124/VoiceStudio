@@ -1,0 +1,184 @@
+<Window x:Class="VoiceStudio.App.Views.Shell.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:VoiceStudio.App.Views.Controls"
+        xmlns:panels="using:VoiceStudio.App.Views.Panels"
+        xmlns:shell="using:VoiceStudio.App.Views.Shell"
+        Title="VoiceStudio"
+        Background="{StaticResource VSQ.Window.Background}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- Top Command Deck -->
+            <RowDefinition Height="*"/>      <!-- Main Workspace -->
+            <RowDefinition Height="Auto"/>   <!-- Status Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Top Command Deck -->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Menu -->
+                <RowDefinition Height="48"/>   <!-- Toolbar -->
+            </Grid.RowDefinitions>
+
+            <!-- MenuBar -->
+            <MenuBar Grid.Row="0">
+                <MenuBarItem Title="File">
+                    <!-- File menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="Edit">
+                    <!-- Edit menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="View">
+                    <!-- View menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="Modules">
+                    <!-- Modules menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="Playback">
+                    <!-- Playback menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="Tools">
+                    <!-- Tools menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="AI">
+                    <!-- AI menu items -->
+                </MenuBarItem>
+                <MenuBarItem Title="Help">
+                    <!-- Help menu items -->
+                </MenuBarItem>
+            </MenuBar>
+
+            <!-- Command Toolbar -->
+            <CommandBar Grid.Row="1">
+                <!-- Transport Controls -->
+                <AppBarButton Icon="Play" Label="Play"/>
+                <AppBarButton Icon="Pause" Label="Pause"/>
+                <AppBarButton Icon="Stop" Label="Stop"/>
+                <AppBarButton Icon="Record" Label="Record"/>
+                <AppBarButton Icon="RepeatAll" Label="Loop"/>
+
+                <!-- Separator -->
+                <CommandBarSeparator/>
+
+                <!-- Project Section -->
+                <AppBarButton Label="Project"/>
+                <ComboBox Width="150" Margin="8,0">
+                    <ComboBoxItem Content="Workspace 1"/>
+                </ComboBox>
+
+                <!-- Separator -->
+                <CommandBarSeparator/>
+
+                <!-- Engine Section -->
+                <TextBlock Text="Engine:" VerticalAlignment="Center" Margin="8,0"/>
+                <ComboBox Width="120" Margin="8,0">
+                    <ComboBoxItem Content="XTTS"/>
+                    <ComboBoxItem Content="RVC"/>
+                </ComboBox>
+
+                <!-- Separator -->
+                <CommandBarSeparator/>
+
+                <!-- Performance HUD -->
+                <StackPanel Orientation="Horizontal" Margin="8,0">
+                    <TextBlock Text="GPU:" Style="{StaticResource VSQ.Text.Caption}" Margin="4,0"/>
+                    <ProgressBar Width="40" Height="8" Value="45"/>
+                    <TextBlock Text="CPU:" Style="{StaticResource VSQ.Text.Caption}" Margin="8,0,4,0"/>
+                    <ProgressBar Width="40" Height="8" Value="30"/>
+                    <TextBlock Text="Lat:" Style="{StaticResource VSQ.Text.Caption}" Margin="8,0,4,0"/>
+                    <TextBlock Text="12ms" Style="{StaticResource VSQ.Text.Caption}"/>
+                </StackPanel>
+
+                <!-- Separator -->
+                <CommandBarSeparator/>
+
+                <!-- Undo/Redo -->
+                <AppBarButton Icon="Undo" Label="Undo"/>
+                <AppBarButton Icon="Redo" Label="Redo"/>
+                <AppBarButton Icon="History" Label="History"/>
+            </CommandBar>
+        </Grid>
+
+        <!-- Row 1: Main Workspace -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>        <!-- Top main band -->
+                <RowDefinition Height="0.18*"/>    <!-- Bottom deck (macros/diag) -->
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.2*"/>   <!-- Left dock -->
+                <ColumnDefinition Width="0.55*"/>  <!-- Center -->
+                <ColumnDefinition Width="0.25*"/>  <!-- Right dock -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Row 0, Column 0: Left dock (Navigation + ProfilesPanel) -->
+            <Grid Grid.Row="0" Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="48"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Navigation Sidebar -->
+                <StackPanel Grid.Column="0"
+                           Background="{StaticResource VSQ.Background.Darker}"
+                           BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                           BorderThickness="0,0,1,0">
+                    <ToggleButton x:Name="NavProfiles"
+                                  Style="{StaticResource VSQ.Button.NavToggle}"
+                                  IsChecked="True"
+                                  ToolTipService.ToolTip="Profiles">
+                        <FontIcon FontSize="20" Glyph="&#xE8A5;"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavLibrary"
+                                  Style="{StaticResource VSQ.Button.NavToggle}"
+                                  ToolTipService.ToolTip="Library">
+                        <FontIcon FontSize="20" Glyph="&#xE8F1;"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavBatch"
+                                  Style="{StaticResource VSQ.Button.NavToggle}"
+                                  ToolTipService.ToolTip="Batch">
+                        <FontIcon FontSize="20" Glyph="&#xE8F5;"/>
+                    </ToggleButton>
+                </StackPanel>
+                
+                <!-- Panel Host -->
+                <controls:PanelHost Grid.Column="1"
+                                   x:Name="LeftPanelHost" 
+                                   Title="Profiles"
+                                   IconGlyph="&#xE8A5;">
+                    <panels:ProfilesPanel x:Name="ProfilesPanelContent"/>
+                </controls:PanelHost>
+            </Grid>
+
+            <!-- Row 0, Column 1: Center (TimelinePanel) -->
+            <controls:PanelHost Grid.Row="0" Grid.Column="1" 
+                               x:Name="CenterPanelHost"
+                               Title="Timeline"
+                               IconGlyph="&#xE8C5;">
+                <panels:TimelinePanel/>
+            </controls:PanelHost>
+
+            <!-- Row 0, Column 2: Right dock (EffectsMixerPanel, AnalyzerPanel) -->
+            <controls:PanelHost Grid.Row="0" Grid.Column="2" 
+                               x:Name="RightPanelHost"
+                               Title="Effects &amp; Mixer"
+                               IconGlyph="&#xE8F2;">
+                <panels:EffectsMixerPanel/>
+            </controls:PanelHost>
+
+            <!-- Row 1, Columns 0-2: Bottom deck (MacroPanel, DiagnosticsPanel) -->
+            <controls:PanelHost Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" 
+                               x:Name="BottomPanelHost"
+                               Title="Macros"
+                               IconGlyph="&#xE8EF;">
+                <panels:MacroPanel/>
+            </controls:PanelHost>
+        </Grid>
+
+        <!-- Row 2: Status Bar -->
+        <shell:StatusBarView Grid.Row="2" x:Name="StatusBar"/>
+    </Grid>
+</Window>
+

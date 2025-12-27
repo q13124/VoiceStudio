@@ -1,0 +1,47 @@
+{
+  "engine_id": "rhvoice",
+  "name": "RHVoice",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "RHVoice - Multilingual TTS with high-quality voices, optimized for Russian and other languages",
+  "author": "RHVoice Team",
+  "license": "GPL-3.0",
+  "python_version": ">=3.8",
+  "dependencies": {},
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\rhvoice",
+    "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\rhvoice\\voices"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "multilingual",
+    "high_quality_voices",
+    "russian_optimized"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.rhvoice_engine.RHVoiceEngine",
+  "config_schema": {
+    "executable_path": {
+      "type": "string",
+      "default": "rhvoice-client",
+      "description": "Path to RHVoice executable"
+    },
+    "voice": {
+      "type": "string",
+      "default": "anna",
+      "description": "Voice name"
+    },
+    "language": {
+      "type": "string",
+      "default": "ru",
+      "description": "Language code"
+    }
+  }
+}
+

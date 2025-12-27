@@ -1,0 +1,293 @@
+# BUILD FAILURE ROOT CAUSE - VISUAL SUMMARY
+
+## The Problem (516 Errors)
+
+```
+┌─────────────────────────────────────────────┐
+│  VoiceStudio Build FAILURE                  │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│  516 Errors                                 │
+│  19 Warnings                                │
+│  MSB3073: XAML Compiler crashed             │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## Root Causes Found (3 Critical Issues)
+
+### ROOT CAUSE #1: Class Name Mismatch ⚠️ CRITICAL
+
+```
+Reality:
+┌──────────────────────────────────────────┐
+│ TextSpeechEditorViewModel.cs              │
+│ ─────────────────────────────────────────│
+│ public class TextSpeechEditorSegmentItem │
+│ {                                        │
+│     public TextSegmentItem(...) { }      │
+│ }                                        │
+└──────────────────────────────────────────┘
+         ↓
+         CLASS NAME MISMATCH!
+         ↓
+Expected in codebase:
+┌──────────────────────────────────────────┐
+│ 80+ references to:                       │
+│ ─────────────────────────────────────────│
+│ TextSegmentItem (used everywhere)        │
+│                                          │
+│ TextHighlightingViewModel.cs line 37:    │
+│ Collection<TextSegmentItem> segments     │
+│                                          │
+│ TextSpeechEditorActions.cs line 118:     │
+│ TextSpeechEditorViewModel.TextSegmentItem│
+│                                          │
+│ TextSpeechEditorView.xaml.cs line 386:   │
+│ if (segment is TextSegmentItem) { }      │
+└──────────────────────────────────────────┘
+
+IMPACT: ~80 errors (15% of total)
+```
+
+### ROOT CAUSE #2: Missing Using Statements ⚠️ CRITICAL
+
+```
+File: TrainingQualityVisualizationViewModel.cs
+Line: 32
+┌─────────────────────────────────────────────────────┐
+│ [ObservableProperty]                               │
+│ private ObservableCollection<TrainingQualityMetrics>│  ← Uses this type
+│         qualityHistory = new();                     │
+└─────────────────────────────────────────────────────┘
+
+Missing Import at top of file:
+┌─────────────────────────────────────────────────────┐
+│ using VoiceStudio.Core.Models;  ← THIS IS MISSING  │
+└─────────────────────────────────────────────────────┘
+
+But TrainingQualityMetrics EXISTS in:
+┌─────────────────────────────────────────────────────┐
+│ E:\VoiceStudio\src\VoiceStudio.Core\Models\        │
+│ TrainingQualityMetrics.cs                          │
+│                                                     │
+│ public class TrainingQualityMetrics { }            │
+└─────────────────────────────────────────────────────┘
+
+IMPACT: ~40-50 errors (8-10% of total)
+```
+
+### ROOT CAUSE #3: XAML Compiler Still Running ⚠️ CRITICAL BLOCKER
+
+```
+Current State:
+┌────────────────────────────────────────────┐
+│ Custom Bypass Files:                       │
+│ ✓ VoiceStudio.App.MsCompile.targets exists│
+│ ✓ Import in .csproj exists                 │
+│ ✗ XAML compiler STILL crashes              │
+└────────────────────────────────────────────┘
+
+Build Flow:
+┌─────────────────────────────────────────────────────────┐
+│ Start Build                                             │
+│ ↓                                                       │
+│ Import Custom Targets (empty targets defined)          │
+│ ↓                                                       │
+│ SDK="Microsoft.NET.Sdk" processes                      │
+│ ↓                                                       │
+│ NuGet Targets imported (maybe overrides our targets?)  │
+│ ↓                                                       │
+│ XamlCompiler.exe runs (should be suppressed!)          │
+│ ↓                                                       │
+│ ✗ ERROR MSB3073: XamlCompiler exit code 1              │
+│ ↓                                                       │
+│ ✗ Build stops (remaining errors never visible)         │
+└─────────────────────────────────────────────────────────┘
+
+IMPACT: Blocks entire build, masks other 400+ errors
+```
+
+---
+
+## The Fixes (Quick Reference)
+
+### FIX #1: Rename Class (1 line)
+```
+File: TextSpeechEditorViewModel.cs, Line 640
+─────────────────────────────────────────────
+
+BEFORE:
+    public class TextSpeechEditorSegmentItem
+
+AFTER:
+    public class TextSegmentItem
+
+Result: ✓ Eliminates ~80 errors
+```
+
+### FIX #2: Add Using Statement (1 line per file)
+```
+File: TrainingQualityVisualizationViewModel.cs (and others)
+Line: Top of file
+─────────────────────────────────────────────────────────
+
+BEFORE:
+    using VoiceStudio.Core.Services;
+    // missing: using VoiceStudio.Core.Models;
+    using VoiceStudio.App.Services;
+
+AFTER:
+    using VoiceStudio.Core.Services;
+    using VoiceStudio.Core.Models;          ← ADD THIS
+    using VoiceStudio.App.Services;
+
+Result: ✓ Eliminates ~40-50 errors
+```
+
+### FIX #3: Debug XAML Bypass
+```
+File: VoiceStudio.App.csproj
+─────────────────────────────────────────────────────
+
+Option A - Verify Import Placement
+  ✓ Check that custom targets import is before Sdk attribute
+
+Option B - Use Property-Based Disable
+  Add to <PropertyGroup>:
+    <DisableXbfGeneration>true</DisableXbfGeneration>
+    <EnableUIXamlCompilation>false</EnableUIXamlCompilation>
+
+Result: ✓ Enables build to proceed
+```
+
+---
+
+## Error Reduction Timeline
+
+```
+516 Errors
+  │
+  ├─ Fix #1: Rename Class (-80 errors)
+  │   └─→ 436 Errors
+  │
+  ├─ Fix #2: Add Using Statements (-40-50 errors)
+  │   └─→ 386-396 Errors
+  │
+  ├─ Fix #3: Fix XAML Bypass (enables build progression)
+  │   └─→ Remaining 386 errors now visible and manageable
+  │
+  └─ Continue with remaining fixes (duplicates, interfaces, etc.)
+      └─→ 0 Errors (clean build)
+
+Timeline:
+  Fix #1: 2 minutes
+  Fix #2: 10 minutes
+  Fix #3: 5-15 minutes (testing)
+  ─────────────────────
+  Total: ~20-30 minutes to eliminate 120 errors
+```
+
+---
+
+## Key Insights
+
+```
+┌─────────────────────────────────────────────────────┐
+│ WHY THIS HAPPENED                                   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 1. Class Renamed Without Updating All References    │
+│    Someone renamed TextSegmentItem →                │
+│    TextSpeechEditorSegmentItem but missed:          │
+│    • Constructor name                              │
+│    • 80+ references in other files                 │
+│                                                     │
+│ 2. Incomplete Refactoring (Missing Imports)        │
+│    When adding new Core.Models types,              │
+│    not all ViewModels added the using statement   │
+│                                                     │
+│ 3. XAML Compiler Issue (Pre-existing)              │
+│    XamlCompiler.exe crashes (maybe unrelated)      │
+│    Previous bypass attempt incomplete               │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+
+CONCLUSION:
+These are NOT fundamental design flaws.
+These are typical build configuration issues.
+All 3 are quick fixes.
+```
+
+---
+
+## What These Fixes Enable
+
+```
+BEFORE:                          AFTER FIX:
+──────────────────────────────────────────────────
+516 Errors                       386-396 Errors
+│                                │
+├─ Hidden by XAML crash          ├─ Visible for fixing
+├─ Unclear priorities            ├─ Clear priorities
+├─ No build progress             ├─ Build proceeds
+└─ Frustrating                   └─ Productive
+
+Result: From "complete blockage" to "manageable cleanup"
+```
+
+---
+
+## Files to Download
+
+1. **`QUICK_FIX_GUIDE.md`** ← START HERE
+   - Step-by-step implementation
+   - Exact code to change
+   - Testing instructions
+
+2. **`ROOT_CAUSE_ANALYSIS.md`**
+   - Deep technical analysis
+   - Evidence for each finding
+   - Complete context
+
+3. **`BUILD_ERROR_LOG.md`** (updated)
+   - Full error breakdown
+   - Root cause section added
+   - File-by-file analysis
+
+4. **`INVESTIGATION_SUMMARY.txt`**
+   - This summary
+   - Investigation process
+   - Next steps
+
+---
+
+## Status Summary
+
+```
+┌─────────────────────────────────────────────────────┐
+│ INVESTIGATION: ✅ COMPLETE                          │
+├─────────────────────────────────────────────────────┤
+│ Root Cause #1 (Class Name): 95% Confident          │
+│ Root Cause #2 (Using Statements): 90% Confident    │
+│ Root Cause #3 (XAML Bypass): 70% Confident         │
+│                                                     │
+│ Actionable Fixes: 3                                 │
+│ Estimated Error Reduction: 23-26%                  │
+│ Time to Implement: 20-30 minutes                    │
+│ Risk Level: Low (simple changes)                    │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## Next Action
+
+👉 Open `QUICK_FIX_GUIDE.md` and follow the 3 fixes in order.
+
+Expected result: ~120 fewer errors, clearer path forward.
+
+---
+
+*Visual Summary | Generated December 15, 2025*
+*Based on comprehensive codebase investigation*

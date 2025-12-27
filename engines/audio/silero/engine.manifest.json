@@ -1,0 +1,58 @@
+{
+  "engine_id": "silero",
+  "name": "Silero Models",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "description": "Silero TTS - Fast, high-quality multilingual TTS models with many languages",
+  "author": "Silero Team",
+  "license": "MIT",
+  "python_version": ">=3.8",
+  "dependencies": {
+    "torch": ">=1.9.0",
+    "torchaudio": ">=0.9.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\silero",
+    "models": "%PROGRAMDATA%\\VoiceStudio\\models\\silero\\models"
+  },
+  "supported_formats": ["wav", "mp3"],
+  "capabilities": [
+    "text_to_speech",
+    "multilingual",
+    "fast_inference",
+    "high_quality",
+    "many_languages",
+    "many_voices"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "entry_point": "app.core.engines.silero_engine.SileroEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cpu",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "model_id": {
+      "type": "string",
+      "default": "v4_ru",
+      "description": "Silero model identifier (v4_ru, v4_en, v4_uk, etc.)"
+    },
+    "speaker": {
+      "type": "string",
+      "default": "aidar",
+      "description": "Speaker name"
+    },
+    "language": {
+      "type": "string",
+      "default": "ru",
+      "description": "Language code"
+    }
+  }
+}
+

@@ -1,0 +1,269 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.Storage;
+using System.Text.Json;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace VoiceStudio.App.Services
+{
+    /// <summary>
+    /// Service for managing recent projects history.
+    /// Implements IDEA 16: Recent Projects Quick Access.
+    /// </summary>
+    public class RecentProjectsService : ObservableObject
+    {
+        private const string SettingsKey = "RecentProjects";
+        private const int MaxRecentProjects = 10;
+        private const int MaxPinnedProjects = 3;
+        private readonly List<RecentProject> _recentProjects = new();
+        private readonly List<RecentProject> _pinnedProjects = new();
+
+        /// <summary>
+        /// Gets the list of recent projects (excluding pinned).
+        /// </summary>
+        public IReadOnlyList<RecentProject> RecentProjects => _recentProjects.AsReadOnly();
+
+        /// <summary>
+        /// Gets the list of pinned projects.
+        /// </summary>
+        public IReadOnlyList<RecentProject> PinnedProjects => _pinnedProjects.AsReadOnly();
+
+        /// <summary>
+        /// Gets all projects (pinned first, then recent).
+        /// </summary>
+        public IReadOnlyList<RecentProject> AllProjects
+        {
+            get
+            {
+                var all = new List<RecentProject>(_pinnedProjects);
+                all.AddRange(_recentProjects);
+                return all.AsReadOnly();
+            }
+        }
+
+        public RecentProjectsService()
+        {
+            LoadRecentProjects();
+        }
+
+        /// <summary>
+        /// Adds or updates a project in the recent projects list.
+        /// </summary>
+        public async Task AddRecentProjectAsync(string projectPath, string projectName)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+                return;
+
+            // Remove if already exists
+            var existing = _recentProjects.FirstOrDefault(p => p.Path == projectPath);
+            if (existing != null)
+            {
+                _recentProjects.Remove(existing);
+            }
+
+            // Check if pinned
+            var pinned = _pinnedProjects.FirstOrDefault(p => p.Path == projectPath);
+            if (pinned != null)
+            {
+                // Update pinned project
+                pinned.LastAccessed = DateTime.Now;
+                pinned.Name = projectName;
+                await SaveRecentProjectsAsync();
+                OnPropertyChanged(nameof(PinnedProjects));
+                OnPropertyChanged(nameof(AllProjects));
+                return;
+            }
+
+            // Add new recent project
+            var project = new RecentProject
+            {
+                Name = projectName,
+                Path = projectPath,
+                LastAccessed = DateTime.Now,
+                IsPinned = false
+            };
+
+            _recentProjects.Insert(0, project);
+
+            // Limit to max recent projects
+            if (_recentProjects.Count > MaxRecentProjects)
+            {
+                _recentProjects.RemoveRange(MaxRecentProjects, _recentProjects.Count - MaxRecentProjects);
+            }
+
+            await SaveRecentProjectsAsync();
+            OnPropertyChanged(nameof(RecentProjects));
+            OnPropertyChanged(nameof(AllProjects));
+        }
+
+        /// <summary>
+        /// Pins a project to the top of the list.
+        /// </summary>
+        public async Task PinProjectAsync(string projectPath)
+        {
+            if (_pinnedProjects.Count >= MaxPinnedProjects)
+                throw new InvalidOperationException($"Cannot pin more than {MaxPinnedProjects} projects");
+
+            // Remove from recent if exists
+            var fromRecent = _recentProjects.FirstOrDefault(p => p.Path == projectPath);
+            if (fromRecent != null)
+            {
+                _recentProjects.Remove(fromRecent);
+            }
+
+            // Check if already pinned
+            if (_pinnedProjects.Any(p => p.Path == projectPath))
+                return;
+
+            // Add to pinned
+            var project = fromRecent ?? new RecentProject
+            {
+                Name = System.IO.Path.GetFileNameWithoutExtension(projectPath),
+                Path = projectPath,
+                LastAccessed = DateTime.Now,
+                IsPinned = true
+            };
+            project.IsPinned = true;
+
+            _pinnedProjects.Add(project);
+            await SaveRecentProjectsAsync();
+            OnPropertyChanged(nameof(PinnedProjects));
+            OnPropertyChanged(nameof(RecentProjects));
+            OnPropertyChanged(nameof(AllProjects));
+        }
+
+        /// <summary>
+        /// Unpins a project.
+        /// </summary>
+        public async Task UnpinProjectAsync(string projectPath)
+        {
+            var pinned = _pinnedProjects.FirstOrDefault(p => p.Path == projectPath);
+            if (pinned == null)
+                return;
+
+            _pinnedProjects.Remove(pinned);
+            pinned.IsPinned = false;
+            pinned.LastAccessed = DateTime.Now;
+
+            // Add to recent (at the top)
+            _recentProjects.Insert(0, pinned);
+
+            // Limit recent projects
+            if (_recentProjects.Count > MaxRecentProjects)
+            {
+                _recentProjects.RemoveRange(MaxRecentProjects, _recentProjects.Count - MaxRecentProjects);
+            }
+
+            await SaveRecentProjectsAsync();
+            OnPropertyChanged(nameof(PinnedProjects));
+            OnPropertyChanged(nameof(RecentProjects));
+            OnPropertyChanged(nameof(AllProjects));
+        }
+
+        /// <summary>
+        /// Removes a project from recent projects.
+        /// </summary>
+        public async Task RemoveRecentProjectAsync(string projectPath)
+        {
+            var project = _recentProjects.FirstOrDefault(p => p.Path == projectPath);
+            if (project != null)
+            {
+                _recentProjects.Remove(project);
+                await SaveRecentProjectsAsync();
+                OnPropertyChanged(nameof(RecentProjects));
+                OnPropertyChanged(nameof(AllProjects));
+            }
+        }
+
+        /// <summary>
+        /// Clears all recent projects (keeps pinned).
+        /// </summary>
+        public async Task ClearRecentProjectsAsync()
+        {
+            _recentProjects.Clear();
+            await SaveRecentProjectsAsync();
+            OnPropertyChanged(nameof(RecentProjects));
+            OnPropertyChanged(nameof(AllProjects));
+        }
+
+        /// <summary>
+        /// Loads recent projects from local settings.
+        /// </summary>
+        private void LoadRecentProjects()
+        {
+            try
+            {
+                var localSettings = ApplicationData.Current.LocalSettings;
+                if (localSettings.Values.ContainsKey(SettingsKey))
+                {
+                    var json = localSettings.Values[SettingsKey] as string;
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        var projects = JsonSerializer.Deserialize<List<RecentProject>>(json);
+                        if (projects != null)
+                        {
+                            _pinnedProjects.Clear();
+                            _recentProjects.Clear();
+
+                            foreach (var project in projects)
+                            {
+                                if (project.IsPinned)
+                                {
+                                    _pinnedProjects.Add(project);
+                                }
+                                else
+                                {
+                                    _recentProjects.Add(project);
+                                }
+                            }
+
+                            // Sort by last accessed
+                            _pinnedProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
+                            _recentProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // If loading fails, start with empty list
+                _recentProjects.Clear();
+                _pinnedProjects.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Saves recent projects to local settings.
+        /// </summary>
+        private async Task SaveRecentProjectsAsync()
+        {
+            try
+            {
+                var allProjects = new List<RecentProject>(_pinnedProjects);
+                allProjects.AddRange(_recentProjects);
+
+                var json = JsonSerializer.Serialize(allProjects);
+                var localSettings = ApplicationData.Current.LocalSettings;
+                localSettings.Values[SettingsKey] = json;
+            }
+            catch (Exception)
+            {
+                // If saving fails, log but don't throw
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a recent project entry.
+    /// </summary>
+    public class RecentProject
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public DateTime LastAccessed { get; set; }
+        public bool IsPinned { get; set; }
+    }
+}
+

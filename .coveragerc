@@ -1,0 +1,41 @@
+[run]
+# Coverage configuration for VoiceStudio Quantum+
+source = app,backend
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    */site-packages/*
+    */migrations/*
+    */manage.py
+    */conftest.py
+    */setup.py
+
+[report]
+# Coverage report settings
+precision = 2
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    @property
+    @staticmethod
+    @classmethod
+
+[html]
+# HTML report settings
+directory = htmlcov
+title = VoiceStudio Quantum+ Coverage Report
+
+[xml]
+# XML report settings (for CI/CD)
+output = coverage.xml
+

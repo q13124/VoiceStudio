@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VoiceSynthesizeResponse",
+  "type": "object",
+  "description": "Response schema for voice synthesis",
+  "properties": {
+    "audio_id": {
+      "type": "string",
+      "description": "Generated audio file ID",
+      "example": "audio-456"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL to access generated audio",
+      "format": "uri",
+      "example": "/api/audio/audio-456"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Audio duration in seconds",
+      "minimum": 0,
+      "example": 5.2
+    },
+    "quality_metrics": {
+      "type": "object",
+      "description": "Quality metrics (if calculate_quality was true)",
+      "properties": {
+        "mos_score": {
+          "type": "number",
+          "description": "Mean Opinion Score (1.0-5.0)",
+          "minimum": 1.0,
+          "maximum": 5.0
+        },
+        "similarity": {
+          "type": "number",
+          "description": "Voice similarity (0.0-1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "naturalness": {
+          "type": "number",
+          "description": "Naturalness score (0.0-1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "snr": {
+          "type": "number",
+          "description": "Signal-to-noise ratio (dB)"
+        },
+        "artifacts_detected": {
+          "type": "boolean",
+          "description": "Whether artifacts were detected"
+        }
+      }
+    },
+    "engine_used": {
+      "type": "string",
+      "description": "Engine that was used for synthesis",
+      "example": "chatterbox"
+    },
+    "processing_time_seconds": {
+      "type": "number",
+      "description": "Time taken to synthesize (seconds)",
+      "minimum": 0
+    }
+  },
+  "required": ["audio_id", "audio_url"],
+  "additionalProperties": false
+}
+
