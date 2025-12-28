@@ -1,0 +1,71 @@
+{
+  "mcpServers": {
+    "GitKraken": {
+      "args": [
+        "mcp",
+        "--host=cursor",
+        "--source=gitlens",
+        "--scheme=cursor"
+      ],
+      "command": "c:\\Users\\Tyler\\AppData\\Roaming\\Cursor\\User\\globalStorage\\eamodio.gitlens\\gk.exe",
+      "env": {},
+      "name": "GitKraken",
+      "type": "stdio"
+    },
+    "agentset": {
+      "args": [
+        "-y",
+        "@agentset/mcp"
+      ],
+      "command": "npx"
+    },
+    "crawlbase": {
+      "args": [
+        "-y",
+        "@crawlbase/mcp"
+      ],
+      "command": "npx"
+    },
+    "heroku": {
+      "args": [
+        "-y",
+        "@heroku/mcp-server"
+      ],
+      "command": "npx"
+    },
+    "mcp-interactive": {
+      "args": [
+        "-y",
+        "mcp-interactive"
+      ],
+      "command": "npx"
+    },
+    "minimax-js": {
+      "args": [
+        "-y",
+        "minimax-mcp-js"
+      ],
+      "command": "npx"
+    },
+    "openai-websearch": {
+      "args": [
+        "-y",
+        "openai-websearch-mcp"
+      ],
+      "command": "npx"
+    },
+    "openmemory": {
+      "headers": {
+        "Authorization": "Token om-{YOUR OPENMEMORY API KEY}"
+      },
+      "url": "https://api.openmemory.dev/mcp-stream?client=cursor"
+    },
+    "supadata": {
+      "args": [
+        "-y",
+        "@supadata/mcp"
+      ],
+      "command": "npx"
+    }
+  }
+}
