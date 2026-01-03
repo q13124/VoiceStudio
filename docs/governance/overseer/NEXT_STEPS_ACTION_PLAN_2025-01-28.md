@@ -1,4 +1,5 @@
 # Next Steps Action Plan
+
 ## VoiceStudio Quantum+ - Immediate Action Items
 
 **Date:** 2025-01-28  
@@ -14,7 +15,9 @@
 **Action Required:** Set up testing infrastructure to unblock remaining tasks
 
 **Tasks:**
+
 1. **Set up C# UI Test Framework** (TASK-004 dependency)
+
    - Choose test framework (e.g., Appium, WinAppDriver, or WinUI 3 test framework)
    - Configure test environment
    - Create test project structure
@@ -31,6 +34,7 @@
    - **Status:** ⏳ Pending (external dependency)
 
 **Why This First:**
+
 - These are the critical blockers preventing completion
 - Once resolved, all remaining testing tasks can proceed
 - Enables final release preparation
@@ -42,17 +46,20 @@
 ### Option A: If Dependencies Can Be Resolved Now
 
 **Step 1: Set Up Testing Infrastructure (1-2 days)**
+
 - [ ] Set up C# UI test framework
 - [ ] Configure test environments
 - [ ] Create test project structure
 - [ ] Verify test framework works
 
 **Step 2: Complete Manual Testing (2-3 days)**
+
 - [ ] TASK-002: Test installer on clean Windows systems
 - [ ] TASK-003: Test update mechanism end-to-end
 - [ ] TASK-004: Complete UI integration testing
 
 **Step 3: Release Preparation (1-2 days)**
+
 - [ ] TASK-011: Build and verify release package
 - [ ] Final verification
 - [ ] Release documentation updates
@@ -64,6 +71,7 @@
 ### Option B: If Dependencies Cannot Be Resolved Immediately
 
 **Step 1: Assign New Work to Worker 2 (While Waiting)**
+
 - Worker 2 has completed all assigned tasks (79 tasks)
 - Worker 2 is ready for new assignments
 - **Potential Tasks:**
@@ -73,16 +81,19 @@
   - Documentation updates
 
 **Step 2: Continue Supporting Work**
+
 - Worker 1 can continue supporting Worker 3
 - Worker 3 can work on non-blocked tasks
 - Prepare test plans and documentation
 
 **Step 3: Resolve Dependencies**
+
 - Set up test framework when possible
 - Obtain VM access when available
 - Configure test environments
 
 **Step 4: Complete Testing (Once Dependencies Resolved)**
+
 - Execute TASK-002, TASK-003, TASK-004
 - Execute TASK-011 (release package)
 
@@ -93,17 +104,21 @@
 ### Primary Recommendation: Set Up C# UI Test Framework
 
 **Why:**
+
 - This is something that can be done immediately (no external dependency)
 - Unblocks TASK-004 (UI integration testing)
 - Can be done in parallel with waiting for VM access
 
 **Action Plan:**
+
 1. **Choose Test Framework:**
+
    - Research WinUI 3 compatible test frameworks
    - Options: Appium, WinAppDriver, or WinUI 3 test framework
    - Select best option for project
 
 2. **Set Up Test Project:**
+
    - Create test project structure
    - Configure test framework
    - Create initial test templates
@@ -123,7 +138,9 @@
 ## 📊 TASK PRIORITY MATRIX
 
 ### High Priority (Blockers)
+
 1. **Set up C# UI Test Framework** (TASK-004 dependency)
+
    - Blocks: TASK-004
    - Can be done: Immediately
    - Time: 1-2 days
@@ -134,11 +151,14 @@
    - Time: 1 day (setup)
 
 ### Medium Priority (Dependent Tasks)
+
 3. **TASK-002: Test Installer** (depends on VM access)
+
    - Blocks: TASK-003, TASK-011
    - Time: 1 day
 
 4. **TASK-003: Test Update Mechanism** (depends on TASK-002)
+
    - Blocks: TASK-011
    - Time: 1 day
 
@@ -147,6 +167,7 @@
    - Time: 1-2 days
 
 ### Low Priority (Final Steps)
+
 6. **TASK-011: Build Release Package** (depends on TASK-002, TASK-003)
    - Blocks: None
    - Time: 1 day
@@ -158,18 +179,21 @@
 ### While Waiting for Dependencies
 
 **Worker 2 (Ready for New Work):**
+
 - Can work on additional UI polish
 - Can implement new features (if any)
 - Can review and optimize code
 - Can update documentation
 
-**Worker 1 (Supporting Worker 3):**
-- Can continue backend optimization
-- Can review and improve code quality
-- Can prepare additional documentation
-- Can support Worker 3's testing work
+**Build & Tooling Engineer (Reassigned from Worker 3):**
+
+- Set up C# UI test framework (TASK-004 dependency)
+- Deliver Release configuration hotfix for VS-0003/VS-0012
+- Can continue build tooling improvements
+- Can review and improve CI/CD quality
 
 **Worker 3 (Has Blocked Tasks):**
+
 - Can prepare test plans
 - Can document test procedures
 - Can review test coverage
@@ -180,6 +204,7 @@
 ## ✅ SUCCESS CRITERIA
 
 ### Testing Infrastructure Ready When:
+
 - [ ] C# UI test framework installed and configured
 - [ ] Test project structure created
 - [ ] Initial test templates working
@@ -187,6 +212,7 @@
 - [ ] Documentation updated
 
 ### Testing Complete When:
+
 - [ ] TASK-002: Installer tested on clean Windows systems
 - [ ] TASK-003: Update mechanism tested end-to-end
 - [ ] TASK-004: UI integration testing complete
@@ -194,6 +220,7 @@
 - [ ] All issues resolved
 
 ### Release Ready When:
+
 - [ ] TASK-011: Release package built and verified
 - [ ] Final verification complete
 - [ ] Release documentation updated
@@ -207,6 +234,7 @@
 ### Choose Your Path:
 
 **Path 1: Resolve Dependencies First (Recommended)**
+
 - Set up test framework immediately
 - Obtain VM access
 - Complete all testing
@@ -214,6 +242,7 @@
 - **Time:** 4-7 days (once dependencies resolved)
 
 **Path 2: Work on Other Tasks While Waiting**
+
 - Assign new work to Worker 2
 - Continue supporting work
 - Resolve dependencies when possible
@@ -227,12 +256,14 @@
 ### Start Here: Set Up C# UI Test Framework
 
 **Why This First:**
+
 1. ✅ Can be done immediately (no external dependency)
 2. ✅ Unblocks TASK-004
 3. ✅ Moves project forward while waiting for VM access
 4. ✅ Shows progress even if other dependencies delayed
 
 **Action Items:**
+
 1. Research WinUI 3 test frameworks
 2. Choose appropriate framework
 3. Set up test project
@@ -241,8 +272,8 @@
 6. Verify framework works
 7. Document setup process
 
-**Estimated Time:** 1-2 days  
-**Assigned To:** Worker 3 or Overseer  
+**Estimated Time:** 1-2 days
+**Assigned To:** Build & Tooling Engineer (reassigned from Worker 3)
 **Priority:** High
 
 ---
@@ -250,6 +281,7 @@
 ## 📊 NEXT STEPS SUMMARY
 
 ### Immediate (Today/Tomorrow)
+
 1. **Set up C# UI Test Framework** (1-2 days)
    - Research and choose framework
    - Set up test project
@@ -257,7 +289,9 @@
    - Verify setup
 
 ### Short Term (This Week)
+
 2. **Obtain VM Access** (when available)
+
    - Set up Windows 10 VM
    - Set up Windows 11 VM
    - Configure test environments
@@ -268,6 +302,7 @@
    - TASK-004: UI integration testing
 
 ### Final Steps (Next Week)
+
 4. **Release Preparation** (1-2 days)
    - TASK-011: Build release package
    - Final verification
@@ -280,6 +315,7 @@
 **Immediate Next Step:** **Set up C# UI Test Framework**
 
 This is the highest priority actionable item that:
+
 - Can be done immediately
 - Unblocks testing tasks
 - Moves project toward completion
