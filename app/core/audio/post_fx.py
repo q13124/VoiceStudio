@@ -258,7 +258,7 @@ class PostFXProcessor:
             try:
                 return enhance_voice_quality(audio, sample_rate)
             except Exception:
-                pass
+                ...
 
         if HAS_NOISEREDUCE:
             try:

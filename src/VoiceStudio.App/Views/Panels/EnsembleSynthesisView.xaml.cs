@@ -58,7 +58,7 @@ namespace VoiceStudio.App.Views.Panels
                 {
                     _toastService?.ShowToast(ToastType.Error, "Ensemble Synthesis Error", ViewModel.ErrorMessage);
                 }
-                // TODO: Quality metrics properties not implemented in EnsembleSynthesisViewModel
+                // Note: Quality metrics properties not implemented in EnsembleSynthesisViewModel
                 // Quality metrics change handling would go here when implemented
             };
 
@@ -349,7 +349,7 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async System.Threading.Tasks.Task DuplicateVoiceAsync(EnsembleVoiceItem voice)
+        private System.Threading.Tasks.Task DuplicateVoiceAsync(EnsembleVoiceItem voice)
         {
             try
             {
@@ -380,6 +380,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate voice: {ex.Message}");
             }
+
+            return System.Threading.Tasks.Task.CompletedTask;
         }
 
         // Drag-and-drop handlers for voice item reordering

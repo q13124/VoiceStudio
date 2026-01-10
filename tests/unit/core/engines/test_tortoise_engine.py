@@ -45,6 +45,35 @@ class TestTortoiseEngineClass:
             assert isinstance(cls, type), "TortoiseEngine should be a class"
 
 
+def test_process_audio_quality_enables_ml_prediction():
+    """
+    VS-0009 regression: ensure ML prediction is enabled in quality metric calculation.
+    """
+    if not getattr(tortoise_engine, "HAS_QUALITY_METRICS", False):
+        pytest.skip("Quality metrics not available for tortoise_engine")
+
+    import numpy as np
+
+    engine = tortoise_engine.TortoiseEngine.__new__(tortoise_engine.TortoiseEngine)
+    audio = np.zeros(16000, dtype=np.float32)
+
+    with patch.object(tortoise_engine, "calculate_all_metrics", autospec=True) as calc:
+        calc.return_value = {"quality_score": 0.5}
+
+        processed, metrics = engine._process_audio_quality(
+            audio=audio,
+            sample_rate=16000,
+            reference_audio=None,
+            enhance=False,
+            calculate_metrics=True,
+        )
+
+        assert processed is not None
+        assert isinstance(metrics, dict)
+        assert calc.call_count == 1
+        assert calc.call_args.kwargs.get("include_ml_prediction") is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 

@@ -8,9 +8,9 @@ Compatible with:
 """
 
 import logging
-from typing import Dict, List, Optional, Callable, Any, Union
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,9 @@ class UnifiedTrainer:
             output_dir: Directory to save trained models
         """
         self.engine = engine.lower()
-        self.device = device or ("cuda" if (gpu and HAS_TORCH and torch.cuda.is_available()) else "cpu")
+        self.device = device or (
+            "cuda" if (gpu and HAS_TORCH and torch.cuda.is_available()) else "cpu"
+        )
         self.gpu = gpu
         self.output_dir = Path(output_dir) if output_dir else Path("models/trained")
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -139,8 +141,8 @@ class UnifiedTrainer:
                 audio_files, transcripts, output_metadata
             )
         else:
-            raise NotImplementedError(
-                f"Dataset preparation not implemented for engine '{self.engine}'"
+            raise RuntimeError(
+                f"Dataset preparation unavailable for engine '{self.engine}'"
             )
 
     def initialize_model(
@@ -214,9 +216,7 @@ class UnifiedTrainer:
                 )
                 return result
             else:
-                raise NotImplementedError(
-                    f"Training not implemented for engine '{self.engine}'"
-                )
+                raise RuntimeError(f"Training unavailable for engine '{self.engine}'")
         finally:
             self._is_training = False
 
@@ -259,9 +259,7 @@ class UnifiedTrainer:
         if hasattr(self.trainer, "export_model"):
             return self.trainer.export_model(output_path, model_name)
         else:
-            raise NotImplementedError(
-                f"Model export not implemented for engine '{self.engine}'"
-            )
+            raise RuntimeError(f"Model export unavailable for engine '{self.engine}'")
 
     def get_training_status(self) -> Dict[str, Any]:
         """
@@ -341,4 +339,3 @@ def create_unified_trainer(
     return UnifiedTrainer.create_trainer(
         engine=engine, device=device, gpu=gpu, output_dir=output_dir
     )
-

@@ -15,751 +15,767 @@ using EditorSessionModel = VoiceStudio.App.ViewModels.TextSpeechEditorViewModel.
 
 namespace VoiceStudio.App.ViewModels
 {
-    /// <summary>
-    /// ViewModel for the TextSpeechEditorView panel - Text-based speech editing.
-    /// </summary>
-    public partial class TextSpeechEditorViewModel : BaseViewModel, IPanelView
+  /// <summary>
+  /// ViewModel for the TextSpeechEditorView panel - Text-based speech editing.
+  /// </summary>
+  public partial class TextSpeechEditorViewModel : BaseViewModel, IPanelView
+  {
+    private readonly IBackendClient _backendClient;
+    private readonly UndoRedoService? _undoRedoService;
+
+    public string PanelId => "text-speech-editor";
+    public string DisplayName => ResourceHelper.GetString("Panel.TextSpeechEditor.DisplayName", "Text Speech Editor");
+    public PanelRegion Region => PanelRegion.Center;
+
+    [ObservableProperty]
+    private ObservableCollection<EditorSessionItem> sessions = new();
+
+    [ObservableProperty]
+    private EditorSessionItem? selectedSession;
+
+    [ObservableProperty]
+    private ObservableCollection<TextSegmentItem> segments = new();
+
+    [ObservableProperty]
+    private TextSegmentItem? selectedSegment;
+
+    [ObservableProperty]
+    private string newSessionTitle = string.Empty;
+
+    [ObservableProperty]
+    private string? selectedProjectId;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableProjects = new();
+
+    [ObservableProperty]
+    private string? selectedVoiceProfileId;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableVoiceProfiles = new();
+
+    [ObservableProperty]
+    private string? selectedEngine;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableEngines = new();
+
+    [ObservableProperty]
+    private bool ssmlMode = false;
+
+    [ObservableProperty]
+    private string editedTranscript = string.Empty;
+
+    [ObservableProperty]
+    private string? previewAudioId;
+
+    [ObservableProperty]
+    private string? previewAudioUrl;
+
+    public TextSpeechEditorViewModel(IBackendClient backendClient)
     {
-        private readonly IBackendClient _backendClient;
-        private readonly UndoRedoService? _undoRedoService;
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
-        public string PanelId => "text-speech-editor";
-        public string DisplayName => ResourceHelper.GetString("Panel.TextSpeechEditor.DisplayName", "Text Speech Editor");
-        public PanelRegion Region => PanelRegion.Center;
+      // Get undo/redo service using helper (reduces code duplication)
+      _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
 
-        [ObservableProperty]
-        private ObservableCollection<EditorSessionItem> sessions = new();
+      LoadSessionsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("LoadSessions");
+        await LoadSessionsAsync(ct);
+      });
+      CreateSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("CreateSession");
+        await CreateSessionAsync(ct);
+      });
+      UpdateSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("UpdateSession");
+        await UpdateSessionAsync(ct);
+      });
+      DeleteSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("DeleteSession");
+        await DeleteSessionAsync(ct);
+      });
+      AddSegmentCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("AddSegment");
+        await AddSegmentAsync(ct);
+      });
+      RemoveSegmentCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("RemoveSegment");
+        await RemoveSegmentAsync(ct);
+      });
+      SynthesizeSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("SynthesizeSession");
+        await SynthesizeSessionAsync(ct);
+      });
+      PreviewSynthesisCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("PreviewSynthesis");
+        await PreviewSynthesisAsync(ct);
+      }, () => SsmlMode && !string.IsNullOrWhiteSpace(EditedTranscript) && !string.IsNullOrWhiteSpace(SelectedVoiceProfileId));
+      RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("Refresh");
+        await RefreshAsync(ct);
+      });
 
-        [ObservableProperty]
-        private EditorSessionItem? selectedSession;
-
-        [ObservableProperty]
-        private ObservableCollection<TextSegmentItem> segments = new();
-
-        [ObservableProperty]
-        private TextSegmentItem? selectedSegment;
-
-        [ObservableProperty]
-        private string newSessionTitle = string.Empty;
-
-        [ObservableProperty]
-        private string? selectedProjectId;
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableProjects = new();
-
-        [ObservableProperty]
-        private string? selectedVoiceProfileId;
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableVoiceProfiles = new();
-
-        [ObservableProperty]
-        private string? selectedEngine;
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableEngines = new();
-
-        [ObservableProperty]
-        private bool ssmlMode = false;
-
-        [ObservableProperty]
-        private string editedTranscript = string.Empty;
-
-        [ObservableProperty]
-        private string? previewAudioId;
-
-        [ObservableProperty]
-        private string? previewAudioUrl;
-
-        public TextSpeechEditorViewModel(IBackendClient backendClient)
-        {
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            
-            // Get undo/redo service using helper (reduces code duplication)
-            _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
-
-            LoadSessionsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("LoadSessions");
-                await LoadSessionsAsync(ct);
-            });
-            CreateSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("CreateSession");
-                await CreateSessionAsync(ct);
-            });
-            UpdateSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("UpdateSession");
-                await UpdateSessionAsync(ct);
-            });
-            DeleteSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("DeleteSession");
-                await DeleteSessionAsync(ct);
-            });
-            AddSegmentCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("AddSegment");
-                await AddSegmentAsync(ct);
-            });
-            RemoveSegmentCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("RemoveSegment");
-                await RemoveSegmentAsync(ct);
-            });
-            SynthesizeSessionCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("SynthesizeSession");
-                await SynthesizeSessionAsync(ct);
-            });
-            PreviewSynthesisCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("PreviewSynthesis");
-                await PreviewSynthesisAsync(ct);
-            }, () => SsmlMode && !string.IsNullOrWhiteSpace(EditedTranscript) && !string.IsNullOrWhiteSpace(SelectedVoiceProfileId));
-            RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("Refresh");
-                await RefreshAsync(ct);
-            });
-
-            // Load initial data
-            _ = LoadSessionsAsync(CancellationToken.None);
-            _ = LoadAvailableProjectsAsync(CancellationToken.None);
-            _ = LoadAvailableVoiceProfilesAsync(CancellationToken.None);
-            _ = LoadAvailableEnginesAsync(CancellationToken.None);
-        }
-
-        public IAsyncRelayCommand LoadSessionsCommand { get; }
-        public IAsyncRelayCommand CreateSessionCommand { get; }
-        public IAsyncRelayCommand UpdateSessionCommand { get; }
-        public IAsyncRelayCommand DeleteSessionCommand { get; }
-        public IAsyncRelayCommand AddSegmentCommand { get; }
-        public IAsyncRelayCommand RemoveSegmentCommand { get; }
-        public IAsyncRelayCommand SynthesizeSessionCommand { get; }
-        public IAsyncRelayCommand PreviewSynthesisCommand { get; }
-        public IAsyncRelayCommand RefreshCommand { get; }
-
-        partial void OnSelectedSessionChanged(EditorSessionItem? value)
-        {
-            if (value != null)
-            {
-                Segments.Clear();
-                foreach (var segment in value.Segments)
-                {
-                    Segments.Add(segment);
-                }
-            }
-            else
-            {
-                Segments.Clear();
-            }
-        }
-
-        private async Task LoadSessionsAsync(CancellationToken cancellationToken)
-        {
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var sessions = await _backendClient.SendRequestAsync<object, EditorSession[]>(
-                    "/api/edit/sessions",
-                    null,
-                    System.Net.Http.HttpMethod.Get,
-                    cancellationToken
-                );
-
-                if (sessions != null)
-                {
-                    Sessions.Clear();
-                    foreach (var session in sessions)
-                    {
-                        Sessions.Add(new EditorSessionItem(session));
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.LoadSessionsFailed", ex.Message);
-                await HandleErrorAsync(ex, "LoadSessions");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task CreateSessionAsync(CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(NewSessionTitle))
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.SessionTitleRequired", "Session title is required");
-                return;
-            }
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new
-                {
-                    title = NewSessionTitle,
-                    project_id = SelectedProjectId,
-                    language = "en"
-                };
-
-                var session = await _backendClient.SendRequestAsync<object, EditorSession>(
-                    "/api/edit/sessions",
-                    request,
-                    cancellationToken
-                );
-
-                if (session != null)
-                {
-                    var sessionItem = new EditorSessionItem(session);
-                    Sessions.Add(sessionItem);
-                    SelectedSession = sessionItem;
-                    NewSessionTitle = string.Empty;
-                    StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionCreated", "Session created");
-                    
-                    // Register undo action
-                    if (_undoRedoService != null)
-                    {
-                        var action = new CreateTextSpeechSessionAction(
-                            Sessions,
-                            _backendClient,
-                            sessionItem,
-                            onUndo: (s) => {
-                                if (SelectedSession?.SessionId == s.SessionId)
-                                {
-                                    SelectedSession = Sessions.FirstOrDefault();
-                                }
-                            },
-                            onRedo: (s) => {
-                                SelectedSession = s;
-                            });
-                        _undoRedoService.RegisterAction(action);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.CreateSessionFailed", ex.Message);
-                await HandleErrorAsync(ex, "CreateSession");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task UpdateSessionAsync(CancellationToken cancellationToken)
-        {
-            if (SelectedSession == null)
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
-                return;
-            }
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new
-                {
-                    title = SelectedSession.Title,
-                    segments = SelectedSession.Segments.Select(s => new
-                    {
-                        id = s.Id,
-                        text = s.Text,
-                        start_time = s.StartTime,
-                        end_time = s.EndTime,
-                        speaker = s.Speaker,
-                        prosody = s.Prosody,
-                        phonemes = s.Phonemes,
-                        notes = s.Notes
-                    }).ToArray()
-                };
-
-                var session = await _backendClient.SendRequestAsync<object, EditorSession>(
-                    $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}",
-                    request,
-                    System.Net.Http.HttpMethod.Put,
-                    cancellationToken
-                );
-
-                if (session != null)
-                {
-                    var index = Sessions.IndexOf(SelectedSession);
-                    var updatedItem = new EditorSessionItem(session);
-                    Sessions[index] = updatedItem;
-                    SelectedSession = updatedItem;
-                    StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionUpdated", "Session updated");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.UpdateSessionFailed", ex.Message);
-                await HandleErrorAsync(ex, "UpdateSession");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task DeleteSessionAsync(CancellationToken cancellationToken)
-        {
-            if (SelectedSession == null)
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
-                return;
-            }
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                await _backendClient.SendRequestAsync<object, object>(
-                    $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}",
-                    null,
-                    System.Net.Http.HttpMethod.Delete,
-                    cancellationToken
-                );
-
-                var sessionToDelete = SelectedSession;
-                var originalIndex = Sessions.IndexOf(sessionToDelete);
-                Sessions.Remove(sessionToDelete);
-                SelectedSession = null;
-                Segments.Clear();
-                StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionDeleted", "Session deleted");
-                
-                // Register undo action
-                if (_undoRedoService != null && sessionToDelete != null)
-                {
-                    var action = new DeleteTextSpeechSessionAction(
-                        Sessions,
-                        _backendClient,
-                        sessionToDelete,
-                        originalIndex,
-                        onUndo: (s) => {
-                            SelectedSession = s;
-                            // Reload segments
-                            Segments.Clear();
-                            foreach (var segment in s.Segments)
-                            {
-                                Segments.Add(segment);
-                            }
-                        },
-                        onRedo: (s) => {
-                            if (SelectedSession?.SessionId == s.SessionId)
-                            {
-                                SelectedSession = null;
-                                Segments.Clear();
-                            }
-                        });
-                    _undoRedoService.RegisterAction(action);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.DeleteSessionFailed", ex.Message);
-                await HandleErrorAsync(ex, "DeleteSession");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task AddSegmentAsync(CancellationToken cancellationToken)
-        {
-            if (SelectedSession == null)
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
-                return;
-            }
-
-            var newSegment = new TextSegmentItem
-            {
-                Id = $"seg-{Guid.NewGuid()}",
-                Text = string.Empty,
-                StartTime = Segments.Count > 0 ? Segments.Last().EndTime : 0.0,
-                EndTime = Segments.Count > 0 ? Segments.Last().EndTime + 1.0 : 1.0
-            };
-
-            Segments.Add(newSegment);
-            SelectedSession.Segments.Add(newSegment);
-            SelectedSegment = newSegment;
-            
-            // Register undo action
-            if (_undoRedoService != null)
-            {
-                var action = new AddTextSegmentAction(
-                    Segments,
-                    SelectedSession,
-                    newSegment,
-                    onUndo: (s) => {
-                        if (SelectedSegment?.Id == s.Id)
-                        {
-                            SelectedSegment = null;
-                        }
-                    },
-                    onRedo: (s) => {
-                        SelectedSegment = s;
-                    });
-                _undoRedoService.RegisterAction(action);
-            }
-        }
-
-        private async Task RemoveSegmentAsync(CancellationToken cancellationToken)
-        {
-            if (SelectedSegment == null || SelectedSession == null)
-            {
-                return;
-            }
-
-            var segmentToRemove = SelectedSegment;
-            var originalIndex = Segments.IndexOf(segmentToRemove);
-            Segments.Remove(segmentToRemove);
-            SelectedSession.Segments.Remove(segmentToRemove);
-            SelectedSegment = null;
-            
-            // Register undo action
-            if (_undoRedoService != null && segmentToRemove != null)
-            {
-                var action = new RemoveTextSegmentAction(
-                    Segments,
-                    SelectedSession,
-                    segmentToRemove,
-                    originalIndex,
-                    onUndo: (s) => {
-                        SelectedSegment = s;
-                    },
-                    onRedo: (s) => {
-                        if (SelectedSegment?.Id == s.Id)
-                        {
-                            SelectedSegment = null;
-                        }
-                    });
-                _undoRedoService.RegisterAction(action);
-            }
-        }
-
-        private async Task SynthesizeSessionAsync(CancellationToken cancellationToken)
-        {
-            if (SelectedSession == null)
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(SelectedVoiceProfileId))
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.VoiceProfileRequired", "Voice profile must be selected");
-                return;
-            }
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new
-                {
-                    session_id = SelectedSession.SessionId,
-                    voice_profile_id = SelectedVoiceProfileId,
-                    engine = SelectedEngine,
-                    output_format = "wav"
-                };
-
-                var response = await _backendClient.SendRequestAsync<object, SynthesisResponse>(
-                    $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}/synthesize",
-                    request,
-                    cancellationToken
-                );
-
-                if (response != null)
-                {
-                    StatusMessage = $"Synthesis complete: {response.AudioId}";
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.SynthesizeFailed", ex.Message);
-                await HandleErrorAsync(ex, "SynthesizeSession");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task PreviewSynthesisAsync(CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(EditedTranscript) || string.IsNullOrWhiteSpace(SelectedVoiceProfileId))
-            {
-                ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.TranscriptAndProfileRequired", "Transcript and voice profile are required for preview");
-                return;
-            }
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new
-                {
-                    content = EditedTranscript,
-                    profile_id = SelectedVoiceProfileId,
-                    engine = SelectedEngine ?? "xtts"
-                };
-
-                var response = await _backendClient.SendRequestAsync<object, SSMLPreviewResponse>(
-                    "/api/ssml/preview",
-                    request,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                if (response != null)
-                {
-                    PreviewAudioId = response.AudioId;
-                    PreviewAudioUrl = $"/api/audio/{response.AudioId}";
-                    StatusMessage = ResourceHelper.GetString("TextSpeechEditor.PreviewGenerated", "Preview generated successfully");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to generate preview: {ex.Message}";
-                await HandleErrorAsync(ex, "PreviewSynthesis");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task RefreshAsync(CancellationToken cancellationToken)
-        {
-            await LoadSessionsAsync(cancellationToken);
-            await LoadAvailableProjectsAsync(cancellationToken);
-            await LoadAvailableVoiceProfilesAsync(cancellationToken);
-            await LoadAvailableEnginesAsync(cancellationToken);
-            StatusMessage = ResourceHelper.GetString("TextSpeechEditor.Refreshed", "Refreshed");
-        }
-
-        private async Task LoadAvailableProjectsAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                var projects = await _backendClient.GetProjectsAsync(cancellationToken);
-                AvailableProjects.Clear();
-                foreach (var project in projects)
-                {
-                    AvailableProjects.Add(project.Id);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load projects: {ex.Message}";
-                await HandleErrorAsync(ex, "LoadAvailableProjects");
-            }
-        }
-
-        private async Task LoadAvailableVoiceProfilesAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
-                AvailableVoiceProfiles.Clear();
-                foreach (var profile in profiles)
-                {
-                    AvailableVoiceProfiles.Add(profile.Id);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.LoadVoiceProfilesFailed", ex.Message);
-                await HandleErrorAsync(ex, "LoadAvailableVoiceProfiles");
-            }
-        }
-
-        private async Task LoadAvailableEnginesAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Use the new GetEnginesAsync method for direct engine discovery
-                var engines = await _backendClient.GetEnginesAsync(cancellationToken);
-                AvailableEngines.Clear();
-                foreach (var engine in engines)
-                {
-                    AvailableEngines.Add(engine);
-                }
-                
-                // Fallback to default engines if none found
-                if (AvailableEngines.Count == 0)
-                {
-                    AvailableEngines.Add("xtts");
-                    AvailableEngines.Add("chatterbox");
-                    AvailableEngines.Add("tortoise");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                // Fallback to default engines on error
-                AvailableEngines.Clear();
-                AvailableEngines.Add("xtts");
-                AvailableEngines.Add("chatterbox");
-                AvailableEngines.Add("tortoise");
-                await HandleErrorAsync(ex, "LoadAvailableEngines");
-            }
-        }
-
-        // Response models
-        public class EditorSession
-        {
-            public string SessionId { get; set; } = string.Empty;
-            public string? ProjectId { get; set; }
-            public string Title { get; set; } = string.Empty;
-            public TextSegment[] Segments { get; set; } = Array.Empty<TextSegment>();
-            public string? AudioId { get; set; }
-            public string Language { get; set; } = "en";
-            public string Created { get; set; } = string.Empty;
-            public string Modified { get; set; } = string.Empty;
-        }
-
-        public class TextSegment
-        {
-            public string Id { get; set; } = string.Empty;
-            public string Text { get; set; } = string.Empty;
-            public double StartTime { get; set; }
-            public double EndTime { get; set; }
-            public string? Speaker { get; set; }
-            public Dictionary<string, object>? Prosody { get; set; }
-            public string[]? Phonemes { get; set; }
-            public string? Notes { get; set; }
-        }
-
-        private class SynthesisResponse
-        {
-            public string AudioId { get; set; } = string.Empty;
-            public double Duration { get; set; }
-            public string Message { get; set; } = string.Empty;
-        }
-
-        private class SSMLPreviewResponse
-        {
-            public string AudioId { get; set; } = string.Empty;
-            public double Duration { get; set; }
-            public string Message { get; set; } = string.Empty;
-        }
+      // Load initial data
+      _ = LoadSessionsAsync(CancellationToken.None);
+      _ = LoadAvailableProjectsAsync(CancellationToken.None);
+      _ = LoadAvailableVoiceProfilesAsync(CancellationToken.None);
+      _ = LoadAvailableEnginesAsync(CancellationToken.None);
     }
 
-    // Data models
-    public class EditorSessionItem : ObservableObject
-    {
-        public string SessionId { get; set; }
-        public string? ProjectId { get; set; }
-        public string Title { get; set; }
-        public ObservableCollection<TextSegmentItem> Segments { get; set; }
-        public string? AudioId { get; set; }
-        public string Language { get; set; }
-        public string Created { get; set; }
-        public string Modified { get; set; }
-        public string DurationDisplay => $"{Segments.Sum(s => s.EndTime - s.StartTime):F2}s";
-        public string SegmentCountDisplay => $"{Segments.Count} segments";
+    public IAsyncRelayCommand LoadSessionsCommand { get; }
+    public IAsyncRelayCommand CreateSessionCommand { get; }
+    public IAsyncRelayCommand UpdateSessionCommand { get; }
+    public IAsyncRelayCommand DeleteSessionCommand { get; }
+    public IAsyncRelayCommand AddSegmentCommand { get; }
+    public IAsyncRelayCommand RemoveSegmentCommand { get; }
+    public IAsyncRelayCommand SynthesizeSessionCommand { get; }
+    public IAsyncRelayCommand PreviewSynthesisCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
 
-        public EditorSessionItem(EditorSessionModel session)
+    partial void OnSelectedSessionChanged(EditorSessionItem? value)
+    {
+      if (value != null)
+      {
+        Segments.Clear();
+        foreach (var segment in value.Segments)
         {
-            SessionId = session.SessionId;
-            ProjectId = session.ProjectId;
-            Title = session.Title;
-            Segments = new ObservableCollection<TextSegmentItem>(
-                session.Segments.Select(s => new TextSegmentItem(s))
-            );
-            AudioId = session.AudioId;
-            Language = session.Language;
-            Created = session.Created;
-            Modified = session.Modified;
+          Segments.Add(segment);
         }
+      }
+      else
+      {
+        Segments.Clear();
+      }
     }
 
-    public class TextSegmentItem : ObservableObject
+    private async Task LoadSessionsAsync(CancellationToken cancellationToken)
     {
-        public string Id { get; set; }
-        public string Text { get; set; }
-        public double StartTime { get; set; }
-        public double EndTime { get; set; }
-        public string? Speaker { get; set; }
-        public Dictionary<string, object>? Prosody { get; set; }
-        public ObservableCollection<string> Phonemes { get; set; }
-        public string? Notes { get; set; }
-        public string TimeRangeDisplay => $"{StartTime:F2}s - {EndTime:F2}s";
-        public string DurationDisplay => $"{EndTime - StartTime:F2}s";
+      IsLoading = true;
+      ErrorMessage = null;
 
-        public TextSegmentItem(TextSpeechEditorViewModel.TextSegment segment)
-        {
-            Id = segment.Id;
-            Text = segment.Text;
-            StartTime = segment.StartTime;
-            EndTime = segment.EndTime;
-            Speaker = segment.Speaker;
-            Prosody = segment.Prosody;
-            Phonemes = segment.Phonemes != null
-                ? new ObservableCollection<string>(segment.Phonemes)
-                : new ObservableCollection<string>();
-            Notes = segment.Notes;
-        }
+      try
+      {
+        var sessions = await _backendClient.SendRequestAsync<object, EditorSession[]>(
+            "/api/edit/sessions",
+            null,
+            System.Net.Http.HttpMethod.Get,
+            cancellationToken
+        );
 
-        public TextSegmentItem()
+        if (sessions != null)
         {
-            Id = string.Empty;
-            Text = string.Empty;
-            Phonemes = new ObservableCollection<string>();
+          Sessions.Clear();
+          foreach (var session in sessions)
+          {
+            Sessions.Add(new EditorSessionItem(session));
+          }
         }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.LoadSessionsFailed", ex.Message);
+        await HandleErrorAsync(ex, "LoadSessions");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
     }
+
+    private async Task CreateSessionAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(NewSessionTitle))
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.SessionTitleRequired", "Session title is required");
+        return;
+      }
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
+        {
+          title = NewSessionTitle,
+          project_id = SelectedProjectId,
+          language = "en"
+        };
+
+        var session = await _backendClient.SendRequestAsync<object, EditorSession>(
+            "/api/edit/sessions",
+            request,
+            cancellationToken
+        );
+
+        if (session != null)
+        {
+          var sessionItem = new EditorSessionItem(session);
+          Sessions.Add(sessionItem);
+          SelectedSession = sessionItem;
+          NewSessionTitle = string.Empty;
+          StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionCreated", "Session created");
+
+          // Register undo action
+          if (_undoRedoService != null)
+          {
+            var action = new CreateTextSpeechSessionAction(
+                Sessions,
+                _backendClient,
+                sessionItem,
+                onUndo: (s) =>
+                {
+                  if (SelectedSession?.SessionId == s.SessionId)
+                  {
+                    SelectedSession = Sessions.FirstOrDefault();
+                  }
+                },
+                onRedo: (s) =>
+                {
+                  SelectedSession = s;
+                });
+            _undoRedoService.RegisterAction(action);
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.CreateSessionFailed", ex.Message);
+        await HandleErrorAsync(ex, "CreateSession");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task UpdateSessionAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedSession == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
+        return;
+      }
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
+        {
+          title = SelectedSession.Title,
+          segments = SelectedSession.Segments.Select(s => new
+          {
+            id = s.Id,
+            text = s.Text,
+            start_time = s.StartTime,
+            end_time = s.EndTime,
+            speaker = s.Speaker,
+            prosody = s.Prosody,
+            phonemes = s.Phonemes,
+            notes = s.Notes
+          }).ToArray()
+        };
+
+        var session = await _backendClient.SendRequestAsync<object, EditorSession>(
+            $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}",
+            request,
+            System.Net.Http.HttpMethod.Put,
+            cancellationToken
+        );
+
+        if (session != null)
+        {
+          var index = Sessions.IndexOf(SelectedSession);
+          var updatedItem = new EditorSessionItem(session);
+          Sessions[index] = updatedItem;
+          SelectedSession = updatedItem;
+          StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionUpdated", "Session updated");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.UpdateSessionFailed", ex.Message);
+        await HandleErrorAsync(ex, "UpdateSession");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task DeleteSessionAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedSession == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
+        return;
+      }
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        await _backendClient.SendRequestAsync<object, object>(
+            $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}",
+            null,
+            System.Net.Http.HttpMethod.Delete,
+            cancellationToken
+        );
+
+        var sessionToDelete = SelectedSession;
+        var originalIndex = Sessions.IndexOf(sessionToDelete);
+        Sessions.Remove(sessionToDelete);
+        SelectedSession = null;
+        Segments.Clear();
+        StatusMessage = ResourceHelper.GetString("TextSpeechEditor.SessionDeleted", "Session deleted");
+
+        // Register undo action
+        if (_undoRedoService != null && sessionToDelete != null)
+        {
+          var action = new DeleteTextSpeechSessionAction(
+              Sessions,
+              _backendClient,
+              sessionToDelete,
+              originalIndex,
+              onUndo: (s) =>
+              {
+                SelectedSession = s;
+                // Reload segments
+                Segments.Clear();
+                foreach (var segment in s.Segments)
+                {
+                  Segments.Add(segment);
+                }
+              },
+              onRedo: (s) =>
+              {
+                if (SelectedSession?.SessionId == s.SessionId)
+                {
+                  SelectedSession = null;
+                  Segments.Clear();
+                }
+              });
+          _undoRedoService.RegisterAction(action);
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.DeleteSessionFailed", ex.Message);
+        await HandleErrorAsync(ex, "DeleteSession");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private Task AddSegmentAsync(CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      if (SelectedSession == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
+        return Task.CompletedTask;
+      }
+
+      var newSegment = new TextSegmentItem
+      {
+        Id = $"seg-{Guid.NewGuid()}",
+        Text = string.Empty,
+        StartTime = Segments.Count > 0 ? Segments.Last().EndTime : 0.0,
+        EndTime = Segments.Count > 0 ? Segments.Last().EndTime + 1.0 : 1.0
+      };
+
+      Segments.Add(newSegment);
+      SelectedSession.Segments.Add(newSegment);
+      SelectedSegment = newSegment;
+
+      // Register undo action
+      if (_undoRedoService != null)
+      {
+        var action = new AddTextSegmentAction(
+            Segments,
+            SelectedSession,
+            newSegment,
+            onUndo: (s) =>
+            {
+              if (SelectedSegment?.Id == s.Id)
+              {
+                SelectedSegment = null;
+              }
+            },
+            onRedo: (s) =>
+            {
+              SelectedSegment = s;
+            });
+        _undoRedoService.RegisterAction(action);
+      }
+
+      return Task.CompletedTask;
+    }
+
+    private Task RemoveSegmentAsync(CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      if (SelectedSegment == null || SelectedSession == null)
+      {
+        return Task.CompletedTask;
+      }
+
+      var segmentToRemove = SelectedSegment;
+      var originalIndex = Segments.IndexOf(segmentToRemove);
+      Segments.Remove(segmentToRemove);
+      SelectedSession.Segments.Remove(segmentToRemove);
+      SelectedSegment = null;
+
+      // Register undo action
+      if (_undoRedoService != null && segmentToRemove != null)
+      {
+        var action = new RemoveTextSegmentAction(
+            Segments,
+            SelectedSession,
+            segmentToRemove,
+            originalIndex,
+            onUndo: (s) =>
+            {
+              SelectedSegment = s;
+            },
+            onRedo: (s) =>
+            {
+              if (SelectedSegment?.Id == s.Id)
+              {
+                SelectedSegment = null;
+              }
+            });
+        _undoRedoService.RegisterAction(action);
+      }
+
+      return Task.CompletedTask;
+    }
+
+    private async Task SynthesizeSessionAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedSession == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.NoSessionSelected", "No session selected");
+        return;
+      }
+
+      if (string.IsNullOrEmpty(SelectedVoiceProfileId))
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.VoiceProfileRequired", "Voice profile must be selected");
+        return;
+      }
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
+        {
+          session_id = SelectedSession.SessionId,
+          voice_profile_id = SelectedVoiceProfileId,
+          engine = SelectedEngine,
+          output_format = "wav"
+        };
+
+        var response = await _backendClient.SendRequestAsync<object, SynthesisResponse>(
+            $"/api/edit/sessions/{Uri.EscapeDataString(SelectedSession.SessionId)}/synthesize",
+            request,
+            cancellationToken
+        );
+
+        if (response != null)
+        {
+          StatusMessage = $"Synthesis complete: {response.AudioId}";
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.SynthesizeFailed", ex.Message);
+        await HandleErrorAsync(ex, "SynthesizeSession");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task PreviewSynthesisAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(EditedTranscript) || string.IsNullOrWhiteSpace(SelectedVoiceProfileId))
+      {
+        ErrorMessage = ResourceHelper.GetString("TextSpeechEditor.TranscriptAndProfileRequired", "Transcript and voice profile are required for preview");
+        return;
+      }
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
+        {
+          content = EditedTranscript,
+          profile_id = SelectedVoiceProfileId,
+          engine = SelectedEngine ?? "xtts"
+        };
+
+        var response = await _backendClient.SendRequestAsync<object, SSMLPreviewResponse>(
+            "/api/ssml/preview",
+            request,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        if (response != null)
+        {
+          PreviewAudioId = response.AudioId;
+          PreviewAudioUrl = $"/api/audio/{response.AudioId}";
+          StatusMessage = ResourceHelper.GetString("TextSpeechEditor.PreviewGenerated", "Preview generated successfully");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to generate preview: {ex.Message}";
+        await HandleErrorAsync(ex, "PreviewSynthesis");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task RefreshAsync(CancellationToken cancellationToken)
+    {
+      await LoadSessionsAsync(cancellationToken);
+      await LoadAvailableProjectsAsync(cancellationToken);
+      await LoadAvailableVoiceProfilesAsync(cancellationToken);
+      await LoadAvailableEnginesAsync(cancellationToken);
+      StatusMessage = ResourceHelper.GetString("TextSpeechEditor.Refreshed", "Refreshed");
+    }
+
+    private async Task LoadAvailableProjectsAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        var projects = await _backendClient.GetProjectsAsync(cancellationToken);
+        AvailableProjects.Clear();
+        foreach (var project in projects)
+        {
+          AvailableProjects.Add(project.Id);
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to load projects: {ex.Message}";
+        await HandleErrorAsync(ex, "LoadAvailableProjects");
+      }
+    }
+
+    private async Task LoadAvailableVoiceProfilesAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
+        AvailableVoiceProfiles.Clear();
+        foreach (var profile in profiles)
+        {
+          AvailableVoiceProfiles.Add(profile.Id);
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TextSpeechEditor.LoadVoiceProfilesFailed", ex.Message);
+        await HandleErrorAsync(ex, "LoadAvailableVoiceProfiles");
+      }
+    }
+
+    private async Task LoadAvailableEnginesAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        // Use the new GetEnginesAsync method for direct engine discovery
+        var engines = await _backendClient.GetEnginesAsync(cancellationToken);
+        AvailableEngines.Clear();
+        foreach (var engine in engines)
+        {
+          AvailableEngines.Add(engine);
+        }
+
+        // Fallback to default engines if none found
+        if (AvailableEngines.Count == 0)
+        {
+          AvailableEngines.Add("xtts");
+          AvailableEngines.Add("chatterbox");
+          AvailableEngines.Add("tortoise");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        // Fallback to default engines on error
+        AvailableEngines.Clear();
+        AvailableEngines.Add("xtts");
+        AvailableEngines.Add("chatterbox");
+        AvailableEngines.Add("tortoise");
+        await HandleErrorAsync(ex, "LoadAvailableEngines");
+      }
+    }
+
+    // Response models
+    public class EditorSession
+    {
+      public string SessionId { get; set; } = string.Empty;
+      public string? ProjectId { get; set; }
+      public string Title { get; set; } = string.Empty;
+      public TextSegment[] Segments { get; set; } = Array.Empty<TextSegment>();
+      public string? AudioId { get; set; }
+      public string Language { get; set; } = "en";
+      public string Created { get; set; } = string.Empty;
+      public string Modified { get; set; } = string.Empty;
+    }
+
+    public class TextSegment
+    {
+      public string Id { get; set; } = string.Empty;
+      public string Text { get; set; } = string.Empty;
+      public double StartTime { get; set; }
+      public double EndTime { get; set; }
+      public string? Speaker { get; set; }
+      public Dictionary<string, object>? Prosody { get; set; }
+      public string[]? Phonemes { get; set; }
+      public string? Notes { get; set; }
+    }
+
+    private class SynthesisResponse
+    {
+      public string AudioId { get; set; } = string.Empty;
+      public double Duration { get; set; }
+      public string Message { get; set; } = string.Empty;
+    }
+
+    private class SSMLPreviewResponse
+    {
+      public string AudioId { get; set; } = string.Empty;
+      public double Duration { get; set; }
+      public string Message { get; set; } = string.Empty;
+    }
+  }
+
+  // Data models
+  public class EditorSessionItem : ObservableObject
+  {
+    public string SessionId { get; set; }
+    public string? ProjectId { get; set; }
+    public string Title { get; set; }
+    public ObservableCollection<TextSegmentItem> Segments { get; set; }
+    public string? AudioId { get; set; }
+    public string Language { get; set; }
+    public string Created { get; set; }
+    public string Modified { get; set; }
+    public string DurationDisplay => $"{Segments.Sum(s => s.EndTime - s.StartTime):F2}s";
+    public string SegmentCountDisplay => $"{Segments.Count} segments";
+
+    public EditorSessionItem(EditorSessionModel session)
+    {
+      SessionId = session.SessionId;
+      ProjectId = session.ProjectId;
+      Title = session.Title;
+      Segments = new ObservableCollection<TextSegmentItem>(
+          session.Segments.Select(s => new TextSegmentItem(s))
+      );
+      AudioId = session.AudioId;
+      Language = session.Language;
+      Created = session.Created;
+      Modified = session.Modified;
+    }
+  }
+
+  public class TextSegmentItem : ObservableObject
+  {
+    public string Id { get; set; }
+    public string Text { get; set; }
+    public double StartTime { get; set; }
+    public double EndTime { get; set; }
+    public string? Speaker { get; set; }
+    public Dictionary<string, object>? Prosody { get; set; }
+    public ObservableCollection<string> Phonemes { get; set; }
+    public string? Notes { get; set; }
+    public string TimeRangeDisplay => $"{StartTime:F2}s - {EndTime:F2}s";
+    public string DurationDisplay => $"{EndTime - StartTime:F2}s";
+
+    public TextSegmentItem(TextSpeechEditorViewModel.TextSegment segment)
+    {
+      Id = segment.Id;
+      Text = segment.Text;
+      StartTime = segment.StartTime;
+      EndTime = segment.EndTime;
+      Speaker = segment.Speaker;
+      Prosody = segment.Prosody;
+      Phonemes = segment.Phonemes != null
+          ? new ObservableCollection<string>(segment.Phonemes)
+          : new ObservableCollection<string>();
+      Notes = segment.Notes;
+    }
+
+    public TextSegmentItem()
+    {
+      Id = string.Empty;
+      Text = string.Empty;
+      Phonemes = new ObservableCollection<string>();
+    }
+  }
 }
 

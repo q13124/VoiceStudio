@@ -274,10 +274,10 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Deletes a workspace profile.
         /// </summary>
-        public async Task<bool> DeleteWorkspaceProfileAsync(string profileName)
+        public Task<bool> DeleteWorkspaceProfileAsync(string profileName)
         {
             if (profileName == "Default")
-                return false; // Cannot delete default profile
+                return Task.FromResult(false); // Cannot delete default profile
 
             try
             {
@@ -285,7 +285,7 @@ namespace VoiceStudio.App.Services
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
             catch (Exception ex)
@@ -293,7 +293,7 @@ namespace VoiceStudio.App.Services
                 System.Diagnostics.Debug.WriteLine($"Failed to delete workspace profile: {ex.Message}");
             }
 
-            return false;
+            return Task.FromResult(false);
         }
 
         /// <summary>

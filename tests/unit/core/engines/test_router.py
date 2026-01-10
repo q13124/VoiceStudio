@@ -117,7 +117,7 @@ class TestEngineRouterRegistration:
         """Test that registering non-EngineProtocol raises error."""
 
         class InvalidEngine:
-            pass
+            ...
 
         with pytest.raises(TypeError):
             engine_router.register_engine("invalid", InvalidEngine)

@@ -354,7 +354,7 @@ async def get_recording_devices():
                             sd.check_device(idx, samplerate=rate)
                             sample_rates.append(rate)
                         except Exception:
-                            pass
+                            ...
 
                     # If no specific rates work, use default
                     if not sample_rates:

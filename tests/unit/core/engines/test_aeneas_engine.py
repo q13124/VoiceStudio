@@ -48,7 +48,7 @@ def aeneas_engine():
     try:
         engine.cleanup()
     except Exception:
-        pass
+        ...
 
 
 class TestAeneasEngineImports:
@@ -211,7 +211,7 @@ class TestAeneasEngineBatchProcessing:
             assert mock_executor.called
         except Exception:
             # If aeneas is not installed, that's okay
-            pass
+            ...
 
 
 class TestAeneasEngineConfiguration:
@@ -259,7 +259,7 @@ class TestAeneasEngineOptimization:
                             assert aeneas_engine._temp_dir is not None
                     except Exception:
                         # If dependencies not available, skip
-                        pass
+                        ...
 
     def test_cache_optimization(self, aeneas_engine):
         """Test that cache optimization is enabled by default."""
@@ -293,5 +293,5 @@ class TestAeneasEngineCreateFunction:
         try:
             engine.cleanup()
         except Exception:
-            pass
+            ...
 

@@ -340,7 +340,7 @@ class TestEnhancedRoutesPerformance:
         try:
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except AttributeError:
-            pass
+            ...
 
         mock_explainer = MagicMock()
         mock_explainer.get_available_methods.return_value = ["shap", "lime"]

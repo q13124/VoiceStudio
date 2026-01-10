@@ -110,7 +110,7 @@ class PerformanceBenchmark:
             try:
                 func(*args, **kwargs)
             except Exception:
-                pass
+                ...
 
         # Benchmark
         self.times.clear()

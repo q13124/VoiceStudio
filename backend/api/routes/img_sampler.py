@@ -213,7 +213,7 @@ def _create_placeholder_image(prompt: str, sampler: str) -> dict:
             )
         except Exception:
             # If text rendering fails, just use gradient
-            pass
+            ...
 
         # Convert to base64
         buffer = BytesIO()

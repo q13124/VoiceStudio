@@ -102,7 +102,7 @@ def driver(winappdriver_service):
     try:
         driver.quit()
     except:
-        pass
+        ...
 
 
 @pytest.fixture(scope="function")

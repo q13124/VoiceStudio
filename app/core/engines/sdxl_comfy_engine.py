@@ -54,11 +54,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -319,7 +319,7 @@ class SDXLComfyEngine(EngineProtocol):
                     duration = time.perf_counter() - start_time
                     metrics.record_synthesis_time("sdxl_comfy", duration, cached=True)
                 except Exception:
-                    pass
+                    ...
                 return cached_image
             else:
                 self._cache_stats["misses"] += 1
@@ -413,7 +413,7 @@ class SDXLComfyEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_synthesis_time("sdxl_comfy", duration, cached=False)
             except Exception:
-                pass
+                ...
 
             # Save if requested
             if output_path:
@@ -432,7 +432,7 @@ class SDXLComfyEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("sdxl_comfy", "generation_error")
             except Exception:
-                pass
+                ...
             return None
 
     def batch_generate(
@@ -507,7 +507,7 @@ class SDXLComfyEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("sdxl_comfy", "batch_generation_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Prepare arguments
@@ -542,7 +542,7 @@ class SDXLComfyEngine(EngineProtocol):
             metrics = get_engine_metrics()
             metrics.record_synthesis_time("sdxl_comfy", duration, cached=False)
         except Exception:
-            pass
+            ...
 
         return results
 

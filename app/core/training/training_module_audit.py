@@ -160,7 +160,7 @@ class TrainingModuleAuditor:
 
         except (OSError, TypeError):
             # Can't read source (might be C extension or builtin)
-            pass
+            ...
 
         # Calculate completeness score
         result.is_complete = len(result.missing_features) == 0

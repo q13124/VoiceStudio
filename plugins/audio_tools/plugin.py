@@ -12,7 +12,6 @@ Provides professional audio enhancement tools including:
 
 import json
 import logging
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -21,6 +20,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.core.plugins_api.base import BasePlugin, PluginMetadata
+from app.core.utils.native_tools import find_ffmpeg
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class AudioTools:
     def get_tool(self, name: str) -> Optional[str]:
         """Get path to audio tool executable"""
         if name == "ffmpeg":
-            return shutil.which("ffmpeg") or "ffmpeg"
+            return find_ffmpeg() or "ffmpeg"
 
         if name not in self.manifest.get("tools", {}):
             return None

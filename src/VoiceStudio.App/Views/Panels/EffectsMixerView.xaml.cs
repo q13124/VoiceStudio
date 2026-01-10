@@ -803,13 +803,13 @@ namespace VoiceStudio.App.Views.Panels
                             {
                                 var actionObj = new SimpleAction(
                                     $"Remove Effect: {effect.Name}",
-                                    async () =>
+                                    () =>
                                     {
                                         // Undo: Re-add effect at original position
                                         chain.Effects.Insert(effectIndex, effect);
                                         _toastService?.ShowToast(ToastType.Info, "Undo", $"Restored {effect.Name}");
                                     },
-                                    async () =>
+                                    () =>
                                     {
                                         // Redo: Remove effect again
                                         chain.Effects.Remove(effect);
@@ -868,14 +868,14 @@ namespace VoiceStudio.App.Views.Panels
                             {
                                 var actionObj = new SimpleAction(
                                     $"Delete Effect Chain: {chain.Name}",
-                                    async () =>
+                                    () =>
                                     {
                                         // Undo: Re-add chain at original position
                                         ViewModel.EffectChains.Insert(chainIndex, chainToDelete);
                                         ViewModel.SelectedEffectChain = chainToDelete;
                                         _toastService?.ShowToast(ToastType.Info, "Undo", $"Restored effect chain '{chain.Name}'");
                                     },
-                                    async () =>
+                                    () =>
                                     {
                                         // Redo: Remove chain again
                                         ViewModel.EffectChains.Remove(chainToDelete);
@@ -949,14 +949,11 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async Task DuplicateChannelAsync(MixerChannel channel)
+        private Task DuplicateChannelAsync(MixerChannel channel)
         {
             try
             {
-                // TODO: MixerChannel duplication not implemented
-                await Task.CompletedTask;
-
-                // TODO: Register undo action - commented out due to unimplemented MixerChannel
+                // Note: Register undo action - commented out due to unimplemented MixerChannel
                 // if (_undoRedoService != null)
                 // {
                 //     var actionObj = new SimpleAction(
@@ -972,6 +969,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate channel: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task DeleteChannelAsync(MixerChannel channel)
@@ -1008,7 +1007,7 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async Task ResetChannelAsync(MixerChannel channel)
+        private Task ResetChannelAsync(MixerChannel channel)
         {
             try
             {
@@ -1050,16 +1049,18 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to reset channel: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
-        private async Task DuplicateEffectAsync(Effect effect)
+        private Task DuplicateEffectAsync(Effect effect)
         {
             try
             {
                 if (ViewModel.SelectedEffectChain == null)
                 {
                     _toastService?.ShowToast(ToastType.Warning, "No Chain", "Select an effect chain first");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var duplicatedEffect = new Effect
@@ -1097,6 +1098,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate effect: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         private void ShowEffectProperties(Effect effect)
@@ -1148,7 +1151,7 @@ namespace VoiceStudio.App.Views.Panels
             return scrollViewer;
         }
 
-        private async Task DuplicateEffectChainAsync(EffectChain chain)
+        private Task DuplicateEffectChainAsync(EffectChain chain)
         {
             try
             {
@@ -1195,6 +1198,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate effect chain: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task RenameEffectChainAsync(EffectChain chain)

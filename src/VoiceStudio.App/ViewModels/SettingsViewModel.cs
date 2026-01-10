@@ -555,7 +555,7 @@ namespace VoiceStudio.App.ViewModels
             McpServerUrl = "http://localhost:8080";
         }
 
-        private async Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
+        private Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -620,9 +620,11 @@ namespace VoiceStudio.App.ViewModels
                 // If loading fails, use defaults
                 ResetToDefaults();
             }
+
+            return Task.CompletedTask;
         }
 
-        private async Task SaveToLocalStorageAsync(SettingsData settings)
+        private Task SaveToLocalStorageAsync(SettingsData settings)
         {
             try
             {
@@ -652,6 +654,8 @@ namespace VoiceStudio.App.ViewModels
                 // Log error but don't fail
                 System.Diagnostics.Debug.WriteLine("Failed to save settings to local storage");
             }
+
+            return Task.CompletedTask;
         }
 
         protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)

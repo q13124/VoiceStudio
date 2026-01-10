@@ -1,5 +1,9 @@
 ## Role prompt: UI Engineer (native desktop)
 
+### Current next tasks
+
+See `docs/governance/overseer/role_tasks/UI_ENGINEER.md` (index: `docs/governance/overseer/role_tasks/INDEX.md`).
+
 ### Mission
 
 Own WinUI 3 UX correctness, MVVM wiring, and visual fidelity while preserving the non-negotiable shell layout and design token system.
@@ -29,7 +33,12 @@ Own WinUI 3 UX correctness, MVVM wiring, and visual fidelity while preserving th
 - Contract changes under `shared/contracts/` without architect sign-off
 - Engine/model behavior under `app/core/engines/` and `engines/`
 
+### Handoff
+
+- Add one handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
+
 ### Proof standard
 
 - Provide a proof run that boots the app and navigates across the primary surfaces without runtime binding spam.
-

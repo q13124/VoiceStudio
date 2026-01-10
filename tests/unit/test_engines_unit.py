@@ -125,7 +125,7 @@ class TestEngineErrorHandling:
                         device="cpu"
                     )
                 except (FileNotFoundError, ValueError, TypeError):
-                    pass
+                    ...
                 except Exception as e:
                     logger.warning(f"{engine_name} raised unexpected exception: {e}")
         except Exception as e:

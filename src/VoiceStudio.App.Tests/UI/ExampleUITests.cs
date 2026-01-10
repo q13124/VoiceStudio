@@ -9,6 +9,7 @@ namespace VoiceStudio.App.Tests.UI
     /// These tests run on the UI thread and can create and test UI components.
     /// </summary>
     [TestClass]
+    [TestCategory("UI")]
     public class ExampleUITests
     {
         [UITestMethod]

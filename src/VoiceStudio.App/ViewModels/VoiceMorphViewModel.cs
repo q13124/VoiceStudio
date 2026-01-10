@@ -347,12 +347,14 @@ namespace VoiceStudio.App.ViewModels
             }
         }
 
-        private async Task AddTargetVoiceAsync(CancellationToken cancellationToken)
+        private Task AddTargetVoiceAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (string.IsNullOrEmpty(SelectedVoiceProfileId))
             {
                 ErrorMessage = ResourceHelper.GetString("VoiceMorph.VoiceProfileRequired", "Voice profile must be selected");
-                return;
+                return Task.CompletedTask;
             }
 
             var blend = new VoiceBlendItem
@@ -364,17 +366,23 @@ namespace VoiceStudio.App.ViewModels
             TargetVoices.Add(blend);
             SelectedVoiceProfileId = null;
             VoiceWeight = 0.5;
+
+            return Task.CompletedTask;
         }
 
-        private async Task RemoveTargetVoiceAsync(CancellationToken cancellationToken)
+        private Task RemoveTargetVoiceAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (SelectedTargetVoice == null)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             TargetVoices.Remove(SelectedTargetVoice);
             SelectedTargetVoice = null;
+
+            return Task.CompletedTask;
         }
 
         private async Task ApplyMorphAsync(CancellationToken cancellationToken)

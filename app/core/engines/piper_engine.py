@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import tempfile
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -27,12 +27,8 @@ import soundfile as sf
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (
-        calculate_all_metrics,
-        calculate_mos_score,
-        calculate_naturalness,
-        calculate_similarity,
-    )
+    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
+                                  calculate_naturalness, calculate_similarity)
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -40,12 +36,9 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        match_voice_profile,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from ..audio.audio_utils import (enhance_voice_quality,
+                                     match_voice_profile, normalize_lufs,
+                                     remove_artifacts)
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -79,15 +72,15 @@ def _get_cached_piper_instance(voice: Optional[str], model_path: Optional[str]):
 def _cache_piper_instance(voice: Optional[str], model_path: Optional[str], instance):
     """Cache Piper instance with LRU eviction."""
     cache_key = _get_piper_cache_key(voice, model_path)
-    
+
     # Remove if already exists
     if cache_key in _PIPER_INSTANCE_CACHE:
         _PIPER_INSTANCE_CACHE.move_to_end(cache_key)
         return
-    
+
     # Add new instance
     _PIPER_INSTANCE_CACHE[cache_key] = instance
-    
+
     # Evict oldest if cache full
     if len(_PIPER_INSTANCE_CACHE) > _MAX_PIPER_CACHE_SIZE:
         oldest_key, oldest_instance = _PIPER_INSTANCE_CACHE.popitem(last=False)
@@ -97,8 +90,10 @@ def _cache_piper_instance(voice: Optional[str], model_path: Optional[str], insta
             logger.debug(f"Evicted Piper instance from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting Piper instance from cache: {e}")
-    
-    logger.debug(f"Cached Piper instance: {cache_key} (cache size: {len(_PIPER_INSTANCE_CACHE)})")
+
+    logger.debug(
+        f"Cached Piper instance: {cache_key} (cache size: {len(_PIPER_INSTANCE_CACHE)})"
+    )
 
 
 def _get_temp_dir() -> str:
@@ -125,12 +120,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                pass
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                pass
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -223,6 +216,22 @@ class PiperEngine(EngineProtocol):
         self.enable_caching = enable_caching
         self._piper_instance = None  # Cached Piper instance (Python package)
 
+        # Apply defaults for model/voice using the shared models root
+        models_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+        if self.voice is None:
+            self.voice = "en_US-amy-medium"
+        if self.model_path is None:
+            candidate = os.path.join(models_root, "piper", "en_US-amy-medium.onnx")
+            if os.path.exists(candidate):
+                self.model_path = candidate
+            else:
+                logger.warning(
+                    "Piper model not found at default path: %s. "
+                    "Place en_US-amy-medium.onnx under models\\piper or "
+                    "pass a model_path.",
+                    candidate,
+                )
+
     def _find_executable(
         self, name: str, custom_path: Optional[str] = None
     ) -> Optional[str]:
@@ -253,7 +262,7 @@ class PiperEngine(EngineProtocol):
         """Initialize and cache Piper instance (Python package only)."""
         if self._piper_instance is not None:
             return self._piper_instance
-        
+
         # Check cache first
         if self.enable_caching:
             cached = _get_cached_piper_instance(self.voice, self.model_path)
@@ -261,22 +270,22 @@ class PiperEngine(EngineProtocol):
                 logger.debug("Using cached Piper instance")
                 self._piper_instance = cached
                 return cached
-        
+
         # Create new instance
         try:
             import piper_tts
-            
+
             if self.voice:
                 piper = piper_tts.Piper(voice=self.voice)
             elif self.model_path:
                 piper = piper_tts.Piper(model_path=self.model_path)
             else:
                 piper = piper_tts.Piper()
-            
+
             # Cache instance
             if self.enable_caching:
                 _cache_piper_instance(self.voice, self.model_path, piper)
-            
+
             self._piper_instance = piper
             return piper
         except ImportError:
@@ -284,7 +293,7 @@ class PiperEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Failed to create Piper instance: {e}")
             return None
-    
+
     def initialize(self) -> bool:
         """
         Initialize the Piper engine.
@@ -295,10 +304,12 @@ class PiperEngine(EngineProtocol):
         try:
             if self._initialized:
                 return True
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
-                logger.debug("Lazy loading enabled, engine will be initialized on first use")
+                logger.debug(
+                    "Lazy loading enabled, engine will be initialized on first use"
+                )
                 return True
 
             logger.info("Initializing Piper engine")
@@ -408,6 +419,7 @@ class PiperEngine(EngineProtocol):
             else:
                 temp_dir = _get_temp_dir()
                 import uuid
+
                 output_file = Path(temp_dir) / f"{uuid.uuid4().hex}.wav"
 
             try:
@@ -424,9 +436,7 @@ class PiperEngine(EngineProtocol):
 
                     # Get sample rate
                     self.sample_rate = (
-                        piper.sample_rate
-                        if hasattr(piper, "sample_rate")
-                        else 22050
+                        piper.sample_rate if hasattr(piper, "sample_rate") else 22050
                     )
 
                     # Convert to numpy if needed
@@ -610,79 +620,80 @@ class PiperEngine(EngineProtocol):
         language: str = "en",
         voice: Optional[str] = None,
         output_dir: Optional[Union[str, Path]] = None,
-        **kwargs
+        **kwargs,
     ) -> List[Optional[np.ndarray]]:
         """
         Synthesize multiple texts in batch with optimized processing.
-        
+
         Args:
             texts: List of texts to synthesize
             language: Language code
             voice: Voice name (optional)
             output_dir: Optional directory to save outputs
             **kwargs: Additional synthesis parameters
-        
+
         Returns:
             List of audio arrays
         """
         if not self._initialized:
             if not self.initialize():
                 return [None] * len(texts)
-        
+
         results = []
-        
+
         # Use Python package if available (faster for batch)
         if self.executable_path == "python_package":
             piper = self._initialize_piper_instance()
             if piper is None:
                 return [None] * len(texts)
-            
+
             # Process in batches
             batch_size = self.batch_size
             for batch_start in range(0, len(texts), batch_size):
-                batch_texts = texts[batch_start:batch_start + batch_size]
+                batch_texts = texts[batch_start : batch_start + batch_size]
                 batch_results = []
-                
+
                 for i, text in enumerate(batch_texts):
                     try:
                         audio = piper.synthesize(text)
-                        
+
                         # Convert to numpy if needed
                         if not isinstance(audio, np.ndarray):
                             audio = np.array(audio, dtype=np.float32)
-                        
+
                         # Convert to mono if stereo
                         if len(audio.shape) > 1:
                             audio = np.mean(audio, axis=1)
-                        
+
                         # Normalize
                         if np.max(np.abs(audio)) > 0:
                             audio = audio / np.max(np.abs(audio)) * 0.95
-                        
+
                         # Save to file if output_dir provided
                         if output_dir:
-                            output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
+                            output_path = (
+                                Path(output_dir) / f"output_{batch_start + i:04d}.wav"
+                            )
                             sf.write(str(output_path), audio, self.sample_rate)
                             batch_results.append(None)
                         else:
                             batch_results.append(audio)
                     except Exception as e:
-                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
+                        logger.error(
+                            f"Batch synthesis failed for text {batch_start + i}: {e}"
+                        )
                         batch_results.append(None)
-                
+
                 results.extend(batch_results)
         else:
             # Use subprocess with parallel processing
             batch_size = self.batch_size
-            
+
             def synthesize_single(args):
                 idx, text = args
                 try:
                     result = self.synthesize(
-                        text=text,
-                        language=language,
-                        voice=voice,
-                        **kwargs
+                        text=text, language=language, voice=voice, **kwargs
                     )
                     if output_dir and result is not None:
                         output_path = Path(output_dir) / f"output_{idx:04d}.wav"
@@ -692,26 +703,27 @@ class PiperEngine(EngineProtocol):
                 except Exception as e:
                     logger.error(f"Batch synthesis failed for text {idx}: {e}")
                     return None
-            
+
             # Process in parallel batches
             with ThreadPoolExecutor(max_workers=batch_size) as executor:
-                results = list(executor.map(
-                    synthesize_single,
-                    [(i, text) for i, text in enumerate(texts)]
-                ))
-        
+                results = list(
+                    executor.map(
+                        synthesize_single, [(i, text) for i, text in enumerate(texts)]
+                    )
+                )
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Piper instance caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
+
     def cleanup(self):
         """Clean up resources."""
         try:

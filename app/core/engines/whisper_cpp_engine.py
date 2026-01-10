@@ -88,7 +88,7 @@ def _cache_whisper_cpp_model(model_path: str, language: Optional[str], ctx_data:
                 try:
                     oldest_ctx["ctx"].free()
                 except Exception:
-                    pass
+                    ...
             del oldest_ctx
             logger.debug(f"Evicted Whisper CPP model from cache: {oldest_key}")
         except Exception as e:
@@ -161,7 +161,19 @@ class WhisperCPPEngine(EngineProtocol):
             language: Language code (e.g., 'en', 'zh', 'ja')
                 or None for auto-detect
         """
-        self.model_path = model_path or os.getenv("WHISPER_CPP_MODEL_PATH")
+        default_model_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+        default_model_path = os.path.join(
+            default_model_root, "whisper", "whisper-medium.en.gguf"
+        )
+        self.model_path = model_path or os.getenv("WHISPER_CPP_MODEL_PATH") or default_model_path
+
+        # Validate model path early with clear error
+        if self.model_path and not os.path.exists(self.model_path):
+            logger.error(
+                f"Whisper.cpp model path not found: {self.model_path}. "
+                "Place whisper-medium.en.gguf under the models root "
+                "or set WHISPER_CPP_MODEL_PATH."
+            )
         self.language = language
         self._initialized = False
         self._model = None
@@ -227,7 +239,7 @@ class WhisperCPPEngine(EngineProtocol):
                     try:
                         self._ctx.free()
                     except Exception:
-                        pass
+                        ...
                 self._ctx = None
 
             if self._model is not None:
@@ -565,7 +577,7 @@ class WhisperCPPEngine(EngineProtocol):
                                 try:
                                     os.unlink(tmp_path)
                                 except Exception:
-                                    pass
+                                    ...
 
                                 return {
                                     "text": text_output,
@@ -583,19 +595,19 @@ class WhisperCPPEngine(EngineProtocol):
                                     if os.path.exists(json_output_path):
                                         os.unlink(json_output_path)
                                 except Exception:
-                                    pass
+                                    ...
                         # Clean up temp file
                         try:
                             os.unlink(tmp_path)
                         except Exception:
-                            pass
+                            ...
                     except Exception as e:
                         logger.warning(f"Binary transcription failed: {e}")
                         try:
                             if "tmp_path" in locals():
                                 os.unlink(tmp_path)
                         except Exception:
-                            pass
+                            ...
 
                 # Try to use faster-whisper as fallback
                 try:

@@ -371,7 +371,7 @@ class SileroEngine(EngineProtocol):
                             device=self.device
                         )
                         if isinstance(audio, torch.Tensor):
-                            pass
+                            ...
                         else:
                             audio = torch.tensor(audio, dtype=torch.float32)
                     except Exception as e:

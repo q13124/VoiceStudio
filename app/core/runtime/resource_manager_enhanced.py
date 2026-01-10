@@ -221,7 +221,7 @@ class EnhancedResourceManager(ResourceManager):
                     {"ram_usage_percent": ram_usage_percent},
                 )
         except ImportError:
-            pass
+            ...
         
         # Check CPU usage
         if latest.cpu_usage_percent >= self.alert_thresholds["cpu_usage_percent"]:

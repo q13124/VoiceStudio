@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System.Collections.Generic;
 
 namespace VoiceStudio.App.Controls
@@ -20,6 +21,8 @@ namespace VoiceStudio.App.Controls
         public List<double> LufsValues { get; set; } = new();
         public double? IntegratedLufs { get; set; }
         public double? PeakLufs { get; set; }
+        public double Duration { get; set; }
+        public Brush? LineColor { get; set; }
         public double PlaybackPosition { get; set; } = -1.0;
     }
 }

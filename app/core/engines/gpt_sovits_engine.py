@@ -129,12 +129,9 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_cloning_quality,
-        enhance_voice_quality,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from ..audio.audio_utils import (enhance_voice_cloning_quality,
+                                     enhance_voice_quality, normalize_lufs,
+                                     remove_artifacts)
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -168,8 +165,20 @@ class GPTSovitsEngine(EngineProtocol):
             config_path: Path to configuration file
             device: Device to use ('cuda', 'cpu', or None for auto)
         """
-        self.model_path = model_path or os.getenv("GPT_SOVITS_MODEL_PATH")
-        self.config_path = config_path or os.getenv("GPT_SOVITS_CONFIG_PATH")
+        models_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+        default_model_path = os.path.join(
+            models_root, "checkpoints", "MyVoiceProj", "model.pth"
+        )
+        default_config_path = os.path.join(
+            models_root, "checkpoints", "MyVoiceProj", "config.json"
+        )
+
+        self.model_path = (
+            model_path or os.getenv("GPT_SOVITS_MODEL_PATH") or default_model_path
+        )
+        self.config_path = (
+            config_path or os.getenv("GPT_SOVITS_CONFIG_PATH") or default_config_path
+        )
         self.device = device or (
             "cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu"
         )
@@ -670,7 +679,7 @@ class GPTSovitsEngine(EngineProtocol):
                             try:
                                 os.remove(ref_audio_path)
                             except Exception:
-                                pass
+                                ...
 
                         return audio.astype(np.float32)
                     else:
@@ -699,7 +708,7 @@ class GPTSovitsEngine(EngineProtocol):
                     try:
                         os.remove(ref_audio_path)
                     except Exception:
-                        pass
+                        ...
 
         except Exception as e:
             logger.warning(f"API synthesis failed: {e}, trying fallback")
@@ -764,7 +773,7 @@ class GPTSovitsEngine(EngineProtocol):
                 try:
                     os.remove(ref_audio_path)
                 except:
-                    pass
+                    ...
 
             return audio.astype(np.float32) if audio is not None else None
 
@@ -817,7 +826,7 @@ class GPTSovitsEngine(EngineProtocol):
                         try:
                             os.remove(ref_path)
                         except:
-                            pass
+                            ...
 
                     if result is not None:
                         return result
@@ -1043,7 +1052,7 @@ class GPTSovitsEngine(EngineProtocol):
 
                     if not HAS_REQUESTS:
                         # Fall through to chunked synthesis
-                        pass
+                        ...
                     else:
                         data = {
                             "text": text,

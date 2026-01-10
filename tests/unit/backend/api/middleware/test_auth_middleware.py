@@ -513,7 +513,7 @@ class TestGetOptionalUser:
                 except Exception:
                     # If exception is not caught, that's also acceptable for this test
                     # as it demonstrates the exception handling path
-                    pass
+                    ...
 
 
 class TestSecurityScheme:

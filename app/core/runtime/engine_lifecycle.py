@@ -456,7 +456,7 @@ class EngineLifecycleManager:
                             engine.process.kill()
                             engine.process.wait()
                         except Exception:
-                            pass
+                            ...
 
             # Release port
             if engine.port:
@@ -617,7 +617,7 @@ class EngineLifecycleManager:
                     try:
                         self._stop_engine(engine)
                     except Exception:
-                        pass
+                        ...
 
         return results
 

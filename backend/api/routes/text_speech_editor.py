@@ -620,7 +620,7 @@ async def insert_text(request: InsertTextRequest):
                 try:
                     os.remove(output_path)
                 except OSError:
-                    pass
+                    ...
             raise
     except HTTPException:
         raise
@@ -776,7 +776,7 @@ async def replace_word(request: ReplaceWordRequest):
                 try:
                     os.remove(output_path)
                 except OSError:
-                    pass
+                    ...
             raise
     except HTTPException:
         raise

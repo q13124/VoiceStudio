@@ -148,7 +148,6 @@ namespace VoiceStudio.App.Services
                             _waveStream?.Dispose();
                             _waveStream = null;
                             baseStream?.Dispose();
-                            baseStream = null;
                         }
                         else
                         {

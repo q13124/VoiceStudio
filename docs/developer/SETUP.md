@@ -626,7 +626,7 @@ VOICESTUDIO_LOG_LEVEL=DEBUG
 
 # Engine Configuration
 VOICESTUDIO_ENGINES_PATH=engines
-VOICESTUDIO_MODELS_PATH=%PROGRAMDATA%\VoiceStudio\models
+VOICESTUDIO_MODELS_PATH=E:\VoiceStudio\models
 
 # Python Configuration
 PYTHONPATH=.

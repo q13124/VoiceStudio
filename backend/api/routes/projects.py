@@ -7,18 +7,22 @@ CRUD operations for projects.
 import logging
 import os
 import shutil
-import time
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from ..exceptions import ProjectNotFoundException
-from ..error_handling import ErrorCodes
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from backend.services.ContentAddressedAudioCache import get_audio_cache
+from backend.services.ProjectStoreService import (
+    ProjectRecord,
+    get_project_store_service,
+)
 
 from ..models import ApiOk
-from ..optimization import cache_response, get_pagination_params, PaginationParams
+from ..optimization import cache_response, get_pagination_params
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +35,7 @@ class Project(BaseModel):
     description: Optional[str] = None
     created_at: str
     updated_at: str
-    voice_profile_ids: List[str] = []
+    voice_profile_ids: List[str] = Field(default_factory=list)
 
 
 class ProjectCreateRequest(BaseModel):
@@ -45,40 +49,28 @@ class ProjectUpdateRequest(BaseModel):
     voice_profile_ids: Optional[List[str]] = None
 
 
-# In-memory storage (replace with database in production)
-_projects: dict[str, Project] = {}
-_MAX_PROJECTS = 500  # Maximum number of projects
-_project_timestamps: dict[str, float] = {}  # project_id -> creation_time
+def _store():
+    return get_project_store_service()
 
 
-def _cleanup_old_projects():
-    """
-    Clean up old projects from storage to prevent memory accumulation.
-
-    Removes projects beyond MAX_PROJECTS (oldest first based on creation time).
-    """
-    if len(_projects) > _MAX_PROJECTS:
-        # Sort by creation time (oldest first)
-        sorted_projects = sorted(
-            _project_timestamps.items(),
-            key=lambda x: x[1],
-        )
-        excess = len(_projects) - _MAX_PROJECTS
-        for project_id, _ in sorted_projects[:excess]:
-            if project_id in _projects:
-                del _projects[project_id]
-            if project_id in _project_timestamps:
-                del _project_timestamps[project_id]
-        logger.info(f"Cleaned up {excess} old projects from storage")
+def _to_api_project(record: ProjectRecord) -> Project:
+    return Project(
+        id=record.id,
+        name=record.name,
+        description=record.description,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+        voice_profile_ids=record.voice_profile_ids,
+    )
 
 
-# Project audio storage directory
-PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".voicestudio", "projects")
+def _projects_root_dir() -> str:
+    return str(_store().projects_dir)
 
 
 def _ensure_project_dir(project_id: str) -> str:
     """Ensure project directory exists and return its path."""
-    project_dir = os.path.join(PROJECTS_DIR, project_id)
+    project_dir = os.path.join(_projects_root_dir(), project_id)
     os.makedirs(project_dir, exist_ok=True)
     os.makedirs(os.path.join(project_dir, "audio"), exist_ok=True)
     return project_dir
@@ -89,7 +81,7 @@ def _ensure_project_dir(project_id: str) -> str:
 def list_projects(request: Request) -> dict:
     """
     List all projects with pagination.
-    
+
     Query parameters:
     - page: Page number (default: 1)
     - page_size: Items per page (default: 50, max: 1000)
@@ -97,13 +89,13 @@ def list_projects(request: Request) -> dict:
     try:
         # Get pagination parameters
         pagination = get_pagination_params(request, default_page_size=50)
-        
+
         # Get all projects
-        all_projects = list(_projects.values())
-        
+        all_projects = [_to_api_project(p) for p in _store().list_projects()]
+
         # Paginate
         result = pagination.paginate(all_projects)
-        
+
         return result
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
@@ -117,9 +109,11 @@ def list_projects(request: Request) -> dict:
 def get_project(project_id: str) -> Project:
     """Get a specific project."""
     try:
-        if project_id not in _projects:
+        try:
+            record = _store().get_project(project_id)
+        except KeyError:
             raise HTTPException(status_code=404, detail="Project not found")
-        return _projects[project_id]
+        return _to_api_project(record)
     except HTTPException:
         raise
     except Exception as e:
@@ -138,40 +132,12 @@ def create_project(req: ProjectCreateRequest) -> Project:
             raise HTTPException(
                 status_code=400, detail="Project name is required and cannot be empty"
             )
+        name = req.name.strip()
+        description = req.description.strip() if req.description else None
 
-        import uuid
-        from datetime import datetime
-
-        project_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
-
-        project = Project(
-            id=project_id,
-            name=req.name.strip(),
-            description=req.description.strip() if req.description else None,
-            created_at=now,
-            updated_at=now,
-            voice_profile_ids=[],
-        )
-
-        _projects[project_id] = project
-        _project_timestamps[project_id] = time.time()
-
-        # Clean up old projects if needed
-        if len(_projects) > _MAX_PROJECTS:
-            _cleanup_old_projects()
-
-        # Create project directory structure
-        try:
-            _ensure_project_dir(project_id)
-        except Exception as dir_error:
-            logger.warning(
-                f"Failed to create project directory for {project_id}: {dir_error}"
-            )
-            # Continue - directory creation failure shouldn't prevent project creation
-
-        logger.info(f"Created project: {project_id} - {project.name}")
-        return project
+        record = _store().create_project(name=name, description=description)
+        logger.info(f"Created project: {record.id} - {record.name}")
+        return _to_api_project(record)
     except HTTPException:
         raise
     except Exception as e:
@@ -185,28 +151,26 @@ def create_project(req: ProjectCreateRequest) -> Project:
 def update_project(project_id: str, req: ProjectUpdateRequest) -> Project:
     """Update an existing project."""
     try:
-        if project_id not in _projects:
-            raise HTTPException(status_code=404, detail="Project not found")
-
         # Validate input
         if req.name is not None and (not req.name or not req.name.strip()):
             raise HTTPException(status_code=400, detail="Project name cannot be empty")
+        name = req.name.strip() if req.name is not None else None
+        description_provided = req.description is not None
+        description = req.description.strip() if req.description else None
 
-        from datetime import datetime
+        try:
+            record = _store().update_project(
+                project_id=project_id,
+                name=name,
+                description=description,
+                voice_profile_ids=req.voice_profile_ids,
+                description_provided=description_provided,
+            )
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Project not found")
 
-        project = _projects[project_id]
-
-        if req.name is not None:
-            project.name = req.name.strip()
-        if req.description is not None:
-            project.description = req.description.strip() if req.description else None
-        if req.voice_profile_ids is not None:
-            project.voice_profile_ids = req.voice_profile_ids
-
-        project.updated_at = datetime.utcnow().isoformat()
-        _projects[project_id] = project
-        logger.info(f"Updated project: {project_id} - {project.name}")
-        return project
+        logger.info(f"Updated project: {project_id} - {record.name}")
+        return _to_api_project(record)
     except HTTPException:
         raise
     except Exception as e:
@@ -220,24 +184,10 @@ def update_project(project_id: str, req: ProjectUpdateRequest) -> Project:
 def delete_project(project_id: str) -> ApiOk:
     """Delete a project."""
     try:
-        if project_id not in _projects:
+        if not _store().exists(project_id):
             raise HTTPException(status_code=404, detail="Project not found")
 
-        # Attempt to delete project directory (non-critical if it fails)
-        try:
-            project_dir = os.path.join(PROJECTS_DIR, project_id)
-            if os.path.exists(project_dir):
-                shutil.rmtree(project_dir)
-                logger.debug(f"Deleted project directory: {project_dir}")
-        except Exception as dir_error:
-            logger.warning(
-                f"Failed to delete project directory for {project_id}: {dir_error}"
-            )
-            # Continue - directory deletion failure shouldn't prevent project deletion
-
-        del _projects[project_id]
-        if project_id in _project_timestamps:
-            del _project_timestamps[project_id]
+        _store().delete_project(project_id)
         logger.info(f"Deleted project: {project_id}")
         return ApiOk()
     except HTTPException:
@@ -275,7 +225,9 @@ def save_audio_to_project(
     Returns:
         ProjectAudioFileResponse with file information
     """
-    if project_id not in _projects:
+    try:
+        _store().get_project(project_id)
+    except KeyError:
         raise HTTPException(
             status_code=404,
             detail=f"Project '{project_id}' not found. Please check the project ID and try again.",
@@ -319,10 +271,24 @@ def save_audio_to_project(
                 detail=f"Filename '{filename}' contains invalid characters. Please use a valid filename.",
             )
 
-        # Save audio file to project directory
+        # Use content-addressed cache for deduplication
+        source_path_obj = Path(source_path)
+        audio_cache = get_audio_cache()
+        try:
+            cached_path, hash_value = audio_cache.get_or_store(source_path_obj)
+            logger.debug(
+                f"Using cached audio (hash: {hash_value[:16]}...) for project save"
+            )
+        except Exception as cache_error:
+            logger.warning(
+                f"Content-addressed cache failed, using direct copy: {cache_error}"
+            )
+            cached_path = source_path_obj
+
+        # Save audio file to project directory (copy from cache if available)
         dest_path = os.path.join(audio_dir, filename)
         try:
-            shutil.copy2(source_path, dest_path)
+            shutil.copy2(str(cached_path), dest_path)
         except PermissionError:
             raise HTTPException(
                 status_code=403,
@@ -380,13 +346,14 @@ class ProjectAudioFile(BaseModel):
 def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
     """List all audio files in a project."""
     try:
-        if project_id not in _projects:
+        try:
+            _store().get_project(project_id)
+        except KeyError:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found. Please check the project ID and try again.",
             )
 
-        project_dir = _ensure_project_dir(project_id)
         project_dir = _ensure_project_dir(project_id)
         audio_dir = os.path.join(project_dir, "audio")
 
@@ -443,7 +410,9 @@ def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
 def get_project_audio(project_id: str, filename: str):
     """Get an audio file from a project."""
     try:
-        if project_id not in _projects:
+        try:
+            _store().get_project(project_id)
+        except KeyError:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found. Please check the project ID and try again.",

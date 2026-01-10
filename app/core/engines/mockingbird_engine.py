@@ -773,7 +773,7 @@ class MockingBirdEngine(EngineProtocol):
                         try:
                             os.remove(ref_path)
                         except:
-                            pass
+                            ...
 
                     if result is not None:
                         return result

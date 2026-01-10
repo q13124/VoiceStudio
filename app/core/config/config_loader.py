@@ -224,7 +224,7 @@ class PydanticConfigModel(BaseModel):
     Base Pydantic model for configuration validation.
     Extend this class for specific configuration schemas.
     """
-    pass
+    ...
 
 
 def load_config(

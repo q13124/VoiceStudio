@@ -435,7 +435,7 @@ class VideoCreatorEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("video_creator", "creation_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

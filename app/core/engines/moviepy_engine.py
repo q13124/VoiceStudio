@@ -576,7 +576,7 @@ class MoviePyEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("moviepy", "edit_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

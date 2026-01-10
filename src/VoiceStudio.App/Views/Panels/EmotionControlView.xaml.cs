@@ -177,6 +177,22 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
+        private async void PresetLoadButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.DataContext != null)
+            {
+                await HandlePresetMenuClick("Load", element.DataContext);
+            }
+        }
+
+        private async void PresetDeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.DataContext != null)
+            {
+                await HandlePresetMenuClick("Delete", element.DataContext);
+            }
+        }
+
         private async System.Threading.Tasks.Task HandlePresetMenuClick(string action, object preset)
         {
             try
@@ -230,7 +246,7 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async void DuplicatePreset(object preset)
+        private void DuplicatePreset(object preset)
         {
             if (preset is EmotionControlPresetItem originalPreset)
             {
@@ -239,7 +255,7 @@ namespace VoiceStudio.App.Views.Panels
                     // Set ViewModel properties to match original preset
                     ViewModel.SelectedPrimaryEmotion = originalPreset.PrimaryEmotion;
                     ViewModel.PrimaryIntensity = originalPreset.PrimaryIntensity;
-                    ViewModel.SelectedSecondaryEmotion = originalPreset.SecondaryEmotion ?? string.Empty;
+                    ViewModel.SelectedSecondaryEmotion = originalPreset.SecondaryEmotion;
                     ViewModel.SecondaryIntensity = originalPreset.SecondaryIntensity;
                     ViewModel.EnableBlending = !string.IsNullOrEmpty(originalPreset.SecondaryEmotion);
 

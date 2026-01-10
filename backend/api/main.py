@@ -9,6 +9,30 @@ except ImportError:
     os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
     os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
 
+# Set default model/cache locations (override with env if needed)
+import os
+
+_default_models_root = os.environ.get(
+    "VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"
+)
+os.environ.setdefault("VOICESTUDIO_MODELS_PATH", _default_models_root)
+os.environ.setdefault("HF_HOME", os.path.join(_default_models_root, "hf_cache"))
+os.environ.setdefault("TTS_HOME", os.path.join(_default_models_root, "xtts"))
+os.environ.setdefault(
+    "WHISPER_CPP_MODEL_PATH",
+    os.path.join(_default_models_root, "whisper", "whisper-medium.en.gguf"),
+)
+try:
+    os.makedirs(_default_models_root, exist_ok=True)
+    os.makedirs(os.environ["HF_HOME"], exist_ok=True)
+    os.makedirs(os.path.join(_default_models_root, "whisper"), exist_ok=True)
+    os.makedirs(os.path.join(_default_models_root, "piper"), exist_ok=True)
+    os.makedirs(os.path.join(_default_models_root, "xtts"), exist_ok=True)
+except Exception as e:
+    import logging
+
+    logging.getLogger(__name__).warning("Failed to precreate model directories: %s", e)
+
 import logging
 import os
 import time
@@ -446,6 +470,7 @@ app.add_middleware(
 # Initialize validation optimization middleware
 try:
     from .validation_middleware import setup_validation_optimization
+
     setup_validation_optimization(app)
     logger.info("Validation optimization initialized")
 except Exception as e:

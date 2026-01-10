@@ -289,6 +289,11 @@ namespace VoiceStudio.App.ViewModels
         private bool _disposed = false;
 
         /// <summary>
+        /// Indicates whether this ViewModel has been disposed.
+        /// </summary>
+        protected bool IsDisposed => _disposed;
+
+        /// <summary>
         /// Disposes the ViewModel and releases resources.
         /// </summary>
         public void Dispose()

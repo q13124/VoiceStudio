@@ -181,11 +181,11 @@ except ImportError:
 
         @abstractmethod
         def initialize(self):
-            pass
+            ...
 
         @abstractmethod
         def cleanup(self):
-            pass
+            ...
 
         def is_initialized(self):
             return self._initialized

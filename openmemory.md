@@ -10,12 +10,21 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   - **Backend API**: Python FastAPI service under `backend/`.
   - **Engine layer**: Python engine implementations and runtime management under `app/`.
   - **Shared contracts**: JSON/schema artifacts under `shared/` (interop boundary).
+- **Packaging default**: unpackaged apphost EXE (`WindowsPackageType=None`, MSIX optional).
+- **WinAppSDK versioning**: `Directory.Build.props` centralizes `MicrosoftWindowsAppSDKVersion` (override via `WinAppSdkVersionOverride`); WinUI/CommunityToolkit/NAudio pinned in the same file.
+- **Model root defaults**: `backend/api/main.py` sets `VOICESTUDIO_MODELS_PATH=E:\VoiceStudio\models` with HF/TTS/whisper/piper subfolders expected under that root.
+- **Native tools**: ffmpeg can be overridden via `VOICESTUDIO_FFMPEG_PATH` (fallback PATH + common locations).
+- **Publish status**: Gate C script `scripts/gatec-publish-launch.ps1` produces binlogs under `.buildlogs/`. Latest proof run (2026-01-08) is **green**: Release publish + 10s smoke launch passes (see `.buildlogs/gatec-latest.txt`).
+- **Crash artifacts (Gate C)**:
+  - `%LOCALAPPDATA%\VoiceStudio\crashes\latest.log` (managed unhandled exception pointer)
+  - `%LOCALAPPDATA%\VoiceStudio\crashes\boot_latest.json` + `latest_startup_exception.log` (startup stage + pre-App exception pointer)
+  - Native dumps (when enabled): `scripts/enable-wer-localdumps.ps1` → `%LOCALAPPDATA%\VoiceStudio\dumps\*.dmp`
 
 ## Gate status (A–H)
 
 - **Gate A**: COMPLETE
 - **Gate B**: COMPLETE (RuleGuard enforced)
-- **Gate C**: BLOCKED by **VS-0012** (WinUI runtime activation / launch environment) and **VS-0020** (Release build configuration)
+- **Gate C**: UNBLOCKED for publish+launch proof (`VS-0012` handoff updated; Release Engineer still needs UI smoke verification)
 - **Gate D**: See `Recovery Plan/QUALITY_LEDGER.md`
 - **Gate E**: See `Recovery Plan/QUALITY_LEDGER.md`
 - **Gate F/G**: blocked by Gate C
@@ -32,6 +41,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 
 - **Ledger**: `Recovery Plan/QUALITY_LEDGER.md` (canonical)
 - **Change handoffs**: `docs/governance/overseer/handoffs/` (proof runs + file lists)
+- **Role task lists**: `docs/governance/overseer/role_tasks/INDEX.md` (what each role does next)
 
 ## User Defined Namespaces
 
@@ -60,6 +70,7 @@ quality ledger.
 
 - **Voice routes**: `backend/api/routes/voice.py`
   - Uses `_audio_storage` (`audio_id -> file_path`) to serve `/api/voice/audio/{audio_id}`.
+  - `_audio_storage` is backed by a disk-backed registry (`backend/services/AudioArtifactRegistry.py`) so audio IDs survive backend restarts.
   - Normalizes engine IDs; supports alias `xtts` -> `xtts_v2`.
   - Many engines write to `output_path` and return `None` (or `(None, metrics)`); treat a written file as
     success and still return a playable `audio_url`.
@@ -68,12 +79,7 @@ quality ledger.
 - **Wizard routes**: `backend/api/routes/voice_cloning_wizard.py`
   - Prefix: `/api/voice/clone/wizard` (used by
     `src/VoiceStudio.App/ViewModels/VoiceCloningWizardViewModel.cs`).
-
-## Serialization interoperability
-
-- Frontend `BackendClient` now uses `SnakeCaseJsonNamingPolicy` so C# requests/responses align with FastAPI's
-  snake_case fields (`profile_id`, `audio_id`, `word_timestamps`, etc.).
-- Backend `/api/engines` route mirrors `/api/engines/list` to support host discovery logic expecting the root path.
+  - Wizard job state is persisted via `backend/services/JobStateStore.py` (no longer in-memory only).
 
 ## Key enforcement hooks
 

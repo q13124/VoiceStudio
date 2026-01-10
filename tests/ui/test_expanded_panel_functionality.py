@@ -381,7 +381,7 @@ class TestAdvancedPanelInteractions:
                     first_profile.click()
                     time.sleep(0.5)
             except:
-                pass
+                ...
 
             # Switch to another panel
             timeline_button = driver.find_element(
@@ -462,7 +462,7 @@ class TestPanelErrorHandling:
                 assert empty_state is not None
             except:
                 # Empty state might not be visible if there's data
-                pass
+                ...
         except:
             pytest.skip("Panel error handling test requires automation IDs.")
 

@@ -52,11 +52,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -360,7 +360,7 @@ class SDXLEngine(EngineProtocol):
                     duration = time.perf_counter() - start_time
                     metrics.record_synthesis_time("sdxl", duration, cached=True)
                 except Exception:
-                    pass
+                    ...
                 return cached_image
             else:
                 self._cache_stats["misses"] += 1
@@ -441,7 +441,7 @@ class SDXLEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_synthesis_time("sdxl", duration, cached=False)
             except Exception:
-                pass
+                ...
 
             if output_path:
                 image.save(output_path)
@@ -459,7 +459,7 @@ class SDXLEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("sdxl", "generation_error")
             except Exception:
-                pass
+                ...
             return None
 
     def batch_generate(
@@ -608,7 +608,7 @@ class SDXLEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_synthesis_time("sdxl", duration, cached=False)
             except Exception:
-                pass
+                ...
 
             return all_images
 
@@ -621,7 +621,7 @@ class SDXLEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("sdxl", "batch_generation_error")
             except Exception:
-                pass
+                ...
             return [None] * len(prompts)
 
     def cleanup(self):

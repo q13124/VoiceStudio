@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.core.engines.router import router as engine_router_instance
+from backend.services.model_preflight import run_preflight
 
 from ..optimization import cache_response
 
@@ -108,7 +109,7 @@ class EngineRecommendationResponse(BaseModel):
 @router.get("/list")
 @cache_response(ttl=60)  # Cache for 60 seconds (engine list may change)
 async def list_engines() -> dict:
-    """List all available engines."""
+    """List all available engines (detailed endpoint)."""
     if not ENGINE_AVAILABLE or not engine_router:
         return {"engines": [], "available": False}
 
@@ -118,6 +119,30 @@ async def list_engines() -> dict:
     except Exception as e:
         logger.error(f"Error listing engines: {e}")
         return {"engines": [], "available": False, "error": str(e)}
+
+
+@router.get("")
+@cache_response(ttl=60)  # Root listing for host EngineManager compatibility
+async def get_engines() -> dict:
+    """
+    Root engine listing endpoint.
+
+    This provides the same payload shape as `/api/engines/list` so that
+    host-side clients (e.g. `EngineManager` in the desktop app) can call
+    `GET /api/engines` and receive:
+      { "engines": [...], "available": bool, "count": int }.
+    """
+    return await list_engines()
+
+
+@router.get("/preflight")
+async def preflight(auto_download: bool = True) -> dict:
+    """
+    Run model pre-flight checks (and optional auto-downloads for HF-backed models).
+
+    Returns a summary per engine with paths and download status.
+    """
+    return run_preflight(auto_download=auto_download)
 
 
 @router.post("/recommend", response_model=EngineRecommendationResponse)
@@ -182,14 +207,14 @@ async def recommend_engine(
                     else:
                         mos_estimate = float(mos_str)
                 except (ValueError, AttributeError):
-                    pass
+                    ...
 
             # Parse similarity estimate
             if "similarity_estimate" in quality_features:
                 try:
                     similarity_estimate = float(quality_features["similarity_estimate"])
                 except (ValueError, TypeError):
-                    pass
+                    ...
 
             # Parse naturalness estimate
             if "naturalness_estimate" in quality_features:
@@ -198,7 +223,7 @@ async def recommend_engine(
                         quality_features["naturalness_estimate"]
                     )
                 except (ValueError, TypeError):
-                    pass
+                    ...
 
             # Get speed estimate
             speed_estimate = quality_features.get("speed_estimate", "medium")
@@ -375,6 +400,7 @@ async def compare_engines(
 
 try:
     from backend.services.EngineConfigService import get_engine_config_service
+
     HAS_CONFIG_SERVICE = True
 except ImportError:
     HAS_CONFIG_SERVICE = False
@@ -393,8 +419,12 @@ class GPUSettingsRequest(BaseModel):
 
     enabled: Optional[bool] = Field(None, description="Enable GPU")
     device: Optional[str] = Field(None, description="Device (cuda, cpu, auto)")
-    fallback_to_cpu: Optional[bool] = Field(None, description="Fallback to CPU if GPU unavailable")
-    memory_fraction: Optional[float] = Field(None, ge=0.0, le=1.0, description="GPU memory fraction (0.0-1.0)")
+    fallback_to_cpu: Optional[bool] = Field(
+        None, description="Fallback to CPU if GPU unavailable"
+    )
+    memory_fraction: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="GPU memory fraction (0.0-1.0)"
+    )
 
 
 class EngineConfigUpdateRequest(BaseModel):
@@ -409,13 +439,15 @@ class EngineConfigUpdateRequest(BaseModel):
 async def get_engine_configuration() -> dict:
     """
     Get complete engine configuration.
-    
+
     Returns:
         Complete engine configuration including defaults, GPU settings, and engine-specific configs
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         config = config_service.get_all_config()
@@ -432,22 +464,26 @@ async def get_engine_configuration() -> dict:
 async def get_engine_config(engine_id: str) -> EngineConfigResponse:
     """
     Get configuration for a specific engine.
-    
+
     Args:
         engine_id: Engine ID
-    
+
     Returns:
         Engine configuration
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         config = config_service.get_engine_config(engine_id)
         return EngineConfigResponse(engine_id=engine_id, config=config)
     except Exception as e:
-        logger.error(f"Error getting engine configuration for {engine_id}: {e}", exc_info=True)
+        logger.error(
+            f"Error getting engine configuration for {engine_id}: {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to get engine configuration: {str(e)}"
         )
@@ -455,38 +491,41 @@ async def get_engine_config(engine_id: str) -> EngineConfigResponse:
 
 @router.put("/config/{engine_id}")
 async def update_engine_config(
-    engine_id: str,
-    request: EngineConfigUpdateRequest
+    engine_id: str, request: EngineConfigUpdateRequest
 ) -> EngineConfigResponse:
     """
     Update configuration for a specific engine.
-    
+
     Args:
         engine_id: Engine ID
         request: Configuration update request
-    
+
     Returns:
         Updated engine configuration
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
-        
+
         # Build update config
         update_config = {}
         if request.model_paths:
             update_config["model_paths"] = request.model_paths
         if request.parameters:
             update_config["parameters"] = request.parameters
-        
+
         config_service.set_engine_config(engine_id, update_config)
         config = config_service.get_engine_config(engine_id)
-        
+
         return EngineConfigResponse(engine_id=engine_id, config=config)
     except Exception as e:
-        logger.error(f"Error updating engine configuration for {engine_id}: {e}", exc_info=True)
+        logger.error(
+            f"Error updating engine configuration for {engine_id}: {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to update engine configuration: {str(e)}"
         )
@@ -497,13 +536,15 @@ async def update_engine_config(
 async def get_gpu_settings() -> dict:
     """
     Get global GPU settings.
-    
+
     Returns:
         GPU settings dictionary
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         gpu_settings = config_service.get_gpu_settings()
@@ -519,19 +560,21 @@ async def get_gpu_settings() -> dict:
 async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
     """
     Update global GPU settings.
-    
+
     Args:
         request: GPU settings update request
-    
+
     Returns:
         Updated GPU settings
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
-        
+
         # Build update dict (only include non-None values)
         update_settings = {}
         if request.enabled is not None:
@@ -542,10 +585,10 @@ async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
             update_settings["fallback_to_cpu"] = request.fallback_to_cpu
         if request.memory_fraction is not None:
             update_settings["memory_fraction"] = request.memory_fraction
-        
+
         config_service.set_gpu_settings(update_settings)
         gpu_settings = config_service.get_gpu_settings()
-        
+
         return gpu_settings
     except Exception as e:
         logger.error(f"Error updating GPU settings: {e}", exc_info=True)
@@ -559,13 +602,15 @@ async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
 async def get_default_engines() -> dict:
     """
     Get default engines for each task type.
-    
+
     Returns:
         Dictionary of task types to default engine IDs
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         defaults = config_service.config.get("defaults", {})
@@ -581,17 +626,19 @@ async def get_default_engines() -> dict:
 async def set_default_engine(task_type: str, engine_id: str) -> dict:
     """
     Set default engine for a task type.
-    
+
     Args:
         task_type: Task type (e.g., "tts", "image_gen", "video_gen")
         engine_id: Engine ID to set as default
-    
+
     Returns:
         Updated defaults
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         config_service.set_default_engine(task_type, engine_id)
@@ -608,23 +655,164 @@ async def set_default_engine(task_type: str, engine_id: str) -> dict:
 async def validate_configuration() -> dict:
     """
     Validate engine configuration.
-    
+
     Returns:
         Validation result with any errors
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(status_code=503, detail="Engine configuration service not available")
-    
+        raise HTTPException(
+            status_code=503, detail="Engine configuration service not available"
+        )
+
     try:
         config_service = get_engine_config_service()
         is_valid, errors = config_service.validate_config()
-        
-        return {
-            "valid": is_valid,
-            "errors": errors
-        }
+
+        return {"valid": is_valid, "errors": errors}
     except Exception as e:
         logger.error(f"Error validating configuration: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to validate configuration: {str(e)}"
         )
+
+
+# Engine Lifecycle Management
+
+
+@router.post("/{engine_id}/start")
+async def start_engine(engine_id: str, job_id: Optional[str] = None):
+    """
+    Start an engine instance.
+    """
+    if not ENGINE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Engine system not available")
+
+    try:
+        from app.core.runtime.engine_lifecycle import get_lifecycle_manager
+
+        lifecycle = get_lifecycle_manager()
+
+        # Check if engine is registered (or try to register from manifest via router)
+        # Note: Ideally engine should be registered. If not, we might need to load it.
+        # For now, assume it's registered or we can't start it.
+
+        engine = lifecycle.acquire_engine(engine_id, job_id=job_id, auto_start=True)
+        if not engine:
+            # Try to register via engine router if not found
+            if engine_router:
+                manifest = engine_router.get_manifest(engine_id)
+                if manifest:
+                    lifecycle.register_engine(engine_id, manifest)
+                    engine = lifecycle.acquire_engine(
+                        engine_id, job_id=job_id, auto_start=True
+                    )
+
+        if not engine:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to acquire/start engine {engine_id}"
+            )
+
+        return {"status": "started", "engine_id": engine_id, "port": engine.port}
+    except Exception as e:
+        logger.error(f"Error starting engine {engine_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to start engine: {str(e)}")
+
+
+@router.post("/{engine_id}/stop")
+async def stop_engine(engine_id: str, job_id: Optional[str] = None):
+    """
+    Stop an engine instance.
+    """
+    if not ENGINE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Engine system not available")
+
+    try:
+        from app.core.runtime.engine_lifecycle import get_lifecycle_manager
+
+        lifecycle = get_lifecycle_manager()
+
+        if job_id:
+            lifecycle.release_engine(engine_id, job_id)
+        else:
+            # Administrative stop: request graceful drain.
+            # If the engine is leased, it will stop after the lease is released.
+            # If unleased, it will drain/stop immediately.
+            lifecycle._request_drain(engine_id)  # noqa: SLF001 (internal lifecycle API)
+            return {"status": "drain_requested", "engine_id": engine_id}
+
+        return {"status": "released", "engine_id": engine_id, "job_id": job_id}
+
+    except Exception as e:
+        logger.error(f"Error stopping engine {engine_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to stop engine: {str(e)}")
+
+
+@router.get("/{engine_id}/status")
+async def get_engine_status(engine_id: str):
+    """
+    Get engine status.
+    """
+    if not ENGINE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Engine system not available")
+
+    try:
+        from app.core.runtime.engine_lifecycle import EngineState, get_lifecycle_manager
+
+        lifecycle = get_lifecycle_manager()
+
+        state = lifecycle.get_engine_state(engine_id)
+        status_str = state.name.lower() if state else "unknown"
+
+        # Map BUSY to RUNNING for frontend compatibility
+        if status_str == "busy":
+            status_str = "running"
+
+        return {
+            "engine_id": engine_id,
+            "state": status_str,
+            "available": status_str in ["healthy", "idle", "running", "busy"],
+        }
+    except Exception as e:
+        logger.error(f"Error getting engine status {engine_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get engine status: {str(e)}"
+        )
+
+
+@router.get("/{engine_id}/voices")
+async def get_engine_voices(engine_id: str):
+    """
+    Get voices available for an engine.
+    """
+    if not ENGINE_AVAILABLE or not engine_router:
+        return []
+
+    try:
+        # Get engine instance
+        # Note: We need to use get_engine_stats or similar, or just list voices if engine supports it.
+        # engine_router.get_engine returns the engine instance/adapter.
+
+        # Since get_engine might fail if engine is not running/loaded, we might need to load it first.
+        # But listing voices shouldn't require starting the engine process if possible (metadata).
+        # However, many engines need to be loaded to list voices.
+
+        # We can try to check if engine is running via lifecycle.
+        from app.core.runtime.engine_lifecycle import get_lifecycle_manager
+
+        lifecycle = get_lifecycle_manager()
+
+        # If engine is not running, we might check if we can get voices from manifest or cache?
+        # Typically engines expose get_voices.
+
+        # Let's try to get it. If it fails, return empty.
+        engine = engine_router.get_engine(
+            engine_id
+        )  # This might start it? No, router usually manages instances.
+
+        if engine and hasattr(engine, "get_voices"):
+            return engine.get_voices()
+
+        return []
+    except Exception as e:
+        logger.error(f"Error getting voices for {engine_id}: {e}")
+        return []

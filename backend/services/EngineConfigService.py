@@ -72,8 +72,12 @@ class EngineConfigService:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration structure."""
         # Get default models path
-        program_data = os.getenv("PROGRAMDATA", os.path.expanduser("~"))
-        models_base = Path(program_data) / "VoiceStudio" / "models"
+        env_models_root = os.getenv("VOICESTUDIO_MODELS_PATH")
+        if env_models_root:
+            models_base = Path(env_models_root)
+        else:
+            # Repo default (can be overridden by VOICESTUDIO_MODELS_PATH)
+            models_base = Path(r"E:\VoiceStudio\models")
 
         return {
             "defaults": {
@@ -155,7 +159,7 @@ class EngineConfigService:
 
         # Use default model path structure
         base_path = self.config.get("model_paths", {}).get(
-            "base", "%PROGRAMDATA%\\VoiceStudio\\models"
+            "base", "E:\\VoiceStudio\\models"
         )
         base_path = os.path.expandvars(base_path)
         return str(Path(base_path) / engine_id)

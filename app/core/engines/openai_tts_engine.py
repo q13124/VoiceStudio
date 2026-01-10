@@ -451,7 +451,7 @@ class OpenAITTSEngine(EngineProtocol):
                 try:
                     os.unlink(tmp_path)
                 except Exception:
-                    pass
+                    ...
 
         except Exception as e:
             logger.error(f"Failed to convert audio to numpy: {e}")

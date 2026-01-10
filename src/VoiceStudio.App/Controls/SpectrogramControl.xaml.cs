@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace VoiceStudio.App.Controls
@@ -16,7 +17,9 @@ namespace VoiceStudio.App.Controls
             InitializeComponent();
         }
 
-        public List<SpectrogramFrame> Frames { get; set; } = new();
+        // NOTE: Use non-generic IEnumerable to tolerate differing SpectrogramFrame types
+        // across panels during the Phase 0 Win2D-disabled stub period.
+        public IEnumerable Frames { get; set; } = new List<SpectrogramFrame>();
         public double ZoomLevel { get; set; } = 1.0;
         public double PlaybackPosition { get; set; } = -1.0;
     }

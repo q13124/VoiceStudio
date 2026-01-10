@@ -8,12 +8,13 @@ Compatible with:
 - PyTorch 2.2.2+cu121
 """
 
-import os
-import torch
-import numpy as np
-from typing import Optional, Dict, List, Tuple, Union
-from pathlib import Path
 import logging
+import os
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import torch
 
 # Optional quality metrics import
 try:
@@ -24,11 +25,9 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_cloning_quality,
-        enhance_voice_quality,
-        match_voice_profile
-    )
+    from ..audio.audio_utils import (enhance_voice_cloning_quality,
+                                     enhance_voice_quality,
+                                     match_voice_profile)
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -57,6 +56,7 @@ except ImportError:
 
 # Fallback: Tortoise-specific cache (for backward compatibility)
 from collections import OrderedDict
+
 _MODEL_CACHE: OrderedDict = OrderedDict()
 _VOICE_EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
 _QUALITY_PRESET_CACHE: Dict[str, Dict] = {}
@@ -508,7 +508,8 @@ class TortoiseEngine(EngineProtocol):
                     quality_metrics = calculate_all_metrics(
                         audio=processed_audio,
                         reference_audio=reference_audio,
-                        sample_rate=sample_rate
+                        sample_rate=sample_rate,
+                        include_ml_prediction=True,  # Include ML-based quality prediction
                     )
                 except Exception as e:
                     logger.warning(f"Quality metrics calculation failed: {e}")

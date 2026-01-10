@@ -71,7 +71,7 @@ namespace VoiceStudio.App.Controls
         public static readonly DependencyProperty MinChartHeightProperty =
             DependencyProperty.Register(nameof(MinChartHeight), typeof(double), typeof(MatplotlibControl), new PropertyMetadata(200.0));
 
-        private async Task LoadImageAsync()
+        private Task LoadImageAsync()
         {
             if (string.IsNullOrWhiteSpace(_imageUrl))
             {
@@ -79,7 +79,7 @@ namespace VoiceStudio.App.Controls
                 ChartImage.Visibility = Visibility.Collapsed;
                 EmptyStateText.Visibility = Visibility.Visible;
                 IsLoading = false;
-                return;
+                return Task.CompletedTask;
             }
 
             try
@@ -135,6 +135,8 @@ namespace VoiceStudio.App.Controls
                 EmptyStateText.Visibility = Visibility.Visible;
                 IsLoading = false;
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

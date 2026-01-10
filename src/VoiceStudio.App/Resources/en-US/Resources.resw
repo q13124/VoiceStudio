@@ -4,7 +4,7 @@
     VoiceStudio Quantum+ Resource File - English (US)
     This is the default locale resource file.
   -->
-  
+
   <!-- Button Verbs -->
   <data name="Button.Save" xml:space="preserve">
     <value>Save</value>
@@ -39,7 +39,7 @@
   <data name="Button.Retry" xml:space="preserve">
     <value>Retry</value>
   </data>
-  
+
   <!-- Panel Titles -->
   <data name="Panel.Profiles.Title" xml:space="preserve">
     <value>Voice Profiles</value>
@@ -164,7 +164,7 @@
   <data name="Panel.EnsembleSynthesis.DisplayName" xml:space="preserve">
     <value>Ensemble Synthesis</value>
   </data>
-  
+
   <!-- Error Messages -->
   <data name="Error.ProfileNotFound" xml:space="preserve">
     <value>Profile not found. Please check the profile ID and try again.</value>
@@ -190,7 +190,7 @@
   <data name="Error.DeleteFailed" xml:space="preserve">
     <value>Failed to delete. Please try again.</value>
   </data>
-  
+
   <!-- Success Messages -->
   <data name="Success.ProfileCreated" xml:space="preserve">
     <value>Profile created successfully</value>
@@ -207,7 +207,7 @@
   <data name="Success.Saved" xml:space="preserve">
     <value>Saved successfully</value>
   </data>
-  
+
   <!-- Toast Messages -->
   <data name="Toast.Success.ProfileCreated" xml:space="preserve">
     <value>Profile created successfully</value>
@@ -221,7 +221,7 @@
   <data name="Toast.Info.Processing" xml:space="preserve">
     <value>Processing... This may take a few moments.</value>
   </data>
-  
+
   <!-- Status Messages -->
   <data name="Status.Loading" xml:space="preserve">
     <value>Loading...</value>
@@ -235,7 +235,7 @@
   <data name="Status.Complete" xml:space="preserve">
     <value>Complete</value>
   </data>
-  
+
   <!-- Empty States -->
   <data name="EmptyState.NoProfiles.Title" xml:space="preserve">
     <value>No Profiles</value>
@@ -249,7 +249,7 @@
   <data name="EmptyState.NoProjects.Message" xml:space="preserve">
     <value>Create your first project to get started.</value>
   </data>
-  
+
   <!-- Tooltips -->
   <data name="Tooltip.Save" xml:space="preserve">
     <value>Save changes (Ctrl+S)</value>
@@ -260,7 +260,7 @@
   <data name="Tooltip.Refresh" xml:space="preserve">
     <value>Refresh data (F5)</value>
   </data>
-  
+
   <!-- Additional Panel Display Names -->
   <data name="Panel.VoiceSynthesis.DisplayName" xml:space="preserve">
     <value>Voice Synthesis</value>
@@ -1235,6 +1235,12 @@
   </data>
   <data name="Diagnostics.ErrorLogsDeleted" xml:space="preserve">
     <value>Removed {0} selected error log entr{1}</value>
+  </data>
+  <data name="Diagnostics.CrashBundleExported" xml:space="preserve">
+    <value>Crash bundle exported to {0}</value>
+  </data>
+  <data name="Diagnostics.ExportCrashBundleFailed" xml:space="preserve">
+    <value>Failed to export crash bundle</value>
   </data>
   <data name="Diagnostics.NoDescriptionAvailable" xml:space="preserve">
     <value>No description available</value>

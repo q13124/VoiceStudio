@@ -88,7 +88,7 @@ class TestKeyboardShortcuts:
                 assert not is_visible
             except:
                 # Command palette not found, which means it's closed
-                pass
+                ...
         except:
             pytest.skip("Escape key functionality automation IDs not set.")
 

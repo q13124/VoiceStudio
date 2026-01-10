@@ -1029,7 +1029,7 @@ def load_audio(file_path: Union[str, Path]) -> Tuple[np.ndarray, int]:
         # Ensure audio is 2D for stereo (samples, channels)
         if len(audio.shape) == 1:
             # Mono - keep as 1D
-            pass
+            ...
         elif len(audio.shape) == 2 and audio.shape[0] < audio.shape[1]:
             # Transpose if needed (librosa sometimes returns shape (channels, samples))
             audio = audio.T
@@ -1715,7 +1715,7 @@ def enhance_voice_cloning_quality(
             try:
                 enhanced = nr.reduce_noise(y=enhanced, sr=sample_rate)
             except Exception:
-                pass
+                ...
 
     # Step 3: Spectral smoothing for naturalness (if preserving prosody)
     if preserve_prosody and HAS_LIBROSA:
@@ -1771,7 +1771,7 @@ def enhance_voice_cloning_quality(
         try:
             enhanced = remove_artifacts(enhanced, sample_rate)
         except Exception:
-            pass
+            ...
 
     # Step 6: Advanced spectral enhancement (ultra mode)
     if enhancement_level == "ultra" and HAS_LIBROSA:
@@ -1839,7 +1839,7 @@ def enhance_voice_cloning_quality(
             if np.max(np.abs(enhanced)) > 0:
                 enhanced = enhanced / np.max(np.abs(enhanced)) * 0.95
         except Exception:
-            pass
+            ...
 
     return enhanced
 

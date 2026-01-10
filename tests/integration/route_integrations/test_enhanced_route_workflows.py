@@ -174,7 +174,7 @@ class TestAnalyticsQualityWorkflow:
         try:
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except AttributeError:
-            pass
+            ...
 
         # Step 2: Get quality explanation
         with patch("os.path.exists", return_value=True):
@@ -206,7 +206,7 @@ class TestAnalyticsQualityWorkflow:
         try:
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except AttributeError:
-            pass
+            ...
 
         with patch("os.path.exists", return_value=True):
             with patch(

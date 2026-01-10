@@ -32,6 +32,12 @@ flowchart TD
   integrate --> gateUpdate[GateUpdate]
 ```
 
+## Handoff record
+
+- Each change set adds one handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
+
 ---
 
 ## Workstreams (gate-ordered, voice cloning focus)
@@ -68,7 +74,7 @@ flowchart TD
   - `backend/api/routes/voice*.py`
 - **Proof runs**:
   - Voice workflow: import → transcribe (if used) → synthesize/convert → export
-  - Reference audio outputs plus engine configuration snapshot
+  - Baseline audio outputs plus engine configuration snapshot
 
 ### 4) Studio UX wiring for voice flows (Gate C/F)
 

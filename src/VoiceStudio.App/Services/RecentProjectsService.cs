@@ -237,7 +237,7 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Saves recent projects to local settings.
         /// </summary>
-        private async Task SaveRecentProjectsAsync()
+        private Task SaveRecentProjectsAsync()
         {
             try
             {
@@ -252,6 +252,8 @@ namespace VoiceStudio.App.Services
             {
                 // If saving fails, log but don't throw
             }
+
+            return Task.CompletedTask;
         }
     }
 

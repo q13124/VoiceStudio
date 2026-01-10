@@ -351,7 +351,7 @@ class ConnectionPool:
                 conn_info.connection.close()
                 self.total_connections_closed += 1
             except Exception:
-                pass
+                ...
             del self.pool[i]
             self.active_connections -= 1
 
@@ -381,7 +381,7 @@ class ConnectionPool:
                             try:
                                 conn_info.connection.close()
                             except Exception:
-                                pass
+                                ...
                             conn_info = None
                             continue
 
@@ -447,7 +447,7 @@ class ConnectionPool:
                                     conn.close()
                                     self.total_connections_closed += 1
                                 except Exception:
-                                    pass
+                                    ...
                                 self.active_connections -= 1
                         else:
                             # Connection failed health check, close it
@@ -456,7 +456,7 @@ class ConnectionPool:
                                 conn.close()
                                 self.total_connections_closed += 1
                             except Exception:
-                                pass
+                                ...
                             self.active_connections -= 1
                     else:
                         # Connection is unhealthy, close it
@@ -464,7 +464,7 @@ class ConnectionPool:
                             conn.close()
                             self.total_connections_closed += 1
                         except Exception:
-                            pass
+                            ...
                         if conn_info in self.pool:
                             self.pool.remove(conn_info)
                         self.active_connections -= 1
@@ -474,7 +474,7 @@ class ConnectionPool:
                     conn.close()
                     self.total_connections_closed += 1
                 except Exception:
-                    pass
+                    ...
 
     def get_stats(self) -> Dict[str, Any]:
         """Get connection pool statistics (enhanced)."""
@@ -539,7 +539,7 @@ class ConnectionPool:
                 try:
                     conn_info.connection.close()
                 except Exception:
-                    pass
+                    ...
             self.active_connections = 0
 
 

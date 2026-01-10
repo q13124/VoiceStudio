@@ -94,7 +94,7 @@ namespace VoiceStudio.App.Views.Panels
                 var menu = new MenuFlyout();
                 
                 var exportItem = new MenuFlyoutItem { Text = "Export Analysis" };
-                exportItem.Click += async (s, args) =>
+                exportItem.Click += (s, args) =>
                 {
                     try
                     {

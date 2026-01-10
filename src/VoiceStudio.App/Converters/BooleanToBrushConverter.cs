@@ -1,37 +1,70 @@
 using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 
 namespace VoiceStudio.App.Converters;
 
 /// <summary>
-/// Converter to convert boolean to Brush (Brush for true, different Brush for false).
-/// Returns green brush for true, red/gray brush for false.
+/// Converts a boolean to a Brush.
+/// Prefer setting TrueBrush/FalseBrush/NullBrush from XAML resources (VSQ tokens).
 /// </summary>
-public class BooleanToBrushConverter : IValueConverter
+public sealed class BooleanToBrushConverter : IValueConverter
 {
+    public Brush? TrueBrush { get; set; }
+    public Brush? FalseBrush { get; set; }
+    public Brush? NullBrush { get; set; }
+
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool boolValue)
+        if (value is bool b)
         {
-            // Return green for true (initialized), red/gray for false (not initialized)
-            if (boolValue)
-            {
-                // Plugin is initialized - green
-                return new SolidColorBrush(Microsoft.UI.Colors.Green);
-            }
-            else
-            {
-                // Plugin is not initialized - red/orange
-                return new SolidColorBrush(Microsoft.UI.Colors.Orange);
-            }
+            return b ? ResolveTrueBrush() : ResolveFalseBrush();
         }
-        // Default to gray for unknown state
-        return new SolidColorBrush(Microsoft.UI.Colors.Gray);
+
+        return ResolveNullBrush();
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException("BooleanToBrushConverter does not support ConvertBack");
+        throw new NotSupportedException();
+    }
+
+    private Brush ResolveTrueBrush()
+    {
+        return TrueBrush
+            ?? TryGetAppBrush("VSQ.Success.Brush")
+            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+    }
+
+    private Brush ResolveFalseBrush()
+    {
+        return FalseBrush
+            ?? TryGetAppBrush("VSQ.Warn.Brush")
+            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+    }
+
+    private Brush ResolveNullBrush()
+    {
+        return NullBrush
+            ?? TryGetAppBrush("VSQ.Text.SecondaryBrush")
+            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+    }
+
+    private static Brush? TryGetAppBrush(string key)
+    {
+        try
+        {
+            var resources = Application.Current?.Resources;
+            if (resources != null && resources.ContainsKey(key))
+            {
+                return resources[key] as Brush;
+            }
+        }
+        catch
+        {
+        }
+
+        return null;
     }
 }

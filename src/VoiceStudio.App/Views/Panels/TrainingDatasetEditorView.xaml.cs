@@ -149,6 +149,9 @@ namespace VoiceStudio.App.Views.Panels
                         if (result == ContentDialogResult.Primary)
                         {
                             var audioFileToRemove = (DatasetAudioFileItem)audioFile;
+                            if (ViewModel.DatasetDetail?.AudioFiles == null)
+                                return;
+
                             var audioFileIndex = ViewModel.DatasetDetail.AudioFiles.IndexOf(audioFileToRemove);
 
                             ViewModel.DatasetDetail.AudioFiles.Remove(audioFileToRemove);

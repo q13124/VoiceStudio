@@ -1,6 +1,6 @@
 # Quality Ledger — Single Source of Truth
 
-Last updated: 2026-01-01  
+Last updated: 2025-12-26  
 Owner: [OVERSEER]
 
 This file is the canonical ledger for **every** bug, crash, build failure, missing feature, UX regression, rule violation, or architecture drift item.
@@ -65,10 +65,10 @@ Use exactly one:
 | VS-0014 | DONE        | S2 Major    | D    | Core Platform Engineer   | RUNTIME         | Job Runtime hardening                                                         |
 | VS-0015 | DONE        | S2 Major    | D    | Core Platform Engineer   | STORAGE         | ProjectStore storage migration verification                                   |
 | VS-0016 | DONE        | S2 Major    | E    | Core Platform Engineer   | ENGINE          | Standardize Engine Interface                                                  |
-| VS-0017 | DONE        | S2 Major    | E    | Core Platform Engineer   | ENGINE          | Engine Manager Service Implementation                                         |
-| VS-0018 | DONE        | S0 Blocker  | B    | System Architect         | BUILD,RULES     | RuleGuard violation in /api/engines stop endpoint (remove pass)               |
-| VS-0019 | DONE        | S2 Major    | C    | Overseer                 | RULES,BUILD     | Worker 3 role absence and task reassignment                                   |
-| VS-0020 | IN_PROGRESS | S1 Critical | C    | Build & Tooling Engineer | BUILD,PACKAGING | Release build configuration hotfix assignment                                 |
+| VS-0019 | DONE        | S2 Major    | D    | Core Platform Engineer   | STORAGE,RUNTIME | Backend preflight readiness report (paths + model root)                       |
+| VS-0020 | DONE        | S2 Major    | D    | Core Platform Engineer   | STORAGE,AUDIO   | Durable audio artifact registry (audio_id -> file_path)                       |
+| VS-0021 | DONE        | S2 Major    | D    | Core Platform Engineer   | RUNTIME,STORAGE | Persist voice cloning wizard job state across restart                         |
+| VS-0022 | DONE        | S3 Minor    | D    | Core Platform Engineer   | RUNTIME,PLUGINS | Deterministic ffmpeg discovery (env override + known locations)               |
 
 ---
 
@@ -161,216 +161,150 @@ Use exactly one:
 - Related entries:
   - VS-0003 (Installer package verification and upgrade/rollback path for Gate H)
 
-### VS-0017 — Engine Manager Service Implementation
+---
+
+### VS-0019 — Backend preflight readiness report (paths + model root)
 
 **State:** DONE  
 **Severity:** S2 Major  
-**Gate:** E  
+**Gate:** D  
 **Owner role:** Core Platform Engineer  
 **Reviewer role:** System Architect  
-**Categories:** ENGINE
+**Categories:** STORAGE, RUNTIME  
+**Introduced:** 2026-01-07  
+**Last verified:** 2026-01-07 (Windows 10.0.26200)
 
 **Summary**
 
-- Implements frontend engine discovery/orchestration and a backend adapter bridging to `/api/engines/*` using the standardized engine interfaces.
+- Added `/api/health/preflight` to report operator-readable readiness for local-first operation:
+  - projects root
+  - cache root
+  - model root (`VOICESTUDIO_MODELS_PATH`)
+  - audio registry directory
+  - ffmpeg presence (report-only)
+- Hardened `/api/health/*` to be **safe-by-default** (avoid importing native ML stacks unless explicitly enabled).
 
-**Reproduction / Proof**
+**Change set**
 
-- See `docs/governance/overseer/handoffs/VS-0017.md`.
+- Files changed:
+  - `backend/api/routes/health.py`
+  - `tests/unit/backend/api/routes/test_health.py`
+
+**Proof run**
+
+- Commands executed:
+  - `python -m pytest "e:\\VoiceStudio\\tests\\unit\\backend\\api\\routes\\test_health.py" -q`
+- Result:
+  - ✅ `16 passed`
 
 ---
 
-### VS-0018 — RuleGuard violation in /api/engines stop endpoint (remove pass)
+### VS-0020 — Durable audio artifact registry (audio_id -> file_path)
 
 **State:** DONE  
-**Severity:** S0 Blocker  
-**Gate:** B  
-**Owner role:** System Architect  
+**Severity:** S2 Major  
+**Gate:** D  
+**Owner role:** Core Platform Engineer  
 **Reviewer role:** System Architect  
-**Categories:** BUILD, RULES
+**Categories:** STORAGE, AUDIO  
+**Introduced:** 2026-01-07  
+**Last verified:** 2026-01-07 (Windows 10.0.26200)
 
 **Summary**
 
-- Replaces a RuleGuard-blocking `pass` in `backend/api/routes/engines.py` stop endpoint with explicit drain vs lease-release behavior to keep Gate B clean.
+- Implemented a disk-backed audio artifact registry that persists `audio_id -> cached_file_path` under the cache root.
+- Updated `backend/api/routes/voice.py` to register synthesized outputs via the content-addressed audio cache and persist the mapping.
+- Updated `backend/api/routes/rvc.py` to register outputs via the shared voice registry (durable across restart).
 
-**Reproduction / Proof**
+**Change set**
 
-- See `docs/governance/overseer/handoffs/VS-0018.md`.
+- Files changed:
+  - `backend/services/AudioArtifactRegistry.py`
+  - `backend/api/routes/voice.py`
+  - `backend/api/routes/rvc.py`
+  - `tests/unit/backend/services/test_audio_artifact_registry.py`
+
+**Proof run**
+
+- Commands executed:
+  - `python -m pytest "e:\\VoiceStudio\\tests\\unit\\backend\\services\\test_audio_artifact_registry.py" -q`
+- Result:
+  - ✅ `1 passed`
 
 ---
 
-### VS-0019 — Worker 3 role absence and task reassignment
+### VS-0021 — Persist voice cloning wizard job state across restart
 
-**State:** DONE
-**Severity:** S2 Major
-**Gate:** C
-**Owner role:** Overseer
-**Reviewer role:** System Architect
-**Categories:** RULES, BUILD
-**Introduced:** 2025-01-28
-**Last verified:** 2025-01-28
+**State:** DONE  
+**Severity:** S2 Major  
+**Gate:** D  
+**Owner role:** Core Platform Engineer  
+**Reviewer role:** System Architect  
+**Categories:** RUNTIME, STORAGE  
+**Introduced:** 2026-01-07  
+**Last verified:** 2026-01-07 (Windows 10.0.26200)
 
 **Summary**
 
-- Worker 3 (Testing/Quality/Documentation) role is no longer available for task execution.
-- Outstanding Worker 3 tasks must be reassigned to maintain project momentum.
-
-**Environment**
-
-- Role system: 3-Worker System (Worker 1: Backend/Engines, Worker 2: UI/UX, Worker 3: Testing/Quality/Docs)
-- Current status: Worker 3 absent, tasks blocked
-
-**Reproduction**
-
-1. Review `docs/governance/overseer/NEXT_STEPS_ACTION_PLAN_2025-01-28.md`
-2. Check for Worker 3 assigned tasks (UI test framework setup, manual installer testing)
-3. Confirm Worker 3 is unavailable for execution
-
-**Expected**
-
-- Worker 3 tasks reassigned to appropriate roles per `Recovery Plan/ROLE_SYSTEM_AND_OVERSEER_PROTOCOL.md`
-
-**Actual**
-
-- Worker 3 tasks remain unassigned, blocking progress
-
-**Evidence**
-
-- Worker 3 referenced in action plan but unavailable
-- Release Engineer confirms cannot complete VS-0003/VS-0012 without Release build
-- Build & Tooling Engineer charter includes test infrastructure setup
-
-**Suspected root cause**
-
-- Worker 3 role execution capacity reduced, requiring role protocol adaptation
-
-**Fix plan (small tasks)**
-
-- [x] Reassign UI test framework setup (TASK-004 dependency) to Build & Tooling Engineer
-- [x] Confirm installer/update testing (TASK-002/TASK-003) remains with Release Engineer
-- [x] Update governance docs to reflect new ownership
-- [x] Assign Build & Tooling Engineer to deliver Release configuration hotfix
+- Replaced in-memory-only wizard job tracking with a disk-backed store:
+  - `backend/services/JobStateStore.py` persists `job_id -> job_payload` under the cache root (`VOICESTUDIO_CACHE_DIR/jobs/...`).
+  - `backend/api/routes/voice_cloning_wizard.py` now persists updates on every state/progress mutation.
+- On backend restart, any wizard jobs left in `processing` are marked `failed` with a deterministic error message.
 
 **Change set**
 
 - Files changed:
-  - `Recovery Plan/QUALITY_LEDGER.md` (this entry)
-- Notes:
-  - VS-0019 created to track Worker 3 absence and task reassignment
-  - Maintains single source of truth for role changes
+  - `backend/services/JobStateStore.py`
+  - `backend/api/routes/voice_cloning_wizard.py`
+  - `tests/unit/backend/services/test_job_state_store.py`
 
-**Proof run (required)**
+**Proof run**
 
 - Commands executed:
-  - Reviewed role charters in `Recovery Plan/ROLE_SYSTEM_AND_OVERSEER_PROTOCOL.md`
-  - Confirmed Build & Tooling Engineer scope includes test infrastructure
-  - Verified Release Engineer scope unchanged for packaging tasks
+  - `python -m pytest "e:\\VoiceStudio\\tests\\unit\\backend\\services\\test_job_state_store.py" -q`
+  - `python -m pytest "e:\\VoiceStudio\\tests\\unit\\backend\\api\\routes\\test_voice_cloning_wizard.py" -q`
 - Result:
-  - UI test framework setup reassigned to Build & Tooling Engineer
-  - Installer testing confirmed under Release Engineer
-  - Governance docs updated to reflect assignments
+  - ✅ `1 passed`
+  - ✅ `4 passed`
 
-**Regression / prevention**
+---
 
-- Rules added to ledger: Always log role changes as RULES category entries
-- Future role absences tracked in ledger with reassignment rationale
+### VS-0022 — Deterministic ffmpeg discovery (env override + known locations)
 
-**Links**
-
-- Related entries:
-  - VS-0003 (Release Engineer scope unchanged)
-  - VS-0012 (Release Engineer scope unchanged)
-- Related docs:
-  - `docs/governance/overseer/NEXT_STEPS_ACTION_PLAN_2025-01-28.md`
-
-### VS-0020 — Release build configuration hotfix assignment
-
-**State:** IN_PROGRESS
-**Severity:** S1 Critical
-**Gate:** C
-**Owner role:** Build & Tooling Engineer
-**Reviewer role:** Overseer
-**Categories:** BUILD, PACKAGING
-**Introduced:** 2025-01-28
-**Last verified:** 2025-01-28
+**State:** DONE  
+**Severity:** S3 Minor  
+**Gate:** D  
+**Owner role:** Core Platform Engineer  
+**Reviewer role:** System Architect  
+**Categories:** RUNTIME, PLUGINS  
+**Introduced:** 2026-01-07  
+**Last verified:** 2026-01-07 (Windows 10.0.26200)
 
 **Summary**
 
-- Release Engineer cannot complete VS-0003 (installer verification) or VS-0012 (launch crash) without a working Release binary.
-- Build & Tooling Engineer must deliver Release configuration hotfix to unblock packaging and launch testing.
-
-**Environment**
-
-- Build configurations: Debug (works), Release (broken)
-- Required for: VS-0003 installer testing, VS-0012 launch verification
-- Blocking roles: Release Engineer (packaging), potentially UI test framework
-
-**Reproduction**
-
-1. Build Debug configuration: `dotnet build "E:\VoiceStudio\VoiceStudio.sln" -c Debug -p:Platform=x64`
-2. Build Release configuration: `dotnet build "E:\VoiceStudio\VoiceStudio.sln" -c Release -p:Platform=x64`
-3. Compare: Debug succeeds, Release fails
-
-**Expected**
-
-- Release build succeeds with same output quality as Debug
-- Release binary launches without COMException 0x80040154
-
-**Actual**
-
-- Release build fails or produces non-functional binary
-- Release Engineer blocked from installer and launch testing
-
-**Evidence**
-
-- Release Engineer statement: "I can?t produce an installer artifact or run the install ? launch ? upgrade ? rollback proof without a working Release binary"
-- Gate C still TRIAGE on VS-0012 due to launch failure
-
-**Suspected root cause**
-
-- Release configuration has different optimization settings or missing dependencies compared to Debug
-- Possible: different code paths, missing conditional compilation, or packaging differences
-
-**Fix plan (small tasks)**
-
-- [ ] Investigate Release vs Debug build differences
-- [ ] Identify specific Release configuration issues
-- [ ] Apply hotfix to make Release build functional
-- [ ] Verify Release binary launches successfully
-- [ ] Confirm Release build matches Debug quality
+- Centralized ffmpeg discovery in `app/core/utils/native_tools.py`:
+  - Supports explicit override via `VOICESTUDIO_FFMPEG_PATH`.
+  - Falls back to PATH and common Windows install locations.
+- Updated call sites to use the centralized lookup:
+  - `app/core/engines/ffmpeg_ai_engine.py`
+  - `plugins/audio_tools/plugin.py`
+- Updated backend preflight to surface `VOICESTUDIO_FFMPEG_PATH` if set.
 
 **Change set**
 
 - Files changed:
-  - `VoiceStudio.sln` (if needed)
-  - `Directory.Build.props` (if needed)
-  - `Directory.Build.targets` (if needed)
-- Notes:
-  - VS-0020 created to track Release build hotfix assignment
-  - Unblocks VS-0003 and VS-0012 completion
+  - `app/core/utils/native_tools.py`
+  - `app/core/engines/ffmpeg_ai_engine.py`
+  - `plugins/audio_tools/plugin.py`
+  - `backend/api/routes/health.py`
+  - `tests/unit/core/utils/test_native_tools.py`
 
-**Proof run (required)**
+**Proof run**
 
 - Commands executed:
-  - `dotnet build "E:\VoiceStudio\VoiceStudio.sln" -c Release -p:Platform=x64`
-  - `Start-Process "E:\VoiceStudio\.buildlogs\x64\Release\net8.0-windows10.0.19041.0\VoiceStudio.App.exe"`
+  - `python -m pytest "e:\\VoiceStudio\\tests\\unit\\core\\utils\\test_native_tools.py" -q`
 - Result:
-  - Build completes successfully
-  - Process launches and window appears without COMException
-
-**Regression / prevention**
-
-- CI must verify both Debug and Release builds succeed
-- Release configuration changes require dual verification
-
-**Links**
-
-- Related entries:
-  - VS-0003 (blocked until Release build works)
-  - VS-0012 (blocked until Release build works)
-  - VS-0019 (Worker 3 reassignment context)
-- Related docs:
-  - Build logs in `.buildlogs/`
+  - ✅ `1 passed`
 
 ## Entry template (copy/paste)
 

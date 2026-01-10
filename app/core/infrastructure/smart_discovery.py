@@ -201,7 +201,7 @@ class SmartDiscovery:
                         mos_val = float(mos_str)
                     score += mos_val * 0.4
                 except (ValueError, AttributeError):
-                    pass
+                    ...
 
             # Capability match
             engine_caps = manifest.get("capabilities", [])

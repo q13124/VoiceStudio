@@ -400,17 +400,13 @@ class FFmpegAIEngine(EngineProtocol):
             raise RuntimeError(f"Failed to upscale video: {e}")
 
     def _find_ffmpeg(self) -> Optional[str]:
-        """Find FFmpeg binary in system PATH."""
+        """Find FFmpeg binary deterministically."""
         try:
-            result = subprocess.run(
-                ["ffmpeg", "-version"], capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                return "ffmpeg"
-        except FileNotFoundError:
-            pass
+            from ..utils.native_tools import find_ffmpeg
 
-        return None
+            return find_ffmpeg()
+        except Exception:
+            return None
 
     def _check_ffmpeg(self) -> bool:
         """Check if FFmpeg is available."""
@@ -483,7 +479,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("ffmpeg_ai", "transcode_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking
@@ -555,7 +551,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("ffmpeg_ai", "upscale_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

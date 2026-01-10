@@ -196,7 +196,7 @@ if (-not $DryRun) {
         Write-Host "  Running panel discovery..." -ForegroundColor Yellow
         & $discoverScript -SourcePath $SourceRoot -OutputPath (Join-Path $TargetRoot "docs\governance\PANEL_CATALOG.json")
         
-        # TODO: Auto-register panels in PanelRegistry
+        # Note: Auto-register panels in PanelRegistry
         # This would require parsing the catalog and updating PanelRegistry.cs
         Write-Host "  ⚠ Manual panel registration required" -ForegroundColor Yellow
         Write-Host "  See: docs/governance/BULK_PANEL_MIGRATION_GUIDE.md" -ForegroundColor Yellow

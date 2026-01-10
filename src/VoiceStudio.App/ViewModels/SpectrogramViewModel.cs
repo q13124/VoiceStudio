@@ -40,16 +40,16 @@ namespace VoiceStudio.App.ViewModels
         private int nFft = 2048;
 
         [ObservableProperty]
-        private double? frequencyMin;
+        private double frequencyMin = double.NaN;
 
         [ObservableProperty]
-        private double? frequencyMax;
+        private double frequencyMax = double.NaN;
 
         [ObservableProperty]
-        private double? timeStart;
+        private double timeStart = double.NaN;
 
         [ObservableProperty]
-        private double? timeEnd;
+        private double timeEnd = double.NaN;
 
         [ObservableProperty]
         private bool logScale = true;
@@ -131,14 +131,14 @@ namespace VoiceStudio.App.ViewModels
                 queryParams.Add("window_size", WindowSize.ToString());
                 queryParams.Add("hop_length", HopLength.ToString());
                 queryParams.Add("n_fft", NFft.ToString());
-                if (FrequencyMin.HasValue)
-                    queryParams.Add("frequency_min", FrequencyMin.Value.ToString());
-                if (FrequencyMax.HasValue)
-                    queryParams.Add("frequency_max", FrequencyMax.Value.ToString());
-                if (TimeStart.HasValue)
-                    queryParams.Add("time_start", TimeStart.Value.ToString());
-                if (TimeEnd.HasValue)
-                    queryParams.Add("time_end", TimeEnd.Value.ToString());
+                if (!double.IsNaN(FrequencyMin))
+                    queryParams.Add("frequency_min", FrequencyMin.ToString());
+                if (!double.IsNaN(FrequencyMax))
+                    queryParams.Add("frequency_max", FrequencyMax.ToString());
+                if (!double.IsNaN(TimeStart))
+                    queryParams.Add("time_start", TimeStart.ToString());
+                if (!double.IsNaN(TimeEnd))
+                    queryParams.Add("time_end", TimeEnd.ToString());
                 queryParams.Add("log_scale", LogScale.ToString().ToLower());
 
                 var queryString = string.Join("&",
@@ -200,15 +200,15 @@ namespace VoiceStudio.App.ViewModels
                     window_size = WindowSize,
                     hop_length = HopLength,
                     n_fft = NFft,
-                    frequency_range = (FrequencyMin.HasValue || FrequencyMax.HasValue) ? new
+                    frequency_range = (!double.IsNaN(FrequencyMin) || !double.IsNaN(FrequencyMax)) ? new
                     {
-                        min = FrequencyMin ?? 0.0,
-                        max = FrequencyMax ?? 22050.0
+                        min = double.IsNaN(FrequencyMin) ? 0.0 : FrequencyMin,
+                        max = double.IsNaN(FrequencyMax) ? 22050.0 : FrequencyMax
                     } : null,
-                    time_range = (TimeStart.HasValue || TimeEnd.HasValue) ? new
+                    time_range = (!double.IsNaN(TimeStart) || !double.IsNaN(TimeEnd)) ? new
                     {
-                        start = TimeStart ?? 0.0,
-                        end = TimeEnd ?? 10.0
+                        start = double.IsNaN(TimeStart) ? 0.0 : TimeStart,
+                        end = double.IsNaN(TimeEnd) ? 10.0 : TimeEnd
                     } : null,
                     color_scheme = SelectedColorScheme,
                     show_phase = ShowPhase,

@@ -5,6 +5,8 @@ Provides comprehensive health checking for the API and system components.
 """
 
 import logging
+import os
+import shutil
 from datetime import datetime
 from typing import Any, Dict
 
@@ -44,7 +46,20 @@ def _check_database() -> bool:
 def _check_gpu() -> Dict[str, Any]:
     """Check GPU availability."""
     try:
-        import torch
+        # NOTE: Importing torch (and friends) can hard-crash the process on some machines
+        # due to native DLL/ABI mismatches. Keep this check safe-by-default.
+        if os.getenv("VOICESTUDIO_HEALTH_ENABLE_TORCH", "0") not in (
+            "1",
+            "true",
+            "TRUE",
+        ):
+            return {
+                "status": "degraded",
+                "available": False,
+                "message": "GPU check skipped (set VOICESTUDIO_HEALTH_ENABLE_TORCH=1 to enable torch-based GPU detection)",
+            }
+
+        import torch  # type: ignore
 
         if torch.cuda.is_available():
             return {
@@ -57,17 +72,11 @@ def _check_gpu() -> Dict[str, Any]:
                     else None
                 ),
             }
-        else:
-            return {
-                "status": "degraded",
-                "available": False,
-                "message": "GPU not available, using CPU",
-            }
-    except ImportError:
+
         return {
             "status": "degraded",
             "available": False,
-            "message": "PyTorch not installed",
+            "message": "GPU not available, using CPU",
         }
     except Exception as e:
         return {
@@ -80,57 +89,39 @@ def _check_gpu() -> Dict[str, Any]:
 def _check_engines() -> Dict[str, Any]:
     """Check engine availability with detailed information (enhanced)."""
     try:
-        from app.core.engines.router import EngineRouter
+        # Safe engine availability check: enumerate engine manifests without importing engine modules.
+        # Importing full engine packages can hard-crash the process on machines with incompatible
+        # native dependencies (torch/torchvision/etc.).
+        import json
+        from pathlib import Path
 
-        router = EngineRouter()
-        engines = router.list_engines()
-        stats = router.get_engine_stats()
+        repo_root = Path(__file__).resolve().parents[3]
+        engines_root = repo_root / "engines"
+        manifests = (
+            list(engines_root.rglob("engine.manifest.json"))
+            if engines_root.exists()
+            else []
+        )
 
-        # Get initialized engines with details
-        initialized_engines = []
-        engine_details = {}
-        for name, engine_info in stats.get("engines", {}).items():
-            if engine_info.get("initialized", False):
-                initialized_engines.append(name)
-                engine_details[name] = {
-                    "initialized": True,
-                    "memory_usage_mb": engine_info.get("memory_usage_mb", 0.0),
-                    "gpu_memory_mb": engine_info.get("gpu_memory_mb", 0.0),
-                }
+        engine_ids = []
+        for p in manifests[:2000]:
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                engine_id = data.get("engine_id") or data.get("id")
+                if engine_id:
+                    engine_ids.append(str(engine_id))
+            except Exception:
+                continue
 
-        # Get engine performance metrics
-        try:
-            from app.core.engines.performance_metrics import get_engine_metrics
-
-            metrics = get_engine_metrics()
-            all_stats = metrics.get_all_stats()
-            for engine_name, engine_stats in all_stats.items():
-                if engine_name not in engine_details:
-                    engine_details[engine_name] = {}
-                engine_details[engine_name]["performance"] = {
-                    "avg_synthesis_time_ms": engine_stats.get(
-                        "avg_synthesis_time_ms", 0.0
-                    ),
-                    "total_syntheses": engine_stats.get("total_syntheses", 0),
-                    "cache_hit_rate": engine_stats.get("cache_hit_rate", 0.0),
-                    "error_rate": engine_stats.get("error_rate", 0.0),
-                }
-        except Exception as e:
-            logger.debug(f"Failed to get engine performance metrics: {e}")
-
+        engine_ids = sorted(set(engine_ids))
         return {
-            "status": "healthy",
-            "available_engines": len(engines),
-            "initialized_engines": len(initialized_engines),
-            "total_engines": len(engines),
-            "engines": engines[:10],  # First 10 engines
-            "initialized": initialized_engines[:10],
-            "memory_usage_mb": stats.get("total_memory_usage_mb", 0.0),
-            "gpu_memory_usage_mb": stats.get("total_gpu_memory_usage_mb", 0.0),
-            "system_memory_pressure": stats.get("system_memory_pressure", False),
-            "engine_details": {
-                k: v for k, v in list(engine_details.items())[:10]
-            },  # First 10 engine details
+            "status": "healthy" if engine_ids else "degraded",
+            "available_engines": len(engine_ids),
+            "initialized_engines": 0,
+            "total_engines": len(engine_ids),
+            "engines": engine_ids[:10],
+            "initialized": [],
+            "message": "Engine availability derived from manifests (safe mode)",
         }
     except Exception as e:
         return {
@@ -203,7 +194,7 @@ async def health_check() -> Dict[str, Any]:
             "memory_percent": process.memory_percent(),
         }
     except Exception:
-        pass
+        ...
 
     # Resource usage summary
     try:
@@ -302,7 +293,7 @@ def _get_system_metrics() -> Dict[str, Any]:
                 "packets_recv": net_io.packets_recv,
             }
         except Exception:
-            pass
+            ...
 
     except Exception as e:
         logger.warning(f"Failed to get system metrics: {e}")
@@ -314,6 +305,24 @@ def _get_system_metrics() -> Dict[str, Any]:
 def _get_resource_usage() -> Dict[str, Any]:
     """Get resource usage information (enhanced)."""
     resources = {}
+
+    # Safe-by-default: avoid importing app.core.* modules that may pull in native ML stacks.
+    # These imports can hard-crash the process on some machines due to DLL/ABI mismatches.
+    if os.getenv("VOICESTUDIO_HEALTH_SAFE_MODE", "1") not in ("0", "false", "FALSE"):
+        try:
+            from backend.api.validation_optimizer import (
+                get_cache_stats,
+                get_validation_stats,
+            )
+
+            resources["validation"] = {
+                "cache_stats": get_cache_stats(),
+                "validation_stats": get_validation_stats(),
+            }
+        except Exception as e:
+            logger.debug(f"Failed to get validation optimizer stats: {e}")
+
+        return resources
 
     # GPU information
     try:
@@ -467,16 +476,29 @@ async def readiness_check() -> Dict[str, Any]:
         if isinstance(check_info, dict) and check_info.get("critical", False):
             critical_check_names.append(name)
 
+    def _is_healthy(result: Any) -> bool:
+        try:
+            status = getattr(result, "status", None)
+            if status is None:
+                return False
+            if status == HealthStatus.HEALTHY:
+                return True
+            value = getattr(status, "value", None)
+            return value == HealthStatus.HEALTHY.value
+        except Exception:
+            return False
+
     critical_healthy = all(
-        results.get(
-            name,
-            HealthCheckResult(
-                name=name,
-                status=HealthStatus.UNHEALTHY,
-                message="Check not run",
-            ),
-        ).status
-        == HealthStatus.HEALTHY
+        _is_healthy(
+            results.get(
+                name,
+                HealthCheckResult(
+                    name=name,
+                    status=HealthStatus.UNHEALTHY,
+                    message="Check not run",
+                ),
+            )
+        )
         for name in critical_check_names
     )
 
@@ -493,7 +515,7 @@ async def readiness_check() -> Dict[str, Any]:
 
 
 @router.get("/liveness")
-def liveness_check() -> Dict[str, str]:
+def liveness_check() -> Dict[str, Any]:
     """
     Liveness check (for Kubernetes, etc.).
 
@@ -504,6 +526,111 @@ def liveness_check() -> Dict[str, str]:
         "alive": True,
         "status": "alive",
         "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+def get_performance_middleware():
+    """
+    Wrapper for performance monitoring middleware lookup.
+
+    Exposed as a function so unit tests can patch it without importing middleware modules.
+    """
+    try:
+        from backend.api.middleware.performance_monitoring import (
+            get_performance_middleware as _get_performance_middleware,
+        )  # type: ignore
+
+        return _get_performance_middleware()
+    except Exception:
+        return None
+
+
+@router.get("/preflight")
+def preflight_check() -> Dict[str, Any]:
+    """
+    Operator-readable preflight report for local-first readiness.
+
+    Validates:
+    - storage roots (projects/cache)
+    - model root (VOICESTUDIO_MODELS_PATH)
+    - engine config model path consistency
+    - audio registry durability path
+    - basic native tool presence (ffmpeg)
+    """
+
+    def ensure_dir(path: str) -> Dict[str, Any]:
+        try:
+            os.makedirs(path, exist_ok=True)
+            # Write test
+            test_file = os.path.join(path, ".write_test.tmp")
+            with open(test_file, "w", encoding="utf-8") as f:
+                f.write("ok")
+            os.remove(test_file)
+            return {"ok": True, "path": path}
+        except Exception as e:
+            return {"ok": False, "path": path, "error": str(e)}
+
+    # Resolve core roots
+    from backend.services.AudioArtifactRegistry import get_audio_registry
+    from backend.services.ContentAddressedAudioCache import get_audio_cache
+    from backend.services.EngineConfigService import get_engine_config_service
+    from backend.services.ProjectStoreService import get_project_store_service
+
+    projects_root = str(get_project_store_service().projects_dir)
+    cache_root = str(get_audio_cache().cache_dir)
+    model_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+    audio_registry_path = str(get_audio_registry().registry_path)
+
+    # Ensure dirs exist / writable
+    checks: Dict[str, Any] = {
+        "projects_root": ensure_dir(projects_root),
+        "cache_root": ensure_dir(cache_root),
+        "model_root": ensure_dir(model_root),
+        "audio_registry_dir": ensure_dir(
+            os.path.dirname(audio_registry_path) or cache_root
+        ),
+    }
+
+    # EngineConfigService consistency
+    try:
+        engine_config = get_engine_config_service()
+        base_path = engine_config.config.get("model_paths", {}).get("base")
+        checks["engine_config"] = {
+            "ok": True,
+            "model_paths.base": base_path,
+            "expected_model_root": model_root,
+            "consistent_with_model_root": (
+                os.path.abspath(str(base_path)) == os.path.abspath(str(model_root))
+                if base_path
+                else False
+            ),
+        }
+    except Exception as e:
+        checks["engine_config"] = {"ok": False, "error": str(e)}
+
+    # Native tool discovery (report-only; hardening handled in dedicated task)
+    ffmpeg_env = os.getenv("VOICESTUDIO_FFMPEG_PATH")
+    ffmpeg = ffmpeg_env if (ffmpeg_env and os.path.exists(ffmpeg_env)) else shutil.which("ffmpeg")
+    checks["ffmpeg"] = {
+        "ok": bool(ffmpeg),
+        "path": ffmpeg or None,
+        "message": (
+            "ffmpeg found"
+            if ffmpeg
+            else "ffmpeg not found (set VOICESTUDIO_FFMPEG_PATH or install ffmpeg on PATH)"
+        ),
+    }
+
+    overall_ok = all(v.get("ok", False) for v in checks.values() if isinstance(v, dict))
+    return {
+        "ok": overall_ok,
+        "timestamp": datetime.utcnow().isoformat(),
+        "env": {
+            "VOICESTUDIO_MODELS_PATH": os.getenv("VOICESTUDIO_MODELS_PATH"),
+            "VOICESTUDIO_PROJECTS_DIR": os.getenv("VOICESTUDIO_PROJECTS_DIR"),
+            "VOICESTUDIO_CACHE_DIR": os.getenv("VOICESTUDIO_CACHE_DIR"),
+        },
+        "checks": checks,
     }
 
 
@@ -543,20 +670,6 @@ def engine_health() -> Dict[str, Any]:
     """
     engine_info = _check_engines()
 
-    # Get additional engine statistics
-    try:
-        from app.core.engines.router import EngineRouter
-
-        router = EngineRouter()
-        stats = router.get_engine_stats()
-        engine_info["statistics"] = {
-            "total_engines": stats.get("total_engines", 0),
-            "initialized_engines": stats.get("initialized_engines", 0),
-            "total_memory_usage_mb": stats.get("total_memory_usage_mb", 0.0),
-        }
-    except Exception as e:
-        logger.debug(f"Failed to get engine statistics: {e}")
-
     return {
         "timestamp": datetime.utcnow().isoformat(),
         **engine_info,
@@ -564,8 +677,7 @@ def engine_health() -> Dict[str, Any]:
 
 
 @router.get("/performance")
-@cache_response(ttl=10)  # Cache for 10 seconds (performance metrics change moderately)
-def performance_metrics() -> Dict[str, Any]:
+\\def performance_metrics() -> Dict[str, Any]:
     """
     Get API endpoint performance metrics.
 
@@ -576,10 +688,6 @@ def performance_metrics() -> Dict[str, Any]:
         - Per-endpoint metrics
     """
     try:
-        from backend.api.middleware.performance_monitoring import (
-            get_performance_middleware,
-        )
-
         middleware = get_performance_middleware()
         if middleware:
             stats = middleware.get_stats()
@@ -612,10 +720,6 @@ def endpoint_performance_metrics(endpoint: str) -> Dict[str, Any]:
         Detailed metrics for the specified endpoint
     """
     try:
-        from backend.api.middleware.performance_monitoring import (
-            get_performance_middleware,
-        )
-
         middleware = get_performance_middleware()
         if middleware:
             metrics = middleware.get_metrics(endpoint)

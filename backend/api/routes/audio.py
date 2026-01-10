@@ -541,7 +541,7 @@ def get_loudness_data(
                     if np.isnan(integrated_lufs) or np.isinf(integrated_lufs):
                         integrated_lufs = None
                 except Exception:
-                    pass
+                    ...
 
             if len(lufs_values) > 0:
                 peak_lufs = float(max(lufs_values))

@@ -54,11 +54,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -407,7 +407,7 @@ class InvokeAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("invokeai", "generation_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Prepare arguments

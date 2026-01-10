@@ -421,7 +421,7 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Loads settings from local storage.
         /// </summary>
-        private async Task<SettingsData> LoadFromLocalStorageAsync()
+        private Task<SettingsData> LoadFromLocalStorageAsync()
         {
             try
             {
@@ -436,7 +436,7 @@ namespace VoiceStudio.App.Services
                         var settings = JsonSerializer.Deserialize<SettingsData>(json, _jsonOptions);
                         if (settings != null && ValidateSettings(settings, out _))
                         {
-                            return settings;
+                            return Task.FromResult(settings);
                         }
                     }
                 }
@@ -447,13 +447,13 @@ namespace VoiceStudio.App.Services
             }
 
             // Return defaults if loading fails
-            return GetDefaultSettings();
+            return Task.FromResult(GetDefaultSettings());
         }
 
         /// <summary>
         /// Saves settings to local storage.
         /// </summary>
-        private async Task SaveToLocalStorageAsync(SettingsData settings)
+        private Task SaveToLocalStorageAsync(SettingsData settings)
         {
             try
             {
@@ -462,12 +462,13 @@ namespace VoiceStudio.App.Services
 
                 var json = JsonSerializer.Serialize(settings, _jsonOptions);
                 container.Values[LocalSettingsKey] = json;
-                await Task.CompletedTask; // Mark as async for consistency
             }
             catch (Exception)
             {
                 // Log error but don't fail - settings persistence is best-effort
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

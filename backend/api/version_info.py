@@ -26,7 +26,7 @@ try:
             _build_date = version_data.get("build_date")
             _git_commit = version_data.get("git_commit")
 except Exception:
-    pass
+    ...
 
 # If build date not in version file, use file modification time
 if not _build_date:
@@ -55,7 +55,7 @@ if not _git_commit:
         if result.returncode == 0:
             _git_commit = result.stdout.strip()[:8]  # Short commit hash
     except Exception:
-        pass
+        ...
 
 
 def get_version_info() -> Dict[str, Any]:

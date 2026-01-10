@@ -85,9 +85,9 @@ namespace VoiceStudio.App.Controls
                 typeof(PanelHost),
                 new PropertyMetadata(false));
 
-        public new UIElement Content
+        public new UIElement? Content
         {
-            get => (UIElement)GetValue(ContentProperty);
+            get => (UIElement?)GetValue(ContentProperty);
             set => SetValue(ContentProperty, value);
         }
 
@@ -516,7 +516,12 @@ namespace VoiceStudio.App.Controls
             args.Data.SetText(PanelTitleTextBlock?.Text ?? "Panel");
             args.Data.Properties.Add("PanelHost", this);
             args.Data.Properties.Add("PanelRegion", _region);
-            args.Data.Properties.Add("PanelId", GetPanelIdFromContent(Content, out string? panelId) ? panelId : string.Empty);
+            string panelId = string.Empty;
+            if (Content is UIElement content && GetPanelIdFromContent(content, out var id))
+            {
+                panelId = id ?? string.Empty;
+            }
+            args.Data.Properties.Add("PanelId", panelId);
             
             // Create drag preview
             if (_dragDropService != null)

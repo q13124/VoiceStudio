@@ -130,7 +130,7 @@ class TestAnalyticsEndpoints:
 
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except ImportError:
-            pass
+            ...
 
         # Mock ModelExplainer
         mock_explainer = MagicMock()
@@ -160,7 +160,7 @@ class TestAnalyticsEndpoints:
 
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except ImportError:
-            pass
+            ...
 
         # Mock ModelExplainer
         mock_explainer = MagicMock()
@@ -196,7 +196,7 @@ class TestAnalyticsEndpoints:
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except ImportError:
             # Fallback if voice module not available
-            pass
+            ...
 
         with patch("os.path.exists", return_value=True):
             with patch(
@@ -249,7 +249,7 @@ class TestAnalyticsEndpoints:
 
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
         except ImportError:
-            pass
+            ...
 
         with patch("os.path.exists", return_value=True):
             with patch(
@@ -283,7 +283,7 @@ class TestAnalyticsEndpoints:
 
             voice._audio_storage.clear()
         except ImportError:
-            pass
+            ...
 
         with patch(
             "backend.api.routes.analytics._get_model_explainer"

@@ -179,11 +179,19 @@ namespace VoiceStudio.App.Services
                 }
                 
                 // Find Windows installer asset
-                var installerAsset = release.Assets.Find(a => 
-                    a.Name.Contains("Setup") || 
-                    a.Name.Contains("Installer") || 
-                    a.Name.EndsWith(".exe") || 
-                    a.Name.EndsWith(".msi"));
+                var installerAsset = release.Assets.Find(a =>
+                {
+                    var name = a.Name;
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        return false;
+                    }
+
+                    return name.Contains("Setup", StringComparison.OrdinalIgnoreCase) ||
+                           name.Contains("Installer", StringComparison.OrdinalIgnoreCase) ||
+                           name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
+                           name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                });
                 
                 if (installerAsset == null)
                 {
@@ -195,7 +203,13 @@ namespace VoiceStudio.App.Services
                 var downloadDir = Path.Combine(localAppData, "Updates");
                 Directory.CreateDirectory(downloadDir);
                 
-                var downloadPath = Path.Combine(downloadDir, installerAsset.Name);
+                var assetFileName = installerAsset.Name;
+                if (string.IsNullOrWhiteSpace(assetFileName))
+                {
+                    throw new Exception("Installer asset name is missing");
+                }
+
+                var downloadPath = Path.Combine(downloadDir, assetFileName);
                 _updateDownloadPath = downloadPath;
                 
                 // Download file with progress tracking

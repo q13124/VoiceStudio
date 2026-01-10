@@ -178,7 +178,7 @@ class TestEngineProtocolAbstractMethods:
 
         class IncompleteEngine(EngineProtocol):
             def cleanup(self):
-                pass
+                ...
 
         with pytest.raises(TypeError):
             IncompleteEngine()
@@ -226,7 +226,7 @@ class TestEngineProtocolErrorHandling:
                 raise RuntimeError("Initialization failed")
 
             def cleanup(self):
-                pass
+                ...
 
         engine = ErrorEngine(device="cpu")
         with pytest.raises(RuntimeError):

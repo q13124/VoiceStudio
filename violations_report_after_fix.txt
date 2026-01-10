@@ -1,0 +1,209 @@
+\u274c RuleGuard: VIOLATIONS FOUND
+================================================================================
+File: violations_report.txt:5
+Pattern: \[PLACEHOLDER\]
+Content: Content: - No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: violations_report.txt:9
+Pattern: \[PLACEHOLDER\]
+Content: Content: - \u2705 No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: violations_report.txt:13
+Pattern: \[PLACEHOLDER\]
+Content: Content: - Searched all documentation for "TODO", "PLACEHOLDER", "[PLACEHOLDER]"
+--------------------------------------------------------------------------------
+File: violations_report.txt:17
+Pattern: \bNotImplementedException\b
+Content: Content: - \u2705 No NotImplementedException
+--------------------------------------------------------------------------------
+File: WORKER_3_COMPLETION_SUMMARY.md:197
+Pattern: \[PLACEHOLDER\]
+Content: - No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: WORKER_3_FINAL_STATUS.md:116
+Pattern: \[PLACEHOLDER\]
+Content: - \u2705 No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: WORKER_3_FINAL_STATUS.md:235
+Pattern: \[PLACEHOLDER\]
+Content: - Searched all documentation for "TODO", "PLACEHOLDER", "[PLACEHOLDER]"
+--------------------------------------------------------------------------------
+File: WORKER_3_PHASE_7_COMPLETE.md:119
+Pattern: \bNotImplementedException\b
+Content: - \u2705 No NotImplementedException
+--------------------------------------------------------------------------------
+File: app\core\plugins_api\base.py:115
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError(
+--------------------------------------------------------------------------------
+File: app\core\security\database.py:124
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Query optimizer not available.")
+--------------------------------------------------------------------------------
+File: app\core\security\database.py:159
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Query optimizer not available.")
+--------------------------------------------------------------------------------
+File: app\core\security\database.py:202
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Query optimizer not available.")
+--------------------------------------------------------------------------------
+File: app\core\security\database.py:234
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Query optimizer not available.")
+--------------------------------------------------------------------------------
+File: app\core\security\deepfake_detector.py:35
+Pattern: #\s*TODO\b
+Content: # TODO: Load models (Week 4-5)
+--------------------------------------------------------------------------------
+File: app\core\security\deepfake_detector.py:56
+Pattern: #\s*TODO\b
+Content: # TODO: Implement deepfake detection
+--------------------------------------------------------------------------------
+File: app\core\security\deepfake_detector.py:58
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Deepfake detection not yet implemented. See Phase 18 roadmap.")
+--------------------------------------------------------------------------------
+File: app\core\security\deepfake_detector.py:71
+Pattern: #\s*TODO\b
+Content: # TODO: Implement batch detection
+--------------------------------------------------------------------------------
+File: app\core\security\deepfake_detector.py:72
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Batch detection not yet implemented. See Phase 18 roadmap.")
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:83
+Pattern: #\s*TODO\b
+Content: # TODO: Implement watermark embedding
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:85
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Watermark embedding not yet implemented. See Phase 18 roadmap.")
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:110
+Pattern: #\s*TODO\b
+Content: # TODO: Implement watermark extraction
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:111
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Watermark extraction not yet implemented. See Phase 18 roadmap.")
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:125
+Pattern: #\s*TODO\b
+Content: # TODO: Implement tampering detection
+--------------------------------------------------------------------------------
+File: app\core\security\watermarking.py:126
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError("Tampering detection not yet implemented. See Phase 18 roadmap.")
+--------------------------------------------------------------------------------
+File: app\core\training\unified_trainer.py:142
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError(
+--------------------------------------------------------------------------------
+File: app\core\training\unified_trainer.py:217
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError(
+--------------------------------------------------------------------------------
+File: app\core\training\unified_trainer.py:262
+Pattern: \bNotImplementedError\b
+Content: raise NotImplementedError(
+--------------------------------------------------------------------------------
+File: docs\COMPLETE_RULESET.md:19
+Pattern: \bNotImplementedException\b
+Content: - \u274c Placeholders: `NotImplementedException`, `NotImplementedError`, `[PLACEHOLDER]`, `{"mock": true}`, fake responses
+--------------------------------------------------------------------------------
+File: docs\COMPLETE_RULESET.md:21
+Pattern: #\s*TODO\b
+Content: - \u274c Tags: `#TODO`, `#FIXME`, `[PLACEHOLDER]`, `[WIP]`, `[IN PROGRESS]`
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:40
+Pattern: //\s*TODO\b
+Content: // TODO: Register undo action - type conversion issues between Core and ViewModels
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:46
+Pattern: //\s*TODO\b
+Content: // TODO: Register undo action - type conversion issues between Core and ViewModels
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:60
+Pattern: //\s*TODO\b
+Content: // TODO: SSML document duplication not implemented due to nested class access issues
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:74
+Pattern: //\s*TODO\b
+Content: // TODO: Register undo action - DeleteTrainingDatasetAction not implemented
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:88
+Pattern: //\s*TODO\b
+Content: // TODO: Quality degradation checking is handled internally by the ViewModel
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:102
+Pattern: //\s*TODO\b
+Content: // TODO: Quality metrics properties not implemented in EnsembleSynthesisViewModel
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:116
+Pattern: //\s*TODO\b
+Content: // TODO: MixerChannel duplication not implemented
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:122
+Pattern: //\s*TODO\b
+Content: // TODO: Register undo action - commented out due to unimplemented MixerChannel
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:136
+Pattern: //\s*TODO\b
+Content: // TODO: ProgressChart control not implemented in XAML
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:150
+Pattern: //\s*TODO\b
+Content: // TODO: Update waveform control with new samples
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:164
+Pattern: //\s*TODO\b
+Content: // TODO: Implement curve loading
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:178
+Pattern: //\s*TODO\b
+Content: // TODO: Implement timeline block rendering
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:255
+Pattern: //\s*TODO\b
+Content: - Multiple `// TODO:` comments in ViewModel files
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:412
+Pattern: \bNotImplementedException\b
+Content: ### 49. NotImplementedException in Converters (STUB-001)
+--------------------------------------------------------------------------------
+File: docs\COMPREHENSIVE_VIOLATIONS_REPORT.md:415
+Pattern: \bNotImplementedException\b
+Content: **Evidence:** 7 instances of `NotImplementedException` in converter classes
+--------------------------------------------------------------------------------
+File: docs\MASTER_RULES_COMPLETE_EMBEDDED.md:64
+Pattern: \bNotImplementedException\b
+Content: - `NotImplementedError`, `NotImplementedException`, `[PLACEHOLDER]`, `{"mock": true}`
+--------------------------------------------------------------------------------
+File: docs\ruleguard-report.txt:10173
+Pattern: \bNotImplementedError\b
+Content: Pattern: NotImplementedError
+--------------------------------------------------------------------------------
+File: docs\ruleguard-report.txt:10174
+Pattern: \bNotImplementedError\b
+Content: Content: raise NotImplementedError(
+--------------------------------------------------------------------------------
+File: docs\ruleguard-report.txt:11205
+Pattern: \bNotImplementedError\b
+Content: Pattern: NotImplementedError
+--------------------------------------------------------------------------------
+File: docs\ruleguard-report.txt:11206
+Pattern: \bNotImplementedError\b
+Content: Content: raise NotImplementedError("Query optimizer not available.")
+--------------------------------------------------------------------------------
+File: docs\ruleguard-report.txt:11211
+Pattern: \bNotImplementedError\b
+Content: Pattern: NotImplementedError
+--------------------------------------------------------------------------------
+
+... and 1544 more violations (truncated)
+
+Total violations: 1594
+Files scanned: 2195
+
+See docs/governance/MASTER_RULES_COMPLETE.md for complete rule details

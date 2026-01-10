@@ -112,7 +112,7 @@ async def get_dashboard_data():
                         if isinstance(projects_data, list):
                             total_projects = len(projects_data)
                 except Exception:
-                    pass
+                    ...
                 
                 # Get profiles count
                 try:
@@ -122,7 +122,7 @@ async def get_dashboard_data():
                         if isinstance(profiles_data, list):
                             total_profiles = len(profiles_data)
                 except Exception:
-                    pass
+                    ...
                 
                 # Get batch jobs status
                 try:
@@ -135,7 +135,7 @@ async def get_dashboard_data():
                             # Estimate today's completed jobs (simplified)
                             completed_jobs_today = max(0, completed // 30)  # Rough estimate
                 except Exception:
-                    pass
+                    ...
                 
                 # Get GPU status
                 try:
@@ -149,7 +149,7 @@ async def get_dashboard_data():
                                 # Get utilization from first device
                                 gpu_utilization = devices[0].get("utilization_percent", 0.0)
                 except Exception:
-                    pass
+                    ...
                 
                 # Get analytics summary for audio files estimate
                 try:
@@ -159,7 +159,7 @@ async def get_dashboard_data():
                         if isinstance(analytics_data, dict):
                             total_audio_files = analytics_data.get("total_audio_processed", 0)
                 except Exception:
-                    pass
+                    ...
         except Exception as e:
             logger.warning(f"Failed to aggregate some dashboard data: {e}")
         
@@ -171,7 +171,7 @@ async def get_dashboard_data():
             system_memory = psutil.virtual_memory()
             memory_usage_percent = system_memory.percent
         except Exception:
-            pass
+            ...
         
         # Determine system status
         if memory_usage_percent > 90 or cpu_utilization > 95:
@@ -266,7 +266,7 @@ async def get_dashboard_data():
                                     )
                                 )
                 except Exception:
-                    pass
+                    ...
                 
                 # Get recent profiles
                 try:
@@ -285,9 +285,9 @@ async def get_dashboard_data():
                                     )
                                 )
                 except Exception:
-                    pass
+                    ...
         except Exception:
-            pass
+            ...
         
         # Sort by timestamp (most recent first) and limit to 10
         recent_activities.sort(key=lambda x: x.timestamp, reverse=True)

@@ -8,6 +8,7 @@ for FastAPI endpoints to achieve 50%+ response time improvement.
 import functools
 import gzip
 import hashlib
+import inspect
 import json
 import logging
 import time
@@ -16,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel as PydanticBaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,7 @@ class ResponseCache:
         self.max_size = max_size
         self.default_ttl = default_ttl
         self.timestamps: Dict[str, float] = {}
+        self.ttls: Dict[str, int] = {}
 
     def _generate_key(
         self, path: str, query_params: str, body: Optional[bytes] = None
@@ -67,10 +70,13 @@ class ResponseCache:
         # Check TTL
         if key in self.timestamps:
             age = time.time() - self.timestamps[key]
-            if age > self.default_ttl:
+            ttl = self.ttls.get(key, self.default_ttl)
+            if age > ttl:
                 # Expired, remove
                 del self.cache[key]
                 del self.timestamps[key]
+                if key in self.ttls:
+                    del self.ttls[key]
                 return None
 
         # Move to end (most recently used)
@@ -78,7 +84,11 @@ class ResponseCache:
         return self.cache[key]
 
     def set(
-        self, key: str, response_data: Any, headers: Dict[str, str], ttl: Optional[int] = None
+        self,
+        key: str,
+        response_data: Any,
+        headers: Dict[str, str],
+        ttl: Optional[int] = None,
     ):
         """
         Cache response.
@@ -89,25 +99,28 @@ class ResponseCache:
             headers: Response headers
             ttl: Optional TTL override
         """
-        # Remove if already exists
-        if key in self.cache:
-            self.cache.move_to_end(key)
-        else:
-            # Add new entry
-            self.cache[key] = (response_data, headers)
-            self.timestamps[key] = time.time()
+        entry_ttl = int(ttl) if ttl is not None else self.default_ttl
 
-            # Evict oldest if cache full
-            if len(self.cache) > self.max_size:
-                oldest_key = next(iter(self.cache))
-                del self.cache[oldest_key]
-                if oldest_key in self.timestamps:
-                    del self.timestamps[oldest_key]
+        # Add/update entry
+        self.cache[key] = (response_data, headers)
+        self.timestamps[key] = time.time()
+        self.ttls[key] = entry_ttl
+        self.cache.move_to_end(key)
+
+        # Evict oldest if cache full
+        if len(self.cache) > self.max_size:
+            oldest_key = next(iter(self.cache))
+            del self.cache[oldest_key]
+            if oldest_key in self.timestamps:
+                del self.timestamps[oldest_key]
+            if oldest_key in self.ttls:
+                del self.ttls[oldest_key]
 
     def clear(self):
         """Clear all cached responses."""
         self.cache.clear()
         self.timestamps.clear()
+        self.ttls.clear()
 
 
 # Global response cache instance
@@ -132,22 +145,36 @@ def cache_response(ttl: int = 300, key_func: Optional[Callable] = None):
     def decorator(func: Callable):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            # Try to get request from kwargs or args
-            request = kwargs.get("request") or (
-                args[0] if args and isinstance(args[0], Request) else None
-            )
+            # Try to locate a Request instance (kwargs or anywhere in args)
+            request = kwargs.get("request")
+            if request is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
 
-            # Generate cache key
+            # Generate cache key (supports endpoints without a Request parameter)
             if key_func:
                 cache_key = key_func(request, *args, **kwargs)
-            elif request:
+            elif request is not None:
                 query_string = str(request.query_params)
                 cache_key = _response_cache._generate_key(
                     request.url.path, query_string
                 )
             else:
-                # No request, can't cache
-                return await func(*args, **kwargs)
+                try:
+                    payload = json.dumps(
+                        {"args": args, "kwargs": kwargs},
+                        default=str,
+                        sort_keys=True,
+                    ).encode("utf-8")
+                except Exception:
+                    payload = repr((args, kwargs)).encode("utf-8")
+                cache_key = _response_cache._generate_key(
+                    f"{func.__module__}.{func.__qualname__}",
+                    "",
+                    body=payload,
+                )
 
             # Check cache
             cached = _response_cache.get(cache_key)
@@ -158,32 +185,50 @@ def cache_response(ttl: int = 300, key_func: Optional[Callable] = None):
                     content=response_data, headers={**headers, "X-Cache": "HIT"}
                 )
 
-            # Call function
-            result = await func(*args, **kwargs) if hasattr(func, "__await__") else func(*args, **kwargs)
-
-            # Cache response
-            if isinstance(result, JSONResponse):
-                response_data = result.body
-                headers = dict(result.headers)
-            elif isinstance(result, dict):
-                response_data = result
-                headers = {}
+            # Call endpoint (sync or async)
+            if inspect.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
             else:
-                # Can't cache this type
+                result = func(*args, **kwargs)
+
+            # Only cache JSON-serializable payloads (including nested pydantic models).
+            if isinstance(result, Response) and not isinstance(result, JSONResponse):
+                return result
+
+            def _to_jsonable(value: Any) -> Any:
+                if isinstance(value, PydanticBaseModel):
+                    return value.model_dump(mode="json")
+                if isinstance(value, dict):
+                    return {k: _to_jsonable(v) for k, v in value.items()}
+                if isinstance(value, list):
+                    return [_to_jsonable(v) for v in value]
+                if isinstance(value, tuple):
+                    return [_to_jsonable(v) for v in value]
+                return value
+
+            headers: Dict[str, str] = {}
+
+            if isinstance(result, JSONResponse):
+                try:
+                    response_data = _to_jsonable(json.loads(result.body))
+                except Exception:
+                    return result
+                headers = dict(result.headers)
+            else:
+                response_data = _to_jsonable(result)
+
+            try:
+                json.dumps(response_data)
+            except TypeError:
                 return result
 
             _response_cache.set(cache_key, response_data, headers, ttl=ttl)
             logger.debug(f"Cached response for {cache_key[:16]}...")
 
-            # Add cache header
-            if isinstance(result, JSONResponse):
-                result.headers["X-Cache"] = "MISS"
-            else:
-                result = JSONResponse(
-                    content=response_data, headers={**headers, "X-Cache": "MISS"}
-                )
-
-            return result
+            return JSONResponse(
+                content=response_data,
+                headers={**headers, "X-Cache": "MISS"},
+            )
 
         return wrapper
 
@@ -310,7 +355,11 @@ class AsyncTaskManager:
 
         async def run_task():
             try:
-                result = await task_func(*args, **kwargs) if hasattr(task_func, "__await__") else task_func(*args, **kwargs)
+                result = (
+                    await task_func(*args, **kwargs)
+                    if hasattr(task_func, "__await__")
+                    else task_func(*args, **kwargs)
+                )
                 self.tasks[task_id] = {
                     "status": "completed",
                     "result": result,
@@ -421,4 +470,3 @@ __all__ = [
     "_response_cache",
     "_async_task_manager",
 ]
-

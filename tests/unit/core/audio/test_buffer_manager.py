@@ -41,7 +41,7 @@ def buffer_pool():
     try:
         pool.cleanup()
     except Exception:
-        pass
+        ...
 
 
 class TestAudioBufferPoolImports:

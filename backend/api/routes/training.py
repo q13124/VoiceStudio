@@ -472,7 +472,7 @@ async def optimize_training_data(
                             mos = calculate_mos_score(audio)
                             quality_scores.append((audio_file, mos))
                         except:
-                            pass
+                            ...
 
                 if quality_scores:
                     # Calculate average quality

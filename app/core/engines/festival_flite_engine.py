@@ -64,11 +64,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -644,7 +644,7 @@ class FestivalFliteEngine(EngineProtocol):
                     engine_name = "flite" if self.use_flite else "festival"
                     metrics.record_error(engine_name, "synthesis_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

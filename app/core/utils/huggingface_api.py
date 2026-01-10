@@ -23,16 +23,39 @@ HF_HUB_API_BASE = "https://huggingface.co/api"
 # Legacy endpoints (deprecated)
 HF_INFERENCE_API_LEGACY = "https://api-inference.huggingface.co"  # DEPRECATED
 
-# Set environment variable to ensure huggingface_hub uses new endpoint
-# This must be set before importing huggingface_hub
-if "HF_INFERENCE_API_BASE" not in os.environ:
-    os.environ["HF_INFERENCE_API_BASE"] = HF_INFERENCE_API_BASE
-    logger.info(f"Set HF_INFERENCE_API_BASE to {HF_INFERENCE_API_BASE}")
 
-# Also set for InferenceClient compatibility
-if "HF_ENDPOINT" not in os.environ:
-    os.environ["HF_ENDPOINT"] = HF_INFERENCE_API_BASE
-    logger.debug(f"Set HF_ENDPOINT to {HF_INFERENCE_API_BASE}")
+def _ensure_router_env(var_name: str) -> None:
+    """
+    Guarantee that the given environment variable points at the router endpoint.
+
+    We override legacy/default values to avoid Hugging Face returning the
+    `api-inference.huggingface.co is no longer supported` error.
+    """
+
+    current = os.environ.get(var_name)
+    desired = HF_INFERENCE_API_BASE
+
+    if not current:
+        os.environ[var_name] = desired
+        logger.info(f"Set {var_name} to {desired}")
+        return
+
+    normalized = current.rstrip("/")
+    if normalized == HF_INFERENCE_API_LEGACY:
+        os.environ[var_name] = desired
+        logger.warning(
+            "%s was pointing at the deprecated Hugging Face inference endpoint. "
+            "Overriding with %s.",
+            var_name,
+            desired,
+        )
+    else:
+        logger.debug("%s already set to %s", var_name, current)
+
+
+# Ensure huggingface_hub sees the router endpoint before it is imported
+_ensure_router_env("HF_INFERENCE_API_BASE")
+_ensure_router_env("HF_ENDPOINT")
 
 
 def get_inference_api_url(model_id: str, endpoint: str = "") -> str:

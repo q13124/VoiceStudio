@@ -18,24 +18,17 @@ import torch
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (
-        calculate_all_metrics,
-        calculate_mos_score,
-        calculate_naturalness,
-        calculate_similarity,
-    )
+    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
+                                  calculate_naturalness, calculate_similarity)
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        match_voice_profile,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from ..audio.audio_utils import (enhance_voice_quality,
+                                     match_voice_profile, normalize_lufs,
+                                     remove_artifacts)
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -505,7 +498,8 @@ class ChatterboxEngine(EngineProtocol):
                     quality_metrics = calculate_all_metrics(
                         audio=processed_audio,
                         reference_audio=reference_audio,
-                        sample_rate=sample_rate
+                        sample_rate=sample_rate,
+                        include_ml_prediction=True,  # Include ML-based quality prediction
                     )
                 except Exception as e:
                     logger.warning(f"Quality metrics calculation failed: {e}")

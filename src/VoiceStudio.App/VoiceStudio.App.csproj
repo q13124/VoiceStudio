@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- XAML bypass targets are imported via Directory.Build.targets (after NuGet) -->
   <!-- Do NOT import here - it must be AFTER NuGet package targets -->
@@ -16,6 +16,11 @@
     <Platform>x64</Platform>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <UseAppHost>true</UseAppHost>
     <!-- Don't set RuntimeIdentifier explicitly - let the EnsureRuntimeIdentifierForWin2D target
     handle it -->
     <!-- Setting RuntimeIdentifier causes RID-specific output paths which break the XAML compiler
@@ -31,16 +36,35 @@
     <UseVCMetaManaged>false</UseVCMetaManaged>
     <!-- Legacy workaround (can be revisited once XAML pipeline is stable) -->
     <DisableXbfGeneration>true</DisableXbfGeneration>
+    <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
+    <XamlCompilerExePath>$(MSBuildThisFileDirectory)..\..\tools\xaml-compiler-wrapper.cmd</XamlCompilerExePath>
     <CppWinRTFastAbi>false</CppWinRTFastAbi>
     <BaseOutputPath>E:\VoiceStudio\.buildlogs</BaseOutputPath>
     <!-- FIX: Don't use architecture-specific sub-paths that cause double backslash in XAML compiler
     Exec command -->
     <!-- Set a simple flat structure for intermediate output to avoid the escaping issue -->
     <IntermediateOutputPathHasTrailingSlash>false</IntermediateOutputPathHasTrailingSlash>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Win2DWarnNoPlatform>true</Win2DWarnNoPlatform>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Unpackaged apphost EXE defaults -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <EnableDefaultPriItems>false</EnableDefaultPriItems>
+    <GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
+    <AppxPackageDir />
+    <AppxBundle>Never</AppxBundle>
+    <AppxManifest />
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WindowsAppSDKRuntimePackageVersion>$(MicrosoftWindowsAppSDKVersion)</WindowsAppSDKRuntimePackageVersion>
+    <WindowsAppSDKRuntimePackageRoot>
+      $(UserProfile)\.nuget\packages\microsoft.windowsappsdk.runtime\$(WindowsAppSDKRuntimePackageVersion)</WindowsAppSDKRuntimePackageRoot>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -71,10 +95,27 @@
       Importance="high" Condition="Exists('$(XamlErrorLogFile)')" />
   </Target>
 
+  <!-- Exclude system DLLs from publish output (Release Engineer: Gate C/H) -->
+  <!-- System DLLs should not be bundled - they must be loaded from the system directory -->
+  <Target Name="ExcludeSystemDllsFromPublish" AfterTargets="Publish"
+    Condition="'$(SelfContained)' == 'true'">
+    <ItemGroup>
+      <SystemDlls Include="$(PublishDir)\CoreMessagingXP.dll" />
+      <SystemDlls Include="$(PublishDir)\dcompi.dll" />
+      <SystemDlls Include="$(PublishDir)\dwmcorei.dll" />
+      <SystemDlls Include="$(PublishDir)\marshal.dll" />
+    </ItemGroup>
+    <Delete Files="@(SystemDlls)" Condition="Exists('%(Identity)')" ContinueOnError="true" />
+    <Message Text="Removed system DLLs from publish: @(SystemDlls, ', ')"
+      Condition="'@(SystemDlls)' != ''" Importance="high" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="$(MicrosoftWindowsAppSDKVersion)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+    <!-- Required for in-proc XAML compiler task dependency -->
+    <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2">
       <PrivateAssets>none</PrivateAssets>
     </PackageReference>
@@ -87,20 +128,19 @@
     <!-- Exclude duplicate model files - models should be in VoiceStudio.Core.Models or
     VoiceStudio.App.Core.Models -->
     <Compile Remove="Models\**\*.cs" />
-    <!-- Temporarily disabled to workaround XamlCompiler.exe crash -->
-    <!-- <Page Update="Views\Panels\**\*.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Update="Views\**\*.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Update="Controls\**\*.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page> -->
   </ItemGroup>
 
   <ItemGroup>
     <None Include="app.manifest" />
+    <None Include="Package.appxmanifest" Condition="'$(WindowsPackageType)' != 'None'" />
+  </ItemGroup>
+
+  <!-- Ensure control XAMLs carry Page metadata -->
+  <ItemGroup>
+    <Page Update="Controls\**\*.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
   <!-- XAML crash isolation switches removed to prevent Visual Studio project system
@@ -113,6 +153,12 @@
   <ItemGroup>
     <PRIResource Include="Resources\Resources.resw" />
     <PRIResource Include="Resources\en-US\Resources.resw" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Assets\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <!-- De-dupe XAML generated Compile items in design-time builds (LSP/VS) -->

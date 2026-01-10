@@ -289,7 +289,7 @@ class XTTSTrainer:
                     try:
                         _, sample_rate = sf.read(valid_files[0], frames=1)
                     except Exception:
-                        pass
+                        ...
 
                 augmentation_pipeline = self.create_augmentation_pipeline(
                     sample_rate=sample_rate
@@ -494,10 +494,10 @@ class XTTSTrainer:
                     return None
 
                 def update_progress(*args, **kwargs):
-                    pass
+                    ...
 
                 def close_progress(*args, **kwargs):
-                    pass
+                    ...
 
             # Create epoch progress bar
             epoch_pbar = (

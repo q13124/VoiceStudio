@@ -74,7 +74,7 @@ namespace VoiceStudio.App.Services.Stores
         /// <summary>
         /// Checks backend connection status.
         /// </summary>
-        public async Task CheckBackendConnectionAsync()
+        public Task CheckBackendConnectionAsync()
         {
             try
             {
@@ -90,6 +90,8 @@ namespace VoiceStudio.App.Services.Stores
                 IsBackendConnected = false;
                 AddError($"Backend connection check failed: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

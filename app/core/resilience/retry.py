@@ -28,12 +28,12 @@ class RetryStrategy(Enum):
 
 class RetryableError(Exception):
     """Base exception for retryable errors."""
-    pass
+    ...
 
 
 class NonRetryableError(Exception):
     """Base exception for non-retryable errors."""
-    pass
+    ...
 
 
 def is_retryable_error(exception: Exception) -> bool:

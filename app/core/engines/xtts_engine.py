@@ -151,12 +151,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                pass
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                pass
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -178,7 +176,7 @@ class XTTSEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_name: str = "tts_models/multilingual/multi-dataset/xtts_v2",
+        model_name: str = "coqui/XTTS-v2",
         device: Optional[str] = None,
         gpu: bool = True,
     ):
@@ -261,12 +259,11 @@ class XTTSEngine(EngineProtocol):
         try:
             logger.info(f"Loading XTTS model: {self.model_name}")
 
-            # Use %PROGRAMDATA%\VoiceStudio\models for model cache if available
+            # Use VOICESTUDIO_MODELS_PATH for model cache if available (default: E:\VoiceStudio\models)
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
             if not model_cache_dir:
                 model_cache_dir = os.path.join(
-                    os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                    "VoiceStudio",
+                    os.getenv("VOICESTUDIO_REPO_ROOT", r"E:\VoiceStudio"),
                     "models",
                 )
 
@@ -287,7 +284,7 @@ class XTTSEngine(EngineProtocol):
                 # Enable inference mode for better performance
                 if hasattr(torch, "inference_mode"):
                     # Will use inference_mode context in synthesize
-                    pass
+                    ...
 
             load_time = time.time() - start_time
             logger.info(
@@ -473,6 +470,7 @@ class XTTSEngine(EngineProtocol):
                         audio=processed_audio,
                         reference_audio=reference_audio,
                         sample_rate=sample_rate,
+                        include_ml_prediction=True,  # Include ML-based quality prediction
                     )
                 except Exception as e:
                     logger.warning(f"Quality metrics calculation failed: {e}")
@@ -959,7 +957,7 @@ class XTTSEngine(EngineProtocol):
 
 # Factory function for easy instantiation
 def create_xtts_engine(
-    model_name: str = "tts_models/multilingual/multi-dataset/xtts_v2",
+    model_name: str = "coqui/XTTS-v2",
     device: Optional[str] = None,
     gpu: bool = True,
 ) -> XTTSEngine:

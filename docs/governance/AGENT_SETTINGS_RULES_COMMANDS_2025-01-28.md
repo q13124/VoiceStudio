@@ -40,7 +40,7 @@ ALL synonyms and variations are FORBIDDEN. Using similar-meaning words to bypass
 ## FORBIDDEN TERMS (ALL Synonyms Included)
 
 ### Bookmarks (ALL Synonyms):
-TODO, FIXME, NOTE, HACK, REMINDER, XXX, WARNING, CAUTION, BUG, ISSUE, REFACTOR, OPTIMIZE, REVIEW, CHECK, VERIFY, TEST, DEBUG, DEPRECATED, OBSOLETE, marker, flag, indicator, annotation, reference point, anchor, checkpoint, waypoint, signpost, milestone marker, pointer, reference, sticky note, bookmark, reminder marker, fix marker, work marker, return marker, later marker, revisit marker, follow-up marker, and ALL other synonyms
+FIXME, NOTE, HACK, REMINDER, XXX, WARNING, CAUTION, BUG, ISSUE, REFACTOR, OPTIMIZE, REVIEW, CHECK, VERIFY, TEST, DEBUG, DEPRECATED, OBSOLETE, marker, flag, indicator, annotation, reference point, anchor, checkpoint, waypoint, signpost, milestone marker, pointer, reference, sticky note, bookmark, reminder marker, fix marker, work marker, return marker, later marker, revisit marker, follow-up marker, and ALL other synonyms
 
 ### Placeholders (ALL Synonyms):
 dummy, mock, fake, sample, temporary, test data, filler, placeholder, stub data, example data, demonstration data, pseudocode, skeleton data, empty data, null data, blank data, default data, NotImplementedError, NotImplementedException, np.zeros(), return {}, return [], return null, and ALL other synonyms

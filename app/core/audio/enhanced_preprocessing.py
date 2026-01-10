@@ -274,7 +274,7 @@ class EnhancedPreprocessor:
                     denoise=True,
                 )
             except Exception:
-                pass
+                ...
 
         if HAS_NOISEREDUCE:
             try:

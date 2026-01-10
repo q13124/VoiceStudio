@@ -9,7 +9,7 @@ import logging
 import os
 import tempfile
 import uuid
-from typing import Dict, Optional
+from typing import Optional
 
 import numpy as np
 from fastapi import (
@@ -28,9 +28,6 @@ from ..models_additional import RvcStartRequest
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/rvc", tags=["rvc"])
-
-# In-memory storage for audio files
-_audio_storage: dict[str, str] = {}  # audio_id -> file_path
 
 # Engine router for RVC
 ENGINE_AVAILABLE = False
@@ -116,7 +113,9 @@ async def convert_voice(
         source_audio_path = _get_audio_path(source_audio_id)
         if not source_audio_path or not os.path.exists(source_audio_path):
             # Try alternative storage
-            source_audio_path = _audio_storage.get(source_audio_id)
+            from .voice import _audio_storage as voice_audio_storage
+
+            source_audio_path = voice_audio_storage.get(source_audio_id)
             if not source_audio_path or not os.path.exists(source_audio_path):
                 raise HTTPException(
                     status_code=404, detail=f"Source audio not found: {source_audio_id}"
@@ -146,9 +145,11 @@ async def convert_voice(
         if audio is None and not os.path.exists(output_path):
             raise HTTPException(status_code=500, detail="Voice conversion failed")
 
-        # Generate audio ID and store
+        # Generate audio ID and store (persisted via voice registry)
         audio_id = str(uuid.uuid4())
-        _audio_storage[audio_id] = output_path
+        from .voice import _register_audio_file
+
+        _register_audio_file(audio_id, output_path)
 
         # Calculate duration
         import wave
@@ -300,12 +301,12 @@ async def convert_realtime(websocket: WebSocket):
                 {"type": "error", "message": f"WebSocket error: {str(e)}"}
             )
         except:
-            pass
+            ...
     finally:
         try:
             await websocket.close()
         except:
-            pass
+            ...
 
 
 @router.get("/models")
@@ -406,6 +407,8 @@ async def get_audio(audio_id: str):
 
     Returns the audio file as a WAV stream for playback.
     """
+    from .voice import _audio_storage
+
     if audio_id not in _audio_storage:
         raise HTTPException(status_code=404, detail=f"Audio not found: {audio_id}")
 

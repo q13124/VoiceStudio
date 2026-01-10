@@ -41,7 +41,7 @@ def metrics():
     try:
         metrics.clear()
     except Exception:
-        pass
+        ...
 
 
 class TestEnginePerformanceMetricsImports:

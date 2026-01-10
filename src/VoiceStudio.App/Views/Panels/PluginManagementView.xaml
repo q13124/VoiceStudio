@@ -8,7 +8,10 @@
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:StringFormatConverter x:Key="StringFormatConverter" />
-        <converters:BooleanToBrushConverter x:Key="BooleanToBrushConverter" />
+        <converters:BooleanToBrushConverter x:Key="BooleanToBrushConverter"
+            TrueBrush="{StaticResource VSQ.Success.Brush}"
+            FalseBrush="{StaticResource VSQ.Warn.Brush}"
+            NullBrush="{StaticResource VSQ.Text.SecondaryBrush}" />
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>

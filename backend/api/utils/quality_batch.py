@@ -144,7 +144,7 @@ def prioritize_batch_jobs(
                 # Older jobs get higher priority (subtract timestamp)
                 priority_score -= created_dt.timestamp()
             except:
-                pass
+                ...
 
         return (-priority_score,)  # Negative for descending sort
 

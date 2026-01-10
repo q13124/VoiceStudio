@@ -1,5 +1,9 @@
 ## Role prompt: Core Platform Engineer
 
+### Current next tasks
+
+See `docs/governance/overseer/role_tasks/CORE_PLATFORM_ENGINEER.md` (index: `docs/governance/overseer/role_tasks/INDEX.md`).
+
 ### Mission
 
 Own orchestration, job runtime, storage, and plugin hosting so engines and UI have reliable foundations for local-first operation.
@@ -26,6 +30,12 @@ Own orchestration, job runtime, storage, and plugin hosting so engines and UI ha
 ### Voice cloning priority
 
 Enable end-to-end local flows for voice synthesis and cloning: request → job → events → artifact persistence → UI consumption.
+
+### Handoff
+
+- Add one handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
 
 ### Proof standard
 

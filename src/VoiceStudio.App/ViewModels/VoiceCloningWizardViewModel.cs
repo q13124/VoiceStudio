@@ -354,19 +354,16 @@ namespace VoiceStudio.App.ViewModels
             }
         }
 
-        private async Task PreviousStepAsync(CancellationToken cancellationToken)
+        private Task PreviousStepAsync(CancellationToken cancellationToken)
         {
-            try
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (CurrentStep > 1)
             {
-                if (CurrentStep > 1)
-                {
-                    CurrentStep--;
-                }
+                CurrentStep--;
             }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
+
+            return Task.CompletedTask;
         }
 
         private async Task StartProcessingAsync(CancellationToken cancellationToken)
@@ -612,7 +609,7 @@ namespace VoiceStudio.App.ViewModels
             }
         }
 
-        private async Task ResetWizardAsync()
+        private Task ResetWizardAsync()
         {
             CurrentStep = 1;
             SelectedAudioFile = null;
@@ -631,6 +628,8 @@ namespace VoiceStudio.App.ViewModels
             UploadedAudioId = null;
             ErrorMessage = null;
             StatusMessage = null;
+
+            return Task.CompletedTask;
         }
 
         // Request/Response models

@@ -70,11 +70,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -697,7 +697,7 @@ class ESpeakNGEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("espeak_ng", "synthesis_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

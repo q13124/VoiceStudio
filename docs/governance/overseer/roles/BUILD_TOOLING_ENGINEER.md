@@ -1,5 +1,9 @@
 ## Role prompt: Build and Tooling Engineer
 
+### Current next tasks
+
+See `docs/governance/overseer/role_tasks/BUILD_TOOLING_ENGINEER.md` (index: `docs/governance/overseer/role_tasks/INDEX.md`).
+
 ### Mission
 
 Own deterministic builds, local setup ergonomics, and enforcement in CI. Keep build lanes stable so other roles can move without toolchain drift.
@@ -21,6 +25,12 @@ Own deterministic builds, local setup ergonomics, and enforcement in CI. Keep bu
 
 - UI behavior and visuals under `src/VoiceStudio.App/` (UI role owns)
 - Engine/model behavior under `app/core/engines/` and `engines/` (Engine role owns)
+
+### Handoff
+
+- Add one handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
 
 ### Proof standard
 

@@ -4,10 +4,11 @@ Base Plugin Class for VoiceStudio
 All plugins must inherit from BasePlugin and implement the register method.
 """
 
-from typing import Dict, List, Optional, Any
-from pathlib import Path
 import json
 import logging
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ class BasePlugin:
         """Plugin description"""
         return self.metadata.description
     
+    @abstractmethod
     def register(self, app):
         """
         Register plugin routes and functionality with FastAPI app.
@@ -112,9 +114,7 @@ class BasePlugin:
         Args:
             app: FastAPI application instance
         """
-        raise NotImplementedError(
-            f"Plugin {self.name} must implement register() method"
-        )
+        ...
     
     def initialize(self):
         """

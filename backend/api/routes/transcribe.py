@@ -15,6 +15,8 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from backend.services.model_preflight import ensure_whisper_cpp
+
 from ..models import ApiOk
 from ..optimization import cache_response
 from ..voice_speech import VoiceActivityDetector
@@ -142,11 +144,12 @@ class TranscriptionRequest(BaseModel):
     """Request for transcription."""
 
     audio_id: str
-    engine: str = "whisper"  # whisper, whisperx, whisper-cpp, vosk
+    engine: str = "whisper_cpp"  # whisper_cpp, whisper, whisperx, vosk
     language: Optional[str] = None  # Auto-detect if None
     word_timestamps: bool = False
     diarization: bool = False  # Speaker diarization (WhisperX only)
     use_vad: bool = False  # Use voice activity detection
+    model_path: Optional[str] = None  # override for whisper_cpp gguf
 
 
 class TranscriptionResponse(BaseModel):
@@ -177,8 +180,16 @@ async def get_supported_languages():
     # If engine router is available, try to get languages from registered engine
     if STT_ENGINE_AVAILABLE and engine_router:
         try:
-            # Try to get whisper engine (default STT engine)
-            whisper_engine = engine_router.get_engine("whisper", gpu=True)
+            # Try to get whisper_cpp (preferred) or whisper engine (fallback)
+            whisper_engine = None
+            for engine_name in ("whisper_cpp", "whisper"):
+                try:
+                    whisper_engine = engine_router.get_engine(engine_name, gpu=True)
+                    if whisper_engine:
+                        break
+                except Exception:
+                    whisper_engine = None
+
             if whisper_engine and hasattr(whisper_engine, "get_supported_languages"):
                 supported = whisper_engine.get_supported_languages()
                 # Map language codes to names
@@ -257,6 +268,9 @@ async def transcribe_audio(
     """
     try:
         transcription_id = str(uuid.uuid4())
+        # Ensure whisper.cpp model is present (auto-download if allowed)
+        if request.engine == "whisper_cpp":
+            ensure_whisper_cpp(auto_download=True)
 
         # Get engine instance - try router first, fallback to direct creation
         stt_engine = None
@@ -287,12 +301,44 @@ async def transcribe_audio(
                     try:
                         stt_engine = engine_router.get_engine(request.engine, gpu=True)
                     except Exception:
-                        pass
+                        ...
             except Exception as e:
                 logger.debug(f"Could not get engine from router: {e}")
 
-        # If not found and requesting whisper, create directly
-        if not stt_engine and request.engine == "whisper":
+        # If not found and requesting whisper_cpp, create directly (honor model_path override)
+        if not stt_engine and request.engine == "whisper_cpp":
+            try:
+                from app.core.engines.whisper_cpp_engine import (
+                    WhisperCPPEngine,
+                    create_whisper_cpp_engine,
+                )
+
+                logger.info(
+                    "Creating Whisper.cpp engine directly (not available in router)"
+                )
+                model_kwargs = {}
+                if request.model_path:
+                    model_kwargs["model_path"] = request.model_path
+                stt_engine = create_whisper_cpp_engine(**model_kwargs)
+                if not stt_engine:
+                    stt_engine = WhisperCPPEngine(**model_kwargs)
+            except ImportError as e:
+                logger.error(f"Whisper.cpp engine not available: {e}.")
+                raise HTTPException(
+                    status_code=503,
+                    detail=(
+                        f"Transcription engine '{request.engine}' is not available. "
+                        "Please ensure the engine is properly installed. "
+                        "For Whisper.cpp engine, install with: pip install whisper-cpp-python"
+                    ),
+                )
+            except Exception as e:
+                logger.error(f"Failed to create Whisper.cpp engine: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to initialize Whisper.cpp engine: {str(e)}",
+                )
+        elif not stt_engine and request.engine == "whisper":
             try:
                 from app.core.engines.whisper_engine import create_whisper_engine
 

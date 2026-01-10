@@ -30,16 +30,16 @@ except ImportError:
             self.n += n
 
         def set_description(self, desc=None):
-            pass
+            ...
 
         def close(self):
-            pass
+            ...
 
         def __enter__(self):
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
     class atqdm:
         def __init__(self, *args, **kwargs):
@@ -50,10 +50,10 @@ except ImportError:
             self.n += n
 
         def set_description(self, desc=None):
-            pass
+            ...
 
         async def close(self):
-            pass
+            ...
 
 
 def create_progress_bar(
@@ -167,4 +167,4 @@ def close_progress(progress_bar: Any):
     try:
         progress_bar.close()
     except Exception:
-        pass
+        ...

@@ -27,6 +27,8 @@ Include the following metadata in the change set description (or at the top of t
 2. Create the branch from `master` using the naming pattern above.
 3. Implement the change inside the role boundary.
 4. Run proof commands for the impacted gate and capture a short result summary.
-5. Add the handoff file: `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` (filled out for this change set).
+5. Add a handoff record for the change set:
+   - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+   - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
 6. Merge back into `master` after sign-off.
 

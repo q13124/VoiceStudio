@@ -7,10 +7,10 @@ See: docs/governance/SECURITY_FEATURES_IMPLEMENTATION_PLAN.md
 """
 
 import json
-from datetime import datetime
-from typing import Dict, List, Optional
-from pathlib import Path
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 # Import query optimizer for optimized database operations
 try:
@@ -20,27 +20,29 @@ try:
 except ImportError:
     HAS_QUERY_OPTIMIZER = False
     logger = logging.getLogger(__name__)
-    logger.warning("Query optimizer not available. Database operations will be limited.")
+    logger.warning(
+        "Query optimizer not available. Database operations will be limited."
+    )
 
 logger = logging.getLogger(__name__)
 
 
 class WatermarkDatabase:
     """Database for storing watermark metadata with query optimization."""
-    
+
     def __init__(self, db_path: Optional[Path] = None):
         """
         Initialize watermark database.
-        
+
         Args:
             db_path: Path to SQLite database file
         """
         if db_path is None:
             db_path = Path.home() / ".voicestudio" / "watermarks.db"
-        
+
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db_path = str(db_path)
-        
+
         # Initialize query optimizer if available
         if HAS_QUERY_OPTIMIZER:
             self.optimizer = DatabaseQueryOptimizer(
@@ -51,16 +53,18 @@ class WatermarkDatabase:
             )
         else:
             self.optimizer = None
-        
+
         logger.info(f"WatermarkDatabase initialized (path: {db_path})")
         self._init_database()
-    
+
     def _init_database(self):
         """Initialize database schema."""
         if not self.optimizer:
-            logger.warning("Query optimizer not available. Schema initialization skipped.")
+            logger.warning(
+                "Query optimizer not available. Schema initialization skipped."
+            )
             return
-        
+
         try:
             # Create watermark table
             self.optimizer.execute_query(
@@ -76,7 +80,7 @@ class WatermarkDatabase:
                 """,
                 use_cache=False,
             )
-            
+
             # Create verification log table
             self.optimizer.execute_query(
                 """
@@ -92,27 +96,27 @@ class WatermarkDatabase:
                 """,
                 use_cache=False,
             )
-            
+
             # Create indexes for performance
             self.optimizer.create_index("watermarks", "created_at")
             self.optimizer.create_index("verification_logs", "watermark_id")
             self.optimizer.create_index("verification_logs", "verified_at")
-            
+
             logger.info("Watermark database schema initialized")
         except Exception as e:
             logger.error(f"Failed to initialize database schema: {e}")
-    
+
     def store_watermark(
         self,
         watermark_id: str,
         watermark_data: Dict,
         method: str,
         strength: float,
-        audio_path: Optional[str] = None
+        audio_path: Optional[str] = None,
     ):
         """
         Store watermark metadata.
-        
+
         Args:
             watermark_id: Unique watermark identifier
             watermark_data: Watermark data dictionary
@@ -121,50 +125,56 @@ class WatermarkDatabase:
             audio_path: Optional path to audio file
         """
         if not self.optimizer:
-            raise NotImplementedError("Query optimizer not available.")
-        
+            raise RuntimeError("Query optimizer not available.")
+
         try:
             watermark_data_json = json.dumps(watermark_data)
-            
+
             self.optimizer.execute_query(
                 """
                 INSERT OR REPLACE INTO watermarks 
                 (watermark_id, watermark_data, method, strength, audio_path)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                parameters=(watermark_id, watermark_data_json, method, strength, audio_path),
+                parameters=(
+                    watermark_id,
+                    watermark_data_json,
+                    method,
+                    strength,
+                    audio_path,
+                ),
                 use_cache=False,
             )
-            
+
             # Invalidate cache for this watermark
             if self.optimizer.cache:
                 self.optimizer.cache.invalidate(f"watermark_{watermark_id}")
-            
+
             logger.info(f"Stored watermark: {watermark_id}")
         except Exception as e:
             logger.error(f"Failed to store watermark: {e}")
             raise
-    
+
     def get_watermark(self, watermark_id: str) -> Optional[Dict]:
         """
         Retrieve watermark metadata.
-        
+
         Args:
             watermark_id: Watermark identifier
-            
+
         Returns:
             Watermark data dictionary or None if not found
         """
         if not self.optimizer:
-            raise NotImplementedError("Query optimizer not available.")
-        
+            raise RuntimeError("Query optimizer not available.")
+
         try:
             results = self.optimizer.execute_query(
                 "SELECT * FROM watermarks WHERE watermark_id = ?",
                 parameters=(watermark_id,),
                 use_cache=True,
             )
-            
+
             if results:
                 row = results[0]
                 watermark_data = json.loads(row["watermark_data"])
@@ -176,22 +186,22 @@ class WatermarkDatabase:
                     "audio_path": row["audio_path"],
                     "created_at": row["created_at"],
                 }
-            
+
             return None
         except Exception as e:
             logger.error(f"Failed to retrieve watermark: {e}")
             return None
-    
+
     def log_verification(
         self,
         watermark_id: str,
         result: str,
         confidence: float,
-        verified_by: Optional[str] = None
+        verified_by: Optional[str] = None,
     ):
         """
         Log watermark verification.
-        
+
         Args:
             watermark_id: Watermark identifier
             result: Verification result
@@ -199,8 +209,8 @@ class WatermarkDatabase:
             verified_by: Optional verifier identifier
         """
         if not self.optimizer:
-            raise NotImplementedError("Query optimizer not available.")
-        
+            raise RuntimeError("Query optimizer not available.")
+
         try:
             self.optimizer.execute_query(
                 """
@@ -211,28 +221,28 @@ class WatermarkDatabase:
                 parameters=(watermark_id, result, confidence, verified_by),
                 use_cache=False,
             )
-            
+
             logger.info(f"Logged verification for watermark: {watermark_id}")
         except Exception as e:
             logger.error(f"Failed to log verification: {e}")
             raise
-    
+
     def get_verification_history(
         self, watermark_id: str, limit: int = 100
     ) -> List[Dict]:
         """
         Get verification history for a watermark.
-        
+
         Args:
             watermark_id: Watermark identifier
             limit: Maximum number of records
-            
+
         Returns:
             List of verification records
         """
         if not self.optimizer:
-            raise NotImplementedError("Query optimizer not available.")
-        
+            raise RuntimeError("Query optimizer not available.")
+
         try:
             results = self.optimizer.execute_query(
                 """
@@ -244,14 +254,13 @@ class WatermarkDatabase:
                 parameters=(watermark_id, limit),
                 use_cache=True,
             )
-            
+
             return results
         except Exception as e:
             logger.error(f"Failed to get verification history: {e}")
             return []
-    
+
     def close(self):
         """Close database connections."""
         if self.optimizer:
             self.optimizer.close()
-

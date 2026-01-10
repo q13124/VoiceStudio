@@ -3,12 +3,12 @@
     "tts": "xtts_v2",
     "image_gen": "sdxl_comfy",
     "video_gen": "svd",
-    "stt": "whisper"
+    "stt": "whisper_cpp"
   },
   "overrides": {},
   "installed": [],
   "model_paths": {
-    "base": "%PROGRAMDATA%\\VoiceStudio\\models",
+    "base": "E:\\\\VoiceStudio\\\\models",
     "engines": {}
   },
   "gpu_settings": {
@@ -20,18 +20,48 @@
   "engine_configs": {
     "xtts_v2": {
       "model_paths": {
-        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2",
-        "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\xtts_v2\\cache"
+        "base": "E:\\\\VoiceStudio\\\\models\\\\xtts",
+        "cache": "E:\\\\VoiceStudio\\\\models\\\\xtts\\\\cache"
       },
       "parameters": {
-        "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+        "model_name": "coqui/XTTS-v2",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "piper": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\piper"
+      },
+      "parameters": {
+        "voice": "en_US-amy-medium",
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\piper\\\\en_US-amy-medium.onnx",
+        "gpu": false
+      }
+    },
+    "whisper_cpp": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\whisper"
+      },
+      "parameters": {
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\whisper\\\\whisper-medium.en.gguf",
+        "language": "en"
+      }
+    },
+    "gpt_sovits": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\checkpoints"
+      },
+      "parameters": {
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\MyVoiceProj\\\\model.pth",
+        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\MyVoiceProj\\\\config.json",
         "device": "cuda",
         "gpu": true
       }
     },
     "chatterbox": {
       "model_paths": {
-        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\chatterbox"
+        "base": "E:\\\\VoiceStudio\\\\models\\\\chatterbox"
       },
       "parameters": {
         "device": "cuda",
@@ -40,7 +70,7 @@
     },
     "tortoise": {
       "model_paths": {
-        "base": "%PROGRAMDATA%\\VoiceStudio\\models\\tortoise"
+        "base": "E:\\\\VoiceStudio\\\\models\\\\tortoise"
       },
       "parameters": {
         "device": "cuda",

@@ -12,11 +12,14 @@ from typing import Dict, Optional
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from ...services.JobStateStore import get_job_state_store
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/voice/clone/wizard", tags=["voice-cloning-wizard"])
 
-# In-memory storage for wizard jobs (replace with database in production)
+# Disk-backed wizard job state (durable across backend restarts)
+_wizard_store = get_job_state_store("voice_cloning_wizard")
 _wizard_jobs: Dict[str, "WizardJob"] = {}
 
 
@@ -41,6 +44,37 @@ class WizardJob(BaseModel):
     error_message: Optional[str] = None
     created_at: str
     updated_at: str
+
+
+def _persist_wizard_job(job: "WizardJob") -> None:
+    _wizard_jobs[job.job_id] = job
+    try:
+        _wizard_store.upsert(job.job_id, job.model_dump(mode="json"))
+    except Exception as e:
+        logger.debug(f"Failed to persist wizard job {job.job_id}: {e}")
+
+
+def _load_wizard_jobs_from_disk() -> None:
+    try:
+        for job_id, payload in _wizard_store.load_all().items():
+            try:
+                job = WizardJob.model_validate(payload)
+            except Exception:
+                continue
+
+            # If backend restarted mid-processing, surface that deterministically.
+            if job.processing_status == "processing":
+                job.processing_status = "failed"
+                job.error_message = "Backend restarted during processing"
+                job.updated_at = datetime.utcnow().isoformat()
+                _persist_wizard_job(job)
+            else:
+                _wizard_jobs[job_id] = job
+    except Exception as e:
+        logger.debug(f"Failed to load wizard jobs from disk: {e}")
+
+
+_load_wizard_jobs_from_disk()
 
 
 class AudioValidationRequest(BaseModel):
@@ -234,7 +268,7 @@ async def validate_audio(request: AudioValidationRequest):
                         issues.append(f"Low signal-to-noise ratio ({snr:.1f}dB)")
                         recommendations.append("Record in a quieter environment")
                 except Exception:
-                    pass
+                    ...
 
                 # Check for silence
                 rms = np.sqrt(np.mean(audio_mono**2))

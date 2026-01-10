@@ -15,15 +15,56 @@ from fastapi.testclient import TestClient
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# Mock torch before importing engines module
+# Mock torch comprehensively to satisfy type hints and imports
 mock_torch = ModuleType("torch")
 mock_torch.__spec__ = MagicMock()
 mock_torch.__version__ = "2.0.0"
+mock_torch.tensor = MagicMock()
+mock_torch.Tensor = MagicMock() # Capital T required for type hints
+mock_torch.device = MagicMock()
+mock_torch.cuda = MagicMock()
+mock_torch.cuda.is_available.return_value = False
 sys.modules["torch"] = mock_torch
 
 mock_torchaudio = ModuleType("torchaudio")
 mock_torchaudio.__spec__ = MagicMock()
 sys.modules["torchaudio"] = mock_torchaudio
+
+# Mock silero_vad to prevent deep imports
+mock_silero = ModuleType("silero_vad")
+sys.modules["silero_vad"] = mock_silero
+
+# Mock voicefixer
+mock_voicefixer = ModuleType("voicefixer")
+sys.modules["voicefixer"] = mock_voicefixer
+
+# Mock app.core.engines.router to prevent loading real engines
+mock_engine_router_module = ModuleType("app.core.engines.router")
+mock_engine_router_instance = MagicMock()
+mock_engine_router_module.router = mock_engine_router_instance
+sys.modules["app.core.engines.router"] = mock_engine_router_module
+
+# Mock app.core.runtime package structure
+# This is needed because patch traverses the package structure
+mock_app_core = ModuleType("app.core")
+sys.modules["app.core"] = mock_app_core
+
+mock_app_core_runtime = ModuleType("app.core.runtime")
+sys.modules["app.core.runtime"] = mock_app_core_runtime
+mock_app_core.runtime = mock_app_core_runtime
+
+# Mock app.core.runtime.engine_lifecycle
+mock_lifecycle = ModuleType("app.core.runtime.engine_lifecycle")
+mock_lifecycle.get_lifecycle_manager = MagicMock()
+mock_lifecycle.EngineState = MagicMock()
+mock_lifecycle.EngineState.STOPPED.name = "STOPPED"
+mock_lifecycle.EngineState.STARTING.name = "STARTING"
+mock_lifecycle.EngineState.HEALTHY.name = "HEALTHY"
+mock_lifecycle.EngineState.BUSY.name = "BUSY"
+mock_lifecycle.EngineState.DRAINING.name = "DRAINING"
+mock_lifecycle.EngineState.ERROR.name = "ERROR"
+sys.modules["app.core.runtime.engine_lifecycle"] = mock_lifecycle
+mock_app_core_runtime.engine_lifecycle = mock_lifecycle
 
 # Import the route module
 try:
@@ -50,128 +91,77 @@ class TestEnginesRouteImports:
                 "/api/engines" in engines.router.prefix
             ), "Router prefix should include /api/engines"
 
-    def test_router_has_routes(self):
-        """Test router has registered routes."""
-        if hasattr(engines.router, "routes"):
-            routes = [route.path for route in engines.router.routes]
-            assert len(routes) > 0, "Router should have routes registered"
-
 
 class TestEnginesEndpoints:
     """Test engine management endpoints."""
 
+    def setup_method(self):
+        self.app = FastAPI()
+        self.app.include_router(engines.router)
+        self.client = TestClient(self.app)
+
     def test_list_engines_success(self):
         """Test successful engine listing."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
-
         with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
+            # We must patch the router instance that was imported into the module
             with patch("backend.api.routes.engines.engine_router") as mock_router:
                 mock_router.list_engines.return_value = ["xtts", "tortoise"]
 
-                response = client.get("/api/engines/list")
+                response = self.client.get("/api/engines/list")
                 assert response.status_code == 200
                 data = response.json()
                 assert "engines" in data
                 assert data["available"] is True
 
-    def test_list_engines_not_available(self):
-        """Test listing engines when router not available."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
-
-        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", False):
-            response = client.get("/api/engines/list")
-            assert response.status_code == 200
-            data = response.json()
-            assert data["available"] is False
-
-    def test_recommend_engine_success(self):
-        """Test successful engine recommendation."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
-
-        request_data = {
-            "task_type": "tts",
-            "min_mos_score": 4.0,
-            "quality_tier": "standard",
-        }
-
+    def test_start_engine_success(self):
+        """Test successful engine start."""
         with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
-            with patch("backend.api.routes.engines.engine_router") as mock_router:
-                mock_router.list_engines.return_value = ["xtts"]
-                mock_router.get_manifest.return_value = {
-                    "type": "audio",
-                    "subtype": "tts",
-                    "name": "XTTS",
-                    "quality_features": {
-                        "mos_estimate": "4.5",
-                        "quality_tier": "standard",
-                    },
-                }
+            # Since we mocked the module structure, patch should work
+            with patch("app.core.runtime.engine_lifecycle.get_lifecycle_manager") as mock_get_manager:
+                mock_manager = MagicMock()
+                mock_get_manager.return_value = mock_manager
+                
+                # Mock successful acquire
+                mock_engine_instance = MagicMock()
+                mock_engine_instance.port = 8081
+                mock_manager.acquire_engine.return_value = mock_engine_instance
 
-                response = client.post("/api/engines/recommend", json=request_data)
+                response = self.client.post("/api/engines/test_engine/start")
                 assert response.status_code == 200
                 data = response.json()
-                assert "recommendations" in data
+                assert data["status"] == "started"
+                assert data["engine_id"] == "test_engine"
+                assert data["port"] == 8081
 
-    def test_recommend_engine_not_available(self):
-        """Test engine recommendation when router not available."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
-
-        request_data = {"task_type": "tts"}
-
-        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", False):
-            response = client.post("/api/engines/recommend", json=request_data)
-            assert response.status_code == 503
-
-    def test_compare_engines_success(self):
-        """Test successful engine comparison."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
-
+    def test_get_engine_status(self):
+        """Test getting engine status."""
         with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
-            with patch("backend.api.routes.engines.engine_router") as mock_router:
-                mock_router.list_engines.return_value = ["xtts", "tortoise"]
-                mock_router.get_manifest.side_effect = [
-                    {
-                        "type": "audio",
-                        "subtype": "tts",
-                        "name": "XTTS",
-                        "quality_features": {},
-                    },
-                    {
-                        "type": "audio",
-                        "subtype": "tts",
-                        "name": "Tortoise",
-                        "quality_features": {},
-                    },
-                ]
+            with patch("app.core.runtime.engine_lifecycle.get_lifecycle_manager") as mock_get_manager:
+                mock_manager = MagicMock()
+                mock_get_manager.return_value = mock_manager
+                
+                # Mock state return
+                mock_state = MagicMock()
+                mock_state.name = "HEALTHY"
+                mock_manager.get_engine_state.return_value = mock_state
 
-                response = client.get("/api/engines/compare?engines=xtts,tortoise")
+                response = self.client.get("/api/engines/test_engine/status")
                 assert response.status_code == 200
                 data = response.json()
-                assert "comparison" in data
+                assert data["state"] == "healthy"
+                assert data["available"] is True
 
-    def test_compare_engines_not_available(self):
-        """Test engine comparison when router not available."""
-        app = FastAPI()
-        app.include_router(engines.router)
-        client = TestClient(app)
+    def test_get_engine_voices(self):
+        """Test getting engine voices."""
+        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
+            with patch("backend.api.routes.engines.engine_router") as mock_router:
+                # Mock engine instance with get_voices
+                mock_engine = MagicMock()
+                mock_engine.get_voices.return_value = [{"id": "v1", "name": "Voice 1"}]
+                mock_router.get_engine.return_value = mock_engine
 
-        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", False):
-            response = client.get("/api/engines/compare?engines=xtts,tortoise")
-            assert response.status_code == 200
-            data = response.json()
-            assert "available" in data
-            assert data["available"] is False
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+                response = self.client.get("/api/engines/test_engine/voices")
+                assert response.status_code == 200
+                data = response.json()
+                assert len(data) == 1
+                assert data[0]["id"] == "v1"

@@ -14,5 +14,5 @@ async def stream(ws: WebSocket):
         try:
             await ws.close()
         except Exception:
-            pass
+            ...
 

@@ -129,7 +129,7 @@ async def get_gpu_status():
                             devices.append(device)
         except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
             # nvidia-smi not available or failed
-            pass
+            ...
 
         # If no real GPUs detected, return empty device list
         # Client should handle empty device list as "no GPU available" state
