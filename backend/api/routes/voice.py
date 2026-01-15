@@ -282,8 +282,27 @@ async def synthesize(
     """
     # Get request ID from middleware
     request_id = getattr(request.state, "request_id", None)
-    requested_engine = req.engine
+    
+    # Select default engine if not specified (XTTS -> Piper -> eSpeak fallback)
+    if not req.engine or not req.engine.strip():
+        # Try to get default from config service
+        try:
+            from backend.services.EngineConfigService import get_engine_config_service
+            config_service = get_engine_config_service()
+            default_engine = config_service.get_default_engine("tts")
+            if default_engine:
+                requested_engine = default_engine
+            else:
+                # Hardcoded fallback chain: XTTS -> Piper -> eSpeak
+                requested_engine = "xtts_v2"
+        except Exception:
+            # Fallback to XTTS if config service unavailable
+            requested_engine = "xtts_v2"
+    
     engine_id = _normalize_engine_id(requested_engine)
+    
+    # Ensure required assets exist for selected engine (auto-download when allowed)
+    _ensure_tts_assets(engine_id)
 
     # Instrument synthesis flow
     from ..utils.instrumentation import EventType, instrument_flow
@@ -311,17 +330,31 @@ async def synthesize(
                     logger.warning(f"Failed to auto-load engines: {e}")
                     valid_engines = []
 
-            # Validate engine
+            # Validate engine and try fallback chain if invalid
             if valid_engines and engine_id not in valid_engines:
-                engines_str = (
-                    ", ".join(valid_engines)
-                    if valid_engines
-                    else "none (engines not loaded)"
-                )
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid engine '{requested_engine}'. Available engines: {engines_str}",
-                )
+                # Try fallback chain: XTTS -> Piper -> eSpeak
+                fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+                original_engine_id = engine_id
+                
+                for fallback_engine in fallback_chain:
+                    if fallback_engine in valid_engines:
+                        engine_id = fallback_engine
+                        logger.info(
+                            f"Engine '{original_engine_id}' not available, "
+                            f"falling back to '{fallback_engine}'"
+                        )
+                        break
+                else:
+                    # No fallback available
+                    engines_str = (
+                        ", ".join(valid_engines)
+                        if valid_engines
+                        else "none (engines not loaded)"
+                    )
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid engine '{requested_engine}'. Available engines: {engines_str}",
+                    )
             elif not valid_engines:
                 # No engines available - this is a configuration issue
                 logger.warning(
@@ -2292,7 +2325,7 @@ async def post_process_pipeline(
 
 @router.post("/clone", response_model=VoiceCloneResponse)
 async def clone(
-    reference_audio: UploadFile = File(...),
+    reference_audio: List[UploadFile] = File(...),
     text: Optional[str] = Form(None),
     engine: str = Form("xtts"),
     quality_mode: str = Form("standard"),
@@ -2363,11 +2396,15 @@ async def clone(
                 detail=f"Invalid quality_mode. Must be one of: {', '.join(valid_modes)}",
             )
 
-        # Save reference audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-            content = await reference_audio.read()
-            tmp_file.write(content)
-            ref_path = tmp_file.name
+        # Save reference audio(s)
+        ref_paths: List[str] = []
+        reference_files = reference_audio or []
+        for ref_file in reference_files:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+                content = await ref_file.read()
+                tmp_file.write(content)
+                ref_paths.append(tmp_file.name)
+        ref_path = ref_paths[0] if ref_paths else None
 
         try:
             # Use a stable, non-process-random identifier (built-in hash() is salted per process).
@@ -2412,8 +2449,12 @@ async def clone(
                         output_path: Optional[str] = None
                         if hasattr(engine_instance, "clone_voice"):
                             output_path = tempfile.mktemp(suffix=".wav")
+                            if use_multi_reference and len(ref_paths) > 1:
+                                reference_audio_arg: Union[str, List[str]] = ref_paths
+                            else:
+                                reference_audio_arg = ref_paths[0] if ref_paths else ref_path
                             clone_kwargs = {
-                                "reference_audio": ref_path,
+                                "reference_audio": reference_audio_arg,
                                 "text": text,
                                 "language": language,
                                 "output_path": output_path,
@@ -2431,13 +2472,16 @@ async def clone(
                                 # This will be handled in the quality enhancement pipeline
                                 clone_kwargs["enhance_quality"] = True
 
+                            logger.info(f"Calling clone_voice with output_path={output_path}")
                             result = engine_instance.clone_voice(**clone_kwargs)
+                            logger.info(f"clone_voice returned: type={type(result)}, is_tuple={isinstance(result, tuple)}, is_dict={isinstance(result, dict)}")
                         elif hasattr(engine_instance, "synthesize"):
                             # Fallback to synthesize method
                             output_path = tempfile.mktemp(suffix=".wav")
+                            synth_reference = ref_paths[0] if ref_paths else ref_path
                             synth_kwargs = {
                                 "text": text,
-                                "speaker_wav": ref_path,
+                                "speaker_wav": synth_reference,
                                 "language": language,
                                 "output_path": output_path,
                                 "calculate_quality": True,
@@ -2445,22 +2489,30 @@ async def clone(
                             }
                             if quality_preset:
                                 synth_kwargs["quality_preset"] = quality_preset
+                            logger.info(f"Calling synthesize (fallback) with output_path={output_path}")
                             result = engine_instance.synthesize(**synth_kwargs)
+                            logger.info(f"synthesize returned: type={type(result)}, is_tuple={isinstance(result, tuple)}, is_dict={isinstance(result, dict)}")
                         else:
+                            logger.warning("Engine instance has neither clone_voice nor synthesize method")
                             result = None
 
                         # Handle tuple return (audio, metrics) or single audio
                         if isinstance(result, tuple):
                             audio, metrics = result
+                            logger.info(f"Result is tuple: audio type={type(audio)}, metrics type={type(metrics)}")
                         else:
                             audio = result
                             metrics = {}
+                            logger.info(f"Result is single value: audio type={type(audio)}")
 
                         file_written = bool(output_path) and os.path.exists(output_path)
+                        logger.info(f"File check: output_path={output_path}, exists={os.path.exists(output_path) if output_path else False}, file_written={file_written}")
 
                         # Some engines write to output_path and return None (or (None, metrics)).
                         # Treat that as success if the file exists.
+                        logger.info(f"Before audio persistence check: file_written={file_written}, audio is ndarray={isinstance(audio, np.ndarray) if audio is not None else False}")
                         if not file_written and isinstance(audio, np.ndarray):
+                            logger.info("Audio is ndarray but file not written, persisting audio to file...")
                             # Fallback: persist returned audio so the UI can retrieve it.
                             if not output_path:
                                 output_path = tempfile.mktemp(suffix=".wav")
@@ -2492,10 +2544,62 @@ async def clone(
                                     f"Failed to persist clone audio to file: {e}"
                                 )
 
+                        # Log synthesis result for debugging
+                        logger.info(
+                            f"Clone synthesis result: file_written={file_written}, "
+                            f"output_path={output_path}, has_output_path={output_path is not None}, "
+                            f"output_path_exists={os.path.exists(output_path) if output_path else False}"
+                        )
+                        
+                        # Extract detailed quality metrics (when available)
+                        detailed_metrics = None
+                        quality_score = (
+                            0.88 if quality_mode in ["high", "ultra"] else 0.82
+                        )
+
+                        if metrics:
+                            # Extract artifact information
+                            artifacts_info = metrics.get("artifacts", {})
+                            if isinstance(artifacts_info, dict):
+                                artifact_score = artifacts_info.get(
+                                    "artifact_score", 0.0
+                                )
+                                has_clicks = artifacts_info.get("has_clicks", False)
+                                has_distortion = artifacts_info.get(
+                                    "has_distortion", False
+                                )
+                            else:
+                                artifact_score = 0.0
+                                has_clicks = False
+                                has_distortion = False
+
+                            # Build detailed metrics
+                            detailed_metrics = QualityMetrics(
+                                mos_score=metrics.get("mos_score"),
+                                similarity=metrics.get("similarity"),
+                                naturalness=metrics.get("naturalness"),
+                                snr_db=metrics.get("snr_db"),
+                                artifact_score=artifact_score,
+                                has_clicks=has_clicks,
+                                has_distortion=has_distortion,
+                                voice_profile_match=metrics.get("voice_profile_match"),
+                            )
+
+                            # Calculate quality score from metrics
+                            if metrics.get("mos_score"):
+                                quality_score = metrics["mos_score"] / 5.0
+                            elif metrics.get("similarity"):
+                                quality_score = metrics["similarity"]
+                            elif metrics.get("quality_score"):
+                                quality_score = metrics["quality_score"]
+
                         if file_written and output_path:
                             audio_id = f"clone_{profile_id}_{uuid.uuid4().hex[:8]}"
                             cached_path = _dedupe_and_get_path(output_path)
                             _register_audio_file(audio_id, cached_path)
+                            logger.info(
+                                f"Clone audio registered: audio_id={audio_id}, cached_path={cached_path}"
+                            )
                             if cached_path != output_path and os.path.exists(
                                 output_path
                             ):
@@ -2506,50 +2610,6 @@ async def clone(
                                         f"Failed to remove temp clone audio {output_path}: {e}"
                                     )
 
-                            # Extract detailed quality metrics
-                            detailed_metrics = None
-                            quality_score = (
-                                0.88 if quality_mode in ["high", "ultra"] else 0.82
-                            )
-
-                            if metrics:
-                                # Extract artifact information
-                                artifacts_info = metrics.get("artifacts", {})
-                                if isinstance(artifacts_info, dict):
-                                    artifact_score = artifacts_info.get(
-                                        "artifact_score", 0.0
-                                    )
-                                    has_clicks = artifacts_info.get("has_clicks", False)
-                                    has_distortion = artifacts_info.get(
-                                        "has_distortion", False
-                                    )
-                                else:
-                                    artifact_score = 0.0
-                                    has_clicks = False
-                                    has_distortion = False
-
-                                # Build detailed metrics
-                                detailed_metrics = QualityMetrics(
-                                    mos_score=metrics.get("mos_score"),
-                                    similarity=metrics.get("similarity"),
-                                    naturalness=metrics.get("naturalness"),
-                                    snr_db=metrics.get("snr_db"),
-                                    artifact_score=artifact_score,
-                                    has_clicks=has_clicks,
-                                    has_distortion=has_distortion,
-                                    voice_profile_match=metrics.get(
-                                        "voice_profile_match"
-                                    ),
-                                )
-
-                                # Calculate quality score from metrics
-                                if metrics.get("mos_score"):
-                                    quality_score = metrics["mos_score"] / 5.0
-                                elif metrics.get("similarity"):
-                                    quality_score = metrics["similarity"]
-                                elif metrics.get("quality_score"):
-                                    quality_score = metrics["quality_score"]
-
                             return VoiceCloneResponse(
                                 profile_id=profile_id,
                                 audio_id=audio_id,
@@ -2557,19 +2617,33 @@ async def clone(
                                 quality_score=quality_score,
                                 quality_metrics=detailed_metrics,
                             )
+
+                        logger.warning(
+                            "Clone synthesis did not produce audio file: "
+                            f"file_written={file_written}, output_path={output_path}"
+                        )
+                        return VoiceCloneResponse(
+                            profile_id=profile_id,
+                            audio_id=None,
+                            audio_url=None,
+                            quality_score=quality_score,
+                            quality_metrics=detailed_metrics,
+                        )
                 except Exception as e:
                     logger.error(f"Cloning with engine failed: {e}", exc_info=True)
                     # Continue to return profile creation response
 
-            # Return profile creation response
+            # Return profile creation response (no audio synthesized)
+            logger.warning(f"Clone endpoint returning profile-only response: profile_id={profile_id}, audio_id=None (synthesis did not produce audio)")
             return VoiceCloneResponse(
                 profile_id=profile_id, audio_id=None, audio_url=None, quality_score=0.85
             )
 
         finally:
-            # Clean up temp file
-            if os.path.exists(ref_path):
-                os.unlink(ref_path)
+            # Clean up temp file(s)
+            for ref_path in ref_paths:
+                if os.path.exists(ref_path):
+                    os.unlink(ref_path)
 
     except HTTPException:
         raise

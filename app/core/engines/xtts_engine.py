@@ -11,6 +11,7 @@ Compatible with:
 
 import logging
 import os
+import sys
 import time
 from collections import OrderedDict
 from functools import lru_cache
@@ -22,12 +23,8 @@ import torch
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (
-        calculate_all_metrics,
-        calculate_mos_score,
-        calculate_naturalness,
-        calculate_similarity,
-    )
+    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
+                                  calculate_naturalness, calculate_similarity)
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -35,13 +32,10 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_cloning_quality,
-        enhance_voice_quality,
-        match_voice_profile,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from ..audio.audio_utils import (enhance_voice_cloning_quality,
+                                     enhance_voice_quality,
+                                     match_voice_profile, normalize_lufs,
+                                     remove_artifacts)
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -59,6 +53,40 @@ except ImportError:
     )
 
 logger = logging.getLogger(__name__)
+
+# Optional librosa import for prosody control
+try:
+    import librosa
+
+    HAS_LIBROSA = True
+except ImportError:
+    HAS_LIBROSA = False
+    librosa = None
+    logger.warning("librosa not available. Prosody control will be limited.")
+
+# Coqui TTS expects model IDs like: tts_models/<language>/<dataset>/<model_name>.
+# Older configs/docs may use the HuggingFace-style repo id (e.g. "coqui/XTTS-v2").
+XTTS_DEFAULT_MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
+_XTTS_MODEL_NAME_ALIASES = {
+    "coqui/xtts-v2": XTTS_DEFAULT_MODEL_NAME,
+}
+
+
+def _normalize_xtts_model_name(model_name: Optional[str]) -> str:
+    """
+    Normalize XTTS model identifiers to a Coqui-TTS-compatible model id.
+
+    Accepts legacy HuggingFace-style repo ids and maps them to the canonical Coqui ID.
+    """
+    if not model_name:
+        return XTTS_DEFAULT_MODEL_NAME
+
+    name = str(model_name).strip()
+    if not name:
+        return XTTS_DEFAULT_MODEL_NAME
+
+    return _XTTS_MODEL_NAME_ALIASES.get(name.lower(), name)
+
 
 # Try importing general model cache
 try:
@@ -176,7 +204,7 @@ class XTTSEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_name: str = "coqui/XTTS-v2",
+        model_name: str = XTTS_DEFAULT_MODEL_NAME,
         device: Optional[str] = None,
         gpu: bool = True,
     ):
@@ -196,10 +224,41 @@ class XTTSEngine(EngineProtocol):
         # Initialize base protocol
         super().__init__(device=device, gpu=gpu)
 
-        self.model_name = model_name
+        requested_model_name = model_name
+        self.model_name = _normalize_xtts_model_name(model_name)
+        if requested_model_name != self.model_name:
+            logger.info(
+                f"Normalized XTTS model_name '{requested_model_name}' -> '{self.model_name}'"
+            )
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
+
+        # Guardrail: some GPUs (e.g. RTX 50-series / sm_120) are newer than the pinned
+        # PyTorch build and will crash at runtime with:
+        #   "CUDA error: no kernel image is available for execution on the device"
+        # Detect unsupported compute capability and fall back to CPU automatically so
+        # voice cloning remains functional (albeit slower).
+        if self.device == "cuda" and torch.cuda.is_available():
+            try:
+                cap = torch.cuda.get_device_capability(0)
+                arch = f"sm_{cap[0]}{cap[1]}"
+                supported_arches = list(torch.cuda.get_arch_list())
+                if supported_arches and arch not in supported_arches:
+                    gpu_name = torch.cuda.get_device_name(0)
+                    logger.warning(
+                        "CUDA device '%s' (capability %s) is not supported by this PyTorch build (%s). "
+                        "Supported arches: %s. Falling back to CPU for XTTS.",
+                        gpu_name,
+                        arch,
+                        torch.__version__,
+                        " ".join(supported_arches),
+                    )
+                    self.device = "cpu"
+            except Exception as e:
+                logger.warning(
+                    f"Failed to verify CUDA arch compatibility for XTTS: {e}"
+                )
         self.tts = None
         self._use_cache = True  # Enable model caching by default
         self._lazy_load = False  # Lazy loading flag
@@ -258,6 +317,21 @@ class XTTSEngine(EngineProtocol):
         """
         try:
             logger.info(f"Loading XTTS model: {self.model_name}")
+
+            # Coqui XTTS-v2 downloads can require interactive CPML acceptance (input prompt).
+            # In non-interactive backend runs, this can hang the server. Fail fast with a clear
+            # instruction to set COQUI_TOS_AGREED=1 (or use start_backend.ps1 -CoquiTosAgreed).
+            if os.environ.get("COQUI_TOS_AGREED") != "1":
+                try:
+                    stdin_is_tty = bool(getattr(sys.stdin, "isatty", lambda: False)())
+                except Exception:
+                    stdin_is_tty = False
+                if not stdin_is_tty:
+                    raise RuntimeError(
+                        "XTTS-v2 model download requires CPML/commercial license acceptance. "
+                        "For non-interactive runs, set COQUI_TOS_AGREED=1 "
+                        "(e.g. start_backend.ps1 -CoquiTosAgreed)."
+                    )
 
             # Use VOICESTUDIO_MODELS_PATH for model cache if available (default: E:\VoiceStudio\models)
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
@@ -573,6 +647,24 @@ class XTTSEngine(EngineProtocol):
             calculate_quality=calculate_quality,
             **kwargs,
         )
+
+        # `synthesize()` may return:
+        # - ndarray (audio) when output_path is None
+        # - (audio, metrics) when calculate_quality=True and output_path is None
+        # - None when output_path is provided (file written to disk)
+        # - (None, metrics) when calculate_quality=True and output_path is provided
+        # In the output_path case, the file is already written and quality metrics are already
+        # computed inside `synthesize()`. Avoid re-processing here.
+        if isinstance(audio, tuple):
+            audio_arr, quality_metrics = audio
+            # If audio was written to disk, propagate metrics and return early.
+            if audio_arr is None:
+                return None, quality_metrics
+            # If we already have metrics and no extra post-processing is requested,
+            # return early to avoid double-processing.
+            if not prosody_params:
+                return audio_arr, quality_metrics
+            audio = audio_arr
 
         # Apply advanced prosody control if specified
         if audio is not None and prosody_params:
@@ -957,7 +1049,7 @@ class XTTSEngine(EngineProtocol):
 
 # Factory function for easy instantiation
 def create_xtts_engine(
-    model_name: str = "coqui/XTTS-v2",
+    model_name: str = XTTS_DEFAULT_MODEL_NAME,
     device: Optional[str] = None,
     gpu: bool = True,
 ) -> XTTSEngine:
