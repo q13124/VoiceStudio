@@ -27,8 +27,12 @@ import soundfile as sf
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
-                                  calculate_naturalness, calculate_similarity)
+    from .quality_metrics import (
+        calculate_all_metrics,
+        calculate_mos_score,
+        calculate_naturalness,
+        calculate_similarity,
+    )
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -36,9 +40,12 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (enhance_voice_quality,
-                                     match_voice_profile, normalize_lufs,
-                                     remove_artifacts)
+    from ..audio.audio_utils import (
+        enhance_voice_quality,
+        match_voice_profile,
+        normalize_lufs,
+        remove_artifacts,
+    )
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -346,9 +353,7 @@ class PiperEngine(EngineProtocol):
 
             # Test executable
             try:
-                if self.executable_path == "python_package":
-                    pass  # Already tested
-                else:
+                if self.executable_path != "python_package":
                     result = subprocess.run(
                         [self.executable_path, "--help"],
                         capture_output=True,

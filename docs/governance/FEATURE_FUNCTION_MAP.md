@@ -74,7 +74,7 @@ Other unclassified top-level folders exist on `E:\` (see the full inventory JSON
 
 - **Inno Setup**: `installer/VoiceStudio.iss`
 - **WiX**: `installer/VoiceStudio.wxs`
-- **Build/installer integrity scripts**: `installer/*.ps1`, `scripts/package_release.ps1`, `scripts/prepare-release.ps1`
+- **Build/installer integrity scripts**: `installer/*.ps1`, `scripts/prepare-release.ps1`, `scripts/gatec-publish-launch.ps1`
 
 ### Shared contracts (UI ↔ backend)
 
@@ -309,7 +309,7 @@ Other unclassified top-level folders exist on `E:\` (see the full inventory JSON
   - `installer/build-installer.ps1`
   - `installer/verify-installer.ps1`
   - `scripts/prepare-release.ps1`
-  - `scripts/package_release.ps1`
+  - `scripts/gatec-publish-launch.ps1`
 
 ### Tooling / audits
 

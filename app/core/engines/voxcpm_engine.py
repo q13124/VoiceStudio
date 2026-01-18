@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Try importing general model cache
 try:
     from ..models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -52,7 +53,7 @@ def _get_cached_voxcpm_model(model_name: str, device: str):
         cached = _model_cache.get("voxcpm", model_name, device=device)
         if cached is not None:
             return cached
-    
+
     # Fallback to VoxCPM-specific cache
     cache_key = _get_cache_key(model_name, device)
     if cache_key in _VOXCPM_MODEL_CACHE:
@@ -70,16 +71,16 @@ def _cache_voxcpm_model(model_name: str, device: str, models: Dict):
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to VoxCPM-specific cache
     cache_key = _get_cache_key(model_name, device)
-    
+
     if cache_key in _VOXCPM_MODEL_CACHE:
         _VOXCPM_MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     _VOXCPM_MODEL_CACHE[cache_key] = models
-    
+
     # Evict oldest if cache full
     if len(_VOXCPM_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, oldest_models = _VOXCPM_MODEL_CACHE.popitem(last=False)
@@ -90,8 +91,11 @@ def _cache_voxcpm_model(model_name: str, device: str, models: Dict):
             logger.debug(f"Evicted VoxCPM model from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting VoxCPM model from cache: {e}")
-    
-    logger.debug(f"Cached VoxCPM model: {cache_key} (cache size: {len(_VOXCPM_MODEL_CACHE)})")
+
+    logger.debug(
+        f"Cached VoxCPM model: {cache_key} (cache size: {len(_VOXCPM_MODEL_CACHE)})"
+    )
+
 
 # Optional quality metrics import
 try:
@@ -101,6 +105,7 @@ try:
         calculate_naturalness,
         calculate_similarity,
     )
+
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
@@ -113,6 +118,7 @@ try:
         normalize_lufs,
         remove_artifacts,
     )
+
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -125,53 +131,60 @@ except ImportError:
         from .base import EngineProtocol
     except ImportError:
         from abc import ABC, abstractmethod
+
         class EngineProtocol(ABC):
             def __init__(self, device=None, gpu=True):
                 self.device = device or ("cuda" if gpu else "cpu")
                 self._initialized = False
+
             @abstractmethod
-            def initialize(self): pass
+            def initialize(self) -> bool:
+                return False
+
             @abstractmethod
-            def cleanup(self): pass
-            def is_initialized(self): return self._initialized
-            def get_device(self): return self.device
+            def cleanup(self) -> None:
+                return None
+
+            def is_initialized(self) -> bool:
+                return self._initialized
+
+            def get_device(self) -> str:
+                return self.device
 
 
 class VoxCPMEngine(EngineProtocol):
     """
     VoxCPM Engine for Chinese and multilingual text-to-speech synthesis.
-    
+
     Supports:
     - High-quality Chinese TTS
     - Multilingual synthesis
     - Multiple voices
     - Fast inference
     """
-    
+
     # Supported languages
-    SUPPORTED_LANGUAGES = [
-        "zh", "zh-cn", "zh-tw", "en", "en-us", "en-gb", "ja", "ko"
-    ]
-    
+    SUPPORTED_LANGUAGES = ["zh", "zh-cn", "zh-tw", "en", "en-us", "en-gb", "ja", "ko"]
+
     # Default sample rate
     DEFAULT_SAMPLE_RATE = 24000
-    
+
     def __init__(
         self,
         model_name: str = "voxcpm/base",
         device: Optional[str] = None,
-        gpu: bool = True
+        gpu: bool = True,
     ):
         """
         Initialize VoxCPM engine.
-        
+
         Args:
             model_name: VoxCPM model identifier
             device: Device to use ('cuda', 'cpu', or None for auto)
             gpu: Whether to use GPU if available
         """
         super().__init__(device=device, gpu=gpu)
-        
+
         self.model_name = model_name
         self.model = None
         self.tokenizer = None
@@ -180,11 +193,11 @@ class VoxCPMEngine(EngineProtocol):
         self.lazy_load = True
         self.batch_size = 2
         self.enable_caching = True
-        
+
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
-    
+
     def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
@@ -195,44 +208,53 @@ class VoxCPMEngine(EngineProtocol):
                 self.model = cached_models.get("model")
                 self.tokenizer = cached_models.get("tokenizer")
                 self.vocoder = cached_models.get("vocoder")
-                if hasattr(self.model, 'config') and hasattr(self.model.config, 'sample_rate'):
+                if hasattr(self.model, "config") and hasattr(
+                    self.model.config, "sample_rate"
+                ):
                     self.sample_rate = self.model.config.sample_rate
                 else:
                     self.sample_rate = self.DEFAULT_SAMPLE_RATE
                 self._initialized = True
                 return True
-        
+
         # Try importing transformers and loading VoxCPM
         try:
             from transformers import AutoModel, AutoTokenizer
         except ImportError:
-            logger.error("transformers not installed. Install with: pip install transformers")
+            logger.error(
+                "transformers not installed. Install with: pip install transformers"
+            )
             self._initialized = False
             return False
-        
+
         try:
             # Try loading from HuggingFace
-            model_id = "voxcpm/voxcpm" if "voxcpm" in self.model_name.lower() else self.model_name
-            
+            model_id = (
+                "voxcpm/voxcpm"
+                if "voxcpm" in self.model_name.lower()
+                else self.model_name
+            )
+
             # Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
-                model_id,
-                trust_remote_code=True
+                model_id, trust_remote_code=True
             )
-            
+
             # Load model
             self.model = AutoModel.from_pretrained(
                 model_id,
                 trust_remote_code=True,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
             )
             self.model = self.model.to(self.device)
             self.model.eval()
-            
+
             # Get sample rate from model config if available
-            if hasattr(self.model, 'config') and hasattr(self.model.config, 'sample_rate'):
+            if hasattr(self.model, "config") and hasattr(
+                self.model.config, "sample_rate"
+            ):
                 self.sample_rate = self.model.config.sample_rate
-            
+
             # Cache models
             if self.enable_caching:
                 _cache_voxcpm_model(
@@ -241,41 +263,42 @@ class VoxCPMEngine(EngineProtocol):
                     {
                         "model": self.model,
                         "tokenizer": self.tokenizer,
-                        "vocoder": self.vocoder
-                    }
+                        "vocoder": self.vocoder,
+                    },
                 )
-            
-            logger.info(f"VoxCPM model loaded successfully (sample_rate: {self.sample_rate})")
+
+            logger.info(
+                f"VoxCPM model loaded successfully (sample_rate: {self.sample_rate})"
+            )
             self._initialized = True
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load VoxCPM model: {e}")
             logger.info("Trying alternative loading method...")
-            
+
             # Alternative: Try direct VoxCPM package
             try:
                 import voxcpm
+
                 self.model = voxcpm.VoxCPM()
                 self.sample_rate = 24000
-                
+
                 # Cache model
                 if self.enable_caching:
                     _cache_voxcpm_model(
                         self.model_name,
                         self.device,
-                        {
-                            "model": self.model,
-                            "tokenizer": None,
-                            "vocoder": None
-                        }
+                        {"model": self.model, "tokenizer": None, "vocoder": None},
                     )
-                
+
                 logger.info("VoxCPM loaded via voxcpm package")
                 self._initialized = True
                 return True
             except ImportError:
-                logger.error("voxcpm package not found. Install with: pip install voxcpm")
+                logger.error(
+                    "voxcpm package not found. Install with: pip install voxcpm"
+                )
                 logger.error("Or use transformers with model: voxcpm/voxcpm")
                 self._initialized = False
                 return False
@@ -283,31 +306,31 @@ class VoxCPMEngine(EngineProtocol):
                 logger.error(f"Alternative loading also failed: {e2}")
                 self._initialized = False
                 return False
-    
+
     def initialize(self) -> bool:
         """
         Initialize the VoxCPM model.
-        
+
         Returns:
             True if initialization successful, False otherwise
         """
         try:
             if self._initialized:
                 return True
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
                 logger.debug("Lazy loading enabled, model will be loaded on first use")
                 return True
-            
+
             logger.info(f"Loading VoxCPM model: {self.model_name} on {self.device}")
             return self._load_model()
-                    
+
         except Exception as e:
             logger.error(f"Failed to initialize VoxCPM engine: {e}")
             self._initialized = False
             return False
-    
+
     def synthesize(
         self,
         text: str,
@@ -316,11 +339,11 @@ class VoxCPMEngine(EngineProtocol):
         output_path: Optional[Union[str, Path]] = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
         """
         Synthesize speech from text using VoxCPM.
-        
+
         Args:
             text: Text to synthesize
             language: Language code (e.g., 'zh', 'en', 'ja')
@@ -331,7 +354,7 @@ class VoxCPMEngine(EngineProtocol):
             **kwargs: Additional synthesis parameters
                 - speed: Speech speed (0.5-2.0, default 1.0)
                 - temperature: Generation temperature (0.1-2.0, default 1.0)
-        
+
         Returns:
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
@@ -340,34 +363,34 @@ class VoxCPMEngine(EngineProtocol):
         if not self._initialized:
             if not self._load_model():
                 return None
-        
+
         try:
             # Get speed
             speed = kwargs.get("speed", 1.0)
-            
+
             # Get temperature
             temperature = kwargs.get("temperature", 1.0)
-            
+
             # Synthesize using transformers model
             if self.tokenizer is not None and self.model is not None:
                 # Tokenize text
                 inputs = self.tokenizer(text, return_tensors="pt", padding=True)
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
-                
+
                 # Generate audio with inference mode for better performance
                 with torch.inference_mode():  # Faster than no_grad
-                    if hasattr(self.model, 'generate'):
+                    if hasattr(self.model, "generate"):
                         # Use generate method if available
                         outputs = self.model.generate(
                             **inputs,
                             language=language,
                             temperature=temperature,
-                            max_length=512
+                            max_length=512,
                         )
                     else:
                         # Use forward pass
                         outputs = self.model(**inputs)
-                    
+
                     # Extract audio from outputs
                     if isinstance(outputs, dict):
                         audio = outputs.get("audio", outputs.get("waveform", None))
@@ -375,70 +398,69 @@ class VoxCPMEngine(EngineProtocol):
                         audio = outputs[0]
                     else:
                         audio = outputs
-                    
+
                     if audio is None:
                         logger.error("VoxCPM did not return audio")
                         return None
-                    
+
                     # Convert to numpy
                     if isinstance(audio, torch.Tensor):
                         audio = audio.cpu().numpy()
-                    
+
                     # Handle batch dimension
                     if len(audio.shape) > 1:
                         if audio.shape[0] == 1:
                             audio = audio[0]
                         else:
                             audio = audio[0]  # Take first item
-                    
+
                     # Ensure mono
                     if len(audio.shape) > 1:
                         audio = np.mean(audio, axis=0)
-                    
+
                     # Convert to float32
                     if audio.dtype != np.float32:
                         audio = audio.astype(np.float32)
-                    
+
                     # Normalize
                     if np.max(np.abs(audio)) > 0:
                         audio = audio / np.max(np.abs(audio)) * 0.95
-                    
+
             else:
                 # Try voxcpm package API
                 try:
                     audio = self.model.synthesize(
-                        text=text,
-                        language=language,
-                        speed=speed
+                        text=text, language=language, speed=speed
                     )
-                    
+
                     if isinstance(audio, torch.Tensor):
                         audio = audio.cpu().numpy()
-                    
+
                     # Ensure mono
                     if len(audio.shape) > 1:
                         audio = np.mean(audio, axis=0)
-                    
+
                     # Convert to float32
                     if audio.dtype != np.float32:
                         audio = audio.astype(np.float32)
-                    
+
                     # Normalize
                     if np.max(np.abs(audio)) > 0:
                         audio = audio / np.max(np.abs(audio)) * 0.95
-                        
+
                 except Exception as e:
                     logger.error(f"VoxCPM synthesis failed: {e}")
                     return None
-            
+
             # Apply speed adjustment if needed
             if speed != 1.0:
                 try:
                     import librosa
+
                     audio = librosa.effects.time_stretch(audio, rate=speed)
                 except ImportError:
                     logger.warning("librosa not available for speed adjustment")
-            
+
             # Apply quality processing if requested
             if enhance_quality or calculate_quality:
                 audio = self._process_audio_quality(
@@ -455,30 +477,30 @@ class VoxCPMEngine(EngineProtocol):
                         sf.write(output_path, audio, self.sample_rate)
                         return None
                     return audio
-            
+
             # Save to file if requested
             if output_path:
                 sf.write(output_path, audio, self.sample_rate)
                 logger.info(f"Audio saved to: {output_path}")
                 return None
-            
+
             return audio
-            
+
         except Exception as e:
             logger.error(f"VoxCPM synthesis failed: {e}")
             return None
-    
+
     def _process_audio_quality(
         self,
         audio: np.ndarray,
         sample_rate: int,
         reference_audio: Optional[Union[str, Path]] = None,
         enhance: bool = False,
-        calculate: bool = False
+        calculate: bool = False,
     ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
-        
+
         if enhance and HAS_AUDIO_UTILS:
             try:
                 audio = enhance_voice_quality(audio, sample_rate)
@@ -486,31 +508,33 @@ class VoxCPMEngine(EngineProtocol):
                 audio = remove_artifacts(audio, sample_rate)
             except Exception as e:
                 logger.warning(f"Quality enhancement failed: {e}")
-        
+
         if calculate and HAS_QUALITY_METRICS:
             try:
                 quality_metrics = calculate_all_metrics(audio, sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(
+                            audio, sample_rate, ref_audio, ref_sr
+                        )
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
             except Exception as e:
                 logger.warning(f"Quality metrics calculation failed: {e}")
                 quality_metrics = {}
-        
+
         if calculate:
             return audio, quality_metrics
         return audio
-    
+
     def get_voices(self, language: Optional[str] = None) -> List[str]:
         """Get available voices/speakers."""
         if not self._initialized:
             if not self.initialize():
                 return []
-        
+
         # VoxCPM typically has multiple speakers per language
         voices = []
         if language:
@@ -521,13 +545,13 @@ class VoxCPMEngine(EngineProtocol):
             # Return default speakers
             for lang in ["zh", "en", "ja", "ko"]:
                 voices.append(f"{lang}_spk_0")
-        
+
         return voices
-    
+
     def get_languages(self) -> List[str]:
         """Get available languages."""
         return self.SUPPORTED_LANGUAGES
-    
+
     def batch_synthesize(
         self,
         texts: List[str],
@@ -537,11 +561,11 @@ class VoxCPMEngine(EngineProtocol):
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
-        **kwargs
+        **kwargs,
     ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
         """
         Synthesize multiple texts in batch with optimized processing.
-        
+
         Args:
             texts: List of texts to synthesize
             language: Language code
@@ -551,7 +575,7 @@ class VoxCPMEngine(EngineProtocol):
             calculate_quality: If True, return quality metrics
             batch_size: Number of texts to process in a single batch
             **kwargs: Additional synthesis parameters
-        
+
         Returns:
             List of audio arrays or tuples of (audio, quality_metrics)
         """
@@ -559,12 +583,12 @@ class VoxCPMEngine(EngineProtocol):
         if not self._initialized:
             if not self._load_model():
                 return [None] * len(texts)
-        
+
         results = []
-        
+
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
-        
+
         def synthesize_single(text):
             try:
                 return self.synthesize(
@@ -573,16 +597,16 @@ class VoxCPMEngine(EngineProtocol):
                     voice=voice,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
                 return None
-        
+
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             batch_results = list(executor.map(synthesize_single, texts))
-        
+
         # Handle output directory if provided
         if output_dir:
             output_dir = Path(output_dir)
@@ -607,33 +631,33 @@ class VoxCPMEngine(EngineProtocol):
                     results.append(None)
         else:
             results = batch_results
-        
+
         # Clear GPU cache periodically
         if torch.cuda.is_available() and (len(texts) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
+
     def _get_memory_usage(self) -> Dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
-        
+
         return {
             "gpu_memory_mb": torch.cuda.get_device_properties(0).total_memory / 1024**2,
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
-    
+
     def cleanup(self):
         """Clean up resources."""
         try:
@@ -641,32 +665,31 @@ class VoxCPMEngine(EngineProtocol):
             self.model = None
             self.tokenizer = None
             self.vocoder = None
-            
+
             # Clear CUDA cache if using GPU
             if self.device == "cuda" and torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            
+
             self._initialized = False
             logger.info("VoxCPM engine cleaned up")
         except Exception as e:
             logger.warning(f"Error during VoxCPM cleanup: {e}")
-    
+
     def get_info(self) -> Dict:
         """Get engine information."""
         info = super().get_info()
-        info.update({
-            "model_name": self.model_name,
-            "sample_rate": self.sample_rate,
-            "supported_languages": len(self.SUPPORTED_LANGUAGES)
-        })
+        info.update(
+            {
+                "model_name": self.model_name,
+                "sample_rate": self.sample_rate,
+                "supported_languages": len(self.SUPPORTED_LANGUAGES),
+            }
+        )
         return info
 
 
 def create_voxcpm_engine(
-    model_name: str = "voxcpm/base",
-    device: Optional[str] = None,
-    gpu: bool = True
+    model_name: str = "voxcpm/base", device: Optional[str] = None, gpu: bool = True
 ) -> VoxCPMEngine:
     """Factory function to create a VoxCPM engine instance."""
     return VoxCPMEngine(model_name=model_name, device=device, gpu=gpu)
-

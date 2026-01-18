@@ -16,15 +16,19 @@ import time
 from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
-                                  calculate_naturalness, calculate_similarity)
+    from .quality_metrics import (
+        calculate_all_metrics,
+        calculate_mos_score,
+        calculate_naturalness,
+        calculate_similarity,
+    )
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -32,10 +36,13 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (enhance_voice_cloning_quality,
-                                     enhance_voice_quality,
-                                     match_voice_profile, normalize_lufs,
-                                     remove_artifacts)
+    from ..audio.audio_utils import (
+        enhance_voice_cloning_quality,
+        enhance_voice_quality,
+        match_voice_profile,
+        normalize_lufs,
+        remove_artifacts,
+    )
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -263,6 +270,7 @@ class XTTSEngine(EngineProtocol):
         self._use_cache = True  # Enable model caching by default
         self._lazy_load = False  # Lazy loading flag
         self._batch_size = 1  # Default batch size for batch processing
+        self._last_multi_reference_metrics: Optional[Dict[str, Any]] = None
 
     def initialize(self, lazy: bool = False) -> bool:
         """
@@ -484,6 +492,34 @@ class XTTSEngine(EngineProtocol):
             logger.error(f"Synthesis failed: {e}")
             return None
 
+    def _compute_voice_profile_match(
+        self,
+        processed_audio: np.ndarray,
+        sample_rate: int,
+        reference_audio: Optional[Union[str, Path]],
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """
+        Compute voice profile match metrics against the reference audio when available.
+
+        Returns a tuple of (profile_match, missing_dependency_hint).
+        """
+        if not reference_audio or not HAS_AUDIO_UTILS:
+            return None, None
+
+        try:
+            import soundfile as sf
+
+            ref_audio, ref_sr = sf.read(str(reference_audio))
+            profile_match = match_voice_profile(
+                ref_audio, processed_audio, ref_sr, sample_rate
+            )
+            return profile_match, None
+        except ImportError:
+            return None, "soundfile (pip install soundfile)"
+        except Exception as e:
+            logger.debug(f"Voice profile matching failed: {e}")
+            return None, None
+
     def _process_audio_quality(
         self,
         audio: np.ndarray,
@@ -550,17 +586,16 @@ class XTTSEngine(EngineProtocol):
                     logger.warning(f"Quality metrics calculation failed: {e}")
 
             # Add voice profile matching if reference available
-            if reference_audio and HAS_AUDIO_UTILS:
-                try:
-                    import soundfile as sf
-
-                    ref_audio, ref_sr = sf.read(str(reference_audio))
-                    profile_match = match_voice_profile(
-                        ref_audio, processed_audio, ref_sr, sample_rate
-                    )
-                    quality_metrics["voice_profile_match"] = profile_match
-                except Exception as e:
-                    logger.debug(f"Voice profile matching failed: {e}")
+            profile_match, missing_dep = self._compute_voice_profile_match(
+                processed_audio, sample_rate, reference_audio
+            )
+            if profile_match is not None:
+                quality_metrics["voice_profile_match"] = profile_match
+            elif missing_dep:
+                missing = quality_metrics.get("missing_dependencies") or []
+                if missing_dep not in missing:
+                    missing.append(missing_dep)
+                quality_metrics["missing_dependencies"] = missing
 
         if calculate_metrics:
             return processed_audio, quality_metrics
@@ -599,6 +634,8 @@ class XTTSEngine(EngineProtocol):
         Returns:
             Audio array or None, or tuple of (audio, quality_metrics) if calculate_quality=True
         """
+        self._last_multi_reference_metrics = None
+
         # Support multi-reference voice cloning
         if isinstance(reference_audio, list) and len(reference_audio) > 1:
             if use_multi_reference:
@@ -638,57 +675,85 @@ class XTTSEngine(EngineProtocol):
             if quality_preset in quality_params:
                 kwargs.update(quality_params[quality_preset])
 
-        audio = self.synthesize(
+        has_prosody = bool(prosody_params)
+
+        # If no prosody is requested, delegate to `synthesize()` which already handles:
+        # - output_path writing
+        # - enhancement
+        # - metrics calculation
+        # Doing additional `_process_audio_quality()` work here can double-apply enhancement.
+        if not has_prosody:
+            return self.synthesize(
+                text=text,
+                speaker_wav=reference_audio,
+                language=language,
+                output_path=output_path,
+                enhance_quality=enhance_quality,
+                calculate_quality=calculate_quality,
+                **kwargs,
+            )
+
+        # Prosody modifies the waveform; apply enhancement/metrics once after prosody so we don't
+        # over-process audio (and so metrics reflect the final waveform).
+        synth_audio = self.synthesize(
             text=text,
             speaker_wav=reference_audio,
             language=language,
-            output_path=output_path,
-            enhance_quality=enhance_quality,
-            calculate_quality=calculate_quality,
+            output_path=None,
+            enhance_quality=False,
+            calculate_quality=False,
             **kwargs,
         )
+        if synth_audio is None:
+            return None
 
-        # `synthesize()` may return:
-        # - ndarray (audio) when output_path is None
-        # - (audio, metrics) when calculate_quality=True and output_path is None
-        # - None when output_path is provided (file written to disk)
-        # - (None, metrics) when calculate_quality=True and output_path is provided
-        # In the output_path case, the file is already written and quality metrics are already
-        # computed inside `synthesize()`. Avoid re-processing here.
-        if isinstance(audio, tuple):
-            audio_arr, quality_metrics = audio
-            # If audio was written to disk, propagate metrics and return early.
-            if audio_arr is None:
-                return None, quality_metrics
-            # If we already have metrics and no extra post-processing is requested,
-            # return early to avoid double-processing.
-            if not prosody_params:
-                return audio_arr, quality_metrics
-            audio = audio_arr
+        if isinstance(synth_audio, tuple):
+            synth_audio_arr, _synth_quality_metrics = synth_audio
+            if synth_audio_arr is None:
+                return None
+            synth_audio = synth_audio_arr
 
-        # Apply advanced prosody control if specified
-        if audio is not None and prosody_params:
-            audio = self._apply_prosody_control(
-                audio, getattr(self.tts, "output_sample_rate", 22050), prosody_params
+        prosody_params_dict = prosody_params
+        if prosody_params_dict is None:
+            return synth_audio
+
+        sample_rate = getattr(self.tts, "output_sample_rate", 22050)
+        audio_after_prosody = self._apply_prosody_control(
+            synth_audio, sample_rate, prosody_params_dict
+        )
+
+        if isinstance(reference_audio, list):
+            ref_for_metrics: Optional[Union[str, Path]] = (
+                reference_audio[0] if reference_audio else None
             )
+        else:
+            ref_for_metrics = reference_audio
 
-        # Process audio quality (enhancement + metrics)
-        if audio is not None:
-            audio = self._process_audio_quality(
-                audio,
-                getattr(self.tts, "output_sample_rate", 22050),
-                (
-                    reference_audio
-                    if not isinstance(reference_audio, list)
-                    else reference_audio[0]
-                ),
+        audio_out: Union[np.ndarray, Tuple[np.ndarray, Dict]] = audio_after_prosody
+        if enhance_quality or calculate_quality:
+            audio_out = self._process_audio_quality(
+                audio_after_prosody,
+                sample_rate,
+                ref_for_metrics,
                 enhance=enhance_quality,
                 calculate_metrics=calculate_quality,
             )
-            if isinstance(audio, tuple):
-                return audio  # (audio, quality_metrics)
 
-        return audio
+        # If output_path is specified, persist the final waveform and match `synthesize()`'s return
+        # convention (None or (None, metrics)).
+        if output_path:
+            import soundfile as sf
+
+            out_path = str(output_path)
+            if isinstance(audio_out, tuple):
+                audio_arr, quality_metrics = audio_out
+                sf.write(out_path, audio_arr, sample_rate)
+                return None, quality_metrics
+
+            sf.write(out_path, audio_out, sample_rate)
+            return None
+
+        return audio_out
 
     def _clone_voice_multi_reference(
         self,
@@ -710,40 +775,96 @@ class XTTSEngine(EngineProtocol):
         """
         logger.info(f"Multi-reference cloning with {len(reference_audios)} references")
 
-        # Synthesize with each reference
-        audio_results = []
+        # Synthesize with each reference and compute metrics
+        candidates: List[Dict[str, Any]] = []
         for i, ref_audio in enumerate(reference_audios):
             try:
-                audio = self.synthesize(
+                audio_result = self.synthesize(
                     text=text,
                     speaker_wav=ref_audio,
                     language=language,
-                    enhance_quality=False,  # Apply enhancement after ensemble
-                    calculate_quality=False,
+                    enhance_quality=False,  # Apply enhancement after selection
+                    calculate_quality=True,
                     speed=speed,
                 )
-                if audio is not None:
-                    audio_results.append(audio)
+                metrics = None
+                audio = audio_result
+                if isinstance(audio_result, tuple):
+                    audio, metrics = audio_result
+                if audio is None:
+                    continue
+
+                score = None
+                if isinstance(metrics, dict):
+                    similarity = metrics.get("similarity")
+                    mos_score = metrics.get("mos_score")
+                    artifact_score = (
+                        metrics.get("artifacts", {}).get("artifact_score")
+                        if isinstance(metrics.get("artifacts"), dict)
+                        else None
+                    )
+                    voice_profile_match = metrics.get("voice_profile_match")
+                    overall_match = None
+                    if isinstance(voice_profile_match, dict):
+                        overall_match = voice_profile_match.get("overall_similarity")
+                    score = 0.0
+                    score_parts = 0
+                    if similarity is not None:
+                        score += similarity * 2.0
+                        score_parts += 1
+                    if mos_score is not None:
+                        score += mos_score / 5.0
+                        score_parts += 1
+                    if artifact_score is not None:
+                        score += max(0.0, 1.0 - float(artifact_score))
+                        score_parts += 1
+                    if overall_match is not None:
+                        try:
+                            score += float(overall_match) * 1.5
+                            score_parts += 1
+                        except (TypeError, ValueError):
+                            logger.debug(
+                                f"Voice profile match overall_similarity not numeric: {overall_match}"
+                            )
+                    if score_parts == 0:
+                        score = None
+
+                candidates.append(
+                    {
+                        "reference_audio": str(ref_audio),
+                        "audio": audio,
+                        "metrics": metrics,
+                        "score": score,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to synthesize with reference {i+1}: {e}")
 
-        if not audio_results:
+        if not candidates:
             logger.error("All reference audios failed to synthesize")
             return None
 
-        # Ensemble: average the audio results for stability
-        if len(audio_results) > 1:
-            # Ensure all have same length
-            min_length = min(len(a) for a in audio_results)
-            audio_results = [a[:min_length] for a in audio_results]
-            # Weighted average (first reference has more weight)
-            weights = np.linspace(
-                0.6, 0.4 / (len(audio_results) - 1), len(audio_results)
-            )
-            weights = weights / weights.sum()  # Normalize
-            audio = np.average(audio_results, axis=0, weights=weights)
+        scored = [c for c in candidates if c.get("score") is not None]
+        if scored:
+            selected = max(scored, key=lambda c: float(c["score"]))
         else:
-            audio = audio_results[0]
+            selected = candidates[0]
+
+        self._last_multi_reference_metrics = {
+            "strategy": "metrics_best",
+            "selected_reference": selected.get("reference_audio"),
+            "candidates": [
+                {
+                    "reference_audio": c.get("reference_audio"),
+                    "metrics": c.get("metrics"),
+                    "score": c.get("score"),
+                    "selected": c is selected,
+                }
+                for c in candidates
+            ],
+        }
+
+        audio = selected["audio"]
 
         # Apply prosody control if specified
         if prosody_params:

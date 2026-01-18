@@ -60,5 +60,10 @@ models/**/*.ckpt
 .cursor/
 openmemory.md
 
+# SpecStory chat history (local IDE artifact)
+.specstory/
+
 # OpenMemory - IDE/Assistant specific rules
+.cursor/rules/openmemory.mdc
+.cursor\rules\openmemory.mdc
 .cursor\rules\openmemory.mdc

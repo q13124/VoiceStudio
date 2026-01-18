@@ -193,7 +193,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task QuickCloneAsync(CancellationToken cancellationToken)
     {
-      if (SelectedAudioFile == null || IsProcessing)
+      var selectedAudioFile = SelectedAudioFile;
+      if (selectedAudioFile == null || IsProcessing)
       {
         return;
       }
@@ -208,7 +209,7 @@ namespace VoiceStudio.App.ViewModels
         ProcessingProgress = 0.1f;
 
         // Upload audio file
-        var audioStream = await SelectedAudioFile.OpenStreamForReadAsync();
+        using var audioStream = await selectedAudioFile.OpenStreamForReadAsync();
         cancellationToken.ThrowIfCancellationRequested();
         ProcessingProgress = 0.2f;
         ProcessingStatus = ResourceHelper.GetString("VoiceQuickClone.AnalyzingAudio", "Analyzing audio...");
@@ -216,7 +217,10 @@ namespace VoiceStudio.App.ViewModels
         // Clone voice using the existing endpoint
         var engine = DetectedEngine ?? "xtts";
         var qualityMode = DetectedQualityMode ?? "standard";
-        var profileName = ProfileName ?? $"Quick Clone - {DateTime.Now:yyyyMMdd_HHmmss}";
+        if (string.IsNullOrWhiteSpace(ProfileName))
+        {
+          ProfileName = $"Quick Clone - {DateTime.Now:yyyyMMdd_HHmmss}";
+        }
 
         ProcessingProgress = 0.3f;
         ProcessingStatus = ResourceHelper.GetString("VoiceQuickClone.CloningVoice", "Cloning voice...");

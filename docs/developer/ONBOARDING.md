@@ -35,18 +35,21 @@ Before you begin, ensure you have:
 ### Quick Start
 
 1. **Clone the Repository:**
+
    ```bash
    git clone https://github.com/your-repo/voicestudio.git
    cd voicestudio
    ```
 
 2. **Set Up Development Environment:**
+
    - Follow [SETUP.md](SETUP.md) for detailed setup instructions
    - Install all prerequisites (.NET 8 SDK, Python 3.10+, Visual Studio 2022)
    - Install dependencies (Python packages, NuGet packages)
    - Set up Python virtual environment
 
 3. **Run the Application:**
+
    - Start backend: `python -m uvicorn backend.api.main:app`
    - Open `src/VoiceStudio.App/VoiceStudio.App.csproj` in Visual Studio
    - Run the application (F5)
@@ -63,6 +66,7 @@ Before you begin, ensure you have:
 ### What is VoiceStudio Quantum+?
 
 VoiceStudio Quantum+ is a professional voice cloning and audio production studio with:
+
 - Multiple voice cloning engines (XTTS v2, Chatterbox TTS, Tortoise TTS)
 - Professional timeline editor
 - Comprehensive audio effects (17 types)
@@ -72,6 +76,7 @@ VoiceStudio Quantum+ is a professional voice cloning and audio production studio
 ### Architecture
 
 **High-Level Architecture:**
+
 ```
 WinUI 3 Frontend (C#/.NET 8)
     ↓ HTTP/WebSocket
@@ -81,6 +86,7 @@ Engine Layer (Python)
 ```
 
 **Key Technologies:**
+
 - **Frontend:** WinUI 3, C#, XAML, MVVM
 - **Backend:** FastAPI, Python
 - **Engines:** Python-based voice cloning engines
@@ -139,6 +145,7 @@ VoiceStudio/
 ### Key Directories
 
 **Frontend (`src/VoiceStudio.App/`):**
+
 - `Views/` - XAML UI files
 - `ViewModels/` - MVVM ViewModels
 - `Services/` - Application services
@@ -146,11 +153,13 @@ VoiceStudio/
 - `Converters/` - Value converters
 
 **Backend (`backend/api/`):**
+
 - `routes/` - API route handlers
 - `models/` - Pydantic request/response models
 - `main.py` - FastAPI application entry point
 
 **Core (`app/core/`):**
+
 - `engines/` - Engine implementations
 - `audio/` - Audio processing
 - `utils/` - Utility functions
@@ -162,11 +171,13 @@ VoiceStudio/
 ### 1. Understanding the Codebase
 
 **Start Here:**
+
 1. Read [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 2. Read [CODE_STRUCTURE.md](CODE_STRUCTURE.md) - Code organization
 3. Read [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 
 **Key Files to Understand:**
+
 - `backend/api/main.py` - Backend entry point
 - `src/VoiceStudio.App/App.xaml.cs` - Frontend entry point
 - `src/VoiceStudio.App/ViewModels/` - ViewModels
@@ -175,22 +186,27 @@ VoiceStudio/
 ### 2. Making Changes
 
 **Workflow:**
+
 1. **Create Feature Branch:**
+
    ```bash
    git checkout -b feature/my-feature
    ```
 
 2. **Make Changes:**
+
    - Follow code style guidelines
    - Write tests for new functionality
    - Update documentation
 
 3. **Test Changes:**
+
    - Run unit tests
    - Test manually
    - Verify no regressions
 
 4. **Commit Changes:**
+
    ```bash
    git add .
    git commit -m "feat: Add new feature"
@@ -206,6 +222,7 @@ VoiceStudio/
 ### 3. Code Review Process
 
 **Before Submitting:**
+
 - [ ] Code follows style guidelines
 - [ ] No TODO comments or placeholders
 - [ ] Error handling implemented
@@ -214,6 +231,7 @@ VoiceStudio/
 - [ ] No code duplication
 
 **Review Checklist:**
+
 - Code quality and style
 - Functionality correctness
 - Test coverage
@@ -223,6 +241,7 @@ VoiceStudio/
 ### 4. Building the Application
 
 **Frontend Build:**
+
 ```bash
 # Using Visual Studio
 # Build → Build Solution (Ctrl+Shift+B)
@@ -233,8 +252,17 @@ dotnet build
 ```
 
 **Backend Build:**
+
 - Python is interpreted, no build step required
-- Ensure dependencies are installed: `pip install -r backend/requirements.txt`
+- Ensure backend/dev dependencies are installed: `pip install -r backend/requirements.txt`
+- Ensure engine dependencies are installed:
+  - XTTS CPU profile:
+    - `powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'`
+  - XTTS GPU profile (sm_120):
+    - `powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-gpu-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts -Gpu 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'`
+  - Full engine stack (all engines; longer install):
+    - `powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-full-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile full 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'`
+  - Logs land in `.buildlogs\engine-deps-install*.log`.
 
 **Full Build Process:**
 See [SETUP.md](SETUP.md#building-from-source) for complete build instructions.
@@ -242,12 +270,14 @@ See [SETUP.md](SETUP.md#building-from-source) for complete build instructions.
 ### 5. Testing
 
 **Types of Tests:**
+
 - **Unit Tests:** Test individual functions/classes
 - **Integration Tests:** Test API endpoints
 - **E2E Tests:** Test complete workflows
 - **Performance Tests:** Test performance characteristics
 
 **Running Tests:**
+
 ```bash
 # Python tests
 pytest tests/
@@ -257,6 +287,7 @@ pytest tests/
 ```
 
 **Testing Setup:**
+
 - See [SETUP.md](SETUP.md#running-tests) for detailed testing instructions
 - See [TESTING.md](TESTING.md) for comprehensive testing guide
 
@@ -267,18 +298,20 @@ pytest tests/
 ### MVVM Pattern
 
 **Model-View-ViewModel:**
+
 - **Model:** Data and business logic
 - **View:** XAML UI files
 - **ViewModel:** Connects View and Model
 
 **Example:**
+
 ```csharp
 // ViewModel
 public class ProfilesViewModel : ViewModelBase
 {
     private readonly IBackendClient _backendClient;
     public ObservableCollection<Profile> Profiles { get; }
-    
+
     public ICommand LoadProfilesCommand { get; }
 }
 
@@ -291,16 +324,17 @@ public class ProfilesViewModel : ViewModelBase
 ### Engine Protocol
 
 **All engines implement `EngineProtocol`:**
+
 ```python
 class MyEngine(EngineProtocol):
     def initialize(self) -> None:
         # Initialize engine
         pass
-    
+
     def synthesize(self, text: str, **kwargs) -> bytes:
         # Synthesize speech
         pass
-    
+
     def cleanup(self) -> None:
         # Cleanup resources
         pass
@@ -309,10 +343,12 @@ class MyEngine(EngineProtocol):
 ### API Communication
 
 **Frontend → Backend:**
+
 - HTTP REST API for synchronous operations
 - WebSocket for real-time updates
 
 **Example:**
+
 ```csharp
 // Frontend (C#)
 var response = await _backendClient.SynthesizeAsync(
@@ -332,16 +368,18 @@ async def synthesize(request: VoiceSynthesizeRequest):
 ### Services
 
 **Service Pattern:**
+
 - Services provide reusable functionality
 - Injected via dependency injection
 - Examples: `IBackendClient`, `IAudioPlayerService`, `IUpdateService`
 
 **Example:**
+
 ```csharp
 public class MyViewModel : ViewModelBase
 {
     private readonly IBackendClient _backendClient;
-    
+
     public MyViewModel(IBackendClient backendClient)
     {
         _backendClient = backendClient;
@@ -356,6 +394,7 @@ public class MyViewModel : ViewModelBase
 ### Documentation
 
 **Essential Reading:**
+
 - [SETUP.md](SETUP.md) - **Start here!** Complete development setup guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [CODE_STRUCTURE.md](CODE_STRUCTURE.md) - Code organization
@@ -363,6 +402,7 @@ public class MyViewModel : ViewModelBase
 - [ENGINE_PLUGIN_SYSTEM.md](ENGINE_PLUGIN_SYSTEM.md) - Engine development
 
 **Developer Guides:**
+
 - [SERVICES.md](SERVICES.md) - All services documentation
 - [SERVICE_EXAMPLES.md](SERVICE_EXAMPLES.md) - Service usage examples
 - [TESTING.md](TESTING.md) - Testing guide
@@ -370,6 +410,7 @@ public class MyViewModel : ViewModelBase
 - [BUILD_AND_DEPLOYMENT.md](BUILD_AND_DEPLOYMENT.md) - Build and deployment guide
 
 **User Documentation:**
+
 - [User Manual](../user/USER_MANUAL.md) - User features
 - [API Documentation](../api/COMPLETE_ENDPOINT_DOCUMENTATION.md) - Complete API reference
 - [OpenAPI Specification](../api/OPENAPI_SPECIFICATION.md) - OpenAPI/Swagger docs
@@ -378,12 +419,14 @@ public class MyViewModel : ViewModelBase
 ### External Resources
 
 **Technologies:**
+
 - [WinUI 3 Documentation](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [.NET 8 Documentation](https://learn.microsoft.com/en-us/dotnet/)
 - [Python 3.10 Documentation](https://docs.python.org/3.10/)
 
 **Tools:**
+
 - [Visual Studio 2022](https://visualstudio.microsoft.com/)
 - [Postman](https://www.postman.com/) - API testing
 - [Git](https://git-scm.com/) - Version control
@@ -391,11 +434,13 @@ public class MyViewModel : ViewModelBase
 ### Getting Help
 
 **Internal:**
+
 - Check documentation first
 - Search existing issues
 - Ask team members
 
 **External:**
+
 - Stack Overflow
 - Technology documentation
 - Community forums
@@ -407,11 +452,13 @@ public class MyViewModel : ViewModelBase
 ### Week 1: Orientation
 
 1. **Day 1-2: Setup**
+
    - Complete development environment setup
    - Run the application
    - Explore the codebase
 
 2. **Day 3-4: Understanding**
+
    - Read architecture documentation
    - Understand key concepts
    - Review existing code
@@ -424,11 +471,13 @@ public class MyViewModel : ViewModelBase
 ### Week 2-4: Active Development
 
 1. **Pick Tasks:**
+
    - Start with small, well-defined tasks
    - Gradually take on larger features
    - Ask for help when needed
 
 2. **Learn by Doing:**
+
    - Work on real features
    - Review code from others
    - Participate in code reviews
@@ -441,11 +490,13 @@ public class MyViewModel : ViewModelBase
 ### Ongoing: Growth
 
 1. **Continuous Learning:**
+
    - Stay updated with technology
    - Learn new patterns
    - Improve skills
 
 2. **Contribution:**
+
    - Contribute to codebase
    - Help other developers
    - Improve documentation
@@ -462,6 +513,7 @@ public class MyViewModel : ViewModelBase
 ### Adding a New API Endpoint
 
 1. **Create Route Handler:**
+
    ```python
    # backend/api/routes/my_feature.py
    @router.post("/api/my-feature")
@@ -471,6 +523,7 @@ public class MyViewModel : ViewModelBase
    ```
 
 2. **Add to Main App:**
+
    ```python
    # backend/api/main.py
    from backend.api.routes import my_feature
@@ -478,10 +531,11 @@ public class MyViewModel : ViewModelBase
    ```
 
 3. **Add Frontend Method:**
+
    ```csharp
    // IBackendClient.cs
    Task<MyResponse> MyFeatureAsync(MyRequest request);
-   
+
    // BackendClient.cs
    public async Task<MyResponse> MyFeatureAsync(MyRequest request)
    {
@@ -492,6 +546,7 @@ public class MyViewModel : ViewModelBase
 ### Adding a New UI Panel
 
 1. **Create ViewModel:**
+
    ```csharp
    // ViewModels/MyPanelViewModel.cs
    public class MyPanelViewModel : ViewModelBase
@@ -501,6 +556,7 @@ public class MyViewModel : ViewModelBase
    ```
 
 2. **Create View:**
+
    ```xml
    <!-- Views/Panels/MyPanelView.xaml -->
    <UserControl>
@@ -517,6 +573,7 @@ public class MyViewModel : ViewModelBase
 ### Adding a New Engine
 
 1. **Create Engine Class:**
+
    ```python
    # app/core/engines/my_engine.py
    class MyEngine(EngineProtocol):
@@ -524,13 +581,14 @@ public class MyViewModel : ViewModelBase
    ```
 
 2. **Create Manifest:**
+
    ```json
    // engines/audio/my_engine.manifest.json
    {
-       "id": "my_engine",
-       "name": "My Engine",
-       "type": "audio",
-       // ...
+     "id": "my_engine",
+     "name": "My Engine",
+     "type": "audio"
+     // ...
    }
    ```
 
@@ -545,24 +603,28 @@ public class MyViewModel : ViewModelBase
 ### Common Issues
 
 **Backend won't start:**
+
 - Check Python environment is activated
 - Verify dependencies installed: `pip install -r backend/requirements.txt`
 - Check port 8000 is available
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#backend-wont-start) for detailed solutions
 
 **Frontend won't build:**
+
 - Run `dotnet restore` to restore NuGet packages
 - Clean and rebuild: `dotnet clean && dotnet build`
 - Verify .NET 8 SDK is installed: `dotnet --version`
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#build-errors) for detailed solutions
 
 **Connection failed:**
+
 - Verify backend is running on `http://localhost:8000`
 - Check backend health: `curl http://localhost:8000/health`
 - Verify firewall isn't blocking the connection
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#runtime-errors) for detailed solutions
 
 **For more troubleshooting help:**
+
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for comprehensive troubleshooting guide
 - Check [SETUP.md](SETUP.md#common-development-issues) for setup-related issues
 
@@ -598,6 +660,7 @@ public class MyViewModel : ViewModelBase
 **Welcome to VoiceStudio Quantum+!**
 
 You now have:
+
 - ✅ Development environment set up
 - ✅ Understanding of project structure
 - ✅ Knowledge of key concepts
@@ -605,6 +668,7 @@ You now have:
 - ✅ Path forward
 
 **Remember:**
+
 - Start with small tasks
 - Ask for help when needed
 - Learn by doing
@@ -616,4 +680,3 @@ You now have:
 
 **Last Updated:** 2025-01-28  
 **Version:** 1.0.0
-

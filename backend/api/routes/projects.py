@@ -6,7 +6,6 @@ CRUD operations for projects.
 
 import logging
 import os
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -15,7 +14,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from backend.services.ContentAddressedAudioCache import get_audio_cache
 from backend.services.ProjectStoreService import (
     ProjectRecord,
     get_project_store_service,
@@ -253,46 +251,22 @@ def save_audio_to_project(
         )
 
     try:
-        # Ensure project directory exists
-        project_dir = _ensure_project_dir(project_id)
-        audio_dir = os.path.join(project_dir, "audio")
-
-        # Generate filename if not provided
-        if not filename:
-            filename = f"{audio_id}.wav"
-        elif not filename.endswith(".wav"):
-            filename = f"{filename}.wav"
-
-        # Validate filename doesn't contain invalid characters
-        invalid_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*"]
-        if any(char in filename for char in invalid_chars):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Filename '{filename}' contains invalid characters. Please use a valid filename.",
-            )
-
-        # Use content-addressed cache for deduplication
-        source_path_obj = Path(source_path)
-        audio_cache = get_audio_cache()
         try:
-            cached_path, hash_value = audio_cache.get_or_store(source_path_obj)
-            logger.debug(
-                f"Using cached audio (hash: {hash_value[:16]}...) for project save"
+            dest_path = _store().save_audio_file(
+                project_id,
+                source_path,
+                audio_id=audio_id,
+                filename=filename,
             )
-        except Exception as cache_error:
-            logger.warning(
-                f"Content-addressed cache failed, using direct copy: {cache_error}"
-            )
-            cached_path = source_path_obj
-
-        # Save audio file to project directory (copy from cache if available)
-        dest_path = os.path.join(audio_dir, filename)
-        try:
-            shutil.copy2(str(cached_path), dest_path)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         except PermissionError:
             raise HTTPException(
                 status_code=403,
-                detail=f"Permission denied when saving audio to '{dest_path}'. Please check directory permissions.",
+                detail=(
+                    "Permission denied when saving audio to the project. "
+                    "Please check directory permissions."
+                ),
             )
         except OSError as e:
             if "No space left" in str(e) or "disk full" in str(e).lower():
@@ -314,11 +288,12 @@ def save_audio_to_project(
                 detail="Failed to retrieve file information after save.",
             )
 
+        final_name = Path(dest_path).name
         logger.info(f"Saved audio {audio_id} to project {project_id}: {dest_path}")
 
         return ProjectAudioFileResponse(
-            filename=filename,
-            url=f"/api/projects/{project_id}/audio/{filename}",
+            filename=final_name,
+            url=f"/api/projects/{project_id}/audio/{final_name}",
             size=file_stat.st_size,
             modified=datetime.fromtimestamp(file_stat.st_mtime).isoformat(),
         )

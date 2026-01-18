@@ -21,7 +21,7 @@ torch==2.2.2+cu121  # Must install from: --index-url https://download.pytorch.or
 torchaudio==2.2.2+cu121  # Must match Torch exactly
 transformers==4.55.4  # Stable with XTTS v2 and PyTorch 2.2.2
 huggingface_hub==0.36.0  # Matches Transformers 4.55+ API
-tokenizers==0.22.1  # Required by Transformers 4.55
+tokenizers==0.21.4  # Required by Transformers 4.55 (tokenizers>=0.21,<0.22)
 safetensors==0.6.2  # Fast checkpoint I/O
 hf-xet==1.2.0  # XetHub remote dataset backend (installed by hub)
 fsspec==2025.9.0  # For remote asset loading
@@ -70,8 +70,9 @@ coqui-tts-trainer==0.3.1  # Finetuning & dataset manager
 # Piper TTS - Already have
 piper-tts>=1.0.0
 
-# OpenVoice - Already have
-openvoice>=1.0.0
+# OpenVoice (MyShell) - install from GitHub (PyPI name: myshell-openvoice; provides `import openvoice`)
+# Repo has no stable PyPI release/tag; pin commit for deterministic installs.
+myshell-openvoice @ git+https://github.com/myshell-ai/OpenVoice.git@74a1d147b17a8c3092dd5430504bd83ef6c7eb23
 
 # F5-TTS
 # Note: F5-TTS may require custom installation from source

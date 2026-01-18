@@ -52,7 +52,7 @@
       <!-- Quality Analysis & Optimization Tab -->
       <TabViewItem Header="Analysis &amp; Optimization">
         <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
-          <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+          <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
             <!-- Quality Metrics Input -->
             <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
               BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
@@ -233,7 +233,7 @@
       <!-- Engine Recommendations Tab -->
       <TabViewItem Header="Engine Recommendations">
         <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
-          <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+          <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
             <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
               BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
               BorderThickness="1"
@@ -288,7 +288,7 @@
       <!-- Project Consistency Tab -->
       <TabViewItem Header="Project Consistency">
         <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
-          <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+          <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
             <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
               BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
               BorderThickness="1"
@@ -396,7 +396,7 @@
       <!-- Advanced Visualizations Tab -->
       <TabViewItem Header="Visualizations">
         <ScrollViewer Padding="{StaticResource VSQ.Spacing.Medium}">
-          <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+          <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
             <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
               BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
               BorderThickness="1"

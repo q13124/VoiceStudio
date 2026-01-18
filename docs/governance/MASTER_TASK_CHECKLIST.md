@@ -1,10 +1,15 @@
 # Master Task Checklist
 ## VoiceStudio Quantum+ - All Tasks and Completion Status
 
+> ⚠️ **NON-STATUS DOCUMENT — INTERNAL CHECKLIST**  
+> **This is an internal task checklist, NOT a project status report.**  
+> **For authoritative project status, see:** [`Recovery Plan/QUALITY_LEDGER.md`](../../Recovery%20Plan/QUALITY_LEDGER.md)  
+> **This checklist tracks task completion, not gate/project status.**
+
 **Date Created:** 2025-01-28  
 **Last Updated:** 2025-01-28  
-**Status:** ✅ **100% COMPLETE** - All 190 Tasks Finished  
-**Purpose:** Single source of truth for all task completion status  
+**Status:** ✅ **100% COMPLETE** - All 190 Tasks Finished (Internal checklist — see ledger for gate status)  
+**Purpose:** Internal task completion tracking (not canonical project status)  
 **Update Instructions:** See UPDATE INSTRUCTIONS section below  
 **Completion Report:** See `PROJECT_COMPLETION_SUMMARY_2025-01-28.md`
 

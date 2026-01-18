@@ -93,7 +93,7 @@
           Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
           Visibility="{x:Bind ViewModel.IsWaveformOrSpectralTab, Mode=OneWay}">
           <StackPanel Orientation="Horizontal"
-            Spacing="{StaticResource VSQ.Spacing.Medium}" HorizontalAlignment="Right">
+            Spacing="{StaticResource VSQ.Spacing.Value.Medium}" HorizontalAlignment="Right">
             <TextBlock x:Uid="AnalyzerView_ZoomLabel" VerticalAlignment="Center"
               Style="{StaticResource VSQ.Text.Caption}"
               Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
@@ -142,17 +142,25 @@
           <!-- Waveform Tab Content -->
           <controls:WaveformControl x:Name="WaveformControl"
             Visibility="{x:Bind ViewModel.IsWaveformTab, Mode=OneWay}"
+            Samples="{x:Bind ViewModel.WaveformSamples, Mode=OneWay}"
             PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}" />
           <!-- Spectral Tab Content -->
           <controls:SpectrogramControl x:Name="SpectrogramControl"
             Visibility="{x:Bind ViewModel.IsSpectralTab, Mode=OneWay}"
+            Frames="{x:Bind ViewModel.SpectrogramFrames, Mode=OneWay}"
             PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}" />
           <!-- Radar Tab Content -->
           <controls:RadarChartControl x:Name="RadarChartControl"
-            Visibility="{x:Bind ViewModel.IsRadarTab, Mode=OneWay}" />
+            Visibility="{x:Bind ViewModel.IsRadarTab, Mode=OneWay}"
+            Data="{x:Bind ViewModel.RadarData, Mode=OneWay}" />
           <!-- Loudness Tab Content -->
           <controls:LoudnessChartControl x:Name="LoudnessChartControl"
             Visibility="{x:Bind ViewModel.IsLoudnessTab, Mode=OneWay}"
+            Times="{x:Bind ViewModel.LoudnessTimes, Mode=OneWay}"
+            LufsValues="{x:Bind ViewModel.LoudnessLufsValues, Mode=OneWay}"
+            IntegratedLufs="{x:Bind ViewModel.LoudnessIntegratedLufs, Mode=OneWay}"
+            PeakLufs="{x:Bind ViewModel.LoudnessPeakLufs, Mode=OneWay}"
+            Duration="{x:Bind ViewModel.LoudnessDuration, Mode=OneWay}"
             PlaybackPosition="{x:Bind ViewModel.PlaybackPosition, Mode=OneWay}" />
           <!-- Phase Tab Content -->
           <controls:PhaseAnalysisControl x:Name="PhaseAnalysisControl"

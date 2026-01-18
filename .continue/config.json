@@ -32,5 +32,39 @@
     "selection",
     "codebase"
   ],
-  "allowAnonymousTelemetry": false
+  "allowAnonymousTelemetry": false,
+  "mcpServers": {
+    "GitKraken": {
+      "args": [
+        "mcp",
+        "--host=cursor",
+        "--source=gitlens",
+        "--scheme=cursor"
+      ],
+      "command": "c:\\Users\\Tyler\\AppData\\Roaming\\Cursor\\User\\globalStorage\\eamodio.gitlens\\gk.exe",
+      "env": {},
+      "name": "GitKraken",
+      "type": "stdio"
+    },
+    "mcp-interactive": {
+      "args": [
+        "-y",
+        "mcp-interactive"
+      ],
+      "command": "npx"
+    },
+    "openmemory": {
+      "headers": {
+        "Authorization": "Token om-{YOUR OPENMEMORY API KEY}"
+      },
+      "url": "https://api.openmemory.dev/mcp-stream?client=cursor"
+    },
+    "cursor-browser-extension": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cursor-browser-extension/mcp-server"
+      ]
+    }
+  }
 }

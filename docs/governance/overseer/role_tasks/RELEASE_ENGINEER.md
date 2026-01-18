@@ -6,43 +6,30 @@ Ship a **local-first** desktop app safely: install → launch → upgrade → ro
 
 ## Current state snapshot (from evidence)
 
-- Gate C artifact default: **unpackaged self-contained apphost EXE**
-- Publish/binlogs: see `docs/governance/overseer/handoffs/VS-0020.md`
-- Model root default: `E:\VoiceStudio\models` (set by `backend/api/main.py` unless overridden)
-- Known open packaging lane: `VS-0003` (installer verification) is downstream of Gate C stability.
+- ✅ Gate C is **DONE** (VS-0012 UI smoke PASS, exit code 0, 0 binding failures).
+- ✅ Gate H is **DONE** (VS-0003 installer lifecycle proof captured; installer lane proven).
+- Build inputs (for future releases):
+  - Gate C publish artifact: `.buildlogs\x64\Release\gatec-publish\VoiceStudio.App.exe`
+  - Installer build entrypoint: `installer/build-installer.ps1`
+  - Lifecycle test harness (VM): `installer/test-installer-lifecycle.ps1`
 
 ## What you do next (ordered)
 
-### 1) Gate C proof run (launch stability)
+### 1) Archive Gate H + prep for quality proof
 
-- [ ] Run the Gate C launch method on the current Release artifact:
-  - Use the published apphost output under `.buildlogs/` (see VS-0020 handoff)
-  - Verify the process stays running and the main window becomes visible
-  - If it fails: capture exit code + Windows Application log events + crash bundle (if available)
-- **Success**: you can attach proof (commands + outcome) that satisfies Gate C.
+- [x] Ensure the final Gate H artifacts (installer EXEs, lifecycle logs) remain referenced in `handoffs/VS-0003.md` and are hashable/retrievable.
+  - Evidence: `docs/governance/overseer/handoffs/VS-0003.md` includes SHA256 for both installers and lifecycle log.
+- [ ] Keep the installer lane ready for distribution (no further action unless it regresses).
 
-### 2) Resolve VS-0012 (WinUI activation / class not registered) if it still reproduces
+### 2) When Engine Engineer produces the “quality + functions” baseline proof
 
-- [ ] Reproduce VS-0012 using the exact launch method recorded in the ledger.
-- [ ] If the Gate C artifact is unpackaged and still hits WinUI activation issues:
-  - Work with Build & Tooling Engineer to make prerequisites deterministic (runtime/bootstrap)
-  - If needed, switch Gate C artifact to MSIX (only if unpackaged cannot meet activation constraints)
-- **Success**: app launches reliably on the chosen Gate C artifact; ledger updated with proof.
-
-### 3) Gate H packaging proofs (VS-0003)
-
-- [ ] Once Gate C is green, run the installer build and verification workflow:
-  - Build installer (Inno/WiX scripts) using the Release artifact
-  - Test on clean Windows profiles (VMs): install → launch → upgrade → rollback → uninstall
-  - Confirm the install includes/prereqs:
-    - .NET runtime approach (self-contained already preferred)
-    - `E:\VoiceStudio\models` expectations (or allow configuring via env/config in installer)
-    - ffmpeg/native tools as required by backend engines
-- **Success**: VS-0003 evidence packet with logs + commands + outcomes; installer can be built and verified end-to-end.
+- [x] Pull the new `proof_runs/...` directory and archive it in the handoff (attach the path, audio + metrics).
+  - **Proof dir**: `proof_runs\\baseline_workflow_20260116-091722_prosody\\`
+  - **Handoff**: `docs/governance/overseer/handoffs/VS-0031.md`
+- [x] Update `Recovery Plan/QUALITY_LEDGER.md` with the baseline quality entry and artifacts.
+- [x] Copy the proof artifacts into `.buildlogs\proof_runs` for release packaging.
+  - Evidence: `.buildlogs\proof_runs\baseline_workflow_20260116-091722_prosody`
 
 ## Handoff expectation
 
-When you finish, Overseer should be able to mark Gate C and Gate H deliverables DONE with evidence:
-
-- Gate C proof: launch stable
-- Gate H proof: installer lifecycle stable
+Overseer should have: Gate H proof retained, plus the baseline quality proof logged and archived for release packaging.

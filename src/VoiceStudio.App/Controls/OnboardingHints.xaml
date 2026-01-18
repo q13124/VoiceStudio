@@ -24,7 +24,7 @@
       HorizontalAlignment="Center"
       VerticalAlignment="Center"
       Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-      <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+      <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
         <!-- Header -->
         <Grid>
           <Grid.ColumnDefinitions>

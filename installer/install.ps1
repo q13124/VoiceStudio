@@ -116,7 +116,7 @@ Write-Host ""
 Write-Host "Creating Start Menu shortcut..." -ForegroundColor Yellow
 $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut("$env:ProgramData\Microsoft\Windows\Start Menu\Programs\VoiceStudio Quantum+.lnk")
-$Shortcut.TargetPath = Join-Path $InstallPath "App\VoiceStudioApp.exe"
+$Shortcut.TargetPath = Join-Path $InstallPath "App\VoiceStudio.App.exe"
 $Shortcut.WorkingDirectory = $InstallPath
 $Shortcut.Description = "Professional Voice Cloning Studio"
 $Shortcut.Save()
@@ -126,7 +126,7 @@ Write-Host "Start Menu shortcut created!" -ForegroundColor Green
 $createDesktop = Read-Host "Create Desktop shortcut? (Y/N)"
 if ($createDesktop -eq "Y") {
     $DesktopShortcut = $WshShell.CreateShortcut("$env:Public\Desktop\VoiceStudio Quantum+.lnk")
-    $DesktopShortcut.TargetPath = Join-Path $InstallPath "App\VoiceStudioApp.exe"
+    $DesktopShortcut.TargetPath = Join-Path $InstallPath "App\VoiceStudio.App.exe"
     $DesktopShortcut.WorkingDirectory = $InstallPath
     $DesktopShortcut.Description = "Professional Voice Cloning Studio"
     $DesktopShortcut.Save()

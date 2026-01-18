@@ -69,16 +69,16 @@ def get_inference_api_url(model_id: str, endpoint: str = "") -> str:
     Returns:
         Full URL for inference API
     """
-    # Use new router endpoint
+    # Use new router endpoint with /hf-inference path prefix
     base_url = HF_INFERENCE_API_BASE
 
-    # Construct URL
+    # Construct URL with /hf-inference path prefix required by router endpoint
     if endpoint:
         # Remove leading slash if present
         endpoint = endpoint.lstrip("/")
-        url = f"{base_url}/{model_id}/{endpoint}"
+        url = f"{base_url}/hf-inference/{model_id}/{endpoint}"
     else:
-        url = f"{base_url}/{model_id}"
+        url = f"{base_url}/hf-inference/{model_id}"
 
     return url
 
@@ -154,9 +154,11 @@ def check_api_compatibility() -> Dict[str, Any]:
     }
 
     try:
-        # Test new router endpoint
+        # Test new router endpoint (use /hf-inference path)
         response = requests.get(
-            f"{HF_INFERENCE_API_BASE}/health", timeout=5, headers=get_api_headers()
+            f"{HF_INFERENCE_API_BASE}/hf-inference/health",
+            timeout=5,
+            headers=get_api_headers(),
         )
         info["status"] = "available" if response.status_code == 200 else "unavailable"
         info["router_endpoint_working"] = response.status_code == 200

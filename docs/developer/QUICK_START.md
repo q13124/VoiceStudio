@@ -81,6 +81,14 @@ python -m venv venv
 
 # Install Python dependencies
 pip install -r backend/requirements.txt
+
+# Install engine dependencies
+# - XTTS CPU profile:
+powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
+# - XTTS GPU profile (sm_120):
+# powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-gpu-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts -Gpu 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
+# - Full engine stack (all engines; longer install):
+# powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-full-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile full 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
 ```
 
 **Expected Time:** 5-10 minutes (depending on internet speed)
@@ -121,6 +129,7 @@ Build succeeded.
 # Verify Python dependencies
 python -c "import fastapi; print('FastAPI: OK')"
 python -c "import torch; print('PyTorch: OK')"
+python -c "from TTS.api import TTS; print('Coqui TTS: OK')"
 ```
 
 **Expected Output:**

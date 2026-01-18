@@ -8,16 +8,18 @@ Keep the “local-first” foundations reliable: job runtime, persistence, artif
 
 - Model root default: `E:\VoiceStudio\models` (env: `VOICESTUDIO_MODELS_PATH`)
 - Engine configuration fallback resolves to `E:\VoiceStudio\models` when engine-specific paths are absent.
+- ✅ Gate C is **DONE** (publish + `--smoke-ui` PASS).
+- ✅ Gate H is **DONE** (VS-0003 lifecycle proof).
 
 ## What you do next (ordered)
 
-### 1) Pre-flight infrastructure checks (storage + paths)
+### 1) Engine readiness for quality + functions
 
-- [ ] Add/verify a backend preflight that validates:
-  - model root exists or can be created
-  - artifact output directories exist (audio/images/projects)
-  - `EngineConfigService` resolves paths consistently under the chosen model root
-- **Success**: backend startup or a dedicated endpoint provides an operator-readable readiness report.
+- [x] Ensure backend startup warns when the XTTS stack is not installed (coqui-tts) or model assets are not on disk; surface via preflight.
+  - Evidence: `backend/services/model_preflight.py` adds XTTS dependency status + asset presence, and `/api/health/preflight` includes `xtts_v2`.
+- [x] Verify `/api/engines/list` reports `xtts_v2` available on a clean machine after running the pinned engine install.
+  - Evidence: `proof_runs\\baseline_workflow_20260116-091722_prosody\\proof_data.json` (`config.available_engines` includes `xtts_v2`)
+- **Success**: Engine Engineer can run the baseline workflow proof and get a non-null `audio_id`.
 
 ### 2) Artifact persistence (voice workflow stability)
 
@@ -39,10 +41,11 @@ Keep the “local-first” foundations reliable: job runtime, persistence, artif
 - [ ] Ensure path discovery is deterministic and does not depend on user PATH.
 - **Success**: engines that require ffmpeg/native tools work on clean machines.
 
+**Code Quality Note:** Roslynator is integrated and configured as warnings (non-blocking). Fix warnings incrementally as you work to maintain reliable, high-quality platform code.
+
 ## Proof run expectation
 
 - Run a minimal voice job that:
   - executes via runtime/job path
   - emits progress/events
   - persists an artifact that is retrievable after restart
-

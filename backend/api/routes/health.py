@@ -12,11 +12,8 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.resilience.health_check import (
-    HealthCheckResult,
-    HealthStatus,
-    get_health_checker,
-)
+from app.core.resilience.health_check import (HealthCheckResult, HealthStatus,
+                                              get_health_checker)
 
 from ..optimization import cache_response
 
@@ -310,10 +307,8 @@ def _get_resource_usage() -> Dict[str, Any]:
     # These imports can hard-crash the process on some machines due to DLL/ABI mismatches.
     if os.getenv("VOICESTUDIO_HEALTH_SAFE_MODE", "1") not in ("0", "false", "FALSE"):
         try:
-            from backend.api.validation_optimizer import (
-                get_cache_stats,
-                get_validation_stats,
-            )
+            from backend.api.validation_optimizer import (get_cache_stats,
+                                                          get_validation_stats)
 
             resources["validation"] = {
                 "cache_stats": get_cache_stats(),
@@ -348,10 +343,8 @@ def _get_resource_usage() -> Dict[str, Any]:
 
     # Validation optimizer statistics
     try:
-        from backend.api.validation_optimizer import (
-            get_cache_stats,
-            get_validation_stats,
-        )
+        from backend.api.validation_optimizer import (get_cache_stats,
+                                                      get_validation_stats)
 
         resources["validation"] = {
             "cache_stats": get_cache_stats(),
@@ -393,9 +386,8 @@ def _get_resource_usage() -> Dict[str, Any]:
 
     # API endpoint performance metrics
     try:
-        from backend.api.middleware.performance_monitoring import (
-            get_performance_middleware,
-        )
+        from backend.api.middleware.performance_monitoring import \
+            get_performance_middleware
 
         middleware = get_performance_middleware()
         if middleware:
@@ -536,9 +528,9 @@ def get_performance_middleware():
     Exposed as a function so unit tests can patch it without importing middleware modules.
     """
     try:
-        from backend.api.middleware.performance_monitoring import (
-            get_performance_middleware as _get_performance_middleware,
-        )  # type: ignore
+        from backend.api.middleware.performance_monitoring import \
+            get_performance_middleware as \
+            _get_performance_middleware  # type: ignore
 
         return _get_performance_middleware()
     except Exception:
@@ -551,10 +543,11 @@ def preflight_check() -> Dict[str, Any]:
     Operator-readable preflight report for local-first readiness.
 
     Validates:
-    - storage roots (projects/cache)
+    - storage roots (projects/cache/jobs)
     - model root (VOICESTUDIO_MODELS_PATH)
     - engine config model path consistency
     - audio registry durability path
+    - job state persistence path
     - basic native tool presence (ffmpeg)
     """
 
@@ -574,12 +567,14 @@ def preflight_check() -> Dict[str, Any]:
     from backend.services.AudioArtifactRegistry import get_audio_registry
     from backend.services.ContentAddressedAudioCache import get_audio_cache
     from backend.services.EngineConfigService import get_engine_config_service
+    from backend.services.JobStateStore import get_job_state_store
     from backend.services.ProjectStoreService import get_project_store_service
 
     projects_root = str(get_project_store_service().projects_dir)
     cache_root = str(get_audio_cache().cache_dir)
     model_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
     audio_registry_path = str(get_audio_registry().registry_path)
+    jobs_root = str(get_job_state_store("voice_cloning_wizard").jobs_root)
 
     # Ensure dirs exist / writable
     checks: Dict[str, Any] = {
@@ -589,6 +584,7 @@ def preflight_check() -> Dict[str, Any]:
         "audio_registry_dir": ensure_dir(
             os.path.dirname(audio_registry_path) or cache_root
         ),
+        "jobs_root": ensure_dir(jobs_root),
     }
 
     # EngineConfigService consistency
@@ -608,9 +604,39 @@ def preflight_check() -> Dict[str, Any]:
     except Exception as e:
         checks["engine_config"] = {"ok": False, "error": str(e)}
 
+    # XTTS preflight (deps + assets)
+    try:
+        from backend.services.model_preflight import ensure_xtts
+
+        checks["xtts_v2"] = ensure_xtts(auto_download=False)
+    except HTTPException as exc:
+        detail = exc.detail
+        message = detail.get("message") if isinstance(detail, dict) else None
+        checks["xtts_v2"] = {
+            "ok": False,
+            "downloaded": False,
+            "message": message or str(detail),
+            "status_code": exc.status_code,
+        }
+        if isinstance(detail, dict):
+            for key, value in detail.items():
+                if key != "message":
+                    checks["xtts_v2"][key] = value
+    except Exception as e:
+        checks["xtts_v2"] = {
+            "ok": False,
+            "downloaded": False,
+            "message": f"{type(e).__name__}: {e}",
+            "status_code": 500,
+        }
+
     # Native tool discovery (report-only; hardening handled in dedicated task)
     ffmpeg_env = os.getenv("VOICESTUDIO_FFMPEG_PATH")
-    ffmpeg = ffmpeg_env if (ffmpeg_env and os.path.exists(ffmpeg_env)) else shutil.which("ffmpeg")
+    ffmpeg = (
+        ffmpeg_env
+        if (ffmpeg_env and os.path.exists(ffmpeg_env))
+        else shutil.which("ffmpeg")
+    )
     checks["ffmpeg"] = {
         "ok": bool(ffmpeg),
         "path": ffmpeg or None,
@@ -629,6 +655,13 @@ def preflight_check() -> Dict[str, Any]:
             "VOICESTUDIO_MODELS_PATH": os.getenv("VOICESTUDIO_MODELS_PATH"),
             "VOICESTUDIO_PROJECTS_DIR": os.getenv("VOICESTUDIO_PROJECTS_DIR"),
             "VOICESTUDIO_CACHE_DIR": os.getenv("VOICESTUDIO_CACHE_DIR"),
+            "VOICESTUDIO_JOBS_DIR": os.getenv("VOICESTUDIO_JOBS_DIR"),
+            "HF_HOME": os.getenv("HF_HOME"),
+            "HUGGINGFACE_HUB_CACHE": os.getenv("HUGGINGFACE_HUB_CACHE"),
+            "TRANSFORMERS_CACHE": os.getenv("TRANSFORMERS_CACHE"),
+            "HF_DATASETS_CACHE": os.getenv("HF_DATASETS_CACHE"),
+            "TTS_HOME": os.getenv("TTS_HOME"),
+            "TORCH_HOME": os.getenv("TORCH_HOME"),
         },
         "checks": checks,
     }
@@ -677,7 +710,7 @@ def engine_health() -> Dict[str, Any]:
 
 
 @router.get("/performance")
-\\def performance_metrics() -> Dict[str, Any]:
+def performance_metrics() -> Dict[str, Any]:
     """
     Get API endpoint performance metrics.
 

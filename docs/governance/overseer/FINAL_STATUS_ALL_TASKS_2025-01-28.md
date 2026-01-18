@@ -1,8 +1,13 @@
 # Final Status: All Tasks Remaining
 
-**Date:** 2025-01-28  
-**Overseer:** ACTIVE  
-**Status:** ✅ **INFRASTRUCTURE COMPLETE - WORKERS READY**
+> ⚠️ **NON-STATUS DOCUMENT — HISTORICAL SNAPSHOT**  
+> **This document is a historical snapshot from 2025-01-28 and does NOT reflect current project status.**  
+> **For authoritative status, see:** [`Recovery Plan/QUALITY_LEDGER.md`](../../../Recovery%20Plan/QUALITY_LEDGER.md)  
+> **Current Status:** All gates through H are DONE per ledger (VS-0012, VS-0003)
+
+**Date:** 2025-01-28 (Historical)  
+**Overseer:** ACTIVE (Historical)  
+**Status:** ✅ **INFRASTRUCTURE COMPLETE - WORKERS READY** (Historical snapshot — see ledger for current status)
 
 ---
 
@@ -70,9 +75,9 @@
    - Update 50+ files using toasts
 
 3. ⏳ **TASK 2.6: Packaging Script & Smoke Checklist** (6-8h)
-   - Create package_release.ps1
-   - MSIX configuration
+   - Use `scripts/prepare-release.ps1` + `installer/build-installer.ps1` (installer only)
    - Smoke checklist
+   - MSIX lane archived under `docs/archive/msix/`
 
 #### MEDIUM PRIORITY (3 tasks)
 4. ⏳ **TASK 2.2: Locale Switch Toggle** (4-6h)

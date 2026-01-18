@@ -53,12 +53,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                ...
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                ...
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -396,7 +394,9 @@ class InvokeAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("invokeai", duration, cached=False)
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for invokeai batch generation."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch generation failed for prompt {idx}: {e}")

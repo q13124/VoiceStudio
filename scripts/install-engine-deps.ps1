@@ -5,17 +5,28 @@ Param(
   [string]$TorchaudioVersion = "2.2.2+cu121",
   [string]$PytorchIndexUrl = "https://download.pytorch.org/whl/cu121",
   [ValidateSet("xtts", "full")]
-  [string]$Profile = "xtts"
+  [string]$InstallProfile = "xtts",
+  [switch]$Gpu
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== VoiceStudio engine dependency install ($Profile) ===" -ForegroundColor Cyan
+Write-Host "=== VoiceStudio engine dependency install ($InstallProfile) ===" -ForegroundColor Cyan
 
 $repoRoot = Resolve-Path "$PSScriptRoot\.."
 if ($repoRoot -is [System.Management.Automation.PathInfo]) {
   $repoRoot = $repoRoot.Path
+}
+
+$gpuVenvDir = "venv_xtts_gpu_sm120"
+if ($Gpu) {
+  $TorchVersion = "2.7.1+cu128"
+  $TorchaudioVersion = "2.7.1+cu128"
+  $PytorchIndexUrl = "https://download.pytorch.org/whl/cu128"
+  if ($VenvDir -eq "venv") {
+    $VenvDir = $gpuVenvDir
+  }
 }
 
 $venvPath = Join-Path $repoRoot $VenvDir
@@ -25,7 +36,7 @@ $requirementsEngines = Join-Path $repoRoot "requirements_engines.txt"
 Write-Host "RepoRoot: $repoRoot" -ForegroundColor DarkGray
 Write-Host "VenvDir:   $VenvDir" -ForegroundColor DarkGray
 Write-Host "Pytorch:   $PytorchIndexUrl" -ForegroundColor DarkGray
-Write-Host "Profile:   $Profile" -ForegroundColor DarkGray
+Write-Host "Profile:   $InstallProfile" -ForegroundColor DarkGray
 
 if (-not (Test-Path $requirementsEngines)) {
   throw "requirements_engines.txt not found: $requirementsEngines"
@@ -66,14 +77,16 @@ catch {
 
 if ($needTorchInstall) {
   Write-Host "Installing PyTorch ($TorchVersion) + torchaudio ($TorchaudioVersion)..." -ForegroundColor Yellow
-  & $venvPython -m pip uninstall -y torch torchaudio torchvision *> $null
+  $uninstallCmd = "`"$venvPython`" -m pip uninstall -y torch torchaudio torchvision 1>nul 2>nul"
+  cmd /c $uninstallCmd | Out-Null
+  $global:LASTEXITCODE = 0
   & $venvPython -m pip install "torch==$TorchVersion" "torchaudio==$TorchaudioVersion" --index-url $PytorchIndexUrl
   if ($LASTEXITCODE -ne 0) {
     throw "PyTorch install failed (ExitCode=$LASTEXITCODE)"
   }
 }
 
-if ($Profile -eq "full") {
+if ($InstallProfile -eq "full") {
   Write-Host "Installing engine requirements (full: requirements_engines.txt)..." -ForegroundColor Yellow
   
   # aeneas has a known build-time dependency on numpy, but does not declare it for build isolation.
@@ -81,8 +94,8 @@ if ($Profile -eq "full") {
   $tempReq = Join-Path $env:TEMP ("requirements_engines.noaeneas." + [Guid]::NewGuid().ToString("N") + ".txt")
   try {
     Get-Content -Path $requirementsEngines |
-      Where-Object { $_ -notmatch '^\s*aeneas\s*([=<>~!].*)?\s*(#.*)?$' } |
-      Set-Content -Path $tempReq -Encoding UTF8
+    Where-Object { $_ -notmatch '^\s*aeneas\s*([=<>~!].*)?\s*(#.*)?$' } |
+    Set-Content -Path $tempReq -Encoding UTF8
 
     & $venvPython -m pip install --index-url https://pypi.org/simple --extra-index-url $PytorchIndexUrl -r $tempReq
     if ($LASTEXITCODE -ne 0) {
@@ -148,18 +161,30 @@ if ($LASTEXITCODE -ne 0) {
 $backendRequirements = Join-Path $repoRoot "backend\\requirements.txt"
 if (Test-Path $backendRequirements) {
   Write-Host "Verifying backend runtime deps (FastAPI/uvicorn)..." -ForegroundColor Yellow
-  & $venvPython -c "import fastapi, uvicorn; print('fastapi:', fastapi.__version__); print('uvicorn:', uvicorn.__version__)" 2>$null
-  if ($LASTEXITCODE -ne 0) {
+  $backendOk = $false
+  try {
+    & $venvPython -c "import fastapi, uvicorn; print('fastapi:', fastapi.__version__); print('uvicorn:', uvicorn.__version__)" 2>$null
+    $backendOk = ($LASTEXITCODE -eq 0)
+  } catch {
+    $backendOk = $false
+  }
+  if (-not $backendOk) {
     Write-Host "Installing backend requirements (backend/requirements.txt)..." -ForegroundColor Yellow
     & $venvPython -m pip install --index-url https://pypi.org/simple --extra-index-url $PytorchIndexUrl -r $backendRequirements
     if ($LASTEXITCODE -ne 0) {
       throw "backend requirements install failed (ExitCode=$LASTEXITCODE)"
     }
   }
-} else {
+}
+else {
   Write-Host "WARNING: backend requirements file not found: $backendRequirements" -ForegroundColor Yellow
+}
+
+Write-Host "Installed package versions:" -ForegroundColor Cyan
+& $venvPython -c "import sys; from importlib import metadata as m; pkgs=['torch','torchaudio','transformers','tokenizers','huggingface-hub','coqui-tts','numpy','librosa','soundfile','fastapi','uvicorn']; print('python:', sys.version.split()[0]); [print(f'{p}: {m.version(p)}') if (m.version(p)) else print(f'{p}: <missing>') for p in pkgs]"
+if ($LASTEXITCODE -ne 0) {
+  throw "package version report failed (ExitCode=$LASTEXITCODE)"
 }
 
 Write-Host "Engine dependency install complete." -ForegroundColor Green
 Write-Host "Activate: .\$VenvDir\Scripts\Activate.ps1" -ForegroundColor Cyan
-

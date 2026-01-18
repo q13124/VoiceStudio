@@ -528,13 +528,20 @@ class WhisperCPPEngine(EngineProtocol):
                             if language:
                                 cmd.extend(["--language", language])
 
-                            # Request JSON output for better parsing
-                            # Note: whisper.cpp typically writes JSON to stdout or specified file
-                            # Format may vary by version, so we'll try multiple approaches
-                            json_output_path = tmp_path + ".json"
+                            # Request JSON output for better parsing.
+                            # Newer whisper.cpp uses `whisper-cli` where `--output-json` is a flag
+                            # (boolean) and the output path is set via `--output-file` (base name).
+                            # Older binaries accepted `--output-json <path>`.
+                            base_no_ext = os.path.splitext(tmp_path)[0]
+                            json_output_path = base_no_ext + ".json"
 
-                            # Try --output-json with file path (if supported)
-                            cmd.extend(["--output-json", json_output_path])
+                            binary_base = os.path.basename(binary_path).lower()
+                            if "whisper-cli" in binary_base:
+                                # -oj writes JSON, -of sets base output path (without extension)
+                                cmd.extend(["-oj", "-of", base_no_ext])
+                            else:
+                                # Legacy behavior: attempt `--output-json <path>`
+                                cmd.extend(["--output-json", json_output_path])
 
                             result = subprocess.run(
                                 cmd,
@@ -557,10 +564,51 @@ class WhisperCPPEngine(EngineProtocol):
                                             json_output_path, "r", encoding="utf-8"
                                         ) as f:
                                             json_result = json.load(f)
-                                            text_output = json_result.get(
-                                                "text", ""
-                                            ).strip()
-                                            segments = json_result.get("segments", [])
+                                            # Handle multiple whisper.cpp JSON formats:
+                                            # - Legacy: {"text": "...", "segments": [...]}
+                                            # - New whisper-cli: {"result": {"language": ...}, "transcription": [...]}
+                                            if isinstance(json_result, dict) and isinstance(
+                                                json_result.get("transcription"), list
+                                            ):
+                                                segs = []
+                                                texts = []
+                                                for seg in json_result.get(
+                                                    "transcription", []
+                                                ):
+                                                    if not isinstance(seg, dict):
+                                                        continue
+                                                    seg_text = str(
+                                                        seg.get("text", "")
+                                                    ).strip()
+                                                    if seg_text:
+                                                        texts.append(seg_text)
+                                                    offsets = seg.get("offsets") or {}
+                                                    try:
+                                                        start_ms = float(
+                                                            offsets.get("from", 0) or 0
+                                                        )
+                                                        end_ms = float(
+                                                            offsets.get("to", 0) or 0
+                                                        )
+                                                        start_s = start_ms / 1000.0
+                                                        end_s = end_ms / 1000.0
+                                                    except Exception:
+                                                        start_s = 0.0
+                                                        end_s = 0.0
+                                                    segs.append(
+                                                        {
+                                                            "start": start_s,
+                                                            "end": end_s,
+                                                            "text": seg_text,
+                                                        }
+                                                    )
+                                                text_output = " ".join(texts).strip()
+                                                segments = segs
+                                            else:
+                                                text_output = str(
+                                                    json_result.get("text", "")
+                                                ).strip()
+                                                segments = json_result.get("segments", [])
                                         os.unlink(json_output_path)
                                 except Exception as e:
                                     logger.debug(f"Failed to parse JSON output: {e}")
@@ -674,17 +722,15 @@ class WhisperCPPEngine(EngineProtocol):
         import platform
         import shutil
 
-        binary_names = ["whisper-cpp", "whisper", "main"]
+        # Prefer the new upstream CLI binary name (whisper-cli). "main" is deprecated
+        # in newer releases and may return a non-zero exit code even for --help.
+        binary_names = ["whisper-cli", "whisper-cpp", "whisper", "main"]
 
         # On Windows, check for .exe versions
         if platform.system() == "Windows":
-            binary_names.extend(["whisper-cpp.exe", "whisper.exe", "main.exe"])
-
-        # Check PATH
-        for name in binary_names:
-            binary_path = shutil.which(name)
-            if binary_path and os.path.exists(binary_path):
-                return binary_path
+            binary_names.extend(
+                ["whisper-cli.exe", "whisper-cpp.exe", "whisper.exe", "main.exe"]
+            )
 
         # Check common installation locations
         common_paths = []
@@ -707,7 +753,11 @@ class WhisperCPPEngine(EngineProtocol):
                         "whisper.cpp",
                         "main.exe",
                     ),
+                    # Upstream prebuilt zip layout (contains Release\\whisper-cli.exe and Release\\main.exe)
+                    os.path.join(os.getcwd(), "whisper.cpp", "Release", "whisper-cli.exe"),
                     os.path.join(os.getcwd(), "whisper.cpp", "main.exe"),
+                    # Common when using the upstream prebuilt Windows zip (contains Release\\main.exe)
+                    os.path.join(os.getcwd(), "whisper.cpp", "Release", "main.exe"),
                     os.path.join(os.getcwd(), "main.exe"),
                 ]
             )
@@ -727,6 +777,13 @@ class WhisperCPPEngine(EngineProtocol):
         for path in common_paths:
             if path and os.path.exists(path) and os.access(path, os.X_OK):
                 return path
+
+        # Fallback: Check PATH last. This avoids picking up unrelated `whisper.exe`
+        # launchers from other packages when a repo-local whisper.cpp binary exists.
+        for name in binary_names:
+            binary_path = shutil.which(name)
+            if binary_path and os.path.exists(binary_path):
+                return binary_path
 
         return None
 

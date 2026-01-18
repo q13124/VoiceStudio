@@ -125,7 +125,7 @@
                        Grid.Row="2" 
                        HorizontalAlignment="Center" 
                        VerticalAlignment="Center"
-                       Spacing="{StaticResource VSQ.Spacing.Medium}"
+                       Spacing="{StaticResource VSQ.Spacing.Value.Medium}"
                        Visibility="Collapsed">
                 <TextBlock Text="🔍" 
                           FontSize="48" 
@@ -147,7 +147,7 @@
             <StackPanel Grid.Row="3" 
                        Orientation="Horizontal" 
                        HorizontalAlignment="Right" 
-                       Spacing="{StaticResource VSQ.Spacing.Medium}"
+                       Spacing="{StaticResource VSQ.Spacing.Value.Medium}"
                        Margin="16,12,16,16">
                 <TextBlock Text="Enter: Navigate   Esc: Close   Ctrl+K: Open Search" 
                           Style="{StaticResource VSQ.Text.Caption}" 

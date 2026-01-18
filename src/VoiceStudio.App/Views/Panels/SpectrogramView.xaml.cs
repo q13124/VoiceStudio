@@ -64,15 +64,18 @@ namespace VoiceStudio.App.Views.Panels
 
     private void UpdateSpectrogramControl()
     {
-      if (ViewModel.SpectrogramData != null && SpectrogramControl != null)
+      if (SpectrogramControl == null)
       {
-        // Convert SpectrogramDataItem to AutomationCurve for SpectrogramControl
-        // Note: SpectrogramControl expects AutomationCurve format, but we'll adapt
-        // In a real implementation, we'd need to convert the spectrogram frames
-        // to the format expected by SpectrogramControl
+        return;
+      }
 
-        // For now, we'll set the frames directly if SpectrogramControl supports it
-        // This is a placeholder - actual implementation would convert the data format
+      if (ViewModel.SpectrogramData?.Frames != null)
+      {
+        SpectrogramControl.Frames = ViewModel.SpectrogramData.Frames;
+      }
+      else
+      {
+        SpectrogramControl.Frames = Array.Empty<object>();
       }
     }
 

@@ -264,7 +264,7 @@ else:
         return snr_db
 
 
-def calculate_snr(audio: np.ndarray) -> float:
+def calculate_snr(audio: np.ndarray) -> Optional[float]:
     """
     Calculate Signal-to-Noise Ratio (SNR) of audio.
 
@@ -280,7 +280,7 @@ def calculate_snr(audio: np.ndarray) -> float:
         SNR in dB
     """
     if len(audio) == 0:
-        return 0.0
+        return None
 
     # Use Cython-optimized version if available
     if HAS_CYTHON_QUALITY:
@@ -323,7 +323,7 @@ def calculate_snr(audio: np.ndarray) -> float:
     return float(snr_db)
 
 
-def calculate_mos_score(audio: np.ndarray) -> float:
+def calculate_mos_score(audio: np.ndarray) -> Optional[float]:
     """
     Estimate Mean Opinion Score (MOS) for audio quality.
 
@@ -340,7 +340,7 @@ def calculate_mos_score(audio: np.ndarray) -> float:
         Estimated MOS score (1.0 to 5.0)
     """
     if len(audio) == 0:
-        return 1.0
+        return None
 
     # Use essentia-tensorflow for advanced audio analysis if available
     if HAS_ESSENTIA and es is not None:
@@ -424,6 +424,8 @@ def calculate_mos_score(audio: np.ndarray) -> float:
 
     # Factor 1: SNR (higher is better)
     snr = calculate_snr(audio)  # Already uses Cython if available
+    if snr is None:
+        return None
     snr_factor = min(1.0, max(0.0, (snr + 10) / 40))  # Normalize to 0-1
     mos += snr_factor * 1.0
 
@@ -500,7 +502,7 @@ def calculate_similarity(
     reference_audio: Union[str, Path, np.ndarray],
     generated_audio: Union[str, Path, np.ndarray],
     method: str = "embedding",
-) -> float:
+) -> Optional[float]:
     """
     Calculate voice similarity between reference and generated audio.
 
@@ -523,28 +525,37 @@ def calculate_similarity(
         gen_audio = librosa.resample(gen_audio, orig_sr=gen_sr, target_sr=ref_sr)
         gen_sr = ref_sr
 
-    if method == "embedding" and HAS_RESEMBLYZER:
-        try:
-            # Use Resemblyzer for voice embeddings
-            encoder = VoiceEncoder()
-
-            # Preprocess and encode
-            ref_wav = preprocess_wav(ref_audio)
-            gen_wav = preprocess_wav(gen_audio)
-
-            ref_embedding = encoder.embed_utterance(ref_wav)
-            gen_embedding = encoder.embed_utterance(gen_wav)
-
-            # Calculate cosine similarity
-            similarity = np.dot(ref_embedding, gen_embedding) / (
-                np.linalg.norm(ref_embedding) * np.linalg.norm(gen_embedding)
+    if method == "embedding":
+        if not HAS_RESEMBLYZER:
+            logger.warning(
+                "resemblyzer not available for embedding-based similarity. "
+                "Install with: pip install resemblyzer. Falling back to MFCC method."
             )
-
-            return float(similarity)
-
-        except Exception as e:
-            logger.warning(f"Resemblyzer similarity failed: {e}, falling back to MFCC")
             method = "mfcc"
+        else:
+            try:
+                # Use Resemblyzer for voice embeddings
+                encoder = VoiceEncoder()
+
+                # Preprocess and encode
+                ref_wav = preprocess_wav(ref_audio)
+                gen_wav = preprocess_wav(gen_audio)
+
+                ref_embedding = encoder.embed_utterance(ref_wav)
+                gen_embedding = encoder.embed_utterance(gen_wav)
+
+                # Calculate cosine similarity
+                similarity = np.dot(ref_embedding, gen_embedding) / (
+                    np.linalg.norm(ref_embedding) * np.linalg.norm(gen_embedding)
+                )
+
+                return float(similarity)
+
+            except Exception as e:
+                logger.warning(
+                    f"Resemblyzer similarity failed: {e}, falling back to MFCC"
+                )
+                method = "mfcc"
 
     if method == "mfcc" and HAS_LIBROSA:
         try:
@@ -570,20 +581,19 @@ def calculate_similarity(
 
         except Exception as e:
             logger.error(f"MFCC similarity failed: {e}")
-            return 0.5  # Default neutral similarity
+            return None
 
-    # Fallback: simple energy-based comparison
-    ref_energy = np.mean(np.abs(ref_audio))
-    gen_energy = np.mean(np.abs(gen_audio))
+    if method == "mfcc" and not HAS_LIBROSA:
+        logger.warning("librosa not available for MFCC similarity")
+        return None
 
-    if ref_energy == 0 or gen_energy == 0:
-        return 0.0
-
-    energy_ratio = min(ref_energy, gen_energy) / max(ref_energy, gen_energy)
-    return float(energy_ratio)
+    # No reliable similarity path available
+    return None
 
 
-def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float:
+def calculate_naturalness(
+    audio: np.ndarray, sample_rate: int = 22050
+) -> Optional[float]:
     """
     Calculate naturalness score of audio.
 
@@ -598,12 +608,12 @@ def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float:
         Naturalness score (0.0 to 1.0)
     """
     if len(audio) == 0:
-        return 0.0
-
-    naturalness = 0.5  # Base score
+        return None
 
     if not HAS_LIBROSA:
-        return naturalness
+        return None
+
+    naturalness = 0.5  # Base score
 
     try:
         # Factor 1: Zero-crossing rate (speech-like rhythm)
@@ -640,6 +650,7 @@ def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float:
 
     except Exception as e:
         logger.debug(f"Error calculating naturalness: {e}")
+        return None
 
     # Clamp to valid range
     naturalness = max(0.0, min(1.0, naturalness))
@@ -725,9 +736,15 @@ def calculate_pesq_score(
 
     Returns:
         PESQ score (None if pesq not available or error occurs)
+
+    Raises:
+        ImportError: If pesq package is missing (with installation instructions)
     """
     if not HAS_PESQ:
-        return None
+        raise ImportError(
+            "pesq package is required for PESQ score calculation. "
+            "Install with: pip install pesq"
+        )
 
     try:
         # PESQ requires 8000 or 16000 Hz sample rate
@@ -776,9 +793,15 @@ def calculate_stoi_score(
 
     Returns:
         STOI score (None if pystoi not available or error occurs)
+
+    Raises:
+        ImportError: If pystoi package is missing (with installation instructions)
     """
     if not HAS_PYSTOI:
-        return None
+        raise ImportError(
+            "pystoi package is required for STOI score calculation. "
+            "Install with: pip install pystoi"
+        )
 
     try:
         # STOI works best at 10000 Hz, but accepts other rates
@@ -801,7 +824,7 @@ def calculate_stoi_score(
 
 def calculate_spectral_flatness(
     audio: np.ndarray, sample_rate: int = 22050, frame_length: int = 2048
-) -> float:
+) -> Optional[float]:
     """
     Calculate spectral flatness metric.
 
@@ -819,7 +842,7 @@ def calculate_spectral_flatness(
     """
     if not HAS_LIBROSA:
         logger.warning("librosa not available for spectral flatness")
-        return 0.5  # Default neutral value
+        return None
 
     try:
         # Compute STFT
@@ -845,12 +868,12 @@ def calculate_spectral_flatness(
         return float(np.clip(spectral_flatness, 0.0, 1.0))
     except Exception as e:
         logger.warning(f"Spectral flatness calculation failed: {e}")
-        return 0.5
+        return None
 
 
 def calculate_pitch_variance(
     audio: np.ndarray, sample_rate: int = 22050, fmin: float = 50.0, fmax: float = 400.0
-) -> float:
+) -> Optional[float]:
     """
     Calculate pitch variance metric.
 
@@ -868,7 +891,7 @@ def calculate_pitch_variance(
     """
     if not HAS_LIBROSA:
         logger.warning("librosa not available for pitch variance")
-        return 0.0
+        return None
 
     try:
         # Extract pitch using librosa's pyin
@@ -880,7 +903,7 @@ def calculate_pitch_variance(
         voiced_pitches = pitches[voiced_flag]
 
         if len(voiced_pitches) == 0:
-            return 0.0
+            return None
 
         # Calculate variance
         pitch_variance = np.var(voiced_pitches)
@@ -888,12 +911,12 @@ def calculate_pitch_variance(
         return float(pitch_variance)
     except Exception as e:
         logger.warning(f"Pitch variance calculation failed: {e}")
-        return 0.0
+        return None
 
 
 def calculate_energy_variance(
     audio: np.ndarray, frame_length: int = 2048, hop_length: int = 512
-) -> float:
+) -> Optional[float]:
     """
     Calculate energy variance metric.
 
@@ -917,7 +940,7 @@ def calculate_energy_variance(
             frame_energy.append(energy)
 
         if len(frame_energy) == 0:
-            return 0.0
+            return None
 
         frame_energy = np.array(frame_energy)
 
@@ -927,12 +950,12 @@ def calculate_energy_variance(
         return float(energy_variance)
     except Exception as e:
         logger.warning(f"Energy variance calculation failed: {e}")
-        return 0.0
+        return None
 
 
 def calculate_speaking_rate(
     audio: np.ndarray, sample_rate: int = 22050, threshold: float = 0.01
-) -> float:
+) -> Optional[float]:
     """
     Calculate speaking rate metric.
 
@@ -959,7 +982,7 @@ def calculate_speaking_rate(
             frame_energy.append(energy)
 
         if len(frame_energy) == 0:
-            return 0.0
+            return None
 
         frame_energy = np.array(frame_energy)
         max_energy = np.max(frame_energy)
@@ -981,15 +1004,14 @@ def calculate_speaking_rate(
         # Estimate words per second
         # Rough approximation: each speech segment ≈ 1 word
         duration_seconds = len(audio) / sample_rate
-        if duration_seconds > 0:
-            speaking_rate = speech_segments / duration_seconds
-        else:
-            speaking_rate = 0.0
+        if duration_seconds <= 0:
+            return None
+        speaking_rate = speech_segments / duration_seconds
 
         return float(speaking_rate)
     except Exception as e:
         logger.warning(f"Speaking rate calculation failed: {e}")
-        return 0.0
+        return None
 
 
 def detect_clicks(
@@ -1063,14 +1085,18 @@ def calculate_silence_ratio(
     """
     try:
         # Calculate frame energy
-        frame_length = int(0.025 * sample_rate)  # 25ms frames
-        hop_length = frame_length // 2
+        frame_length = max(1, int(0.025 * sample_rate))  # 25ms frames
+        hop_length = max(1, frame_length // 2)
 
         frame_energy = []
-        for i in range(0, len(audio) - frame_length, hop_length):
-            frame = audio[i : i + frame_length]
-            energy = np.sum(frame**2)
-            frame_energy.append(energy)
+        if len(audio) < frame_length:
+            # Too-short audio: treat as a single frame so the metric remains meaningful.
+            frame_energy.append(float(np.sum(audio**2)))
+        else:
+            for i in range(0, len(audio) - frame_length, hop_length):
+                frame = audio[i : i + frame_length]
+                energy = np.sum(frame**2)
+                frame_energy.append(energy)
 
         if len(frame_energy) == 0:
             return 0.0
@@ -1078,11 +1104,15 @@ def calculate_silence_ratio(
         frame_energy = np.array(frame_energy)
         max_energy = np.max(frame_energy)
 
-        # Convert threshold to linear scale
-        threshold_linear = max_energy * (10 ** (threshold_db / 20.0))
+        # All-zero energy -> all silence.
+        if float(max_energy) <= 0.0:
+            return 1.0
+
+        # Convert threshold dB (power ratio) to linear scale.
+        threshold_linear = float(max_energy) * (10 ** (threshold_db / 10.0))
 
         # Count silent frames
-        silent_frames = np.sum(frame_energy < threshold_linear)
+        silent_frames = np.sum(frame_energy <= threshold_linear)
 
         # Calculate silence ratio
         silence_ratio = (
@@ -1097,7 +1127,7 @@ def calculate_silence_ratio(
 
 def calculate_clipping_ratio(
     audio: np.ndarray, clipping_threshold: float = 0.99
-) -> float:
+) -> Optional[float]:
     """
     Calculate clipping ratio metric.
 
@@ -1120,6 +1150,9 @@ def calculate_clipping_ratio(
             normalized = audio
 
         # Detect clipped samples (at or near maximum)
+        if len(audio) == 0:
+            return None
+
         clipped_samples = np.abs(normalized) >= clipping_threshold
 
         # Calculate clipping ratio
@@ -1128,7 +1161,7 @@ def calculate_clipping_ratio(
         return float(np.clip(clipping_ratio, 0.0, 1.0))
     except Exception as e:
         logger.warning(f"Clipping ratio calculation failed: {e}")
-        return 0.0
+        return None
 
 
 def calculate_all_metrics(
@@ -1162,6 +1195,8 @@ def calculate_all_metrics(
         missing_deps.append("pesq (pip install pesq)")
     if not HAS_PYSTOI:
         missing_deps.append("pystoi (pip install pystoi)")
+    if not HAS_LIBROSA:
+        missing_deps.append("librosa (pip install librosa==0.11.0)")
     if include_ml_prediction and not HAS_SKLEARN:
         missing_deps.append("scikit-learn (pip install scikit-learn>=1.3.0)")
 
@@ -1217,13 +1252,25 @@ def calculate_all_metrics(
         metrics["similarity"] = calculate_similarity(reference_audio, audio_array)
 
         # Add PESQ and STOI if reference audio is available
-        pesq_score = calculate_pesq_score(reference_audio, audio_array, sr)
-        if pesq_score is not None:
-            metrics["pesq_score"] = pesq_score
+        try:
+            pesq_score = calculate_pesq_score(reference_audio, audio_array, sr)
+            if pesq_score is not None:
+                metrics["pesq_score"] = pesq_score
+        except ImportError as e:
+            logger.warning(f"PESQ calculation skipped: {e}")
+            missing_deps.append(str(e))
+        except Exception as e:
+            logger.warning(f"PESQ calculation failed: {e}")
 
-        stoi_score = calculate_stoi_score(reference_audio, audio_array, sr)
-        if stoi_score is not None:
-            metrics["stoi_score"] = stoi_score
+        try:
+            stoi_score = calculate_stoi_score(reference_audio, audio_array, sr)
+            if stoi_score is not None:
+                metrics["stoi_score"] = stoi_score
+        except ImportError as e:
+            logger.warning(f"STOI calculation skipped: {e}")
+            missing_deps.append(str(e))
+        except Exception as e:
+            logger.warning(f"STOI calculation failed: {e}")
 
     # Add ML-based quality prediction if requested
     if include_ml_prediction:
@@ -1231,27 +1278,36 @@ def calculate_all_metrics(
             logger.warning(
                 "ML quality prediction requested but scikit-learn not available. Install with: pip install scikit-learn>=1.3.0"
             )
+            metrics["ml_prediction"] = None
         else:
             try:
-                # Extract key features for ML prediction: [MOS, SNR, Naturalness, Similarity, Artifact_Score]
-                feature_vector = np.array(
-                    [
-                        metrics.get("mos_score", 3.0),
-                        metrics.get("snr_db", 20.0),
-                        metrics.get("naturalness", 0.5),
-                        (
-                            metrics.get("similarity", 0.5)
-                            if reference_audio is not None
-                            else 0.5
-                        ),
-                        metrics.get("artifacts", {}).get("artifact_score", 0.5),
-                    ]
+                mos_score = metrics.get("mos_score")
+                snr_db = metrics.get("snr_db")
+                naturalness = metrics.get("naturalness")
+                similarity = (
+                    metrics.get("similarity") if reference_audio is not None else None
                 )
+                artifact_score = metrics.get("artifacts", {}).get("artifact_score")
 
-                ml_prediction = predict_quality_with_ml(feature_vector)
-                metrics["ml_prediction"] = ml_prediction
+                if None in (mos_score, snr_db, naturalness, artifact_score):
+                    metrics["ml_prediction"] = None
+                elif reference_audio is not None and similarity is None:
+                    metrics["ml_prediction"] = None
+                else:
+                    feature_vector = np.array(
+                        [
+                            mos_score,
+                            snr_db,
+                            naturalness,
+                            similarity if similarity is not None else 0.0,
+                            artifact_score,
+                        ]
+                    )
+                    ml_prediction = predict_quality_with_ml(feature_vector)
+                    metrics["ml_prediction"] = ml_prediction
             except Exception as e:
                 logger.warning(f"ML quality prediction failed: {e}")
+                metrics["ml_prediction"] = None
 
     metrics["missing_dependencies"] = missing_deps
 
@@ -1526,7 +1582,8 @@ def predict_quality_with_ml(
     # Calculate confidence based on:
     # 1. Feature variance (lower variance = more consistent = higher confidence)
     # 2. Number of features available (more features = higher confidence)
-    feature_variance = float(np.std(features_flat))
+    # IMPORTANT: variance must be computed on normalized features; raw SNR (0–40 dB) dominates otherwise.
+    feature_variance = float(np.std(normalized_features))
     variance_confidence = float(1.0 - min(1.0, feature_variance / 2.0))
     feature_count_confidence = float(min(1.0, num_features / 5.0))
 
@@ -1551,9 +1608,15 @@ if __name__ == "__main__":
 
     metrics = calculate_all_metrics(audio_file, reference_file)
 
+    def _fmt(value: Optional[float], suffix: str) -> str:
+        if value is None:
+            return "n/a"
+        return f"{value:.2f}{suffix}"
+
     print("Quality Metrics:")
-    print(f"  MOS Score: {metrics['mos_score']:.2f}/5.0")
-    print(f"  SNR: {metrics['snr_db']:.2f} dB")
-    print(f"  Naturalness: {metrics['naturalness']:.2f}/1.0")
-    print(f"  Similarity: {metrics.get('similarity', 'N/A'):.2f}/1.0")
-    print(f"  Artifacts: {metrics['artifacts']['artifact_score']:.2f}/1.0")
+    print(f"  MOS Score: {_fmt(metrics.get('mos_score'), '/5.0')}")
+    print(f"  SNR: {_fmt(metrics.get('snr_db'), ' dB')}")
+    print(f"  Naturalness: {_fmt(metrics.get('naturalness'), '/1.0')}")
+    print(f"  Similarity: {_fmt(metrics.get('similarity'), '/1.0')}")
+    artifacts = metrics.get("artifacts", {})
+    print(f"  Artifacts: {_fmt(artifacts.get('artifact_score'), '/1.0')}")

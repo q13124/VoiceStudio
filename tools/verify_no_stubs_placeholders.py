@@ -52,10 +52,12 @@ ALL_PATTERNS = (
 # Directories to exclude (build artifacts, dependencies, generated files)
 EXCLUDE_DIRS = [
     ".git",
+    ".specstory",
     "__pycache__",
     "node_modules",
     ".venv",
     "venv",
+    "venv_",
     "env",
     "bin",
     "obj",

@@ -7,6 +7,7 @@ This folder provides **role-specific, next-action task lists** aligned to the ga
 - **Status source of truth**: `Recovery Plan/QUALITY_LEDGER.md`
 - **Execution plan / roadmap (gate-driven)**: `docs/governance/overseer/PROJECT_BREAKDOWN_AND_EXECUTION_PLAN.md`
 - **Working architecture notes**: `openmemory.md`
+- **Role prompts + direction (7 roles)**: `docs/governance/overseer/ALL_ROLE_PROMPTS.md`
 - **Architecture blueprints (external)**
   - `C:\Users\Tyler\Downloads\VoiceStudio – Architecture Blueprint.pdf`
   - `C:\Users\Tyler\Downloads\VoiceStudio Project Architecture and Dependency Guide.pdf`
@@ -17,7 +18,7 @@ This folder provides **role-specific, next-action task lists** aligned to the ga
 - **Artifact + models layout**:
   - Default model root: `E:\VoiceStudio\models` (set by `backend/api/main.py` unless overridden)
   - Expected subfolders: `hf_cache/`, `xtts/`, `piper/`, `whisper/`, `checkpoints/`
-- **Gate C artifact**: default is **unpackaged self-contained apphost EXE** (MSIX optional).
+- **Gate C artifact**: **unpackaged self-contained apphost EXE** (installer distribution; MSIX not used).
 - **No placeholders**: replace stubs with real behavior (RuleGuard must remain green).
 
 ## Role task lists (start here)

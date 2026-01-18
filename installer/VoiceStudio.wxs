@@ -30,7 +30,7 @@
           <!-- Application Files -->
           <Directory Id="AppFolder" Name="App">
             <Component Id="AppExecutable" Guid="C1D2E3F4-A5B6-4C7D-8E9F-0A1B2C3D4E5F">
-              <File Id="VoiceStudioApp.exe"
+              <File Id="VoiceStudioAppExe"
                     Source="$(var.VoiceStudio.App.TargetPath)"
                     KeyPath="yes" />
             </Component>
@@ -100,7 +100,7 @@
             <Shortcut Id="ApplicationShortcut"
                       Name="VoiceStudio Quantum+"
                       Description="Professional Voice Cloning Studio"
-                      Target="[INSTALLFOLDER]App\VoiceStudioApp.exe"
+                      Target="[INSTALLFOLDER]App\VoiceStudio.App.exe"
                       WorkingDirectory="INSTALLFOLDER" />
             <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
             <RegistryValue Root="HKCU"
@@ -132,7 +132,7 @@
           <Shortcut Id="DesktopShortcut"
                     Name="VoiceStudio Quantum+"
                     Description="Professional Voice Cloning Studio"
-                    Target="[INSTALLFOLDER]App\VoiceStudioApp.exe"
+                    Target="[INSTALLFOLDER]App\VoiceStudio.App.exe"
                     WorkingDirectory="INSTALLFOLDER" />
           <RemoveFolder Id="DesktopFolder" On="uninstall" />
           <RegistryValue Root="HKCU"
@@ -160,13 +160,13 @@
                    ForceDeleteOnUninstall="yes">
         <RegistryValue Type="string" Value="VoiceStudio Project File" />
         <RegistryKey Key="DefaultIcon">
-          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudioApp.exe,0" />
+          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudio.App.exe,0" />
         </RegistryKey>
         <RegistryKey Key="shell">
           <RegistryKey Key="open">
             <RegistryKey Key="command">
               <RegistryValue Type="string"
-                            Value="&quot;[INSTALLFOLDER]App\VoiceStudioApp.exe&quot; &quot;%1&quot;" />
+                            Value="&quot;[INSTALLFOLDER]App\VoiceStudio.App.exe&quot; &quot;%1&quot;" />
             </RegistryKey>
           </RegistryKey>
         </RegistryKey>
@@ -185,13 +185,13 @@
                    ForceDeleteOnUninstall="yes">
         <RegistryValue Type="string" Value="VoiceStudio Voice Profile" />
         <RegistryKey Key="DefaultIcon">
-          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudioApp.exe,1" />
+          <RegistryValue Type="string" Value="[INSTALLFOLDER]App\VoiceStudio.App.exe,1" />
         </RegistryKey>
         <RegistryKey Key="shell">
           <RegistryKey Key="open">
             <RegistryKey Key="command">
               <RegistryValue Type="string"
-                            Value="&quot;[INSTALLFOLDER]App\VoiceStudioApp.exe&quot; &quot;%1&quot;" />
+                            Value="&quot;[INSTALLFOLDER]App\VoiceStudio.App.exe&quot; &quot;%1&quot;" />
             </RegistryKey>
           </RegistryKey>
         </RegistryKey>
@@ -285,4 +285,3 @@
     </InstallExecuteSequence>
   </Product>
 </Wix>
-

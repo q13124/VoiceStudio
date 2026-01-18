@@ -12,11 +12,13 @@ Complete guide to creating and distributing the release package.
 ### Required Files
 
 1. **Installer**
+
    - `VoiceStudio-Setup-v1.0.0.exe` (Inno Setup installer)
    - `VoiceStudio-Setup-v1.0.0.msi` (WiX installer, optional)
    - Checksums (SHA256)
 
 2. **Documentation**
+
    - `README.md` - Project overview
    - `RELEASE_NOTES.md` - Release notes
    - `CHANGELOG.md` - Complete changelog
@@ -25,6 +27,7 @@ Complete guide to creating and distributing the release package.
    - `THIRD_PARTY_LICENSES.md` - Third-party licenses
 
 3. **Checksums**
+
    - `SHA256SUMS.txt` - SHA256 checksums for all files
 
 4. **Release Information**
@@ -40,16 +43,19 @@ Complete guide to creating and distributing the release package.
 ### Step 1: Build Installer
 
 **Using Build Script:**
+
 ```powershell
 .\installer\build-installer.ps1 -InstallerType InnoSetup -Version 1.0.0
 ```
 
 **Output:**
+
 - `installer\Output\VoiceStudio-Setup-v1.0.0.exe`
 
 ### Step 2: Generate Checksums
 
 **Create SHA256 Checksums:**
+
 ```powershell
 Get-ChildItem installer\Output\*.exe | ForEach-Object {
     $hash = Get-FileHash $_.FullName -Algorithm SHA256
@@ -58,11 +64,13 @@ Get-ChildItem installer\Output\*.exe | ForEach-Object {
 ```
 
 **Output:**
+
 - `SHA256SUMS.txt`
 
 ### Step 3: Prepare Documentation
 
 **Copy Documentation Files:**
+
 - `README.md`
 - `RELEASE_NOTES.md`
 - `CHANGELOG.md`
@@ -73,6 +81,7 @@ Get-ChildItem installer\Output\*.exe | ForEach-Object {
 ### Step 4: Create Release Archive
 
 **Create ZIP Archive:**
+
 ```powershell
 $releaseFiles = @(
     "installer\Output\VoiceStudio-Setup-v1.0.0.exe",
@@ -89,6 +98,7 @@ Compress-Archive -Path $releaseFiles -DestinationPath "VoiceStudio-v1.0.0-Releas
 ```
 
 **Output:**
+
 - `VoiceStudio-v1.0.0-Release.zip`
 
 ---
@@ -114,6 +124,7 @@ VoiceStudio-v1.0.0-Release/
 ### GitHub Releases
 
 **Create Release:**
+
 1. Go to GitHub repository
 2. Click "Releases" → "Draft a new release"
 3. Tag: `v1.0.0`
@@ -127,6 +138,7 @@ VoiceStudio-v1.0.0-Release/
 ### Website Distribution
 
 **Upload Files:**
+
 - Installer to downloads section
 - Documentation to docs section
 - Checksums for verification
@@ -134,6 +146,7 @@ VoiceStudio-v1.0.0-Release/
 ### Direct Distribution
 
 **Provide:**
+
 - Download link to installer
 - Checksums for verification
 - Documentation links
@@ -145,6 +158,7 @@ VoiceStudio-v1.0.0-Release/
 ### Verify Checksums
 
 **Windows PowerShell:**
+
 ```powershell
 $expectedHash = (Get-Content SHA256SUMS.txt | Select-String "VoiceStudio-Setup-v1.0.0.exe").ToString().Split()[0]
 $actualHash = (Get-FileHash VoiceStudio-Setup-v1.0.0.exe -Algorithm SHA256).Hash
@@ -156,6 +170,7 @@ if ($expectedHash -eq $actualHash) {
 ```
 
 **Linux/Mac:**
+
 ```bash
 sha256sum -c SHA256SUMS.txt
 ```
@@ -267,6 +282,7 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
 **Format:** `MAJOR.MINOR.PATCH.BUILD`
 
 **Examples:**
+
 - `1.0.0.0` - Initial release
 - `1.0.1.0` - Patch release
 - `1.1.0.0` - Minor release
@@ -279,6 +295,7 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
 ### Sign Installer
 
 **Using SignTool:**
+
 ```powershell
 signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudio-Setup-v1.0.0.exe
 ```
@@ -286,8 +303,9 @@ signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com Vo
 ### Sign Executables
 
 **Sign Application:**
+
 ```powershell
-signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudioApp.exe
+signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudio.App.exe
 ```
 
 ---
@@ -297,6 +315,7 @@ signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com Vo
 ### Verify Signatures
 
 **Check Signature:**
+
 ```powershell
 Get-AuthenticodeSignature VoiceStudio-Setup-v1.0.0.exe
 ```
@@ -310,6 +329,7 @@ Always verify checksums before installation to ensure file integrity.
 ## Support
 
 For release-related questions:
+
 - Check release notes
 - Review known issues
 - Contact support
@@ -318,4 +338,3 @@ For release-related questions:
 
 **Last Updated:** 2025-01-27  
 **Version:** 1.0.0
-

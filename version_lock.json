@@ -15,7 +15,7 @@
   "noisereduce": "3.0.2",
   "soundfile": "0.12.1",
   "ffmpeg-python": "0.2.0",
-  "tokenizers": "0.22.1",
+  "tokenizers": "0.21.4",
   "safetensors": "0.6.2",
   "notes": {
     "python": "Latest tested with PyTorch 2.2.2 + Transformers 4.55.4",
@@ -51,4 +51,3 @@
     ]
   }
 }
-

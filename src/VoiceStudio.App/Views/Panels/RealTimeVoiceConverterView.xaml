@@ -44,16 +44,16 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
-              <StackPanel Grid.Column="0" Spacing="{StaticResource VSQ.Spacing.Medium}" Margin="0">
+              <StackPanel Grid.Column="0" Spacing="{StaticResource VSQ.Spacing.Value.Medium}" Margin="0">
                 <TextBlock x:Name="SourceProfileLabel" Text="Source Profile" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Source profile label"/>
                 <ComboBox x:Name="SourceProfileComboBox" ItemsSource="{x:Bind ViewModel.AvailableProfiles, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SourceProfileId, Mode=TwoWay}" PlaceholderText="Select Source Profile" ToolTipService.ToolTip="Select source voice profile" AutomationProperties.Name="Source profile" AutomationProperties.HelpText="Select source voice profile" AutomationProperties.LabeledBy="{x:Bind SourceProfileLabel}" AutomationProperties.AutomationId="RealTimeVoiceConverter_SourceProfileComboBox" TabIndex="1"/>
               </StackPanel>
-              <StackPanel Grid.Column="1" Spacing="{StaticResource VSQ.Spacing.Medium}" Margin="0">
+              <StackPanel Grid.Column="1" Spacing="{StaticResource VSQ.Spacing.Value.Medium}" Margin="0">
                 <TextBlock x:Name="TargetProfileLabel" Text="Target Profile" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Target profile label"/>
                 <ComboBox x:Name="TargetProfileComboBox" ItemsSource="{x:Bind ViewModel.AvailableProfiles, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.TargetProfileId, Mode=TwoWay}" PlaceholderText="Select Target Profile" ToolTipService.ToolTip="Select target voice profile" AutomationProperties.Name="Target profile" AutomationProperties.HelpText="Select target voice profile" AutomationProperties.LabeledBy="{x:Bind TargetProfileLabel}" AutomationProperties.AutomationId="RealTimeVoiceConverter_TargetProfileComboBox" TabIndex="2"/>
               </StackPanel>
             </Grid>
-            <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Medium}">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
               <Button Content="Start Conversion" Command="{x:Bind ViewModel.StartSessionCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Primary}" ToolTipService.ToolTip="Start real-time voice conversion" AutomationProperties.Name="Start conversion" AutomationProperties.HelpText="Start real-time voice conversion" AutomationProperties.AutomationId="RealTimeVoiceConverter_StartButton" TabIndex="3"/>
               <Button Content="Stop" Command="{x:Bind ViewModel.StopSessionCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Secondary}" IsEnabled="{x:Bind ViewModel.IsStreaming, Mode=OneWay}" ToolTipService.ToolTip="Stop voice conversion" AutomationProperties.Name="Stop conversion" AutomationProperties.HelpText="Stop voice conversion" AutomationProperties.AutomationId="RealTimeVoiceConverter_StopButton" TabIndex="4"/>
               <Button Content="Pause" Command="{x:Bind ViewModel.PauseSessionCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Secondary}" IsEnabled="{x:Bind ViewModel.IsStreaming, Mode=OneWay}" ToolTipService.ToolTip="Pause voice conversion" AutomationProperties.Name="Pause conversion" AutomationProperties.HelpText="Pause voice conversion" AutomationProperties.AutomationId="RealTimeVoiceConverter_PauseButton" TabIndex="5"/>
@@ -63,10 +63,10 @@
         </Border>
         <!-- Status Display -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-          <StackPanel Spacing="{StaticResource VSQ.Spacing.Large}" Padding="{StaticResource VSQ.Spacing.Large}">
+          <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Large}" Padding="{StaticResource VSQ.Spacing.Large}">
             <TextBlock Text="Real-Time Conversion Status" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
             <Border BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource VSQ.CornerRadius.Button}" Padding="12" Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
-              <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+              <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                 <TextBlock Text="Status: Streaming" Style="{StaticResource VSQ.Text.Body}" Visibility="{x:Bind ViewModel.IsStreaming, Mode=OneWay}" AutomationProperties.Name="Conversion status" AutomationProperties.LiveSetting="Polite"/>
                 <TextBlock Text="Status: Paused" Style="{StaticResource VSQ.Text.Body}" Visibility="{x:Bind ViewModel.IsPaused, Mode=OneWay}" AutomationProperties.Name="Conversion status" AutomationProperties.LiveSetting="Polite"/>
                 <TextBlock Text="Status: Stopped" Style="{StaticResource VSQ.Text.Body}" Visibility="{x:Bind ViewModel.IsStreaming, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}" AutomationProperties.Name="Conversion status" AutomationProperties.LiveSetting="Polite"/>
@@ -100,7 +100,7 @@
             <!-- Quality Metrics -->
             <TextBlock Text="Quality Metrics" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold" Visibility="{x:Bind ViewModel.IsStreaming, Mode=OneWay}"/>
             <Border BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource VSQ.CornerRadius.Button}" Padding="12" Background="{StaticResource VSQ.Panel.Background.DarkBrush}" Visibility="{x:Bind ViewModel.IsStreaming, Mode=OneWay}">
-              <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+              <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                 <TextBlock Text="{x:Bind ViewModel.QualityMetricsDisplay, Mode=OneWay}" Style="{StaticResource VSQ.Text.Body}" AutomationProperties.Name="Quality metrics" AutomationProperties.LiveSetting="Polite"/>
                 <Grid>
                   <Grid.ColumnDefinitions>

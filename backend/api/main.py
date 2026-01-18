@@ -9,9 +9,19 @@ except ImportError:
     os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
     os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
 
-# Set default model/cache locations (override with env if needed)
+# FORCE HuggingFace endpoint override - set before ANY imports
 import os
 
+os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
+os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
+
+# Also override any legacy cached values
+if os.environ.get("HF_INFERENCE_API_BASE") == "https://api-inference.huggingface.co":
+    os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
+if os.environ.get("HF_ENDPOINT") == "https://api-inference.huggingface.co":
+    os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
+
+# Set default model/cache locations (override with env if needed)
 _default_models_root = os.environ.get(
     "VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"
 )
@@ -19,12 +29,26 @@ os.environ.setdefault("VOICESTUDIO_MODELS_PATH", _default_models_root)
 os.environ.setdefault("HF_HOME", os.path.join(_default_models_root, "hf_cache"))
 os.environ.setdefault("TTS_HOME", os.path.join(_default_models_root, "xtts"))
 os.environ.setdefault(
+    "HUGGINGFACE_HUB_CACHE", os.path.join(os.environ["HF_HOME"], "hub")
+)
+os.environ.setdefault(
+    "TRANSFORMERS_CACHE", os.path.join(os.environ["HF_HOME"], "transformers")
+)
+os.environ.setdefault(
+    "HF_DATASETS_CACHE", os.path.join(os.environ["HF_HOME"], "datasets")
+)
+os.environ.setdefault("TORCH_HOME", os.path.join(_default_models_root, "torch"))
+os.environ.setdefault(
     "WHISPER_CPP_MODEL_PATH",
     os.path.join(_default_models_root, "whisper", "whisper-medium.en.gguf"),
 )
 try:
     os.makedirs(_default_models_root, exist_ok=True)
     os.makedirs(os.environ["HF_HOME"], exist_ok=True)
+    os.makedirs(os.environ["HUGGINGFACE_HUB_CACHE"], exist_ok=True)
+    os.makedirs(os.environ["TRANSFORMERS_CACHE"], exist_ok=True)
+    os.makedirs(os.environ["HF_DATASETS_CACHE"], exist_ok=True)
+    os.makedirs(os.environ["TORCH_HOME"], exist_ok=True)
     os.makedirs(os.path.join(_default_models_root, "whisper"), exist_ok=True)
     os.makedirs(os.path.join(_default_models_root, "piper"), exist_ok=True)
     os.makedirs(os.path.join(_default_models_root, "xtts"), exist_ok=True)
@@ -33,6 +57,7 @@ except Exception as e:
 
     logging.getLogger(__name__).warning("Failed to precreate model directories: %s", e)
 
+import importlib
 import logging
 import os
 import time
@@ -119,16 +144,188 @@ def _lazy_import_response_cache():
     return _get_response_cache, _response_cache_middleware
 
 
+def _perform_startup_sanity_checks():
+    """
+    Perform startup sanity checks for critical dependencies and assets.
+
+    Checks:
+    - coqui-tts==0.27.2 package version
+    - XTTS model assets availability
+
+    Fail fast (raise) or warn (log) based on severity.
+    """
+    import sys
+    from pathlib import Path
+
+    # Check coqui-tts version
+    try:
+        try:
+            # Try importlib.metadata (Python 3.8+)
+            from importlib.metadata import PackageNotFoundError, version
+
+            try:
+                coqui_version = version("coqui-tts")
+                expected_version = "0.27.2"
+                if coqui_version != expected_version:
+                    logger.warning(
+                        f"coqui-tts version mismatch: found {coqui_version}, "
+                        f"expected {expected_version}. XTTS may not work correctly. "
+                        f"Install with: pip install coqui-tts=={expected_version}"
+                    )
+                else:
+                    logger.info(f"coqui-tts version check: OK ({coqui_version})")
+            except PackageNotFoundError:
+                logger.warning(
+                    f"coqui-tts not installed. XTTS engine will not work. "
+                    f"Install with: pip install coqui-tts==0.27.2"
+                )
+        except ImportError:
+            # Fallback to pkg_resources (older Python or if importlib.metadata unavailable)
+            try:
+                import pkg_resources
+
+                coqui_version = pkg_resources.get_distribution("coqui-tts").version
+                expected_version = "0.27.2"
+                if coqui_version != expected_version:
+                    logger.warning(
+                        f"coqui-tts version mismatch: found {coqui_version}, "
+                        f"expected {expected_version}. XTTS may not work correctly. "
+                        f"Install with: pip install coqui-tts=={expected_version}"
+                    )
+                else:
+                    logger.info(f"coqui-tts version check: OK ({coqui_version})")
+            except pkg_resources.DistributionNotFound:
+                logger.warning(
+                    f"coqui-tts not installed. XTTS engine will not work. "
+                    f"Install with: pip install coqui-tts==0.27.2"
+                )
+    except Exception as e:
+        logger.warning(f"Failed to check coqui-tts version: {e}")
+
+    # Check XTTS model assets
+    try:
+        from backend.services.model_preflight import ensure_xtts
+
+        # Run preflight check (non-blocking, auto-download disabled during startup)
+        result = ensure_xtts(auto_download=False)
+        if not result.get("ok", False):
+            logger.warning(
+                f"XTTS model assets missing at {result.get('paths', [])}. "
+                f"XTTS engine may not work until models are downloaded. "
+                f"Run: python -m backend.scripts.ensure_engines_ready"
+            )
+        else:
+            paths = result.get("paths", [])
+            if paths:
+                logger.info(f"XTTS model assets check: OK ({len(paths)} files found)")
+            else:
+                logger.warning(
+                    "XTTS model directory exists but appears empty. "
+                    "Models will be downloaded on first use."
+                )
+    except Exception as e:
+        logger.warning(f"Failed to check XTTS model assets: {e}")
+
+
 # Lazy route imports - routes will be imported during startup
 _ROUTES_LOADED = False
+
+
+# Load plugins and routes on application startup (lazy initialization)
+# Registered below after the FastAPI `app` is created.
+async def startup_event():
+    """Load plugins and routes on application startup."""
+    startup_start = time.time()
+
+    # Initialize temp file manager and perform startup cleanup
+    try:
+        from app.core.utils.temp_file_manager import get_temp_file_manager
+
+        temp_manager = get_temp_file_manager()
+        temp_manager.cleanup_on_startup()
+        logger.info("Temp file manager initialized and startup cleanup performed")
+    except Exception as e:
+        logger.warning(f"Failed to initialize temp file manager: {e}")
+
+    try:
+        # Initialize background task scheduler
+        try:
+            from app.core.tasks.scheduler import TaskPriority, get_scheduler
+
+            scheduler = get_scheduler()
+            scheduler.start()
+
+            # Register periodic temp file cleanup task
+            from app.core.utils.temp_file_manager import get_temp_file_manager
+
+            temp_manager = get_temp_file_manager()
+
+            def cleanup_temp_files():
+                """Periodic temp file cleanup."""
+                temp_manager.cleanup_old_files()
+                temp_manager.cleanup_by_disk_space()
+
+            scheduler.add_task(
+                name="Temp File Cleanup",
+                func=cleanup_temp_files,
+                interval=temp_manager.cleanup_interval_seconds,
+                priority=TaskPriority.LOW,
+            )
+
+            logger.info("Background task scheduler started")
+        except Exception as e:
+            logger.warning(f"Failed to initialize task scheduler: {e}")
+
+        # Register all routes (lazy)
+        _register_all_routes()
+
+        # Startup sanity checks: verify critical dependencies and assets
+        _perform_startup_sanity_checks()
+
+        # Load plugins after all routes are registered (lazy import)
+        load_all_plugins = _lazy_import_plugins()
+        plugin_count = load_all_plugins(app)
+        logger.info(f"Loaded {plugin_count} plugin(s) on startup")
+
+        startup_time = (time.time() - startup_start) * 1000
+        logger.info(f"FastAPI startup completed in {startup_time:.2f}ms")
+    except Exception as e:
+        logger.error(f"Error during startup: {e}", exc_info=True)
+
+
+# Registered below after the FastAPI `app` is created.
+async def shutdown_event():
+    """Cleanup on application shutdown."""
+    # Cleanup temp files on shutdown
+    try:
+        from app.core.utils.temp_file_manager import get_temp_file_manager
+
+        temp_manager = get_temp_file_manager()
+        temp_manager.cleanup_on_shutdown()
+        logger.info("Temp file manager shutdown cleanup performed")
+    except Exception as e:
+        logger.warning(f"Failed to cleanup temp files on shutdown: {e}")
+    try:
+        # Stop background task scheduler
+        try:
+            from app.core.tasks.scheduler import get_scheduler
+
+            scheduler = get_scheduler()
+            scheduler.stop()
+            logger.info("Background task scheduler stopped")
+        except Exception as e:
+            logger.warning(f"Failed to stop task scheduler: {e}")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}", exc_info=True)
+
 
 app = FastAPI(
     title="VoiceStudio Quantum+ Backend API",
     description="""
     VoiceStudio Quantum+ provides a comprehensive REST API for voice cloning, audio processing, and project management.
-    
+
     ## Features
-    
+
     - **Voice Cloning:** Multiple engines (XTTS v2, Chatterbox TTS, Tortoise TTS, OpenVoice, RVC, and more)
     - **Audio Processing:** 17+ audio effects and processing tools
     - **Project Management:** Projects, tracks, clips, and timeline management
@@ -137,14 +334,14 @@ app = FastAPI(
     - **Batch Processing:** Queue-based batch synthesis
     - **Transcription:** Whisper-based speech-to-text
     - **Real-time Updates:** WebSocket support for real-time updates
-    
+
     ## Error Handling
-    
+
     All errors follow a standardized format with error codes, recovery suggestions, and context.
     See the error handling documentation for details.
-    
+
     ## Rate Limiting
-    
+
     API endpoints are rate-limited to ensure fair usage and system stability.
     Rate limit information is provided in response headers.
     See the rate limiting documentation for details.
@@ -188,6 +385,11 @@ app = FastAPI(
         },
     ],
 )
+
+
+# Register lifecycle hooks now that `app` exists (avoids NameError during module import).
+app.add_event_handler("startup", startup_event)
+app.add_event_handler("shutdown", shutdown_event)
 
 
 # Lazy OpenAPI schema generation - only generate when requested
@@ -509,203 +711,226 @@ def _register_all_routes():
     logger.info("Loading routes (lazy initialization)...")
     start_time = time.time()
 
-    # Import routes lazily - batch import for better performance
-    # Routes are imported in a single batch to minimize import overhead
-    try:
-        from .routes import (
-            adr,
-            advanced_settings,
-            ai_production_assistant,
-            analytics,
-            api_key_manager,
-            articulation,
-            assistant,
-            assistant_run,
-            audio,
-            audio_analysis,
-            audio_audit,
-            auth,
-            automation,
-            backup,
-            batch,
-            dataset,
-            deepfake_creator,
-            docs,
-            dubbing,
-            effects,
-            embedding_explorer,
-            emotion,
-            engine,
-            engine_audit,
-            engines,
-            ensemble,
-            eval_abx,
-            formant,
-            gpu_status,
-            granular,
-            health,
-            help,
-            image_gen,
-            image_search,
-            img_sampler,
-            jobs,
-            lexicon,
-            library,
-            macros,
-            markers,
-            mcp_dashboard,
-            mix_scene,
-            mixer,
-            ml_optimization,
-            model_inspect,
-            models,
-            monitoring,
-            multi_voice_generator,
-            nr,
-            pdf,
-            plugins,
-            presets,
-            profiles,
-            projects,
-            prosody,
-            quality,
-            quality_pipelines,
-            realtime_converter,
-            realtime_visualizer,
-            recording,
-            repair,
-            reward,
-            rvc,
-            safety,
-            scenes,
-            script_editor,
-            settings,
-            shortcuts,
-            sonography,
-            spatial_audio,
-            spectral,
-            ssml,
-            style_transfer,
-            tags,
-            templates,
-            text_highlighting,
-            text_speech_editor,
-            todo_panel,
-            tracks,
-            training,
-            training_audit,
-            transcribe,
-            ultimate_dashboard,
-            upscaling,
-            video_edit,
-            video_gen,
-            voice,
-            voice_cloning_wizard,
-            voice_speech,
-            workflows,
-        )
-    except ImportError as e:
-        logger.error(f"Failed to import routes: {e}")
-        _ROUTES_LOADED = True
-        return
+    route_module_names = [
+        "adr",
+        "advanced_settings",
+        "ai_production_assistant",
+        "analytics",
+        "api_key_manager",
+        "articulation",
+        "assistant",
+        "assistant_run",
+        "audio",
+        "audio_analysis",
+        "audio_audit",
+        "auth",
+        "automation",
+        "backup",
+        "batch",
+        "dataset",
+        "deepfake_creator",
+        "docs",
+        "dubbing",
+        "effects",
+        "embedding_explorer",
+        "emotion",
+        "engine",
+        "engine_audit",
+        "engines",
+        "ensemble",
+        "eval_abx",
+        "formant",
+        "gpu_status",
+        "granular",
+        "health",
+        "help",
+        "image_gen",
+        "image_search",
+        "img_sampler",
+        "jobs",
+        "lexicon",
+        "library",
+        "macros",
+        "markers",
+        "mcp_dashboard",
+        "mix_scene",
+        "mixer",
+        "ml_optimization",
+        "model_inspect",
+        "models",
+        "monitoring",
+        "multi_voice_generator",
+        "nr",
+        "pdf",
+        "plugins",
+        "presets",
+        "profiles",
+        "projects",
+        "prosody",
+        "quality",
+        "quality_pipelines",
+        "realtime_converter",
+        "realtime_visualizer",
+        "recording",
+        "repair",
+        "reward",
+        "rvc",
+        "safety",
+        "scenes",
+        "script_editor",
+        "settings",
+        "shortcuts",
+        "sonography",
+        "spatial_audio",
+        "spectral",
+        "ssml",
+        "style_transfer",
+        "tags",
+        "templates",
+        "text_highlighting",
+        "text_speech_editor",
+        "todo_panel",
+        "tracks",
+        "training",
+        "training_audit",
+        "transcribe",
+        "ultimate_dashboard",
+        "upscaling",
+        "video_edit",
+        "video_gen",
+        "voice",
+        "voice_cloning_wizard",
+        "voice_speech",
+        "workflows",
+    ]
+
+    route_modules = {}
+    module_base = __package__ or "backend.api"
+    critical_routes = {"voice"}
+    for module_name in route_module_names:
+        try:
+            module_path = f"{module_base}.routes.{module_name}"
+            route_modules[module_name] = importlib.import_module(module_path)
+        except Exception as e:
+            logger.error(
+                f"Unable to import route '{module_name}': {e}",
+                exc_info=True,
+            )
+            if module_name in critical_routes:
+                raise
+
+    def _include_route(module_key: str):
+        module = route_modules.get(module_key)
+        if module is None:
+            return
+        router = getattr(module, "router", None)
+        if router is None:
+            logger.error(f"Route module '{module_key}' missing router")
+            return
+        app.include_router(router)
 
     # Authentication routes (must be early for dependency injection)
-    app.include_router(auth.router)
+    _include_route("auth")
 
     # Core routes (from skeleton)
-    app.include_router(advanced_settings.router)
-    app.include_router(lexicon.router)
-    app.include_router(spatial_audio.router)
-    app.include_router(style_transfer.router)
-    app.include_router(embedding_explorer.router)
-    app.include_router(voice.router)
-    app.include_router(voice_speech.router)
-    app.include_router(quality.router)
-    app.include_router(quality_pipelines.router)
+    _include_route("advanced_settings")
+    _include_route("lexicon")
+    _include_route("spatial_audio")
+    _include_route("style_transfer")
+    _include_route("embedding_explorer")
+    _include_route("voice")
+    _include_route("voice_speech")
+    _include_route("quality")
+    _include_route("quality_pipelines")
+
+    if not any(getattr(r, "path", None) == "/api/voice/clone" for r in app.routes):
+        raise RuntimeError(
+            "Voice routes not registered. Inspect backend.api.routes.voice import."
+        )
 
     # Management routes
-    app.include_router(profiles.router)
-    app.include_router(projects.router)
-    app.include_router(tracks.router)
-    app.include_router(audio.router)
-    app.include_router(audio_audit.router)
-    app.include_router(macros.router)
-    app.include_router(workflows.router)
-    app.include_router(models.router)
-    app.include_router(effects.router)
-    app.include_router(batch.router)
-    app.include_router(transcribe.router)
-    app.include_router(training.router)
-    app.include_router(training_audit.router)
-    app.include_router(mixer.router)
-    app.include_router(ml_optimization.router)
-    app.include_router(docs.router)
-    app.include_router(health.router)
-    app.include_router(monitoring.router)
+    _include_route("profiles")
+    _include_route("projects")
+    _include_route("tracks")
+    _include_route("audio")
+    _include_route("audio_audit")
+    _include_route("macros")
+    _include_route("workflows")
+    _include_route("models")
+    _include_route("effects")
+    _include_route("batch")
+    _include_route("transcribe")
+    _include_route("training")
+    _include_route("training_audit")
+    _include_route("mixer")
+    _include_route("ml_optimization")
+    _include_route("docs")
+    _include_route("health")
+    _include_route("monitoring")
 
     # Additional routes
-    app.include_router(eval_abx.router)
-    app.include_router(dataset.router)
-    app.include_router(engine.router)
-    app.include_router(engines.router)
-    app.include_router(engine_audit.router)
-    app.include_router(adr.router)
-    app.include_router(prosody.router)
-    app.include_router(emotion.router)
-    app.include_router(formant.router)
-    app.include_router(spectral.router)
-    app.include_router(model_inspect.router)
-    app.include_router(granular.router)
-    app.include_router(gpu_status.router)
-    app.include_router(rvc.router)
-    app.include_router(dubbing.router)
-    app.include_router(articulation.router)
-    app.include_router(nr.router)
-    app.include_router(repair.router)
-    app.include_router(mix_scene.router)
-    app.include_router(reward.router)
-    app.include_router(safety.router)
-    app.include_router(img_sampler.router)
-    app.include_router(assistant_run.router)
-    app.include_router(ai_production_assistant.router)
-    app.include_router(image_gen.router)
-    app.include_router(image_search.router)
-    app.include_router(upscaling.router)
-    app.include_router(deepfake_creator.router)
-    app.include_router(todo_panel.router)
-    app.include_router(ultimate_dashboard.router)
-    app.include_router(mcp_dashboard.router)
-    app.include_router(pdf.router)
-    app.include_router(voice_cloning_wizard.router)
-    app.include_router(multi_voice_generator.router)
-    app.include_router(video_gen.router)
-    app.include_router(video_edit.router)
-    app.include_router(settings.router)
-    app.include_router(recording.router)
-    app.include_router(library.router)
-    app.include_router(presets.router)
-    app.include_router(help.router)
-    app.include_router(shortcuts.router)
-    app.include_router(tags.router)
-    app.include_router(backup.router)
-    app.include_router(jobs.router)
-    app.include_router(templates.router)
-    app.include_router(automation.router)
-    app.include_router(scenes.router)
-    app.include_router(script_editor.router)
-    app.include_router(markers.router)
-    app.include_router(audio_analysis.router)
-    app.include_router(ensemble.router)
-    app.include_router(ssml.router)
-    app.include_router(realtime_converter.router)
-    app.include_router(text_highlighting.router)
-    app.include_router(sonography.router)
-    app.include_router(realtime_visualizer.router)
-    app.include_router(text_speech_editor.router)
-    app.include_router(assistant.router)
-    app.include_router(api_key_manager.router)
-    app.include_router(plugins.router)
-    app.include_router(analytics.router)
+    _include_route("eval_abx")
+    _include_route("dataset")
+    _include_route("engine")
+    _include_route("engines")
+    _include_route("engine_audit")
+    _include_route("adr")
+    _include_route("prosody")
+    _include_route("emotion")
+    _include_route("formant")
+    _include_route("spectral")
+    _include_route("model_inspect")
+    _include_route("granular")
+    _include_route("gpu_status")
+    _include_route("rvc")
+    _include_route("dubbing")
+    _include_route("articulation")
+    _include_route("nr")
+    _include_route("repair")
+    _include_route("mix_scene")
+    _include_route("reward")
+    _include_route("safety")
+    _include_route("img_sampler")
+    _include_route("assistant_run")
+    _include_route("ai_production_assistant")
+    _include_route("image_gen")
+    _include_route("image_search")
+    _include_route("upscaling")
+    _include_route("deepfake_creator")
+    _include_route("todo_panel")
+    _include_route("ultimate_dashboard")
+    _include_route("mcp_dashboard")
+    _include_route("pdf")
+    _include_route("voice_cloning_wizard")
+    _include_route("multi_voice_generator")
+    _include_route("video_gen")
+    _include_route("video_edit")
+    _include_route("settings")
+    _include_route("recording")
+    _include_route("library")
+    _include_route("presets")
+    _include_route("help")
+    _include_route("shortcuts")
+    _include_route("tags")
+    _include_route("backup")
+    _include_route("jobs")
+    _include_route("templates")
+    _include_route("automation")
+    _include_route("scenes")
+    _include_route("script_editor")
+    _include_route("markers")
+    _include_route("audio_analysis")
+    _include_route("ensemble")
+    _include_route("ssml")
+    _include_route("realtime_converter")
+    _include_route("text_highlighting")
+    _include_route("sonography")
+    _include_route("realtime_visualizer")
+    _include_route("text_speech_editor")
+    _include_route("assistant")
+    _include_route("api_key_manager")
+    _include_route("plugins")
+    _include_route("analytics")
 
     load_time = (time.time() - start_time) * 1000
     logger.info(f"Routes loaded in {load_time:.2f}ms")
@@ -1119,88 +1344,4 @@ def scheduler_task_cancel(task_id: str):
     except Exception as e:
         logger.warning(f"Failed to cancel task: {e}")
         return {"error": str(e)}
-
-
-# Load plugins and routes on application startup (lazy initialization)
-@app.on_event("startup")
-async def startup_event():
-    """Load plugins and routes on application startup."""
-    startup_start = time.time()
-
-    # Initialize temp file manager and perform startup cleanup
-    try:
-        from app.core.utils.temp_file_manager import get_temp_file_manager
-
-        temp_manager = get_temp_file_manager()
-        temp_manager.cleanup_on_startup()
-        logger.info("Temp file manager initialized and startup cleanup performed")
-    except Exception as e:
-        logger.warning(f"Failed to initialize temp file manager: {e}")
-
-    try:
-        # Initialize background task scheduler
-        try:
-            from app.core.tasks.scheduler import TaskPriority, get_scheduler
-
-            scheduler = get_scheduler()
-            scheduler.start()
-
-            # Register periodic temp file cleanup task
-            from app.core.utils.temp_file_manager import get_temp_file_manager
-
-            temp_manager = get_temp_file_manager()
-
-            def cleanup_temp_files():
-                """Periodic temp file cleanup."""
-                temp_manager.cleanup_old_files()
-                temp_manager.cleanup_by_disk_space()
-
-            scheduler.add_task(
-                name="Temp File Cleanup",
-                func=cleanup_temp_files,
-                interval=temp_manager.cleanup_interval_seconds,
-                priority=TaskPriority.LOW,
-            )
-
-            logger.info("Background task scheduler started")
-        except Exception as e:
-            logger.warning(f"Failed to initialize task scheduler: {e}")
-
-        # Register all routes (lazy)
-        _register_all_routes()
-
-        # Load plugins after all routes are registered (lazy import)
-        load_all_plugins = _lazy_import_plugins()
-        plugin_count = load_all_plugins(app)
-        logger.info(f"Loaded {plugin_count} plugin(s) on startup")
-
-        startup_time = (time.time() - startup_start) * 1000
-        logger.info(f"FastAPI startup completed in {startup_time:.2f}ms")
-    except Exception as e:
-        logger.error(f"Error during startup: {e}", exc_info=True)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on application shutdown."""
-    # Cleanup temp files on shutdown
-    try:
-        from app.core.utils.temp_file_manager import get_temp_file_manager
-
-        temp_manager = get_temp_file_manager()
-        temp_manager.cleanup_on_shutdown()
-        logger.info("Temp file manager shutdown cleanup performed")
-    except Exception as e:
-        logger.warning(f"Failed to cleanup temp files on shutdown: {e}")
-    try:
-        # Stop background task scheduler
-        try:
-            from app.core.tasks.scheduler import get_scheduler
-
-            scheduler = get_scheduler()
-            scheduler.stop()
-            logger.info("Background task scheduler stopped")
-        except Exception as e:
-            logger.warning(f"Failed to stop task scheduler: {e}")
-    except Exception as e:
-        logger.error(f"Error during shutdown: {e}", exc_info=True)
+        return {"error": str(e)}

@@ -18,7 +18,8 @@
     <PlatformTarget>x64</PlatformTarget>
     <IsPackable>false</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Use system-installed Windows App SDK runtime (unpackaged app via Bootstrap.Initialize). -->
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
     <UseAppHost>true</UseAppHost>
     <!-- Don't set RuntimeIdentifier explicitly - let the EnsureRuntimeIdentifierForWin2D target
@@ -95,18 +96,50 @@
       Importance="high" Condition="Exists('$(XamlErrorLogFile)')" />
   </Target>
 
-  <!-- Exclude system DLLs from publish output (Release Engineer: Gate C/H) -->
-  <!-- System DLLs should not be bundled - they must be loaded from the system directory -->
+  <!-- Exclude Windows App Runtime / WinUI native DLLs from publish output (Gate C/H).
+       When using WindowsAppSDKSelfContained=false, the unpackaged app relies on
+       Bootstrap.Initialize(...) to load these from the installed runtime packages.
+       Keeping loose copies can cause CoreMessagingXP.dll fail-fast or dependency-resolution issues. -->
+  <!-- Ensure compiled XAML (.xbf) is present in publish output for unpackaged Gate C/H artifacts.
+       Without this, ms-appx:///MainWindow.xaml fails in publish output because the build produces
+       XBFs under obj (IntermediateOutputPath) but publish doesn't automatically copy them. -->
+  <Target Name="IncludeXbfInPublishOutput" AfterTargets="Publish"
+    Condition="'$(PublishDir)' != ''">
+    <ItemGroup>
+      <!-- WinUI XamlCompiler generates compiled dictionaries/pages into obj
+      (IntermediateOutputPath). -->
+      <_XbfToPublish Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)**\*.xbf" />
+      <_XbfToPublishWithDest Include="@(_XbfToPublish)">
+        <Dest>$(PublishDir)\%(RecursiveDir)%(Filename)%(Extension)</Dest>
+      </_XbfToPublishWithDest>
+    </ItemGroup>
+    <Message
+      Text="IncludeXbfInPublishOutput: Copying @(_XbfToPublishWithDest->Count()) XBF files from $(TargetDir) -> $(PublishDir)"
+      Importance="high"
+      Condition="'@(_XbfToPublishWithDest)' != ''" />
+    <Copy
+      SourceFiles="@(_XbfToPublishWithDest->'%(FullPath)')"
+      DestinationFiles="@(_XbfToPublishWithDest->'%(Dest)')"
+      SkipUnchangedFiles="true"
+      Condition="'@(_XbfToPublishWithDest)' != ''" />
+  </Target>
+
   <Target Name="ExcludeSystemDllsFromPublish" AfterTargets="Publish"
-    Condition="'$(SelfContained)' == 'true'">
+    Condition="'$(SelfContained)' == 'true' And '$(WindowsAppSDKSelfContained)' != 'true'">
     <ItemGroup>
       <SystemDlls Include="$(PublishDir)\CoreMessagingXP.dll" />
       <SystemDlls Include="$(PublishDir)\dcompi.dll" />
       <SystemDlls Include="$(PublishDir)\dwmcorei.dll" />
-      <SystemDlls Include="$(PublishDir)\marshal.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.ui.xaml.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.ui.xaml.resources.common.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.ui.xaml.resources.19h1.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.UI.Xaml.Controls.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.UI.Xaml.Internal.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.UI.Xaml.Phone.dll" />
+      <SystemDlls Include="$(PublishDir)\Microsoft.UI.Xaml.winmd" />
     </ItemGroup>
     <Delete Files="@(SystemDlls)" Condition="Exists('%(Identity)')" ContinueOnError="true" />
-    <Message Text="Removed system DLLs from publish: @(SystemDlls, ', ')"
+    <Message Text="Removed Windows App Runtime native DLLs from publish: @(SystemDlls, ', ')"
       Condition="'@(SystemDlls)' != ''" Importance="high" />
   </Target>
 
@@ -121,6 +154,10 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.11.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 
@@ -132,7 +169,7 @@
 
   <ItemGroup>
     <None Include="app.manifest" />
-    <None Include="Package.appxmanifest" Condition="'$(WindowsPackageType)' != 'None'" />
+    <!-- MSIX lane removed: Package.appxmanifest archived under docs/archive/msix/ -->
   </ItemGroup>
 
   <!-- Ensure control XAMLs carry Page metadata -->

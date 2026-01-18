@@ -5,7 +5,7 @@
   xmlns:vm="using:VoiceStudio.App.ViewModels"
   xmlns:converters="using:VoiceStudio.App.Converters">
   <UserControl.Resources>
-    <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanConverter" />
+    <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     <converters:StringFormatConverter x:Key="StringFormatConverter" />
     <Style x:Key="CategoryButtonStyle" TargetType="Button">

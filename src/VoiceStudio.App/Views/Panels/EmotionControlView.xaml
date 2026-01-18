@@ -47,7 +47,7 @@
 
         <!-- Main content -->
         <ScrollViewer Grid.Row="1" Padding="{StaticResource VSQ.Spacing.Medium}">
-            <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                 <!-- Target Audio -->
                 <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
                     BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"

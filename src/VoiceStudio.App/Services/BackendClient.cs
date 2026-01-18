@@ -326,6 +326,11 @@ namespace VoiceStudio.App.Services
           content.Add(new StringContent(prosodyJson), "prosody_params");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.ProjectId))
+        {
+          content.Add(new StringContent(request.ProjectId), "project_id");
+        }
+
         var response = await _httpClient.PostAsync("/api/voice/clone", content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)

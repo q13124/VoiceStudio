@@ -596,8 +596,8 @@ class LyrebirdEngine(EngineProtocol):
             logger.warning(f"Local model synthesis failed: {e}")
             raise RuntimeError(f"Local model synthesis error: {e}")
 
-    # Removed placeholder synthesis methods (_synthesize_tacotron2_like, _synthesize_fastspeech2_like,
-    # _synthesize_generic_vocoder, _mel_to_audio_simple) to avoid generating placeholder/random audio.
+    # Removed experimental synthesis helpers (_synthesize_tacotron2_like, _synthesize_fastspeech2_like,
+    # _synthesize_generic_vocoder, _mel_to_audio_simple) to avoid generating random audio.
     # Instead, the engine now prefers using the fallback voice cloning engine (XTTS) for reliable,
     # high-quality synthesis when local model cannot be properly used.
 

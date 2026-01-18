@@ -21,9 +21,11 @@ import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError
+
+from backend.services.ContentAddressedAudioCache import get_audio_cache
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +82,57 @@ class ProjectStoreService:
         project_dir.mkdir(parents=True, exist_ok=True)
         (project_dir / "audio").mkdir(parents=True, exist_ok=True)
         return project_dir
+
+    def _normalize_audio_filename(
+        self, source_path: Path, audio_id: Optional[str], filename: Optional[str]
+    ) -> str:
+        if filename:
+            normalized = filename
+        elif audio_id:
+            normalized = f"{audio_id}.wav"
+        else:
+            normalized = source_path.name
+
+        if not normalized.lower().endswith(".wav"):
+            normalized = f"{normalized}.wav"
+
+        invalid_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*"]
+        if any(char in normalized for char in invalid_chars):
+            raise ValueError(f"Filename '{normalized}' contains invalid characters.")
+        return normalized
+
+    def save_audio_file(
+        self,
+        project_id: str,
+        source_path: Union[Path, str],
+        *,
+        audio_id: Optional[str] = None,
+        filename: Optional[str] = None,
+    ) -> Path:
+        if not self.exists(project_id):
+            raise KeyError(project_id)
+
+        source = Path(source_path)
+        if not source.exists():
+            raise FileNotFoundError(f"Audio file not found: {source}")
+
+        project_dir = self._ensure_project_dirs(project_id)
+        audio_dir = project_dir / "audio"
+        normalized = self._normalize_audio_filename(source, audio_id, filename)
+        dest_path = audio_dir / normalized
+
+        try:
+            audio_cache = get_audio_cache()
+            cached_path, _ = audio_cache.get_or_store(source)
+        except Exception as cache_error:
+            logger.warning(
+                "Content-addressed cache failed, using direct copy: %s",
+                cache_error,
+            )
+            cached_path = source
+
+        shutil.copy2(str(cached_path), str(dest_path))
+        return dest_path
 
     def _atomic_write_json(self, path: Path, payload: dict) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)

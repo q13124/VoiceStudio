@@ -428,9 +428,34 @@ async def transcribe_audio(
             language = None
 
         # Transcribe audio
-        result = stt_engine.transcribe(
-            audio=audio_path, language=language, word_timestamps=request.word_timestamps
-        )
+        # NOTE: WhisperCPPEngine supports multiple output formats; we want structured output.
+        if request.engine == "whisper_cpp":
+            result = stt_engine.transcribe(
+                audio=audio_path,
+                language=language,
+                word_timestamps=request.word_timestamps,
+                output_format="json",
+            )
+        else:
+            result = stt_engine.transcribe(
+                audio=audio_path,
+                language=language,
+                word_timestamps=request.word_timestamps,
+            )
+
+        # Normalize legacy return shapes (some engines return plain text).
+        if result is None:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Transcription failed for engine '{request.engine}'",
+            )
+        if isinstance(result, str):
+            result = {
+                "text": result,
+                "segments": [],
+                "language": language or "unknown",
+                "word_timestamps": [],
+            }
 
         # Convert result to response format
         segments = [

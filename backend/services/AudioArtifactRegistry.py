@@ -30,6 +30,9 @@ DEFAULT_REGISTRY_FILENAME = "audio_registry.json"
 class AudioArtifactRecord:
     path: str
     created_at_epoch: float
+    project_id: Optional[str] = None
+    source: Optional[str] = None
+    hash_value: Optional[str] = None
 
 
 class AudioArtifactRegistry:
@@ -94,12 +97,19 @@ class AudioArtifactRegistry:
                             continue
                         file_path = str(entry.get("path", ""))
                         created = float(entry.get("created_at_epoch", 0.0))
+                        project_id = entry.get("project_id")
+                        source = entry.get("source")
+                        hash_value = entry.get("hash_value")
                         if not file_path:
                             continue
                         if not os.path.exists(file_path):
                             continue
                         records[str(audio_id)] = AudioArtifactRecord(
-                            path=file_path, created_at_epoch=created or time.time()
+                            path=file_path,
+                            created_at_epoch=created or time.time(),
+                            project_id=str(project_id) if project_id else None,
+                            source=str(source) if source else None,
+                            hash_value=str(hash_value) if hash_value else None,
                         )
                     except Exception:
                         continue
@@ -108,13 +118,19 @@ class AudioArtifactRegistry:
 
     def _persist(self) -> None:
         with self._lock:
-            payload = {
-                audio_id: {
+            payload = {}
+            for audio_id, rec in self._records.items():
+                entry = {
                     "path": rec.path,
                     "created_at_epoch": rec.created_at_epoch,
                 }
-                for audio_id, rec in self._records.items()
-            }
+                if rec.project_id:
+                    entry["project_id"] = rec.project_id
+                if rec.source:
+                    entry["source"] = rec.source
+                if rec.hash_value:
+                    entry["hash_value"] = rec.hash_value
+                payload[audio_id] = entry
             self._atomic_write_json(self._registry_path, payload)
 
     def to_dict(self) -> Dict[str, str]:
@@ -126,13 +142,24 @@ class AudioArtifactRegistry:
             rec = self._records.get(audio_id)
             return rec.path if rec else None
 
+    def get_record(self, audio_id: str) -> Optional[AudioArtifactRecord]:
+        with self._lock:
+            return self._records.get(audio_id)
+
     def remove(self, audio_id: str) -> None:
         with self._lock:
             if audio_id in self._records:
                 del self._records[audio_id]
                 self._persist()
 
-    def register_file(self, audio_id: str, file_path: str) -> Tuple[str, str]:
+    def register_file(
+        self,
+        audio_id: str,
+        file_path: str,
+        *,
+        project_id: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """
         Register an audio file under audio_id.
 
@@ -150,7 +177,11 @@ class AudioArtifactRegistry:
 
         with self._lock:
             self._records[audio_id] = AudioArtifactRecord(
-                path=str(cached_path), created_at_epoch=time.time()
+                path=str(cached_path),
+                created_at_epoch=time.time(),
+                project_id=project_id,
+                source=source,
+                hash_value=hash_value,
             )
             self._persist()
 
@@ -170,4 +201,3 @@ def get_audio_registry(registry_path: Optional[str] = None) -> AudioArtifactRegi
 def reset_audio_registry() -> None:
     global _service_instance
     _service_instance = None
-

@@ -353,10 +353,11 @@ namespace VoiceStudio.App.Services
         {
             try
             {
-                var layout = GetCurrentLayout();
-                var settingsData = _settingsService.LoadSettingsAsync().GetAwaiter().GetResult();
-                settingsData.WorkspaceLayout = layout;
-                _settingsService.SaveSettingsAsync(settingsData).GetAwaiter().GetResult();
+                // IMPORTANT: Do NOT block the UI thread here.
+                // This method is called from UI panel switching (PanelHost.OnContentChanged).
+                // Sync-over-async can deadlock or stall the UI thread (especially when the backend is unavailable),
+                // which breaks Gate C UI smoke and can freeze the app in production.
+                _ = Task.Run(async () => await SaveCurrentWorkspaceAsync().ConfigureAwait(false));
             }
             catch (Exception ex)
             {

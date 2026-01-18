@@ -12,8 +12,12 @@
   </LinearGradientBrush>
   <SolidColorBrush x:Key="VSQ.Text.PrimaryBrush" Color="#FFCDD9E5" />
   <SolidColorBrush x:Key="VSQ.Text.SecondaryBrush" Color="#FF8A9BB3" />
+  <!-- Text on accent backgrounds (e.g., cyan). Use a dark ink for contrast. -->
+  <SolidColorBrush x:Key="VSQ.Text.OnAccentBrush" Color="#FF0A0F15" />
   <SolidColorBrush x:Key="VSQ.Accent.CyanBrush" Color="#FF00B7C2" />
   <SolidColorBrush x:Key="VSQ.Panel.BorderBrush" Color="#26FFFFFF" />
+  <!-- Panel background alias used by some UI surfaces (keep in sync with DarkBrush). -->
+  <SolidColorBrush x:Key="VSQ.Panel.Background" Color="#FF151921" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.DarkBrush" Color="#FF151921" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.DarkerBrush" Color="#FF1E2329" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.HeaderBrush" Color="#FF20252E" />
@@ -21,12 +25,51 @@
   <SolidColorBrush x:Key="VSQ.Warn.Brush" Color="#FFFFB540" />
   <SolidColorBrush x:Key="VSQ.Error.Brush" Color="#FFFF4060" />
   <SolidColorBrush x:Key="VSQ.Success.Brush" Color="#FF40FF80" />
+  <!-- Nav rail and status bar backgrounds -->
+  <SolidColorBrush x:Key="VSQ.NavRail.BackgroundBrush" Color="#FF141820" />
+  <SolidColorBrush x:Key="VSQ.StatusBar.BackgroundBrush" Color="#FF141820" />
+  <!-- Status indicator colors -->
+  <SolidColorBrush x:Key="VSQ.StatusIndicator.SuccessBrush" Color="#FF40FF80" />
+  <SolidColorBrush x:Key="VSQ.StatusIndicator.ActiveBrush" Color="#FF40FF80" />
+  <SolidColorBrush x:Key="VSQ.StatusIndicator.IdleBrush" Color="#FF40FF80" Opacity="0.3" />
+  <SolidColorBrush x:Key="VSQ.StatusIndicator.WarningBrush" Color="#FFFFB540" />
+  <SolidColorBrush x:Key="VSQ.StatusIndicator.ErrorBrush" Color="#FFFF4060" />
+  <!-- Overlay backgrounds -->
+  <SolidColorBrush x:Key="VSQ.Overlay.BackgroundBrush" Color="#80000000" />
+  <!-- Loading (overlay + spinners) -->
+  <SolidColorBrush x:Key="VSQ.Loading.BackgroundBrush" Color="#80000000" />
+  <SolidColorBrush x:Key="VSQ.Loading.TextBrush" Color="#FFCDD9E5" />
+  <SolidColorBrush x:Key="VSQ.Loading.ForegroundBrush" Color="#FF00B7C2" />
+  <!-- NOTE: WinUI 3 does not define DefaultProgressRingStyle. ProgressRing uses an implicit style
+  in WinUI generic.xaml.
+       Keep this token style free of BasedOn so it never crashes XAML parsing. -->
+  <Style x:Key="VSQ.LoadingSpinner.Style" TargetType="ProgressRing">
+    <Setter Property="Width" Value="{StaticResource VSQ.Icon.Size.Large}" />
+    <Setter Property="Height" Value="{StaticResource VSQ.Icon.Size.Large}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Loading.ForegroundBrush}" />
+    <Setter Property="IsActive" Value="True" />
+  </Style>
+  <!-- NOTE: WinUI 3 ProgressBar also uses an implicit style; keep this style token safe to
+  reference. -->
+  <Style x:Key="VSQ.ProgressBar.Style" TargetType="ProgressBar">
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Progress.ForegroundBrush}" />
+  </Style>
+  <!-- Drop zone colors (using accent cyan with opacity) -->
+  <SolidColorBrush x:Key="VSQ.DropZone.BackgroundBrush" Color="#4000B7C2" />
+  <SolidColorBrush x:Key="VSQ.DropZone.BorderBrush" Color="#FF00B7C2" />
+  <SolidColorBrush x:Key="VSQ.DropZone.PreviewBackgroundBrush" Color="#2000B7C2" />
+  <!-- PanelHost specific -->
+  <SolidColorBrush x:Key="VSQ.PanelHost.HeaderBackgroundBrush" Color="#FF181D26" />
+  <SolidColorBrush x:Key="VSQ.PanelHost.DragShadowBackgroundBrush" Color="#10000000" />
+  <SolidColorBrush x:Key="VSQ.PanelHost.DragShadowBorderBrush" Color="#4000B7C2" />
   <!-- Empty / progress -->
   <SolidColorBrush x:Key="VSQ.EmptyState.TextBrush" Color="#FF8A9BB3" Opacity="0.6" />
   <SolidColorBrush x:Key="VSQ.Progress.ForegroundBrush" Color="#FF00B7C2" />
   <!-- Typography sizes -->
   <x:Double x:Key="VSQ.FontSize.Caption">10</x:Double>
   <x:Double x:Key="VSQ.FontSize.Body">12</x:Double>
+  <x:Double x:Key="VSQ.FontSize.Title">16</x:Double>
+  <x:Double x:Key="VSQ.FontSize.Heading">20</x:Double>
   <!-- Spacing (Thickness) -->
   <Thickness x:Key="VSQ.Spacing.None">0</Thickness>
   <Thickness x:Key="VSQ.Spacing.Small">4</Thickness>
@@ -39,9 +82,15 @@
   <x:Double x:Key="VSQ.Spacing.Value.Medium">8</x:Double>
   <x:Double x:Key="VSQ.Spacing.Value.Large">16</x:Double>
   <!-- Control sizes -->
+  <x:Double x:Key="VSQ.Control.Width.Small">24</x:Double>
+  <x:Double x:Key="VSQ.Control.Width.Medium">32</x:Double>
+  <x:Double x:Key="VSQ.Control.Width.Large">40</x:Double>
   <x:Double x:Key="VSQ.Control.Height.Small">24</x:Double>
   <x:Double x:Key="VSQ.Control.Height.Medium">32</x:Double>
   <x:Double x:Key="VSQ.Control.Height.Large">40</x:Double>
+  <!-- Input sizes -->
+  <x:Double x:Key="VSQ.Input.Width.Standard">100</x:Double>
+  <x:Double x:Key="VSQ.Input.Width.Wide">300</x:Double>
   <x:Double x:Key="VSQ.Icon.Size.Small">16</x:Double>
   <x:Double x:Key="VSQ.Icon.Size.Medium">24</x:Double>
   <x:Double x:Key="VSQ.Icon.Size.Large">32</x:Double>
@@ -51,6 +100,12 @@
   <CornerRadius x:Key="VSQ.CornerRadius.Small">4</CornerRadius>
   <CornerRadius x:Key="VSQ.CornerRadius.Panel">8</CornerRadius>
   <CornerRadius x:Key="VSQ.CornerRadius.Button">4</CornerRadius>
+  <!-- PanelHost specific corner radius configurations -->
+  <CornerRadius x:Key="VSQ.CornerRadius.PanelHeader">8,8,0,0</CornerRadius>
+  <CornerRadius x:Key="VSQ.CornerRadius.PanelBody">0,0,8,8</CornerRadius>
+  <CornerRadius x:Key="VSQ.CornerRadius.DropZoneLeft">8,0,0,8</CornerRadius>
+  <CornerRadius x:Key="VSQ.CornerRadius.DropZoneRight">0,8,8,0</CornerRadius>
+  <CornerRadius x:Key="VSQ.CornerRadius.DropZoneBottom">0,0,8,8</CornerRadius>
   <!-- Corner radius values (Double) -->
   <x:Double x:Key="VSQ.CornerRadius.Value.Small">4</x:Double>
   <!-- Shared padding/margins as typed Thickness -->
@@ -71,6 +126,18 @@
     <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}" />
     <Setter Property="TextWrapping" Value="Wrap" />
   </Style>
+  <Style x:Key="VSQ.Text.Title" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Title}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style x:Key="VSQ.Text.Heading" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Heading}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
   <!-- Basic button styles (no triggers/templates; WinUI-safe) -->
   <Style x:Key="VSQ.Button.Primary" TargetType="Button">
     <Setter Property="Background" Value="{StaticResource VSQ.Accent.CyanBrush}" />
@@ -85,5 +152,35 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}" />
     <Setter Property="Padding" Value="{StaticResource VSQ.Spacing.Medium}" />
+  </Style>
+  <!-- Shared focus-friendly style used across buttons/toggles (referenced as
+  VSQ.Button.FocusStyle). -->
+  <!-- Keep TargetType broad so it can be applied to Button + ToggleButton safely. -->
+  <Style x:Key="VSQ.Button.FocusStyle" TargetType="Control">
+    <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="FocusVisualPrimaryBrush" Value="{StaticResource VSQ.Accent.CyanBrush}" />
+    <Setter Property="FocusVisualSecondaryBrush" Value="{StaticResource VSQ.Accent.CyanBrush}" />
+  </Style>
+  <Style x:Key="VSQ.Button.HoverStyle" TargetType="Button"
+    BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}" />
+    <Setter Property="Padding" Value="{StaticResource VSQ.Spacing.Medium}" />
+  </Style>
+
+  <!-- Small icon button (help / close / etc). -->
+  <Style x:Key="VSQ.Button.Icon" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8" />
+    <Setter Property="MinWidth" Value="{StaticResource VSQ.Control.Width.Medium}" />
+    <Setter Property="MinHeight" Value="{StaticResource VSQ.Control.Height.Medium}" />
+    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}" />
   </Style>
 </ResourceDictionary>

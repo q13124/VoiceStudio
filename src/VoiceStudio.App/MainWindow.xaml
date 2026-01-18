@@ -80,17 +80,17 @@
           Spacing="{StaticResource VSQ.Spacing.Value.Medium}"
           Margin="0,0,12,0">
           <Border x:Name="ProcessingIndicator" Width="8" Height="8"
-            CornerRadius="{StaticResource VSQ.CornerRadius.Value.Small}"
+            CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
             Background="{StaticResource VSQ.StatusIndicator.IdleBrush}"
             ToolTipService.ToolTip="Processing: Idle">
           </Border>
           <Border x:Name="NetworkIndicator" Width="8" Height="8"
-            CornerRadius="{StaticResource VSQ.CornerRadius.Value.Small}"
+            CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
             Background="{StaticResource VSQ.StatusIndicator.SuccessBrush}"
             ToolTipService.ToolTip="Network: Connected">
           </Border>
           <Border x:Name="EngineIndicator" Width="8" Height="8"
-            CornerRadius="{StaticResource VSQ.CornerRadius.Value.Small}"
+            CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
             Background="{StaticResource VSQ.StatusIndicator.SuccessBrush}"
             ToolTipService.ToolTip="Engine: Ready">
           </Border>

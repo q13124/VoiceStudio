@@ -48,7 +48,7 @@ VoiceStudio's architecture is **properly aligned** with the blueprint rails. All
 
 **Gate C Artifact Default:**
 
-- **Unpackaged self-contained apphost EXE** (MSIX optional)
+- **Unpackaged self-contained apphost EXE** (installer distribution; MSIX not used)
 - Referenced in: `role_tasks/INDEX.md`, `BUILD_TOOLING_ENGINEER.md`, `RELEASE_ENGINEER.md`, `UI_ENGINEER.md`, `SYSTEM_ARCHITECT.md`
 
 ---

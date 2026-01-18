@@ -11,13 +11,14 @@ Compatible with:
 - HTTP API for image generation
 """
 
-import os
-import requests
 import base64
-from typing import Optional, Dict, List, Tuple, Union
-from pathlib import Path
 import logging
+import os
 from io import BytesIO
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
+
+import requests
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -30,31 +31,43 @@ except ImportError:
         from .base import EngineProtocol
     except ImportError:
         from abc import ABC, abstractmethod
+
         class EngineProtocol(ABC):
             def __init__(self, device=None, gpu=True):
                 self.device = device or ("cuda" if gpu else "cpu")
                 self._initialized = False
+
             @abstractmethod
-            def initialize(self): pass
+            def initialize(self) -> bool:
+                return False
+
             @abstractmethod
-            def cleanup(self): pass
-            def is_initialized(self): return self._initialized
-            def get_device(self): return self.device
+            def cleanup(self) -> None:
+                return None
+
+            def is_initialized(self) -> bool:
+                return self._initialized
+
+            def get_device(self) -> str:
+                return se1) Wizard API uses a single reference_audio_id. There is no reference_audio_ids list in the wizard request or job state. Multi-clip input exists on /api/voice/clone via multipart reference_audio[] plus use_multi_reference=true. For wizard support, keep reference_audio_id as the compatibility path; add a list field only after backend adds it.
+2) device and candidate_metrics come from the backend /api/voice/clone response at the top level, not inside quality_metrics. Candidate entries come from XTTS multi‑reference selection and include reference_audio, metrics, score, selected. Payload shape:
+{  "device": "cuda",  "candidate_metrics": [    {      "reference_audio": "C:\\path\\ref1.wav",      "metrics": {        "mos_score": 4.12,        "similarity": 0.83,        "naturalness": 0.78,        "snr_db": 24.5,        "artifacts": {          "artifact_score": 0.07,          "has_clicks": false,          "has_distortion": false        },        "voice_profile_match": {          "overall_similarity": 0.86        }      },      "score": 2.45,      "selected": true    }  ]}
+3) UI spec: there is no separate design spec for multi‑clip list or candidate list beyond the existing wizard layout and VSQ tokens. Use the current Step 1 area for the clip list, and the Step 4 quality metrics panel style for candidate metrics (list rows with metrics + selected label).lf.device
 
 
 class SDNextEngine(EngineProtocol):
     """
     SD.Next Engine for advanced Stable Diffusion image generation.
-    
+
     Supports:
     - All AUTOMATIC1111 features
     - Additional optimizations
     - Enhanced performance
     - Extended API features
     """
-    
+
     SUPPORTED_FORMATS = ["png", "jpg", "webp"]
-    
+
     def __init__(
         self,
         webui_url: str = "http://127.0.0.1:7860",
@@ -63,28 +76,28 @@ class SDNextEngine(EngineProtocol):
         steps: int = 20,
         cfg_scale: float = 7.0,
         device: Optional[str] = None,
-        gpu: bool = True
+        gpu: bool = True,
     ):
         """Initialize SD.Next engine."""
         super().__init__(device=device, gpu=gpu)
-        
-        self.webui_url = webui_url.rstrip('/')
-        self.api_endpoint = api_endpoint.rstrip('/')
+
+        self.webui_url = webui_url.rstrip("/")
+        self.api_endpoint = api_endpoint.rstrip("/")
         self.api_url = f"{self.webui_url}{self.api_endpoint}"
         self.default_sampler = sampler
         self.default_steps = steps
         self.default_cfg_scale = cfg_scale
         self.session = requests.Session()
         self.session.timeout = 300
-    
+
     def initialize(self) -> bool:
         """Initialize the SD.Next engine by connecting to server."""
         try:
             if self._initialized:
                 return True
-            
+
             logger.info(f"Connecting to SD.Next server: {self.webui_url}")
-            
+
             try:
                 response = self.session.get(f"{self.api_url}/options", timeout=5)
                 if response.status_code == 200:
@@ -92,7 +105,9 @@ class SDNextEngine(EngineProtocol):
                     self._initialized = True
                     return True
                 else:
-                    logger.error(f"SD.Next server returned status {response.status_code}")
+                    logger.error(
+                        f"SD.Next server returned status {response.status_code}"
+                    )
                     self._initialized = False
                     return False
             except requests.exceptions.RequestException as e:
@@ -101,12 +116,12 @@ class SDNextEngine(EngineProtocol):
                 logger.error("Install from: https://github.com/vladmandic/automatic")
                 self._initialized = False
                 return False
-                
+
         except Exception as e:
             logger.error(f"Failed to initialize SD.Next engine: {e}")
             self._initialized = False
             return False
-    
+
     def generate(
         self,
         prompt: str,
@@ -118,13 +133,13 @@ class SDNextEngine(EngineProtocol):
         sampler: Optional[str] = None,
         seed: Optional[int] = None,
         output_path: Optional[Union[str, Path]] = None,
-        **kwargs
+        **kwargs,
     ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
         """Generate image using SD.Next (same API as AUTOMATIC1111)."""
         if not self._initialized:
             if not self.initialize():
                 return None
-        
+
         try:
             payload = {
                 "prompt": prompt,
@@ -132,108 +147,110 @@ class SDNextEngine(EngineProtocol):
                 "width": width,
                 "height": height,
                 "steps": steps if steps is not None else self.default_steps,
-                "cfg_scale": cfg_scale if cfg_scale is not None else self.default_cfg_scale,
+                "cfg_scale": (
+                    cfg_scale if cfg_scale is not None else self.default_cfg_scale
+                ),
                 "sampler_name": sampler if sampler else self.default_sampler,
                 "seed": seed if seed is not None else -1,
                 "batch_size": 1,
-                "n_iter": 1
+                "n_iter": 1,
             }
-            
+
             if "image" in kwargs:
                 image_input = kwargs["image"]
                 if isinstance(image_input, str):
                     if os.path.exists(image_input):
-                        with open(image_input, 'rb') as f:
-                            image_data = base64.b64encode(f.read()).decode('utf-8')
+                        with open(image_input, "rb") as f:
+                            image_data = base64.b64encode(f.read()).decode("utf-8")
                     else:
                         image_data = image_input
                 elif isinstance(image_input, Image.Image):
                     buffer = BytesIO()
-                    image_input.save(buffer, format='PNG')
-                    image_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                    image_input.save(buffer, format="PNG")
+                    image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
                 else:
                     image_data = str(image_input)
-                
+
                 payload["init_images"] = [image_data]
                 payload["denoising_strength"] = kwargs.get("denoising_strength", 0.7)
                 endpoint = f"{self.api_url}/img2img"
             else:
                 endpoint = f"{self.api_url}/txt2img"
-            
+
             if "mask" in kwargs:
                 mask_input = kwargs["mask"]
                 if isinstance(mask_input, str):
                     if os.path.exists(mask_input):
-                        with open(mask_input, 'rb') as f:
-                            mask_data = base64.b64encode(f.read()).decode('utf-8')
+                        with open(mask_input, "rb") as f:
+                            mask_data = base64.b64encode(f.read()).decode("utf-8")
                     else:
                         mask_data = mask_input
                 elif isinstance(mask_input, Image.Image):
                     buffer = BytesIO()
-                    mask_input.save(buffer, format='PNG')
-                    mask_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                    mask_input.save(buffer, format="PNG")
+                    mask_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
                 else:
                     mask_data = str(mask_input)
-                
+
                 payload["mask"] = mask_data
                 payload["inpainting_fill"] = kwargs.get("inpainting_fill", 1)
                 payload["inpaint_full_res"] = kwargs.get("inpaint_full_res", False)
-            
+
             if "controlnet" in kwargs:
                 payload["alwayson_scripts"] = {
-                    "controlnet": {
-                        "args": [kwargs["controlnet"]]
-                    }
+                    "controlnet": {"args": [kwargs["controlnet"]]}
                 }
-            
+
             response = self.session.post(endpoint, json=payload, timeout=300)
-            
+
             if response.status_code != 200:
                 logger.error(f"SD.Next generation failed: {response.text}")
                 return None
-            
+
             result = response.json()
-            
+
             if "images" in result and len(result["images"]) > 0:
                 image_data = result["images"][0]
                 image_bytes = base64.b64decode(image_data)
                 image = Image.open(BytesIO(image_bytes))
-                
+
                 if output_path:
                     image.save(output_path)
                     logger.info(f"Image saved to: {output_path}")
                     return image
-                
+
                 return image
             else:
                 logger.error("No images in response")
                 return None
-            
+
         except Exception as e:
             logger.error(f"SD.Next generation failed: {e}")
             return None
-    
+
     def cleanup(self):
         """Clean up resources."""
         try:
-            if hasattr(self, 'session'):
+            if hasattr(self, "session"):
                 self.session.close()
             self._initialized = False
             logger.info("SD.Next engine cleaned up")
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
-    
+
     def get_info(self) -> Dict:
         """Get engine information."""
         info = super().get_info()
-        info.update({
-            "webui_url": self.webui_url,
-            "api_endpoint": self.api_endpoint,
-            "default_sampler": self.default_sampler,
-            "default_steps": self.default_steps,
-            "default_cfg_scale": self.default_cfg_scale,
-            "supported_formats": self.SUPPORTED_FORMATS
-        })
+        info.update(
+            {
+                "webui_url": self.webui_url,
+                "api_endpoint": self.api_endpoint,
+                "default_sampler": self.default_sampler,
+                "default_steps": self.default_steps,
+                "default_cfg_scale": self.default_cfg_scale,
+                "supported_formats": self.SUPPORTED_FORMATS,
+            }
+        )
         return info
 
 
@@ -244,7 +261,7 @@ def create_sdnext_engine(
     steps: int = 20,
     cfg_scale: float = 7.0,
     device: Optional[str] = None,
-    gpu: bool = True
+    gpu: bool = True,
 ) -> SDNextEngine:
     """Factory function to create an SD.Next engine instance."""
     return SDNextEngine(
@@ -254,6 +271,5 @@ def create_sdnext_engine(
         steps=steps,
         cfg_scale=cfg_scale,
         device=device,
-        gpu=gpu
+        gpu=gpu,
     )
-

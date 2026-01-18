@@ -291,12 +291,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                ...
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                ...
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -585,7 +583,9 @@ class RVCEngine(EngineProtocol):
 
             # If conversion failed or model not available, use enhanced feature-based conversion
             if converted_audio is None or len(converted_audio) == 0:
-                logger.debug("RVC model conversion failed, using enhanced feature-based conversion")
+                logger.debug(
+                    "RVC model conversion failed, using enhanced feature-based conversion"
+                )
                 converted_audio = self._convert_with_enhanced_features(
                     audio_16k,
                     features,
@@ -1373,8 +1373,22 @@ class RVCEngine(EngineProtocol):
 
                     # Move to target device
                     if isinstance(checkpoint, dict) and "weight" in checkpoint:
-                        # Move model weights to device (will be moved when model is instantiated)
-                        pass  # We'll move weights when instantiating the model
+                        weights = checkpoint.get("weight")
+                        if torch is not None:
+                            try:
+                                device = torch.device(self.device)
+                                if isinstance(weights, dict):
+                                    checkpoint["weight"] = {
+                                        k: (v.to(device) if torch.is_tensor(v) else v)
+                                        for k, v in weights.items()
+                                    }
+                                elif torch.is_tensor(weights):
+                                    checkpoint["weight"] = weights.to(device)
+                            except Exception as e:
+                                logger.debug(
+                                    "Failed to move RVC weights to device: %s",
+                                    e,
+                                )
 
                     # Cache model
                     if self._enable_caching:
@@ -1674,7 +1688,9 @@ class RVCEngine(EngineProtocol):
             if HAS_LIBROSA and features.shape[1] > 1:
                 try:
                     # Convert to frequency domain
-                    stft = librosa.stft(converted_audio, hop_length=self.hop_length, n_fft=2048)
+                    stft = librosa.stft(
+                        converted_audio, hop_length=self.hop_length, n_fft=2048
+                    )
                     magnitude, phase = np.abs(stft), np.angle(stft)
 
                     # Apply spectral envelope modification (formant shifting)
@@ -1685,26 +1701,33 @@ class RVCEngine(EngineProtocol):
                     freqs = librosa.fft_frequencies(sr=16000, n_fft=2048)
                     # Shift formants slightly to simulate different vocal tract characteristics
                     formant_shift = 1.1  # Slight shift for voice conversion effect
-                    modified_magnitude = np.zeros_like(magnitude)
+                    # Preserve baseline spectrum; only adjust target band so we don't zero-out other freqs.
+                    modified_magnitude = magnitude.copy()
 
                     for t in range(magnitude.shape[1]):
                         # Apply formant-like modifications
                         for f in range(n_freq_bins):
                             # Create formant peaks at different frequencies
-                            if freqs[f] > 200 and freqs[f] < 8000:  # Voice frequency range
+                            if (
+                                freqs[f] > 200 and freqs[f] < 8000
+                            ):  # Voice frequency range
                                 # Modify magnitude based on formant characteristics
-                                formant_effect = 1.0 + 0.3 * np.sin(2 * np.pi * freqs[f] / 1000)
-                                modified_magnitude[f, t] = magnitude[f, t] * formant_effect
+                                formant_effect = 1.0 + 0.3 * np.sin(
+                                    2 * np.pi * freqs[f] / 1000
+                                )
+                                modified_magnitude[f, t] = (
+                                    magnitude[f, t] * formant_effect
+                                )
 
                     # Ensure we don't exceed original magnitude too much
-                    modified_magnitude = np.clip(modified_magnitude, 0, magnitude.max() * 2.0)
+                    modified_magnitude = np.clip(
+                        modified_magnitude, 0, magnitude.max() * 2.0
+                    )
 
                     # Reconstruct audio
                     modified_stft = modified_magnitude * np.exp(1j * phase)
                     converted_audio = librosa.istft(
-                        modified_stft,
-                        hop_length=self.hop_length,
-                        length=len(audio)
+                        modified_stft, hop_length=self.hop_length, length=len(audio)
                     )
 
                     logger.debug("Applied spectral modifications for voice conversion")
@@ -1716,15 +1739,21 @@ class RVCEngine(EngineProtocol):
             if HAS_LIBROSA:
                 try:
                     # Apply gentle compression to even out dynamics
-                    converted_audio = librosa.effects.preemphasis(converted_audio, coef=0.97)
+                    converted_audio = librosa.effects.preemphasis(
+                        converted_audio, coef=0.97
+                    )
                     # De-emphasis to compensate
-                    converted_audio = librosa.effects.deemphasis(converted_audio, coef=0.97)
+                    converted_audio = librosa.effects.deemphasis(
+                        converted_audio, coef=0.97
+                    )
                 except Exception as e:
                     logger.debug(f"Dynamic processing failed: {e}")
 
             # Normalize output
             if np.max(np.abs(converted_audio)) > 0:
-                converted_audio = converted_audio / np.max(np.abs(converted_audio)) * 0.95
+                converted_audio = (
+                    converted_audio / np.max(np.abs(converted_audio)) * 0.95
+                )
 
             return converted_audio.astype(np.float32)
 
@@ -1810,7 +1839,9 @@ class RVCEngine(EngineProtocol):
         """Load HuBERT model for feature extraction using HuggingFace transformers."""
         try:
             if not HAS_HUGGINGFACE:
-                logger.warning("HuggingFace transformers not available for HuBERT loading")
+                logger.warning(
+                    "HuggingFace transformers not available for HuBERT loading"
+                )
                 return None
 
             device = torch.device(self.device) if torch is not None else None
@@ -1902,7 +1933,10 @@ class RVCEngine(EngineProtocol):
                 audio_16k = audio_16k / np.max(np.abs(audio_16k))
 
             # Use feature extractor to prepare input
-            if hasattr(self, 'feature_extractor') and self.feature_extractor is not None:
+            if (
+                hasattr(self, "feature_extractor")
+                and self.feature_extractor is not None
+            ):
                 inputs = self.feature_extractor(
                     audio_16k,
                     sampling_rate=16000,
@@ -1912,7 +1946,9 @@ class RVCEngine(EngineProtocol):
                 input_values = inputs.input_values.to(device)
             else:
                 # Fallback: prepare tensor manually
-                audio_tensor = torch.from_numpy(audio_16k).float().unsqueeze(0).to(device)
+                audio_tensor = (
+                    torch.from_numpy(audio_16k).float().unsqueeze(0).to(device)
+                )
                 input_values = audio_tensor
 
             # Extract features using HuggingFace HuBERT

@@ -140,7 +140,7 @@
                 BorderThickness="1,0,0,0"
                 Padding="{StaticResource VSQ.Spacing.Medium}">
                 <ScrollViewer>
-                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                         <controls:EmptyState Icon="📋"
                             Title="No Plugin Selected"
                             Message="Select a plugin from the list to view details and manage its state."
@@ -148,7 +148,7 @@
 
                         <StackPanel
                             Visibility="{x:Bind ViewModel.SelectedPlugin, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
-                            Spacing="{StaticResource VSQ.Spacing.Medium}">
+                            Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                             <TextBlock Text="{x:Bind ViewModel.SelectedPlugin.Name, Mode=OneWay}"
                                 Style="{StaticResource VSQ.Text.Heading}" />
 

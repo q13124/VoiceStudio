@@ -325,7 +325,7 @@ Unhandled exception. System.Runtime.InteropServices.COMException (0x80040154): C
 **Resolution Required:**
 - Install Windows App SDK runtime
 - Configure proper Windows development environment
-- Or deploy as MSIX package for testing
+- Do not deploy as MSIX; use the unpackaged Gate C publish artifact and `scripts/gatec-publish-launch.ps1`
 
 ### Recommendations
 

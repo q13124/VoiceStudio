@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml.Media.Animation;
 using VoiceStudio.App.Controls;
 using VoiceStudio.App.Views.Dialogs;
@@ -247,6 +248,149 @@ namespace VoiceStudio.App
     }
 
     #endregion
+
+    internal async Task<(string[] Steps, bool TimedOut, string? TimedOutStep)> RunGateCUiSmokeNavigationAsync(string crashDir)
+    {
+      // Deterministic Gate C UI smoke: exercise primary nav buttons to surface binding failures.
+      var executed = new List<string>();
+
+      var perStepTimeout = TimeSpan.FromSeconds(12);
+      var warmupTimeout = TimeSpan.FromSeconds(30);
+      var stepsLogPath = System.IO.Path.Combine(crashDir, "ui_smoke_steps_latest.log");
+      try
+      {
+        System.IO.Directory.CreateDirectory(crashDir);
+        System.IO.File.WriteAllText(
+          stepsLogPath,
+          $"timestamp_utc\t{DateTime.UtcNow:o}{Environment.NewLine}",
+          System.Text.Encoding.UTF8);
+      }
+      catch
+      {
+        // Best effort
+      }
+
+      void AppendStepLog(string line)
+      {
+        try
+        {
+          System.IO.File.AppendAllText(
+            stepsLogPath,
+            $"{DateTime.UtcNow:o}\t{line}{Environment.NewLine}",
+            System.Text.Encoding.UTF8);
+        }
+        catch
+        {
+          // Best effort
+        }
+      }
+
+      var dispatcher = this.DispatcherQueue;
+      Task RunOnUiThreadAsync(string stepName, Action action)
+      {
+        var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        try
+        {
+          var enqueued = dispatcher.TryEnqueue(() =>
+          {
+            try
+            {
+              AppendStepLog($"DISPATCH_ENTER\t{stepName}");
+              action();
+              AppendStepLog($"DISPATCH_EXIT\t{stepName}");
+              tcs.TrySetResult(null);
+            }
+            catch (Exception ex)
+            {
+              AppendStepLog($"DISPATCH_EXCEPTION\t{stepName}\t{ex.GetType().Name}\t{ex.Message}");
+              tcs.TrySetException(ex);
+            }
+          });
+
+          if (!enqueued)
+          {
+            AppendStepLog($"ENQUEUE_FAILED\t{stepName}");
+            tcs.TrySetException(new InvalidOperationException("Failed to enqueue UI smoke step onto DispatcherQueue."));
+          }
+        }
+        catch (Exception ex)
+        {
+          AppendStepLog($"ENQUEUE_EXCEPTION\t{stepName}\t{ex.GetType().Name}\t{ex.Message}");
+          tcs.TrySetException(ex);
+        }
+
+        return tcs.Task;
+      }
+
+      // Warm up: verify the UI thread is pumping the DispatcherQueue before we attempt navigation.
+      AppendStepLog("WARMUP_BEGIN");
+      var warmupTask = RunOnUiThreadAsync("Warmup", () => { });
+      var warmupCompleted = await Task.WhenAny(warmupTask, Task.Delay(warmupTimeout)).ConfigureAwait(false);
+      if (warmupCompleted != warmupTask)
+      {
+        AppendStepLog($"WARMUP_TIMEOUT\ttimeout_sec={(int)warmupTimeout.TotalSeconds}");
+        return (executed.ToArray(), true, "Warmup");
+      }
+
+      try
+      {
+        await warmupTask.ConfigureAwait(false);
+      }
+      catch (Exception ex)
+      {
+        AppendStepLog($"WARMUP_EXCEPTION\t{ex.GetType().Name}\t{ex.Message}");
+        throw;
+      }
+
+      AppendStepLog("WARMUP_DONE");
+
+      var steps = new (string Name, Action Action)[]
+      {
+        ("NavStudio", () => NavStudio_Click(this, new RoutedEventArgs())),
+        ("NavProfiles", () => NavProfiles_Click(this, new RoutedEventArgs())),
+        ("NavLibrary", () => NavLibrary_Click(this, new RoutedEventArgs())),
+        ("NavTrain", () => NavTrain_Click(this, new RoutedEventArgs())),
+        ("NavEffects", () => NavEffects_Click(this, new RoutedEventArgs())),
+        ("NavAnalyze", () => NavAnalyze_Click(this, new RoutedEventArgs())),
+        ("NavSettings", () => NavSettings_Click(this, new RoutedEventArgs())),
+        ("NavLogs", () => NavLogs_Click(this, new RoutedEventArgs())),
+
+        // Additional frequently-used panels reachable via quick-switch shortcuts.
+        ("QuickSwitchVoiceSynthesis", () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView())),
+        ("QuickSwitchTextSpeechEditor", () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Text Speech Editor", () => new TextSpeechEditorView())),
+        ("QuickSwitchQualityControl", () => SwitchToPanel(Core.Panels.PanelRegion.Right, "Quality Control", () => new QualityControlView())),
+      };
+
+      foreach (var step in steps)
+      {
+        executed.Add(step.Name);
+        AppendStepLog($"STEP_BEGIN\t{step.Name}");
+
+        var stepTask = RunOnUiThreadAsync(step.Name, step.Action);
+        var completed = await Task.WhenAny(stepTask, Task.Delay(perStepTimeout)).ConfigureAwait(false);
+        if (completed != stepTask)
+        {
+          AppendStepLog($"STEP_TIMEOUT\t{step.Name}\ttimeout_sec={(int)perStepTimeout.TotalSeconds}");
+          return (executed.ToArray(), true, step.Name);
+        }
+
+        try
+        {
+          await stepTask.ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+          AppendStepLog($"STEP_EXCEPTION\t{step.Name}\t{ex.GetType().Name}\t{ex.Message}");
+          throw;
+        }
+
+        AppendStepLog($"STEP_DONE\t{step.Name}");
+        await Task.Delay(250).ConfigureAwait(false);
+      }
+
+      return (executed.ToArray(), false, null);
+    }
 
     #region Status Bar Activity Indicators (IDEA 19)
 
@@ -794,11 +938,26 @@ namespace VoiceStudio.App
 
     private async void MainWindow_Activated(object sender, WindowActivatedEventArgs e)
     {
-      // Attach keyboard handler to root content (only once)
-      if (this.Content is UIElement root)
+      if (IsGateCSmokeMode())
       {
-        root.KeyDown -= MainWindow_KeyDown; // Remove first to avoid duplicates
-        root.KeyDown += MainWindow_KeyDown;
+        // Smoke runs must not touch WinUI state that may already be closing/closed
+        // (e.g., --smoke-exit closes the window quickly). Keep this handler no-op.
+        return;
+      }
+
+      // Attach keyboard handler to root content (only once).
+      // Guard against COMException if the window is closing during activation.
+      try
+      {
+        if (this.Content is UIElement root)
+        {
+          root.KeyDown -= MainWindow_KeyDown; // Remove first to avoid duplicates
+          root.KeyDown += MainWindow_KeyDown;
+        }
+      }
+      catch
+      {
+        // Best effort
       }
 
       if (e.WindowActivationState != WindowActivationState.CodeActivated)
@@ -815,6 +974,53 @@ namespace VoiceStudio.App
 
         // Save preference
         localSettings.Values[ShowWelcomeKey] = welcomeDialog.ShowOnStartup;
+      }
+    }
+
+    private static bool IsGateCSmokeMode()
+    {
+      try
+      {
+        static bool IsTruthy(string? value)
+        {
+          if (string.IsNullOrWhiteSpace(value))
+          {
+            return false;
+          }
+
+          return value.Equals("1", StringComparison.OrdinalIgnoreCase)
+              || value.Equals("true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (IsTruthy(Environment.GetEnvironmentVariable("VOICE_STUDIO_SMOKE_EXIT"))
+            || IsTruthy(Environment.GetEnvironmentVariable("VOICE_STUDIO_SMOKE_UI")))
+        {
+          return true;
+        }
+
+        var raw = Environment.CommandLine ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(raw)
+            && (raw.IndexOf("--smoke", StringComparison.OrdinalIgnoreCase) >= 0
+                || raw.IndexOf("--ui-smoke", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+          return true;
+        }
+
+        foreach (var arg in Environment.GetCommandLineArgs())
+        {
+          if (arg.Equals("--smoke-exit", StringComparison.OrdinalIgnoreCase)
+              || arg.Equals("--smoke-ui", StringComparison.OrdinalIgnoreCase)
+              || arg.Equals("--ui-smoke", StringComparison.OrdinalIgnoreCase))
+          {
+            return true;
+          }
+        }
+
+        return false;
+      }
+      catch
+      {
+        return false;
       }
     }
 
@@ -1025,6 +1231,12 @@ namespace VoiceStudio.App
       var panelView = panelFactory();
       targetHost.Content = panelView;
 
+      if (IsGateCSmokeMode())
+      {
+        // Smoke runs should avoid extra UI animations/popups that can introduce timing flake or stalls.
+        return;
+      }
+
       // Show visual indicator
       ShowPanelQuickSwitchIndicator(panelName, region, targetHost);
     }
@@ -1055,8 +1267,8 @@ namespace VoiceStudio.App
         var transform = targetHost.TransformToVisual(rootElement);
         var point = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
 
-        _panelQuickSwitchPopup.HorizontalOffset = point.X + (targetHost.ActualWidth / 2) - (_panelQuickSwitchIndicator?.ActualWidth ?? 0) / 2;
-        _panelQuickSwitchPopup.VerticalOffset = point.Y + (targetHost.ActualHeight / 2) - (_panelQuickSwitchIndicator?.ActualHeight ?? 0) / 2;
+        _panelQuickSwitchPopup.HorizontalOffset = point.X + (targetHost.ActualWidth / 2) - ((_panelQuickSwitchIndicator?.ActualWidth ?? 0) / 2);
+        _panelQuickSwitchPopup.VerticalOffset = point.Y + (targetHost.ActualHeight / 2) - ((_panelQuickSwitchIndicator?.ActualHeight ?? 0) / 2);
       }
 
       _panelQuickSwitchPopup.XamlRoot = targetHost.XamlRoot;

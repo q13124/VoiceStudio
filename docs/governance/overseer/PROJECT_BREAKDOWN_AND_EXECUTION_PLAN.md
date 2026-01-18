@@ -132,7 +132,7 @@ This section is intentionally “where to look + what it owns” so engineers ca
 
 - `src/VoiceStudio.App/VoiceStudio.App.csproj` is configured for **unpackaged apphost EXE by default**:
   - `WindowsPackageType=None`
-  - MSIX tooling disabled unless explicitly re-enabled
+  - MSIX lane removed/archived (do not re-enable MSIX tooling)
 
 **Why this matters**
 
@@ -645,7 +645,7 @@ This plan is intentionally **gate-driven** so voice cloning upgrades are built o
 - **Build & Tooling Engineer**
   - Pin WinAppSDK/WinUI/CommunityToolkit/NAudio to one stable line (1.8.x) and purge experimental WinUI bits.
   - Add publish-time extraction/copy of WinAppSDK runtime (CoreMessagingXP/bootstrap DLLs) into unpackaged apphost publish output (align with VS-0020/Gate C).
-  - Keep unpackaged EXE as default; MSIX optional behind a property; remove duplicate asset warnings.
+  - Keep unpackaged EXE as the only supported lane; remove MSIX/dual-path ambiguity in docs/scripts.
 - **Release Engineer**
   - Run Release publish with new runtime copy; launch apphost EXE and capture proof/dump if failure (VS-0012/VS-0020 linkage).
   - Own installer/upgrade proofs once Gate C launch is green (VS-0003).
@@ -670,8 +670,7 @@ Deliverables:
 
 1. **Choose and codify the Gate C artifact**
 
-   - Preferred first path: **unpackaged self-contained apphost EXE** (fastest iteration)
-   - Alternate: MSIX package if unpackaged launch cannot satisfy WinUI activation constraints
+   - **Unpackaged self-contained apphost EXE** (single supported lane; distribution via installer; MSIX not used)
 
 2. **Make Release publish deterministic (VS-0020)**
 

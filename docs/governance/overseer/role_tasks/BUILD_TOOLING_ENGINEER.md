@@ -6,49 +6,44 @@ Keep the build/publish lane deterministic so **voice cloning quality work** can 
 
 ## Current state snapshot (from evidence)
 
-- Gate C artifact: **unpackaged self-contained apphost EXE** (preferred fast path).
-- Publish is green; binlogs retained under `.buildlogs/` (see `docs/governance/overseer/handoffs/VS-0020.md`).
-- Default model root is now `E:\VoiceStudio\models` (set by `backend/api/main.py` unless overridden).
+- ✅ Gate C is **DONE**: publish + UI smoke proof is green (VS-0012 DONE).
+- ✅ Gate H is **DONE**: installer lifecycle proof captured (VS-0003 DONE).
+- Toolchain outputs:
+  - Gate C publish folder: `.buildlogs\x64\Release\gatec-publish\`
+  - Installer builder: `installer/build-installer.ps1` (Inno/WiX)
 
 ## What you do next (ordered)
 
-### 1) Make Gate C proof reproducible (publish + launch)
+### 1) Harden engine dependency onboarding (quality + functions focus)
 
-- [ ] Add a single-command script to publish Release apphost and launch smoke it (no placeholders):
-  - **Location**: `scripts/` (or `tools/`)
-  - **Must do**:
-    - Run `dotnet publish` (Release, win-x64, self-contained, apphost)
-    - Start the produced `VoiceStudio.App.exe`
-    - Capture **exit code**, and optionally write a minimal launch log to `.buildlogs/`
-  - **Success**: running the script on a clean shell produces the same publish output and launch behavior every time.
+- [x] Provide a one-liner (script or doc) that installs the pinned engine stack so XTTS loads by default:
+  - **Production one-liner**: `powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'`
+  - **Usage**: Run from repo root. Creates timestamped log in `.buildlogs/` with full install output and key package versions.
+- [x] Clean venv run captured with key package versions logged.
+  - **Run**: `.\scripts\install-engine-deps.ps1 -VenvDir venv_xtts_clean_verify6 -Profile xtts`
+  - **Log**: `.buildlogs\engine-deps-install-20260115-213116-32948.log`
+- **Success**: Engine Engineer can run baseline proof without "Coqui TTS not installed" errors.
 
-### 2) Ensure toolchain pinning is stable (no experimental WinUI)
+### 2) Keep the build/publish/installer lane deterministic
 
-- [ ] Verify the build uses the pinned WinAppSDK/WinUI toolchain (no `*-experimental` compiler/tooling).
-- [ ] If any experimental packages are being restored, remove/override them via `Directory.Build.props`/central package versions.
-- **Success**: publish/binlog shows stable WinUI/XAML compiler inputs; no “experimental” package paths appear.
+- [ ] Ensure `installer/build-installer.ps1` and publish scripts remain stable (no regressions from Gate H); fix only if drift is detected.
+- [ ] Keep Inno Setup discovery working (PATH or `-InnoSetupPath`).
+- **Success**: a clean machine can still produce installer EXEs without edits.
 
-### 3) CI enforcement lane coverage (build + publish sanity)
+### 3) CI lane coverage (build + publish + installer sanity)
 
 - [ ] Add/adjust CI checks to run:
   - RuleGuard
-  - `dotnet build` (Debug/Release x64)
-  - `dotnet publish` (Release, Gate C artifact)
-  - Sanity check publish output contains `VoiceStudio.App.exe` and supporting files
-- **Success**: CI can fail fast when publish output regresses (missing apphost, missing deps, etc.).
+  - `dotnet publish` (Gate C artifact)
+  - Basic installer build validation (at least script + prereq detection)
+- **Success**: CI fails fast when the ship lane regresses.
 
-### 4) Close the build-side Gate C work item (handoff hygiene)
+### 4) Toolchain pinning guardrails (ongoing)
 
-- [ ] Update `docs/governance/overseer/handoffs/VS-0020.md` with:
-  - The latest proof commands
-  - Binlog paths
-  - Launch result (including exit code + any captured crash evidence if it fails)
-- [ ] Coordinate with Overseer to ensure **the ledger** includes VS-0020 and reflects current state (DONE vs IN_PROGRESS).
-- **Success**: other roles can look at the ledger + VS-0020 handoff and know exactly how to reproduce success.
+- [ ] Keep `.NET SDK` + `Windows App SDK` pins stable; do not upgrade without proof + doc updates.
 
 ## Hand-off expectation
 
 When you finish, Release Engineer should be able to:
 
-- Use the Gate C script/output to launch the Release artifact reliably
-- Proceed to installer/upgrade proof work (Gate H) without build uncertainty
+- Build installers without surprises and stay unblocked; Engine Engineer should be unblocked on quality proof by having a ready engine stack.

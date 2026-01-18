@@ -84,33 +84,11 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private string qualityMetricsDisplay = "No metrics available";
 
-    private bool _isLoading;
-    private string? _statusMessage;
-    private string? _errorMessage;
-
     // Monitoring
     private DispatcherQueueTimer? _monitoringTimer;
     private readonly List<double> _latencyHistory = new();
     private const int MAX_LATENCY_HISTORY = 100;
     private const int MONITORING_INTERVAL_MS = 2000; // Update every 2 seconds
-
-    public new bool IsLoading
-    {
-      get => _isLoading;
-      set => SetProperty(ref _isLoading, value);
-    }
-
-    public new string? StatusMessage
-    {
-      get => _statusMessage;
-      set => SetProperty(ref _statusMessage, value);
-    }
-
-    public new string? ErrorMessage
-    {
-      get => _errorMessage;
-      set => SetProperty(ref _errorMessage, value);
-    }
 
     public RealTimeVoiceConverterViewModel(IBackendClient backendClient)
     {
@@ -190,13 +168,25 @@ namespace VoiceStudio.App.ViewModels
         _monitoringTimer = dispatcherQueue.CreateTimer();
         _monitoringTimer.Interval = TimeSpan.FromMilliseconds(MONITORING_INTERVAL_MS);
         _monitoringTimer.IsRepeating = true;
-        _monitoringTimer.Tick += (s, e) => _ = UpdateMetricsAsync(CancellationToken.None);
+        _monitoringTimer.Tick += MonitoringTimer_Tick;
       }
+    }
+
+    private void MonitoringTimer_Tick(DispatcherQueueTimer sender, object args)
+    {
+      _ = UpdateMetricsAsync(CancellationToken.None);
     }
 
     private async Task UpdateMetricsAsync(CancellationToken cancellationToken)
     {
-      if (!IsStreaming || IsPaused || SelectedSession == null)
+      var selectedSession = SelectedSession;
+      if (!IsStreaming || IsPaused || selectedSession == null)
+      {
+        return;
+      }
+
+      var sessionId = selectedSession.SessionId;
+      if (string.IsNullOrWhiteSpace(sessionId))
       {
         return;
       }
@@ -204,12 +194,12 @@ namespace VoiceStudio.App.ViewModels
       try
       {
         // Try to get latency from backend endpoint
-        if (SelectedSession != null && !string.IsNullOrEmpty(SelectedSession.SessionId))
+        if (!string.IsNullOrEmpty(sessionId))
         {
           try
           {
             var latencyResponse = await _backendClient.SendRequestAsync<object, RealtimeLatencyInfo>(
-                $"/api/realtime-converter/{Uri.EscapeDataString(SelectedSession.SessionId)}/latency",
+                $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}/latency",
                 null,
                 System.Net.Http.HttpMethod.Get,
                 cancellationToken
@@ -262,7 +252,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task LoadQualityMetricsAsync(CancellationToken cancellationToken)
     {
-      if (SelectedSession == null || string.IsNullOrEmpty(SelectedSession.SessionId))
+      var sessionId = SelectedSession?.SessionId;
+      if (string.IsNullOrWhiteSpace(sessionId))
       {
         return;
       }
@@ -275,7 +266,7 @@ namespace VoiceStudio.App.ViewModels
         try
         {
           var metricsResponse = await _backendClient.SendRequestAsync<object, RealtimeQualityMetrics>(
-              $"/api/realtime-converter/{Uri.EscapeDataString(SelectedSession.SessionId)}/quality",
+              $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}/quality",
               null,
               System.Net.Http.HttpMethod.Get,
               cancellationToken
@@ -332,7 +323,7 @@ namespace VoiceStudio.App.ViewModels
       var naturalnessScore = 0.75 + (latencyFactor * 0.2); // 0.75-0.95
       var snrDb = 20.0 + (latencyFactor * 15.0); // 20-35 dB
 
-      var qualityScore = (mosScore / 5.0) * 0.4 + similarityScore * 0.3 + naturalnessScore * 0.3;
+      var qualityScore = (mosScore / 5.0 * 0.4) + (similarityScore * 0.3) + (naturalnessScore * 0.3);
 
       return (qualityScore, mosScore, similarityScore, naturalnessScore, snrDb);
     }
@@ -359,10 +350,11 @@ namespace VoiceStudio.App.ViewModels
       {
         _dispatcherQueue.TryEnqueue(() =>
         {
-          StatusMessage = status.Message ?? status.Status;
+          var statusValue = status.Status ?? string.Empty;
+          StatusMessage = status.Message ?? statusValue;
 
           // Update streaming/paused state based on status
-          switch (status.Status.ToLowerInvariant())
+          switch (statusValue.ToLowerInvariant())
           {
             case "idle":
               IsStreaming = false;
@@ -418,10 +410,35 @@ namespace VoiceStudio.App.ViewModels
       }
     }
 
-    public new void Dispose()
+    protected override void Dispose(bool disposing)
     {
-      _webSocketClient?.Dispose();
-      _monitoringTimer?.Stop();
+      if (IsDisposed)
+      {
+        base.Dispose(disposing);
+        return;
+      }
+
+      if (disposing)
+      {
+        if (_monitoringTimer != null)
+        {
+          _monitoringTimer.Tick -= MonitoringTimer_Tick;
+          _monitoringTimer.Stop();
+          _monitoringTimer = null;
+        }
+
+        if (_webSocketClient != null)
+        {
+          _webSocketClient.AudioDataReceived -= OnAudioDataReceived;
+          _webSocketClient.StatusChanged -= OnConversionStatusChanged;
+          _webSocketClient.QualityMetricsUpdated -= OnQualityMetricsUpdated;
+          _webSocketClient.LatencyInfoReceived -= OnLatencyInfoReceived;
+
+          _webSocketClient.Dispose();
+        }
+      }
+
+      base.Dispose(disposing);
     }
 
     private async Task LoadProfilesAsync(CancellationToken cancellationToken)
@@ -466,7 +483,9 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task StartSessionAsync(CancellationToken cancellationToken)
     {
-      if (string.IsNullOrEmpty(SourceProfileId) || string.IsNullOrEmpty(TargetProfileId))
+      var sourceProfileId = SourceProfileId?.Trim();
+      var targetProfileId = TargetProfileId?.Trim();
+      if (string.IsNullOrEmpty(sourceProfileId) || string.IsNullOrEmpty(targetProfileId))
       {
         ErrorMessage = ResourceHelper.GetString("RealTimeVoiceConverter.BothProfilesRequired", "Both source and target profiles must be selected");
         return;
@@ -479,8 +498,8 @@ namespace VoiceStudio.App.ViewModels
       {
         var request = new
         {
-          source_profile_id = SourceProfileId,
-          target_profile_id = TargetProfileId
+          source_profile_id = sourceProfileId,
+          target_profile_id = targetProfileId
         };
 
         var response = await _backendClient.SendRequestAsync<object, ConverterStartResponse>(
@@ -535,7 +554,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task StopSessionAsync(CancellationToken cancellationToken)
     {
-      if (SelectedSession == null)
+      var sessionId = SelectedSession?.SessionId;
+      if (string.IsNullOrWhiteSpace(sessionId))
       {
         ErrorMessage = ResourceHelper.GetString("RealTimeVoiceConverter.SessionRequired", "Session must be selected");
         return;
@@ -547,7 +567,7 @@ namespace VoiceStudio.App.ViewModels
       try
       {
         await _backendClient.SendRequestAsync<object, object>(
-            $"/api/realtime-converter/{SelectedSession.SessionId}/stop",
+            $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}/stop",
             null,
             System.Net.Http.HttpMethod.Post,
             cancellationToken
@@ -590,7 +610,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task PauseSessionAsync(CancellationToken cancellationToken)
     {
-      if (SelectedSession == null)
+      var sessionId = SelectedSession?.SessionId;
+      if (string.IsNullOrWhiteSpace(sessionId))
       {
         ErrorMessage = ResourceHelper.GetString("RealTimeVoiceConverter.SessionRequired", "Session must be selected");
         return;
@@ -602,7 +623,7 @@ namespace VoiceStudio.App.ViewModels
       try
       {
         await _backendClient.SendRequestAsync<object, object>(
-            $"/api/realtime-converter/{SelectedSession.SessionId}/pause",
+            $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}/pause",
             null,
             System.Net.Http.HttpMethod.Post,
             cancellationToken
@@ -637,7 +658,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task ResumeSessionAsync(CancellationToken cancellationToken)
     {
-      if (SelectedSession == null)
+      var sessionId = SelectedSession?.SessionId;
+      if (string.IsNullOrWhiteSpace(sessionId))
       {
         ErrorMessage = ResourceHelper.GetString("RealTimeVoiceConverter.SessionRequired", "Session must be selected");
         return;
@@ -649,7 +671,7 @@ namespace VoiceStudio.App.ViewModels
       try
       {
         await _backendClient.SendRequestAsync<object, object>(
-            $"/api/realtime-converter/{SelectedSession.SessionId}/resume",
+            $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}/resume",
             null,
             System.Net.Http.HttpMethod.Post,
             cancellationToken
@@ -709,17 +731,20 @@ namespace VoiceStudio.App.ViewModels
         }
         catch
         {
-          if (SelectedSession != null)
+          var selectedSession = SelectedSession;
+          var sessionId = selectedSession?.SessionId;
+          if (!string.IsNullOrWhiteSpace(sessionId))
           {
             var session = await _backendClient.SendRequestAsync<object, ConverterSession>(
-                $"/api/realtime-converter/{SelectedSession.SessionId}",
+                $"/api/realtime-converter/{Uri.EscapeDataString(sessionId)}",
                 null,
-                System.Net.Http.HttpMethod.Get
+                System.Net.Http.HttpMethod.Get,
+                cancellationToken
             );
 
             if (session != null)
             {
-              SelectedSession.UpdateFrom(session);
+              selectedSession?.UpdateFrom(session);
               if (!Sessions.Any(s => s.SessionId == session.SessionId))
               {
                 Sessions.Add(new ConverterSessionItem(session));

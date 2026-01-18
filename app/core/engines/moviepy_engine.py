@@ -29,19 +29,13 @@ logger = logging.getLogger(__name__)
 
 # Required imports
 try:
-    from moviepy.editor import (
-        AudioFileClip,
-        VideoFileClip,
-        concatenate_videoclips,
-    )
+    from moviepy.editor import AudioFileClip, VideoFileClip, concatenate_videoclips
     from moviepy.video.fx import all as vfx
 
     HAS_MOVIEPY = True
 except ImportError:
     HAS_MOVIEPY = False
-    logger.warning(
-        "moviepy not installed. Install with: pip install moviepy>=1.0.3"
-    )
+    logger.warning("moviepy not installed. Install with: pip install moviepy>=1.0.3")
 
 
 class MoviePyEngine(EngineProtocol):
@@ -78,8 +72,7 @@ class MoviePyEngine(EngineProtocol):
         """
         if not HAS_MOVIEPY:
             raise ImportError(
-                "moviepy not installed. "
-                "Install with: pip install moviepy>=1.0.3"
+                "moviepy not installed. " "Install with: pip install moviepy>=1.0.3"
             )
 
         super().__init__(device=device, gpu=gpu)
@@ -114,9 +107,7 @@ class MoviePyEngine(EngineProtocol):
                 self._temp_dir = temp_manager.create_temp_directory(
                     prefix="moviepy_", owner="moviepy_engine"
                 )
-                logger.debug(
-                    f"Created temp directory via manager: {self._temp_dir}"
-                )
+                logger.debug(f"Created temp directory via manager: {self._temp_dir}")
             except Exception as e:
                 logger.debug(f"Temp file manager not available, using tempfile: {e}")
                 self._temp_dir = tempfile.mkdtemp(prefix="moviepy_")
@@ -128,9 +119,7 @@ class MoviePyEngine(EngineProtocol):
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to initialize MoviePy engine: {e}"
-            )
+            logger.error(f"Failed to initialize MoviePy engine: {e}")
             self._initialized = False
             return False
 
@@ -389,13 +378,9 @@ class MoviePyEngine(EngineProtocol):
             video_path = Path(video_path)
             audio_path = Path(audio_path)
             if not video_path.exists():
-                raise FileNotFoundError(
-                    f"Input video not found: {video_path}"
-                )
+                raise FileNotFoundError(f"Input video not found: {video_path}")
             if not audio_path.exists():
-                raise FileNotFoundError(
-                    f"Input audio not found: {audio_path}"
-                )
+                raise FileNotFoundError(f"Input audio not found: {audio_path}")
 
             # Check cache (LRU) - optimized
             if self.enable_cache:
@@ -565,7 +550,9 @@ class MoviePyEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("moviepy", duration, cached=False)
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for moviepy batch edit."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch editing failed for {video_path}: {e}")

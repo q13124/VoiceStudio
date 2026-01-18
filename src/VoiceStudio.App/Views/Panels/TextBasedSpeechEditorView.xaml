@@ -31,7 +31,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal"
-                    Spacing="{StaticResource VSQ.Spacing.Medium}">
+                    Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                     <TextBlock Text="Text-Based Speech Editor"
                         Style="{StaticResource VSQ.Text.Title}"
                         VerticalAlignment="Center" />
@@ -194,7 +194,7 @@
                 BorderThickness="1,0,0,0"
                 Padding="{StaticResource VSQ.Spacing.Medium}">
                 <ScrollViewer>
-                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                         <!-- Word editing -->
                         <Border Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
                             BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
