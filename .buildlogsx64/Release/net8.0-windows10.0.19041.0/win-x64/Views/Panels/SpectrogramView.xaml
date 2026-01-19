@@ -1,0 +1,121 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.SpectrogramView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:converters="using:VoiceStudio.App.Converters">
+    <UserControl.Resources>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource VSQ.Panel.HeaderBackground}" Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Advanced Spectrogram" Style="{StaticResource VSQ.Text.Subtitle}" FontWeight="SemiBold" AutomationProperties.Name="Advanced Spectrogram panel" AutomationProperties.HelpText="Analyze audio frequency content with advanced spectrogram visualization"/>
+                <Button Grid.Column="1" Content="?" Width="{StaticResource VSQ.Icon.Size.Medium}" Height="{StaticResource VSQ.Icon.Size.Medium}" FontSize="{StaticResource VSQ.FontSize.Caption}" Padding="0" Click="HelpButton_Click" ToolTipService.ToolTip="Show help for Spectrogram" AutomationProperties.Name="Help" AutomationProperties.HelpText="Show contextual help for the Spectrogram panel" AutomationProperties.AutomationId="Spectrogram_HelpButton"/>
+            </Grid>
+        </Border>
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{StaticResource VSQ.Panel.Sidebar.Width.Narrow}"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <!-- Controls Panel -->
+            <Border Grid.Column="0" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,1,0" Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Large}" Padding="12">
+                        <!-- Audio Selection -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="Audio File" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold" AutomationProperties.Name="Audio file section"/>
+                            <TextBlock x:Name="AudioFileLabel" Text="Audio File" Style="{StaticResource VSQ.Text.Caption}" Visibility="Collapsed" AutomationProperties.Name="Audio file label"/>
+                            <ComboBox x:Name="AudioComboBox" ItemsSource="{x:Bind ViewModel.AvailableAudioIds, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedAudioId, Mode=TwoWay}" PlaceholderText="Select audio..." AutomationProperties.Name="Audio file" AutomationProperties.HelpText="Select audio file for spectrogram" AutomationProperties.LabeledBy="{x:Bind AudioFileLabel}" AutomationProperties.AutomationId="Spectrogram_AudioComboBox" RightTapped="AudioComboBox_RightTapped"/>
+                        </StackPanel>
+                        <!-- FFT Parameters -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="FFT Parameters" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock x:Name="WindowSizeLabel" Text="Window Size" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Window size label"/>
+                                <NumberBox x:Name="WindowSizeNumberBox" Value="{x:Bind ViewModel.WindowSize, Mode=TwoWay}" Minimum="256" Maximum="8192" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Window size" AutomationProperties.HelpText="FFT window size" AutomationProperties.LabeledBy="{x:Bind WindowSizeLabel}" AutomationProperties.AutomationId="Spectrogram_WindowSizeNumberBox"/>
+                                <TextBlock x:Name="HopLengthLabel" Text="Hop Length" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Hop length label"/>
+                                <NumberBox x:Name="HopLengthNumberBox" Value="{x:Bind ViewModel.HopLength, Mode=TwoWay}" Minimum="128" Maximum="2048" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Hop length" AutomationProperties.HelpText="FFT hop length" AutomationProperties.LabeledBy="{x:Bind HopLengthLabel}" AutomationProperties.AutomationId="Spectrogram_HopLengthNumberBox"/>
+                                <TextBlock x:Name="NFftLabel" Text="N-FFT" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="N-FFT label"/>
+                                <NumberBox x:Name="NFftNumberBox" Value="{x:Bind ViewModel.NFft, Mode=TwoWay}" Minimum="256" Maximum="8192" SpinButtonPlacementMode="Inline" AutomationProperties.Name="N-FFT" AutomationProperties.HelpText="Number of FFT points" AutomationProperties.LabeledBy="{x:Bind NFftLabel}" AutomationProperties.AutomationId="Spectrogram_NFftNumberBox"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <!-- Frequency Range -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="Frequency Range (Hz)" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock x:Name="FrequencyMinLabel" Text="Min" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Frequency min label"/>
+                                <NumberBox x:Name="FrequencyMinNumberBox" Value="{x:Bind ViewModel.FrequencyMin, Mode=TwoWay}" Minimum="0" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Frequency min" AutomationProperties.HelpText="Minimum frequency" AutomationProperties.LabeledBy="{x:Bind FrequencyMinLabel}" AutomationProperties.AutomationId="Spectrogram_FrequencyMinNumberBox"/>
+                                <TextBlock x:Name="FrequencyMaxLabel" Text="Max" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Frequency max label"/>
+                                <NumberBox x:Name="FrequencyMaxNumberBox" Value="{x:Bind ViewModel.FrequencyMax, Mode=TwoWay}" Minimum="0" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Frequency max" AutomationProperties.HelpText="Maximum frequency" AutomationProperties.LabeledBy="{x:Bind FrequencyMaxLabel}" AutomationProperties.AutomationId="Spectrogram_FrequencyMaxNumberBox"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <!-- Time Range -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="Time Range (s)" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                                <TextBlock x:Name="TimeStartLabel" Text="Start" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Time start label"/>
+                                <NumberBox x:Name="TimeStartNumberBox" Value="{x:Bind ViewModel.TimeStart, Mode=TwoWay}" Minimum="0" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Time start" AutomationProperties.HelpText="Start time" AutomationProperties.LabeledBy="{x:Bind TimeStartLabel}" AutomationProperties.AutomationId="Spectrogram_TimeStartNumberBox"/>
+                                <TextBlock x:Name="TimeEndLabel" Text="End" Style="{StaticResource VSQ.Text.Caption}" AutomationProperties.Name="Time end label"/>
+                                <NumberBox x:Name="TimeEndNumberBox" Value="{x:Bind ViewModel.TimeEnd, Mode=TwoWay}" Minimum="0" SpinButtonPlacementMode="Inline" AutomationProperties.Name="Time end" AutomationProperties.HelpText="End time" AutomationProperties.LabeledBy="{x:Bind TimeEndLabel}" AutomationProperties.AutomationId="Spectrogram_TimeEndNumberBox"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <!-- Display Options -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="Display Options" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <CheckBox Content="Log Scale" IsChecked="{x:Bind ViewModel.LogScale, Mode=TwoWay}" AutomationProperties.Name="Log scale" AutomationProperties.HelpText="Use logarithmic frequency scale"/>
+                            <CheckBox Content="Show Magnitude" IsChecked="{x:Bind ViewModel.ShowMagnitude, Mode=TwoWay}" AutomationProperties.Name="Show magnitude" AutomationProperties.HelpText="Show magnitude spectrogram"/>
+                            <CheckBox Content="Show Phase" IsChecked="{x:Bind ViewModel.ShowPhase, Mode=TwoWay}" AutomationProperties.Name="Show phase" AutomationProperties.HelpText="Show phase information"/>
+                        </StackPanel>
+                        <!-- Color Scheme -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <TextBlock Text="Color Scheme" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <ComboBox ItemsSource="{x:Bind ViewModel.AvailableColorSchemes, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedColorScheme, Mode=TwoWay}" DisplayMemberPath="Name" SelectedValuePath="Id" AutomationProperties.Name="Color scheme" AutomationProperties.HelpText="Select color scheme for spectrogram"/>
+                        </StackPanel>
+                        <!-- Actions -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                            <Button Content="Load Spectrogram" Command="{x:Bind ViewModel.LoadSpectrogramCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Primary}" AutomationProperties.Name="Load spectrogram" AutomationProperties.HelpText="Load spectrogram with current settings"/>
+                            <Button Content="Update Config" Command="{x:Bind ViewModel.UpdateConfigCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Secondary}" AutomationProperties.Name="Update config" AutomationProperties.HelpText="Update spectrogram configuration"/>
+                            <Button Content="Export" Command="{x:Bind ViewModel.ExportSpectrogramCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Secondary}" AutomationProperties.Name="Export spectrogram" AutomationProperties.HelpText="Export spectrogram as image"/>
+                        </StackPanel>
+                        <!-- Info -->
+                        <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}" Visibility="{x:Bind ViewModel.SpectrogramData, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="Spectrogram Info" Style="{StaticResource VSQ.Text.BodyStrong}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{x:Bind ViewModel.SpectrogramData.FrameCount, Mode=OneWay}" Style="{StaticResource VSQ.Text.Caption}"/>
+                            <TextBlock Text="{x:Bind ViewModel.SpectrogramData.FrequencyResolution, Mode=OneWay}" Style="{StaticResource VSQ.Text.Caption}"/>
+                            <TextBlock Text="{x:Bind ViewModel.SpectrogramData.TimeResolution, Mode=OneWay}" Style="{StaticResource VSQ.Text.Caption}"/>
+                            <TextBlock Text="{x:Bind ViewModel.SpectrogramData.Duration, Mode=OneWay}" Style="{StaticResource VSQ.Text.Caption}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            <!-- Spectrogram Display -->
+            <Grid Grid.Column="1">
+                <!-- Loading Overlay -->
+                <controls:LoadingOverlay IsLoading="{x:Bind ViewModel.IsLoading, Mode=OneWay}" LoadingMessage="Generating spectrogram..."/>
+                <!-- Spectrogram Control -->
+                <Border Padding="{StaticResource VSQ.Spacing.Large}" Visibility="{x:Bind ViewModel.SpectrogramData, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <controls:SpectrogramControl x:Name="SpectrogramControl" RightTapped="SpectrogramControl_RightTapped"/>
+                </Border>
+                <!-- Empty State -->
+                <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Visibility="{x:Bind ViewModel.SpectrogramData, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <TextBlock Text="No spectrogram loaded" Style="{StaticResource VSQ.Text.Body}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Select an audio file and click 'Load Spectrogram'" Style="{StaticResource VSQ.Text.Caption}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="{StaticResource VSQ.Text.MaxWidth.Standard}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <!-- Help Overlay -->
+        <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed"/>
+    </Grid>
+</UserControl>

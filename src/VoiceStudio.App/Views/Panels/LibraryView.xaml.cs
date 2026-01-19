@@ -356,14 +356,14 @@ namespace VoiceStudio.App.Views.Panels
 
     private Task AnalyzeAssetAsync(string assetId, string assetName)
     {
+      if (string.IsNullOrEmpty(assetId))
+      {
+        _toastService?.ShowToast(ToastType.Warning, "Analysis", "Asset ID required for analysis");
+        return Task.CompletedTask;
+      }
+
       try
       {
-        if (string.IsNullOrEmpty(assetId))
-        {
-          _toastService?.ShowToast(ToastType.Warning, "Analysis", "Asset ID required for analysis");
-          return Task.CompletedTask;
-        }
-
         // Navigate to AnalyzerView with this asset
         _toastService?.ShowToast(ToastType.Info, "Analysis", $"Opening analyzer for {assetName}...");
 
@@ -380,14 +380,14 @@ namespace VoiceStudio.App.Views.Panels
 
     private Task ApplyEffectsToAssetAsync(string assetId, string assetName)
     {
+      if (string.IsNullOrEmpty(assetId))
+      {
+        _toastService?.ShowToast(ToastType.Warning, "Effects", "Asset ID required");
+        return Task.CompletedTask;
+      }
+
       try
       {
-        if (string.IsNullOrEmpty(assetId))
-        {
-          _toastService?.ShowToast(ToastType.Warning, "Effects", "Asset ID required");
-          return Task.CompletedTask;
-        }
-
         // Navigate to EffectsMixerView with this asset
         _toastService?.ShowToast(ToastType.Info, "Effects", $"Opening effects mixer for {assetName}...");
 
@@ -576,14 +576,14 @@ namespace VoiceStudio.App.Views.Panels
 
     private Task AddAssetToTimelineAsync(string assetId, string assetName, string assetUrl)
     {
+      if (string.IsNullOrEmpty(assetId))
+      {
+        _toastService?.ShowToast(ToastType.Warning, "Timeline", "Asset ID required");
+        return Task.CompletedTask;
+      }
+
       try
       {
-        if (string.IsNullOrEmpty(assetId))
-        {
-          _toastService?.ShowToast(ToastType.Warning, "Timeline", "Asset ID required");
-          return Task.CompletedTask;
-        }
-
         // Note: Adding asset to timeline will be implemented when TimelineViewModel integration is available
         // This will require:
         // 1. Get current project from TimelineViewModel

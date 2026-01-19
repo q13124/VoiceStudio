@@ -102,5 +102,9 @@
     "editor.wordWrap": "on",
     "editor.tabSize": 2
   },
-  "markdown.validate.enabled": true
+  "markdown.validate.enabled": true,
+  "git.ignoreLimitWarning": true,
+  "cSpell.words": [
+    "Coqui"
+  ]
 }

@@ -234,9 +234,9 @@ namespace VoiceStudio.App.Views.Panels
 
     private void CalculateQualityMetricsFromParameters()
     {
-      var qualityScore = (Steps / 60.0) * 30.0 + // Steps contribution (max 30%)
-                         (CfgScale / 10.0) * 20.0 + // CFG contribution (max 20%)
-                         ((Width * Height) / (1024.0 * 1024.0)) * 50.0; // Resolution contribution (max 50%)
+      var qualityScore = (Steps / 60.0 * 30.0) + // Steps contribution (max 30%)
+                         (CfgScale / 10.0 * 20.0) + // CFG contribution (max 20%)
+                         (Width * Height / (1024.0 * 1024.0) * 50.0); // Resolution contribution (max 50%)
 
       ImageClarity = Math.Min(100.0, qualityScore * 0.9);
       ImageDetail = Math.Min(100.0, qualityScore * 0.85);

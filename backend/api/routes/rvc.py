@@ -22,12 +22,27 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
+from backend.services.model_preflight import ensure_sovits
+
 from ..models import ApiOk
 from ..models_additional import RvcStartRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/rvc", tags=["rvc"])
+
+# Backward-compatible engine aliases used by the UI and some clients.
+_ENGINE_ID_ALIASES: dict[str, str] = {
+    "sovits": "sovits_svc",
+    "sovits_v4": "sovits_svc",
+    "gpt_sovits": "sovits_svc",
+}
+
+
+def _normalize_engine_id(engine_id: str) -> str:
+    engine_norm = (engine_id or "").strip().lower()
+    return _ENGINE_ID_ALIASES.get(engine_norm, engine_norm)
+
 
 # Engine router for RVC
 ENGINE_AVAILABLE = False
@@ -74,6 +89,7 @@ except (ImportError, ModuleNotFoundError) as e:
 async def convert_voice(
     source_audio_id: str,
     target_speaker_model: str,
+    engine_id: str = "rvc",
     pitch_shift: int = 0,
     protect: float = 0.33,
     index_rate: float = 0.75,
@@ -99,12 +115,17 @@ async def convert_voice(
         raise HTTPException(status_code=503, detail="Engine router not available")
 
     try:
-        # Get RVC engine
-        engine = engine_router.get_engine("rvc")
+        requested_engine = (engine_id or "rvc").strip().lower()
+        engine_key = _normalize_engine_id(requested_engine)
+        if engine_key == "sovits_svc":
+            ensure_sovits(auto_download=False)
+
+        # Get conversion engine
+        engine = engine_router.get_engine(engine_key)
         if engine is None:
             raise HTTPException(
                 status_code=503,
-                detail="RVC engine is not available or failed to initialize",
+                detail=f"Conversion engine '{engine_key}' is not available or failed to initialize",
             )
 
         # Get source audio path using helper function
@@ -120,6 +141,17 @@ async def convert_voice(
                 raise HTTPException(
                     status_code=404, detail=f"Source audio not found: {source_audio_id}"
                 )
+
+        if engine_key == "sovits_svc":
+            inference_configured = bool(getattr(engine, "infer_command", None))
+            allow_passthrough = bool(getattr(engine, "allow_passthrough", False))
+            if not inference_configured and not allow_passthrough:
+                detail = (
+                    "So-VITS-SVC inference command not configured. "
+                    "Set SOVITS_SVC_INFER_COMMAND or configure "
+                    "infer_command in engine settings."
+                )
+                raise HTTPException(status_code=424, detail=detail)
 
         # Perform conversion
         output_path = tempfile.mktemp(suffix=".wav")
@@ -169,7 +201,14 @@ async def convert_voice(
             "audio_url": f"/api/rvc/audio/{audio_id}",
             "duration": duration,
             "sample_rate": 40000,
+            "engine_id": engine_key,
+            "device": getattr(engine, "device", None),
         }
+
+        if engine_key == "sovits_svc":
+            response["inference_configured"] = bool(
+                getattr(engine, "infer_command", None)
+            )
 
         if quality_metrics_dict:
             response["quality_metrics"] = quality_metrics_dict

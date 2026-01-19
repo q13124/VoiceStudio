@@ -43,9 +43,17 @@ namespace VoiceStudio.App.Converters
 
             if (value is IDictionary legacyDict)
             {
-                if (legacyDict.Contains(key))
+                try
                 {
-                    return CoerceToTargetType(legacyDict[key], targetType);
+                    if (legacyDict.Contains(key))
+                    {
+                        return CoerceToTargetType(legacyDict[key], targetType);
+                    }
+                }
+                catch
+                {
+                    // Dictionary access failed - return default
+                    return GetDefaultForTargetType(targetType);
                 }
 
                 return GetDefaultForTargetType(targetType);

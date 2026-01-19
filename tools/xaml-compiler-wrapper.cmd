@@ -53,19 +53,43 @@ echo Compiler: "%COMPILER%"
 echo Arguments: "%INPUT_JSON%" "%OUTPUT_JSON%"
 echo.
 
-echo [%date% %time%] CMD="%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" > "%REPO_ROOT%\xaml_compiler_raw.log"
-echo [%date% %time%] PWD=%CD% >> "%REPO_ROOT%\xaml_compiler_raw.log"
+set "RAW_LOG=%REPO_ROOT%\xaml_compiler_raw_%RANDOM%.log"
+echo Raw log: "%RAW_LOG%"
+echo [%date% %time%] CMD="%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" > "%RAW_LOG%"
+echo [%date% %time%] PWD=%CD% >> "%RAW_LOG%"
 
 rem Change to project directory so relative paths in input.json resolve correctly
 cd /d "%APP_ROOT%"
-echo [%date% %time%] NEW_PWD=%CD% >> "%REPO_ROOT%\xaml_compiler_raw.log"
+echo [%date% %time%] NEW_PWD=%CD% >> "%RAW_LOG%"
 
-"%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" >> "%REPO_ROOT%\xaml_compiler_raw.log" 2>&1
+rem Some environments intermittently fail to materialize output.json due to transient file locks
+rem ("The process cannot access the file because it is being used by another process.").
+rem If the compiler reports success but output.json is missing, retry a few times.
+set "MAX_RETRIES=4"
+set "RETRY_DELAY_MS=250"
+set "ATTEMPT=1"
+
+:_retry_xaml
+echo [%date% %time%] ATTEMPT=%ATTEMPT% >> "%RAW_LOG%"
+"%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" >> "%RAW_LOG%" 2>&1
 set "EXIT_CODE=%ERRORLEVEL%"
+
+if "%EXIT_CODE%"=="0" (
+  if not exist "%OUTPUT_JSON%" (
+    echo XAML compiler reported success but output.json is missing - retrying...
+    echo [%date% %time%] RETRY_MISSING_OUTPUT_JSON=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "%RAW_LOG%"
+    if %ATTEMPT% LSS %MAX_RETRIES% (
+      set /a ATTEMPT+=1
+      rem Sleep (milliseconds) via ping.
+      ping 127.0.0.1 -n 1 -w %RETRY_DELAY_MS% >nul
+      goto :_retry_xaml
+    )
+  )
+)
 
 echo.
 echo XAML compiler exit code: %EXIT_CODE%
-echo [%date% %time%] EXIT=%EXIT_CODE% >> "%REPO_ROOT%\xaml_compiler_raw.log"
+echo [%date% %time%] EXIT=%EXIT_CODE% >> "%RAW_LOG%"
 
 rem VS-0001: Some WinUI/XAML compiler builds return exit code 1 but still
 rem generate a valid output.json. Treat that as success to avoid blocking builds.
@@ -77,7 +101,7 @@ if "%EXIT_CODE%"=="1" (
       for %%F in ("%OUTPUT_JSON%") do set "OUT_DIR=%%~dpF"
       if exist "!OUT_DIR!App.g.i.cs" if exist "!OUT_DIR!MainWindow.g.i.cs" (
         echo output.json found - treating as false-positive exit code 1
-        echo [%date% %time%] FALSE_POSITIVE=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "%REPO_ROOT%\xaml_compiler_raw.log"
+        echo [%date% %time%] FALSE_POSITIVE=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "%RAW_LOG%"
         exit /b 0
       )
     )

@@ -31,16 +31,16 @@ print()
 expected = "https://router.huggingface.co"
 
 if hf_base == expected:
-    print("✅ HF_INFERENCE_API_BASE is correctly set!")
+    print("PASS: HF_INFERENCE_API_BASE is correctly set!")
 else:
-    print(f"❌ HF_INFERENCE_API_BASE is incorrect!")
+    print("FAIL: HF_INFERENCE_API_BASE is incorrect!")
     print(f"   Expected: {expected}")
     print(f"   Got: {hf_base}")
 
 if hf_endpoint == expected:
-    print("✅ HF_ENDPOINT is correctly set!")
+    print("PASS: HF_ENDPOINT is correctly set!")
 else:
-    print(f"⚠️  HF_ENDPOINT is not set (optional)")
+    print("WARN: HF_ENDPOINT is not set (optional)")
 
 print()
 print("=" * 60)
@@ -49,19 +49,19 @@ print("=" * 60)
 try:
     from huggingface_hub import InferenceClient
 
-    print("✅ huggingface_hub.InferenceClient imported successfully")
+    print("PASS: huggingface_hub.InferenceClient imported successfully")
     print("   The environment variable should be used automatically")
 
     # Try to create a client (won't actually make requests)
     try:
         client = InferenceClient()
-        print("✅ InferenceClient created successfully")
+        print("PASS: InferenceClient created successfully")
     except Exception as e:
-        print(f"⚠️  InferenceClient creation error: {e}")
+        print(f"WARN: InferenceClient creation error: {e}")
         print("   (This is OK if no model is specified)")
 
 except ImportError:
-    print("⚠️  huggingface_hub not installed")
+    print("WARN: huggingface_hub not installed")
     print("   Install with: pip install huggingface_hub>=0.36.0")
 
 print()

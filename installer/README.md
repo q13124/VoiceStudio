@@ -5,6 +5,7 @@ Complete installer solution for VoiceStudio Quantum+.
 ## Overview
 
 VoiceStudio Quantum+ uses a Windows installer to bundle:
+
 - WinUI 3 frontend application
 - Python backend with FastAPI
 - Engine manifests and core engine files
@@ -16,6 +17,7 @@ VoiceStudio Quantum+ uses a Windows installer to bundle:
 Two installer options are provided:
 
 1. **WiX Toolset** (Professional, MSI-based)
+
    - File: `VoiceStudio.wxs`
    - Requires: WiX Toolset v3.11+
    - Output: `.msi` installer
@@ -30,6 +32,7 @@ Two installer options are provided:
 ### For Building WiX Installer
 
 1. **WiX Toolset v3.11+**
+
    - Download from: https://wixtoolset.org/releases/
    - Install WiX Toolset and WiX Visual Studio Extension
 
@@ -47,6 +50,7 @@ Two installer options are provided:
 ### Application Installation
 
 **Default Location:**
+
 ```
 C:\Program Files\VoiceStudio\
 ├── App\              # Frontend application
@@ -59,6 +63,7 @@ C:\Program Files\VoiceStudio\
 ### User Data Directories
 
 **Application Data:**
+
 ```
 %APPDATA%\VoiceStudio\
 ├── settings.json
@@ -67,6 +72,7 @@ C:\Program Files\VoiceStudio\
 ```
 
 **Program Data:**
+
 ```
 %PROGRAMDATA%\VoiceStudio\
 ├── models\           # Engine models
@@ -78,11 +84,13 @@ C:\Program Files\VoiceStudio\
 ### WiX Installer
 
 **Using Visual Studio:**
+
 1. Open `installer/VoiceStudio.wixproj` in Visual Studio
 2. Build → Build Solution
 3. Output: `installer\bin\Release\VoiceStudio.msi`
 
 **Using Command Line:**
+
 ```powershell
 cd installer
 candle VoiceStudio.wxs
@@ -92,11 +100,13 @@ light VoiceStudio.wixobj -ext WixUIExtension
 ### Inno Setup Installer
 
 **Using Inno Setup Compiler:**
+
 1. Open `installer/VoiceStudio.iss` in Inno Setup Compiler
 2. Build → Compile
-3. Output: `installer\Output\VoiceStudio-Setup.exe`
+3. Output: `installer\Output\VoiceStudio-Setup-v<version>.exe`
 
 **Using Command Line:**
+
 ```powershell
 cd installer
 "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" VoiceStudio.iss
@@ -105,11 +115,13 @@ cd installer
 ### Build Script
 
 **Automated Build:**
+
 ```powershell
 .\installer\build-installer.ps1
 ```
 
 This script:
+
 - Builds the frontend application
 - Prepares backend files
 - Creates installer package
@@ -120,21 +132,25 @@ This script:
 ### Installation Components
 
 1. **Frontend Application**
+
    - WinUI 3 executable
    - DLLs and dependencies
    - Resources and themes
 
 2. **Backend**
+
    - Python API files
    - Route handlers
    - WebSocket handlers
 
 3. **Core Engine System**
+
    - Engine implementations
    - Audio utilities
    - Runtime services
 
 4. **Engine Manifests**
+
    - Audio engine manifests
    - Image engine manifests
    - Video engine manifests
@@ -158,22 +174,26 @@ This script:
 ### Dependencies
 
 **Required:**
+
 - .NET 8.0 Runtime (checked during installation)
 - Windows 10 version 1903 or later
 
 **Optional:**
+
 - Python 3.10+ (if not installed, user prompted)
 - NVIDIA GPU with CUDA (for GPU acceleration)
 
 ### Python Environment Setup
 
 The installer:
+
 1. Checks for Python 3.10+ installation
 2. If not found, prompts user to install
 3. Creates virtual environment (if needed)
 4. Installs Python packages from `backend/requirements.txt`
 
 **Python Installation:**
+
 - User can download from python.org
 - Or installer can bundle Python runtime (optional)
 
@@ -182,6 +202,7 @@ The installer:
 ### Clean System Testing
 
 **Windows 10:**
+
 1. Create clean Windows 10 VM
 2. Install .NET 8 Runtime
 3. Run installer
@@ -190,6 +211,7 @@ The installer:
 6. Test uninstallation
 
 **Windows 11:**
+
 1. Create clean Windows 11 VM
 2. Install .NET 8 Runtime
 3. Run installer
@@ -223,11 +245,13 @@ The installer:
 ### Installer Fails to Build
 
 **WiX:**
+
 - Verify WiX Toolset installed
 - Check WiX extension in Visual Studio
 - Verify all file paths exist
 
 **Inno Setup:**
+
 - Verify Inno Setup installed
 - Check file paths in script
 - Verify all source files exist
@@ -235,11 +259,13 @@ The installer:
 ### Installation Fails
 
 **Missing Dependencies:**
+
 - Install .NET 8 Runtime first
 - Install Python 3.10+ if required
 - Check Windows version compatibility
 
 **Permission Errors:**
+
 - Run installer as Administrator
 - Check antivirus software
 - Verify disk space available
@@ -247,11 +273,13 @@ The installer:
 ### Application Won't Start
 
 **Missing Python:**
+
 - Install Python 3.10+
 - Verify Python in PATH
 - Check virtual environment
 
 **Missing Dependencies:**
+
 - Run `pip install -r backend/requirements.txt`
 - Check Python packages installed
 - Verify engine models available
@@ -262,12 +290,14 @@ The installer:
 
 **WiX:**
 Edit `VoiceStudio.wxs`:
+
 ```xml
 <Directory Id="INSTALLFOLDER" Name="VoiceStudio">
 ```
 
 **Inno Setup:**
 Edit `VoiceStudio.iss`:
+
 ```ini
 DefaultDirName={pf}\VoiceStudio
 ```
@@ -293,6 +323,7 @@ Add `[Run]` sections for post-install tasks
 ### Release Package
 
 **Contents:**
+
 - `VoiceStudio-Setup-v1.0.0.exe` (or `.msi`)
 - `README.md` (installation instructions)
 - `CHANGELOG.md` (version history)
@@ -301,6 +332,7 @@ Add `[Run]` sections for post-install tasks
 ### Code Signing
 
 **Recommended:**
+
 - Sign installer with code signing certificate
 - Verify signature before distribution
 - Include signature in release notes
@@ -326,4 +358,3 @@ Add `[Run]` sections for post-install tasks
 
 **Last Updated:** 2025-01-27  
 **Version:** 1.0
-

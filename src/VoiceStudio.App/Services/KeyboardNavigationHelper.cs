@@ -102,7 +102,7 @@ namespace VoiceStudio.App.Services
                 if (transform != null)
                 {
                     var point = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
-                    return (int)(point.Y * 10000 + point.X);
+                    return (int)((point.Y * 10000) + point.X);
                 }
             }
             return 0;

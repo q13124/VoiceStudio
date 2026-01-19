@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-01-14T02:37:24.644606",
+  "workflow": "baseline_voice_workflow",
+  "steps": [
+    {
+      "step": "synthesize",
+      "status": "failed",
+      "error": "Synthesis request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))",
+      "duration_seconds": 115.26538372039795
+    }
+  ],
+  "inputs": {
+    "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+    "language": "en",
+    "synthesis": {
+      "engine": "xtts_v2",
+      "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+      "language": "en",
+      "reference_audio": "E:\\VoiceStudio\\proof_runs\\baseline_workflow_20260113-203724\\test_reference.wav"
+    }
+  },
+  "outputs": {},
+  "metrics": {},
+  "config": {
+    "engine": "xtts_v2",
+    "language": "en",
+    "reference_audio_path": "E:\\VoiceStudio\\proof_runs\\baseline_workflow_20260113-203724\\test_reference.wav"
+  }
+}

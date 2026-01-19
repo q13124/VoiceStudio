@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp-interactive": {
+      "args": ["-y", "mcp-interactive"],
+      "command": "npx"
+    }
+  }
+}

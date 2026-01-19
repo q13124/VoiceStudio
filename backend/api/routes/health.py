@@ -12,8 +12,11 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.resilience.health_check import (HealthCheckResult, HealthStatus,
-                                              get_health_checker)
+from app.core.resilience.health_check import (
+    HealthCheckResult,
+    HealthStatus,
+    get_health_checker,
+)
 
 from ..optimization import cache_response
 
@@ -53,7 +56,10 @@ def _check_gpu() -> Dict[str, Any]:
             return {
                 "status": "degraded",
                 "available": False,
-                "message": "GPU check skipped (set VOICESTUDIO_HEALTH_ENABLE_TORCH=1 to enable torch-based GPU detection)",
+                "message": (
+                    "GPU check skipped (set VOICESTUDIO_HEALTH_ENABLE_TORCH=1 "
+                    "to enable torch-based GPU detection)"
+                ),
             }
 
         import torch  # type: ignore
@@ -86,9 +92,10 @@ def _check_gpu() -> Dict[str, Any]:
 def _check_engines() -> Dict[str, Any]:
     """Check engine availability with detailed information (enhanced)."""
     try:
-        # Safe engine availability check: enumerate engine manifests without importing engine modules.
-        # Importing full engine packages can hard-crash the process on machines with incompatible
-        # native dependencies (torch/torchvision/etc.).
+        # Safe engine availability check: enumerate engine manifests
+        # without importing engine modules. Importing full engine packages
+        # can hard-crash the process on machines with incompatible native
+        # dependencies (torch/torchvision/etc.).
         import json
         from pathlib import Path
 
@@ -307,8 +314,10 @@ def _get_resource_usage() -> Dict[str, Any]:
     # These imports can hard-crash the process on some machines due to DLL/ABI mismatches.
     if os.getenv("VOICESTUDIO_HEALTH_SAFE_MODE", "1") not in ("0", "false", "FALSE"):
         try:
-            from backend.api.validation_optimizer import (get_cache_stats,
-                                                          get_validation_stats)
+            from backend.api.validation_optimizer import (
+                get_cache_stats,
+                get_validation_stats,
+            )
 
             resources["validation"] = {
                 "cache_stats": get_cache_stats(),
@@ -343,8 +352,10 @@ def _get_resource_usage() -> Dict[str, Any]:
 
     # Validation optimizer statistics
     try:
-        from backend.api.validation_optimizer import (get_cache_stats,
-                                                      get_validation_stats)
+        from backend.api.validation_optimizer import (
+            get_cache_stats,
+            get_validation_stats,
+        )
 
         resources["validation"] = {
             "cache_stats": get_cache_stats(),
@@ -386,8 +397,9 @@ def _get_resource_usage() -> Dict[str, Any]:
 
     # API endpoint performance metrics
     try:
-        from backend.api.middleware.performance_monitoring import \
-            get_performance_middleware
+        from backend.api.middleware.performance_monitoring import (
+            get_performance_middleware,
+        )
 
         middleware = get_performance_middleware()
         if middleware:
@@ -528,9 +540,9 @@ def get_performance_middleware():
     Exposed as a function so unit tests can patch it without importing middleware modules.
     """
     try:
-        from backend.api.middleware.performance_monitoring import \
-            get_performance_middleware as \
-            _get_performance_middleware  # type: ignore
+        from backend.api.middleware.performance_monitoring import (
+            get_performance_middleware as _get_performance_middleware,
+        )  # type: ignore
 
         return _get_performance_middleware()
     except Exception:
@@ -596,7 +608,7 @@ def preflight_check() -> Dict[str, Any]:
             "model_paths.base": base_path,
             "expected_model_root": model_root,
             "consistent_with_model_root": (
-                os.path.abspath(str(base_path)) == os.path.abspath(str(model_root))
+                (os.path.abspath(str(base_path)) == os.path.abspath(str(model_root)))
                 if base_path
                 else False
             ),
@@ -611,7 +623,11 @@ def preflight_check() -> Dict[str, Any]:
         checks["xtts_v2"] = ensure_xtts(auto_download=False)
     except HTTPException as exc:
         detail = exc.detail
-        message = detail.get("message") if isinstance(detail, dict) else None
+        message = None
+        if isinstance(detail, dict):
+            msg = detail.get("message")
+            if isinstance(msg, str):
+                message = msg
         checks["xtts_v2"] = {
             "ok": False,
             "downloaded": False,
@@ -630,7 +646,38 @@ def preflight_check() -> Dict[str, Any]:
             "status_code": 500,
         }
 
-    # Native tool discovery (report-only; hardening handled in dedicated task)
+    # So-VITS-SVC preflight (checkpoint + config)
+    try:
+        from backend.services.model_preflight import ensure_sovits
+
+        checks["sovits_svc"] = ensure_sovits(auto_download=False)
+    except HTTPException as exc:
+        detail = exc.detail
+        message = None
+        if isinstance(detail, dict):
+            msg = detail.get("message")
+            if isinstance(msg, str):
+                message = msg
+        checks["sovits_svc"] = {
+            "ok": False,
+            "downloaded": False,
+            "message": message or str(detail),
+            "status_code": exc.status_code,
+        }
+        if isinstance(detail, dict):
+            for key, value in detail.items():
+                if key != "message":
+                    checks["sovits_svc"][key] = value
+    except Exception as e:
+        checks["sovits_svc"] = {
+            "ok": False,
+            "downloaded": False,
+            "message": f"{type(e).__name__}: {e}",
+            "status_code": 500,
+        }
+
+    # Native tool discovery (report-only; hardening handled in
+    # dedicated task)
     ffmpeg_env = os.getenv("VOICESTUDIO_FFMPEG_PATH")
     ffmpeg = (
         ffmpeg_env
@@ -643,7 +690,10 @@ def preflight_check() -> Dict[str, Any]:
         "message": (
             "ffmpeg found"
             if ffmpeg
-            else "ffmpeg not found (set VOICESTUDIO_FFMPEG_PATH or install ffmpeg on PATH)"
+            else (
+                "ffmpeg not found (set VOICESTUDIO_FFMPEG_PATH or "
+                "install ffmpeg on PATH)"
+            )
         ),
     }
 
@@ -668,7 +718,7 @@ def preflight_check() -> Dict[str, Any]:
 
 
 @router.get("/resources")
-@cache_response(ttl=5)  # Cache for 5 seconds (resource usage changes frequently)
+@cache_response(ttl=5)  # Cache for 5 seconds
 def resource_usage() -> Dict[str, Any]:
     """
     Get detailed resource usage information.
@@ -693,7 +743,7 @@ def resource_usage() -> Dict[str, Any]:
 
 
 @router.get("/engines")
-@cache_response(ttl=10)  # Cache for 10 seconds (engine health changes moderately)
+@cache_response(ttl=10)  # Cache for 10 seconds
 def engine_health() -> Dict[str, Any]:
     """
     Get detailed engine availability and health information.
@@ -732,12 +782,13 @@ def performance_metrics() -> Dict[str, Any]:
             return {
                 "timestamp": datetime.utcnow().isoformat(),
                 "enabled": False,
-                "message": "Performance monitoring middleware not initialized",
+                "message": ("Performance monitoring middleware not initialized"),
             }
     except Exception as e:
         logger.error(f"Failed to get performance metrics: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get performance metrics: {str(e)}"
+            status_code=500,
+            detail=f"Failed to get performance metrics: {str(e)}",
         )
 
 

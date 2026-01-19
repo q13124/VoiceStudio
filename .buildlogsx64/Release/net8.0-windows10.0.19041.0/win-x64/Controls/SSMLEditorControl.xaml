@@ -1,0 +1,125 @@
+<UserControl x:Class="VoiceStudio.App.Controls.SSMLEditorControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!-- Editor with Line Numbers -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <!-- Line Numbers -->
+            <Border Grid.Column="0"
+                Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                BorderThickness="0,0,1,0"
+                Width="50"
+                Visibility="{x:Bind LineNumbersVisibility, Mode=OneWay}">
+                <ScrollViewer x:Name="LineNumberScrollViewer"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollMode="Disabled"
+                    HorizontalScrollMode="Disabled">
+                    <TextBlock x:Name="LineNumbersText"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                        TextAlignment="Right"
+                        Padding="4,0,4,0"
+                        LineHeight="20"
+                        LineStackingStrategy="BlockLineHeight" />
+                </ScrollViewer>
+            </Border>
+            <!-- SSML Editor -->
+            <Grid Grid.Column="1">
+                <ScrollViewer x:Name="EditorScrollViewer"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Auto"
+                    ZoomMode="Disabled">
+                    <RichEditBox x:Name="SSMLEditor"
+                        TextWrapping="NoWrap"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        AcceptsReturn="True"
+                        IsSpellCheckEnabled="False"
+                        IsTextPredictionEnabled="False"
+                        TextChanged="SSMLEditor_TextChanged"
+                        SelectionChanged="SSMLEditor_SelectionChanged"
+                        KeyDown="SSMLEditor_KeyDown"
+                        GotFocus="SSMLEditor_GotFocus"
+                        LostFocus="SSMLEditor_LostFocus"
+                        AutomationProperties.Name="SSML editor"
+                        AutomationProperties.HelpText="Edit SSML markup with syntax highlighting and auto-completion" />
+                </ScrollViewer>
+                <!-- Auto-completion Popup -->
+                <Popup x:Name="AutoCompletePopup"
+                    IsLightDismissEnabled="True"
+                    HorizontalOffset="0"
+                    VerticalOffset="0">
+                    <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                        BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        MaxHeight="200"
+                        MinWidth="250">
+                        <ListView x:Name="AutoCompleteList"
+                            SelectionMode="Single"
+                            ItemsSource="{x:Bind AutoCompleteItems, Mode=OneWay}"
+                            ItemClick="AutoCompleteList_ItemClick"
+                            KeyDown="AutoCompleteList_KeyDown">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                            Text="{Binding DisplayText}"
+                                            Style="{StaticResource VSQ.Text.Body}" />
+                                        <TextBlock Grid.Column="1"
+                                            Text="{Binding Description}"
+                                            Style="{StaticResource VSQ.Text.Caption}"
+                                            Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                            Margin="8,0,0,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Border>
+                </Popup>
+            </Grid>
+        </Grid>
+        <!-- Status Bar -->
+        <Border Grid.Row="1"
+            Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="8,4"
+            Visibility="{x:Bind StatusBarVisibility, Mode=OneWay}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                    x:Name="StatusText"
+                    Text="{x:Bind StatusMessage, Mode=OneWay}"
+                    Style="{StaticResource VSQ.Text.Caption}"
+                    Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{x:Bind LineCount, Mode=OneWay}"
+                        Style="{StaticResource VSQ.Text.Caption}"
+                        Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                    <TextBlock Text="{x:Bind ColumnCount, Mode=OneWay}"
+                        Style="{StaticResource VSQ.Text.Caption}"
+                        Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

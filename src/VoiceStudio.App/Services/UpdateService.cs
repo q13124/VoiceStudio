@@ -236,7 +236,7 @@ namespace VoiceStudio.App.Services
                             {
                                 _downloadProgress = (double)bytesDownloaded / totalBytes;
                                 var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-                                var speedMbps = elapsedSeconds > 0 ? (bytesDownloaded * 8) / (elapsedSeconds * 1_000_000) : 0;
+                                var speedMbps = elapsedSeconds > 0 ? bytesDownloaded * 8 / (elapsedSeconds * 1_000_000) : 0;
                                 
                                 progressCallback?.Invoke(_downloadProgress);
                                 OnDownloadProgressChanged(_downloadProgress, bytesDownloaded, totalBytes, speedMbps);

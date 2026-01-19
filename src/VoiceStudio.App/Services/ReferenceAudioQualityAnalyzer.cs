@@ -92,14 +92,14 @@ namespace VoiceStudio.App.Services
             // Factor in MOS score if available (1-5 scale)
             if (metrics.TryGetValue("mos", out var mos) && mos > 0)
             {
-                var mosNormalized = (mos / 5.0) * 100.0;
+                var mosNormalized = mos / 5.0 * 100.0;
                 score = (score * 0.4) + (mosNormalized * 0.6); // Weight MOS more
             }
 
             // Factor in SNR if available (higher is better, typically 0-60dB)
             if (metrics.TryGetValue("snr", out var snr))
             {
-                var snrNormalized = Math.Min(100.0, Math.Max(0.0, (snr / 60.0) * 100.0));
+                var snrNormalized = Math.Min(100.0, Math.Max(0.0, snr / 60.0 * 100.0));
                 score = (score * 0.7) + (snrNormalized * 0.3);
             }
 
@@ -224,7 +224,7 @@ namespace VoiceStudio.App.Services
             // Lower artifacts = clearer
             if (metrics.TryGetValue("artifact_score", out var artifactScore))
             {
-                clarity *= (1.0 - artifactScore);
+                clarity *= 1.0 - artifactScore;
             }
 
             // Higher MOS = clearer
@@ -264,7 +264,7 @@ namespace VoiceStudio.App.Services
             // Lower artifact score = more consistent
             if (metrics.TryGetValue("artifact_score", out var artifactScore))
             {
-                consistency *= (1.0 - artifactScore * 0.5);
+                consistency *= 1.0 - (artifactScore * 0.5);
             }
 
             // Higher naturalness = more consistent

@@ -58,7 +58,7 @@
       "headers": {
         "Authorization": "Token om-{YOUR OPENMEMORY API KEY}"
       },
-      "url": "https://api.openmemory.dev/mcp-stream?client=cursor"
+      "url": "http://api.openmemory.dev/mcp-stream?client=cursor"
     },
     "supadata": {
       "args": [

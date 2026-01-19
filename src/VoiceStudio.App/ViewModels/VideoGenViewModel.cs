@@ -523,12 +523,12 @@ namespace VoiceStudio.App.ViewModels
 
     private void CalculateQualityMetricsFromProperties(GeneratedVideo video)
     {
-      var resolutionScore = Math.Min(100.0, ((video.Width * video.Height) / (1920.0 * 1080.0)) * 100.0);
-      var fpsScore = Math.Min(100.0, (video.Fps / 60.0) * 100.0);
-      var bitrateScore = Math.Min(100.0, (Bitrate / 20.0) * 100.0);
+      var resolutionScore = Math.Min(100.0, video.Width * video.Height / (1920.0 * 1080.0) * 100.0);
+      var fpsScore = Math.Min(100.0, video.Fps / 60.0 * 100.0);
+      var bitrateScore = Math.Min(100.0, Bitrate / 20.0 * 100.0);
 
       VideoClarity = (resolutionScore * 0.5) + (fpsScore * 0.3) + (bitrateScore * 0.2);
-      VideoCompression = Math.Max(0.0, Math.Min(100.0, 100.0 - (Bitrate / 20.0) * 50.0));
+      VideoCompression = Math.Max(0.0, Math.Min(100.0, 100.0 - (Bitrate / 20.0 * 50.0)));
     }
 
     private class VideoQualityMetricsResponse

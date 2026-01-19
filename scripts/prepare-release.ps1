@@ -2,7 +2,7 @@
 # Prepares the project for release: version tagging, changelog, distribution package
 
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Version,
     
     [string]$ReleaseNotes = "",
@@ -54,7 +54,7 @@ if (-not $SkipBuild) {
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed"
         }
-        Write-Host "✓ Build successful" -ForegroundColor Green
+        Write-Host "[OK] Build successful" -ForegroundColor Green
     }
     catch {
         Write-Error "Build failed: $_"
@@ -63,7 +63,8 @@ if (-not $SkipBuild) {
     finally {
         Pop-Location
     }
-} else {
+}
+else {
     Write-Host "Skipping build (--SkipBuild specified)" -ForegroundColor Yellow
 }
 
@@ -75,8 +76,9 @@ if (-not $SkipInstaller) {
         Write-Error "Installer creation failed"
         exit 1
     }
-    Write-Host "✓ Installer created" -ForegroundColor Green
-} else {
+    Write-Host "[OK] Installer created" -ForegroundColor Green
+}
+else {
     Write-Host "Skipping installer creation (--SkipInstaller specified)" -ForegroundColor Yellow
 }
 
@@ -88,7 +90,7 @@ $InstallerSource = Join-Path "$RootDir\installer\Output" "VoiceStudio-Setup-v$Ve
 $InstallerDest = Join-Path $DistDir "VoiceStudio-Setup-v$Version.exe"
 if (Test-Path $InstallerSource) {
     Copy-Item $InstallerSource $InstallerDest -Force
-    Write-Host "✓ Installer copied to distribution package" -ForegroundColor Green
+    Write-Host "[OK] Installer copied to distribution package" -ForegroundColor Green
 }
 
 # Copy documentation
@@ -103,22 +105,22 @@ foreach ($docFile in $DocsFiles) {
     $sourcePath = Join-Path $RootDir $docFile
     if (Test-Path $sourcePath) {
         Copy-Item $sourcePath (Join-Path $DistDir $docFile) -Force
-        Write-Host "✓ $docFile copied" -ForegroundColor Green
+        Write-Host "[OK] $docFile copied" -ForegroundColor Green
     }
 }
 
 # Create release package info
 $packageInfo = @{
-    version = $Version
+    version     = $Version
     releaseDate = (Get-Date -Format "yyyy-MM-dd")
-    installer = "VoiceStudio-Setup-v$Version.exe"
-    files = @()
+    installer   = "VoiceStudio-Setup-v$Version.exe"
+    files       = @()
 }
 
 Get-ChildItem $DistDir | ForEach-Object {
     $packageInfo.files += @{
-        name = $_.Name
-        size = $_.Length
+        name   = $_.Name
+        size   = $_.Length
         sizeMB = [math]::Round($_.Length / 1MB, 2)
     }
 }
@@ -136,12 +138,14 @@ if ($CreateTag) {
     
     git tag -a $tagName -m $tagMessage
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "✓ Git tag created: $tagName" -ForegroundColor Green
+        Write-Host "[OK] Git tag created: $tagName" -ForegroundColor Green
         Write-Host "  Note: Push tag with: git push origin $tagName" -ForegroundColor Yellow
-    } else {
+    }
+    else {
         Write-Warning "Failed to create Git tag (may already exist)"
     }
-} else {
+}
+else {
     Write-Host "Skipping Git tag creation (use --CreateTag to create tag)" -ForegroundColor Yellow
 }
 

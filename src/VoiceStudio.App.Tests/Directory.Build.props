@@ -1,4 +1,9 @@
 <Project>
+  <!-- This project subtree has its own Directory.Build.props, which shadows the repo root props.
+       Import the repo root props so shared version pins (e.g. MicrosoftWindowsAppSDKVersion)
+       remain consistent across the solution. -->
+  <Import Project="..\..\Directory.Build.props" Condition="Exists('..\..\Directory.Build.props')" />
+
   <!-- Suppress RuntimeIdentifier errors for WindowsAppSDK in .NET 10 SDK -->
   <PropertyGroup>
     <_SuppressWinRTError>true</_SuppressWinRTError>

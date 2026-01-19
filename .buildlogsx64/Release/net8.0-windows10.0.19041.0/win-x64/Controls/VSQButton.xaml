@@ -1,0 +1,37 @@
+<UserControl
+    x:Class="VoiceStudio.App.Controls.VSQButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Button
+        x:Name="ButtonControl"
+        Style="{StaticResource VSQ.Button.HoverStyle}"
+        MinWidth="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
+        MinHeight="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
+        Padding="{StaticResource VSQ.Spacing.Medium}"
+        CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
+        FocusVisualPrimaryBrush="{StaticResource VSQ.Focus.BorderBrush}"
+        FocusVisualPrimaryThickness="{StaticResource VSQ.Focus.BorderThickness}"
+        Click="ButtonControl_Click">
+        <Button.Content>
+            <Grid>
+                <StackPanel x:Name="ContentStack" Orientation="Horizontal"
+                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                    <ContentPresenter x:Name="ButtonContent"
+                        Content="{x:Bind Content, Mode=OneWay}" />
+                </StackPanel>
+                <ProgressRing
+                    x:Name="LoadingSpinner"
+                    Width="16"
+                    Height="16"
+                    Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
+                    IsActive="False"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Grid>
+        </Button.Content>
+    </Button>
+</UserControl>

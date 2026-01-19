@@ -373,12 +373,12 @@ namespace VoiceStudio.App.Views.Panels
 
         public string Similarity => 
             QualityMetrics?.Similarity.HasValue == true 
-                ? $"{(QualityMetrics.Similarity.Value * 100):F1}%" 
+                ? $"{QualityMetrics.Similarity.Value * 100:F1}%" 
                 : "N/A";
 
         public string Naturalness => 
             QualityMetrics?.Naturalness.HasValue == true 
-                ? $"{(QualityMetrics.Naturalness.Value * 100):F1}%" 
+                ? $"{QualityMetrics.Naturalness.Value * 100:F1}%" 
                 : "N/A";
 
         public string OverallQuality => 

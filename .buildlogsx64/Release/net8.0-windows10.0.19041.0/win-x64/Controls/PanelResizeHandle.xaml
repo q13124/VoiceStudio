@@ -1,0 +1,10 @@
+<UserControl x:Class="VoiceStudio.App.Controls.PanelResizeHandle"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
+  <Border x:Name="ResizeHandle"
+    Background="Transparent"
+    Width="4"
+    MinWidth="4"
+    MinHeight="4" />
+</UserControl>

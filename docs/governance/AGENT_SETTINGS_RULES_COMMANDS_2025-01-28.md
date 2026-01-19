@@ -1,4 +1,5 @@
 # Agent Settings - Rules and Commands
+
 ## Complete Content for Cursor Agent Settings Tab
 
 **Date:** 2025-01-28  
@@ -355,7 +356,8 @@ UI Specification: docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md
 - When workflow changes
 - When UI requirements change
 
-### How to Update:
+### How to Update
+
 1. Update this document
 2. Update Agent Settings in Cursor
 3. Update system prompts
@@ -366,6 +368,7 @@ UI Specification: docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md
 ## ✅ CHECKLIST
 
 **Before Starting Work:**
+
 - [ ] Rules pasted into Agent Settings → Rules tab
 - [ ] Commands pasted into Agent Settings → Commands tab
 - [ ] Settings saved

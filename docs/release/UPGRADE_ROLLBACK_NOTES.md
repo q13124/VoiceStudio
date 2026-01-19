@@ -69,7 +69,7 @@
 
    - Control Panel → Programs → VoiceStudio Quantum+
    - Click "Uninstall"
-   - **Important:** Choose "Keep user data" when prompted
+   - **Important:** User data is preserved by default (installer/uninstaller does not prompt during uninstall)
    - User data in `%APPDATA%\VoiceStudio\` and `%PROGRAMDATA%\VoiceStudio\` is preserved
 
 2. **Install Previous Version**

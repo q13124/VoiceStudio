@@ -244,7 +244,7 @@ namespace VoiceStudio.App.ViewModels
             var maxSize = SelectedMediaType == "image" ? 500 * 1024 * 1024L : 2L * 1024 * 1024 * 1024;
             if (fileInfo.Length > maxSize)
             {
-                ErrorMessage = ResourceHelper.FormatString("Upscaling.FileSizeExceeded", (maxSize / (1024.0 * 1024.0)));
+                ErrorMessage = ResourceHelper.FormatString("Upscaling.FileSizeExceeded", maxSize / (1024.0 * 1024.0));
                 return;
             }
 
@@ -321,7 +321,7 @@ namespace VoiceStudio.App.ViewModels
                 // Create progress tracking stream
                 var progressStream = new ProgressStream(fileStream, (bytesRead, totalBytes) =>
                 {
-                    UploadProgress = (bytesRead / (double)totalBytes) * 100.0;
+                    UploadProgress = bytesRead / (double)totalBytes * 100.0;
                 });
                 
                 using var content = new MultipartFormDataContent();

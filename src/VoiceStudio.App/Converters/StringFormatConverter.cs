@@ -12,9 +12,17 @@ namespace VoiceStudio.App.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, string language)
         {
-            if (parameter is string format)
+            if (parameter is string format && !string.IsNullOrWhiteSpace(format))
             {
-                return string.Format(CultureInfo.InvariantCulture, format, value ?? string.Empty);
+                try
+                {
+                    return string.Format(CultureInfo.InvariantCulture, format, value ?? string.Empty);
+                }
+                catch (FormatException)
+                {
+                    // Invalid format string - return value as string instead
+                    return value?.ToString() ?? string.Empty;
+                }
             }
             return value?.ToString() ?? string.Empty;
         }

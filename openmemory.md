@@ -65,6 +65,9 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
     `/api/voice/audio/{audio_id}`.
   - XTTS quality metrics now include `voice_profile_match` (from reference audio) in
     `quality_metrics` alongside artifacts/clicks/distortion when available.
+- **RVC conversion**: `backend/api/routes/rvc.py`
+  - Normalizes So-VITS-SVC engine IDs (`sovits`, `sovits_v4`, `gpt_sovits` -> `sovits_svc`).
+  - Returns HTTP 424 when So-VITS-SVC inference is not configured (unless passthrough is enabled).
 - **Wizard routes**: `backend/api/routes/voice_cloning_wizard.py`
   - Prefix: `/api/voice/clone/wizard` (used by
     `src/VoiceStudio.App/ViewModels/VoiceCloningWizardViewModel.cs`).
@@ -73,6 +76,14 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   - Wizard + quick clone ViewModels normalize profile names and use local copies of nullable inputs before API calls.
   - Real-time converter and quality optimization ViewModels now use local session/profile IDs for backend calls.
   - Wizard Step 4 binds quality metrics via a nested DataContext to avoid XamlCompiler failures on dotted bindings.
+
+## Backend inspection + image sampler
+
+- **Image sampler**: `backend/api/routes/img_sampler.py` now returns explicit HTTP errors when image generation
+  is unavailable or output files are missing; it no longer emits fallback images.
+- **Model inspection**: `backend/api/routes/model_inspect.py` now returns explicit status payloads when models
+  or activations are unavailable (`model_available`, `activations_available`, `message`) and raises HTTP 503/500
+  when the cache or inspection flow is unavailable.
 
 ## Key enforcement hooks
 
@@ -84,6 +95,11 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **So-VITS-SVC**: `app/core/engines/sovits_svc_engine.py` now supports external inference via
   `SOVITS_SVC_INFER_COMMAND` (or engine config `infer_command`) with optional `infer_workdir`
   and `allow_passthrough`.
+- **So-VITS-SVC cleanup**: conversion now tracks temporary input/output paths explicitly and logs cleanup
+  failures instead of silently ignoring them.
+- **So-VITS-SVC preflight**: `/api/health/preflight` now reports `sovits_svc` status alongside XTTS.
+- **So-VITS-SVC proof**: `scripts/sovits_svc_conversion_proof.py` auto-resolves backend ports and blocks
+  early when So-VITS-SVC inference is not configured.
 - **Voice engines**: fallback `EngineProtocol` implementations in voice TTS engines now return
   explicit defaults instead of empty bodies to avoid incomplete method stubs.
 - **Engine batch metrics**: engine batch helpers now log when performance metrics are unavailable

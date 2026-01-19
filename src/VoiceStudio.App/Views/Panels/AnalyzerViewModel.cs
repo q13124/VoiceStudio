@@ -363,7 +363,7 @@ namespace VoiceStudio.App.Views.Panels
                                 var binCount = AudioOrbsData.Magnitudes.Count;
                                 for (int i = 0; i < binCount; i++)
                                 {
-                                    var frequency = (i / (float)binCount) * nyquist;
+                                    var frequency = i / (float)binCount * nyquist;
                                     AudioOrbsData.Frequencies.Add(frequency);
                                 }
                             }

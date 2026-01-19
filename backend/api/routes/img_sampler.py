@@ -8,13 +8,9 @@ for diffusion models (DDIM, Euler, etc.).
 import base64
 import logging
 import os
-import tempfile
-import uuid
-from io import BytesIO
-from typing import Dict, Optional
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException
-from PIL import Image
 
 from ..models_additional import ImgSamplerRequest
 
@@ -102,54 +98,76 @@ async def render(req: ImgSamplerRequest) -> dict:
             image_id = gen_result.image_id
             image_path = gen_result.image_path
 
-            if image_path and os.path.exists(image_path):
-                # Read image and convert to base64
-                with open(image_path, "rb") as f:
-                    image_data = f.read()
-                    image_base64 = base64.b64encode(image_data).decode("utf-8")
-                    mime_type = "image/png"
-                    if image_path.lower().endswith(".jpg") or image_path.lower().endswith(
-                        ".jpeg"
-                    ):
-                        mime_type = "image/jpeg"
-                    elif image_path.lower().endswith(".webp"):
-                        mime_type = "image/webp"
-
-                    data_url = f"data:{mime_type};base64,{image_base64}"
-
-                    logger.info(
-                        f"Image sampled: prompt='{prompt[:50]}...', "
-                        f"sampler={sampler}, image_id={image_id}"
-                    )
-
-                    return {
-                        "image": data_url,
-                        "image_id": image_id,
-                        "sampler": sampler,
-                        "prompt": prompt,
-                    }
-            else:
-                # Fallback: create fallback image when generation unavailable
-                logger.warning(
-                    f"Image generation returned no path, "
-                    f"creating fallback image for sampler={sampler}"
+            if not image_path:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "Image generation returned no output path. "
+                        "Ensure the image generation engine is configured and running."
+                    ),
                 )
-                return _create_placeholder_image(prompt, sampler)
+            if not os.path.exists(image_path):
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "Image generation output file was not found on disk. "
+                        "Check engine logs and storage permissions."
+                    ),
+                )
 
-        except ImportError:
-            # Image generation not available, create fallback image
+            # Read image and convert to base64
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+                image_base64 = base64.b64encode(image_data).decode("utf-8")
+                mime_type = "image/png"
+                if image_path.lower().endswith(".jpg") or image_path.lower().endswith(
+                    ".jpeg"
+                ):
+                    mime_type = "image/jpeg"
+                elif image_path.lower().endswith(".webp"):
+                    mime_type = "image/webp"
+
+                data_url = f"data:{mime_type};base64,{image_base64}"
+
+                logger.info(
+                    f"Image sampled: prompt='{prompt[:50]}...', "
+                    f"sampler={sampler}, image_id={image_id}"
+                )
+
+                return {
+                    "image": data_url,
+                    "image_id": image_id,
+                    "sampler": sampler,
+                    "prompt": prompt,
+                }
+
+        except HTTPException:
+            raise
+        except ImportError as exc:
+            # Image generation not available
             logger.warning(
-                "Image generation engine not available, "
-                "creating fallback image"
+                "Image generation engine not available: %s",
+                exc,
             )
-            return _create_placeholder_image(prompt, sampler)
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Image generation engine not available. "
+                    "Install image engine dependencies and enable image generation routes."
+                ),
+            ) from exc
         except Exception as e:
             logger.error(
-                f"Image generation failed: {e}, creating fallback image",
+                f"Image generation failed: {e}",
                 exc_info=True,
             )
-            # Fallback to fallback image on error
-            return _create_placeholder_image(prompt, sampler)
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "Image generation failed. "
+                    "Check the image engine logs for details."
+                ),
+            ) from e
 
     except HTTPException:
         raise
@@ -158,100 +176,6 @@ async def render(req: ImgSamplerRequest) -> dict:
         raise HTTPException(
             status_code=500, detail=f"Image sampling failed: {str(e)}"
         ) from e
-
-
-def _create_placeholder_image(prompt: str, sampler: str) -> dict:
-    """
-    Create a fallback image when generation is not available.
-    Generates a deterministic gradient image with text overlay.
-
-    Args:
-        prompt: Image prompt
-        sampler: Sampler name
-
-    Returns:
-        Dictionary with fallback image as base64 data URL
-    """
-    try:
-        import numpy as np
-
-        # Create a simple placeholder image
-        width, height = 512, 512
-        # Create gradient background
-        img_array = np.zeros((height, width, 3), dtype=np.uint8)
-
-        # Create a simple gradient
-        for y in range(height):
-            for x in range(width):
-                img_array[y, x] = [
-                    int(255 * (x / width)),
-                    int(255 * (y / height)),
-                    int(255 * 0.5),
-                ]
-
-        # Convert to PIL Image
-        img = Image.fromarray(img_array)
-
-        # Add text overlay (if PIL supports it)
-        try:
-            from PIL import ImageDraw, ImageFont
-
-            draw = ImageDraw.Draw(img)
-            # Try to use default font
-            try:
-                font = ImageFont.truetype("arial.ttf", 24)
-            except Exception:
-                font = ImageFont.load_default()
-
-            # Draw prompt text (truncated)
-            text = f"Sampler: {sampler}\n{prompt[:40]}..."
-            draw.text(
-                (10, 10),
-                text,
-                fill=(255, 255, 255),
-                font=font,
-            )
-        except Exception:
-            # If text rendering fails, just use gradient
-            ...
-
-        # Convert to base64
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        image_data = buffer.getvalue()
-        image_base64 = base64.b64encode(image_data).decode("utf-8")
-        data_url = f"data:image/png;base64,{image_base64}"
-
-        # Generate image ID
-        image_id = f"sampled_{uuid.uuid4().hex[:8]}"
-
-        logger.info(
-            f"Created fallback image: sampler={sampler}, "
-            f"image_id={image_id}"
-        )
-
-        return {
-            "image": data_url,
-            "image_id": image_id,
-            "sampler": sampler,
-            "prompt": prompt,
-            "generated": False,
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to create fallback image: {e}")
-        # Ultimate fallback: return empty base64 image
-        # 1x1 transparent PNG
-        empty_png = (
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-        )
-        return {
-            "image": f"data:image/png;base64,{empty_png}",
-            "image_id": f"sampled_{uuid.uuid4().hex[:8]}",
-            "sampler": sampler,
-            "prompt": prompt,
-            "generated": False,
-        }
 
 
 @router.get("/samplers")

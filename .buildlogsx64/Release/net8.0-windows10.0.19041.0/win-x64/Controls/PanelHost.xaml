@@ -1,0 +1,162 @@
+<UserControl x:Class="VoiceStudio.App.Controls.PanelHost"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls">
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <!-- Header -->
+            <RowDefinition Height="*" />
+            <!-- Body -->
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <!-- Content area -->
+            <ColumnDefinition Width="Auto" />
+            <!-- Resize handle column -->
+        </Grid.ColumnDefinitions>
+        <!-- Resize Handles -->
+        <!-- Right resize handle (for horizontal resizing) -->
+        <controls:PanelResizeHandle Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Right"
+            VerticalAlignment="Stretch" ResizeDirection="Horizontal" x:Name="RightResizeHandle" />
+        <!-- Bottom resize handle (for vertical resizing) -->
+        <controls:PanelResizeHandle Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch"
+            VerticalAlignment="Bottom" ResizeDirection="Vertical" x:Name="BottomResizeHandle" />
+        <!-- Header bar -->
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{StaticResource VSQ.PanelHost.HeaderBackgroundBrush}" CornerRadius="{StaticResource VSQ.CornerRadius.PanelHeader}"
+            Padding="8,0,8,0" x:Name="HeaderBorder">
+            <Grid x:Name="HeaderGrid" CanDrag="True" DragStarting="HeaderGrid_DragStarting"
+                DragOver="HeaderGrid_DragOver" Drop="HeaderGrid_Drop"
+                DragLeave="HeaderGrid_DragLeave">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" x:Name="PanelIconTextBlock" Text="📋"
+                    VerticalAlignment="Center"
+                    FontSize="16" Margin="0,0,8,0" AutomationProperties.Name="Panel Icon" />
+                <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" x:Name="PanelTitleTextBlock"
+                        VerticalAlignment="Center"
+                        Text="Panel" FontWeight="SemiBold" AutomationProperties.Name="Panel Title" />
+                    <!-- Quality Badge -->
+                    <controls:QualityBadgeControl Grid.Column="1" x:Name="QualityBadge"
+                        Margin="8,0,0,0" Visibility="{x:Bind QualityBadgeVisibility, Mode=OneWay}"
+                        QualityMetrics="{x:Bind QualityMetrics, Mode=OneWay}" />
+                </Grid>
+                <!-- Context-Sensitive Action Bar (IDEA 2) -->
+                <StackPanel x:Name="ActionBar" Grid.Column="2" Orientation="Horizontal"
+                    VerticalAlignment="Center" Spacing="4" Margin="8,0,8,0" Visibility="Collapsed" />
+                <!-- Panel Actions (Pop out, Collapse) -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
+                    Spacing="4">
+                    <Button x:Name="PopOutButton" Content="▢" Width="24" Height="24"
+                        ToolTipService.ToolTip="Pop out panel"
+                        AutomationProperties.Name="Pop out panel"
+                        Style="{StaticResource VSQ.Button.FocusStyle}" />
+                    <Button x:Name="CollapseButton" Content="–" Width="24" Height="24"
+                        ToolTipService.ToolTip="Collapse panel"
+                        AutomationProperties.Name="Collapse panel" Click="CollapseButton_Click"
+                        Style="{StaticResource VSQ.Button.FocusStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <!-- Body -->
+        <Border Grid.Row="1" Grid.ColumnSpan="2" x:Name="PanelBody" CornerRadius="{StaticResource VSQ.CornerRadius.PanelBody}"
+            Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+            BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1">
+            <Grid>
+                <!-- Panel Content -->
+                <ContentPresenter x:Name="PanelContent"
+                    Content="{x:Bind Content, Mode=OneWay}"
+                    Opacity="1" />
+                <!-- Loading Overlay -->
+                <controls:LoadingOverlay x:Name="LoadingOverlay"
+                    IsLoading="{x:Bind IsLoading, Mode=TwoWay}"
+                    LoadingMessage="{x:Bind LoadingMessage, Mode=TwoWay}" />
+            </Grid>
+        </Border>
+        <!-- Drop Zone Indicators (shown during drag) -->
+        <Grid x:Name="DropZoneOverlay" Grid.RowSpan="2" Grid.ColumnSpan="2" Visibility="Collapsed"
+            IsHitTestVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <!-- Left Drop Zone -->
+            <Border x:Name="LeftDropZone" Grid.Column="0" Grid.RowSpan="2" Width="120"
+                Background="#4000FFFF" BorderBrush="#FF00FFFF" BorderThickness="3" Opacity="0"
+                CornerRadius="8,0,0,8">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="◀" FontSize="24" Foreground="White"
+                        HorizontalAlignment="Center" />
+                    <TextBlock Text="Drop to Dock Left" Foreground="White" FontWeight="SemiBold"
+                        FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="8,0" />
+                </StackPanel>
+            </Border>
+            <!-- Center Drop Zone -->
+            <Border x:Name="CenterDropZone" Grid.Column="1" Grid.Row="0" Background="{StaticResource VSQ.DropZone.BackgroundBrush}"
+                BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0" CornerRadius="0">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="⬌" FontSize="24" Foreground="White"
+                        HorizontalAlignment="Center" />
+                    <TextBlock Text="Drop to Dock Center" Foreground="White" FontWeight="SemiBold"
+                        FontSize="12" />
+                </StackPanel>
+            </Border>
+            <!-- Right Drop Zone -->
+            <Border x:Name="RightDropZone" Grid.Column="2" Grid.RowSpan="2" Width="120"
+                Background="{StaticResource VSQ.DropZone.BackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0"
+                CornerRadius="{StaticResource VSQ.CornerRadius.DropZoneRight}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="▶" FontSize="24" Foreground="White"
+                        HorizontalAlignment="Center" />
+                    <TextBlock Text="Drop to Dock Right" Foreground="White" FontWeight="SemiBold"
+                        FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="8,0" />
+                </StackPanel>
+            </Border>
+            <!-- Bottom Drop Zone -->
+            <Border x:Name="BottomDropZone" Grid.Row="1" Grid.Column="1" Height="80"
+                Background="{StaticResource VSQ.DropZone.BackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0"
+                CornerRadius="{StaticResource VSQ.CornerRadius.DropZoneBottom}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="▼" FontSize="24" Foreground="White"
+                        HorizontalAlignment="Center" />
+                    <TextBlock Text="Drop to Dock Bottom" Foreground="White" FontWeight="SemiBold"
+                        FontSize="12" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <!-- Dock Preview Indicator -->
+        <Border x:Name="DockPreviewIndicator" Grid.RowSpan="2" Grid.ColumnSpan="2"
+            Visibility="Collapsed" Background="{StaticResource VSQ.DropZone.PreviewBackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}"
+            BorderThickness="2" CornerRadius="{StaticResource VSQ.CornerRadius.Panel}" Opacity="0">
+            <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" x:Name="DockPreviewIcon" Text="⚓" FontSize="32"
+                    Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                <TextBlock Grid.Row="1" x:Name="DockPreviewText" Text="Dock Here"
+                    VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"
+                    FontWeight="Bold" FontSize="16" />
+            </Grid>
+        </Border>
+        <!-- Drag Shadow Effect -->
+        <Border x:Name="DragShadow" Grid.RowSpan="2" Grid.ColumnSpan="2" Visibility="Collapsed"
+            Background="{StaticResource VSQ.PanelHost.DragShadowBackgroundBrush}" BorderBrush="{StaticResource VSQ.PanelHost.DragShadowBorderBrush}" BorderThickness="2" CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+            Opacity="0.5" IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

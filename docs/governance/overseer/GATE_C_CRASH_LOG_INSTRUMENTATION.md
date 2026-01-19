@@ -36,6 +36,30 @@ Points to the most recent crash log for quick access.
 
 ---
 
+## Startup (pre-App) crash artifacts
+
+Some Gate C failures occur **before** `App.xaml.cs` is constructed (e.g., `XamlCheckProcessRequirements()` / WinAppSDK bootstrap issues).
+In these cases, `Program.Main()` writes additional artifacts under the same crash directory:
+
+### Boot marker (always overwritten)
+
+```
+%LOCALAPPDATA%\VoiceStudio\crashes\boot_latest.json
+```
+
+Contains the last startup stage reached (e.g. `main_entered`, `bootstrap_initialize_done`, `xaml_check_done`).
+
+### Startup exception log (only when managed startup throws)
+
+```
+%LOCALAPPDATA%\VoiceStudio\crashes\startup_exception_<TIMESTAMP>.log
+%LOCALAPPDATA%\VoiceStudio\crashes\latest_startup_exception.log
+```
+
+`latest_startup_exception.log` points to the most recent `startup_exception_*.log`.
+
+---
+
 ## Directory Structure
 
 ```
@@ -44,7 +68,33 @@ C:\Users\<USERNAME>\AppData\Local\VoiceStudio\
 │   ├── crash_2025-01-28_14-32-45-123.log     (Timestamped logs)
 │   ├── crash_2025-01-28_14-33-12-456.log
 │   ├── crash_2025-01-28_14-34-01-789.log
-│   └── latest.log                             (Symlink to latest)
+│   ├── latest.log                             (Latest App.xaml.cs crash pointer)
+│   ├── boot_latest.json                       (Latest Program.Main() stage marker)
+│   └── latest_startup_exception.log            (Latest Program.Main() exception pointer)
+```
+
+---
+
+## Native fail-fast crashes (0xC0000602) — dump capture
+
+If the process terminates with `0xC0000602` (fail-fast / native crash) **before managed code runs**, you may see:
+- No new `boot_latest.json` timestamp
+- No `crash_*.log` / `startup_exception_*.log`
+
+In that case, rely on Event Viewer (`Application Error` + `Windows Error Reporting`) and enable **WER LocalDumps** to capture `.dmp` files.
+
+### Enable WER LocalDumps (per-user, recommended for Gate C triage)
+
+Run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "E:\VoiceStudio\scripts\enable-wer-localdumps.ps1" -Mode Enable
+```
+
+Expected dump folder:
+
+```
+%LOCALAPPDATA%\VoiceStudio\dumps
 ```
 
 ---

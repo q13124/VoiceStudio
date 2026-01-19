@@ -24,7 +24,7 @@
         "cache": "E:\\\\VoiceStudio\\\\models\\\\xtts\\\\cache"
       },
       "parameters": {
-        "model_name": "coqui/XTTS-v2",
+        "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
         "device": "cuda",
         "gpu": true
       }
@@ -53,8 +53,19 @@
         "base": "E:\\\\VoiceStudio\\\\models\\\\checkpoints"
       },
       "parameters": {
-        "model_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\MyVoiceProj\\\\model.pth",
-        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\MyVoiceProj\\\\config.json",
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\model.pth",
+        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\config.json",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "sovits_svc": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\checkpoints"
+      },
+      "parameters": {
+        "checkpoint_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\model.pth",
+        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\config.json",
         "device": "cuda",
         "gpu": true
       }

@@ -20,7 +20,7 @@ mock_torch = ModuleType("torch")
 mock_torch.__spec__ = MagicMock()
 mock_torch.__version__ = "2.0.0"
 mock_torch.tensor = MagicMock()
-mock_torch.Tensor = MagicMock() # Capital T required for type hints
+mock_torch.Tensor = MagicMock()  # Capital T required for type hints
 mock_torch.device = MagicMock()
 mock_torch.cuda = MagicMock()
 mock_torch.cuda.is_available.return_value = False
@@ -70,9 +70,7 @@ mock_app_core_runtime.engine_lifecycle = mock_lifecycle
 try:
     from backend.api.routes import engines
 except (ImportError, NameError, ValueError) as e:
-    pytest.skip(
-        f"Could not import engines route module: {e}", allow_module_level=True
-    )
+    pytest.skip(f"Could not import engines route module: {e}", allow_module_level=True)
 
 
 class TestEnginesRouteImports:
@@ -117,10 +115,12 @@ class TestEnginesEndpoints:
         """Test successful engine start."""
         with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
             # Since we mocked the module structure, patch should work
-            with patch("app.core.runtime.engine_lifecycle.get_lifecycle_manager") as mock_get_manager:
+            with patch(
+                "app.core.runtime.engine_lifecycle.get_lifecycle_manager"
+            ) as mock_get_manager:
                 mock_manager = MagicMock()
                 mock_get_manager.return_value = mock_manager
-                
+
                 # Mock successful acquire
                 mock_engine_instance = MagicMock()
                 mock_engine_instance.port = 8081
@@ -136,10 +136,12 @@ class TestEnginesEndpoints:
     def test_get_engine_status(self):
         """Test getting engine status."""
         with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
-            with patch("app.core.runtime.engine_lifecycle.get_lifecycle_manager") as mock_get_manager:
+            with patch(
+                "app.core.runtime.engine_lifecycle.get_lifecycle_manager"
+            ) as mock_get_manager:
                 mock_manager = MagicMock()
                 mock_get_manager.return_value = mock_manager
-                
+
                 # Mock state return
                 mock_state = MagicMock()
                 mock_state.name = "HEALTHY"
@@ -165,3 +167,14 @@ class TestEnginesEndpoints:
                 data = response.json()
                 assert len(data) == 1
                 assert data[0]["id"] == "v1"
+
+    def test_engine_preflight_endpoint(self):
+        """Test /api/engines/preflight proxies model_preflight.run_preflight."""
+        with patch("backend.api.routes.engines.run_preflight") as mock_run:
+            mock_run.return_value = {"results": {"xtts_v2": {"ok": True}}}
+
+            response = self.client.get("/api/engines/preflight?auto_download=false")
+            assert response.status_code == 200
+            data = response.json()
+            assert "results" in data
+            mock_run.assert_called_once_with(auto_download=False)

@@ -1,0 +1,28 @@
+<UserControl x:Class="VoiceStudio.App.Controls.PhaseAnalysisControl"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid x:Name="PhaseContainer" Background="Transparent">
+    <Path x:Name="CorrelationPath"
+      Stroke="Cyan"
+      StrokeThickness="2"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch" />
+    <Path x:Name="StereoWidthPath"
+      Stroke="Orange"
+      StrokeThickness="2"
+      Visibility="Collapsed"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch" />
+    <Line x:Name="PlaybackLine"
+      Stroke="Yellow"
+      StrokeThickness="2"
+      Visibility="Collapsed" />
+    <TextBlock Text="No phase data available"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+      Opacity="0.5"
+      Visibility="Collapsed"
+      x:Name="EmptyStateText" />
+  </Grid>
+</UserControl>

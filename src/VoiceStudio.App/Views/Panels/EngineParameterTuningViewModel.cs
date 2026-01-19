@@ -233,13 +233,13 @@ namespace VoiceStudio.App.Views.Panels
                 var diffusionIterations = Parameters.FirstOrDefault(p => p.Id == "diffusion_iterations")?.Value ?? 200;
 
                 // Higher samples/iterations = better quality but slower
-                var qualityFactor = (autoregressiveSamples / 256.0) * (diffusionIterations / 200.0);
+                var qualityFactor = autoregressiveSamples / 256.0 * (diffusionIterations / 200.0);
                 var speedFactor = 1.0 / qualityFactor;
 
-                PredictedMosScore = Math.Min(5.0, 4.0 + qualityFactor * 1.0);
-                PredictedSimilarity = Math.Min(1.0, 0.85 + qualityFactor * 0.15);
-                PredictedNaturalness = Math.Min(1.0, 0.90 + qualityFactor * 0.10);
-                PredictedSnr = 20 + qualityFactor * 15;
+                PredictedMosScore = Math.Min(5.0, 4.0 + (qualityFactor * 1.0));
+                PredictedSimilarity = Math.Min(1.0, 0.85 + (qualityFactor * 0.15));
+                PredictedNaturalness = Math.Min(1.0, 0.90 + (qualityFactor * 0.10));
+                PredictedSnr = 20 + (qualityFactor * 15);
                 EstimatedSpeed = Math.Max(0.1, speedFactor);
                 QualitySpeedTradeoff = qualityFactor > 1.2 ? "Quality Focused" : qualityFactor < 0.8 ? "Speed Focused" : "Balanced";
 
@@ -250,10 +250,10 @@ namespace VoiceStudio.App.Views.Panels
                 var temperature = Parameters.FirstOrDefault(p => p.Id == "temperature")?.Value ?? 0.7;
                 var topP = Parameters.FirstOrDefault(p => p.Id == "top_p")?.Value ?? 0.9;
 
-                PredictedMosScore = 4.2 + (temperature - 0.7) * 0.5;
-                PredictedSimilarity = 0.88 + (topP - 0.9) * 0.1;
-                PredictedNaturalness = 0.85 + (temperature - 0.7) * 0.2;
-                PredictedSnr = 25 + (topP - 0.9) * 10;
+                PredictedMosScore = 4.2 + ((temperature - 0.7) * 0.5);
+                PredictedSimilarity = 0.88 + ((topP - 0.9) * 0.1);
+                PredictedNaturalness = 0.85 + ((temperature - 0.7) * 0.2);
+                PredictedSnr = 25 + ((topP - 0.9) * 10);
                 EstimatedSpeed = 1.0; // These engines are generally fast
                 QualitySpeedTradeoff = "Balanced";
 
@@ -366,18 +366,18 @@ namespace VoiceStudio.App.Views.Panels
                     if (step <= 0) continue;
 
                     // Test values around current
-                    for (var testValue = Math.Max(param.MinValue, currentValue - step * 2);
-                         testValue <= Math.Min(param.MaxValue, currentValue + step * 2);
+                    for (var testValue = Math.Max(param.MinValue, currentValue - (step * 2));
+                         testValue <= Math.Min(param.MaxValue, currentValue + (step * 2));
                          testValue += step)
                     {
                         param.Value = testValue;
                         UpdateQualityPredictions();
 
                         // Score based on predicted metrics
-                        var score = PredictedMosScore * 0.4 +
-                                   PredictedSimilarity * 0.3 +
-                                   PredictedNaturalness * 0.2 +
-                                   (PredictedSnr / 50.0) * 0.1;
+                        var score = (PredictedMosScore * 0.4) +
+                                   (PredictedSimilarity * 0.3) +
+                                   (PredictedNaturalness * 0.2) +
+                                   (PredictedSnr / 50.0 * 0.1);
 
                         if (score > bestScore)
                         {

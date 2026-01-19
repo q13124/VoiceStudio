@@ -654,7 +654,7 @@ namespace VoiceStudio.App.ViewModels
         if (seconds < 3600)
           return $"{seconds / 60}m {seconds % 60}s";
         var hours = seconds / 3600;
-        var minutes = (seconds % 3600) / 60;
+        var minutes = seconds % 3600 / 60;
         return $"{hours}h {minutes}m";
       }
     }

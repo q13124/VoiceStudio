@@ -32,20 +32,28 @@ namespace VoiceStudio.App.Converters
             }
 
             string formatted;
-            if (value is IFormattable formattable)
+            try
             {
-                formatted = formattable.ToString(format, CultureInfo.InvariantCulture);
+                if (value is IFormattable formattable)
+                {
+                    formatted = formattable.ToString(format, CultureInfo.InvariantCulture);
+                }
+                else if (double.TryParse(
+                    value.ToString(),
+                    NumberStyles.Float | NumberStyles.AllowThousands,
+                    CultureInfo.InvariantCulture,
+                    out var numValue))
+                {
+                    formatted = numValue.ToString(format, CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    return value.ToString() ?? string.Empty;
+                }
             }
-            else if (double.TryParse(
-                value.ToString(),
-                NumberStyles.Float | NumberStyles.AllowThousands,
-                CultureInfo.InvariantCulture,
-                out var numValue))
+            catch (FormatException)
             {
-                formatted = numValue.ToString(format, CultureInfo.InvariantCulture);
-            }
-            else
-            {
+                // Invalid format string - return value as string instead
                 return value.ToString() ?? string.Empty;
             }
             

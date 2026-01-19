@@ -478,7 +478,7 @@ namespace VoiceStudio.App.ViewModels
     public int Count { get; set; }
     public int TotalSamples { get; set; }
     public string CountDisplay => Count.ToString();
-    public string PercentageDisplay => TotalSamples > 0 ? $"{(Count * 100.0 / TotalSamples):F1}" : "0.0";
+    public string PercentageDisplay => TotalSamples > 0 ? $"{Count * 100.0 / TotalSamples:F1}" : "0.0";
 
     public QualityDistributionItem()
     {

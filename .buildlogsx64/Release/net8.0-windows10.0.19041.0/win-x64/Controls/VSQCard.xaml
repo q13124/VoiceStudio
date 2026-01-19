@@ -1,0 +1,20 @@
+<UserControl
+    x:Class="VoiceStudio.App.Controls.VSQCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Border
+        x:Name="CardBorder"
+        Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+        BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+        BorderThickness="1"
+        CornerRadius="{StaticResource VSQ.CornerRadius.Large}"
+        Padding="{StaticResource VSQ.Spacing.Large}"
+        MinWidth="{StaticResource VSQ.Card.MinWidth}"
+        MinHeight="{StaticResource VSQ.Card.MinHeight}">
+        <ContentPresenter x:Name="CardContent"
+            Content="{x:Bind Content, Mode=OneWay}" />
+    </Border>
+</UserControl>

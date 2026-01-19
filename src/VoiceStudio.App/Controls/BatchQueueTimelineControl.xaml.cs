@@ -417,7 +417,7 @@ namespace VoiceStudio.App.Controls
                         Tag = "job_block"
                     };
                     
-                    Canvas.SetLeft(durationLabel, x + width - durationLabel.Text.Length * 6 - 4);
+                    Canvas.SetLeft(durationLabel, x + width - (durationLabel.Text.Length * 6) - 4);
                     Canvas.SetTop(durationLabel, y + rowHeight - 14);
                     TimelineCanvas.Children.Add(durationLabel);
                 }

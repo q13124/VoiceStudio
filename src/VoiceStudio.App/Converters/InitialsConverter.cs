@@ -12,24 +12,34 @@ namespace VoiceStudio.App.Converters
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value is string name && !string.IsNullOrWhiteSpace(name))
+            try
             {
-                var words = name.Trim().Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                if (words.Length > 0)
+                if (value is string name && !string.IsNullOrWhiteSpace(name))
                 {
-                    if (words.Length == 1)
+                    var words = name.Trim().Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (words.Length > 0)
                     {
-                        // Single word: take first letter (uppercase)
-                        return words[0].Substring(0, Math.Min(1, words[0].Length)).ToUpperInvariant();
-                    }
-                    else
-                    {
-                        // Multiple words: take first letter of first two words
-                        var first = words[0].Length > 0 ? words[0][0].ToString().ToUpperInvariant() : "";
-                        var second = words[1].Length > 0 ? words[1][0].ToString().ToUpperInvariant() : "";
-                        return first + second;
+                        if (words.Length == 1)
+                        {
+                            // Single word: take first letter (uppercase)
+                            if (words[0].Length > 0)
+                            {
+                                return words[0].Substring(0, Math.Min(1, words[0].Length)).ToUpperInvariant();
+                            }
+                        }
+                        else
+                        {
+                            // Multiple words: take first letter of first two words
+                            var first = words[0].Length > 0 ? words[0][0].ToString().ToUpperInvariant() : "";
+                            var second = words.Length > 1 && words[1].Length > 0 ? words[1][0].ToString().ToUpperInvariant() : "";
+                            return first + second;
+                        }
                     }
                 }
+            }
+            catch
+            {
+                // Fall through to return "?"
             }
             return "?";
         }

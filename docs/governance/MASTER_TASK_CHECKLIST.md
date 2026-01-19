@@ -24,17 +24,61 @@
 
 ## 📊 OVERALL PROGRESS
 
-**Total Tasks:** 214 tasks (after rebalancing + Phase D)  
-**Completed:** 214 tasks (100%)  
+**Total Tasks:** 224 tasks (after rebalancing + Phase D + 2026 voice cloning upgrades)  
+**Completed:** 224 tasks (100%)  
 **In Progress:** 0 tasks (0%)  
 **Pending:** 0 tasks (0%)
 
 **By Worker:**
-- **Worker 1:** 47 tasks (47 complete, 0 in progress, 0 pending) ✅ **100% COMPLETE**
+- **Worker 1:** 57 tasks (57 complete, 0 in progress, 0 pending) ✅ **100% COMPLETE**
 - **Worker 2:** 85 tasks (85 complete, 0 in progress, 0 pending) ✅ **100% COMPLETE** (61 original + 24 Phase D)
 - **Worker 3:** 82 tasks (82 complete, 0 in progress, 0 pending) ✅ **100% COMPLETE**
 
 **Note:** Task counts reflect final rebalanced distribution (V6). See `REBALANCED_TASK_DISTRIBUTION_2025-01-28.md` for details.
+
+---
+
+## Voice Cloning Quality Upgrades (2026-01-18)
+
+#### VC-2026-001: Stage So-VITS-SVC 4.0 checkpoint + config (Lain_SVC4)
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Downloaded `model.pth` + `config.json` into `models\checkpoints\Lain_SVC4`.
+
+#### VC-2026-002: Point GPT-SoVITS config at staged checkpoint
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Updated engine config paths to `Lain_SVC4`.
+
+#### VC-2026-003: Add So-VITS-SVC engine config entry
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Added `sovits_svc` config section with checkpoint/config paths.
+
+#### VC-2026-004: Add So-VITS-SVC to health preflight report
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** `/api/health/preflight` now reports So-VITS-SVC readiness.
+
+#### VC-2026-005: Normalize So-VITS-SVC engine aliases in RVC conversion
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Normalized aliases to `sovits_svc`.
+
+#### VC-2026-006: Guard So-VITS-SVC conversions when inference is missing
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** `/api/rvc/convert` returns HTTP 424 when inference is not configured and passthrough is disabled.
+
+#### VC-2026-007: Fix So-VITS-SVC proof backend resolution + health check
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Proof runner now auto-resolves backend port and validates routes.
+
+#### VC-2026-008: Add So-VITS-SVC preflight gating in proof runner
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Proof run blocks early when So-VITS-SVC inference is not configured.
+
+#### VC-2026-009: Document So-VITS-SVC inference requirement for proof
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Documented `infer_command` and `SOVITS_SVC_INFER_COMMAND` requirement in proof README.
+
+#### VC-2026-010: Update OpenMemory with So-VITS-SVC routing + proof notes
+**Status:** ✅ **COMPLETE** (2026-01-18)  
+**Notes:** Documented So-VITS-SVC preflight, RVC alias handling, and proof runner behavior.
 
 ---
 

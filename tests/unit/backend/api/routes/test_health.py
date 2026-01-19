@@ -201,6 +201,7 @@ class TestHealthEndpoints:
         projects_dir = tmp_path / "projects"
         cache_dir = tmp_path / "cache"
         registry_path = tmp_path / "cache" / "audio_registry.json"
+        jobs_root = tmp_path / "cache" / "jobs"
 
         mock_project_store = MagicMock()
         mock_project_store.projects_dir = projects_dir
@@ -210,6 +211,9 @@ class TestHealthEndpoints:
 
         mock_registry = MagicMock()
         mock_registry.registry_path = registry_path
+
+        mock_job_store = MagicMock()
+        mock_job_store.jobs_root = jobs_root
 
         mock_engine_config = MagicMock()
         mock_engine_config.config = {"model_paths": {"base": str(tmp_path / "models")}}
@@ -223,6 +227,9 @@ class TestHealthEndpoints:
         ), patch(
             "backend.services.AudioArtifactRegistry.get_audio_registry",
             return_value=mock_registry,
+        ), patch(
+            "backend.services.JobStateStore.get_job_state_store",
+            return_value=mock_job_store,
         ), patch(
             "backend.services.EngineConfigService.get_engine_config_service",
             return_value=mock_engine_config,
@@ -242,6 +249,7 @@ class TestHealthEndpoints:
             assert data["checks"]["projects_root"]["ok"] is True
             assert data["checks"]["cache_root"]["ok"] is True
             assert data["checks"]["model_root"]["ok"] is True
+            assert data["checks"]["jobs_root"]["ok"] is True
             assert data["checks"]["ffmpeg"]["ok"] is True
 
     def test_resource_usage_success(self):
@@ -250,9 +258,7 @@ class TestHealthEndpoints:
         app.include_router(health.router)
         client = TestClient(app)
 
-        with patch(
-            "backend.api.routes.health._get_system_metrics"
-        ) as mock_metrics:
+        with patch("backend.api.routes.health._get_system_metrics") as mock_metrics:
             mock_metrics.return_value = {"cpu_percent": 50.0}
 
             with patch(
