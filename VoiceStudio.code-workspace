@@ -7,11 +7,9 @@
   "settings": {
     // VoiceStudio Workspace Settings
     // Project location: E:\VoiceStudio
-    
     // Terminal settings
     "terminal.integrated.cwd": "${workspaceFolder}",
     "terminal.integrated.defaultLocation": "editor",
-    
     // File watcher settings
     "files.watcherExclude": {
       "**/.git/objects/**": true,
@@ -23,7 +21,6 @@
       "**/obj/**": true,
       "**/.venv/**": true
     },
-    
     // Python settings
     "python.defaultInterpreterPath": "${workspaceFolder}\\backend\\.venv\\Scripts\\python.exe",
     "python.analysis.extraPaths": [
@@ -31,19 +28,17 @@
       "${workspaceFolder}/backend/api",
       "${workspaceFolder}/backend/mcp_bridge"
     ],
-    
     // Logging (may help with rpcFileLoggerFolder warning)
     "log.output.level": "info",
     "log.extensionHost.level": "info",
-    
     // Editor settings
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     },
-    
     // Suppress some console warnings (extension API proposals)
-    "extensions.ignoreRecommendations": false
+    "extensions.ignoreRecommendations": false,
+    "git.ignoreLimitWarning": true
   },
   "extensions": {
     "recommendations": [
@@ -56,4 +51,3 @@
     "unwantedRecommendations": []
   }
 }
-

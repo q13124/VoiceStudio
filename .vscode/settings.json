@@ -106,5 +106,18 @@
   "git.ignoreLimitWarning": true,
   "cSpell.words": [
     "Coqui"
-  ]
+  ],
+  "todo-tree.tree.scanMode": "current file",
+  "yaml.schemas": {
+    "file:///c%3A/Users/Tyler/.cursor/extensions/continue.continue-1.3.28-win32-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ],
+    "file:///c%3A/Users/Tyler/.cursor/extensions/continue.continue-1.3.29-win32-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ],
+    "file:///c%3A/Users/Tyler/.cursor/extensions/continue.continue-1.2.14-win32-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml",
+      "file:///c%3A/Users/Tyler/.continue/config.yaml"
+    ]
+  }
 }
