@@ -14,12 +14,12 @@ This script runs a baseline end-to-end voice workflow proof to establish a quali
 
    ```powershell
    # Start backend (from project root)
-   .\start_backend.ps1
+   .\scripts/backend/start_backend.ps1
    # Or manually:
    uvicorn backend.api.main:app --port 8001
    ```
 
-   If port `8001` is already in use, `start_backend.ps1` will switch to an
+   If port `8001` is already in use, `scripts/backend/start_backend.ps1` will switch to an
    alternate port (8002/8080/8888). The proof script will auto-detect the
    backend when using the default URL, but you can always pass `--backend-url`
    to pin the exact port.
@@ -47,15 +47,15 @@ python scripts/baseline_voice_workflow_proof.py
 
 ### GPU Lane (sm_120)
 
-Use the GPU venv and backend launcher, then run the proof with an output folder under `proof_runs/`.
+Use the GPU venv and backend launcher, then run the proof with an output folder under `.buildlogs\proof_runs\`.
 
 ```powershell
-.\start_backend.ps1 -Gpu -CoquiTosAgreed
+.\scripts/backend/start_backend.ps1 -Gpu -CoquiTosAgreed
 ```
 
 ```powershell
-.\venv_xtts_gpu_sm120\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
-  --output-dir E:\VoiceStudio\proof_runs\baseline_workflow_gpu_run
+.\env\venv_xtts_gpu_sm120\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
+  --output-dir E:\VoiceStudio\.buildlogs\proof_runs\baseline_workflow_gpu_run
 ```
 
 The proof artifact records the device used in `proof_data.json` (`steps[].device` and `config.device`).
@@ -66,9 +66,9 @@ Pass multiple `--reference-audio` entries and enable `--use-multi-reference`. Pr
 `--prosody-params` with a JSON object.
 
 ```powershell
-.\venv\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
-  --reference-audio E:\VoiceStudio\proof_runs\baseline_workflow_gpu_run\ref_a.wav `
-  --reference-audio E:\VoiceStudio\proof_runs\baseline_workflow_gpu_run\ref_b.wav `
+.\env\venv_xtts_gpu_sm120\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
+  --reference-audio E:\VoiceStudio\.buildlogs\proof_runs\baseline_workflow_gpu_run\ref_a.wav `
+  --reference-audio E:\VoiceStudio\.buildlogs\proof_runs\baseline_workflow_gpu_run\ref_b.wav `
   --use-multi-reference `
   --prosody-params "{\"pitch\":1.0,\"tempo\":1.0,\"formant_shift\":1.0,\"energy\":1.0}"
 ```
@@ -82,7 +82,7 @@ Once a So-VITS-SVC checkpoint + config exist under `E:\VoiceStudio\models\checkp
 
 Run the proof with the `--checkpoint-path` and `--config-path` flags pointing to the So-VITS-SVC checkpoint `.pth` and config `.json` files.
 
-The script records conversion output, device, and metrics under a new `proof_runs/` folder.
+The script records conversion output, device, and metrics under a new `.buildlogs\proof_runs\` folder.
 
 So-VITS-SVC conversion requires an external inference command. Configure one of the following:
 
@@ -111,7 +111,7 @@ python scripts/baseline_voice_workflow_proof.py \
 
 ## Output
 
-The script creates a timestamped directory under `proof_runs/` containing:
+The script creates a timestamped directory under `.buildlogs\proof_runs\` containing:
 
 - **`proof_data.json`**: Complete proof data including:
 
@@ -119,6 +119,7 @@ The script creates a timestamped directory under `proof_runs/` containing:
   - Outputs (audio_id, audio_url, transcription text)
   - Quality metrics (MOS, similarity, naturalness, SNR, etc.)
   - Model paths and configuration
+  - Dependency versions (python/torch/torchaudio/transformers)
   - Step-by-step execution results
 
 - **`{audio_id}.wav`**: Downloaded synthesized audio file (if available)
@@ -181,7 +182,14 @@ The `proof_data.json` file contains:
     "engine": "xtts_v2",
     "language": "en",
     "profile_id": "...",
-    "model_paths": { ... }
+    "model_paths": { ... },
+    "dependency_versions": {
+      "python": "...",
+      "python_executable": "...",
+      "torch": "...",
+      "torchaudio": "...",
+      "transformers": "..."
+    }
   }
 }
 ```
@@ -197,7 +205,7 @@ ERROR: Backend API is not accessible. Please start the backend server.
 **Solution**: Start the backend server:
 
 ```powershell
-.\start_backend.ps1
+.\scripts/backend/start_backend.ps1
 ```
 
 ### /api/voice/clone returns 404
@@ -205,10 +213,10 @@ ERROR: Backend API is not accessible. Please start the backend server.
 If the backend started on an alternate port, the default proof URL (`8001`)
 may point at an older process with missing voice routes.
 
-**Solution**: Re-run the proof with the port printed by `start_backend.ps1`:
+**Solution**: Re-run the proof with the port printed by `scripts/backend/start_backend.ps1`:
 
 ```powershell
-.\venv\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
+.\env\venv_xtts_gpu_sm120\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py `
   --backend-url http://localhost:8080
 ```
 
@@ -221,7 +229,7 @@ without the XTTS engine deps.
 
 ```powershell
 .\scripts\install-engine-deps.ps1 -Profile xtts
-.\start_backend.ps1 -CoquiTosAgreed
+.\scripts/backend/start_backend.ps1 -CoquiTosAgreed
 ```
 
 ### No Profiles Available

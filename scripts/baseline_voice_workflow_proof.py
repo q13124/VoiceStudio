@@ -19,10 +19,11 @@ import os
 import sys
 import tempfile
 import time
-from urllib.parse import urlparse
 from datetime import datetime
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import requests
 
@@ -81,6 +82,7 @@ class BaselineWorkflowProof:
         output_dir = os.path.join(
             os.path.dirname(__file__),
             "..",
+            ".buildlogs",
             "proof_runs",
             f"baseline_workflow_{timestamp}",
         )
@@ -233,7 +235,7 @@ class BaselineWorkflowProof:
             if not self._check_xtts_engine_available(candidate, log_missing=False):
                 continue
             logger.warning(
-                "Backend URL auto-detected as %s (start_backend.ps1 may have picked an alternate port).",
+                "Backend URL auto-detected as %s (scripts/backend/start_backend.ps1 may have picked an alternate port).",
                 candidate,
             )
             self.backend_url = candidate.rstrip("/")
@@ -596,9 +598,9 @@ class BaselineWorkflowProof:
                 computed_duration = self._get_wav_duration_seconds(audio_file_path)
                 if computed_duration is not None:
                     step_result["audio_duration_seconds"] = computed_duration
-                    self.proof_data["outputs"]["synthesis"]["duration"] = (
-                        computed_duration
-                    )
+                    self.proof_data["outputs"]["synthesis"][
+                        "duration"
+                    ] = computed_duration
 
             return result
 
@@ -775,9 +777,9 @@ class BaselineWorkflowProof:
             if self._backend_resolution_error:
                 logger.error(self._backend_resolution_error)
             logger.info(
-                "Start backend with: .\\start_backend.ps1 (preferred) "
+                "Start backend with: .\\scripts\\backend\\start_backend.ps1 (preferred) "
                 "or: .\\venv\\Scripts\\python.exe -m uvicorn backend.api.main:app --port 8001. "
-                "If start_backend.ps1 selected an alternate port, re-run with "
+                "If scripts/backend/start_backend.ps1 selected an alternate port, re-run with "
                 "--backend-url http://localhost:<port>."
             )
             return {"error": "Backend not accessible"}
@@ -787,9 +789,7 @@ class BaselineWorkflowProof:
             if self.backend_url != self.backend_url_requested
             else "requested"
         )
-        self.proof_data["config"]["backend_url_requested"] = (
-            self.backend_url_requested
-        )
+        self.proof_data["config"]["backend_url_requested"] = self.backend_url_requested
         self.proof_data["config"]["backend_url"] = self.backend_url
         self.proof_data["config"]["backend_url_source"] = backend_url_source
         logger.info(f"Backend URL: {self.backend_url}")
@@ -797,6 +797,9 @@ class BaselineWorkflowProof:
         # Store inputs
         self.proof_data["inputs"]["text"] = text
         self.proof_data["inputs"]["language"] = language
+
+        # Capture local dependency versions for proof metadata
+        self._capture_dependency_versions()
 
         # Step 1: Synthesize with XTTS v2
         synthesis_result = self.synthesize_with_xtts(
@@ -863,24 +866,45 @@ class BaselineWorkflowProof:
                 self.proof_data["config"]["available_engines"] = engines
 
             # Capture health preflight (includes env + writable path checks)
-            response = requests.get(f"{self.backend_url}/api/health/preflight", timeout=30)
+            response = requests.get(
+                f"{self.backend_url}/api/health/preflight", timeout=30
+            )
             if response.status_code == 200:
                 self.proof_data["config"]["health_preflight"] = response.json()
 
             # Engine preflight (canonical)
-            response = requests.get(f"{self.backend_url}/api/engines/preflight", timeout=30)
+            response = requests.get(
+                f"{self.backend_url}/api/engines/preflight", timeout=30
+            )
             if response.status_code == 200:
                 preflight = response.json()
                 self.proof_data["config"]["preflight"] = preflight
                 return
 
             # Fallback: health preflight (older route shape)
-            response = requests.get(f"{self.backend_url}/api/health/preflight", timeout=30)
+            response = requests.get(
+                f"{self.backend_url}/api/health/preflight", timeout=30
+            )
             if response.status_code == 200:
                 preflight = response.json()
                 self.proof_data["config"]["preflight"] = preflight
         except Exception as e:
             logger.debug(f"Could not capture model paths: {e}")
+
+    def _capture_dependency_versions(self):
+        """Capture local dependency versions for evidence."""
+        versions: Dict[str, Any] = {
+            "python": sys.version,
+            "python_executable": sys.executable,
+        }
+        for package in ("torch", "torchaudio", "transformers"):
+            try:
+                versions[package] = importlib_metadata.version(package)
+            except importlib_metadata.PackageNotFoundError:
+                versions[package] = None
+            except Exception as exc:
+                versions[package] = f"error: {exc}"
+        self.proof_data["config"]["dependency_versions"] = versions
 
     def _print_summary(self):
         """Print proof summary."""
