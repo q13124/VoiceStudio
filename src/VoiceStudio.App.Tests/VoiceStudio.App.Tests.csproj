@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- Align Windows SDK reference pack with app project to avoid NETSDK1148 -->
+    <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
     <RootNamespace>VoiceStudio.App.Tests</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Nullable>enable</Nullable>

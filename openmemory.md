@@ -17,6 +17,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Repo/runtime layout docs**: `docs/developer/REPO_LAYOUT.md` and `docs/developer/RUNTIME_LAYOUT.md`.
 - **Packaging lane**: unpackaged apphost EXE + installer only (`WindowsPackageType=None`; MSIX archived/removed).
 - **WinAppSDK versioning**: `Directory.Build.props` centralizes `MicrosoftWindowsAppSDKVersion` (override via `WinAppSdkVersionOverride`); WinUI/CommunityToolkit/NAudio pinned in the same file.
+- **.NET SDK pin**: `global.json` pins the repo SDK version (currently `8.0.417`).
 - **Model root defaults**: `backend/config/path_config.py` resolves `VOICESTUDIO_MODELS_PATH` (default `%PROGRAMDATA%\VoiceStudio\models`), and `backend/api/main.py` seeds HF/TTS/whisper/piper caches under that root.
 - **Native tools**: ffmpeg can be overridden via `VOICESTUDIO_FFMPEG_PATH` (fallback PATH + common locations); shared DLLs can be injected for runtime engines via `VOICESTUDIO_FFMPEG_DLL_DIR` (XTTS runtime launcher uses `os.add_dll_directory` before loading torchcodec).
 - **Operational reports**: `docs/reports/` (XAML diagnostics under `docs/reports/build/xaml/`).
@@ -205,6 +206,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   state read/acknowledgment and completion updates.
 - **Verifier protocol**: `.cursor/rules/workflows/verifier-subagent.mdc` defines skeptical validation.
 - **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
+- **Context allocator**: `tools/context/allocate.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
 
 ## Agent governance tooling
 

@@ -5,6 +5,8 @@
 - `.cursor/rules/core/rule-governance.mdc` ⚠️ AGENTS CANNOT MODIFY RULES WITHOUT USER CONSENT
 - `.cursor/rules/core/project-context.mdc`
 - `.cursor/rules/core/architecture.mdc`
+- `.cursor/rules/core/local-first.mdc`
+- `.cursor/rules/core/free-only.mdc`
 - `.cursor/rules/core/anti-drift.mdc`
 - `.cursor/rules/security/api-key-management.mdc`
 - `.cursor/rules/security/secure-coding.mdc`
