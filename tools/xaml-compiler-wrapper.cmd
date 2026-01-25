@@ -1,4 +1,25 @@
 @echo off
+setlocal EnableExtensions
+
+rem Args: <input.json> <output.json>
+set "INPUT_JSON=%~1"
+set "OUTPUT_JSON=%~2"
+
+for %%d in ("%~dp0..") do set "REPO_ROOT=%%~fd"
+set "APP_ROOT=%REPO_ROOT%\src\VoiceStudio.App"
+
+rem Normalize to absolute paths relative to app root
+if not exist "%INPUT_JSON%" if exist "%APP_ROOT%\%INPUT_JSON%" set "INPUT_JSON=%APP_ROOT%\%INPUT_JSON%"
+
+rem Delegate to PowerShell for robust path handling
+powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO_ROOT%\tools\xaml-compiler-wrapper.ps1" ^
+  -InputJson "%INPUT_JSON%" ^
+  -OutputJson "%OUTPUT_JSON%" ^
+  -AppRoot "%APP_ROOT%" ^
+  -RepoRoot "%REPO_ROOT%"
+
+exit /b %ERRORLEVEL%
+@echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
 rem Args: <input.json> <output.json>
@@ -14,8 +35,8 @@ rem Keep OUTPUT_JSON as provided (usually a relative obj\...\output.json path).
 rem Some WinUI XAML compiler builds are sensitive to an absolute output.json path; we run from APP_ROOT below.
 
 rem Normalize accidental double backslashes (can break some XamlCompiler builds/targets)
-set "INPUT_JSON=!INPUT_JSON:\\=\!"
-set "OUTPUT_JSON=!OUTPUT_JSON:\\=\!"
+call set "INPUT_JSON=%%INPUT_JSON:\\=\%%"
+call set "OUTPUT_JSON=%%OUTPUT_JSON:\\=\%%"
 
 set "DEBUG_LOG=e:\VoiceStudio\.cursor\debug.log"
 set "LOG_RUN_ID=pre-fix"
@@ -32,7 +53,7 @@ set "MSBUILD_PROJECT_ESC=!MSBuildProjectFullPath:\=\\!"
 
 if "%VSQ_DEBUG_ENABLED%"=="1" (
   :: #region agent log H1
-  for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()"') do set "VSQ_TS=%%t"
+  set "VSQ_TS=%date% %time%"
   >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H1","location":"tools/xaml-compiler-wrapper.cmd:24","message":"wrapper_entry","data":{"inputJson":"!INPUT_JSON_ESC!","outputJson":"!OUTPUT_JSON_ESC!","repoRoot":"!REPO_ROOT_ESC!","appRoot":"!APP_ROOT_ESC!","cwd":"!CWD_ESC!","designTimeBuild":"%DesignTimeBuild%","msbuildProjectName":"%MSBuildProjectName%","msbuildProjectFullPath":"!MSBUILD_PROJECT_ESC!","msbuildNodeId":"%MSBuildNodeId%"},"timestamp":!VSQ_TS!}
   :: #endregion agent log H1
 )
@@ -77,7 +98,7 @@ if not defined COMPILER (
   set "NUGET_ROOT_ESC=%NUGET_ROOT:\=\\%"
   if "%VSQ_DEBUG_ENABLED%"=="1" (
     :: #region agent log H2
-    for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()"') do set "VSQ_TS=%%t"
+    set "VSQ_TS=%date% %time%"
     >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H2","location":"tools/xaml-compiler-wrapper.cmd:74","message":"compiler_not_found","data":{"nugetRoot":"!NUGET_ROOT_ESC!"},"timestamp":!VSQ_TS!}
     :: #endregion agent log H2
   )
@@ -89,7 +110,7 @@ set "COMPILER_ESC=!COMPILER:\=\\!"
 set "NUGET_ROOT_ESC=!NUGET_ROOT:\=\\!"
 if "%VSQ_DEBUG_ENABLED%"=="1" (
   :: #region agent log H2
-  for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()"') do set "VSQ_TS=%%t"
+  set "VSQ_TS=%date% %time%"
   >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H2","location":"tools/xaml-compiler-wrapper.cmd:83","message":"compiler_resolved","data":{"compiler":"!COMPILER_ESC!","nugetRoot":"!NUGET_ROOT_ESC!"},"timestamp":!VSQ_TS!}
   :: #endregion agent log H2
 )
@@ -105,7 +126,7 @@ if "%RAW_LOG_ENABLED%"=="1" (
   set "RAW_LOG_ESC=!RAW_LOG:\=\\!"
   if "%VSQ_DEBUG_ENABLED%"=="1" (
     :: #region agent log H3
-    for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()"') do set "VSQ_TS=%%t"
+    set "VSQ_TS=%date% %time%"
     >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H3","location":"tools/xaml-compiler-wrapper.cmd:95","message":"raw_log_path_set","data":{"rawLog":"!RAW_LOG_ESC!","inputJson":"!INPUT_JSON_ESC!","outputJson":"!OUTPUT_JSON_ESC!"},"timestamp":!VSQ_TS!}
     :: #endregion agent log H3
   )
@@ -137,7 +158,7 @@ set "OUTPUT_JSON_EXISTS=0"
 if exist "%OUTPUT_JSON%" set "OUTPUT_JSON_EXISTS=1"
 if "%VSQ_DEBUG_ENABLED%"=="1" (
   :: #region agent log H4
-  for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()"') do set "VSQ_TS=%%t"
+  set "VSQ_TS=%date% %time%"
   >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H4","location":"tools/xaml-compiler-wrapper.cmd:117","message":"compiler_exit","data":{"exitCode":"%EXIT_CODE%","outputJsonExists":"%OUTPUT_JSON_EXISTS%","attempt":"%ATTEMPT%","maxRetries":"%MAX_RETRIES%"},"timestamp":!VSQ_TS!}
   :: #endregion agent log H4
 )
