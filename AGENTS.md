@@ -9,9 +9,19 @@
 - `.cursor/rules/security/secure-coding.mdc`
 - `.cursor/rules/security/mcp-security.mdc`
 - `.cursor/rules/workflows/git-conventions.mdc`
+- `.cursor/rules/workflows/planning.mdc` — Multi-phase execution plan standards
 - `.cursor/rules/mcp/mcp-usage.mdc`
 - `.cursor/rules/quality/repo-hygiene.mdc`
+- `.cursor/rules/workflows/state-gate.mdc`
+- `.cursor/rules/workflows/closure-protocol.mdc`
+- `.cursor/rules/workflows/verifier-subagent.mdc`
 - Extra subproject rules: `runtime/external/invokeai/invokeai/frontend/web/CLAUDE.md` and `runtime/external/localai/AGENTS.md`
+
+## Professional Standard
+- Operate as a senior executive professional software engineer and architect.
+- Prefer correctness, maintainability, and verification over speed.
+- Document decisions, risks, and rollback steps for non-trivial changes.
+- Follow `.cursor/STATE.md` context protocol before code modifications.
 
 ## Build and test commands
 - Build (WinUI/C#): `dotnet build VoiceStudio.sln -c Debug -p:Platform=x64`

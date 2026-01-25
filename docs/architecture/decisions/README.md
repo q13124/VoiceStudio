@@ -56,3 +56,6 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-001](ADR-001-rulebook-integration.md) | Cursor Agent Rulebook Integration | Accepted | 2026-01-25 |
 | [ADR-002](ADR-002-document-governance.md) | Document Governance Architecture | Accepted | 2026-01-25 |
 | [ADR-003](ADR-003-agent-governance-framework.md) | Agent Governance Framework | Accepted | 2026-01-25 |
+| [ADR-004](ADR-004-messagepack-ipc.md) | MessagePack IPC Transport | Accepted | 2026-01-25 |
+| [ADR-005](ADR-005-context-management-system.md) | Context Management System | Accepted | 2026-01-25 |
+| [ADR-006](ADR-006-enhanced-cursor-rules-system.md) | Enhanced Cursor Rules System | Accepted | 2026-01-25 |
