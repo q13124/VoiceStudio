@@ -5,13 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Agent Action Approval Required"
-    Width="500"
-    Height="Auto"
-    MinHeight="350"
-    SizeToContent="Height"
-    WindowStartupLocation="CenterScreen"
-    ResizeMode="NoResize">
+    Title="Agent Action Approval Required">
 
     <Grid Padding="24">
         <Grid.RowDefinitions>
