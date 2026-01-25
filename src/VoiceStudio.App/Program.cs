@@ -89,7 +89,7 @@ namespace VoiceStudio.App
         Application.Start((p) =>
         {
           WriteBootMarker(crashDir, "application_start_callback_entered", args);
-          var context = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
+          var context = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
           SynchronizationContext.SetSynchronizationContext(context);
           WinRT.ComWrappersSupport.InitializeComWrappers();
           WriteBootMarker(crashDir, "com_wrappers_done", args);

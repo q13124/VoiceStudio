@@ -13,6 +13,7 @@ using Windows.Storage;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
@@ -20,8 +21,11 @@ namespace VoiceStudio.App.ViewModels
   /// <summary>
   /// ViewModel for video generation panel.
   /// </summary>
-  public class VideoGenViewModel : BaseViewModel
+  public class VideoGenViewModel : BaseViewModel, IPanelView
   {
+    public string PanelId => "video-gen";
+    public string DisplayName => ResourceHelper.GetString("Panel.VideoGen.DisplayName", "Video Generation");
+    public PanelRegion Region => PanelRegion.Center;
     private readonly IBackendClient _backendClient;
     private readonly ToastNotificationService? _toastNotificationService;
 

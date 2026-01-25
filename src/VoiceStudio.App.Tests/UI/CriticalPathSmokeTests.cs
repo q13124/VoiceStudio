@@ -35,9 +35,17 @@ namespace VoiceStudio.App.Tests.UI
       // In a real implementation, this would test the full workflow:
       // 1. Create profile → 2. Synthesize → 3. Apply effect → 4. Export
 
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
       var synthesisViewModel = new VoiceStudio.App.Views.Panels.VoiceSynthesisViewModel(
           _mockBackendClient!,
           new VoiceStudio.App.Services.AudioPlayerService());
@@ -56,9 +64,17 @@ namespace VoiceStudio.App.Tests.UI
     public void Workflow_CommandsAreInitialized()
     {
       // Arrange
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
 
       // Act & Assert
       // Verify that commands needed for the workflow are properly initialized
@@ -76,15 +92,30 @@ namespace VoiceStudio.App.Tests.UI
       // Arrange & Act
       // Verify all ViewModels in the critical path can be instantiated
 
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
       var synthesisViewModel = new VoiceStudio.App.Views.Panels.VoiceSynthesisViewModel(
           _mockBackendClient!,
           new VoiceStudio.App.Services.AudioPlayerService());
       var timelineViewModel = new VoiceStudio.App.Views.Panels.TimelineViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null,
+          settingsService: null,
+          recentProjectsService: null);
 
       // Assert
       Assert.IsNotNull(profilesViewModel, "ProfilesViewModel creation should succeed");

@@ -35,16 +35,23 @@ namespace VoiceStudio.App.Views.Panels
       this.InitializeComponent();
       // Wire DataContext with BackendClient and AudioPlayerService
       ViewModel = new TimelineViewModel(
-          ServiceProvider.GetBackendClient(),
-          ServiceProvider.GetAudioPlayerService()
+          AppServices.GetBackendClient(),
+          AppServices.GetAudioPlayerService(),
+          AppServices.GetMultiSelectService(),
+          AppServices.TryGetToastNotificationService(),
+          AppServices.TryGetUndoRedoService(),
+          AppServices.TryGetErrorPresentationService(),
+          AppServices.TryGetErrorLoggingService(),
+          AppServices.GetService<ISettingsService>(),
+          AppServices.TryGetRecentProjectsService()
       );
       this.DataContext = ViewModel;
 
       // Initialize services
-      _dragDropService = ServiceProvider.GetDragDropVisualFeedbackService();
-      _toastService = ServiceProvider.GetToastNotificationService();
-      _undoRedoService = ServiceProvider.GetUndoRedoService();
-      _keyboardShortcutService = ServiceProvider.TryGetKeyboardShortcutService();
+      _dragDropService = AppServices.GetDragDropVisualFeedbackService();
+      _toastService = AppServices.TryGetToastNotificationService();
+      _undoRedoService = AppServices.TryGetUndoRedoService();
+      _keyboardShortcutService = AppServices.TryGetKeyboardShortcutService();
 
       // Register keyboard shortcuts
       if (_keyboardShortcutService != null)

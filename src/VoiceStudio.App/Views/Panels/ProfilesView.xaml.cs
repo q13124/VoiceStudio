@@ -29,26 +29,24 @@ namespace VoiceStudio.App.Views.Panels
       this.InitializeComponent();
       // Wire DataContext with BackendClient and AudioPlayerService
       ViewModel = new ProfilesViewModel(
-          ServiceProvider.GetBackendClient(),
-          ServiceProvider.GetAudioPlayerService()
+          AppServices.GetBackendClient(),
+          AppServices.GetProfilesUseCase(),
+          AppServices.GetAudioPlayerService(),
+          AppServices.GetMultiSelectService(),
+          AppServices.TryGetToastNotificationService(),
+          AppServices.TryGetUndoRedoService(),
+          AppServices.TryGetErrorPresentationService(),
+          AppServices.TryGetErrorLoggingService()
       );
       this.DataContext = ViewModel;
 
       // Initialize services
-      _dragDropService = ServiceProvider.GetDragDropVisualFeedbackService();
-      _toastService = ServiceProvider.GetToastNotificationService();
-      try
-      {
-        _errorLoggingService = ServiceProvider.GetErrorLoggingService();
-      }
-      catch
-      {
-        // Error logging service may not be initialized yet - that's okay
-        _errorLoggingService = null;
-      }
+      _dragDropService = AppServices.GetDragDropVisualFeedbackService();
+      _toastService = AppServices.TryGetToastNotificationService();
+      _errorLoggingService = AppServices.TryGetErrorLoggingService();
 
       // Subscribe to selection changes to update UI
-      var multiSelectService = ServiceProvider.GetMultiSelectService();
+      var multiSelectService = AppServices.GetMultiSelectService();
       multiSelectService.SelectionChanged += (s, e) =>
       {
         if (e.PanelId == ViewModel.PanelId)
@@ -181,21 +179,72 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "import profile":
             _errorLoggingService?.LogInfo("Profile import requested", "ProfilesView");
-            _toastService?.ShowInfo("Coming Soon", "Profile import functionality will be available in a future update.");
+            await ViewModel.ImportProfilesAsync();
             break;
           case "edit":
             if (profile != null)
             {
               ViewModel.SelectedProfile = profile;
               _errorLoggingService?.LogInfo($"Profile edit requested: {profile.Name}", "ProfilesView");
-              _toastService?.ShowInfo("Coming Soon", "Profile editing functionality will be available in a future update.");
+              var editDialog = new ContentDialog
+              {
+                Title = "Edit Profile",
+                PrimaryButtonText = "Save",
+                SecondaryButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+              };
+
+              var editPanel = new StackPanel
+              {
+                Spacing = 8
+              };
+
+              var nameBox = new TextBox
+              {
+                Header = "Name",
+                Text = profile.Name ?? string.Empty
+              };
+              var languageBox = new TextBox
+              {
+                Header = "Language",
+                Text = profile.Language ?? string.Empty
+              };
+              var emotionBox = new TextBox
+              {
+                Header = "Emotion",
+                Text = profile.Emotion ?? string.Empty
+              };
+              var tagsBox = new TextBox
+              {
+                Header = "Tags (comma-separated)",
+                Text = profile.Tags != null ? string.Join(", ", profile.Tags) : string.Empty
+              };
+
+              editPanel.Children.Add(nameBox);
+              editPanel.Children.Add(languageBox);
+              editPanel.Children.Add(emotionBox);
+              editPanel.Children.Add(tagsBox);
+
+              editDialog.Content = editPanel;
+
+              var editResult = await editDialog.ShowAsync();
+              if (editResult == ContentDialogResult.Primary)
+              {
+                await ViewModel.UpdateProfileAsync(
+                    profile,
+                    nameBox.Text,
+                    languageBox.Text,
+                    emotionBox.Text,
+                    tagsBox.Text);
+              }
             }
             break;
           case "duplicate":
             if (profile != null)
             {
               _errorLoggingService?.LogInfo($"Profile duplicate requested: {profile.Name}", "ProfilesView");
-              _toastService?.ShowInfo("Coming Soon", "Profile duplication functionality will be available in a future update.");
+              await ViewModel.DuplicateProfileAsync(profile);
             }
             break;
           case "delete":
@@ -208,7 +257,7 @@ namespace VoiceStudio.App.Views.Panels
             if (profile != null)
             {
               _errorLoggingService?.LogInfo($"Profile export requested: {profile.Name}", "ProfilesView");
-              _toastService?.ShowInfo("Coming Soon", "Profile export functionality will be available in a future update.");
+              await ViewModel.ExportProfileAsync(profile);
             }
             break;
           case "test voice":
@@ -223,7 +272,7 @@ namespace VoiceStudio.App.Views.Panels
             if (profile != null)
             {
               _errorLoggingService?.LogInfo($"Quality analysis requested for profile: {profile.Name}", "ProfilesView");
-              _toastService?.ShowInfo("Coming Soon", "Quality analysis functionality will be available in a future update.");
+              await ViewModel.AnalyzeProfileQualityAsync(profile);
             }
             break;
         }
@@ -341,10 +390,10 @@ namespace VoiceStudio.App.Views.Panels
       return null;
     }
 
-    private void BatchExport_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void BatchExport_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
       _errorLoggingService?.LogInfo($"Batch export requested for {ViewModel.SelectedCount} profiles", "ProfilesView");
-      _toastService?.ShowInfo("Coming Soon", "Batch export functionality will be available in a future update.");
+      await ViewModel.ExportSelectedProfilesAsync();
     }
 
     private void Profile_DragStarting(UIElement sender, DragStartingEventArgs e)
@@ -374,7 +423,6 @@ namespace VoiceStudio.App.Views.Panels
       if (_dragDropService != null)
       {
         _dragDropService.Cleanup();
-        // DragDropCanvas cleanup not implemented
       }
 
       _draggedProfile = null;
@@ -405,8 +453,14 @@ namespace VoiceStudio.App.Views.Panels
         _dragDropService.HideDropTargetIndicator();
         _dragDropService.Cleanup();
 
-        _errorLoggingService?.LogInfo($"Profile reorder requested: {_draggedProfile.Name}", "ProfilesView");
-        _toastService?.ShowInfo("Coming Soon", "Profile reordering functionality will be available in a future update.");
+        if (border.DataContext is VoiceProfile targetProfile)
+        {
+          // Determine drop position based on pointer location
+          var position = e.GetPosition(border);
+          var dropPosition = DetermineDropPosition(border, position);
+          _errorLoggingService?.LogInfo($"Profile reorder requested: {_draggedProfile.Name}", "ProfilesView");
+          ViewModel.ReorderProfiles(_draggedProfile, targetProfile, dropPosition);
+        }
 
         // Clean up drag state
         _draggedProfile = null;

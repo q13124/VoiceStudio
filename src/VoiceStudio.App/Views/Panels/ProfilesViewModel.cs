@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,14 +11,18 @@ using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.UseCases;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
+using Windows.Storage;
+using Windows.Storage.Pickers;
 
 namespace VoiceStudio.App.Views.Panels
 {
   public partial class ProfilesViewModel : ObservableObject, IPanelView
   {
     private readonly IBackendClient _backendClient;
+    private readonly IProfilesUseCase _profilesUseCase;
     private readonly IAudioPlayerService _audioPlayer;
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly UndoRedoService? _undoRedoService;
@@ -172,38 +177,42 @@ namespace VoiceStudio.App.Views.Panels
     private readonly Dictionary<string, QualityMetrics?> _previewQualityCache = new();
     private readonly Dictionary<string, double> _previewQualityScoreCache = new();
 
-    public ProfilesViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+    private sealed class ProfileImportData
+    {
+      public string? Name { get; set; }
+      public string? Language { get; set; }
+      public string? Emotion { get; set; }
+      public List<string>? Tags { get; set; }
+    }
+
+    private sealed class ProfileExportBundle
+    {
+      public string ExportedAt { get; set; } = string.Empty;
+      public string Version { get; set; } = "1.0";
+      public List<ProfileImportData> Profiles { get; set; } = new();
+    }
+
+    public ProfilesViewModel(
+      IBackendClient backendClient,
+      IProfilesUseCase profilesUseCase,
+      IAudioPlayerService audioPlayer,
+      MultiSelectService multiSelectService,
+      ToastNotificationService? toastNotificationService = null,
+      UndoRedoService? undoRedoService = null,
+      IErrorPresentationService? errorService = null,
+      IErrorLoggingService? logService = null)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _profilesUseCase = profilesUseCase ?? throw new ArgumentNullException(nameof(profilesUseCase));
       _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new ArgumentNullException(nameof(multiSelectService));
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
-      // Get toast notification service (may be null if not initialized)
-      try
-      {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
-      }
-      catch
-      {
-        // Service may not be initialized yet - that's okay
-        _toastNotificationService = null;
-      }
+      _toastNotificationService = toastNotificationService;
+      _undoRedoService = undoRedoService;
 
-      // Get undo/redo service (may be null if not initialized)
-      try
-      {
-        _undoRedoService = ServiceProvider.GetUndoRedoService();
-      }
-      catch
-      {
-        // Service may not be initialized yet - that's okay
-        _undoRedoService = null;
-      }
-
-      // Get error services
-      _errorService = ServiceProvider.TryGetErrorPresentationService();
-      _logService = ServiceProvider.TryGetErrorLoggingService();
+      _errorService = errorService;
+      _logService = logService;
 
       LoadProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -328,6 +337,602 @@ namespace VoiceStudio.App.Views.Panels
     public EnhancedAsyncRelayCommand LoadQualityHistoryCommand { get; }
     public EnhancedAsyncRelayCommand LoadQualityTrendsCommand { get; }
 
+    public async Task ImportProfilesAsync()
+    {
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var picker = new FileOpenPicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeFilter.Add(".json");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null)
+        {
+          return;
+        }
+
+        var json = await FileIO.ReadTextAsync(file);
+        var importProfiles = ParseProfileImports(json, out var parseError);
+        if (!string.IsNullOrWhiteSpace(parseError))
+        {
+          ErrorMessage = parseError;
+          _toastNotificationService?.ShowError(
+              ResourceHelper.GetString("Toast.Title.ImportFailed", "Import Failed"),
+              parseError);
+          return;
+        }
+
+        if (importProfiles.Count == 0)
+        {
+          ErrorMessage = ResourceHelper.GetString("Profile.ImportEmpty", "Import file contains no profiles.");
+          return;
+        }
+
+        var createdProfiles = new List<VoiceProfile>();
+        foreach (var importProfile in importProfiles)
+        {
+          var name = importProfile.Name?.Trim();
+          if (string.IsNullOrWhiteSpace(name))
+          {
+            continue;
+          }
+
+          var language = string.IsNullOrWhiteSpace(importProfile.Language) ? "en" : importProfile.Language!.Trim();
+          var emotion = string.IsNullOrWhiteSpace(importProfile.Emotion) ? null : importProfile.Emotion!.Trim();
+          var tags = importProfile.Tags?.Where(tag => !string.IsNullOrWhiteSpace(tag)).Select(tag => tag.Trim()).ToList();
+
+          var profile = await _profilesUseCase.CreateAsync(
+              name,
+              language,
+              emotion,
+              tags,
+              CancellationToken.None);
+          if (profile != null)
+          {
+            Profiles.Add(profile);
+            createdProfiles.Add(profile);
+          }
+        }
+
+        UpdateAvailableFilters();
+        ApplyFilters();
+
+        if (createdProfiles.Count > 0)
+        {
+          SelectedProfile = createdProfiles.Last();
+          var message = string.Format(
+              ResourceHelper.GetString("Profile.ImportSuccess", "{0} profiles imported"),
+              createdProfiles.Count);
+          _toastNotificationService?.ShowSuccess(
+              message,
+              ResourceHelper.GetString("Toast.Title.ImportComplete", "Import Complete"));
+        }
+        else
+        {
+          ErrorMessage = ResourceHelper.GetString("Profile.ImportEmpty", "Import file contains no profiles.");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return;
+      }
+      catch (Exception ex)
+      {
+        var message = ErrorHandler.GetUserFriendlyMessage(ex);
+        ErrorMessage = string.Format(
+            ResourceHelper.GetString("Profile.ImportFailed", "Import failed: {0}"),
+            message);
+        _logService?.LogError(ex, "ImportProfiles");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.ImportFailed", "Import Failed"),
+            message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    public async Task ExportProfileAsync(VoiceProfile? profile)
+    {
+      if (profile == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("Profile.ExportNoSelection", "Select a profile to export.");
+        return;
+      }
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var exportBundle = new ProfileExportBundle
+        {
+          ExportedAt = DateTime.UtcNow.ToString("O"),
+          Profiles = new List<ProfileImportData>
+          {
+            new ProfileImportData
+            {
+              Name = profile.Name,
+              Language = profile.Language,
+              Emotion = profile.Emotion,
+              Tags = profile.Tags?.ToList()
+            }
+          }
+        };
+
+        var json = JsonSerializer.Serialize(exportBundle, new JsonSerializerOptions { WriteIndented = true });
+
+        var picker = new FileSavePicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
+        picker.SuggestedFileName = SanitizeFilename($"voice_profile_{profile.Name}_{DateTime.Now:yyyyMMdd}");
+
+        var file = await picker.PickSaveFileAsync();
+        if (file == null)
+        {
+          return;
+        }
+
+        await FileIO.WriteTextAsync(file, json);
+        var message = string.Format(
+            ResourceHelper.GetString("Profile.ExportSuccess", "Exported to {0}"),
+            file.Name);
+        _toastNotificationService?.ShowSuccess(
+            message,
+            ResourceHelper.GetString("Toast.Title.ExportComplete", "Export Complete"));
+      }
+      catch (OperationCanceledException)
+      {
+        return;
+      }
+      catch (Exception ex)
+      {
+        var message = ErrorHandler.GetUserFriendlyMessage(ex);
+        ErrorMessage = string.Format(
+            ResourceHelper.GetString("Profile.ExportFailed", "Export failed: {0}"),
+            message);
+        _logService?.LogError(ex, "ExportProfile");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.ExportFailed", "Export Failed"),
+            message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    public async Task ExportSelectedProfilesAsync()
+    {
+      var selectedProfiles = GetSelectedProfiles();
+      if (selectedProfiles.Count == 0)
+      {
+        ErrorMessage = ResourceHelper.GetString("Profile.ExportNoSelection", "Select profiles to export.");
+        return;
+      }
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var exportBundle = new ProfileExportBundle
+        {
+          ExportedAt = DateTime.UtcNow.ToString("O"),
+          Profiles = selectedProfiles.Select(profile => new ProfileImportData
+          {
+            Name = profile.Name,
+            Language = profile.Language,
+            Emotion = profile.Emotion,
+            Tags = profile.Tags?.ToList()
+          }).ToList()
+        };
+
+        var json = JsonSerializer.Serialize(exportBundle, new JsonSerializerOptions { WriteIndented = true });
+
+        var picker = new FileSavePicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
+        picker.SuggestedFileName = SanitizeFilename($"voice_profiles_export_{DateTime.Now:yyyyMMdd}");
+
+        var file = await picker.PickSaveFileAsync();
+        if (file == null)
+        {
+          return;
+        }
+
+        await FileIO.WriteTextAsync(file, json);
+        var message = string.Format(
+            ResourceHelper.GetString("Profile.ExportSuccess", "Exported to {0}"),
+            file.Name);
+        _toastNotificationService?.ShowSuccess(
+            message,
+            ResourceHelper.GetString("Toast.Title.ExportComplete", "Export Complete"));
+      }
+      catch (OperationCanceledException)
+      {
+        return;
+      }
+      catch (Exception ex)
+      {
+        var message = ErrorHandler.GetUserFriendlyMessage(ex);
+        ErrorMessage = string.Format(
+            ResourceHelper.GetString("Profile.ExportFailed", "Export failed: {0}"),
+            message);
+        _logService?.LogError(ex, "ExportProfiles");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.ExportFailed", "Export Failed"),
+            message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    public async Task DuplicateProfileAsync(VoiceProfile? profile)
+    {
+      if (profile == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("Profile.DuplicateNoSelection", "Select a profile to duplicate.");
+        return;
+      }
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var duplicateName = GenerateDuplicateName(profile.Name);
+        var newProfile = await _profilesUseCase.CreateAsync(
+            duplicateName,
+            profile.Language,
+            profile.Emotion,
+            profile.Tags?.ToList(),
+            CancellationToken.None);
+
+        if (newProfile != null)
+        {
+          Profiles.Add(newProfile);
+          SelectedProfile = newProfile;
+          UpdateAvailableFilters();
+          ApplyFilters();
+          var message = string.Format(
+              ResourceHelper.GetString("Profile.DuplicateSuccess", "Duplicated {0}"),
+              duplicateName);
+          _toastNotificationService?.ShowSuccess(
+              message,
+              ResourceHelper.GetString("Toast.Title.DuplicateComplete", "Profile Duplicated"));
+        }
+      }
+      catch (Exception ex)
+      {
+        var message = ErrorHandler.GetUserFriendlyMessage(ex);
+        ErrorMessage = string.Format(
+            ResourceHelper.GetString("Profile.DuplicateFailed", "Duplicate failed: {0}"),
+            message);
+        _logService?.LogError(ex, "DuplicateProfile");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.DuplicateFailed", "Duplicate Failed"),
+            message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    public async Task UpdateProfileAsync(
+        VoiceProfile? profile,
+        string? name,
+        string? language,
+        string? emotion,
+        string? tagsText)
+    {
+      if (profile == null || string.IsNullOrWhiteSpace(profile.Id))
+      {
+        ErrorMessage = ResourceHelper.GetString("Profile.UpdateNoSelection", "Select a profile to update.");
+        return;
+      }
+
+      var validation = InputValidator.ValidateProfileName(name);
+      if (!validation.IsValid)
+      {
+        ErrorMessage = validation.ErrorMessage;
+        return;
+      }
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var tags = ParseTags(tagsText);
+        var updated = await _profilesUseCase.UpdateAsync(
+            profile.Id,
+            name?.Trim(),
+            string.IsNullOrWhiteSpace(language) ? null : language!.Trim(),
+            string.IsNullOrWhiteSpace(emotion) ? null : emotion!.Trim(),
+            tags,
+            CancellationToken.None);
+
+        ReplaceProfile(updated);
+        SelectedProfile = updated;
+        UpdateAvailableFilters();
+        ApplyFilters();
+
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.GetString("Profile.UpdateSuccess", "Profile updated"),
+            ResourceHelper.GetString("Toast.Title.UpdateComplete", "Profile Updated"));
+      }
+      catch (Exception ex)
+      {
+        var message = ErrorHandler.GetUserFriendlyMessage(ex);
+        ErrorMessage = string.Format(
+            ResourceHelper.GetString("Profile.UpdateFailed", "Update failed: {0}"),
+            message);
+        _logService?.LogError(ex, "UpdateProfile");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.UpdateFailed", "Update Failed"),
+            message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    public async Task AnalyzeProfileQualityAsync(VoiceProfile? profile)
+    {
+      if (profile == null)
+      {
+        ErrorMessage = ResourceHelper.GetString("Profile.AnalyzeNoSelection", "Select a profile to analyze.");
+        return;
+      }
+
+      SelectedProfile = profile;
+      await LoadQualityHistoryAsync(CancellationToken.None);
+      await LoadQualityTrendsAsync(CancellationToken.None);
+      await CheckQualityDegradationAsync(CancellationToken.None);
+
+      var message = string.Format(
+          ResourceHelper.GetString("Profile.AnalyzeSuccess", "Analysis completed for {0}"),
+          profile.Name ?? string.Empty);
+      _toastNotificationService?.ShowSuccess(
+          message,
+          ResourceHelper.GetString("Toast.Title.AnalysisComplete", "Analysis Complete"));
+    }
+
+    public bool ReorderProfiles(VoiceProfile? dragged, VoiceProfile? target, DropPosition dropPosition)
+    {
+      if (dragged == null || target == null)
+      {
+        return false;
+      }
+
+      if (dragged.Id == target.Id)
+      {
+        return false;
+      }
+
+      var fromIndex = Profiles.IndexOf(dragged);
+      var targetIndex = Profiles.IndexOf(target);
+      if (fromIndex < 0 || targetIndex < 0)
+      {
+        return false;
+      }
+
+      Profiles.RemoveAt(fromIndex);
+      if (fromIndex < targetIndex)
+      {
+        targetIndex--;
+      }
+
+      var insertIndex = dropPosition switch
+      {
+        DropPosition.Before => targetIndex,
+        DropPosition.After => targetIndex + 1,
+        _ => targetIndex
+      };
+
+      if (insertIndex < 0)
+      {
+        insertIndex = 0;
+      }
+      if (insertIndex > Profiles.Count)
+      {
+        insertIndex = Profiles.Count;
+      }
+
+      Profiles.Insert(insertIndex, dragged);
+      ApplyFilters();
+
+      _toastNotificationService?.ShowSuccess(
+          ResourceHelper.GetString("Profile.ReorderSuccess", "Profile order updated"),
+          ResourceHelper.GetString("Toast.Title.ReorderComplete", "Profiles Reordered"));
+
+      return true;
+    }
+
+    private static List<string>? ParseTags(string? tagsText)
+    {
+      if (string.IsNullOrWhiteSpace(tagsText))
+      {
+        return null;
+      }
+
+      return tagsText
+          .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+          .Where(tag => !string.IsNullOrWhiteSpace(tag))
+          .ToList();
+    }
+
+    private static string SanitizeFilename(string? value)
+    {
+      var name = string.IsNullOrWhiteSpace(value) ? "profile_export" : value!;
+      foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+      {
+        name = name.Replace(c, '_');
+      }
+      return name;
+    }
+
+    private string GenerateDuplicateName(string? baseName)
+    {
+      var normalized = string.IsNullOrWhiteSpace(baseName)
+          ? ResourceHelper.GetString("Profile.Unnamed", "Unnamed Profile")
+          : baseName!.Trim();
+
+      var candidate = $"{normalized} (Copy)";
+      var counter = 2;
+      while (Profiles.Any(profile => string.Equals(profile.Name, candidate, StringComparison.OrdinalIgnoreCase)))
+      {
+        candidate = $"{normalized} (Copy {counter})";
+        counter++;
+      }
+
+      return candidate;
+    }
+
+    private void ReplaceProfile(VoiceProfile? updatedProfile)
+    {
+      if (updatedProfile == null)
+      {
+        return;
+      }
+
+      for (var i = 0; i < Profiles.Count; i++)
+      {
+        if (Profiles[i].Id == updatedProfile.Id)
+        {
+          Profiles[i] = updatedProfile;
+          break;
+        }
+      }
+    }
+
+    private List<VoiceProfile> GetSelectedProfiles()
+    {
+      if (_multiSelectState == null || _multiSelectState.SelectedIds.Count == 0)
+      {
+        return SelectedProfile != null ? new List<VoiceProfile> { SelectedProfile } : new List<VoiceProfile>();
+      }
+
+      return Profiles
+          .Where(profile => _multiSelectState.SelectedIds.Contains(profile.Id))
+          .ToList();
+    }
+
+    private static List<ProfileImportData> ParseProfileImports(string json, out string? errorMessage)
+    {
+      errorMessage = null;
+      try
+      {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+          return ParseProfileArray(root);
+        }
+
+        if (root.ValueKind == JsonValueKind.Object)
+        {
+          if (TryGetProperty(root, "profiles", out var profilesElement) && profilesElement.ValueKind == JsonValueKind.Array)
+          {
+            return ParseProfileArray(profilesElement);
+          }
+
+          var single = ParseProfileObject(root);
+          return single != null ? new List<ProfileImportData> { single } : new List<ProfileImportData>();
+        }
+      }
+      catch (JsonException ex)
+      {
+        errorMessage = ResourceHelper.FormatString("Profile.ImportParseFailed", ex.Message);
+        return new List<ProfileImportData>();
+      }
+
+      errorMessage = ResourceHelper.GetString("Profile.ImportParseFailed", "Invalid profile import format.");
+      return new List<ProfileImportData>();
+    }
+
+    private static List<ProfileImportData> ParseProfileArray(JsonElement element)
+    {
+      var profiles = new List<ProfileImportData>();
+      foreach (var item in element.EnumerateArray())
+      {
+        if (item.ValueKind != JsonValueKind.Object)
+        {
+          continue;
+        }
+
+        var profile = ParseProfileObject(item);
+        if (profile != null)
+        {
+          profiles.Add(profile);
+        }
+      }
+      return profiles;
+    }
+
+    private static ProfileImportData? ParseProfileObject(JsonElement element)
+    {
+      var importData = new ProfileImportData();
+
+      if (TryGetProperty(element, "name", out var nameElement))
+      {
+        importData.Name = nameElement.GetString();
+      }
+
+      if (TryGetProperty(element, "language", out var languageElement))
+      {
+        importData.Language = languageElement.GetString();
+      }
+
+      if (TryGetProperty(element, "emotion", out var emotionElement))
+      {
+        importData.Emotion = emotionElement.GetString();
+      }
+
+      if (TryGetProperty(element, "tags", out var tagsElement))
+      {
+        if (tagsElement.ValueKind == JsonValueKind.Array)
+        {
+          importData.Tags = tagsElement.EnumerateArray()
+              .Select(tag => tag.GetString())
+              .Where(tag => !string.IsNullOrWhiteSpace(tag))
+              .Select(tag => tag!.Trim())
+              .ToList();
+        }
+        else if (tagsElement.ValueKind == JsonValueKind.String)
+        {
+          importData.Tags = ParseTags(tagsElement.GetString());
+        }
+      }
+
+      return importData;
+    }
+
+    private static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
+    {
+      foreach (var property in element.EnumerateObject())
+      {
+        if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+        {
+          value = property.Value;
+          return true;
+        }
+      }
+
+      value = default;
+      return false;
+    }
+
     private async Task LoadProfilesAsync(CancellationToken cancellationToken)
     {
       IsLoading = true;
@@ -335,7 +940,7 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        var profilesList = await _backendClient.GetProfilesAsync(cancellationToken);
+        var profilesList = await _profilesUseCase.ListAsync(cancellationToken);
 
         Profiles.Clear();
         foreach (var profile in profilesList)
@@ -381,7 +986,7 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        var profile = await _backendClient.CreateProfileAsync(name!, cancellationToken: cancellationToken);
+        var profile = await _profilesUseCase.CreateAsync(name!, cancellationToken: cancellationToken);
         Profiles.Add(profile);
         SelectedProfile = profile;
 
@@ -456,7 +1061,7 @@ namespace VoiceStudio.App.Views.Panels
         IsLoading = true;
         ErrorMessage = null;
 
-        var success = await _backendClient.DeleteProfileAsync(profileId, cancellationToken);
+        var success = await _profilesUseCase.DeleteAsync(profileId, cancellationToken);
         if (success)
         {
           var profileToDelete = Profiles.FirstOrDefault(p => p.Id == profileId);
@@ -818,7 +1423,7 @@ namespace VoiceStudio.App.Views.Panels
 
           try
           {
-            var success = await _backendClient.DeleteProfileAsync(profileId, cancellationToken);
+            var success = await _profilesUseCase.DeleteAsync(profileId, cancellationToken);
             if (success)
             {
               var profile = Profiles.FirstOrDefault(p => p.Id == profileId);

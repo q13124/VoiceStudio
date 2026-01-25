@@ -32,9 +32,17 @@ namespace VoiceStudio.App.Tests.UI
     public async Task CreateProfile_CommandExists()
     {
       // Arrange
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var viewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
 
       // Act
       // In a real implementation, this would:
@@ -99,9 +107,17 @@ namespace VoiceStudio.App.Tests.UI
     public void ViewModels_CanExecuteCommands()
     {
       // Arrange
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
 
       // Act & Assert
       // Verify commands are properly initialized

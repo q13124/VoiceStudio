@@ -70,7 +70,7 @@ namespace VoiceStudio.App.ViewModels
         private ObservableCollection<string> availableGpuDevices = new();
 
         [ObservableProperty]
-        private int? memoryLimitMb;
+        private double memoryLimitMb;
 
         [ObservableProperty]
         private bool backgroundProcessing = true;
@@ -247,7 +247,7 @@ namespace VoiceStudio.App.ViewModels
                     MaxThreads = settings.Performance?.MaxThreads ?? 4;
                     GpuEnabled = settings.Performance?.GpuEnabled ?? true;
                     SelectedGpuDevice = settings.Performance?.GpuDevice;
-                    MemoryLimitMb = settings.Performance?.MemoryLimitMb;
+                    MemoryLimitMb = settings.Performance?.MemoryLimitMb ?? 0;
                     BackgroundProcessing = settings.Performance?.BackgroundProcessing ?? true;
                     PreloadEngines = settings.Performance?.PreloadEngines ?? false;
 
@@ -455,7 +455,7 @@ namespace VoiceStudio.App.ViewModels
             public int MaxThreads { get; set; }
             public bool GpuEnabled { get; set; }
             public string? GpuDevice { get; set; }
-            public int? MemoryLimitMb { get; set; }
+            public double MemoryLimitMb { get; set; }
             public bool BackgroundProcessing { get; set; }
             public bool PreloadEngines { get; set; }
         }

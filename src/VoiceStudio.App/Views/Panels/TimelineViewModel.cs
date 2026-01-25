@@ -25,6 +25,8 @@ namespace VoiceStudio.App.Views.Panels
     private readonly UndoRedoService? _undoRedoService;
     private readonly IErrorPresentationService? _errorService;
     private readonly IErrorLoggingService? _logService;
+    private readonly ISettingsService? _settingsService;
+    private readonly RecentProjectsService? _recentProjectsService;
 
     public string PanelId => "timeline";
     public string DisplayName => ResourceHelper.GetString("Panel.Timeline.DisplayName", "Timeline");
@@ -189,18 +191,29 @@ namespace VoiceStudio.App.Views.Panels
 
     public bool HasProjectAudioFiles => ProjectAudioFiles != null && ProjectAudioFiles.Count > 0;
 
-    public TimelineViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+    public TimelineViewModel(
+      IBackendClient backendClient,
+      IAudioPlayerService audioPlayer,
+      MultiSelectService multiSelectService,
+      ToastNotificationService? toastNotificationService = null,
+      UndoRedoService? undoRedoService = null,
+      IErrorPresentationService? errorService = null,
+      IErrorLoggingService? logService = null,
+      ISettingsService? settingsService = null,
+      RecentProjectsService? recentProjectsService = null)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new ArgumentNullException(nameof(multiSelectService));
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       // Get optional services using helper (reduces code duplication)
-      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetToastNotificationService());
-      _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
-      _errorService = ServiceProvider.TryGetErrorPresentationService();
-      _logService = ServiceProvider.TryGetErrorLoggingService();
+      _toastNotificationService = toastNotificationService;
+      _undoRedoService = undoRedoService;
+      _errorService = errorService;
+      _logService = logService;
+      _settingsService = settingsService;
+      _recentProjectsService = recentProjectsService;
 
       LoadProjectsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -321,7 +334,7 @@ namespace VoiceStudio.App.Views.Panels
     {
       try
       {
-        var settingsService = ServiceProvider.GetSettingsService();
+        var settingsService = _settingsService;
         if (settingsService != null)
         {
           var settings = await settingsService.LoadSettingsAsync();
@@ -721,7 +734,7 @@ namespace VoiceStudio.App.Views.Panels
         // Add to recent projects (IDEA 16)
         try
         {
-          var recentProjectsService = ServiceProvider.GetRecentProjectsService();
+          var recentProjectsService = _recentProjectsService;
           if (recentProjectsService != null)
           {
             _ = recentProjectsService.AddRecentProjectAsync(value.Id, value.Name ?? ResourceHelper.GetString("Project.Unnamed", "Unnamed Project"));
@@ -1286,7 +1299,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        // Log but don't show error - waveform will show placeholder
+        // Log but don't show error - waveform will show empty state
         _logService?.LogError(ex, "LoadClipWaveform");
         System.Diagnostics.Debug.WriteLine($"Failed to load waveform for clip {clip.Id}: {ex.Message}");
       }

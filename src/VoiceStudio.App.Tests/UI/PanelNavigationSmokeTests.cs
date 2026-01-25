@@ -36,9 +36,17 @@ namespace VoiceStudio.App.Tests.UI
       // In a real implementation, this would use NavigationService to navigate
       // For now, we verify the ViewModel can be created
 
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var viewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
 
       // Act
       await WaitForPanelAsync("profiles");
@@ -54,7 +62,14 @@ namespace VoiceStudio.App.Tests.UI
       // Arrange
       var viewModel = new VoiceStudio.App.Views.Panels.TimelineViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null,
+          settingsService: null,
+          recentProjectsService: null);
 
       // Act
       await WaitForPanelAsync("timeline");
@@ -68,12 +83,27 @@ namespace VoiceStudio.App.Tests.UI
     public async Task PanelSwitchingWorks()
     {
       // Arrange
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
       var timelineViewModel = new VoiceStudio.App.Views.Panels.TimelineViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null,
+          settingsService: null,
+          recentProjectsService: null);
 
       // Act
       // In a real implementation, this would:
@@ -97,9 +127,17 @@ namespace VoiceStudio.App.Tests.UI
     public void PanelViewModels_ImplementIPanelView()
     {
       // Arrange & Act
+      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
-          new VoiceStudio.App.Services.AudioPlayerService());
+          profilesUseCase,
+          new VoiceStudio.App.Services.AudioPlayerService(),
+          new VoiceStudio.App.Services.MultiSelectService(),
+          toastNotificationService: null,
+          undoRedoService: new VoiceStudio.App.Services.UndoRedoService(),
+          errorService: null,
+          logService: null);
 
       // Assert
       Assert.IsInstanceOfType(profilesViewModel, typeof(VoiceStudio.Core.Panels.IPanelView),

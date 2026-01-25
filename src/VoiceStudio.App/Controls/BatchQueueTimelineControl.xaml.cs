@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VoiceStudio.Core.Models;
 using Windows.Foundation;
-using Microsoft.UI;
+using Colors = Microsoft.UI.Colors;
 
 namespace VoiceStudio.App.Controls
 {

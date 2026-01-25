@@ -40,8 +40,7 @@
     <!-- Legacy workaround (can be revisited once XAML pipeline is stable) -->
     <DisableXbfGeneration>true</DisableXbfGeneration>
     <EnableUIXamlCompilation>false</EnableUIXamlCompilation>
-    <!-- VS-0035 fix: Use in-process XAML compiler - the standalone XamlCompiler.exe has a known bug
-         where it fails silently with exit code 1. The in-process compiler requires VS MSBuild. -->
+    <!-- VS-0035 fix: Force external XamlCompiler via wrapper to avoid WMC9999 in-process failures. -->
     <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
     <CppWinRTFastAbi>false</CppWinRTFastAbi>
     <BaseOutputPath>$(SolutionDir).buildlogs\</BaseOutputPath>
@@ -134,9 +133,14 @@
   </Target>
 
   <ItemGroup>
+    <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="JsonSchema.Net" Version="8.0.5" />
     <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="$(MicrosoftWindowsAppSDKVersion)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />

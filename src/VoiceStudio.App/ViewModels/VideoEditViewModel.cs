@@ -8,17 +8,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Windows.Storage.Pickers;
 using VoiceStudio.App.Services;
-using VoiceStudio.Core.Models;
-using VoiceStudio.Core.Services;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
 {
   /// <summary>
   /// ViewModel for video editing panel.
   /// </summary>
-  public class VideoEditViewModel : BaseViewModel
+  public class VideoEditViewModel : BaseViewModel, IPanelView
   {
+    public string PanelId => "video-edit";
+    public string DisplayName => ResourceHelper.GetString("Panel.VideoEdit.DisplayName", "Video Editing");
+    public PanelRegion Region => PanelRegion.Center;
     private readonly IBackendClient _backendClient;
 
     private string? _selectedVideoPath;

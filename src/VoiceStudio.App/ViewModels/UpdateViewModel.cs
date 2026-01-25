@@ -1,18 +1,21 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using VoiceStudio.App.Services;
-using VoiceStudio.App.ViewModels;
-using VoiceStudio.App.Utilities;
-
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.App.Services;
+using VoiceStudio.App.Utilities;
+using VoiceStudio.Core.Panels;
+
 namespace VoiceStudio.App.ViewModels
 {
   /// <summary>
   /// ViewModel for the update dialog and update notifications.
   /// </summary>
-  public class UpdateViewModel : BaseViewModel
+  public class UpdateViewModel : BaseViewModel, IPanelView
   {
+    public string PanelId => "update";
+    public string DisplayName => ResourceHelper.GetString("Panel.Update.DisplayName", "Updates");
+    public PanelRegion Region => PanelRegion.Floating;
     private readonly IUpdateService _updateService;
     private bool _isUpdateAvailable;
     private bool _isCheckingForUpdates;
