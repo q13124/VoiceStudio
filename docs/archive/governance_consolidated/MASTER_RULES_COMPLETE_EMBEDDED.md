@@ -10,7 +10,7 @@
 
 ## TABLE OF CONTENTS
 
-1. [The Absolute Rule - NO Stubs/Placeholders/Bookmarks/Tags](#1-the-absolute-rule)
+1. [Task Completion Expectations](#1-task-completion-expectations)
 2. [Dependency Installation Rule - ALWAYS Install Dependencies](#2-dependency-installation-rule)
 3. [UI Design Rules - ChatGPT Specification](#3-ui-design-rules)
 4. [Integration Rules](#4-integration-rules)
@@ -23,68 +23,13 @@
 
 ---
 
-## 1. THE ABSOLUTE RULE
+## 1. TASK COMPLETION EXPECTATIONS
 
-### 🚨 THE MAIN RULE - HIGHEST PRIORITY
+### Deliver complete work before moving on
 
-**EVERY task must be 100% complete before moving to the next task.**
-
-**NO exceptions. NO shortcuts. NO placeholders. NO bookmarks. NO tags. NO stubs.**
-
-**This rule applies to:**
-
-- ✅ All code files (C#, Python, XAML, JSON, etc.)
-- ✅ All documentation files (Markdown, text, etc.)
-- ✅ All configuration files
-- ✅ All comments in code
-- ✅ All UI text and labels
-- ✅ All error messages
-- ✅ All test files
-- ✅ All build scripts
-- ✅ All installer files
-- ✅ **EVERYTHING**
-
----
-
-### ❌ FORBIDDEN TERMS AND PATTERNS
-
-**ALL of these are FORBIDDEN in ANY form:**
-
-#### Bookmarks (FORBIDDEN):
-
-- `TODO`, `FIXME`, `NOTE`, `HACK`, `REMINDER`, `XXX`, `WARNING`, `CAUTION`, `BUG`, `ISSUE`
-- `REFACTOR`, `OPTIMIZE`, `REVIEW`, `CHECK`, `VERIFY`, `TEST`, `DEBUG`, `DEPRECATED`, `OBSOLETE`
-- `marker`, `flag`, `indicator`, `annotation`, `reference point`, `anchor`, `checkpoint`, `waypoint`
-- `signpost`, `milestone marker`, `pointer`, `reference`, `sticky note`
-- `bookmark`, `reminder marker`, `fix marker`, `work marker`, `return marker`, `later marker`
-- `revisit marker`, `follow-up marker`, `revisit point`, `follow-up point`, `return point`
-
-#### Placeholders (FORBIDDEN):
-
-- `NotImplementedError`, `NotImplementedException`, `[PLACEHOLDER]`, `{"mock": true}`
-- `return {}`, `return []`, `return null`, `dummy`, `mock`, `fake`, `sample`, `temporary`
-- `test data`, `filler`, `placeholder`, `stub data`, `example data`, `demonstration data`
-- `pseudocode`, `skeleton data`, `empty data`, `null data`, `blank data`, `default data`
-- `dummy value`, `mock value`, `fake value`, `sample value`, `test value`, `placeholder value`
-- `dummy code`, `mock code`, `fake code`, `sample code`, `test code`, `placeholder code`
-- `dummy implementation`, `mock implementation`, `fake implementation`, `sample implementation`
-- `dummy function`, `mock function`, `fake function`, `sample function`, `test function`
-- `dummy method`, `mock method`, `fake method`, `sample method`, `test method`
-- `dummy response`, `mock response`, `fake response`, `sample response`, `test response`
-
-#### Status Words/Phrases (FORBIDDEN):
-
-- `pending`, `incomplete`, `unfinished`, `partial`, `in progress`, `to do`, `will be`
-- `coming soon`, `not yet`, `eventually`, `later`, `soon`, `planned`, `scheduled`, `assigned`
-- `open`, `active`, `ongoing`, `under construction`, `under development`, `in development`
-- `work in progress`, `WIP`, `draft`, `rough`, `prototype`, `experimental`, `alpha`, `beta`
-- `preview`, `pre-release`, `needs`, `requires`, `missing`, `absent`, `empty`, `blank`
-- `null`, `void`, `tbd`, `tba`, `tbc`, `to be done`, `will be implemented`
-- `coming soon`, `not yet`, `eventually`, `later`, `for now`, `temporary`, `needs to be`
-
-#### Tags (FORBIDDEN):
-
-- ALL markup tags, version control tags, code/documentation tags, status/indicator tags, system/metadata tags, API/service tags, tracking/monitoring tags, social/collaboration tags, content/organizational tags
+- Complete the intended functionality before marking a task done.
+- Track remaining work in the project tracker or ledger instead of leaving incomplete behavior in shipping paths.
+- Keep documentation and UI text accurate about what is implemented.
 
 ---
 

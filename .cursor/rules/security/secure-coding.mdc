@@ -1,0 +1,31 @@
+---
+description: "Secure coding requirements for all VoiceStudio changes."
+alwaysApply: true
+---
+# Secure coding rules
+
+## Baseline expectations
+- Treat all inputs as untrusted; validate format, ranges, and size.
+- Prefer safe defaults (HTTPS, strong crypto, least privilege).
+- Do not expose internal errors or sensitive data in user-facing messages.
+- Never include secrets, tokens, or credentials in code or output.
+
+## Privacy defaults
+- Offline-first: no network calls by default.
+- No telemetry unless explicitly enabled, documented, and easily disabled.
+- Limit file system scope to app directories.
+- Sanitize user-provided paths before use.
+
+## Data handling
+- Use parameterized queries for any database access.
+- Escape or encode user-controlled output when rendering or generating content.
+- Avoid logging PII or sensitive identifiers.
+
+## Dependency hygiene
+- Prefer standard libraries or well-known, vetted dependencies.
+- Do not introduce packages that are unverified or unused.
+- Keep versions explicit and stable.
+
+## Verification
+- Add tests for security-critical paths, including negative tests.
+- When changes are non-trivial, perform a self-review pass and fix issues found.

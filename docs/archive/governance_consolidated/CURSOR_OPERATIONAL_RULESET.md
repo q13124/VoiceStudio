@@ -574,7 +574,7 @@
 
 ### Architecture
 1. **VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md** - Master spec
-2. **ARCHITECTURE_DATA_FLOW.md** - Data flow
+2. **../architecture/Part6_State_Data.md** - Data flow
 3. **ENGINE_RECOMMENDATIONS.md** - Backend engines
 
 ---

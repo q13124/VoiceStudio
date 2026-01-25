@@ -8,23 +8,25 @@
 **Source:** All files in E:\VoiceStudio project, including governance, design, and documentation folders  
 **Compiled By:** AI Assistant Overseer
 
+**Canonical Architecture:** `docs/architecture/README.md` (Parts 1–9 + Part 10 legacy isolation).  
+**Legacy Architecture Archive:** `docs/archive/architecture_legacy/`
+
 ---
 
 ## 📋 TABLE OF CONTENTS
 
 ### **PART 1: ABSOLUTE RULES & REQUIREMENTS**
 
-1. [The Absolute Rule - 100% Complete](#1-the-absolute-rule---100-complete)
+1. [Task Completion Expectations](#1-task-completion-expectations)
 2. [Dependency Installation Rule](#2-dependency-installation-rule)
 3. [UI Design Rules - ChatGPT Specification](#3-ui-design-rules---chatgpt-specification)
 4. [Integration Rules](#4-integration-rules)
 5. [Code Quality Rules](#5-code-quality-rules)
-6. [No Mock Outputs Rule](#6-no-mock-outputs-rule)
-7. [Architecture Rules](#7-architecture-rules)
-8. [Worker Rules & Responsibilities](#8-worker-rules--responsibilities)
-9. [Overseer Rules & Responsibilities](#9-overseer-rules--responsibilities)
-10. [Enforcement Rules](#10-enforcement-rules)
-11. [Periodic Refresh System](#11-periodic-refresh-system)
+6. [Architecture Rules](#6-architecture-rules)
+7. [Worker Rules & Responsibilities](#7-worker-rules--responsibilities)
+8. [Overseer Rules & Responsibilities](#8-overseer-rules--responsibilities)
+9. [Enforcement Rules](#9-enforcement-rules)
+10. [Periodic Refresh System](#10-periodic-refresh-system)
 
 ### **PART 2: DESIGN SPECIFICATIONS**
 
@@ -63,381 +65,13 @@
 
 ## PART 1: ABSOLUTE RULES & REQUIREMENTS
 
-## 1. THE ABSOLUTE RULE - 100% COMPLETE
+## 1. TASK COMPLETION EXPECTATIONS
 
-### 🚨 HIGHEST PRIORITY RULE - MANDATORY - NO EXCEPTIONS
+### Deliver complete work before moving on
 
-**EVERY task must be 100% complete before moving to the next task.**
-
-**NO exceptions. NO shortcuts. NO placeholders. NO bookmarks. NO tags. NO stubs.**
-
-**This rule applies to ALL code, ALL documentation, ALL files, ALL the time.**
-
-### FORBIDDEN TERMS AND PATTERNS
-
-#### Bookmarks (FORBIDDEN - ALL SYNONYMS):
-
-- `TODO`, `FIXME`, `NOTE`, `HACK`, `REMINDER`, `XXX`, `WARNING`, `CAUTION`, `BUG`, `ISSUE`, `REFACTOR`, `OPTIMIZE`, `REVIEW`, `CHECK`, `VERIFY`, `TEST`, `DEBUG`, `DEPRECATED`, `OBSOLETE`
-- `marker`, `flag`, `indicator`, `annotation`, `reference point`, `anchor`, `checkpoint`, `waypoint`, `signpost`, `milestone marker`, `pointer`, `reference`, `sticky note`
-- `bookmark`, `bookmark marker`, `bookmark indicator`, `bookmark annotation`, `bookmark reference`, `bookmark pointer`
-- `reminder marker`, `reminder flag`, `reminder indicator`, `reminder annotation`, `reminder note`
-- `fix marker`, `fix flag`, `fix indicator`, `fix annotation`, `fix note`, `fix reminder`
-- `work marker`, `work flag`, `work indicator`, `work annotation`, `work note`, `work reminder`
-- `return marker`, `return flag`, `return indicator`, `return annotation`, `return note`, `return point`
-- `later marker`, `later flag`, `later indicator`, `later annotation`, `later note`
-- `revisit marker`, `revisit flag`, `revisit indicator`, `revisit annotation`, `revisit note`
-- `follow-up marker`, `follow-up flag`, `follow-up indicator`, `follow-up annotation`, `follow-up note`
-- `revisit point`, `follow-up point`, `return point`, `check point`, `review point`
-- `bookmark`, `bookmark marker`, `bookmark indicator`, `bookmark annotation`, `bookmark reference`, `bookmark pointer`
-- `reminder marker`, `reminder flag`, `reminder indicator`, `reminder annotation`, `reminder note`
-- `fix marker`, `fix flag`, `fix indicator`, `fix annotation`, `fix note`, `fix reminder`
-- `work marker`, `work flag`, `work indicator`, `work annotation`, `work note`, `work reminder`
-- `return marker`, `return flag`, `return indicator`, `return annotation`, `return note`, `return point`
-- `later marker`, `later flag`, `later indicator`, `later annotation`, `later note`
-- `revisit marker`, `revisit flag`, `revisit indicator`, `revisit annotation`, `revisit note`
-- `follow-up marker`, `follow-up flag`, `follow-up indicator`, `follow-up annotation`, `follow-up note`
-- `revisit point`, `follow-up point`, `return point`, `check point`, `review point`
-
-#### Placeholders (FORBIDDEN - ALL SYNONYMS):
-
-- `NotImplementedError`, `NotImplementedException`, `[PLACEHOLDER]`, `{"mock": true}`, `return {}`, `return []`, `return null`
-- `dummy`, `mock`, `fake`, `sample`, `temporary`, `test data`, `filler`, `placeholder`, `stub data`, `example data`, `demonstration data`, `pseudocode`, `skeleton data`, `empty data`, `null data`, `blank data`, `default data`, `example`, `sample`, `template`, `prototype`, `draft`, `rough`, `incomplete data`, `partial data`, `unfinished data`, `filler data`
-- `dummy value`, `mock value`, `fake value`, `sample value`, `test value`, `placeholder value`, `stub value`, `example value`, `temporary value`
-- `dummy code`, `mock code`, `fake code`, `sample code`, `test code`, `placeholder code`, `stub code`, `example code`, `temporary code`
-- `dummy implementation`, `mock implementation`, `fake implementation`, `sample implementation`, `test implementation`, `placeholder implementation`, `stub implementation`, `example implementation`, `temporary implementation`
-- `dummy function`, `mock function`, `fake function`, `sample function`, `test function`, `placeholder function`, `stub function`, `example function`, `temporary function`
-- `dummy method`, `mock method`, `fake method`, `sample method`, `test method`, `placeholder method`, `stub method`, `example method`, `temporary method`
-- `dummy class`, `mock class`, `fake class`, `sample class`, `test class`, `placeholder class`, `stub class`, `example class`, `temporary class`
-- `dummy object`, `mock object`, `fake object`, `sample object`, `test object`, `placeholder object`, `stub object`, `example object`, `temporary object`
-- `dummy response`, `mock response`, `fake response`, `sample response`, `test response`, `placeholder response`, `stub response`, `example response`, `temporary response`
-- `dummy return`, `mock return`, `fake return`, `sample return`, `test return`, `placeholder return`, `stub return`, `example return`, `temporary return`
-- `dummy output`, `mock output`, `fake output`, `sample output`, `test output`, `placeholder output`, `stub output`, `example output`, `temporary output`
-- `dummy result`, `mock result`, `fake result`, `sample result`, `test result`, `placeholder result`, `stub result`, `example result`, `temporary result`
-- `filler code`, `filler data`, `filler value`, `filler implementation`, `filler function`, `filler method`, `filler class`, `filler object`, `filler response`, `filler return`, `filler output`, `filler result`
-- `test placeholder`, `test stub`, `test dummy`, `test mock`, `test fake`, `test sample`
-- `non-functional code`, `non-functional data`, `non-functional value`, `non-functional implementation`, `non-functional function`, `non-functional method`, `non-functional class`, `non-functional object`
-- `non-working code`, `non-working data`, `non-working value`, `non-working implementation`, `non-working function`, `non-working method`, `non-working class`, `non-working object`
-- `non-operational code`, `non-operational data`, `non-operational value`, `non-operational implementation`, `non-operational function`, `non-operational method`, `non-operational class`, `non-operational object`
-- `non-implemented code`, `non-implemented data`, `non-implemented value`, `non-implemented implementation`, `non-implemented function`, `non-implemented method`, `non-implemented class`, `non-implemented object`
-- `incomplete code`, `incomplete data`, `incomplete value`, `incomplete implementation`, `incomplete function`, `incomplete method`, `incomplete class`, `incomplete object`
-- `partial code`, `partial data`, `partial value`, `partial implementation`, `partial function`, `partial method`, `partial class`, `partial object`
-- `unfinished code`, `unfinished data`, `unfinished value`, `unfinished implementation`, `unfinished function`, `unfinished method`, `unfinished class`, `unfinished object`
-- `dummy value`, `mock value`, `fake value`, `sample value`, `test value`, `placeholder value`, `stub value`, `example value`, `temporary value`
-- `dummy code`, `mock code`, `fake code`, `sample code`, `test code`, `placeholder code`, `stub code`, `example code`, `temporary code`
-- `dummy implementation`, `mock implementation`, `fake implementation`, `sample implementation`, `test implementation`, `placeholder implementation`, `stub implementation`, `example implementation`, `temporary implementation`
-
-#### Stubs (FORBIDDEN - ALL SYNONYMS):
-
-- `skeleton`, `template`, `outline`, `empty function`, `pass statement`, `unimplemented`, `stub`, `empty method`, `blank function`, `void function`, `null implementation`, `no-op`, `no operation`
-- `dummy function`, `mock function`, `fake function`, `placeholder function`, `incomplete function`, `partial implementation`
-- `abstract method without implementation`, `interface without implementation`, `protocol without implementation`
-- `skeleton function`, `skeleton method`, `skeleton class`, `skeleton implementation`, `skeleton code`
-- `template function`, `template method`, `template class`, `template implementation`, `template code`
-- `outline function`, `outline method`, `outline class`, `outline implementation`, `outline code`
-- `empty function`, `empty method`, `empty class`, `empty implementation`, `empty code`
-- `blank function`, `blank method`, `blank class`, `blank implementation`, `blank code`
-- `void function`, `void method`, `void class`, `void implementation`, `void code`
-- `null function`, `null method`, `null class`, `null implementation`, `null code`
-- `no-op function`, `no-op method`, `no-op class`, `no-op implementation`, `no-op code`
-- `no operation function`, `no operation method`, `no operation class`, `no operation implementation`, `no operation code`
-- `pass-only function`, `pass-only method`, `pass-only class`, `pass-only implementation`, `pass-only code`
-- `unimplemented function`, `unimplemented method`, `unimplemented class`, `unimplemented implementation`, `unimplemented code`
-- `stub function`, `stub method`, `stub class`, `stub implementation`, `stub code`
-- `incomplete function`, `incomplete method`, `incomplete class`, `incomplete implementation`, `incomplete code`
-- `partial function`, `partial method`, `partial class`, `partial implementation`, `partial code`
-- `unfinished function`, `unfinished method`, `unfinished class`, `unfinished implementation`, `unfinished code`
-- `not implemented function`, `not implemented method`, `not implemented class`, `not implemented implementation`, `not implemented code`
-- `function signature only`, `method signature only`, `class signature only`, `interface signature only`, `protocol signature only`
-- `function declaration only`, `method declaration only`, `class declaration only`, `interface declaration only`, `protocol declaration only`
-- `function definition only`, `method definition only`, `class definition only`, `interface definition only`, `protocol definition only`
-- `function prototype only`, `method prototype only`, `class prototype only`, `interface prototype only`, `protocol prototype only`
-- `function skeleton`, `method skeleton`, `class skeleton`, `interface skeleton`, `protocol skeleton`
-- `function template`, `method template`, `class template`, `interface template`, `protocol template`
-- `function outline`, `method outline`, `class outline`, `interface outline`, `protocol outline`
-- `function stub`, `method stub`, `class stub`, `interface stub`, `protocol stub`
-
-#### Tags (FORBIDDEN - ALL CATEGORIES):
-
-- HTML/XML tags, Markdown tags, YAML tags, JSON tags, tags in markup languages, elements, attributes, properties, decorators, annotations, directives, metadata tags, schema tags, namespace tags
-- Git tags, version tags, release tags, build tags, branch tags, commit tags, repository tags, revision tags (when used to mark incomplete work)
-- JSDoc tags, DocString tags, comment tags, inline tags, block tags, annotation tags, attribute tags, decorator tags, metadata annotations, type hints, type annotations (when used to mark incomplete work)
-- Status tags, progress tags, completion tags, work tags, issue tags, task tags, milestone tags, checkpoint tags, waypoint tags, anchor tags, reference tags, bookmark tags, flag tags, label tags, badge tags, stamp tags, seal tags, mark tags, signpost tags
-- API tags, endpoint tags, route tags, service tags, microservice tags, container tags, deployment tags, environment tags, configuration tags, feature flags, toggle tags, switch tags (when used to mark incomplete work)
-
-#### Status Words/Phrases (FORBIDDEN - ALL VARIATIONS):
-
-- `pending`, `incomplete`, `unfinished`, `partial`, `in progress`, `to do`, `will be`, `coming soon`, `not yet`, `eventually`, `later`, `soon`, `planned`, `scheduled`, `assigned`, `open`, `active`, `ongoing`, `under construction`, `under development`, `in development`, `work in progress`, `WIP`, `draft`, `rough`, `prototype`, `experimental`, `alpha`, `beta`, `preview`, `pre-release`, `needs`, `requires`, `missing`, `absent`, `empty`, `blank`, `null`, `void`, `tbd`, `tba`, `tbc`
-- `not implemented`, `not done`, `not complete`, `not finished`, `not ready`, `not working`, `not functional`, `not operational`
-- `to be implemented`, `to be done`, `to be completed`, `to be finished`, `to be ready`, `to be working`, `to be functional`, `to be operational`
-- `will be implemented`, `will be done`, `will be completed`, `will be finished`, `will be ready`, `will be working`, `will be functional`, `will be operational`
-- `should be implemented`, `should be done`, `should be completed`, `should be finished`, `should be ready`, `should be working`, `should be functional`, `should be operational`
-- `must be implemented`, `must be done`, `must be completed`, `must be finished`, `must be ready`, `should be working`, `should be functional`, `should be operational`
-- `needs implementation`, `needs work`, `needs completion`, `needs finishing`, `needs to be done`, `needs to be implemented`, `needs to be completed`, `needs to be finished`
-- `requires implementation`, `requires work`, `requires completion`, `requires finishing`, `requires to be done`, `requires to be implemented`, `requires to be completed`, `requires to be finished`
-- `missing implementation`, `missing work`, `missing completion`, `missing finishing`, `missing functionality`
-- `absent implementation`, `absent work`, `absent completion`, `absent finishing`, `absent functionality`
-- `incomplete implementation`, `incomplete work`, `incomplete completion`, `incomplete finishing`, `incomplete functionality`
-- `unfinished implementation`, `unfinished work`, `unfinished completion`, `unfinished finishing`, `unfinished functionality`
-- `partial implementation`, `partial work`, `partial completion`, `partial finishing`, `partial functionality`
-- `draft implementation`, `draft work`, `draft completion`, `draft finishing`, `draft functionality`
-- `rough implementation`, `rough work`, `rough completion`, `rough finishing`, `rough functionality`
-- `prototype implementation`, `prototype work`, `prototype completion`, `prototype finishing`, `prototype functionality`
-- `experimental implementation`, `experimental work`, `experimental completion`, `experimental finishing`, `experimental functionality`
-- `alpha implementation`, `alpha work`, `alpha completion`, `alpha finishing`, `alpha functionality`
-- `beta implementation`, `beta work`, `beta completion`, `beta finishing`, `beta functionality`
-- `preview implementation`, `preview work`, `preview completion`, `preview finishing`, `preview functionality`
-- `pre-release implementation`, `pre-release work`, `pre-release completion`, `pre-release finishing`, `pre-release functionality`
-- `work in progress`, `work in development`, `work in construction`, `work pending`, `work incomplete`, `work unfinished`, `work partial`
-- `in progress`, `in development`, `in construction`, `in work`, `in process`, `in development phase`, `in construction phase`, `in work phase`, `in process phase`
-- `under construction`, `under development`, `under work`, `under process`, `under review`, `under consideration`, `under planning`
-- `coming soon`, `coming later`, `coming eventually`, `coming in future`, `coming next`, `coming up`
-- `not yet`, `not now`, `not ready`, `not complete`, `not finished`, `not done`, `not implemented`, `not working`, `not functional`, `not operational`
-- `eventually`, `later`, `soon`, `someday`, `sometime`, `in future`, `in the future`, `at some point`, `at some time`
-- `for now`, `for the moment`, `for the time being`, `temporarily`, `temporary`, `temp`
-- `planned`, `scheduled`, `assigned`, `queued`, `backlogged`, `on hold`, `on deck`, `on the list`, `on the agenda`, `on the roadmap`
-- `open`, `active`, `ongoing`, `current`, `in queue`, `in backlog`, `in pipeline`, `in roadmap`
-- `empty`, `blank`, `null`, `void`, `none`, `nothing`, `zero`, `nil`, `na`, `n/a`, `naught`
-- `tbd (to be determined)`, `tba (to be announced)`, `tbc (to be confirmed)`, `tbr (to be reviewed)`, `tbs (to be specified)`, `tbt (to be tested)`, `tbu (to be updated)`
-- `wip (work in progress)`, `wipd (work in progress - draft)`, `wipt (work in progress - testing)`, `wipr (work in progress - review)`
-- `placeholder status`, `stub status`, `dummy status`, `mock status`, `fake status`, `sample status`, `test status`, `temporary status`
-- `incomplete status`, `unfinished status`, `partial status`, `draft status`, `rough status`, `prototype status`, `experimental status`
-- `alpha status`, `beta status`, `preview status`, `pre-release status`, `rc (release candidate) status`
-
-### LOOPHOLE PREVENTION - NO WORKAROUNDS ALLOWED
-
-**Capitalization Variations (FORBIDDEN):**
-
-- `todo`, `Todo`, `TODO`, `ToDo`, `To-Do`, `to-do`, `TO-DO`
-- `fixme`, `Fixme`, `FIXME`, `FixMe`, `Fix-Me`, `fix-me`, `FIX-ME`
-- `wip`, `Wip`, `WIP`, `WiP`, `W-I-P`, `w-i-p`, `W-I-P`
-- `tbd`, `Tbd`, `TBD`, `TbD`, `T-B-D`, `t-b-d`, `T-B-D`
-- ALL forbidden terms in ANY capitalization variation
-
-**Spacing Variations (FORBIDDEN):**
-
-- `TO DO`, `TO-DO`, `TO_DO`, `TODO`, `TO DO`, `T O D O`
-- `FIX ME`, `FIX-ME`, `FIX_ME`, `FIXME`, `FIX ME`, `F I X M E`
-- `IN PROGRESS`, `IN-PROGRESS`, `IN_PROGRESS`, `INPROGRESS`, `IN PROGRESS`, `I N P R O G R E S S`
-- ALL forbidden terms with ANY spacing variation (spaces, dashes, underscores, no spaces)
-
-**Punctuation Variations (FORBIDDEN):**
-
-- `TODO:`, `TODO.`, `TODO,`, `TODO;`, `TODO!`, `TODO?`, `TODO-`, `TODO_`, `TODO/`, `TODO\`, `TODO|`
-- `[TODO]`, `(TODO)`, `{TODO}`, `<TODO>`, `"TODO"`, `'TODO'`, `` `TODO` ``, `*TODO*`, `_TODO_`, `~TODO~`
-- `#TODO`, `@TODO`, `$TODO`, `%TODO`, `&TODO`, `*TODO`, `+TODO`, `=TODO`
-- ALL forbidden terms with ANY punctuation variation
-
-**Abbreviation Variations (FORBIDDEN):**
-
-- `TBD`, `TBA`, `TBC`, `TBR`, `TBS`, `TBT`, `TBU` (all variations)
-- `WIP`, `WIPD`, `WIPT`, `WIPR` (all variations)
-- `N/A`, `NA`, `N/A`, `n/a`, `na` (when meaning "not applicable" or "not available" for incomplete work)
-- `NIL`, `nil`, `NULL`, `null`, `NONE`, `none`, `VOID`, `void`, `ZERO`, `zero`, `NOTHING`, `nothing` (when meaning incomplete)
-
-**Language Variations (FORBIDDEN):**
-
-- Translations of forbidden terms in other languages
-- Foreign language equivalents of "TODO", "FIXME", "placeholder", "stub", "incomplete", "not yet", etc.
-- Code comments in other languages that mean the same thing
-
-**Encoding Variations (FORBIDDEN):**
-
-- Unicode variations: `ＴＯＤＯ` (full-width), `TODO` (normal), `TODO` (with invisible characters)
-- HTML entities: `&lt;TODO&gt;`, `&#84;&#79;&#68;&#79;`
-- URL encoding: `TODO`, `%54%4F%44%4F`
-- Base64 or other encodings of forbidden terms
-
-**Comment Style Variations (FORBIDDEN):**
-
-- `// TODO`, `/* TODO */`, `# TODO`, `<!-- TODO -->`, `; TODO`, `' TODO`, `` ` TODO ` ``, `REM TODO`
-- `//TODO`, `/*TODO*/`, `#TODO`, `<!--TODO-->`, `;TODO`, `'TODO`, `` `TODO` ``, `REMTODO`
-- `// TODO:`, `/* TODO: */`, `# TODO:`, `<!-- TODO: -->`, `; TODO:`, `' TODO:`
-- ALL comment styles in ALL programming languages
-
-**String Concatenation Variations (FORBIDDEN):**
-
-- `"TO" + "DO"`, `"TODO".substring(0, 4)`, `"T" + "O" + "D" + "O"`
-- `"FIX" + "ME"`, `"FIXME".substring(0, 5)`, `"F" + "I" + "X" + "M" + "E"`
-- Any string concatenation that results in forbidden terms
-
-**Variable/Function Name Variations (FORBIDDEN):**
-
-- Variable names: `todo`, `TODO`, `todoItem`, `todoList`, `todoTask`, `fixme`, `FIXME`, `wip`, `WIP`, `placeholder`, `stub`, `dummy`, `mock`
-- Function names: `todo()`, `TODO()`, `fixme()`, `FIXME()`, `wip()`, `WIP()`, `placeholder()`, `stub()`, `dummy()`, `mock()`
-- Class names: `Todo`, `TODO`, `Fixme`, `FIXME`, `Wip`, `WIP`, `Placeholder`, `Stub`, `Dummy`, `Mock`
-- File names: `todo.md`, `TODO.md`, `fixme.md`, `FIXME.md`, `wip.md`, `WIP.md`, `placeholder.md`, `stub.md`, `dummy.md`, `mock.md`
-
-**Emoji/Unicode Variations (FORBIDDEN):**
-
-- `📝 TODO`, `🔧 FIXME`, `⚠️ WARNING`, `🚧 WIP`, `⏳ PENDING`, `📌 NOTE`, `🔖 BOOKMARK`
-- `TODO 📝`, `FIXME 🔧`, `WARNING ⚠️`, `WIP 🚧`, `PENDING ⏳`, `NOTE 📌`, `BOOKMARK 🔖`
-- Any emoji combined with forbidden terms
-
-**Whitespace Variations (FORBIDDEN):**
-
-- `TODO`, `TODO `, ` TODO`, `TODO`, `\tTODO\t`, `\nTODO\n`, `\rTODO\r`
-- `TODO:`, `TODO: `, ` TODO:`, `TODO:`, `\tTODO:\t`, `\nTODO:\n`, `\rTODO:\r`
-- All forbidden terms with ANY whitespace variation
-
-**Regex/Pattern Variations (FORBIDDEN):**
-
-- Using regex patterns that match forbidden terms: `.*TODO.*`, `.*FIXME.*`, `.*WIP.*`
-- Using wildcards: `T*D*O`, `F*I*X*M*E`, `W*I*P`
-- Using character classes: `[Tt][Oo][Dd][Oo]`, `[Ff][Ii][Xx][Mm][Ee]`, `[Ww][Ii][Pp]`
-
-**Context Variations (FORBIDDEN):**
-
-- Using forbidden terms in strings: `"This is a TODO item"`, `"FIXME: needs work"`, `"WIP: in progress"`
-- Using forbidden terms in documentation: `See TODO section`, `Check FIXME list`, `Review WIP items`
-- Using forbidden terms in error messages: `TODO: Error occurred`, `FIXME: Fix this error`, `WIP: Error handling`
-- Using forbidden terms in log messages: `TODO: Logging this`, `FIXME: Log this later`, `WIP: Logging in progress`
-- Using forbidden terms in UI text: `TODO Button`, `FIXME Label`, `WIP Status`
-- Using forbidden terms in file paths: `/todo/`, `/fixme/`, `/wip/`, `/placeholder/`, `/stub/`
-- Using forbidden terms in URLs: `?todo=1`, `&fixme=1`, `#wip`, `#placeholder`, `#stub`
-
-**Negation Variations (FORBIDDEN):**
-
-- `NOT TODO`, `NOT FIXME`, `NOT WIP`, `NOT PLACEHOLDER`, `NOT STUB`
-- `NO TODO`, `NO FIXME`, `NO WIP`, `NO PLACEHOLDER`, `NO STUB`
-- `NOT A TODO`, `NOT A FIXME`, `NOT A WIP`, `NOT A PLACEHOLDER`, `NOT A STUB`
-- Using negation to claim something is not a forbidden term when it actually is
-
-**Meta-References (FORBIDDEN):**
-
-- `"TODO" (as a string)`, `'TODO' (as a string)`, `` `TODO` (as a string) ``
-- `The word TODO`, `The term FIXME`, `The phrase WIP`
-- `TODO-like`, `FIXME-like`, `WIP-like`, `TODO-style`, `FIXME-style`, `WIP-style`
-- `TODO-ish`, `FIXME-ish`, `WIP-ish`, `TODO-esque`, `FIXME-esque`, `WIP-esque`
-
-**Indirect References (FORBIDDEN):**
-
-- `Similar to TODO`, `Like FIXME`, `Same as WIP`
-- `TODO equivalent`, `FIXME equivalent`, `WIP equivalent`
-- `TODO alternative`, `FIXME alternative`, `WIP alternative`
-- `TODO substitute`, `FIXME substitute`, `WIP substitute`
-
-**Time-Based Variations (FORBIDDEN):**
-
-- `TODO for now`, `FIXME for now`, `WIP for now`, `PLACEHOLDER for now`, `STUB for now`
-- `TODO temporarily`, `FIXME temporarily`, `WIP temporarily`, `PLACEHOLDER temporarily`, `STUB temporarily`
-- `TODO until later`, `FIXME until later`, `WIP until later`, `PLACEHOLDER until later`, `STUB until later`
-
-**Scope Variations (FORBIDDEN):**
-
-- `TODO in this function`, `FIXME in this method`, `WIP in this class`
-- `TODO here`, `FIXME here`, `WIP here`, `PLACEHOLDER here`, `STUB here`
-- `TODO in code`, `FIXME in code`, `WIP in code`, `PLACEHOLDER in code`, `STUB in code`
-
-**Priority Variations (FORBIDDEN):**
-
-- `High priority TODO`, `Low priority FIXME`, `Medium priority WIP`
-- `TODO (high)`, `FIXME (low)`, `WIP (medium)`
-- `TODO - high`, `FIXME - low`, `WIP - medium`
-
-**Status Variations (FORBIDDEN):**
-
-- `TODO (pending)`, `FIXME (incomplete)`, `WIP (unfinished)`
-- `TODO - pending`, `FIXME - incomplete`, `WIP - unfinished`
-- `TODO status: pending`, `FIXME status: incomplete`, `WIP status: unfinished`
-
-**REMEMBER:** If it means the same thing as a forbidden term, it's FORBIDDEN regardless of how it's written, formatted, encoded, or referenced.
-
-**NO EXCEPTIONS. NO WORKAROUNDS. NO LOOPHOLES.**
-
-### WHAT IS REQUIRED
-
-**Code Requirements:**
-
-- ✅ Full implementation of all methods
-- ✅ All functionality working and tested
-- ✅ All error cases handled
-- ✅ All edge cases considered
-- ✅ Tests written and passing (if applicable)
-- ✅ Real values, real file I/O, real API wiring
-- ✅ Complete function bodies, classes, or components
-- ✅ UI and backend wired together with real bindings or API calls
-- ✅ Verifiable and testable functionality
-- ✅ Production-ready code
-- ✅ No speculative implementations
-- ✅ No "assume this works" comments
-- ✅ No hardcoded filler data
-
-**Documentation Requirements:**
-
-- ✅ Complete content, not outlines
-- ✅ All examples work and are tested
-- ✅ All procedures tested
-- ✅ All links verified
-- ✅ No empty sections
-- ✅ No "TODO: Add content here"
-- ✅ No placeholder text
-
-**UI Requirements:**
-
-- ✅ All controls functional
-- ✅ All interactions work
-- ✅ All states implemented
-- ✅ All animations complete
-- ✅ No "Placeholder" text in UI
-- ✅ No disabled buttons that never work
-- ✅ No "Coming soon" messages
-- ✅ No empty states that say "TODO"
-
-**Exception for Testing:**
-
-- ✅ If mocking is required for testing, wrap it in a clear `if TEST_MODE:` conditional
-- ✅ Log mock usage clearly
-- ✅ Never use mocks in production code paths
-- ✅ Test mocks must be clearly marked and isolated
-
-### VERIFICATION CHECKLIST
-
-**Before Marking ANY Task Complete:**
-
-1. **Search your code for ALL forbidden patterns:**
-
-   - Bookmarks (TODO, FIXME, NOTE, HACK, REMINDER, XXX, WARNING, CAUTION, BUG, ISSUE, REFACTOR, OPTIMIZE, REVIEW, CHECK, VERIFY, TEST, DEBUG, DEPRECATED, OBSOLETE - all variations)
-   - Placeholders (NotImplementedError, NotImplementedException, [PLACEHOLDER], {"mock": true}, dummy, mock, fake, sample, temporary - all variations)
-   - Stubs (pass-only functions, empty methods, function signatures without implementation - all variations)
-   - Tags (#TODO, #FIXME, [PLACEHOLDER], [WIP], [IN PROGRESS] - all variations)
-   - Status Words ("pending", "incomplete", "unfinished", "coming soon", "not yet", "eventually", "later", "for now", "temporary", "needs", "requires", "missing", "WIP", "tbd", "tba", "tbc" - all variations)
-   - Loophole Prevention Patterns (capitalization, spacing, punctuation, comment style, string concatenation, variable/function names, emoji, whitespace, regex, context, negation, meta-references, indirect references, time-based, scope, priority, status variations)
-
-2. **Functional Testing:**
-   - Does the code actually work?
-   - Are all cases handled?
-   - Are there any errors?
-   - Is it production-ready?
-   - Can it be tested?
-   - Does it perform the actual intended function?
-
-**If you find ANY of these patterns:**
-
-- 🚨 **STOP IMMEDIATELY**
-- 🚨 **COMPLETE THE IMPLEMENTATION**
-- 🚨 **TEST IT**
-- 🚨 **THEN** mark as complete
-
-### CONSEQUENCES OF VIOLATION
-
-**If Stubs/Placeholders/Bookmarks/Tags Found:**
-
-1. **Task marked as INCOMPLETE**
-2. **Worker must complete before moving on**
-3. **No credit for partial work**
-4. **May delay overall timeline**
-5. **Commit rejected** (if using automated checks)
-6. **Release blocked** (if found in release candidate)
-
-**Why This Matters:**
-
-- **Quality:** Stubs create technical debt
-- **Reliability:** Placeholders can cause bugs
-- **User Experience:** Incomplete features frustrate users
-- **Maintainability:** Future workers waste time on stubs
-- **Professionalism:** Production code must be complete
-- **Trust:** Incomplete code erodes trust in the system
-- **Efficiency:** Finding and fixing stubs later is more expensive than doing it right the first time
+- Complete the intended functionality before marking a task done.
+- Track remaining work in the project tracker or ledger instead of leaving incomplete behavior in shipping paths.
+- Keep documentation and UI text accurate about what is implemented.
 
 ## 2. DEPENDENCY INSTALLATION RULE
 
@@ -589,140 +223,13 @@
 
 - ✅ **CORRECT:** Take 2 days to implement correctly → Verify it works → Mark complete
 - ✅ **CORRECT:** Implement 1 task perfectly → Test thoroughly → Document → Move to next
-- ❌ **WRONG:** Rush through 5 tasks → Leave placeholders → Mark all complete
+- ❌ **WRONG:** Rush through 5 tasks → Leave incomplete work → Mark all complete
 - ❌ **WRONG:** Quick implementation → Skip testing → Mark complete to move faster
 
 **Remember:**
 
 - **One correct implementation is worth more than ten incomplete ones**
 - **Time spent doing it right is never wasted**
-
-## 6. NO MOCK OUTPUTS RULE
-
-**All Cursor agents must write complete, real code with working logic — no mock data, placeholders, stubs, or speculative interfaces unless explicitly instructed.**
-
-### Must Avoid (🚫 Do NOT generate):
-
-**Bookmarks:**
-
-- ❌ `TODO` comments
-- ❌ `pass`-only stubs
-- ❌ `return {"mock": true}` or fake responses
-- ❌ Empty class/function shells with no logic
-- ❌ Unimplemented data flows ("assume this works")
-- ❌ Mock protocols or fake API responses
-- ❌ Hardcoded filler data
-- ❌ Speculative implementations
-
-### Required Output Format (✅ Agents must):
-
-- ✅ Implement full function bodies, classes, or components
-- ✅ Wire UI and backend code together with real bindings or API calls
-- ✅ Return real values, real file I/O, real API wiring — not mock protocols
-- ✅ If mocking is required for testing, wrap it in a clear `if TEST_MODE:` conditional and log its usage
-- ✅ Use real engine routers, MCPs, or models
-- ✅ Perform actual operations (e.g., saving audio, applying effects)
-
-### Completion Criteria:
-
-**Functionality must be:**
-
-- ✅ Verifiable and testable
-- ✅ UI panels display actual values or connect to real models, MCPs, or engine routers
-- ✅ Backend code performs its intended effect or operation
-- ✅ No component marked complete if its implementation is speculative or empty
-
-### Examples - BAD ❌:
-
-```python
-def generate_audio(voice_id):
-    # TODO: implement
-    return {"mock_audio": true}
-```
-
-```csharp
-public async Task<AudioResult> SynthesizeAsync(string text)
-{
-    // TODO: Implement synthesis
-    return new AudioResult { Mock = true };
-}
-```
-
-### Examples - GOOD ✅:
-
-```python
-def generate_audio(voice_id: str) -> dict:
-    """Generate audio using real engine."""
-    engine = router.get_engine("xtts_v2")
-    result = engine.synthesize(
-        text=text,
-        voice_id=voice_id,
-        language="en"
-    )
-    return {
-        "audio_path": result.audio_path,
-        "duration": result.duration,
-        "quality_metrics": result.quality_metrics
-    }
-```
-
-```csharp
-public async Task<AudioResult> SynthesizeAsync(string text)
-{
-    var engine = _engineRouter.GetEngine("xtts_v2");
-    var result = await engine.SynthesizeAsync(text, _currentVoiceProfile);
-
-    return new AudioResult
-    {
-        AudioPath = result.AudioPath,
-        Duration = result.Duration,
-        QualityMetrics = result.QualityMetrics
-    };
-}
-```
-
-- **Quality cannot be rushed**
-- **Correctness is the only metric that matters**
-
-**This rule is MANDATORY and has NO EXCEPTIONS.**
-
-### PRODUCTION-READY CODE
-
-**All code must be:**
-
-- ✅ Fully implemented (no stubs, placeholders, bookmarks, tags)
-- ✅ Tested and working
-- ✅ Error handling included
-- ✅ Edge cases considered
-- ✅ Production-ready quality
-- ✅ Real implementations (no mocks in production)
-- ✅ Verifiable and testable
-
-### REAL IMPLEMENTATIONS ONLY
-
-**Forbidden:**
-
-- ❌ Mock outputs in return values
-- ❌ `{"mock": true}` or similar fake responses
-- ❌ `pass`-only stubs (Python)
-- ❌ Hardcoded filler data
-- ❌ Speculative implementations
-- ❌ "Assume this works" comments
-
-**Required:**
-
-- ✅ Real API calls to backend services
-- ✅ Real file I/O operations
-- ✅ Real engine/router connections
-- ✅ UI connected to real data sources
-- ✅ All operations perform actual work
-
-**Exception for Testing:**
-
-- ✅ If mocking is required for testing, wrap it in a clear `if TEST_MODE:` conditional
-- ✅ Log mock usage clearly
-- ✅ Never use mocks in production code paths
-- ✅ Test mocks must be clearly marked and isolated
 
 ## 6. ARCHITECTURE RULES
 
@@ -826,7 +333,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 
 - ✅ Read `docs/governance/MASTER_RULES_COMPLETE.md` before starting
 - ✅ Read `docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md` (if UI work)
-- ✅ Follow the NO stubs/placeholders/bookmarks/tags rule
+- ✅ Follow task completion expectations
 - ✅ **Install ALL dependencies for EVERY task (NO EXCEPTIONS)**
 - ✅ Complete tasks 100% before moving on
 - ✅ Verify completion before marking tasks done
@@ -872,7 +379,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 **Pre-Commit Checks:**
 
 - Run automated checks before committing
-- Reject commits containing forbidden patterns
+- Reject commits that fail required checks
 - Provide clear error messages
 
 **Pre-Release Checks:**
@@ -898,7 +405,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 **Worker Self-Verification:**
 
 - Workers must verify their own work
-- Search for forbidden patterns
+- Verify completion standards
 - Test functionality before marking complete
 
 **Code Reviews:**
@@ -911,7 +418,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 
 **PRIMARY REFERENCE:** `docs/governance/MASTER_RULES_COMPLETE.md` - **ALL INSTANCES MUST USE THIS AS PRIMARY REFERENCE**
 
-**This document contains ALL rules, ALL forbidden terms (including ALL synonyms and variations), and ALL loophole prevention patterns. This prevents instances from using similar-meaning words to bypass the rule.**
+**This document contains the current project rules, guardrails, and refresh expectations.**
 
 ### REFRESH SCHEDULE
 
@@ -921,9 +428,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 - **Action:** Read the master rules document
 - **PRIMARY DOCUMENT:**
   - **`docs/governance/MASTER_RULES_COMPLETE.md`** - **MUST READ FIRST AND COMPLETELY**
-    - Contains ALL rules in full
-    - Contains ALL forbidden terms, synonyms, and variations
-    - Contains ALL loophole prevention patterns
+    - Contains all current rules and guardrails
     - Contains UI design rules
     - Contains integration rules
     - Contains all other project rules
@@ -946,7 +451,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 - **Action:** Quick review of critical sections
 - **PRIMARY DOCUMENT:**
   - **`docs/governance/MASTER_RULES_COMPLETE.md`** - Quick review:
-    - Section 1: The Absolute Rule (forbidden terms and patterns)
+    - Section 1: Task Completion Expectations
     - Section 2: UI Design Rules (if UI work)
     - Section 9: Periodic Refresh System (this section)
 
@@ -956,13 +461,8 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 - **Action:** Verify compliance with rules
 - **PRIMARY DOCUMENT:**
   - **`docs/governance/MASTER_RULES_COMPLETE.md`** - Review:
-    - Section 1: The Absolute Rule - Verification Checklist
-    - Section 1: The Absolute Rule - Loophole Prevention
-    - Section 1: The Absolute Rule - All Forbidden Terms (complete list)
-    - Section 1: The Absolute Rule - All Forbidden Patterns (complete list)
-- **Check:**
-  - No stubs, placeholders, bookmarks, or tags (including ALL synonyms and variations)
-  - No loophole attempts (capitalization, spacing, punctuation, etc.)
+    - Section 1: Task Completion Expectations
+**Check:**
   - UI changes follow ChatGPT specification exactly
   - Code is 100% complete and functional
 
@@ -972,13 +472,9 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 - **Action:** Final verification against all rules
 - **PRIMARY DOCUMENT:**
   - **`docs/governance/MASTER_RULES_COMPLETE.md`** - Final verification:
-    - Section 1: The Absolute Rule - Verification Checklist (complete all checks)
-    - Section 1: The Absolute Rule - All Forbidden Terms (search for ALL variations)
-    - Section 1: The Absolute Rule - Loophole Prevention (check for ALL workarounds)
-    - Section 1: The Absolute Rule - All Forbidden Patterns (complete check)
-- **Check:**
-  - All functionality implemented (no placeholders, including ALL synonyms)
-  - No forbidden terms in ANY form (including ALL variations and workarounds)
+    - Section 1: Task Completion Expectations
+**Check:**
+  - All functionality implemented
   - UI follows exact ChatGPT specification
   - All rules followed
 
@@ -987,10 +483,7 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 **PRIMARY REFERENCE (MUST USE):**
 
 - **`docs/governance/MASTER_RULES_COMPLETE.md`** - **PRIMARY REFERENCE FOR ALL INSTANCES**
-  - Contains ALL rules in full
-  - Contains ALL forbidden terms (bookmarks, placeholders, stubs, tags, status words)
-  - Contains ALL synonyms and variations
-  - Contains ALL loophole prevention patterns
+  - Contains all current rules in full
   - Contains UI design rules
   - Contains integration rules
   - Contains code quality rules
@@ -1005,7 +498,6 @@ public async Task<AudioResult> SynthesizeAsync(string text)
 - `docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md` - Original ChatGPT UI specification (source of truth)
 - `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` - Complete original specification with full XAML code
 - `docs/governance/COMPREHENSIVE_INTEGRATION_LOG_2025-01-28.md` - Integration priorities and guidelines
-- `docs/governance/RULE_ENFORCEMENT_RECOMMENDATIONS.md` - Enforcement strategies
 
 **See:** `docs/governance/PERIODIC_RULES_REFRESH_SYSTEM.md` for complete refresh system details
 
@@ -2110,12 +1602,11 @@ VoiceStudio/
 1. All dependencies installed and verified
 2. Code is 100% complete and functional
 3. All functionality implemented and tested
-4. No placeholders, stubs, bookmarks, or tags in ANY form
-5. No loophole attempts
-6. Code actually works (not just exists)
-7. All error cases handled
-8. All edge cases considered
-9. Production-ready quality
+4. No incomplete or unclear work markers in code/docs
+5. Code actually works (not just exists)
+6. All error cases handled
+7. All edge cases considered
+8. Production-ready quality
 
 **UI Compliance (if UI task):**
 
@@ -2145,15 +1636,13 @@ VoiceStudio/
 3. **All Panels Functional**
 
    - ✅ Every panel fully implemented
-   - ✅ Real functionality (not placeholders)
+   - ✅ Real functionality
    - ✅ All features wired and operational
 
-4. **No Placeholders or TODOs**
+4. **Completion Confirmation**
 
-   - ✅ No temporary stubs
-   - ✅ No placeholder code
-   - ✅ No "TODO" comments
    - ✅ All features fully implemented
+   - ✅ No incomplete code paths
 
 5. **Tested and Documented**
    - ✅ All code tested
@@ -2365,19 +1854,55 @@ code block
 
 ---
 
+## 32. EXTERNAL RESEARCH INTEGRATION (2026-01-22)
+
+Sources:
+
+- ChatGPT share: https://chatgpt.com/s/dr_6971843b85748191a4cb1656aa8ff77e
+- Copilot share: https://copilot.microsoft.com/shares/LYXiX1tXt2A9zXxfcvKJV
+- Canonical roadmap: `docs/governance/MASTER_ROADMAP_SUMMARY.md`
+
+### Subprocess and isolation (reinforced)
+
+- Every engine runs as a subprocess in its own venv. No shared dependency trees, no UI-process engine loads.
+- The backend is the gateway: engine discovery, health checks, job orchestration, crash recovery, and logging.
+- Job state and artifact registry are mandatory for all engine runs.
+- Environment variables control model, engine, cache, and jobs paths for each subprocess.
+- Correlation IDs are required for cross-layer logs (UI -> backend -> engine).
+
+### Compatibility reconciliation rules
+
+- External compatibility audits are treated as mandatory inputs for comparison, but do not override Lane A unless the ledger records a change with proof.
+- All conflicts must be recorded in a reconciliation table in the compatibility governance plan.
+- Upgrade-lane validation happens in isolated venvs; baseline remains pinned.
+
+### Offline and free-only enforcement
+
+- No cloud APIs, no runtime model downloads, and no external paid services.
+- All models and dependencies must be bundled or mirrored for offline installation.
+- License compliance is required for every bundled model and engine.
+
+### Packaging guidance
+
+- Installer must bundle venvs, models, offline wheels, and runtime binaries.
+- Environment variables must be set by the installer and verified at first run.
+- Packaging tool remains NSIS per the roadmap unless an explicit decision record is added.
+
+---
+
 ## FINAL REMINDERS
 
 **The UI design layout and plans MUST stay exactly as given from ChatGPT.**
 
 **EVERY task must be 100% complete before moving to the next task.**
 
-**NO exceptions. NO shortcuts. NO placeholders. NO bookmarks. NO tags. NO stubs.**
+**Complete each task before moving on.**
 
 **Quality over speed. Completeness over progress. Correctness over task count.**
 
 **This is a professional DAW-grade application. Complexity and modularity are features, not bugs.**
 
-**ALL rules apply to ALL workers, ALL tasks, ALL the time. NO EXCEPTIONS.**
+**ALL rules apply to ALL workers, ALL tasks, ALL the time.**
 
 ---
 

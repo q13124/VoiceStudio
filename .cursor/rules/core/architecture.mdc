@@ -1,0 +1,55 @@
+---
+description: "Architecture, sacred boundaries, and decision records for VoiceStudio."
+alwaysApply: true
+---
+# Architecture overview
+
+## Sacred boundaries (UI ↔ Core ↔ Engines)
+- UI may NOT call engine internals directly.
+- UI interacts through stable core contracts (interfaces/protocols).
+- Engines attach via adapters that implement those contracts.
+- These boundaries enable independent evolution of each layer.
+
+## High-level flow
+1. WinUI UI and ViewModels call backend APIs via `src/VoiceStudio.App/Services/BackendClient.cs`.
+2. FastAPI routes under `backend/api/routes/` validate and route requests.
+3. Backend services in `backend/services/` orchestrate engine execution.
+4. Python engines in `app/core/engines/` perform synthesis/transcription/processing.
+5. Engine manifests in `engines/*.json` describe capabilities and configuration.
+6. Results flow back to the UI through the backend API.
+
+## Plugin-first mindset
+Shape engine integrations as if they could become plugins:
+- Explicit manifest/config for each engine
+- Capability declaration (what the engine can do)
+- Version compatibility range
+
+## Data persistence
+- All persistent data must be schema-defined.
+- Breaking changes require migration strategy (idempotent, dry-run capable).
+
+## Frontend patterns
+- MVVM with ViewModels in `src/VoiceStudio.App/ViewModels/` and Views in `src/VoiceStudio.App/Views/`.
+- Panel system uses `IPanelView` (see `src/VoiceStudio.Core/Panels/IPanelView.cs`).
+
+## Backend patterns
+- App entrypoint: `backend/api/main.py`.
+- Pydantic models: `backend/api/models*.py`.
+- Feature routes live in separate files under `backend/api/routes/`.
+
+## Engine layer
+- Engine protocol in `app/core/engines/base.py`.
+- Runtime orchestration in `app/core/runtime/` (prefer `runtime_engine_enhanced.py`).
+
+## Contract boundary
+- JSON schemas in `shared/` define API and engine contracts. Keep them in sync with backend and UI usage.
+
+## ADR requirement
+An Architecture Decision Record (ADR) is required when:
+- Adding or removing a major dependency
+- Changing project structure
+- Changing engine integration strategy
+- Introducing persistence schemas or migrations
+
+ADR format: Context → Options → Decision → Consequences
+Location: `docs/architecture/decisions/ADR-NNN-title.md`

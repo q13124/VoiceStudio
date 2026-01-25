@@ -1,0 +1,27 @@
+---
+description: "Git workflow and commit message conventions."
+alwaysApply: true
+---
+# Git workflow
+
+## Commit messages
+- Use Conventional Commits: `<type>(optional-scope): <summary>`.
+- Types: feat, fix, refactor, perf, docs, test, build, ci, chore, style.
+- Keep summaries concise and action-oriented.
+
+## Workaround labeling
+Workarounds are allowed only if:
+- Labeled `TEMP` in code AND commit message
+- Include a removal plan (TODO with issue link)
+- Cannot leak into release builds
+
+## Safety checks
+- Do not commit secrets or `.env` files.
+- Stage only relevant changes.
+- Avoid rewriting history unless explicitly requested.
+
+## Proof in commits
+When the change is non-trivial, the commit message or PR should reference:
+- Build result (success or failure root cause)
+- Test execution status
+- Verification steps performed

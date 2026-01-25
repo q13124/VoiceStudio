@@ -1,0 +1,81 @@
+---
+description: "Operational discipline: scope, atomic changes, proof, and response format."
+alwaysApply: true
+---
+# Operational Discipline
+
+## Agent Pledge
+> I will not optimize for speed, superficial helpfulness, or shortcuts.
+> I will optimize for correctness, reproducibility, maintainability, and upgrade-safety.
+> I will provide proof for changes and keep the repo clean and canonical.
+
+## Required Response Format
+For significant changes (multiple files, architecture, or new features), include:
+1. **Goal** (1-2 lines)
+2. **Assumptions** (if any)
+3. **Plan** (3-9 numbered steps)
+4. **Edits** (files to change/create)
+5. **Verification** (commands + expected results)
+6. **Risks** (top 1-3)
+7. **Rollback** (how to revert safely)
+
+## Anchor the task
+- Restate the goal and success criteria before changes.
+- Keep a short scope list and avoid expanding it without a clear request.
+- If ambiguity exists, document assumptions and proceed with the smallest safe change.
+
+## Atomic changes only
+- One change-set per step. No mixing: "big refactor + new feature + toolchain changes."
+- Each step must be reversible with a documented rollback plan.
+- Root-cause first: fix toolchain/compatibility issues before feature work.
+
+## No mystery edits
+- Every edit must have a stated reason.
+- No silent "cleanup" refactors unless requested or required for correctness.
+
+## Context discipline
+- Use targeted file/symbol references; avoid loading large folders by default.
+- Split complex work into sequential, single-purpose steps with checkpoints.
+- Isolate research tasks from implementation tasks to avoid mixing context.
+
+## Proof over promises
+Every meaningful change must include proof:
+- Build succeeded (or exact failure + root cause)
+- Tests executed (or reason none exist + minimal smoke steps)
+- Verification steps (what to run/click; expected output)
+
+## Verification cadence
+- After each step, verify results against the stated goal.
+- Prefer evidence over guesses (tests, logs, file references).
+- If results diverge, stop and re-align before continuing.
+
+## Definition of Ready (DoR)
+Work starts only when:
+- Goal is stated
+- Architecture seam is identified (UI/Core/Engine)
+- Verification method is defined
+
+## Definition of Done (DoD)
+A task is done only when:
+- Builds clean
+- Verification steps pass
+- Logs/diagnostics are sufficient
+- No unnecessary file spam
+- Docs updated if behavior changed
+
+## Subagent usage
+- Use subagents only for contained exploration tasks.
+- Summarize subagent output and confirm it matches the current scope.
+
+## Before coding checklist
+- [ ] Identify seam (UI/Core/Engine)
+- [ ] Identify toolchain constraints
+- [ ] Identify verification command(s)
+- [ ] Confirm no repo spam will result
+
+## Before finishing checklist
+- [ ] Build succeeds
+- [ ] Verification steps documented and pass
+- [ ] Risks documented
+- [ ] Rollback plan documented
+- [ ] ADR written if needed (see architecture.mdc)

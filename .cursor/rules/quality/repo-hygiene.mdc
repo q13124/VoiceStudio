@@ -1,0 +1,44 @@
+---
+description: "Repository hygiene: documentation, file creation, and diagnostics."
+alwaysApply: true
+---
+# Repository hygiene
+
+## One canonical doc per topic
+- No "spec_v2.md", "spec_final2.md", or near-duplicate documents.
+- Use a CHANGELOG section or ADRs for decision history.
+- When updating docs, update the canonical source; do not create variants.
+
+## Allowed new files
+Only create a new file if it is:
+- A new subsystem or module
+- A new canonical doc topic (no existing doc covers it)
+- An Architecture Decision Record (ADR)
+- A test or verification artifact
+- A necessary config or manifest
+
+## Disallowed patterns
+- Multiple near-duplicate docs for the same topic
+- Output dumps or generated artifacts committed to repo
+- Random scripts scattered at repo root
+
+## Required structure
+- Keep `docs/`, `src/`, `tools/`, `tests/` separation clear.
+- Keep root directory minimal and readable.
+- Place scripts in `tools/` not repo root.
+
+## Diagnostics-first
+- Prefer adding diagnostics to make the next failure easier to debug.
+- Include in logs: environment info, dependency versions, GPU/CPU status, paths.
+
+## Logging standards
+- Use structured logs with stable file locations.
+- Include context for failures: paths, versions, selected engine, device.
+
+## Consolidation completed (2026-01-25)
+Overlapping governance docs were archived to `docs/archive/governance_consolidated/`.
+Canonical references:
+- **Agent Rules**: `.cursor/rules/*.mdc`
+- **Human Reference**: `docs/governance/MASTER_RULES_COMPLETE.md`
+
+See ADR-001 for decision rationale.

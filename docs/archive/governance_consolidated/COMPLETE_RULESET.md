@@ -8,34 +8,6 @@
 
 ## 🚨 NON-NEGOTIABLE GUARDRAILS
 
-### 0. 100% COMPLETE - NO STUBS, PLACEHOLDERS, BOOKMARKS, OR TAGS ⚠️ **HIGHEST PRIORITY**
-
-**📋 COMPREHENSIVE RULE:** See `docs/governance/COMPLETE_NO_STUBS_PLACEHOLDERS_BOOKMARKS_RULE.md` for the complete, expanded rule with ALL forbidden terms, patterns, synonyms, and variations.
-
-**This is the MAIN RULE for the entire project and applies to EVERYTHING.**
-
-**FORBIDDEN (Summary - see comprehensive rule for complete list):**
-- ❌ Bookmarks: `TODO`, `FIXME`, `NOTE`, `HACK`, `REMINDER`, `XXX`, `WARNING`, `CAUTION`, `BUG`, `ISSUE`, `REFACTOR`, `OPTIMIZE`, `REVIEW`, `CHECK`, `VERIFY`, `TEST`, `DEBUG`, `DEPRECATED`, `OBSOLETE`
-- ❌ Placeholders: `NotImplementedException`, `NotImplementedError`, `[PLACEHOLDER]`, `{"mock": true}`, fake responses
-- ❌ Stubs: `pass`-only functions, empty methods, functions that just return
-- ❌ Tags: `#TODO`, `#FIXME`, `[PLACEHOLDER]`, `[WIP]`, `[IN PROGRESS]`
-- ❌ Status Words: "pending", "incomplete", "unfinished", "coming soon", "not yet", "eventually", "later", "for now", "temporary", "needs", "requires", "missing", "WIP", "tbd", "tba", "tbc"
-- ❌ Phrases: "to be done", "will be implemented", "coming soon", "not yet", "eventually", "later", "for now", "temporary", "in progress", "under development", "work in progress"
-
-**REQUIRED:**
-- ✅ Full implementation of all methods
-- ✅ All functionality working and tested
-- ✅ Production-ready code
-- ✅ Real values, real file I/O, real API wiring
-
-**Rule:** If it's not 100% complete and tested, it's NOT done. Don't move on.
-
-**See:** 
-- `docs/governance/COMPLETE_NO_STUBS_PLACEHOLDERS_BOOKMARKS_RULE.md` - **COMPREHENSIVE RULE** with all forbidden terms
-- `docs/governance/NO_STUBS_PLACEHOLDERS_RULE.md` - Summary rule
-
----
-
 ### 1. Do NOT Simplify UI Layout
 - ❌ **DO NOT** collapse panels or merge views
 - ❌ **DO NOT** reduce panel count
@@ -435,8 +407,9 @@ Required actions:
 
 ### Architecture
 1. **VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md** - Master spec
-2. **ARCHITECTURE_DATA_FLOW.md** - Data flow
-3. **ENGINE_RECOMMENDATIONS.md** - Backend engines
+2. **architecture/README.md** - Canonical architecture index (Parts 1–9)
+3. **architecture/Part6_State_Data.md** - State & data flow
+4. **ENGINE_RECOMMENDATIONS.md** - Backend engines
 
 ---
 
