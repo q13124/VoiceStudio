@@ -22,7 +22,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Operational reports**: `docs/reports/` (XAML diagnostics under `docs/reports/build/xaml/`).
 - **Third-party binaries**: repo-local `third_party/whisper.cpp` is used when present for `whisper_cpp_engine.py` binary fallback.
 - **Cursor MCP servers**: workspace MCP configuration lives in `cursor.mcp.json` with 24+ servers organized by category (Memory, Reasoning, Code Intelligence, Voice/Audio, Dev Tools). Key MCPs: `sequential-thinking` (structured reasoning), `openmemory`/`mem0` (persistent context), `chroma` (CodeRAG), `tree-sitter` (AST analysis), `context7` (library docs). See `docs/developer/MCP_OPTIMIZATION_GUIDE.md` for usage patterns.
-- **Cursor preprompted baseline**: user rules live in `docs/developer/CURSOR_USER_RULES.md`; automation scripts `scripts/setup-preprompted-cursor.ps1` and `scripts/validate-cursor-setup.ps1`; reusable commands in `.cursor/commands/`.
+- **Cursor preprompted baseline**: user rules live in `docs/developer/CURSOR_USER_RULES.md`; automation scripts `scripts/setup-preprompted-cursor.ps1` and `scripts/validate-cursor-setup.ps1`; reusable commands in `.cursor/commands/` (including `prompt-universal.md` and `role-*.md`).
 - **Cursor rules expansion**: domain-scoped rules live in `.cursor/rules/domains/` and workflow modes in `.cursor/rules/workflows/` for role-aware guidance (architect dependency matrix + incident runbook references).
 - **Role cheatsheet**: `docs/developer/ROLE_CHEATSHEET.md` provides role preprompts and one-liners for Cursor chats.
 - **Rules integration reports**: `docs/reports/governance/RULES_GAP_ANALYSIS_REPORT.md` and `docs/reports/verification/RULES_VALIDATION_REPORT.md`.
