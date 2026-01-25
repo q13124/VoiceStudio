@@ -112,31 +112,8 @@ def _get_temp_dir() -> str:
     return _temp_dir.name
 
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self): ...
-
-            @abstractmethod
-            def cleanup(self): ...
-
-            def is_initialized(self):
-                return self._initialized
-
-            def get_device(self):
-                return self.device
+# Import base protocol from canonical protocols module
+from .protocols import EngineProtocol
 
 
 class PiperEngine(EngineProtocol):
@@ -224,7 +201,13 @@ class PiperEngine(EngineProtocol):
         self._piper_instance = None  # Cached Piper instance (Python package)
 
         # Apply defaults for model/voice using the shared models root
-        models_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+        models_root = os.getenv("VOICESTUDIO_MODELS_PATH")
+        if not models_root:
+            models_root = os.path.join(
+                os.getenv("PROGRAMDATA", "C:\\ProgramData"),
+                "VoiceStudio",
+                "models",
+            )
         if self.voice is None:
             self.voice = "en_US-amy-medium"
         if self.model_path is None:

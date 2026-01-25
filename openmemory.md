@@ -83,7 +83,10 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 
 ## Governance source of truth
 
+- **Canonical registry**: `docs/governance/CANONICAL_REGISTRY.md` (updated 2026-01-25 with openmemory.md, engine config, and prompt library entries)
+- **Unified architecture plan**: `.cursor/plans/unified_architecture_index_*.plan.md` indexes all implemented components and establishes AI-driven development framework
 - **Ledger**: `Recovery Plan/QUALITY_LEDGER.md` (canonical)
+- **Service Level Objectives**: `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` (SLOs for synthesis, transcription, API response, UI, engine availability, and quality)
 - **Canonical roadmap (execution plan)**: `docs/governance/MASTER_ROADMAP_SUMMARY.md` (ledger remains status source of truth)
 - **Master roadmap index**: `docs/governance/MASTER_ROADMAP_INDEX.md` (prompt execution navigation)
 - **Prompt implementation guides (archived)**: `docs/archive/governance/prompts/` (PROMPT_04..12)
@@ -207,6 +210,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Verifier protocol**: `.cursor/rules/workflows/verifier-subagent.mdc` defines skeptical validation.
 - **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
 - **Context allocator**: `tools/context/allocate.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
+- **OpenMemory reader**: `tools/context/sources/openmemory_reader.py` provides optional integration for context bundle assembly.
 
 ## Agent governance tooling
 

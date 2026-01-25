@@ -226,5 +226,247 @@ class TestPanelHelpEndpoint:
         assert response.status_code in [200, 404]
 
 
+class TestHelpTopicCRUD:
+    """Test CRUD operations for help topics."""
+
+    def test_create_help_topic_success(self):
+        """Test successful help topic creation."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        topic_data = {
+            "id": "test_topic",
+            "title": "Test Topic",
+            "category": "test",
+            "content": "Test content",
+            "keywords": ["test"],
+            "related_topics": [],
+            "panel_id": None
+        }
+
+        response = client.post("/api/help/topics", json=topic_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == "test_topic"
+        assert data["title"] == "Test Topic"
+
+    def test_update_help_topic_success(self):
+        """Test successful help topic update."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        # First create a topic
+        topic_data = {
+            "id": "update_test",
+            "title": "Original Title",
+            "category": "test",
+            "content": "Original content",
+            "keywords": [],
+            "related_topics": [],
+            "panel_id": None
+        }
+        client.post("/api/help/topics", json=topic_data)
+
+        # Then update it
+        updated_data = {
+            "id": "update_test",
+            "title": "Updated Title",
+            "category": "test",
+            "content": "Updated content",
+            "keywords": [],
+            "related_topics": [],
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/topics/update_test", json=updated_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["title"] == "Updated Title"
+
+    def test_update_help_topic_id_mismatch(self):
+        """Test updating topic with ID mismatch."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        topic_data = {
+            "id": "different_id",
+            "title": "Test",
+            "category": "test",
+            "content": "Content",
+            "keywords": [],
+            "related_topics": [],
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/topics/wrong_id", json=topic_data)
+        assert response.status_code == 400
+
+    def test_update_help_topic_not_found(self):
+        """Test updating non-existent help topic."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        topic_data = {
+            "id": "nonexistent",
+            "title": "Test",
+            "category": "test",
+            "content": "Content",
+            "keywords": [],
+            "related_topics": [],
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/topics/nonexistent", json=topic_data)
+        assert response.status_code == 404
+
+    def test_delete_help_topic_success(self):
+        """Test successful help topic deletion."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        # First create a topic
+        topic_data = {
+            "id": "delete_test",
+            "title": "To Delete",
+            "category": "test",
+            "content": "Content",
+            "keywords": [],
+            "related_topics": [],
+            "panel_id": None
+        }
+        client.post("/api/help/topics", json=topic_data)
+
+        # Then delete it
+        response = client.delete("/api/help/topics/delete_test")
+        assert response.status_code == 200
+        assert "message" in response.json()
+
+    def test_delete_help_topic_not_found(self):
+        """Test deleting non-existent help topic."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        response = client.delete("/api/help/topics/nonexistent")
+        assert response.status_code == 404
+
+
+class TestKeyboardShortcutCRUD:
+    """Test CRUD operations for keyboard shortcuts."""
+
+    def test_create_keyboard_shortcut_success(self):
+        """Test successful keyboard shortcut creation."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        shortcut_data = {
+            "key": "Ctrl+T",
+            "description": "Test shortcut",
+            "category": "test",
+            "panel_id": None
+        }
+
+        response = client.post("/api/help/shortcuts", json=shortcut_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["key"] == "Ctrl+T"
+
+    def test_update_keyboard_shortcut_success(self):
+        """Test successful keyboard shortcut update."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        # First create a shortcut
+        shortcut_data = {
+            "key": "Ctrl+U",
+            "description": "Original",
+            "category": "test",
+            "panel_id": None
+        }
+        client.post("/api/help/shortcuts", json=shortcut_data)
+
+        # Then update it
+        updated_data = {
+            "key": "Ctrl+U",
+            "description": "Updated",
+            "category": "test",
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/shortcuts/Ctrl+U", json=updated_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["description"] == "Updated"
+
+    def test_update_keyboard_shortcut_key_mismatch(self):
+        """Test updating shortcut with key mismatch."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        shortcut_data = {
+            "key": "Ctrl+X",
+            "description": "Test",
+            "category": "test",
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/shortcuts/Ctrl+Y", json=shortcut_data)
+        assert response.status_code == 400
+
+    def test_update_keyboard_shortcut_not_found(self):
+        """Test updating non-existent keyboard shortcut."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        shortcut_data = {
+            "key": "Ctrl+Z",
+            "description": "Test",
+            "category": "test",
+            "panel_id": None
+        }
+
+        response = client.put("/api/help/shortcuts/Ctrl+Z", json=shortcut_data)
+        # May return 404 if shortcut doesn't exist
+        assert response.status_code in [200, 404]
+
+    def test_delete_keyboard_shortcut_success(self):
+        """Test successful keyboard shortcut deletion."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        # First create a shortcut
+        shortcut_data = {
+            "key": "Ctrl+D",
+            "description": "To Delete",
+            "category": "test",
+            "panel_id": None
+        }
+        client.post("/api/help/shortcuts", json=shortcut_data)
+
+        # Then delete it
+        response = client.delete("/api/help/shortcuts/Ctrl+D")
+        assert response.status_code == 200
+        assert "message" in response.json()
+
+    def test_delete_keyboard_shortcut_not_found(self):
+        """Test deleting non-existent keyboard shortcut."""
+        app = FastAPI()
+        app.include_router(help.router)
+        client = TestClient(app)
+
+        response = client.delete("/api/help/shortcuts/Ctrl+Nonexistent")
+        assert response.status_code == 404
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

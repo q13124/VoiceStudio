@@ -848,6 +848,7 @@ def _register_all_routes():
         "video_edit",
         "video_gen",
         "voice",
+        "voice_browser",
         "voice_cloning_wizard",
         "voice_speech",
         "workflows",
@@ -888,6 +889,7 @@ def _register_all_routes():
     _include_route("style_transfer")
     _include_route("embedding_explorer")
     _include_route("voice")
+    _include_route("voice_browser")
     _include_route("voice_speech")
     _include_route("quality")
     _include_route("quality_pipelines")

@@ -1,7 +1,0 @@
-<UserControl x:Class="VoiceStudio.App.Controls.QualityBadgeControl"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Border x:Name="BadgeBorder" Width="28" Height="28" CornerRadius="14" Background="{x:Bind QualityBrush, Mode=OneWay}" BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1" Padding="4" ToolTipService.Placement="Top">
-    <TextBlock x:Name="BadgeText" Text="{x:Bind QualityText, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
-  </Border>
-</UserControl>

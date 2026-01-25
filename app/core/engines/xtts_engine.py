@@ -3,10 +3,10 @@ XTTS Engine for VoiceStudio
 Coqui TTS XTTS v2 integration for voice cloning and synthesis
 
 Compatible with:
-- Python 3.10.15
-- Coqui TTS 0.27.2
-- Transformers 4.55.4
-- PyTorch 2.2.2+cu121
+- Python 3.11.9
+- Coqui TTS 0.24.2
+- Transformers 4.47.0
+- PyTorch 2.5.1+cu128
 """
 
 import logging
@@ -56,10 +56,56 @@ except ImportError:
     TTS = None
     ModelManager = None
     logging.warning(
-        "Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2"
+        "Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2"
     )
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_torchaudio_load_fallback() -> None:
+    """Patch torchaudio.load with a soundfile fallback for torchcodec failures."""
+    try:
+        import torchaudio
+    except Exception as exc:
+        logger.debug("torchaudio not available for XTTS fallback: %s", exc)
+        return
+
+    if getattr(torchaudio.load, "_voicestudio_fallback", False):
+        return
+
+    try:
+        import soundfile as sf
+    except Exception as exc:
+        logger.debug("soundfile not available for XTTS fallback: %s", exc)
+        return
+
+    original_load = torchaudio.load
+
+    def load_with_fallback(uri, *args, **kwargs):
+        try:
+            return original_load(uri, *args, **kwargs)
+        except Exception as exc:
+            logger.warning("torchaudio.load failed; falling back to soundfile: %s", exc)
+            frame_offset = kwargs.get("frame_offset", 0) or 0
+            num_frames = kwargs.get("num_frames", -1)
+            channels_first = kwargs.get("channels_first", True)
+            read_kwargs = {"dtype": "float32", "always_2d": True}
+            if frame_offset:
+                read_kwargs["start"] = int(frame_offset)
+            if num_frames is not None and num_frames > 0:
+                read_kwargs["frames"] = int(num_frames)
+            try:
+                audio, sample_rate = sf.read(uri, **read_kwargs)
+            except TypeError:
+                # Some file-like objects don't support start/frames.
+                audio, sample_rate = sf.read(uri, dtype="float32", always_2d=True)
+            audio = np.asarray(audio, dtype=np.float32)
+            if channels_first:
+                audio = audio.T
+            return torch.from_numpy(audio), sample_rate
+
+    load_with_fallback._voicestudio_fallback = True
+    torchaudio.load = load_with_fallback
 
 # Optional librosa import for prosody control
 try:
@@ -169,33 +215,8 @@ def _cache_model(model_name: str, device: str, model):
     logger.debug(f"Cached model: {cache_key} (cache size: {len(_MODEL_CACHE)})")
 
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    # Fallback if protocols not available
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        # Final fallback
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self): ...
-
-            @abstractmethod
-            def cleanup(self): ...
-
-            def is_initialized(self):
-                return self._initialized
-
-            def get_device(self):
-                return self.device
+# Import base protocol from canonical protocols module
+from .protocols import EngineProtocol
 
 
 class XTTSEngine(EngineProtocol):
@@ -225,7 +246,7 @@ class XTTSEngine(EngineProtocol):
         """
         if TTS is None:
             raise ImportError(
-                "Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2"
+                "Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2"
             )
 
         # Initialize base protocol
@@ -325,10 +346,11 @@ class XTTSEngine(EngineProtocol):
         """
         try:
             logger.info(f"Loading XTTS model: {self.model_name}")
+            _ensure_torchaudio_load_fallback()
 
             # Coqui XTTS-v2 downloads can require interactive CPML acceptance (input prompt).
             # In non-interactive backend runs, this can hang the server. Fail fast with a clear
-            # instruction to set COQUI_TOS_AGREED=1 (or use start_backend.ps1 -CoquiTosAgreed).
+            # instruction to set COQUI_TOS_AGREED=1 (or use scripts/backend/start_backend.ps1 -CoquiTosAgreed).
             if os.environ.get("COQUI_TOS_AGREED") != "1":
                 try:
                     stdin_is_tty = bool(getattr(sys.stdin, "isatty", lambda: False)())
@@ -338,14 +360,15 @@ class XTTSEngine(EngineProtocol):
                     raise RuntimeError(
                         "XTTS-v2 model download requires CPML/commercial license acceptance. "
                         "For non-interactive runs, set COQUI_TOS_AGREED=1 "
-                        "(e.g. start_backend.ps1 -CoquiTosAgreed)."
+                        "(e.g. scripts/backend/start_backend.ps1 -CoquiTosAgreed)."
                     )
 
-            # Use VOICESTUDIO_MODELS_PATH for model cache if available (default: E:\VoiceStudio\models)
+            # Use VOICESTUDIO_MODELS_PATH for model cache if available
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
             if not model_cache_dir:
                 model_cache_dir = os.path.join(
-                    os.getenv("VOICESTUDIO_REPO_ROOT", r"E:\VoiceStudio"),
+                    os.getenv("PROGRAMDATA", "C:\\ProgramData"),
+                    "VoiceStudio",
                     "models",
                 )
 

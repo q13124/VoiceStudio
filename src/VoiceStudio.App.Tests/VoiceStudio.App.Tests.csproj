@@ -59,6 +59,8 @@
   <ItemGroup>
     <ProjectReference Include="..\VoiceStudio.App\VoiceStudio.App.csproj"
       Condition="Exists('..\VoiceStudio.App\VoiceStudio.App.csproj')" />
+    <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj"
+      Condition="Exists('..\VoiceStudio.Core\VoiceStudio.Core.csproj')" />
   </ItemGroup>
 
   <ItemGroup>

@@ -231,13 +231,13 @@ try:
 
     HAS_HUGGINGFACE = True
     logger.debug("HuggingFace transformers available for HuBERT feature extraction")
-except ImportError:
+except Exception as e:
     HAS_HUGGINGFACE = False
     HubertModel = None
     Wav2Vec2FeatureExtractor = None
     logger.warning(
-        "HuggingFace transformers not available. "
-        "Install with: pip install transformers"
+        "HuggingFace transformers not available (%s).",
+        type(e).__name__,
     )
 
 # Try to import RVC SynthesizerTrn model classes
@@ -276,31 +276,8 @@ except ImportError:
             "RVC inference will use fallback methods."
         )
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self): ...
-
-            @abstractmethod
-            def cleanup(self): ...
-
-            def is_initialized(self):
-                return self._initialized
-
-            def get_device(self):
-                return self.device
+# Import base protocol from canonical protocols module
+from .protocols import EngineProtocol
 
 
 class RVCEngine(EngineProtocol):

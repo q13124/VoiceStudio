@@ -116,7 +116,8 @@ def _check_engines() -> Dict[str, Any]:
                 engine_id = data.get("engine_id") or data.get("id")
                 if engine_id:
                     engine_ids.append(str(engine_id))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to parse engine manifest {p}: {e}")
                 continue
 
         engine_ids = sorted(set(engine_ids))
@@ -491,7 +492,8 @@ async def readiness_check() -> Dict[str, Any]:
                 return True
             value = getattr(status, "value", None)
             return value == HealthStatus.HEALTHY.value
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Readiness health check evaluation failed: {e}")
             return False
 
     critical_healthy = all(
@@ -559,7 +561,8 @@ def get_performance_middleware():
         )  # type: ignore
 
         return _get_performance_middleware()
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Performance middleware unavailable: {e}")
         return None
 
 

@@ -6,6 +6,7 @@ Tests voice browser endpoints comprehensively.
 import sys
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI
@@ -389,6 +390,52 @@ class TestVoiceCatalogEndpoints:
         data = response.json()
         assert "tags" in data
         assert len(data["tags"]) == 0
+
+
+class TestVoiceBrowserRefreshEndpoint:
+    """Test voice browser catalog refresh endpoint."""
+
+    def test_refresh_catalog_success(self):
+        """Test successful catalog refresh."""
+        app = FastAPI()
+        app.include_router(voice_browser.router)
+        client = TestClient(app)
+
+        with patch("backend.api.routes.voice_browser._sync_catalog_from_profiles") as mock_sync:
+            mock_sync.return_value = None
+
+            response = client.post("/api/voice-browser/refresh")
+            assert response.status_code == 200
+            data = response.json()
+            assert "message" in data
+
+    def test_refresh_catalog_updates_catalog(self):
+        """Test that refresh updates the catalog."""
+        app = FastAPI()
+        app.include_router(voice_browser.router)
+        client = TestClient(app)
+
+        # Clear catalog first
+        voice_browser._voice_catalog.clear()
+
+        # Mock profiles storage
+        mock_profiles = {
+            "profile1": {
+                "id": "profile1",
+                "name": "Test Profile",
+                "language": "en",
+                "quality_score": 0.9,
+                "tags": ["test"],
+            }
+        }
+
+        with patch("backend.api.routes.voice_browser._sync_catalog_from_profiles") as mock_sync:
+            def sync_side_effect():
+                voice_browser._voice_catalog["profile1"] = mock_profiles["profile1"]
+            mock_sync.side_effect = sync_side_effect
+
+            response = client.post("/api/voice-browser/refresh")
+            assert response.status_code == 200
 
 
 if __name__ == "__main__":

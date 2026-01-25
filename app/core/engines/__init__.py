@@ -47,9 +47,51 @@ def _to_snake(name: str) -> str:
 
 _ENGINE_CLASSES = {
     # Keep this minimal; add optional engines only when needed.
+    # Most engines are auto-discovered from manifests via _discover_engines_from_manifests()
     "rvc": "app.core.engines.rvc_engine:RVCEngine",
     "deforum": "app.core.engines.deforum_engine:DeforumEngine",
 }
+
+# Cache for discovered engines from manifests
+_ENGINE_CLASSES_DISCOVERED = False
+
+
+def _discover_engines_from_manifests():
+    """Auto-discover engines from manifest files and add to _ENGINE_CLASSES."""
+    global _ENGINE_CLASSES_DISCOVERED
+    if _ENGINE_CLASSES_DISCOVERED:
+        return
+    
+    try:
+        from .manifest_loader import find_engine_manifests, get_engine_entry_point, load_engine_manifest
+        
+        # Find all engine manifests
+        manifests = find_engine_manifests("engines")
+        
+        for engine_id, manifest_path in manifests.items():
+            # Skip if already registered
+            if engine_id in _ENGINE_CLASSES:
+                continue
+            
+            try:
+                manifest = load_engine_manifest(manifest_path)
+                entry_point = get_engine_entry_point(manifest)
+                
+                if entry_point:
+                    # Add to registry in format "module:class"
+                    _ENGINE_CLASSES[engine_id] = entry_point
+            except Exception as e:
+                # Log but don't fail - some engines may have invalid manifests
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to discover engine {engine_id} from manifest: {e}")
+        
+        _ENGINE_CLASSES_DISCOVERED = True
+    except Exception as e:
+        # If manifest discovery fails, engines will still work via explicit registration
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Engine manifest discovery failed (non-critical): {e}")
 
 
 _EXPLICIT_MODULES = {
@@ -95,6 +137,9 @@ _EXPLICIT_MODULES = {
 
 def get_engine_class(engine_id: str):
     """Return an engine class by id using lazy import."""
+    # Auto-discover engines from manifests on first call
+    _discover_engines_from_manifests()
+    
     try:
         dotted = _ENGINE_CLASSES[engine_id]
     except KeyError as exc:
@@ -123,6 +168,9 @@ def _resolve_module_for_attr(name: str) -> str | None:
 
 
 def __getattr__(name: str) -> Any:
+    # Auto-discover engines from manifests on first access
+    _discover_engines_from_manifests()
+    
     module_path = _resolve_module_for_attr(name)
     if not module_path:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -138,8 +186,4 @@ def __getattr__(name: str) -> Any:
         ) from exc
 
 
-# Optional convenience re-export for RVC only (safe + light)
-RVCEngine = _load(_ENGINE_CLASSES["rvc"])
-create_rvc_engine = getattr(
-    importlib.import_module("app.core.engines.rvc_engine"), "create_rvc_engine"
-)
+# RVCEngine and create_rvc_engine are resolved lazily via __getattr__

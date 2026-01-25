@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.UI.Xaml.Controls;
 using VoiceStudio.App.Services;
+using VoiceStudio.App.Tests.UI;
 using System;
 using System.Linq;
 
@@ -11,7 +12,6 @@ namespace VoiceStudio.App.Tests.Services
   /// Tests toast notification display and management.
   /// </summary>
   [TestClass]
-  [Ignore("Requires UI Thread - VS-0013")]
   public class ToastNotificationServiceTests : TestBase
   {
     private StackPanel? _container;
@@ -33,8 +33,7 @@ namespace VoiceStudio.App.Tests.Services
       base.TestCleanup();
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowSuccess_CreatesToast()
     {
       // Arrange
@@ -47,8 +46,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowSuccess_WithTitle_CreatesToast()
     {
       // Arrange
@@ -62,8 +60,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowError_CreatesToast()
     {
       // Arrange
@@ -76,8 +73,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowError_WithTitle_CreatesToast()
     {
       // Arrange
@@ -91,8 +87,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowError_WithAction_CreatesToast()
     {
       // Arrange
@@ -107,8 +102,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowInfo_CreatesToast()
     {
       // Arrange
@@ -121,8 +115,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowInfo_WithTitle_CreatesToast()
     {
       // Arrange
@@ -136,7 +129,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void ShowWarning_CreatesToast()
     {
       // Arrange
@@ -149,8 +142,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowWarning_WithTitle_CreatesToast()
     {
       // Arrange
@@ -164,7 +156,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void ShowProgress_CreatesProgressToast()
     {
       // Arrange
@@ -178,8 +170,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowProgress_WithTitle_CreatesProgressToast()
     {
       // Arrange
@@ -194,8 +185,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container!.Children.Count > 0);
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowMultipleToasts_LimitsVisibleToasts()
     {
       // Arrange
@@ -214,7 +204,7 @@ namespace VoiceStudio.App.Tests.Services
       Assert.IsTrue(_container.Children.Count >= initialCount);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void ShowToast_EmptyMessage_HandlesGracefully()
     {
       // Arrange
@@ -232,8 +222,7 @@ namespace VoiceStudio.App.Tests.Services
       }
     }
 
-    [TestMethod]
-    [Ignore("Requires UI Thread - VS-0013")]
+    [UITestMethod]
     public void ShowToast_NullTitle_HandlesGracefully()
     {
       // Arrange
