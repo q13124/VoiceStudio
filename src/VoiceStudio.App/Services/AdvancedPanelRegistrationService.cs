@@ -13,7 +13,7 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Registers all 9 advanced panels in the PanelRegistry.
         /// </summary>
-        public static void RegisterAdvancedPanels(PanelRegistry registry)
+        public static void RegisterAdvancedPanels(IPanelRegistry registry)
         {
             if (registry == null)
                 throw new ArgumentNullException(nameof(registry));

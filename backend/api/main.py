@@ -1,30 +1,39 @@
 # IMPORTANT: Import Hugging Face fix FIRST to set environment variables
 # before any huggingface_hub imports
+import os
+
+
+def _configure_hf_endpoints() -> None:
+    """Configure Hugging Face endpoints with env overrides."""
+    endpoint_default = os.getenv("VOICESTUDIO_HF_ENDPOINT", "https://router.huggingface.co")
+    inference_default = os.getenv("VOICESTUDIO_HF_INFERENCE_API_BASE", endpoint_default)
+
+    endpoint = os.getenv("HF_ENDPOINT", endpoint_default)
+    inference = os.getenv("HF_INFERENCE_API_BASE", inference_default)
+
+    # Override legacy endpoints with configured defaults
+    if endpoint == "https://api-inference.huggingface.co":
+        endpoint = endpoint_default
+    if inference == "https://api-inference.huggingface.co":
+        inference = inference_default
+
+    os.environ["HF_ENDPOINT"] = endpoint
+    os.environ["HF_INFERENCE_API_BASE"] = inference
+
+
 try:
     from .routes import huggingface_fix  # noqa: F401
 except ImportError:
-    # If the fix module doesn't exist, set environment variable directly
-    import os
+    _configure_hf_endpoints()
 
-    os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
-    os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
+from backend.config.path_config import get_models_path
 
-# FORCE HuggingFace endpoint override - set before ANY imports
-import os
-
-os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
-os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
-
-# Also override any legacy cached values
-if os.environ.get("HF_INFERENCE_API_BASE") == "https://api-inference.huggingface.co":
-    os.environ["HF_INFERENCE_API_BASE"] = "https://router.huggingface.co"
-if os.environ.get("HF_ENDPOINT") == "https://api-inference.huggingface.co":
-    os.environ["HF_ENDPOINT"] = "https://router.huggingface.co"
+_configure_hf_endpoints()
 
 # Set default model/cache locations (override with env if needed)
-_default_models_root = os.environ.get(
-    "VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"
-)
+_default_models_root = os.environ.get("VOICESTUDIO_MODELS_PATH")
+if not _default_models_root:
+    _default_models_root = str(get_models_path())
 os.environ.setdefault("VOICESTUDIO_MODELS_PATH", _default_models_root)
 os.environ.setdefault("HF_HOME", os.path.join(_default_models_root, "hf_cache"))
 os.environ.setdefault("TTS_HOME", os.path.join(_default_models_root, "xtts"))
@@ -89,11 +98,17 @@ except ImportError:
 from .error_handling import (
     add_request_id_middleware,
     general_exception_handler,
+    get_error_metrics,
     http_exception_handler,
     validation_exception_handler,
 )
 from .exceptions import VoiceStudioException
 from .version_info import get_version_info, get_version_string
+
+# API versioning
+API_VERSION_PREFIX = "/api/v1"
+LEGACY_API_PREFIX = "/api"
+API_SUNSET_DATE = "2026-06-30"
 
 # Defer heavy imports until startup
 _PerformanceMonitoringMiddleware = None
@@ -355,8 +370,10 @@ app = FastAPI(
         "name": "MIT",
     },
     servers=[
-        {"url": "http://localhost:8000", "description": "Development server"},
-        {"url": "https://api.voicestudio.com", "description": "Production server"},
+        {"url": "http://localhost:8000/api/v1", "description": "Development server (v1)"},
+        {"url": "http://localhost:8000", "description": "Development server (legacy)"},
+        {"url": "https://api.voicestudio.com/api/v1", "description": "Production server (v1)"},
+        {"url": "https://api.voicestudio.com", "description": "Production server (legacy)"},
     ],
     swagger_ui_parameters={
         "tryItOutEnabled": True,
@@ -467,7 +484,10 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                         ),
                     )
             except ValueError:
-                pass  # Invalid content-length, let request proceed
+                logger.debug(
+                    "Invalid content-length header '%s', letting request proceed",
+                    content_length,
+                )
 
         return await call_next(request)
 
@@ -515,6 +535,26 @@ async def request_id_middleware(request: Request, call_next):
     return await add_request_id_middleware(request, call_next)
 
 
+# API versioning middleware
+@app.middleware("http")
+async def api_versioning_middleware(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if path.startswith(API_VERSION_PREFIX):
+        versioned_path = path[len(API_VERSION_PREFIX):] or "/"
+        request.scope["path"] = versioned_path
+        request.scope["root_path"] = API_VERSION_PREFIX
+        return await call_next(request)
+
+    response = await call_next(request)
+    if path.startswith(LEGACY_API_PREFIX):
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = API_SUNSET_DATE
+        response.headers["Link"] = (
+            f"<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel=\"alternate\""
+        )
+    return response
+
+
 # Middleware to disable service worker registration in Swagger UI
 @app.middleware("http")
 async def disable_swagger_service_worker_middleware(request: Request, call_next):
@@ -525,7 +565,7 @@ async def disable_swagger_service_worker_middleware(request: Request, call_next)
     response = await call_next(request)
 
     # Only modify responses from /docs endpoint (Swagger UI)
-    if request.url.path == "/docs" and response.status_code == 200:
+    if request.url.path in {"/docs", f"{API_VERSION_PREFIX}/docs"} and response.status_code == 200:
         # Check if response is HTML
         content_type = response.headers.get("content-type", "")
         if "text/html" in content_type:
@@ -624,7 +664,16 @@ def _initialize_rate_limiting():
 
         app.add_middleware(
             RateLimitMiddleware,
-            skip_paths=["/health", "/api/health", "/", "/docs", "/openapi.json"],
+            skip_paths=[
+                "/health",
+                "/api/health",
+                f"{API_VERSION_PREFIX}/health",
+                "/",
+                "/docs",
+                f"{API_VERSION_PREFIX}/docs",
+                "/openapi.json",
+                f"{API_VERSION_PREFIX}/openapi.json",
+            ],
         )
         logger.info("Enhanced rate limiting middleware enabled")
         _rate_limit_middleware_loaded = True
@@ -1017,6 +1066,40 @@ def api_health():
         }
 
 
+@app.get("/api/metrics")
+def api_metrics():
+    """Minimum observability metrics for API, engines, and errors."""
+    payload = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "errors": get_error_metrics(),
+        "endpoints": {"enabled": False},
+        "engines": {"enabled": False},
+    }
+
+    try:
+        middleware = _get_performance_middleware()
+        if middleware is not None:
+            payload["endpoints"] = {
+                "stats": middleware.get_stats(),
+                "by_endpoint": middleware.get_metrics(),
+            }
+    except Exception as e:
+        payload["endpoints"] = {"enabled": False, "error": str(e)}
+
+    try:
+        from app.core.engines.performance_metrics import get_engine_metrics
+
+        metrics = get_engine_metrics()
+        payload["engines"] = {
+            "summary": metrics.get_summary(),
+            "total_engines": len(metrics.get_all_stats()),
+        }
+    except Exception as e:
+        payload["engines"] = {"enabled": False, "error": str(e)}
+
+    return payload
+
+
 @app.get("/api/cache/stats")
 def cache_stats():
     """Get response cache statistics."""
@@ -1343,5 +1426,4 @@ def scheduler_task_cancel(task_id: str):
         raise
     except Exception as e:
         logger.warning(f"Failed to cancel task: {e}")
-        return {"error": str(e)}
         return {"error": str(e)}

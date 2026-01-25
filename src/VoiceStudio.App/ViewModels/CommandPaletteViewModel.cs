@@ -19,14 +19,14 @@ namespace VoiceStudio.App.ViewModels
     public IRelayCommand RunSelectedCmd { get; }
     public IRelayCommand<string?> RunByIdCmd { get; }
 
-    private readonly PanelRegistry _registry;
+    private readonly IPanelRegistry _registry;
 
     /// <summary>
     /// Event raised when a command is executed.
     /// </summary>
     public event EventHandler<CommandExecutedEventArgs>? CommandExecuted;
 
-    public CommandPaletteViewModel(PanelRegistry registry)
+    public CommandPaletteViewModel(IPanelRegistry registry)
     {
       _registry = registry;
       RunSelectedCmd = new RelayCommand(() => Run(SelectedItem?.Id));

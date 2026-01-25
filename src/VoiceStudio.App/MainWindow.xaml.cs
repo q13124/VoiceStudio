@@ -16,10 +16,12 @@ using System.Diagnostics;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.UI.Xaml.Media.Animation;
 using VoiceStudio.App.Controls;
 using VoiceStudio.App.Views.Dialogs;
 using Microsoft.UI.Xaml.Media;
+using Windows.ApplicationModel;
 
 namespace VoiceStudio.App
 {
@@ -64,7 +66,7 @@ namespace VoiceStudio.App
       this.InitializeComponent();
       profiler.Checkpoint("InitializeComponent");
 
-      _keyboardShortcutService = new KeyboardShortcutService();
+      _keyboardShortcutService = ServiceProvider.GetKeyboardShortcutService();
       profiler.Checkpoint("KeyboardShortcutService Created");
 
       _updateService = ServiceProvider.GetUpdateService();
@@ -99,6 +101,9 @@ namespace VoiceStudio.App
       _keyboardShortcutsMenuItem = new MenuFlyoutItem { Text = "Keyboard Shortcuts" };
       _keyboardShortcutsMenuItem.Click += KeyboardShortcutsMenuItem_Click;
       profiler.Checkpoint("Menu Items Created");
+
+      InitializeMenuBar();
+      profiler.Checkpoint("Menu Bar Initialized");
 
       // Enable keyboard navigation - will attach in MainWindow_Activated handler
       // Also register Activated handler for welcome dialog
@@ -1067,7 +1072,7 @@ namespace VoiceStudio.App
           "playback.record",
           VirtualKey.R,
           VirtualKeyModifiers.Control,
-          () => { /* Record functionality not yet implemented */ },
+          () => ToggleRecording(),
           "Record");
 
       // Edit operations
@@ -1450,8 +1455,9 @@ namespace VoiceStudio.App
     {
       try
       {
+        var panelRegistry = ServiceProvider.GetPanelRegistry();
         var commandPaletteService = new CommandPaletteService(
-            new Core.Panels.PanelRegistry(),
+            panelRegistry,
             new ThemeManager()
         );
         commandPaletteService.Show();
@@ -1705,6 +1711,224 @@ namespace VoiceStudio.App
       }
     }
 
+    private void InitializeMenuBar()
+    {
+      var host = FindInContent<ContentControl>("MenuBarHost");
+      if (host == null)
+      {
+        return;
+      }
+
+      var menuBar = new MenuBar
+      {
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        VerticalAlignment = VerticalAlignment.Center
+      };
+
+      menuBar.Items.Add(BuildFileMenu());
+      menuBar.Items.Add(BuildEditMenu());
+      menuBar.Items.Add(BuildViewMenu());
+      menuBar.Items.Add(BuildModulesMenu());
+      menuBar.Items.Add(BuildPlaybackMenu());
+      menuBar.Items.Add(BuildToolsMenu());
+      menuBar.Items.Add(BuildAiMenu());
+      menuBar.Items.Add(BuildHelpMenu());
+
+      host.Content = menuBar;
+    }
+
+    private MenuBarItem BuildFileMenu()
+    {
+      var item = new MenuBarItem { Title = "File" };
+      item.Items.Add(CreateMenuItem("New Project", CreateNewProject));
+      item.Items.Add(CreateMenuItem("Open Project", OpenProject));
+      item.Items.Add(CreateMenuItem("Save Project", SaveProject));
+      item.Items.Add(new MenuFlyoutSeparator());
+      if (_recentProjectsSubMenu != null)
+      {
+        item.Items.Add(_recentProjectsSubMenu);
+        item.Items.Add(new MenuFlyoutSeparator());
+      }
+      item.Items.Add(CreateMenuItem("Exit", () => Close()));
+      return item;
+    }
+
+    private MenuBarItem BuildEditMenu()
+    {
+      var item = new MenuBarItem { Title = "Edit" };
+      item.Items.Add(CreateMenuItem("Undo", ExecuteUndo));
+      item.Items.Add(CreateMenuItem("Redo", ExecuteRedo));
+      return item;
+    }
+
+    private MenuBarItem BuildViewMenu()
+    {
+      var item = new MenuBarItem { Title = "View" };
+      if (_toggleMiniTimelineMenuItem != null)
+      {
+        item.Items.Add(_toggleMiniTimelineMenuItem);
+      }
+      item.Items.Add(CreateMenuItem("Global Search", ShowGlobalSearch));
+      return item;
+    }
+
+    private MenuBarItem BuildModulesMenu()
+    {
+      var item = new MenuBarItem { Title = "Modules" };
+      item.Items.Add(CreateMenuItem("Studio (Timeline)", () => NavStudio_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Profiles", () => NavProfiles_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Library", () => NavLibrary_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Effects Mixer", () => NavEffects_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Training", () => NavTrain_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Analyzer", () => NavAnalyze_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Settings", () => NavSettings_Click(this, new RoutedEventArgs())));
+      item.Items.Add(CreateMenuItem("Diagnostics", () => NavLogs_Click(this, new RoutedEventArgs())));
+      return item;
+    }
+
+    private MenuBarItem BuildPlaybackMenu()
+    {
+      var item = new MenuBarItem { Title = "Playback" };
+      item.Items.Add(CreateMenuItem("Play/Pause", TogglePlayback));
+      item.Items.Add(CreateMenuItem("Stop", StopPlayback));
+      item.Items.Add(CreateMenuItem("Record", ToggleRecording));
+      return item;
+    }
+
+    private MenuBarItem BuildToolsMenu()
+    {
+      var item = new MenuBarItem { Title = "Tools" };
+      if (_customizeToolbarMenuItem != null)
+      {
+        item.Items.Add(_customizeToolbarMenuItem);
+      }
+      if (_checkForUpdatesMenuItem != null)
+      {
+        item.Items.Add(_checkForUpdatesMenuItem);
+      }
+      if (_keyboardShortcutsMenuItem != null)
+      {
+        item.Items.Add(_keyboardShortcutsMenuItem);
+      }
+      return item;
+    }
+
+    private MenuBarItem BuildAiMenu()
+    {
+      var item = new MenuBarItem { Title = "AI" };
+      item.Items.Add(CreateMenuItem(
+          "AI Mixing & Mastering",
+          () => SwitchToPanel(Core.Panels.PanelRegion.Right, "AI Mixing & Mastering", () => new AIMixingMasteringView())));
+      item.Items.Add(CreateMenuItem(
+          "Ensemble Synthesis",
+          () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView())));
+      return item;
+    }
+
+    private MenuBarItem BuildHelpMenu()
+    {
+      var item = new MenuBarItem { Title = "Help" };
+      item.Items.Add(CreateMenuItem("Documentation Folder", OpenDocumentationFolder));
+      item.Items.Add(CreateMenuItem("About VoiceStudio", ShowAboutDialog));
+      return item;
+    }
+
+    private MenuFlyoutItem CreateMenuItem(string text, Action action)
+    {
+      var item = new MenuFlyoutItem { Text = text };
+      item.Click += (_, __) => action();
+      return item;
+    }
+
+    private void ExecuteUndo()
+    {
+      try
+      {
+        var undoService = ServiceProvider.GetUndoRedoService();
+        if (undoService.CanUndo)
+        {
+          undoService.Undo();
+        }
+      }
+      catch (Exception ex)
+      {
+        ServiceProvider.TryGetErrorLoggingService()?.LogError(ex, "ExecuteUndo");
+      }
+    }
+
+    private void ExecuteRedo()
+    {
+      try
+      {
+        var undoService = ServiceProvider.GetUndoRedoService();
+        if (undoService.CanRedo)
+        {
+          undoService.Redo();
+        }
+      }
+      catch (Exception ex)
+      {
+        ServiceProvider.TryGetErrorLoggingService()?.LogError(ex, "ExecuteRedo");
+      }
+    }
+
+    private void OpenDocumentationFolder()
+    {
+      var repoRoot = Environment.GetEnvironmentVariable("VOICESTUDIO_REPO_ROOT");
+      var docsPath = repoRoot != null
+          ? Path.Combine(repoRoot, "docs")
+          : Path.Combine(AppContext.BaseDirectory, "docs");
+      try
+      {
+        if (!Directory.Exists(docsPath))
+        {
+          ServiceProvider.TryGetToastNotificationService()?.ShowWarning(
+              $"Docs folder not found: {docsPath}",
+              "Documentation");
+          return;
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+          FileName = "explorer.exe",
+          Arguments = $"\"{docsPath}\"",
+          UseShellExecute = true
+        });
+      }
+      catch (Exception ex)
+      {
+        ServiceProvider.TryGetErrorLoggingService()?.LogError(ex, "OpenDocumentationFolder");
+        ServiceProvider.TryGetToastNotificationService()?.ShowError(
+            "Unable to open documentation folder.",
+            "Documentation");
+      }
+    }
+
+    private async void ShowAboutDialog()
+    {
+      try
+      {
+        var version = Package.Current.Id.Version;
+        var versionText = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+        var dialog = new ContentDialog
+        {
+          Title = "VoiceStudio Quantum+",
+          Content = $"Version {versionText}",
+          CloseButtonText = "Close",
+          XamlRoot = (Content as FrameworkElement)?.XamlRoot
+        };
+
+        await dialog.ShowAsync();
+      }
+      catch (Exception ex)
+      {
+        ServiceProvider.TryGetErrorLoggingService()?.LogError(ex, "ShowAboutDialog");
+        ServiceProvider.TryGetToastNotificationService()?.ShowError(
+            "Unable to show About dialog.",
+            "About");
+      }
+    }
+
     private void PopulateRecentProjectsMenu()
     {
       if (_recentProjectsSubMenu == null || _recentProjectsService == null)
@@ -1848,6 +2072,48 @@ namespace VoiceStudio.App
         {
           viewModel.StopAudioCommand.Execute(null);
         }
+      }
+    }
+
+    private void ToggleRecording()
+    {
+      try
+      {
+        var rightPanelHost = FindNameOnContent("RightPanelHost") as Controls.PanelHost;
+        if (rightPanelHost == null)
+        {
+          return;
+        }
+
+        var recordingView = rightPanelHost.Content as RecordingView;
+        if (recordingView == null)
+        {
+          recordingView = new RecordingView();
+          rightPanelHost.Content = recordingView;
+        }
+
+        var viewModel = recordingView.ViewModel;
+        if (viewModel.IsRecording)
+        {
+          if (viewModel.StopRecordingCommand.CanExecute(null))
+          {
+            viewModel.StopRecordingCommand.Execute(null);
+          }
+        }
+        else
+        {
+          if (viewModel.StartRecordingCommand.CanExecute(null))
+          {
+            viewModel.StartRecordingCommand.Execute(null);
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        ServiceProvider.TryGetErrorLoggingService()?.LogError(ex, "ToggleRecording");
+        ServiceProvider.TryGetToastNotificationService()?.ShowError(
+            "Recording toggle failed.",
+            "Recording");
       }
     }
 

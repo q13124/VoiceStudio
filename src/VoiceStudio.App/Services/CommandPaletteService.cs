@@ -27,7 +27,7 @@ namespace VoiceStudio.App.Services
 
     public sealed class CommandPaletteService
     {
-        private readonly PanelRegistry _registry;
+        private readonly IPanelRegistry _registry;
         private readonly ThemeManager _theme;
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace VoiceStudio.App.Services
         /// </summary>
         public event EventHandler<HelpViewRequestedEventArgs>? HelpViewRequested;
 
-        public CommandPaletteService(PanelRegistry registry, ThemeManager themeManager)
+        public CommandPaletteService(IPanelRegistry registry, ThemeManager themeManager)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
             _theme = themeManager ?? throw new ArgumentNullException(nameof(themeManager));

@@ -12,6 +12,8 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
 
+from backend.config.path_config import get_models_path
+
 from app.core.resilience.health_check import (
     HealthCheckResult,
     HealthStatus,
@@ -197,8 +199,8 @@ async def health_check() -> Dict[str, Any]:
             "memory_mb": process.memory_info().rss / 1024 / 1024,
             "memory_percent": process.memory_percent(),
         }
-    except Exception:
-        ...
+    except Exception as e:
+        logger.debug(f"Failed to collect system metrics: {e}")
 
     # Resource usage summary
     try:
@@ -296,8 +298,8 @@ def _get_system_metrics() -> Dict[str, Any]:
                 "packets_sent": net_io.packets_sent,
                 "packets_recv": net_io.packets_recv,
             }
-        except Exception:
-            ...
+        except Exception as e:
+            logger.debug(f"Failed to collect network metrics: {e}")
 
     except Exception as e:
         logger.warning(f"Failed to get system metrics: {e}")
@@ -518,6 +520,12 @@ async def readiness_check() -> Dict[str, Any]:
         )
 
 
+@router.get("/ready")
+async def ready_check() -> Dict[str, Any]:
+    """Alias for readiness check."""
+    return await readiness_check()
+
+
 @router.get("/liveness")
 def liveness_check() -> Dict[str, Any]:
     """
@@ -531,6 +539,12 @@ def liveness_check() -> Dict[str, Any]:
         "status": "alive",
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+
+@router.get("/live")
+def live_check() -> Dict[str, Any]:
+    """Alias for liveness check."""
+    return liveness_check()
 
 
 def get_performance_middleware():
@@ -584,7 +598,7 @@ def preflight_check() -> Dict[str, Any]:
 
     projects_root = str(get_project_store_service().projects_dir)
     cache_root = str(get_audio_cache().cache_dir)
-    model_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+    model_root = str(get_models_path())
     audio_registry_path = str(get_audio_registry().registry_path)
     jobs_root = str(get_job_state_store("voice_cloning_wizard").jobs_root)
 

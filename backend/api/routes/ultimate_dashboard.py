@@ -111,8 +111,8 @@ async def get_dashboard_data():
                         projects_data = projects_response.json()
                         if isinstance(projects_data, list):
                             total_projects = len(projects_data)
-                except Exception:
-                    ...
+                except Exception as e:
+                    logger.debug(f"Failed to load projects count: {e}")
                 
                 # Get profiles count
                 try:
@@ -121,8 +121,8 @@ async def get_dashboard_data():
                         profiles_data = profiles_response.json()
                         if isinstance(profiles_data, list):
                             total_profiles = len(profiles_data)
-                except Exception:
-                    ...
+                except Exception as e:
+                    logger.debug(f"Failed to load profiles count: {e}")
                 
                 # Get batch jobs status
                 try:
@@ -134,8 +134,8 @@ async def get_dashboard_data():
                             completed = jobs_data.get("completed", 0)
                             # Estimate today's completed jobs (simplified)
                             completed_jobs_today = max(0, completed // 30)  # Rough estimate
-                except Exception:
-                    ...
+                except Exception as e:
+                    logger.debug(f"Failed to load batch job status: {e}")
                 
                 # Get GPU status
                 try:
@@ -148,8 +148,8 @@ async def get_dashboard_data():
                             if devices:
                                 # Get utilization from first device
                                 gpu_utilization = devices[0].get("utilization_percent", 0.0)
-                except Exception:
-                    ...
+                except Exception as e:
+                    logger.debug(f"Failed to load GPU status: {e}")
                 
                 # Get analytics summary for audio files estimate
                 try:
@@ -158,8 +158,8 @@ async def get_dashboard_data():
                         analytics_data = analytics_response.json()
                         if isinstance(analytics_data, dict):
                             total_audio_files = analytics_data.get("total_audio_processed", 0)
-                except Exception:
-                    ...
+                except Exception as e:
+                    logger.debug(f"Failed to load analytics summary: {e}")
         except Exception as e:
             logger.warning(f"Failed to aggregate some dashboard data: {e}")
         
@@ -170,8 +170,8 @@ async def get_dashboard_data():
             memory_info = process.memory_info()
             system_memory = psutil.virtual_memory()
             memory_usage_percent = system_memory.percent
-        except Exception:
-            ...
+        except Exception as e:
+            logger.debug(f"Failed to collect system metrics: {e}")
         
         # Determine system status
         if memory_usage_percent > 90 or cpu_utilization > 95:

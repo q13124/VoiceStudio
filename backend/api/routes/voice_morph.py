@@ -739,8 +739,8 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                         except Exception as e3:
                             logger.debug(f"Speaker encoder extraction failed: {e3}")
 
-        except ImportError:
-            ...
+        except ImportError as e:
+            logger.warning(f"Speaker encoder dependencies not available: {e}")
         except HTTPException:
             raise
 

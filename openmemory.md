@@ -24,8 +24,11 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Cursor MCP servers**: workspace MCP configuration lives in `cursor.mcp.json` with 24+ servers organized by category (Memory, Reasoning, Code Intelligence, Voice/Audio, Dev Tools). Key MCPs: `sequential-thinking` (structured reasoning), `openmemory`/`mem0` (persistent context), `chroma` (CodeRAG), `tree-sitter` (AST analysis), `context7` (library docs). See `docs/developer/MCP_OPTIMIZATION_GUIDE.md` for usage patterns.
 - **Cursor preprompted baseline**: user rules live in `docs/developer/CURSOR_USER_RULES.md`; automation scripts `scripts/setup-preprompted-cursor.ps1` and `scripts/validate-cursor-setup.ps1`; reusable commands in `.cursor/commands/` (including `prompt-universal.md` and `role-*.md`).
 - **Cursor rules expansion**: domain-scoped rules live in `.cursor/rules/domains/` and workflow modes in `.cursor/rules/workflows/` for role-aware guidance (architect dependency matrix + incident runbook references).
+- **AI-native workflow rules**: new governance rules include dual-validation (`.cursor/rules/workflows/dual-validation.mdc`), model selection (`.cursor/rules/core/model-selection.mdc`), context strategy (`.cursor/rules/workflows/context-strategy.mdc`), and operational reliability (`.cursor/rules/workflows/operational-reliability.mdc`); ADR-009 documents the decision.
 - **Role cheatsheet**: `docs/developer/ROLE_CHEATSHEET.md` provides role preprompts and one-liners for Cursor chats.
+- **Error envelope enforcement**: backend error responses use `shared/schemas/error-envelope.schema.json`, taxonomy in `shared/contracts/error_codes.json`, and UI mapping via `ErrorMappingService`.
 - **Rules integration reports**: `docs/reports/governance/RULES_GAP_ANALYSIS_REPORT.md` and `docs/reports/verification/RULES_VALIDATION_REPORT.md`.
+- **Markdown linting**: repo-wide markdown normalization uses `markdownlint-cli2 --fix` with `.gitignore` to scope targets.
 - **Bootstrap setup**: `scripts/bootstrap.ps1` creates venv, installs deps, optional engine deps, and runs verification.
 - **Python lint/type config**: `ruff.toml` and `mypy.ini` define repo linting/type defaults.
 - **Secret scanning config**: `.gitleaks.toml` adds allowlisted paths for gitleaks.
@@ -155,6 +158,8 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **XAML compiler logging**: `tools/xaml-compiler-wrapper.cmd` only writes raw logs when
   `VSQ_XAML_RAW_LOG=1` and debug entries when `VSQ_XAML_DEBUG=1` to avoid log spam during
   design-time builds.
+- **XAML wrapper delegation**: `tools/xaml-compiler-wrapper.cmd` now delegates to
+  `tools/xaml-compiler-wrapper.ps1` for execution and logging.
 
 ## Engine notes
 
