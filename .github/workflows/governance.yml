@@ -1,0 +1,92 @@
+name: Governance Tests
+
+on:
+  push:
+    paths:
+      - 'tools/overseer/agent/**'
+      - 'tests/governance/**'
+      - '.github/workflows/governance.yml'
+  pull_request:
+    paths:
+      - 'tools/overseer/agent/**'
+      - 'tests/governance/**'
+      - '.github/workflows/governance.yml'
+  workflow_dispatch:
+
+jobs:
+  governance-tests:
+    name: Run Governance Tests
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pyyaml
+      
+      - name: Run governance tests
+        run: |
+          python -m pytest tests/governance/ -v --tb=short --cov=tools/overseer/agent --cov-report=xml
+        env:
+          PROJECT_ROOT: ${{ github.workspace }}
+      
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7
+
+  policy-validation:
+    name: Validate Policy Files
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install pyyaml
+      
+      - name: Validate base policy
+        run: |
+          python -c "
+          import yaml
+          from pathlib import Path
+          
+          policy_path = Path('tools/overseer/agent/policies/base_policy.yaml')
+          if policy_path.exists():
+              with open(policy_path) as f:
+                  policy = yaml.safe_load(f)
+              
+              # Validate required keys
+              required = {'version', 'risk_tiers', 'tool_restrictions'}
+              missing = required - set(policy.keys())
+              if missing:
+                  raise ValueError(f'Missing required keys: {missing}')
+              
+              # Validate risk tiers
+              valid_tiers = {'low', 'medium', 'high', 'critical'}
+              for tier in policy.get('risk_tiers', {}):
+                  if tier not in valid_tiers:
+                      raise ValueError(f'Invalid risk tier: {tier}')
+              
+              print('Policy validation passed!')
+          else:
+              print('No policy file found, skipping validation')
+          "

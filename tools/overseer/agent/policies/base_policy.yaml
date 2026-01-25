@@ -1,0 +1,228 @@
+# VoiceStudio Agent Governance - Base Policy
+# This policy defines the default security controls for all agents.
+# Override with role-specific or environment-specific policies as needed.
+
+version: "1.0"
+description: "Default restrictive policy for agent governance"
+
+# Default risk tier for unlisted actions
+default_risk_tier: medium
+
+# Risk tier definitions
+risk_tiers:
+  low:
+    description: "Read-only analysis, local computations"
+    requires_approval: false
+    max_concurrent: 10
+    timeout_seconds: 300
+    
+  medium:
+    description: "Write to project files, run tests"
+    requires_approval: false
+    max_concurrent: 5
+    timeout_seconds: 600
+    
+  high:
+    description: "Execute processes, network access, system changes"
+    requires_approval: true
+    max_concurrent: 1
+    timeout_seconds: 1800
+    
+  critical:
+    description: "Registry, startup, installer modifications"
+    requires_approval: true
+    requires_explicit_consent: true
+    max_concurrent: 1
+    timeout_seconds: 3600
+
+# Tool restrictions by name
+tool_restrictions:
+  # File operations
+  ReadFile:
+    risk_tier: low
+    allowed_paths:
+      - "${PROJECT_ROOT}/**"
+      - "${APPDATA}/VoiceStudio/**"
+      - "${TEMP}/**"
+    denied_paths:
+      - "**/.env"
+      - "**/.env.*"
+      - "**/secrets/**"
+      - "**/credentials/**"
+      - "**/*.key"
+      - "**/*.pem"
+      - "**/config/api-keys.json"
+    
+  WriteFile:
+    risk_tier: medium
+    allowed_paths:
+      - "${PROJECT_ROOT}/src/**"
+      - "${PROJECT_ROOT}/docs/**"
+      - "${PROJECT_ROOT}/tests/**"
+      - "${PROJECT_ROOT}/tools/**"
+      - "${APPDATA}/VoiceStudio/**"
+      - "${TEMP}/**"
+    denied_paths:
+      - "${PROJECT_ROOT}/.git/**"
+      - "${PROJECT_ROOT}/.cursor/rules/**"
+      - "**/*.exe"
+      - "**/*.dll"
+      - "**/*.sys"
+      - "**/.env"
+      - "**/secrets/**"
+    
+  DeleteFile:
+    risk_tier: high
+    allowed_paths:
+      - "${PROJECT_ROOT}/src/**"
+      - "${PROJECT_ROOT}/docs/**"
+      - "${PROJECT_ROOT}/tests/**"
+      - "${TEMP}/**"
+    denied_paths:
+      - "${PROJECT_ROOT}/.git/**"
+      - "${PROJECT_ROOT}/.cursor/**"
+      - "**/*.exe"
+      - "**/*.dll"
+      
+  # Process execution
+  RunProcess:
+    risk_tier: high
+    allowed_executables:
+      - "dotnet"
+      - "python"
+      - "python3"
+      - "pytest"
+      - "pip"
+      - "git"
+      - "npm"
+      - "node"
+    denied_executables:
+      - "powershell"
+      - "pwsh"
+      - "cmd"
+      - "bash"
+      - "sh"
+      - "curl"
+      - "wget"
+      - "nc"
+      - "netcat"
+    allowed_args_patterns: []
+    denied_args_patterns:
+      - "--eval"
+      - "-e"
+      - "exec("
+      - "eval("
+      
+  # Network access
+  HttpRequest:
+    risk_tier: high
+    allowed_domains:
+      - "localhost"
+      - "127.0.0.1"
+      - "::1"
+    denied_domains:
+      - "*"  # Block all external by default
+    allowed_methods:
+      - "GET"
+      - "POST"
+    denied_methods:
+      - "DELETE"
+      - "PATCH"
+      
+  # Database access
+  QueryDb:
+    risk_tier: medium
+    require_parameterized: true
+    denied_patterns:
+      - "DROP"
+      - "TRUNCATE"
+      - "DELETE FROM"
+      - "--"
+      - "/*"
+      
+  # Code analysis (read-only)
+  AnalyzeCode:
+    risk_tier: low
+    allowed_paths:
+      - "${PROJECT_ROOT}/**"
+      
+  # Metrics and logging (read-only)
+  QueryMetrics:
+    risk_tier: low
+
+# Registry access (Windows-specific)
+registry_access:
+  read: false
+  write: false
+  allowed_keys: []
+  denied_keys:
+    - "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+    - "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+    - "HKLM\\SYSTEM\\CurrentControlSet\\Services"
+
+# Safe zones - paths that trigger immediate quarantine if touched
+safe_zones:
+  paths:
+    - "${PROGRAMFILES}/**"
+    - "${PROGRAMFILES(X86)}/**"
+    - "${WINDIR}/**"
+    - "${APPDATA}/Microsoft/Windows/Start Menu/Programs/Startup/**"
+    - "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+    - "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+  on_violation: quarantine_and_alert
+
+# Role-based overrides
+role_overrides:
+  Coder:
+    tool_restrictions:
+      WriteFile:
+        risk_tier: medium
+      RunProcess:
+        risk_tier: medium
+        
+  Tester:
+    tool_restrictions:
+      RunProcess:
+        risk_tier: medium
+        allowed_executables:
+          - "pytest"
+          - "dotnet"
+          - "python"
+          
+  Overseer:
+    tool_restrictions:
+      ReadFile:
+        risk_tier: low
+        allowed_paths:
+          - "**"
+        denied_paths:
+          - "**/.env"
+          - "**/secrets/**"
+          
+  DataImporter:
+    tool_restrictions:
+      ReadFile:
+        risk_tier: low
+      WriteFile:
+        risk_tier: medium
+        allowed_paths:
+          - "${APPDATA}/VoiceStudio/data/**"
+          - "${PROJECT_ROOT}/data/**"
+
+# Circuit breaker settings
+circuit_breaker:
+  denied_action_threshold: 3
+  denied_action_window_minutes: 5
+  failure_threshold: 5
+  failure_window_minutes: 10
+  backoff:
+    initial_delay_seconds: 5
+    max_delay_seconds: 300
+    multiplier: 2.0
+
+# Audit settings
+audit:
+  log_all_actions: true
+  log_parameters: true
+  redact_secrets: true
+  retention_days: 30

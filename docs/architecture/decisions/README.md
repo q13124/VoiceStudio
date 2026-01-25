@@ -53,4 +53,6 @@ What becomes easier or more difficult to do because of this change?
 
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
-| - | No ADRs yet | - | - |
+| [ADR-001](ADR-001-rulebook-integration.md) | Cursor Agent Rulebook Integration | Accepted | 2026-01-25 |
+| [ADR-002](ADR-002-document-governance.md) | Document Governance Architecture | Accepted | 2026-01-25 |
+| [ADR-003](ADR-003-agent-governance-framework.md) | Agent Governance Framework | Accepted | 2026-01-25 |
