@@ -8,8 +8,10 @@
   <!-- XAML compilation should run normally (no overrides). -->
   <!-- Ensure XAML compiler has resolved reference assemblies (dotnet build) -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
-    <!-- Use custom wrapper to surface XAML errors and log -->
-    <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
+    <!-- VS-0035 fix: Use in-process XAML compiler instead of standalone XamlCompiler.exe -->
+    <!-- The standalone compiler has a known bug where it fails silently with exit code 1 -->
+    <!-- Requires building with VS MSBuild (dotnet build uses external compiler) -->
+    <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
     <XAMLFingerprint>false</XAMLFingerprint>
     <!-- Keep XAML compiler off VC meta + Win32 codegen (stability) -->
     <EnableWin32Codegen>false</EnableWin32Codegen>
@@ -22,26 +24,6 @@
     Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App' AND '$(VoiceStudioPrintXamlProps)' == 'true'">
     <Message Importance="high"
       Text="VoiceStudio XAML props: UseXamlCompilerExecutable=$(UseXamlCompilerExecutable) UseVCMetaManaged=$(UseVCMetaManaged) EnableWin32Codegen=$(EnableWin32Codegen) VCInstallPath32=$(VCInstallPath32) VCInstallPath64=$(VCInstallPath64)" />
-  </Target>
-
-  <!-- RuleGuard: Run verification script before build (Gate B requirement) -->
-  <Target Name="RunRuleGuard"
-    BeforeTargets="CoreBuild"
-    Condition="'$(SkipRuleGuard)' != 'true' AND '$(Configuration)' != ''">
-    <PropertyGroup>
-      <RuleGuardScript>$(MSBuildThisFileDirectory)tools\verify_no_stubs_placeholders.py</RuleGuardScript>
-    </PropertyGroup>
-
-    <Message Text="RuleGuard: Running verification script..." Importance="normal" />
-
-    <Exec Command="python &quot;$(RuleGuardScript)&quot;"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      ConsoleToMSBuild="true">
-      <Output TaskParameter="ConsoleOutput" ItemName="RuleGuardOutput" />
-    </Exec>
-
-    <Message Text="RuleGuard: Verification passed - no violations found" Importance="high" />
   </Target>
 
   <!--

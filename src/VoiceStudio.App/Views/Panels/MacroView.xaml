@@ -1,12 +1,80 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.MacroView"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:controls="using:VoiceStudio.App.Controls">
-  <Grid>
-    <!-- Minimal placeholders to satisfy code-behind references during Phase 0 -->
-    <ListView x:Name="MacrosListView" />
-    <controls:MacroNodeEditorControl x:Name="NodeEditor" />
-    <controls:AutomationCurveEditorControl x:Name="CurveEditor" />
-    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />
+  xmlns:controls="using:VoiceStudio.App.Controls"
+  xmlns:converters="using:VoiceStudio.App.Converters">
+  <UserControl.Resources>
+    <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+  </UserControl.Resources>
+  <Grid RowSpacing="8" ColumnSpacing="8" Padding="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <ToggleButton x:Name="AutomationToggleButton"
+        Content="Automation"
+        IsChecked="{x:Bind ViewModel.ShowAutomationView, Mode=OneWay}"
+        Checked="AutomationToggleButton_Checked"
+        Unchecked="AutomationToggleButton_Unchecked" />
+      <Button Content="New Macro" Click="NewMacroButton_Click" />
+      <ComboBox x:Name="ParameterCombo" Width="140">
+        <ComboBoxItem Content="Volume" Tag="volume" IsSelected="True" />
+        <ComboBoxItem Content="Pitch" Tag="pitch" />
+        <ComboBoxItem Content="Speed" Tag="speed" />
+      </ComboBox>
+      <Button Content="Create Curve" Click="CreateCurveButton_Click" />
+      <Button Content="Help" Click="HelpButton_Click" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="2*" />
+      </Grid.ColumnDefinitions>
+
+      <ListView x:Name="MacrosListView"
+        ItemsSource="{x:Bind ViewModel.Macros, Mode=OneWay}"
+        SelectedItem="{x:Bind ViewModel.SelectedMacro, Mode=TwoWay}"
+        RightTapped="Macro_RightTapped"
+        Visibility="{x:Bind ViewModel.ShowMacrosView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <ListView.ItemTemplate>
+          <DataTemplate x:DataType="core:Macro" xmlns:core="using:VoiceStudio.Core.Models">
+            <StackPanel Padding="6">
+              <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
+              <TextBlock Text="{x:Bind Description}" Opacity="0.7" FontSize="11" />
+              <Button Content="Edit" Click="EditMacroButton_Click" CommandParameter="{x:Bind}"
+                HorizontalAlignment="Left" />
+            </StackPanel>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+
+      <ListView x:Name="AutomationCurvesListView"
+        ItemsSource="{x:Bind ViewModel.AutomationCurves, Mode=OneWay}"
+        SelectedItem="{x:Bind ViewModel.SelectedAutomationCurve, Mode=TwoWay}"
+        RightTapped="AutomationCurve_RightTapped"
+        Visibility="{x:Bind ViewModel.ShowAutomationView, Converter={StaticResource BoolToVisibilityConverter}}">
+        <ListView.ItemTemplate>
+          <DataTemplate x:DataType="core:AutomationCurve" xmlns:core="using:VoiceStudio.Core.Models">
+            <StackPanel Padding="6">
+              <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
+              <TextBlock Text="{x:Bind ParameterId}" Opacity="0.7" FontSize="11" />
+            </StackPanel>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+
+      <controls:MacroNodeEditorControl x:Name="NodeEditor" Grid.Column="1"
+        Macro="{x:Bind ViewModel.SelectedMacro, Mode=OneWay}"
+        Visibility="{x:Bind ViewModel.ShowMacrosView, Converter={StaticResource BoolToVisibilityConverter}}" />
+      <controls:AutomationCurveEditorControl x:Name="CurveEditor" Grid.Column="1"
+        Curve="{x:Bind ViewModel.SelectedAutomationCurve, Mode=OneWay}"
+        Visibility="{x:Bind ViewModel.ShowAutomationView, Converter={StaticResource BoolToVisibilityConverter}}" />
+    </Grid>
+
+    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed"
+      Grid.RowSpan="2" />
   </Grid>
 </UserControl>
