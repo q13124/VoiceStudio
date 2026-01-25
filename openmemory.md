@@ -25,6 +25,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Cursor preprompted baseline**: user rules live in `docs/developer/CURSOR_USER_RULES.md`; automation scripts `scripts/setup-preprompted-cursor.ps1` and `scripts/validate-cursor-setup.ps1`; reusable commands in `.cursor/commands/` (including `prompt-universal.md` and `role-*.md`).
 - **Cursor rules expansion**: domain-scoped rules live in `.cursor/rules/domains/` and workflow modes in `.cursor/rules/workflows/` for role-aware guidance (architect dependency matrix + incident runbook references).
 - **AI-native workflow rules**: new governance rules include dual-validation (`.cursor/rules/workflows/dual-validation.mdc`), model selection (`.cursor/rules/core/model-selection.mdc`), context strategy (`.cursor/rules/workflows/context-strategy.mdc`), and operational reliability (`.cursor/rules/workflows/operational-reliability.mdc`); ADR-009 documents the decision.
+- **Platform identity**: ADR-010 establishes VoiceStudio as a native Windows installed application (WinUI 3 / Windows App SDK, installer-based distribution).
 - **Role cheatsheet**: `docs/developer/ROLE_CHEATSHEET.md` provides role preprompts and one-liners for Cursor chats.
 - **Error envelope enforcement**: backend error responses use `shared/schemas/error-envelope.schema.json`, taxonomy in `shared/contracts/error_codes.json`, and UI mapping via `ErrorMappingService`.
 - **Rules integration reports**: `docs/reports/governance/RULES_GAP_ANALYSIS_REPORT.md` and `docs/reports/verification/RULES_VALIDATION_REPORT.md`.

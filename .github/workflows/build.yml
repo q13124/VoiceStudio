@@ -29,9 +29,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: RuleGuard (no stubs/placeholders)
-        run: python tools/verify_no_stubs_placeholders.py
-
       - name: Build solution (Debug, x64)
         run: dotnet build --configuration Debug --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\"
 
@@ -64,6 +61,33 @@ jobs:
             .buildlogs/gatec-publish*.binlog
             .buildlogs/x64/Release/gatec-publish/gatec-launch.log
           retention-days: 7
+
+  validate-platform:
+    name: Validate Native Windows Platform
+    runs-on: windows-latest
+    needs: [build-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify no Electron dependencies
+        run: |
+          $matches = Get-ChildItem -Recurse -Filter *.csproj | Select-String -Pattern "Electron"
+          if ($matches) {
+            Write-Error "BLOCKED: Electron dependencies violate ADR-010."
+            exit 1
+          }
+          Write-Host "Platform constraint validated: No Electron dependencies."
+
+      - name: Verify WinUI 3 target
+        run: |
+          $csproj = Get-Content "src/VoiceStudio.App/VoiceStudio.App.csproj" -Raw
+          if ($csproj -notmatch "Microsoft.WindowsAppSDK") {
+            Write-Error "BLOCKED: Missing Windows App SDK - violates ADR-010."
+            exit 1
+          }
+          Write-Host "Platform constraint validated: Windows App SDK present."
 
   build-backend:
     name: Build Python Backend

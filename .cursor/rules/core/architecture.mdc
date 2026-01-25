@@ -10,6 +10,17 @@ alwaysApply: true
 - Engines attach via adapters that implement those contracts.
 - These boundaries enable independent evolution of each layer.
 
+## Platform identity
+VoiceStudio is a **native Windows desktop application**:
+- Frontend: WinUI 3 / Windows App SDK (not Electron, not web-based).
+- Distribution: Windows installer (MSIX or Inno Setup).
+- Runtime: Local processes, offline-capable for core features.
+- UX: Fluent Design, respects Windows system settings.
+
+**Prohibited patterns**: Electron, browser-required UI, cloud-only core features, portable-only deployment.
+
+See ADR-010 for decision rationale.
+
 ## High-level flow
 1. WinUI UI and ViewModels call backend APIs via `src/VoiceStudio.App/Services/BackendClient.cs`.
 2. FastAPI routes under `backend/api/routes/` validate and route requests.

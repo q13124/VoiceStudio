@@ -9,6 +9,7 @@ An ADR documents a significant architectural decision along with its context and
 ## When to create an ADR
 
 Per `.cursor/rules/core/architecture.mdc`, an ADR is required when:
+
 - Adding or removing a major dependency
 - Changing project structure
 - Changing engine integration strategy
@@ -59,3 +60,7 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-004](ADR-004-messagepack-ipc.md) | MessagePack IPC Transport | Accepted | 2026-01-25 |
 | [ADR-005](ADR-005-context-management-system.md) | Context Management System | Accepted | 2026-01-25 |
 | [ADR-006](ADR-006-enhanced-cursor-rules-system.md) | Enhanced Cursor Rules System | Accepted | 2026-01-25 |
+| [ADR-007](ADR-007-ipc-boundary.md) | IPC Boundary (Control vs Data Plane) | Accepted | 2026-01-25 |
+| [ADR-008](ADR-008-architecture-patterns.md) | Architecture Patterns and Enforcement | Accepted | 2026-01-25 |
+| [ADR-009](ADR-009-ai-native-development-patterns.md) | AI-Native Development Patterns | Accepted | 2026-01-25 |
+| [ADR-010](ADR-010-native-windows-platform.md) | Native Windows Platform | Accepted | 2026-01-25 |
