@@ -5,11 +5,12 @@ Baseline End-to-End Voice Workflow Proof
 Engine Engineer - Quality + Functions Tranche
 
 This script runs a baseline end-to-end voice workflow:
-1. XTTS v2 synthesis
+1. TTS synthesis (default: XTTS v2; use --engine to select)
 2. whisper.cpp transcription
-3. Quality metrics capture
+3. Quality metrics capture and SLO-6 checks (MOS >= 3.5, similarity >= 0.7)
 
-All evidence (inputs, outputs, metrics, paths) is captured for baseline comparison.
+All evidence (inputs, outputs, metrics, paths, latency, SLO) is captured for baseline
+comparison. Use --strict-slo to exit non-zero when quality targets are not met.
 """
 
 import argparse
@@ -45,13 +46,34 @@ DEFAULT_TEST_TEXT = (
 DEFAULT_LANGUAGE = "en"
 
 
+def _engine_to_backend_id(engine: str) -> str:
+    """Map CLI engine name to backend engine id (e.g. xtts -> xtts_v2)."""
+    e = (engine or "").strip().lower()
+    aliases = {
+        "xtts": "xtts_v2",
+        "xtts_v2": "xtts_v2",
+        "sovits": "sovits_svc",
+        "sovits_svc": "sovits_svc",
+        "gpt_sovits": "gpt_sovits",
+        "whisper_cpp": "whisper_cpp",
+        "whisper": "whisper",
+    }
+    return aliases.get(e, e) or "xtts_v2"
+
+
 class BaselineWorkflowProof:
     """Baseline end-to-end voice workflow proof runner."""
+
+    # SLO targets per docs/governance/SERVICE_LEVEL_OBJECTIVES.md (SLO-6)
+    MOS_TARGET = 3.5
+    SIMILARITY_TARGET = 0.7
 
     def __init__(
         self,
         backend_url: str = DEFAULT_BACKEND_URL,
         output_dir: Optional[str] = None,
+        synthesis_engine: str = "xtts",
+        strict_slo: bool = False,
     ):
         """
         Initialize the baseline proof runner.
@@ -59,11 +81,15 @@ class BaselineWorkflowProof:
         Args:
             backend_url: Backend API base URL
             output_dir: Directory to save proof artifacts (default: timestamped dir)
+            synthesis_engine: TTS engine for synthesis (default: xtts; maps to xtts_v2)
+            strict_slo: If True, exit non-zero when MOS/similarity below SLO targets
         """
         self.backend_url_requested = backend_url.rstrip("/")
         self.backend_url = self.backend_url_requested
         self._backend_resolution_error: Optional[str] = None
         self.output_dir = output_dir or self._create_output_dir()
+        self._synthesis_engine = (synthesis_engine or "xtts").strip().lower()
+        self._strict_slo = bool(strict_slo)
         Path(self.output_dir).resolve().mkdir(parents=True, exist_ok=True)
         self.proof_data: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -73,6 +99,7 @@ class BaselineWorkflowProof:
             "outputs": {},
             "metrics": {},
             "config": {},
+            "slo": {},
         }
         logger.info(f"Proof output directory: {self.output_dir}")
 
@@ -156,11 +183,15 @@ class BaselineWorkflowProof:
                 )
             return False
 
-    def _check_xtts_engine_available(
-        self, base_url: Optional[str] = None, log_missing: bool = True
+    def _check_engine_available(
+        self,
+        engine_id: str,
+        base_url: Optional[str] = None,
+        log_missing: bool = True,
     ) -> bool:
-        """Verify the XTTS engine is available on the backend."""
+        """Verify the given synthesis engine is available on the backend."""
         base_url = (base_url or self.backend_url).rstrip("/")
+        backend_id = _engine_to_backend_id(engine_id)
         try:
             response = requests.get(f"{base_url}/api/engines", timeout=10)
             if response.status_code != 200:
@@ -182,13 +213,17 @@ class BaselineWorkflowProof:
                         engine_ids.append(item)
                     elif isinstance(item, dict) and "id" in item:
                         engine_ids.append(str(item["id"]))
-            engine_ids = [engine_id.lower() for engine_id in engine_ids]
-            if "xtts_v2" in engine_ids or "xtts" in engine_ids:
+            engine_ids = [eid.lower() for eid in engine_ids]
+            if backend_id in engine_ids:
+                return True
+            # Allow xtts when backend reports xtts_v2
+            if backend_id == "xtts_v2" and "xtts" in engine_ids:
                 return True
             if log_missing:
                 logger.warning(
-                    "Backend %s does not list xtts_v2 in /api/engines.",
+                    "Backend %s does not list %s in /api/engines.",
                     base_url,
+                    backend_id,
                 )
             return False
         except (requests.exceptions.RequestException, ValueError) as e:
@@ -197,13 +232,14 @@ class BaselineWorkflowProof:
             return False
 
     def _resolve_backend_url(self) -> bool:
-        """Resolve a backend URL that exposes /api/voice/clone."""
+        """Resolve a backend URL that exposes /api/voice/clone and requested engine."""
         self._backend_resolution_error = None
+        backend_engine_id = _engine_to_backend_id(self._synthesis_engine)
         if self._check_backend_health() and self._check_voice_clone_route():
-            if self._check_xtts_engine_available():
+            if self._check_engine_available(self._synthesis_engine):
                 return True
             self._backend_resolution_error = (
-                "Backend is reachable but xtts_v2 is not available."
+                f"Backend is reachable but {backend_engine_id} is not available."
             )
         else:
             self._backend_resolution_error = (
@@ -232,7 +268,9 @@ class BaselineWorkflowProof:
                 continue
             if not self._check_voice_clone_route(candidate, log_missing=False):
                 continue
-            if not self._check_xtts_engine_available(candidate, log_missing=False):
+            if not self._check_engine_available(
+                self._synthesis_engine, candidate, log_missing=False
+            ):
                 continue
             logger.warning(
                 "Backend URL auto-detected as %s (scripts/backend/start_backend.ps1 may have picked an alternate port).",
@@ -242,7 +280,7 @@ class BaselineWorkflowProof:
             return True
 
         self._backend_resolution_error = (
-            "No backend with xtts_v2 detected on default ports "
+            f"No backend with {backend_engine_id} detected on default ports "
             "(8001, 8002, 8080, 8888)."
         )
         return False
@@ -374,9 +412,10 @@ class BaselineWorkflowProof:
         quality_mode: str = "standard",
         use_multi_reference: bool = False,
         prosody_params: Optional[str] = None,
+        engine: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Synthesize audio using XTTS v2 via clone endpoint (accepts reference audio directly).
+        Synthesize audio via clone endpoint (accepts reference audio directly).
 
         Args:
             text: Text to synthesize
@@ -385,11 +424,13 @@ class BaselineWorkflowProof:
             quality_mode: Quality mode ("fast", "standard", "high", "ultra")
             use_multi_reference: Enable multi-reference cloning when multiple references provided
             prosody_params: JSON string of prosody parameters (pitch, tempo, formant_shift, energy)
+            engine: Backend engine id (default: xtts_v2 from instance synthesis_engine)
 
         Returns:
             Synthesis result with audio_id, audio_url, quality_metrics, etc.
         """
-        logger.info("Step 1: Synthesizing with XTTS v2 (clone endpoint)...")
+        backend_engine = (engine or _engine_to_backend_id(self._synthesis_engine))
+        logger.info("Step 1: Synthesizing with %s (clone endpoint)...", backend_engine)
         step_start = time.time()
 
         # Normalize reference audio inputs
@@ -426,7 +467,7 @@ class BaselineWorkflowProof:
             reference_audio_paths = [ref_audio_path]
 
         self.proof_data["inputs"]["synthesis"] = {
-            "engine": "xtts_v2",
+            "engine": backend_engine,
             "text": text,
             "language": language,
             "quality_mode": quality_mode,
@@ -434,7 +475,7 @@ class BaselineWorkflowProof:
             "use_multi_reference": use_multi_reference,
             "prosody_params": prosody_params,
         }
-        self.proof_data["config"]["engine"] = "xtts_v2"
+        self.proof_data["config"]["engine"] = backend_engine
         self.proof_data["config"]["language"] = language
         self.proof_data["config"]["quality_mode"] = quality_mode
         self.proof_data["config"]["reference_audio_paths"] = reference_audio_paths
@@ -460,7 +501,7 @@ class BaselineWorkflowProof:
                     }
                 data = {
                     "text": text,
-                    "engine": "xtts_v2",
+                    "engine": backend_engine,
                     "language": language,
                     "quality_mode": quality_mode,
                     "use_multi_reference": str(bool(use_multi_reference)).lower(),
@@ -835,6 +876,29 @@ class BaselineWorkflowProof:
             # Return early since we can't transcribe without audio_id
             return self.proof_data
 
+        # SLO and latency from synthesis step (SLO-6: MOS >= 3.5, similarity >= 0.7)
+        syn_step = next(
+            (s for s in self.proof_data["steps"] if s.get("step") == "synthesize"), None
+        )
+        if syn_step and syn_step.get("status") == "success":
+            qm = syn_step.get("quality_metrics") or self.proof_data.get("metrics", {}).get(
+                "synthesis", {}
+            )
+            lat = syn_step.get("duration_seconds") or syn_step.get("step_duration_seconds")
+            mos = qm.get("mos_score") if isinstance(qm, dict) else None
+            sim = qm.get("similarity") if isinstance(qm, dict) else None
+            self.proof_data["slo"]["mos_target"] = self.MOS_TARGET
+            self.proof_data["slo"]["similarity_target"] = self.SIMILARITY_TARGET
+            self.proof_data["slo"]["mos_met"] = (
+                (float(mos) >= self.MOS_TARGET) if mos is not None else None
+            )
+            self.proof_data["slo"]["similarity_met"] = (
+                (float(sim) >= self.SIMILARITY_TARGET) if sim is not None else None
+            )
+            self.proof_data["slo"]["synthesis_latency_seconds"] = lat
+            if self.proof_data["outputs"].get("synthesis") is not None:
+                self.proof_data["outputs"]["synthesis"]["synthesis_latency_seconds"] = lat
+
         # Step 2: Transcribe with whisper.cpp
         transcription_result = self.transcribe_with_whisper(
             audio_id=audio_id,
@@ -844,6 +908,18 @@ class BaselineWorkflowProof:
 
         if "error" in transcription_result:
             logger.warning("Transcription failed, but synthesis succeeded.")
+
+        # Transcription latency for SLO / P50-P95 use
+        trans_step = next(
+            (s for s in self.proof_data["steps"] if s.get("step") == "transcribe"), None
+        )
+        if trans_step:
+            t_lat = trans_step.get("duration_seconds")
+            self.proof_data["slo"]["transcription_latency_seconds"] = t_lat
+            if self.proof_data["outputs"].get("transcription") is not None and t_lat is not None:
+                self.proof_data["outputs"]["transcription"][
+                    "transcription_latency_seconds"
+                ] = t_lat
 
         # Step 3: Capture model paths and configuration
         self._capture_model_paths()
@@ -929,6 +1005,16 @@ class BaselineWorkflowProof:
                 for key, value in metrics.items():
                     if value is not None:
                         logger.info(f"     {key}: {value}")
+            slo = self.proof_data.get("slo") or {}
+            lat = slo.get("synthesis_latency_seconds")
+            if lat is not None:
+                logger.info("   Synthesis latency: %.2fs", lat)
+            if slo.get("mos_met") is not None or slo.get("similarity_met") is not None:
+                logger.info(
+                    "   SLO-6: MOS>=3.5=%s, similarity>=0.7=%s",
+                    slo.get("mos_met"),
+                    slo.get("similarity_met"),
+                )
         else:
             logger.info("❌ Synthesis: FAILED")
 
@@ -940,6 +1026,9 @@ class BaselineWorkflowProof:
             logger.info("✅ Transcription: SUCCESS")
             logger.info(f"   Language: {transcription_step.get('language')}")
             logger.info(f"   Text: {transcription_step.get('text', '')[:100]}...")
+            t_lat = (self.proof_data.get("slo") or {}).get("transcription_latency_seconds")
+            if t_lat is not None:
+                logger.info("   Transcription latency: %.2fs", t_lat)
         else:
             logger.info("❌ Transcription: FAILED")
 
@@ -995,12 +1084,24 @@ def main():
         default=None,
         help="Output directory for proof artifacts (default: timestamped)",
     )
+    parser.add_argument(
+        "--engine",
+        default="xtts",
+        help="TTS engine for synthesis (default: xtts; maps to xtts_v2 for clone endpoint)",
+    )
+    parser.add_argument(
+        "--strict-slo",
+        action="store_true",
+        help="Exit non-zero if MOS < 3.5 or similarity < 0.7 (SLO-6 targets)",
+    )
 
     args = parser.parse_args()
 
     proof = BaselineWorkflowProof(
         backend_url=args.backend_url,
         output_dir=args.output_dir,
+        synthesis_engine=args.engine,
+        strict_slo=args.strict_slo,
     )
 
     result = proof.run_baseline_proof(
@@ -1021,6 +1122,20 @@ def main():
     if failed_steps:
         logger.error(f"Proof completed with {len(failed_steps)} failed steps")
         sys.exit(1)
+
+    # --strict-slo: exit non-zero if MOS or similarity missing or below SLO-6 targets
+    if args.strict_slo:
+        slo = result.get("slo") or {}
+        mos_met = slo.get("mos_met")
+        sim_met = slo.get("similarity_met")
+        if mos_met is not True or sim_met is not True:
+            logger.error(
+                "SLO-6 check failed (--strict-slo): MOS >= 3.5 and similarity >= 0.7 required. "
+                "mos_met=%s, similarity_met=%s",
+                mos_met,
+                sim_met,
+            )
+            sys.exit(1)
 
     logger.info("✅ Baseline proof completed successfully")
     sys.exit(0)
