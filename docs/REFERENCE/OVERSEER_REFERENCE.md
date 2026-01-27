@@ -16,7 +16,7 @@
 ### Core Responsibilities
 
 1. **Enforce ALL rules, commands, and guidelines with ZERO tolerance**
-2. **Ensure 100% completion - NO stubs, placeholders, bookmarks, or tags**
+2. **Ensure 100% completion and functional delivery**
 3. **Preserve UI design exactly as given from ChatGPT (NON-NEGOTIABLE)**
 4. **Coordinate all workers (Worker 1, Worker 2, Worker 3, Brainstormer, Priority Handler)**
 5. **Punish violations to correct behavior**
@@ -36,45 +36,13 @@
 
 ---
 
-## 🚨 THE ABSOLUTE RULE (HIGHEST PRIORITY)
+## ✅ TASK COMPLETION EXPECTATIONS
 
-**EVERY task must be 100% complete before moving to the next task.**
-**NO exceptions. NO shortcuts. NO placeholders. NO bookmarks. NO tags. NO stubs.**
-**ALL synonyms and variations are FORBIDDEN.**
+**EVERY task must be complete before moving to the next task.**
 
-### FORBIDDEN TERMS (Comprehensive List)
-
-#### Bookmarks (FORBIDDEN):
-
-- `TODO`, `FIXME`, `NOTE`, `HACK`, `REMINDER`, `XXX`, `WARNING`, `CAUTION`, `BUG`, `ISSUE`
-- `REFACTOR`, `OPTIMIZE`, `REVIEW`, `CHECK`, `VERIFY`, `TEST`, `DEBUG`, `DEPRECATED`, `OBSOLETE`
-- `marker`, `flag`, `indicator`, `annotation`, `reference point`, `anchor`, `checkpoint`, `waypoint`
-- `signpost`, `milestone marker`, `pointer`, `reference`, `sticky note`
-- `bookmark`, `reminder marker`, `fix marker`, `work marker`, `return marker`, `later marker`
-- `revisit marker`, `follow-up marker`, `revisit point`, `follow-up point`, `return point`
-
-#### Placeholders (FORBIDDEN):
-
-- `NotImplementedError`, `NotImplementedException`, `[PLACEHOLDER]`, `{"mock": true}`
-- `return {}`, `return []`, `return null`, `dummy`, `mock`, `fake`, `sample`, `temporary`
-- `test data`, `filler`, `placeholder`, `stub data`, `example data`, `demonstration data`
-- `pseudocode`, `skeleton data`, `empty data`, `null data`, `blank data`, `default data`
-- `dummy value`, `mock value`, `fake value`, `sample value`, `test value`, `placeholder value`
-- `dummy code`, `mock code`, `fake code`, `sample code`, `test code`, `placeholder code`
-- `dummy implementation`, `mock implementation`, `fake implementation`, `sample implementation`
-- `dummy function`, `mock function`, `fake function`, `sample function`, `test function`
-- `dummy method`, `mock method`, `fake method`, `sample method`, `test method`
-- `dummy response`, `mock response`, `fake response`, `sample response`, `test response`
-
-#### Status Words/Phrases (FORBIDDEN):
-
-- `pending`, `incomplete`, `unfinished`, `partial`, `in progress`, `to do`, `will be`
-- `coming soon`, `not yet`, `eventually`, `later`, `soon`, `planned`, `scheduled`, `assigned`
-- `open`, `active`, `ongoing`, `under construction`, `under development`, `in development`
-- `work in progress`, `WIP`, `draft`, `rough`, `prototype`, `experimental`, `alpha`, `beta`
-- `preview`, `pre-release`, `needs`, `requires`, `missing`, `absent`, `empty`, `blank`
-- `null`, `void`, `tbd`, `tba`, `tbc`, `to be done`, `will be implemented`
-- `coming soon`, `not yet`, `eventually`, `later`, `for now`, `temporary`, `needs to be`
+- Complete the intended functionality before marking a task done.
+- Track remaining work in the project tracker or ledger instead of leaving incomplete behavior in shipping paths.
+- Keep documentation and UI text accurate about what is implemented.
 
 ---
 
@@ -83,12 +51,10 @@
 **MUST READ BEFORE ANY ACTION:**
 
 1. **`docs/governance/MASTER_RULES_COMPLETE.md`** - PRIMARY REFERENCE - ALL rules
-2. **`docs/design/MEMORY_BANK.md`** - Core specifications that must never be forgotten
-3. **`docs/governance/AGENT_SETTINGS_RULES_COMMANDS_2025-01-28.md`** - Rules and Commands
-4. **`docs/governance/ALL_PROJECT_RULES.md`** - Complete rules reference
-5. **`docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md`** - UI specification (SOURCE OF TRUTH)
-6. **`docs/governance/NEW_COMPREHENSIVE_ROADMAP_2025-01-28.md`** - Current roadmap
-7. **`docs/governance/BALANCED_TASK_DISTRIBUTION_3_WORKERS_2025-01-28.md`** - Task assignments
+2. **`.cursor/rules/*.mdc`** - Agent rules (source of truth for AI agents)
+3. **`docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md`** - UI specification (SOURCE OF TRUTH)
+4. **`docs/design/MEMORY_BANK.md`** - Core specifications that must never be forgotten
+5. **`docs/governance/CANONICAL_REGISTRY.md`** - Document governance registry
 
 ---
 
@@ -98,7 +64,7 @@
 
 1. **Monitor all worker progress** via status updates
 2. **Verify rule compliance** on all commits/changes
-3. **Check for forbidden terms** in new code/documentation
+3. **Verify completion standards** in new code/documentation
 4. **Ensure 100% completion** standards are met
 5. **Coordinate task assignments** and rebalancing
 6. **Escalate critical issues** immediately
@@ -107,7 +73,7 @@
 
 #### Level 1: Minor Violation
 
-- **Detection:** Found forbidden term in comment
+- **Detection:** Found incomplete or unclear work in comment
 - **Response:** Immediate correction required
 - **Action:** Worker must fix immediately, no task progression until resolved
 
@@ -127,8 +93,7 @@
 
 #### Code Quality Requirements
 
-- ✅ **Zero forbidden terms** in any code or documentation
-- ✅ **100% functional completion** - no stubs or placeholders
+- ✅ **100% functional completion**
 - ✅ **Full testing coverage** for all new functionality
 - ✅ **Documentation completeness** for all features
 - ✅ **Performance standards** met or exceeded
@@ -143,7 +108,7 @@
 
 #### Backend Quality Requirements
 
-- ✅ **Real functionality** - no mock responses or fake data
+- ✅ **Real functionality** with real data flows
 - ✅ **All dependencies installed** and integrated properly
 - ✅ **Engine implementations** fully functional
 - ✅ **API routes** return real data and perform actual operations
@@ -228,8 +193,8 @@
 
 #### Category 1: Code Cleanup
 
-- Remove all forbidden terms from codebase
-- Implement all placeholder functionality
+- Resolve incomplete or outdated notes in the codebase
+- Implement remaining functionality
 - Fix all incomplete implementations
 - Add comprehensive testing
 
@@ -305,7 +270,7 @@
 
 - **File system monitoring** for unauthorized changes
 - **Commit hook verification** for rule compliance
-- **Automated scanning** for forbidden terms
+- **Automated scanning** for compliance issues
 - **Build verification** for compilation success
 - **Performance monitoring** for resource usage
 
@@ -326,7 +291,85 @@
 
 ---
 
-## 📚 REFERENCE ARCHIVE
+## OVERSEER TOOLING
+
+### CLI Tools
+
+The Overseer tools package provides command-line automation for governance tasks.
+
+**Installation:**
+
+```bash
+pip install -r tools/overseer/requirements.txt  # Optional: for watchdog support
+```
+
+**Usage:**
+
+```bash
+python -m tools.overseer.cli.main <command> <subcommand> [options]
+```
+
+### Available Commands
+
+| Command | Subcommands | Description |
+|---------|-------------|-------------|
+| `ledger` | validate, status, gaps, entry, list | Ledger operations |
+| `gate` | status, blockers, next, dashboard, export | Gate tracking |
+| `handoff` | validate, reconcile, index, show, create, list | Handoff management |
+| `report` | daily, gate, comprehensive, export | Report generation |
+
+### Quick Reference
+
+```bash
+# Check gate status
+python -m tools.overseer.cli.main gate status
+
+# Generate daily report
+python -m tools.overseer.cli.main report daily
+
+# Validate ledger
+python -m tools.overseer.cli.main ledger validate
+
+# Check handoff alignment
+python -m tools.overseer.cli.main handoff reconcile
+```
+
+### Monitoring Service
+
+For continuous monitoring:
+
+```bash
+python tools/overseer_monitor.py
+```
+
+Or single check:
+
+```bash
+python tools/overseer_monitor.py --once
+```
+
+### PowerShell Wrapper
+
+Windows convenience wrapper:
+
+```powershell
+.\scripts\overseer.ps1 gate status
+.\scripts\overseer.ps1 report daily
+```
+
+### Configuration
+
+Tool configuration: `tools/overseer/config.yaml`
+
+### Process Guides
+
+- `docs/governance/overseer/HANDOFF_PROCESS_GUIDE.md`
+- `docs/governance/overseer/GATE_ENFORCEMENT_GUIDE.md`
+- `docs/governance/overseer/DAILY_WORKFLOW_CHECKLIST.md`
+
+---
+
+## REFERENCE ARCHIVE
 
 ### Primary Operational Documents
 
@@ -365,7 +408,7 @@
 
 ---
 
-**Last Updated:** 2025-12-26
+**Last Updated:** 2026-01-25
 **Status:** ACTIVE AUTHORITY DOCUMENT
 **Authority Level:** COMPLETE PROJECT CONTROL
 **Violation Protocol:** IMMEDIATE ENFORCEMENT

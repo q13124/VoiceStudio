@@ -1004,6 +1004,32 @@ go
 
 ---
 
+### VS-0029 — Preflight jobs_root enhancement + durability proof documentation
+
+**State:** DONE  
+**Severity:** S2 Major  
+**Gate:** D  
+**Owner role:** Core Platform Engineer  
+**Reviewer role:** System Architect  
+**Categories:** RUNTIME, STORAGE  
+**Introduced:** 2026-01  
+**Last verified:** 2026-01-07 (Windows 10.0.26200)
+
+**Summary**
+
+- Preflight `jobs_root` and storage roots documented and validated; durability proof captured for Gate D. `/api/health/preflight` reports projects root, cache root, model root, jobs_root; persistence proofs aligned with FINAL-2026-001.
+
+**Proof run**
+
+- Evidence: FINAL-2026-001; preflight and jobs_root covered by VS-0019, VS-0021, VS-0022. Unit tests: `pytest tests/unit/backend/api/routes/test_health.py` — preflight; `pytest tests/unit/backend/services/test_job_state_store.py` — job persistence.
+- Command (representative): `python -m pytest tests/unit/backend/api/routes/test_health.py tests/unit/backend/services/test_job_state_store.py -q` → passed.
+
+**Links**
+
+- Related: VS-0019, VS-0021, VS-0022; FINAL-2026-001
+
+---
+
 ### VS-0030 — Baseline voice workflow proof setup
 
 **State:** DONE  
@@ -1033,6 +1059,12 @@ go
   - `.\env\venv_xtts_gpu_sm120\Scripts\python.exe .\scripts\baseline_voice_workflow_proof.py`
 - Result: ✅ PASS (XTTS synth → whisper.cpp transcribe → metrics captured)
 - Evidence: `.buildlogs\proof_runs\baseline_workflow_20260114-052929\` (audio + `proof_data.json`)
+
+**Proof run (update 2026-01-27)**
+
+- Script accepts `--engine` (default `xtts`) and `--strict-slo`; records `slo` (mos_target, similarity_target, mos_met, similarity_met, synthesis_latency_seconds, transcription_latency_seconds) in `proof_data.json`.
+- Command: `python scripts\baseline_voice_workflow_proof.py --engine xtts` (use backend venv). With SLO enforcement: `--strict-slo`.
+- Report: `docs/reports/verification/ENGINE_ENGINEER_STATUS_2026-01-27.md`
 
 **Change set**
 
