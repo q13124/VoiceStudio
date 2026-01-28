@@ -9,6 +9,7 @@ Compatible with:
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from datetime import datetime
@@ -233,14 +234,22 @@ class ContentHashCache:
                 self._hash_cache = {}
 
     def save_cache(self):
-        """Save cache to file."""
+        """Save cache to file atomically (tmp + replace)."""
+        tmp_path = None
         try:
             self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.cache_file, "w", encoding="utf-8") as f:
+            tmp_path = self.cache_file.with_suffix(self.cache_file.suffix + ".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._hash_cache, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.cache_file)
             logger.info(f"Saved {len(self._hash_cache)} cache entries to {self.cache_file}")
         except Exception as e:
             logger.error(f"Failed to save cache: {e}")
+            if tmp_path and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
 
     def get_cache_stats(self) -> Dict[str, Any]:
         """

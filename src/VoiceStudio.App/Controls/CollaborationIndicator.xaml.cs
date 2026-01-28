@@ -1,60 +1,125 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
+using System.Linq;
 using VoiceStudio.App.Services;
 
 namespace VoiceStudio.App.Controls
 {
-    /// <summary>
-    /// Collaboration indicator control showing active users.
-    /// Implements IDEA 25: Real-Time Collaboration Indicators.
-    /// </summary>
-    public sealed class CollaborationIndicator : UserControl
+  /// <summary>
+  /// Collaboration indicator control showing active users.
+  /// Implements IDEA 25: Real-Time Collaboration Indicators.
+  /// </summary>
+  public sealed partial class CollaborationIndicator : UserControl
+  {
+    private CollaborationService? _collaborationService;
+    private readonly StackPanel _rootPanel = new();
+    private readonly StackPanel _userListPanel = new();
+    private readonly TextBlock _emptyStateText = new();
+
+    public CollaborationIndicator()
     {
-        private CollaborationService? _collaborationService;
+      InitializeComponent();
+      _rootPanel.Spacing = 6;
+      var header = new TextBlock
+      {
+        Text = "Active Collaborators",
+        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+      };
+      _emptyStateText.Text = "No collaborators connected";
+      _emptyStateText.Opacity = 0.6;
+      _emptyStateText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray);
 
-        public CollaborationIndicator()
-        {
-            // NOTE: XAML-backed implementation removed to avoid XamlCompiler.exe crashes.
-            Content = new TextBlock
-            {
-                Text = "Collaboration indicator temporarily disabled (XAML compiler stability)",
-                TextWrapping = TextWrapping.Wrap,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Opacity = 0.7
-            };
+      _rootPanel.Children.Add(header);
+      _rootPanel.Children.Add(_emptyStateText);
+      _rootPanel.Children.Add(_userListPanel);
 
-            Loaded += CollaborationIndicator_Loaded;
-        }
+      Content = _rootPanel;
 
-        private void CollaborationIndicator_Loaded(object sender, RoutedEventArgs e)
-        {
-            _collaborationService = Services.ServiceProvider.TryGetCollaborationService();
-            if (_collaborationService != null)
-            {
-                _collaborationService.UserJoined += CollaborationService_UserJoined;
-                _collaborationService.UserLeft += CollaborationService_UserLeft;
-                UpdateUserList();
-            }
-        }
-
-        private void CollaborationService_UserJoined(object? sender, ActiveUserEventArgs e)
-        {
-            this.DispatcherQueue.TryEnqueue(() => UpdateUserList());
-        }
-
-        private void CollaborationService_UserLeft(object? sender, ActiveUserEventArgs e)
-        {
-            this.DispatcherQueue.TryEnqueue(() => UpdateUserList());
-        }
-
-        private void UpdateUserList()
-        {
-            if (_collaborationService == null)
-                return;
-            // UI elements are not currently rendered (placeholder only).
-        }
+      Loaded += CollaborationIndicator_Loaded;
     }
-}
 
+    private void CollaborationIndicator_Loaded(object sender, RoutedEventArgs e)
+    {
+      _collaborationService = Services.ServiceProvider.TryGetCollaborationService();
+      if (_collaborationService != null)
+      {
+        _collaborationService.UserJoined += CollaborationService_UserJoined;
+        _collaborationService.UserLeft += CollaborationService_UserLeft;
+        UpdateUserList();
+      }
+    }
+
+    private void CollaborationService_UserJoined(object? sender, ActiveUserEventArgs e)
+    {
+      this.DispatcherQueue.TryEnqueue(() => UpdateUserList());
+    }
+
+    private void CollaborationService_UserLeft(object? sender, ActiveUserEventArgs e)
+    {
+      this.DispatcherQueue.TryEnqueue(() => UpdateUserList());
+    }
+
+    private void UpdateUserList()
+    {
+      if (_collaborationService == null)
+        return;
+
+      _userListPanel.Children.Clear();
+
+      var users = _collaborationService.ActiveUsers.ToList();
+      if (users.Count == 0)
+      {
+        _emptyStateText.Visibility = Visibility.Visible;
+        return;
+      }
+
+      _emptyStateText.Visibility = Visibility.Collapsed;
+      foreach (var user in users)
+      {
+        var userRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var colorIndicator = new Border
+        {
+          Width = 8,
+          Height = 8,
+          CornerRadius = new CornerRadius(4),
+          Background = new SolidColorBrush(ParseColor(user.Color))
+        };
+        var nameBlock = new TextBlock
+        {
+          Text = user.UserName,
+          VerticalAlignment = VerticalAlignment.Center
+        };
+        userRow.Children.Add(colorIndicator);
+        userRow.Children.Add(nameBlock);
+        _userListPanel.Children.Add(userRow);
+      }
+    }
+
+    private static Windows.UI.Color ParseColor(string? hex)
+    {
+      if (string.IsNullOrWhiteSpace(hex) || !hex.StartsWith("#"))
+        return Microsoft.UI.Colors.Cyan;
+
+      var value = hex.TrimStart('#');
+      if (value.Length == 6)
+      {
+        value = "FF" + value;
+      }
+
+      if (value.Length != 8)
+        return Microsoft.UI.Colors.Cyan;
+
+      if (byte.TryParse(value.Substring(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var a) &&
+          byte.TryParse(value.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out var r) &&
+          byte.TryParse(value.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out var g) &&
+          byte.TryParse(value.Substring(6, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+      {
+        return Windows.UI.Color.FromArgb(a, r, g, b);
+      }
+
+      return Microsoft.UI.Colors.Cyan;
+    }
+  }
+}

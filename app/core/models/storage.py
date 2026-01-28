@@ -78,17 +78,25 @@ class ModelStorage:
             self._registry = {}
 
     def _save_registry(self):
-        """Save model registry to disk."""
+        """Save model registry to disk atomically (tmp + replace)."""
+        tmp_path = None
         try:
             data = {
                 key: info.to_dict()
                 for key, info in self._registry.items()
             }
-            with open(self._registry_file, "w", encoding="utf-8") as f:
+            tmp_path = Path(str(self._registry_file) + ".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
+            os.replace(tmp_path, self._registry_file)
             logger.debug("Saved model registry")
         except Exception as e:
             logger.error(f"Failed to save model registry: {e}")
+            if tmp_path and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
 
     def get_engine_dir(self, engine: str) -> Path:
         """Get the storage directory for an engine."""

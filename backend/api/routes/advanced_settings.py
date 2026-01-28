@@ -138,19 +138,23 @@ async def get_advanced_settings():
 async def update_advanced_settings(
     settings: AdvancedSettingsData,
 ):
-    """Update advanced settings."""
+    """Update advanced settings atomically (tmp + replace)."""
+    import os
+    import time
+
+    tmp_path = None
     try:
         # Ensure directory exists
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-        # Save to file
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        # Save to file atomically
+        tmp_path = SETTINGS_FILE.with_suffix(SETTINGS_FILE.suffix + ".tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(settings.model_dump(), f, indent=2)
+        os.replace(tmp_path, SETTINGS_FILE)
 
         # Update cache
         global _settings_cache, _cache_timestamp
-        import time
-
         _settings_cache = settings.model_dump()
         _cache_timestamp = time.time()
 
@@ -158,6 +162,11 @@ async def update_advanced_settings(
         return settings
     except Exception as e:
         logger.error(f"Failed to save advanced settings: {e}")
+        if tmp_path and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
         raise HTTPException(
             status_code=500,
             detail=f"Failed to save settings: {str(e)}",

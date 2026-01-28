@@ -19,19 +19,49 @@ from pydantic import BaseModel
 
 from ..models import ApiOk
 from ..optimization import cache_response
+from ...services.JobStateStore import get_job_state_store
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/batch", tags=["batch"])
 
+# Disk-backed job state store for persistence across restarts
+_batch_store = get_job_state_store("batch_jobs")
+
 # Enhanced job queue integration
 _enhanced_job_queue = None
 _resource_manager = None
 
-# Legacy in-memory storage (for backward compatibility)
+# In-memory cache (populated from disk on startup)
 _batch_jobs: dict[str, dict] = {}
 _job_queue: list[str] = []  # Queue of job IDs
 _processing_jobs: set[str] = set()  # Jobs currently being processed
+
+
+def _persist_batch_job(job_id: str, job_data: dict) -> None:
+    """Persist batch job state to disk."""
+    try:
+        _batch_store.upsert(job_id, job_data)
+    except Exception as e:
+        logger.debug(f"Failed to persist batch job {job_id}: {e}")
+
+
+def _load_persisted_batch_jobs() -> None:
+    """Load persisted batch jobs from disk on startup."""
+    global _batch_jobs
+    try:
+        for job_id, payload in _batch_store.load_all().items():
+            try:
+                # Mark incomplete jobs as failed on restart
+                if payload.get("status") in ("pending", "processing", "running"):
+                    payload["status"] = "failed"
+                    payload["error"] = "Backend restarted during processing"
+                    _batch_store.upsert(job_id, payload)
+                _batch_jobs[job_id] = payload
+            except Exception as e:
+                logger.warning(f"Failed to restore batch job {job_id}: {e}")
+    except Exception as e:
+        logger.warning(f"Failed to load persisted batch jobs: {e}")
 
 
 def _websocket_notifier(event_type: str, data: Dict[str, Any]):
@@ -187,6 +217,10 @@ class BatchJobRequest(BaseModel):
     enhance_quality: bool = False  # Enable quality enhancement
 
 
+# Load persisted batch jobs on module import
+_load_persisted_batch_jobs()
+
+
 @router.post("/jobs", response_model=BatchJob)
 async def create_batch_job(job_request: BatchJobRequest):
     """Create a new batch processing job."""
@@ -222,6 +256,7 @@ async def create_batch_job(job_request: BatchJobRequest):
         job_data = job.model_dump()
         job_data["enhance_quality"] = job_request.enhance_quality
         _batch_jobs[job_id] = job_data
+        _persist_batch_job(job_id, job_data)
         _job_queue.append(job_id)
 
         logger.info(f"Created batch job {job_id}: {job_request.name}")
@@ -311,6 +346,7 @@ async def delete_batch_job(job_id: str):
             _processing_jobs.remove(job_id)
 
         del _batch_jobs[job_id]
+        _batch_store.delete(job_id)
         logger.info(f"Deleted batch job {job_id}")
 
         return ApiOk(success=True)
@@ -355,6 +391,7 @@ async def start_batch_job(job_id: str):
 
         job_data = job.model_dump()
         _batch_jobs[job_id] = job_data
+        _persist_batch_job(job_id, job_data)
 
         # Remove from queue if present
         if job_id in _job_queue:
@@ -407,6 +444,7 @@ async def cancel_batch_job(job_id: str):
 
         job_data = job.model_dump()
         _batch_jobs[job_id] = job_data
+        _persist_batch_job(job_id, job_data)
 
         logger.info(f"Cancelled batch job {job_id}")
 
@@ -902,6 +940,7 @@ async def _process_batch_job(job_id: str):
             job_data["result_audio_id"] = audio_id
             job_data["completed"] = datetime.utcnow().isoformat()
             _batch_jobs[job_id] = job_data
+            _persist_batch_job(job_id, job_data)
 
             logger.info(
                 f"Batch job {job_id} completed successfully. Audio ID: {audio_id}"
@@ -928,6 +967,7 @@ async def _process_batch_job(job_id: str):
             job_data["error_message"] = error_msg
             job_data["completed"] = datetime.utcnow().isoformat()
             _batch_jobs[job_id] = job_data
+            _persist_batch_job(job_id, job_data)
 
             if HAS_WEBSOCKET:
                 await realtime.broadcast_batch_progress(
@@ -948,6 +988,7 @@ async def _process_batch_job(job_id: str):
         job_data["error_message"] = error_msg
         job_data["completed"] = datetime.utcnow().isoformat()
         _batch_jobs[job_id] = job_data
+        _persist_batch_job(job_id, job_data)
 
         if HAS_WEBSOCKET:
             await realtime.broadcast_batch_progress(
