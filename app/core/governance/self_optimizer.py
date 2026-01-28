@@ -8,6 +8,7 @@ Compatible with:
 
 import json
 import logging
+import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -423,7 +424,8 @@ class SelfOptimizer:
                 logger.warning(f"Failed to load optimization data: {e}")
 
     def _save_optimization_data(self):
-        """Save optimization data to file."""
+        """Save optimization data to file atomically (tmp + replace)."""
+        tmp_path = None
         try:
             self.optimization_data_path.parent.mkdir(parents=True, exist_ok=True)
             data = {
@@ -431,10 +433,19 @@ class SelfOptimizer:
                 "history": self._optimization_history[-1000:],  # Keep last 1000
                 "baseline": self._performance_baseline,
             }
-            with open(self.optimization_data_path, "w", encoding="utf-8") as f:
+            tmp_path = self.optimization_data_path.with_suffix(
+                self.optimization_data_path.suffix + ".tmp"
+            )
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.optimization_data_path)
             logger.info(f"Saved optimization data to {self.optimization_data_path}")
         except Exception as e:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
             logger.error(f"Failed to save optimization data: {e}")
 
     def get_optimization_stats(self) -> Dict[str, Any]:

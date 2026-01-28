@@ -8,6 +8,7 @@ Compatible with:
 
 import json
 import logging
+import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -356,13 +357,23 @@ class AIGovernor:
                 self._reward_model = {}
 
     def _save_reward_model(self):
-        """Save reward model to file."""
+        """Save reward model to file atomically (tmp + replace)."""
+        tmp_path = None
         try:
             self.reward_model_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.reward_model_path, "w", encoding="utf-8") as f:
+            tmp_path = self.reward_model_path.with_suffix(
+                self.reward_model_path.suffix + ".tmp"
+            )
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._reward_model, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.reward_model_path)
             logger.info(f"Saved reward model to {self.reward_model_path}")
         except Exception as e:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
             logger.error(f"Failed to save reward model: {e}")
 
     def _load_ab_test_data(self):
@@ -378,14 +389,24 @@ class AIGovernor:
                 self._ab_test_data = {}
 
     def _save_ab_test_data(self):
-        """Save A/B test data to file."""
+        """Save A/B test data to file atomically (tmp + replace)."""
+        tmp_path = None
         try:
             self.ab_test_data_path.parent.mkdir(parents=True, exist_ok=True)
             self._ab_test_data["results"] = self._ab_test_results
-            with open(self.ab_test_data_path, "w", encoding="utf-8") as f:
+            tmp_path = self.ab_test_data_path.with_suffix(
+                self.ab_test_data_path.suffix + ".tmp"
+            )
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._ab_test_data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.ab_test_data_path)
             logger.info(f"Saved A/B test data to {self.ab_test_data_path}")
         except Exception as e:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
             logger.error(f"Failed to save A/B test data: {e}")
 
     def get_governance_stats(self) -> Dict[str, Any]:

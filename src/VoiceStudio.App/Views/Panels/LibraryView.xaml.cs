@@ -35,7 +35,10 @@ namespace VoiceStudio.App.Views.Panels
     {
       this.InitializeComponent();
       ViewModel = new LibraryViewModel(
-          VoiceStudio.App.Services.ServiceProvider.GetBackendClient()
+          ServiceProvider.GetBackendClient(),
+          ServiceProvider.GetMultiSelectService(),
+          ServiceProvider.GetToastNotificationService(),
+          ServiceProvider.GetUndoRedoService()
       );
       DataContext = ViewModel;
 

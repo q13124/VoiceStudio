@@ -27,7 +27,10 @@ namespace VoiceStudio.App.Views.Panels
         {
             this.InitializeComponent();
             ViewModel = new TagManagerViewModel(
-                VoiceStudio.App.Services.ServiceProvider.GetBackendClient()
+                VoiceStudio.App.Services.ServiceProvider.GetBackendClient(),
+                ServiceProvider.GetMultiSelectService(),
+                ServiceProvider.GetToastNotificationService(),
+                ServiceProvider.GetUndoRedoService()
             );
             DataContext = ViewModel;
 

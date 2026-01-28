@@ -83,7 +83,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 
 ## Governance source of truth
 
-- **Canonical registry**: `docs/governance/CANONICAL_REGISTRY.md` (updated 2026-01-25 with openmemory.md, engine config, and prompt library entries)
+- **Canonical registry**: `docs/governance/CANONICAL_REGISTRY.md` (updated 2026-01-25 with role system prompts)
 - **Unified architecture plan**: `.cursor/plans/unified_architecture_index_*.plan.md` indexes all implemented components and establishes AI-driven development framework
 - **Ledger**: `Recovery Plan/QUALITY_LEDGER.md` (canonical)
 - **Service Level Objectives**: `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` (SLOs for synthesis, transcription, API response, UI, engine availability, and quality)
@@ -118,6 +118,16 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Compatibility docs alignment**: Upgrade-lane references remain at PyTorch 2.10.0+cu128 and Transformers 4.57.3 in `docs/governance/ROADMAP_COMPATIBILITY_UPDATE.md` and related audit docs; baseline references now point to `docs/governance/COMPATIBILITY_SNAPSHOT.md`.
 - **Baseline stack**: Python 3.11.9 + Torch/Torchaudio 2.5.1+cu128 + Transformers 4.47.0; engines requiring newer stacks run in isolated venvs.
 - **So-VITS proof prerequisite**: `scripts/sovits_svc_conversion_proof.py` expects `E:\VoiceStudio\models\checkpoints\Lain_SVC4\model.pth` + `config.json` (now populated from `therealvul/so-vits-svc-4.0` BaseModelv2 `G_202000.pth`). Conversion still needs an inference command (`SOVITS_SVC_INFER_COMMAND` or engine `infer_command`).
+
+## 7-Role system prompts (2026-01-25)
+
+- **Role system architecture**: VoiceStudio uses a 7-role system for professional software development: Role 0 (Overseer), Role 1 (System Architect), Role 2 (Build & Tooling), Role 3 (UI Engineer), Role 4 (Core Platform), Role 5 (Engine Engineer), Role 6 (Release Engineer).
+- **Role prompts index**: `.cursor/prompts/ROLE_PROMPTS_INDEX.md` provides master navigation for all 7 role prompts.
+- **Individual role prompts**: Each role has a comprehensive system prompt at `.cursor/prompts/ROLE_N_[NAME]_PROMPT.md` designed for AI agent role assumption.
+- **Prompt structure**: All prompts include role identity, non-negotiables, required reading, current status, operational workflows, quality standards, tools/commands, role coordination, output format, and execution philosophy.
+- **Usage pattern**: Reference role prompts with `@.cursor/prompts/ROLE_N_..._PROMPT.md` in Cursor chats for immediate role assumption.
+- **Comprehensive guides**: Each prompt is a quick-start companion to detailed role guides at `docs/governance/roles/ROLE_N_*_GUIDE.md`.
+- **Onboarding completed**: Full Overseer onboarding completed 2026-01-25, documented in `.cursor/prompts/ONBOARDING_COMPLETE_SUMMARY.md`.
 
 ## User Defined Namespaces
 

@@ -8,8 +8,9 @@
   <!-- XAML compilation should run normally (no overrides). -->
   <!-- Ensure XAML compiler has resolved reference assemblies (dotnet build) -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
-    <!-- VS-0035 fix: force external XamlCompiler.exe via wrapper to avoid WMC9999 in-process failure -->
-    <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+    <!-- CRITICAL: UseXamlCompilerExecutable=true forces EXTERNAL compiler (avoids WMC9999 in-process error)
+         The external compiler goes through our wrapper at tools/xaml-compiler-wrapper.cmd -->
+    <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
     <XAMLFingerprint>false</XAMLFingerprint>
     <!-- Keep XAML compiler off VC meta + Win32 codegen (stability) -->
     <EnableWin32Codegen>false</EnableWin32Codegen>

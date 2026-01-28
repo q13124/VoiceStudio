@@ -9,6 +9,7 @@ Compatible with:
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -442,10 +443,18 @@ class VoiceProfileManager:
             return
 
         profile_file = self.profiles_directory / f"{profile_id}.json"
+        profile_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = profile_file.with_suffix(profile_file.suffix + ".tmp")
         try:
-            with open(profile_file, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(profile, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, profile_file)
         except Exception as e:
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
             logger.error(f"Failed to save profile {profile_id}: {e}")
 
 
