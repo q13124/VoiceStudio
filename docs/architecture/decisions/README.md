@@ -64,3 +64,11 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-008](ADR-008-architecture-patterns.md) | Architecture Patterns and Enforcement | Accepted | 2026-01-25 |
 | [ADR-009](ADR-009-ai-native-development-patterns.md) | AI-Native Development Patterns | Accepted | 2026-01-25 |
 | [ADR-010](ADR-010-native-windows-platform.md) | Native Windows Platform | Accepted | 2026-01-25 |
+| [ADR-011](ADR-011-context-manager-architecture.md) | Context Manager Architecture | Accepted | 2026-01-25 |
+| [ADR-012](ADR-012-roadmap-integration-scaffolding.md) | Roadmap Integration Scaffolding | Accepted | 2026-01-25 |
+| [ADR-013](ADR-013-opentelemetry-distributed-tracing.md) | OpenTelemetry Distributed Tracing | Accepted | 2026-01-28 |
+| [ADR-014](ADR-014-agent-skills-integration.md) | Agent Skills Integration | Accepted | 2026-01-28 |
+
+## Implementation Evidence (audit 2026-01-28)
+
+ADR-001 through ADR-012 are reflected in the codebase (rulebook, docs, phase_tracker, telemetry, context tools, roadmap scaffolding). ADR-013 (OpenTelemetry) is implemented in `backend/api/tracing.py` and integrated via `backend/api/main.py` (`setup_tracing(app)`). No undocumented architectural decisions requiring new ADRs were identified.
