@@ -150,7 +150,19 @@ namespace VoiceStudio.App.Services
 
         private static string GetUpdateDirectory()
         {
-            var localAppData = ApplicationData.Current.LocalFolder.Path;
+            string localAppData;
+            try
+            {
+                // Packaged app: use ApplicationData
+                localAppData = ApplicationData.Current.LocalFolder.Path;
+            }
+            catch (Exception)
+            {
+                // Unpackaged app: fall back to Environment (catches InvalidOperationException, COMException, etc.)
+                localAppData = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "VoiceStudio");
+            }
             var downloadDir = Path.Combine(localAppData, "Updates");
             Directory.CreateDirectory(downloadDir);
             return downloadDir;

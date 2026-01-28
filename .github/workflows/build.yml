@@ -35,6 +35,9 @@ jobs:
       - name: Build solution (Release, x64)
         run: dotnet build --configuration Release --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\"
 
+      - name: RuleGuard (no stubs/placeholders)
+        run: python tools/verify_no_stubs_placeholders.py
+
       - name: Gate C publish check (no launch)
         run: powershell -ExecutionPolicy Bypass -File scripts/gatec-publish-launch.ps1 -Configuration Release -RuntimeIdentifier win-x64 -NoLaunch
 

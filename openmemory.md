@@ -35,7 +35,8 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Python lint/type config**: `ruff.toml` and `mypy.ini` define repo linting/type defaults.
 - **Secret scanning config**: `.gitleaks.toml` adds allowlisted paths for gitleaks.
 - **Dependency scan allowlist**: `config/pip-audit-ignore.txt` lists ignored vulnerability IDs for CI.
-- **Publish status**: Gate C script `scripts/gatec-publish-launch.ps1` produces binlogs under `.buildlogs/`. Latest proof run (2026-01-13) is **green**: Release publish + UI smoke exits 0 with 0 binding failures (see `.buildlogs/gatec-latest.txt`).
+- **Publish status**: Gate C script `scripts/gatec-publish-launch.ps1` produces binlogs under `.buildlogs/`. Latest proof run (2026-01-27) is **green**: Release publish + UI smoke exits 0 with 11 nav steps and 0 binding failures (see `.buildlogs/gatec-latest.txt`, `.buildlogs/x64/Release/gatec-publish/ui_smoke_summary.json`).
+- **Baseline voice proof**: Task B complete via `.venv` + backend on 8001; proof at `.buildlogs/proof_runs/baseline_workflow_20260127-194335/proof_data.json` with SLO-6 MOS ≥ 3.5 and similarity ≥ 0.7 met.
 - **Installer lane**: `installer/build-installer.ps1` publishes the frontend via Gate C (`scripts/gatec-publish-launch.ps1 -NoLaunch`) and Inno Setup packages from the Gate C publish directory (`installer/VoiceStudio.iss` via `MyAppSourceDir`).
 - **Crash artifacts (Gate C)**:
   - `%LOCALAPPDATA%\VoiceStudio\crashes\latest.log` (managed unhandled exception pointer)

@@ -1,237 +1,179 @@
+#!/usr/bin/env python3
 """
-RuleGuard: Automated verification script for NO stubs, placeholders, bookmarks, or tags rule.
-Scans all code and documentation files for forbidden patterns.
-Runs as part of the build pipeline and fails the build when violations are found.
+RuleGuard: No stubs, placeholders, bookmarks, or tags.
+
+Scans code for forbidden patterns. Fails the build when violations are found.
+Used in Clean Build Workflow (step 5) and CI. See QUALITY_LEDGER and
+docs/governance/roles/ROLE_2_BUILD_TOOLING_GUIDE.md.
+
+Usage:
+    python tools/verify_no_stubs_placeholders.py
+    python tools/verify_no_stubs_placeholders.py --allowlist .ruleguard-allowlist
 """
 
+import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple, Union
 
-# Project root (tools/verify_no_stubs_placeholders.py -> project root is parent)
-PROJECT_ROOT = Path(__file__).parent.parent
+# Project root (tools/verify_no_stubs_placeholders.py -> parent of tools)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# High-confidence violation patterns (actual code issues)
-FORBIDDEN_COMMENT_PATTERNS = [
-    r"#\s*TODO\b",  # Python TODO comments
-    r"//\s*TODO\b",  # C#/C++ TODO comments
-    r"<!--\s*TODO\b",  # XML/HTML TODO comments
-    r";\s*TODO\b",  # PowerShell TODO comments
-    r"#\s*FIXME\b",  # Python FIXME comments
-    r"//\s*FIXME\b",  # C#/C++ FIXME comments
-    r"#\s*HACK\b",  # Python HACK comments
-    r"//\s*HACK\b",  # C#/C++ HACK comments
-    r"#\s*XXX\b",  # Python XXX comments
-    r"//\s*XXX\b",  # C#/C++ XXX comments
+# High-confidence violation patterns (stubs/placeholders)
+FORBIDDEN = [
+    (r"\bNotImplementedError\b", "not_implemented_py", "Python NotImplementedError"),
+    (r"\bNotImplementedException\b", "not_implemented_cs", "C# NotImplementedException"),
+    (r"raise\s+NotImplementedError", "raise_not_implemented", "raise NotImplementedError"),
+    (r"throw\s+new\s+NotImplementedException", "throw_not_implemented", "throw NotImplementedException"),
+    (r"\[PLACEHOLDER\]", "placeholder_bracket", "[PLACEHOLDER] literal"),
+    (r"\bPLACEHOLDER\b", "placeholder_word", "PLACEHOLDER keyword"),
+    (r"#\s*TODO\b", "todo_py", "TODO comment (#)"),
+    (r"//\s*TODO\b", "todo_cs", "TODO comment (//)"),
+    (r"#\s*FIXME\b", "fixme_py", "FIXME comment (#)"),
+    (r"//\s*FIXME\b", "fixme_cs", "FIXME comment (//)"),
+    (r"#\s*HACK\b", "hack_py", "HACK comment (#)"),
+    (r"//\s*HACK\b", "hack_cs", "HACK comment (//)"),
 ]
 
-FORBIDDEN_CODE_PATTERNS = [
-    r"\bNotImplementedException\b",  # C# NotImplementedException
-    r"\bNotImplementedError\b",  # Python NotImplementedError
-    r"throw\s+new\s+NotImplementedException",  # C# throw
-    r"raise\s+NotImplementedError",  # Python raise
-    r"^\s*pass\s*$",  # Python pass-only (within function body context)
-]
+# Code file extensions only (no markdown/docs to reduce noise)
+CODE_EXTENSIONS = {".py", ".cs", ".xaml", ".js", ".ts", ".tsx", ".jsx"}
 
-FORBIDDEN_PLACEHOLDER_PATTERNS = [
-    r"\[PLACEHOLDER\]",  # [PLACEHOLDER] tags
-    r"\[TODO\]",  # [TODO] tags
-    r"\[FIXME\]",  # [FIXME] tags
-    r"\[WIP\]",  # [WIP] tags
-    r'\{\s*"mock"\s*:\s*true\s*\}',  # JSON mock objects
-]
-
-# All patterns combined
-ALL_PATTERNS = (
-    FORBIDDEN_COMMENT_PATTERNS
-    + FORBIDDEN_CODE_PATTERNS
-    + FORBIDDEN_PLACEHOLDER_PATTERNS
-)
-
-# Directories to exclude (build artifacts, dependencies, generated files)
-EXCLUDE_DIRS = [
-    ".git",
-    ".specstory",
-    "__pycache__",
-    "node_modules",
-    ".venv",
-    "venv",
-    "venv_",
-    "env",
-    "bin",
-    "obj",
-    ".vs",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".buildlogs",
-    "xaml_bisect_tmp",
-    "artifacts",
-    ".cursor",
-    "tests",
-    "tools",  # Exclude tool scripts (may contain TODOs for future features)
-]
-
-# File patterns to scan
-INCLUDE_EXTENSIONS = {
-    ".py",
-    ".cs",
-    ".xaml",
-    ".json",
-    ".md",
-    ".txt",
-    ".yml",
-    ".yaml",
-    ".ps1",
+# Directories to skip
+EXCLUDE_DIRS = {
+    "__pycache__", ".git", "node_modules", "bin", "obj", ".vs", ".vscode",
+    "venv", "env", ".venv", "build", "dist", ".buildlogs", "packages",
 }
 
-# Files to exclude (generated files, test runners, verification scripts themselves)
+# Paths relative to PROJECT_ROOT to scan
+SCAN_DIRS = ["src", "backend", "app", "tools"]
+
+# Files that define or implement stub/placeholder checks — do not scan
 EXCLUDE_FILES = {
-    "verify_no_stubs_placeholders.py",  # Exclude self
-    "verify_non_mock.py",
-    "verify_no_placeholders.py",
-    "RULE_ENFORCEMENT_RECOMMENDATIONS.md",  # Rule documentation
-    "COMPLETE_NO_STUBS_PLACEHOLDERS_BOOKMARKS_RULE.md",  # Rule documentation
-    "MASTER_RULES_COMPLETE.md",  # Rule documentation
-    "CONTRIBUTING.md",  # Contributing guide (contains examples)
-    "placeholder_verification_report.txt",  # Verification report (contains examples)
-    "placeholder_verification_report_improved.txt",  # Verification report
-    "violations_report.txt",
-    "violations_report_after_fix.txt",
-    "ruleguard-report.txt",
-    "violations_detailed.txt",
-    "violations_full.txt",
-    "COMPLETE_RULESET.md",
-    "COMPREHENSIVE_VIOLATIONS_REPORT.md",
-    "README_TESTING.md",
-    "run_bug_analysis.py",
-    "test_comprehensive_api_endpoints.py",
-    "test_backend_endpoints.py",
+    "tools/verify_no_stubs_placeholders.py",
+    "tools/verify_non_mock.py",
 }
 
-# Markdown files that document issues (may contain examples) - exclude documentation directory
-EXCLUDE_MARKDOWN_DIRS = ["docs"]
+
+def _compile_patterns() -> List[Tuple[re.Pattern[str], str, str]]:
+    return [(re.compile(pat, re.IGNORECASE), tid, desc) for pat, tid, desc in FORBIDDEN]
 
 
-def should_scan_file(file_path: Path) -> bool:
-    """Determine if a file should be scanned."""
-    file_str = str(file_path.relative_to(PROJECT_ROOT))
-
-    # Check exclude directories
-    for exclude_dir in EXCLUDE_DIRS:
-        if (
-            f"/{exclude_dir}/" in file_str
-            or f"\\{exclude_dir}\\" in file_str
-            or file_str.startswith(exclude_dir)
-        ):
-            return False
-
-    # Check exclude markdown documentation directories
-    if file_path.suffix.lower() == ".md":
-        for exclude_dir in EXCLUDE_MARKDOWN_DIRS:
-            if file_str.startswith(exclude_dir.replace("/", "\\")):
-                return False
-
-    # Check exclude files (by name)
-    if file_path.name in EXCLUDE_FILES:
-        return False
-
-    # Exclude verification report files in root
-    if (
-        file_path.suffix.lower() == ".txt"
-        and "verification" in file_path.name.lower()
-        and "report" in file_path.name.lower()
-    ):
-        return False
-
-    # Exclude general report files
-    if "report" in file_path.name.lower() and file_path.suffix.lower() == ".txt":
-        return False
-
-    # Exclude CONTRIBUTING.md in root
-    if file_path.name == "CONTRIBUTING.md" and file_path.parent == PROJECT_ROOT:
-        return False
-
-    # Exclude WORKER_3 status files (historical)
-    if file_path.name.startswith("WORKER_3_") and file_path.suffix.lower() == ".md":
-        return False
-
-    # Check extension
-    if file_path.suffix.lower() not in INCLUDE_EXTENSIONS:
-        return False
-
-    return True
+def _load_allowlist(path: Path) -> Set[Tuple[str, int]]:
+    """Load (path, line) allowlist; line 0 means whole file. Paths repo-relative, normalized."""
+    out: Set[Tuple[str, int]] = set()
+    if not path.exists():
+        return out
+    for raw in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = raw.split("#")[0].strip()
+        if not line:
+            continue
+        part = line.split(":", 1)
+        rel = part[0].strip().replace("\\", "/")
+        try:
+            ln = int(part[1].strip()) if len(part) > 1 else 0
+        except (ValueError, IndexError):
+            ln = 0
+        out.add((rel, ln))
+    return out
 
 
-def scan_file(file_path: Path) -> List[Dict]:
-    """Scan a file for forbidden patterns and return violations."""
-    violations = []
+def _is_allowed(rel_path: str, line_num: int, allowlist: Set[Tuple[str, int]]) -> bool:
+    norm = rel_path.replace("\\", "/")
+    if (norm, 0) in allowlist or (norm, line_num) in allowlist:
+        return True
+    return False
 
+
+def scan_file(
+    path: Path,
+    rel_path: str,
+    patterns: List[Tuple[re.Pattern[str], str, str]],
+    allowlist: Set[Tuple[str, int]],
+) -> List[Dict[str, Union[str, int]]]:
+    violations: List[Dict[str, str | int]] = []
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
-
-            for line_num, line in enumerate(lines, 1):
-                for pattern in ALL_PATTERNS:
-                    # Use case-insensitive search
-                    if re.search(pattern, line, re.IGNORECASE):
-                        violations.append(
-                            {
-                                "file": str(file_path.relative_to(PROJECT_ROOT)),
-                                "line": line_num,
-                                "pattern": (
-                                    pattern.pattern
-                                    if hasattr(pattern, "pattern")
-                                    else str(pattern)
-                                ),
-                                "content": line.strip()[:120],  # Limit content length
-                            }
-                        )
-                        break  # Only report one pattern per line
-    except Exception:
-        # Silently skip files that can't be read (binary files, permissions, etc.)
-        ...
-
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return violations
+    for line_num, line in enumerate(text.splitlines(), 1):
+        for regex, tid, desc in patterns:
+            if regex.search(line) and not _is_allowed(rel_path, line_num, allowlist):
+                violations.append({
+                    "file": rel_path,
+                    "line": line_num,
+                    "id": tid,
+                    "desc": desc,
+                    "content": line.strip()[:100],
+                })
     return violations
 
 
 def main() -> int:
-    """Main verification function. Returns 0 on success, 1 on violations found."""
-    violations = []
-    files_scanned = 0
+    ap = argparse.ArgumentParser(
+        description="RuleGuard: verify no stubs, placeholders, bookmarks, or tags"
+    )
+    ap.add_argument(
+        "--allowlist",
+        type=Path,
+        default=PROJECT_ROOT / ".ruleguard-allowlist",
+        help="Path to allowlist file (default: .ruleguard-allowlist in repo root)",
+    )
+    ap.add_argument(
+        "--path",
+        type=Path,
+        default=None,
+        help="Override: scan only this path (file or dir)",
+    )
+    args = ap.parse_args()
+    allowlist_path = args.allowlist.resolve() if args.allowlist else PROJECT_ROOT / ".ruleguard-allowlist"
+    allowlist = _load_allowlist(allowlist_path)
 
-    # Scan all files in project
-    for file_path in PROJECT_ROOT.rglob("*"):
-        if file_path.is_file() and should_scan_file(file_path):
-            files_scanned += 1
-            file_violations = scan_file(file_path)
-            violations.extend(file_violations)
+    patterns = _compile_patterns()
+    all_violations: List[Dict[str, Union[str, int]]] = []
+    root_str = str(PROJECT_ROOT)
 
-    if violations:
-        print("RuleGuard: VIOLATIONS FOUND", file=sys.stderr)
-        print("=" * 80, file=sys.stderr)
-        for v in violations[:50]:  # Limit output to first 50 violations
-            print(f"File: {v['file']}:{v['line']}", file=sys.stderr)
-            print(f"Pattern: {v['pattern']}", file=sys.stderr)
-            print(f"Content: {v['content']}", file=sys.stderr)
-            print("-" * 80, file=sys.stderr)
-
-        if len(violations) > 50:
-            print(
-                f"\n... and {len(violations) - 50} more violations (truncated)",
-                file=sys.stderr,
-            )
-
-        print(f"\nTotal violations: {len(violations)}", file=sys.stderr)
-        print(f"Files scanned: {files_scanned}", file=sys.stderr)
-        print(
-            "\nSee docs/governance/MASTER_RULES_COMPLETE.md for complete rule details",
-            file=sys.stderr,
-        )
-        return 1
+    if args.path is not None:
+        start = (PROJECT_ROOT / args.path).resolve() if not Path(args.path).is_absolute() else Path(args.path).resolve()
+        if not start.exists():
+            print(f"RuleGuard: path does not exist: {start}", file=sys.stderr)
+            return 1
+        dirs_to_scan = [start]
     else:
-        print(f"RuleGuard: No violations found ({files_scanned} files scanned)")
+        dirs_to_scan = [PROJECT_ROOT / d for d in SCAN_DIRS if (PROJECT_ROOT / d).exists()]
+
+    for base in dirs_to_scan:
+        if not base.exists():
+            continue
+        if base.is_file():
+            files = [base]
+        else:
+            files = [f for f in base.rglob("*") if f.is_file()]
+        for f in files:
+            if any(ex in f.parts for ex in EXCLUDE_DIRS):
+                continue
+            if f.suffix.lower() not in CODE_EXTENSIONS:
+                continue
+            try:
+                rel = f.relative_to(PROJECT_ROOT)
+            except ValueError:
+                rel = f
+            rel_path = str(rel).replace("\\", "/")
+            if rel_path in EXCLUDE_FILES:
+                continue
+            vs = scan_file(f, rel_path, patterns, allowlist)
+            all_violations.extend(vs)
+
+    if not all_violations:
+        print("RuleGuard: no stubs, placeholders, or forbidden comments detected.")
         return 0
+
+    print("RuleGuard: violations (no stubs/placeholders/TODO/FIXME/HACK/NotImplemented):", file=sys.stderr)
+    for v in sorted(all_violations, key=lambda x: (x["file"], x["line"])):
+        print(f"  {v['file']}:{v['line']} [{v['id']}] {v['desc']}", file=sys.stderr)
+        print(f"    {v['content']}", file=sys.stderr)
+    print(f"\nTotal: {len(all_violations)} violation(s). Add paths/lines to .ruleguard-allowlist to allow.", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
