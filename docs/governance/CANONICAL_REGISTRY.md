@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-01-29 (Phase 2 mini-specs: ViewModel DI, Engine Venv Isolation, UI Automation)
+> **Last Updated**: 2026-01-30 (Comprehensive Documentation Completeness Audit - 10 reports in docs/reports/audit/)
 
 ---
 
@@ -54,6 +54,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Architecture Integration Contract ADR | `docs/architecture/decisions/ADR-015-architecture-integration-contract.md` | 2026-01-25 | Integration contract |
 | Task Classifier and MCP Selector ADR | `docs/architecture/decisions/ADR-016-task-classifier-and-mcp-selector.md` | 2026-01-29 | Task-type → role and MCP recommendations |
 | **Debug Role Architecture ADR** | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | 2026-01-25 | Debug Role (Role 7), Issue System integration, auto-task creation, cross-role escalation |
+| **IPC Architecture Deviation ADR** | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | 2026-01-30 | HTTP/FastAPI vs Named Pipes decision; intentional deviation from ChatGPT spec Part 5 |
+| **Orchestration Architecture ADR** | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | 2026-01-30 | Python backend vs C# host orchestration; intentional deviation from ChatGPT spec Part 3 |
 
 ## Planning and Roadmaps
 
@@ -189,6 +191,9 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Security Audit (Phase 4)** | `docs/reports/verification/SECURITY_AUDIT_REPORT.md` | 2026-01-29 | Dependency scan (pip-audit, dotnet vulnerable), code review; TASK-0014 Phase C |
 | **Phase 5 Closure Report** | `docs/reports/packaging/PHASE_5_CLOSURE_REPORT_2026-01-29.md` | 2026-01-29 | Phase 5 (Packaging & Installer) formal closure; Gate H 1/1 GREEN; lifecycle 7/7 PASS; roadmap baseline complete; TASK-0017 deliverable |
 | **Optional Tasks Master Plan — Stream Status** | `docs/reports/verification/ENGINE_PROOF_STREAM_STATUS_2026-01-29.md`, `CORE_PLATFORM_STREAM_STATUS_2026-01-29.md`, `UI_STREAM_STATUS_2026-01-29.md`, `BUILD_QUALITY_STREAM_STATUS_2026-01-29.md`, `OBSERVABILITY_STREAM_STATUS_2026-01-29.md` | 2026-01-29 | Phase 4/7/8 stream status: engine venv + baseline proofs; wizard upload + preflight; advanced panels + UI automation; build quality/warnings; SLO re-baseline + perf checks; Security Audit §9 CVE tracking |
+| **TASK-0022 Evidence Pack** | `docs/reports/post_mortem/TASK-0022_EVIDENCE_PACK_2026-01-30.md` | 2026-01-30 | Enterprise-grade evidence catalog (E-001 to E-015), full missing file inventory (80+ files), minute-by-minute timeline for Git History Reconstruction incident |
+| **Architecture Cross-Reference** | `docs/reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md` | 2026-01-30 | Full 9-domain comparison matrix of ChatGPT specs vs implementation; gap analysis; actionable integration plan; TD-013 to TD-016 identified |
+| **Comprehensive Documentation Audit** | `docs/reports/audit/COMPREHENSIVE_AUDIT_FINAL_REPORT_2026-01-30.md` | 2026-01-30 | 8-phase audit: specs extraction, codebase inventory, doc completeness, spec-to-code xref, architecture compliance, restored modules, gap analysis, final report; 10 deliverables |
 
 ## Overseer Tooling
 
