@@ -11,7 +11,7 @@ using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Utilities;
-using VoiceStudio.App.UseCases;
+// using VoiceStudio.App.UseCases;  // Commented - namespace missing
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using Windows.Storage;

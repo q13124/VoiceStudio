@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using VoiceStudio.App.Services.Persistence;
+// using VoiceStudio.App.Services.Persistence;  // Commented - namespace missing
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 
