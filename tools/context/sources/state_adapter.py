@@ -28,6 +28,8 @@ def _parse_proof_index(text: str) -> List[Dict[str, Any]]:
                 continue
             parts = [p.strip() for p in line.split("|")[1:-1]]
             if len(parts) >= 5:
+                if parts[0].lower() == "date" and parts[1].lower() == "task":
+                    continue
                 out.append({
                     "date": parts[0],
                     "task": parts[1],
