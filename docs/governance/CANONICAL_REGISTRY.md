@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-01-30 (Comprehensive Documentation Completeness Audit - 10 reports in docs/reports/audit/)
+> **Last Updated**: 2026-01-30 (Final Sweep — Annotated still-missing items: ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md, docs/archive/governance; added Final Sweep Pre-Realignment report; handoff realignment link.)
 
 ---
 
@@ -14,27 +14,27 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Agent Rules | `.cursor/rules/*.mdc` | 2026-01-25 | 39 files across 8 categories |
 | Error Resolution Standard | `.cursor/rules/workflows/error-resolution.mdc` | 2026-01-25 | Mandatory error discovery, logging, and professional resolution standards |
 | Human Rules Reference | `docs/governance/MASTER_RULES_COMPLETE.md` | 2026-01-25 | Read-only reference for humans |
-| Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | 2026-01-25 | Template for proposing new rules |
+| Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | 2026-01-25 | **NOT YET CREATED** — directory `docs/governance/templates/` and template missing; create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
 | Rule Review Checklist | `.cursor/rules/quality/rule-review.mdc` | 2026-01-25 | Quality checklist for rule review |
-| Document Governance | `docs/governance/DOCUMENT_GOVERNANCE.md` | 2026-01-25 | File creation and lifecycle |
-| Archive Policy | `docs/governance/ARCHIVE_POLICY.md` | 2026-01-25 | Archive locations and policy |
-| Governance Lock | `docs/governance/GOVERNANCE_LOCK.md` | 2026-01-25 | Lock state for governance changes |
+| Document Governance | `docs/governance/DOCUMENT_GOVERNANCE.md` | 2026-01-30 | File creation and lifecycle; 4-gate check, versioning, archive workflow |
+| Archive Policy | `docs/governance/ARCHIVE_POLICY.md` | 2026-01-25 | **NOT YET CREATED** — create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
+| Governance Lock | `docs/governance/GOVERNANCE_LOCK.md` | 2026-01-25 | **NOT YET CREATED** — create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
 | Definition of Done | `docs/governance/DEFINITION_OF_DONE.md` | 2026-01-25 | Consolidated completion criteria |
 | Session State | `.cursor/STATE.md` | 2026-01-25 | Active task, phase, proofs |
 | Memory Index | `openmemory.md` | 2026-01-25 | Living project index for AI context |
-| **Project Handoff Guide** | `docs/governance/PROJECT_HANDOFF_GUIDE.md` | 2026-01-29 | Maintainer entry point; gate status, build/test, structure, roles |
+| **Project Handoff Guide** | `docs/governance/PROJECT_HANDOFF_GUIDE.md` | 2026-01-30 | Maintainer entry point; gate status, build/test, structure, roles, task brief creation |
 | **Tech Debt Register** | `docs/governance/TECH_DEBT_REGISTER.md` | 2026-01-29 | Consolidated technical debt, limitations, and future enhancements; categorized by priority (High/Medium/Low) |
-| **Production Readiness Statement** | `docs/PRODUCTION_READINESS.md` | 2026-01-29 | Formal production readiness declaration for v1.0.0 BASELINE; capabilities, limitations, quality gates, support |
-| Task Brief System | `docs/tasks/README.md` | 2026-01-25 | Task brief workflow and conventions |
-| Task Brief Template | `docs/tasks/TASK_TEMPLATE.md` | 2026-01-25 | Standard task brief template; new briefs: use next ID (e.g. TASK-0020) per [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md) § Task brief creation |
+| **Production Readiness Statement** | `docs/PRODUCTION_READINESS.md` | 2026-01-30 | Formal production readiness declaration for v1.0.0 BASELINE; capabilities, limitations, quality gates, support |
+| Task Brief System | `docs/tasks/README.md` | 2026-01-30 | Task brief workflow and conventions; lifecycle: Analyze → Blueprint → Construct → Validate |
+| Task Brief Template | `docs/tasks/TASK_TEMPLATE.md` | 2026-01-30 | Standard task brief template; new briefs: use next ID (e.g. TASK-0023) per [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md) § Task brief creation |
 | Prompt Library | `.cursor/commands/` | 2026-01-25 | Reusable AI prompts and roles |
 
 ## Architecture
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
-| Architecture Index | `docs/architecture/README.md` | 2026-01-25 | Entry point to 10-part series |
-| System Architecture | `docs/architecture/Part*.md` | 2026-01-25 | 10-part architecture series |
+| Architecture Index | `docs/architecture/README.md` | 2026-01-25 | Entry point; architecture content lives in README + ADRs. |
+| System Architecture (Part series) | `docs/architecture/Part*.md` | 2026-01-25 | **NOT YET CREATED** — 10-part series (Part1–Part10) absent; use README + ADRs as canonical architecture. Create Part*.md or treat as retired. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
 | Decisions (ADRs) | `docs/architecture/decisions/ADR-*.md` | 2026-01-25 | Architecture Decision Records |
 | ADR Index | `docs/architecture/decisions/README.md` | 2026-01-25 | ADR listing and template |
 | Rulebook Integration ADR | `docs/architecture/decisions/ADR-001-rulebook-integration.md` | 2026-01-25 | Rulebook and rule governance |
@@ -63,9 +63,9 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | --- | --- | --- | --- |
 | **Unified Master Roadmap** | `docs/governance/MASTER_ROADMAP_UNIFIED.md` | 2026-01-25 | **Primary canonical roadmap** - consolidates all previous roadmaps |
 | **Optional Task Inventory** | `docs/governance/OPTIONAL_TASK_INVENTORY.md` | 2026-01-29 | Authoritative optional-task backlog and dependency map; Phase 1 Master Plan deliverable |
-| Master Roadmap (Legacy) | `docs/archive/governance/MASTER_ROADMAP.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
-| Roadmap Summary (Legacy) | `docs/archive/governance/MASTER_ROADMAP_SUMMARY.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
-| Roadmap Index (Legacy) | `docs/archive/governance/MASTER_ROADMAP_INDEX.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
+| Master Roadmap (Legacy) | `docs/archive/governance/MASTER_ROADMAP.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md. Note: `docs/archive/governance/` may be missing; create and move legacy roadmaps if archive policy requires. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §2, §6.1. |
+| Roadmap Summary (Legacy) | `docs/archive/governance/MASTER_ROADMAP_SUMMARY.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md |
+| Roadmap Index (Legacy) | `docs/archive/governance/MASTER_ROADMAP_INDEX.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md |
 | Task Tracking | `docs/governance/MASTER_TASK_CHECKLIST.md` | 2026-01-25 | Active task checklist |
 | Task Log | `docs/governance/TASK_LOG.md` | 2026-01-25 | Historical task log |
 | Phase Gates | `docs/governance/PHASE_GATES_EVIDENCE_MAP.md` | 2026-01-25 | Gate completion evidence |
@@ -95,7 +95,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
-| **Role Guides Index** | `docs/governance/ROLE_GUIDES_INDEX.md` | 2026-01-25 | Master index with phase-gate-role matrix |
+| **Role Guides Index** | `docs/governance/ROLE_GUIDES_INDEX.md` | 2026-01-30 | Master index with phase-gate-role matrix, role ownership by module, invocation commands |
 | Role 0: Overseer | `docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md` | 2026-01-25 | Gate enforcement, evidence, coordination |
 | Role 1: System Architect | `docs/governance/roles/ROLE_1_SYSTEM_ARCHITECT_GUIDE.md` | 2026-01-25 | Boundaries, contracts, ADRs |
 | Role 2: Build & Tooling | `docs/governance/roles/ROLE_2_BUILD_TOOLING_GUIDE.md` | 2026-01-25 | Deterministic builds, CI/CD |
@@ -155,9 +155,9 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Execution Plan | `docs/design/EXECUTION_PLAN.md` | 2026-01-25 | Implementation execution |
 | File Structure | `docs/design/file-structure.md` | 2026-01-25 | Project file organization |
 | Project Structure | `docs/design/project-structure.md` | 2026-01-25 | High-level project layout |
-| **ViewModel DI Refactor** | `docs/design/viewmodel_di_refactor.md` | 2026-01-29 | TD-004; migration from AppServices/parameterless BaseViewModel to constructor injection |
-| **Engine Venv Isolation** | `docs/design/ENGINE_VENV_ISOLATION_SPEC.md` | 2026-01-29 | TD-001; per-engine/dual-venv strategy (Chatterbox vs XTTS torch) |
-| **UI Automation** | `docs/design/UI_AUTOMATION_SPEC.md` | 2026-01-29 | Hybrid Gate C + WinAppDriver; Phase 2 Master Plan mini-spec |
+| **ViewModel DI Refactor** | `docs/design/viewmodel_di_refactor.md` | 2026-01-30 | TD-004; migration from AppServices/parameterless BaseViewModel to constructor injection; 4-phase rollout plan |
+| **Engine Venv Isolation** | `docs/design/ENGINE_VENV_ISOLATION_SPEC.md` | 2026-01-30 | TD-001; per-engine/dual-venv strategy (Chatterbox vs XTTS torch); Option C (dual venv) recommended |
+| **UI Automation** | `docs/design/UI_AUTOMATION_SPEC.md` | 2026-01-30 | Hybrid Gate C + WinAppDriver; Phase 2 Master Plan mini-spec; Option D (Hybrid) decision |
 
 ## Project Organization
 
@@ -190,10 +190,16 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Performance Testing (Phase 4)** | `docs/reports/verification/PERFORMANCE_TESTING_REPORT.md` | 2026-01-29 | Baseline UI/engine/SLO metrics; TASK-0014 Phase B |
 | **Security Audit (Phase 4)** | `docs/reports/verification/SECURITY_AUDIT_REPORT.md` | 2026-01-29 | Dependency scan (pip-audit, dotnet vulnerable), code review; TASK-0014 Phase C |
 | **Phase 5 Closure Report** | `docs/reports/packaging/PHASE_5_CLOSURE_REPORT_2026-01-29.md` | 2026-01-29 | Phase 5 (Packaging & Installer) formal closure; Gate H 1/1 GREEN; lifecycle 7/7 PASS; roadmap baseline complete; TASK-0017 deliverable |
-| **Optional Tasks Master Plan — Stream Status** | `docs/reports/verification/ENGINE_PROOF_STREAM_STATUS_2026-01-29.md`, `CORE_PLATFORM_STREAM_STATUS_2026-01-29.md`, `UI_STREAM_STATUS_2026-01-29.md`, `BUILD_QUALITY_STREAM_STATUS_2026-01-29.md`, `OBSERVABILITY_STREAM_STATUS_2026-01-29.md` | 2026-01-29 | Phase 4/7/8 stream status: engine venv + baseline proofs; wizard upload + preflight; advanced panels + UI automation; build quality/warnings; SLO re-baseline + perf checks; Security Audit §9 CVE tracking |
+| **Optional Tasks Master Plan — Stream Status** | `docs/reports/verification/ENGINE_PROOF_STREAM_STATUS_2026-01-29.md`, `CORE_PLATFORM_STREAM_STATUS_2026-01-29.md`, `UI_STREAM_STATUS_2026-01-29.md`, `BUILD_QUALITY_STREAM_STATUS_2026-01-29.md`, `OBSERVABILITY_STREAM_STATUS_2026-01-29.md` | 2026-01-30 | Phase 4/7/8 stream status: engine venv + baseline proofs; wizard upload + preflight; advanced panels + UI automation; build quality/warnings; SLO re-baseline + perf checks; Security Audit §9 CVE tracking |
 | **TASK-0022 Evidence Pack** | `docs/reports/post_mortem/TASK-0022_EVIDENCE_PACK_2026-01-30.md` | 2026-01-30 | Enterprise-grade evidence catalog (E-001 to E-015), full missing file inventory (80+ files), minute-by-minute timeline for Git History Reconstruction incident |
 | **Architecture Cross-Reference** | `docs/reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md` | 2026-01-30 | Full 9-domain comparison matrix of ChatGPT specs vs implementation; gap analysis; actionable integration plan; TD-013 to TD-016 identified |
 | **Comprehensive Documentation Audit** | `docs/reports/audit/COMPREHENSIVE_AUDIT_FINAL_REPORT_2026-01-30.md` | 2026-01-30 | 8-phase audit: specs extraction, codebase inventory, doc completeness, spec-to-code xref, architecture compliance, restored modules, gap analysis, final report; 10 deliverables |
+| **Final Sweep — Gaps and Realignment** | `docs/reports/audit/FINAL_SWEEP_GAPS_AND_REALIGNMENT_2026-01-30.md` | 2026-01-30 | Pre-realignment sweep: missing canonicals (MASTER_ROADMAP_UNIFIED, PROJECT_HANDOFF_GUIDE, ROLE_GUIDES_INDEX, architecture Part*.md, 13 ADRs), role/workflow/architecture gaps, recommended order of operations |
+| **Forensic System Report** | `docs/reports/forensic/VOICESTUDIO_FORENSIC_SYSTEM_REPORT_2026-01-30.md` | 2026-01-30 | Comprehensive forensic analysis: 38-day period, 136 verification reports (98.5% pass), 101 proof runs (59.4% with failures), TASK-0022 S0 incident, 5 RCAs, 9 recommendations, installer error, 4 crash dumps, security audit |
+| **Final Sweep Before Realignment** | `docs/reports/audit/FINAL_SWEEP_BEFORE_REALIGNMENT_2026-01-30.md` | 2026-01-30 | All-roles final sweep: missing/misaligned canonical files (PROJECT_HANDOFF_GUIDE, MASTER_ROADMAP_UNIFIED, DOCUMENT_GOVERNANCE, ROLE_GUIDES_INDEX, architecture README/Part series, 12 ADRs), scaffolding/architecture/workflow/role gaps; checklist for realignment and roadmap update |
+| **Final Sweep (Missing & Never-Done)** | `docs/reports/verification/FINAL_SWEEP_MISSING_AND_NEVER_DONE_2026-01-30.md` | 2026-01-30 | Cross-role audit: missing roadmap/ADRs/governance/handoff/task system/architecture/production; TASK-0022 outstanding; backend/frontend gaps; realignment checklist |
+| **Final Sweep — One Last Time** | `docs/reports/audit/FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md` | 2026-01-30 | **Authoritative** all-roles sweep before realignment: verified present (19 ADRs, handoff, roadmap, PRODUCTION_READINESS, role guides, AppServices, UseCases); still missing (Domain/Infrastructure in App, ARCHIVE_POLICY, GOVERNANCE_LOCK, templates/, Part*.md, TASK-0009/0011–0019 briefs, commit-discipline.mdc, BRANCH_MERGE_POLICY); structures/layers/role checklist; realignment checklist (§5) |
+| **Final Sweep — All Roles (Pre-Realignment)** | `docs/reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md` | 2026-01-30 | **Authoritative** pre-realignment sweep: corrects record (what exists post–TASK-0022 vs missing); still-missing canonicals (ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md, docs/archive/governance/); implementation/architecture gaps; checklist for realignment and roadmap update (§6) |
 
 ## Overseer Tooling
 
@@ -231,5 +237,5 @@ When a document is replaced:
 If unclear which document is canonical:
 
 1. Check this registry first
-2. If not listed, check `docs/governance/ARCHIVE_POLICY.md`
+2. If not listed, check archive workflow in `docs/governance/DOCUMENT_GOVERNANCE.md` (ARCHIVE_POLICY.md not yet created; see [Final Sweep](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1).
 3. If still unclear, create an ADR to establish the canonical source
