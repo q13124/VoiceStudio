@@ -4,7 +4,7 @@
 
 This spec defines the **exact UI shell, layout, panels, and architecture** for the VoiceStudio Quantum+ desktop app using **WinUI 3 (.NET 8, C#/XAML)**.
 
-It is designed for **Cursor with one Overseer/Architect agent and ~8 Worker agents**.
+It is designed for **Cursor agents operating under the 8-role governance system** (see [ROLE_GUIDES_INDEX](../governance/ROLE_GUIDES_INDEX.md)).
 
 ### Non-Negotiable Cursor Rules
 

@@ -1364,7 +1364,7 @@ namespace VoiceStudio.App.Services
 - **GLOBAL_GUARDRAILS.md** - Anti-simplification rules
 - **UI_IMPLEMENTATION_SPEC.md** - Detailed UI spec
 - **ARCHITECTURE_DATA_FLOW.md** - Data flow and contracts
-- **EXECUTION_PLAN.md** - Overseer + 8 Workers plan
+- **EXECUTION_PLAN.md** - Legacy plan (archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/EXECUTION_PLAN.md))
 
 ---
 

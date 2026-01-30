@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-01-30 (Final sweep one last time: SKEPTICAL_VALIDATOR_GUIDE.md and VALIDATOR_ESCALATION.md created; FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT updated. Still missing: ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md, docs/archive/governance.)
+> **Last Updated**: 2026-01-30 (Architecture Audit: ADRs restored, legacy docs archived, engine configs standardized. Deferred: ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md.)
 
 ---
 
@@ -11,14 +11,14 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
-| Agent Rules | `.cursor/rules/*.mdc` | 2026-01-25 | 39 files across 8 categories |
+| Agent Rules | `.cursor/rules/*.mdc` | 2026-01-30 | 41 files across 8 categories |
 | Error Resolution Standard | `.cursor/rules/workflows/error-resolution.mdc` | 2026-01-25 | Mandatory error discovery, logging, and professional resolution standards |
-| Human Rules Reference | `docs/governance/MASTER_RULES_COMPLETE.md` | 2026-01-25 | Read-only reference for humans |
-| Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | 2026-01-25 | **NOT YET CREATED** — directory `docs/governance/templates/` and template missing; create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
+| Human Rules Reference (Legacy) | `docs/archive/legacy_worker_system/governance/MASTER_RULES_COMPLETE.md` | 2026-01-30 | **ARCHIVED** — Legacy worker/overseer rules; use `.cursor/rules/*.mdc` and [ROLE_GUIDES_INDEX](ROLE_GUIDES_INDEX.md) for current governance |
+| Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | — | **DEFERRED** — Template not yet created; low priority |
 | Rule Review Checklist | `.cursor/rules/quality/rule-review.mdc` | 2026-01-25 | Quality checklist for rule review |
 | Document Governance | `docs/governance/DOCUMENT_GOVERNANCE.md` | 2026-01-30 | File creation and lifecycle; 4-gate check, versioning, archive workflow |
-| Archive Policy | `docs/governance/ARCHIVE_POLICY.md` | 2026-01-25 | **NOT YET CREATED** — create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
-| Governance Lock | `docs/governance/GOVERNANCE_LOCK.md` | 2026-01-25 | **NOT YET CREATED** — create or remove from registry. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
+| Archive Policy | `docs/governance/ARCHIVE_POLICY.md` | — | **DEFERRED** — Use [document-lifecycle.mdc](.cursor/rules/workflows/document-lifecycle.mdc) and archive structure in `docs/archive/` |
+| Governance Lock | `docs/governance/GOVERNANCE_LOCK.md` | — | **DEFERRED** — Low priority |
 | Definition of Done | `docs/governance/DEFINITION_OF_DONE.md` | 2026-01-25 | Consolidated completion criteria |
 | Session State | `.cursor/STATE.md` | 2026-01-25 | Active task, phase, proofs |
 | Memory Index | `openmemory.md` | 2026-01-25 | Living project index for AI context |
@@ -34,28 +34,28 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | Architecture Index | `docs/architecture/README.md` | 2026-01-25 | Entry point; architecture content lives in README + ADRs. |
-| System Architecture (Part series) | `docs/architecture/Part*.md` | 2026-01-25 | **NOT YET CREATED** — 10-part series (Part1–Part10) absent; use README + ADRs as canonical architecture. Create Part*.md or treat as retired. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §6.1. |
+| System Architecture (Part series) | `docs/architecture/Part*.md` | — | **DEFERRED** — 10-part series from ChatGPT spec; use `docs/architecture/README.md` + ADRs as canonical architecture source |
 | Decisions (ADRs) | `docs/architecture/decisions/ADR-*.md` | 2026-01-25 | Architecture Decision Records |
 | ADR Index | `docs/architecture/decisions/README.md` | 2026-01-25 | ADR listing and template |
 | Rulebook Integration ADR | `docs/architecture/decisions/ADR-001-rulebook-integration.md` | 2026-01-25 | Rulebook and rule governance |
-| Document Governance ADR | `docs/architecture/decisions/ADR-002-document-governance.md` | 2026-01-25 | Document lifecycle and registry |
+| Document Governance ADR | `docs/architecture/decisions/ADR-002-document-governance.md` | — | **PLANNED** — Not yet created |
 | Agent Governance Framework ADR | `docs/architecture/decisions/ADR-003-agent-governance-framework.md` | 2026-01-25 | Agent governance and roles |
-| MessagePack IPC ADR | `docs/architecture/decisions/ADR-004-messagepack-ipc.md` | 2026-01-25 | IPC transport decision |
-| Context Management ADR | `docs/architecture/decisions/ADR-005-context-management-system.md` | 2026-01-25 | Context/state management |
-| Enhanced Rules ADR | `docs/architecture/decisions/ADR-006-enhanced-cursor-rules-system.md` | 2026-01-25 | Cursor rules system |
-| IPC Boundary ADR | `docs/architecture/decisions/ADR-007-ipc-boundary.md` | 2026-01-25 | Control/data plane boundary |
-| Architecture Patterns ADR | `docs/architecture/decisions/ADR-008-architecture-patterns.md` | 2026-01-25 | Architecture patterns |
-| AI-Native Development ADR | `docs/architecture/decisions/ADR-009-ai-native-development-patterns.md` | 2026-01-25 | AI-native governance patterns |
-| Native Windows Platform ADR | `docs/architecture/decisions/ADR-010-native-windows-platform.md` | 2026-01-25 | Platform identity decision |
-| Context Manager Architecture ADR | `docs/architecture/decisions/ADR-011-context-manager-architecture.md` | 2026-01-25 | Context manager design |
-| Roadmap Integration Scaffolding ADR | `docs/architecture/decisions/ADR-012-roadmap-integration-scaffolding.md` | 2026-01-25 | Roadmap integration |
-| OpenTelemetry Distributed Tracing ADR | `docs/architecture/decisions/ADR-013-opentelemetry-distributed-tracing.md` | 2026-01-25 | Distributed tracing |
-| Agent Skills Integration ADR | `docs/architecture/decisions/ADR-014-agent-skills-integration.md` | 2026-01-28 | Cursor Agent Skills integration decision |
+| MessagePack IPC ADR | `docs/architecture/decisions/ADR-004-messagepack-ipc.md` | — | **PLANNED** — Not yet created |
+| Context Management ADR | `docs/architecture/decisions/ADR-005-context-management-system.md` | — | **PLANNED** — Not yet created |
+| Enhanced Rules ADR | `docs/architecture/decisions/ADR-006-enhanced-cursor-rules-system.md` | — | **PLANNED** — Not yet created |
+| IPC Boundary ADR | `docs/architecture/decisions/ADR-007-ipc-boundary.md` | — | **PLANNED** — Not yet created |
+| Architecture Patterns ADR | `docs/architecture/decisions/ADR-008-architecture-patterns.md` | — | **PLANNED** — Not yet created |
+| AI-Native Development ADR | `docs/architecture/decisions/ADR-009-ai-native-development-patterns.md` | — | **PLANNED** — Not yet created |
+| Native Windows Platform ADR | `docs/architecture/decisions/ADR-010-native-windows-platform.md` | — | **PLANNED** — Not yet created |
+| Context Manager Architecture ADR | `docs/architecture/decisions/ADR-011-context-manager-architecture.md` | — | **PLANNED** — Not yet created |
+| Roadmap Integration Scaffolding ADR | `docs/architecture/decisions/ADR-012-roadmap-integration-scaffolding.md` | — | **PLANNED** — Not yet created |
+| OpenTelemetry Distributed Tracing ADR | `docs/architecture/decisions/ADR-013-opentelemetry-distributed-tracing.md` | — | **PLANNED** — Not yet created |
+| Agent Skills Integration ADR | `docs/architecture/decisions/ADR-014-agent-skills-integration.md` | — | **PLANNED** — Not yet created |
 | Architecture Integration Contract ADR | `docs/architecture/decisions/ADR-015-architecture-integration-contract.md` | 2026-01-25 | Integration contract |
-| Task Classifier and MCP Selector ADR | `docs/architecture/decisions/ADR-016-task-classifier-and-mcp-selector.md` | 2026-01-29 | Task-type → role and MCP recommendations |
-| **Debug Role Architecture ADR** | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | 2026-01-25 | Debug Role (Role 7), Issue System integration, auto-task creation, cross-role escalation |
-| **IPC Architecture Deviation ADR** | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | 2026-01-30 | HTTP/FastAPI vs Named Pipes decision; intentional deviation from ChatGPT spec Part 5 |
-| **Orchestration Architecture ADR** | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | 2026-01-30 | Python backend vs C# host orchestration; intentional deviation from ChatGPT spec Part 3 |
+| **Gate C Artifact Choice ADR** | `docs/architecture/decisions/ADR-016-gate-c-artifact-choice.md` | 2026-01-29 | Unpackaged self-contained apphost EXE as Gate C launch artifact |
+| Debug Role Architecture ADR | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | — | **PLANNED** — Not yet created |
+| IPC Architecture Deviation ADR | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | — | **PLANNED** — Not yet created |
+| Orchestration Architecture ADR | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | — | **PLANNED** — Not yet created |
 
 ## Planning and Roadmaps
 

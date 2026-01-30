@@ -622,7 +622,7 @@ All panels require:
 
 - `PANEL_IMPLEMENTATION_GUIDE.md` - Complete panel implementation guide
 - `VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` - Master specification
-- `CURSOR_AGENT_GUIDELINES_V2.md` - Agent system (Worker 3: Panel Scaffolding)
+- `CURSOR_AGENT_GUIDELINES_V2.md` - Archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/CURSOR_AGENT_GUIDELINES_V2.md)
 - `AI_INTEGRATION_GUIDE.md` - AI integration details
 - `ENGINE_RECOMMENDATIONS.md` - Backend engine choices
 

@@ -76,16 +76,16 @@ BottomPanelHost.Content = new MacroView();
 ## ✅ Execution Plan Updated
 
 The execution plan (EXECUTION_PLAN.md) has been updated with:
-- Exact worker tasks for all 8 workers
-- Overseer system prompt
+- Exact role-based task assignments (see [ROLE_GUIDES_INDEX](../governance/ROLE_GUIDES_INDEX.md))
+- Role prompts (`.cursor/prompts/ROLE_*_PROMPT.md`)
 - Phase-by-phase verification checklists
 
 ## ✅ Documentation Complete
 
 All documentation files created:
 - UI_IMPLEMENTATION_SPEC.md - Complete specification
-- EXECUTION_PLAN.md - Step-by-step plan with worker assignments
-- OVERSEER_SYSTEM_PROMPT.md - Overseer agent prompt
+- EXECUTION_PLAN.md - Legacy plan (archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/EXECUTION_PLAN.md))
+- Role prompts - `.cursor/prompts/ROLE_*_PROMPT.md`
 - PANEL_SKELETONS_REFERENCE.md - Panel XAML reference
 - CANONICAL_FILES.md - File specifications
 - FINAL_VERIFICATION.md - Verification checklist
