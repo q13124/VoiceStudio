@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Dispatching;
 
 namespace VoiceStudio.Core.Services
 {
@@ -23,6 +22,9 @@ namespace VoiceStudio.Core.Services
         /// UI thread dispatcher for marshalling async results to UI.
         /// Required for any ViewModel that updates observable properties from background tasks.
         /// </summary>
-        DispatcherQueue DispatcherQueue { get; }
+        /// <remarks>
+        /// Type: Microsoft.UI.Dispatching.DispatcherQueue from WinUI (declared as object here for Core portability)
+        /// </remarks>
+        object DispatcherQueue { get; }
     }
 }
