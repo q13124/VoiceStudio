@@ -1,6 +1,4 @@
-using VoiceStudio.App.Models;
-
-namespace VoiceStudio.App.Models
+namespace VoiceStudio.Core.Panels
 {
     public interface IPanelView
     {

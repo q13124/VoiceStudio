@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using VoiceStudio.App.Models;
+using VoiceStudio.Core.Panels;
 
-namespace VoiceStudio.App.Services
+namespace VoiceStudio.Core.Services
 {
     public interface IPanelRegistry
     {
