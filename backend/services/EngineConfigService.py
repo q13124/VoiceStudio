@@ -92,7 +92,7 @@ class EngineConfigService:
                 "tts": "xtts_v2",
                 "image_gen": "sdxl_comfy",
                 "video_gen": "svd",
-                "stt": "whisper",
+                "stt": "whisper_cpp",
             },
             "overrides": {},
             "installed": [],

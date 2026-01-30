@@ -1,11 +1,33 @@
-# VoiceStudio Quantum+ - COMPLETE ENGINE REFERENCE
+# VoiceStudio Quantum+ - ENGINE REFERENCE
 
-## All 47+ Engines - Capabilities, Usage & Selection Guide
+## Engine Capabilities, Usage & Selection Guide
 
-**Version:** 1.0 - Consolidated Reference
-**Date:** 2025-12-26
-**Total Engines:** 47+ across 3 categories
-**Status:** COMPLETE - All engines documented
+**Version:** 1.1 - Updated 2026-01-30
+**Date:** 2025-12-26 (original), 2026-01-30 (updated)
+**Status:** Living document - implementation status varies
+
+---
+
+## Implementation Status
+
+> **Note**: This document describes both implemented and planned engines. Not all engines listed are currently implemented.
+
+### Implemented Engines (Ready to Use)
+- **TTS**: XTTS v2, Piper, Chatterbox, Tortoise TTS, GPT-SoVITS, So-VITS-SVC, OpenVoice, Bark
+- **Voice Conversion**: RVC, OpenVoice
+- **STT**: Whisper (OpenAI), Whisper.cpp
+- **Image Generation**: Stable Diffusion XL (ComfyUI), Fooocus, Automatic1111, InvokeAI, SD.next, FastSD CPU
+- **Image Enhancement**: Real-ESRGAN
+- **Video**: Stable Video Diffusion, FFmpeg pipelines
+
+### Planned Engines (Not Yet Implemented)
+- **TTS**: DDSP-SVC, ResVoice, MaryTTS
+- **STT**: WhisperX, Faster-Whisper, Coqui STT, Vosk
+- **Image Generation**: DALL-E 3, Midjourney v6, Kandinsky, Flux
+- **Image Enhancement**: GFPGAN, CodeFormer, SwinIR, Real-CUGAN
+- **Video**: Topaz Video AI, DaVinci Resolve integration, Adobe After Effects integration
+
+See `app/core/engines/` for current implementations.
 
 ---
 

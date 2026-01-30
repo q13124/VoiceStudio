@@ -6,7 +6,7 @@
     "stt": "whisper_cpp"
   },
   "overrides": {},
-  "installed": [],
+  "installed": ["xtts_v2", "piper", "openvoice", "sdxl_comfy", "realesrgan", "svd"],
   "model_paths": {
     "base": "E:\\\\VoiceStudio\\\\models",
     "engines": {}
