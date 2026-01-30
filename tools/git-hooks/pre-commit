@@ -1,0 +1,96 @@
+#!/bin/sh
+# VoiceStudio Pre-commit Hook
+# Enforces commit discipline per .cursor/rules/workflows/git-conventions.mdc
+#
+# Exit codes:
+#   0 - Checks passed
+#   1 - Checks failed (commit blocked)
+
+echo "Running VoiceStudio pre-commit checks..."
+
+# Check for secrets/credentials
+check_secrets() {
+    # Patterns that indicate potential secrets
+    patterns='(api[_-]?key|password|secret|token|private[_-]?key|credentials|auth[_-]?token)[\s]*[=:]["'"'"']?[a-zA-Z0-9+/=]{10,}'
+    
+    if git diff --cached --name-only | xargs grep -l -E -i "$patterns" 2>/dev/null; then
+        echo "ERROR: Potential secrets detected in staged files!"
+        echo "Review the files above and remove any credentials before committing."
+        return 1
+    fi
+    return 0
+}
+
+# Check for .env files
+check_env_files() {
+    if git diff --cached --name-only | grep -E '\.env($|\.local|\.prod|\.dev)' 2>/dev/null; then
+        echo "ERROR: .env files should not be committed!"
+        return 1
+    fi
+    return 0
+}
+
+# Check for large files (>10MB)
+check_large_files() {
+    max_size=10485760  # 10MB in bytes
+    staged_files=$(git diff --cached --name-only)
+    
+    for file in $staged_files; do
+        if [ -f "$file" ]; then
+            size=$(wc -c < "$file" 2>/dev/null)
+            if [ "$size" -gt "$max_size" ]; then
+                echo "ERROR: File $file is larger than 10MB ($size bytes)"
+                return 1
+            fi
+        fi
+    done
+    return 0
+}
+
+# Check for merge conflict markers
+check_conflict_markers() {
+    # Use a variable to avoid matching this file itself
+    marker="<<""<<""<<"" HEAD"
+    if git diff --cached --name-only | xargs grep -l "$marker" 2>/dev/null; then
+        echo "ERROR: Merge conflict markers found in staged files!"
+        return 1
+    fi
+    return 0
+}
+
+# Run Python syntax check on staged .py files
+check_python_syntax() {
+    python_files=$(git diff --cached --name-only | grep '\.py$')
+    if [ -n "$python_files" ]; then
+        echo "Checking Python syntax..."
+        for file in $python_files; do
+            if [ -f "$file" ]; then
+                python -m py_compile "$file" 2>/dev/null
+                if [ $? -ne 0 ]; then
+                    echo "ERROR: Python syntax error in $file"
+                    return 1
+                fi
+            fi
+        done
+    fi
+    return 0
+}
+
+# Run all checks
+failed=0
+
+check_secrets || failed=1
+check_env_files || failed=1
+check_large_files || failed=1
+check_conflict_markers || failed=1
+check_python_syntax || failed=1
+
+if [ $failed -eq 1 ]; then
+    echo ""
+    echo "Pre-commit checks FAILED. Fix the issues above and try again."
+    echo "To bypass (not recommended): git commit --no-verify"
+    exit 1
+fi
+
+echo "Pre-commit checks passed."
+exit 0

@@ -1,0 +1,54 @@
+#!/bin/sh
+# VoiceStudio Commit Message Hook
+# Enforces Conventional Commits per .cursor/rules/workflows/git-conventions.mdc
+#
+# Format: <type>(optional-scope): <summary>
+# Types: feat, fix, refactor, perf, docs, test, build, ci, chore, style
+#
+# Exit codes:
+#   0 - Message valid
+#   1 - Message invalid
+
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+# Skip merge commits
+if echo "$commit_msg" | grep -q '^Merge'; then
+    exit 0
+fi
+
+# Skip revert commits
+if echo "$commit_msg" | grep -q '^Revert'; then
+    exit 0
+fi
+
+# Validate Conventional Commits format
+# Pattern: type(scope): summary OR type: summary
+pattern='^(feat|fix|refactor|perf|docs|test|build|ci|chore|style)(\([a-zA-Z0-9_-]+\))?!?: .{1,72}$'
+
+first_line=$(echo "$commit_msg" | head -1)
+
+if ! echo "$first_line" | grep -Eq "$pattern"; then
+    echo "ERROR: Commit message does not follow Conventional Commits format."
+    echo ""
+    echo "Expected: <type>(optional-scope): <summary>"
+    echo "Types: feat, fix, refactor, perf, docs, test, build, ci, chore, style"
+    echo ""
+    echo "Examples:"
+    echo "  feat(ui): add voice profile selector"
+    echo "  fix: resolve audio playback issue"
+    echo "  docs(api): update endpoint documentation"
+    echo ""
+    echo "Your message: $first_line"
+    echo ""
+    echo "See .cursor/rules/workflows/git-conventions.mdc for details."
+    exit 1
+fi
+
+# Check summary length (max 72 chars for first line)
+summary_length=${#first_line}
+if [ "$summary_length" -gt 72 ]; then
+    echo "WARNING: First line is $summary_length chars (recommended max: 72)"
+fi
+
+exit 0
