@@ -1,5 +1,32 @@
 # VoiceStudio Session State
 
+## Baseline Protection
+
+- **Baseline Tag**: `v1.0.0-baseline`
+- **Baseline Branch**: `baseline-2026-01-30`
+- **Created**: 2026-01-30
+- **Commit**: f5da3fd3
+
+**To restore to baseline if needed:**
+```bash
+git checkout v1.0.0-baseline      # Detached HEAD at baseline
+# OR
+git checkout baseline-2026-01-30  # Branch at baseline
+# OR
+git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructive)
+```
+
+**Baseline includes:**
+- 41 modern rules in `.cursor/rules/`
+- 19 ADRs in `docs/architecture/decisions/`
+- 8-role governance system complete
+- validator_workflow.py, circuit breaker, pre-commit hooks
+- CI verification integrated
+- Legacy 886 files archived
+- All gates B-H GREEN, verification PASS
+
+---
+
 ## Current Phase
 
 - **Phase**: Implement (Post Gate D — Gate H)

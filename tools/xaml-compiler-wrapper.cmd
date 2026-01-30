@@ -8,14 +8,14 @@ set "OUTPUT_JSON=%~2"
 for %%d in ("%~dp0..") do set "REPO_ROOT=%%~fd"
 set "APP_ROOT=%REPO_ROOT%\src\VoiceStudio.App"
 
+rem Normalize accidental double backslashes FIRST (can break path existence checks)
+set "INPUT_JSON=!INPUT_JSON:\\=\!"
+set "OUTPUT_JSON=!OUTPUT_JSON:\\=\!"
+
 rem Normalize to absolute paths relative to app root
-if not exist "%INPUT_JSON%" if exist "%APP_ROOT%\%INPUT_JSON%" set "INPUT_JSON=%APP_ROOT%\%INPUT_JSON%"
+if not exist "!INPUT_JSON!" if exist "%APP_ROOT%\!INPUT_JSON!" set "INPUT_JSON=%APP_ROOT%\!INPUT_JSON!"
 rem Keep OUTPUT_JSON as provided (usually a relative obj\...\output.json path).
 rem Some WinUI XAML compiler builds are sensitive to an absolute output.json path; we run from APP_ROOT below.
-
-rem Normalize accidental double backslashes (can break some XamlCompiler builds/targets)
-call set "INPUT_JSON=%%INPUT_JSON:\\=\%%"
-call set "OUTPUT_JSON=%%OUTPUT_JSON:\\=\%%"
 
 set "DEBUG_LOG=e:\VoiceStudio\.cursor\debug.log"
 set "LOG_RUN_ID=pre-fix"
@@ -37,8 +37,8 @@ if "%VSQ_DEBUG_ENABLED%"=="1" (
   rem #endregion agent log H1
 )
 
-if not exist "%INPUT_JSON%" (
-  echo Xaml compiler error: Input JSON file "%~1" doesn't exist! Resolved as "%INPUT_JSON%".
+if not exist "!INPUT_JSON!" (
+  echo Xaml compiler error: Input JSON file "%~1" doesn't exist! Resolved as "!INPUT_JSON!".
   exit /b 1
 )
 
@@ -95,8 +95,8 @@ if "%VSQ_DEBUG_ENABLED%"=="1" (
 )
 
 echo Running XAML compiler...
-echo Compiler: "%COMPILER%"
-echo Arguments: "%INPUT_JSON%" "%OUTPUT_JSON%"
+echo Compiler: "!COMPILER!"
+echo Arguments: "!INPUT_JSON!" "!OUTPUT_JSON!"
 echo.
 
 set "RAW_LOG="
@@ -109,14 +109,14 @@ if "%RAW_LOG_ENABLED%"=="1" (
     >> "%DEBUG_LOG%" echo {"sessionId":"debug-session","runId":"%LOG_RUN_ID%","hypothesisId":"H3","location":"tools/xaml-compiler-wrapper.cmd:95","message":"raw_log_path_set","data":{"rawLog":"!RAW_LOG_ESC!","inputJson":"!INPUT_JSON_ESC!","outputJson":"!OUTPUT_JSON_ESC!"},"timestamp":!VSQ_TS!}
     rem #endregion agent log H3
   )
-  echo Raw log: "%RAW_LOG%"
-  echo [%date% %time%] CMD="%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" > "%RAW_LOG%"
-  echo [%date% %time%] PWD=%CD% >> "%RAW_LOG%"
+  echo Raw log: "!RAW_LOG!"
+  echo [%date% %time%] CMD="%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" > "!RAW_LOG!"
+  echo [%date% %time%] PWD=%CD% >> "!RAW_LOG!"
 )
 
 rem Change to project directory so relative paths in input.json resolve correctly
 cd /d "%APP_ROOT%"
-if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] NEW_PWD=%CD% >> "%RAW_LOG%"
+if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] NEW_PWD=%CD% >> "!RAW_LOG!"
 
 rem Some environments intermittently fail to materialize output.json due to transient file locks
 rem ("The process cannot access the file because it is being used by another process.").
@@ -127,10 +127,10 @@ set "ATTEMPT=1"
 
 :_retry_xaml
 if "%RAW_LOG_ENABLED%"=="1" (
-  echo [%date% %time%] ATTEMPT=%ATTEMPT% >> "%RAW_LOG%"
-  "%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%" >> "%RAW_LOG%" 2>&1
+  echo [%date% %time%] ATTEMPT=%ATTEMPT% >> "!RAW_LOG!"
+  "!COMPILER!" "!INPUT_JSON!" "!OUTPUT_JSON!" >> "!RAW_LOG!" 2>&1
 ) else (
-  "%COMPILER%" "%INPUT_JSON%" "%OUTPUT_JSON%"
+  "!COMPILER!" "!INPUT_JSON!" "!OUTPUT_JSON!"
 )
 set "EXIT_CODE=%ERRORLEVEL%"
 set "OUTPUT_JSON_EXISTS=0"
@@ -145,7 +145,7 @@ if "%VSQ_DEBUG_ENABLED%"=="1" (
 if "%EXIT_CODE%"=="0" (
   if not exist "%OUTPUT_JSON%" (
     echo XAML compiler reported success but output.json is missing - retrying...
-    if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] RETRY_MISSING_OUTPUT_JSON=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "%RAW_LOG%"
+    if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] RETRY_MISSING_OUTPUT_JSON=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "!RAW_LOG!"
     if %ATTEMPT% LSS %MAX_RETRIES% (
       set /a ATTEMPT+=1
       rem Sleep (milliseconds) via ping.
@@ -157,7 +157,7 @@ if "%EXIT_CODE%"=="0" (
 
 echo.
 echo XAML compiler exit code: %EXIT_CODE%
-if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] EXIT=%EXIT_CODE% >> "%RAW_LOG%"
+if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] EXIT=%EXIT_CODE% >> "!RAW_LOG!"
 
 rem VS-0001: Some WinUI/XAML compiler builds return exit code 1 but still
 rem generate a valid output.json. Treat that as success to avoid blocking builds.
@@ -169,7 +169,7 @@ if "%EXIT_CODE%"=="1" (
       for %%F in ("%OUTPUT_JSON%") do set "OUT_DIR=%%~dpF"
       if exist "!OUT_DIR!App.g.i.cs" if exist "!OUT_DIR!MainWindow.g.i.cs" (
         echo output.json found - treating as false-positive exit code 1
-        if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] FALSE_POSITIVE=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "%RAW_LOG%"
+        if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] FALSE_POSITIVE=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "!RAW_LOG!"
         exit /b 0
       )
     )
@@ -178,7 +178,7 @@ if "%EXIT_CODE%"=="1" (
 
 if "%RAW_LOG_ENABLED%"=="1" (
   echo XAML compilation failed. Dumping log contents:
-  type "%RAW_LOG%"
+  type "!RAW_LOG!"
 ) else (
   echo XAML compilation failed. Re-run with VSQ_XAML_RAW_LOG=1 to capture a raw log.
 )

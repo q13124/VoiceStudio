@@ -28,6 +28,10 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from backend.services.model_preflight import ensure_piper, ensure_sovits, ensure_xtts
+from backend.services.circuit_breaker import (
+    get_engine_breaker,
+    CircuitBreakerOpenError,
+)
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
@@ -643,16 +647,35 @@ async def synthesize(
                         if quality_preset:
                             synthesis_kwargs["quality_preset"] = quality_preset
 
-                        # Attempt synthesis with error recovery
+                        # Attempt synthesis with circuit breaker + error recovery
                         result = None
                         synthesis_error = None
                         max_retries = 2
 
+                        # Get circuit breaker for this engine (TD-014)
+                        engine_breaker = get_engine_breaker(engine_id)
+
+                        # Check if circuit is open before attempting
+                        if not engine_breaker.allow_request():
+                            logger.warning(
+                                f"Circuit breaker OPEN for engine '{engine_id}', "
+                                f"retry in {engine_breaker.time_until_retry():.1f}s"
+                            )
+                            raise HTTPException(
+                                status_code=503,
+                                detail=f"Engine '{engine_id}' is temporarily unavailable. "
+                                f"Retry in {int(engine_breaker.time_until_retry())} seconds."
+                            )
+
                         for attempt in range(max_retries + 1):
                             try:
                                 result = engine.synthesize(**synthesis_kwargs)
+                                # Record success with circuit breaker
+                                engine_breaker.record_success()
                                 break  # Success, exit retry loop
                             except RuntimeError as e:
+                                # Record failure with circuit breaker
+                                engine_breaker.record_failure()
                                 # GPU/device errors - may be recoverable
                                 error_msg = str(e).lower()
 

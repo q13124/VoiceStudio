@@ -53,6 +53,54 @@ def _validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _trace(args: argparse.Namespace) -> int:
+    """Trace issues and audit entries by correlation ID."""
+    correlation_id = args.correlation_id
+    
+    # Query issues with this correlation ID
+    store = IssueStore()
+    issues = store.get_by_correlation(correlation_id)
+    
+    print(f"=== Correlation Trace: {correlation_id} ===")
+    print()
+    
+    # Display issues
+    if issues:
+        print(f"Issues ({len(issues)}):")
+        for issue in sorted(issues, key=lambda i: i.timestamp):
+            print(f"  [{issue.timestamp.isoformat()}] {issue.id}")
+            print(f"    Severity: {issue.severity.value} | Status: {issue.status.value}")
+            print(f"    Message: {issue.message[:100]}...")
+            if issue.component:
+                print(f"    Component: {issue.component}")
+            print()
+    else:
+        print("Issues: None found")
+        print()
+    
+    # Try to get audit entries for this correlation ID
+    try:
+        from tools.overseer.agent.audit_store import AuditStore
+        audit_store = AuditStore()
+        audit_entries = audit_store.get_by_correlation_id(correlation_id)
+        
+        if audit_entries:
+            print(f"Audit Trail ({len(audit_entries)}):")
+            for entry in sorted(audit_entries, key=lambda e: e.timestamp):
+                print(f"  [{entry.timestamp.isoformat()}] {entry.action}")
+                print(f"    Agent: {entry.agent_id} | Success: {entry.success}")
+                if entry.details:
+                    details_str = json.dumps(entry.details, default=str)[:100]
+                    print(f"    Details: {details_str}...")
+                print()
+        else:
+            print("Audit Trail: None found")
+    except Exception as e:
+        print(f"Audit Trail: Error loading ({e})")
+    
+    return 0 if issues else 1
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="overseer debug", description="Debug workflows")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -74,6 +122,10 @@ def main(argv=None) -> int:
     validate_parser = subparsers.add_parser("validate", help="Validate fix status for issue")
     validate_parser.add_argument("issue_id", help="Issue id")
     validate_parser.set_defaults(func=_validate)
+
+    trace_parser = subparsers.add_parser("trace", help="Trace issues and audit entries by correlation ID")
+    trace_parser.add_argument("correlation_id", help="Correlation UUID to trace")
+    trace_parser.set_defaults(func=_trace)
 
     args = parser.parse_args(argv)
     return args.func(args)
