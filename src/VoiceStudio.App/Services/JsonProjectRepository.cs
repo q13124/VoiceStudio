@@ -1,0 +1,185 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Services;
+
+namespace VoiceStudio.App.Services
+{
+    /// <summary>
+    /// JSON file-based implementation of IProjectRepository.
+    /// Stores projects as individual JSON files in a projects directory.
+    /// </summary>
+    /// <remarks>
+    /// Local-first design: all data stored on disk, no cloud dependencies.
+    /// Thread-safe via SemaphoreSlim for concurrent access.
+    /// </remarks>
+    public sealed class JsonProjectRepository : IProjectRepository
+    {
+        private readonly string _projectsDirectory;
+        private readonly SemaphoreSlim _lock = new(1, 1);
+        private readonly JsonSerializerOptions _jsonOptions;
+
+        public JsonProjectRepository(string? projectsDirectory = null)
+        {
+            _projectsDirectory = projectsDirectory ??
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoiceStudio", "Projects");
+
+            Directory.CreateDirectory(_projectsDirectory);
+
+            _jsonOptions = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+        }
+
+        private string GetProjectPath(string projectId) =>
+            Path.Combine(_projectsDirectory, $"{projectId}.json");
+
+        public async Task<IReadOnlyList<ProjectMetadata>> GetAllMetadataAsync(CancellationToken cancellationToken = default)
+        {
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                var metadataList = new List<ProjectMetadata>();
+                var projectFiles = Directory.GetFiles(_projectsDirectory, "*.json");
+
+                foreach (var file in projectFiles)
+                {
+                    try
+                    {
+                        var json = await File.ReadAllTextAsync(file, cancellationToken);
+                        var project = JsonSerializer.Deserialize<Project>(json, _jsonOptions);
+
+                        if (project != null)
+                        {
+                            metadataList.Add(MapToMetadata(project, file));
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Skip malformed project files
+                    }
+                }
+
+                return metadataList.OrderByDescending(m => m.Modified).ToList();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task<Project?> GetByIdAsync(string projectId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return null;
+
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                var path = GetProjectPath(projectId);
+                if (!File.Exists(path))
+                    return null;
+
+                var json = await File.ReadAllTextAsync(path, cancellationToken);
+                return JsonSerializer.Deserialize<Project>(json, _jsonOptions);
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task<Project> SaveAsync(Project project, CancellationToken cancellationToken = default)
+        {
+            if (project == null)
+                throw new ArgumentNullException(nameof(project));
+
+            if (string.IsNullOrEmpty(project.Id))
+                project.Id = Guid.NewGuid().ToString("N");
+
+            project.UpdatedAt = DateTime.UtcNow.ToString("o");
+
+            if (string.IsNullOrEmpty(project.CreatedAt))
+                project.CreatedAt = project.UpdatedAt;
+
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                var path = GetProjectPath(project.Id);
+                var json = JsonSerializer.Serialize(project, _jsonOptions);
+                await File.WriteAllTextAsync(path, json, cancellationToken);
+
+                return project;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task<bool> DeleteAsync(string projectId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return false;
+
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                var path = GetProjectPath(projectId);
+                if (!File.Exists(path))
+                    return false;
+
+                File.Delete(path);
+                return true;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task<bool> ExistsAsync(string projectId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return false;
+
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                return File.Exists(GetProjectPath(projectId));
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        private static ProjectMetadata MapToMetadata(Project project, string filePath)
+        {
+            DateTime.TryParse(project.CreatedAt, out var created);
+            DateTime.TryParse(project.UpdatedAt, out var modified);
+
+            var fileInfo = new FileInfo(filePath);
+
+            return new ProjectMetadata
+            {
+                Id = project.Id,
+                Name = project.Name,
+                Description = project.Description,
+                Created = created,
+                Modified = modified,
+                SizeBytes = fileInfo.Length,
+                TrackCount = project.Tracks?.Count ?? 0,
+                ProfileCount = project.VoiceProfileIds?.Count ?? 0
+            };
+        }
+    }
+}
