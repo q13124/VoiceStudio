@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Golden audio test configuration",
+  "tolerances": {
+    "mos": 0.3,
+    "similarity": 0.1,
+    "lufs": 2.0,
+    "snr_db": 3.0,
+    "spectral_centroid_hz": 200
+  },
+  "engines": {
+    "xtts": {
+      "enabled": true,
+      "test_cases": [
+        {
+          "id": "hello_world",
+          "text": "Hello world. This is a test of the text to speech system.",
+          "voice_profile": "default",
+          "golden_file": "xtts/hello_world.wav"
+        }
+      ]
+    },
+    "chatterbox": {
+      "enabled": true,
+      "test_cases": [
+        {
+          "id": "hello_world",
+          "text": "Hello world. This is a test of the text to speech system.",
+          "voice_profile": "default",
+          "golden_file": "chatterbox/hello_world.wav"
+        }
+      ]
+    },
+    "piper": {
+      "enabled": true,
+      "test_cases": [
+        {
+          "id": "hello_world",
+          "text": "Hello world. This is a test of the text to speech system.",
+          "voice_profile": "en_US-lessac-medium",
+          "golden_file": "piper/hello_world.wav"
+        }
+      ]
+    }
+  },
+  "skip_if_engine_unavailable": true,
+  "max_generation_time_seconds": 60
+}

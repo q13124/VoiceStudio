@@ -1,0 +1,2 @@
+# Placeholder for Chatterbox golden audio files
+# Run `pytest tests/regression/test_audio_golden.py --update-golden` to generate

@@ -1,0 +1,53 @@
+repos:
+  # Python import validation (local hooks)
+  - repo: local
+    hooks:
+      - id: python-import-check
+        name: Validate Python Imports
+        entry: python scripts/validate_imports.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        
+      - id: package-structure-check
+        name: Validate Package Structure
+        entry: python scripts/validate_package_structure.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        
+      - id: uncommitted-deps-check
+        name: Audit Uncommitted Dependencies
+        entry: python scripts/audit_uncommitted_dependencies.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        
+  # Python linters (ruff)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        
+  # Python formatter (black)
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: [--line-length=100]
+        
+  # Secret scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            \.buildlogs/.*|
+            \.venv/.*|
+            env/.*|
+            runtime/external/.*|
+            third_party/.*
+          )$

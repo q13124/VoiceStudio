@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""
+Run Verification
+
+Automated verification script that validates gate status and ledger.
+Includes import validation as a defensive pre-check.
+
+Exit codes:
+  0 - All checks passed
+  1 - One or more checks failed
+"""
+
+import io
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Ensure UTF-8 output on Windows console
+if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+
+def _validate_imports_first():
+    """
+    Validate critical imports before running verification commands.
+    
+    Defensive check to catch ModuleNotFoundError before running CLI commands.
+    """
+    critical_modules = [
+        "tools.overseer",
+        "tools.overseer.models",
+        "tools.overseer.cli.main",
+    ]
+    
+    for module in critical_modules:
+        try:
+            __import__(module)
+        except (ModuleNotFoundError, ImportError) as e:
+            return False, f"Import validation failed: {module} - {e}"
+    
+    return True, "Imports validated"
+
+
+def run_check(name, command, timeout=30):
+    """Run a single verification check."""
+    start_time = datetime.now()
+    
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=True
+        )
+        
+        duration = (datetime.now() - start_time).total_seconds()
+        
+        return {
+            "name": name,
+            "command": command if isinstance(command, str) else " ".join(command),
+            "exit_code": result.returncode,
+            "passed": result.returncode == 0,
+            "duration_seconds": round(duration, 2),
+            "output_sample": (result.stdout + result.stderr)[:500] if result.stdout or result.stderr else ""
+        }
+    except subprocess.TimeoutExpired:
+        duration = (datetime.now() - start_time).total_seconds()
+        return {
+            "name": name,
+            "command": command if isinstance(command, str) else " ".join(command),
+            "exit_code": -1,
+            "passed": False,
+            "duration_seconds": round(duration, 2),
+            "output_sample": f"Command timed out after {timeout}s"
+        }
+    except Exception as e:
+        duration = (datetime.now() - start_time).total_seconds()
+        return {
+            "name": name,
+            "command": command if isinstance(command, str) else " ".join(command),
+            "exit_code": -1,
+            "passed": False,
+            "duration_seconds": round(duration, 2),
+            "output_sample": f"Exception: {e}"
+        }
+
+
+def main():
+    """Run all verification checks."""
+    project_root = Path(__file__).parent.parent
+    
+    # Add project root to path for imports
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    # Pre-check: Validate imports
+    print("Pre-check: Validating imports...")
+    valid, message = _validate_imports_first()
+    if not valid:
+        print(f"❌ {message}")
+        print("   Fix: Ensure all required modules have __init__.py and are importable")
+        return 1
+    print(f"✓ {message}\n")
+    
+    # Define checks
+    checks = [
+        {
+            "name": "gate_status",
+            "command": f"{sys.executable} -m tools.overseer.cli.main gate status"
+        },
+        {
+            "name": "ledger_validate",
+            "command": f"{sys.executable} -m tools.overseer.cli.main ledger validate"
+        },
+    ]
+    
+    # Optionally add build check if --build flag
+    if "--build" in sys.argv:
+        checks.append({
+            "name": "build_smoke",
+            "command": "dotnet build VoiceStudio.sln -c Debug -p:Platform=x64 --verbosity minimal"
+        })
+    
+    # Run checks
+    results = []
+    print("=" * 60)
+    print("VERIFICATION REPORT (automated)")
+    print("=" * 60)
+    print()
+    
+    for check in checks:
+        result = run_check(check["name"], check["command"])
+        results.append(result)
+        
+        status = "PASS" if result["passed"] else "FAIL"
+        print(f"  [{status}] {result['name']} (exit {result['exit_code']}, {result['duration_seconds']}s)")
+    
+    # Summary
+    all_passed = all(r["passed"] for r in results)
+    print()
+    print(f"  Overall: {'PASS' if all_passed else 'FAIL'}")
+    print()
+    
+    # Save JSON report
+    output_dir = project_root / ".buildlogs" / "verification"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    report = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp_short": datetime.now().strftime("%Y%m%d-%H%M%S"),
+        "all_passed": all_passed,
+        "checks": results
+    }
+    
+    output_file = output_dir / "last_run.json"
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+    
+    print(f"  JSON: {output_file}")
+    print()
+    
+    return 0 if all_passed else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

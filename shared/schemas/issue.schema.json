@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://voicestudio.dev/schemas/issue.schema.json",
+  "title": "OverseerIssue",
+  "description": "Unified issue record from Overseer Issue Logging (agent, engine, build)",
+  "type": "object",
+  "required": [
+    "id",
+    "timestamp",
+    "instance_type",
+    "instance_id",
+    "correlation_id",
+    "severity",
+    "category",
+    "error_type",
+    "message",
+    "context",
+    "pattern_hash",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique issue ID (UUID)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the issue was recorded"
+    },
+    "instance_type": {
+      "type": "string",
+      "enum": ["agent", "engine", "build"],
+      "description": "Source of the issue"
+    },
+    "instance_id": {
+      "type": "string",
+      "description": "Identifier of the source instance"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Cross-layer tracing ID"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Severity of the issue"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category (e.g. error type)"
+    },
+    "error_type": {
+      "type": "string",
+      "description": "Exception/error type name"
+    },
+    "message": {
+      "type": "string",
+      "description": "Error message (sanitized)"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Additional context (stack, env, etc.)"
+    },
+    "pattern_hash": {
+      "type": "string",
+      "description": "Stable hash for grouping similar issues"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["new", "acknowledged", "in_progress", "resolved", "escalated"],
+      "description": "Current status of the issue"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Recommendation" },
+      "default": [],
+      "description": "Recommended actions"
+    },
+    "resolved_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When the issue was resolved"
+    },
+    "resolved_by": {
+      "type": ["string", "null"],
+      "description": "Who resolved the issue"
+    },
+    "state_history": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/StateTransition" },
+      "description": "State transition history"
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "description": "Parent issue ID if this is a child"
+    },
+    "related_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Related issue IDs"
+    },
+    "labels": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Tags/labels for filtering"
+    },
+    "priority": {
+      "type": ["string", "null"],
+      "enum": ["low", "medium", "high", "urgent"],
+      "description": "Business priority (urgency)"
+    }
+  },
+  "$defs": {
+    "Recommendation": {
+      "type": "object",
+      "required": ["action", "confidence", "rationale", "similar_issues", "risk_assessment"],
+      "properties": {
+        "action": { "type": "string", "description": "Recommended action" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "rationale": { "type": "string" },
+        "similar_issues": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risk_assessment": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "StateTransition": {
+      "type": "object",
+      "required": ["status", "at"],
+      "properties": {
+        "status": { "type": "string" },
+        "at": { "type": "string", "format": "date-time" },
+        "by": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

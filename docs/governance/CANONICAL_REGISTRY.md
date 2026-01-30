@@ -1,0 +1,230 @@
+# Canonical Document Registry
+
+This registry is the single source of truth for all canonical documents in VoiceStudio.
+Before creating a new document, check this registry to ensure the topic isn't already covered.
+
+> **Last Updated**: 2026-01-29 (Phase 2 mini-specs: ViewModel DI, Engine Venv Isolation, UI Automation)
+
+---
+
+## Rules and Governance
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Agent Rules | `.cursor/rules/*.mdc` | 2026-01-25 | 39 files across 8 categories |
+| Error Resolution Standard | `.cursor/rules/workflows/error-resolution.mdc` | 2026-01-25 | Mandatory error discovery, logging, and professional resolution standards |
+| Human Rules Reference | `docs/governance/MASTER_RULES_COMPLETE.md` | 2026-01-25 | Read-only reference for humans |
+| Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | 2026-01-25 | Template for proposing new rules |
+| Rule Review Checklist | `.cursor/rules/quality/rule-review.mdc` | 2026-01-25 | Quality checklist for rule review |
+| Document Governance | `docs/governance/DOCUMENT_GOVERNANCE.md` | 2026-01-25 | File creation and lifecycle |
+| Archive Policy | `docs/governance/ARCHIVE_POLICY.md` | 2026-01-25 | Archive locations and policy |
+| Governance Lock | `docs/governance/GOVERNANCE_LOCK.md` | 2026-01-25 | Lock state for governance changes |
+| Definition of Done | `docs/governance/DEFINITION_OF_DONE.md` | 2026-01-25 | Consolidated completion criteria |
+| Session State | `.cursor/STATE.md` | 2026-01-25 | Active task, phase, proofs |
+| Memory Index | `openmemory.md` | 2026-01-25 | Living project index for AI context |
+| **Project Handoff Guide** | `docs/governance/PROJECT_HANDOFF_GUIDE.md` | 2026-01-29 | Maintainer entry point; gate status, build/test, structure, roles |
+| **Tech Debt Register** | `docs/governance/TECH_DEBT_REGISTER.md` | 2026-01-29 | Consolidated technical debt, limitations, and future enhancements; categorized by priority (High/Medium/Low) |
+| **Production Readiness Statement** | `docs/PRODUCTION_READINESS.md` | 2026-01-29 | Formal production readiness declaration for v1.0.0 BASELINE; capabilities, limitations, quality gates, support |
+| Task Brief System | `docs/tasks/README.md` | 2026-01-25 | Task brief workflow and conventions |
+| Task Brief Template | `docs/tasks/TASK_TEMPLATE.md` | 2026-01-25 | Standard task brief template; new briefs: use next ID (e.g. TASK-0020) per [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md) § Task brief creation |
+| Prompt Library | `.cursor/commands/` | 2026-01-25 | Reusable AI prompts and roles |
+
+## Architecture
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Architecture Index | `docs/architecture/README.md` | 2026-01-25 | Entry point to 10-part series |
+| System Architecture | `docs/architecture/Part*.md` | 2026-01-25 | 10-part architecture series |
+| Decisions (ADRs) | `docs/architecture/decisions/ADR-*.md` | 2026-01-25 | Architecture Decision Records |
+| ADR Index | `docs/architecture/decisions/README.md` | 2026-01-25 | ADR listing and template |
+| Rulebook Integration ADR | `docs/architecture/decisions/ADR-001-rulebook-integration.md` | 2026-01-25 | Rulebook and rule governance |
+| Document Governance ADR | `docs/architecture/decisions/ADR-002-document-governance.md` | 2026-01-25 | Document lifecycle and registry |
+| Agent Governance Framework ADR | `docs/architecture/decisions/ADR-003-agent-governance-framework.md` | 2026-01-25 | Agent governance and roles |
+| MessagePack IPC ADR | `docs/architecture/decisions/ADR-004-messagepack-ipc.md` | 2026-01-25 | IPC transport decision |
+| Context Management ADR | `docs/architecture/decisions/ADR-005-context-management-system.md` | 2026-01-25 | Context/state management |
+| Enhanced Rules ADR | `docs/architecture/decisions/ADR-006-enhanced-cursor-rules-system.md` | 2026-01-25 | Cursor rules system |
+| IPC Boundary ADR | `docs/architecture/decisions/ADR-007-ipc-boundary.md` | 2026-01-25 | Control/data plane boundary |
+| Architecture Patterns ADR | `docs/architecture/decisions/ADR-008-architecture-patterns.md` | 2026-01-25 | Architecture patterns |
+| AI-Native Development ADR | `docs/architecture/decisions/ADR-009-ai-native-development-patterns.md` | 2026-01-25 | AI-native governance patterns |
+| Native Windows Platform ADR | `docs/architecture/decisions/ADR-010-native-windows-platform.md` | 2026-01-25 | Platform identity decision |
+| Context Manager Architecture ADR | `docs/architecture/decisions/ADR-011-context-manager-architecture.md` | 2026-01-25 | Context manager design |
+| Roadmap Integration Scaffolding ADR | `docs/architecture/decisions/ADR-012-roadmap-integration-scaffolding.md` | 2026-01-25 | Roadmap integration |
+| OpenTelemetry Distributed Tracing ADR | `docs/architecture/decisions/ADR-013-opentelemetry-distributed-tracing.md` | 2026-01-25 | Distributed tracing |
+| Agent Skills Integration ADR | `docs/architecture/decisions/ADR-014-agent-skills-integration.md` | 2026-01-28 | Cursor Agent Skills integration decision |
+| Architecture Integration Contract ADR | `docs/architecture/decisions/ADR-015-architecture-integration-contract.md` | 2026-01-25 | Integration contract |
+| Task Classifier and MCP Selector ADR | `docs/architecture/decisions/ADR-016-task-classifier-and-mcp-selector.md` | 2026-01-29 | Task-type → role and MCP recommendations |
+| **Debug Role Architecture ADR** | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | 2026-01-25 | Debug Role (Role 7), Issue System integration, auto-task creation, cross-role escalation |
+
+## Planning and Roadmaps
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Unified Master Roadmap** | `docs/governance/MASTER_ROADMAP_UNIFIED.md` | 2026-01-25 | **Primary canonical roadmap** - consolidates all previous roadmaps |
+| **Optional Task Inventory** | `docs/governance/OPTIONAL_TASK_INVENTORY.md` | 2026-01-29 | Authoritative optional-task backlog and dependency map; Phase 1 Master Plan deliverable |
+| Master Roadmap (Legacy) | `docs/archive/governance/MASTER_ROADMAP.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
+| Roadmap Summary (Legacy) | `docs/archive/governance/MASTER_ROADMAP_SUMMARY.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
+| Roadmap Index (Legacy) | `docs/archive/governance/MASTER_ROADMAP_INDEX.md` | 2026-01-25 | **ARCHIVED** - Superseded by MASTER_ROADMAP_UNIFIED.md |
+| Task Tracking | `docs/governance/MASTER_TASK_CHECKLIST.md` | 2026-01-25 | Active task checklist |
+| Task Log | `docs/governance/TASK_LOG.md` | 2026-01-25 | Historical task log |
+| Phase Gates | `docs/governance/PHASE_GATES_EVIDENCE_MAP.md` | 2026-01-25 | Gate completion evidence |
+| Risk Register | `docs/governance/RISK_REGISTER.md` | 2026-01-25 | Known risks and mitigations |
+| Service Level Objectives | `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` | 2026-01-25 | SLOs and telemetry-to-backlog integration |
+| Architecture Integration Phase 4 Backlog | `docs/design/ARCHITECTURE_INTEGRATION_BACKLOG.md` | 2026-01-28 | R10/R11 done; R12 (skills-as-MCP) backlog |
+| **Cross-Role Escalation Matrix** | `docs/governance/CROSS_ROLE_ESCALATION_MATRIX.md` | 2026-01-29 | Decision tree and routing table for cross-role escalation; when to use Debug Agent vs other roles |
+| **Handoff Protocol** | `docs/governance/HANDOFF_PROTOCOL.md` | 2026-01-29 | Standardized protocol for issue escalation and cross-role handoffs; templates and examples |
+
+## References
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| API Reference | `docs/REFERENCE/` | 2026-01-25 | Consolidated API docs |
+| Engine Reference | `docs/REFERENCE/ENGINE_REFERENCE.md` | 2026-01-25 | Engine capabilities and config |
+| Engine Config | `backend/config/engine_config.json` | 2026-01-25 | Runtime engine configuration |
+| Overseer Reference | `docs/REFERENCE/OVERSEER_REFERENCE.md` | 2026-01-25 | Overseer tooling guide |
+| Workers Reference | `docs/REFERENCE/WORKERS_REFERENCE.md` | 2026-01-25 | Worker system documentation |
+| Project Status | `docs/REFERENCE/PROJECT_STATUS_REFERENCE.md` | 2026-01-25 | Current project status |
+| Comprehensive Issues | `docs/REFERENCE/COMPREHENSIVE_ISSUES_REFERENCE.md` | 2026-01-25 | Known issues tracker |
+| Storage Durability | `docs/REFERENCE/STORAGE_DURABILITY_REFERENCE.md` | 2026-01-27 | Atomic-write audit and reference (Role 4) |
+| Job Runtime Map | `docs/REFERENCE/JOB_RUNTIME_MAP_REFERENCE.md` | 2026-01-27 | Job flows, cancellation, JobStateStore (Role 4) |
+| Preflight | `docs/REFERENCE/PREFLIGHT_REFERENCE.md` | 2026-01-27 | Port 8001, intended use, plugin-dir (Role 4) |
+| Artifact & Model | `docs/REFERENCE/ARTIFACT_MODEL_REFERENCE.md` | 2026-01-27 | Artifact/model storage, durability, preflight (Role 4) |
+
+## Role Documentation
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Role Guides Index** | `docs/governance/ROLE_GUIDES_INDEX.md` | 2026-01-25 | Master index with phase-gate-role matrix |
+| Role 0: Overseer | `docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md` | 2026-01-25 | Gate enforcement, evidence, coordination |
+| Role 1: System Architect | `docs/governance/roles/ROLE_1_SYSTEM_ARCHITECT_GUIDE.md` | 2026-01-25 | Boundaries, contracts, ADRs |
+| Role 2: Build & Tooling | `docs/governance/roles/ROLE_2_BUILD_TOOLING_GUIDE.md` | 2026-01-25 | Deterministic builds, CI/CD |
+| Role 3: UI Engineer | `docs/governance/roles/ROLE_3_UI_ENGINEER_GUIDE.md` | 2026-01-25 | MVVM, VSQ tokens, WinUI 3 |
+| Role 4: Core Platform | `docs/governance/roles/ROLE_4_CORE_PLATFORM_GUIDE.md` | 2026-01-25 | Runtime, storage, preflight |
+| Role 5: Engine Engineer | `docs/governance/roles/ROLE_5_ENGINE_ENGINEER_GUIDE.md` | 2026-01-25 | Quality metrics, adapters |
+| Role 6: Release Engineer | `docs/governance/roles/ROLE_6_RELEASE_ENGINEER_GUIDE.md` | 2026-01-25 | Installer, lifecycle, Gate H |
+| **Role 7: Debug Agent** | `docs/governance/roles/ROLE_7_DEBUG_AGENT_GUIDE.md` | 2026-01-25 | Root-cause analysis, issue triage, system-wide fixes, validation |
+| Skeptical Validator (subagent) | `docs/governance/SKEPTICAL_VALIDATOR_GUIDE.md` | 2026-01-28 | Cross-cutting validation subagent; §7 "When to Use" |
+| Validator Escalation Protocol | `docs/governance/VALIDATOR_ESCALATION.md` | 2026-01-28 | Overseer queue, HIGH PRIORITY, escalation triggers |
+| Context Manager Integration | `docs/governance/CONTEXT_MANAGER_INTEGRATION.md` | 2026-01-25 | Context manager architecture, ownership, and usage by role |
+| Role Boundaries Protocol | `Recovery Plan/ROLE_SYSTEM_AND_OVERSEER_PROTOCOL.md` | 2026-01-25 | Role playbooks, handshake rules |
+| Role Cheatsheet | `docs/developer/ROLE_CHEATSHEET.md` | 2026-01-25 | Quick one-liner prompts |
+
+## Role System Prompts
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Role Prompts Index** | `.cursor/prompts/ROLE_PROMPTS_INDEX.md` | 2026-01-25 | Master index for all 7 role prompts |
+| Role 0: Overseer Prompt | `.cursor/prompts/ROLE_0_OVERSEER_PROMPT.md` | 2026-01-25 | Complete system prompt for Overseer |
+| Role 1: System Architect Prompt | `.cursor/prompts/ROLE_1_SYSTEM_ARCHITECT_PROMPT.md` | 2026-01-25 | Complete system prompt for System Architect |
+| Role 2: Build & Tooling Prompt | `.cursor/prompts/ROLE_2_BUILD_TOOLING_PROMPT.md` | 2026-01-25 | Complete system prompt for Build & Tooling |
+| Role 3: UI Engineer Prompt | `.cursor/prompts/ROLE_3_UI_ENGINEER_PROMPT.md` | 2026-01-25 | Complete system prompt for UI Engineer |
+| Role 4: Core Platform Prompt | `.cursor/prompts/ROLE_4_CORE_PLATFORM_PROMPT.md` | 2026-01-25 | Complete system prompt for Core Platform |
+| Role 5: Engine Engineer Prompt | `.cursor/prompts/ROLE_5_ENGINE_ENGINEER_PROMPT.md` | 2026-01-25 | Complete system prompt for Engine Engineer |
+| Role 6: Release Engineer Prompt | `.cursor/prompts/ROLE_6_RELEASE_ENGINEER_PROMPT.md` | 2026-01-25 | Complete system prompt for Release Engineer |
+| **Role 7: Debug Agent Prompt** | `.cursor/prompts/ROLE_7_DEBUG_AGENT_PROMPT.md` | 2026-01-25 | Complete system prompt for Debug Agent |
+| Skeptical Validator Prompt | `.cursor/prompts/SKEPTICAL_VALIDATOR_PROMPT.md` | 2026-01-28 | Kickoff prompt for Skeptical Validator subagent (v1.1.0: role identity fix, validator_workflow.py integration, Quality Ledger clarification) |
+| Onboarding Summary | `.cursor/prompts/ONBOARDING_COMPLETE_SUMMARY.md` | 2026-01-25 | Overseer onboarding completion report |
+
+## Agent Skills
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Agent Skills | `.cursor/skills/` | 2026-01-28 | Role and tool skills for Cursor Agent |
+| Skill Registration Script | `tools/skills/register_skill.ps1` | 2026-01-28 | Scaffold for new skills and templates |
+
+## Developer Documentation
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Quick Start | `docs/governance/QUICK_START_GUIDE.md` | 2026-01-25 | Getting started for devs |
+| README First | `docs/governance/README_FIRST.md` | 2026-01-25 | First-time contributor guide |
+| Developer Guide | `docs/developer/DEVELOPER_GUIDE.md` | 2026-01-25 | Development practices |
+| Build & Deploy | `docs/developer/BUILD_AND_DEPLOYMENT.md` | 2026-01-25 | Build process |
+| Contributing | `docs/developer/CONTRIBUTING.md` | 2026-01-25 | Contribution guidelines |
+| Onboarding | `docs/developer/ONBOARDING.md` | 2026-01-25 | New developer onboarding |
+| Troubleshooting | `docs/developer/TROUBLESHOOTING.md` | 2026-01-25 | Common issues and fixes |
+| Cursor User Rules | `docs/developer/CURSOR_USER_RULES.md` | 2026-01-25 | Global Cursor baseline for VoiceStudio |
+
+## Design and Specifications
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| UI Implementation | `docs/design/UI_IMPLEMENTATION_SPEC.md` | 2026-01-25 | UI design specification |
+| Implementation Spec | `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` | 2026-01-25 | Full implementation spec |
+| Execution Plan | `docs/design/EXECUTION_PLAN.md` | 2026-01-25 | Implementation execution |
+| File Structure | `docs/design/file-structure.md` | 2026-01-25 | Project file organization |
+| Project Structure | `docs/design/project-structure.md` | 2026-01-25 | High-level project layout |
+| **ViewModel DI Refactor** | `docs/design/viewmodel_di_refactor.md` | 2026-01-29 | TD-004; migration from AppServices/parameterless BaseViewModel to constructor injection |
+| **Engine Venv Isolation** | `docs/design/ENGINE_VENV_ISOLATION_SPEC.md` | 2026-01-29 | TD-001; per-engine/dual-venv strategy (Chatterbox vs XTTS torch) |
+| **UI Automation** | `docs/design/UI_AUTOMATION_SPEC.md` | 2026-01-29 | Hybrid Gate C + WinAppDriver; Phase 2 Master Plan mini-spec |
+
+## Project Organization
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Organization Map | `docs/governance/PROJECT_ORGANIZATION_MAP.md` | 2026-01-25 | Project structure map |
+| Reorg Log | `docs/governance/PROJECT_REORG_LOG.md` | 2026-01-25 | Reorganization history |
+| Compatibility | `docs/governance/COMPATIBILITY_SNAPSHOT.md` | 2026-01-25 | Compatibility matrix |
+| Production Build | `docs/governance/VoiceStudio_Production_Build_Plan.md` | 2026-01-25 | Production build plan |
+
+## Security
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Threat Model | `docs/reports/security/THREAT_MODEL.md` | 2026-01-25 | Baseline security threat model |
+
+## Reports
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Architecture Peer Review Package (Gate C / TASK-0004)** | `docs/reports/verification/ARCHITECTURE_PEER_REVIEW_PACKAGE_2026-01-27.md` | 2026-01-27 | Overseer-owned single entry point for architecture peer review; consolidates blockers, decisions, evidence, next tasks, approval map |
+| Session 11 Overseer Next Steps | `docs/reports/verification/SESSION11_OVERSEER_NEXT_STEPS_2026-01-27.md` | 2026-01-27 | Overseer run: tooling refresh, Task B deferred (venv), Task C partial (Install OK, Launch V1 fail); §6 peer approval |
+| Peer Review Package | `docs/reports/verification/PEER_REVIEW_PACKAGE_2026-01-28.md` | 2026-01-28 | Peer review of items pending approval; tooling verification; Validator sign-off checklist |
+| Gate C / Gate H Release Engineer | `docs/reports/packaging/GATE_C_H_RELEASE_ENGINEER_REPORT_2026-01-27.md` | 2026-01-27 | Gate C proof status, Gate H lifecycle plan, prereq gaps, evidence bundle |
+| Rules Gap Analysis | `docs/reports/governance/RULES_GAP_ANALYSIS_REPORT.md` | 2026-01-25 | Rules Kit integration gap assessment |
+| Rules Validation | `docs/reports/verification/RULES_VALIDATION_REPORT.md` | 2026-01-25 | Static validation + manual steps |
+| UI Spec Reconciliation | `docs/reports/design/UI_SPEC_RECONCILIATION_MATRIX.md` | 2026-01-25 | Base vs Quantum+ comparison |
+| UI Gap Analysis | `docs/reports/verification/UI_GAP_ANALYSIS_REPORT.md` | 2026-01-25 | Spec vs implementation gaps |
+| **Accessibility Testing (Gate G)** | `docs/reports/verification/ACCESSIBILITY_TESTING_REPORT.md` | 2026-01-29 | Phase 4 QA; §2.1 formal screen reader procedure; Role 3 contribution |
+| **Performance Testing (Phase 4)** | `docs/reports/verification/PERFORMANCE_TESTING_REPORT.md` | 2026-01-29 | Baseline UI/engine/SLO metrics; TASK-0014 Phase B |
+| **Security Audit (Phase 4)** | `docs/reports/verification/SECURITY_AUDIT_REPORT.md` | 2026-01-29 | Dependency scan (pip-audit, dotnet vulnerable), code review; TASK-0014 Phase C |
+| **Phase 5 Closure Report** | `docs/reports/packaging/PHASE_5_CLOSURE_REPORT_2026-01-29.md` | 2026-01-29 | Phase 5 (Packaging & Installer) formal closure; Gate H 1/1 GREEN; lifecycle 7/7 PASS; roadmap baseline complete; TASK-0017 deliverable |
+| **Optional Tasks Master Plan — Stream Status** | `docs/reports/verification/ENGINE_PROOF_STREAM_STATUS_2026-01-29.md`, `CORE_PLATFORM_STREAM_STATUS_2026-01-29.md`, `UI_STREAM_STATUS_2026-01-29.md`, `BUILD_QUALITY_STREAM_STATUS_2026-01-29.md`, `OBSERVABILITY_STREAM_STATUS_2026-01-29.md` | 2026-01-29 | Phase 4/7/8 stream status: engine venv + baseline proofs; wizard upload + preflight; advanced panels + UI automation; build quality/warnings; SLO re-baseline + perf checks; Security Audit §9 CVE tracking |
+
+## Overseer Tooling
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| Daily Workflow | `docs/governance/overseer/DAILY_WORKFLOW_CHECKLIST.md` | 2026-01-25 | Daily overseer tasks |
+| Gate Enforcement | `docs/governance/overseer/GATE_ENFORCEMENT_GUIDE.md` | 2026-01-25 | Gate system guide |
+| Handoff Process | `docs/governance/overseer/HANDOFF_PROCESS_GUIDE.md` | 2026-01-25 | Handoff documentation |
+| Quality Ledger | `Recovery Plan/QUALITY_LEDGER.md` | 2026-01-25 | VS-XXXX tracking |
+| Verification automation | `scripts/run_verification.py`, `scripts/run-verification.ps1` | 2026-01-28 | Gate + ledger (+ optional build); proof in `.buildlogs/verification/last_run.json` |
+| Overseer Issue System | `docs/developer/OVERSEER_ISSUE_SYSTEM.md` | 2026-01-28 | Unified issue logging from agents, engines, builds; recommendations and CLI for AI Overseer review |
+| **Debug Role Integration** | `docs/developer/DEBUG_ROLE_INTEGRATION_GUIDE.md` | 2026-01-25 | Debug Role (Role 7) integration guide; issue-to-task workflow, escalation, CLI reference |
+
+---
+
+## Registry Maintenance
+
+### Adding New Canonical Sources
+
+1. Verify the topic doesn't already exist in this registry
+2. Create the document following naming conventions in `DOCUMENT_GOVERNANCE.md`
+3. Add an entry to the appropriate section above
+4. Update the "Last Updated" date
+
+### Superseding Documents
+
+When a document is replaced:
+
+1. Update this registry to point to the new canonical source
+2. Add "Superseded by X" note to the old document
+3. Move the old document to `docs/archive/{category}/`
+
+### Disputes
+
+If unclear which document is canonical:
+
+1. Check this registry first
+2. If not listed, check `docs/governance/ARCHIVE_POLICY.md`
+3. If still unclear, create an ADR to establish the canonical source
