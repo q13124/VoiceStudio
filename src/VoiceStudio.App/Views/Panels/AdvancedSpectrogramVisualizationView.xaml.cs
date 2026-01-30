@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 namespace VoiceStudio.App.Views.Panels
 {
     // Phase 0: code-only placeholder to avoid XamlCompiler.exe crashes.
-    public sealed class AdvancedSpectrogramVisualizationView : UserControl
+    public sealed partial class AdvancedSpectrogramVisualizationView : UserControl
     {
         public AdvancedSpectrogramVisualizationView()
         {
