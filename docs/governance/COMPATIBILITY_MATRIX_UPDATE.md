@@ -1,3 +1,5 @@
+<!-- HISTORICAL SNAPSHOT - See docs/governance/ON_TRACK_STATE.md for canonical sources. Implementation files (requirements_engines.txt, Directory.Build.props) define current versions. -->
+
 # Compatibility Matrix Update - Roadmap Integration
 ## Software Architecture & Version Lock Implementation
 

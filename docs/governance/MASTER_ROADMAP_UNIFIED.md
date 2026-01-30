@@ -1,0 +1,291 @@
+# VoiceStudio Quantum+ Master Roadmap (Unified)
+
+> **Version**: 1.0.0  
+> **Last Updated**: 2026-01-29  
+> **Owner**: Overseer (Role 0)  
+> **Status**: ACTIVE — Primary canonical roadmap  
+> **Supersedes**: MASTER_ROADMAP.md, MASTER_ROADMAP_SUMMARY.md, MASTER_ROADMAP_INDEX.md (archived to `docs/archive/governance/`)
+
+This is the **single source of truth** for VoiceStudio's development roadmap. All other roadmap documents are superseded or archived.
+
+---
+
+## Executive Summary
+
+**Project**: VoiceStudio Quantum+ — Native Windows AI voice studio (WinUI 3 + FastAPI + 44 manifest-driven engines)
+
+**Current State** (2026-01-29):
+- **Phase**: Post-Phase-5 (Packaging & Installer)
+- **Gates**: B–H **GREEN** (100%)
+- **Quality Ledger**: 33/33 **DONE**
+- **Production Status**: v1.0.0 BASELINE declared **PRODUCTION-READY** for Windows 10/11
+- **Active Task**: TASK-0020 (Wizard flow e2e proof)
+
+**Key Metrics**:
+- 164+ API endpoints
+- 6 core panels + 12 advanced panels
+- 44 engine manifests
+- Gate C UI smoke: 11 nav steps, 0 binding failures
+- Gate H installer lifecycle: 7/7 PASS
+
+---
+
+## Roadmap Phases
+
+### Phase 0: Foundation (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2025-12-27
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| Architecture defined | ✓ | 19 ADRs, 10-part spec series |
+| Engine Protocol system | ✓ | BaseEngine, manifests in `engines/` |
+| XTTS, Chatterbox, Tortoise engines | ✓ | Engine adapters in `app/core/engines/` |
+| Quality metrics framework | ✓ | `app/core/engines/quality_metrics.py` |
+| Panel discovery system | ✓ | PanelHost, PanelStack, Registry |
+
+---
+
+### Phase 1: Core Backend (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2026-01-15
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| FastAPI application | ✓ | `backend/api/main.py` |
+| Core endpoints (164+) | ✓ | `backend/api/routes/` |
+| WebSocket support | ✓ | `backend/api/ws/realtime.py` |
+| Engine router | ✓ | `backend/services/engine_router.py` |
+| IBackendClient (C#) | ✓ | `src/VoiceStudio.App/Services/BackendClient.cs` |
+
+---
+
+### Phase 2: Audio Integration (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2026-01-20
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| Engine integration | ✓ | XTTS, Piper, Chatterbox adapters |
+| Audio engine router | ✓ | Dynamic engine selection |
+| Audio playback service | ✓ | NAudio/WASAPI integration |
+| Audio file I/O | ✓ | Backend returns URLs, client downloads |
+| Timeline audio playback | ✓ | Play/Pause/Stop/Resume in TimelineView |
+
+---
+
+### Phase 3: UI Core (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2026-01-22
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| 3-row shell | ✓ | MenuBar, Workspace, StatusBar |
+| 4 PanelHosts | ✓ | Left, Center, Right, Bottom |
+| 6 core panels | ✓ | Profiles, Timeline, EffectsMixer, Analyzer, Macro, Diagnostics |
+| Design tokens | ✓ | VSQ.* tokens in DesignTokens.xaml |
+| MVVM separation | ✓ | Views + ViewModels + Services |
+
+---
+
+### Phase 4: Quality & Testing (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2026-01-25
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| Gate D (Backend Quality) | ✓ GREEN (10/10) | Role 4 proof suite 40/40 PASS |
+| Gate E (Engine Integration) | ✓ GREEN (4/4) | Baseline proof, SLO-6 met |
+| Gate F (UI Compliance) | ✓ GREEN (6/6) | UI_COMPLIANCE_AUDIT, PANEL_FUNCTIONALITY_TESTS |
+| Gate G (Comprehensive QA) | ✓ GREEN (3/3) | ACCESSIBILITY_TESTING_REPORT, PERFORMANCE_TESTING_REPORT, SECURITY_AUDIT_REPORT |
+| Quality Ledger | ✓ 33/33 DONE | Recovery Plan/QUALITY_LEDGER.md |
+
+---
+
+### Phase 5: Packaging & Installer (COMPLETE ✓)
+
+**Status**: 100% DONE  
+**Completion**: 2026-01-29
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| Gate H (Packaging & Installer) | ✓ GREEN (1/1) | Installer lifecycle 7/7 PASS |
+| Gate C (Release Build) | ✓ GREEN | 21 UI smoke runs, 0 binding failures |
+| Production readiness | ✓ DECLARED | PRODUCTION_READINESS.md |
+| Phase 5 closure | ✓ COMPLETE | PHASE_5_CLOSURE_REPORT_2026-01-29.md |
+
+---
+
+## Phase 6+: Optional Work & Tech Debt
+
+**Status**: ACTIVE — Optional features and tech debt remediation  
+**Entry Criteria**: All gates B-H GREEN ✓
+
+### Phase 6: Optional Enhancements
+
+| Feature | Description | Effort | Priority | Owner |
+|---------|-------------|--------|----------|-------|
+| Advanced panel backend integration | Wire backend APIs for 9 innovative panels (Text Speech Editor, Prosody, Spatial Audio, AI Mixing, etc.) | 36-72h | Medium | Role 3 |
+| UI automation framework | Playwright/WinAppDriver setup + tests | 16-24h | Medium | Role 3 |
+| Wizard e2e automation | Execute wizard_flow_proof.py with ≥3s speech reference | 1-2h | Medium | Role 3/5 |
+| OpenMemory MCP wiring | Complete stubbed `_try_openmemory_mcp_protocol()` in memory_adapter.py | 4-8h | Medium | Role 4 |
+| Design system expansion | Visualization/animation tokens | 8-16h | Low | Role 3 |
+| Accessibility enhancements | Screen reader, ARIA, focus | 8-16h | Medium | Role 3 |
+| UI performance optimization | Virtualization, caching, profiling | 8-16h | Low | Role 3/4 |
+| UX refinements | Animations, tooltips | 8-16h | Low | Role 3 |
+
+### Phase 7: Tech Debt Remediation
+
+Per [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md):
+
+| TD ID | Description | Priority | Owner | Target |
+|-------|-------------|----------|-------|--------|
+| TD-001 | Chatterbox torch>=2.6 / per-engine venv | HIGH | Role 5 | Phase 6+ |
+| TD-002 | Gate C Release full fix (revert NoWarn) | HIGH | Role 2 | Phase 6+ |
+| TD-003 | protobuf CVE-2026-0994 | MEDIUM | Role 4/5 | Sprint 2 |
+| TD-004 | ViewModel DI migration | MEDIUM | Role 3/4 | Phase 6+ |
+| TD-005 | Wizard flow e2e automation | MEDIUM | Role 3/5 | Sprint 2 (TASK-0020) |
+| TD-007 | Warning count reduction (~4990) | LOW | Role 2/3 | Phase 6+ (optional) |
+
+### Phase 8: Architecture Gap Remediation
+
+Per [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md):
+
+| TD ID | Description | Spec Source | Priority | Owner |
+|-------|-------------|-------------|----------|-------|
+| TD-013 | VRAM Resource Scheduler | ChatGPT Part 7 | HIGH | Role 4/5 |
+| TD-014 | Circuit Breaker pattern | ChatGPT Part 3 | MEDIUM | Role 4 |
+| TD-015 | Venv Families (12 families) | ChatGPT Part 4 | MEDIUM | Role 5 |
+| TD-016 | Engine Manifest Schema v2 | ChatGPT Part 4 | LOW | Role 5 |
+
+### Phase 9: Documentation Completeness
+
+Per [FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md](../reports/verification/FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md):
+
+| Item | Description | Effort | Owner |
+|------|-------------|--------|-------|
+| 13 missing ADRs | Create placeholder or full ADRs (ADR-002, 004-014, 016) | 4-6h (placeholders) or 16-24h (full) | Role 1 |
+| Missing task briefs | Backfill TASK-0009, 0011-0019, 0021 | 8-11h | Role 0 |
+| Architecture README | Create docs/architecture/README.md | 1-2h | Role 1 |
+
+---
+
+## Current Work (2026-01-29)
+
+### Active Tasks
+
+| Task ID | Title | Owner | Status | Next Action |
+|---------|-------|-------|--------|-------------|
+| **TASK-0020** | Wizard Flow E2E Proof (TD-005) | Role 3/5 | In Progress | Re-run with ≥3s speech reference |
+| **TASK-0021** | OpenMemory MCP Wiring | Role 4/1 | Pending | Phase 6+ |
+| **TASK-0022** | Git History Reconstruction | Role 0 | Complete | 80+ files recovered |
+
+### Next 3 Steps
+
+1. **TASK-0020**: Execute wizard flow e2e proof when backend on 8001 with ≥3s speech reference
+2. **Tooling refresh**: Run `python scripts/run_verification.py` when starting next workstream
+3. **Role handoff**: Use `/role-ui-engineer` or `/role-engine-engineer` for TASK-0020; `/role-core-platform` or `/role-system-architect` for TASK-0021
+
+---
+
+## Future Phases (Phase 10+)
+
+### Advanced Features (Phase 6+ Optional)
+
+From [TECH_DEBT_REGISTER §4](TECH_DEBT_REGISTER.md):
+
+- Real-time streaming voice synthesis
+- Advanced UI animations (Fluent, micro-interactions)
+- Additional engine families (Bark, Tacotron, RVC v2)
+- MCP auto-selection (task-type → MCP)
+- Performance optimizations (UI <100ms, engine throughput)
+- Cross-platform (macOS, Linux via Avalonia/MAUI)
+- Task-type classifier
+- Issues-to-tasks automation
+- CI/CD pipeline
+- Agent Skills migration
+- Onboarding packet caching
+
+---
+
+## Governance & Process
+
+### Gate System
+
+All gates B-H are **GREEN** (100%):
+
+| Gate | Name | Status | Evidence |
+|------|------|--------|----------|
+| B | Baseline Build | GREEN | `dotnet build` 0 errors |
+| C | Release Build & UI Smoke | GREEN | 21 UI smoke runs, 0 binding failures |
+| D | Backend Quality | GREEN (10/10) | Role 4 proof suite 40/40 PASS |
+| E | Engine Integration | GREEN (4/4) | Baseline proof, SLO-6 met |
+| F | UI Compliance | GREEN (6/6) | UI_COMPLIANCE_AUDIT |
+| G | Comprehensive QA | GREEN (3/3) | Accessibility, Performance, Security |
+| H | Packaging & Installer | GREEN (1/1) | Installer lifecycle 7/7 PASS |
+
+**Source**: [Recovery Plan/QUALITY_LEDGER.md](../../Recovery Plan/QUALITY_LEDGER.md)
+
+### Role System
+
+8 roles + Skeptical Validator:
+
+| Role | Responsibility | Guide | Prompt |
+|------|----------------|-------|--------|
+| 0 Overseer | Gate discipline, evidence, coordination | [ROLE_0_OVERSEER_GUIDE.md](roles/ROLE_0_OVERSEER_GUIDE.md) | [ROLE_0_OVERSEER_PROMPT.md](../../.cursor/prompts/ROLE_0_OVERSEER_PROMPT.md) |
+| 1 System Architect | Boundaries, contracts, ADRs | [ROLE_1_SYSTEM_ARCHITECT_GUIDE.md](roles/ROLE_1_SYSTEM_ARCHITECT_GUIDE.md) | [ROLE_1_SYSTEM_ARCHITECT_PROMPT.md](../../.cursor/prompts/ROLE_1_SYSTEM_ARCHITECT_PROMPT.md) |
+| 2 Build & Tooling | Deterministic build, CI/CD | [ROLE_2_BUILD_TOOLING_GUIDE.md](roles/ROLE_2_BUILD_TOOLING_GUIDE.md) | [ROLE_2_BUILD_TOOLING_PROMPT.md](../../.cursor/prompts/ROLE_2_BUILD_TOOLING_PROMPT.md) |
+| 3 UI Engineer | MVVM, VSQ tokens, WinUI 3 | [ROLE_3_UI_ENGINEER_GUIDE.md](roles/ROLE_3_UI_ENGINEER_GUIDE.md) | [ROLE_3_UI_ENGINEER_PROMPT.md](../../.cursor/prompts/ROLE_3_UI_ENGINEER_PROMPT.md) |
+| 4 Core Platform | Runtime, storage, preflight | [ROLE_4_CORE_PLATFORM_GUIDE.md](roles/ROLE_4_CORE_PLATFORM_GUIDE.md) | [ROLE_4_CORE_PLATFORM_PROMPT.md](../../.cursor/prompts/ROLE_4_CORE_PLATFORM_PROMPT.md) |
+| 5 Engine Engineer | Quality metrics, engine adapters | [ROLE_5_ENGINE_ENGINEER_GUIDE.md](roles/ROLE_5_ENGINE_ENGINEER_GUIDE.md) | [ROLE_5_ENGINE_ENGINEER_PROMPT.md](../../.cursor/prompts/ROLE_5_ENGINE_ENGINEER_PROMPT.md) |
+| 6 Release Engineer | Installer, Gate H lifecycle | [ROLE_6_RELEASE_ENGINEER_GUIDE.md](roles/ROLE_6_RELEASE_ENGINEER_GUIDE.md) | [ROLE_6_RELEASE_ENGINEER_PROMPT.md](../../.cursor/prompts/ROLE_6_RELEASE_ENGINEER_PROMPT.md) |
+| 7 Debug Agent | Issue triage, escalation, root-cause | [ROLE_7_DEBUG_AGENT_GUIDE.md](roles/ROLE_7_DEBUG_AGENT_GUIDE.md) | [ROLE_7_DEBUG_AGENT_PROMPT.md](../../.cursor/prompts/ROLE_7_DEBUG_AGENT_PROMPT.md) |
+| Skeptical Validator | Independent verification before closure | [SKEPTICAL_VALIDATOR_GUIDE.md](SKEPTICAL_VALIDATOR_GUIDE.md) | [SKEPTICAL_VALIDATOR_PROMPT.md](../../.cursor/prompts/SKEPTICAL_VALIDATOR_PROMPT.md) |
+
+---
+
+## Technical Debt
+
+See [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md) for complete list. Summary:
+
+### High Priority
+- TD-001: Chatterbox torch>=2.6 / per-engine venv
+- TD-002: Gate C Release full fix (revert NoWarn suppressions)
+
+### Medium Priority
+- TD-003: protobuf CVE-2026-0994
+- TD-004: ViewModel DI migration
+- TD-005: Wizard flow e2e automation (TASK-0020)
+
+### Low Priority
+- TD-007: Warning count reduction (~4990)
+
+### Architecture Gaps (from ChatGPT Spec)
+- TD-013: VRAM Resource Scheduler
+- TD-014: Circuit Breaker pattern
+- TD-015: Venv Families (12 families)
+- TD-016: Engine Manifest Schema v2
+
+---
+
+## References
+
+- **Gate Status**: [Recovery Plan/QUALITY_LEDGER.md](../../Recovery Plan/QUALITY_LEDGER.md)
+- **Session State**: [.cursor/STATE.md](../../.cursor/STATE.md)
+- **Production Readiness**: [PRODUCTION_READINESS.md](../PRODUCTION_READINESS.md)
+- **Tech Debt**: [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md)
+- **Optional Tasks**: [OPTIONAL_TASK_INVENTORY.md](OPTIONAL_TASK_INVENTORY.md)
+- **Project Handoff**: [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md)
+
+---
+
+## Changelog
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-01-29 | Initial creation — consolidates roadmap state post-Phase-5 | Overseer (Role 0) |
