@@ -34,28 +34,36 @@
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,8"
           Spacing="8">
           <ToggleButton x:Name="NavStudio" Content="S" ToolTipService.ToolTip="Studio" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavStudio_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavStudio_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavProfiles" Content="P" ToolTipService.ToolTip="Profiles"
-            Width="40" Height="40" Margin="0,0,0,4" Click="NavProfiles_Click"
+            Width="40" Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavProfiles_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavLibrary" Content="L" ToolTipService.ToolTip="Library" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavLibrary_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavLibrary_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavEffects" Content="E" ToolTipService.ToolTip="Effects" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavEffects_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavEffects_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavTrain" Content="T" ToolTipService.ToolTip="Train" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavTrain_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavTrain_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavAnalyze" Content="A" ToolTipService.ToolTip="Analyze" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavAnalyze_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavAnalyze_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavSettings" Content="⚙" ToolTipService.ToolTip="Settings"
-            Width="40" Height="40" Margin="0,0,0,4" Click="NavSettings_Click"
+            Width="40" Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavSettings_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
           <ToggleButton x:Name="NavLogs" Content="D" ToolTipService.ToolTip="Logs" Width="40"
-            Height="40" Margin="0,0,0,4" Click="NavLogs_Click"
+            Height="40" Margin="0,0,0,4" Style="{StaticResource VSQ.Button.NavToggle}"
+            Click="NavLogs_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited" />
         </StackPanel>
       </Border>

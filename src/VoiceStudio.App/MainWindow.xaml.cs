@@ -158,6 +158,8 @@ namespace VoiceStudio.App
         profiler.Checkpoint("MacroView Created (Default)");
       }
 
+      SetActiveNavButton("NavStudio");
+
       // Update menu item state for Mini Timeline toggle (IDEA 6)
       UpdateMiniTimelineMenuItem();
 
@@ -215,44 +217,77 @@ namespace VoiceStudio.App
     private void NavStudio_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Center, "Timeline", () => new TimelineView());
+      SetActiveNavButton("NavStudio");
     }
 
     private void NavProfiles_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Profiles", () => new ProfilesView());
+      SetActiveNavButton("NavProfiles");
     }
 
     private void NavLibrary_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Library", () => new LibraryView());
+      SetActiveNavButton("NavLibrary");
     }
 
     private void NavEffects_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
+      SetActiveNavButton("NavEffects");
     }
 
     private void NavTrain_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Training", () => new TrainingView());
+      SetActiveNavButton("NavTrain");
     }
 
     private void NavAnalyze_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Analyzer", () => new AnalyzerView());
+      SetActiveNavButton("NavAnalyze");
     }
 
     private void NavSettings_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Settings", () => new SettingsView());
+      SetActiveNavButton("NavSettings");
     }
 
     private void NavLogs_Click(object sender, RoutedEventArgs e)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
+      SetActiveNavButton("NavLogs");
     }
 
     #endregion
+
+    private void SetActiveNavButton(string activeButtonName)
+    {
+      var navButtons = new[]
+      {
+        FindNameOnContent("NavStudio") as ToggleButton,
+        FindNameOnContent("NavProfiles") as ToggleButton,
+        FindNameOnContent("NavLibrary") as ToggleButton,
+        FindNameOnContent("NavEffects") as ToggleButton,
+        FindNameOnContent("NavTrain") as ToggleButton,
+        FindNameOnContent("NavAnalyze") as ToggleButton,
+        FindNameOnContent("NavSettings") as ToggleButton,
+        FindNameOnContent("NavLogs") as ToggleButton
+      };
+
+      foreach (var navButton in navButtons)
+      {
+        if (navButton == null)
+        {
+          continue;
+        }
+
+        navButton.IsChecked = string.Equals(navButton.Name, activeButtonName, StringComparison.Ordinal);
+      }
+    }
 
     internal async Task<(string[] Steps, bool TimedOut, string? TimedOutStep)> RunGateCUiSmokeNavigationAsync(string crashDir)
     {

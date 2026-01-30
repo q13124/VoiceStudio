@@ -8,6 +8,10 @@
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <!-- Design tokens (VSQ.*) -->
         <ResourceDictionary Source="ms-appx:///Resources/DesignTokens.xaml" />
+        <!-- Style dictionaries -->
+        <ResourceDictionary Source="ms-appx:///Resources/Styles/Controls.xaml" />
+        <ResourceDictionary Source="ms-appx:///Resources/Styles/Text.xaml" />
+        <ResourceDictionary Source="ms-appx:///Resources/Styles/Panels.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

@@ -37,7 +37,7 @@
       "source.organizeImports": "explicit"
     },
     // Suppress some console warnings (extension API proposals)
-    "extensions.ignoreRecommendations": false,
+    "extensions.ignoreRecommendations": true,
     "git.ignoreLimitWarning": true
   },
   "extensions": {

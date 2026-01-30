@@ -7,6 +7,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Primary goal**: upgrade voice cloning quality + functionality without architectural drift.
 - **Architecture**:
   - **Frontend**: WinUI 3 (.NET) app under `src/` (MVVM).
+- **UI styling**: `src/VoiceStudio.App/Resources/DesignTokens.xaml` holds VSQ tokens; style dictionaries live under `src/VoiceStudio.App/Resources/Styles/` and are merged in `App.xaml` (Controls/Text/Panels).
 - **Frontend DI**: `AppServiceBootstrapper` builds DI container; `AppServices` provides access; legacy `ServiceProvider` is a shim.
 - **App state**: `AppStateStore` (immutable) tracks backend connectivity and global app flags.
   - **Backend API**: Python FastAPI service under `backend/`.
@@ -222,6 +223,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
 - **Context allocator**: `tools/context/allocate.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
 - **OpenMemory reader**: `tools/context/sources/openmemory_reader.py` provides optional integration for context bundle assembly.
+- **Context tests gap**: Role 4 guide references `tests/tools/test_context_source_adapters.py` and `tests/tools/test_context_allocator.py`, but these files are not present in the repo (verified 2026-01-29).
 
 ## Agent governance tooling
 
@@ -238,3 +240,4 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   `%APPDATA%\\VoiceStudio\\logs\\agent_audit`.
 - **Safe zones**: `tools/overseer/agent/safe_zones.py` deep-copies default safe zones per manager and
   matches recursive patterns using escaped regex handling.
+- **Overseer CLI gap**: `tools/overseer/cli/main.py` references `gate_cli` and `ledger_cli`, but the modules are missing under `tools/overseer/cli` (gate/ledger commands fail with ModuleNotFoundError as of 2026-01-29).

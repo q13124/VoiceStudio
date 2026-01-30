@@ -40,20 +40,7 @@
   <SolidColorBrush x:Key="VSQ.Loading.BackgroundBrush" Color="#80000000" />
   <SolidColorBrush x:Key="VSQ.Loading.TextBrush" Color="#FFCDD9E5" />
   <SolidColorBrush x:Key="VSQ.Loading.ForegroundBrush" Color="#FF00B7C2" />
-  <!-- NOTE: WinUI 3 does not define DefaultProgressRingStyle. ProgressRing uses an implicit style
-  in WinUI generic.xaml.
-       Keep this token style free of BasedOn so it never crashes XAML parsing. -->
-  <Style x:Key="VSQ.LoadingSpinner.Style" TargetType="ProgressRing">
-    <Setter Property="Width" Value="{StaticResource VSQ.Icon.Size.Large}" />
-    <Setter Property="Height" Value="{StaticResource VSQ.Icon.Size.Large}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Loading.ForegroundBrush}" />
-    <Setter Property="IsActive" Value="True" />
-  </Style>
-  <!-- NOTE: WinUI 3 ProgressBar also uses an implicit style; keep this style token safe to
-  reference. -->
-  <Style x:Key="VSQ.ProgressBar.Style" TargetType="ProgressBar">
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Progress.ForegroundBrush}" />
-  </Style>
+  <!-- Control styles moved to Resources/Styles/Controls.xaml -->
   <!-- Drop zone colors (using accent cyan with opacity) -->
   <SolidColorBrush x:Key="VSQ.DropZone.BackgroundBrush" Color="#4000B7C2" />
   <SolidColorBrush x:Key="VSQ.DropZone.BorderBrush" Color="#FF00B7C2" />
@@ -115,72 +102,5 @@
   <Thickness x:Key="VSQ.Toast.ActionButton.Padding">8,4,8,4</Thickness>
   <Thickness x:Key="VSQ.Toast.Progress.Margin">0,8,0,0</Thickness>
   <Thickness x:Key="VSQ.Button.Padding.Small">4</Thickness>
-  <!-- Basic text styles -->
-  <Style x:Key="VSQ.Text.Body" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Body}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="TextWrapping" Value="Wrap" />
-  </Style>
-  <Style x:Key="VSQ.Text.Caption" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Caption}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}" />
-    <Setter Property="TextWrapping" Value="Wrap" />
-  </Style>
-  <Style x:Key="VSQ.Text.Title" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Title}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="TextWrapping" Value="Wrap" />
-  </Style>
-  <Style x:Key="VSQ.Text.Heading" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Heading}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="FontWeight" Value="Bold" />
-    <Setter Property="TextWrapping" Value="Wrap" />
-  </Style>
-  <!-- Basic button styles (no triggers/templates; WinUI-safe) -->
-  <Style x:Key="VSQ.Button.Primary" TargetType="Button">
-    <Setter Property="Background" Value="{StaticResource VSQ.Accent.CyanBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}" />
-    <Setter Property="Padding" Value="{StaticResource VSQ.Spacing.Medium}" />
-  </Style>
-  <Style x:Key="VSQ.Button.Secondary" TargetType="Button">
-    <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}" />
-    <Setter Property="Padding" Value="{StaticResource VSQ.Spacing.Medium}" />
-  </Style>
-  <!-- Shared focus-friendly style used across buttons/toggles (referenced as
-  VSQ.Button.FocusStyle). -->
-  <!-- Keep TargetType broad so it can be applied to Button + ToggleButton safely. -->
-  <Style x:Key="VSQ.Button.FocusStyle" TargetType="Control">
-    <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="FocusVisualPrimaryBrush" Value="{StaticResource VSQ.Accent.CyanBrush}" />
-    <Setter Property="FocusVisualSecondaryBrush" Value="{StaticResource VSQ.Accent.CyanBrush}" />
-  </Style>
-  <Style x:Key="VSQ.Button.HoverStyle" TargetType="Button"
-    BasedOn="{StaticResource DefaultButtonStyle}">
-    <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Button}" />
-    <Setter Property="Padding" Value="{StaticResource VSQ.Spacing.Medium}" />
-  </Style>
-
-  <!-- Small icon button (help / close / etc). -->
-  <Style x:Key="VSQ.Button.Icon" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="8" />
-    <Setter Property="MinWidth" Value="{StaticResource VSQ.Control.Width.Medium}" />
-    <Setter Property="MinHeight" Value="{StaticResource VSQ.Control.Height.Medium}" />
-    <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}" />
-  </Style>
+  <!-- Text + control styles moved to Resources/Styles/Text.xaml and Resources/Styles/Controls.xaml -->
 </ResourceDictionary>
