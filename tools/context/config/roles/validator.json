@@ -1,0 +1,4 @@
+{
+  "weights": { "brief": 1.0, "rules": 0.8, "state": 0.9 },
+  "budgets": { "brief_chars": 4000, "rules_chars": 2400, "state_chars": 2500 }
+}

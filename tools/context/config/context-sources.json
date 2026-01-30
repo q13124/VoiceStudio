@@ -1,0 +1,78 @@
+{
+  "weights": {
+    "state": 1.0,
+    "task": 1.0,
+    "brief": 0.9,
+    "ledger": 0.85,
+    "issues": 0.82,
+    "rules": 0.6,
+    "memory": 0.5,
+    "telemetry": 0.4,
+    "gitkraken": 0.35,
+    "git": 0.3
+  },
+  "budgets": {
+    "total_chars": 17000,
+    "state_chars": 2000,
+    "task_chars": 2000,
+    "brief_chars": 3000,
+    "ledger_chars": 2500,
+    "issues_chars": 2500,
+    "rules_chars": 2000,
+    "memory_chars": 2000,
+    "telemetry_chars": 1000,
+    "gitkraken_chars": 1500,
+    "git_chars": 1000
+  },
+  "rules": {
+    "include_always_apply_only": false,
+    "max_rules": 12
+  },
+  "git": {
+    "include_status": true,
+    "include_shortlog": true,
+    "shortlog_limit": 5
+  },
+  "memory": {
+    "offline": true,
+    "max_results": 5,
+    "query_type": "contextual",
+    "mcp_enabled": false,
+    "vector_enabled": false,
+    "vector_persist_directory": ".cursor/chroma",
+    "vector_top_k": 5
+  },
+  "conversation": {
+    "enabled": false,
+    "history_path": ".cursor/.conversation_history.jsonl",
+    "max_turns": 10,
+    "recent_turns": 5
+  },
+  "notes": {
+    "enabled": true,
+    "notes_dir": ".cursor/agent_notes"
+  },
+  "ledger": {
+    "enabled": true,
+    "include_done": false
+  },
+  "telemetry": {
+    "enabled": false,
+    "endpoint": "http://localhost:8000/api/telemetry/slos",
+    "timeout_seconds": 2.0,
+    "include_passing": false
+  },
+  "gitkraken": {
+    "enabled": false,
+    "include_issues": true,
+    "include_prs": true,
+    "commit_limit": 5
+  },
+  "issues": {
+    "enabled": true,
+    "max_issues": 10,
+    "severity_filter": ["critical", "high"],
+    "time_window_hours": 24,
+    "include_recommendations": true
+  }
+}
