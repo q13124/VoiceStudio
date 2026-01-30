@@ -7,6 +7,7 @@ from tools.context.core.models import (
     AllocationContext,
     BudgetConstraints,
     ContextBundle,
+    ContextLevel,
     GitContext,
     MemoryItem,
     RuleContext,
@@ -15,6 +16,26 @@ from tools.context.core.models import (
     TaskContext,
 )
 from tools.context.core.protocols import AllocatorProtocol
+
+
+# Map sources to context levels for progressive disclosure
+SOURCE_LEVEL_MAP = {
+    # Level 1 (HIGH): Always loaded
+    "state": ContextLevel.HIGH,
+    "task": ContextLevel.HIGH,
+    
+    # Level 2 (MID): Loaded if budget allows
+    "brief": ContextLevel.MID,
+    "ledger": ContextLevel.MID,
+    "issues": ContextLevel.MID,
+    
+    # Level 3 (LOW): Loaded if budget allows
+    "rules": ContextLevel.LOW,
+    "memory": ContextLevel.LOW,
+    "git": ContextLevel.LOW,
+    "telemetry": ContextLevel.LOW,
+    "gitkraken": ContextLevel.LOW,
+}
 
 
 def _truncate_text(text: str | None, limit: int) -> str | None:
@@ -33,18 +54,41 @@ def _string_size(data) -> int:
 
 
 class ContextAllocator(AllocatorProtocol):
-    """Priority-aware allocator with budget enforcement."""
+    """Priority-aware allocator with budget enforcement and progressive disclosure."""
 
-    def allocate(self, sources: List[SourceResult], budget: BudgetConstraints) -> ContextBundle:
+    def allocate(
+        self,
+        sources: List[SourceResult],
+        budget: BudgetConstraints,
+        max_level: ContextLevel = ContextLevel.LOW,
+    ) -> ContextBundle:
+        """
+        Allocate context bundle with progressive disclosure.
+        
+        Args:
+            sources: Source results to allocate from
+            budget: Budget constraints
+            max_level: Maximum context level to load (HIGH, MID, or LOW)
+        
+        Returns:
+            Context bundle with sources filtered by level
+        """
+        # Filter sources by max_level (progressive disclosure)
+        filtered = [
+            s for s in sources
+            if self._should_include_source(s.source_name, max_level)
+        ]
+        
         # Sort by source priority order if provided, else keep input order.
         priority_order = budget.priority_order or []
         order_map = {name: idx for idx, name in enumerate(priority_order)}
         ordered = sorted(
-            sources,
+            filtered,
             key=lambda s: order_map.get(s.source_name, len(order_map)),
         )
 
         bundle = ContextBundle()
+        bundle.meta["max_level"] = max_level.value
         for result in ordered:
             if not result.success:
                 continue
@@ -77,6 +121,17 @@ class ContextAllocator(AllocatorProtocol):
 
         self._apply_budget(bundle, budget)
         return bundle.with_meta(budget_chars=budget.total_chars)
+    
+    def _should_include_source(self, source_name: str, max_level: ContextLevel) -> bool:
+        """Determine if source should be included based on level."""
+        source_level = SOURCE_LEVEL_MAP.get(source_name, ContextLevel.LOW)
+        
+        if max_level == ContextLevel.HIGH:
+            return source_level == ContextLevel.HIGH
+        elif max_level == ContextLevel.MID:
+            return source_level in (ContextLevel.HIGH, ContextLevel.MID)
+        else:  # LOW
+            return True  # Include all levels
 
     def _apply_budget(self, bundle: ContextBundle, budget: BudgetConstraints) -> None:
         # Task

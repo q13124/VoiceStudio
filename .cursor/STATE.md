@@ -159,7 +159,7 @@ _Previous:_
 | Domain | Canonical Source |
 | --- | --- |
 | Architecture | docs/architecture/README.md |
-| Compatibility | docs/governance/COMPATIBILITY_SNAPSHOT.md |
+| Compatibility | docs/design/COMPATIBILITY_MATRIX.md |
 | Roadmap | docs/governance/MASTER_ROADMAP_UNIFIED.md |
 | UI Spec | docs/design/UI_IMPLEMENTATION_SPEC.md |
 | Engine Config | backend/config/engine_config.json |
@@ -383,3 +383,4 @@ _Previous:_
 | 2026-01-30 | FORENSIC-SYSTEM-REPORT | [VOICESTUDIO_FORENSIC_SYSTEM_REPORT_2026-01-30.md](docs/reports/forensic/VOICESTUDIO_FORENSIC_SYSTEM_REPORT_2026-01-30.md): Comprehensive forensic analysis covering 38-day period (2025-12-23 to 2026-01-30); 136 verification reports (98.5% pass rate); 101 proof runs (59.4% contain failures); TASK-0022 S0 incident documented; 5 root cause analyses; 9 actionable recommendations; installer error identified; 4 crash dumps cataloged; security audit shows no incidents. | Forensic Report | Manual |
 | 2026-01-30 | FINAL-SWEEP | [FINAL_SWEEP_MISSING_AND_NEVER_DONE_2026-01-30.md](docs/reports/verification/FINAL_SWEEP_MISSING_AND_NEVER_DONE_2026-01-30.md): Cross-role final sweep: missing MASTER_ROADMAP_UNIFIED, 13 ADRs, DOCUMENT_GOVERNANCE, ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, PROJECT_HANDOFF_GUIDE, docs/tasks README+TEMPLATE, docs/architecture Part* series, PRODUCTION_READINESS, docs/archive/governance; TASK-0022 outstanding; backend/frontend gaps; realignment checklist and recommendations. | Verification | Manual |
 | 2026-01-30 | FINAL-SWEEP-ONE-LAST-TIME | [FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md](docs/reports/audit/FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md): All-roles final sweep (one last time). Verified present: 19/19 ADRs, MASTER_ROADMAP_UNIFIED, PROJECT_HANDOFF_GUIDE, DOCUMENT_GOVERNANCE, ROLE_GUIDES_INDEX, PRODUCTION_READINESS, docs/tasks (README, TASK_TEMPLATE, 7 briefs), architecture README, role guides 0–7, role prompts. Still missing: Part1–Part10, ARCHIVE_POLICY, GOVERNANCE_LOCK, SKEPTICAL_VALIDATOR_GUIDE, templates/RULE_PROPOSAL_TEMPLATE. DOC-001 stale. Realignment checklist. | Audit Report | Verified |
+| 2026-01-30 | FINAL-SWEEP-PRE-REALIGNMENT | [FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md](docs/reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md): One-last-time sweep before realignment. Created SKEPTICAL_VALIDATOR_GUIDE.md and VALIDATOR_ESCALATION.md (were referenced but missing). Updated sweep report: still missing ARCHIVE_POLICY, GOVERNANCE_LOCK, templates/RULE_PROPOSAL_TEMPLATE, Part*.md series, docs/archive/governance. Implementation gaps (backend interface layer, DI, TD-002/004/009/011/012) and realignment checklist unchanged. | Audit Report | Manual |

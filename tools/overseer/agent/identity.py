@@ -25,6 +25,7 @@ class AgentRole(str, Enum):
     OVERSEER = "Overseer"
     REVIEWER = "Reviewer"
     BUILDER = "Builder"
+    DEBUGGER = "Debugger"
     
     @classmethod
     def from_string(cls, value: str) -> Optional["AgentRole"]:

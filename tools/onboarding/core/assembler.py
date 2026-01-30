@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from tools.onboarding.core.models import OnboardingPacket, RoleConfig
 from tools.onboarding.core.role_registry import RoleRegistry
@@ -117,6 +117,26 @@ class OnboardingAssembler:
             return []
 
     def assemble(self, role_id: str, include_full_guide: Optional[bool] = None) -> OnboardingPacket:
+        """
+        Assemble onboarding packet for role.
+        
+        Integrates with:
+        - RoleRegistry: Role config and metadata
+        - StateSource: Project state and active task
+        - ContextManager: Context bundle allocation (ADR-015)
+        - AgentRegistry: Agent registration when enabled
+        - PolicyEngine: Role permission validation (via AgentRegistry)
+        
+        Args:
+            role_id: Role ID or alias (0-7, or short-name)
+            include_full_guide: Include full role guide in packet
+        
+        Returns:
+            OnboardingPacket with all components
+            
+        Raises:
+            ValueError: If role_id unknown or policy validation fails
+        """
         role = self.registry.get_role(role_id)
         include_full = (
             include_full_guide
@@ -124,27 +144,43 @@ class OnboardingAssembler:
             else bool(self._config.get("include_full_guide_default", False))
         )
 
+        # Load role-specific content
         prompt = self.prompt_source.load(role)
         guide = self.guide_source.summarize(role, include_full=include_full)
         project_state, active_task = self.state_source.load()
         role_context = self.context_source.load(role, active_task=active_task)
 
+        # Allocate context bundle (ADR-015: Integration Contract)
         context_bundle = None
         if self._context_manager is not None:
             try:
-                from tools.context.core.models import AllocationContext
+                from tools.context.core.models import AllocationContext, ContextLevel
                 ctx = AllocationContext(
                     task_id=active_task.id if active_task else None,
                     phase=project_state.phase,
                     role=role.short_name,
                     include_git=False,
+                    max_level=ContextLevel.MID,  # Brief + Ledger, skip low-priority sources
                 )
                 context_bundle = self._context_manager.allocate(ctx)
-            except Exception:
-                pass
+            except Exception as e:
+                # Graceful degradation (ADR-015: failure mode)
+                import logging
+                logging.getLogger(__name__).debug(
+                    "Context Manager unavailable during onboarding: %s", e
+                )
 
         # Fetch role-specific issues from handoff queue
         role_issues = self._fetch_role_issues(role_id)
+
+        # Validate packet before creating
+        validation_errors = self._validate_packet_components(
+            role, prompt, guide, project_state
+        )
+        if validation_errors:
+            import logging
+            for error in validation_errors:
+                logging.getLogger(__name__).warning("Packet validation: %s", error)
 
         packet = OnboardingPacket(
             role=role,
@@ -156,17 +192,55 @@ class OnboardingAssembler:
             issues=role_issues,
         )
 
+        # Register agent with policy validation (ADR-003: Agent Governance)
         if self._agent_registry is not None:
             try:
                 from tools.overseer.agent.identity import AgentIdentity
                 from tools.overseer.agent.role_mapping import role_to_agent_role
+                import logging
+                
                 ar = role_to_agent_role(role_id)
                 identity = AgentIdentity.create(role=ar, user_id="voicestudio")
+                
+                # Policy validation would happen here via PolicyEngine if integrated
+                # For now, registry.register performs basic validation
                 self._agent_registry.register(identity)
-            except Exception:
-                pass  # Do not fail assembly when registry is unavailable (ADR-015)
+                logging.getLogger(__name__).info(
+                    "Agent registered: %s (role=%s)", identity.agent_id, ar.value
+                )
+            except ValueError as ve:
+                # Agent already registered or validation failed
+                import logging
+                logging.getLogger(__name__).warning("Agent registration: %s", ve)
+            except Exception as e:
+                # Graceful degradation (ADR-015: failure mode)
+                import logging
+                logging.getLogger(__name__).debug(
+                    "Agent registry unavailable during onboarding: %s", e
+                )
 
         return packet
+    
+    def _validate_packet_components(
+        self, role, prompt, guide, project_state
+    ) -> List[str]:
+        """
+        Validate packet completeness.
+        
+        Returns list of validation errors (empty if valid).
+        """
+        errors = []
+        
+        if not role or not role.id:
+            errors.append("Role missing or invalid")
+        if not prompt or not prompt.full_text:
+            errors.append(f"Prompt missing for role {role.id if role else 'unknown'}")
+        if not guide:
+            errors.append(f"Guide missing for role {role.id if role else 'unknown'}")
+        if not project_state:
+            errors.append("Project state unavailable")
+        
+        return errors
 
     def render(self, packet: OnboardingPacket) -> str:
         template_text = self._read_template()

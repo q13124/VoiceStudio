@@ -1,5 +1,6 @@
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.UseCases;
 
 namespace VoiceStudio.App.Services
 {
@@ -8,6 +9,11 @@ namespace VoiceStudio.App.Services
   /// </summary>
   public static class ServiceProvider
   {
+    /// <summary>
+    /// Initializes the app service container. Called from App constructor.
+    /// </summary>
+    public static void Initialize() => AppServices.Initialize();
+
     public static IBackendClient GetBackendClient() => AppServices.GetBackendClient();
     public static IAudioPlayerService GetAudioPlayerService() => AppServices.GetAudioPlayerService();
     public static IErrorDialogService GetErrorDialogService() => AppServices.GetErrorDialogService();
@@ -107,8 +113,8 @@ namespace VoiceStudio.App.Services
       try { return AppServices.TryGetSecretsService(); }
       catch { return null; }
     }
-    public static UseCases.IProfilesUseCase GetProfilesUseCase() => AppServices.GetProfilesUseCase();
-    public static UseCases.IProfilesUseCase? TryGetProfilesUseCase()
+    public static IProfilesUseCase GetProfilesUseCase() => AppServices.GetProfilesUseCase();
+    public static IProfilesUseCase? TryGetProfilesUseCase()
     {
       try { return AppServices.TryGetProfilesUseCase(); }
       catch { return null; }

@@ -9,10 +9,13 @@
     "memory": 0.5,
     "telemetry": 0.4,
     "gitkraken": 0.35,
-    "git": 0.3
+    "git": 0.3,
+    "context7": 0.25,
+    "linear": 0.20,
+    "github_mcp": 0.15
   },
   "budgets": {
-    "total_chars": 17000,
+    "total_chars": 20000,
     "state_chars": 2000,
     "task_chars": 2000,
     "brief_chars": 3000,
@@ -22,7 +25,10 @@
     "memory_chars": 2000,
     "telemetry_chars": 1000,
     "gitkraken_chars": 1500,
-    "git_chars": 1000
+    "git_chars": 1000,
+    "context7_chars": 3000,
+    "linear_chars": 2000,
+    "github_mcp_chars": 3000
   },
   "rules": {
     "include_always_apply_only": false,

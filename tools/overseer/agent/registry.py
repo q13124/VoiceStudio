@@ -156,6 +156,11 @@ class AgentRegistry:
         """Get all agents for a user."""
         with self._lock:
             return [a for a in self._agents.values() if a.user_id == user_id]
+
+    def list_all(self) -> List[AgentIdentity]:
+        """Return all registered agents."""
+        with self._lock:
+            return list(self._agents.values())
     
     def get_by_machine(self, machine_id: str) -> List[AgentIdentity]:
         """Get all agents on a machine."""

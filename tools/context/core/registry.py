@@ -29,6 +29,9 @@ def build_default_registry(config: dict) -> SourceRegistry:
     from tools.context.sources.memory_adapter import MemorySourceAdapter
     from tools.context.sources.rules_adapter import RulesSourceAdapter
     from tools.context.sources.state_adapter import StateSourceAdapter
+    from tools.context.sources.context7_adapter import Context7Adapter
+    from tools.context.sources.linear_adapter import LinearAdapter
+    from tools.context.sources.github_adapter import GitHubAdapter
     from tools.context.sources.task_adapter import TaskSourceAdapter
 
     registry = SourceRegistry()

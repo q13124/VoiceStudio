@@ -11,6 +11,7 @@ from tools.context.core.models import (
     AllocationContext,
     BudgetConstraints,
     ContextBundle,
+    ContextLevel,
     SourceResult,
 )
 from tools.context.core.registry import SourceRegistry, build_default_registry
@@ -91,17 +92,27 @@ class ContextManager:
             logger.debug("Context Manager agent registry lookup skipped: %s", e)
 
     def allocate(self, context: AllocationContext | None = None) -> ContextBundle:
+        """
+        Allocate context bundle with progressive disclosure support.
+        
+        Args:
+            context: Allocation context (task, role, phase, max_level)
+        
+        Returns:
+            Context bundle with sources filtered by level and budget
+        """
         ctx = context or AllocationContext(
             task_id=None,
             phase=None,
             role=None,
             include_git=False,
             budget_chars=self.config.get("budgets", {}).get("total_chars", 12000),
+            max_level=ContextLevel.LOW,
         )
 
         self._validate_agent_if_enabled(ctx)
 
-        cache_key = f"{ctx.task_id}:{ctx.phase}:{ctx.role}:{ctx.include_git}:{ctx.budget_chars}"
+        cache_key = f"{ctx.task_id}:{ctx.phase}:{ctx.role}:{ctx.include_git}:{ctx.budget_chars}:{ctx.max_level.value}"
         cached = self.cache.get(cache_key)
         if cached:
             return cached
@@ -123,7 +134,8 @@ class ContextManager:
                 )
 
         budget = self._build_budget(ctx)
-        bundle = self.allocator.allocate(results, budget)
+        bundle = self.allocator.allocate(results, budget, max_level=ctx.max_level)
+        bundle.meta["role"] = ctx.role
         self.cache.put(cache_key, bundle, ttl_seconds=self.cache_ttl_seconds)
         return bundle
 

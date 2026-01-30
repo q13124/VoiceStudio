@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using VoiceStudio.App.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Services
 {

@@ -221,9 +221,13 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   state read/acknowledgment and completion updates.
 - **Verifier protocol**: `.cursor/rules/workflows/verifier-subagent.mdc` defines skeptical validation.
 - **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
-- **Context allocator**: `tools/context/allocate.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
+- **Context allocator**: `tools/context/core/manager.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
 - **OpenMemory reader**: `tools/context/sources/openmemory_reader.py` provides optional integration for context bundle assembly.
-- **Context tests gap**: Role 4 guide references `tests/tools/test_context_source_adapters.py` and `tests/tools/test_context_allocator.py`, but these files are not present in the repo (verified 2026-01-29).
+- **Context tests restored**: `tests/tools/test_context_source_adapters.py` and `tests/tools/test_context_allocator.py` are now present and passing (2026-01-29).
+- **Context CLI restored**: `tools/context/cli/allocate.py` provides `python -m tools.context.cli.allocate --role <role> --preamble` (2026-01-29).
+- **P.A.R.T. framework**: Context Manager implements P.A.R.T. structure (Prompt, Archive, Resources, Tools) with `ContextBundle.to_part_structure()` and `to_part_markdown()`; CLI `--part` flag for structured output (2026-01-30).
+- **Progressive disclosure**: Tiered context loading with `ContextLevel` enum (HIGH: STATE+TASK, MID: +Brief+Ledger, LOW: all); allocator filters by level; CLI `--level high|mid|low` (2026-01-30).
+- **MCP integration**: Context7, Linear, GitHub adapters in `tools/context/sources/` with env-gated graceful fallback; config updated with weights/budgets (2026-01-30).
 
 ## Agent governance tooling
 
@@ -240,4 +244,11 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   `%APPDATA%\\VoiceStudio\\logs\\agent_audit`.
 - **Safe zones**: `tools/overseer/agent/safe_zones.py` deep-copies default safe zones per manager and
   matches recursive patterns using escaped regex handling.
-- **Overseer CLI gap**: `tools/overseer/cli/main.py` references `gate_cli` and `ledger_cli`, but the modules are missing under `tools/overseer/cli` (gate/ledger commands fail with ModuleNotFoundError as of 2026-01-29).
+- **Overseer CLI restored**: `tools/overseer/cli/gate_cli.py` and `ledger_cli.py` added; gate/ledger commands now run with expected reserved-ID warnings (2026-01-29).
+- **Onboarding CLI restored**: `tools/onboarding/cli/onboard.py` generates onboarding packets; role registry auto-scans `.cursor/prompts/ROLE_*_PROMPT.md` and guides (2026-01-29).
+- **Onboarding enhancements**: Packet validation (`_validate_packet_components`), structured logging for failures, Context Manager integration with `AllocationContext`, AgentRegistry with graceful degradation per ADR-015 (2026-01-30).
+- **Debug Role (Role 7) architecture**: Clean Architecture domain layer in `tools/overseer/domain/` with entities (IssueReport, BugInvestigationSession), value objects (ResolutionLog, RootCause, ValidationResult), services (DebugWorkflow, RootCauseAnalyzer); 28 domain tests PASS; ADR-017 decision record (2026-01-30).
+- **Role 7 documentation**: Comprehensive Debug Agent Guide (17 sections, 700+ lines) at `docs/governance/roles/ROLE_7_DEBUG_AGENT_GUIDE.md`; Integration Guide at `docs/developer/DEBUG_ROLE_INTEGRATION_GUIDE.md` with CLI reference, workflows, examples (2026-01-30).
+- **HandoffQueue**: Cross-role issue escalation system at `tools/overseer/issues/handoff.py` with JSONL persistence; methods: handoff(), get_role_queue(), acknowledge(), complete() (2026-01-30).
+- **Path config**: Enhanced `backend/config/path_config.py` with `get_ffmpeg_path()` (env → PATH → known dirs → bundled), `get_path(path_type)` supporting 7 types (models, ffmpeg, cache, checkpoints, logs, artifacts, data, config), `validate_path()`, comprehensive docstrings (2026-01-30).
+- **Lifecycle hooks**: `hooks.json` config with beforeSubmitPrompt (state validation), afterFileEdit (audit), stop (closure reminder), sessionStart (role detection); scripts in `.cursor/hooks/` (2026-01-30).
