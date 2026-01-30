@@ -88,7 +88,7 @@ Role prompts: `.cursor/prompts/ROLE_PROMPTS_INDEX.md`. Escalation: [VALIDATOR_ES
 
 **Phase 6+** = post-Phase-5 optional work. Two sources:
 
-1. **EXECUTION_PLAN** ([docs/design/EXECUTION_PLAN.md](../design/EXECUTION_PLAN.md)): Phase 6 — Styles & Micro-Interactions; Phase 7 — Sanity Pass & Anti-Simplification.
+1. **EXECUTION_PLAN** ([docs/archive/legacy_worker_system/design/EXECUTION_PLAN.md](../archive/legacy_worker_system/design/EXECUTION_PLAN.md)) (archived): Phase 6 — Styles & Micro-Interactions; Phase 7 — Sanity Pass & Anti-Simplification. Prefer MASTER_ROADMAP_UNIFIED and TECH_DEBT_REGISTER for current Phase 6+.
 2. **TECH_DEBT_REGISTER §4** ([TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md)): Optional features (streaming TTS, UI animations, more engines, MCP auto-selection, performance, cross-platform); Context Manager enhancements (OpenMemory MCP wiring, task-type classifier, issues-to-tasks); Tooling (CI/CD, skills migration, onboarding caching).
 
 First Phase 6+ work is chosen by Overseer and scoped in a task brief (e.g. TASK-0021).

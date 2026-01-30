@@ -172,7 +172,7 @@
 
 - `TASK_LOG.md` - Task tracking
 - `UI_UX_INTEGRITY_RULES.md` - UI requirements
-- `OVERSEER_SYSTEM_PROMPT_V2.md` - Overseer verification
+- `.cursor/rules` and `docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md` - Overseer verification (legacy OVERSEER_SYSTEM_PROMPT_V2 archived)
 - `NO_STUBS_PLACEHOLDERS_RULE.md` - Placeholder prohibition
 
 ---

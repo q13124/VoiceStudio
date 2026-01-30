@@ -382,7 +382,7 @@ Other unclassified top-level folders exist on `E:\` (see the full inventory JSON
 ### Reliability / resilience
 
 - **Documented addition: retry/circuit-breaker/health endpoints/graceful-degradation**
-  - **Docs**: `docs/governance/worker1/ERROR_RECOVERY_RESILIENCE_COMPLETE_2025-01-28.md`
+  - **Docs**: `docs/archive/legacy_worker_system/worker1/ERROR_RECOVERY_RESILIENCE_COMPLETE_2025-01-28.md` (archived)
   - **Code**:
     - `app/core/resilience/*`
     - `backend/api/routes/health.py` (expanded health endpoints)

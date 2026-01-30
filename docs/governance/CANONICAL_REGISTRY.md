@@ -152,7 +152,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | --- | --- | --- | --- |
 | UI Implementation | `docs/design/UI_IMPLEMENTATION_SPEC.md` | 2026-01-25 | UI design specification |
 | Implementation Spec | `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` | 2026-01-25 | Full implementation spec |
-| Execution Plan | `docs/design/EXECUTION_PLAN.md` | 2026-01-25 | Implementation execution |
+| Execution Plan (Legacy) | `docs/archive/legacy_worker_system/design/EXECUTION_PLAN.md` | 2026-01-30 | **ARCHIVED** — Legacy Overseer+8-Worker plan; use MASTER_ROADMAP_UNIFIED and PROJECT_HANDOFF_GUIDE |
 | File Structure | `docs/design/file-structure.md` | 2026-01-25 | Project file organization |
 | Project Structure | `docs/design/project-structure.md` | 2026-01-25 | High-level project layout |
 | **ViewModel DI Refactor** | `docs/design/viewmodel_di_refactor.md` | 2026-01-30 | TD-004; migration from AppServices/parameterless BaseViewModel to constructor injection; 4-phase rollout plan |
@@ -206,13 +206,21 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
-| Daily Workflow | `docs/governance/overseer/DAILY_WORKFLOW_CHECKLIST.md` | 2026-01-25 | Daily overseer tasks |
-| Gate Enforcement | `docs/governance/overseer/GATE_ENFORCEMENT_GUIDE.md` | 2026-01-25 | Gate system guide |
-| Handoff Process | `docs/governance/overseer/HANDOFF_PROCESS_GUIDE.md` | 2026-01-25 | Handoff documentation |
+| Daily Workflow (Legacy) | `docs/archive/legacy_worker_system/overseer/DAILY_WORKFLOW_CHECKLIST.md` | 2026-01-30 | **ARCHIVED** — Legacy daily tasks; use ROLE_0_OVERSEER_GUIDE and PROJECT_HANDOFF_GUIDE |
+| Gate Enforcement (Legacy) | `docs/archive/legacy_worker_system/overseer/GATE_ENFORCEMENT_GUIDE.md` | 2026-01-30 | **ARCHIVED** — Legacy gate guide; use Recovery Plan/QUALITY_LEDGER and run_verification.py |
+| Handoff Process (Legacy) | `docs/archive/legacy_worker_system/overseer/HANDOFF_PROCESS_GUIDE.md` | 2026-01-30 | **ARCHIVED** — Legacy handoff; use HANDOFF_PROTOCOL.md and ROLE_GUIDES_INDEX |
 | Quality Ledger | `Recovery Plan/QUALITY_LEDGER.md` | 2026-01-25 | VS-XXXX tracking |
 | Verification automation | `scripts/run_verification.py`, `scripts/run-verification.ps1` | 2026-01-28 | Gate + ledger (+ optional build); proof in `.buildlogs/verification/last_run.json` |
 | Overseer Issue System | `docs/developer/OVERSEER_ISSUE_SYSTEM.md` | 2026-01-28 | Unified issue logging from agents, engines, builds; recommendations and CLI for AI Overseer review |
 | **Debug Role Integration** | `docs/developer/DEBUG_ROLE_INTEGRATION_GUIDE.md` | 2026-01-25 | Debug Role (Role 7) integration guide; issue-to-task workflow, escalation, CLI reference |
+
+---
+
+## Legacy Archive (Reference Only)
+
+| Topic | Location | Notes |
+| --- | --- | --- |
+| Legacy Worker+Overseer System | `docs/archive/legacy_worker_system/` | 2026-01-30 — ChatGPT-era 3-Worker + Overseer docs; superseded by 8-role governance (ADR-003). See [README](../../archive/legacy_worker_system/README.md). |
 
 ---
 

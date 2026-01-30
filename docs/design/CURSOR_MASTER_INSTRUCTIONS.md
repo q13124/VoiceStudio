@@ -1,6 +1,8 @@
 # Cursor Master Instructions for VoiceStudio Quantum+
 ## Complete Integration & Implementation Guide
 
+> **Deprecation (2026-01-30):** This document describes the legacy ChatGPT-era "Overseer + 6 Workers" setup. For current governance use `.cursor/rules/*.mdc`, [ROLE_GUIDES_INDEX](../governance/ROLE_GUIDES_INDEX.md), and [PROJECT_HANDOFF_GUIDE](../governance/PROJECT_HANDOFF_GUIDE.md). Legacy prompts (CURSOR_AGENT_GUIDELINES_V2, OVERSEER_SYSTEM_PROMPT_V2, WORKER_AGENT_PROMPTS) are in `docs/archive/legacy_worker_system/design/`.
+
 **Version:** 2.0  
 **Date:** 2025  
 **Purpose:** Master document for Cursor to integrate new UI with existing code
@@ -19,12 +21,12 @@
 
 ### 1. Critical Documents (Read in Order)
 
-1. **CURSOR_OPERATIONAL_RULESET.md** - **CRITICAL** - Complete operational rules and guidelines - **READ THIS FIRST**
+1. **.cursor/rules/*.mdc** - **CRITICAL** - Current operational rules (legacy CURSOR_OPERATIONAL_RULESET archived in docs/archive/governance_consolidated/)
 2. **MEMORY_BANK.md** - Critical information that must never be forgotten
 3. **SKELETON_INTEGRATION_GUIDE.md** - **NEW** - Step-by-step guide to integrate skeleton code - **READ THIS FIRST**
 4. **SKELETON_FILES_MAPPING.md** - **NEW** - Complete file-by-file mapping reference
 5. **COMPLETE_INTEGRATION_SUMMARY.md** - **NEW** - Complete overview of all integration work
-6. **CURSOR_AGENT_GUIDELINES_V2.md** - Complete agent system (Overseer + 6 Workers) - **USE THIS VERSION**
+6. **CURSOR_AGENT_GUIDELINES_V2.md** (archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/CURSOR_AGENT_GUIDELINES_V2.md)) - Legacy agent system; use .cursor/rules and ROLE_GUIDES_INDEX for current roles
 6. **INTEGRATION_GUIDE.md** - How to merge new UI with existing code
 7. **PRESERVATION_CHECKLIST.md** - Ensure nothing is lost
 8. **CURSOR_INTEGRATION_INSTRUCTIONS.md** - Step-by-step integration process
@@ -35,8 +37,8 @@
 - **PANEL_IMPLEMENTATION_GUIDE.md** - Complete guide for implementing 100+ panels
 - **INNOVATIVE_ADVANCED_PANELS_CATALOG.md** - 9 advanced panels catalog
 - **VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md** - Master specification
-- **OVERSEER_SYSTEM_PROMPT_V2.md** - Overseer agent prompt
-- **WORKER_AGENT_PROMPTS.md** - Individual worker prompts
+- **OVERSEER_SYSTEM_PROMPT_V2.md** (archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/)) - Legacy Overseer prompt
+- **WORKER_AGENT_PROMPTS.md** (archived) - Legacy worker prompts
 - **ADVANCED_UI_UX_FEATURES.md** - Advanced features roadmap
 - **AI_INTEGRATION_GUIDE.md** - AI integration (3 AIs + Overseer)
 - **ENGINE_RECOMMENDATIONS.md** - Backend engine choices

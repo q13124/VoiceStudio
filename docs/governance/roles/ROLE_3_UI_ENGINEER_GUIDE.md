@@ -297,7 +297,7 @@ When reviewing UI changes:
 | `docs/design/UI_IMPLEMENTATION_SPEC.md` | UI specification |
 | `docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md` | Original UI design |
 | `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` | Full implementation spec |
-| `docs/design/EXECUTION_PLAN.md` | UI execution plan |
+| `docs/archive/legacy_worker_system/design/EXECUTION_PLAN.md` | Legacy UI execution plan (archived) |
 | `src/VoiceStudio.App/Resources/DesignTokens.xaml` | Token definitions |
 | `.cursor/rules/languages/csharp-winui.mdc` | C#/WinUI coding rules |
 

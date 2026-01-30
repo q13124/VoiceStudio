@@ -582,7 +582,7 @@ src/
 
 ## 9. Implementation Phases
 
-See [EXECUTION_PLAN.md](EXECUTION_PLAN.md) for detailed step-by-step implementation with Overseer + 8 Workers.
+See [EXECUTION_PLAN.md](../archive/legacy_worker_system/design/EXECUTION_PLAN.md) (archived) for legacy step-by-step implementation; current execution uses MASTER_ROADMAP_UNIFIED and PROJECT_HANDOFF_GUIDE.
 
 ### Phase Summary
 
@@ -681,8 +681,8 @@ The implementation is successful when:
 ## 13. Reference Documents
 
 - [GUARDRAILS.md](GUARDRAILS.md) - Absolute rules
-- [EXECUTION_PLAN.md](EXECUTION_PLAN.md) - Step-by-step plan
-- [OVERSEER_CONTEXT.md](OVERSEER_CONTEXT.md) - Overseer instructions
+- [EXECUTION_PLAN.md](../archive/legacy_worker_system/design/EXECUTION_PLAN.md) (archived) - Legacy step-by-step plan
+- [OVERSEER_CONTEXT.md](../archive/legacy_worker_system/design/OVERSEER_CONTEXT.md) (archived) - Legacy Overseer instructions; use `.cursor/rules` and ROLE_0_OVERSEER_GUIDE for current governance
 - [Architecture](../architecture/README.md) - Canonical architecture
 - [file-structure.md](file-structure.md) - File tree
 - [CURSOR_INSTRUCTIONS.md](CURSOR_INSTRUCTIONS.md) - AI assistant guide
