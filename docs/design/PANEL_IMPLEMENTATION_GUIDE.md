@@ -827,10 +827,10 @@ void ActivatePanel(string panelId)
 
 - `VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` - Master specification
 - `INNOVATIVE_ADVANCED_PANELS_CATALOG.md` - **NEW** - Complete catalog of 9 innovative advanced panels
-- `CURSOR_AGENT_GUIDELINES_V2.md` - Agent system (Worker 3: Panel Scaffolding)
-- `INTEGRATION_GUIDE.md` - Integration patterns
+- `CURSOR_AGENT_GUIDELINES_V2.md` - Archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/CURSOR_AGENT_GUIDELINES_V2.md)
+- `INTEGRATION_GUIDE.md` - Archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/INTEGRATION_GUIDE.md)
 - `PRESERVATION_CHECKLIST.md` - Preservation guide
-- `MEMORY_BANK.md` - Critical information
+- `MEMORY_BANK.md` - Archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/MEMORY_BANK.md)
 
 ---
 

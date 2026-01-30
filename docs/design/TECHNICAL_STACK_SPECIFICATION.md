@@ -298,7 +298,7 @@ Write-Host "✅ VoiceStudio backend dependencies installed successfully!"
 ## 🔗 Related Documents
 
 - **[ENGINE_RECOMMENDATIONS.md](ENGINE_RECOMMENDATIONS.md)** - Detailed engine recommendations
-- **[MEMORY_BANK.md](MEMORY_BANK.md)** - Critical project information
+- **[MEMORY_BANK.md](../archive/legacy_worker_system/design/MEMORY_BANK.md)** - Legacy critical project information (archived)
 - **[SKELETON_INTEGRATION_GUIDE.md](SKELETON_INTEGRATION_GUIDE.md)** - Integration guide
 
 ---

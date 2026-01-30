@@ -35,10 +35,11 @@ Only create a new file if it is:
 - Use structured logs with stable file locations.
 - Include context for failures: paths, versions, selected engine, device.
 
-## Consolidation completed (2026-01-25)
-Overlapping governance docs were archived to `docs/archive/governance_consolidated/`.
+## Consolidation completed (2026-01-25, updated 2026-01-30)
+Overlapping governance docs were archived to `docs/archive/governance_consolidated/` and `docs/archive/legacy_worker_system/`.
 Canonical references:
 - **Agent Rules**: `.cursor/rules/*.mdc`
-- **Human Reference**: `docs/governance/MASTER_RULES_COMPLETE.md`
+- **Role Guides**: `docs/governance/roles/ROLE_*_GUIDE.md`
+- **Archived Legacy Rules**: `docs/archive/legacy_worker_system/governance/MASTER_RULES_COMPLETE.md`
 
 See ADR-001 for decision rationale.

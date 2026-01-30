@@ -21,16 +21,18 @@
 
 ### 1. Critical Documents (Read in Order)
 
-1. **.cursor/rules/*.mdc** - **CRITICAL** - Current operational rules (legacy CURSOR_OPERATIONAL_RULESET archived in docs/archive/governance_consolidated/)
-2. **MEMORY_BANK.md** - Critical information that must never be forgotten
-3. **SKELETON_INTEGRATION_GUIDE.md** - **NEW** - Step-by-step guide to integrate skeleton code - **READ THIS FIRST**
-4. **SKELETON_FILES_MAPPING.md** - **NEW** - Complete file-by-file mapping reference
-5. **COMPLETE_INTEGRATION_SUMMARY.md** - **NEW** - Complete overview of all integration work
-6. **CURSOR_AGENT_GUIDELINES_V2.md** (archived: [legacy_worker_system/design/](../archive/legacy_worker_system/design/CURSOR_AGENT_GUIDELINES_V2.md)) - Legacy agent system; use .cursor/rules and ROLE_GUIDES_INDEX for current roles
-6. **INTEGRATION_GUIDE.md** - How to merge new UI with existing code
-7. **PRESERVATION_CHECKLIST.md** - Ensure nothing is lost
-8. **CURSOR_INTEGRATION_INSTRUCTIONS.md** - Step-by-step integration process
-9. **REGRESSION_CHECKLIST.md** - QA verification checklist
+1. **.cursor/rules/*.mdc** - **CRITICAL** - Current operational rules
+2. **[ROLE_GUIDES_INDEX](../governance/ROLE_GUIDES_INDEX.md)** - Current 8-role governance system
+3. **SKELETON_INTEGRATION_GUIDE.md** - Step-by-step guide to integrate skeleton code
+4. **SKELETON_FILES_MAPPING.md** - Complete file-by-file mapping reference
+5. **VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md** - Master specification
+
+**Archived legacy documents** (historical reference only):
+- [MEMORY_BANK.md](../archive/legacy_worker_system/design/MEMORY_BANK.md) - Legacy critical info
+- [COMPLETE_INTEGRATION_SUMMARY.md](../archive/legacy_worker_system/design/COMPLETE_INTEGRATION_SUMMARY.md) - Legacy integration overview
+- [CURSOR_AGENT_GUIDELINES_V2.md](../archive/legacy_worker_system/design/CURSOR_AGENT_GUIDELINES_V2.md) - Legacy agent system
+- [INTEGRATION_GUIDE.md](../archive/legacy_worker_system/design/INTEGRATION_GUIDE.md) - Legacy integration patterns
+- [CURSOR_INTEGRATION_INSTRUCTIONS.md](../archive/legacy_worker_system/design/CURSOR_INTEGRATION_INSTRUCTIONS.md) - Legacy integration process
 
 ### 2. Reference Documents
 
