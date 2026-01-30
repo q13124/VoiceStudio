@@ -13,6 +13,11 @@
 # Do not upgrade librosa, numpy, or transformers without testing XTTS v2
 
 # ============================================================================
+# Security Constraints (TD-003)
+# ============================================================================
+protobuf>=5.28.3  # CVE-2024-7254 fix - required for tensorflow/onnx
+
+# ============================================================================
 # Core ML/AI Dependencies (LOCKED VERSIONS - Production Ready)
 # ============================================================================
 # Python 3.11.9 recommended (3.10.15 minimum)
@@ -36,7 +41,7 @@ scipy>=1.9.0
 librosa==0.11.0  # Audio feature extraction for XTTS and QC
 numpy==1.26.4  # Perfect bridge between PyTorch 2.2.2 and Librosa 0.11
 soundfile==0.12.1  # WAV/FLAC I/O
-faster-whisper==1.0.3  # Whisper variant; GPU-ready (compatible with PyTorch 2.2.2)
+faster-whisper==1.2.0  # Whisper variant; GPU-ready (compatible with PyTorch 2.2.2)
 pyloudnorm==0.1.1  # LUFS metering
 noisereduce==3.0.2  # NR chain
 pydub>=0.25.0

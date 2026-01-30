@@ -72,6 +72,12 @@ PyPDF2>=3.0.1  # PDF processing for MCP unlock-pdf integration
 # nlpaug>=1.1.11
 
 # ============================================================================
+# Security Constraints (TD-003)
+# ============================================================================
+# Constrain protobuf version to address CVE-2024-7254 when installed as transitive dep
+protobuf>=5.28.3; extra == "proto"
+
+# ============================================================================
 # Note: Engine-specific dependencies are in requirements_engines.txt
 # ============================================================================
 
