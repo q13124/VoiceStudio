@@ -84,6 +84,14 @@ venv\Scripts\activate.bat
 
 # Install dependencies
 pip install -r backend/requirements.txt
+
+# Install engine dependencies
+# - XTTS CPU profile:
+powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
+# - XTTS GPU profile (sm_120):
+# powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-gpu-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts -Gpu 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
+# - Full engine stack (all engines; longer install):
+# powershell -NoProfile -Command '& { $log=Join-Path ".\.buildlogs" ("engine-deps-install-full-" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + $PID + ".log"); New-Item -ItemType Directory -Path (Split-Path $log -Parent) -Force | Out-Null; & .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile full 2>&1 | Tee-Object -FilePath $log; Write-Host ("LOG_PATH=" + $log) }'
 ```
 
 **Option B: Using conda**
@@ -95,6 +103,11 @@ conda activate voicestudio
 
 # Install dependencies
 pip install -r backend/requirements.txt
+
+# Install engine dependencies (XTTS + full engine stack)
+pip uninstall -y torch torchaudio torchvision
+pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
+pip install --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cu121 -r requirements_engines.txt
 ```
 
 ### Step 5: Install Frontend Dependencies
@@ -115,6 +128,7 @@ dotnet restore
 ```bash
 python -c "import fastapi; print('FastAPI installed')"
 python -c "import torch; print('PyTorch installed')"
+python -c "from TTS.api import TTS; print('Coqui TTS installed')"
 ```
 
 **Check .NET:**
@@ -440,8 +454,8 @@ logger.error("Error message", exc_info=True)
 
 2. **Check Engine Dependencies:**
    ```bash
-   # Install engine-specific dependencies
-   pip install torch transformers coqui-tts
+   # Install the pinned engine dependency set (includes XTTS)
+   powershell -ExecutionPolicy Bypass -File .\scripts\install-engine-deps.ps1 -VenvDir venv -Profile xtts
    ```
 
 3. **Check Engine Entry Points:**
@@ -497,7 +511,7 @@ logger.error("Error message", exc_info=True)
 
 3. **Install PyTorch with CUDA:**
    ```bash
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
    ```
 
 4. **Verify GPU:**
@@ -626,7 +640,15 @@ VOICESTUDIO_LOG_LEVEL=DEBUG
 
 # Engine Configuration
 VOICESTUDIO_ENGINES_PATH=engines
-VOICESTUDIO_MODELS_PATH=%PROGRAMDATA%\VoiceStudio\models
+VOICESTUDIO_MODELS_PATH=E:\VoiceStudio\models
+
+# Force all Hugging Face / Transformers / Coqui caches onto E:\ (avoid C:\ user cache spill)
+HF_HOME=E:\VoiceStudio\models\hf_cache
+HUGGINGFACE_HUB_CACHE=E:\VoiceStudio\models\hf_cache\hub
+TRANSFORMERS_CACHE=E:\VoiceStudio\models\hf_cache\transformers
+HF_DATASETS_CACHE=E:\VoiceStudio\models\hf_cache\datasets
+TTS_HOME=E:\VoiceStudio\models\xtts
+TORCH_HOME=E:\VoiceStudio\models\torch
 
 # Python Configuration
 PYTHONPATH=.

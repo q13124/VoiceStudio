@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from backend.config.path_config import get_models_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,20 +62,30 @@ class EngineConfigService:
             self.save()
 
     def save(self):
-        """Save configuration to file."""
+        """Save configuration to file atomically (tmp + replace)."""
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, "w", encoding="utf-8") as f:
+            tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.config_path)
             logger.debug(f"Saved engine configuration to {self.config_path}")
         except Exception as e:
             logger.error(f"Failed to save engine configuration: {e}")
+            try:
+                if tmp_path.exists():
+                    tmp_path.unlink()
+            except Exception:
+                pass
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration structure."""
         # Get default models path
-        program_data = os.getenv("PROGRAMDATA", os.path.expanduser("~"))
-        models_base = Path(program_data) / "VoiceStudio" / "models"
+        env_models_root = os.getenv("VOICESTUDIO_MODELS_PATH")
+        if env_models_root:
+            models_base = Path(env_models_root)
+        else:
+            models_base = Path(get_models_path())
 
         return {
             "defaults": {
@@ -155,7 +167,7 @@ class EngineConfigService:
 
         # Use default model path structure
         base_path = self.config.get("model_paths", {}).get(
-            "base", "%PROGRAMDATA%\\VoiceStudio\\models"
+            "base", "E:\\VoiceStudio\\models"
         )
         base_path = os.path.expandvars(base_path)
         return str(Path(base_path) / engine_id)
@@ -225,6 +237,54 @@ class EngineConfigService:
         """
         engine_configs = self.config.get("engine_configs", {})
         return engine_configs.get(engine_id, {}).copy()
+
+    def get_engine_init_kwargs(
+        self, engine_id: str, manifest: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Build engine initialization kwargs from config and manifest schema.
+
+        Args:
+            engine_id: Engine ID
+            manifest: Optional engine manifest dictionary
+
+        Returns:
+            Dictionary of kwargs to pass into engine constructors
+        """
+        engine_config = self.get_engine_config(engine_id)
+        raw_params = engine_config.get("parameters", {})
+        if not isinstance(raw_params, dict):
+            raw_params = {}
+
+        def _expand(value: Any) -> Any:
+            if isinstance(value, str):
+                return os.path.expandvars(value)
+            return value
+
+        params = {key: _expand(value) for key, value in raw_params.items()}
+
+        schema = None
+        if isinstance(manifest, dict):
+            schema = manifest.get("config_schema")
+
+        schema_keys = None
+        if isinstance(schema, dict) and schema:
+            schema_keys = set(schema.keys())
+            params = {key: value for key, value in params.items() if key in schema_keys}
+
+        gpu_settings = self.get_gpu_settings()
+        if schema_keys is None or "device" in schema_keys:
+            if "device" not in params:
+                params["device"] = (
+                    gpu_settings.get("device", "cuda")
+                    if gpu_settings.get("enabled", True)
+                    else "cpu"
+                )
+        if schema_keys is None or "gpu" in schema_keys:
+            if "gpu" not in params:
+                params["gpu"] = bool(gpu_settings.get("enabled", True))
+
+        return params
 
     def set_engine_config(self, engine_id: str, config: Dict[str, Any]):
         """

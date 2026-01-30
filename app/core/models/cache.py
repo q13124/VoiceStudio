@@ -148,7 +148,7 @@ class ModelCache:
                     memory_bytes = total_params * 4
                     return memory_bytes / (1024 * 1024)
                 except ImportError:
-                    pass
+                    ...
 
             # Try to get size attribute
             if hasattr(model, "__sizeof__"):
@@ -194,7 +194,7 @@ class ModelCache:
             if torch.cuda.is_available():
                 return torch.cuda.memory_allocated(0) / (1024 * 1024)  # Convert to MB
         except ImportError:
-            pass
+            ...
         except Exception as e:
             logger.debug(f"Failed to get GPU memory usage: {e}")
         return 0.0
@@ -233,7 +233,7 @@ class ModelCache:
                     torch.cuda.empty_cache()
                     logger.debug(f"Cleared GPU cache after evicting: {oldest_key}")
             except ImportError:
-                pass
+                ...
 
         self._stats["evictions"] += 1
         logger.debug(f"Evicted model from cache: {oldest_key}")

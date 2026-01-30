@@ -34,13 +34,23 @@ if (Test-Path $InstallPath) {
     $response = Read-Host "Uninstall existing installation? (Y/N)"
     if ($response -eq "Y" -or $response -eq "y") {
         Write-Host "Uninstalling existing installation..." -ForegroundColor Yellow
-        $uninstaller = Join-Path $InstallPath "uninstall.exe"
-        if (Test-Path $uninstaller) {
-            & $uninstaller /SILENT
+        $uninstaller = Get-ChildItem -Path $InstallPath -Filter "unins*.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -ExpandProperty FullName
+
+        if (-not $uninstaller) {
+            Write-Host "Warning: Uninstaller not found under $InstallPath (expected unins*.exe). Manual uninstallation may be required." -ForegroundColor Yellow
+        } else {
+            $logDir = "C:\logs"
+            New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+            $uninstallLog = Join-Path $logDir "voicestudio_uninstall_$Version.log"
+
+            Write-Host "Running uninstaller: $uninstaller" -ForegroundColor Yellow
+            Write-Host "Uninstall log: $uninstallLog" -ForegroundColor Yellow
+
+            $proc = Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/LOG=`"$uninstallLog`"" -Wait -PassThru -NoNewWindow
+            Write-Host "Uninstaller exit code: $($proc.ExitCode)" -ForegroundColor Yellow
+
             Start-Sleep -Seconds 5
-        }
-        else {
-            Write-Host "Warning: Uninstaller not found. Manual uninstallation may be required." -ForegroundColor Yellow
         }
     }
     else {
@@ -52,18 +62,25 @@ if (Test-Path $InstallPath) {
 # Run silent installation
 Write-Host "Running silent installation..." -ForegroundColor Yellow
 try {
-    $process = Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/DIR=`"$InstallPath`"" -Wait -PassThru -NoNewWindow
+    $logDir = "C:\logs"
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+    $installLog = Join-Path $logDir "voicestudio_install_$Version.log"
+
+    Write-Host "Install log: $installLog" -ForegroundColor Yellow
+
+    # Inno Setup silent install switches: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /DIR= /LOG=
+    $process = Start-Process -FilePath $InstallerPath -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/DIR=`"$InstallPath`"", "/LOG=`"$installLog`"" -Wait -PassThru -NoNewWindow
     
     if ($process.ExitCode -eq 0) {
-        Write-Host "✓ Silent installation completed successfully" -ForegroundColor Green
+        Write-Host "[OK] Silent installation completed successfully" -ForegroundColor Green
     }
     else {
-        Write-Host "✗ Silent installation failed with exit code: $($process.ExitCode)" -ForegroundColor Red
+        Write-Host "[ERROR] Silent installation failed with exit code: $($process.ExitCode)" -ForegroundColor Red
         exit 1
     }
 }
 catch {
-    Write-Host "✗ Silent installation failed: $_" -ForegroundColor Red
+    Write-Host "[ERROR] Silent installation failed: $_" -ForegroundColor Red
     exit 1
 }
 
@@ -76,16 +93,16 @@ $warnings = @()
 
 # Check installation directory
 if (Test-Path $InstallPath) {
-    Write-Host "✓ Installation directory exists" -ForegroundColor Green
+    Write-Host "[OK] Installation directory exists" -ForegroundColor Green
 }
 else {
     $errors += "Installation directory not found: $InstallPath"
 }
 
 # Check application executable
-$appExe = Join-Path $InstallPath "App\VoiceStudioApp.exe"
+$appExe = Join-Path $InstallPath "App\VoiceStudio.App.exe"
 if (Test-Path $appExe) {
-    Write-Host "✓ Application executable exists" -ForegroundColor Green
+    Write-Host "[OK] Application executable exists" -ForegroundColor Green
 }
 else {
     $errors += "Application executable not found: $appExe"
@@ -94,11 +111,11 @@ else {
 # Check backend files
 $backendPath = Join-Path $InstallPath "Backend"
 if (Test-Path $backendPath) {
-    Write-Host "✓ Backend directory exists" -ForegroundColor Green
+    Write-Host "[OK] Backend directory exists" -ForegroundColor Green
     
     $backendMain = Join-Path $backendPath "api\main.py"
     if (Test-Path $backendMain) {
-        Write-Host "✓ Backend main.py exists" -ForegroundColor Green
+        Write-Host "[OK] Backend main.py exists" -ForegroundColor Green
     }
     else {
         $errors += "Backend main.py not found: $backendMain"
@@ -111,7 +128,7 @@ else {
 # Check core files
 $corePath = Join-Path $InstallPath "Core"
 if (Test-Path $corePath) {
-    Write-Host "✓ Core directory exists" -ForegroundColor Green
+    Write-Host "[OK] Core directory exists" -ForegroundColor Green
 }
 else {
     $warnings += "Core directory not found: $corePath"
@@ -120,7 +137,7 @@ else {
 # Check engine manifests
 $enginesPath = Join-Path $InstallPath "Engines"
 if (Test-Path $enginesPath) {
-    Write-Host "✓ Engines directory exists" -ForegroundColor Green
+    Write-Host "[OK] Engines directory exists" -ForegroundColor Green
 }
 else {
     $warnings += "Engines directory not found: $enginesPath"
@@ -129,7 +146,7 @@ else {
 # Check documentation
 $docsPath = Join-Path $InstallPath "Docs"
 if (Test-Path $docsPath) {
-    Write-Host "✓ Documentation directory exists" -ForegroundColor Green
+    Write-Host "[OK] Documentation directory exists" -ForegroundColor Green
 }
 else {
     $warnings += "Documentation directory not found: $docsPath"
@@ -138,7 +155,7 @@ else {
 # Check Start Menu shortcut
 $startMenuPath = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\VoiceStudio"
 if (Test-Path $startMenuPath) {
-    Write-Host "✓ Start Menu shortcut exists" -ForegroundColor Green
+    Write-Host "[OK] Start Menu shortcut exists" -ForegroundColor Green
 }
 else {
     $warnings += "Start Menu shortcut not found: $startMenuPath"
@@ -151,7 +168,7 @@ Write-Host "Test Summary" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
-    Write-Host "✓ Silent installation test passed!" -ForegroundColor Green
+    Write-Host "[OK] Silent installation test passed!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Installation verified successfully." -ForegroundColor Cyan
     Write-Host ""
@@ -165,14 +182,14 @@ else {
     if ($errors.Count -gt 0) {
         Write-Host "Errors found:" -ForegroundColor Red
         foreach ($error in $errors) {
-            Write-Host "  ✗ $error" -ForegroundColor Red
+            Write-Host "  [ERROR] $error" -ForegroundColor Red
         }
     }
     
     if ($warnings.Count -gt 0) {
         Write-Host "Warnings:" -ForegroundColor Yellow
         foreach ($warning in $warnings) {
-            Write-Host "  ⚠ $warning" -ForegroundColor Yellow
+            Write-Host "  [WARN] $warning" -ForegroundColor Yellow
         }
     }
     

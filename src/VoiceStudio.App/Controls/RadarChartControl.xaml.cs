@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using VoiceStudio.Core.Models;
 
 namespace VoiceStudio.App.Controls
@@ -17,6 +18,7 @@ namespace VoiceStudio.App.Controls
         }
 
         public RadarData? Data { get; set; }
+        public Brush? RadarColor { get; set; }
     }
 }
 

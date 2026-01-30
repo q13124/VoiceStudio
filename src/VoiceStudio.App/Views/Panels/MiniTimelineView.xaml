@@ -6,7 +6,7 @@
   <UserControl.Resources>
     <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
   </UserControl.Resources>
-  <Grid Height="{StaticResource VSQ.Control.Height.Large}" Background="{StaticResource VSQ.Panel.BackgroundBrush}">
+  <Grid Height="{StaticResource VSQ.Control.Height.Large}" Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
     <Grid.RowDefinitions>
       <RowDefinition Height="{StaticResource VSQ.Control.Height.Small}"/>
       <RowDefinition Height="*"/>
@@ -24,7 +24,7 @@
         <!-- Background timeline area -->
         <Canvas x:Name="TimelineCanvas" Background="Transparent" PointerPressed="TimelineCanvas_PointerPressed" PointerMoved="TimelineCanvas_PointerMoved" PointerReleased="TimelineCanvas_PointerReleased">
           <!-- Timeline background -->
-          <Rectangle x:Name="TimelineBackground" Fill="{StaticResource VSQ.Panel.BackgroundBrush}" Height="{StaticResource VSQ.Control.Height.Large}"/>
+          <Rectangle x:Name="TimelineBackground" Fill="{StaticResource VSQ.Panel.Background.DarkBrush}" Height="{StaticResource VSQ.Control.Height.Large}"/>
         </Canvas>
         <!-- Playhead Indicator -->
         <Line x:Name="PlayheadLine" X1="{x:Bind ViewModel.PlayheadPosition, Mode=OneWay}" Y1="0" X2="{x:Bind ViewModel.PlayheadPosition, Mode=OneWay}" Y2="32" Stroke="{StaticResource VSQ.Accent.CyanBrush}" StrokeThickness="2" Opacity="0.9" Visibility="{x:Bind ViewModel.IsPlayheadVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" IsHitTestVisible="False"/>

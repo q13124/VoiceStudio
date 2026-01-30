@@ -1,0 +1,274 @@
+{
+  "timestamp": "2026-01-15T02:29:24.793568",
+  "workflow": "baseline_voice_workflow",
+  "steps": [
+    {
+      "step": "synthesize",
+      "status": "success",
+      "audio_id": "clone_clone_7174c582cccf_31676103",
+      "audio_url": "/api/voice/audio/clone_clone_7174c582cccf_31676103",
+      "audio_duration_seconds": 11.734666666666667,
+      "quality_metrics": {
+        "mos_score": 4.771824645996094,
+        "similarity": 0.9058627486228943,
+        "naturalness": 1.0,
+        "snr_db": 82.28860490412194,
+        "artifact_score": 2.6630591092599892e-05,
+        "has_clicks": true,
+        "has_distortion": false,
+        "voice_profile_match": {
+          "f0_similarity": 0.9967859918385521,
+          "formant_similarity": 0.78466796875,
+          "mfcc_distance": 80.56384943887964,
+          "overall_similarity": 0.6924232390437819,
+          "recommendations": [
+            "High MFCC distance - spectral characteristics differ significantly",
+            "Overall voice match is low - review synthesis parameters"
+          ]
+        }
+      },
+      "step_duration_seconds": 24.668200731277466,
+      "duration_seconds": 24.668200731277466,
+      "device": "cuda",
+      "profile_id": "clone_7174c582cccf"
+    },
+    {
+      "step": "transcribe",
+      "status": "success",
+      "text": "Hello, this is a baseline voice workflow proof. We are testing XTT's V2 synthesis, whispered CP transcription, and quality metrics calculation.",
+      "language": "en",
+      "segments_count": 4,
+      "duration_seconds": 18.084673166275024
+    }
+  ],
+  "inputs": {
+    "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+    "language": "en",
+    "synthesis": {
+      "engine": "xtts_v2",
+      "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+      "language": "en",
+      "quality_mode": "standard",
+      "reference_audio": [
+        "E:\\VoiceStudio\\proof_runs\\baseline_workflow_gpu_20260115-024000\\test_reference.wav"
+      ],
+      "use_multi_reference": false,
+      "prosody_params": null
+    },
+    "transcription": {
+      "audio_id": "clone_clone_7174c582cccf_31676103",
+      "engine": "whisper_cpp",
+      "word_timestamps": true,
+      "language": "en"
+    }
+  },
+  "outputs": {
+    "synthesis": {
+      "audio_id": "clone_clone_7174c582cccf_31676103",
+      "audio_url": "/api/voice/audio/clone_clone_7174c582cccf_31676103",
+      "duration": 11.734666666666667
+    },
+    "audio_file_path": "E:\\VoiceStudio\\proof_runs\\baseline_workflow_gpu_20260115-024000\\clone_clone_7174c582cccf_31676103.wav",
+    "transcription": {
+      "text": "Hello, this is a baseline voice workflow proof. We are testing XTT's V2 synthesis, whispered CP transcription, and quality metrics calculation.",
+      "language": "en",
+      "segments": [
+        {
+          "text": "Hello, this is a baseline voice workflow proof.",
+          "start": 0.0,
+          "end": 3.8,
+          "words": []
+        },
+        {
+          "text": "We are testing XTT's V2 synthesis,",
+          "start": 3.8,
+          "end": 6.66,
+          "words": []
+        },
+        {
+          "text": "whispered CP transcription,",
+          "start": 6.66,
+          "end": 9.02,
+          "words": []
+        },
+        {
+          "text": "and quality metrics calculation.",
+          "start": 9.02,
+          "end": 11.32,
+          "words": []
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "synthesis": {
+      "mos_score": 4.771824645996094,
+      "similarity": 0.9058627486228943,
+      "naturalness": 1.0,
+      "snr_db": 82.28860490412194,
+      "artifact_score": 2.6630591092599892e-05,
+      "has_clicks": true,
+      "has_distortion": false,
+      "voice_profile_match": {
+        "f0_similarity": 0.9967859918385521,
+        "formant_similarity": 0.78466796875,
+        "mfcc_distance": 80.56384943887964,
+        "overall_similarity": 0.6924232390437819,
+        "recommendations": [
+          "High MFCC distance - spectral characteristics differ significantly",
+          "Overall voice match is low - review synthesis parameters"
+        ]
+      }
+    }
+  },
+  "config": {
+    "engine": "xtts_v2",
+    "language": "en",
+    "quality_mode": "standard",
+    "reference_audio_paths": [
+      "E:\\VoiceStudio\\proof_runs\\baseline_workflow_gpu_20260115-024000\\test_reference.wav"
+    ],
+    "use_multi_reference": false,
+    "device": "cuda",
+    "profile_id": "clone_7174c582cccf",
+    "available_engines": {
+      "engines": [
+        "aeneas",
+        "chatterbox",
+        "espeak_ng",
+        "f5_tts",
+        "festival",
+        "gpt_sovits",
+        "higgs_audio",
+        "lyrebird",
+        "marytts",
+        "mockingbird",
+        "openvoice",
+        "parakeet",
+        "piper",
+        "rhvoice",
+        "rvc",
+        "silero",
+        "sovits_svc",
+        "tortoise",
+        "voice_ai",
+        "voxcpm",
+        "whisper",
+        "whisper_cpp",
+        "whisper_ui",
+        "xtts_v2",
+        "automatic1111",
+        "comfyui",
+        "fastsd_cpu",
+        "fooocus",
+        "invokeai",
+        "localai",
+        "openjourney",
+        "realistic_vision",
+        "sdnext",
+        "sdxl",
+        "sdxl_comfy",
+        "sd_cpu",
+        "realesrgan",
+        "deepfacelab",
+        "deforum",
+        "ffmpeg_ai",
+        "fomm",
+        "moviepy",
+        "sadtalker",
+        "svd",
+        "video_creator"
+      ],
+      "available": true,
+      "count": 45
+    },
+    "health_preflight": {
+      "ok": true,
+      "timestamp": "2026-01-15T02:30:15.814111",
+      "env": {
+        "VOICESTUDIO_MODELS_PATH": "E:\\VoiceStudio\\models",
+        "VOICESTUDIO_PROJECTS_DIR": null,
+        "VOICESTUDIO_CACHE_DIR": null,
+        "VOICESTUDIO_JOBS_DIR": null,
+        "HF_HOME": "E:\\VoiceStudio\\models\\hf_cache",
+        "HUGGINGFACE_HUB_CACHE": "E:\\VoiceStudio\\models\\hf_cache\\hub",
+        "TRANSFORMERS_CACHE": "E:\\VoiceStudio\\models\\hf_cache\\transformers",
+        "HF_DATASETS_CACHE": "E:\\VoiceStudio\\models\\hf_cache\\datasets",
+        "TTS_HOME": "E:\\VoiceStudio\\models\\xtts",
+        "TORCH_HOME": "E:\\VoiceStudio\\models\\torch"
+      },
+      "checks": {
+        "projects_root": {
+          "ok": true,
+          "path": "C:\\Users\\Tyler\\.voicestudio\\projects"
+        },
+        "cache_root": {
+          "ok": true,
+          "path": "C:\\Users\\Tyler\\.voicestudio\\cache"
+        },
+        "model_root": {
+          "ok": true,
+          "path": "E:\\VoiceStudio\\models"
+        },
+        "audio_registry_dir": {
+          "ok": true,
+          "path": "C:\\Users\\Tyler\\.voicestudio\\cache"
+        },
+        "jobs_root": {
+          "ok": true,
+          "path": "C:\\Users\\Tyler\\.voicestudio\\cache\\jobs"
+        },
+        "engine_config": {
+          "ok": true,
+          "model_paths.base": "E:\\\\VoiceStudio\\\\models",
+          "expected_model_root": "E:\\VoiceStudio\\models",
+          "consistent_with_model_root": true
+        },
+        "ffmpeg": {
+          "ok": true,
+          "path": "C:\\Users\\Tyler\\scoop\\shims\\ffmpeg.EXE",
+          "message": "ffmpeg found"
+        }
+      }
+    },
+    "preflight": {
+      "results": {
+        "xtts_v2": {
+          "ok": true,
+          "paths": [
+            "E:\\VoiceStudio\\models\\xtts\\tts\\tts_models--multilingual--multi-dataset--xtts_v2\\config.json",
+            "E:\\VoiceStudio\\models\\xtts\\tts\\tts_models--multilingual--multi-dataset--xtts_v2\\hash.md5",
+            "E:\\VoiceStudio\\models\\xtts\\tts\\tts_models--multilingual--multi-dataset--xtts_v2\\model.pth",
+            "E:\\VoiceStudio\\models\\xtts\\tts\\tts_models--multilingual--multi-dataset--xtts_v2\\speakers_xtts.pth",
+            "E:\\VoiceStudio\\models\\xtts\\tts\\tts_models--multilingual--multi-dataset--xtts_v2\\vocab.json"
+          ],
+          "downloaded": false,
+          "message": "XTTS ready at E:\\VoiceStudio\\models\\xtts"
+        },
+        "piper": {
+          "ok": true,
+          "paths": [
+            "E:\\VoiceStudio\\models\\piper\\en_US-amy-medium.onnx",
+            "E:\\VoiceStudio\\models\\piper\\en_US-amy-medium.onnx.json"
+          ],
+          "downloaded": true,
+          "message": "Piper voice ready: en_US-amy-medium"
+        },
+        "whisper_cpp": {
+          "ok": true,
+          "paths": [
+            "E:\\VoiceStudio\\models\\whisper\\whisper-medium.en.gguf"
+          ],
+          "downloaded": false,
+          "message": "Whisper.cpp model ready"
+        },
+        "gpt_sovits": {
+          "ok": false,
+          "downloaded": false,
+          "message": "So-VITS checkpoints/config missing. Place files here: E:\\VoiceStudio\\models\\checkpoints\\MyVoiceProj\\model.pth; E:\\VoiceStudio\\models\\checkpoints\\MyVoiceProj\\config.json",
+          "status_code": 424
+        }
+      }
+    }
+  }
+}

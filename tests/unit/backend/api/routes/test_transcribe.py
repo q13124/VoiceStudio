@@ -38,7 +38,7 @@ class TestTranscribeRouteImports:
             assert VoiceActivityDetector is not None
         except ImportError:
             # VAD may not be available, which is acceptable
-            pass
+            ...
 
 
 class TestTranscribeRouteHandlers:

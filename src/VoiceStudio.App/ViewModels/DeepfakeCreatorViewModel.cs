@@ -424,13 +424,13 @@ namespace VoiceStudio.App.ViewModels
                 var sourceProgressStream = new ProgressStream(sourceStream, (bytesRead, totalBytes) =>
                 {
                     uploadedBytes += bytesRead;
-                    UploadProgress = (uploadedBytes / (double)totalSize) * 100.0;
+                    UploadProgress = uploadedBytes / (double)totalSize * 100.0;
                 });
 
                 var targetProgressStream = new ProgressStream(targetStream, (bytesRead, totalBytes) =>
                 {
                     uploadedBytes += bytesRead;
-                    UploadProgress = (uploadedBytes / (double)totalSize) * 100.0;
+                    UploadProgress = uploadedBytes / (double)totalSize * 100.0;
                 });
 
                 using var content = new MultipartFormDataContent();

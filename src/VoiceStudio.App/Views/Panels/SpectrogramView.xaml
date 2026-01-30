@@ -109,7 +109,7 @@
                     <controls:SpectrogramControl x:Name="SpectrogramControl" RightTapped="SpectrogramControl_RightTapped"/>
                 </Border>
                 <!-- Empty State -->
-                <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Visibility="{x:Bind ViewModel.SpectrogramData, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Visibility="{x:Bind ViewModel.SpectrogramData, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                     <TextBlock Text="No spectrogram loaded" Style="{StaticResource VSQ.Text.Body}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" HorizontalAlignment="Center"/>
                     <TextBlock Text="Select an audio file and click 'Load Spectrogram'" Style="{StaticResource VSQ.Text.Caption}" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="{StaticResource VSQ.Text.MaxWidth.Standard}"/>
                 </StackPanel>

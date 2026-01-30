@@ -10,16 +10,23 @@ namespace VoiceStudio.App.Converters
     {
         public object? Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value is string str && !string.IsNullOrEmpty(str))
+            if (value is string str && !string.IsNullOrWhiteSpace(str))
             {
-                return str.Substring(0, 1).ToUpper();
+                try
+                {
+                    return str.Substring(0, Math.Min(1, str.Length)).ToUpperInvariant();
+                }
+                catch
+                {
+                    return "?";
+                }
             }
             return "?";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

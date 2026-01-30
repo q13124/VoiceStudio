@@ -558,7 +558,7 @@ git tag v1.0.0
 VOICESTUDIO_BACKEND_URL=http://localhost:8000
 VOICESTUDIO_LOG_LEVEL=INFO
 VOICESTUDIO_ENGINES_PATH=engines
-VOICESTUDIO_MODELS_PATH=%PROGRAMDATA%\VoiceStudio\models
+VOICESTUDIO_MODELS_PATH=E:\VoiceStudio\models
 ```
 
 ### Installer Configuration

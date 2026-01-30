@@ -1,4 +1,5 @@
 # Worker 2 Prompt - UI/UX/Controls/Localization/Packaging
+
 ## Complete Task Instructions
 
 **Date:** 2025-01-28  
@@ -10,6 +11,7 @@
 ## 🎯 YOUR ROLE
 
 You are **Worker 2**, responsible for:
+
 - UI/UX design and implementation
 - Reusable controls and components
 - Localization and internationalization
@@ -41,12 +43,14 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Create Resource File Structure:**
+
    - File: `src/VoiceStudio.App/Resources/Resources.resw` (create)
    - File: `src/VoiceStudio.App/Resources/en-US/Resources.resw` (create)
    - File: `src/VoiceStudio.App/Resources/es-ES/Resources.resw` (create - optional, can be empty initially)
    - File: `src/VoiceStudio.App/Resources/fr-FR/Resources.resw` (create - optional, can be empty initially)
 
 2. **Create Resource Key Naming Convention:**
+
    - Format: `Category.Item.Description`
    - Examples:
      - `Button.Save` - Save button text
@@ -57,6 +61,7 @@ You are **Worker 2**, responsible for:
      - `Tooltip.Search.Help` - Search tooltip text
 
 3. **Create Resource Helper:**
+
    - File: `src/VoiceStudio.App/Utilities/ResourceHelper.cs`
    - Static class with methods:
      - `GetString(string key, params object[] args) -> string`
@@ -66,6 +71,7 @@ You are **Worker 2**, responsible for:
    - Support string formatting (e.g., "Profile {0} created")
 
 4. **Audit ViewModels for Hardcoded Strings:**
+
    - Search pattern: `"text"` or `@"text"` in ViewModels
    - Files to audit (70+ ViewModels):
      - `src/VoiceStudio.App/ViewModels/*.cs`
@@ -74,34 +80,40 @@ You are **Worker 2**, responsible for:
    - Document in `docs/developer/RESOURCE_KEYS.md`
 
 5. **Update ViewModels:**
+
    - Replace hardcoded strings with `ResourceHelper.GetString()`
    - Example:
+
      ```csharp
      // Before:
      Title = "Voice Profiles";
-     
+
      // After:
      Title = ResourceHelper.GetString("Panel.Profiles.Title", "Voice Profiles");
      ```
+
    - Update all 70+ ViewModels systematically
 
 6. **Audit XAML Files for Hardcoded Text:**
+
    - Search pattern: `Text="..."` or `<TextBlock Text="..."/>`
    - Files to audit (150+ XAML files):
      - `src/VoiceStudio.App/Views/**/*.xaml`
      - `src/VoiceStudio.App/Controls/**/*.xaml`
    - Replace with `x:Uid` and resource references
    - Example:
+
      ```xml
      <!-- Before: -->
      <TextBlock Text="Voice Profiles" />
-     
+
      <!-- After: -->
      <TextBlock x:Uid="ProfilesPanelTitle" />
      <!-- In Resources.resw: ProfilesPanelTitle.Text = "Voice Profiles" -->
      ```
 
 7. **Create Resource Key Documentation:**
+
    - File: `docs/developer/RESOURCE_KEYS.md`
    - List all resource keys organized by category
    - Usage examples
@@ -115,6 +127,7 @@ You are **Worker 2**, responsible for:
    - Verify no missing keys
 
 **Files to Create:**
+
 - `src/VoiceStudio.App/Resources/Resources.resw`
 - `src/VoiceStudio.App/Resources/en-US/Resources.resw`
 - `src/VoiceStudio.App/Resources/es-ES/Resources.resw` (optional)
@@ -123,10 +136,12 @@ You are **Worker 2**, responsible for:
 - `docs/developer/RESOURCE_KEYS.md`
 
 **Files to Modify:**
+
 - All ViewModels with hardcoded strings (70+ files)
 - All XAML files with hardcoded text (150+ files)
 
 **Acceptance Criteria:**
+
 - [ ] Resource files created
 - [ ] ResourceHelper implemented
 - [ ] All ViewModels use resources
@@ -148,6 +163,7 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Create Localization Service Interface:**
+
    - File: `src/VoiceStudio.Core/Services/ILocalizationService.cs`
    - Methods:
      - `string GetCurrentLocale()`
@@ -158,6 +174,7 @@ You are **Worker 2**, responsible for:
      - `event EventHandler<string> LocaleChanged`
 
 2. **Implement Localization Service:**
+
    - File: `src/VoiceStudio.App/Services/LocalizationService.cs`
    - Load resource files based on locale
    - Switch `ResourceContext` for locale changes
@@ -166,6 +183,7 @@ You are **Worker 2**, responsible for:
    - Support: en-US, es-ES, fr-FR (at minimum)
 
 3. **Create Locale Switch Control:**
+
    - File: `src/VoiceStudio.App/Controls/LocaleSwitchControl.xaml`
    - File: `src/VoiceStudio.App/Controls/LocaleSwitchControl.xaml.cs`
    - ComboBox or RadioButtons for locale selection
@@ -180,18 +198,21 @@ You are **Worker 2**, responsible for:
      - Keyboard navigation
 
 4. **Add to Settings Panel:**
+
    - File: `src/VoiceStudio.App/Views/Panels/SettingsView.xaml` (modify)
    - Add locale switch control in "General" or "Appearance" section
    - Label: "Language" or "Locale"
    - Save locale preference on change
 
 5. **Implement Locale Persistence:**
+
    - Use `ApplicationData.LocalSettings` to save locale
    - Key: `"AppLocale"` (default: "en-US")
    - Load on app startup in `App.xaml.cs`
    - Apply locale immediately on change
 
 6. **Update ResourceHelper:**
+
    - File: `src/VoiceStudio.App/Utilities/ResourceHelper.cs` (modify)
    - Use `LocalizationService` instead of direct ResourceLoader
    - Listen to `LocaleChanged` event
@@ -205,17 +226,20 @@ You are **Worker 2**, responsible for:
    - Test fallback to en-US if locale missing
 
 **Files to Create:**
+
 - `src/VoiceStudio.Core/Services/ILocalizationService.cs`
 - `src/VoiceStudio.App/Services/LocalizationService.cs`
 - `src/VoiceStudio.App/Controls/LocaleSwitchControl.xaml` + `.xaml.cs`
 
 **Files to Modify:**
+
 - `src/VoiceStudio.App/Views/Panels/SettingsView.xaml`
 - `src/VoiceStudio.App/Utilities/ResourceHelper.cs`
 - `src/VoiceStudio.App/App.xaml.cs`
 - `src/VoiceStudio.App/Services/ServiceProvider.cs`
 
 **Acceptance Criteria:**
+
 - [ ] LocalizationService implemented
 - [ ] Locale switch control created
 - [ ] Added to settings panel
@@ -237,13 +261,14 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Create Toast Styles Resource:**
+
    - File: `src/VoiceStudio.App/Resources/ToastStyles.xaml`
    - Styles:
      - `VSQ.Toast.Success` - Green background, checkmark icon
      - `VSQ.Toast.Error` - Red background, error icon
      - `VSQ.Toast.Warning` - Orange background, warning icon
      - `VSQ.Toast.Info` - Blue background, info icon
-   - Use VSQ.* design tokens:
+   - Use VSQ.\* design tokens:
      - Colors: `VSQ.Success`, `VSQ.Error`, `VSQ.Warn`, `VSQ.Accent.Cyan`
      - Spacing: `VSQ.Spacing.Medium`, `VSQ.Spacing.Large`
      - Corner radius: `VSQ.CornerRadius.Medium`
@@ -254,6 +279,7 @@ You are **Worker 2**, responsible for:
      - Duration: 300ms
 
 2. **Create Toast Control:**
+
    - File: `src/VoiceStudio.App/Controls/ToastNotification.xaml`
    - File: `src/VoiceStudio.App/Controls/ToastNotification.xaml.cs`
    - Properties:
@@ -274,6 +300,7 @@ You are **Worker 2**, responsible for:
      - Live region for screen readers
 
 3. **Enhance ToastNotificationService:**
+
    - File: `src/VoiceStudio.App/Services/ToastNotificationService.cs` (modify)
    - Add typed methods:
      - `void ShowSuccess(string message, string? title = null, TimeSpan? duration = null)`
@@ -285,12 +312,14 @@ You are **Worker 2**, responsible for:
    - Support action buttons
 
 4. **Add Toast Queue Management:**
+
    - Limit concurrent toasts (max 3-5)
    - Queue overflow handling
    - Dismiss oldest when queue full
    - Smooth animations for queue changes
 
 5. **Update All Toast Calls:**
+
    - Audit all `ToastNotificationService` usage
    - Replace generic `Show()` calls with typed methods
    - Ensure consistent styling
@@ -306,14 +335,17 @@ You are **Worker 2**, responsible for:
    - Test animations
 
 **Files to Create:**
+
 - `src/VoiceStudio.App/Resources/ToastStyles.xaml`
 - `src/VoiceStudio.App/Controls/ToastNotification.xaml` + `.xaml.cs`
 
 **Files to Modify:**
+
 - `src/VoiceStudio.App/Services/ToastNotificationService.cs`
 - All files using ToastNotificationService (50+ files)
 
 **Acceptance Criteria:**
+
 - [ ] Toast styles created
 - [ ] Toast control created
 - [ ] ToastNotificationService enhanced
@@ -335,6 +367,7 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Audit Existing Empty States:**
+
    - Review all panels for empty states
    - Document current implementations
    - Identify inconsistencies
@@ -342,6 +375,7 @@ You are **Worker 2**, responsible for:
      - `src/VoiceStudio.App/Views/Panels/*.xaml`
 
 2. **Enhance EmptyState Control:**
+
    - File: `src/VoiceStudio.App/Controls/EmptyState.xaml` (modify)
    - Properties:
      - `Title` (string) - Main title
@@ -349,13 +383,14 @@ You are **Worker 2**, responsible for:
      - `Icon` (IconElement) - Optional icon
      - `ActionButtonText` (string) - Optional action button
      - `ActionButtonCommand` (ICommand) - Action command
-   - Use VSQ.* design tokens
+   - Use VSQ.\* design tokens
    - Accessibility:
      - `AutomationProperties.Name`
      - `AutomationProperties.HelpText`
      - Keyboard navigation for action button
 
 3. **Enhance SkeletonScreen Control:**
+
    - File: `src/VoiceStudio.App/Controls/SkeletonScreen.xaml` (modify)
    - Properties:
      - `SkeletonType` (List, Card, Form, Table)
@@ -366,9 +401,10 @@ You are **Worker 2**, responsible for:
      - Form skeleton: Input field shapes
      - Table skeleton: Row/column structure
    - Smooth shimmer animation
-   - Use VSQ.* design tokens
+   - Use VSQ.\* design tokens
 
 4. **Create Empty State Patterns:**
+
    - File: `docs/design/EMPTY_STATE_PATTERNS.md`
    - Document patterns for different scenarios:
      - No data (e.g., "No profiles yet")
@@ -380,6 +416,7 @@ You are **Worker 2**, responsible for:
    - When to use each pattern
 
 5. **Update All Panels:**
+
    - Replace custom empty states with `EmptyState` control
    - Replace custom loading with `SkeletonScreen` control
    - Ensure consistency
@@ -393,15 +430,18 @@ You are **Worker 2**, responsible for:
    - Test accessibility
 
 **Files to Create/Modify:**
+
 - `src/VoiceStudio.App/Controls/EmptyState.xaml` (enhance)
 - `src/VoiceStudio.App/Controls/SkeletonScreen.xaml` (enhance)
 - `docs/design/EMPTY_STATE_PATTERNS.md` (create)
 
 **Files to Modify:**
+
 - All panels with custom empty states (30+ files)
 - All panels with custom loading (30+ files)
 
 **Acceptance Criteria:**
+
 - [ ] EmptyState control standardized
 - [ ] SkeletonScreen control standardized
 - [ ] All panels use standardized controls
@@ -422,6 +462,7 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Create Microcopy Guide:**
+
    - File: `docs/design/MICROCOPY_GUIDE.md`
    - Sections:
      - Button Verbs
@@ -434,6 +475,7 @@ You are **Worker 2**, responsible for:
      - Loading Messages
 
 2. **Document Button Verb Patterns:**
+
    - Action verbs: Save, Delete, Create, Edit, Export, Import, Apply, Cancel, Close
    - Avoid: Click, Press, Use, Do
    - Examples:
@@ -447,6 +489,7 @@ You are **Worker 2**, responsible for:
      - Be action-oriented
 
 3. **Document Error Message Patterns:**
+
    - User-friendly language
    - Actionable messages
    - Avoid technical jargon
@@ -460,6 +503,7 @@ You are **Worker 2**, responsible for:
      - "[What happened]. [What user can do]."
 
 4. **Document Title Conventions:**
+
    - Panel titles: Use noun phrases
      - ✅ "Voice Profiles"
      - ❌ "Manage Voice Profiles"
@@ -471,6 +515,7 @@ You are **Worker 2**, responsible for:
      - ❌ "View Quality Metrics"
 
 5. **Document Toast Message Patterns:**
+
    - Success messages:
      - ✅ "Profile created successfully"
      - ❌ "Success!"
@@ -485,6 +530,7 @@ You are **Worker 2**, responsible for:
      - ❌ "Processing..."
 
 6. **Document Tooltip Patterns:**
+
    - Be concise (1 sentence)
    - Explain what the control does
    - Include keyboard shortcut if available
@@ -499,9 +545,11 @@ You are **Worker 2**, responsible for:
    - Examples of good vs bad microcopy
 
 **Files to Create:**
+
 - `docs/design/MICROCOPY_GUIDE.md`
 
 **Acceptance Criteria:**
+
 - [ ] Microcopy guide complete
 - [ ] All patterns documented
 - [ ] Examples provided
@@ -521,57 +569,42 @@ You are **Worker 2**, responsible for:
 **Detailed Steps:**
 
 1. **Create Packaging Script:**
-   - File: `scripts/package_release.ps1`
+
+   - Use: `scripts/prepare-release.ps1` + `installer/build-installer.ps1` (installer-only lane)
    - Script steps:
+
      ```powershell
      # 1. Clean build directories
      Remove-Item -Recurse -Force bin, obj -ErrorAction SilentlyContinue
-     
+
      # 2. Restore NuGet packages
      dotnet restore
-     
+
      # 3. Build in Release mode
      dotnet build -c Release
-     
+
      # 4. Run tests
      dotnet test
-     
-     # 5. Create MSIX package
-     # (MSIX packaging steps)
-     
-     # 6. Sign package (if certificate available)
-     # (Code signing steps)
-     
-     # 7. Generate release notes
+
+     # 5. Create installer (Inno Setup / WiX) via installer/build-installer.ps1
+
+     # 6. Generate release notes
      # (Extract from changelog)
-     
-     # 8. Create installer
-     # (NSIS or similar)
      ```
+
    - Parameters:
      - `-Version` - Version number
      - `-Configuration` - Release/Debug (default: Release)
      - `-SkipTests` - Skip test execution
      - `-Sign` - Sign package (requires certificate)
 
-2. **Create MSIX Package Configuration:**
-   - File: `src/VoiceStudio.App/Package.appxmanifest` (create or modify)
-   - App identity:
-     - Name: VoiceStudio Quantum+
-     - Publisher: (your publisher)
-     - Version: (from VersionService)
-   - Capabilities:
-     - Internet (for backend API)
-     - Private Networks (for localhost)
-     - Documents Library (for file access)
-   - Visual assets:
-     - Logo images
-     - Splash screen
-     - Tile images
+2. **No MSIX lane:**
+
+   - Do not create or modify `Package.appxmanifest` (MSIX is archived under `docs/archive/msix/` and not used)
 
 3. **Create Installer Script:**
-   - File: `installer/create_installer.ps1` (or enhance existing)
-   - Use NSIS or WiX Toolset
+
+   - Use: `installer/build-installer.ps1` + installer sources under `installer/` (Inno Setup `.iss` and/or WiX `.wxs`)
    - Include:
      - All dependencies
      - Create shortcuts
@@ -580,6 +613,7 @@ You are **Worker 2**, responsible for:
      - Add uninstaller
 
 4. **Create Smoke Checklist:**
+
    - File: `docs/release/SMOKE_CHECKLIST.md`
    - Pre-release verification steps:
      - [ ] All unit tests pass
@@ -601,6 +635,7 @@ You are **Worker 2**, responsible for:
      - [ ] Release notes generated
 
 5. **Add Version Stamping:**
+
    - File: `src/VoiceStudio.App/Views/Dialogs/AboutDialog.xaml` (modify or create)
    - Display:
      - App version (from VersionService)
@@ -619,6 +654,7 @@ You are **Worker 2**, responsible for:
      ```
 
 6. **Enhance VersionService:**
+
    - File: `src/VoiceStudio.App/Services/VersionService.cs` (modify)
    - Add methods:
      - `GetCommitHash()` - Get Git commit hash (if available)
@@ -637,19 +673,18 @@ You are **Worker 2**, responsible for:
    - Format for changelog
 
 **Files to Create:**
-- `scripts/package_release.ps1`
-- `src/VoiceStudio.App/Package.appxmanifest` (if not exists)
-- `installer/create_installer.ps1` (or enhance existing)
+
 - `docs/release/SMOKE_CHECKLIST.md`
 - `docs/release/RELEASE_NOTES_TEMPLATE.md`
 
 **Files to Modify:**
+
 - `src/VoiceStudio.App/Views/Dialogs/AboutDialog.xaml` (or create)
 - `src/VoiceStudio.App/Services/VersionService.cs`
 
 **Acceptance Criteria:**
+
 - [ ] Packaging script complete
-- [ ] MSIX package configuration complete
 - [ ] Installer script complete
 - [ ] Smoke checklist complete
 - [ ] Version stamping in About dialog
@@ -663,10 +698,12 @@ You are **Worker 2**, responsible for:
 **Total Tasks:** 6  
 **Estimated Time:** 30-40 hours  
 **Priority Breakdown:**
+
 - HIGH: 3 tasks (Resources, Toast styles, Packaging)
 - MEDIUM: 3 tasks (Locale switch, Empty states, Microcopy)
 
 **Dependencies:**
+
 - TASK 2.2 (Locale switch) → TASK 2.1 (Resources)
 - All other tasks are independent
 
@@ -675,6 +712,7 @@ You are **Worker 2**, responsible for:
 ## ✅ COMPLETION CRITERIA
 
 ### Code Complete
+
 - [ ] All 6 tasks implemented
 - [ ] All hardcoded strings migrated to resources
 - [ ] All toast calls use typed methods
@@ -683,6 +721,7 @@ You are **Worker 2**, responsible for:
 - [ ] Version stamping complete
 
 ### Documentation Complete
+
 - [ ] Resource keys documented
 - [ ] Microcopy guide complete
 - [ ] Empty state patterns documented
@@ -690,6 +729,7 @@ You are **Worker 2**, responsible for:
 - [ ] Release notes template created
 
 ### Consistency Achieved
+
 - [ ] All UI text follows microcopy guide
 - [ ] All toasts use standardized styles
 - [ ] All empty states consistent
@@ -702,12 +742,14 @@ You are **Worker 2**, responsible for:
 **Immediate Next Steps:**
 
 1. **TASK 2.1: Resource Files** (Start here - foundation for localization)
+
    - Create resource files
    - Create ResourceHelper
    - Audit and extract hardcoded strings
    - Update ViewModels and XAML
 
 2. **TASK 2.3: Toast Styles** (High priority - UX consistency)
+
    - Create toast styles
    - Create toast control
    - Enhance ToastNotificationService
@@ -715,7 +757,6 @@ You are **Worker 2**, responsible for:
 
 3. **TASK 2.6: Packaging Script** (High priority - release readiness)
    - Create packaging script
-   - Create MSIX configuration
    - Create installer script
    - Create smoke checklist
 

@@ -52,12 +52,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                pass
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                pass
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -441,7 +439,9 @@ class ComfyUIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("comfyui", duration, cached=False)
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for comfyui batch generation."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch generation failed for prompt {idx}: {e}")
@@ -452,7 +452,7 @@ class ComfyUIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("comfyui", "generation_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Prepare arguments

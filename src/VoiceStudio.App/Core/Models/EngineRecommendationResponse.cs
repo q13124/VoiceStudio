@@ -11,6 +11,13 @@ namespace VoiceStudio.Core.Models
         public List<EngineRecommendation> Recommendations { get; set; } = new();
         public int TotalEngines { get; set; }
         public int MatchingEngines { get; set; }
+
+        // Convenience aliases for the top recommendation (used by some XAML bindings).
+        public string? RecommendedEngine =>
+            Recommendations.Count > 0 ? Recommendations[0].RecommendedEngine : null;
+
+        public string? Reason =>
+            Recommendations.Count > 0 ? Recommendations[0].Reason : null;
     }
 }
 

@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-01-16T02:37:32.395562",
+  "workflow": "baseline_voice_workflow",
+  "steps": [
+    {
+      "step": "synthesize",
+      "status": "failed",
+      "error": "Synthesis failed: 404 - {\"error\":true,\"error_code\":\"RESOURCE_NOT_FOUND\",\"message\":\"Not Found\",\"request_id\":\"2a8b5942-cf9d-4a54-b542-a12a6c4d3404\",\"timestamp\":\"2026-01-16T02:37:36.751337\",\"path\":\"/api/voice/clone\"}",
+      "duration_seconds": 2.214567184448242
+    }
+  ],
+  "inputs": {
+    "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+    "language": "en",
+    "synthesis": {
+      "engine": "xtts_v2",
+      "text": "Hello, this is a baseline voice workflow proof. We are testing XTTS v2 synthesis, whisper.cpp transcription, and quality metrics calculation.",
+      "language": "en",
+      "quality_mode": "high",
+      "reference_audio": [
+        "proof_runs\\baseline_workflow_20260115-203732_prosody\\test_reference.wav"
+      ],
+      "use_multi_reference": false,
+      "prosody_params": "{\"pitch\":1.05,\"tempo\":1.0,\"formant_shift\":0.0,\"energy\":1.0}"
+    }
+  },
+  "outputs": {},
+  "metrics": {},
+  "config": {
+    "engine": "xtts_v2",
+    "language": "en",
+    "quality_mode": "high",
+    "reference_audio_paths": [
+      "proof_runs\\baseline_workflow_20260115-203732_prosody\\test_reference.wav"
+    ],
+    "use_multi_reference": false,
+    "prosody_params": "{\"pitch\":1.05,\"tempo\":1.0,\"formant_shift\":0.0,\"energy\":1.0}"
+  }
+}

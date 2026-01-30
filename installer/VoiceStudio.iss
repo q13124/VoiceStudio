@@ -2,10 +2,23 @@
 ; Professional Voice Cloning Studio Installer
 
 #define MyAppName "VoiceStudio Quantum+"
+
+; Allow build scripts to override version/exe name (e.g., ISCC.exe /DMyAppVersion=1.2.3)
+#ifndef MyAppVersion
 #define MyAppVersion "1.0.0"
+#endif
 #define MyAppPublisher "VoiceStudio"
 #define MyAppURL "https://voicestudio.example"
-#define MyAppExeName "VoiceStudioApp.exe"
+
+#ifndef MyAppExeName
+#define MyAppExeName "VoiceStudio.App.exe"
+#endif
+
+; Gate C publish output is the canonical frontend artifact (unpackaged apphost EXE).
+; Override when needed (e.g., ISCC.exe /DMyAppSourceDir="..\path\to\publish").
+#ifndef MyAppSourceDir
+#define MyAppSourceDir "..\.buildlogs\x64\Release\gatec-publish"
+#endif
 #define MyAppId "A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D"
 
 [Setup]
@@ -23,7 +36,10 @@ AllowNoIcons=yes
 LicenseFile=..\LICENSE
 OutputDir=Output
 OutputBaseFilename=VoiceStudio-Setup-v{#MyAppVersion}
+; Optional setup icon (only if present). Inno Setup requires an .ico file.
+#ifexist "..\src\VoiceStudio.App\Assets\icon.ico"
 SetupIconFile=..\src\VoiceStudio.App\Assets\icon.ico
+#endif
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -44,8 +60,7 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 
 [Files]
 ; Frontend Application
-Source: "..\src\VoiceStudio.App\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}\App"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\src\VoiceStudio.Core\bin\Release\net8.0\*"; DestDir: "{app}\App"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#MyAppSourceDir}\*"; DestDir: "{app}\App"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Backend Files
 Source: "..\backend\api\*.py"; DestDir: "{app}\Backend\api"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -60,9 +75,11 @@ Source: "..\app\core\runtime\*.py"; DestDir: "{app}\Core\runtime"; Flags: ignore
 Source: "..\app\core\training\*.py"; DestDir: "{app}\Core\training"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Engine Manifests
-Source: "..\engines\audio\*\engine.manifest.json"; DestDir: "{app}\Engines\audio"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\engines\image\*\engine.manifest.json"; DestDir: "{app}\Engines\image"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\engines\video\*\engine.manifest.json"; DestDir: "{app}\Engines\video"; Flags: ignoreversion recursesubdirs createallsubdirs
+; NOTE: Inno Setup does not support wildcards in the directory portion of Source,
+; so we include each category root and recurse.
+Source: "..\engines\audio\*"; DestDir: "{app}\Engines\audio"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\engines\image\*"; DestDir: "{app}\Engines\image"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\engines\video\*"; DestDir: "{app}\Engines\video"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Documentation
 Source: "..\docs\user\*.md"; DestDir: "{app}\Docs\user"; Flags: ignoreversion
@@ -95,9 +112,6 @@ Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "Insta
 Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"; Flags: uninsdeletekey
 
 [Run]
-; Check for .NET 8 Runtime
-Filename: "{dotnet80runtime}"; StatusMsg: "Checking for .NET 8 Runtime..."; Check: not IsDotNetInstalled
-
 ; Install Python Packages (if Python is installed)
 Filename: "python"; Parameters: "-m pip install -r ""{app}\Backend\requirements.txt"""; StatusMsg: "Installing Python packages..."; Check: IsPythonInstalled; Flags: runhidden
 
@@ -105,15 +119,6 @@ Filename: "python"; Parameters: "-m pip install -r ""{app}\Backend\requirements.
 Filename: "powershell"; Parameters: "-Command ""New-Item -ItemType Directory -Force -Path $env:APPDATA\VoiceStudio"""; StatusMsg: "Creating user data directories..."; Flags: runhidden
 
 [Code]
-function IsDotNetInstalled: Boolean;
-var
-  Release: Cardinal;
-begin
-  Result := RegQueryDWordValue(HKLM, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedhost', 'Version', Release);
-  if Result then
-    Result := Release >= $08000000; // .NET 8.0
-end;
-
 function IsPythonInstalled: Boolean;
 var
   PythonPath: String;
@@ -135,27 +140,18 @@ begin
     MsgBox('VoiceStudio Quantum+ requires 64-bit Windows.', mbError, MB_OK);
     Result := False;
   end;
-  
-  // Check .NET 8 Runtime
-  if not IsDotNetInstalled then
-  begin
-    if MsgBox('.NET 8.0 Runtime is required. Would you like to download it now?', mbConfirmation, MB_YESNO) = IDYES then
-    begin
-      ShellExec('open', 'https://dotnet.microsoft.com/download/dotnet/8.0', '', '', SW_SHOWNORMAL, ewNoWait, Result);
-    end;
-    Result := False;
-  end;
 end;
 
 function InitializeUninstall(): Boolean;
 begin
   Result := True;
   
-  // Optional: Ask user if they want to keep user data
-  if MsgBox('Do you want to keep your user data (settings, projects, profiles)?', mbConfirmation, MB_YESNO) = IDNO then
-  begin
-    // Delete user data
-    DelTree(ExpandConstant('{userappdata}\VoiceStudio'), True, True, True);
-  end;
+  // IMPORTANT: Gate H lifecycle proof runs the uninstaller in silent mode.
+  // Do not show interactive prompts during uninstall; keep user data by default for determinism.
+  //
+  // NOTE: CmdLineParamExists is an Inno Setup Preprocessor helper (compile-time), not a Pascal Script API.
+  // Calling it here breaks compilation with "Unknown identifier".
+  //
+  // If user data removal is ever needed, document it as a manual step outside Gate H automation.
 end;
 

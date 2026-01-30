@@ -326,7 +326,7 @@ class TestConnectionManagement:
         try:
             await realtime.connect(ws, topics=["meters"])
         except realtime.WebSocketDisconnect:
-            pass
+            ...
 
         # Should be removed from connections
         assert ws not in realtime._active_connections["meters"]

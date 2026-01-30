@@ -197,7 +197,7 @@ namespace VoiceStudio.App.Views.Panels
         public bool Success => _result.Success;
         public string StatusDisplay => Success 
             ? ResourceHelper.GetString("QualityBenchmark.Success", "✓ Success") 
-            : ResourceHelper.FormatString("QualityBenchmark.Failed", _result.Error);
+            : ResourceHelper.FormatString("QualityBenchmark.Failed", _result.Error ?? string.Empty);
 
         public string MosScoreDisplay
         {

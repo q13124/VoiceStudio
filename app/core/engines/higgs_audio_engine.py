@@ -12,16 +12,17 @@ Compatible with:
 - higgs-audio package or direct model loading
 """
 
+import hashlib
+import logging
 import os
-import torch
-import numpy as np
-import soundfile as sf
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Dict, List, Tuple, Union
 from pathlib import Path
-import logging
-import hashlib
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import soundfile as sf
+import torch
 
 # Try importing general model cache
 try:
@@ -100,24 +101,17 @@ def _cache_higgs_audio_model(model_name: str, device: str, models: Dict):
 
 # Optional quality metrics import
 try:
-    from .quality_metrics import (
-        calculate_mos_score,
-        calculate_similarity,
-        calculate_naturalness,
-        calculate_all_metrics
-    )
+    from .quality_metrics import (calculate_all_metrics, calculate_mos_score,
+                                  calculate_naturalness, calculate_similarity)
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        match_voice_profile,
-        normalize_lufs,
-        remove_artifacts
-    )
+    from ..audio.audio_utils import (enhance_voice_quality,
+                                     match_voice_profile, normalize_lufs,
+                                     remove_artifacts)
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -134,12 +128,20 @@ except ImportError:
             def __init__(self, device=None, gpu=True):
                 self.device = device or ("cuda" if gpu else "cpu")
                 self._initialized = False
+
             @abstractmethod
-            def initialize(self): pass
+            def initialize(self) -> bool:
+                return False
+
             @abstractmethod
-            def cleanup(self): pass
-            def is_initialized(self): return self._initialized
-            def get_device(self): return self.device
+            def cleanup(self) -> None:
+                return None
+
+            def is_initialized(self) -> bool:
+                return self._initialized
+
+            def get_device(self) -> str:
+                return self.device
 
 
 class HiggsAudioEngine(EngineProtocol):
@@ -209,7 +211,7 @@ class HiggsAudioEngine(EngineProtocol):
         
         # Try importing transformers and loading Higgs Audio
         try:
-            from transformers import AutoTokenizer, AutoModel
+            from transformers import AutoModel, AutoTokenizer
         except ImportError:
             logger.error("transformers not installed. Install with: pip install transformers")
             self._initialized = False

@@ -104,7 +104,7 @@
 - **Status:** ⏳ Pending
 - **Time:** 6-8 hours
 - **Priority:** HIGH
-- **What:** Create MSIX packaging script and smoke tests
+- **What:** Create installer packaging script and smoke tests (single lane; MSIX not used)
 - **Impact:** Release readiness
 - **Action:** Create packaging infrastructure
 

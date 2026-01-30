@@ -283,7 +283,7 @@ class TestEngineErrorHandling:
                         sample_rate=22050
                     )
                 except (ValueError, TypeError, AttributeError):
-                    pass
+                    ...
                 except Exception as e:
                     logger.warning(f"{engine_name} raised unexpected exception: {e}")
         except Exception as e:

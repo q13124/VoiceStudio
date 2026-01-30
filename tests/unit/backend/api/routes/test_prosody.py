@@ -356,7 +356,7 @@ class TestProsodyApply:
         if response.status_code == 200:
             # Verify pyrubberband functions were called if pitch/rate modified
             # (Note: actual call depends on implementation details)
-            pass
+            ...
 
     @patch("backend.api.routes.prosody.HAS_AUDIO_UTILS", False)
     @patch("librosa.effects.pitch_shift")

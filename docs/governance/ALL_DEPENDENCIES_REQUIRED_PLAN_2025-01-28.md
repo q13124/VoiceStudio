@@ -107,7 +107,7 @@ Everything that can run locally should be:
 - torchaudio==2.9.0+cu128 ✅
 - transformers==4.57.1 ✅
 - huggingface_hub==0.36.0 ✅
-- tokenizers==0.22.1 ✅
+- tokenizers==0.21.4 ✅
 - safetensors==0.6.2 ✅
 - hf-xet==1.2.0 ✅
 - fsspec==2025.9.0 ✅

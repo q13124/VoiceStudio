@@ -16,13 +16,21 @@ namespace VoiceStudio.App.Views.Panels
         public SettingsView()
         {
             this.InitializeComponent();
-            var settingsService = VoiceStudio.App.Services.ServiceProvider.GetSettingsService();
-            ViewModel = new SettingsViewModel(settingsService);
+            var settingsService = AppServices.GetSettingsService();
+            var backendClient = AppServices.GetBackendClient();
+            var pluginManager = AppServices.GetService<PluginManager>();
+            var context = AppServices.GetViewModelContext();
+            ViewModel = new SettingsViewModel(
+                context,
+                settingsService,
+                backendClient,
+                pluginManager,
+                AppServices.GetService<ITelemetryService>());
             this.DataContext = ViewModel;
 
             // Initialize services
-            _contextMenuService = ServiceProvider.GetContextMenuService();
-            _toastService = ServiceProvider.GetToastNotificationService();
+            _contextMenuService = AppServices.GetContextMenuService();
+            _toastService = AppServices.TryGetToastNotificationService();
             
             // Subscribe to ViewModel events for toast notifications
             ViewModel.PropertyChanged += (s, e) =>

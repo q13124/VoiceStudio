@@ -1,33 +1,74 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VoiceStudio.App.Services;
+using VoiceStudio.App.ViewModels;
+using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.Views.Panels
 {
-    // Phase 0: code-only placeholder to avoid XamlCompiler.exe crashes.
-    public sealed class AdvancedSettingsView : UserControl
+  public sealed partial class AdvancedSettingsView : UserControl
+  {
+    public AdvancedSettingsViewModel ViewModel { get; }
+
+    public AdvancedSettingsView()
     {
-        public AdvancedSettingsView()
+      InitializeComponent();
+      ViewModel = new AdvancedSettingsViewModel(
+          ServiceProvider.GetBackendClient()
+      );
+      DataContext = ViewModel;
+      KeyboardNavigationHelper.SetupEscapeKeyHandling(this, () =>
+      {
+        if (HelpOverlay.IsVisible)
         {
-            Content = new StackPanel
-            {
-                Spacing = 12,
-                Padding = new Thickness(16),
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = "Advanced Settings",
-                        FontSize = 18,
-                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
-                    },
-                    new TextBlock
-                    {
-                        Text = "Temporarily disabled for build stability.",
-                        Opacity = 0.7,
-                        TextWrapping = TextWrapping.Wrap
-                    }
-                }
-            };
+          HelpOverlay.Hide();
         }
+      });
     }
+
+    private void CacheSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.CacheSizeMb = (int)sender.Value;
+    }
+
+    private void MaxThreadsBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.MaxThreads = (int)sender.Value;
+    }
+
+    private void MemoryLimitBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.MemoryLimitMb = sender.Value;
+    }
+
+    private void SampleRateBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.DefaultSampleRate = (int)sender.Value;
+    }
+
+    private void BitDepthBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.DefaultBitDepth = (int)sender.Value;
+    }
+
+    private void FadeDurationBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.FadeDurationMs = (int)sender.Value;
+    }
+
+    private void TimeoutBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.TimeoutSeconds = (int)sender.Value;
+    }
+
+    private void RetryBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.RetryAttempts = (int)sender.Value;
+    }
+
+    private void BatchSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+      ViewModel.BatchSize = (int)sender.Value;
+    }
+  }
 }

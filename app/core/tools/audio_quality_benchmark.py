@@ -8,6 +8,7 @@ Compatible with:
 
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -473,12 +474,23 @@ class AudioQualityBenchmark:
             output_path: Output file path
         """
         output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "timestamp": datetime.utcnow().isoformat(),
             "benchmark_results": benchmark_results,
             "comparison": comparison,
         }
-        output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+        try:
+            tmp_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            os.replace(tmp_path, output_path)
+        except Exception:
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+            raise
         logger.info(f"Results saved to: {output_path}")
 
 

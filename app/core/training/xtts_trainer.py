@@ -289,7 +289,7 @@ class XTTSTrainer:
                     try:
                         _, sample_rate = sf.read(valid_files[0], frames=1)
                     except Exception:
-                        pass
+                        ...
 
                 augmentation_pipeline = self.create_augmentation_pipeline(
                     sample_rate=sample_rate
@@ -319,9 +319,21 @@ class XTTSTrainer:
                 }
             )
 
-        # Save metadata
-        with open(metadata_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2, ensure_ascii=False)
+        # Save metadata atomically (tmp + replace)
+        mpath = Path(metadata_path)
+        mpath.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = mpath.with_suffix(mpath.suffix + ".tmp")
+        try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, mpath)
+        except Exception:
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+            raise
 
         logger.info(
             f"Prepared dataset with {len(metadata)} samples "
@@ -494,10 +506,10 @@ class XTTSTrainer:
                     return None
 
                 def update_progress(*args, **kwargs):
-                    pass
+                    ...
 
                 def close_progress(*args, **kwargs):
-                    pass
+                    ...
 
             # Create epoch progress bar
             epoch_pbar = (
@@ -649,19 +661,26 @@ class XTTSTrainer:
                     model_path,
                 )
 
-            # Save config
+            # Save config atomically (tmp + replace)
             if self.config:
                 config_path = checkpoint_path / "config.json"
-                with open(config_path, "w") as f:
-                    json.dump(
-                        (
-                            self.config.to_dict()
-                            if hasattr(self.config, "to_dict")
-                            else {}
-                        ),
-                        f,
-                        indent=2,
-                    )
+                cfg = (
+                    self.config.to_dict()
+                    if hasattr(self.config, "to_dict")
+                    else {}
+                )
+                tmp_path = config_path.with_suffix(config_path.suffix + ".tmp")
+                try:
+                    with open(tmp_path, "w", encoding="utf-8") as f:
+                        json.dump(cfg, f, indent=2)
+                    os.replace(tmp_path, config_path)
+                except Exception:
+                    if tmp_path.exists():
+                        try:
+                            tmp_path.unlink()
+                        except Exception:
+                            pass
+                    raise
 
             logger.debug(f"Saved checkpoint: {checkpoint_path}")
 

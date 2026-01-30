@@ -25,22 +25,37 @@ namespace VoiceStudio.App.Converters
             if (value == null)
                 return string.Empty;
 
-            double numValue;
-            if (value is double d)
-                numValue = d;
-            else if (value is float f)
-                numValue = f;
-            else if (value is int i)
-                numValue = i;
-            else if (value is decimal dec)
-                numValue = (double)dec;
-            else if (double.TryParse(value.ToString(), out numValue))
-                // Try to parse as double
-                ;
-            else
-                return value.ToString() ?? string.Empty;
+            var format = Format;
+            if (parameter is string p && !string.IsNullOrWhiteSpace(p))
+            {
+                format = p;
+            }
 
-            string formatted = numValue.ToString(Format, CultureInfo.InvariantCulture);
+            string formatted;
+            try
+            {
+                if (value is IFormattable formattable)
+                {
+                    formatted = formattable.ToString(format, CultureInfo.InvariantCulture);
+                }
+                else if (double.TryParse(
+                    value.ToString(),
+                    NumberStyles.Float | NumberStyles.AllowThousands,
+                    CultureInfo.InvariantCulture,
+                    out var numValue))
+                {
+                    formatted = numValue.ToString(format, CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    return value.ToString() ?? string.Empty;
+                }
+            }
+            catch (FormatException)
+            {
+                // Invalid format string - return value as string instead
+                return value.ToString() ?? string.Empty;
+            }
             
             if (!string.IsNullOrEmpty(Suffix))
                 formatted += Suffix;
@@ -50,7 +65,7 @@ namespace VoiceStudio.App.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, string language)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

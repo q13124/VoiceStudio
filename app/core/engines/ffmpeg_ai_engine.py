@@ -400,17 +400,13 @@ class FFmpegAIEngine(EngineProtocol):
             raise RuntimeError(f"Failed to upscale video: {e}")
 
     def _find_ffmpeg(self) -> Optional[str]:
-        """Find FFmpeg binary in system PATH."""
+        """Find FFmpeg binary deterministically."""
         try:
-            result = subprocess.run(
-                ["ffmpeg", "-version"], capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                return "ffmpeg"
-        except FileNotFoundError:
-            pass
+            from ..utils.native_tools import find_ffmpeg
 
-        return None
+            return find_ffmpeg()
+        except Exception:
+            return None
 
     def _check_ffmpeg(self) -> bool:
         """Check if FFmpeg is available."""
@@ -468,11 +464,11 @@ class FFmpegAIEngine(EngineProtocol):
                     from .performance_metrics import get_engine_metrics
 
                     metrics = get_engine_metrics()
-                    metrics.record_synthesis_time(
-                        "ffmpeg_ai", duration, cached=False
-                    )
+                    metrics.record_synthesis_time("ffmpeg_ai", duration, cached=False)
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for ffmpeg_ai batch transcode."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch transcoding failed for {input_path}: {e}")
@@ -483,7 +479,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("ffmpeg_ai", "transcode_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking
@@ -540,11 +536,11 @@ class FFmpegAIEngine(EngineProtocol):
                     from .performance_metrics import get_engine_metrics
 
                     metrics = get_engine_metrics()
-                    metrics.record_synthesis_time(
-                        "ffmpeg_ai", duration, cached=False
-                    )
+                    metrics.record_synthesis_time("ffmpeg_ai", duration, cached=False)
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for ffmpeg_ai batch upscale."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch upscaling failed for {input_path}: {e}")
@@ -555,7 +551,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("ffmpeg_ai", "upscale_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking
@@ -628,25 +624,19 @@ class FFmpegAIEngine(EngineProtocol):
 
 
 def create_ffmpeg_ai_engine(
-    device: Optional[str] = None,
-    gpu: bool = True,
-    ffmpeg_path: Optional[str] = None
+    device: Optional[str] = None, gpu: bool = True, ffmpeg_path: Optional[str] = None
 ) -> FFmpegAIEngine:
     """
     Create and initialize FFmpeg AI engine.
-    
+
     Args:
         device: Device to use (not used, kept for compatibility)
         gpu: Whether to use GPU (for AI plugins)
         ffmpeg_path: Path to FFmpeg binary
-    
+
     Returns:
         Initialized FFmpegAIEngine instance
     """
-    engine = FFmpegAIEngine(
-        device=device,
-        gpu=gpu,
-        ffmpeg_path=ffmpeg_path
-    )
+    engine = FFmpegAIEngine(device=device, gpu=gpu, ffmpeg_path=ffmpeg_path)
     engine.initialize()
     return engine

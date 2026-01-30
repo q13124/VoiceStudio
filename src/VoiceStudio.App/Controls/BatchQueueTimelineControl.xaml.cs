@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VoiceStudio.Core.Models;
 using Windows.Foundation;
-using Microsoft.UI;
+using Colors = Microsoft.UI.Colors;
 
 namespace VoiceStudio.App.Controls
 {
@@ -417,7 +417,7 @@ namespace VoiceStudio.App.Controls
                         Tag = "job_block"
                     };
                     
-                    Canvas.SetLeft(durationLabel, x + width - durationLabel.Text.Length * 6 - 4);
+                    Canvas.SetLeft(durationLabel, x + width - (durationLabel.Text.Length * 6) - 4);
                     Canvas.SetTop(durationLabel, y + rowHeight - 14);
                     TimelineCanvas.Children.Add(durationLabel);
                 }

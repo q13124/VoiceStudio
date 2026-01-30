@@ -207,7 +207,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
                         event = self._event_queue.get(timeout=1.0)
                         self._handle_event(event)
                     except Empty:
-                        pass
+                        ...
 
                     # Periodic monitoring (optimized)
                     self._monitor_engines_optimized()

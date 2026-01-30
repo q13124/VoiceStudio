@@ -1,0 +1,240 @@
+# VoiceStudio — OpenMemory
+
+This file is a **living index** of VoiceStudio’s architecture, contracts, and current recovery gate status.
+
+## Overview
+
+- **Primary goal**: upgrade voice cloning quality + functionality without architectural drift.
+- **Architecture**:
+  - **Frontend**: WinUI 3 (.NET) app under `src/` (MVVM).
+- **Frontend DI**: `AppServiceBootstrapper` builds DI container; `AppServices` provides access; legacy `ServiceProvider` is a shim.
+- **App state**: `AppStateStore` (immutable) tracks backend connectivity and global app flags.
+  - **Backend API**: Python FastAPI service under `backend/`.
+  - **Engine layer**: Python engine implementations and runtime management under `app/`.
+  - **Shared contracts**: JSON/schema artifacts under `shared/` (interop boundary).
+- **Canonical architecture docs**: `docs/architecture/README.md` (Parts 1–9 + Part 10 legacy isolation); legacy archive in `docs/archive/architecture_legacy/`.
+- **Layout guidance**: `docs/design/panel_layout_optimization.pdf` (panel layout optimization guidance).
+- **Repo/runtime layout docs**: `docs/developer/REPO_LAYOUT.md` and `docs/developer/RUNTIME_LAYOUT.md`.
+- **Packaging lane**: unpackaged apphost EXE + installer only (`WindowsPackageType=None`; MSIX archived/removed).
+- **WinAppSDK versioning**: `Directory.Build.props` centralizes `MicrosoftWindowsAppSDKVersion` (override via `WinAppSdkVersionOverride`); WinUI/CommunityToolkit/NAudio pinned in the same file.
+- **.NET SDK pin**: `global.json` pins the repo SDK version (currently `8.0.417`).
+- **Model root defaults**: `backend/config/path_config.py` resolves `VOICESTUDIO_MODELS_PATH` (default `%PROGRAMDATA%\VoiceStudio\models`), and `backend/api/main.py` seeds HF/TTS/whisper/piper caches under that root.
+- **Native tools**: ffmpeg can be overridden via `VOICESTUDIO_FFMPEG_PATH` (fallback PATH + common locations); shared DLLs can be injected for runtime engines via `VOICESTUDIO_FFMPEG_DLL_DIR` (XTTS runtime launcher uses `os.add_dll_directory` before loading torchcodec).
+- **Operational reports**: `docs/reports/` (XAML diagnostics under `docs/reports/build/xaml/`).
+- **Third-party binaries**: repo-local `third_party/whisper.cpp` is used when present for `whisper_cpp_engine.py` binary fallback.
+- **Cursor MCP servers**: workspace MCP configuration lives in `cursor.mcp.json` with 24+ servers organized by category (Memory, Reasoning, Code Intelligence, Voice/Audio, Dev Tools). Key MCPs: `sequential-thinking` (structured reasoning), `openmemory`/`mem0` (persistent context), `chroma` (CodeRAG), `tree-sitter` (AST analysis), `context7` (library docs). See `docs/developer/MCP_OPTIMIZATION_GUIDE.md` for usage patterns.
+- **Cursor preprompted baseline**: user rules live in `docs/developer/CURSOR_USER_RULES.md`; automation scripts `scripts/setup-preprompted-cursor.ps1` and `scripts/validate-cursor-setup.ps1`; reusable commands in `.cursor/commands/` (including `prompt-universal.md` and `role-*.md`).
+- **Cursor rules expansion**: domain-scoped rules live in `.cursor/rules/domains/` and workflow modes in `.cursor/rules/workflows/` for role-aware guidance (architect dependency matrix + incident runbook references).
+- **AI-native workflow rules**: new governance rules include dual-validation (`.cursor/rules/workflows/dual-validation.mdc`), model selection (`.cursor/rules/core/model-selection.mdc`), context strategy (`.cursor/rules/workflows/context-strategy.mdc`), and operational reliability (`.cursor/rules/workflows/operational-reliability.mdc`); ADR-009 documents the decision.
+- **Platform identity**: ADR-010 establishes VoiceStudio as a native Windows installed application (WinUI 3 / Windows App SDK, installer-based distribution).
+- **Role cheatsheet**: `docs/developer/ROLE_CHEATSHEET.md` provides role preprompts and one-liners for Cursor chats.
+- **Error envelope enforcement**: backend error responses use `shared/schemas/error-envelope.schema.json`, taxonomy in `shared/contracts/error_codes.json`, and UI mapping via `ErrorMappingService`.
+- **Rules integration reports**: `docs/reports/governance/RULES_GAP_ANALYSIS_REPORT.md` and `docs/reports/verification/RULES_VALIDATION_REPORT.md`.
+- **Markdown linting**: repo-wide markdown normalization uses `markdownlint-cli2 --fix` with `.gitignore` to scope targets.
+- **Bootstrap setup**: `scripts/bootstrap.ps1` creates venv, installs deps, optional engine deps, and runs verification.
+- **Python lint/type config**: `ruff.toml` and `mypy.ini` define repo linting/type defaults.
+- **Secret scanning config**: `.gitleaks.toml` adds allowlisted paths for gitleaks.
+- **Dependency scan allowlist**: `config/pip-audit-ignore.txt` lists ignored vulnerability IDs for CI.
+- **Publish status**: Gate C script `scripts/gatec-publish-launch.ps1` produces binlogs under `.buildlogs/`. Latest proof run (2026-01-27) is **green**: Release publish + UI smoke exits 0 with 11 nav steps and 0 binding failures (see `.buildlogs/gatec-latest.txt`, `.buildlogs/x64/Release/gatec-publish/ui_smoke_summary.json`).
+- **Baseline voice proof**: Task B complete via `.venv` + backend on 8001; proof at `.buildlogs/proof_runs/baseline_workflow_20260127-194335/proof_data.json` with SLO-6 MOS ≥ 3.5 and similarity ≥ 0.7 met.
+- **Installer lane**: `installer/build-installer.ps1` publishes the frontend via Gate C (`scripts/gatec-publish-launch.ps1 -NoLaunch`) and Inno Setup packages from the Gate C publish directory (`installer/VoiceStudio.iss` via `MyAppSourceDir`).
+- **Crash artifacts (Gate C)**:
+  - `%LOCALAPPDATA%\VoiceStudio\crashes\latest.log` (managed unhandled exception pointer)
+  - `%LOCALAPPDATA%\VoiceStudio\crashes\boot_latest.json` + `latest_startup_exception.log` (startup stage + pre-App exception pointer)
+  - Native dumps (when enabled): `scripts/enable-wer-localdumps.ps1` → `%LOCALAPPDATA%\VoiceStudio\dumps\*.dmp`
+
+## Gate status (A–H)
+
+- **Gate A**: COMPLETE
+- **Gate B**: COMPLETE
+- **Gate C**: COMPLETE (VS-0012 UI smoke proof captured)
+- **Gate D**: See `Recovery Plan/QUALITY_LEDGER.md`
+- **Gate E**: See `Recovery Plan/QUALITY_LEDGER.md`
+- **Gate F/G**: See `Recovery Plan/QUALITY_LEDGER.md`
+- **Gate H**: COMPLETE (VS-0003 installer lifecycle proof captured)
+
+## Key components and contracts
+
+- **Engine interface contract (Gate E)**: `VoiceStudio.Core.Engines` interfaces (`IEngine`, `ITextToSpeechEngine`, `ITranscriptionEngine`) + `EngineCapabilities`.
+- **Schema validation (C#)**: `src/VoiceStudio.App/Utilities/SchemaValidationHelper.cs` validates settings and voice profiles against `shared/schemas/` using JsonSchema.Net; schemas are copied into app output under `shared/`.
+- **IPC boundary**: `src/VoiceStudio.App/Services/IPC/NamedPipeClient.cs` validates IPC messages against `shared/schemas/ipc-message.schema.json` and uses `IIPCSerializer` (JSON default) with length-prefixed named pipe transport; error payloads include `request_id` + `path` for envelope alignment.
+- **IPC transport update**: `MessagePackIpcSerializer` is now the default serializer in `AppServiceBootstrapper`, and the Python coordinator uses MessagePack payloads with length-prefix framing plus `job.progress`/`job.completed` events.
+- **HF endpoint configuration**: `backend/api/main.py` reads `VOICESTUDIO_HF_ENDPOINT` and `VOICESTUDIO_HF_INFERENCE_API_BASE` for Hugging Face endpoints (fallback to router).
+- **IPC schema enforcement (Python)**: `app/core/runtime/coordinator.py` validates inbound IPC messages against `shared/schemas/ipc-message.schema.json` and ensures error payloads match `shared/schemas/error-envelope.schema.json` before sending.
+- **Frontend engine orchestration (Gate E)**: `src/VoiceStudio.App/Services/EngineManager.cs` with adapters in `src/VoiceStudio.App/Services/Engines/`.
+- **Backend engine discovery/lifecycle**: `backend/api/routes/engines.py` (`/api/engines/*`).
+- **Backend API versioning**: `/api/v1` is canonical with legacy `/api` deprecation headers set in `backend/api/main.py`.
+- **Engine list contract**: `/api/engines/list` returns `engine_details` with manifest metadata; schemas in `shared/contracts/engine_descriptor.schema.json` and `shared/contracts/engine_list_response.schema.json`.
+- **Job/quality contracts**: `shared/contracts/job_progress.schema.json` + `shared/contracts/quality_metrics.schema.json`; OpenAPI reflects engine list + job progress schemas.
+- **Voice cloning quality metrics**: engine quality metrics pipeline uses ML prediction enablement for major voice cloning engines (tracked in VS-0009).
+- **Profile management UI**: `src/VoiceStudio.App/Views/Panels/ProfilesView.xaml` + `ProfilesViewModel.cs` handle profile CRUD, preview, quality analysis triggers, import/export/duplicate, batch export, and drag-and-drop reorder using `/api/profiles`.
+- **Visualization + training UI**: `LoudnessChartControl`/`RadarChartControl` render analyzer charts from `AnalyzerViewModel` data via XAML path geometry; `TrainingProgressChart` renders training quality history in `TrainingView` with a status filter driving job reloads.
+- **Automation + ensemble UI**: `AutomationCurveEditorControl` renders curve points, `MacroNodeEditorControl` lists macro nodes/connections, and `EnsembleTimelineControl` renders voice blocks for `EnsembleSynthesisView` jobs.
+- **A/B testing playback**: `ABTestingViewModel` plays sample audio streams via `IAudioPlayerService.PlayStreamAsync`.
+- **Advanced visualization panels**: `AdvancedWaveformVisualizationView` and `AdvancedSpectrogramVisualizationView` now bind to their ViewModels (audio selection, config inputs, generate/compare actions) instead of placeholder panels.
+- **Advanced real-time visualization**: `AdvancedRealTimeVisualizationView` exposes visualization type/preset controls with 3D/particle settings bound to `AdvancedRealTimeVisualizationViewModel`.
+- **Advanced settings UI**: `AdvancedSettingsView` binds core UI/performance/audio/engine/system settings to `AdvancedSettingsViewModel` and uses NumberBox handlers for numeric updates.
+- **Voice synthesis UI**: `VoiceSynthesisView` now surfaces profile/engine selection, text input, synth/play controls, and quality metrics display instead of placeholder content.
+- **Timeline/Library layout**: `TimelineView` and `LibraryView` now have basic layout grids wiring existing controls (tracks list, scrub/playhead canvases, drag-drop overlay) instead of placeholder comments.
+- **Analytics + collaboration controls**: `AnalyticsChartControl` renders metric line charts; `CollaborationIndicator` displays active users from `CollaborationService`.
+- **MainWindow command deck**: `src/VoiceStudio.App/MainWindow.xaml` hosts a code-built MenuBar (File/Edit/View/Modules/Playback/Tools/AI/Help) via `MenuBarHost` in `MainWindow.xaml.cs` to avoid XAML MenuBar compiler issues.
+- **Audio library refresh**: `AudioStore.RefreshAudioFilesAsync` aggregates project audio via `IBackendClient.ListProjectAudioAsync` across projects.
+- **Emotion preset preview**: `EmotionStylePresetEditorViewModel` now synthesizes preset previews using backend profiles and plays audio via `IAudioPlayerService`.
+- **Audio module guards**: `app/core/audio/__init__.py` now tolerates missing DSP dependencies by optional imports (SciPy/pyloudnorm/etc).
+
+## Governance source of truth
+
+- **Canonical registry**: `docs/governance/CANONICAL_REGISTRY.md` (updated 2026-01-25 with role system prompts)
+- **Unified architecture plan**: `.cursor/plans/unified_architecture_index_*.plan.md` indexes all implemented components and establishes AI-driven development framework
+- **Ledger**: `Recovery Plan/QUALITY_LEDGER.md` (canonical)
+- **Service Level Objectives**: `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` (SLOs for synthesis, transcription, API response, UI, engine availability, and quality)
+- **Canonical roadmap (execution plan)**: `docs/governance/MASTER_ROADMAP_SUMMARY.md` (ledger remains status source of truth)
+- **Master roadmap index**: `docs/governance/MASTER_ROADMAP_INDEX.md` (prompt execution navigation)
+- **Prompt implementation guides (archived)**: `docs/archive/governance/prompts/` (PROMPT_04..12)
+- **Roadmap alignment**: `docs/governance/MASTER_ROADMAP_SUMMARY.md` mirrors the PDF section order and includes completion criteria plus deep research sub-plans.
+- **Planning suite (archived)**: overseer handoff plans under `docs/archive/governance/overseer/handoffs/VS-PLAN-*`.
+- **Superseded roadmap archive**: legacy roadmaps are archived under `docs/archive/governance/roadmaps/` and excluded from Cursor indexing.
+- **Subprocess isolation implementation guide**: `docs/design/ENGINE_SUBPROCESS_ISOLATION_IMPLEMENTATION_GUIDE.md` unifies runtime, lifecycle, and sandbox guidance.
+- **External research integration**: ChatGPT + Copilot links are recorded in the master roadmap and plan suite; the Copilot baseline is treated as an external compatibility audit that must be reconciled against Lane A before any promotion.
+- **Completion plan sources (archived)**: `docs/archive/governance/sources/plan_sources/`.
+- **Roadmap development sources (archived)**: `docs/archive/governance/sources/roadmap_sources/`.
+- **Governance archive policy**: `docs/governance/ARCHIVE_POLICY.md` (physical archive: `docs/archive/governance/`).
+- **Change handoffs (archived)**: `docs/archive/governance/overseer/handoffs/` (proof runs + file lists)
+- **Role task lists (archived)**: `docs/archive/governance/overseer/role_tasks/INDEX.md` (what each role does next)
+- **Progression log (archived)**: `docs/archive/governance/overseer/PROJECT_PROGRESSION_LOG.md` (snapshot in same folder)
+- **Production build plan (execution playbook)**: `docs/governance/VoiceStudio_Production_Build_Plan.md`
+- **Role prompts + direction (archived)**: `docs/archive/governance/overseer/ALL_ROLE_PROMPTS.md`
+- **Proof archive helper**: `scripts/archive-proof-artifacts.ps1` copies proof runs into `.buildlogs\\proof_runs`.
+- **Repo organization map**: `docs/governance/PROJECT_ORGANIZATION_MAP.md`
+- **Reorg log**: `docs/governance/PROJECT_REORG_LOG.md`
+- **Finalization addendum tracking**: `docs/governance/MASTER_TASK_CHECKLIST.md` (Finalization Phase Addendum)
+- **Risk register + gate map**: `docs/governance/RISK_REGISTER.md` and `docs/governance/PHASE_GATES_EVIDENCE_MAP.md`
+- **Threat model**: `docs/reports/security/THREAT_MODEL.md` baseline security threat model.
+- **Definition of Done**: `docs/governance/DEFINITION_OF_DONE.md` consolidates global, gate, and role DoD criteria.
+- **QA evidence**: `docs/reports/verification/QA_EXECUTION_REPORT_2026-01-20.md` includes DSP-ready RVC pass (clears RVC skip)
+- **Overseer role tasks**: `docs/governance/overseer/role_tasks/OVERSEER.md` now reflects canonical roadmap mapping completion.
+- **Execution ownership**: Overseer covers roles 1-7; avoid worker labels in current planning docs.
+- **Compatibility snapshot (cu128)**: `docs/governance/COMPATIBILITY_SNAPSHOT.md` defines the canonical baseline (torch/torchaudio 2.5.1+cu128, transformers 4.47.0). Historical compatibility docs are marked superseded; GPU validation proof exists for sm_120 in `env\venv_xtts_gpu_sm120`.
+- **Upgrade-lane XTTS proof status**: torchaudio 2.10.0+cu128 still triggers torchcodec load failures on Windows (WinError 127), so XTTS adds a `torchaudio.load` → `soundfile` fallback in `app/core/engines/xtts_engine.py`. Upgrade-lane proof succeeded at `.buildlogs\proof_runs\upgrade_lane_workflow_20260121-220357\proof_data.json` (see VS-0034).
+- **Compatibility docs alignment**: Upgrade-lane references remain at PyTorch 2.10.0+cu128 and Transformers 4.57.3 in `docs/governance/ROADMAP_COMPATIBILITY_UPDATE.md` and related audit docs; baseline references now point to `docs/governance/COMPATIBILITY_SNAPSHOT.md`.
+- **Baseline stack**: Python 3.11.9 + Torch/Torchaudio 2.5.1+cu128 + Transformers 4.47.0; engines requiring newer stacks run in isolated venvs.
+- **So-VITS proof prerequisite**: `scripts/sovits_svc_conversion_proof.py` expects `E:\VoiceStudio\models\checkpoints\Lain_SVC4\model.pth` + `config.json` (now populated from `therealvul/so-vits-svc-4.0` BaseModelv2 `G_202000.pth`). Conversion still needs an inference command (`SOVITS_SVC_INFER_COMMAND` or engine `infer_command`).
+
+## 7-Role system prompts (2026-01-25)
+
+- **Role system architecture**: VoiceStudio uses a 7-role system for professional software development: Role 0 (Overseer), Role 1 (System Architect), Role 2 (Build & Tooling), Role 3 (UI Engineer), Role 4 (Core Platform), Role 5 (Engine Engineer), Role 6 (Release Engineer).
+- **Role prompts index**: `.cursor/prompts/ROLE_PROMPTS_INDEX.md` provides master navigation for all 7 role prompts.
+- **Individual role prompts**: Each role has a comprehensive system prompt at `.cursor/prompts/ROLE_N_[NAME]_PROMPT.md` designed for AI agent role assumption.
+- **Prompt structure**: All prompts include role identity, non-negotiables, required reading, current status, operational workflows, quality standards, tools/commands, role coordination, output format, and execution philosophy.
+- **Usage pattern**: Reference role prompts with `@.cursor/prompts/ROLE_N_..._PROMPT.md` in Cursor chats for immediate role assumption.
+- **Comprehensive guides**: Each prompt is a quick-start companion to detailed role guides at `docs/governance/roles/ROLE_N_*_GUIDE.md`.
+- **Onboarding completed**: Full Overseer onboarding completed 2026-01-25, documented in `.cursor/prompts/ONBOARDING_COMPLETE_SUMMARY.md`.
+
+## User Defined Namespaces
+
+- Leave blank - user populates
+
+## Backend voice cloning routes
+
+- **Voice routes**: `backend/api/routes/voice.py`
+  - Uses `_audio_storage` (`audio_id -> file_path`) to serve `/api/voice/audio/{audio_id}`.
+  - `_audio_storage` is backed by a disk-backed registry (`backend/services/AudioArtifactRegistry.py`) so audio IDs survive backend restarts.
+  - `/api/voice/clone` accepts optional `project_id` and will persist outputs to the project audio folder when provided.
+  - Normalizes engine IDs; supports alias `xtts` -> `xtts_v2`.
+  - Many engines write to `output_path` and return `None` (or `(None, metrics)`); treat a written file as
+    success and still return a playable `audio_url`.
+  - `/api/voice/clone` registers the generated file under a new `audio_id` and returns
+    `/api/voice/audio/{audio_id}`.
+  - XTTS quality metrics now include `voice_profile_match` (from reference audio) in
+    `quality_metrics` alongside artifacts/clicks/distortion when available.
+- **RVC conversion**: `backend/api/routes/rvc.py`
+  - Normalizes So-VITS-SVC engine IDs (`sovits`, `sovits_v4`, `gpt_sovits` -> `sovits_svc`).
+  - Pulls engine init kwargs from `EngineConfigService` (manifest-filtered), including `infer_command`.
+  - Returns HTTP 424 when So-VITS-SVC inference is not configured (unless passthrough is enabled).
+- **Wizard routes**: `backend/api/routes/voice_cloning_wizard.py`
+  - Prefix: `/api/voice/clone/wizard` (used by
+    `src/VoiceStudio.App/ViewModels/VoiceCloningWizardViewModel.cs`).
+  - Wizard job state is persisted via `backend/services/JobStateStore.py` (no longer in-memory only).
+  - Wizard UI displays parsed quality metrics in Step 4 (MOS/Similarity/Naturalness/SNR/Artifacts/Clicks/Distortion).
+  - Wizard + quick clone ViewModels normalize profile names and use local copies of nullable inputs before API calls.
+  - Real-time converter and quality optimization ViewModels now use local session/profile IDs for backend calls.
+  - Wizard Step 4 binds quality metrics via a nested DataContext to avoid XamlCompiler failures on dotted bindings.
+
+## Backend inspection + image sampler
+
+- **Image sampler**: `backend/api/routes/img_sampler.py` now returns explicit HTTP errors when image generation
+  is unavailable or output files are missing; it no longer emits fallback images.
+- **Model inspection**: `backend/api/routes/model_inspect.py` now returns explicit status payloads when models
+  or activations are unavailable (`model_available`, `activations_available`, `message`) and raises HTTP 503/500
+  when the cache or inspection flow is unavailable.
+
+## Key enforcement hooks
+
+- **XAML toolchain**: wrapper/targets under `tools/` + MSBuild targets.
+- **XAML compiler logging**: `tools/xaml-compiler-wrapper.cmd` only writes raw logs when
+  `VSQ_XAML_RAW_LOG=1` and debug entries when `VSQ_XAML_DEBUG=1` to avoid log spam during
+  design-time builds.
+- **XAML wrapper delegation**: `tools/xaml-compiler-wrapper.cmd` now delegates to
+  `tools/xaml-compiler-wrapper.ps1` for execution and logging.
+
+## Engine notes
+
+- **Runtime engine**: `app/core/runtime/runtime_engine.py` is a deprecation wrapper; `runtime_engine_enhanced.py` is the canonical implementation.
+- **Coordinator runtime**: `app/core/runtime/coordinator.py` now loads engine/runtime manifests under `engines/`, uses `EnhancedRuntimeEngineManager` for start/stop/health, and surfaces runtime-capable engines via named pipe IPC.
+- **So-VITS-SVC**: `app/core/engines/sovits_svc_engine.py` now supports external inference via
+  `SOVITS_SVC_INFER_COMMAND` (or engine config `infer_command`) with optional `infer_workdir`
+  and `allow_passthrough`.
+- **So-VITS-SVC setup**: `docs/developer/SETUP.md` documents the inference command configuration options.
+- **So-VITS-SVC cleanup**: conversion now tracks temporary input/output paths explicitly and logs cleanup
+  failures instead of silently ignoring them.
+- **So-VITS-SVC preflight**: `/api/health/preflight` now reports `sovits_svc` status alongside XTTS.
+- **So-VITS-SVC proof**: `scripts/sovits_svc_conversion_proof.py` auto-resolves backend ports and blocks
+  early when So-VITS-SVC inference is not configured.
+- **So-VITS-SVC proof status**: `.buildlogs/proof_runs/sovits_svc_workflow_20260121-075330/proof_data.json`
+  records a successful conversion using CPU inference (`vec768l12` in `models/checkpoints/Lain_SVC4/config.json`).
+- **So-VITS-SVC GPU proof**: `.buildlogs/proof_runs/sovits_svc_workflow_20260121-081759/proof_data.json`
+  records a CUDA conversion (`device=cuda`) with `env\\venv_sovits_svc` running torch `2.7.1+cu128`.
+- **So-VITS-SVC encoder load**: `runtime/external/so-vits-svc/vencoder/ContentVec768L12.py` allowlists
+  `fairseq.data.dictionary.Dictionary` via `torch.serialization.add_safe_globals` for torch 2.6+ weights-only load.
+- **So-VITS-SVC proof diagnostics**: route checks now record OpenAPI/OPTIONS failures into
+  `proof_data["config"]["route_check_error"]` for easier troubleshooting.
+- **So-VITS-SVC tests**: `tests/unit/backend/api/routes/test_rvc.py` covers alias normalization and the
+  inference-command guard (HTTP 424); `tests/unit/backend/services/test_model_preflight.py` asserts
+  inference flags in preflight results.
+- **Voice route preflight tests**: `tests/unit/backend/api/routes/test_voice.py` asserts XTTS alias
+  normalization and validates TTS/VC preflight helpers.
+- **Quality metrics tests**: `tests/unit/core/engines/test_additional_quality_metrics.py` verifies
+  `missing_dependencies` includes actionable guidance when optional libs are absent.
+- **Voice engines**: fallback `EngineProtocol` implementations in voice TTS engines now return
+  explicit defaults instead of empty bodies to avoid incomplete method stubs.
+- **Engine batch metrics**: engine batch helpers now log when performance metrics are unavailable
+  instead of silently no-oping, and fallback `EngineProtocol` implementations in image engines
+  return explicit defaults to avoid empty method stubs.
+- **Voice cloning wizard**: wizard now supports quality mode selection and displays candidate metrics in Step 4.  
+
+## Context management system
+
+- **Session state**: `.cursor/STATE.md` tracks phase, active task, SSOT pointers, and proof index.
+- **Task briefs**: `docs/tasks/` holds `TASK-####.md` briefs and the canonical template.
+- **Hard gate + closure**: `.cursor/rules/workflows/state-gate.mdc` and `closure-protocol.mdc` enforce
+  state read/acknowledgment and completion updates.
+- **Verifier protocol**: `.cursor/rules/workflows/verifier-subagent.mdc` defines skeptical validation.
+- **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
+- **Context allocator**: `tools/context/allocate.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
+- **OpenMemory reader**: `tools/context/sources/openmemory_reader.py` provides optional integration for context bundle assembly.
+
+## Agent governance tooling
+
+- **Policy fragments**: `tools/overseer/agent/policies/` splits risk tiers and allowlists into
+  `risk_tiers.yaml`, `path_allowlist.yaml`, and `tool_allowlist.yaml`; `base_policy.yaml` includes them via
+  `include_files`.
+- **Policy loader**: `tools/overseer/agent/policy_loader.py` now merges `include_files` fragments before
+  validation.
+- **Policy matching**: `tools/overseer/agent/policy_engine.py` expands env vars at match time and treats
+  `**` path globs as recursive regex tokens to avoid false denials.
+- **QueryDb tool**: `tools/overseer/agent/tools/db_tools.py` enforces parameterized SQLite queries only.
+- **Approval store**: `tools/overseer/agent/approval_store.py` persists approval history in JSONL.
+- **Agent UI**: `src/VoiceStudio.App/Views/AgentLogViewer.xaml` displays audit log entries from
+  `%APPDATA%\\VoiceStudio\\logs\\agent_audit`.
+- **Safe zones**: `tools/overseer/agent/safe_zones.py` deep-copies default safe zones per manager and
+  matches recursive patterns using escaped regex handling.

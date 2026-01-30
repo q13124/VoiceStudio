@@ -55,7 +55,7 @@ def streaming_engine(mock_engine):
     try:
         engine.cleanup()
     except Exception:
-        pass
+        ...
 
 
 class TestStreamingEngineImports:

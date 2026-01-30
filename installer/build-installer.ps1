@@ -4,7 +4,11 @@
 param(
     [string]$InstallerType = "InnoSetup",
     [string]$Configuration = "Release",
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.0.0",
+    # Optional override for locating the Inno Setup compiler (ISCC.exe) when not installed in the default path.
+    [string]$InnoSetupPath = "",
+    # If set, always re-run the Gate C publish step even when a valid publish output already exists.
+    [switch]$ForcePublish
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,33 +22,159 @@ Write-Host ""
 $RootDir = Split-Path -Parent $PSScriptRoot
 $InstallerDir = Join-Path $RootDir "installer"
 $OutputDir = Join-Path $InstallerDir "Output"
-$FrontendPath = Join-Path $RootDir "src\VoiceStudio.App"
+$GateCProofScript = Join-Path $RootDir "scripts\gatec-publish-launch.ps1"
+$GateCPublishDir = Join-Path $RootDir ".buildlogs\x64\$Configuration\gatec-publish"
 $BackendPath = Join-Path $RootDir "backend"
 
-# Clean output directory
-Write-Host "Cleaning output directory..." -ForegroundColor Yellow
-if (Test-Path $OutputDir) {
-    Remove-Item -Path $OutputDir -Recurse -Force
-}
+# Ensure output directory exists (do NOT delete; we want multiple versioned installers side-by-side)
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
-# Build Frontend
-Write-Host "Building frontend application..." -ForegroundColor Yellow
-Push-Location $FrontendPath
-try {
-    dotnet clean --configuration $Configuration
-    dotnet build --configuration $Configuration
-    if ($LASTEXITCODE -ne 0) {
-        throw "Frontend build failed"
+# Remove only the specific versioned output file (avoid stale overwrite while preserving other versions)
+$expectedInstallerOutput = $null
+if ($InstallerType -eq "InnoSetup") {
+    $expectedInstallerOutput = Join-Path $OutputDir "VoiceStudio-Setup-v$Version.exe"
+}
+elseif ($InstallerType -eq "WiX") {
+    $expectedInstallerOutput = Join-Path $OutputDir "VoiceStudio-Setup-v$Version.msi"
+}
+
+if ($expectedInstallerOutput -and (Test-Path $expectedInstallerOutput)) {
+    Remove-Item -Path $expectedInstallerOutput -Force
+}
+
+# Resolve installer toolchain early (fail fast before publishing)
+$IsccPath = $null
+if ($InstallerType -eq "InnoSetup") {
+    $resolvedIscc = $null
+
+    if ($InnoSetupPath -and (Test-Path $InnoSetupPath)) {
+        $resolvedIscc = $InnoSetupPath
     }
-    Write-Host "Frontend build successful!" -ForegroundColor Green
+    else {
+        $cmd = Get-Command "ISCC.exe" -ErrorAction SilentlyContinue
+        if ($cmd -and $cmd.Path) {
+            $resolvedIscc = $cmd.Path
+        }
+        else {
+            $candidates = @(
+                (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"),
+                "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+                "C:\Program Files\Inno Setup 6\ISCC.exe",
+                (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 5\ISCC.exe"),
+                "C:\Program Files (x86)\Inno Setup 5\ISCC.exe",
+                "C:\Program Files\Inno Setup 5\ISCC.exe"
+            )
+            foreach ($c in $candidates) {
+                if (Test-Path $c) { $resolvedIscc = $c; break }
+            }
+        }
+    }
+
+    if (-not $resolvedIscc) {
+        Write-Host "Error: Inno Setup compiler (ISCC.exe) not found." -ForegroundColor Red
+        Write-Host "Install Inno Setup 6.2+ or add ISCC.exe to PATH, or pass -InnoSetupPath <full path to ISCC.exe>." -ForegroundColor Yellow
+        Write-Host "Download: https://jrsoftware.org/isdl.php" -ForegroundColor Yellow
+        exit 1
+    }
+    $IsccPath = $resolvedIscc
+}
+elseif ($InstallerType -eq "WiX") {
+    $WixCandle = Get-Command "candle.exe" -ErrorAction SilentlyContinue
+    $WixLight = Get-Command "light.exe" -ErrorAction SilentlyContinue
+    if (-not $WixCandle -or -not $WixLight) {
+        Write-Host "Error: WiX Toolset not found in PATH (requires candle.exe + light.exe)." -ForegroundColor Red
+        Write-Host "Install WiX Toolset v3.11+ and ensure it is on PATH." -ForegroundColor Yellow
+        Write-Host "Download: https://wixtoolset.org/releases/" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
+# Publish frontend (canonical Gate C artifact)
+try {
+    if (-not (Test-Path $GateCProofScript)) {
+        throw "Gate C script not found: $GateCProofScript"
+    }
+
+    $publishIsReusable = $false
+    if (Test-Path $GateCPublishDir) {
+        $requiredPublishFiles = @(
+            (Join-Path $GateCPublishDir "VoiceStudio.App.exe"),
+            (Join-Path $GateCPublishDir "VoiceStudio.App.dll"),
+            (Join-Path $GateCPublishDir "VoiceStudio.App.deps.json"),
+            (Join-Path $GateCPublishDir "VoiceStudio.App.runtimeconfig.json")
+        )
+        $missing = @()
+        foreach ($p in $requiredPublishFiles) {
+            if (-not (Test-Path $p)) { $missing += $p }
+        }
+
+        # WinUI resource indexes (.pri) are required for ms-appx resource resolution in the unpackaged lane.
+        $requiredPriFiles = @(
+            (Join-Path $GateCPublishDir "VoiceStudio.App.pri"),
+            (Join-Path $GateCPublishDir "Microsoft.UI.pri"),
+            (Join-Path $GateCPublishDir "Microsoft.UI.Xaml.Controls.pri"),
+            (Join-Path $GateCPublishDir "Microsoft.WindowsAppRuntime.pri")
+        )
+        foreach ($p in $requiredPriFiles) {
+            if (-not (Test-Path $p)) { $missing += $p }
+        }
+
+        # For unpackaged apps we require compiled XAML payload (XBF) or raw XAML.
+        $xbfFiles = Get-ChildItem -Path $GateCPublishDir -Filter "*.xbf" -Recurse -ErrorAction SilentlyContinue
+        $xamlFiles = Get-ChildItem -Path $GateCPublishDir -Filter "*.xaml" -Recurse -ErrorAction SilentlyContinue
+        if ($xbfFiles.Count -eq 0 -and $xamlFiles.Count -eq 0) {
+            $missing += "<XAML payload missing: expected at least one .xbf or .xaml in $GateCPublishDir>"
+        }
+
+        if ($missing.Count -eq 0) {
+            $publishIsReusable = $true
+
+            $gatecLaunchLog = Join-Path $GateCPublishDir "gatec-launch.log"
+            if (Test-Path $gatecLaunchLog) {
+                $gatecLaunchLogText = Get-Content -LiteralPath $gatecLaunchLog -Raw -ErrorAction SilentlyContinue
+                if ($gatecLaunchLogText -notmatch '(?m)^ExitCode:\\s*0\\s*$') {
+                    Write-Host "Warning: Gate C launch log exists but does not show ExitCode: 0. Publish output appears complete; reusing. Use -ForcePublish to regenerate." -ForegroundColor Yellow
+                }
+            }
+            else {
+                Write-Host "Warning: Gate C launch log not found. Publish output appears complete; reusing. Use -ForcePublish to regenerate." -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "Gate C publish output is present but incomplete; will re-publish. Missing:" -ForegroundColor Yellow
+            foreach ($m in $missing) { Write-Host "  - $m" -ForegroundColor Yellow }
+        }
+    }
+
+    if ($publishIsReusable -and -not $ForcePublish) {
+        Write-Host "Reusing existing Gate C publish output (skipping publish):" -ForegroundColor Yellow
+        Write-Host "PublishDir: $GateCPublishDir" -ForegroundColor Cyan
+    }
+    else {
+        Write-Host "Publishing frontend (Gate C artifact)..." -ForegroundColor Yellow
+
+        # Ensure we don't accidentally package stale publish output.
+        if (Test-Path $GateCPublishDir) {
+            Remove-Item -Path $GateCPublishDir -Recurse -Force
+        }
+
+        & $GateCProofScript -Configuration $Configuration -RuntimeIdentifier win-x64 -NoLaunch
+        if ($LASTEXITCODE -ne 0) {
+            throw "Gate C publish failed (ExitCode=$LASTEXITCODE)"
+        }
+
+        $appExe = Join-Path $GateCPublishDir "VoiceStudio.App.exe"
+        if (-not (Test-Path $appExe)) {
+            throw "Gate C publish output missing: $appExe"
+        }
+
+        Write-Host "Gate C publish successful!" -ForegroundColor Green
+        Write-Host "PublishDir: $GateCPublishDir" -ForegroundColor Cyan
+    }
 }
 catch {
-    Write-Host "Frontend build failed: $_" -ForegroundColor Red
+    Write-Host "Frontend publish failed: $_" -ForegroundColor Red
     exit 1
-}
-finally {
-    Pop-Location
 }
 
 # Verify backend files exist
@@ -73,14 +203,6 @@ Write-Host "Building installer ($InstallerType)..." -ForegroundColor Yellow
 
 if ($InstallerType -eq "InnoSetup") {
     # Build Inno Setup installer
-    $InnoSetupPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-    
-    if (-not (Test-Path $InnoSetupPath)) {
-        Write-Host "Error: Inno Setup not found at $InnoSetupPath" -ForegroundColor Red
-        Write-Host "Please install Inno Setup 6.2+ from https://jrsoftware.org/isdl.php" -ForegroundColor Yellow
-        exit 1
-    }
-    
     $InnoScript = Join-Path $InstallerDir "VoiceStudio.iss"
     if (-not (Test-Path $InnoScript)) {
         Write-Host "Error: Inno Setup script not found at $InnoScript" -ForegroundColor Red
@@ -88,10 +210,21 @@ if ($InstallerType -eq "InnoSetup") {
     }
     
     Write-Host "Compiling Inno Setup installer..." -ForegroundColor Yellow
-    & $InnoSetupPath $InnoScript
+    # Ensure the installer always packages the publish output we just produced (matches -Configuration).
+    # Note: avoid embedding quotes in the /D value; on some shells this can be passed through as `\E:\...` and
+    # Inno Setup will reject it as an "Unknown filename prefix".
+    # Keep this as a repo-relative path (relative to the .iss file location) for maximum determinism.
+    $innoSourceDir = "..\.buildlogs\x64\$Configuration\gatec-publish"
+    Write-Host "ISCC: $IsccPath /DMyAppVersion=$Version /DMyAppSourceDir=$innoSourceDir $InnoScript" -ForegroundColor Cyan
+    & $IsccPath "/DMyAppVersion=$Version" "/DMyAppSourceDir=$innoSourceDir" $InnoScript
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Inno Setup compilation failed!" -ForegroundColor Red
+        exit 1
+    }
+
+    if ($expectedInstallerOutput -and (-not (Test-Path $expectedInstallerOutput))) {
+        Write-Host "Error: Expected installer output not found: $expectedInstallerOutput" -ForegroundColor Red
         exit 1
     }
     
@@ -120,7 +253,7 @@ elseif ($InstallerType -eq "WiX") {
     Write-Host "Compiling WiX installer..." -ForegroundColor Yellow
     Push-Location $InstallerDir
     try {
-        & $WixCandle VoiceStudio.wxs
+        & $WixCandle "-dProductVersion=$Version" VoiceStudio.wxs
         if ($LASTEXITCODE -ne 0) {
             throw "WiX candle failed"
         }
@@ -173,5 +306,7 @@ Write-Host "2. Test installer on clean Windows 11 VM" -ForegroundColor White
 Write-Host "3. Test upgrade from previous version" -ForegroundColor White
 Write-Host "4. Test uninstallation" -ForegroundColor White
 Write-Host "5. Code sign installer (if applicable)" -ForegroundColor White
+Write-Host ""
+
 Write-Host ""
 

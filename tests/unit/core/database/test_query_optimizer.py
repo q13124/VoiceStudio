@@ -160,7 +160,7 @@ class TestConnectionPool:
         try:
             Path(db_path).unlink()
         except Exception:
-            pass
+            ...
 
     def test_pool_initialization(self, temp_db):
         """Test ConnectionPool initializes correctly."""
@@ -185,7 +185,7 @@ class TestConnectionPool:
 
         # First use - creates connection
         with pool.get_connection():
-            pass
+            ...
 
         # Second use - should reuse connection
         with pool.get_connection():
@@ -202,7 +202,7 @@ class TestConnectionPool:
 
         # Create and return connection
         with pool.get_connection():
-            pass
+            ...
 
         # Wait for health check interval
         time.sleep(0.2)
@@ -231,7 +231,7 @@ class TestConnectionPool:
             try:
                 conn.__exit__(None, None, None)
             except Exception:
-                pass
+                ...
 
     def test_idle_connection_cleanup(self, temp_db):
         """Test idle connections are cleaned up."""
@@ -243,7 +243,7 @@ class TestConnectionPool:
 
         # Create and return connection
         with pool.get_connection():
-            pass
+            ...
 
         # Wait for idle timeout
         time.sleep(0.2)
@@ -251,7 +251,7 @@ class TestConnectionPool:
         # Next get_connection should cleanup idle connection
         with pool.get_connection():
             # Should create new connection (old one cleaned up)
-            pass
+            ...
 
     def test_connection_statistics(self, temp_db):
         """Test connection pool statistics."""
@@ -259,7 +259,7 @@ class TestConnectionPool:
 
         # Use connection
         with pool.get_connection():
-            pass
+            ...
 
         stats = pool.get_stats()
         assert "pool_size" in stats
@@ -277,7 +277,7 @@ class TestConnectionPool:
         # Create and return connections
         for _ in range(3):
             with pool.get_connection():
-                pass
+                ...
 
         # Close all
         pool.close_all()
@@ -311,7 +311,7 @@ class TestDatabaseQueryOptimizer:
         try:
             Path(db_path).unlink()
         except Exception:
-            pass
+            ...
 
     def test_optimizer_initialization(self, temp_db):
         """Test DatabaseQueryOptimizer initializes correctly."""

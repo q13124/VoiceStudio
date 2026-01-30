@@ -323,7 +323,7 @@ class WhisperUIEngine(EngineProtocol):
                 try:
                     os.remove(audio_path)
                 except Exception:
-                    pass
+                    ...
 
             if result is None:
                 return None

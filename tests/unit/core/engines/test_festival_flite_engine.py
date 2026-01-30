@@ -40,7 +40,7 @@ def festival_engine():
     try:
         engine.cleanup()
     except Exception:
-        pass
+        ...
 
 
 class TestFestivalFliteEngineImports:
@@ -215,7 +215,7 @@ class TestFestivalFliteEngineBatchProcessing:
             assert mock_executor.called
         except Exception:
             # If festival/flite is not installed, that's okay
-            pass
+            ...
 
 
 class TestFestivalFliteEngineConfiguration:
@@ -273,7 +273,7 @@ class TestFestivalFliteEngineOptimization:
                             assert festival_engine._temp_dir is not None
                     except Exception:
                         # If dependencies not available, skip
-                        pass
+                        ...
 
     def test_cache_optimization(self, festival_engine):
         """Test that cache optimization is enabled by default."""
@@ -311,5 +311,5 @@ class TestFestivalFliteEngineCreateFunction:
         try:
             engine.cleanup()
         except Exception:
-            pass
+            ...
 

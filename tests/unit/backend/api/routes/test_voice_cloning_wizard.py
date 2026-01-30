@@ -5,11 +5,8 @@ Tests voice cloning wizard endpoints in isolation.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -58,9 +55,9 @@ class TestVoiceCloningWizardRouter:
         ), "Router should exist"
         if hasattr(voice_cloning_wizard.router, "prefix"):
             assert (
-                "/api/voice-cloning-wizard"
+                "/api/voice/clone/wizard"
                 in voice_cloning_wizard.router.prefix
-            ), "Router prefix should include /api/voice-cloning-wizard"
+            ), "Router prefix should include /api/voice/clone/wizard"
 
     def test_router_has_routes(self):
         """Test router has registered routes."""
@@ -73,4 +70,3 @@ class TestVoiceCloningWizardRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

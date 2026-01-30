@@ -86,7 +86,7 @@ def sanitize_text(text: str) -> tuple[str, int, int]:
             # If line became empty/whitespace, drop it
             if line.strip() == "":
                 # keepends already present; dropping line is safe inside tag
-                pass
+                ...
 
         # End of start tag
         if in_window_tag and ">" in line:

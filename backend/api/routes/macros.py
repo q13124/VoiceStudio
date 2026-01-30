@@ -5,8 +5,10 @@ CRUD operations for macros and automation curves.
 """
 
 import logging
+import os
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from fastapi import APIRouter, HTTPException, Query
@@ -751,14 +753,20 @@ def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
 
     if output_type == "save_file":
         file_path = node.properties.get("file_path", "")
+        tmp_path = None
         try:
-            import os
-
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, "w") as f:
-                f.write(str(input_value))
+            path = Path(file_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = path.with_suffix(path.suffix + ".tmp")
+            tmp_path.write_text(str(input_value), encoding="utf-8")
+            os.replace(tmp_path, path)
             return {"output": file_path, "saved": True}
         except Exception as e:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
             logger.error(f"Failed to save output: {e}")
             return {"output": None, "saved": False}
     else:

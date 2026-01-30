@@ -368,7 +368,7 @@ class SVDEngine(EngineProtocol):
                         "svd", duration, cached=True
                     )
                 except Exception:
-                    pass
+                    ...
                 return cached_path
             else:
                 self._cache_stats["misses"] += 1
@@ -453,7 +453,7 @@ class SVDEngine(EngineProtocol):
                     "svd", duration, cached=False
                 )
             except Exception:
-                pass
+                ...
 
             logger.info(f"Video generated successfully: {output_path}")
             return str(output_path)
@@ -467,7 +467,7 @@ class SVDEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("svd", "generation_error")
             except Exception:
-                pass
+                ...
             raise RuntimeError(f"Failed to generate video: {e}")
 
     def batch_generate_videos(
@@ -541,7 +541,7 @@ class SVDEngine(EngineProtocol):
                         metrics = get_engine_metrics()
                         metrics.record_error("svd", "batch_generation_error")
                     except Exception:
-                        pass
+                        ...
                     return None
 
             # Prepare arguments
@@ -581,7 +581,7 @@ class SVDEngine(EngineProtocol):
                     "svd", duration, cached=False
                 )
             except Exception:
-                pass
+                ...
 
             return all_outputs
 
@@ -594,7 +594,7 @@ class SVDEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("svd", "batch_generation_error")
             except Exception:
-                pass
+                ...
             return [None] * len(image_paths)
 
     def _save_video_cv2(self, frames: List[Image.Image], output_path: str, fps: int):

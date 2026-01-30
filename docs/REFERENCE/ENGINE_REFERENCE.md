@@ -44,6 +44,9 @@
 
 ## 🏗️ ENGINE ARCHITECTURE
 
+**Canonical engine layer architecture:** `docs/architecture/Part4_Engine_Layer.md`  
+**Architecture index:** `docs/architecture/README.md`
+
 ### Engine Discovery System
 
 VoiceStudio Quantum+ uses automatic engine discovery through manifest files:
@@ -936,7 +939,55 @@ engine_manager.enable_caching({
 
 ---
 
-**Last Updated:** 2025-12-26
+## Quality Metrics (SLO-6) and Baseline Proof Run
+
+**Source:** `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` (SLO-6), `docs/reports/verification/ENGINE_ENGINEER_STATUS_2026-01-27.md`
+
+### SLO-6 targets
+
+| Metric       | Target | Wiring |
+|-------------|--------|--------|
+| MOS score   | > 3.5  | `app/core/engines/quality_metrics.py` — `calculate_mos_score`, `calculate_all_metrics`. Backend `voice.py` uses `engine_quality_metrics.get("mos_score")` and normalizes to `quality_score` (MOS/5.0). |
+| Similarity   | > 0.7  | `quality_metrics.calculate_similarity` (resemblyzer / speechbrain). Clone response uses it for `quality_score` when MOS absent. |
+| Artifacts   | < 5%   | `quality_metrics.detect_artifacts`; backend uses `engine_quality_metrics.get("artifacts")`. |
+
+### Minimal dependency set for MOS/similarity
+
+Quality metrics depend on optional stacks. For MOS ≥ 3.5 and similarity ≥ 0.7:
+
+- **MOS**: `torch`, `pesq`, `pystoi`, `librosa` (and optional `speechbrain`, `resemblyzer` where used).
+- **Similarity**: `resemblyzer` and/or `speechbrain` for speaker embeddings.
+- **Artifacts**: `librosa` and engine-specific logic.
+
+Install backend/engine venv per `backend/requirements.txt` and engine manifests; use a venv that includes quality-metric deps when running the baseline proof.
+
+### Baseline proof run
+
+Proof script: **`scripts/baseline_voice_workflow_proof.py`**
+
+**Prerequisites:** Backend running (e.g. `python -m uvicorn backend.api.main:app --port 8001`). Python env must have `requests` — use a venv with backend deps (`pip install -r requirements.txt`) or the same venv you use for the backend.
+
+**Commands:**
+
+```powershell
+# Default (XTTS, port 8001)
+python scripts/baseline_voice_workflow_proof.py --engine xtts
+
+# With SLO enforcement (exit non-zero if MOS < 3.5 or similarity < 0.7)
+python scripts/baseline_voice_workflow_proof.py --engine xtts --backend-url http://localhost:8001 --strict-slo
+
+# Other engines (when backend lists them)
+python scripts/baseline_voice_workflow_proof.py --engine piper
+python scripts/baseline_voice_workflow_proof.py --engine chatterbox
+```
+
+**Artifacts:** `.buildlogs/proof_runs/baseline_workflow_<YYYYMMDD-HHMMSS>/` — `proof_data.json` with `steps`, `metrics`, and `slo` (always recorded when synthesis succeeds): `mos_target`, `similarity_target`, `mos_met`, `similarity_met`, `synthesis_latency_seconds`, `transcription_latency_seconds`. Downloaded `<audio_id>.wav` when synthesis succeeds.
+
+**Success:** Exit code 0; `proof_data.json` has `steps.synthesize` and `steps.transcribe` both `"status": "success"`. With `--strict-slo`, `slo.mos_met === true` and `slo.similarity_met === true` (script exits 1 otherwise).
+
+---
+
+**Last Updated:** 2026-01-27 (SLO-6 and proof run added)
 **Total Engines:** 47+ across 3 categories
 **Status:** COMPLETE - All engines documented
 **Next Update:** When new engines are added

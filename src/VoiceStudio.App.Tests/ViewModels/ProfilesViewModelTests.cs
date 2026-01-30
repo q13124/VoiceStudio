@@ -24,7 +24,19 @@ namespace VoiceStudio.App.Tests.ViewModels
         {
             base.TestInitialize();
             _audioPlayerService = new AudioPlayerService();
-            _viewModel = new ProfilesViewModel(MockBackendClient!, _audioPlayerService);
+            var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(MockBackendClient!);
+            var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+            var multiSelectService = new MultiSelectService();
+            var undoRedoService = new UndoRedoService();
+            _viewModel = new ProfilesViewModel(
+                MockBackendClient!,
+                profilesUseCase,
+                _audioPlayerService,
+                multiSelectService,
+                toastNotificationService: null,
+                undoRedoService: undoRedoService,
+                errorService: null,
+                logService: null);
         }
 
         [TestCleanup]

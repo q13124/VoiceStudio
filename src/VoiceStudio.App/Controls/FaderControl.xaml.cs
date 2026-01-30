@@ -91,13 +91,13 @@ namespace VoiceStudio.App.Controls
             if (volume <= 1.0)
             {
                 // 0.0-1.0 -> MIN_DB to 0dB
-                return (volume / 1.0) * (0.0 - MIN_DB) + MIN_DB;
+                return (volume / 1.0 * (0.0 - MIN_DB)) + MIN_DB;
             }
             else
             {
                 // 1.0-2.0 -> 0dB to MAX_DB
                 var t = (volume - 1.0) / (MAX_VOLUME - 1.0);
-                return t * (MAX_DB - 0.0) + 0.0;
+                return (t * (MAX_DB - 0.0)) + 0.0;
             }
         }
 
@@ -116,13 +116,13 @@ namespace VoiceStudio.App.Controls
             {
                 // MIN_DB to 0dB -> 0.0-1.0
                 var t = (db - MIN_DB) / (0.0 - MIN_DB);
-                return t * 1.0 + 0.0;
+                return (t * 1.0) + 0.0;
             }
             else
             {
                 // 0dB to MAX_DB -> 1.0-2.0
                 var t = (db - 0.0) / (MAX_DB - 0.0);
-                return t * (MAX_VOLUME - 1.0) + 1.0;
+                return (t * (MAX_VOLUME - 1.0)) + 1.0;
             }
         }
 
@@ -152,7 +152,7 @@ namespace VoiceStudio.App.Controls
             FaderBackground.Height = faderPosition;
 
             // Set knob position (knob center should be at fader position)
-            var knobOffset = faderPosition - (FaderKnob?.ActualHeight ?? 20) / 2.0;
+            var knobOffset = faderPosition - ((FaderKnob?.ActualHeight ?? 20) / 2.0);
             FaderKnobTransform.Y = -knobOffset;
         }
 
@@ -204,7 +204,7 @@ namespace VoiceStudio.App.Controls
             // Convert pixel movement to volume change
             // Track goes from bottom (0.0) to top (2.0)
             // deltaY is positive when moving up (increasing volume)
-            var deltaVolume = (deltaY / trackHeight) * MAX_VOLUME; // Scale to 0.0-2.0 range
+            var deltaVolume = deltaY / trackHeight * MAX_VOLUME; // Scale to 0.0-2.0 range
             var newVolume = Math.Max(0.0, Math.Min(MAX_VOLUME, _dragStartVolume + deltaVolume));
             
             // Update drag start for next move

@@ -1,5 +1,9 @@
 ## Role prompt: Overseer
 
+### Current next tasks
+
+See `docs/governance/overseer/role_tasks/OVERSEER.md` (index: `docs/governance/overseer/role_tasks/INDEX.md`).
+
 ### Mission
 
 Keep VoiceStudio aligned to the recovery gates, architecture boundaries, and ledger discipline. Block integration when evidence is absent.
@@ -34,10 +38,11 @@ Log → Repro → Fix → Proof → Close
   - Sign-off role
   - Proof run commands
   - Result summary
-- Every change set includes a filled handoff file at `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md`.
+- Every change set includes a handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
 
 ### Evidence standard
 
 - Proof runs must be reproducible from a clean workspace state.
 - Evidence is recorded as command lines plus a short output summary.
-

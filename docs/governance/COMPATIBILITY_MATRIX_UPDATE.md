@@ -29,7 +29,7 @@ Updated VoiceStudio with a comprehensive compatibility matrix ensuring all depen
 **Transformers Stack:**
 - ✅ Updated from 4.55.4 → **4.57.1**
 - ✅ Updated huggingface_hub from 0.20.0 → **0.36.0**
-- ✅ Added tokenizers==0.22.1
+- ✅ Added tokenizers==0.21.4
 - ✅ Added safetensors==0.6.2
 - ✅ Added hf-xet==1.2.0
 - ✅ Added fsspec==2025.9.0

@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.App.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -46,10 +47,10 @@ namespace VoiceStudio.App.Views.Panels
         {
             // Setup Tab navigation order for this panel
             KeyboardNavigationHelper.SetupTabNavigation(this, 0);
-            
+
             // Setup tab selection changed handler
             DiagnosticsTabView.SelectionChanged += TabView_SelectionChanged;
-            
+
             // Initialize Errors tab as visible (default selected)
             ErrorsTabGrid.Visibility = Visibility.Visible;
         }

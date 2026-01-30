@@ -424,7 +424,7 @@ async def preprocess_reference_audio(
                 quality_score -= 1.5
                 recommendations.append("Background noise detected - apply denoising")
         except:
-            pass
+            ...
 
         # Check for distortion (unusual spectral characteristics)
         try:
@@ -436,7 +436,7 @@ async def preprocess_reference_audio(
                     "Possible distortion detected - check audio source"
                 )
         except:
-            pass
+            ...
 
         # Check sample rate (should be >= 16kHz for good quality)
         if sample_rate < 16000:

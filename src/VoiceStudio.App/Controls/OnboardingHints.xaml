@@ -1,73 +1,67 @@
 <UserControl x:Class="VoiceStudio.App.Controls.OnboardingHints"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="using:VoiceStudio.App.Converters">
-    <Grid x:Name="HintsContainer" Visibility="Collapsed">
-        <!-- Hint Overlay -->
-        <Border x:Name="HintOverlay"
-                Background="{StaticResource VSQ.Color.Overlay.DarkerBrush}"
-                Opacity="0.9"
-                Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border.Transitions>
-                <TransitionCollection>
-                    <FadeInThemeAnimation Duration="0:0:0.3"/>
-                </TransitionCollection>
-            </Border.Transitions>
-        </Border>
-        <!-- Hint Card -->
-        <Border x:Name="HintCard"
-                Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
-                BorderBrush="{StaticResource VSQ.Accent.CyanBrush}"
-                BorderThickness="2"
-                CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
-                Padding="{StaticResource VSQ.Spacing.Large}"
-                MaxWidth="400"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border.Transitions>
-                <TransitionCollection>
-                    <EntranceThemeTransition FromVerticalOffset="20" IsStaggeringEnabled="False"/>
-                </TransitionCollection>
-            </Border.Transitions>
-            <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
-                <!-- Header -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" 
-                               Text="{x:Bind Title, Mode=OneWay}"
-                               Style="{StaticResource VSQ.Text.Title}"
-                               FontWeight="SemiBold"/>
-                    <Button Grid.Column="1"
-                            Content="✕"
-                            Width="24"
-                            Height="24"
-                            Padding="0"
-                            FontSize="12"
-                            Click="CloseButton_Click"
-                            ToolTipService.ToolTip="Dismiss hint"
-                            AutomationProperties.Name="Close hint"/>
-                </Grid>
-                <!-- Message -->
-                <TextBlock Text="{x:Bind Message, Mode=OneWay}"
-                           TextWrapping="Wrap"
-                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
-                           LineHeight="20"/>
-                <!-- Action Button (if provided) -->
-                <Button Content="{x:Bind ActionText, Mode=OneWay}"
-                        Command="{x:Bind ActionCommand, Mode=OneWay}"
-                        CommandParameter="{x:Bind ActionParameter, Mode=OneWay}"
-                        HorizontalAlignment="Stretch"
-                        Style="{StaticResource VSQ.Button.HoverStyle}"
-                        Visibility="{x:Bind ActionText, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"/>
-                <!-- Don't show again checkbox -->
-                <CheckBox Content="Don't show this hint again"
-                          IsChecked="{x:Bind DontShowAgain, Mode=TwoWay}"
-                          Margin="0"/>
-            </StackPanel>
-        </Border>
-    </Grid>
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:converters="using:VoiceStudio.App.Converters">
+  <UserControl.Resources>
+    <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+  </UserControl.Resources>
+  <Grid x:Name="HintsContainer" Visibility="Collapsed">
+    <!-- Hint Overlay -->
+    <Border x:Name="HintOverlay"
+      Background="{StaticResource VSQ.Color.Overlay.DarkerBrush}"
+      Opacity="0.9"
+      Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+    </Border>
+    <!-- Hint Card -->
+    <Border x:Name="HintCard"
+      Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+      BorderBrush="{StaticResource VSQ.Accent.CyanBrush}"
+      BorderThickness="2"
+      CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+      Padding="{StaticResource VSQ.Spacing.Large}"
+      MaxWidth="400"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+      <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
+        <!-- Header -->
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0"
+            Text="{x:Bind Title, Mode=OneWay}"
+            Style="{StaticResource VSQ.Text.Title}"
+            FontWeight="SemiBold" />
+          <Button Grid.Column="1"
+            Content="✕"
+            Width="24"
+            Height="24"
+            Padding="0"
+            FontSize="12"
+            Click="CloseButton_Click"
+            ToolTipService.ToolTip="Dismiss hint"
+            AutomationProperties.Name="Close hint" />
+        </Grid>
+        <!-- Message -->
+        <TextBlock Text="{x:Bind Message, Mode=OneWay}"
+          TextWrapping="Wrap"
+          Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+          LineHeight="20" />
+        <!-- Action Button (if provided) -->
+        <Button Content="{x:Bind ActionText, Mode=OneWay}"
+          Command="{x:Bind ActionCommand, Mode=OneWay}"
+          CommandParameter="{x:Bind ActionParameter, Mode=OneWay}"
+          HorizontalAlignment="Stretch"
+          Style="{StaticResource VSQ.Button.HoverStyle}"
+          Visibility="{x:Bind ActionText, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
+        <!-- Don't show again checkbox -->
+        <CheckBox Content="Don't show this hint again"
+          IsChecked="{x:Bind DontShowAgain, Mode=TwoWay}"
+          Margin="0" />
+      </StackPanel>
+    </Border>
+  </Grid>
 </UserControl>

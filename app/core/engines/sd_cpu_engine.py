@@ -49,11 +49,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -287,7 +287,7 @@ class SDCPUEngine(EngineProtocol):
                     duration = time.perf_counter() - start_time
                     metrics.record_synthesis_time("sd_cpu", duration, cached=True)
                 except Exception:
-                    pass
+                    ...
                 return cached_image
             else:
                 self._cache_stats["misses"] += 1
@@ -330,7 +330,7 @@ class SDCPUEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_synthesis_time("sd_cpu", duration, cached=False)
             except Exception:
-                pass
+                ...
 
             if output_path:
                 image.save(output_path)
@@ -348,7 +348,7 @@ class SDCPUEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("sd_cpu", "generation_error")
             except Exception:
-                pass
+                ...
             return None
 
     def batch_generate(
@@ -449,7 +449,7 @@ class SDCPUEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_synthesis_time("sd_cpu", duration, cached=False)
             except Exception:
-                pass
+                ...
 
             return all_images
 
@@ -462,7 +462,7 @@ class SDCPUEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("sd_cpu", "batch_generation_error")
             except Exception:
-                pass
+                ...
             return [None] * len(prompts)
 
     def cleanup(self):

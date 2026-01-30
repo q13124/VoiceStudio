@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VoiceStudio.App.Services.Persistence;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 
@@ -16,6 +17,7 @@ namespace VoiceStudio.App.Services.Stores
     {
         private readonly IBackendClient _backendClient;
         private readonly StateCacheService? _stateCacheService;
+        private readonly IProjectRepository? _projectRepository;
 
         [ObservableProperty]
         private ObservableCollection<Project> projects = new();
@@ -35,10 +37,14 @@ namespace VoiceStudio.App.Services.Stores
         [ObservableProperty]
         private DateTime? lastUpdated;
 
-        public ProjectStore(IBackendClient backendClient, StateCacheService? stateCacheService = null)
+        public ProjectStore(
+            IBackendClient backendClient,
+            StateCacheService? stateCacheService = null,
+            IProjectRepository? projectRepository = null)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             _stateCacheService = stateCacheService;
+            _projectRepository = projectRepository;
         }
 
         /// <summary>
@@ -84,8 +90,27 @@ namespace VoiceStudio.App.Services.Stores
         {
             try
             {
+                if (_projectRepository != null)
+                {
+                    var localProjects = await _projectRepository.ListProjectsAsync();
+                    Projects = new ObservableCollection<Project>(
+                        localProjects.Select(MapMetadataToProject));
+
+                    LastUpdated = DateTime.UtcNow;
+
+                    if (_stateCacheService != null)
+                    {
+                        await _stateCacheService.CacheStateAsync("projects", Projects);
+                    }
+
+                    if (Projects.Count > 0)
+                    {
+                        return;
+                    }
+                }
+
                 var projectsArray = await _backendClient.GetProjectsAsync();
-                
+
                 Projects.Clear();
                 if (projectsArray != null)
                 {
@@ -119,7 +144,26 @@ namespace VoiceStudio.App.Services.Stores
                 IsLoading = true;
                 ErrorMessage = null;
 
-                var project = await _backendClient.GetProjectAsync(projectId);
+                Project? project = null;
+                if (_projectRepository != null)
+                {
+                    try
+                    {
+                        var localProjects = await _projectRepository.ListProjectsAsync();
+                        var localMatch = localProjects.FirstOrDefault(p => p.ProjectId == projectId);
+                        if (localMatch != null)
+                        {
+                            var localProject = await _projectRepository.OpenAsync(localMatch.Path);
+                            project = MapDataToProject(localProject);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Fallback to backend
+                    }
+                }
+
+                project ??= await _backendClient.GetProjectAsync(projectId);
                 if (project != null)
                 {
                     CurrentProject = project;
@@ -219,6 +263,30 @@ namespace VoiceStudio.App.Services.Stores
             CurrentProject = null;
             SelectedProject = null;
             LastUpdated = null;
+        }
+
+        private static Project MapMetadataToProject(ProjectMetadata metadata)
+        {
+            return new Project
+            {
+                Id = metadata.ProjectId,
+                Name = metadata.Name,
+                Description = string.Empty,
+                CreatedAt = metadata.CreatedAt.UtcDateTime.ToString("o"),
+                UpdatedAt = metadata.ModifiedAt.UtcDateTime.ToString("o")
+            };
+        }
+
+        private static Project MapDataToProject(ProjectData data)
+        {
+            return new Project
+            {
+                Id = data.ProjectId,
+                Name = data.Name,
+                Description = string.Empty,
+                CreatedAt = data.CreatedAt.UtcDateTime.ToString("o"),
+                UpdatedAt = data.ModifiedAt.UtcDateTime.ToString("o")
+            };
         }
     }
 }

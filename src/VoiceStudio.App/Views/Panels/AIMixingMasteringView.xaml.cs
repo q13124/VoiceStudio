@@ -119,12 +119,12 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async System.Threading.Tasks.Task HandleSuggestionMenuClick(string action, object suggestion)
+        private System.Threading.Tasks.Task HandleSuggestionMenuClick(string action, object suggestion)
         {
             try
             {
                 if (suggestion is not ViewModels.AIMixingMixSuggestionItem suggestionItem)
-                    return;
+                    return System.Threading.Tasks.Task.CompletedTask;
 
                 switch (action.ToLower())
                 {
@@ -146,6 +146,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to {action}: {ex.Message}");
             }
+
+            return System.Threading.Tasks.Task.CompletedTask;
         }
     }
 }

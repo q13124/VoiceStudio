@@ -274,10 +274,10 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Deletes a workspace profile.
         /// </summary>
-        public async Task<bool> DeleteWorkspaceProfileAsync(string profileName)
+        public Task<bool> DeleteWorkspaceProfileAsync(string profileName)
         {
             if (profileName == "Default")
-                return false; // Cannot delete default profile
+                return Task.FromResult(false); // Cannot delete default profile
 
             try
             {
@@ -285,7 +285,7 @@ namespace VoiceStudio.App.Services
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
             catch (Exception ex)
@@ -293,7 +293,7 @@ namespace VoiceStudio.App.Services
                 System.Diagnostics.Debug.WriteLine($"Failed to delete workspace profile: {ex.Message}");
             }
 
-            return false;
+            return Task.FromResult(false);
         }
 
         /// <summary>
@@ -353,10 +353,11 @@ namespace VoiceStudio.App.Services
         {
             try
             {
-                var layout = GetCurrentLayout();
-                var settingsData = _settingsService.LoadSettingsAsync().GetAwaiter().GetResult();
-                settingsData.WorkspaceLayout = layout;
-                _settingsService.SaveSettingsAsync(settingsData).GetAwaiter().GetResult();
+                // IMPORTANT: Do NOT block the UI thread here.
+                // This method is called from UI panel switching (PanelHost.OnContentChanged).
+                // Sync-over-async can deadlock or stall the UI thread (especially when the backend is unavailable),
+                // which breaks Gate C UI smoke and can freeze the app in production.
+                _ = Task.Run(async () => await SaveCurrentWorkspaceAsync().ConfigureAwait(false));
             }
             catch (Exception ex)
             {

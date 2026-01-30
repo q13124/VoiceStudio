@@ -3,19 +3,20 @@ XTTS Engine for VoiceStudio
 Coqui TTS XTTS v2 integration for voice cloning and synthesis
 
 Compatible with:
-- Python 3.10.15
-- Coqui TTS 0.27.2
-- Transformers 4.55.4
-- PyTorch 2.2.2+cu121
+- Python 3.11.9
+- Coqui TTS 0.24.2
+- Transformers 4.47.0
+- PyTorch 2.5.1+cu128
 """
 
 import logging
 import os
+import sys
 import time
 from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -55,10 +56,90 @@ except ImportError:
     TTS = None
     ModelManager = None
     logging.warning(
-        "Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2"
+        "Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2"
     )
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_torchaudio_load_fallback() -> None:
+    """Patch torchaudio.load with a soundfile fallback for torchcodec failures."""
+    try:
+        import torchaudio
+    except Exception as exc:
+        logger.debug("torchaudio not available for XTTS fallback: %s", exc)
+        return
+
+    if getattr(torchaudio.load, "_voicestudio_fallback", False):
+        return
+
+    try:
+        import soundfile as sf
+    except Exception as exc:
+        logger.debug("soundfile not available for XTTS fallback: %s", exc)
+        return
+
+    original_load = torchaudio.load
+
+    def load_with_fallback(uri, *args, **kwargs):
+        try:
+            return original_load(uri, *args, **kwargs)
+        except Exception as exc:
+            logger.warning("torchaudio.load failed; falling back to soundfile: %s", exc)
+            frame_offset = kwargs.get("frame_offset", 0) or 0
+            num_frames = kwargs.get("num_frames", -1)
+            channels_first = kwargs.get("channels_first", True)
+            read_kwargs = {"dtype": "float32", "always_2d": True}
+            if frame_offset:
+                read_kwargs["start"] = int(frame_offset)
+            if num_frames is not None and num_frames > 0:
+                read_kwargs["frames"] = int(num_frames)
+            try:
+                audio, sample_rate = sf.read(uri, **read_kwargs)
+            except TypeError:
+                # Some file-like objects don't support start/frames.
+                audio, sample_rate = sf.read(uri, dtype="float32", always_2d=True)
+            audio = np.asarray(audio, dtype=np.float32)
+            if channels_first:
+                audio = audio.T
+            return torch.from_numpy(audio), sample_rate
+
+    load_with_fallback._voicestudio_fallback = True
+    torchaudio.load = load_with_fallback
+
+# Optional librosa import for prosody control
+try:
+    import librosa
+
+    HAS_LIBROSA = True
+except ImportError:
+    HAS_LIBROSA = False
+    librosa = None
+    logger.warning("librosa not available. Prosody control will be limited.")
+
+# Coqui TTS expects model IDs like: tts_models/<language>/<dataset>/<model_name>.
+# Older configs/docs may use the HuggingFace-style repo id (e.g. "coqui/XTTS-v2").
+XTTS_DEFAULT_MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
+_XTTS_MODEL_NAME_ALIASES = {
+    "coqui/xtts-v2": XTTS_DEFAULT_MODEL_NAME,
+}
+
+
+def _normalize_xtts_model_name(model_name: Optional[str]) -> str:
+    """
+    Normalize XTTS model identifiers to a Coqui-TTS-compatible model id.
+
+    Accepts legacy HuggingFace-style repo ids and maps them to the canonical Coqui ID.
+    """
+    if not model_name:
+        return XTTS_DEFAULT_MODEL_NAME
+
+    name = str(model_name).strip()
+    if not name:
+        return XTTS_DEFAULT_MODEL_NAME
+
+    return _XTTS_MODEL_NAME_ALIASES.get(name.lower(), name)
+
 
 # Try importing general model cache
 try:
@@ -134,35 +215,8 @@ def _cache_model(model_name: str, device: str, model):
     logger.debug(f"Cached model: {cache_key} (cache size: {len(_MODEL_CACHE)})")
 
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    # Fallback if protocols not available
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        # Final fallback
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self):
-                pass
-
-            @abstractmethod
-            def cleanup(self):
-                pass
-
-            def is_initialized(self):
-                return self._initialized
-
-            def get_device(self):
-                return self.device
+# Import base protocol from canonical protocols module
+from .protocols import EngineProtocol
 
 
 class XTTSEngine(EngineProtocol):
@@ -178,7 +232,7 @@ class XTTSEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_name: str = "tts_models/multilingual/multi-dataset/xtts_v2",
+        model_name: str = XTTS_DEFAULT_MODEL_NAME,
         device: Optional[str] = None,
         gpu: bool = True,
     ):
@@ -192,20 +246,52 @@ class XTTSEngine(EngineProtocol):
         """
         if TTS is None:
             raise ImportError(
-                "Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2"
+                "Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2"
             )
 
         # Initialize base protocol
         super().__init__(device=device, gpu=gpu)
 
-        self.model_name = model_name
+        requested_model_name = model_name
+        self.model_name = _normalize_xtts_model_name(model_name)
+        if requested_model_name != self.model_name:
+            logger.info(
+                f"Normalized XTTS model_name '{requested_model_name}' -> '{self.model_name}'"
+            )
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
+
+        # Guardrail: some GPUs (e.g. RTX 50-series / sm_120) are newer than the pinned
+        # PyTorch build and will crash at runtime with:
+        #   "CUDA error: no kernel image is available for execution on the device"
+        # Detect unsupported compute capability and fall back to CPU automatically so
+        # voice cloning remains functional (albeit slower).
+        if self.device == "cuda" and torch.cuda.is_available():
+            try:
+                cap = torch.cuda.get_device_capability(0)
+                arch = f"sm_{cap[0]}{cap[1]}"
+                supported_arches = list(torch.cuda.get_arch_list())
+                if supported_arches and arch not in supported_arches:
+                    gpu_name = torch.cuda.get_device_name(0)
+                    logger.warning(
+                        "CUDA device '%s' (capability %s) is not supported by this PyTorch build (%s). "
+                        "Supported arches: %s. Falling back to CPU for XTTS.",
+                        gpu_name,
+                        arch,
+                        torch.__version__,
+                        " ".join(supported_arches),
+                    )
+                    self.device = "cpu"
+            except Exception as e:
+                logger.warning(
+                    f"Failed to verify CUDA arch compatibility for XTTS: {e}"
+                )
         self.tts = None
         self._use_cache = True  # Enable model caching by default
         self._lazy_load = False  # Lazy loading flag
         self._batch_size = 1  # Default batch size for batch processing
+        self._last_multi_reference_metrics: Optional[Dict[str, Any]] = None
 
     def initialize(self, lazy: bool = False) -> bool:
         """
@@ -260,8 +346,24 @@ class XTTSEngine(EngineProtocol):
         """
         try:
             logger.info(f"Loading XTTS model: {self.model_name}")
+            _ensure_torchaudio_load_fallback()
 
-            # Use %PROGRAMDATA%\VoiceStudio\models for model cache if available
+            # Coqui XTTS-v2 downloads can require interactive CPML acceptance (input prompt).
+            # In non-interactive backend runs, this can hang the server. Fail fast with a clear
+            # instruction to set COQUI_TOS_AGREED=1 (or use scripts/backend/start_backend.ps1 -CoquiTosAgreed).
+            if os.environ.get("COQUI_TOS_AGREED") != "1":
+                try:
+                    stdin_is_tty = bool(getattr(sys.stdin, "isatty", lambda: False)())
+                except Exception:
+                    stdin_is_tty = False
+                if not stdin_is_tty:
+                    raise RuntimeError(
+                        "XTTS-v2 model download requires CPML/commercial license acceptance. "
+                        "For non-interactive runs, set COQUI_TOS_AGREED=1 "
+                        "(e.g. scripts/backend/start_backend.ps1 -CoquiTosAgreed)."
+                    )
+
+            # Use VOICESTUDIO_MODELS_PATH for model cache if available
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
             if not model_cache_dir:
                 model_cache_dir = os.path.join(
@@ -287,7 +389,7 @@ class XTTSEngine(EngineProtocol):
                 # Enable inference mode for better performance
                 if hasattr(torch, "inference_mode"):
                     # Will use inference_mode context in synthesize
-                    pass
+                    ...
 
             load_time = time.time() - start_time
             logger.info(
@@ -413,6 +515,34 @@ class XTTSEngine(EngineProtocol):
             logger.error(f"Synthesis failed: {e}")
             return None
 
+    def _compute_voice_profile_match(
+        self,
+        processed_audio: np.ndarray,
+        sample_rate: int,
+        reference_audio: Optional[Union[str, Path]],
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """
+        Compute voice profile match metrics against the reference audio when available.
+
+        Returns a tuple of (profile_match, missing_dependency_hint).
+        """
+        if not reference_audio or not HAS_AUDIO_UTILS:
+            return None, None
+
+        try:
+            import soundfile as sf
+
+            ref_audio, ref_sr = sf.read(str(reference_audio))
+            profile_match = match_voice_profile(
+                ref_audio, processed_audio, ref_sr, sample_rate
+            )
+            return profile_match, None
+        except ImportError:
+            return None, "soundfile (pip install soundfile)"
+        except Exception as e:
+            logger.debug(f"Voice profile matching failed: {e}")
+            return None, None
+
     def _process_audio_quality(
         self,
         audio: np.ndarray,
@@ -473,22 +603,22 @@ class XTTSEngine(EngineProtocol):
                         audio=processed_audio,
                         reference_audio=reference_audio,
                         sample_rate=sample_rate,
+                        include_ml_prediction=True,  # Include ML-based quality prediction
                     )
                 except Exception as e:
                     logger.warning(f"Quality metrics calculation failed: {e}")
 
             # Add voice profile matching if reference available
-            if reference_audio and HAS_AUDIO_UTILS:
-                try:
-                    import soundfile as sf
-
-                    ref_audio, ref_sr = sf.read(str(reference_audio))
-                    profile_match = match_voice_profile(
-                        ref_audio, processed_audio, ref_sr, sample_rate
-                    )
-                    quality_metrics["voice_profile_match"] = profile_match
-                except Exception as e:
-                    logger.debug(f"Voice profile matching failed: {e}")
+            profile_match, missing_dep = self._compute_voice_profile_match(
+                processed_audio, sample_rate, reference_audio
+            )
+            if profile_match is not None:
+                quality_metrics["voice_profile_match"] = profile_match
+            elif missing_dep:
+                missing = quality_metrics.get("missing_dependencies") or []
+                if missing_dep not in missing:
+                    missing.append(missing_dep)
+                quality_metrics["missing_dependencies"] = missing
 
         if calculate_metrics:
             return processed_audio, quality_metrics
@@ -527,6 +657,8 @@ class XTTSEngine(EngineProtocol):
         Returns:
             Audio array or None, or tuple of (audio, quality_metrics) if calculate_quality=True
         """
+        self._last_multi_reference_metrics = None
+
         # Support multi-reference voice cloning
         if isinstance(reference_audio, list) and len(reference_audio) > 1:
             if use_multi_reference:
@@ -566,39 +698,85 @@ class XTTSEngine(EngineProtocol):
             if quality_preset in quality_params:
                 kwargs.update(quality_params[quality_preset])
 
-        audio = self.synthesize(
+        has_prosody = bool(prosody_params)
+
+        # If no prosody is requested, delegate to `synthesize()` which already handles:
+        # - output_path writing
+        # - enhancement
+        # - metrics calculation
+        # Doing additional `_process_audio_quality()` work here can double-apply enhancement.
+        if not has_prosody:
+            return self.synthesize(
+                text=text,
+                speaker_wav=reference_audio,
+                language=language,
+                output_path=output_path,
+                enhance_quality=enhance_quality,
+                calculate_quality=calculate_quality,
+                **kwargs,
+            )
+
+        # Prosody modifies the waveform; apply enhancement/metrics once after prosody so we don't
+        # over-process audio (and so metrics reflect the final waveform).
+        synth_audio = self.synthesize(
             text=text,
             speaker_wav=reference_audio,
             language=language,
-            output_path=output_path,
-            enhance_quality=enhance_quality,
-            calculate_quality=calculate_quality,
+            output_path=None,
+            enhance_quality=False,
+            calculate_quality=False,
             **kwargs,
         )
+        if synth_audio is None:
+            return None
 
-        # Apply advanced prosody control if specified
-        if audio is not None and prosody_params:
-            audio = self._apply_prosody_control(
-                audio, getattr(self.tts, "output_sample_rate", 22050), prosody_params
+        if isinstance(synth_audio, tuple):
+            synth_audio_arr, _synth_quality_metrics = synth_audio
+            if synth_audio_arr is None:
+                return None
+            synth_audio = synth_audio_arr
+
+        prosody_params_dict = prosody_params
+        if prosody_params_dict is None:
+            return synth_audio
+
+        sample_rate = getattr(self.tts, "output_sample_rate", 22050)
+        audio_after_prosody = self._apply_prosody_control(
+            synth_audio, sample_rate, prosody_params_dict
+        )
+
+        if isinstance(reference_audio, list):
+            ref_for_metrics: Optional[Union[str, Path]] = (
+                reference_audio[0] if reference_audio else None
             )
+        else:
+            ref_for_metrics = reference_audio
 
-        # Process audio quality (enhancement + metrics)
-        if audio is not None:
-            audio = self._process_audio_quality(
-                audio,
-                getattr(self.tts, "output_sample_rate", 22050),
-                (
-                    reference_audio
-                    if not isinstance(reference_audio, list)
-                    else reference_audio[0]
-                ),
+        audio_out: Union[np.ndarray, Tuple[np.ndarray, Dict]] = audio_after_prosody
+        if enhance_quality or calculate_quality:
+            audio_out = self._process_audio_quality(
+                audio_after_prosody,
+                sample_rate,
+                ref_for_metrics,
                 enhance=enhance_quality,
                 calculate_metrics=calculate_quality,
             )
-            if isinstance(audio, tuple):
-                return audio  # (audio, quality_metrics)
 
-        return audio
+        # If output_path is specified, persist the final waveform and match `synthesize()`'s return
+        # convention (None or (None, metrics)).
+        if output_path:
+            import soundfile as sf
+
+            out_path = str(output_path)
+            if isinstance(audio_out, tuple):
+                audio_arr, quality_metrics = audio_out
+                sf.write(out_path, audio_arr, sample_rate)
+                return None, quality_metrics
+
+            sf.write(out_path, audio_out, sample_rate)
+            return None
+
+        return audio_out
 
     def _clone_voice_multi_reference(
         self,
@@ -620,40 +798,96 @@ class XTTSEngine(EngineProtocol):
         """
         logger.info(f"Multi-reference cloning with {len(reference_audios)} references")
 
-        # Synthesize with each reference
-        audio_results = []
+        # Synthesize with each reference and compute metrics
+        candidates: List[Dict[str, Any]] = []
         for i, ref_audio in enumerate(reference_audios):
             try:
-                audio = self.synthesize(
+                audio_result = self.synthesize(
                     text=text,
                     speaker_wav=ref_audio,
                     language=language,
-                    enhance_quality=False,  # Apply enhancement after ensemble
-                    calculate_quality=False,
+                    enhance_quality=False,  # Apply enhancement after selection
+                    calculate_quality=True,
                     speed=speed,
                 )
-                if audio is not None:
-                    audio_results.append(audio)
+                metrics = None
+                audio = audio_result
+                if isinstance(audio_result, tuple):
+                    audio, metrics = audio_result
+                if audio is None:
+                    continue
+
+                score = None
+                if isinstance(metrics, dict):
+                    similarity = metrics.get("similarity")
+                    mos_score = metrics.get("mos_score")
+                    artifact_score = (
+                        metrics.get("artifacts", {}).get("artifact_score")
+                        if isinstance(metrics.get("artifacts"), dict)
+                        else None
+                    )
+                    voice_profile_match = metrics.get("voice_profile_match")
+                    overall_match = None
+                    if isinstance(voice_profile_match, dict):
+                        overall_match = voice_profile_match.get("overall_similarity")
+                    score = 0.0
+                    score_parts = 0
+                    if similarity is not None:
+                        score += similarity * 2.0
+                        score_parts += 1
+                    if mos_score is not None:
+                        score += mos_score / 5.0
+                        score_parts += 1
+                    if artifact_score is not None:
+                        score += max(0.0, 1.0 - float(artifact_score))
+                        score_parts += 1
+                    if overall_match is not None:
+                        try:
+                            score += float(overall_match) * 1.5
+                            score_parts += 1
+                        except (TypeError, ValueError):
+                            logger.debug(
+                                f"Voice profile match overall_similarity not numeric: {overall_match}"
+                            )
+                    if score_parts == 0:
+                        score = None
+
+                candidates.append(
+                    {
+                        "reference_audio": str(ref_audio),
+                        "audio": audio,
+                        "metrics": metrics,
+                        "score": score,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to synthesize with reference {i+1}: {e}")
 
-        if not audio_results:
+        if not candidates:
             logger.error("All reference audios failed to synthesize")
             return None
 
-        # Ensemble: average the audio results for stability
-        if len(audio_results) > 1:
-            # Ensure all have same length
-            min_length = min(len(a) for a in audio_results)
-            audio_results = [a[:min_length] for a in audio_results]
-            # Weighted average (first reference has more weight)
-            weights = np.linspace(
-                0.6, 0.4 / (len(audio_results) - 1), len(audio_results)
-            )
-            weights = weights / weights.sum()  # Normalize
-            audio = np.average(audio_results, axis=0, weights=weights)
+        scored = [c for c in candidates if c.get("score") is not None]
+        if scored:
+            selected = max(scored, key=lambda c: float(c["score"]))
         else:
-            audio = audio_results[0]
+            selected = candidates[0]
+
+        self._last_multi_reference_metrics = {
+            "strategy": "metrics_best",
+            "selected_reference": selected.get("reference_audio"),
+            "candidates": [
+                {
+                    "reference_audio": c.get("reference_audio"),
+                    "metrics": c.get("metrics"),
+                    "score": c.get("score"),
+                    "selected": c is selected,
+                }
+                for c in candidates
+            ],
+        }
+
+        audio = selected["audio"]
 
         # Apply prosody control if specified
         if prosody_params:
@@ -959,7 +1193,7 @@ class XTTSEngine(EngineProtocol):
 
 # Factory function for easy instantiation
 def create_xtts_engine(
-    model_name: str = "tts_models/multilingual/multi-dataset/xtts_v2",
+    model_name: str = XTTS_DEFAULT_MODEL_NAME,
     device: Optional[str] = None,
     gpu: bool = True,
 ) -> XTTSEngine:

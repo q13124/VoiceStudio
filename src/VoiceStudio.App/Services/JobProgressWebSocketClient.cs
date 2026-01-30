@@ -115,7 +115,9 @@ namespace VoiceStudio.App.Services
                 // Determine message type
                 var messageType = root.TryGetProperty("type", out var typeProp) 
                     ? typeProp.GetString() 
-                    : "progress";
+                    : null;
+
+                messageType = string.IsNullOrWhiteSpace(messageType) ? "progress" : messageType;
 
                 switch (messageType.ToLowerInvariant())
                 {

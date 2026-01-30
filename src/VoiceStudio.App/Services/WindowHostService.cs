@@ -44,8 +44,8 @@ namespace VoiceStudio.App.Services
             var displayArea = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Nearest);
             if (displayArea != null)
             {
-                var centerX = displayArea.WorkArea.X + (displayArea.WorkArea.Width - (int)width) / 2;
-                var centerY = displayArea.WorkArea.Y + (displayArea.WorkArea.Height - (int)height) / 2;
+                var centerX = displayArea.WorkArea.X + ((displayArea.WorkArea.Width - (int)width) / 2);
+                var centerY = displayArea.WorkArea.Y + ((displayArea.WorkArea.Height - (int)height) / 2);
                 appWindow.Move(new Windows.Graphics.PointInt32(centerX, centerY));
             }
 

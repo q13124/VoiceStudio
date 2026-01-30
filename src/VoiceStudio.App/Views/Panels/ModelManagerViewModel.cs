@@ -188,7 +188,7 @@ namespace VoiceStudio.App.Views.Panels
                 }
                 else
                 {
-                    VerificationResult = ResourceHelper.FormatString("ModelManager.VerificationFailed", result.ErrorMessage);
+                    VerificationResult = ResourceHelper.FormatString("ModelManager.VerificationFailed", result.ErrorMessage ?? string.Empty);
                     ErrorMessage = result.ErrorMessage;
                 }
             }

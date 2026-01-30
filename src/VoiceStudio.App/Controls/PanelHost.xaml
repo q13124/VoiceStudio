@@ -23,7 +23,7 @@
         <controls:PanelResizeHandle Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch"
             VerticalAlignment="Bottom" ResizeDirection="Vertical" x:Name="BottomResizeHandle" />
         <!-- Header bar -->
-        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="#181D26" CornerRadius="8,8,0,0"
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{StaticResource VSQ.PanelHost.HeaderBackgroundBrush}" CornerRadius="{StaticResource VSQ.CornerRadius.PanelHeader}"
             Padding="8,0,8,0" x:Name="HeaderBorder">
             <Grid x:Name="HeaderGrid" CanDrag="True" DragStarting="HeaderGrid_DragStarting"
                 DragOver="HeaderGrid_DragOver" Drop="HeaderGrid_Drop"
@@ -68,8 +68,8 @@
             </Grid>
         </Border>
         <!-- Body -->
-        <Border Grid.Row="1" Grid.ColumnSpan="2" x:Name="PanelBody" CornerRadius="0,0,8,8"
-            Background="{StaticResource VSQ.Panel.BackgroundBrush}"
+        <Border Grid.Row="1" Grid.ColumnSpan="2" x:Name="PanelBody" CornerRadius="{StaticResource VSQ.CornerRadius.PanelBody}"
+            Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
             BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="1">
             <Grid>
                 <!-- Panel Content -->
@@ -106,8 +106,8 @@
                 </StackPanel>
             </Border>
             <!-- Center Drop Zone -->
-            <Border x:Name="CenterDropZone" Grid.Column="1" Grid.Row="0" Background="#4000FFFF"
-                BorderBrush="#FF00FFFF" BorderThickness="3" Opacity="0" CornerRadius="0">
+            <Border x:Name="CenterDropZone" Grid.Column="1" Grid.Row="0" Background="{StaticResource VSQ.DropZone.BackgroundBrush}"
+                BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0" CornerRadius="0">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
                     <TextBlock Text="⬌" FontSize="24" Foreground="White"
                         HorizontalAlignment="Center" />
@@ -117,8 +117,8 @@
             </Border>
             <!-- Right Drop Zone -->
             <Border x:Name="RightDropZone" Grid.Column="2" Grid.RowSpan="2" Width="120"
-                Background="#4000FFFF" BorderBrush="#FF00FFFF" BorderThickness="3" Opacity="0"
-                CornerRadius="0,8,8,0">
+                Background="{StaticResource VSQ.DropZone.BackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0"
+                CornerRadius="{StaticResource VSQ.CornerRadius.DropZoneRight}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
                     <TextBlock Text="▶" FontSize="24" Foreground="White"
                         HorizontalAlignment="Center" />
@@ -128,8 +128,8 @@
             </Border>
             <!-- Bottom Drop Zone -->
             <Border x:Name="BottomDropZone" Grid.Row="1" Grid.Column="1" Height="80"
-                Background="#4000FFFF" BorderBrush="#FF00FFFF" BorderThickness="3" Opacity="0"
-                CornerRadius="0,0,8,8">
+                Background="{StaticResource VSQ.DropZone.BackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}" BorderThickness="3" Opacity="0"
+                CornerRadius="{StaticResource VSQ.CornerRadius.DropZoneBottom}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
                     <TextBlock Text="▼" FontSize="24" Foreground="White"
                         HorizontalAlignment="Center" />
@@ -140,8 +140,8 @@
         </Grid>
         <!-- Dock Preview Indicator -->
         <Border x:Name="DockPreviewIndicator" Grid.RowSpan="2" Grid.ColumnSpan="2"
-            Visibility="Collapsed" Background="#2000FFFF" BorderBrush="#FF00FFFF"
-            BorderThickness="2" CornerRadius="8" Opacity="0">
+            Visibility="Collapsed" Background="{StaticResource VSQ.DropZone.PreviewBackgroundBrush}" BorderBrush="{StaticResource VSQ.DropZone.BorderBrush}"
+            BorderThickness="2" CornerRadius="{StaticResource VSQ.CornerRadius.Panel}" Opacity="0">
             <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -156,7 +156,7 @@
         </Border>
         <!-- Drag Shadow Effect -->
         <Border x:Name="DragShadow" Grid.RowSpan="2" Grid.ColumnSpan="2" Visibility="Collapsed"
-            Background="#10000000" BorderBrush="#4000FFFF" BorderThickness="2" CornerRadius="8"
+            Background="{StaticResource VSQ.PanelHost.DragShadowBackgroundBrush}" BorderBrush="{StaticResource VSQ.PanelHost.DragShadowBorderBrush}" BorderThickness="2" CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
             Opacity="0.5" IsHitTestVisible="False" />
     </Grid>
 </UserControl>

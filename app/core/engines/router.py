@@ -204,7 +204,7 @@ class EngineRouter:
                             torch.cuda.empty_cache()
                             logger.debug(f"Cleared GPU cache for engine '{name}'")
                     except ImportError:
-                        pass
+                        ...
                     except Exception as e:
                         logger.debug(f"Failed to clear GPU cache: {e}")
 
@@ -300,7 +300,7 @@ class EngineRouter:
             if torch.cuda.is_available():
                 return torch.cuda.memory_allocated(0) / (1024 * 1024)  # Convert to MB
         except ImportError:
-            pass
+            ...
         except Exception as e:
             logger.debug(f"Failed to get GPU memory usage: {e}")
         return 0.0
@@ -707,7 +707,7 @@ class EngineRouter:
                     else:
                         mos_estimate = float(mos_str)
                 except (ValueError, AttributeError):
-                    pass
+                    ...
 
             # Map similarity/naturalness text to numeric estimates
             similarity_estimate = None

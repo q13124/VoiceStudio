@@ -5,23 +5,106 @@
     Directory.Build.targets is automatically imported by MSBuild at the end.
   -->
 
-  <!-- XAML compilation should run normally (no bypass import here). -->
+  <!-- XAML compilation should run normally (no overrides). -->
   <!-- Ensure XAML compiler has resolved reference assemblies (dotnet build) -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <!-- CRITICAL: UseXamlCompilerExecutable=true forces EXTERNAL compiler (avoids WMC9999 in-process error)
+         The external compiler goes through our wrapper at tools/xaml-compiler-wrapper.cmd -->
+    <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
+    <XAMLFingerprint>false</XAMLFingerprint>
+    <!-- Keep XAML compiler off VC meta + Win32 codegen (stability) -->
+    <EnableWin32Codegen>false</EnableWin32Codegen>
+    <UseVCMetaManaged>false</UseVCMetaManaged>
     <MarkupCompilePass1DependsOn>ResolveReferences;$(MarkupCompilePass1DependsOn)</MarkupCompilePass1DependsOn>
-    <!-- Force CoreCompile to run before Pass2 so LocalAssembly exists for validation -->
-    <!-- NOTE: Pass 2 requires a valid LocalAssembly. If CoreCompile fails, Pass 2 will also fail. -->
-    <!-- Solution: Fix C# compilation errors to allow CoreCompile to succeed. -->
-    <MarkupCompilePass2DependsOn>CoreCompile;$(MarkupCompilePass2DependsOn)</MarkupCompilePass2DependsOn>
-
-    <!-- ROOT CAUSE FIX: XamlGeneratedOutputPath defaults to IntermediateOutputPath which ends with
-    \ -->
-    <!-- When targets file does $(XamlGeneratedOutputPath)\input.json, it becomes path\\input.json
-    (double backslash) -->
-    <!-- This breaks the Exec task command for XamlCompiler.exe -->
-    <!-- FIX: Set XamlGeneratedOutputPath without trailing backslash so concatenation works
-    correctly -->
-    <XamlGeneratedOutputPath>$(IntermediateOutputPath.TrimEnd('\'))</XamlGeneratedOutputPath>
   </PropertyGroup>
+
+  <Target Name="VoiceStudio_PrintXamlProps"
+    BeforeTargets="MarkupCompilePass1"
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App' AND '$(VoiceStudioPrintXamlProps)' == 'true'">
+    <Message Importance="high"
+      Text="VoiceStudio XAML props: UseXamlCompilerExecutable=$(UseXamlCompilerExecutable) UseVCMetaManaged=$(UseVCMetaManaged) EnableWin32Codegen=$(EnableWin32Codegen) VCInstallPath32=$(VCInstallPath32) VCInstallPath64=$(VCInstallPath64)" />
+  </Target>
+
+  <!--
+  XAML File Management for WinUI Build Pipeline
+
+  PROBLEM: WinUI build expects XAML source files in obj directory for packaging/copy operations,
+  but MSBuild's implicit discovery doesn't always copy them there reliably.
+
+  SOLUTION: Explicitly copy XAML files to obj before MarkupCompilePass1 runs.
+
+  CRITICAL: This target MUST include BeforeTargets="MarkupCompilePass1".
+  It also runs before GetCopyToOutputDirectoryItems so project references can copy XAML
+  sources even when the app project is built via reference targets.
+
+  The validation target below will catch this issue if target ordering is broken.
+  -->
+  <Target Name="EnsureXamlInObj"
+    BeforeTargets="MarkupCompilePass1;GetCopyToOutputDirectoryItems"
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <ItemGroup>
+      <_XamlSource Include="@(Page)" />
+      <_XamlSource Include="@(ApplicationDefinition)" />
+      <_XamlSourceWithDest Include="@(_XamlSource)">
+        <Dest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)%(Identity)</Dest>
+      </_XamlSourceWithDest>
+    </ItemGroup>
+    <Message
+      Text="EnsureXamlInObj: Copying @(_XamlSourceWithDest->Count()) XAML files to $(MSBuildProjectDirectory)\$(IntermediateOutputPath)"
+      Importance="normal" />
+    <Copy SourceFiles="@(_XamlSourceWithDest->'%(FullPath)')"
+      DestinationFiles="@(_XamlSourceWithDest->'%(Dest)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <!--
+    Some WinUI build steps (or tooling) can delete XAML sources from obj after MarkupCompile.
+    MSBuild later tries to copy those XAML sources to output during
+  _CopyOutOfDateSourceItemsToOutputDirectory.
+
+    Re-copy the XAML sources immediately before that copy-to-output step to prevent MSB3030
+    "file ... was not found" failures.
+  -->
+  <Target Name="EnsureXamlInObjBeforeCopyToOutput"
+    BeforeTargets="_CopyOutOfDateSourceItemsToOutputDirectory"
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <ItemGroup>
+      <_XamlSource_CopyOut Include="@(Page)" />
+      <_XamlSource_CopyOut Include="@(ApplicationDefinition)" />
+      <_XamlSourceWithDest_CopyOut Include="@(_XamlSource_CopyOut)">
+        <Dest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)%(Identity)</Dest>
+      </_XamlSourceWithDest_CopyOut>
+    </ItemGroup>
+    <Message
+      Text="EnsureXamlInObjBeforeCopyToOutput: Ensuring @(_XamlSourceWithDest_CopyOut->Count()) XAML files exist in $(MSBuildProjectDirectory)\$(IntermediateOutputPath) before copy-to-output"
+      Importance="normal" />
+    <Copy SourceFiles="@(_XamlSourceWithDest_CopyOut->'%(FullPath)')"
+      DestinationFiles="@(_XamlSourceWithDest_CopyOut->'%(Dest)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <!--
+  VALIDATION: Ensure XAML files are available before packaging/copy operations.
+  This target will fail the build with a clear error if XAML files are missing,
+  preventing silent failures that lead to MSB3030 errors later in the build.
+  -->
+  <Target Name="ValidateXamlFilesPresent"
+    BeforeTargets="CopyFilesToOutputDirectory"
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <ItemGroup>
+      <_ExpectedXamlFiles Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)**\*.xaml" />
+    </ItemGroup>
+    <Message
+      Text="ValidateXamlFilesPresent: Checking for XAML files in $(MSBuildProjectDirectory)\$(IntermediateOutputPath)"
+      Importance="normal" />
+
+    <Error
+      Condition="'@(_ExpectedXamlFiles)' == ''"
+      Text="No XAML files found in $(MSBuildProjectDirectory)\$(IntermediateOutputPath). EnsureXamlInObj did not copy XAML sources into obj." />
+
+    <Message
+      Text="ValidateXamlFilesPresent: XAML files validated successfully"
+      Importance="normal" />
+  </Target>
 
 </Project>

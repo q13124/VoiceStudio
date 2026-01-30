@@ -331,7 +331,7 @@ async def _health_checker():
                 try:
                     await ws.close()
                 except Exception:
-                    pass
+                    ...
 
         except Exception as e:
             logger.error(f"Health checker error: {e}")
@@ -497,7 +497,7 @@ async def broadcast_meter_updates(
             try:
                 priority = MessagePriority[meter_data["priority"]]
             except (KeyError, ValueError):
-                pass
+                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())
@@ -567,7 +567,7 @@ async def broadcast_training_progress(
             try:
                 priority = MessagePriority[progress_data["priority"]]
             except (KeyError, ValueError):
-                pass
+                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())
@@ -637,7 +637,7 @@ async def broadcast_batch_progress(
             try:
                 priority = MessagePriority[progress_data["priority"]]
             except (KeyError, ValueError):
-                pass
+                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())

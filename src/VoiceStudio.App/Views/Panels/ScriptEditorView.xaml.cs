@@ -30,7 +30,12 @@ namespace VoiceStudio.App.Views.Panels
         public ScriptEditorView()
         {
             InitializeComponent();
-            ViewModel = new ScriptEditorViewModel(ServiceProvider.GetBackendClient());
+            ViewModel = new ScriptEditorViewModel(
+                ServiceProvider.GetBackendClient(),
+                ServiceProvider.GetMultiSelectService(),
+                ServiceProvider.GetToastNotificationService(),
+                ServiceProvider.GetUndoRedoService()
+            );
             DataContext = ViewModel;
 
             // Initialize services

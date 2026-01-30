@@ -10,6 +10,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Models;
 using CoreSettingsData = VoiceStudio.Core.Models.SettingsData;
+using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using Windows.UI;
 
@@ -18,11 +19,15 @@ namespace VoiceStudio.App.ViewModels
     /// <summary>
     /// ViewModel for settings panel.
     /// </summary>
-    public partial class SettingsViewModel : BaseViewModel
+    public partial class SettingsViewModel : BaseViewModel, IPanelView
     {
+        public string PanelId => "settings";
+        public string DisplayName => ResourceHelper.GetString("Panel.Settings.DisplayName", "Settings");
+        public PanelRegion Region => PanelRegion.Floating;
         private readonly ISettingsService _settingsService;
         private readonly IBackendClient _backendClient;
         private readonly PluginManager? _pluginManager;
+        private readonly ITelemetryService? _telemetryService;
 
         // General Settings
         [ObservableProperty]
@@ -118,6 +123,16 @@ namespace VoiceStudio.App.ViewModels
 
         [ObservableProperty]
         private string mcpServerUrl = "http://localhost:8080";
+
+        // Diagnostics Settings
+        [ObservableProperty]
+        private bool telemetryEnabled = false;
+
+        [ObservableProperty]
+        private bool crashReportingEnabled = true;
+
+        [ObservableProperty]
+        private bool includeLogsInCrashReport = true;
 
         // System/Dependency Status
         [ObservableProperty]
@@ -216,20 +231,31 @@ namespace VoiceStudio.App.ViewModels
             "voice_ai"
         };
 
-        public SettingsViewModel(ISettingsService settingsService)
+        public SettingsViewModel(
+            IViewModelContext context,
+            ISettingsService settingsService,
+            IBackendClient backendClient,
+            PluginManager? pluginManager = null,
+            ITelemetryService? telemetryService = null)
+            : base(context)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            _backendClient = ServiceProvider.GetBackendClient();
-            try
-            {
-                _pluginManager = ServiceProvider.GetPluginManager();
-            }
-            catch
-            {
-                // PluginManager not available, continue without it
-                _pluginManager = null;
-            }
+            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+            _pluginManager = pluginManager;
+            _telemetryService = telemetryService;
+        }
 
+        public SettingsViewModel(
+            ISettingsService settingsService,
+            IBackendClient? backendClient = null,
+            PluginManager? pluginManager = null)
+            : this(
+                  AppServices.GetRequiredService<IViewModelContext>(),
+                  settingsService,
+                  backendClient ?? AppServices.GetBackendClient(),
+                  pluginManager ?? AppServices.GetService<PluginManager>(),
+                  AppServices.GetService<ITelemetryService>())
+        {
             LoadSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
             {
                 using var profiler = PerformanceProfiler.StartCommand("LoadSettings");
@@ -312,6 +338,12 @@ namespace VoiceStudio.App.ViewModels
 
                 // Save via service (backend and local storage)
                 await _settingsService.SaveSettingsAsync(settings, cancellationToken);
+
+                var telemetryService = _telemetryService;
+                if (telemetryService != null && settings.Diagnostics != null)
+                {
+                    telemetryService.ApplyDiagnosticsSettings(settings.Diagnostics);
+                }
 
                 HasUnsavedChanges = false;
                 StatusMessage = ResourceHelper.GetString("Settings.SettingsSaved", "Settings saved successfully");
@@ -462,6 +494,11 @@ namespace VoiceStudio.App.ViewModels
             // MCP
             McpEnabled = settings.Mcp?.Enabled ?? false;
             McpServerUrl = settings.Mcp?.ServerUrl ?? "http://localhost:8080";
+
+            // Diagnostics
+            TelemetryEnabled = settings.Diagnostics?.TelemetryEnabled ?? false;
+            CrashReportingEnabled = settings.Diagnostics?.CrashReportingEnabled ?? true;
+            IncludeLogsInCrashReport = settings.Diagnostics?.IncludeLogsInCrashReport ?? true;
         }
 
         private CoreSettingsData GetSettingsData()
@@ -520,6 +557,12 @@ namespace VoiceStudio.App.ViewModels
                 {
                     Enabled = McpEnabled,
                     ServerUrl = McpServerUrl
+                },
+                Diagnostics = new VoiceStudio.Core.Models.DiagnosticsSettings
+                {
+                    TelemetryEnabled = TelemetryEnabled,
+                    CrashReportingEnabled = CrashReportingEnabled,
+                    IncludeLogsInCrashReport = IncludeLogsInCrashReport
                 }
             };
         }
@@ -553,9 +596,12 @@ namespace VoiceStudio.App.ViewModels
             // Plugins are managed by PluginManager, not reset here
             McpEnabled = false;
             McpServerUrl = "http://localhost:8080";
+            TelemetryEnabled = false;
+            CrashReportingEnabled = true;
+            IncludeLogsInCrashReport = true;
         }
 
-        private async Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
+        private Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -610,6 +656,21 @@ namespace VoiceStudio.App.ViewModels
                         }
                     }
                 }
+
+                if (container.Values.ContainsKey("Diagnostics"))
+                {
+                    var diagnosticsJson = container.Values["Diagnostics"]?.ToString();
+                    if (!string.IsNullOrEmpty(diagnosticsJson))
+                    {
+                        var diagnostics = System.Text.Json.JsonSerializer.Deserialize<DiagnosticsSettings>(diagnosticsJson);
+                        if (diagnostics != null)
+                        {
+                            TelemetryEnabled = diagnostics.TelemetryEnabled;
+                            CrashReportingEnabled = diagnostics.CrashReportingEnabled;
+                            IncludeLogsInCrashReport = diagnostics.IncludeLogsInCrashReport;
+                        }
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -620,9 +681,11 @@ namespace VoiceStudio.App.ViewModels
                 // If loading fails, use defaults
                 ResetToDefaults();
             }
+
+            return Task.CompletedTask;
         }
 
-        private async Task SaveToLocalStorageAsync(SettingsData settings)
+        private Task SaveToLocalStorageAsync(SettingsData settings)
         {
             try
             {
@@ -646,12 +709,20 @@ namespace VoiceStudio.App.ViewModels
                     var backendJson = System.Text.Json.JsonSerializer.Serialize(settings.Backend);
                     container.Values["Backend"] = backendJson;
                 }
+
+                if (settings.Diagnostics != null)
+                {
+                    var diagnosticsJson = System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics);
+                    container.Values["Diagnostics"] = diagnosticsJson;
+                }
             }
             catch
             {
                 // Log error but don't fail
                 System.Diagnostics.Debug.WriteLine("Failed to save settings to local storage");
             }
+
+            return Task.CompletedTask;
         }
 
         protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
@@ -759,6 +830,7 @@ namespace VoiceStudio.App.ViewModels
         public PerformanceSettings? Performance { get; set; }
         public PluginSettings? Plugins { get; set; }
         public McpSettings? Mcp { get; set; }
+        public DiagnosticsSettings? Diagnostics { get; set; }
     }
 
     public class GeneralSettings
@@ -818,6 +890,13 @@ namespace VoiceStudio.App.ViewModels
     {
         public bool Enabled { get; set; } = false;
         public string ServerUrl { get; set; } = "http://localhost:8080";
+    }
+
+    public class DiagnosticsSettings
+    {
+        public bool TelemetryEnabled { get; set; } = false;
+        public bool CrashReportingEnabled { get; set; } = true;
+        public bool IncludeLogsInCrashReport { get; set; } = true;
     }
 
     public class DependencyStatusItem : ObservableObject

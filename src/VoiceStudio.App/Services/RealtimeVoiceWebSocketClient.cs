@@ -136,9 +136,11 @@ namespace VoiceStudio.App.Services
                 var root = doc.RootElement;
 
                 // Determine message type
-                var messageType = root.TryGetProperty("type", out var typeProp) 
-                    ? typeProp.GetString() 
-                    : "audio_data";
+                var messageType = root.TryGetProperty("type", out var typeProp)
+                    ? typeProp.GetString()
+                    : null;
+
+                messageType = string.IsNullOrWhiteSpace(messageType) ? "audio_data" : messageType;
 
                 switch (messageType.ToLowerInvariant())
                 {

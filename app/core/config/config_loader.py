@@ -179,19 +179,40 @@ class ConfigLoader:
         logger.info(f"Saved configuration to {self.config_path} (format: {save_format})")
     
     def _save_json(self) -> None:
-        """Save as JSON."""
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            json.dump(self.config, f, indent=2, ensure_ascii=False)
+        """Save as JSON atomically (tmp + replace)."""
+        tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
+        try:
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, self.config_path)
+        except Exception:
+            if tmp_path.exists():
+                tmp_path.unlink()
+            raise
     
     def _save_yaml(self) -> None:
-        """Save as YAML."""
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            yaml.dump(self.config, f, default_flow_style=False, allow_unicode=True)
+        """Save as YAML atomically (tmp + replace)."""
+        tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
+        try:
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                yaml.dump(self.config, f, default_flow_style=False, allow_unicode=True)
+            os.replace(tmp_path, self.config_path)
+        except Exception:
+            if tmp_path.exists():
+                tmp_path.unlink()
+            raise
     
     def _save_toml(self) -> None:
-        """Save as TOML."""
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            toml.dump(self.config, f)
+        """Save as TOML atomically (tmp + replace)."""
+        tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
+        try:
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                toml.dump(self.config, f)
+            os.replace(tmp_path, self.config_path)
+        except Exception:
+            if tmp_path.exists():
+                tmp_path.unlink()
+            raise
     
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key (supports dot notation)."""
@@ -224,7 +245,7 @@ class PydanticConfigModel(BaseModel):
     Base Pydantic model for configuration validation.
     Extend this class for specific configuration schemas.
     """
-    pass
+    ...
 
 
 def load_config(

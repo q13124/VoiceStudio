@@ -54,7 +54,7 @@ namespace VoiceStudio.App.Utilities
             BudgetMs = budgetMs;
             ActualMs = actualMs;
             Timestamp = DateTime.Now;
-            ViolationPercent = ((double)(actualMs - budgetMs) / budgetMs) * 100.0;
+            ViolationPercent = (double)(actualMs - budgetMs) / budgetMs * 100.0;
         }
     }
 

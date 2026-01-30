@@ -10,6 +10,8 @@ Provides utilities for:
 
 import json
 import logging
+import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI
@@ -926,10 +928,22 @@ def generate_api_documentation(
     # Generate enhanced schema
     openapi_schema = enhance_openapi_schema(app)
 
-    # Save to file if path provided
+    # Save to file if path provided (atomically: tmp + replace)
     if output_path:
-        with open(output_path, "w") as f:
-            json.dump(openapi_schema, f, indent=2)
+        path = Path(output_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(openapi_schema, f, indent=2)
+            os.replace(tmp_path, path)
+        except Exception:
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+            raise
         logger.info(f"API documentation saved to {output_path}")
 
     return openapi_schema

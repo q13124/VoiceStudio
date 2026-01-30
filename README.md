@@ -55,6 +55,7 @@ Complete documentation is available in the `docs/` directory:
 - [Getting Started](docs/user/GETTING_STARTED.md) - New user guide
 - [User Manual](docs/user/USER_MANUAL.md) - Complete feature guide
 - [API Reference](docs/api/API_REFERENCE.md) - API documentation
+- [HuggingFace Setup](HUGGINGFACE_SETUP_GUIDE.md) - Fix rate limiting issues
 - [Contributing](docs/developer/CONTRIBUTING.md) - How to contribute
 - [Architecture](docs/developer/ARCHITECTURE.md) - System architecture
 

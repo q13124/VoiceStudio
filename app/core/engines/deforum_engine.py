@@ -33,16 +33,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Optional imports
-try:
-    from diffusers import StableDiffusionPipeline
-
-    HAS_DIFFUSERS = True
-except ImportError:
-    HAS_DIFFUSERS = False
-    logger.warning(
-        "diffusers not installed. " "Install with: pip install diffusers>=0.21.0"
-    )
+# Optional imports (lazy to avoid crashing when dependencies are missing)
+HAS_DIFFUSERS = False
+_StableDiffusionPipeline = None
 
 try:
     import cv2
@@ -53,6 +46,33 @@ except ImportError:
     logger.warning(
         "opencv-python not installed. Install with: pip install opencv-python"
     )
+
+
+def _load_diffusers_pipeline():
+    """Import StableDiffusionPipeline only when needed."""
+    try:
+        from diffusers import StableDiffusionPipeline
+
+        return StableDiffusionPipeline
+    except Exception as exc:  # noqa: BLE001 - surface dependency issues clearly
+        raise RuntimeError(
+            "DeforumEngine requires diffusers plus a compatible transformers/torch "
+            "stack. Install or repair the Deforum environment (recommended: a "
+            "dedicated virtual environment for this engine)."
+        ) from exc
+
+
+def _require_diffusers_pipeline():
+    """Ensure diffusers is available, raising with a clear message otherwise."""
+    global HAS_DIFFUSERS, _StableDiffusionPipeline
+
+    if HAS_DIFFUSERS and _StableDiffusionPipeline is not None:
+        return _StableDiffusionPipeline
+
+    pipeline_cls = _load_diffusers_pipeline()
+    HAS_DIFFUSERS = True
+    _StableDiffusionPipeline = pipeline_cls
+    return pipeline_cls
 
 
 class DeforumEngine(EngineProtocol):
@@ -101,10 +121,8 @@ class DeforumEngine(EngineProtocol):
             response_cache_size: Maximum response cache size
         """
         if not HAS_DIFFUSERS:
-            raise ImportError(
-                "diffusers not installed. "
-                "Install with: pip install diffusers>=0.21.0"
-            )
+            # Try to load lazily with a clearer error message
+            _require_diffusers_pipeline()
 
         super().__init__(device=device, gpu=gpu)
 
@@ -195,7 +213,9 @@ class DeforumEngine(EngineProtocol):
                 )
             os.makedirs(model_cache_dir, exist_ok=True)
 
-            self.pipeline = StableDiffusionPipeline.from_pretrained(
+            pipeline_cls = _require_diffusers_pipeline()
+
+            self.pipeline = pipeline_cls.from_pretrained(
                 self.model_id,
                 torch_dtype=(torch.float16 if self.device == "cuda" else torch.float32),
                 cache_dir=model_cache_dir,
@@ -363,7 +383,7 @@ class DeforumEngine(EngineProtocol):
                         "deforum", duration, cached=True
                     )
                 except Exception:
-                    pass
+                    ...
                 return cached_path
             else:
                 self._cache_stats["misses"] += 1
@@ -479,7 +499,7 @@ class DeforumEngine(EngineProtocol):
                     "deforum", duration, cached=False
                 )
             except Exception:
-                pass
+                ...
 
             logger.info(f"Animation generated successfully: {output_path}")
             return str(output_path)
@@ -493,7 +513,7 @@ class DeforumEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("deforum", "generation_error")
             except Exception:
-                pass
+                ...
             raise RuntimeError(f"Failed to generate animation: {e}")
 
     def batch_generate_animations(
@@ -557,7 +577,7 @@ class DeforumEngine(EngineProtocol):
                         metrics = get_engine_metrics()
                         metrics.record_error("deforum", "batch_generation_error")
                     except Exception:
-                        pass
+                        ...
                     return None
 
             # Prepare arguments
@@ -588,7 +608,7 @@ class DeforumEngine(EngineProtocol):
                     "deforum", duration, cached=False
                 )
             except Exception:
-                pass
+                ...
 
             return all_outputs
 
@@ -601,7 +621,7 @@ class DeforumEngine(EngineProtocol):
                 metrics = get_engine_metrics()
                 metrics.record_error("deforum", "batch_generation_error")
             except Exception:
-                pass
+                ...
             return [None] * len(animations_config)
 
     def _parse_prompts(

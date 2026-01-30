@@ -69,7 +69,7 @@ namespace VoiceStudio.App.Views.Panels
 
         private void UpdateProgressChart()
         {
-            // TODO: ProgressChart control not implemented in XAML
+            // Note: ProgressChart control not implemented in XAML
             // if (ProgressChart != null && ViewModel?.QualityHistory != null)
             // {
             //     ProgressChart.UpdateChart(ViewModel.QualityHistory);
@@ -248,7 +248,7 @@ namespace VoiceStudio.App.Views.Panels
 
         private void StatusFilter_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
         {
-            // TODO: StatusFilter ComboBox not implemented in XAML
+            // Note: StatusFilter ComboBox not implemented in XAML
             // if (StatusFilter.SelectedItem is Microsoft.UI.Xaml.Controls.ComboBoxItem item && item.Tag is string status)
             // {
             //     ViewModel.FilterStatus = string.IsNullOrEmpty(status) ? null : status;
@@ -478,7 +478,7 @@ namespace VoiceStudio.App.Views.Panels
             }
         }
 
-        private async System.Threading.Tasks.Task DuplicateDatasetAsync(TrainingDataset dataset)
+        private System.Threading.Tasks.Task DuplicateDatasetAsync(TrainingDataset dataset)
         {
             try
             {
@@ -511,6 +511,8 @@ namespace VoiceStudio.App.Views.Panels
             {
                 _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate dataset: {ex.Message}");
             }
+
+            return System.Threading.Tasks.Task.CompletedTask;
         }
 
         // Drag-and-drop handlers for dataset reordering

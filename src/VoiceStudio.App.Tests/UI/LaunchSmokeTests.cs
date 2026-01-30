@@ -10,6 +10,7 @@ namespace VoiceStudio.App.Tests.UI
     /// Verifies that the application can start without crashing and basic UI elements are present.
     /// </summary>
     [TestClass]
+    [TestCategory("UI")]
     public class LaunchSmokeTests : SmokeTestBase
     {
         [UITestMethod]

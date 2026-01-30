@@ -338,10 +338,10 @@ class OptimizedAudioPipeline:
         self._cache.clear()
         if hasattr(self, 'preprocessor') and self.preprocessor:
             # Clear any caches in preprocessor
-            pass
+            ...
         if hasattr(self, 'enhancer') and self.enhancer:
             # Clear any caches in enhancer
-            pass
+            ...
         logger.debug("Memory optimization: caches cleared")
 
 

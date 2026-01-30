@@ -192,15 +192,73 @@ class TestHealthEndpoints:
         assert data["alive"] is True
         assert data["status"] == "alive"
 
+    def test_preflight_check_success(self, tmp_path):
+        """Test preflight check returns readiness report."""
+        app = FastAPI()
+        app.include_router(health.router)
+        client = TestClient(app)
+
+        projects_dir = tmp_path / "projects"
+        cache_dir = tmp_path / "cache"
+        registry_path = tmp_path / "cache" / "audio_registry.json"
+        jobs_root = tmp_path / "cache" / "jobs"
+
+        mock_project_store = MagicMock()
+        mock_project_store.projects_dir = projects_dir
+
+        mock_audio_cache = MagicMock()
+        mock_audio_cache.cache_dir = cache_dir
+
+        mock_registry = MagicMock()
+        mock_registry.registry_path = registry_path
+
+        mock_job_store = MagicMock()
+        mock_job_store.jobs_root = jobs_root
+
+        mock_engine_config = MagicMock()
+        mock_engine_config.config = {"model_paths": {"base": str(tmp_path / "models")}}
+
+        with patch(
+            "backend.services.ProjectStoreService.get_project_store_service",
+            return_value=mock_project_store,
+        ), patch(
+            "backend.services.ContentAddressedAudioCache.get_audio_cache",
+            return_value=mock_audio_cache,
+        ), patch(
+            "backend.services.AudioArtifactRegistry.get_audio_registry",
+            return_value=mock_registry,
+        ), patch(
+            "backend.services.JobStateStore.get_job_state_store",
+            return_value=mock_job_store,
+        ), patch(
+            "backend.services.EngineConfigService.get_engine_config_service",
+            return_value=mock_engine_config,
+        ), patch(
+            "backend.api.routes.health.shutil.which",
+            return_value=str(tmp_path / "ffmpeg.exe"),
+        ), patch.dict(
+            "os.environ",
+            {"VOICESTUDIO_MODELS_PATH": str(tmp_path / "models")},
+            clear=False,
+        ):
+            response = client.get("/api/health/preflight")
+            assert response.status_code == 200
+            data = response.json()
+            assert "ok" in data
+            assert "checks" in data
+            assert data["checks"]["projects_root"]["ok"] is True
+            assert data["checks"]["cache_root"]["ok"] is True
+            assert data["checks"]["model_root"]["ok"] is True
+            assert data["checks"]["jobs_root"]["ok"] is True
+            assert data["checks"]["ffmpeg"]["ok"] is True
+
     def test_resource_usage_success(self):
         """Test successful resource usage retrieval."""
         app = FastAPI()
         app.include_router(health.router)
         client = TestClient(app)
 
-        with patch(
-            "backend.api.routes.health._get_system_metrics"
-        ) as mock_metrics:
+        with patch("backend.api.routes.health._get_system_metrics") as mock_metrics:
             mock_metrics.return_value = {"cpu_percent": 50.0}
 
             with patch(

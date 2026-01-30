@@ -23,16 +23,39 @@ HF_HUB_API_BASE = "https://huggingface.co/api"
 # Legacy endpoints (deprecated)
 HF_INFERENCE_API_LEGACY = "https://api-inference.huggingface.co"  # DEPRECATED
 
-# Set environment variable to ensure huggingface_hub uses new endpoint
-# This must be set before importing huggingface_hub
-if "HF_INFERENCE_API_BASE" not in os.environ:
-    os.environ["HF_INFERENCE_API_BASE"] = HF_INFERENCE_API_BASE
-    logger.info(f"Set HF_INFERENCE_API_BASE to {HF_INFERENCE_API_BASE}")
 
-# Also set for InferenceClient compatibility
-if "HF_ENDPOINT" not in os.environ:
-    os.environ["HF_ENDPOINT"] = HF_INFERENCE_API_BASE
-    logger.debug(f"Set HF_ENDPOINT to {HF_INFERENCE_API_BASE}")
+def _ensure_router_env(var_name: str) -> None:
+    """
+    Guarantee that the given environment variable points at the router endpoint.
+
+    We override legacy/default values to avoid Hugging Face returning the
+    `api-inference.huggingface.co is no longer supported` error.
+    """
+
+    current = os.environ.get(var_name)
+    desired = HF_INFERENCE_API_BASE
+
+    if not current:
+        os.environ[var_name] = desired
+        logger.info(f"Set {var_name} to {desired}")
+        return
+
+    normalized = current.rstrip("/")
+    if normalized == HF_INFERENCE_API_LEGACY:
+        os.environ[var_name] = desired
+        logger.warning(
+            "%s was pointing at the deprecated Hugging Face inference endpoint. "
+            "Overriding with %s.",
+            var_name,
+            desired,
+        )
+    else:
+        logger.debug("%s already set to %s", var_name, current)
+
+
+# Ensure huggingface_hub sees the router endpoint before it is imported
+_ensure_router_env("HF_INFERENCE_API_BASE")
+_ensure_router_env("HF_ENDPOINT")
 
 
 def get_inference_api_url(model_id: str, endpoint: str = "") -> str:
@@ -46,16 +69,16 @@ def get_inference_api_url(model_id: str, endpoint: str = "") -> str:
     Returns:
         Full URL for inference API
     """
-    # Use new router endpoint
+    # Use new router endpoint with /hf-inference path prefix
     base_url = HF_INFERENCE_API_BASE
 
-    # Construct URL
+    # Construct URL with /hf-inference path prefix required by router endpoint
     if endpoint:
         # Remove leading slash if present
         endpoint = endpoint.lstrip("/")
-        url = f"{base_url}/{model_id}/{endpoint}"
+        url = f"{base_url}/hf-inference/{model_id}/{endpoint}"
     else:
-        url = f"{base_url}/{model_id}"
+        url = f"{base_url}/hf-inference/{model_id}"
 
     return url
 
@@ -131,9 +154,11 @@ def check_api_compatibility() -> Dict[str, Any]:
     }
 
     try:
-        # Test new router endpoint
+        # Test new router endpoint (use /hf-inference path)
         response = requests.get(
-            f"{HF_INFERENCE_API_BASE}/health", timeout=5, headers=get_api_headers()
+            f"{HF_INFERENCE_API_BASE}/hf-inference/health",
+            timeout=5,
+            headers=get_api_headers(),
         )
         info["status"] = "available" if response.status_code == 200 else "unavailable"
         info["router_endpoint_working"] = response.status_code == 200

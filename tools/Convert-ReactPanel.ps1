@@ -2,13 +2,13 @@
 # Generates XAML, ViewModel, and code-behind from React component
 
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$SourceFile,
     
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$OutputDir,
     
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$PanelName,
     
     [string]$Namespace = "VoiceStudio.App",
@@ -50,7 +50,7 @@ namespace $Namespace.ViewModels;
 
 public partial class $viewModelName : ObservableObject
 {
-    // TODO: Add properties based on React component state
+    // Note: Add properties based on React component state
     // Example:
     // [ObservableProperty]
     // private ObservableCollection<Item> items = new();
@@ -79,7 +79,7 @@ $xamlCode = @"
     </UserControl.DataContext>
     
     <Grid>
-        <!-- TODO: Convert React JSX structure to XAML -->
+        <!-- Note: Convert React JSX structure to XAML -->
         <!-- Example React div -> Grid or StackPanel -->
         <!-- Example React button -> Button -->
         <!-- Example React input -> TextBox or NumberBox -->

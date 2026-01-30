@@ -31,7 +31,7 @@ namespace VoiceStudio.App.Views.Panels
         public PanelRegion Region => PanelRegion.Right;
 
         [ObservableProperty]
-        private ObservableCollection<float> waveformSamples = new();
+        private List<float> waveformSamples = new();
 
         [ObservableProperty]
         private ObservableCollection<SpectrogramFrame> spectrogramFrames = new();
@@ -201,11 +201,8 @@ namespace VoiceStudio.App.Views.Panels
                     var waveformData = await _backendClient.GetWaveformDataAsync(SelectedAudioId, width: 1024, mode: "peak", cancellationToken);
                     if (waveformData?.Samples != null)
                     {
-                        WaveformSamples.Clear();
-                        foreach (var sample in waveformData.Samples)
-                        {
-                            WaveformSamples.Add(sample);
-                        }
+                        // Replace the list so x:Bind targets update reliably.
+                        WaveformSamples = waveformData.Samples;
                     }
                 }
 
@@ -366,7 +363,7 @@ namespace VoiceStudio.App.Views.Panels
                                 var binCount = AudioOrbsData.Magnitudes.Count;
                                 for (int i = 0; i < binCount; i++)
                                 {
-                                    var frequency = (i / (float)binCount) * nyquist;
+                                    var frequency = i / (float)binCount * nyquist;
                                     AudioOrbsData.Frequencies.Add(frequency);
                                 }
                             }

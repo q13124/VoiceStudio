@@ -3,12 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- Align Windows SDK reference pack with app project to avoid NETSDK1148 -->
+    <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
     <RootNamespace>VoiceStudio.App.Tests</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <EnableDefaultItems>false</EnableDefaultItems>
+    <!-- Ensure the test assembly is not treated as an app executable -->
+    <OutputType>Library</OutputType>
     <UseWinUI>true</UseWinUI>
     <Platforms>x64</Platforms>
     <!-- Suppress Win2D platform warning - we're building as x64 -->
@@ -21,6 +24,11 @@
     <RuntimeIdentifiers></RuntimeIdentifiers>
     <!-- Suppress duplicate AssemblyAttributes warning -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Ensure test host runs framework-dependent -->
+    <SelfContained>false</SelfContained>
+    <UseAppHost>false</UseAppHost>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
 
   <!-- Suppress RuntimeIdentifier resolution errors -->
@@ -33,11 +41,14 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="$(MicrosoftWindowsAppSDKVersion)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.4.3" />
     <PackageReference Include="MSTest.TestFramework" Version="3.4.3" />
     <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.12.0" />
+    <!-- Required for in-proc XAML compiler task dependency (matches app project) -->
+    <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -48,14 +59,17 @@
   <ItemGroup>
     <ProjectReference Include="..\VoiceStudio.App\VoiceStudio.App.csproj"
       Condition="Exists('..\VoiceStudio.App\VoiceStudio.App.csproj')" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="**\*.cs" />
+    <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj"
+      Condition="Exists('..\VoiceStudio.Core\VoiceStudio.Core.csproj')" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="app.manifest" />
   </ItemGroup>
+
+  <!-- Late override: WinUI tooling can infer WinExe; tests must remain a library -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
 
 </Project>

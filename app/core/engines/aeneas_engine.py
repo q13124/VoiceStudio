@@ -41,11 +41,11 @@ except ImportError:
 
             @abstractmethod
             def initialize(self):
-                pass
+                ...
 
             @abstractmethod
             def cleanup(self):
-                pass
+                ...
 
             def is_initialized(self):
                 return self._initialized
@@ -211,7 +211,7 @@ class AeneasEngine(EngineProtocol):
                         self._initialized = True
                         return True
                 except Exception:
-                    pass
+                    ...
 
                 logger.error("Aeneas not found. Install with: pip install aeneas")
                 logger.error("Also requires FFmpeg: https://ffmpeg.org/download.html")

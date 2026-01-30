@@ -236,15 +236,20 @@
 
 ## 📦 TASK 7: RELEASE PACKAGING
 
-### 7.1 Packaging Script
+### 7.1 Packaging Script (single lane)
 
-**File:** `scripts/package_release.ps1`
+**Files:**
+- `scripts/prepare-release.ps1` (release preparation + installer distribution package)
+- `installer/build-installer.ps1` (Inno Setup / WiX installer build)
+- `scripts/gatec-publish-launch.ps1` (Gate C publish+launch proof artifact)
 
 **Features:**
-- Build MSIX package
-- Create installer
-- Sign package
-- Generate release notes
+- Build Release app (unpackaged apphost EXE)
+- Create installer (Inno Setup / WiX)
+- Generate release notes/distribution package
+- Capture deterministic logs/proof artifacts under `.buildlogs/`
+
+**Note:** The MSIX lane is archived under `docs/archive/msix/` and is not used.
 
 **Status:** ⏳ **PENDING**
 

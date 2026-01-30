@@ -1,0 +1,70 @@
+{
+  "models": [
+    {
+      "title": "Qwen2.5-Coder 7B (chat/edit/apply - fallback while 14B downloads)",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b",
+      "apiBase": "http://127.0.0.1:11434"
+    },
+    {
+      "title": "Qwen2.5-Coder 14B (chat/edit/apply)",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:14b",
+      "apiBase": "http://127.0.0.1:11434"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Qwen2.5-Coder 7B (autocomplete)",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "apiBase": "http://127.0.0.1:11434"
+  },
+  "embeddings": {
+    "provider": "ollama",
+    "model": "nomic-embed-text",
+    "apiBase": "http://127.0.0.1:11434"
+  },
+  "contextProviders": [
+    "file",
+    "directory",
+    "git",
+    "terminal",
+    "selection",
+    "codebase"
+  ],
+  "allowAnonymousTelemetry": false,
+  "mcpServers": {
+    "GitKraken": {
+      "args": [
+        "mcp",
+        "--host=cursor",
+        "--source=gitlens",
+        "--scheme=cursor"
+      ],
+      "command": "c:\\Users\\Tyler\\AppData\\Roaming\\Cursor\\User\\globalStorage\\eamodio.gitlens\\gk.exe",
+      "env": {},
+      "name": "GitKraken",
+      "type": "stdio"
+    },
+    "mcp-interactive": {
+      "args": [
+        "-y",
+        "mcp-interactive"
+      ],
+      "command": "npx"
+    },
+    "openmemory": {
+      "headers": {
+        "Authorization": "Token om-{YOUR OPENMEMORY API KEY}"
+      },
+      "url": "https://api.openmemory.dev/mcp-stream?client=cursor"
+    },
+    "cursor-browser-extension": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cursor-browser-extension/mcp-server"
+      ]
+    }
+  }
+}

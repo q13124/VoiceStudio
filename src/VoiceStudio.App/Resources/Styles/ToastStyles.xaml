@@ -17,8 +17,8 @@
   </Style>
   <!-- Toast Error Style -->
   <Style x:Key="VSQ.Toast.Error" TargetType="Border" BasedOn="{StaticResource VSQ.Toast.Container}">
-    <Setter Property="Background" Value="{StaticResource VSQ.Error.BackgroundBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Error.BorderBrush}" />
+    <Setter Property="Background" Value="{StaticResource VSQ.Error.Brush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource VSQ.Error.Brush}" />
   </Style>
   <!-- Toast Warning Style -->
   <Style x:Key="VSQ.Toast.Warning" TargetType="Border"

@@ -1,0 +1,11 @@
+# VoiceStudio Backend Requirements
+#
+# NOTE:
+# - Several docs and installer scripts expect this file to exist at `backend/requirements.txt`.
+# - To avoid duplicating dependency lists, this file delegates to the repo-root requirements file.
+#
+# Install:
+#   pip install -r backend/requirements.txt
+#
+-r ../requirements.txt
+

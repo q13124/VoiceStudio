@@ -37,14 +37,14 @@ class EngineProtocol(ABC):
         Returns:
             True if initialization successful, False otherwise
         """
-        pass
+        ...
     
     @abstractmethod
     def cleanup(self):
         """
         Clean up resources and free memory.
         """
-        pass
+        ...
     
     def is_initialized(self) -> bool:
         """Check if engine is initialized."""

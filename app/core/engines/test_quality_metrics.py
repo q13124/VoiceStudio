@@ -28,7 +28,7 @@ with warnings.catch_warnings():
             if "list_audio_backends" in str(e):
                 logger.warning("Speechbrain/torchaudio compatibility issue detected. Some features may be limited.")
                 # Try to continue anyway - most functions don't need speechbrain
-                pass
+                ...
             else:
                 raise
     except Exception as e:

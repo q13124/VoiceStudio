@@ -4,140 +4,142 @@ Base Plugin Class for VoiceStudio
 All plugins must inherit from BasePlugin and implement the register method.
 """
 
-from typing import Dict, List, Optional, Any
-from pathlib import Path
 import json
 import logging
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class PluginMetadata:
     """Plugin metadata from manifest.json"""
-    
+
     def __init__(self, manifest_path: Path):
         """Load plugin metadata from manifest.json"""
         self.manifest_path = manifest_path
         self.manifest_data = {}
         self.load_manifest()
-    
+
     def load_manifest(self):
         """Load manifest.json file"""
         try:
-            with open(self.manifest_path, 'r', encoding='utf-8') as f:
+            with open(self.manifest_path, "r", encoding="utf-8") as f:
                 self.manifest_data = json.load(f)
         except Exception as e:
             logger.error(f"Failed to load plugin manifest {self.manifest_path}: {e}")
             raise
-    
+
     @property
     def name(self) -> str:
         """Plugin name"""
         return self.manifest_data.get("name", "unknown")
-    
+
     @property
     def version(self) -> str:
         """Plugin version"""
         return self.manifest_data.get("version", "1.0.0")
-    
+
     @property
     def author(self) -> str:
         """Plugin author"""
         return self.manifest_data.get("author", "Unknown")
-    
+
     @property
     def description(self) -> str:
         """Plugin description"""
         return self.manifest_data.get("description", "")
-    
+
     @property
     def capabilities(self) -> Dict[str, Any]:
         """Plugin capabilities"""
         return self.manifest_data.get("capabilities", {})
-    
+
     @property
     def dependencies(self) -> List[str]:
         """Plugin dependencies"""
         return self.manifest_data.get("dependencies", [])
-    
+
     @property
     def entry_points(self) -> Dict[str, str]:
         """Plugin entry points"""
         return self.manifest_data.get("entry_points", {})
 
 
-class BasePlugin:
+class BasePlugin(ABC):
     """
     Base class for all VoiceStudio plugins.
-    
+
     Plugins must inherit from this class and implement the register method.
     """
-    
+
     def __init__(self, metadata: PluginMetadata):
         """
         Initialize plugin with metadata.
-        
+
         Args:
             metadata: PluginMetadata instance loaded from manifest.json
         """
         self.metadata = metadata
         self._initialized = False
-    
+
     @property
     def name(self) -> str:
         """Plugin name"""
         return self.metadata.name
-    
+
     @property
     def version(self) -> str:
         """Plugin version"""
         return self.metadata.version
-    
+
     @property
     def author(self) -> str:
         """Plugin author"""
         return self.metadata.author
-    
+
     @property
     def description(self) -> str:
         """Plugin description"""
         return self.metadata.description
-    
-    def register(self, app):
+
+    @abstractmethod
+    def register(self, app) -> None:
         """
         Register plugin routes and functionality with FastAPI app.
-        
+
         This method must be implemented by all plugins.
-        
+
         Args:
             app: FastAPI application instance
         """
-        raise NotImplementedError(
-            f"Plugin {self.name} must implement register() method"
+        raise RuntimeError(
+            "BasePlugin.register must be implemented by plugin subclasses."
         )
-    
+
     def initialize(self):
         """
         Initialize plugin (called after registration).
-        
+
         Override this method to perform initialization tasks.
         """
         self._initialized = True
         logger.info(f"Plugin {self.name} initialized")
-    
+
     def cleanup(self):
         """
         Cleanup plugin resources (called on shutdown).
-        
+
         Override this method to perform cleanup tasks.
         """
         self._initialized = False
         logger.info(f"Plugin {self.name} cleaned up")
-    
+
     def is_initialized(self) -> bool:
         """Check if plugin is initialized"""
         return self._initialized
-    
+
     def get_info(self) -> Dict[str, Any]:
         """Get plugin information"""
         return {
@@ -146,6 +148,5 @@ class BasePlugin:
             "author": self.author,
             "description": self.description,
             "capabilities": self.metadata.capabilities,
-            "initialized": self._initialized
+            "initialized": self._initialized,
         }
-

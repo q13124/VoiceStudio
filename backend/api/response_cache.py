@@ -274,7 +274,7 @@ class ResponseCache:
             for key in self._cache.keys():
                 # Cache keys are MD5 hashes, so we can't match paths directly
                 # This is a limitation - we'd need to store path metadata
-                pass
+                ...
 
         # Invalidate by pattern
         if pattern:
@@ -464,7 +464,7 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
                 max_age = int(max_age_str)
                 ttl = max_age
             except (ValueError, IndexError):
-                pass
+                ...
 
         # Extract tags from path for invalidation
         tags = []

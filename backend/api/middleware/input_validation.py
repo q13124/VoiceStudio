@@ -229,7 +229,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
                 # This is a secondary security check
                 # We don't read the body here to avoid consuming it
                 # Body validation should be done in route handlers if needed
-                pass
+                ...
 
         except HTTPException:
             # Re-raise HTTP exceptions (validation failures)

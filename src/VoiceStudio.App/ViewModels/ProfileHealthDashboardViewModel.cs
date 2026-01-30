@@ -6,9 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using VoiceStudio.Core.Models;
-using VoiceStudio.Core.Services;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -16,8 +17,11 @@ namespace VoiceStudio.App.ViewModels
     /// ViewModel for Voice Profile Health Dashboard.
     /// Implements IDEA 35: Voice Profile Health Dashboard.
     /// </summary>
-    public partial class ProfileHealthDashboardViewModel : BaseViewModel
+    public partial class ProfileHealthDashboardViewModel : BaseViewModel, IPanelView
     {
+        public string PanelId => "profile-health-dashboard";
+        public string DisplayName => ResourceHelper.GetString("Panel.ProfileHealthDashboard.DisplayName", "Profile Health Dashboard");
+        public PanelRegion Region => PanelRegion.Center;
         private readonly IBackendClient _backendClient;
 
         [ObservableProperty]

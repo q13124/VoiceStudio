@@ -10,6 +10,7 @@ Complete guide for preparing and configuring the VoiceStudio Quantum+ installer.
 ## Overview
 
 VoiceStudio Quantum+ uses Windows installers to bundle:
+
 - WinUI 3 frontend application
 - Python backend with FastAPI
 - Engine manifests and core engine files
@@ -17,6 +18,7 @@ VoiceStudio Quantum+ uses Windows installers to bundle:
 - Required dependencies
 
 Two installer technologies are supported:
+
 1. **Inno Setup** (EXE-based, simpler)
 2. **WiX Toolset** (MSI-based, professional)
 
@@ -45,6 +47,7 @@ installer/
 ### For Building Inno Setup Installer
 
 1. **Inno Setup 6.2+**
+
    - Download from: https://jrsoftware.org/isdl.php
    - Install Inno Setup Compiler
    - Default location: `C:\Program Files (x86)\Inno Setup 6\`
@@ -54,6 +57,7 @@ installer/
 ### For Building WiX Installer
 
 1. **WiX Toolset v3.11+**
+
    - Download from: https://wixtoolset.org/releases/
    - Install WiX Toolset
    - Install WiX Visual Studio Extension (optional)
@@ -70,16 +74,18 @@ installer/
 **Key Configuration Sections:**
 
 1. **Application Information**
+
    ```ini
    #define MyAppName "VoiceStudio Quantum+"
    #define MyAppVersion "1.0.0"
    #define MyAppPublisher "VoiceStudio"
    #define MyAppURL "https://voicestudio.example"
-   #define MyAppExeName "VoiceStudioApp.exe"
+   #define MyAppExeName "VoiceStudio.App.exe"
    #define MyAppId "A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D"
    ```
 
 2. **Installation Settings**
+
    ```ini
    DefaultDirName={autopf}\VoiceStudio
    DefaultGroupName=VoiceStudio
@@ -88,6 +94,7 @@ installer/
    ```
 
 3. **File Components**
+
    - Frontend application files
    - Backend Python files
    - Core engine files
@@ -95,6 +102,7 @@ installer/
    - Documentation files
 
 4. **Registry Entries**
+
    - File associations (`.voiceproj`, `.vprofile`)
    - Application registry keys
    - Uninstall information
@@ -110,6 +118,7 @@ installer/
 **Key Configuration Sections:**
 
 1. **Product Information**
+
    ```xml
    <?define ProductName = "VoiceStudio Quantum+" ?>
    <?define ProductVersion = "1.0.0" ?>
@@ -119,6 +128,7 @@ installer/
    ```
 
 2. **Package Settings**
+
    ```xml
    <Package InstallerVersion="200"
             Compressed="yes"
@@ -126,6 +136,7 @@ installer/
    ```
 
 3. **Directory Structure**
+
    - Installation directory
    - Component organization
    - File references
@@ -143,6 +154,7 @@ installer/
 ### Application Installation
 
 **Default Location:**
+
 ```
 C:\Program Files\VoiceStudio\
 ├── App\              # Frontend application
@@ -155,6 +167,7 @@ C:\Program Files\VoiceStudio\
 ### User Data Directories
 
 **Application Data:**
+
 ```
 %APPDATA%\VoiceStudio\
 ├── settings.json
@@ -163,6 +176,7 @@ C:\Program Files\VoiceStudio\
 ```
 
 **Program Data:**
+
 ```
 %PROGRAMDATA%\VoiceStudio\
 ├── models\           # Engine models
@@ -176,17 +190,20 @@ C:\Program Files\VoiceStudio\
 ### Automated Build
 
 **Using Build Script:**
+
 ```powershell
 .\installer\build-installer.ps1 -InstallerType InnoSetup -Version 1.0.0
 ```
 
 **Parameters:**
+
 - `-InstallerType`: `InnoSetup` or `WiX` (default: `InnoSetup`)
 - `-Configuration`: `Release` or `Debug` (default: `Release`)
 - `-Version`: Version number (default: `1.0.0`)
 
 **Build Steps:**
-1. Clean output directory
+
+1. Ensure `installer\Output\` exists (the build script preserves existing versioned installers side-by-side)
 2. Build frontend application
 3. Verify backend files
 4. Verify engine manifests
@@ -196,12 +213,14 @@ C:\Program Files\VoiceStudio\
 ### Manual Build
 
 **Inno Setup:**
+
 ```powershell
 cd installer
 "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" VoiceStudio.iss
 ```
 
 **WiX:**
+
 ```powershell
 cd installer
 candle VoiceStudio.wxs
@@ -215,23 +234,27 @@ light VoiceStudio.wixobj -ext WixUIExtension
 ### Installation Components
 
 1. **Frontend Application**
+
    - WinUI 3 executable
    - DLLs and dependencies
    - Resources and themes
 
 2. **Backend**
+
    - Python API files
    - Route handlers
    - WebSocket handlers
    - requirements.txt
 
 3. **Core Engine System**
+
    - Engine implementations
    - Audio utilities
    - Runtime services
    - Training modules
 
 4. **Engine Manifests**
+
    - Audio engine manifests
    - Image engine manifests
    - Video engine manifests
@@ -255,16 +278,19 @@ light VoiceStudio.wixobj -ext WixUIExtension
 ### Dependencies
 
 **Required:**
+
 - .NET 8.0 Runtime (checked during installation)
 - Windows 10 version 1903 or later (64-bit)
 
 **Optional:**
+
 - Python 3.10+ (if not installed, user prompted)
 - NVIDIA GPU with CUDA (for GPU acceleration)
 
 ### Python Environment Setup
 
 The installer:
+
 1. Checks for Python 3.10+ installation
 2. If not found, prompts user to install
 3. Creates virtual environment (if needed)
@@ -278,12 +304,14 @@ The installer:
 
 **Inno Setup:**
 Edit `VoiceStudio.iss`:
+
 ```ini
 #define MyAppVersion "1.0.1"
 ```
 
 **WiX:**
 Edit `VoiceStudio.wxs`:
+
 ```xml
 <?define ProductVersion = "1.0.1" ?>
 ```
@@ -292,12 +320,14 @@ Edit `VoiceStudio.wxs`:
 
 **Inno Setup:**
 Edit `VoiceStudio.iss`:
+
 ```ini
 DefaultDirName={pf}\VoiceStudio
 ```
 
 **WiX:**
 Edit `VoiceStudio.wxs`:
+
 ```xml
 <Directory Id="INSTALLFOLDER" Name="VoiceStudio">
 ```
@@ -306,6 +336,7 @@ Edit `VoiceStudio.wxs`:
 
 **Inno Setup:**
 Add new `[Files]` sections:
+
 ```ini
 [Files]
 Source: "..\new\component\*"; DestDir: "{app}\NewComponent"; Flags: ignoreversion recursesubdirs
@@ -313,6 +344,7 @@ Source: "..\new\component\*"; DestDir: "{app}\NewComponent"; Flags: ignoreversio
 
 **WiX:**
 Add new `<Component>` elements:
+
 ```xml
 <Component Id="NewComponent" Guid="...">
   <File Source="new\component\file.txt" />
@@ -323,6 +355,7 @@ Add new `<Component>` elements:
 
 **Inno Setup:**
 Add `[Run]` sections or Pascal code:
+
 ```ini
 [Run]
 Filename: "powershell"; Parameters: "-Command ""..."""; StatusMsg: "Running custom action..."
@@ -330,6 +363,7 @@ Filename: "powershell"; Parameters: "-Command ""..."""; StatusMsg: "Running cust
 
 **WiX:**
 Add `<CustomAction>` elements:
+
 ```xml
 <CustomAction Id="CustomAction" Execute="deferred" ... />
 ```
@@ -341,6 +375,7 @@ Add `<CustomAction>` elements:
 ### Clean System Testing
 
 **Windows 10:**
+
 1. Create clean Windows 10 VM
 2. Install .NET 8 Runtime
 3. Run installer
@@ -349,6 +384,7 @@ Add `<CustomAction>` elements:
 6. Test uninstallation
 
 **Windows 11:**
+
 1. Create clean Windows 11 VM
 2. Install .NET 8 Runtime
 3. Run installer
@@ -384,11 +420,13 @@ Add `<CustomAction>` elements:
 ### Signing the Installer
 
 **Using SignTool:**
+
 ```powershell
 signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudio-Setup-v1.0.0.exe
 ```
 
 **Requirements:**
+
 - Code signing certificate
 - SignTool (Windows SDK)
 - Timestamp server URL
@@ -432,12 +470,14 @@ signtool verify /pa VoiceStudio-Setup-v1.0.0.exe
 ### Installer Fails to Build
 
 **Inno Setup:**
+
 - Verify Inno Setup installed
 - Check file paths in script
 - Verify all source files exist
 - Check for syntax errors
 
 **WiX:**
+
 - Verify WiX Toolset installed
 - Check WiX extension in Visual Studio
 - Verify all file paths exist
@@ -446,11 +486,13 @@ signtool verify /pa VoiceStudio-Setup-v1.0.0.exe
 ### Installation Fails
 
 **Missing Dependencies:**
+
 - Install .NET 8 Runtime first
 - Install Python 3.10+ if required
 - Check Windows version compatibility
 
 **Permission Errors:**
+
 - Run installer as Administrator
 - Check antivirus software
 - Verify disk space available
@@ -458,11 +500,13 @@ signtool verify /pa VoiceStudio-Setup-v1.0.0.exe
 ### Application Won't Start
 
 **Missing Python:**
+
 - Install Python 3.10+
 - Verify Python in PATH
 - Check virtual environment
 
 **Missing Dependencies:**
+
 - Run `pip install -r backend/requirements.txt`
 - Check Python packages installed
 - Verify engine models available
@@ -472,22 +516,26 @@ signtool verify /pa VoiceStudio-Setup-v1.0.0.exe
 ## Best Practices
 
 1. **Version Management**
+
    - Update version numbers in all files
    - Use consistent versioning scheme
    - Document version changes
 
 2. **Testing**
+
    - Test on clean systems
    - Test upgrade paths
    - Test uninstallation
    - Test all components
 
 3. **Code Signing**
+
    - Always sign installers
    - Use timestamp server
    - Verify signatures
 
 4. **Documentation**
+
    - Include installation instructions
    - Document system requirements
    - Provide troubleshooting guide
@@ -510,4 +558,3 @@ signtool verify /pa VoiceStudio-Setup-v1.0.0.exe
 
 **Last Updated:** 2025-01-28  
 **Version:** 1.0
-

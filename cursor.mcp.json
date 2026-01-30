@@ -1,0 +1,318 @@
+{
+  "mcpServers": {
+    "// === EXISTING/ORIGINAL MCPs ===": "",
+    "GitKraken": {
+      "command": "c:\\Users\\Tyler\\AppData\\Roaming\\Cursor\\User\\globalStorage\\eamodio.gitlens\\gk.exe",
+      "args": [
+        "mcp",
+        "--host=cursor",
+        "--source=gitlens",
+        "--scheme=cursor"
+      ],
+      "env": {},
+      "name": "GitKraken",
+      "type": "stdio"
+    },
+    "mcp-interactive": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-interactive"
+      ]
+    },
+    "openai-websearch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "openai-websearch-mcp"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}"
+      }
+    },
+    "openmemory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "openmemory-js",
+        "mcp"
+      ],
+      "env": {
+        "OM_TIER": "hybrid",
+        "OM_EMBEDDINGS": "synthetic"
+      }
+    },
+    "cursor-browser-extension": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cursor-browser-extension/mcp-server"
+      ]
+    },
+    "// === VOICE & AUDIO MCPs ===": "",
+    "elevenlabs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@elevenlabs/mcp"
+      ],
+      "env": {
+        "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}"
+      }
+    },
+    "hume": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "hume-mcp-server"
+      ],
+      "env": {
+        "HUME_API_KEY": "${HUME_API_KEY}",
+        "HUME_SECRET_KEY": "${HUME_SECRET_KEY}"
+      }
+    },
+    "// === AI REASONING & INTELLIGENCE MCPs ===": "",
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {
+        "DISABLE_THOUGHT_LOGGING": "false"
+      }
+    },
+    "thought-chain": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "thought-chain-mcp"
+      ]
+    },
+    "deepseek-thinker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deepseek-thinker-mcp"
+      ],
+      "env": {
+        "USE_OLLAMA": "true",
+        "OLLAMA_HOST": "http://localhost:11434",
+        "OLLAMA_MODEL": "deepseek-r1:7b"
+      }
+    },
+    "deepseek-api": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deepseek-thinker-mcp"
+      ],
+      "env": {
+        "USE_OLLAMA": "false",
+        "API_KEY": "${DEEPSEEK_API_KEY}",
+        "BASE_URL": "https://api.deepseek.com"
+      }
+    },
+    "mem0": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mem0/mcp"
+      ]
+    },
+    "// === PROJECT & PLANNING MCPs ===": "",
+    "taskflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "taskflow-mcp"
+      ],
+      "env": {
+        "TASKFLOW_PROJECT": "VoiceStudio"
+      }
+    },
+    "longterm-planner": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "longterm-planner-mcp"
+      ]
+    },
+    "// === LOCAL LLM MCPs (Ollama - Free) ===": "",
+    "ollama": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ollama-mcp"
+      ],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434"
+      }
+    },
+    "// === DOCUMENTATION & CONTEXT MCPs ===": "",
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    },
+    "openapi-explorer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-openapi-schema-explorer"
+      ]
+    },
+    "// === DEVELOPMENT TOOLS MCPs ===": "",
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "fastapi-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "fastapi-mcp"
+      ]
+    },
+    "docker-mcp": {
+      "command": "uvx",
+      "args": [
+        "docker-mcp"
+      ]
+    },
+    "semgrep": {
+      "command": "uvx",
+      "args": [
+        "semgrep-mcp"
+      ],
+      "env": {
+        "SEMGREP_APP_TOKEN": "${SEMGREP_APP_TOKEN}"
+      }
+    },
+    "codepathfinder": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "codepathfinder-mcp"
+      ]
+    },
+    "ast-grep": {
+      "command": "uvx",
+      "args": [
+        "ast-grep-mcp"
+      ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "E:/VoiceStudio"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "console-automation": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-console-automation"
+      ]
+    },
+    "opentelemetry": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "opentelemetry-mcp-server"
+      ]
+    },
+    "// === CODE INTELLIGENCE MCPs ===": "",
+    "tree-sitter": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-tree-sitter"
+      ]
+    },
+    "lsp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "lsp-mcp"
+      ]
+    },
+    "// === DATABASE & SEARCH MCPs ===": "",
+    "sqlite": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "E:/VoiceStudio/data/voicestudio.db"
+      ]
+    },
+    "chroma": {
+      "command": "uvx",
+      "args": [
+        "chroma-mcp-server"
+      ],
+      "env": {
+        "CHROMA_PERSISTENCE_DIR": "E:/VoiceStudio/data/chroma"
+      }
+    },
+    "// === ADDITIONAL RECOMMENDED MCPs ===": "",
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/brave-search-mcp"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    },
+    "// === CODE QUALITY MCPs (require Docker) ===": "",
+    "sonarqube": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "SONARQUBE_TOKEN",
+        "-e",
+        "SONARQUBE_ORG",
+        "mcp/sonarqube"
+      ],
+      "env": {
+        "SONARQUBE_TOKEN": "${SONARQUBE_TOKEN}",
+        "SONARQUBE_ORG": "${SONARQUBE_ORG}"
+      }
+    },
+    "python-refactoring": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "E:/VoiceStudio:/workspace:ro",
+        "mcp/mcp-python-refactoring"
+      ]
+    }
+  }
+}

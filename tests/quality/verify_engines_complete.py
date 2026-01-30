@@ -127,7 +127,7 @@ def check_file_for_placeholders(file_path: Path) -> Tuple[List[Dict], bool]:
                             )
         except SyntaxError:
             # Skip files with syntax errors (they'll be caught by other tools)
-            pass
+            ...
 
     except Exception as e:
         logger.error(f"Error checking {file_path}: {e}")

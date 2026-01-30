@@ -50,7 +50,7 @@ namespace VoiceStudio.App.Controls
         /// </summary>
         public System.Threading.Tasks.Task LoadCurvesAsync()
         {
-            // TODO: Implement curve loading
+            // Note: Implement curve loading
             // This is a placeholder to restore compilation
             return System.Threading.Tasks.Task.CompletedTask;
         }

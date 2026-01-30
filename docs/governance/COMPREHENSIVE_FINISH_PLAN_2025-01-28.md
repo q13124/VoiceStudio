@@ -695,31 +695,22 @@ This document provides **extremely detailed** task breakdowns for completing Voi
 **Detailed Steps:**
 
 1. **Create Packaging Script:**
-   - File: `scripts/package_release.ps1`
+   - File: `scripts/prepare-release.ps1`
    - Steps:
      - Clean build directories
      - Restore NuGet packages
      - Build in Release mode
-     - Run tests
-     - Create MSIX package
-     - Sign package (if certificate available)
      - Generate release notes
-     - Create installer (NSIS or similar)
+     - Create installer (Inno Setup / WiX via `installer/build-installer.ps1`)
 
-2. **Create MSIX Package Configuration:**
-   - File: `src/VoiceStudio.App/Package.appxmanifest` (create/modify)
-   - App identity
-   - Capabilities
-   - Visual assets
-
-3. **Create Installer Script:**
+2. **Create Installer Script:**
    - File: `installer/VoiceStudio.iss` (NSIS script)
    - Or: `installer/create_installer.ps1` (PowerShell)
    - Include all dependencies
    - Create shortcuts
    - Add to Start Menu
 
-4. **Create Smoke Checklist:**
+3. **Create Smoke Checklist:**
    - File: `docs/release/SMOKE_CHECKLIST.md`
    - Pre-release verification steps:
      - [ ] All tests pass
@@ -745,9 +736,6 @@ This document provides **extremely detailed** task breakdowns for completing Voi
    - Format for changelog
 
 **Files to Create:**
-- `scripts/package_release.ps1`
-- `src/VoiceStudio.App/Package.appxmanifest` (if not exists)
-- `installer/create_installer.ps1` (or enhance existing)
 - `docs/release/SMOKE_CHECKLIST.md`
 - `docs/release/RELEASE_NOTES_TEMPLATE.md`
 
@@ -757,7 +745,6 @@ This document provides **extremely detailed** task breakdowns for completing Voi
 
 **Acceptance Criteria:**
 - [ ] Packaging script complete
-- [ ] MSIX package configuration complete
 - [ ] Installer script complete
 - [ ] Smoke checklist complete
 - [ ] Version stamping in About dialog

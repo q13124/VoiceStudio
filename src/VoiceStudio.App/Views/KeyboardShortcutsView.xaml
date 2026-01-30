@@ -43,7 +43,7 @@
             <ItemsControl x:Name="ShortcutsItemsControl">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{StaticResource VSQ.Panel.BackgroundBrush}"
+                        <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
                                BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
                                BorderThickness="0,0,0,1"
                                Padding="16,12">

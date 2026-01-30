@@ -348,11 +348,11 @@ namespace VoiceStudio.App.ViewModels
             }
         }
 
-        private async Task PreviewSuggestionAsync()
+        private Task PreviewSuggestionAsync()
         {
             if (SelectedSuggestion == null)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             try
@@ -364,6 +364,8 @@ namespace VoiceStudio.App.ViewModels
             {
                 ErrorMessage = ResourceHelper.FormatString("AIMixingMastering.PreviewSuggestionFailed", ex.Message);
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task AnalyzeMasteringAsync()

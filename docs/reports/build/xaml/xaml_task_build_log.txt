@@ -1,0 +1,11 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj : XamlCompiler error WMC1013: XAML files 'App.xaml' and 'App.xaml' have the same project path 'App.xaml'.  Each file must have a unique project path.
+
+Build FAILED.
+
+E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj : XamlCompiler error WMC1013: XAML files 'App.xaml' and 'App.xaml' have the same project path 'App.xaml'.  Each file must have a unique project path.
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:01.15

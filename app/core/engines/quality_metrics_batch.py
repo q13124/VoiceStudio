@@ -283,7 +283,7 @@ def calculate_quality_metrics_batch(
                     df.select_dtypes(include=[np.number]).std().to_dict()
                 )
     except ImportError:
-        pass  # pandas not available
+        logger.debug("pandas not available for batch metric summaries")
 
     return {
         "results": results,

@@ -1,12 +1,34 @@
 <UserControl
-    x:Class="VoiceStudio.App.Controls.LoudnessChartControl"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid>
-        <TextBlock Text="Loudness chart temporarily disabled (XAML compiler stability)"
-            TextWrapping="Wrap"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Opacity="0.7" />
-    </Grid>
+  x:Class="VoiceStudio.App.Controls.LoudnessChartControl"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid x:Name="LoudnessContainer" Background="Transparent">
+    <Path x:Name="LoudnessPath"
+      Stroke="Cyan"
+      StrokeThickness="2"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch" />
+    <Line x:Name="IntegratedLine"
+      Stroke="Green"
+      StrokeThickness="1"
+      StrokeDashArray="4,2"
+      Visibility="Collapsed" />
+    <Line x:Name="PeakLine"
+      Stroke="Red"
+      StrokeThickness="1"
+      StrokeDashArray="4,2"
+      Visibility="Collapsed" />
+    <Line x:Name="PlaybackLine"
+      Stroke="Yellow"
+      StrokeThickness="2"
+      Visibility="Collapsed" />
+    <Canvas x:Name="LabelCanvas" />
+    <TextBlock Text="No loudness data available"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+      Opacity="0.5"
+      Visibility="Collapsed"
+      x:Name="EmptyStateText" />
+  </Grid>
 </UserControl>

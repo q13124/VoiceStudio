@@ -29,7 +29,7 @@ namespace VoiceStudio.App.Services
         public event EventHandler<NavigationEventArgs>? NavigationChanged;
         public event EventHandler? BackStackChanged;
 
-        public async Task NavigateToPanelAsync(string panelId, Dictionary<string, object>? parameters = null, CancellationToken cancellationToken = default)
+        public Task NavigateToPanelAsync(string panelId, Dictionary<string, object>? parameters = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(panelId))
                 throw new ArgumentException("Panel ID cannot be null or empty.", nameof(panelId));
@@ -81,6 +81,8 @@ namespace VoiceStudio.App.Services
 
             NavigationChanged?.Invoke(this, args);
             BackStackChanged?.Invoke(this, EventArgs.Empty);
+
+            return Task.CompletedTask;
         }
 
         public async Task NavigateBackAsync(CancellationToken cancellationToken = default)

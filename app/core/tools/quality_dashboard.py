@@ -8,6 +8,7 @@ Compatible with:
 
 import json
 import logging
+import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -412,7 +413,18 @@ class QualityDashboard:
                 "engine_comparison": self.get_engine_comparison(),
                 "trends": self.get_trends(),
             }
-            output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+            try:
+                tmp_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                os.replace(tmp_path, output_path)
+            except Exception:
+                if tmp_path.exists():
+                    try:
+                        tmp_path.unlink()
+                    except Exception:
+                        pass
+                raise
             logger.info(f"Dashboard data exported to: {output_path}")
         else:
             raise ValueError(f"Unsupported format: {format}")

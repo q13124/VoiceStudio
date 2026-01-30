@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,9 +21,10 @@ namespace VoiceStudio.App.Services
     public class UpdateService : IUpdateService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _updateServerUrl;
-        private readonly string _repositoryOwner;
-        private readonly string _repositoryName;
+        private readonly UpdateServiceConfig _updateConfig;
+        private UpdateHistory? _lastUpdateHistory;
+        private const string UpdateConfigFileName = "update_config.json";
+        private const string UpdateHistoryFileName = "update_history.json";
         private Version? _latestVersion;
         private bool _isCheckingForUpdates;
         private bool _isDownloadingUpdate;
@@ -50,13 +52,10 @@ namespace VoiceStudio.App.Services
                 Timeout = TimeSpan.FromSeconds(30)
             };
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "VoiceStudio-Quantum-Plus/1.0");
-            
-            // Repository information
-            // Note: These values should be updated to match the actual GitHub repository at release time
-            _updateServerUrl = "https://api.github.com";
-            _repositoryOwner = "VoiceStudio"; // GitHub organization/username
-            _repositoryName = "VoiceStudio-Quantum-Plus"; // Repository name
-            
+
+            _updateConfig = LoadUpdateConfig();
+            _lastUpdateHistory = LoadUpdateHistory();
+
             // Get current version from assembly
             CurrentVersion = GetCurrentVersion();
         }
@@ -69,6 +68,230 @@ namespace VoiceStudio.App.Services
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             var version = assembly.GetName().Version;
             return version ?? new Version(1, 0, 0, 0);
+        }
+
+        private UpdateServiceConfig LoadUpdateConfig()
+        {
+            var config = new UpdateServiceConfig();
+
+            var configPath = Path.Combine(AppContext.BaseDirectory, UpdateConfigFileName);
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(configPath);
+                    var fileConfig = JsonSerializer.Deserialize<UpdateServiceConfig>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    if (fileConfig != null)
+                    {
+                        config = config.Merge(fileConfig);
+                    }
+                }
+                catch
+                {
+                    // Best effort: fall back to defaults/env overrides
+                }
+            }
+
+            var envServer = Environment.GetEnvironmentVariable("VOICESTUDIO_UPDATE_SERVER_URL");
+            var envOwner = Environment.GetEnvironmentVariable("VOICESTUDIO_UPDATE_REPO_OWNER");
+            var envRepo = Environment.GetEnvironmentVariable("VOICESTUDIO_UPDATE_REPO_NAME");
+
+            if (!string.IsNullOrWhiteSpace(envServer))
+                config.UpdateServerUrl = envServer.TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(envOwner))
+                config.RepositoryOwner = envOwner;
+            if (!string.IsNullOrWhiteSpace(envRepo))
+                config.RepositoryName = envRepo;
+
+            return config;
+        }
+
+        private UpdateHistory? LoadUpdateHistory()
+        {
+            var historyPath = Path.Combine(GetUpdateDirectory(), UpdateHistoryFileName);
+            if (!File.Exists(historyPath))
+                return null;
+
+            try
+            {
+                var json = File.ReadAllText(historyPath);
+                return JsonSerializer.Deserialize<UpdateHistory>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void SaveUpdateHistory(UpdateHistory history)
+        {
+            try
+            {
+                var historyPath = Path.Combine(GetUpdateDirectory(), UpdateHistoryFileName);
+                var json = JsonSerializer.Serialize(history, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true
+                });
+                File.WriteAllText(historyPath, json);
+                _lastUpdateHistory = history;
+            }
+            catch
+            {
+                // Best effort
+            }
+        }
+
+        private static string GetUpdateDirectory()
+        {
+            string localAppData;
+            try
+            {
+                // Packaged app: use ApplicationData
+                localAppData = ApplicationData.Current.LocalFolder.Path;
+            }
+            catch (Exception)
+            {
+                // Unpackaged app: fall back to Environment (catches InvalidOperationException, COMException, etc.)
+                localAppData = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "VoiceStudio");
+            }
+            var downloadDir = Path.Combine(localAppData, "Updates");
+            Directory.CreateDirectory(downloadDir);
+            return downloadDir;
+        }
+
+        private bool IsConfigValid()
+        {
+            return _updateConfig.IsValid;
+        }
+
+        private string BuildApiUrl(string path)
+        {
+            return $"{_updateConfig.UpdateServerUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+        }
+
+        private async Task<GitHubRelease?> GetLatestReleaseAsync(CancellationToken cancellationToken)
+        {
+            var apiUrl = BuildApiUrl($"repos/{_updateConfig.RepositoryOwner}/{_updateConfig.RepositoryName}/releases/latest");
+            var response = await _httpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<GitHubRelease>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+
+        private async Task<GitHubRelease?> GetReleaseByTagAsync(Version version, CancellationToken cancellationToken)
+        {
+            var apiUrl = BuildApiUrl($"repos/{_updateConfig.RepositoryOwner}/{_updateConfig.RepositoryName}/releases/tags/v{version}");
+            var response = await _httpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<GitHubRelease>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+
+        private static bool IsInstallerAsset(GitHubAsset asset)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.Name))
+                return false;
+
+            var name = asset.Name;
+            return name.Contains("Setup", StringComparison.OrdinalIgnoreCase)
+                   || name.Contains("Installer", StringComparison.OrdinalIgnoreCase)
+                   || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                   || name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsDeltaAsset(GitHubAsset asset)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.Name))
+                return false;
+
+            var name = asset.Name;
+            return name.Contains("delta", StringComparison.OrdinalIgnoreCase)
+                   || name.Contains("patch", StringComparison.OrdinalIgnoreCase)
+                   || name.Contains("diff", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static GitHubAsset? SelectUpdateAsset(IReadOnlyList<GitHubAsset> assets)
+        {
+            var candidates = assets.Where(IsInstallerAsset).ToList();
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            var deltaCandidates = candidates.Where(IsDeltaAsset).ToList();
+            var selectionPool = deltaCandidates.Count > 0 ? deltaCandidates : candidates;
+            return selectionPool.OrderBy(a => a.Size).FirstOrDefault();
+        }
+
+        private static string EnsureFileName(string fileName)
+        {
+            return string.IsNullOrWhiteSpace(fileName) ? $"VoiceStudio_Update_{DateTime.UtcNow:yyyyMMdd_HHmmss}.exe" : fileName;
+        }
+
+        private async Task<string> DownloadAssetAsync(GitHubAsset asset, CancellationToken cancellationToken, Action<double>? progressCallback = null)
+        {
+            var downloadDir = GetUpdateDirectory();
+            var assetFileName = EnsureFileName(asset.Name ?? string.Empty);
+            var downloadPath = Path.Combine(downloadDir, assetFileName);
+
+            _updateDownloadPath = downloadPath;
+
+            using (var fileStream = new FileStream(downloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                var downloadResponse = await _httpClient.GetAsync(asset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                downloadResponse.EnsureSuccessStatusCode();
+
+                var totalBytes = downloadResponse.Content.Headers.ContentLength ?? asset.Size;
+                var bytesDownloaded = 0L;
+                var stopwatch = Stopwatch.StartNew();
+
+                using (var contentStream = await downloadResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    var buffer = new byte[8192];
+                    int bytesRead;
+
+                    while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) > 0)
+                    {
+                        await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+                        bytesDownloaded += bytesRead;
+
+                        if (totalBytes > 0)
+                        {
+                            _downloadProgress = (double)bytesDownloaded / totalBytes;
+                            var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+                            var speedMbps = elapsedSeconds > 0 ? bytesDownloaded * 8 / (elapsedSeconds * 1_000_000) : 0;
+
+                            progressCallback?.Invoke(_downloadProgress);
+                            OnDownloadProgressChanged(_downloadProgress, bytesDownloaded, totalBytes, speedMbps);
+                        }
+                    }
+                }
+            }
+
+            return downloadPath;
         }
         
         public async Task<bool> CheckForUpdatesAsync(bool forceCheck = false, CancellationToken cancellationToken = default)
@@ -89,8 +312,14 @@ namespace VoiceStudio.App.Services
             
             try
             {
+                if (!IsConfigValid())
+                {
+                    OnUpdateCheckCompleted(false, null, "Update repository not configured. Set VOICESTUDIO_UPDATE_REPO_OWNER and VOICESTUDIO_UPDATE_REPO_NAME.");
+                    return false;
+                }
+
                 // Check GitHub Releases API
-                var apiUrl = $"{_updateServerUrl}/repos/{_repositoryOwner}/{_repositoryName}/releases/latest";
+                var apiUrl = BuildApiUrl($"repos/{_updateConfig.RepositoryOwner}/{_updateConfig.RepositoryName}/releases/latest");
                 var response = await _httpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
                 
                 if (!response.IsSuccessStatusCode)
@@ -162,75 +391,25 @@ namespace VoiceStudio.App.Services
             
             try
             {
-                // Get release information
-                var apiUrl = $"{_updateServerUrl}/repos/{_repositoryOwner}/{_repositoryName}/releases/latest";
-                var response = await _httpClient.GetAsync(apiUrl, CancellationToken.None).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                
-                var jsonContent = await response.Content.ReadAsStringAsync(CancellationToken.None).ConfigureAwait(false);
-                var release = JsonSerializer.Deserialize<GitHubRelease>(jsonContent, new JsonSerializerOptions
+                if (!IsConfigValid())
                 {
-                    PropertyNameCaseInsensitive = true
-                });
-                
+                    throw new InvalidOperationException("Update repository not configured.");
+                }
+
+                var release = await GetLatestReleaseAsync(CancellationToken.None).ConfigureAwait(false);
                 if (release?.Assets == null || release.Assets.Count == 0)
                 {
                     throw new Exception("No update assets found in release");
                 }
-                
-                // Find Windows installer asset
-                var installerAsset = release.Assets.Find(a => 
-                    a.Name.Contains("Setup") || 
-                    a.Name.Contains("Installer") || 
-                    a.Name.EndsWith(".exe") || 
-                    a.Name.EndsWith(".msi"));
-                
+
+                var installerAsset = SelectUpdateAsset(release.Assets);
                 if (installerAsset == null)
                 {
                     throw new Exception("No installer asset found in release");
                 }
-                
-                // Create download directory
-                var localAppData = ApplicationData.Current.LocalFolder.Path;
-                var downloadDir = Path.Combine(localAppData, "Updates");
-                Directory.CreateDirectory(downloadDir);
-                
-                var downloadPath = Path.Combine(downloadDir, installerAsset.Name);
-                _updateDownloadPath = downloadPath;
-                
-                // Download file with progress tracking
-                using (var fileStream = new FileStream(downloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    var downloadResponse = await _httpClient.GetAsync(installerAsset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
-                    downloadResponse.EnsureSuccessStatusCode();
-                    
-                    var totalBytes = downloadResponse.Content.Headers.ContentLength ?? 0L;
-                    var bytesDownloaded = 0L;
-                    var stopwatch = Stopwatch.StartNew();
-                    
-                    using (var contentStream = await downloadResponse.Content.ReadAsStreamAsync(CancellationToken.None).ConfigureAwait(false))
-                    {
-                        var buffer = new byte[8192];
-                        int bytesRead;
-                        
-                        while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false)) > 0)
-                        {
-                            await fileStream.WriteAsync(buffer, 0, bytesRead, CancellationToken.None).ConfigureAwait(false);
-                            bytesDownloaded += bytesRead;
-                            
-                            if (totalBytes > 0)
-                            {
-                                _downloadProgress = (double)bytesDownloaded / totalBytes;
-                                var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-                                var speedMbps = elapsedSeconds > 0 ? (bytesDownloaded * 8) / (elapsedSeconds * 1_000_000) : 0;
-                                
-                                progressCallback?.Invoke(_downloadProgress);
-                                OnDownloadProgressChanged(_downloadProgress, bytesDownloaded, totalBytes, speedMbps);
-                            }
-                        }
-                    }
-                }
-                
+
+                var downloadPath = await DownloadAssetAsync(installerAsset, CancellationToken.None, progressCallback).ConfigureAwait(false);
+
                 OnDownloadCompleted(true, downloadPath, null);
                 return downloadPath;
             }
@@ -317,7 +496,7 @@ namespace VoiceStudio.App.Services
         {
             try
             {
-                var apiUrl = $"{_updateServerUrl}/repos/{_repositoryOwner}/{_repositoryName}/releases/tags/v{version}";
+                var apiUrl = $"{_updateConfig.UpdateServerUrl}/repos/{_updateConfig.RepositoryOwner}/{_updateConfig.RepositoryName}/releases/tags/v{version}";
                 var response = await _httpClient.GetAsync(apiUrl, CancellationToken.None).ConfigureAwait(false);
                 
                 if (!response.IsSuccessStatusCode)
@@ -396,6 +575,88 @@ namespace VoiceStudio.App.Services
         public string? Name { get; set; }
         public string? BrowserDownloadUrl { get; set; }
         public long Size { get; set; }
+    }
+
+    /// <summary>
+    /// Configuration for the update service.
+    /// </summary>
+    public class UpdateServiceConfig
+    {
+        /// <summary>
+        /// The base URL for the update server (GitHub API).
+        /// </summary>
+        public string UpdateServerUrl { get; set; } = "https://api.github.com";
+
+        /// <summary>
+        /// The GitHub repository owner.
+        /// </summary>
+        public string RepositoryOwner { get; set; } = "VoiceStudio";
+
+        /// <summary>
+        /// The GitHub repository name.
+        /// </summary>
+        public string RepositoryName { get; set; } = "VoiceStudio";
+
+        /// <summary>
+        /// Indicates whether the configuration is valid for checking updates.
+        /// </summary>
+        public bool IsValid =>
+            !string.IsNullOrWhiteSpace(UpdateServerUrl) &&
+            !string.IsNullOrWhiteSpace(RepositoryOwner) &&
+            !string.IsNullOrWhiteSpace(RepositoryName);
+
+        /// <summary>
+        /// Merges another config into this one, overwriting non-empty values.
+        /// </summary>
+        public UpdateServiceConfig Merge(UpdateServiceConfig other)
+        {
+            if (other == null) return this;
+
+            if (!string.IsNullOrWhiteSpace(other.UpdateServerUrl))
+                UpdateServerUrl = other.UpdateServerUrl;
+            if (!string.IsNullOrWhiteSpace(other.RepositoryOwner))
+                RepositoryOwner = other.RepositoryOwner;
+            if (!string.IsNullOrWhiteSpace(other.RepositoryName))
+                RepositoryName = other.RepositoryName;
+
+            return this;
+        }
+    }
+
+    /// <summary>
+    /// Tracks update history and rollback information.
+    /// </summary>
+    public class UpdateHistory
+    {
+        /// <summary>
+        /// The version that was installed before the last update.
+        /// </summary>
+        public string? PreviousVersion { get; set; }
+
+        /// <summary>
+        /// The version that was installed by the last update.
+        /// </summary>
+        public string? InstalledVersion { get; set; }
+
+        /// <summary>
+        /// When the last update was installed.
+        /// </summary>
+        public DateTime? InstalledAt { get; set; }
+
+        /// <summary>
+        /// Path to the backup of the previous installation (for rollback).
+        /// </summary>
+        public string? BackupPath { get; set; }
+
+        /// <summary>
+        /// Whether the last update was successful.
+        /// </summary>
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// Error message if the update failed.
+        /// </summary>
+        public string? ErrorMessage { get; set; }
     }
 }
 

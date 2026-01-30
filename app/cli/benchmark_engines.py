@@ -144,7 +144,7 @@ def benchmark_engine(
             if engine_instance.is_initialized():
                 engine_instance.cleanup()
         except:
-            pass
+            ...
     
     return results
 

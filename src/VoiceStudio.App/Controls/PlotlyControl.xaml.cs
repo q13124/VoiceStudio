@@ -118,7 +118,7 @@ namespace VoiceStudio.App.Controls
             }
         }
 
-        private async Task LoadImageAsync(string imageUrl)
+        private Task LoadImageAsync(string imageUrl)
         {
             try
             {
@@ -169,6 +169,8 @@ namespace VoiceStudio.App.Controls
                 EmptyStateText.Visibility = Visibility.Visible;
                 IsLoading = false;
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

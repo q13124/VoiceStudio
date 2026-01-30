@@ -240,7 +240,7 @@ class Pyttsx3Wrapper:
             try:
                 self.engine.stop()
             except Exception:
-                pass
+                ...
             self.engine = None
             self.available = False
 

@@ -606,7 +606,7 @@ async def estimate_phonemes(request: PhonemeEstimateRequest):
                         confidence = 0.85
                         method = "espeak"
                 except (ImportError, FileNotFoundError, subprocess.TimeoutExpired):
-                    pass
+                    ...
 
             # Fallback: Use common phoneme mappings
             if not pronunciation:

@@ -5,7 +5,10 @@ Endpoints for help content, tutorials, and documentation.
 Supports help topics, keyboard shortcuts, and search.
 """
 
+import json
 import logging
+import os
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -17,9 +20,56 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/help", tags=["help"])
 
-# In-memory help content (replace with database in production)
+# Help content storage with JSON persistence
 _help_topics: Dict[str, Dict] = {}
 _keyboard_shortcuts: Dict[str, Dict] = {}
+_help_data_file: Optional[str] = None
+
+
+def _get_help_data_path() -> str:
+    """Get path to help data persistence file."""
+    global _help_data_file
+    if _help_data_file is None:
+        data_dir = os.getenv("VOICESTUDIO_DATA_DIR", os.path.join(os.path.expanduser("~"), ".voicestudio", "data"))
+        os.makedirs(data_dir, exist_ok=True)
+        _help_data_file = os.path.join(data_dir, "help_data.json")
+    return _help_data_file
+
+
+def _load_help_data():
+    """Load help topics and shortcuts from JSON file."""
+    global _help_topics, _keyboard_shortcuts
+    help_file = _get_help_data_path()
+    
+    if os.path.exists(help_file):
+        try:
+            with open(help_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                _help_topics = data.get("topics", {})
+                _keyboard_shortcuts = data.get("shortcuts", {})
+            logger.info(f"Loaded {len(_help_topics)} help topics and {len(_keyboard_shortcuts)} shortcuts from {help_file}")
+        except Exception as e:
+            logger.warning(f"Failed to load help data from {help_file}: {e}")
+            _help_topics = {}
+            _keyboard_shortcuts = {}
+    else:
+        logger.debug(f"Help data file not found: {help_file}, using defaults")
+
+
+def _save_help_data():
+    """Save help topics and shortcuts to JSON file."""
+    help_file = _get_help_data_path()
+    try:
+        data = {
+            "topics": _help_topics,
+            "shortcuts": _keyboard_shortcuts,
+            "version": "1.0"
+        }
+        with open(help_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        logger.debug(f"Saved help data to {help_file}")
+    except Exception as e:
+        logger.warning(f"Failed to save help data to {help_file}: {e}")
 
 
 class HelpTopic(BaseModel):
@@ -258,8 +308,13 @@ Effects are applied in order. Drag to reorder.
         _keyboard_shortcuts[key] = shortcut
 
 
-# Initialize on module load
-_initialize_default_help()
+# Load persisted data on module load
+_load_help_data()
+
+# Initialize defaults only if no persisted data exists
+if not _help_topics:
+    _initialize_default_help()
+    _save_help_data()  # Save defaults on first run
 
 
 @router.get("/topics", response_model=List[HelpTopic])
@@ -291,6 +346,72 @@ async def get_help_topic(topic_id: str):
         raise HTTPException(status_code=404, detail="Help topic not found")
 
     return HelpTopic(**_help_topics[topic_id])
+
+
+@router.post("/topics", response_model=HelpTopic)
+async def create_help_topic(topic: HelpTopic):
+    """Create or update a help topic."""
+    _help_topics[topic.id] = topic.dict()
+    _save_help_data()
+    return topic
+
+
+@router.put("/topics/{topic_id}", response_model=HelpTopic)
+async def update_help_topic(topic_id: str, topic: HelpTopic):
+    """Update a help topic."""
+    if topic_id != topic.id:
+        raise HTTPException(status_code=400, detail="Topic ID mismatch")
+    
+    if topic_id not in _help_topics:
+        raise HTTPException(status_code=404, detail="Help topic not found")
+    
+    _help_topics[topic_id] = topic.dict()
+    _save_help_data()
+    return topic
+
+
+@router.delete("/topics/{topic_id}")
+async def delete_help_topic(topic_id: str):
+    """Delete a help topic."""
+    if topic_id not in _help_topics:
+        raise HTTPException(status_code=404, detail="Help topic not found")
+    
+    del _help_topics[topic_id]
+    _save_help_data()
+    return {"message": "Help topic deleted"}
+
+
+@router.post("/shortcuts", response_model=KeyboardShortcut)
+async def create_keyboard_shortcut(shortcut: KeyboardShortcut):
+    """Create or update a keyboard shortcut."""
+    _keyboard_shortcuts[shortcut.key] = shortcut.dict()
+    _save_help_data()
+    return shortcut
+
+
+@router.put("/shortcuts/{key}", response_model=KeyboardShortcut)
+async def update_keyboard_shortcut(key: str, shortcut: KeyboardShortcut):
+    """Update a keyboard shortcut."""
+    if key != shortcut.key:
+        raise HTTPException(status_code=400, detail="Shortcut key mismatch")
+    
+    if key not in _keyboard_shortcuts:
+        raise HTTPException(status_code=404, detail="Keyboard shortcut not found")
+    
+    _keyboard_shortcuts[key] = shortcut.dict()
+    _save_help_data()
+    return shortcut
+
+
+@router.delete("/shortcuts/{key}")
+async def delete_keyboard_shortcut(key: str):
+    """Delete a keyboard shortcut."""
+    if key not in _keyboard_shortcuts:
+        raise HTTPException(status_code=404, detail="Keyboard shortcut not found")
+    
+    del _keyboard_shortcuts[key]
+    _save_help_data()
+    return {"message": "Keyboard shortcut deleted"}
 
 
 @router.get("/search", response_model=HelpSearchResponse)

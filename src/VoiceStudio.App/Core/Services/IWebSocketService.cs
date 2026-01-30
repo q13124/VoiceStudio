@@ -98,4 +98,3 @@ namespace VoiceStudio.Core.Services
         public DateTime Timestamp { get; set; }
     }
 }
-

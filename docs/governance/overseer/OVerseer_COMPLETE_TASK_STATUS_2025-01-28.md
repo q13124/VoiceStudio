@@ -111,7 +111,7 @@
 3. **TASK 2.6: Packaging Script & Smoke Checklist** (6-8 hours)
    - **Status:** ⏳ Pending
    - **What:** Create repeatable packaging script and comprehensive smoke checklist
-   - **Files:** `scripts/package_release.ps1`, `Package.appxmanifest`, `docs/release/SMOKE_CHECKLIST.md`
+   - **Files:** `scripts/prepare-release.ps1`, `installer/build-installer.ps1`, `docs/release/SMOKE_CHECKLIST.md` (MSIX archived under `docs/archive/msix/`)
    - **Impact:** Release readiness
 
 #### MEDIUM PRIORITY (2 tasks)

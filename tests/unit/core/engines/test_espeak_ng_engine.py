@@ -40,7 +40,7 @@ def espeak_engine():
     try:
         engine.cleanup()
     except Exception:
-        pass
+        ...
 
 
 class TestESpeakNGEngineImports:
@@ -209,7 +209,7 @@ class TestESpeakNGEngineBatchProcessing:
             assert mock_executor.called
         except Exception:
             # If espeak is not installed, that's okay
-            pass
+            ...
 
 
 class TestESpeakNGEngineConfiguration:
@@ -260,7 +260,7 @@ class TestESpeakNGEngineOptimization:
                             assert espeak_engine._temp_dir is not None
                     except Exception:
                         # If dependencies not available, skip
-                        pass
+                        ...
 
     def test_cache_optimization(self, espeak_engine):
         """Test that cache optimization is enabled by default."""
@@ -294,5 +294,5 @@ class TestESpeakNGEngineCreateFunction:
         try:
             engine.cleanup()
         except Exception:
-            pass
+            ...
 

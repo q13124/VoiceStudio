@@ -1,0 +1,209 @@
+\u274c RuleGuard: VIOLATIONS FOUND
+================================================================================
+File: WORKER_3_COMPLETION_SUMMARY.md:197
+Pattern: \[PLACEHOLDER\]
+Content: - No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: WORKER_3_FINAL_STATUS.md:116
+Pattern: \[PLACEHOLDER\]
+Content: - \u2705 No "[PLACEHOLDER]" text
+--------------------------------------------------------------------------------
+File: WORKER_3_FINAL_STATUS.md:235
+Pattern: \[PLACEHOLDER\]
+Content: - Searched all documentation for "TODO", "PLACEHOLDER", "[PLACEHOLDER]"
+--------------------------------------------------------------------------------
+File: WORKER_3_PHASE_7_COMPLETE.md:119
+Pattern: \bNotImplementedException\b
+Content: - \u2705 No NotImplementedException
+--------------------------------------------------------------------------------
+File: app\cli\benchmark_engines.py:147
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\cli\verify_env.py:162
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\audio_module_audit.py:153
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\audio_utils.py:1032
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\audio_utils.py:1718
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\audio_utils.py:1774
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\audio_utils.py:1842
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\enhanced_preprocessing.py:277
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\pipeline_optimized.py:341
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\pipeline_optimized.py:344
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\audio\post_fx.py:261
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\config\config_loader.py:227
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:354
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:384
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:450
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:459
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:467
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:477
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\database\query_optimizer.py:542
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\aeneas_engine.py:44
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\aeneas_engine.py:48
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\aeneas_engine.py:214
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\automatic1111_engine.py:56
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\automatic1111_engine.py:60
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\automatic1111_engine.py:488
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\base.py:40
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\base.py:47
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\comfyui_engine.py:56
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\comfyui_engine.py:60
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\comfyui_engine.py:455
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deepfacelab_engine.py:223
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deepfacelab_engine.py:535
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:366
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:482
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:496
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:560
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:591
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\deforum_engine.py:604
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\espeak_ng_engine.py:73
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\espeak_ng_engine.py:77
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\espeak_ng_engine.py:700
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\fastsd_cpu_engine.py:75
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\fastsd_cpu_engine.py:79
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\fastsd_cpu_engine.py:322
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\fastsd_cpu_engine.py:370
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+File: app\core\engines\fastsd_cpu_engine.py:388
+Pattern: ^\s*pass\s*$
+Content: pass
+--------------------------------------------------------------------------------
+
+... and 1797 more violations (truncated)
+
+Total violations: 1847
+Files scanned: 2193
+
+See docs/governance/MASTER_RULES_COMPLETE.md for complete rule details

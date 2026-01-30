@@ -565,7 +565,7 @@ async def synthesize_script(script_id: str):
                 try:
                     os.unlink(segment_file)
                 except:
-                    pass
+                    ...
 
             # Save combined audio
             audio_id = f"script-{uuid.uuid4().hex[:8]}"

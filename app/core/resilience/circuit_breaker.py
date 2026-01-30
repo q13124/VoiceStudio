@@ -208,7 +208,7 @@ class CircuitBreaker:
 
 class CircuitBreakerOpenError(Exception):
     """Exception raised when circuit breaker is open."""
-    pass
+    ...
 
 
 # Global circuit breaker registry

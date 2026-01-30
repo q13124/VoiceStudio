@@ -188,7 +188,7 @@ namespace VoiceStudio.App.Views.Panels
 
         private void DuplicateDocument(object document)
         {
-            // TODO: SSML document duplication not implemented due to nested class access issues
+            // Note: SSML document duplication not implemented due to nested class access issues
             _toastService?.ShowToast(ToastType.Info, "Not Implemented", "Document duplication is not yet implemented");
         }
     }

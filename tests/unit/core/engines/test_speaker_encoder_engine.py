@@ -239,7 +239,7 @@ class TestSpeakerEncoderEngineOptimization:
                         if "inference_mode" in source or "no_grad" in source:
                             has_inference_mode = True
                     except (OSError, TypeError):
-                        pass
+                        ...
 
                 # If we can't check the source, at least verify the method exists
                 # The optimization is in the helper methods, not the main extract_embedding

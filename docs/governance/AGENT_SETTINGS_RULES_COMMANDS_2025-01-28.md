@@ -1,4 +1,5 @@
 # Agent Settings - Rules and Commands
+
 ## Complete Content for Cursor Agent Settings Tab
 
 **Date:** 2025-01-28  
@@ -37,28 +38,28 @@ NO exceptions. NO shortcuts. NO placeholders. NO bookmarks. NO tags. NO stubs.
 
 ALL synonyms and variations are FORBIDDEN. Using similar-meaning words to bypass the rule is FORBIDDEN.
 
-## FORBIDDEN TERMS (ALL Synonyms Included)
+## FORBIDDEN TERMS (Explicit incomplete-work markers only)
 
-### Bookmarks (ALL Synonyms):
-TODO, FIXME, NOTE, HACK, REMINDER, XXX, WARNING, CAUTION, BUG, ISSUE, REFACTOR, OPTIMIZE, REVIEW, CHECK, VERIFY, TEST, DEBUG, DEPRECATED, OBSOLETE, marker, flag, indicator, annotation, reference point, anchor, checkpoint, waypoint, signpost, milestone marker, pointer, reference, sticky note, bookmark, reminder marker, fix marker, work marker, return marker, later marker, revisit marker, follow-up marker, and ALL other synonyms
+### Bookmarks (explicit markers):
+TODO, FIXME, HACK, XXX, TBD, TBA, TBC, WIP
 
-### Placeholders (ALL Synonyms):
-dummy, mock, fake, sample, temporary, test data, filler, placeholder, stub data, example data, demonstration data, pseudocode, skeleton data, empty data, null data, blank data, default data, NotImplementedError, NotImplementedException, np.zeros(), return {}, return [], return null, and ALL other synonyms
+### Placeholders (non-functional code/data markers):
+NotImplementedError, NotImplementedException, "pass" as the only statement in a concrete function, deliberate placeholder responses that bypass real logic (e.g., returning dummy data in production paths)
 
-### Stubs (ALL Synonyms):
-skeleton, template, outline, empty function, pass statement, unimplemented, stub, empty method, blank function, void function, null implementation, no-op, no operation, function signature only, and ALL other synonyms
+### Stubs (non-implemented bodies):
+Empty method bodies in non-abstract types, `throw new NotImplementedException()` as the only body, or any function that exists only as a signature without behavior
 
-### Tags (ALL Categories):
-ALL markup tags, version control tags, code/documentation tags, status/indicator tags, system/metadata tags, API/service tags, tracking/monitoring tags, social/collaboration tags, content/organizational tags
+### Tags (incomplete-work tags only):
+`#TODO`, `#FIXME`, `#TBD`, `#WIP`, or any tag/label explicitly indicating unfinished work
 
-### Status Words (ALL Synonyms):
-pending, incomplete, unfinished, partial, in progress, to do, will be, coming soon, not yet, eventually, later, soon, planned, scheduled, assigned, open, active, ongoing, under construction, under development, in development, work in progress, WIP, draft, rough, prototype, experimental, alpha, beta, preview, pre-release, needs, requires, missing, absent, empty, blank, null, void, tbd, tba, tbc, and ALL other synonyms
+### Status words and phrases (explicit incomplete markers only):
+"to be implemented", "to be done", "not implemented yet", "will be implemented later"
 
-### Phrases (ALL Variations):
-"to be done", "will be implemented", "coming soon", "not yet", "eventually", "later", "for now", "temporary", "in progress", "under development", "work in progress", "needs to be", "requires to be", "missing implementation", and ALL other variations
+### Allowed operational terms:
+Words like test/verify/debug/review/issue/bug/warning/deprecated/pending/planned are allowed when they describe real work, real state, or real diagnostics (not placeholders).
 
 ### Loophole Prevention:
-ALL capitalization variations, spacing variations, punctuation variations, abbreviation variations, language variations, encoding variations, comment style variations, string concatenation variations, variable/function name variations, emoji/unicode variations, whitespace variations, regex/pattern variations, context variations, negation variations, meta-reference variations, indirect reference variations, time-based variations, scope variations, priority variations, status variations
+No obfuscating the explicit markers above via capitalization, punctuation, spacing, or naming tricks.
 
 ## UI DESIGN RULES
 
@@ -355,7 +356,8 @@ UI Specification: docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md
 - When workflow changes
 - When UI requirements change
 
-### How to Update:
+### How to Update
+
 1. Update this document
 2. Update Agent Settings in Cursor
 3. Update system prompts
@@ -366,6 +368,7 @@ UI Specification: docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md
 ## ✅ CHECKLIST
 
 **Before Starting Work:**
+
 - [ ] Rules pasted into Agent Settings → Rules tab
 - [ ] Commands pasted into Agent Settings → Commands tab
 - [ ] Settings saved

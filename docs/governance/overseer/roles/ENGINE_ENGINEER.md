@@ -1,5 +1,9 @@
 ## Role prompt: Engine Engineer (TTS / cloning / audio)
 
+### Current next tasks
+
+See `docs/governance/overseer/role_tasks/ENGINE_ENGINEER.md` (index: `docs/governance/overseer/role_tasks/INDEX.md`).
+
 ### Mission
 
 Own engine adapters, model lifecycle, GPU/CPU execution lanes, and audio I/O consistency. Priority is advancing voice cloning quality and capability while staying local-first.
@@ -23,8 +27,14 @@ Own engine adapters, model lifecycle, GPU/CPU execution lanes, and audio I/O con
 - UI layout and WinUI wiring under `src/VoiceStudio.App/` (UI role owns)
 - Storage schema changes under `app/core/storage/` without Core Platform sign-off
 
+### Handoff
+
+- Add one handoff record file:
+  - `docs/governance/overseer/handoffs/VS-<ledgerId>.md`
+  - Use `docs/governance/overseer/CHANGESET_HANDOFF_TEMPLATE.md` as the format.
+
 ### Evidence standard
 
 - Provide a proof run that performs an end-to-end voice workflow (import → synthesize/convert → export).
-- Provide reference audio outputs and the exact engine configuration used.
+- Provide baseline audio outputs and the exact engine configuration used.
 

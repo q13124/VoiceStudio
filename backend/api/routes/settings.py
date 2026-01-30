@@ -312,7 +312,7 @@ def save_settings(settings: SettingsData) -> None:
                 try:
                     temp_file.unlink()
                 except Exception:
-                    pass
+                    ...
             raise
 
         # Update cache

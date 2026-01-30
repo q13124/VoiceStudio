@@ -13,6 +13,18 @@ namespace VoiceStudio.App.Controls
         private ToolbarConfigurationService? _toolbarService;
         private readonly Dictionary<string, UIElement> _toolbarButtons = new Dictionary<string, UIElement>();
 
+        private static Style? TryGetFocusStyle()
+        {
+            try
+            {
+                return Application.Current?.Resources?["VSQ.Button.FocusStyle"] as Style;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public CustomizableToolbar()
         {
             this.InitializeComponent();
@@ -87,7 +99,7 @@ namespace VoiceStudio.App.Controls
             {
                 Content = content,
                 Margin = new Thickness(0, 0, 4, 0),
-                Style = (Style)Application.Current.Resources["VSQ.Button.FocusStyle"]
+                Style = TryGetFocusStyle()
             };
             if (!string.IsNullOrEmpty(tooltip))
             {
@@ -106,7 +118,7 @@ namespace VoiceStudio.App.Controls
             {
                 Content = content,
                 Margin = new Thickness(8, 0, 0, 0),
-                Style = (Style)Application.Current.Resources["VSQ.Button.FocusStyle"]
+                Style = TryGetFocusStyle()
             };
             if (!string.IsNullOrEmpty(tooltip))
             {

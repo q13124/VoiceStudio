@@ -319,7 +319,7 @@ pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://downl
 
 ### Step 3: Core ML Stack
 ```powershell
-pip install transformers==4.55.4 huggingface_hub==0.36.0 tokenizers==0.22.1 safetensors==0.6.2
+pip install transformers==4.55.4 huggingface_hub==0.36.0 tokenizers==0.21.4 safetensors==0.6.2
 ```
 
 ### Step 4: Coqui TTS
@@ -453,7 +453,7 @@ pip install --upgrade pip wheel setuptools
 pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
 
 # Step 3: Install Core ML Stack
-pip install transformers==4.55.4 huggingface_hub==0.36.0 tokenizers==0.22.1 safetensors==0.6.2
+pip install transformers==4.55.4 huggingface_hub==0.36.0 tokenizers==0.21.4 safetensors==0.6.2
 
 # Step 4: Install Coqui TTS
 pip install coqui-tts==0.27.2 coqui-tts-trainer==0.3.1

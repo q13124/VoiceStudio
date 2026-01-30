@@ -605,7 +605,7 @@ async def convert_voice(
         try:
             os.unlink(input_audio_path)
         except Exception:
-            pass
+            ...
 
         if not os.path.exists(converted_path):
             raise HTTPException(status_code=500, detail="Voice conversion failed")

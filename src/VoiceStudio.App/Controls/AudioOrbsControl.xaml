@@ -1,0 +1,14 @@
+<UserControl x:Class="VoiceStudio.App.Controls.AudioOrbsControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid x:Name="AudioOrbsContainer" Background="Black">
+        <Canvas x:Name="OrbsCanvas" />
+        <TextBlock Text="No audio orbs data available"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+            Opacity="0.5"
+            Visibility="Collapsed"
+            x:Name="EmptyStateText" />
+    </Grid>
+</UserControl>

@@ -25,7 +25,7 @@ namespace VoiceStudio.App.Services
                 return;
 
             // Log the error
-            _errorLoggingService?.LogError(exception, context);
+            _errorLoggingService?.LogError(exception, context ?? string.Empty);
 
             var userMessage = ErrorHandler.GetUserFriendlyMessage(exception);
             var recoverySuggestion = ErrorHandler.GetRecoverySuggestion(exception);

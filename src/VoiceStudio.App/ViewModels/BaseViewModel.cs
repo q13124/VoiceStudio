@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Dispatching;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
@@ -13,12 +16,15 @@ namespace VoiceStudio.App.ViewModels
     /// </summary>
     public abstract class BaseViewModel : ObservableObject, IDisposable
     {
-        protected IErrorLoggingService? ErrorLoggingService { get; private set; }
-        protected IErrorDialogService? ErrorDialogService { get; private set; }
-        protected StatePersistenceService? StatePersistenceService { get; private set; }
-        protected OperationQueueService? OperationQueueService { get; private set; }
-        protected StateCacheService? StateCacheService { get; private set; }
-        protected GracefulDegradationService? GracefulDegradationService { get; private set; }
+        protected ILogger Logger { get; }
+        protected DispatcherQueue Dispatcher { get; }
+
+        protected IErrorLoggingService? ErrorLoggingService { get; }
+        protected IErrorDialogService? ErrorDialogService { get; }
+        protected StatePersistenceService? StatePersistenceService { get; }
+        protected OperationQueueService? OperationQueueService { get; }
+        protected StateCacheService? StateCacheService { get; }
+        protected GracefulDegradationService? GracefulDegradationService { get; }
 
         // Common UI state (many panels rely on these)
         private bool _isLoading;
@@ -42,31 +48,74 @@ namespace VoiceStudio.App.ViewModels
             set => SetProperty(ref _errorMessage, value);
         }
 
-        protected BaseViewModel()
+        protected BaseViewModel(
+            IViewModelContext context,
+            IErrorLoggingService? errorLoggingService = null,
+            IErrorDialogService? errorDialogService = null,
+            StatePersistenceService? statePersistenceService = null,
+            OperationQueueService? operationQueueService = null,
+            StateCacheService? stateCacheService = null,
+            GracefulDegradationService? gracefulDegradationService = null)
         {
-            // Get services from ServiceProvider using helper method
-            InitializeServices();
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            Logger = context.Logger ?? throw new ArgumentNullException(nameof(context.Logger));
+            Dispatcher = context.DispatcherQueue ?? throw new ArgumentNullException(nameof(context.DispatcherQueue));
+
+            ErrorLoggingService = errorLoggingService;
+            ErrorDialogService = errorDialogService;
+            StatePersistenceService = statePersistenceService;
+            OperationQueueService = operationQueueService;
+            StateCacheService = stateCacheService;
+            GracefulDegradationService = gracefulDegradationService;
         }
 
         /// <summary>
-        /// Initializes services from ServiceProvider with error handling.
-        /// This helper method reduces code duplication across ViewModels.
+        /// Temporary legacy constructor to preserve existing call sites.
+        /// TODO: remove once all ViewModels are migrated to DI constructors.
         /// </summary>
-        protected void InitializeServices()
+        [Obsolete("Use the DI-enabled constructor that accepts IViewModelContext and explicit services.")]
+        protected BaseViewModel()
+            : this(
+                  ResolveContext(),
+                  TryResolve<IErrorLoggingService>(),
+                  TryResolve<IErrorDialogService>(),
+                  TryResolve<StatePersistenceService>(),
+                  TryResolve<OperationQueueService>(),
+                  TryResolve<StateCacheService>(),
+                  TryResolve<GracefulDegradationService>())
+        {
+        }
+
+        private static IViewModelContext ResolveContext()
         {
             try
             {
-                ErrorLoggingService = ServiceProvider.GetErrorLoggingService();
-                ErrorDialogService = ServiceProvider.GetErrorDialogService();
-                StatePersistenceService = ServiceProvider.GetStatePersistenceService();
-                OperationQueueService = ServiceProvider.GetOperationQueueService();
-                StateCacheService = ServiceProvider.GetStateCacheService();
-                GracefulDegradationService = ServiceProvider.GetGracefulDegradationService();
+                var context = AppServices.GetService<IViewModelContext>();
+                if (context != null)
+                {
+                    return context;
+                }
             }
             catch
             {
-                // Services may not be initialized yet - that's okay
-                // This allows ViewModels to be created before ServiceProvider is initialized
+                // AppServices not initialized; fall back to minimal context
+            }
+
+            var dispatcher = DispatcherQueue.GetForCurrentThread()
+                ?? Microsoft.UI.Dispatching.DispatcherQueueController.CreateOnDedicatedThread().DispatcherQueue;
+            return new ViewModelContext(NullLogger.Instance, dispatcher);
+        }
+
+        private static T? TryResolve<T>() where T : class
+        {
+            try
+            {
+                return AppServices.GetService<T>();
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -287,6 +336,11 @@ namespace VoiceStudio.App.ViewModels
         #region IDisposable Implementation
 
         private bool _disposed = false;
+
+        /// <summary>
+        /// Indicates whether this ViewModel has been disposed.
+        /// </summary>
+        protected bool IsDisposed => _disposed;
 
         /// <summary>
         /// Disposes the ViewModel and releases resources.

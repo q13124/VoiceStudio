@@ -220,7 +220,7 @@ class DeepFaceLabEngine(EngineProtocol):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except ImportError:
-                pass
+                ...
 
             # Clear caches
             self._result_cache.clear()
@@ -532,7 +532,7 @@ class DeepFaceLabEngine(EngineProtocol):
                                 for gpu in gpus:
                                     tf.config.experimental.set_memory_growth(gpu, True)
                             except RuntimeError:
-                                pass
+                                ...
 
                     # Load model
                     if model_path.endswith(".h5"):

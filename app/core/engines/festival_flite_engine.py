@@ -63,12 +63,10 @@ except ImportError:
                 self._initialized = False
 
             @abstractmethod
-            def initialize(self):
-                pass
+            def initialize(self): ...
 
             @abstractmethod
-            def cleanup(self):
-                pass
+            def cleanup(self): ...
 
             def is_initialized(self):
                 return self._initialized
@@ -632,7 +630,9 @@ class FestivalFliteEngine(EngineProtocol):
                             engine_name, duration, cached=False
                         )
                     except Exception:
-                        pass  # Metrics not available, skip
+                        logger.debug(
+                            "Performance metrics unavailable for festival/flite batch."
+                        )
                 return result
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -644,7 +644,7 @@ class FestivalFliteEngine(EngineProtocol):
                     engine_name = "flite" if self.use_flite else "festival"
                     metrics.record_error(engine_name, "synthesis_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking

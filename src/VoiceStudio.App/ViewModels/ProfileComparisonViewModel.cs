@@ -352,7 +352,7 @@ namespace VoiceStudio.App.ViewModels
         // Comparison helpers
         public string QualityScoreADisplay => $"{QualityScoreA:F2}/5.0";
         public string QualityScoreBDisplay => $"{QualityScoreB:F2}/5.0";
-        public string QualityScoreDifference => $"{(QualityScoreA - QualityScoreB):+0.00;-0.00;0.00}";
+        public string QualityScoreDifference => $"{QualityScoreA - QualityScoreB:+0.00;-0.00;0.00}";
         public bool ProfileAIsBetter => QualityScoreA > QualityScoreB;
         public bool ProfileBIsBetter => QualityScoreB > QualityScoreA;
 

@@ -735,12 +735,12 @@ Get-AuthenticodeSignature VoiceStudio-Setup-v1.0.0.exe
 
 **Command:**
 ```powershell
-signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudioApp.exe
+signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com VoiceStudio.App.exe
 ```
 
 **Verify:**
 ```powershell
-Get-AuthenticodeSignature VoiceStudioApp.exe
+Get-AuthenticodeSignature VoiceStudio.App.exe
 ```
 
 **Pass Criteria:**

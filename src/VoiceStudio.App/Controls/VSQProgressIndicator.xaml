@@ -8,14 +8,16 @@
     <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
         <ProgressBar
             x:Name="ProgressBarControl"
-            Style="{StaticResource VSQ.ProgressBar.Style}"
+            Foreground="{StaticResource VSQ.Progress.ForegroundBrush}"
             Value="{x:Bind Progress, Mode=OneWay}"
             Minimum="0"
             Maximum="100"
             Visibility="{x:Bind ProgressBarVisibility, Mode=OneWay}" />
         <ProgressRing
             x:Name="ProgressRingControl"
-            Style="{StaticResource VSQ.LoadingSpinner.Style}"
+            Width="{StaticResource VSQ.Icon.Size.Medium}"
+            Height="{StaticResource VSQ.Icon.Size.Medium}"
+            Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
             IsActive="{x:Bind IsIndeterminate, Mode=OneWay}"
             Visibility="{x:Bind ProgressRingVisibility, Mode=OneWay}" />
         <TextBlock

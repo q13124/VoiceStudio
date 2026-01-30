@@ -32,7 +32,7 @@ def count_lines_of_code(directory: Path, extensions: List[str]) -> Dict[str, int
                         lines = f.readlines()
                         counts[ext] += len([l for l in lines if l.strip()])
                 except:
-                    pass
+                    ...
     
     return counts
 

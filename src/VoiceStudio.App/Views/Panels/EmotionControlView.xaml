@@ -5,6 +5,7 @@
     xmlns:vm="using:VoiceStudio.App.ViewModels"
     xmlns:converters="using:VoiceStudio.App.Converters">
     <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:StringFormatConverter x:Key="StringFormatConverter" />
@@ -46,7 +47,7 @@
 
         <!-- Main content -->
         <ScrollViewer Grid.Row="1" Padding="{StaticResource VSQ.Spacing.Medium}">
-            <StackPanel Spacing="{StaticResource VSQ.Spacing.Medium}">
+            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
                 <!-- Target Audio -->
                 <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
                     BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
@@ -122,7 +123,7 @@
                             OnContent="Blending Enabled" />
 
                         <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}"
-                            Visibility="{x:Bind ViewModel.EnableBlending, Mode=OneWay}">
+                            Visibility="{x:Bind ViewModel.EnableBlending, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Orientation="Horizontal"
                                 Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                                 <TextBlock Text="Secondary:" Width="100"
@@ -239,11 +240,9 @@
                                         <StackPanel Grid.Column="1" Orientation="Horizontal"
                                             Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                                             <Button Content="Load"
-                                                Command="{x:Bind ViewModel.LoadPresetCommand, Mode=OneWay}"
-                                                CommandParameter="{Binding}" />
+                                                Click="PresetLoadButton_Click" />
                                             <Button Content="Delete"
-                                                Command="{x:Bind ViewModel.DeletePresetCommand, Mode=OneWay}"
-                                                CommandParameter="{Binding}" />
+                                                Click="PresetDeleteButton_Click" />
                                         </StackPanel>
                                     </Grid>
                                 </DataTemplate>

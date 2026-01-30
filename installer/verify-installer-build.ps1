@@ -25,7 +25,7 @@ if (-not (Test-Path $buildScript)) {
     $errors += "Build script not found: $buildScript"
 }
 else {
-    Write-Host "✓ Build script exists" -ForegroundColor Green
+    Write-Host "[OK] Build script exists" -ForegroundColor Green
 }
 
 # Check installer script exists
@@ -36,7 +36,7 @@ if ($InstallerType -eq "InnoSetup") {
         $errors += "Inno Setup script not found: $installerScript"
     }
     else {
-        Write-Host "✓ Inno Setup script exists" -ForegroundColor Green
+        Write-Host "[OK] Inno Setup script exists" -ForegroundColor Green
     }
 }
 elseif ($InstallerType -eq "WiX") {
@@ -45,23 +45,36 @@ elseif ($InstallerType -eq "WiX") {
         $errors += "WiX script not found: $installerScript"
     }
     else {
-        Write-Host "✓ WiX script exists" -ForegroundColor Green
+        Write-Host "[OK] WiX script exists" -ForegroundColor Green
     }
 }
 
-# Check frontend build output
-Write-Host "Checking frontend build output..." -ForegroundColor Yellow
-$frontendPath = Join-Path $RootDir "src\VoiceStudio.App\bin\Release\net8.0-windows10.0.19041.0"
-if (-not (Test-Path $frontendPath)) {
-    $warnings += "Frontend build output not found: $frontendPath (may need to build first)"
+# Check Gate C publish output (canonical frontend artifact)
+Write-Host "Checking Gate C publish output..." -ForegroundColor Yellow
+$publishDir = Join-Path $RootDir ".buildlogs\x64\Release\gatec-publish"
+if (-not (Test-Path $publishDir)) {
+    $warnings += "Gate C publish output not found: $publishDir (run scripts\\gatec-publish-launch.ps1 -NoLaunch)"
 }
 else {
-    $exeFile = Join-Path $frontendPath "VoiceStudioApp.exe"
-    if (-not (Test-Path $exeFile)) {
-        $warnings += "Frontend executable not found: $exeFile"
+    $missing = @()
+    $required = @(
+        (Join-Path $publishDir "VoiceStudio.App.exe"),
+        (Join-Path $publishDir "VoiceStudio.App.dll"),
+        (Join-Path $publishDir "VoiceStudio.App.deps.json"),
+        (Join-Path $publishDir "VoiceStudio.App.runtimeconfig.json")
+    )
+    foreach ($p in $required) {
+        if (-not (Test-Path $p)) {
+            $missing += $p
+        }
+    }
+    if ($missing.Count -eq 0) {
+        Write-Host "[OK] Gate C publish output looks complete" -ForegroundColor Green
     }
     else {
-        Write-Host "✓ Frontend executable exists" -ForegroundColor Green
+        foreach ($p in $missing) {
+            $warnings += "Missing publish output file: $p"
+        }
     }
 }
 
@@ -72,7 +85,7 @@ if (-not (Test-Path $corePath)) {
     $warnings += "Core build output not found: $corePath (may need to build first)"
 }
 else {
-    Write-Host "✓ Core build output exists" -ForegroundColor Green
+    Write-Host "[OK] Core build output exists" -ForegroundColor Green
 }
 
 # Check backend files
@@ -82,7 +95,7 @@ if (-not (Test-Path $backendMain)) {
     $errors += "Backend main.py not found: $backendMain"
 }
 else {
-    Write-Host "✓ Backend main.py exists" -ForegroundColor Green
+    Write-Host "[OK] Backend main.py exists" -ForegroundColor Green
 }
 
 $backendRoutes = Join-Path $RootDir "backend\api\routes"
@@ -95,7 +108,7 @@ else {
         $warnings += "No route files found in backend\api\routes"
     }
     else {
-        Write-Host "✓ Backend routes exist ($($routeFiles.Count) files)" -ForegroundColor Green
+        Write-Host "[OK] Backend routes exist ($($routeFiles.Count) files)" -ForegroundColor Green
     }
 }
 
@@ -104,7 +117,7 @@ if (-not (Test-Path $backendRequirements)) {
     $warnings += "Backend requirements.txt not found: $backendRequirements"
 }
 else {
-    Write-Host "✓ Backend requirements.txt exists" -ForegroundColor Green
+    Write-Host "[OK] Backend requirements.txt exists" -ForegroundColor Green
 }
 
 # Check core engine files
@@ -119,7 +132,7 @@ else {
         $warnings += "No engine files found in app\core\engines"
     }
     else {
-        Write-Host "✓ Core engine files exist ($($engineFiles.Count) files)" -ForegroundColor Green
+        Write-Host "[OK] Core engine files exist ($($engineFiles.Count) files)" -ForegroundColor Green
     }
 }
 
@@ -128,7 +141,7 @@ if (-not (Test-Path $audioPath)) {
     $warnings += "Core audio directory not found: $audioPath"
 }
 else {
-    Write-Host "✓ Core audio files exist" -ForegroundColor Green
+    Write-Host "[OK] Core audio files exist" -ForegroundColor Green
 }
 
 $runtimePath = Join-Path $RootDir "app\core\runtime"
@@ -136,7 +149,7 @@ if (-not (Test-Path $runtimePath)) {
     $warnings += "Core runtime directory not found: $runtimePath"
 }
 else {
-    Write-Host "✓ Core runtime files exist" -ForegroundColor Green
+    Write-Host "[OK] Core runtime files exist" -ForegroundColor Green
 }
 
 $trainingPath = Join-Path $RootDir "app\core\training"
@@ -144,7 +157,7 @@ if (-not (Test-Path $trainingPath)) {
     $warnings += "Core training directory not found: $trainingPath"
 }
 else {
-    Write-Host "✓ Core training files exist" -ForegroundColor Green
+    Write-Host "[OK] Core training files exist" -ForegroundColor Green
 }
 
 # Check engine manifests
@@ -159,7 +172,7 @@ else {
         $warnings += "No engine manifests found in engines directory"
     }
     else {
-        Write-Host "✓ Engine manifests exist ($($manifests.Count) manifests)" -ForegroundColor Green
+        Write-Host "[OK] Engine manifests exist ($($manifests.Count) manifests)" -ForegroundColor Green
     }
 }
 
@@ -175,7 +188,7 @@ else {
         $warnings += "No user documentation files found"
     }
     else {
-        Write-Host "✓ User documentation exists ($($userDocs.Count) files)" -ForegroundColor Green
+        Write-Host "[OK] User documentation exists ($($userDocs.Count) files)" -ForegroundColor Green
     }
 }
 
@@ -184,7 +197,7 @@ if (-not (Test-Path $docsApi)) {
     $warnings += "API documentation directory not found: $docsApi"
 }
 else {
-    Write-Host "✓ API documentation exists" -ForegroundColor Green
+    Write-Host "[OK] API documentation exists" -ForegroundColor Green
 }
 
 $docsDeveloper = Join-Path $RootDir "docs\developer"
@@ -192,7 +205,7 @@ if (-not (Test-Path $docsDeveloper)) {
     $warnings += "Developer documentation directory not found: $docsDeveloper"
 }
 else {
-    Write-Host "✓ Developer documentation exists" -ForegroundColor Green
+    Write-Host "[OK] Developer documentation exists" -ForegroundColor Green
 }
 
 # Check license file
@@ -202,7 +215,7 @@ if (-not (Test-Path $licenseFile)) {
     $warnings += "LICENSE file not found: $licenseFile"
 }
 else {
-    Write-Host "✓ LICENSE file exists" -ForegroundColor Green
+    Write-Host "[OK] LICENSE file exists" -ForegroundColor Green
 }
 
 # Summary
@@ -212,7 +225,7 @@ Write-Host "Verification Summary" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
-    Write-Host "✓ All checks passed!" -ForegroundColor Green
+    Write-Host "[OK] All checks passed!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Installer is ready to build." -ForegroundColor Cyan
     Write-Host "Run: .\build-installer.ps1 -InstallerType $InstallerType -Version $Version" -ForegroundColor White
@@ -222,14 +235,14 @@ else {
     if ($errors.Count -gt 0) {
         Write-Host "Errors found:" -ForegroundColor Red
         foreach ($error in $errors) {
-            Write-Host "  ✗ $error" -ForegroundColor Red
+            Write-Host "  [ERROR] $error" -ForegroundColor Red
         }
     }
     
     if ($warnings.Count -gt 0) {
         Write-Host "Warnings:" -ForegroundColor Yellow
         foreach ($warning in $warnings) {
-            Write-Host "  ⚠ $warning" -ForegroundColor Yellow
+            Write-Host "  [WARN] $warning" -ForegroundColor Yellow
         }
     }
     

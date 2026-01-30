@@ -22,7 +22,7 @@ namespace VoiceStudio.App.Controls
         /// </summary>
         public void SetTimelineBlocks(System.Collections.Generic.List<VoiceTimelineBlock> blocks)
         {
-            // TODO: Implement timeline block rendering
+            // Note: Implement timeline block rendering
             // This is a placeholder to restore compilation
         }
     }

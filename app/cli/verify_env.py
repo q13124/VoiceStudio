@@ -159,7 +159,7 @@ def check_path_references():
                         if "C:\\VoiceStudio" in content or "C:/VoiceStudio" in content:
                             found_old_paths.append(str(file_path))
                 except:
-                    pass
+                    ...
     
     if found_old_paths:
         print(f"  ⚠ Found {len(found_old_paths)} files with C:\\VoiceStudio references:")

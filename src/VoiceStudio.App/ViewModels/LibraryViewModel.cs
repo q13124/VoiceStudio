@@ -169,9 +169,12 @@ namespace VoiceStudio.App.ViewModels
                 );
 
                 Folders.Clear();
-                foreach (var folder in response.Folders)
+                if (response?.Folders != null)
                 {
-                    Folders.Add(folder);
+                    foreach (var folder in response.Folders)
+                    {
+                        Folders.Add(folder);
+                    }
                 }
             }
             catch (Exception ex)
@@ -222,12 +225,15 @@ namespace VoiceStudio.App.ViewModels
                 );
 
                 Assets.Clear();
-                foreach (var asset in response.Assets)
+                if (response?.Assets != null)
                 {
-                    Assets.Add(asset);
+                    foreach (var asset in response.Assets)
+                    {
+                        Assets.Add(asset);
+                    }
                 }
 
-                TotalAssets = response.Total;
+                TotalAssets = response?.Total ?? 0;
             }
             catch (OperationCanceledException)
             {
@@ -275,6 +281,11 @@ namespace VoiceStudio.App.ViewModels
                     System.Net.Http.HttpMethod.Post,
                     cancellationToken
                 );
+
+                if (createdFolder == null)
+                {
+                    throw new InvalidOperationException("Backend did not return the created folder.");
+                }
 
                 await LoadFoldersAsync(cancellationToken);
                 
@@ -401,9 +412,12 @@ namespace VoiceStudio.App.ViewModels
                 );
 
                 AvailableAssetTypes.Clear();
-                foreach (var type in response.Types)
+                if (response?.Types != null)
                 {
-                    AvailableAssetTypes.Add(type.Id);
+                    foreach (var type in response.Types)
+                    {
+                        AvailableAssetTypes.Add(type.Id);
+                    }
                 }
             }
             catch (OperationCanceledException)

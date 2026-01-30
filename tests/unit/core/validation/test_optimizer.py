@@ -177,7 +177,7 @@ class TestValidationOptimizer:
         try:
             optimizer.validate(TestModel, {"name": "Test"})
         except ValidationError:
-            pass
+            ...
 
         stats = optimizer.get_stats()
         assert stats["validation_count"] == 2

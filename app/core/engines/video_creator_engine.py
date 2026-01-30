@@ -424,7 +424,9 @@ class VideoCreatorEngine(EngineProtocol):
                         "video_creator", duration, cached=False
                     )
                 except Exception:
-                    pass  # Metrics not available, skip
+                    logger.debug(
+                        "Performance metrics unavailable for video_creator batch create."
+                    )
                 return result
             except Exception as e:
                 logger.error(f"Batch video creation failed: {e}")
@@ -435,7 +437,7 @@ class VideoCreatorEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_error("video_creator", "creation_error")
                 except Exception:
-                    pass
+                    ...
                 return None
 
         # Optimize batch processing with better chunking
