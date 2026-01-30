@@ -200,12 +200,14 @@ class CircuitBreaker:
         if self._state == CircuitState.OPEN:
             if self._should_attempt_reset():
                 self._set_state(CircuitState.HALF_OPEN)
+                self._half_open_calls += 1  # First call entering half-open
                 return True
             self._total_blocked += 1
             return False
         
         # HALF_OPEN: limit concurrent calls
         if self._half_open_calls < self.config.half_open_max_calls:
+            self._half_open_calls += 1  # Track in-flight calls for concurrency limiting
             return True
         
         self._total_blocked += 1
@@ -216,6 +218,9 @@ class CircuitBreaker:
         self._total_calls += 1
         
         if self._state == CircuitState.HALF_OPEN:
+            # Decrement in-flight counter (allow_request incremented it)
+            if self._half_open_calls > 0:
+                self._half_open_calls -= 1
             self._success_count += 1
             if self._success_count >= self.config.success_threshold:
                 self._failure_count = 0
@@ -234,6 +239,9 @@ class CircuitBreaker:
         self._last_failure_time = time.monotonic()
         
         if self._state == CircuitState.HALF_OPEN:
+            # Decrement in-flight counter (allow_request incremented it)
+            if self._half_open_calls > 0:
+                self._half_open_calls -= 1
             # Any failure in half-open re-opens circuit
             self._set_state(CircuitState.OPEN)
         elif self._state == CircuitState.CLOSED:
@@ -284,9 +292,7 @@ class CircuitBreaker:
         async with self._lock:
             if not self.allow_request():
                 raise CircuitBreakerOpenError(self.name, self.time_until_retry())
-            
-            if self._state == CircuitState.HALF_OPEN:
-                self._half_open_calls += 1
+            # Note: allow_request() now increments _half_open_calls when in HALF_OPEN state
         
         try:
             yield

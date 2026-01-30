@@ -167,6 +167,44 @@ class TestCircuitBreaker:
         assert stats.total_calls == 3
         assert stats.total_failures == 1
         assert stats.state == CircuitState.CLOSED
+    
+    def test_half_open_concurrency_limit_synchronous(self):
+        """Synchronous allow_request() enforces half-open concurrency limit."""
+        breaker = CircuitBreaker(
+            name="test_engine",
+            failure_threshold=2,
+            recovery_timeout=0.05,
+            half_open_max_calls=2  # Only allow 2 concurrent calls in half-open
+        )
+        
+        # Open the circuit
+        breaker.record_failure()
+        breaker.record_failure()
+        assert breaker.is_open
+        
+        # Wait for recovery timeout
+        time.sleep(0.06)
+        
+        # First call - should allow and increment counter
+        assert breaker.allow_request()
+        assert breaker.is_half_open
+        assert breaker._half_open_calls == 1
+        
+        # Second call - should allow
+        assert breaker.allow_request()
+        assert breaker._half_open_calls == 2
+        
+        # Third call - should be blocked (at limit)
+        assert not breaker.allow_request()
+        assert breaker._half_open_calls == 2  # Still at 2
+        
+        # Complete first call successfully - should decrement counter
+        breaker.record_success()
+        assert breaker._half_open_calls == 1
+        
+        # Now another call should be allowed
+        assert breaker.allow_request()
+        assert breaker._half_open_calls == 2
 
 
 class TestCircuitBreakerAsync:
