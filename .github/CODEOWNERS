@@ -1,0 +1,90 @@
+# VoiceStudio CODEOWNERS
+# 
+# This file defines code ownership for protected surfaces.
+# When a PR modifies these paths, the designated owners are automatically
+# requested for review.
+#
+# Format: path @owner1 @owner2
+# Use GitHub usernames or team names.
+#
+# For VoiceStudio, owners map to roles:
+#   @Overseer = Role 0 (Overseer)
+#   @SystemArchitect = Role 1 (System Architect)
+#   @BuildTooling = Role 2 (Build & Tooling)
+#   @UIEngineer = Role 3 (UI Engineer)
+#   @CorePlatform = Role 4 (Core Platform)
+#   @EngineEngineer = Role 5 (Engine Engineer)
+#   @ReleaseEngineer = Role 6 (Release Engineer)
+#
+# NOTE: Replace placeholder names with actual GitHub usernames/teams.
+# See config/compatibility_matrix.yml for protected surface definitions.
+# ============================================================================
+
+# ==============================================================================
+# GOVERNANCE & RULES (Overseer approval required)
+# ==============================================================================
+/.cursor/rules/                         @Overseer
+/.cursor/STATE.md                       @Overseer
+/config/compatibility_matrix.yml        @Overseer
+/version_lock.json                      @Overseer
+/docs/governance/                       @Overseer
+/AGENTS.md                              @Overseer
+
+# ==============================================================================
+# BUILD & TOOLING (Build & Tooling role required)
+# ==============================================================================
+/global.json                            @Overseer @BuildTooling
+/Directory.Build.props                  @BuildTooling
+/Directory.Build.targets                @BuildTooling
+/.github/workflows/                     @BuildTooling @Overseer
+/.pre-commit-config.yaml                @BuildTooling
+/VoiceStudio.sln                        @BuildTooling
+
+# ==============================================================================
+# CORE ARCHITECTURE (System Architect approval required)
+# ==============================================================================
+/src/VoiceStudio.Core/                  @SystemArchitect @Overseer
+/shared/                                @SystemArchitect
+/docs/architecture/                     @SystemArchitect
+
+# ==============================================================================
+# UI COMPONENTS (UI Engineer)
+# ==============================================================================
+/src/VoiceStudio.App/Views/             @UIEngineer
+/src/VoiceStudio.App/ViewModels/        @UIEngineer
+/src/VoiceStudio.App/Resources/         @UIEngineer
+/src/VoiceStudio.Common.UI/             @UIEngineer
+/src/VoiceStudio.Module.*/              @UIEngineer
+
+# ==============================================================================
+# BACKEND & PLATFORM (Core Platform)
+# ==============================================================================
+/backend/api/                           @CorePlatform
+/backend/services/                      @CorePlatform
+/requirements.txt                       @CorePlatform @Overseer
+
+# ==============================================================================
+# ENGINE LAYER (Engine Engineer)
+# ==============================================================================
+/app/core/engines/                      @EngineEngineer
+/engines/                               @EngineEngineer
+/requirements_engines.txt               @EngineEngineer @Overseer
+/models/                                @EngineEngineer
+
+# ==============================================================================
+# RELEASE & INSTALLER (Release Engineer)
+# ==============================================================================
+/installer/                             @ReleaseEngineer
+/scripts/gatec-*.ps1                    @ReleaseEngineer @BuildTooling
+
+# ==============================================================================
+# VERIFICATION TOOLING (Overseer + relevant role)
+# ==============================================================================
+/tools/overseer/                        @Overseer
+/scripts/run_verification.py            @Overseer @BuildTooling
+/scripts/validator_workflow.py          @Overseer
+
+# ==============================================================================
+# DEFAULT: Any file not matched above
+# ==============================================================================
+*                                       @Overseer
