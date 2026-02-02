@@ -519,15 +519,27 @@ def _get_request_size_middleware():
 # Add performance profiling middleware (lazy initialization)
 @app.middleware("http")
 async def performance_profiling_middleware(request: Request, call_next):
-    middleware = _get_performance_middleware()
-    return await middleware.dispatch(request, call_next)
+    try:
+        middleware = _get_performance_middleware()
+        if middleware is None:
+            return await call_next(request)
+        return await middleware.dispatch(request, call_next)
+    except Exception as e:
+        logger.warning(f"Performance middleware error: {e}")
+        return await call_next(request)
 
 
 # Add request size limit middleware (lazy initialization)
 @app.middleware("http")
 async def request_size_limit_middleware(request: Request, call_next):
-    middleware = _get_request_size_middleware()
-    return await middleware.dispatch(request, call_next)
+    try:
+        middleware = _get_request_size_middleware()
+        if middleware is None:
+            return await call_next(request)
+        return await middleware.dispatch(request, call_next)
+    except Exception as e:
+        logger.warning(f"Request size middleware error: {e}")
+        return await call_next(request)
 
 
 # Add request ID middleware (must be first)
@@ -647,8 +659,15 @@ if ('serviceWorker' in navigator) {
 # Add response caching middleware (after request ID, before rate limiting)
 @app.middleware("http")
 async def api_response_cache_middleware(request: Request, call_next):
-    _, response_cache_middleware = _lazy_import_response_cache()
-    return await response_cache_middleware(request, call_next)
+    try:
+        _, middleware_func = _lazy_import_response_cache()
+        if middleware_func is None:
+            # Fallback if import failed
+            return await call_next(request)
+        return await middleware_func(request, call_next)
+    except Exception as e:
+        logger.warning(f"Response cache middleware error: {e}")
+        return await call_next(request)
 
 
 # Lazy rate limiting middleware initialization
@@ -1132,21 +1151,37 @@ def api_metrics():
 
 
 @app.get("/api/cache/stats")
-def cache_stats():
+async def cache_stats():
     """Get response cache statistics."""
-    get_response_cache, _ = _lazy_import_response_cache()
-    cache = get_response_cache()
-    return cache.get_stats()
+    try:
+        get_response_cache, _ = _lazy_import_response_cache()
+        if get_response_cache is None:
+            return {"error": "Response cache not initialized"}
+        cache = get_response_cache()
+        if cache is None:
+            return {"error": "Response cache instance not available"}
+        return cache.get_stats()
+    except Exception as e:
+        logger.warning(f"Failed to get cache stats: {e}")
+        return {"error": str(e)}
 
 
 @app.post("/api/cache/clear")
-def clear_cache():
+async def clear_cache():
     """Clear all response cache entries."""
-    get_response_cache, _ = _lazy_import_response_cache()
-    cache = get_response_cache()
-    count = len(cache._cache)
-    cache.clear()
-    return {"message": "Cache cleared", "entries_cleared": count}
+    try:
+        get_response_cache, _ = _lazy_import_response_cache()
+        if get_response_cache is None:
+            return {"error": "Response cache not initialized"}
+        cache = get_response_cache()
+        if cache is None:
+            return {"error": "Response cache instance not available"}
+        count = len(cache._cache)
+        cache.clear()
+        return {"message": "Cache cleared", "entries_cleared": count}
+    except Exception as e:
+        logger.warning(f"Failed to clear cache: {e}")
+        return {"error": str(e)}
 
 
 @app.get("/api/profiler/stats")
