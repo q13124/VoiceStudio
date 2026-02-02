@@ -13,7 +13,7 @@
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
 | **TD-001** | Chatterbox torch version | Chatterbox requires torch>=2.6, but venv has 2.2.2+cu121 | Engine unusable | Role 5 | 2026-01-29 | Phase 6+ |
-| **TD-002** | Release build suppressions | Release build uses NoWarn for CS0436, CS0618 | Technical debt in build | Role 2 | 2026-01-29 | Sprint 2 |
+| **TD-002** | Release build suppressions | Release build passes (0 warnings, 0 errors); no suppressions needed | Build clean | Role 2 | 2026-01-29 | CLOSED |
 | **TD-013** | VRAM Resource Scheduler | No explicit VRAM budgeting per ChatGPT spec Part 7 | Potential OOM with multi-engine | Role 4/5 | 2026-01-30 | Phase 6+ |
 | **TD-014** | Circuit Breaker Pattern | Implemented and wired into voice, image_gen, video_gen, rvc routes | Cascading failures prevented | Role 4 | 2026-01-30 | CLOSED |
 | **TD-015** | Venv Families Strategy | Single venv instead of 12 families per ChatGPT spec Part 4 | Dependency conflicts, limits expansion | Role 5 | 2026-01-30 | Phase 6+ |
@@ -22,8 +22,8 @@
 
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
-| **TD-003** | Python CVE: protobuf | protobuf <5.28.3 has CVE-2024-7254 | Security vulnerability | Role 4 | 2026-01-29 | Sprint 2 |
-| **TD-004** | ViewModel DI migration | TD-004 DI migration incomplete, some commented imports | Code cleanup needed | Role 3 | 2026-01-28 | Sprint 2 |
+| **TD-003** | Python CVE: protobuf | protobuf 6.33.4 installed (CVE fixed at 5.28.3) | Security RESOLVED | Role 4 | 2026-01-29 | CLOSED |
+| **TD-004** | ViewModel DI migration | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Migration complete | Role 3 | 2026-01-28 | CLOSED |
 | **TD-005** | Wizard e2e proof | Wizard flow proof passes (4 PASS, 2 SKIP due to engine deps) | QA complete | Role 3/5 | 2026-01-29 | CLOSED |
 | **TD-017** | OpenAPI spec regeneration | docs/api/openapi.json regenerated (508 paths) | Verification complete | Role 4 | 2026-02-02 | CLOSED |
 
@@ -36,8 +36,8 @@
 | **TD-008** | Git History Reconstruction | Documentation-git disconnect from branch divergence | Process failure | Role 0 | 2026-01-29 | CLOSED |
 | **TD-009** | Commit Discipline Enforcement | Pre-commit hooks verified (completion_guard, compatibility_matrix) | Process improvement | Role 0 | 2026-01-30 | CLOSED |
 | **TD-010** | Branch Merge Policy | Need policy for max branch divergence | Process improvement | Role 0 | 2026-01-30 | Sprint 2 |
-| **TD-011** | Interface Implementations | IViewModelContext, ITelemetryService, IProjectRepository need implementations | Functionality incomplete | Role 3/4 | 2026-01-30 | TASK-0023 |
-| **TD-012** | Namespace Cleanup | Some consumers still use wrong namespaces (App.UseCases) | Code cleanup | Role 2/3 | 2026-01-30 | TD-004 |
+| **TD-011** | Interface Implementations | All interfaces implemented: ViewModelContext, TelemetryServiceStub, JsonProjectRepository | Complete | Role 3/4 | 2026-01-30 | CLOSED |
+| **TD-012** | Namespace Cleanup | UseCases namespace correctly defined and used; no issues | Verified correct | Role 2/3 | 2026-01-30 | CLOSED |
 
 ---
 
@@ -53,6 +53,11 @@
 | **TD-016** | Engine Manifest Schema v2 | 2026-02-02 | verify_engine_tasks_targeted.py 4/4 PASS | ENGINE_ENGINEER_STATUS_2026-02-01 |
 | **TD-005** | Wizard e2e proof | 2026-02-02 | Wizard flow proof 4/4 PASS, 2 SKIP (engine deps) | .buildlogs/proof_runs/wizard_flow_20260201-231924 |
 | **TD-017** | OpenAPI spec regeneration | 2026-02-02 | docs/api/openapi.json regenerated with 508 paths | curl http://localhost:8002/openapi.json |
+| **TD-003** | Python CVE: protobuf | 2026-02-02 | protobuf 6.33.4 installed (CVE fixed at 5.28.3) | pip show protobuf |
+| **TD-002** | Release build suppressions | 2026-02-02 | Release build 0 warnings, 0 errors; no suppressions needed | dotnet build -c Release |
+| **TD-004** | ViewModel DI migration | 2026-02-02 | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Grep: IViewModelContext |
+| **TD-011** | Interface Implementations | 2026-02-02 | ViewModelContext, TelemetryServiceStub, JsonProjectRepository implemented | Grep: class.*: I*Service |
+| **TD-012** | Namespace Cleanup | 2026-02-02 | UseCases namespace correctly defined and used; no issues found | Grep: App.UseCases |
 
 ---
 
