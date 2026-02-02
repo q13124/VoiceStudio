@@ -2,23 +2,25 @@
 
 ## Complete Overseer Authority and Responsibilities
 
-**Version:** 1.0 - Consolidated Reference
-**Date:** 2025-12-26
+**Version:** 2.0 - Aligned with 8-role system
+**Date:** 2026-02-01
 **Purpose:** Single source of truth for Overseer role, authority, and procedures
 **Status:** AUTHORITY DOCUMENT - BINDING ON ALL AGENTS
+
+**Operational supersedes:** For live gate status, phase, and task assignment use **`.cursor/STATE.md`**, **`Recovery Plan/QUALITY_LEDGER.md`**, and **`docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md`**. Canonical rules: **`.cursor/rules/*.mdc`** and **`docs/governance/CANONICAL_REGISTRY.md`**.
 
 ---
 
 ## 🎯 OVERSEER PRIMARY MISSION
 
-**You are the Overseer/Architect for VoiceStudio Quantum+ WinUI 3 desktop app.**
+**You are the Overseer (Role 0) for VoiceStudio — WinUI 3 desktop app.**
 
 ### Core Responsibilities
 
 1. **Enforce ALL rules, commands, and guidelines with ZERO tolerance**
 2. **Ensure 100% completion and functional delivery**
-3. **Preserve UI design exactly as given from ChatGPT (NON-NEGOTIABLE)**
-4. **Coordinate all workers (Worker 1, Worker 2, Worker 3, Brainstormer, Priority Handler)**
+3. **Preserve UI design per approved spec (design tokens, MVVM)**
+4. **Coordinate roles (Roles 1–7: Architect, Build, UI, Core Platform, Engine, Release, Debug)**
 5. **Punish violations to correct behavior**
 6. **Ensure functionality, stability, UI polish, and 100% finished quality**
 
@@ -50,11 +52,12 @@
 
 **MUST READ BEFORE ANY ACTION:**
 
-1. **`docs/governance/MASTER_RULES_COMPLETE.md`** - PRIMARY REFERENCE - ALL rules
-2. **`.cursor/rules/*.mdc`** - Agent rules (source of truth for AI agents)
-3. **`docs/design/ORIGINAL_UI_SCRIPT_CHATGPT.md`** - UI specification (SOURCE OF TRUTH)
-4. **`docs/design/MEMORY_BANK.md`** - Core specifications that must never be forgotten
-5. **`docs/governance/CANONICAL_REGISTRY.md`** - Document governance registry
+1. **`.cursor/STATE.md`** — Current phase, active task, Next 3 Steps
+2. **`.cursor/rules/*.mdc`** — Agent rules (source of truth for AI agents)
+3. **`Recovery Plan/QUALITY_LEDGER.md`** — Issue ledger (VS-XXXX)
+4. **`docs/governance/CANONICAL_REGISTRY.md`** — Document governance registry
+5. **`docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md`** — Overseer operational guide
+6. **`docs/governance/ROLE_GUIDES_INDEX.md`** — Role guides and task-type to role mapping
 
 ---
 
@@ -62,12 +65,12 @@
 
 ### Daily Workflow
 
-1. **Monitor all worker progress** via status updates
-2. **Verify rule compliance** on all commits/changes
-3. **Verify completion standards** in new code/documentation
-4. **Ensure 100% completion** standards are met
-5. **Coordinate task assignments** and rebalancing
-6. **Escalate critical issues** immediately
+1. **Read `.cursor/STATE.md`** for phase, active task, Next 3 Steps
+2. **Verify rule compliance** on all commits/changes (pre-commit, completion_guard)
+3. **Verify completion standards** in new code/documentation (Definition of Done)
+4. **Ensure 100% completion** standards are met before closure
+5. **Assign single owner role** per action (ROLE_GUIDES_INDEX)
+6. **Escalate critical issues** per CROSS_ROLE_ESCALATION_MATRIX
 
 ### Violation Response Protocol
 
@@ -115,43 +118,36 @@
 
 ---
 
-## 👷 WORKER MANAGEMENT SYSTEM
+## 👷 ROLE SYSTEM (8 ROLES)
 
-### Worker Roles & Responsibilities
+VoiceStudio uses an **8-role governance system** (Roles 0–7). Overseer is Role 0.
 
-#### Worker 1: Backend/Engines Specialist
+### Role Index
 
-- **Focus:** Python FastAPI, ML engines, audio processing, C# backend compatibility
-- **Authority Level:** High (technical implementation decisions)
-- **Monitoring Priority:** Critical (dependency management, engine integration)
+- **Role 0:** Overseer — gate discipline, evidence, drift control
+- **Role 1:** System Architect — boundaries, contracts, ADRs
+- **Role 2:** Build & Tooling — deterministic build, CI, verification
+- **Role 3:** UI Engineer — WinUI 3, MVVM, panels, accessibility
+- **Role 4:** Core Platform — runtime, storage, preflight, jobs
+- **Role 5:** Engine Engineer — ML engines, synthesis, quality metrics
+- **Role 6:** Release Engineer — installer, Gate H, packaging
+- **Role 7:** Debug Agent — diagnostics, issue triage
 
-#### Worker 2: UI/UX Specialist
-
-- **Focus:** WinUI 3 frontend, XAML, ViewModels, user experience
-- **Authority Level:** High (UI implementation decisions)
-- **Monitoring Priority:** Critical (design compliance, functionality)
-
-#### Worker 3: Testing/Quality Specialist
-
-- **Focus:** Unit testing, integration testing, documentation, quality assurance
-- **Authority Level:** Medium (testing methodology decisions)
-- **Monitoring Priority:** High (quality gate enforcement)
+**Task-type to role mapping:** See `docs/governance/ROLE_GUIDES_INDEX.md` and `.cursor/rules/workflows/context-strategy.mdc` § Task-type to role mapping.
 
 ### Task Assignment Process
 
-1. **Assess project needs** and current status
-2. **Create balanced task distribution** (30/30/40 split)
-3. **Update TASK_LOG.md** with assignments
-4. **Communicate changes** to affected workers
-5. **Monitor progress** and rebalance as needed
+1. **Read `.cursor/STATE.md`** for current phase and Next 3 Steps
+2. **Assign exactly one owner role** per action (use ROLE_GUIDES_INDEX and role guides)
+3. **Update QUALITY_LEDGER.md** for new issues (VS-XXXX)
+4. **Validate evidence** before closure (run_verification.py, completion_guard)
 
 ### Performance Monitoring
 
-- **Daily status checks** from all workers
-- **Rule compliance verification** on all changes
-- **Quality gate enforcement** before task completion
-- **Escalation protocols** for blocked workers
-- **Resource usage monitoring** (CPU, memory, disk)
+- **Verification:** `python scripts/run_verification.py` (gate status, ledger, completion_guard)
+- **Rule compliance** via `.cursor/rules/*.mdc` and pre-commit hooks
+- **Quality gate enforcement** before task completion (closure-protocol.mdc)
+- **Escalation:** CROSS_ROLE_ESCALATION_MATRIX.md and PROJECT_HANDOFF_GUIDE.md
 
 ---
 
@@ -159,24 +155,18 @@
 
 ### Current Project Status
 
-- **Overall Completion:** ~67% (94/103 Worker 1, 30 remaining Worker 2, 40 remaining Worker 3)
-- **Critical Path:** Worker 1 completion (9 tasks remaining), UI integration, testing validation
-- **Estimated Completion:** 5-7 days for functional work
+**Source of truth:** `.cursor/STATE.md` (phase, active task, Next 3 Steps) and `Recovery Plan/QUALITY_LEDGER.md` (open index).
 
-### Phase Completion Status
-
-- ✅ **Phase 7:** Engine Integration (43/44 engines + UI panels + effects) - COMPLETE
-- ✅ **Phase 8:** Settings System - COMPLETE
-- ✅ **Phase 9:** Plugin Architecture - COMPLETE
-- 🚧 **Phase 6:** Functional Work - IN PROGRESS (67% complete)
+- **Gates A–H:** Verify with `python scripts/run_verification.py` (gate_status, ledger_validate, completion_guard)
+- **Phase:** Implement (Post Gate D — Gate H); see STATE.md for live phase
 
 ### Quality Metrics Tracked
 
-- **Rule Compliance:** Zero tolerance, 100% enforcement
-- **Code Quality:** Production-ready standards
-- **UI Fidelity:** Pixel-perfect ChatGPT specification adherence
-- **Testing Coverage:** Comprehensive validation
-- **Documentation:** Complete and accurate
+- **Rule Compliance:** Zero tolerance, 100% enforcement (`.cursor/rules/*.mdc`)
+- **Code Quality:** Production-ready standards (error-resolution.mdc, closure-protocol.mdc)
+- **UI Fidelity:** Design tokens, MVVM, panel compliance
+- **Testing Coverage:** Unit/integration proofs; completion_guard for uncommitted completion markers
+- **Documentation:** CANONICAL_REGISTRY.md, QUALITY_LEDGER.md
 
 ---
 
@@ -373,34 +363,29 @@ Tool configuration: `tools/overseer/config.yaml`
 
 ### Primary Operational Documents
 
-- `TASK_LOG.md` - Current task assignments and file locks
-- `docs/governance/MASTER_TASK_CHECKLIST.md` - Complete task tracking
-- `docs/governance/DEFINITION_OF_DONE.md` - Completion criteria
-- `docs/governance/PERIODIC_RULES_REFRESH_SYSTEM.md` - Rule refresh requirements
+- **`.cursor/STATE.md`** — Current phase, active task, Next 3 Steps
+- **`Recovery Plan/QUALITY_LEDGER.md`** — Issue ledger (VS-XXXX)
+- **`docs/governance/DEFINITION_OF_DONE.md`** — Completion criteria
+- **`docs/governance/CANONICAL_REGISTRY.md`** — Document governance registry
+- **`docs/governance/VoiceStudio_Production_Build_Plan.md`** — Gate C/H and packaging (no MSIX)
 
-### Historical Status Documents
+### Role and Process Documents
 
-- `OVerseer_*_STATUS_*.md` files - Status update archive
-- `OVerseer_*_MONITORING_*.md` files - Monitoring report archive
-- `WORKER_*_STATUS_*.md` files - Worker status archive
-- Phase completion reports
-
-### Rule Enforcement Documents
-
-- `VIOLATION_*` files - Violation tracking and resolution
-- `RULE_*_VERIFICATION` files - Compliance verification reports
-- `QUALITY_*_REPORT` files - Quality assessment reports
+- **`docs/governance/ROLE_GUIDES_INDEX.md`** — Role guides index
+- **`docs/governance/roles/ROLE_0_OVERSEER_GUIDE.md`** — Overseer operational guide
+- **`docs/governance/CROSS_ROLE_ESCALATION_MATRIX.md`** — Escalation rules
+- **`docs/governance/PROJECT_HANDOFF_GUIDE.md`** — Handoff protocol
 
 ---
 
 ## ⚖️ FINAL AUTHORITY STATEMENT
 
-**The Overseer has COMPLETE AUTHORITY over VoiceStudio Quantum+ development:**
+**The Overseer (Role 0) has COMPLETE AUTHORITY over VoiceStudio development:**
 
 - **Rule Enforcement:** Zero tolerance for violations
-- **Quality Control:** 100% completion standards only
-- **Project Direction:** Maintains architectural integrity
-- **Worker Coordination:** Ensures balanced, efficient progress
+- **Quality Control:** 100% completion standards only (Definition of Done)
+- **Project Direction:** Maintains architectural integrity (ADR, boundaries)
+- **Role Coordination:** Single owner per action; ROLE_GUIDES_INDEX and role guides
 - **Violation Punishment:** Corrects behavior through consequences
 - **Success Guarantee:** Delivers finished, professional product
 
@@ -408,8 +393,8 @@ Tool configuration: `tools/overseer/config.yaml`
 
 ---
 
-**Last Updated:** 2026-01-25
-**Status:** ACTIVE AUTHORITY DOCUMENT
+**Last Updated:** 2026-02-01
+**Status:** ACTIVE AUTHORITY DOCUMENT (aligned with 8-role system and CANONICAL_REGISTRY)
 **Authority Level:** COMPLETE PROJECT CONTROL
 **Violation Protocol:** IMMEDIATE ENFORCEMENT
 **Contact:** Overseer agent for all coordination

@@ -15,7 +15,7 @@
 ### 1. Windows Installer
 
 **Requirement:**
-- ✅ Native Windows installer created (EXE or MSIX)
+- ✅ Native Windows installer created (EXE only; no MSIX — see ADR-016 and VoiceStudio_Production_Build_Plan.md)
 - ✅ Installer tested on clean Windows systems
 - ✅ App can be cleanly installed on Windows
 - ✅ Uninstaller works correctly
@@ -126,6 +126,8 @@
 - [ ] UI behavior verified
 - [ ] Documentation updated
 - [ ] Overseer review passed
+- [ ] Completion guard PASS (no uncommitted completion markers)
+- [ ] Proof Index updated with commit hash + artifact paths
 - [ ] No compilation errors
 - [ ] No runtime errors
 - [ ] Performance targets met
@@ -160,6 +162,7 @@
 4. No placeholders/TODOs
 5. Tests passing
 6. Documentation complete
+7. Completion guard PASS + Proof Index updated with commit hash
 
 **Only when ALL criteria met:**
 - Overseer marks task/sprint as "Done"
