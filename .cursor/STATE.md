@@ -38,11 +38,14 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **ID**: None
 - **Title**: —
 - **Priority**: —
-- **Status**: **Overseer sweep complete (2026-02-02)** — All verification PASS. TASK-0024 (XAML compiler) CLOSED (build 0 errors). Tech debt 15/16 closed (TD-001 blocked upstream). Token compliance 100%. Phase 6+ optional work available. **Next:** Assign new task or continue Phase 6+ enhancements.
+- **Status**: **UI Engineer Sprint complete (2026-02-02)** — TASK-0027 (Accessibility), TASK-0028 (UI Automation), TASK-0029 (Backend Integration) all CLOSED. 659 AutomationProperties added. UI_TESTING_GUIDE.md created. UI_COMPLIANCE_AUDIT_2026-02-02.md generated. All gates GREEN. **Next:** Assign new task or continue optional enhancements.
 
 ## Last Milestone
 
-- **Completed**: Engine Engineer Quality Improvements
+- **Completed**: UI Engineer Sprint (TASK-0027, TASK-0028, TASK-0029)
+- **Date**: 2026-02-02
+- **Proof**: 659 AutomationProperties across 92 views. UI_TESTING_GUIDE.md created. 3 new UI test files (Settings, Wizard, Keyboard). CI ui-automation job added. UI_COMPLIANCE_AUDIT_2026-02-02.md generated. Gate C UI smoke PASS (exit 0, 11/11 nav steps, 0 binding failures). All 9 panels verified with BackendClient integration (371 usages across 68 ViewModels).
+- **Previous**: Engine Engineer Quality Improvements
 - **Date**: 2026-02-02
 - **Proof**: Voice profile matching improved +26% (0.656 → 0.828). MFCC cosine similarity added (0.993). GPU lane setup script created. Baseline proof SLO-6 PASS. Proof: `.buildlogs/proof_runs/baseline_workflow_20260201-235424/`, `scripts/analyze_quality_trends.py`, `scripts/setup_gpu_venv.ps1`.
 - **Previous**: Sprint 2 Tech Debt Closure (all actionable items resolved)
@@ -75,17 +78,18 @@ Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke 
 
 ## Next 3 Steps
 
-1. **TASK-0027 (Role 3):** Accessibility Enhancements - Add AutomationProperties to 88 views (8-16h)
-2. **TASK-0028 (Role 3):** UI Automation Framework - Set up WinAppDriver/Playwright (16-24h)
-3. **TASK-0029 (Role 3):** Advanced Panel Backend Integration - Wire 9 panels to APIs (36-72h)
+1. **TASK-0010 (Role 5):** Piper/Chatterbox Integration - Complete engine integration (blocked TD-001)
+2. **TASK-0020 (Role 3/5):** Wizard E2E Flow - Full end-to-end wizard proof with speech reference
+3. **Optional:** Additional UI polish, visual regression testing, or performance optimization
 
-**Phase 6+ Task Briefs Created:**
+**Phase 6+ Task Briefs Status:**
 | Task ID | Title | Owner | Priority | Status |
 |---------|-------|-------|----------|--------|
 | TASK-0010 | Piper/Chatterbox Integration | Role 5 | Medium | Partial (blocked TD-001) |
-| TASK-0027 | Accessibility Enhancements | Role 3 | Medium | Not Started |
-| TASK-0028 | UI Automation Framework | Role 3 | Medium | Not Started |
-| TASK-0029 | Advanced Panel Backend Integration | Role 3 | Medium | Not Started |
+| TASK-0020 | Wizard E2E Flow | Role 3/5 | Medium | Blocked (needs speech reference) |
+| TASK-0027 | Accessibility Enhancements | Role 3 | Medium | **Complete** (2026-02-02) |
+| TASK-0028 | UI Automation Framework | Role 3 | Medium | **Complete** (2026-02-02) |
+| TASK-0029 | Advanced Panel Backend Integration | Role 3 | Medium | **Complete** (2026-02-02) |
 
 _Previous:_
 - [x] **Continue role (this run):** Tooling refresh **PASS** (gate_status, ledger_validate). Active Task TASK-0020 (Wizard E2E); full e2e requires ≥3s speech reference. Proof: `.buildlogs/verification/last_run.json`.
