@@ -49,10 +49,7 @@ except ImportError:
                 return self._initialized
 
             def get_device(self) -> str:
-                return se1) Wizard API uses a single reference_audio_id. There is no reference_audio_ids list in the wizard request or job state. Multi-clip input exists on /api/voice/clone via multipart reference_audio[] plus use_multi_reference=true. For wizard support, keep reference_audio_id as the compatibility path; add a list field only after backend adds it.
-2) device and candidate_metrics come from the backend /api/voice/clone response at the top level, not inside quality_metrics. Candidate entries come from XTTS multi‑reference selection and include reference_audio, metrics, score, selected. Payload shape:
-{  "device": "cuda",  "candidate_metrics": [    {      "reference_audio": "C:\\path\\ref1.wav",      "metrics": {        "mos_score": 4.12,        "similarity": 0.83,        "naturalness": 0.78,        "snr_db": 24.5,        "artifacts": {          "artifact_score": 0.07,          "has_clicks": false,          "has_distortion": false        },        "voice_profile_match": {          "overall_similarity": 0.86        }      },      "score": 2.45,      "selected": true    }  ]}
-3) UI spec: there is no separate design spec for multi‑clip list or candidate list beyond the existing wizard layout and VSQ tokens. Use the current Step 1 area for the clip list, and the Step 4 quality metrics panel style for candidate metrics (list rows with metrics + selected label).lf.device
+                return self.device
 
 
 class SDNextEngine(EngineProtocol):
