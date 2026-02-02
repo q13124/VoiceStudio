@@ -28,7 +28,15 @@ repos:
         entry: python tools/overseer/verification/completion_guard.py
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
+
+      - id: compatibility-matrix-check
+        name: Compatibility Matrix Validation
+        entry: python scripts/check_compatibility_matrix.py --local
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^(global\.json|requirements.*\.txt|version_lock\.json|Directory\.Build\.props|config/compatibility_matrix\.yml)$
 
   # Python linters (ruff)
   - repo: https://github.com/astral-sh/ruff-pre-commit

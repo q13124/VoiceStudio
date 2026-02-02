@@ -42,7 +42,10 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 
 ## Last Milestone
 
-- **Completed**: Comprehensive Documentation Completeness Audit (8-Phase)
+- **Completed**: Phase Completion Plan Execution (TD-007, TD-009, TD-014 closed)
+- **Date**: 2026-02-02
+- **Proof**: TECH_DEBT_REGISTER updated; warning reduction 54% (scripts/check_warning_budget.py); circuit breaker wired into image_gen/video_gen/rvc routes; pre-commit hooks verified passing.
+- **Previous**: Comprehensive Documentation Completeness Audit (8-Phase)
 - **Date**: 2026-01-30
 - **Proof**: 10 audit reports in `docs/reports/audit/`; 42 specifications parsed; 77 requirements verified (95% implemented); 56/56 tests passing; 28 gaps identified with remediation plan; [COMPREHENSIVE_AUDIT_FINAL_REPORT_2026-01-30.md](docs/reports/audit/COMPREHENSIVE_AUDIT_FINAL_REPORT_2026-01-30.md).
 - **Previous**: TASK-0022 Git History Reconstruction Complete
@@ -66,9 +69,9 @@ Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke 
 
 ## Next 3 Steps
 
-1. **TASK-0020 (Active):** Execute wizard flow e2e proof when backend on 8001; owner Role 3 or 5. See [TASK-0020.md](docs/tasks/TASK-0020.md). **Backend on 8001 — preflight 200.** Full e2e pass requires `--reference-audio path/to/speech.wav` (≥3s **speech**; silence fails validate). Re-run `python scripts/wizard_flow_proof.py --backend-url http://localhost:8001 --reference-audio <path>`. Next Phase 6+ item: [TASK-0021](docs/tasks/TASK-0021.md) (OpenMemory MCP wiring).
-2. **Optional — Tooling refresh:** Run `python scripts/run_verification.py` when starting next workstream. Last run: **PASS** (gate_status, ledger_validate, completion_guard). Fix: `tools/overseer/verification/__init__.py` uses lazy import so completion_guard runs clean as `-m`; proof: `.buildlogs/verification/last_run.json`.
-3. **Optional — Role handoff:** Use `/role-ui-engineer` or `/role-engine-engineer` for TASK-0020; `/role-core-platform` or `/role-system-architect` for TASK-0021.
+1. **TD-005/TD-017 (Blocked):** Wizard flow e2e proof and OpenAPI regeneration require proper backend environment with numpy and engine dependencies. Install deps with `pip install numpy scipy librosa pillow soundfile` then restart backend. See [TASK-0020.md](docs/tasks/TASK-0020.md).
+2. **Commit pending changes:** Run `git add .` and commit warning budget script, circuit breaker wiring, pre-commit updates, and TECH_DEBT_REGISTER closures.
+3. **Optional — Tooling refresh:** Run `python scripts/run_verification.py` when starting next workstream. Last run: **PASS** (gate_status, ledger_validate). Proof: `.buildlogs/verification/last_run.json`.
 
 _Previous:_
 - [x] **Continue role (this run):** Tooling refresh **PASS** (gate_status, ledger_validate). Active Task TASK-0020 (Wizard E2E); full e2e requires ≥3s speech reference. Proof: `.buildlogs/verification/last_run.json`.

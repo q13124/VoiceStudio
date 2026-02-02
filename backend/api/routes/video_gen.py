@@ -12,10 +12,19 @@ from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from ..models_additional import (TemporalAnalysis, TemporalConsistencyRequest,
-                                 TemporalConsistencyResponse,
-                                 VideoGenerateRequest, VideoGenerateResponse,
-                                 VideoUpscaleRequest, VideoUpscaleResponse)
+from ..models_additional import (
+    TemporalAnalysis,
+    TemporalConsistencyRequest,
+    TemporalConsistencyResponse,
+    VideoGenerateRequest,
+    VideoGenerateResponse,
+    VideoUpscaleRequest,
+    VideoUpscaleResponse,
+)
+from backend.services.circuit_breaker import (
+    CircuitBreakerOpenError,
+    get_engine_breaker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +45,18 @@ try:
     if os.path.exists(app_path) and app_path not in sys.path:
         sys.path.insert(0, app_path)
 
-    from app.core.engines import (DeepFaceLabEngine, DeforumEngine,
-                                  FFmpegAIEngine, FOMMEngine, LyrebirdEngine,
-                                  MoviePyEngine, SadTalkerEngine, SVDEngine,
-                                  VideoCreatorEngine, VoiceAIEngine)
+    from app.core.engines import (
+        DeepFaceLabEngine,
+        DeforumEngine,
+        FFmpegAIEngine,
+        FOMMEngine,
+        LyrebirdEngine,
+        MoviePyEngine,
+        SadTalkerEngine,
+        SVDEngine,
+        VideoCreatorEngine,
+        VoiceAIEngine,
+    )
     from app.core.engines import router as engine_router
 
     ENGINE_AVAILABLE = True
@@ -66,9 +83,7 @@ try:
             engine_router.register_engine("video_creator", VideoCreatorEngine)
             engine_router.register_engine("voice_ai", VoiceAIEngine)
             engine_router.register_engine("lyrebird", LyrebirdEngine)
-            logger.info(
-                "Video engine router initialized with manual registration (fallback mode)"
-            )
+            logger.info("Video engine router initialized with manual registration (fallback mode)")
         except Exception as reg_error:
             logger.error(f"Failed to register engines manually: {reg_error}")
 except (ImportError, ModuleNotFoundError) as e:
@@ -101,11 +116,7 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
 
         # Validate engine
         if valid_engines and req.engine not in valid_engines:
-            engines_str = (
-                ", ".join(valid_engines)
-                if valid_engines
-                else "none (engines not loaded)"
-            )
+            engines_str = ", ".join(valid_engines) if valid_engines else "none (engines not loaded)"
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid engine '{req.engine}'. Available engines: {engines_str}",
@@ -149,8 +160,16 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
                 if req.additional_params:
                     gen_kwargs.update(req.additional_params)
 
-                # Generate video
-                result = engine.generate(**gen_kwargs)
+                # Generate video with circuit breaker protection
+                breaker = get_engine_breaker(req.engine)
+                try:
+                    async with breaker():
+                        result = engine.generate(**gen_kwargs)
+                except CircuitBreakerOpenError as e:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Engine '{req.engine}' temporarily unavailable: {e}",
+                    )
 
                 if result is None:
                     raise HTTPException(
@@ -172,9 +191,7 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
 
                         shutil.copy(video_path, output_path)
                     else:
-                        raise HTTPException(
-                            status_code=500, detail="Video file was not created"
-                        )
+                        raise HTTPException(status_code=500, detail="Video file was not created")
 
                 # Store video path
                 _video_storage[video_id] = output_path
@@ -210,9 +227,7 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
 
             except Exception as e:
                 logger.error(f"Video generation error: {e}", exc_info=True)
-                raise HTTPException(
-                    status_code=500, detail=f"Video generation failed: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
         else:
             # Engines not available - return proper error
             raise HTTPException(
@@ -240,9 +255,7 @@ async def upscale_video(
     """
     try:
         if not ENGINE_AVAILABLE or not engine_router:
-            raise HTTPException(
-                status_code=503, detail="Upscaling engines are not available"
-            )
+            raise HTTPException(status_code=503, detail="Upscaling engines are not available")
 
         # Get upscaling engine (default: realesrgan)
         engine_name = req.engine or "realesrgan"
@@ -264,9 +277,7 @@ async def upscale_video(
         elif req.video_id:
             # Load from stored video
             if req.video_id not in _video_storage:
-                raise HTTPException(
-                    status_code=404, detail=f"Video '{req.video_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"Video '{req.video_id}' not found")
             input_video_path = _video_storage[req.video_id]
         else:
             raise HTTPException(
@@ -279,20 +290,28 @@ async def upscale_video(
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"{video_id}.mp4")
 
-        # Upscale video (Real-ESRGAN supports video)
-        if hasattr(engine, "upscale_video"):
-            upscaled_video_path = engine.upscale_video(
-                input_video_path, output_path=output_path, **req.additional_params or {}
-            )
-        elif hasattr(engine, "upscale"):
-            # Try frame-by-frame upscaling
-            upscaled_video_path = engine.upscale(
-                input_video_path, output_path=output_path, **req.additional_params or {}
-            )
-        else:
+        # Upscale video (Real-ESRGAN supports video) with circuit breaker protection
+        breaker = get_engine_breaker(engine_name)
+        try:
+            async with breaker():
+                if hasattr(engine, "upscale_video"):
+                    upscaled_video_path = engine.upscale_video(
+                        input_video_path, output_path=output_path, **req.additional_params or {}
+                    )
+                elif hasattr(engine, "upscale"):
+                    # Try frame-by-frame upscaling
+                    upscaled_video_path = engine.upscale(
+                        input_video_path, output_path=output_path, **req.additional_params or {}
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Engine '{engine_name}' does not support video upscaling",
+                    )
+        except CircuitBreakerOpenError as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Engine '{engine_name}' does not support video upscaling",
+                status_code=503,
+                detail=f"Upscaling engine '{engine_name}' temporarily unavailable: {e}",
             )
 
         if upscaled_video_path is None or not os.path.exists(output_path):
@@ -348,9 +367,7 @@ async def enhance_temporal_consistency(
     """
     try:
         if req.video_id not in _video_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Video '{req.video_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Video '{req.video_id}' not found")
 
         video_path = _video_storage[req.video_id]
 
@@ -364,9 +381,7 @@ async def enhance_temporal_consistency(
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
             if frame_count < 2:
-                raise HTTPException(
-                    status_code=400, detail="Video must have at least 2 frames"
-                )
+                raise HTTPException(status_code=400, detail="Video must have at least 2 frames")
 
             # Read first few frames for analysis
             frames = []
@@ -378,9 +393,7 @@ async def enhance_temporal_consistency(
             cap.release()
 
             if len(frames) < 2:
-                raise HTTPException(
-                    status_code=400, detail="Failed to read video frames"
-                )
+                raise HTTPException(status_code=400, detail="Failed to read video frames")
 
             # Analyze frame stability (simplified - would use optical flow in production)
             frame_diffs = []
@@ -389,15 +402,11 @@ async def enhance_temporal_consistency(
                 frame_diffs.append(np.mean(diff))
 
             avg_frame_diff = np.mean(frame_diffs)
-            frame_stability = max(
-                0.0, min(1.0, 1.0 - (avg_frame_diff / 255.0))
-            )  # Normalize
+            frame_stability = max(0.0, min(1.0, 1.0 - (avg_frame_diff / 255.0)))  # Normalize
 
             # Analyze motion smoothness (simplified)
             motion_changes = np.diff(frame_diffs)
-            motion_smoothness = max(
-                0.0, min(1.0, 1.0 - (np.std(motion_changes) / 50.0))
-            )
+            motion_smoothness = max(0.0, min(1.0, 1.0 - (np.std(motion_changes) / 50.0)))
 
             # Detect flickering/jitter
             flicker_score = max(0.0, min(1.0, np.std(frame_diffs) / 100.0))
@@ -410,10 +419,7 @@ async def enhance_temporal_consistency(
                 artifacts_detected.append("jitter")
 
             overall_consistency = (
-                frame_stability
-                + motion_smoothness
-                + (1.0 - flicker_score)
-                + (1.0 - jitter_score)
+                frame_stability + motion_smoothness + (1.0 - flicker_score) + (1.0 - jitter_score)
             ) / 4.0
 
             original_analysis = TemporalAnalysis(
@@ -461,9 +467,7 @@ async def enhance_temporal_consistency(
                     if prev_frame is not None and req.smoothing_strength > 0:
                         # Blend with previous frame for smoothing
                         alpha = req.smoothing_strength
-                        frame = cv2.addWeighted(
-                            frame, 1.0 - alpha, prev_frame, alpha, 0
-                        )
+                        frame = cv2.addWeighted(frame, 1.0 - alpha, prev_frame, alpha, 0)
 
                     out.write(frame)
                     prev_frame = frame.copy()
@@ -487,8 +491,7 @@ async def enhance_temporal_consistency(
 
                 quality_improvement = min(
                     1.0,
-                    (processed_analysis.overall_consistency - overall_consistency)
-                    / 1.0,
+                    (processed_analysis.overall_consistency - overall_consistency) / 1.0,
                 )
 
             return TemporalConsistencyResponse(
@@ -561,9 +564,7 @@ async def convert_voice(
         # Get engine instance
         voice_engine = engine_router.get_engine(engine)
         if voice_engine is None:
-            raise HTTPException(
-                status_code=503, detail=f"Engine '{engine}' is not available"
-            )
+            raise HTTPException(status_code=503, detail=f"Engine '{engine}' is not available")
 
         # Save uploaded audio to temp file
         audio_data = await audio_file.read()
@@ -624,9 +625,7 @@ async def convert_voice(
         raise
     except Exception as e:
         logger.error(f"Voice conversion error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Voice conversion failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Voice conversion failed: {str(e)}")
 
 
 @router.get("/engines/list")

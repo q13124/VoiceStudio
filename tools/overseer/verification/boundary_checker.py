@@ -19,6 +19,8 @@ OPENAPI_PATH = "docs/api/openapi.json"
 
 def _normalize_path(path: str) -> str:
     """Normalize path for comparison (e.g. /api/profiles/123 -> /api/profiles/{id})."""
+    # Replace C# string interpolation patterns like {Uri.EscapeDataString(id)} with {id}
+    path = re.sub(r"\{Uri\.EscapeDataString\((\w+)\)\}", r"{\1}", path)
     # Replace path segments that look like IDs with {id}
     path = re.sub(r"/[a-fA-F0-9-]{8,}(/|$)", r"/{id}\1", path)
     path = re.sub(r"/[0-9]+(/|$)", r"/{id}\1", path)
@@ -37,6 +39,8 @@ def extract_ui_api_paths(root: Path) -> Set[str]:
     found = set()
     for m in pattern.finditer(text):
         p = m.group(1).split("?")[0].rstrip("/") or "/api"
+        # Normalize C# interpolation patterns like {Uri.EscapeDataString(id)} to {id}
+        p = re.sub(r"\{Uri\.EscapeDataString\((\w+)\)\}", r"{\1}", p)
         found.add(p)
     return found
 
@@ -68,7 +72,10 @@ def verify_ui_backend_alignment(
     ui_paths = extract_ui_api_paths(root)
     backend_paths = extract_backend_routes_from_openapi(root)
     if not backend_paths:
-        return True, "Backend routes not loaded (openapi.json missing or empty); skip alignment check."
+        return (
+            True,
+            "Backend routes not loaded (openapi.json missing or empty); skip alignment check.",
+        )
     missing: List[str] = []
     for p in ui_paths:
         # Base path before any template (e.g. /api/profiles/123 -> /api/profiles)
@@ -94,3 +101,33 @@ def run_boundary_checks(root: Optional[Path] = None) -> Tuple[bool, str]:
     root = root or DEFAULT_ROOT
     passed, msg = verify_ui_backend_alignment(root)
     return passed, msg
+
+
+def main() -> int:
+    """CLI entry point for boundary checker."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Verify UI ↔ Backend alignment (cross-boundary coherence check)."
+    )
+    parser.add_argument("--root", help="Project root path (default: auto-detect)")
+    parser.add_argument("--json", action="store_true", help="Output JSON format")
+    args = parser.parse_args()
+
+    root = Path(args.root) if args.root else None
+    passed, message = run_boundary_checks(root)
+
+    if args.json:
+        import json
+
+        print(json.dumps({"passed": passed, "message": message}))
+    else:
+        print(f"Boundary checker: {message}")
+
+    return 0 if passed else 1
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

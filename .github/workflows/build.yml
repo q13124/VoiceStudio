@@ -161,6 +161,39 @@ jobs:
             }
           }
 
+  warning-budget:
+    name: Warning Budget Check (TD-007)
+    runs-on: windows-latest
+    needs: [build-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Check warning budget
+        run: python scripts/check_warning_budget.py --json
+
+      - name: Upload warning report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: warning-budget-report
+          path: .buildlogs/verification/
+          retention-days: 30
+
   verify-gates:
     name: Verify Gate Status and Ledger
     runs-on: ubuntu-latest

@@ -23,6 +23,10 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from backend.services.model_preflight import ensure_sovits
+from backend.services.circuit_breaker import (
+    CircuitBreakerOpenError,
+    get_engine_breaker,
+)
 
 from ..models import ApiOk
 from ..models_additional import RvcStartRequest
@@ -71,9 +75,7 @@ try:
     try:
         engine_router.load_all_engines("engines")
         loaded_engines = engine_router.list_engines()
-        logger.info(
-            f"RVC Engine router initialized. " f"Loaded {len(loaded_engines)} engines"
-        )
+        logger.info(f"RVC Engine router initialized. " f"Loaded {len(loaded_engines)} engines")
     except Exception as e:
         logger.warning(f"Failed to auto-load engines: {e}")
 
@@ -153,19 +155,27 @@ async def convert_voice(
                 )
                 raise HTTPException(status_code=424, detail=detail)
 
-        # Perform conversion
+        # Perform conversion with circuit breaker protection
         output_path = tempfile.mktemp(suffix=".wav")
+        breaker = get_engine_breaker(engine_key)
 
-        result = engine.convert_voice(
-            source_audio=source_audio_path,
-            target_speaker_model=target_speaker_model,
-            output_path=output_path,
-            pitch_shift=pitch_shift,
-            enhance_quality=enhance_quality,
-            calculate_quality=calculate_quality,
-            protect=protect,
-            index_rate=index_rate,
-        )
+        try:
+            async with breaker():
+                result = engine.convert_voice(
+                    source_audio=source_audio_path,
+                    target_speaker_model=target_speaker_model,
+                    output_path=output_path,
+                    pitch_shift=pitch_shift,
+                    enhance_quality=enhance_quality,
+                    calculate_quality=calculate_quality,
+                    protect=protect,
+                    index_rate=index_rate,
+                )
+        except CircuitBreakerOpenError as e:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Engine '{engine_key}' temporarily unavailable: {e}",
+            )
 
         # Handle result
         if isinstance(result, tuple):
@@ -206,9 +216,7 @@ async def convert_voice(
         }
 
         if engine_key == "sovits_svc":
-            response["inference_configured"] = bool(
-                getattr(engine, "infer_command", None)
-            )
+            response["inference_configured"] = bool(getattr(engine, "infer_command", None))
 
         if quality_metrics_dict:
             response["quality_metrics"] = quality_metrics_dict
@@ -233,9 +241,7 @@ async def convert_realtime(websocket: WebSocket):
 
     try:
         if not ENGINE_AVAILABLE or not engine_router:
-            await websocket.send_json(
-                {"type": "error", "message": "Engine router not available"}
-            )
+            await websocket.send_json({"type": "error", "message": "Engine router not available"})
             await websocket.close()
             return
 
@@ -289,14 +295,25 @@ async def convert_realtime(websocket: WebSocket):
                     audio_bytes = base64.b64decode(audio_b64)
                     audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
 
-                    # Convert chunk
+                    # Convert chunk with circuit breaker protection
                     import time
 
+                    breaker = get_engine_breaker("rvc")
                     start_time = time.time()
 
-                    converted_chunk = engine.convert_realtime(
-                        audio_chunk, **conversion_params
-                    )
+                    try:
+                        async with breaker():
+                            converted_chunk = engine.convert_realtime(
+                                audio_chunk, **conversion_params
+                            )
+                    except CircuitBreakerOpenError as e:
+                        await websocket.send_json(
+                            {
+                                "type": "error",
+                                "message": f"RVC engine temporarily unavailable: {e}",
+                            }
+                        )
+                        continue
 
                     latency_ms = (time.time() - start_time) * 1000
 
@@ -336,9 +353,7 @@ async def convert_realtime(websocket: WebSocket):
     except Exception as e:
         logger.error(f"RVC WebSocket error: {e}", exc_info=True)
         try:
-            await websocket.send_json(
-                {"type": "error", "message": f"WebSocket error: {str(e)}"}
-            )
+            await websocket.send_json({"type": "error", "message": f"WebSocket error: {str(e)}"})
         except:
             ...
     finally:
@@ -392,9 +407,7 @@ async def get_models():
 
 
 @router.post("/models/upload")
-async def upload_model(
-    model_file: UploadFile = File(...), model_name: Optional[str] = None
-):
+async def upload_model(model_file: UploadFile = File(...), model_name: Optional[str] = None):
     """
     Upload RVC model.
 
@@ -498,9 +511,7 @@ async def start(req: RvcStartRequest) -> dict:
         raise
     except Exception as e:
         logger.error(f"Failed to start RVC session: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to start session: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to start session: {str(e)}") from e
 
 
 @router.post("/stop")
@@ -531,6 +542,4 @@ async def stop(req: dict) -> ApiOk:
 
     except Exception as e:
         logger.error(f"Failed to stop RVC session: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to stop session: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to stop session: {str(e)}") from e

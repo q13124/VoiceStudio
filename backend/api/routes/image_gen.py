@@ -10,7 +10,7 @@ import os
 import tempfile
 import uuid
 from io import BytesIO
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from PIL import Image
@@ -23,6 +23,10 @@ from ..models_additional import (
     ImageGenerateResponse,
     ImageUpscaleRequest,
     ImageUpscaleResponse,
+)
+from backend.services.circuit_breaker import (
+    CircuitBreakerOpenError,
+    get_engine_breaker,
 )
 
 logger = logging.getLogger(__name__)
@@ -197,9 +201,7 @@ def _analyze_image_realism(img_array: "np.ndarray") -> float:
         sharpness_score = max(0.0, 10.0 - ((sharpness - 15) / 10.0))
 
     # Combine scores
-    realism_score = (
-        color_balance_score * 0.3 + contrast_score * 0.4 + sharpness_score * 0.3
-    )
+    realism_score = color_balance_score * 0.3 + contrast_score * 0.4 + sharpness_score * 0.3
 
     return float(realism_score)
 
@@ -259,9 +261,7 @@ try:
             engine_router.register_engine("sd_cpu", SDCPUEngine)
             engine_router.register_engine("fastsd_cpu", FastSDCPUEngine)
             engine_router.register_engine("realesrgan", RealESRGANEngine)
-            logger.info(
-                "Image engine router initialized with manual registration (fallback mode)"
-            )
+            logger.info("Image engine router initialized with manual registration (fallback mode)")
         except Exception as reg_error:
             logger.error(f"Failed to register engines manually: {reg_error}")
 except (ImportError, ModuleNotFoundError) as e:
@@ -295,11 +295,7 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
 
         # Validate engine
         if valid_engines and req.engine not in valid_engines:
-            engines_str = (
-                ", ".join(valid_engines)
-                if valid_engines
-                else "none (engines not loaded)"
-            )
+            engines_str = ", ".join(valid_engines) if valid_engines else "none (engines not loaded)"
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid engine '{req.engine}'. Available engines: {engines_str}",
@@ -341,8 +337,16 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
                 if req.additional_params:
                     gen_kwargs.update(req.additional_params)
 
-                # Generate image
-                result = engine.generate(**gen_kwargs)
+                # Generate image with circuit breaker protection
+                breaker = get_engine_breaker(req.engine)
+                try:
+                    async with breaker():
+                        result = engine.generate(**gen_kwargs)
+                except CircuitBreakerOpenError as e:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Engine '{req.engine}' temporarily unavailable: {e}",
+                    )
 
                 if result is None:
                     raise HTTPException(
@@ -381,9 +385,7 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
 
             except Exception as e:
                 logger.error(f"Image generation error: {e}", exc_info=True)
-                raise HTTPException(
-                    status_code=500, detail=f"Image generation failed: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
         else:
             # Engines not available - return proper error
             raise HTTPException(
@@ -411,9 +413,7 @@ async def upscale_image(
     """
     try:
         if not ENGINE_AVAILABLE or not engine_router:
-            raise HTTPException(
-                status_code=503, detail="Upscaling engines are not available"
-            )
+            raise HTTPException(status_code=503, detail="Upscaling engines are not available")
 
         # Get upscaling engine (default: realesrgan)
         engine_name = req.engine or "realesrgan"
@@ -432,9 +432,7 @@ async def upscale_image(
         elif req.image_id:
             # Load from stored image
             if req.image_id not in _image_storage:
-                raise HTTPException(
-                    status_code=404, detail=f"Image '{req.image_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"Image '{req.image_id}' not found")
             input_image = Image.open(_image_storage[req.image_id])
         else:
             raise HTTPException(
@@ -447,18 +445,26 @@ async def upscale_image(
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"{image_id}.png")
 
-        # Upscale image
-        if hasattr(engine, "upscale"):
-            upscaled_image = engine.upscale(
-                input_image, output_path=output_path, **req.additional_params or {}
-            )
-        else:
-            # Fallback: use generate method with image parameter
-            upscaled_image = engine.generate(
-                prompt="",
-                image=input_image,
-                output_path=output_path,
-                **req.additional_params or {},
+        # Upscale image with circuit breaker protection
+        breaker = get_engine_breaker(engine_name)
+        try:
+            async with breaker():
+                if hasattr(engine, "upscale"):
+                    upscaled_image = engine.upscale(
+                        input_image, output_path=output_path, **req.additional_params or {}
+                    )
+                else:
+                    # Fallback: use generate method with image parameter
+                    upscaled_image = engine.generate(
+                        prompt="",
+                        image=input_image,
+                        output_path=output_path,
+                        **req.additional_params or {},
+                    )
+        except CircuitBreakerOpenError as e:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Upscaling engine '{engine_name}' temporarily unavailable: {e}",
             )
 
         if upscaled_image is None:
@@ -505,9 +511,7 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
         # For images, analyze and enhance
         if req.image_id:
             if req.image_id not in _image_storage:
-                raise HTTPException(
-                    status_code=404, detail=f"Image '{req.image_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"Image '{req.image_id}' not found")
 
             image_path = _image_storage[req.image_id]
             input_image = Image.open(image_path)
@@ -531,10 +535,7 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
             realism_score = _analyze_image_realism(img_array)
 
             overall_quality = (
-                resolution_score
-                + (10 - artifact_score)
-                + alignment_score
-                + realism_score
+                resolution_score + (10 - artifact_score) + alignment_score + realism_score
             ) / 4.0
 
             original_analysis = FaceQualityAnalysis(
@@ -564,17 +565,11 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
                             enhanced_image_id = (
                                 f"face_enhanced_{req.image_id}_{uuid.uuid4().hex[:8]}"
                             )
-                            output_dir = os.path.join(
-                                tempfile.gettempdir(), "voicestudio_images"
-                            )
+                            output_dir = os.path.join(tempfile.gettempdir(), "voicestudio_images")
                             os.makedirs(output_dir, exist_ok=True)
-                            output_path = os.path.join(
-                                output_dir, f"{enhanced_image_id}.png"
-                            )
+                            output_path = os.path.join(output_dir, f"{enhanced_image_id}.png")
 
-                            enhanced_image = engine.upscale(
-                                input_image, output_path=output_path
-                            )
+                            enhanced_image = engine.upscale(input_image, output_path=output_path)
                             if enhanced_image:
                                 _image_storage[enhanced_image_id] = output_path
                                 enhanced_image_url = f"/api/image/{enhanced_image_id}"
@@ -585,18 +580,10 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
                                     10.0, (enhanced_width * enhanced_height) / 10000.0
                                 )
 
-                                enhanced_img_array = np.array(
-                                    enhanced_image.convert("RGB")
-                                )
-                                enhanced_artifact = _analyze_image_artifacts(
-                                    enhanced_img_array
-                                )
-                                enhanced_alignment = _analyze_image_alignment(
-                                    enhanced_img_array
-                                )
-                                enhanced_realism = _analyze_image_realism(
-                                    enhanced_img_array
-                                )
+                                enhanced_img_array = np.array(enhanced_image.convert("RGB"))
+                                enhanced_artifact = _analyze_image_artifacts(enhanced_img_array)
+                                enhanced_alignment = _analyze_image_alignment(enhanced_img_array)
+                                enhanced_realism = _analyze_image_realism(enhanced_img_array)
 
                                 enhanced_overall = (
                                     enhanced_resolution
@@ -647,9 +634,7 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
         raise
     except Exception as e:
         logger.error(f"Face enhancement error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Face enhancement failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Face enhancement failed: {str(e)}") from e
 
 
 @router.get("/{image_id}")
