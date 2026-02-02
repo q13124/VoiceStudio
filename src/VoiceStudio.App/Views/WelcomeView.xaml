@@ -26,7 +26,7 @@
                            TextAlignment="Center"/>
             </StackPanel>
             <!-- Quick Start Guide -->
-            <Border Background="#1A1A1A"
+            <Border Background="{StaticResource VSQ.Panel.Background}"
                     CornerRadius="8"
                     Padding="16"
                     Margin="0,8,0,0">
@@ -76,7 +76,7 @@
                 </StackPanel>
             </Border>
             <!-- Keyboard Shortcuts -->
-            <Border Background="#1A1A1A"
+            <Border Background="{StaticResource VSQ.Panel.Background}"
                     CornerRadius="8"
                     Padding="16">
                 <StackPanel Spacing="8">
@@ -121,7 +121,7 @@
                 </StackPanel>
             </Border>
             <!-- Tips -->
-            <Border Background="#1A1A1A"
+            <Border Background="{StaticResource VSQ.Panel.Background}"
                     CornerRadius="8"
                     Padding="16">
                 <StackPanel Spacing="8">
