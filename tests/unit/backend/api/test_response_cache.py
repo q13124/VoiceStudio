@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock
 from collections import OrderedDict
 
 # Try to import the response cache module
@@ -25,6 +25,7 @@ try:
         response_cache_middleware,
         cache_response,
     )
+
     HAS_RESPONSE_CACHE = True
 except ImportError:
     HAS_RESPONSE_CACHE = False
@@ -61,6 +62,7 @@ class TestResponseCacheImports:
         if not HAS_RESPONSE_CACHE:
             pytest.skip("Response cache not available")
         from backend.api.response_cache import ResponseCache
+
         assert ResponseCache is not None
 
     def test_import_functions(self):
@@ -71,6 +73,7 @@ class TestResponseCacheImports:
             get_response_cache,
             set_response_cache,
         )
+
         assert get_response_cache is not None
         assert set_response_cache is not None
 
@@ -190,7 +193,8 @@ class TestResponseCacheTTL:
         response_cache.set(cache_key, response_data)
 
         # Check that default TTL was used
-        _, timestamp, ttl = response_cache._cache[cache_key]
+        # Cache stores: (response_data, timestamp, ttl, size_bytes, tags)
+        _, timestamp, ttl, _, _ = response_cache._cache[cache_key]
         assert ttl == response_cache.default_ttl
 
     def test_custom_ttl(self, response_cache):
@@ -202,7 +206,8 @@ class TestResponseCacheTTL:
         response_cache.set(cache_key, response_data, ttl=custom_ttl)
 
         # Check that custom TTL was used
-        _, timestamp, ttl = response_cache._cache[cache_key]
+        # Cache stores: (response_data, timestamp, ttl, size_bytes, tags)
+        _, timestamp, ttl, _, _ = response_cache._cache[cache_key]
         assert ttl == custom_ttl
 
 
@@ -371,12 +376,8 @@ class TestResponseCacheKeyGeneration:
         """Test cache key without query parameters."""
         mock_request.query_params = {"param1": "value1"}
 
-        key_with = response_cache._generate_cache_key(
-            mock_request, include_query=True
-        )
-        key_without = response_cache._generate_cache_key(
-            mock_request, include_query=False
-        )
+        key_with = response_cache._generate_cache_key(mock_request, include_query=True)
+        key_without = response_cache._generate_cache_key(mock_request, include_query=False)
 
         # Should be different
         assert key_with != key_without
@@ -425,4 +426,3 @@ class TestResponseCacheOptimization:
         assert hasattr(response_cache, "_hits")
         assert hasattr(response_cache, "_misses")
         assert hasattr(response_cache, "_evictions")
-

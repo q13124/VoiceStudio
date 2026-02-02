@@ -12,7 +12,7 @@
 
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
-| **TD-001** | Chatterbox torch+SM120 | chatterbox-tts pins torch==2.6.0; SM 120 (RTX 5070 Ti) needs torch 2.11+ nightly. Upstream issue. | GPU unusable for Chatterbox | Role 5 | 2026-01-29 | Blocked (upstream) |
+| **TD-001** | Chatterbox torch+SM120 | MITIGATED via TD-015 venv families. venv_advanced_tts uses torch 2.6.0+cu124. SM 120 GPU works with CUDA 12.4 driver. | Chatterbox usable | Role 5 | 2026-01-29 | CLOSED |
 | **TD-002** | Release build suppressions | Release build passes (0 warnings, 0 errors); no suppressions needed | Build clean | Role 2 | 2026-01-29 | CLOSED |
 | **TD-013** | VRAM Resource Scheduler | Implemented: per-engine VRAM budgets, eviction policy for low-priority jobs | OOM prevention implemented | Role 4/5 | 2026-01-30 | CLOSED |
 | **TD-014** | Circuit Breaker Pattern | Implemented and wired into voice, image_gen, video_gen, rvc routes | Cascading failures prevented | Role 4 | 2026-01-30 | CLOSED |
@@ -59,6 +59,7 @@
 | **TD-011** | Interface Implementations | 2026-02-02 | ViewModelContext, TelemetryServiceStub, JsonProjectRepository implemented | Grep: class.*: I*Service |
 | **TD-013** | VRAM Resource Scheduler | 2026-02-02 | Per-engine VRAM budgets, eviction policy, priority-based preemption | tests/unit/core/runtime/test_resource_manager.py (11/11 PASS) |
 | **TD-015** | Venv Families Strategy | 2026-02-02 | VenvFamilyManager, 3 families, 10 engine manifests, requirements files | tests/unit/core/runtime/test_venv_family_manager.py (14/14 PASS) |
+| **TD-001** | Chatterbox torch+SM120 | 2026-02-02 | Mitigated via TD-015 venv families; venv_advanced_tts with torch 2.6.0+cu124 | proof_runs/chatterbox_baseline_20260202_080607 (4/4 PASS) |
 | **TD-012** | Namespace Cleanup | 2026-02-02 | UseCases namespace correctly defined and used; no issues found | Grep: App.UseCases |
 | **TD-010** | Branch Merge Policy | 2026-02-02 | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | BRANCH_MERGE_POLICY.md |
 

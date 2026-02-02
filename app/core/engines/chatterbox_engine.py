@@ -30,8 +30,12 @@ except ImportError:
     HAS_QUALITY_METRICS = False
 
 # Optional audio utilities import for quality enhancement
+# Default fallback for optional function
+enhance_voice_cloning_quality = None
+
 try:
     from ..audio.audio_utils import (
+        enhance_voice_cloning_quality,
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -41,14 +45,13 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
+    enhance_voice_cloning_quality = None
 
 try:
     from chatterbox_tts import ChatterboxTTS
 except ImportError:
     ChatterboxTTS = None
-    logging.warning(
-        "Chatterbox TTS not installed. Install with: pip install chatterbox-tts"
-    )
+    logging.warning("Chatterbox TTS not installed. Install with: pip install chatterbox-tts")
 
 logger = logging.getLogger(__name__)
 
@@ -162,9 +165,7 @@ def _cache_embedding(speaker_wav: Union[str, Path], embedding: np.ndarray):
         del _EMBEDDING_CACHE[oldest_key]
         logger.debug(f"Evicted embedding from cache: {oldest_key[:8]}")
 
-    logger.debug(
-        f"Cached embedding: {cache_key[:8]} (cache size: {len(_EMBEDDING_CACHE)})"
-    )
+    logger.debug(f"Cached embedding: {cache_key[:8]} (cache size: {len(_EMBEDDING_CACHE)})")
 
 
 # Import base protocol
@@ -315,9 +316,7 @@ class ChatterboxEngine(EngineProtocol):
 
         # Initialize Chatterbox TTS
         # Note: Actual API may vary, this is a template based on common patterns
-        self.tts = ChatterboxTTS.from_pretrained(
-            self.model_name, cache_dir=model_cache_dir
-        )
+        self.tts = ChatterboxTTS.from_pretrained(self.model_name, cache_dir=model_cache_dir)
 
         # Move to device if available
         if hasattr(self.tts, "to"):
@@ -328,9 +327,7 @@ class ChatterboxEngine(EngineProtocol):
             _cache_model(self.model_name, self.device, self.tts)
 
         self._initialized = True
-        logger.info(
-            f"Chatterbox TTS model loaded successfully (cache: {model_cache_dir})"
-        )
+        logger.info(f"Chatterbox TTS model loaded successfully (cache: {model_cache_dir})")
         return True
 
     def initialize(self) -> bool:
@@ -397,9 +394,7 @@ class ChatterboxEngine(EngineProtocol):
 
             # Validate emotion
             if emotion and emotion not in self.SUPPORTED_EMOTIONS:
-                logger.warning(
-                    f"Emotion {emotion} not in supported list, using 'neutral'"
-                )
+                logger.warning(f"Emotion {emotion} not in supported list, using 'neutral'")
                 emotion = "neutral"
 
             # Convert speaker_wav to list if single path
@@ -416,14 +411,10 @@ class ChatterboxEngine(EngineProtocol):
             speaker_embedding = None
             if self.enable_caching and speaker_wav:
                 speaker_embedding = _get_cached_embedding(speaker_wav[0])
-                if speaker_embedding is None and hasattr(
-                    self.tts, "get_speaker_embedding"
-                ):
+                if speaker_embedding is None and hasattr(self.tts, "get_speaker_embedding"):
                     # Extract embedding and cache it
                     try:
-                        speaker_embedding = self.tts.get_speaker_embedding(
-                            speaker_wav[0]
-                        )
+                        speaker_embedding = self.tts.get_speaker_embedding(speaker_wav[0])
                         _cache_embedding(speaker_wav[0], speaker_embedding)
                         logger.debug(f"Cached speaker embedding for: {speaker_wav[0]}")
                     except Exception as e:
@@ -452,9 +443,7 @@ class ChatterboxEngine(EngineProtocol):
                     output_path = str(output_path)
                     # Save to file
                     if hasattr(self.tts, "synthesize_to_file"):
-                        self.tts.synthesize_to_file(
-                            output_path=output_path, **synthesis_params
-                        )
+                        self.tts.synthesize_to_file(output_path=output_path, **synthesis_params)
                     else:
                         # Fallback: synthesize then save
                         audio = self.tts.synthesize(**synthesis_params)
@@ -488,9 +477,7 @@ class ChatterboxEngine(EngineProtocol):
                 else:
                     # Return audio array
                     audio = self.tts.synthesize(**synthesis_params)
-                    audio = (
-                        np.array(audio) if isinstance(audio, (list, tuple)) else audio
-                    )
+                    audio = np.array(audio) if isinstance(audio, (list, tuple)) else audio
 
                     # Apply quality processing if requested
                     if enhance_quality or calculate_quality:
@@ -545,9 +532,7 @@ class ChatterboxEngine(EngineProtocol):
                         preserve_prosody=True,
                         target_lufs=-23.0,
                     )
-                    logger.debug(
-                        "Applied advanced quality enhancement to Chatterbox output"
-                    )
+                    logger.debug("Applied advanced quality enhancement to Chatterbox output")
                 elif enhance_voice_quality is not None:
                     # Fallback to standard enhancement
                     processed_audio = enhance_voice_quality(
@@ -697,9 +682,7 @@ class ChatterboxEngine(EngineProtocol):
                 for i, text in enumerate(batch_texts):
                     output_path = None
                     if output_dir:
-                        output_path = (
-                            Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                        )
+                        output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
 
                     # Prepare synthesis parameters
                     synthesis_params = {
@@ -729,34 +712,23 @@ class ChatterboxEngine(EngineProtocol):
                                 audio = self.tts.synthesize(**synthesis_params)
                                 import soundfile as sf
 
-                                sample_rate = getattr(
-                                    self.tts, "output_sample_rate", 22050
-                                )
+                                sample_rate = getattr(self.tts, "output_sample_rate", 22050)
                                 sf.write(str(output_path), audio, sample_rate)
                                 audio = None
                         else:
                             # Return audio array
                             audio = self.tts.synthesize(**synthesis_params)
-                            audio = (
-                                np.array(audio)
-                                if isinstance(audio, (list, tuple))
-                                else audio
-                            )
+                            audio = np.array(audio) if isinstance(audio, (list, tuple)) else audio
 
                         batch_results.append(audio)
                     except Exception as e:
-                        logger.error(
-                            f"Batch synthesis failed for text {batch_start + i}: {e}"
-                        )
+                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
                         batch_results.append(None)
 
             results.extend(batch_results)
 
             # Clear GPU cache periodically
-            if (
-                torch.cuda.is_available()
-                and (batch_start + batch_size) % (batch_size * 2) == 0
-            ):
+            if torch.cuda.is_available() and (batch_start + batch_size) % (batch_size * 2) == 0:
                 torch.cuda.empty_cache()
 
         return results

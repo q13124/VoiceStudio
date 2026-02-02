@@ -4,13 +4,12 @@ Tests spatial audio processing endpoints in isolation.
 """
 
 import sys
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -20,9 +19,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import spatial_audio
 except ImportError:
-    pytest.skip(
-        "Could not import spatial_audio route module", allow_module_level=True
-    )
+    pytest.skip("Could not import spatial_audio route module", allow_module_level=True)
 
 
 class TestSpatialAudioRouteImports:
@@ -30,12 +27,8 @@ class TestSpatialAudioRouteImports:
 
     def test_spatial_audio_module_imports(self):
         """Test spatial_audio module can be imported."""
-        assert (
-            spatial_audio is not None
-        ), "Failed to import spatial_audio module"
-        assert hasattr(
-            spatial_audio, "router"
-        ), "spatial_audio module missing router"
+        assert spatial_audio is not None, "Failed to import spatial_audio module"
+        assert hasattr(spatial_audio, "router"), "spatial_audio module missing router"
 
     def test_spatial_audio_models_imported(self):
         """Test spatial audio models are imported."""
@@ -308,9 +301,11 @@ class TestSpatialAudioProcessingEndpoints:
     @patch("soundfile.write")
     @patch("soundfile.read")
     @patch("backend.api.routes.voice._register_audio_file")
-    @patch("backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"})
+    @patch(
+        "backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"}
+    )
     def test_apply_spatial_audio(
-        self, mock_storage, mock_register, mock_sf_read, mock_sf_write, mock_exists
+        self, mock_register, mock_sf_read, mock_sf_write, mock_exists
     ):
         """Test applying spatial audio to an audio file."""
         # Create sample audio data
@@ -358,9 +353,11 @@ class TestSpatialAudioProcessingEndpoints:
     @patch("soundfile.write")
     @patch("soundfile.read")
     @patch("backend.api.routes.voice._register_audio_file")
-    @patch("backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"})
+    @patch(
+        "backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"}
+    )
     def test_preview_spatial_audio(
-        self, mock_storage, mock_register, mock_sf_read, mock_sf_write, mock_exists
+        self, mock_register, mock_sf_read, mock_sf_write, mock_exists
     ):
         """Test previewing spatial audio."""
         # Create sample audio data
@@ -391,7 +388,7 @@ class TestSpatialAudioProcessingEndpoints:
             assert "position" in data
 
     @patch("backend.api.routes.voice._audio_storage", new={})
-    def test_preview_spatial_audio_not_found(self, mock_storage):
+    def test_preview_spatial_audio_not_found(self):
         """Test previewing with non-existent audio."""
         app = FastAPI()
         app.include_router(spatial_audio.router)
@@ -508,9 +505,11 @@ class TestSpatialAudioProcessingEndpoints:
     @patch("soundfile.write")
     @patch("soundfile.read")
     @patch("backend.api.routes.voice._register_audio_file")
-    @patch("backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"})
+    @patch(
+        "backend.api.routes.voice._audio_storage", new={"test_audio_123": "/fake/path/audio.wav"}
+    )
     def test_generate_binaural_audio(
-        self, mock_storage, mock_register, mock_sf_read, mock_sf_write, mock_exists
+        self, mock_register, mock_sf_read, mock_sf_write, mock_exists
     ):
         """Test generating binaural audio."""
         # Create sample audio data
@@ -545,4 +544,3 @@ class TestSpatialAudioProcessingEndpoints:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

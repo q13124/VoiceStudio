@@ -15,6 +15,23 @@ from typing import Any, Dict, List, Optional
 from .port_manager import PortManager, get_port_manager
 from .resource_manager import ResourceManager, get_resource_manager
 
+# Import venv family manager for engine isolation
+try:
+    from .venv_family_manager import (
+        VenvFamily,
+        VenvFamilyManager,
+        get_venv_manager,
+        ENGINE_TO_FAMILY,
+    )
+
+    HAS_VENV_FAMILIES = True
+except ImportError:
+    HAS_VENV_FAMILIES = False
+    VenvFamily = None
+    VenvFamilyManager = None
+    get_venv_manager = None
+    ENGINE_TO_FAMILY = {}
+
 logger = logging.getLogger(__name__)
 
 # Try importing RuntimeEngine for actual process management
@@ -62,9 +79,7 @@ class EngineInstance:
         old_state = self.state
         self.state = new_state
         self.state_changed_at = datetime.now()
-        logger.info(
-            f"Engine {self.engine_id} state: {old_state.name} -> {new_state.name}"
-        )
+        logger.info(f"Engine {self.engine_id} state: {old_state.name} -> {new_state.name}")
 
     def update_activity(self):
         """Update last activity timestamp."""
@@ -116,6 +131,9 @@ class EngineLifecycleManager:
         self.port_manager = port_manager or get_port_manager()
         self.resource_manager = resource_manager or get_resource_manager()
 
+        # Venv family manager for engine isolation
+        self.venv_manager = get_venv_manager() if HAS_VENV_FAMILIES else None
+
         # Audit log directory
         if audit_log_dir:
             self.audit_log_dir = Path(audit_log_dir)
@@ -162,9 +180,7 @@ class EngineLifecycleManager:
             for engine in list(self.engines.values()):
                 # Check idle timeout
                 if engine.state == EngineState.HEALTHY and engine.is_idle():
-                    logger.info(
-                        f"Engine {engine.engine_id} is idle, transitioning to draining"
-                    )
+                    logger.info(f"Engine {engine.engine_id} is idle, transitioning to draining")
                     self._request_drain(engine.engine_id)
 
                 # Check health for healthy/busy engines
@@ -238,9 +254,7 @@ class EngineLifecycleManager:
 
                 # Check if already has a lease
                 if engine.job_lease is not None and engine.job_lease != job_id:
-                    logger.warning(
-                        f"Engine {engine_id} is leased to job {engine.job_lease}"
-                    )
+                    logger.warning(f"Engine {engine_id} is leased to job {engine.job_lease}")
                     return None
 
                 # Start if needed
@@ -332,6 +346,81 @@ class EngineLifecycleManager:
             else:
                 engine.set_state(EngineState.HEALTHY)
 
+    def _get_venv_family(self, engine: EngineInstance) -> Optional[VenvFamily]:
+        """
+        Get the venv family for an engine.
+
+        Checks manifest for venv_family field, then falls back to ENGINE_TO_FAMILY mapping.
+        """
+        if not HAS_VENV_FAMILIES:
+            return None
+
+        # Check manifest for explicit venv_family
+        manifest = engine.manifest
+        venv_family_str = manifest.get("venv_family")
+        if venv_family_str:
+            try:
+                return VenvFamily(venv_family_str)
+            except ValueError:
+                logger.warning(
+                    f"Unknown venv_family '{venv_family_str}' for engine {engine.engine_id}"
+                )
+
+        # Fall back to ENGINE_TO_FAMILY mapping
+        return ENGINE_TO_FAMILY.get(engine.engine_id)
+
+    def _ensure_venv_ready(self, engine: EngineInstance) -> bool:
+        """
+        Ensure the venv family for an engine is ready.
+
+        Returns True if ready (or no venv needed), False on failure.
+        """
+        family = self._get_venv_family(engine)
+        if not family:
+            # No venv family specified, use default venv
+            return True
+
+        if not self.venv_manager:
+            logger.warning(
+                f"Venv family {family.value} required for {engine.engine_id} but VenvFamilyManager not available"
+            )
+            return True  # Continue with default venv
+
+        try:
+            # Check if venv exists
+            if self.venv_manager.is_venv_created(family):
+                logger.debug(f"Venv {family.value} already exists for {engine.engine_id}")
+                return True
+
+            # Create venv (lazy creation)
+            logger.info(f"Creating venv {family.value} for engine {engine.engine_id}")
+            if not self.venv_manager.create_venv(family):
+                logger.error(f"Failed to create venv {family.value} for {engine.engine_id}")
+                return False
+
+            # Note: Requirements installation is deferred to first actual use
+            # since it can take a long time
+            return True
+
+        except Exception as e:
+            logger.error(f"Error preparing venv for {engine.engine_id}: {e}")
+            return False
+
+    def _get_venv_python(self, engine: EngineInstance) -> Optional[Path]:
+        """
+        Get the Python executable for an engine's venv family.
+
+        Returns None if engine should use the default Python.
+        """
+        family = self._get_venv_family(engine)
+        if not family or not self.venv_manager:
+            return None
+
+        if not self.venv_manager.is_venv_created(family):
+            return None
+
+        return self.venv_manager.get_python_executable(family)
+
     def _start_engine(self, engine: EngineInstance) -> bool:
         """Start an engine instance."""
         if engine.state != EngineState.STOPPED:
@@ -350,6 +439,18 @@ class EngineLifecycleManager:
 
             engine.port = port
 
+            # Ensure venv family is ready (TD-015: venv isolation)
+            if not self._ensure_venv_ready(engine):
+                logger.error(f"Failed to prepare venv for {engine.engine_id}")
+                engine.set_state(EngineState.ERROR)
+                self.port_manager.release_port(engine.engine_id)
+                return False
+
+            # Get venv Python executable if applicable
+            venv_python = self._get_venv_python(engine)
+            if venv_python:
+                logger.info(f"Engine {engine.engine_id} will use venv: {venv_python}")
+
             # Start actual process using RuntimeEngine if available
             if HAS_RUNTIME_ENGINE and RuntimeEngine is not None:
                 try:
@@ -357,10 +458,7 @@ class EngineLifecycleManager:
                     manifest = engine.manifest
                     entry = manifest.get("entry", {})
 
-                    if (
-                        entry.get("kind") == "python"
-                        or entry.get("kind") == "executable"
-                    ):
+                    if entry.get("kind") == "python" or entry.get("kind") == "executable":
                         # Create RuntimeEngine instance
                         runtime_engine = RuntimeEngine(manifest, self.workspace_root)
 
@@ -368,17 +466,11 @@ class EngineLifecycleManager:
                         if runtime_engine.start():
                             engine.process = runtime_engine
                             engine.pid = (
-                                runtime_engine.process.pid
-                                if runtime_engine.process
-                                else None
+                                runtime_engine.process.pid if runtime_engine.process else None
                             )
-                            logger.info(
-                                f"Started RuntimeEngine process for {engine.engine_id}"
-                            )
+                            logger.info(f"Started RuntimeEngine process for {engine.engine_id}")
                         else:
-                            logger.error(
-                                f"Failed to start RuntimeEngine for {engine.engine_id}"
-                            )
+                            logger.error(f"Failed to start RuntimeEngine for {engine.engine_id}")
                             engine.set_state(EngineState.ERROR)
                             self.port_manager.release_port(engine.engine_id)
                             return False
@@ -407,9 +499,7 @@ class EngineLifecycleManager:
             if self._check_health(engine):
                 engine.set_state(EngineState.HEALTHY)
                 engine.update_activity()
-                logger.info(
-                    f"Engine {engine.engine_id} started successfully on port {port}"
-                )
+                logger.info(f"Engine {engine.engine_id} started successfully on port {port}")
                 return True
             else:
                 engine.set_state(EngineState.ERROR)
@@ -436,22 +526,16 @@ class EngineLifecycleManager:
                 if HAS_RUNTIME_ENGINE and isinstance(engine.process, RuntimeEngine):
                     try:
                         engine.process.stop()
-                        logger.info(
-                            f"Stopped RuntimeEngine process for {engine.engine_id}"
-                        )
+                        logger.info(f"Stopped RuntimeEngine process for {engine.engine_id}")
                     except Exception as e:
-                        logger.warning(
-                            f"Error stopping RuntimeEngine for {engine.engine_id}: {e}"
-                        )
+                        logger.warning(f"Error stopping RuntimeEngine for {engine.engine_id}: {e}")
                 elif hasattr(engine.process, "terminate"):
                     # Direct subprocess.Popen instance
                     try:
                         engine.process.terminate()
                         engine.process.wait(timeout=10)
                     except Exception as e:
-                        logger.warning(
-                            f"Error terminating process for {engine.engine_id}: {e}"
-                        )
+                        logger.warning(f"Error terminating process for {engine.engine_id}: {e}")
                         try:
                             engine.process.kill()
                             engine.process.wait()
@@ -516,9 +600,7 @@ class EngineLifecycleManager:
                     response = requests.get(url, timeout=2)
                     return response.status_code == 200
                 except Exception as e:
-                    logger.debug(
-                        f"HTTP health check failed for {engine.engine_id}: {e}"
-                    )
+                    logger.debug(f"HTTP health check failed for {engine.engine_id}: {e}")
                     return False
 
         # TCP health check
@@ -643,9 +725,7 @@ class EngineLifecycleManager:
             }
 
             # Write to daily audit log file
-            audit_file = (
-                self.audit_log_dir / f"audit_{datetime.now().strftime('%Y%m%d')}.jsonl"
-            )
+            audit_file = self.audit_log_dir / f"audit_{datetime.now().strftime('%Y%m%d')}.jsonl"
             with open(audit_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(audit_entry) + "\n")
         except Exception as e:
@@ -670,9 +750,7 @@ class EngineLifecycleManager:
                     "port": engine.port,
                     "job_lease": engine.job_lease,
                     "last_activity": (
-                        engine.last_activity.isoformat()
-                        if engine.last_activity
-                        else None
+                        engine.last_activity.isoformat() if engine.last_activity else None
                     ),
                     "health_check_failures": engine.health_check_failures,
                 }
