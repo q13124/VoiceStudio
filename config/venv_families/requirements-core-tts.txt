@@ -1,0 +1,35 @@
+# VoiceStudio Core TTS Family (venv_core_tts)
+# Engines: XTTS, Silero, eSpeak-NG, Festival, MaryTTS, RHVoice, Piper, Bark, Tortoise
+# Estimated size: ~8GB
+
+# Core framework
+torch>=2.2.2,<2.6.0
+torchaudio>=2.2.2,<2.6.0
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+
+# XTTS / Coqui TTS
+coqui-tts==0.27.2
+transformers>=4.35.0
+
+# Piper (lightweight)
+piper-tts>=1.0.0
+
+# Bark
+suno-bark>=0.9.0
+
+# Silero
+silero>=0.5.0
+
+# Audio processing
+soundfile>=0.12.0
+librosa>=0.10.0
+audioread>=3.0.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
+requests>=2.28.0
+
+# Optional GPU support
+--extra-index-url https://download.pytorch.org/whl/cu121

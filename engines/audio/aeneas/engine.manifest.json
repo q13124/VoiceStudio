@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "alignment",
   "version": "1.0",
+  "venv_family": "venv_stt",
   "description": "Audio-text alignment and subtitle generation - synchronizes audio with text",
   "author": "ReadBeyond",
   "license": "AGPL-3.0",

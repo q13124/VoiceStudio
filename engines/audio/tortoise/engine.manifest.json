@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_core_tts",
   "description": "Tortoise TTS for ultra-realistic high-quality voice synthesis (optimized for quality over speed)",
   "author": "Tortoise TTS Team",
   "license": "Apache-2.0",

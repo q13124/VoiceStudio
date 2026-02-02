@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_core_tts",
   "description": "Silero TTS - Fast, high-quality multilingual TTS models with many languages",
   "author": "Silero Team",
   "license": "MIT",

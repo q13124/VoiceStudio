@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_advanced_tts",
   "description": "Resemble AI Chatterbox TTS for state-of-the-art zero-shot voice cloning and text-to-speech synthesis",
   "author": "Resemble AI",
   "license": "Apache-2.0",

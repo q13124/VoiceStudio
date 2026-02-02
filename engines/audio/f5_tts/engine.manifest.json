@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_advanced_tts",
   "description": "F5-TTS - Modern expressive neural TTS with emotion control",
   "author": "F5-TTS Team",
   "license": "MIT",

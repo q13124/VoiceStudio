@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "2.0",
+  "venv_family": "venv_core_tts",
   "description": "Coqui TTS XTTS v2 for voice cloning and text-to-speech synthesis",
   "author": "Coqui",
   "license": "MPL-2.0",

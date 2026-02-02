@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0.0",
+  "venv_family": "venv_advanced_tts",
   "description": "Zero-shot voice cloning with cross-lingual support and granular style control",
   "author": "MyShell AI",
   "license": "Apache-2.0",

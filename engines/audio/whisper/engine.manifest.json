@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "stt",
   "version": "1.0",
+  "venv_family": "venv_stt",
   "description": "OpenAI Whisper speech-to-text transcription using faster-whisper for fast inference",
   "author": "OpenAI / Hugging Face",
   "license": "MIT",

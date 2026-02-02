@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "stt",
   "version": "1.0",
+  "venv_family": "venv_stt",
   "description": "C++ implementation of Whisper - fast local STT with SRT/VTT subtitle output",
   "author": "ggerganov",
   "license": "MIT",

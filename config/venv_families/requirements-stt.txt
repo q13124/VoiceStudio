@@ -1,0 +1,31 @@
+# VoiceStudio STT Family (venv_stt)
+# Engines: Whisper, Whisper.cpp, Vosk, Aeneas
+# Estimated size: ~4GB
+
+# Core framework
+torch>=2.2.2,<2.6.0
+torchaudio>=2.2.2,<2.6.0
+numpy>=1.24.0,<2.0.0
+
+# OpenAI Whisper
+openai-whisper>=20230124
+
+# Faster Whisper (CTranslate2 backend)
+faster-whisper>=0.10.0
+
+# Vosk (offline STT)
+vosk>=0.3.45
+
+# Aeneas (audio-text alignment)
+# aeneas>=1.7.3  # Requires espeak-ng system install
+
+# Audio processing
+soundfile>=0.12.0
+ffmpeg-python>=0.2.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
+
+# GPU support
+--extra-index-url https://download.pytorch.org/whl/cu121
