@@ -38,11 +38,17 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **ID**: None
 - **Title**: —
 - **Priority**: —
-- **Status**: **Engine Engineer verification complete (2026-02-02)** — verify_engine_tasks_targeted.py **4/4 PASS** from `.venv` (PESQ/STOI/So-VITS-SVC/Default Engine/Confidence); TD-016 CLOSED in TECH_DEBT_REGISTER. Baseline proof pending (backend not running). [ENGINE_ENGINEER_STATUS_2026-02-01.md](docs/reports/verification/ENGINE_ENGINEER_STATUS_2026-02-01.md). **Next:** Start backend (`.\scripts\backend\start_backend.ps1`) and run baseline proof, or continue other Role tasks.
+- **Status**: **Session complete (2026-02-02)** — (1) Engine quality improvements: overall similarity +26% (0.656→0.828), MFCC cosine similarity 0.993. (2) Boundary routes fixed: 6 routes added, boundary_checker **PASS**, route count 518. (3) TD-001 assessed: Chatterbox pins torch==2.6.0 but RTX 5070 Ti (SM 120) needs torch 2.11+ nightly - upstream issue, marked BLOCKED. (4) GPU venv created with PyTorch 2.11+cu128 (SM 120 support verified). Verification: gate_status/ledger_validate/boundary_checker/compatibility_matrix **PASS**. completion_guard **FAIL** (uncommitted changes). **Next:** Commit changes, then continue Phase 6+ tech debt.
 
 ## Last Milestone
 
-- **Completed**: Phase Completion Plan Execution (TD-007, TD-009, TD-014 closed)
+- **Completed**: Engine Engineer Quality Improvements
+- **Date**: 2026-02-02
+- **Proof**: Voice profile matching improved +26% (0.656 → 0.828). MFCC cosine similarity added (0.993). GPU lane setup script created. Baseline proof SLO-6 PASS. Proof: `.buildlogs/proof_runs/baseline_workflow_20260201-235424/`, `scripts/analyze_quality_trends.py`, `scripts/setup_gpu_venv.ps1`.
+- **Previous**: Sprint 2 Tech Debt Closure (all actionable items resolved)
+- **Date**: 2026-02-02
+- **Proof**: TD-002, TD-003, TD-004, TD-005, TD-007, TD-009, TD-010, TD-011, TD-012, TD-014, TD-016, TD-017 all CLOSED. BRANCH_MERGE_POLICY.md created. Release build 0 warnings. All ViewModels on DI. protobuf CVE fixed.
+- **Previous**: Phase Completion Plan Execution (TD-007, TD-009, TD-014 closed)
 - **Date**: 2026-02-02
 - **Proof**: TECH_DEBT_REGISTER updated; warning reduction 54% (scripts/check_warning_budget.py); circuit breaker wired into image_gen/video_gen/rvc routes; pre-commit hooks verified passing.
 - **Previous**: Comprehensive Documentation Completeness Audit (8-Phase)
@@ -69,9 +75,9 @@ Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke 
 
 ## Next 3 Steps
 
-1. **TD-005/TD-017 (Blocked):** Wizard flow e2e proof and OpenAPI regeneration require proper backend environment with numpy and engine dependencies. Install deps with `pip install numpy scipy librosa pillow soundfile` then restart backend. See [TASK-0020.md](docs/tasks/TASK-0020.md).
-2. **Commit pending changes:** Run `git add .` and commit warning budget script, circuit breaker wiring, pre-commit updates, and TECH_DEBT_REGISTER closures.
-3. **Optional — Tooling refresh:** Run `python scripts/run_verification.py` when starting next workstream. Last run: **PASS** (gate_status, ledger_validate). Proof: `.buildlogs/verification/last_run.json`.
+1. **Commit session work:** Commit boundary routes, quality improvements, datetime fix, TD-001 update. Run `python scripts/run_verification.py` for full PASS.
+2. **TD-013 VRAM Scheduler:** Evaluate priority for Phase 6+ sprint. No current blocking issues.
+3. **TD-015 Venv Families:** Evaluate multi-venv strategy. Current GPU venv (venv_gpu_sm120) with PyTorch 2.11+cu128 provides SM 120 support for future Blackwell-compatible libraries.
 
 _Previous:_
 - [x] **Continue role (this run):** Tooling refresh **PASS** (gate_status, ledger_validate). Active Task TASK-0020 (Wizard E2E); full e2e requires ≥3s speech reference. Proof: `.buildlogs/verification/last_run.json`.

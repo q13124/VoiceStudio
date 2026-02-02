@@ -12,7 +12,7 @@
 
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
-| **TD-001** | Chatterbox torch version | Chatterbox requires torch>=2.6, but venv has 2.2.2+cu121 | Engine unusable | Role 5 | 2026-01-29 | Phase 6+ |
+| **TD-001** | Chatterbox torch+SM120 | chatterbox-tts pins torch==2.6.0; SM 120 (RTX 5070 Ti) needs torch 2.11+ nightly. Upstream issue. | GPU unusable for Chatterbox | Role 5 | 2026-01-29 | Blocked (upstream) |
 | **TD-002** | Release build suppressions | Release build passes (0 warnings, 0 errors); no suppressions needed | Build clean | Role 2 | 2026-01-29 | CLOSED |
 | **TD-013** | VRAM Resource Scheduler | No explicit VRAM budgeting per ChatGPT spec Part 7 | Potential OOM with multi-engine | Role 4/5 | 2026-01-30 | Phase 6+ |
 | **TD-014** | Circuit Breaker Pattern | Implemented and wired into voice, image_gen, video_gen, rvc routes | Cascading failures prevented | Role 4 | 2026-01-30 | CLOSED |

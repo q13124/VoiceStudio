@@ -103,14 +103,46 @@ elseif (-not $env:COQUI_TOS_AGREED) {
     Write-Host "NOTE: XTTS v2 model downloads may prompt for CPML acceptance. If you have accepted CPML or have a commercial license, re-run with -CoquiTosAgreed (or set COQUI_TOS_AGREED=1)." -ForegroundColor Yellow
 }
 
-# Optional GPU venv path (sm_120)
+# Optional GPU venv path (sm_120 for RTX 4000/5000 series)
 if ($Gpu -and $VenvDir -eq "venv") {
-    $VenvDir = "venv_xtts_gpu_sm120"
-    Write-Host "GPU venv selected: $VenvDir" -ForegroundColor Yellow
+    $VenvDir = "venv_gpu_sm120"
+    Write-Host "GPU venv selected: $VenvDir (RTX 4000/5000 series support)" -ForegroundColor Yellow
+    Write-Host "  Expected latency improvement: ~42s CPU -> ~5s GPU" -ForegroundColor Green
 }
 
-# Prefer the repo venv Python if present (ensures coqui-tts/engine deps are available)
-$venvPython = Join-Path $PSScriptRoot (Join-Path $VenvDir "Scripts\\python.exe")
+# Determine project root (two levels up from scripts/backend/)
+$projectRoot = (Get-Item $PSScriptRoot).Parent.Parent.FullName
+
+# Check for venv in multiple locations (project root first, then .venv, then script dir)
+$venvPython = $null
+$venvCandidates = @(
+    (Join-Path $projectRoot "$VenvDir\Scripts\python.exe"),
+    (Join-Path $projectRoot ".venv\Scripts\python.exe"),
+    (Join-Path $projectRoot ".$VenvDir\Scripts\python.exe"),
+    (Join-Path $PSScriptRoot "$VenvDir\Scripts\python.exe")
+)
+
+foreach ($candidate in $venvCandidates) {
+    if (Test-Path $candidate) {
+        $venvPython = $candidate
+        break
+    }
+}
+
+# Fallback to default .venv if GPU venv not found
+if (-not $venvPython -and $Gpu) {
+    $fallbackVenv = Join-Path $projectRoot ".venv\Scripts\python.exe"
+    if (Test-Path $fallbackVenv) {
+        Write-Host "WARNING: GPU venv '$VenvDir' not found. Using .venv (CPU mode)." -ForegroundColor Yellow
+        Write-Host "  To set up GPU venv, run: .\scripts\setup_gpu_venv.ps1" -ForegroundColor Yellow
+        $venvPython = $fallbackVenv
+    }
+}
+
+if (-not $venvPython) {
+    # Final fallback to first candidate path for error message
+    $venvPython = $venvCandidates[0]
+}
 
 # Start uvicorn from project root using module path
 Set-Location "$PSScriptRoot"

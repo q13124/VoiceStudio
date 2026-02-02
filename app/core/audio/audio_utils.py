@@ -97,9 +97,7 @@ try:
     else:
         HAS_CREPE = False
         crepe = None
-        logging.debug(
-            "crepe requires TensorFlow. " "Using librosa.pyin for pitch tracking."
-        )
+        logging.debug("crepe requires TensorFlow. " "Using librosa.pyin for pitch tracking.")
 except ImportError:
     HAS_CREPE = False
     crepe = None
@@ -124,9 +122,7 @@ except ImportError:
     HAS_SILERO_VAD = False
     load_silero_vad = None
     get_speech_timestamps = None
-    logging.debug(
-        "silero-vad not installed. Using webrtcvad for voice activity detection."
-    )
+    logging.debug("silero-vad not installed. Using webrtcvad for voice activity detection.")
 
 # Try importing pywavelets for wavelet transforms
 try:
@@ -188,9 +184,7 @@ try:
     HAS_CYTHON_AUDIO = True
 except ImportError:
     HAS_CYTHON_AUDIO = False
-    logger.debug(
-        "Cython audio processing not available. Using pure Python implementations."
-    )
+    logger.debug("Cython audio processing not available. Using pure Python implementations.")
 
 # Default paths
 DEFAULT_TEMP_DIR = os.path.join(
@@ -266,22 +260,16 @@ def normalize_lufs(
 
                 if np.isnan(loudness) or np.isinf(loudness):
                     logger.warning(
-                        f"Could not measure loudness for channel {ch_idx}, "
-                        "using original"
+                        f"Could not measure loudness for channel {ch_idx}, " "using original"
                     )
                     return ch_idx, channel_audio
                 else:
-                    normalized_ch = pyln.normalize.loudness(
-                        channel_audio, loudness, target_lufs
-                    )
+                    normalized_ch = pyln.normalize.loudness(channel_audio, loudness, target_lufs)
                     return ch_idx, normalized_ch
 
             # Use ThreadPoolExecutor for parallel processing
             with ThreadPoolExecutor(max_workers=min(num_channels, 4)) as executor:
-                futures = {
-                    executor.submit(process_channel, ch): ch
-                    for ch in range(num_channels)
-                }
+                futures = {executor.submit(process_channel, ch): ch for ch in range(num_channels)}
                 for future in as_completed(futures):
                     ch_idx, processed_audio = future.result()
                     normalized_channels[ch_idx] = processed_audio
@@ -293,8 +281,7 @@ def normalize_lufs(
 
                 if np.isnan(loudness) or np.isinf(loudness):
                     logger.warning(
-                        f"Could not measure loudness for channel {channel}, "
-                        "using original"
+                        f"Could not measure loudness for channel {channel}, " "using original"
                     )
                     normalized_channels[channel] = channel_audio
                 else:
@@ -363,9 +350,7 @@ def detect_silence(
             # silero-vad provides state-of-the-art voice activity detection
             # Load model (lazy initialization)
             if not hasattr(detect_silence, "_silero_model"):
-                detect_silence._silero_model, detect_silence._silero_utils = (
-                    load_silero_vad()
-                )
+                detect_silence._silero_model, detect_silence._silero_utils = load_silero_vad()
 
             # Get speech timestamps
             speech_timestamps = get_speech_timestamps(
@@ -386,9 +371,7 @@ def detect_silence(
 
             # Check beginning
             if speech_timestamps[0]["start"] / sample_rate > min_silence_duration:
-                silence_regions.append(
-                    (0.0, speech_timestamps[0]["start"] / sample_rate)
-                )
+                silence_regions.append((0.0, speech_timestamps[0]["start"] / sample_rate))
 
             # Check gaps between speech segments
             for i in range(len(speech_timestamps) - 1):
@@ -405,9 +388,7 @@ def detect_silence(
 
             return silence_regions
         except Exception as e:
-            logger.warning(
-                f"silero-vad detection failed: {e}. Falling back to webrtcvad."
-            )
+            logger.warning(f"silero-vad detection failed: {e}. Falling back to webrtcvad.")
 
     # Use webrtcvad if available and requested
     if use_vad and HAS_WEBRTCVAD:
@@ -432,8 +413,7 @@ def detect_silence(
             frame_duration_ms = 30
             frame_size = int(vad_sample_rate * frame_duration_ms / 1000)
             frames = [
-                audio_int16[i : i + frame_size]
-                for i in range(0, len(audio_int16), frame_size)
+                audio_int16[i : i + frame_size] for i in range(0, len(audio_int16), frame_size)
             ]
 
             # Detect voice activity
@@ -484,15 +464,11 @@ def detect_silence(
 
             return silence_regions
         except Exception as e:
-            logger.warning(
-                f"webrtcvad detection failed: {e}. Falling back to energy-based."
-            )
+            logger.warning(f"webrtcvad detection failed: {e}. Falling back to energy-based.")
 
     # Fallback to energy-based detection
     # Calculate RMS energy
-    rms = librosa.feature.rms(
-        y=audio_mono, frame_length=frame_length, hop_length=hop_length
-    )[0]
+    rms = librosa.feature.rms(y=audio_mono, frame_length=frame_length, hop_length=hop_length)[0]
 
     # Convert to dB
     rms_db = librosa.power_to_db(rms**2, ref=1.0)
@@ -572,14 +548,10 @@ def resample_audio(
             # soxr provides highest quality resampling
             # Convert to float64 for soxr (it handles conversion internally)
             audio_float64 = audio.astype(np.float64)
-            resampled = soxr.resample(
-                audio_float64, original_sr, target_sr, quality="VHQ"
-            )
+            resampled = soxr.resample(audio_float64, original_sr, target_sr, quality="VHQ")
             return resampled.astype(audio.dtype)
         except Exception as e:
-            logger.warning(
-                f"soxr resampling failed: {e}. Falling back to resampy/librosa."
-            )
+            logger.warning(f"soxr resampling failed: {e}. Falling back to resampy/librosa.")
 
     # Use resampy if available for higher quality resampling
     if HAS_RESAMPY:
@@ -590,9 +562,7 @@ def resample_audio(
             logger.warning(f"resampy resampling failed: {e}. Falling back to librosa.")
 
     # Fallback to librosa's high-quality resampler
-    resampled = librosa.resample(
-        audio, orig_sr=original_sr, target_sr=target_sr, res_type=res_type
-    )
+    resampled = librosa.resample(audio, orig_sr=original_sr, target_sr=target_sr, res_type=res_type)
 
     return resampled.astype(audio.dtype)
 
@@ -666,9 +636,7 @@ def convert_format(
                 else:
                     audio = np.column_stack([audio[:, 0], audio[:, 0]])
             elif audio.shape[1] != channels:
-                raise ValueError(
-                    f"Cannot convert from {audio.shape[1]} to {channels} channels"
-                )
+                raise ValueError(f"Cannot convert from {audio.shape[1]} to {channels} channels")
 
     # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -737,9 +705,7 @@ def analyze_voice_characteristics(
             voiced_flag = confident_mask
             f0 = frequency
         except Exception as e:
-            logger.warning(
-                f"CREPE pitch tracking failed, falling back to librosa.pyin: {e}"
-            )
+            logger.warning(f"CREPE pitch tracking failed, falling back to librosa.pyin: {e}")
             # Fallback to librosa.pyin
             f0, voiced_flag, voiced_probs = librosa.pyin(
                 audio_mono,
@@ -849,9 +815,7 @@ def enhance_voice_quality(
                 enhance_voice_quality._voicefixer = VoiceFixer()
 
             # Restore voice
-            enhanced_44k = enhance_voice_quality._voicefixer.restore(
-                enhanced_44k, cuda=False
-            )
+            enhanced_44k = enhance_voice_quality._voicefixer.restore(enhanced_44k, cuda=False)
 
             # Resample back to original sample rate
             if sample_rate != 44100:
@@ -887,17 +851,12 @@ def enhance_voice_quality(
                 if num_channels > 2:
 
                     def denoise_channel(ch_idx):
-                        return ch_idx, nr.reduce_noise(
-                            y=enhanced[:, ch_idx], sr=sample_rate
-                        )
+                        return ch_idx, nr.reduce_noise(y=enhanced[:, ch_idx], sr=sample_rate)
 
                     enhanced_channels = [None] * num_channels
-                    with ThreadPoolExecutor(
-                        max_workers=min(num_channels, 4)
-                    ) as executor:
+                    with ThreadPoolExecutor(max_workers=min(num_channels, 4)) as executor:
                         futures = {
-                            executor.submit(denoise_channel, ch): ch
-                            for ch in range(num_channels)
+                            executor.submit(denoise_channel, ch): ch for ch in range(num_channels)
                         }
                         for future in as_completed(futures):
                             ch_idx, denoised = future.result()
@@ -907,9 +866,7 @@ def enhance_voice_quality(
                     # Sequential for 1-2 channels (lower overhead)
                     enhanced_channels = []
                     for ch in range(num_channels):
-                        enhanced_channels.append(
-                            nr.reduce_noise(y=enhanced[:, ch], sr=sample_rate)
-                        )
+                        enhanced_channels.append(nr.reduce_noise(y=enhanced[:, ch], sr=sample_rate))
                     enhanced = np.column_stack(enhanced_channels)
             else:
                 enhanced = nr.reduce_noise(y=enhanced, sr=sample_rate)
@@ -921,9 +878,7 @@ def enhance_voice_quality(
         try:
             enhanced = normalize_lufs(enhanced, sample_rate, target_lufs=target_lufs)
         except Exception as e:
-            logger.warning(
-                f"Normalization failed: {e}, continuing without normalization"
-            )
+            logger.warning(f"Normalization failed: {e}, continuing without normalization")
 
     # Remove artifacts (synthesis artifacts, clicks, pops)
     enhanced = remove_artifacts(enhanced, sample_rate)
@@ -931,9 +886,7 @@ def enhance_voice_quality(
     return enhanced
 
 
-def remove_artifacts(
-    audio: np.ndarray, sample_rate: int, threshold: float = 0.01
-) -> np.ndarray:
+def remove_artifacts(audio: np.ndarray, sample_rate: int, threshold: float = 0.01) -> np.ndarray:
     """
     Remove synthesis artifacts from audio (clicks, pops, discontinuities).
 
@@ -978,9 +931,7 @@ def remove_artifacts(
         # Process each channel
         cleaned_channels = []
         for ch in range(cleaned.shape[1]):
-            cleaned_channels.append(
-                remove_artifacts(cleaned[:, ch], sample_rate, threshold)
-            )
+            cleaned_channels.append(remove_artifacts(cleaned[:, ch], sample_rate, threshold))
         cleaned = np.column_stack(cleaned_channels)
 
     # Clip to prevent overflow
@@ -1034,9 +985,7 @@ def load_audio(file_path: Union[str, Path]) -> Tuple[np.ndarray, int]:
             # Transpose if needed (librosa sometimes returns shape (channels, samples))
             audio = audio.T
 
-        logger.info(
-            f"Loaded audio from {file_path}: shape={audio.shape}, sr={sample_rate}"
-        )
+        logger.info(f"Loaded audio from {file_path}: shape={audio.shape}, sr={sample_rate}")
         return audio, sample_rate
 
     except Exception as e:
@@ -1147,9 +1096,7 @@ def time_stretch_audio(
 
             return stretched
         except Exception as e:
-            logger.warning(
-                f"pyrubberband time-stretching failed: {e}. Falling back to librosa."
-            )
+            logger.warning(f"pyrubberband time-stretching failed: {e}. Falling back to librosa.")
 
     # Fallback to librosa
     if librosa is None:
@@ -1161,16 +1108,12 @@ def time_stretch_audio(
     else:
         # Use librosa's pitch_shift
         semitones = 12 * np.log2(rate)
-        stretched = librosa.effects.pitch_shift(
-            audio, sr=sample_rate, n_steps=semitones
-        )
+        stretched = librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=semitones)
 
     return stretched
 
 
-def pitch_shift_audio(
-    audio: np.ndarray, sample_rate: int, semitones: float
-) -> np.ndarray:
+def pitch_shift_audio(audio: np.ndarray, sample_rate: int, semitones: float) -> np.ndarray:
     """
     Pitch-shift audio (change pitch without changing tempo).
 
@@ -1194,9 +1137,7 @@ def pitch_shift_audio(
             shifted = pyrb.pitch_shift(audio, sample_rate, semitones)
             return shifted
         except Exception as e:
-            logger.warning(
-                f"pyrubberband pitch-shifting failed: {e}. Falling back to librosa."
-            )
+            logger.warning(f"pyrubberband pitch-shifting failed: {e}. Falling back to librosa.")
 
     # Fallback to librosa
     if librosa is None:
@@ -1242,9 +1183,7 @@ def separate_voice_from_music(
         )
 
     if model not in ["2stems", "4stems", "5stems"]:
-        raise ValueError(
-            f"Invalid model '{model}'. Use '2stems', '4stems', or '5stems'"
-        )
+        raise ValueError(f"Invalid model '{model}'. Use '2stems', '4stems', or '5stems'")
 
     try:
         # Initialize separator
@@ -1310,9 +1249,7 @@ def separate_voice_from_music(
                 # Clean up and return original audio
                 os.unlink(tmp_path)
                 logger.warning("Spleeter separation failed, returning original audio")
-                return (
-                    audio_mono if output_format == "numpy" else {"vocals": audio_mono}
-                )
+                return audio_mono if output_format == "numpy" else {"vocals": audio_mono}
 
         except Exception as e:
             # Clean up on error
@@ -1374,9 +1311,7 @@ def analyze_audio_wavelets(
     detail_energies = [float(np.sum(detail**2)) for detail in details]
     total_energy = approximation_energy + sum(detail_energies)
     energy_by_level = [approximation_energy / total_energy if total_energy > 0 else 0.0]
-    energy_by_level.extend(
-        [e / total_energy if total_energy > 0 else 0.0 for e in detail_energies]
-    )
+    energy_by_level.extend([e / total_energy if total_energy > 0 else 0.0 for e in detail_energies])
 
     # Extract spectral features
     # High-frequency content (detail coefficients)
@@ -1385,7 +1320,9 @@ def analyze_audio_wavelets(
     mid_freq_energy = (
         sum(detail_energies[2:4])
         if len(detail_energies) >= 4
-        else sum(detail_energies[2:]) if len(detail_energies) > 2 else 0.0
+        else sum(detail_energies[2:])
+        if len(detail_energies) > 2
+        else 0.0
     )
     # Low-frequency content (approximation)
     low_freq_energy = approximation_energy
@@ -1396,18 +1333,10 @@ def analyze_audio_wavelets(
         "detail_energies": detail_energies,
         "approximation_energy": approximation_energy,
         "spectral_features": {
-            "high_freq_energy": (
-                high_freq_energy / total_energy if total_energy > 0 else 0.0
-            ),
-            "mid_freq_energy": (
-                mid_freq_energy / total_energy if total_energy > 0 else 0.0
-            ),
-            "low_freq_energy": (
-                low_freq_energy / total_energy if total_energy > 0 else 0.0
-            ),
-            "energy_ratio": (
-                high_freq_energy / low_freq_energy if low_freq_energy > 0 else 0.0
-            ),
+            "high_freq_energy": (high_freq_energy / total_energy if total_energy > 0 else 0.0),
+            "mid_freq_energy": (mid_freq_energy / total_energy if total_energy > 0 else 0.0),
+            "low_freq_energy": (low_freq_energy / total_energy if total_energy > 0 else 0.0),
+            "energy_ratio": (high_freq_energy / low_freq_energy if low_freq_energy > 0 else 0.0),
         },
     }
 
@@ -1486,9 +1415,7 @@ def read_audio_metadata(file_path: Union[str, Path]) -> Dict[str, any]:
 
             # Year
             if "TDRC" in tags or "DATE" in tags or "YEAR" in tags:
-                year_str = str(
-                    tags.get("TDRC", tags.get("DATE", tags.get("YEAR", [""]))[0])
-                )
+                year_str = str(tags.get("TDRC", tags.get("DATE", tags.get("YEAR", [""]))[0]))
                 try:
                     metadata["year"] = int(year_str[:4]) if year_str else None
                 except (ValueError, IndexError):
@@ -1504,18 +1431,12 @@ def read_audio_metadata(file_path: Union[str, Path]) -> Dict[str, any]:
         # Extract audio properties
         if hasattr(audio_file, "info"):
             info = audio_file.info
-            metadata["duration"] = (
-                float(info.length) if hasattr(info, "length") else None
-            )
-            metadata["bitrate"] = (
-                int(info.bitrate / 1000) if hasattr(info, "bitrate") else None
-            )
+            metadata["duration"] = float(info.length) if hasattr(info, "length") else None
+            metadata["bitrate"] = int(info.bitrate / 1000) if hasattr(info, "bitrate") else None
             metadata["sample_rate"] = (
                 int(info.sample_rate) if hasattr(info, "sample_rate") else None
             )
-            metadata["channels"] = (
-                int(info.channels) if hasattr(info, "channels") else None
-            )
+            metadata["channels"] = int(info.channels) if hasattr(info, "channels") else None
 
         return metadata
 
@@ -1552,6 +1473,12 @@ def match_voice_profile(
     Analyzes both audio samples and provides metrics for voice matching,
     useful for voice cloning quality assessment.
 
+    Uses improved algorithms for better accuracy:
+    - Cosine similarity for MFCC comparison (more robust than L2 distance)
+    - Normalized feature comparison
+    - Spectral centroid similarity for additional accuracy
+    - Sigmoid-based distance-to-similarity conversion
+
     Args:
         reference_audio: Reference audio array (target voice)
         target_audio: Target audio array (synthesized voice)
@@ -1563,6 +1490,8 @@ def match_voice_profile(
         - f0_similarity: F0 similarity score (0-1)
         - formant_similarity: Formant similarity score (0-1)
         - mfcc_distance: MFCC distance (lower is better)
+        - mfcc_cosine_similarity: MFCC cosine similarity (0-1, higher is better)
+        - spectral_similarity: Spectral centroid similarity (0-1)
         - overall_similarity: Overall similarity score (0-1)
         - recommendations: List of recommendations for improvement
     """
@@ -1580,58 +1509,92 @@ def match_voice_profile(
     ref_chars = analyze_voice_characteristics(reference_audio, reference_sr)
     target_chars = analyze_voice_characteristics(target_audio, target_sr)
 
-    # Calculate F0 similarity
-    f0_diff = abs(ref_chars["f0_mean"] - target_chars["f0_mean"])
-    f0_max = max(ref_chars["f0_mean"], target_chars["f0_mean"], 1.0)
-    f0_similarity = max(0.0, 1.0 - (f0_diff / f0_max))
-
-    # Calculate formant similarity
-    formant_diffs = [
-        abs(ref - tgt)
-        for ref, tgt in zip(ref_chars["formants"], target_chars["formants"])
-        if ref > 0 and tgt > 0
-    ]
-    if formant_diffs:
-        avg_formant_diff = np.mean(formant_diffs)
-        formant_similarity = max(0.0, 1.0 - (avg_formant_diff / 1000.0))  # Normalize
+    # Calculate F0 similarity with improved normalization
+    ref_f0 = ref_chars["f0_mean"]
+    target_f0 = target_chars["f0_mean"]
+    if ref_f0 > 0 and target_f0 > 0:
+        # Use ratio-based similarity (handles different pitch ranges better)
+        f0_ratio = min(ref_f0, target_f0) / max(ref_f0, target_f0)
+        f0_similarity = f0_ratio
     else:
-        formant_similarity = 0.0
+        f0_similarity = 0.0
 
-    # Calculate MFCC distance
+    # Calculate formant similarity with improved weighting
+    # F1 and F2 are more important for voice identity than F3
+    formant_weights = [0.4, 0.4, 0.2]  # F1, F2, F3 weights
+    formant_sims = []
+    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"])):
+        if ref > 0 and tgt > 0:
+            # Ratio-based similarity for each formant
+            formant_ratio = min(ref, tgt) / max(ref, tgt)
+            formant_sims.append(formant_ratio * formant_weights[i])
+        else:
+            formant_sims.append(0.0)
+    formant_similarity = sum(formant_sims) / sum(formant_weights) if formant_sims else 0.0
+
+    # Calculate MFCC similarity using cosine similarity (more robust)
     ref_mfcc = np.array(ref_chars["mfcc"])
     target_mfcc = np.array(target_chars["mfcc"])
+
+    # Compute L2 distance (for backward compatibility)
     mfcc_distance = float(np.linalg.norm(ref_mfcc - target_mfcc))
 
-    # Overall similarity (weighted average)
+    # Compute cosine similarity (more robust for spectral features)
+    ref_norm = np.linalg.norm(ref_mfcc)
+    target_norm = np.linalg.norm(target_mfcc)
+    if ref_norm > 0 and target_norm > 0:
+        mfcc_cosine_similarity = float(
+            np.dot(ref_mfcc, target_mfcc) / (ref_norm * target_norm)
+        )
+        # Clamp to [0, 1] range (cosine can be negative)
+        mfcc_cosine_similarity = max(0.0, mfcc_cosine_similarity)
+    else:
+        mfcc_cosine_similarity = 0.0
+
+    # Calculate spectral centroid similarity
+    ref_centroid = ref_chars.get("spectral_centroid", 0)
+    target_centroid = target_chars.get("spectral_centroid", 0)
+    if ref_centroid > 0 and target_centroid > 0:
+        spectral_similarity = min(ref_centroid, target_centroid) / max(ref_centroid, target_centroid)
+    else:
+        spectral_similarity = 0.0
+
+    # Convert MFCC distance to similarity using sigmoid function
+    # This gives a smoother transition and handles larger distances better
+    # Calibrated so that distance=50 gives ~0.8 similarity, distance=100 gives ~0.5
+    mfcc_distance_similarity = 1.0 / (1.0 + np.exp((mfcc_distance - 75) / 25))
+
+    # Overall similarity with improved weighting
+    # F0: 25%, Formant: 20%, MFCC cosine: 30%, Spectral: 10%, MFCC distance: 15%
     overall_similarity = (
-        f0_similarity * 0.4
-        + formant_similarity * 0.3
-        + max(0.0, 1.0 - (mfcc_distance / 100.0)) * 0.3
+        f0_similarity * 0.25
+        + formant_similarity * 0.20
+        + mfcc_cosine_similarity * 0.30
+        + spectral_similarity * 0.10
+        + mfcc_distance_similarity * 0.15
     )
 
-    # Generate recommendations
+    # Generate recommendations based on improved thresholds
     recommendations = []
-    if f0_similarity < 0.8:
-        recommendations.append(
-            "F0 mismatch detected - consider adjusting pitch parameters"
-        )
-    if formant_similarity < 0.7:
-        recommendations.append(
-            "Formant mismatch detected - voice characteristics differ"
-        )
-    if mfcc_distance > 50:
-        recommendations.append(
-            "High MFCC distance - spectral characteristics differ significantly"
-        )
-    if overall_similarity < 0.7:
-        recommendations.append(
-            "Overall voice match is low - review synthesis parameters"
-        )
+    if f0_similarity < 0.85:
+        recommendations.append("F0 mismatch detected - consider adjusting pitch parameters")
+    if formant_similarity < 0.75:
+        recommendations.append("Formant mismatch detected - voice characteristics differ")
+    if mfcc_cosine_similarity < 0.85:
+        recommendations.append("Spectral mismatch - MFCC characteristics differ from reference")
+    if mfcc_distance > 100:
+        recommendations.append("High MFCC distance - consider reference audio quality")
+    if spectral_similarity < 0.8:
+        recommendations.append("Spectral centroid mismatch - brightness differs from reference")
+    if overall_similarity < 0.75:
+        recommendations.append("Overall voice match is moderate - review synthesis parameters")
 
     return {
         "f0_similarity": float(f0_similarity),
         "formant_similarity": float(formant_similarity),
         "mfcc_distance": mfcc_distance,
+        "mfcc_cosine_similarity": float(mfcc_cosine_similarity),
+        "spectral_similarity": float(spectral_similarity),
         "overall_similarity": float(overall_similarity),
         "recommendations": recommendations,
     }
@@ -1737,9 +1700,7 @@ def enhance_voice_cloning_quality(
                         "aggressive": 0.6,
                         "ultra": 0.8,
                     }.get(enhancement_level, 0.4)
-                    smoothed_magnitude = ndimage.gaussian_filter(
-                        magnitude, sigma=smoothing_sigma
-                    )
+                    smoothed_magnitude = ndimage.gaussian_filter(magnitude, sigma=smoothing_sigma)
                 except ImportError:
                     # Fallback: simple moving average
                     smoothed_magnitude = magnitude
@@ -1928,8 +1889,7 @@ def _apply_rvc_postprocessing(
 
             # Blend spectral envelopes (70% reference, 30% original for naturalness)
             matched_magnitude = (
-                0.7 * ref_magnitude[:, : audio_magnitude.shape[1]]
-                + 0.3 * audio_magnitude
+                0.7 * ref_magnitude[:, : audio_magnitude.shape[1]] + 0.3 * audio_magnitude
             )
 
             # Reconstruct

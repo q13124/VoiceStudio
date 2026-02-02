@@ -182,7 +182,7 @@ async def get_marker(marker_id: str):
     try:
         if not marker_id or not marker_id.strip():
             raise HTTPException(status_code=400, detail="Marker ID is required")
-        
+
         if marker_id not in _markers:
             logger.warning(f"Marker not found: {marker_id}")
             raise HTTPException(status_code=404, detail="Marker not found")
@@ -265,7 +265,7 @@ async def update_marker(marker_id: str, request: MarkerUpdateRequest):
     try:
         if not marker_id or not marker_id.strip():
             raise HTTPException(status_code=400, detail="Marker ID is required")
-        
+
         if marker_id not in _markers:
             logger.warning(f"Marker not found for update: {marker_id}")
             raise HTTPException(status_code=404, detail="Marker not found")
@@ -313,7 +313,7 @@ async def delete_marker(marker_id: str):
     try:
         if not marker_id or not marker_id.strip():
             raise HTTPException(status_code=400, detail="Marker ID is required")
-        
+
         if marker_id not in _markers:
             logger.warning(f"Marker not found for deletion: {marker_id}")
             raise HTTPException(status_code=404, detail="Marker not found")
@@ -354,4 +354,64 @@ async def get_categories(project_id: Optional[str] = Query(None)):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get categories: {str(e)}",
+        ) from e
+
+
+# =============================================================================
+# Project-scoped marker routes (for UI compatibility)
+# =============================================================================
+
+project_markers_router = APIRouter(prefix="/api/projects", tags=["project-markers"])
+
+
+@project_markers_router.get("/{project_id}/markers", response_model=List[Marker])
+@cache_response(ttl=30)
+async def get_project_markers(project_id: str):
+    """Get all markers for a specific project."""
+    try:
+        if not project_id or not project_id.strip():
+            raise HTTPException(status_code=400, detail="Project ID is required")
+
+        markers = [m for m in _markers.values() if m.get("project_id") == project_id]
+        markers.sort(key=lambda m: m.get("time", 0))
+
+        logger.debug(f"Retrieved {len(markers)} markers for project: {project_id}")
+        return markers
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting markers for project {project_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get project markers: {str(e)}",
+        ) from e
+
+
+@project_markers_router.get("/{project_id}/markers/{marker_id}", response_model=Marker)
+@cache_response(ttl=60)
+async def get_project_marker(project_id: str, marker_id: str):
+    """Get a specific marker from a project."""
+    try:
+        if not project_id or not project_id.strip():
+            raise HTTPException(status_code=400, detail="Project ID is required")
+        if not marker_id or not marker_id.strip():
+            raise HTTPException(status_code=400, detail="Marker ID is required")
+
+        if marker_id not in _markers:
+            raise HTTPException(status_code=404, detail="Marker not found")
+
+        marker = _markers[marker_id]
+        if marker.get("project_id") != project_id:
+            raise HTTPException(
+                status_code=404, detail="Marker not found in this project"
+            )
+
+        return marker
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting marker {marker_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get marker: {str(e)}",
         ) from e

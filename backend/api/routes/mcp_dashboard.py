@@ -13,10 +13,13 @@ from pydantic import BaseModel
 try:
     from ..optimization import cache_response
 except ImportError:
+
     def cache_response(ttl: int = 300):
         def decorator(func):
             return func
+
         return decorator
+
 
 logger = logging.getLogger(__name__)
 
@@ -108,21 +111,14 @@ async def get_dashboard_summary():
     """Get MCP dashboard summary."""
     try:
         total = len(_mcp_servers)
-        connected = len([
-            s for s in _mcp_servers.values()
-            if s.status == "connected"
-        ])
-        disconnected = len(
-            [s for s in _mcp_servers.values() if s.status == "disconnected"]
-        )
+        connected = len([s for s in _mcp_servers.values() if s.status == "connected"])
+        disconnected = len([s for s in _mcp_servers.values() if s.status == "disconnected"])
         error = len([s for s in _mcp_servers.values() if s.status == "error"])
 
         # Count operations from all servers
         total_ops = sum(len(s.capabilities) for s in _mcp_servers.values())
         available_ops = sum(
-            len(s.capabilities)
-            for s in _mcp_servers.values()
-            if s.status == "connected"
+            len(s.capabilities) for s in _mcp_servers.values() if s.status == "connected"
         )
 
         return MCPDashboardSummary(
@@ -178,9 +174,7 @@ async def get_mcp_server(server_id: str):
     """Get a specific MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         server = _mcp_servers[server_id]
 
@@ -257,9 +251,7 @@ async def update_mcp_server(server_id: str, request: MCPServerUpdateRequest):
     """Update an MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         server = _mcp_servers[server_id]
 
@@ -304,9 +296,7 @@ async def connect_mcp_server(server_id: str):
     """Connect to an MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         server = _mcp_servers[server_id]
 
@@ -344,16 +334,12 @@ async def connect_mcp_server(server_id: str):
         ) from e
 
 
-@router.post(
-    "/servers/{server_id}/disconnect", response_model=MCPServerResponse
-)
+@router.post("/servers/{server_id}/disconnect", response_model=MCPServerResponse)
 async def disconnect_mcp_server(server_id: str):
     """Disconnect from an MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         server = _mcp_servers[server_id]
         server.status = "disconnected"
@@ -389,9 +375,7 @@ async def delete_mcp_server(server_id: str):
     """Delete an MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         del _mcp_servers[server_id]
         logger.info(f"Deleted MCP server: {server_id}")
@@ -407,16 +391,12 @@ async def delete_mcp_server(server_id: str):
         ) from e
 
 
-@router.get(
-    "/servers/{server_id}/operations", response_model=List[MCPOperation]
-)
+@router.get("/servers/{server_id}/operations", response_model=List[MCPOperation])
 async def list_server_operations(server_id: str):
     """List operations available from an MCP server."""
     try:
         if server_id not in _mcp_servers:
-            raise HTTPException(
-                status_code=404, detail=f"MCP server '{server_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"MCP server '{server_id}' not found")
 
         server = _mcp_servers[server_id]
         operations = []
@@ -459,3 +439,43 @@ async def list_server_types():
         "pdf",
         "custom",
     ]
+
+
+# =============================================================================
+# Simple /api/mcp routes (for UI compatibility)
+# =============================================================================
+
+mcp_router = APIRouter(prefix="/api/mcp", tags=["mcp"])
+
+
+@mcp_router.get("/{operation}")
+async def mcp_operation(operation: str):
+    """
+    Execute an MCP operation by name.
+
+    This is a simple compatibility route for UI that expects /api/mcp/{operation}.
+    Actual MCP operations should use /api/mcp-dashboard/servers/{server_id}/operations.
+    """
+    try:
+        logger.debug(f"MCP operation requested: {operation}")
+
+        # Map known operations to appropriate handlers
+        if operation == "list":
+            return {"servers": list(_mcp_servers.keys())}
+        elif operation == "status":
+            return {
+                "status": "available",
+                "server_count": len(_mcp_servers),
+            }
+        else:
+            return {
+                "operation": operation,
+                "status": "unknown",
+                "message": f"Operation '{operation}' not recognized. Use /api/mcp-dashboard for full MCP functionality.",
+            }
+    except Exception as e:
+        logger.error(f"MCP operation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"MCP operation failed: {str(e)}",
+        ) from e

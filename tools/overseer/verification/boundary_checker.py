@@ -27,6 +27,15 @@ def _normalize_path(path: str) -> str:
     return path.rstrip("/") or "/"
 
 
+def _normalize_path_params(path: str) -> str:
+    """Normalize path parameters to a common format for comparison.
+    
+    Converts all {param_name} to {*} for parameter-agnostic matching.
+    This handles differences like {jobId} vs {job_id}.
+    """
+    return re.sub(r"\{[^}]+\}", "{*}", path)
+
+
 def extract_ui_api_paths(root: Path) -> Set[str]:
     """Extract /api/... paths from BackendClient.cs."""
     path = root / BACKEND_CLIENT_PATH.replace("/", "\\" if str(root).find("\\") >= 0 else "/")
@@ -66,7 +75,8 @@ def verify_ui_backend_alignment(
     Verify UI-called backend endpoints exist in backend (openapi).
 
     Returns (passed, message). Paths are normalized so /api/profiles/xyz
-    matches /api/profiles/{id}.
+    matches /api/profiles/{id} and parameter naming differences like
+    {jobId} vs {job_id} are handled.
     """
     root = root or DEFAULT_ROOT
     ui_paths = extract_ui_api_paths(root)
@@ -76,17 +86,33 @@ def verify_ui_backend_alignment(
             True,
             "Backend routes not loaded (openapi.json missing or empty); skip alignment check.",
         )
+
+    # Normalize backend paths for parameter-agnostic matching
+    backend_normalized = {_normalize_path_params(b): b for b in backend_paths}
+
     missing: List[str] = []
     for p in ui_paths:
+        # Try exact match first
+        if p in backend_paths:
+            continue
+
+        # Try parameter-normalized match (handles {jobId} vs {job_id})
+        p_normalized = _normalize_path_params(p)
+        if p_normalized in backend_normalized:
+            continue
+
         # Base path before any template (e.g. /api/profiles/123 -> /api/profiles)
         base = re.sub(r"/[^/]+$", "", p) if "/" in p else p
         base = base.rstrip("/") or "/api"
-        # Backend has a route that starts with same base (e.g. /api/profiles or /api/profiles/{profile_id})
+
+        # Backend has a route that starts with same base
         if any(b == p or b.startswith(base + "/") or b == base for b in backend_paths):
             continue
         if base in {b.split("{")[0].rstrip("/") for b in backend_paths}:
             continue
+
         missing.append(p)
+
     if not missing:
         return True, "PASS: UI and backend paths aligned."
     return False, f"FAIL: UI paths not found in backend (openapi): {missing[:10]}"

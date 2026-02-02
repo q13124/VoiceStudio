@@ -1,6 +1,7 @@
 # IMPORTANT: Import Hugging Face fix FIRST to set environment variables
 # before any huggingface_hub imports
 import os
+from datetime import datetime
 
 
 def _configure_hf_endpoints() -> None:
@@ -37,15 +38,9 @@ if not _default_models_root:
 os.environ.setdefault("VOICESTUDIO_MODELS_PATH", _default_models_root)
 os.environ.setdefault("HF_HOME", os.path.join(_default_models_root, "hf_cache"))
 os.environ.setdefault("TTS_HOME", os.path.join(_default_models_root, "xtts"))
-os.environ.setdefault(
-    "HUGGINGFACE_HUB_CACHE", os.path.join(os.environ["HF_HOME"], "hub")
-)
-os.environ.setdefault(
-    "TRANSFORMERS_CACHE", os.path.join(os.environ["HF_HOME"], "transformers")
-)
-os.environ.setdefault(
-    "HF_DATASETS_CACHE", os.path.join(os.environ["HF_HOME"], "datasets")
-)
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(os.environ["HF_HOME"], "hub"))
+os.environ.setdefault("TRANSFORMERS_CACHE", os.path.join(os.environ["HF_HOME"], "transformers"))
+os.environ.setdefault("HF_DATASETS_CACHE", os.path.join(os.environ["HF_HOME"], "datasets"))
 os.environ.setdefault("TORCH_HOME", os.path.join(_default_models_root, "torch"))
 os.environ.setdefault(
     "WHISPER_CPP_MODEL_PATH",
@@ -93,6 +88,16 @@ except ImportError:
         "Metrics will be limited."
     )
 
+# Initialize structured JSON logging if enabled
+if os.environ.get("VOICESTUDIO_JSON_LOGGING", "").lower() in ("1", "true", "yes"):
+    try:
+        from backend.services.telemetry import setup_json_logging
+
+        setup_json_logging()
+        logging.getLogger(__name__).info("JSON logging enabled via VOICESTUDIO_JSON_LOGGING")
+    except ImportError:
+        pass
+
 # Lazy imports - defer heavy imports until needed
 # Exception handlers are lightweight, import immediately
 from .error_handling import (
@@ -102,7 +107,6 @@ from .error_handling import (
     http_exception_handler,
     validation_exception_handler,
 )
-from .exceptions import VoiceStudioException
 from .version_info import get_version_info, get_version_string
 
 # API versioning
@@ -169,8 +173,6 @@ def _perform_startup_sanity_checks():
 
     Fail fast (raise) or warn (log) based on severity.
     """
-    import sys
-    from pathlib import Path
 
     # Check coqui-tts version
     try:
@@ -191,8 +193,8 @@ def _perform_startup_sanity_checks():
                     logger.info(f"coqui-tts version check: OK ({coqui_version})")
             except PackageNotFoundError:
                 logger.warning(
-                    f"coqui-tts not installed. XTTS engine will not work. "
-                    f"Install with: pip install coqui-tts==0.27.2"
+                    "coqui-tts not installed. XTTS engine will not work. "
+                    "Install with: pip install coqui-tts==0.27.2"
                 )
         except ImportError:
             # Fallback to pkg_resources (older Python or if importlib.metadata unavailable)
@@ -211,8 +213,8 @@ def _perform_startup_sanity_checks():
                     logger.info(f"coqui-tts version check: OK ({coqui_version})")
             except pkg_resources.DistributionNotFound:
                 logger.warning(
-                    f"coqui-tts not installed. XTTS engine will not work. "
-                    f"Install with: pip install coqui-tts==0.27.2"
+                    "coqui-tts not installed. XTTS engine will not work. "
+                    "Install with: pip install coqui-tts==0.27.2"
                 )
     except Exception as e:
         logger.warning(f"Failed to check coqui-tts version: {e}")
@@ -470,8 +472,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                 size = int(content_length)
                 if size > self.max_size_bytes:
                     logger.warning(
-                        f"Request too large: {size} bytes "
-                        f"(max: {self.max_size_bytes} bytes)"
+                        f"Request too large: {size} bytes " f"(max: {self.max_size_bytes} bytes)"
                     )
                     from fastapi import HTTPException
 
@@ -540,7 +541,7 @@ async def request_id_middleware(request: Request, call_next):
 async def api_versioning_middleware(request: Request, call_next):
     path = request.scope.get("path", "")
     if path.startswith(API_VERSION_PREFIX):
-        versioned_path = path[len(API_VERSION_PREFIX):] or "/"
+        versioned_path = path[len(API_VERSION_PREFIX) :] or "/"
         request.scope["path"] = versioned_path
         request.scope["root_path"] = API_VERSION_PREFIX
         return await call_next(request)
@@ -549,9 +550,9 @@ async def api_versioning_middleware(request: Request, call_next):
     if path.startswith(LEGACY_API_PREFIX):
         response.headers["Deprecation"] = "true"
         response.headers["Sunset"] = API_SUNSET_DATE
-        response.headers["Link"] = (
-            f"<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel=\"alternate\""
-        )
+        response.headers[
+            "Link"
+        ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
     return response
 
 
@@ -619,9 +620,7 @@ if ('serviceWorker' in navigator) {
 
                 # Copy headers but exclude content-length since we're changing the body size
                 headers = {
-                    k: v
-                    for k, v in response.headers.items()
-                    if k.lower() != "content-length"
+                    k: v for k, v in response.headers.items() if k.lower() != "content-length"
                 }
                 return HTMLResponse(
                     content=html_content,
@@ -678,9 +677,7 @@ def _initialize_rate_limiting():
         logger.info("Enhanced rate limiting middleware enabled")
         _rate_limit_middleware_loaded = True
     except ImportError:
-        logger.warning(
-            "Enhanced rate limiting not available, using basic rate limiting"
-        )
+        logger.warning("Enhanced rate limiting not available, using basic rate limiting")
         # Fallback to basic rate limiting
         from .rate_limiting import rate_limit_middleware
 
@@ -695,9 +692,7 @@ def _initialize_rate_limiting():
 # Configure CORS with security best practices
 # For production, replace ["*"] with specific allowed origins
 allowed_origins = (
-    os.getenv(
-        "CORS_ALLOWED_ORIGINS", "*"  # Default to all for local development
-    ).split(",")
+    os.getenv("CORS_ALLOWED_ORIGINS", "*").split(",")  # Default to all for local development
     if os.getenv("CORS_ALLOWED_ORIGINS")
     else ["*"]
 )
@@ -729,6 +724,16 @@ except Exception as e:
 
 # Initialize rate limiting middleware
 _initialize_rate_limiting()
+
+# Initialize telemetry middleware if enabled
+if os.environ.get("VOICESTUDIO_TELEMETRY", "").lower() in ("1", "true", "yes"):
+    try:
+        from backend.api.middleware.telemetry_middleware import TelemetryMiddleware
+
+        app.add_middleware(TelemetryMiddleware, enabled=True)
+        logger.info("Telemetry middleware initialized")
+    except ImportError as e:
+        logger.debug(f"Telemetry middleware not available: {e}")
 
 # Add compression middleware for large responses (lazy initialization)
 _compression_middleware_loaded = False
@@ -835,6 +840,7 @@ def _register_all_routes():
         "ssml",
         "style_transfer",
         "tags",
+        "telemetry",
         "templates",
         "text_highlighting",
         "text_speech_editor",
@@ -895,9 +901,7 @@ def _register_all_routes():
     _include_route("quality_pipelines")
 
     if not any(getattr(r, "path", None) == "/api/voice/clone" for r in app.routes):
-        raise RuntimeError(
-            "Voice routes not registered. Inspect backend.api.routes.voice import."
-        )
+        raise RuntimeError("Voice routes not registered. Inspect backend.api.routes.voice import.")
 
     # Management routes
     _include_route("profiles")
@@ -982,6 +986,31 @@ def _register_all_routes():
     _include_route("api_key_manager")
     _include_route("plugins")
     _include_route("analytics")
+
+    # Register additional sub-routers for UI compatibility
+    try:
+        from .routes.markers import project_markers_router
+
+        app.include_router(project_markers_router)
+        logger.debug("Registered project_markers_router")
+    except Exception as e:
+        logger.warning(f"Failed to register project_markers_router: {e}")
+
+    try:
+        from .routes.effects import project_effects_router
+
+        app.include_router(project_effects_router)
+        logger.debug("Registered project_effects_router")
+    except Exception as e:
+        logger.warning(f"Failed to register project_effects_router: {e}")
+
+    try:
+        from .routes.mcp_dashboard import mcp_router
+
+        app.include_router(mcp_router)
+        logger.debug("Registered mcp_router")
+    except Exception as e:
+        logger.warning(f"Failed to register mcp_router: {e}")
 
     load_time = (time.time() - start_time) * 1000
     logger.info(f"Routes loaded in {load_time:.2f}ms")
@@ -1352,9 +1381,7 @@ def scheduler_tasks(status: Optional[str] = None, priority: Optional[str] = None
                     "priority": task.priority.name,
                     "status": task.status.value,
                     "created_at": task.created_at.isoformat(),
-                    "scheduled_at": (
-                        task.scheduled_at.isoformat() if task.scheduled_at else None
-                    ),
+                    "scheduled_at": (task.scheduled_at.isoformat() if task.scheduled_at else None),
                     "next_run": (task.next_run.isoformat() if task.next_run else None),
                     "last_run": (task.last_run.isoformat() if task.last_run else None),
                     "interval": task.interval,
@@ -1391,9 +1418,7 @@ def scheduler_task_detail(task_id: str):
             "priority": task.priority.name,
             "status": task.status.value,
             "created_at": task.created_at.isoformat(),
-            "scheduled_at": (
-                task.scheduled_at.isoformat() if task.scheduled_at else None
-            ),
+            "scheduled_at": (task.scheduled_at.isoformat() if task.scheduled_at else None),
             "next_run": task.next_run.isoformat() if task.next_run else None,
             "last_run": task.last_run.isoformat() if task.last_run else None,
             "interval": task.interval,
