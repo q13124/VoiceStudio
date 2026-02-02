@@ -35,7 +35,7 @@
 | **TD-007** | Warning count | Debug build reduced 4990→2046 (54%); CI budget at 2500 | Code quality | Role 2 | 2026-01-29 | CLOSED |
 | **TD-008** | Git History Reconstruction | Documentation-git disconnect from branch divergence | Process failure | Role 0 | 2026-01-29 | CLOSED |
 | **TD-009** | Commit Discipline Enforcement | Pre-commit hooks verified (completion_guard, compatibility_matrix) | Process improvement | Role 0 | 2026-01-30 | CLOSED |
-| **TD-010** | Branch Merge Policy | Need policy for max branch divergence | Process improvement | Role 0 | 2026-01-30 | Sprint 2 |
+| **TD-010** | Branch Merge Policy | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | Complete | Role 0 | 2026-01-30 | CLOSED |
 | **TD-011** | Interface Implementations | All interfaces implemented: ViewModelContext, TelemetryServiceStub, JsonProjectRepository | Complete | Role 3/4 | 2026-01-30 | CLOSED |
 | **TD-012** | Namespace Cleanup | UseCases namespace correctly defined and used; no issues | Verified correct | Role 2/3 | 2026-01-30 | CLOSED |
 
@@ -58,6 +58,7 @@
 | **TD-004** | ViewModel DI migration | 2026-02-02 | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Grep: IViewModelContext |
 | **TD-011** | Interface Implementations | 2026-02-02 | ViewModelContext, TelemetryServiceStub, JsonProjectRepository implemented | Grep: class.*: I*Service |
 | **TD-012** | Namespace Cleanup | 2026-02-02 | UseCases namespace correctly defined and used; no issues found | Grep: App.UseCases |
+| **TD-010** | Branch Merge Policy | 2026-02-02 | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | BRANCH_MERGE_POLICY.md |
 
 ---
 

@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-01-30 (Architecture Audit: ADRs restored, legacy docs archived, engine configs standardized. Deferred: ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md.)
+> **Last Updated**: 2026-02-02 (Branch Merge Policy added; TD-010 closed)
 
 ---
 
@@ -29,6 +29,10 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Task Brief Template | `docs/tasks/TASK_TEMPLATE.md` | 2026-01-30 | Standard task brief template; new briefs: use next ID (e.g. TASK-0023) per [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md) § Task brief creation |
 | Prompt Library | `.cursor/commands/` | 2026-01-25 | Reusable AI prompts and roles |
 | Completion Evidence Guard | `tools/overseer/verification/completion_guard.py` | 2026-02-01 | Prevents completion markers in uncommitted changes; integrated with verification and stop hook |
+| **Compatibility Matrix** | `config/compatibility_matrix.yml` | 2026-02-02 | Centralized version pins, dependency constraints, protected surfaces; validated by `scripts/check_compatibility_matrix.py` |
+| **CODEOWNERS** | `.github/CODEOWNERS` | 2026-02-02 | Protected surface ownership mapping for PR review auto-assignment |
+| **AI Agent Safety Rule** | `.cursor/rules/workflows/auto-mode-safety.mdc` | 2026-02-02 | Mandatory scaffolding, matrix checks, protected surface handling for AI agents |
+| **Branch Merge Policy** | `docs/governance/BRANCH_MERGE_POLICY.md` | 2026-02-02 | Divergence limits, branch lifecycle, merge strategies; closes TD-010 |
 
 ## Architecture
 
@@ -58,6 +62,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | IPC Architecture Deviation ADR | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | — | **PLANNED** — Not yet created |
 | Orchestration Architecture ADR | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | — | **PLANNED** — Not yet created |
 | Completion Evidence Guard ADR | `docs/architecture/decisions/ADR-024-completion-evidence-guard.md` | 2026-02-01 | Enforce completion markers committed before verification passes |
+| **Compatibility Matrix ADR** | `docs/architecture/decisions/ADR-025-compatibility-matrix-and-scaffolding.md` | 2026-02-02 | Centralized version pins, scaffolding tools, CODEOWNERS, AI agent safety |
+| **Infrastructure Remediation ADR** | `docs/architecture/decisions/ADR-026-infrastructure-remediation.md` | 2026-02-02 | Activation of dormant development infrastructure (telemetry, issues, context) |
 
 ## Planning and Roadmaps
 
@@ -147,6 +153,9 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Onboarding | `docs/developer/ONBOARDING.md` | 2026-01-25 | New developer onboarding |
 | Troubleshooting | `docs/developer/TROUBLESHOOTING.md` | 2026-01-25 | Common issues and fixes |
 | Cursor User Rules | `docs/developer/CURSOR_USER_RULES.md` | 2026-01-25 | Global Cursor baseline for VoiceStudio |
+| **Compatibility Matrix Guide** | `docs/developer/COMPATIBILITY_MATRIX_GUIDE.md` | 2026-02-02 | How to use and update the compatibility matrix; validation workflow |
+| **AI Agent Development Guide** | `docs/developer/AI_AGENT_DEVELOPMENT_GUIDE.md` | 2026-02-02 | AI-assisted development best practices; scaffold usage, matrix checks |
+| **Scaffolding Tools** | `tools/scaffolds/` | 2026-02-02 | CLI scaffolds: `generate_panel.py`, `generate_route.py`, `generate_engine.py` |
 
 ## Design and Specifications
 
@@ -181,6 +190,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | **Architecture Peer Review Package (Gate C / TASK-0004)** | `docs/reports/verification/ARCHITECTURE_PEER_REVIEW_PACKAGE_2026-01-27.md` | 2026-01-27 | Overseer-owned single entry point for architecture peer review; consolidates blockers, decisions, evidence, next tasks, approval map |
+| **Complete Project Report (Start → 2026-02-02)** | `docs/reports/verification/VOICESTUDIO_COMPLETE_PROJECT_REPORT_2026-02-02.md` | 2026-02-02 | Single narrative + status + remaining gaps; links to SSOT; includes peer approval checklist |
 | Session 11 Overseer Next Steps | `docs/reports/verification/SESSION11_OVERSEER_NEXT_STEPS_2026-01-27.md` | 2026-01-27 | Overseer run: tooling refresh, Task B deferred (venv), Task C partial (Install OK, Launch V1 fail); §6 peer approval |
 | Peer Review Package | `docs/reports/verification/PEER_REVIEW_PACKAGE_2026-01-28.md` | 2026-01-28 | Peer review of items pending approval; tooling verification; Validator sign-off checklist |
 | Gate C / Gate H Release Engineer | `docs/reports/packaging/GATE_C_H_RELEASE_ENGINEER_REPORT_2026-01-27.md` | 2026-01-27 | Gate C proof status, Gate H lifecycle plan, prereq gaps, evidence bundle |
@@ -213,7 +223,11 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Handoff Process (Legacy) | `docs/archive/legacy_worker_system/overseer/HANDOFF_PROCESS_GUIDE.md` | 2026-01-30 | **ARCHIVED** — Legacy handoff; use HANDOFF_PROTOCOL.md and ROLE_GUIDES_INDEX |
 | Quality Ledger | `Recovery Plan/QUALITY_LEDGER.md` | 2026-01-25 | VS-XXXX tracking |
 | Verification automation | `scripts/run_verification.py`, `scripts/run-verification.ps1` | 2026-02-01 | Gate + ledger + completion guard (+ optional build, `--skip-guard` to bypass guard); proof in `.buildlogs/verification/last_run.json` |
-| Overseer Issue System | `docs/developer/OVERSEER_ISSUE_SYSTEM.md` | 2026-01-28 | Unified issue logging from agents, engines, builds; recommendations and CLI for AI Overseer review |
+| Overseer Issue System | `docs/developer/OVERSEER_ISSUE_SYSTEM.md` | 2026-02-02 | Unified issue logging from agents, engines, builds; recommendations and CLI for AI Overseer review; auto-task generation via `task_generator.py` |
+| Issue-to-Task Generator | `tools/overseer/issues/task_generator.py` | 2026-02-02 | Automatic task brief creation from qualifying issues |
+| Debug Agent Context Profile | `tools/context/config/roles/debug-agent.json` | 2026-02-02 | Context allocation weights/budgets for Debug Agent role |
+| Telemetry API Routes | `backend/api/routes/telemetry.py` | 2026-02-02 | /api/telemetry/metrics, /api/telemetry/slos, /api/telemetry/spans endpoints |
+| Onboarding Config | `tools/onboarding/config/onboarding.json`, `tools/onboarding/config/roles.json` | 2026-02-02 | Onboarding packet configuration and role registry |
 | **Debug Role Integration** | `docs/developer/DEBUG_ROLE_INTEGRATION_GUIDE.md` | 2026-01-25 | Debug Role (Role 7) integration guide; issue-to-task workflow, escalation, CLI reference |
 
 ---
