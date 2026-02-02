@@ -38,7 +38,7 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **ID**: None
 - **Title**: —
 - **Priority**: —
-- **Status**: **Session complete (2026-02-02)** — (1) Engine quality improvements: overall similarity +26% (0.656→0.828), MFCC cosine similarity 0.993. (2) Boundary routes fixed: 6 routes added, boundary_checker **PASS**, route count 518. (3) TD-001 assessed: Chatterbox pins torch==2.6.0 but RTX 5070 Ti (SM 120) needs torch 2.11+ nightly - upstream issue, marked BLOCKED. (4) GPU venv created with PyTorch 2.11+cu128 (SM 120 support verified). Verification: gate_status/ledger_validate/boundary_checker/compatibility_matrix **PASS**. completion_guard **FAIL** (uncommitted changes). **Next:** Commit changes, then continue Phase 6+ tech debt.
+- **Status**: **Overseer sweep complete (2026-02-02)** — All verification PASS. TASK-0024 (XAML compiler) CLOSED (build 0 errors). Tech debt 15/16 closed (TD-001 blocked upstream). Token compliance 100%. Phase 6+ optional work available. **Next:** Assign new task or continue Phase 6+ enhancements.
 
 ## Last Milestone
 
@@ -75,9 +75,17 @@ Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke 
 
 ## Next 3 Steps
 
-1. **Commit session work:** Commit boundary routes, quality improvements, datetime fix, TD-001 update. Run `python scripts/run_verification.py` for full PASS.
-2. **TD-013 VRAM Scheduler:** Evaluate priority for Phase 6+ sprint. No current blocking issues.
-3. **TD-015 Venv Families:** Evaluate multi-venv strategy. Current GPU venv (venv_gpu_sm120) with PyTorch 2.11+cu128 provides SM 120 support for future Blackwell-compatible libraries.
+1. **TASK-0027 (Role 3):** Accessibility Enhancements - Add AutomationProperties to 88 views (8-16h)
+2. **TASK-0028 (Role 3):** UI Automation Framework - Set up WinAppDriver/Playwright (16-24h)
+3. **TASK-0029 (Role 3):** Advanced Panel Backend Integration - Wire 9 panels to APIs (36-72h)
+
+**Phase 6+ Task Briefs Created:**
+| Task ID | Title | Owner | Priority | Status |
+|---------|-------|-------|----------|--------|
+| TASK-0010 | Piper/Chatterbox Integration | Role 5 | Medium | Partial (blocked TD-001) |
+| TASK-0027 | Accessibility Enhancements | Role 3 | Medium | Not Started |
+| TASK-0028 | UI Automation Framework | Role 3 | Medium | Not Started |
+| TASK-0029 | Advanced Panel Backend Integration | Role 3 | Medium | Not Started |
 
 _Previous:_
 - [x] **Continue role (this run):** Tooling refresh **PASS** (gate_status, ledger_validate). Active Task TASK-0020 (Wizard E2E); full e2e requires ≥3s speech reference. Proof: `.buildlogs/verification/last_run.json`.
