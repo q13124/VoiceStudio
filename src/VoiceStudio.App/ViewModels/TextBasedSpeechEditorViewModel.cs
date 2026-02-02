@@ -93,7 +93,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private string? finalAudioUrl;
 
-    public TextBasedSpeechEditorViewModel(IBackendClient backendClient)
+    public TextBasedSpeechEditorViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

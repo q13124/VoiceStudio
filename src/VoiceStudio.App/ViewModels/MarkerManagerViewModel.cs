@@ -64,7 +64,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? statusMessage;
 
-        public MarkerManagerViewModel(IBackendClient backendClient)
+        public MarkerManagerViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

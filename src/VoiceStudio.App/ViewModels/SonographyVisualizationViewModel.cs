@@ -64,7 +64,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private SonographyDataItem? sonographyData;
 
-        public SonographyVisualizationViewModel(IBackendClient backendClient)
+        public SonographyVisualizationViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

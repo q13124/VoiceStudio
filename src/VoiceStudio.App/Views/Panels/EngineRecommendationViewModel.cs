@@ -58,7 +58,8 @@ namespace VoiceStudio.App.Views.Panels
 
         public IAsyncRelayCommand GetRecommendationsCommand { get; }
 
-        public EngineRecommendationViewModel(IBackendClient backendClient)
+        public EngineRecommendationViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

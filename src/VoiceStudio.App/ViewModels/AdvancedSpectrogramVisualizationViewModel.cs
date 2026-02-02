@@ -79,7 +79,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string comparisonType = "difference";
 
-        public AdvancedSpectrogramVisualizationViewModel(IBackendClient backendClient)
+        public AdvancedSpectrogramVisualizationViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

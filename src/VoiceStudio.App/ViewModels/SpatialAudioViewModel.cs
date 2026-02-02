@@ -69,7 +69,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool isPreviewing;
 
-    public SpatialAudioViewModel(IBackendClient backendClient)
+    public SpatialAudioViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

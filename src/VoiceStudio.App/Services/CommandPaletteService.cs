@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.ViewModels;
 using VoiceStudio.App.Views;
+using VoiceStudio.Core.Commands;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Services
 {
@@ -29,6 +32,7 @@ namespace VoiceStudio.App.Services
     {
         private readonly IPanelRegistry _registry;
         private readonly ThemeManager _theme;
+        private readonly List<CommandDescriptor> _moduleCommands = new();
 
         /// <summary>
         /// Event raised when a panel should be opened.
@@ -85,7 +89,8 @@ namespace VoiceStudio.App.Services
                         {
                             PanelId = panel.PanelId,
                             DisplayName = panel.DisplayName,
-                            PanelDescriptor = panel
+                            // PanelDescriptor not available from IPanelView - MainWindow uses PanelId directly
+                            PanelDescriptor = null
                         });
                     }
                     else
@@ -119,6 +124,21 @@ namespace VoiceStudio.App.Services
         // These are invoked by palette actions (wire in your action dispatcher)
         public void ApplyTheme(string name) => _theme.ApplyTheme(name);
         public void ApplyDensity(string name) => _theme.ApplyLayoutDensity(name);
+        
+        /// <summary>
+        /// Registers commands from UI modules for the command palette.
+        /// Called by AppServices after module initialization.
+        /// </summary>
+        /// <param name="commands">Commands from ModuleLoader.GetAllCommands()</param>
+        public void RegisterCommands(IEnumerable<CommandDescriptor> commands)
+        {
+            _moduleCommands.AddRange(commands);
+        }
+        
+        /// <summary>
+        /// Gets all registered module commands.
+        /// </summary>
+        public IReadOnlyList<CommandDescriptor> GetModuleCommands() => _moduleCommands.AsReadOnly();
     }
 }
 

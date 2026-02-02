@@ -72,7 +72,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableHighlightTypes = new() { "word", "phrase", "sentence", "emphasis", "note", "error" };
 
-        public TextHighlightingViewModel(IBackendClient backendClient)
+        public TextHighlightingViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

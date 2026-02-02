@@ -15,6 +15,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from backend.services.circuit_breaker import get_engine_breaker
 from backend.services.model_preflight import ensure_whisper_cpp
 
 from ..models import ApiOk
@@ -417,6 +418,22 @@ async def transcribe_audio(
         # Transcribe using Whisper engine
         logger.info(f"Transcribing audio: {audio_path} with engine: {request.engine}")
 
+        # Circuit breaker (TD-014): fail fast if engine is unavailable
+        engine_breaker = get_engine_breaker(request.engine)
+        if not engine_breaker.allow_request():
+            logger.warning(
+                "Circuit breaker OPEN for engine '%s', retry in %.1fs",
+                request.engine,
+                engine_breaker.time_until_retry(),
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Transcription engine '{request.engine}' is temporarily unavailable. "
+                    f"Retry in {int(engine_breaker.time_until_retry())} seconds."
+                ),
+            )
+
         # Ensure engine is initialized
         if not stt_engine.is_initialized():
             logger.info("Initializing Whisper engine...")
@@ -427,24 +444,29 @@ async def transcribe_audio(
         if language == "auto" or language == "":
             language = None
 
-        # Transcribe audio
-        # NOTE: WhisperCPPEngine supports multiple output formats; we want structured output.
-        if request.engine == "whisper_cpp":
-            result = stt_engine.transcribe(
-                audio=audio_path,
-                language=language,
-                word_timestamps=request.word_timestamps,
-                output_format="json",
-            )
-        else:
-            result = stt_engine.transcribe(
-                audio=audio_path,
-                language=language,
-                word_timestamps=request.word_timestamps,
-            )
+        # Transcribe audio (with circuit breaker success/failure recording)
+        try:
+            if request.engine == "whisper_cpp":
+                result = stt_engine.transcribe(
+                    audio=audio_path,
+                    language=language,
+                    word_timestamps=request.word_timestamps,
+                    output_format="json",
+                )
+            else:
+                result = stt_engine.transcribe(
+                    audio=audio_path,
+                    language=language,
+                    word_timestamps=request.word_timestamps,
+                )
+        except Exception as e:
+            engine_breaker.record_failure()
+            raise
+        engine_breaker.record_success()
 
         # Normalize legacy return shapes (some engines return plain text).
         if result is None:
+            engine_breaker.record_failure()
             raise HTTPException(
                 status_code=500,
                 detail=f"Transcription failed for engine '{request.engine}'",

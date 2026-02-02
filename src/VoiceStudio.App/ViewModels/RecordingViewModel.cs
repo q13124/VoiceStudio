@@ -94,7 +94,8 @@ namespace VoiceStudio.App.ViewModels
             24
         };
 
-    public RecordingViewModel(IBackendClient backendClient)
+    public RecordingViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

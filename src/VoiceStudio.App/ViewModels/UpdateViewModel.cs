@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -25,7 +26,8 @@ namespace VoiceStudio.App.ViewModels
     private string _releaseNotes = string.Empty;
     private Version? _latestVersion;
 
-    public UpdateViewModel(IUpdateService updateService)
+    public UpdateViewModel(IViewModelContext context, IUpdateService updateService)
+        : base(context)
     {
       _updateService = updateService ?? throw new ArgumentNullException(nameof(updateService));
 

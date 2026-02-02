@@ -78,7 +78,8 @@ namespace VoiceStudio.App.Views.Panels
 
         public IAsyncRelayCommand RunBenchmarkCommand { get; }
 
-        public QualityBenchmarkViewModel(IBackendClient backendClient)
+        public QualityBenchmarkViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

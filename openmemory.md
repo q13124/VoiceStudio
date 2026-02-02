@@ -221,6 +221,7 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
   state read/acknowledgment and completion updates.
 - **Verifier protocol**: `.cursor/rules/workflows/verifier-subagent.mdc` defines skeptical validation.
 - **Lifecycle hooks**: `.cursor/hooks.json` invokes validation and audit scripts under `.cursor/hooks/`.
+- **Completion guard**: `tools/overseer/verification/completion_guard.py` detects uncommitted completion markers; `scripts/run_verification.py` includes `completion_guard`, and the stop hook blocks closure when completion markers are uncommitted; audit logs include git metadata (2026-02-01).
 - **Context allocator**: `tools/context/core/manager.py` assembles task-scoped bundles from STATE, task briefs, rules, optional OpenMemory, and git using `tools/context/config/context-sources.json` for weights/budgets; unit test at `tests/tools/test_context_allocator.py`.
 - **OpenMemory reader**: `tools/context/sources/openmemory_reader.py` provides optional integration for context bundle assembly.
 - **Context tests restored**: `tests/tools/test_context_source_adapters.py` and `tests/tools/test_context_allocator.py` are now present and passing (2026-01-29).

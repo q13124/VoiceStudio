@@ -38,8 +38,8 @@
     <EnableWin32Codegen>false</EnableWin32Codegen>
     <UseVCMetaManaged>false</UseVCMetaManaged>
     <!-- Legacy workaround (can be revisited once XAML pipeline is stable) -->
-    <DisableXbfGeneration>true</DisableXbfGeneration>
-    <EnableUIXamlCompilation>false</EnableUIXamlCompilation>
+    <!-- <DisableXbfGeneration>true</DisableXbfGeneration> -->
+    <!-- <EnableUIXamlCompilation>false</EnableUIXamlCompilation> -->
     <!-- VS-0035 fix: Force external XamlCompiler via wrapper to avoid WMC9999 in-process failures. -->
     <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
     <CppWinRTFastAbi>false</CppWinRTFastAbi>

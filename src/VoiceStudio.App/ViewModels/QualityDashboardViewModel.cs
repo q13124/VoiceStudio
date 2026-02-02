@@ -66,7 +66,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private string? distributionVisualizationImageUrl;
 
-    public QualityDashboardViewModel(IBackendClient backendClient)
+    public QualityDashboardViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

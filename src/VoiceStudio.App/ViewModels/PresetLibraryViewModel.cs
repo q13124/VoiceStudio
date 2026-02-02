@@ -54,7 +54,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? targetId; // Project ID, track ID, etc. for applying presets
 
-        public PresetLibraryViewModel(IBackendClient backendClient)
+        public PresetLibraryViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

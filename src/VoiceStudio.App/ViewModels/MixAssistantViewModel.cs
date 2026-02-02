@@ -72,7 +72,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableGenres = new() { "pop", "rock", "jazz", "classical", "electronic", "hip-hop", "country" };
 
-        public MixAssistantViewModel(IBackendClient backendClient)
+        public MixAssistantViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -64,7 +64,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? statusMessage;
 
-        public TrainingQualityVisualizationViewModel(IBackendClient backendClient)
+        public TrainingQualityVisualizationViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

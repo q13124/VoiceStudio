@@ -90,7 +90,8 @@ namespace VoiceStudio.App.ViewModels
     private const int MAX_LATENCY_HISTORY = 100;
     private const int MONITORING_INTERVAL_MS = 2000; // Update every 2 seconds
 
-    public RealTimeVoiceConverterViewModel(IBackendClient backendClient)
+    public RealTimeVoiceConverterViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();

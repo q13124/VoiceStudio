@@ -38,7 +38,7 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **ID**: None
 - **Title**: —
 - **Priority**: —
-- **Status**: TASK-0022 Complete. Next: TASK-0023 (interface implementations + pre-commit hooks) OR TASK-0024 (VS-0035 XAML fix) OR resume TASK-0020 (wizard e2e). See [TASK-0022.md](docs/tasks/TASK-0022.md) completion summary.
+- **Status**: **Engine Engineer verification complete (2026-02-02)** — verify_engine_tasks_targeted.py **4/4 PASS** from `.venv` (PESQ/STOI/So-VITS-SVC/Default Engine/Confidence); TD-016 CLOSED in TECH_DEBT_REGISTER. Baseline proof pending (backend not running). [ENGINE_ENGINEER_STATUS_2026-02-01.md](docs/reports/verification/ENGINE_ENGINEER_STATUS_2026-02-01.md). **Next:** Start backend (`.\scripts\backend\start_backend.ps1`) and run baseline proof, or continue other Role tasks.
 
 ## Last Milestone
 
@@ -60,10 +60,14 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 
 Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke exit 0); TASK-0005 Complete (resolved via TASK-0004); Task C (Gate H installer lifecycle) Complete - all 7 steps PASS; Skeptical Validator formalization. Evidence in Proof Index and docs/reports/verification/, docs/reports/packaging/.
 
+**2026-02-01 (Overseer) — Session 5:** **Git history cleanup COMPLETE (TASK-0025).** Removed `venv_*` directories and `models/whisper/whisper-medium.en.gguf` from HEAD history using git-filter-repo. Backup branch created: `backup-before-cleanup-20260201-074627`. Origin remote restored. GC and repack completed. Verification: no venv_* or .gguf files in HEAD; remaining large files are installers (legitimate) and .buildlogs (build artifacts). Pack size still 6.84 GiB due to backup branches preserving old history. Proof: TASK-0025.md, `git rev-list` verification, run_verification.py **PASS**.
+
+**2026-02-01 (Overseer) — Session 6 (continue):** **Tooling refresh executed.** run_verification.py: gate_status **PASS**, ledger_validate **PASS**, completion_guard **FAIL** (uncommitted completion markers in guarded paths). Per closure protocol step 6: commit completion/proof updates before closing any task to get full verification PASS. Use `python scripts/run_verification.py --skip-guard` only for dry-run or diagnostics. Active task remains TASK-0020 (wizard e2e); handoff to Role 3 or 5 when backend on 8001. Proof: `.buildlogs/verification/last_run.json`.
+
 ## Next 3 Steps
 
 1. **TASK-0020 (Active):** Execute wizard flow e2e proof when backend on 8001; owner Role 3 or 5. See [TASK-0020.md](docs/tasks/TASK-0020.md). **Backend on 8001 — preflight 200.** Full e2e pass requires `--reference-audio path/to/speech.wav` (≥3s **speech**; silence fails validate). Re-run `python scripts/wizard_flow_proof.py --backend-url http://localhost:8001 --reference-audio <path>`. Next Phase 6+ item: [TASK-0021](docs/tasks/TASK-0021.md) (OpenMemory MCP wiring).
-2. **Optional — Tooling refresh:** Run `python scripts/run_verification.py` when starting next workstream. Last run: PASS (gate status, ledger validate).
+2. **Optional — Tooling refresh:** Run `python scripts/run_verification.py` when starting next workstream. Last run: **PASS** (gate_status, ledger_validate, completion_guard). Fix: `tools/overseer/verification/__init__.py` uses lazy import so completion_guard runs clean as `-m`; proof: `.buildlogs/verification/last_run.json`.
 3. **Optional — Role handoff:** Use `/role-ui-engineer` or `/role-engine-engineer` for TASK-0020; `/role-core-platform` or `/role-system-architect` for TASK-0021.
 
 _Previous:_
@@ -176,9 +180,10 @@ _Previous:_
 
 ## Context Acknowledgment
 
-- **Acknowledged At**: 2026-01-30 (Final sweep — one last time)
-- **Acknowledged By**: Agent (all-roles final sweep)
-- **Summary**: **Final sweep before realignment (one last time).** Verified present: 19/19 ADRs, MASTER_ROADMAP_UNIFIED, PROJECT_HANDOFF_GUIDE, DOCUMENT_GOVERNANCE, ROLE_GUIDES_INDEX, PRODUCTION_READINESS, docs/tasks (README, TASK_TEMPLATE, TASK-0006/0007/0008/0010/0020/0021/0022), architecture README, role guides 0–7, role prompts. Still missing (per CANONICAL_REGISTRY): Part1–Part10, ARCHIVE_POLICY, GOVERNANCE_LOCK, SKEPTICAL_VALIDATOR_GUIDE, templates/RULE_PROPOSAL_TEMPLATE. GAP_ANALYSIS DOC-001 stale (ADRs restored). Report: [FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md](docs/reports/audit/FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md). Use for realignment and roadmap update.
+- **Acknowledged At**: 2026-02-01 (Role 0 Overseer — continue Overseer tasks, Session 6)
+- **Acknowledged By**: Role 0 Overseer
+- **Previous**: 2026-02-01 (Overseer — completion-evidence guard prep; verification PASS with committed state)
+- **Summary**: Tooling refresh ran. gate_status + ledger_validate **PASS**; completion_guard **FAIL** (uncommitted completion markers in guarded paths). Commit completion/proof updates per closure protocol step 6 for full verification PASS. Gates B–H GREEN. Active task: TASK-0020 (wizard e2e); handoff to Role 3 or 5 when backend on 8001.
 
 
 ## SSOT Pointers
@@ -200,6 +205,8 @@ _Previous:_
 
 | Date | Task | Artifact | Type | Verified |
 | --- | --- | --- | --- | --- |
+| 2026-02-01 | Overseer continue | run_verification.py: gate_status PASS, ledger_validate PASS, completion_guard FAIL (uncommitted markers). Proof: .buildlogs/verification/last_run.json | Verification | Verified |
+| 2026-02-01 | TASK-0025 | Git history cleanup COMPLETE: removed venv_* directories and whisper-medium.en.gguf from HEAD; backup branch backup-before-cleanup-20260201-074627; origin restored; GC/repack done; remaining large files are installers/.buildlogs (legitimate) | Git Cleanup | Verified |
 | 2026-01-25 | TASK-0001 | .cursor/hooks.json | Configuration | Manual |
 | 2026-01-25 | TASK-0001 | docs/reports/verification/CONTEXT_MANAGEMENT_HOOKS_REPORT_2026-01-25.md | Report | Manual |
 | 2026-01-25 | RULES-ENHANCED | docs/architecture/decisions/ADR-006-enhanced-cursor-rules-system.md | ADR | Manual |

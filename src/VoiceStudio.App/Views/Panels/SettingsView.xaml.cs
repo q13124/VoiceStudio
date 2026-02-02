@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Input;
 using VoiceStudio.App.Controls;
 using VoiceStudio.App.ViewModels;
 using VoiceStudio.App.Services;
+using VoiceStudio.Core.Services;
 using Microsoft.UI.Xaml;
 
 namespace VoiceStudio.App.Views.Panels

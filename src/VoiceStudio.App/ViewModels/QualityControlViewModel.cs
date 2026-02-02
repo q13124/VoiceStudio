@@ -132,7 +132,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool isGeneratingVisualizations = false;
 
-    public QualityControlViewModel(IBackendClient backendClient)
+    public QualityControlViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

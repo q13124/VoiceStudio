@@ -106,7 +106,8 @@ namespace VoiceStudio.App.Views.Panels
             "tortoise"
         };
 
-        public BatchProcessingViewModel(IBackendClient backendClient)
+        public BatchProcessingViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

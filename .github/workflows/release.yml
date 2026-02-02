@@ -45,8 +45,8 @@ jobs:
       - name: Run tests before release
         run: |
           pip install pytest
-          pytest tests/unit/ -v --tb=short || echo "Some tests may fail, continuing..."
-        continue-on-error: true
+          pytest tests/unit/ -v --tb=short
+        # Tests must pass for release - no continue-on-error
         
       - name: Build installer
         run: |
@@ -54,8 +54,9 @@ jobs:
             powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1
           } else {
             Write-Host "Installer build script not found, skipping installer generation"
+            exit 1
           }
-        continue-on-error: true
+        # Installer build must succeed for release
         
       - name: Create release artifacts
         run: |

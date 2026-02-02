@@ -21,6 +21,7 @@ namespace VoiceStudio.App.Views.Panels
       this.InitializeComponent();
       // Wire DataContext with BackendClient
       ViewModel = new MacroViewModel(
+          AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(),
           ServiceProvider.GetBackendClient()
       );
       this.DataContext = ViewModel;

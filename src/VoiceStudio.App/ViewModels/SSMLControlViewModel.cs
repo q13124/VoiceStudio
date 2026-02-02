@@ -119,7 +119,8 @@ namespace VoiceStudio.App.ViewModels
             }
         }
 
-        public SSMLControlViewModel(IBackendClient backendClient)
+        public SSMLControlViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -60,7 +60,8 @@ namespace VoiceStudio.App.ViewModels
 
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
-    public AssistantViewModel(IBackendClient backendClient)
+    public AssistantViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

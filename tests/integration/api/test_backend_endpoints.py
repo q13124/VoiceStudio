@@ -129,8 +129,8 @@ class TestBackendRoutePlaceholderDetection:
 class TestBackendEndpointAvailability:
     """Test suite for endpoint availability."""
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False), 
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true", 
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_health_endpoint(self, backend_available):
         """Test health endpoint is available."""
         if not backend_available:
@@ -145,8 +145,8 @@ class TestBackendEndpointAvailability:
         except Exception as e:
             pytest.fail(f"Health endpoint test failed: {e}")
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_profiles_endpoint(self, backend_available):
         """Test profiles endpoint is available."""
         if not backend_available:
@@ -163,8 +163,8 @@ class TestBackendEndpointAvailability:
 class TestBackendEndpointFunctionality:
     """Test suite for endpoint functionality."""
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_profiles_crud(self, backend_available):
         """Test profiles CRUD operations."""
         if not backend_available:
@@ -197,8 +197,8 @@ class TestBackendEndpointFunctionality:
 class TestBackendEndpointErrorHandling:
     """Test suite for endpoint error handling."""
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_invalid_endpoint_returns_404(self, backend_available):
         """Test invalid endpoints return 404."""
         if not backend_available:

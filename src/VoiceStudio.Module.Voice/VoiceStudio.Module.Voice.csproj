@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>VoiceStudio.Module.Voice</RootNamespace>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platform>x64</Platform>
+    <Platforms>x64</Platforms>
+    <OutputType>Library</OutputType>
+    <EnableDefaultPriItems>false</EnableDefaultPriItems>
+    <!-- Disable XAML compilation until panels are migrated -->
+    <EnableUIXamlCompilation>false</EnableUIXamlCompilation>
+    <DisableXbfGeneration>true</DisableXbfGeneration>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj" />
+    <ProjectReference Include="..\VoiceStudio.Common.UI\VoiceStudio.Common.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="$(MicrosoftWindowsAppSDKVersion)" />
+  </ItemGroup>
+
+</Project>

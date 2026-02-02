@@ -24,17 +24,17 @@ namespace VoiceStudio.App.UseCases
             return list ?? new List<VoiceProfile>();
         }
 
-        public Task<VoiceProfile?> CreateAsync(string name, CancellationToken cancellationToken = default)
+        public Task<VoiceProfile> CreateAsync(string name, CancellationToken cancellationToken = default)
         {
             return _backendClient.CreateProfileAsync(name, "en", null, null, cancellationToken);
         }
 
-        public Task<VoiceProfile?> CreateAsync(string name, string? language, string? emotion, List<string>? tags, CancellationToken cancellationToken = default)
+        public Task<VoiceProfile> CreateAsync(string name, string? language, string? emotion, List<string>? tags, CancellationToken cancellationToken = default)
         {
             return _backendClient.CreateProfileAsync(name, language ?? "en", emotion, tags, cancellationToken);
         }
 
-        public Task<VoiceProfile?> UpdateAsync(string profileId, string? name, string? language, string? emotion, List<string>? tags, CancellationToken cancellationToken = default)
+        public Task<VoiceProfile> UpdateAsync(string profileId, string? name, string? language, string? emotion, List<string>? tags, CancellationToken cancellationToken = default)
         {
             return _backendClient.UpdateProfileAsync(profileId, name, language, emotion, tags, cancellationToken);
         }

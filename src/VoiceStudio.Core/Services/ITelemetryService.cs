@@ -46,5 +46,11 @@ namespace VoiceStudio.Core.Services
         /// Flush pending telemetry data (for shutdown scenarios).
         /// </summary>
         void Flush();
+
+        /// <summary>
+        /// Apply diagnostics settings (telemetry level, error reporting, etc.).
+        /// </summary>
+        /// <param name="settings">DiagnosticsSettings object</param>
+        void ApplyDiagnosticsSettings(object settings);
     }
 }

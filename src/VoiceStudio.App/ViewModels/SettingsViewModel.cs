@@ -289,11 +289,11 @@ namespace VoiceStudio.App.ViewModels
             _ = RefreshDependencyStatusAsync(CancellationToken.None);
         }
 
-        public IAsyncRelayCommand LoadSettingsCommand { get; }
-        public IAsyncRelayCommand SaveSettingsCommand { get; }
-        public IAsyncRelayCommand ResetSettingsCommand { get; }
-        public IAsyncRelayCommand RefreshPluginsCommand { get; }
-        public IAsyncRelayCommand RefreshDependencyStatusCommand { get; }
+        public IAsyncRelayCommand LoadSettingsCommand { get; } = null!;
+        public IAsyncRelayCommand SaveSettingsCommand { get; } = null!;
+        public IAsyncRelayCommand ResetSettingsCommand { get; } = null!;
+        public IAsyncRelayCommand RefreshPluginsCommand { get; } = null!;
+        public IAsyncRelayCommand RefreshDependencyStatusCommand { get; } = null!;
 
         private async Task LoadSettingsAsync(CancellationToken cancellationToken)
         {

@@ -173,9 +173,15 @@ def generate_validation_report(
     criteria_complete = criteria_total > 0 and criteria_checked == criteria_total
     proofs_complete = proofs_total > 0 and proofs_checked == proofs_total
     verification_passed = verification_result.get("all_passed", True) if verification_result else True
-    
+    checks = verification_result.get("checks", []) if verification_result else []
+    completion_guard_check = next((c for c in checks if c.get("name") == "completion_guard"), None)
+    completion_guard_status = (
+        "PASS" if completion_guard_check and completion_guard_check.get("passed") else
+        "FAIL" if completion_guard_check else "SKIPPED"
+    )
+
     all_passed = criteria_complete and proofs_complete and verification_passed
-    
+
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "task_id": task_data["task_id"],
@@ -185,7 +191,8 @@ def generate_validation_report(
         "summary": {
             "acceptance_criteria": f"{criteria_checked}/{criteria_total}",
             "required_proofs": f"{proofs_checked}/{proofs_total}",
-            "verification": "PASS" if verification_passed else "FAIL" if verification_result else "SKIPPED"
+            "verification": "PASS" if verification_passed else "FAIL" if verification_result else "SKIPPED",
+            "completion_guard": completion_guard_status,
         },
         "acceptance_criteria": [
             {

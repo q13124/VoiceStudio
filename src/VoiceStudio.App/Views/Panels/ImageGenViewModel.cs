@@ -137,7 +137,8 @@ namespace VoiceStudio.App.Views.Panels
       HasGeneratedImages = value.Count > 0;
     }
 
-    public ImageGenViewModel(IBackendClient backendClient)
+    public ImageGenViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       LoadQualityPresets();

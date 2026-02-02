@@ -119,5 +119,11 @@ namespace VoiceStudio.App.Services
       try { return AppServices.TryGetProfilesUseCase(); }
       catch { return null; }
     }
+    public static ModuleLoader GetModuleLoader() => AppServices.GetModuleLoader();
+    public static ModuleLoader? TryGetModuleLoader() => AppServices.TryGetModuleLoader();
+    public static IErrorCoordinator GetErrorCoordinator() => AppServices.GetErrorCoordinator();
+    public static IErrorCoordinator? TryGetErrorCoordinator() => AppServices.TryGetErrorCoordinator();
+    public static IViewModelFactory GetViewModelFactory() => AppServices.GetViewModelFactory();
+    public static IViewModelFactory? TryGetViewModelFactory() => AppServices.TryGetViewModelFactory();
   }
 }

@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.App.Services;
 using VoiceStudio.Core.Plugins;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.ViewModels
@@ -41,7 +42,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool showEnabledOnly;
 
-    public PluginManagementViewModel()
+    public PluginManagementViewModel(IViewModelContext context)
+        : base(context)
     {
       try
       {

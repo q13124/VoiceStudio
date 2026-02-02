@@ -58,7 +58,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool showStatisticalAnalysis = false;
 
-    public AnalyticsDashboardViewModel(IBackendClient backendClient)
+    public AnalyticsDashboardViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -15,7 +15,7 @@ namespace VoiceStudio.App.Views.Panels
         public QualityControlView()
         {
             InitializeComponent();
-            ViewModel = new QualityControlViewModel(ServiceProvider.GetBackendClient());
+            ViewModel = new QualityControlViewModel(AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(), ServiceProvider.GetBackendClient());
             DataContext = ViewModel;
             
             // Initialize services

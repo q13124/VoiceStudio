@@ -68,7 +68,8 @@ namespace VoiceStudio.App.Views.Panels
             "svd"
         };
 
-        public ModelManagerViewModel(IBackendClient backendClient)
+        public ModelManagerViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

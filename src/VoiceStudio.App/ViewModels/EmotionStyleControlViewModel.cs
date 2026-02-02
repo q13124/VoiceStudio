@@ -58,7 +58,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableStyles = new() { "formal", "casual", "narrative", "conversational", "dramatic", "whisper", "shout" };
 
-        public EmotionStyleControlViewModel(IBackendClient backendClient)
+        public EmotionStyleControlViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

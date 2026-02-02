@@ -28,6 +28,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Task Brief System | `docs/tasks/README.md` | 2026-01-30 | Task brief workflow and conventions; lifecycle: Analyze → Blueprint → Construct → Validate |
 | Task Brief Template | `docs/tasks/TASK_TEMPLATE.md` | 2026-01-30 | Standard task brief template; new briefs: use next ID (e.g. TASK-0023) per [PROJECT_HANDOFF_GUIDE.md](PROJECT_HANDOFF_GUIDE.md) § Task brief creation |
 | Prompt Library | `.cursor/commands/` | 2026-01-25 | Reusable AI prompts and roles |
+| Completion Evidence Guard | `tools/overseer/verification/completion_guard.py` | 2026-02-01 | Prevents completion markers in uncommitted changes; integrated with verification and stop hook |
 
 ## Architecture
 
@@ -56,6 +57,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Debug Role Architecture ADR | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | — | **PLANNED** — Not yet created |
 | IPC Architecture Deviation ADR | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | — | **PLANNED** — Not yet created |
 | Orchestration Architecture ADR | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | — | **PLANNED** — Not yet created |
+| Completion Evidence Guard ADR | `docs/architecture/decisions/ADR-024-completion-evidence-guard.md` | 2026-02-01 | Enforce completion markers committed before verification passes |
 
 ## Planning and Roadmaps
 
@@ -210,7 +212,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Gate Enforcement (Legacy) | `docs/archive/legacy_worker_system/overseer/GATE_ENFORCEMENT_GUIDE.md` | 2026-01-30 | **ARCHIVED** — Legacy gate guide; use Recovery Plan/QUALITY_LEDGER and run_verification.py |
 | Handoff Process (Legacy) | `docs/archive/legacy_worker_system/overseer/HANDOFF_PROCESS_GUIDE.md` | 2026-01-30 | **ARCHIVED** — Legacy handoff; use HANDOFF_PROTOCOL.md and ROLE_GUIDES_INDEX |
 | Quality Ledger | `Recovery Plan/QUALITY_LEDGER.md` | 2026-01-25 | VS-XXXX tracking |
-| Verification automation | `scripts/run_verification.py`, `scripts/run-verification.ps1` | 2026-01-28 | Gate + ledger (+ optional build); proof in `.buildlogs/verification/last_run.json` |
+| Verification automation | `scripts/run_verification.py`, `scripts/run-verification.ps1` | 2026-02-01 | Gate + ledger + completion guard (+ optional build, `--skip-guard` to bypass guard); proof in `.buildlogs/verification/last_run.json` |
 | Overseer Issue System | `docs/developer/OVERSEER_ISSUE_SYSTEM.md` | 2026-01-28 | Unified issue logging from agents, engines, builds; recommendations and CLI for AI Overseer review |
 | **Debug Role Integration** | `docs/developer/DEBUG_ROLE_INTEGRATION_GUIDE.md` | 2026-01-25 | Debug Role (Role 7) integration guide; issue-to-task workflow, escalation, CLI reference |
 

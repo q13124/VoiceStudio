@@ -72,7 +72,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableOrientations = new() { "landscape", "portrait", "square" };
 
-        public ImageSearchViewModel(IBackendClient backendClient)
+        public ImageSearchViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

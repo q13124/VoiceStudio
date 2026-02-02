@@ -34,7 +34,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> systemAlerts = new();
 
-        public UltimateDashboardViewModel(IBackendClient backendClient)
+        public UltimateDashboardViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

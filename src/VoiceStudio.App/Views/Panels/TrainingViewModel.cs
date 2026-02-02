@@ -192,7 +192,8 @@ namespace VoiceStudio.App.Views.Panels
             "coqui"
         };
 
-    public TrainingViewModel(IBackendClient backendClient)
+    public TrainingViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.ViewModels;
-using VoiceStudio.Core.Services;
+using VoiceStudio.App.Services;
 using Windows.System;
 
 namespace VoiceStudio.App.Views
@@ -19,7 +19,7 @@ namespace VoiceStudio.App.Views
         {
             this.InitializeComponent();
             ViewModel = new GlobalSearchViewModel(
-                Services.ServiceProvider.GetBackendClient()
+                ServiceProvider.GetBackendClient()
             );
             DataContext = ViewModel;
             

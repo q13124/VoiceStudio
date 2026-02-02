@@ -96,7 +96,8 @@ namespace VoiceStudio.App.ViewModels
         public Visibility ProcessedAudioVisibility =>
             string.IsNullOrWhiteSpace(ProcessedAudioId) ? Visibility.Collapsed : Visibility.Visible;
 
-        public AIMixingMasteringViewModel(IBackendClient backendClient)
+        public AIMixingMasteringViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

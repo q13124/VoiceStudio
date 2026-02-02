@@ -54,7 +54,8 @@ namespace VoiceStudio.App.ViewModels
     public Visibility SuggestionsVisibility =>
         Suggestions.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    public AIProductionAssistantViewModel(IBackendClient backendClient)
+    public AIProductionAssistantViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

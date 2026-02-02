@@ -1,0 +1,109 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.AdvancedSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="16">
+            <TextBlock Text="Advanced Settings" 
+                Style="{StaticResource SubtitleTextBlockStyle}" />
+        </Border>
+
+        <!-- Settings Content -->
+        <ScrollViewer Grid.Row="1" Padding="16">
+            <StackPanel Spacing="24">
+
+                <!-- Performance Settings -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Performance" 
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    
+                    <NumberBox x:Name="CacheSizeBox" 
+                        Header="Cache Size (MB)"
+                        Minimum="64" Maximum="8192" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="CacheSizeBox_ValueChanged" />
+                    
+                    <NumberBox x:Name="MaxThreadsBox" 
+                        Header="Max Threads"
+                        Minimum="1" Maximum="64" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="MaxThreadsBox_ValueChanged" />
+                    
+                    <NumberBox x:Name="MemoryLimitBox" 
+                        Header="Memory Limit (MB)"
+                        Minimum="512" Maximum="65536" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="MemoryLimitBox_ValueChanged" />
+                </StackPanel>
+
+                <!-- Audio Settings -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Audio Defaults" 
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    
+                    <NumberBox x:Name="SampleRateBox" 
+                        Header="Default Sample Rate (Hz)"
+                        Minimum="8000" Maximum="192000" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="SampleRateBox_ValueChanged" />
+                    
+                    <NumberBox x:Name="BitDepthBox" 
+                        Header="Default Bit Depth"
+                        Minimum="8" Maximum="32" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="BitDepthBox_ValueChanged" />
+                    
+                    <NumberBox x:Name="FadeDurationBox" 
+                        Header="Fade Duration (ms)"
+                        Minimum="0" Maximum="5000" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="FadeDurationBox_ValueChanged" />
+                </StackPanel>
+
+                <!-- Network Settings -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Network" 
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    
+                    <NumberBox x:Name="TimeoutBox" 
+                        Header="Timeout (seconds)"
+                        Minimum="5" Maximum="300" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="TimeoutBox_ValueChanged" />
+                    
+                    <NumberBox x:Name="RetryBox" 
+                        Header="Retry Attempts"
+                        Minimum="0" Maximum="10" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="RetryBox_ValueChanged" />
+                </StackPanel>
+
+                <!-- Batch Processing -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Batch Processing" 
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    
+                    <NumberBox x:Name="BatchSizeBox" 
+                        Header="Batch Size"
+                        Minimum="1" Maximum="100" 
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="BatchSizeBox_ValueChanged" />
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Help Overlay -->
+        <controls:HelpOverlay x:Name="HelpOverlay" Grid.RowSpan="2" />
+    </Grid>
+</UserControl>

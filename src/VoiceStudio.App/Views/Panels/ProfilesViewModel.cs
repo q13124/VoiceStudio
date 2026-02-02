@@ -987,6 +987,7 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var profile = await _profilesUseCase.CreateAsync(name!, cancellationToken: cancellationToken);
+        ArgumentNullException.ThrowIfNull(profile);
         Profiles.Add(profile);
         SelectedProfile = profile;
 

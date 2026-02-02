@@ -57,7 +57,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? audioUrlB;
 
-        public ProfileComparisonViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+        public ProfileComparisonViewModel(IViewModelContext context, IBackendClient backendClient, IAudioPlayerService audioPlayer)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));

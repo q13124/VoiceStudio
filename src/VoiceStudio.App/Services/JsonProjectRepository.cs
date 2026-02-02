@@ -162,6 +162,18 @@ namespace VoiceStudio.App.Services
             }
         }
 
+        /// <summary>
+        /// Alias for GetAllMetadataAsync for compatibility.
+        /// </summary>
+        public Task<IReadOnlyList<ProjectMetadata>> ListProjectsAsync(CancellationToken cancellationToken = default)
+            => GetAllMetadataAsync(cancellationToken);
+
+        /// <summary>
+        /// Alias for GetByIdAsync for compatibility.
+        /// </summary>
+        public Task<Project?> OpenAsync(string projectId, CancellationToken cancellationToken = default)
+            => GetByIdAsync(projectId, cancellationToken);
+
         private static ProjectMetadata MapToMetadata(Project project, string filePath)
         {
             DateTime.TryParse(project.CreatedAt, out var created);

@@ -56,7 +56,8 @@ namespace VoiceStudio.App.ViewModels
     private string _enhancementMethod = "None";
     private double _enhancementStrength = 50.0;
 
-    public VideoGenViewModel(IBackendClient backendClient)
+    public VideoGenViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -40,8 +40,8 @@ The **Skeptical Validator** is a cross-cutting subagent that independently verif
 
 **Automated tooling**:
 
-- `python scripts/run_verification.py` — gate status + ledger validate; proof in `.buildlogs/verification/last_run.json`.
-- `python scripts/validator_workflow.py --task TASK-XXXX` — task-specific validation checklist from the task brief.
+- `python scripts/run_verification.py` — gate status + ledger validate + completion guard (no uncommitted completion markers); proof in `.buildlogs/verification/last_run.json`. Use `--skip-guard` to bypass completion guard for dry-run or diagnostics.
+- `python scripts/validator_workflow.py --task TASK-XXXX` — task-specific validation checklist from the task brief (includes completion_guard in summary).
 
 ---
 

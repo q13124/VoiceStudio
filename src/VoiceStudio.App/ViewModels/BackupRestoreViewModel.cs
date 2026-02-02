@@ -68,7 +68,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool restoreModels = false;
 
-        public BackupRestoreViewModel(IBackendClient backendClient)
+        public BackupRestoreViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

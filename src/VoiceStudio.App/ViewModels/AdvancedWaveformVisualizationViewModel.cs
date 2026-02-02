@@ -88,7 +88,8 @@ namespace VoiceStudio.App.ViewModels
             OnPropertyChanged(nameof(WaveformSamples));
         }
 
-        public AdvancedWaveformVisualizationViewModel(IBackendClient backendClient)
+        public AdvancedWaveformVisualizationViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -82,7 +82,8 @@ namespace VoiceStudio.App.Views.Panels
 
         public ObservableCollection<SupportedLanguage> Languages { get; } = new();
 
-        public TranscribeViewModel(IBackendClient backendClient)
+        public TranscribeViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

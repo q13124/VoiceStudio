@@ -58,7 +58,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private int pageSize = 50;
 
-        public VoiceBrowserViewModel(IBackendClient backendClient)
+        public VoiceBrowserViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

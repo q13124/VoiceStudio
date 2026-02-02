@@ -64,7 +64,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool showComparison = false;
 
-        public VoiceStyleTransferViewModel(IBackendClient backendClient)
+        public VoiceStyleTransferViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

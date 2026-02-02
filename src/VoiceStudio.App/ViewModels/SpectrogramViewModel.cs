@@ -69,7 +69,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool showMagnitude = true;
 
-        public SpectrogramViewModel(IBackendClient backendClient)
+        public SpectrogramViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

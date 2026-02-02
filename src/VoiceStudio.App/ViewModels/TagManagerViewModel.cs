@@ -68,7 +68,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? editingDescription;
 
-        public TagManagerViewModel(IBackendClient backendClient)
+        public TagManagerViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

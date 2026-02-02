@@ -78,7 +78,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private ObservableCollection<string> selectedAudioIdsForComparison = new();
 
-    public MultiVoiceGeneratorViewModel(IBackendClient backendClient)
+    public MultiVoiceGeneratorViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

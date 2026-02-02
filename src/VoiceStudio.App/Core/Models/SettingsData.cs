@@ -91,6 +91,30 @@ namespace VoiceStudio.Core.Models
     }
 
     /// <summary>
+    /// Diagnostics and telemetry settings.
+    /// </summary>
+    public class DiagnosticsSettings
+    {
+        public bool EnableTelemetry { get; set; } = false;
+        public bool EnableErrorReporting { get; set; } = false;
+        public bool EnablePerformanceMetrics { get; set; } = false;
+        public string LogLevel { get; set; } = "Warning";
+        
+        // Alias properties for SettingsViewModel compatibility
+        public bool TelemetryEnabled
+        {
+            get => EnableTelemetry;
+            set => EnableTelemetry = value;
+        }
+        public bool CrashReportingEnabled
+        {
+            get => EnableErrorReporting;
+            set => EnableErrorReporting = value;
+        }
+        public bool IncludeLogsInCrashReport { get; set; } = false;
+    }
+
+    /// <summary>
     /// Quality management settings for voice cloning.
     /// </summary>
     public class QualitySettings
@@ -122,6 +146,7 @@ namespace VoiceStudio.Core.Models
         public PluginSettings? Plugins { get; set; }
         public McpSettings? Mcp { get; set; }
         public QualitySettings? Quality { get; set; }
+        public DiagnosticsSettings? Diagnostics { get; set; }
         public WorkspaceLayout? WorkspaceLayout { get; set; }
     }
 }

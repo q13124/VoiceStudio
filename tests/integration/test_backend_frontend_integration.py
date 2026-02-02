@@ -34,8 +34,8 @@ def backend_available():
 class TestBackendFrontendCommunication:
     """Test backend-frontend communication."""
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_health_endpoint_accessible(self, backend_available):
         """Test health endpoint is accessible from frontend perspective."""
         if not backend_available:
@@ -53,8 +53,8 @@ class TestBackendFrontendCommunication:
         except Exception as e:
             pytest.fail(f"Health endpoint test failed: {e}")
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_cors_headers(self, backend_available):
         """Test CORS headers are present for frontend access."""
         if not backend_available:
@@ -79,8 +79,8 @@ class TestBackendFrontendCommunication:
 class TestDataFlow:
     """Test data flow between frontend and backend."""
     
-    @pytest.mark.skipif(not pytest.config.getoption("--backend-available", default=False),
-                         reason="Backend not available")
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_profiles_data_flow(self, backend_available):
         """Test profiles data flows correctly between frontend and backend."""
         if not backend_available:

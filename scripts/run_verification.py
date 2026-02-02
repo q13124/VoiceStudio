@@ -107,6 +107,7 @@ def main():
     print(f"✓ {message}\n")
     
     # Define checks
+    skip_guard = "--skip-guard" in sys.argv
     checks = [
         {
             "name": "gate_status",
@@ -117,6 +118,11 @@ def main():
             "command": f"{sys.executable} -m tools.overseer.cli.main ledger validate"
         },
     ]
+    if not skip_guard:
+        checks.append({
+            "name": "completion_guard",
+            "command": f"{sys.executable} -m tools.overseer.verification.completion_guard"
+        })
     
     # Optionally add build check if --build flag
     if "--build" in sys.argv:
@@ -131,7 +137,8 @@ def main():
     print("VERIFICATION REPORT (automated)")
     print("=" * 60)
     print()
-    
+    if skip_guard:
+        print("  [SKIP] completion_guard (--skip-guard flag)")
     for check in checks:
         result = run_check(check["name"], check["command"])
         results.append(result)

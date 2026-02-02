@@ -75,6 +75,8 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-017](ADR-017-engine-subprocess-model.md) | Engine Subprocess Model | Proposed | 2026-01-30 |
 | [ADR-018](ADR-018-named-pipes-http.md) | Named Pipes Replaced with HTTP | Accepted | 2026-01-30 |
 | [ADR-019](ADR-019-orchestration-in-python.md) | Orchestration in Python | Accepted | 2026-01-30 |
+| [ADR-023](ADR-023-ui-assembly-split.md) | UI Assembly Split into Feature Modules | Accepted | 2026-02-01 |
+| [ADR-024](ADR-024-completion-evidence-guard.md) | Completion Evidence Guard | Accepted | 2026-02-01 |
 
 ## Status Legend
 

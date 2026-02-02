@@ -49,7 +49,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool showSearchResults = false;
 
-        public HelpViewModel(IBackendClient backendClient)
+        public HelpViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

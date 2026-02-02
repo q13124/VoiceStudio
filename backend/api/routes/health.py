@@ -13,6 +13,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 
 from backend.config.path_config import get_models_path
+from backend.services.circuit_breaker import get_engine_breaker_stats
 
 from app.core.resilience.health_check import (
     HealthCheckResult,
@@ -774,6 +775,44 @@ def engine_health() -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat(),
         **engine_info,
     }
+
+
+@router.get("/circuit-breakers")
+@cache_response(ttl=5)
+def circuit_breaker_health() -> Dict[str, Any]:
+    """
+    Get circuit breaker status for all engines (TD-014).
+
+    Returns per-engine breaker state (closed/open/half_open), failure counts,
+    and blocked request counts for monitoring and debugging.
+    """
+    try:
+        stats = get_engine_breaker_stats()
+        breakers = {}
+        for name, s in stats.items():
+            breakers[name] = {
+                "name": s.name,
+                "state": s.state.name,
+                "failure_count": s.failure_count,
+                "success_count": s.success_count,
+                "last_failure_time": s.last_failure_time,
+                "last_success_time": s.last_success_time,
+                "open_count": s.open_count,
+                "total_calls": s.total_calls,
+                "total_failures": s.total_failures,
+                "total_blocked": s.total_blocked,
+            }
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "breakers": breakers,
+        }
+    except Exception as e:
+        logger.warning("Failed to get circuit breaker stats: %s", e)
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "breakers": {},
+            "error": str(e),
+        }
 
 
 @router.get("/performance")

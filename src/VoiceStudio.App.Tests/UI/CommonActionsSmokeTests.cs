@@ -32,8 +32,7 @@ namespace VoiceStudio.App.Tests.UI
     public async Task CreateProfile_CommandExists()
     {
       // Arrange
-      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
-      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(_mockBackendClient!);
       var viewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
           profilesUseCase,
@@ -107,8 +106,7 @@ namespace VoiceStudio.App.Tests.UI
     public void ViewModels_CanExecuteCommands()
     {
       // Arrange
-      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
-      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(_mockBackendClient!);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
           profilesUseCase,

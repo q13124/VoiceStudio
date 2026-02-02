@@ -25,6 +25,7 @@ namespace VoiceStudio.App.Views.Panels
         {
             this.InitializeComponent();
             ViewModel = new TextSpeechEditorViewModel(
+                AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(),
                 VoiceStudio.App.Services.ServiceProvider.GetBackendClient()
             );
             DataContext = ViewModel;

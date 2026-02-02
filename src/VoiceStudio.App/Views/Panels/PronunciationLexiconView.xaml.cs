@@ -22,6 +22,7 @@ namespace VoiceStudio.App.Views.Panels
         {
             this.InitializeComponent();
             ViewModel = new PronunciationLexiconViewModel(
+                AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(),
                 ServiceProvider.GetBackendClient()
             );
             DataContext = ViewModel;

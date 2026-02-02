@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Exceptions;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -60,7 +61,7 @@ namespace VoiceStudio.App.ViewModels
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             Logger = context.Logger ?? throw new ArgumentNullException(nameof(context.Logger));
-            Dispatcher = context.DispatcherQueue ?? throw new ArgumentNullException(nameof(context.DispatcherQueue));
+            Dispatcher = context.DispatcherQueue as DispatcherQueue ?? throw new ArgumentNullException(nameof(context.DispatcherQueue));
 
             ErrorLoggingService = errorLoggingService;
             ErrorDialogService = errorDialogService;

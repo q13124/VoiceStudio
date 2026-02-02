@@ -17,7 +17,11 @@ Engine Engineer Phase 6+ tasks completed: TASK-EE-001 (TD-016 Engine Manifest Sc
 ## Verification
 
 - **run_verification.py**: PASS (gate_status, ledger_validate)
-- **verify_engine_tasks_targeted.py**: Requires venv with numpy (run from `.venv` or engine venv)
+- **verify_engine_tasks_targeted.py**: **4/4 PASS** (run from `.venv` 2026-02-02)
+  - Quality Metrics Error Handling: PASS (PESQ 4.644, STOI 1.000, 11 metrics computed)
+  - So-VITS-SVC Engine Integration: PASS (45 engines discovered)
+  - Default Engine Selection: PASS (XTTS → Piper → eSpeak fallback)
+  - Quality Metrics Confidence Fix: PASS (normalized features)
 
 ## Next Steps (Role 5)
 
@@ -25,11 +29,9 @@ Engine Engineer Phase 6+ tasks completed: TASK-EE-001 (TD-016 Engine Manifest Sc
    - `python scripts/baseline_voice_workflow_proof.py --engine xtts --strict-slo`
    - `python scripts/baseline_voice_workflow_proof.py --engine chatterbox` (use `.venvs/bleeding_edge` Python if needed)
    - Evidence: `.buildlogs/proof_runs/`
+   - **Status 2026-02-02**: Backend not running on default ports (8001/8002/8080/8888). Start backend with `.\scripts\backend\start_backend.ps1` then re-run.
 
-2. **Optional**: Run engine verification from venv:
-   - `.\\.venv\\Scripts\\python scripts/verify_engine_tasks_targeted.py` (or equivalent venv with numpy)
-
-3. **Phase 6+**: TASK-EE-003 (Engine Isolation) already addressed by TASK-0040/ADR-022; no further Role 5 task briefs open unless created by Overseer.
+2. **Phase 6+**: TASK-EE-003 (Engine Isolation) already addressed by TASK-0040/ADR-022; no further Role 5 task briefs open unless created by Overseer.
 
 ## References
 

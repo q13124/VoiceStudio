@@ -68,7 +68,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<LexiconSearchResultItem> searchResults = new();
 
-        public LexiconViewModel(IBackendClient backendClient)
+        public LexiconViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

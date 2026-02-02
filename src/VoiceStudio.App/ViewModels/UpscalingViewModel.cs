@@ -65,7 +65,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool isUploading = false;
 
-        public UpscalingViewModel(IBackendClient backendClient)
+        public UpscalingViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

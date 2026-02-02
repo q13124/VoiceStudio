@@ -69,7 +69,8 @@ namespace VoiceStudio.App.ViewModels
 
         public bool IsAssetSelected(string assetId) => _multiSelectState?.SelectedIds.Contains(assetId) ?? false;
 
-        public LibraryViewModel(IBackendClient backendClient)
+        public LibraryViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             _multiSelectService = ServiceProvider.GetMultiSelectService();

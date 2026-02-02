@@ -47,7 +47,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool isEditing = false;
 
-    public AutomationViewModel(IBackendClient backendClient)
+    public AutomationViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

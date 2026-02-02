@@ -8,6 +8,7 @@ namespace VoiceStudio.App.Services
     public class PanelRegistry : IPanelRegistry
     {
         private readonly List<IPanelView> _panels = new List<IPanelView>();
+        private readonly List<PanelDescriptor> _descriptors = new List<PanelDescriptor>();
 
         public IEnumerable<IPanelView> GetPanelsForRegion(PanelRegion region)
         {
@@ -25,6 +26,19 @@ namespace VoiceStudio.App.Services
             {
                 _panels.Add(panel);
             }
+        }
+        
+        public void Register(PanelDescriptor descriptor)
+        {
+            if (!_descriptors.Any(d => d.PanelId == descriptor.PanelId))
+            {
+                _descriptors.Add(descriptor);
+            }
+        }
+        
+        public IEnumerable<PanelDescriptor> GetAllDescriptors()
+        {
+            return _descriptors.AsReadOnly();
         }
     }
 }

@@ -40,7 +40,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableProjects = new();
 
-        public SceneBuilderViewModel(IBackendClient backendClient)
+        public SceneBuilderViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

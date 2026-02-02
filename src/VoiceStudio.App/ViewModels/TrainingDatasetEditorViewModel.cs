@@ -54,7 +54,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private ObservableCollection<string> validationWarnings = new();
 
-    public TrainingDatasetEditorViewModel(IBackendClient backendClient)
+    public TrainingDatasetEditorViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

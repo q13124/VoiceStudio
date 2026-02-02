@@ -22,7 +22,7 @@ namespace VoiceStudio.App.Views.Panels
         {
             this.InitializeComponent();
             var backendClient = VoiceStudio.App.Services.ServiceProvider.GetBackendClient();
-            ViewModel = new VideoGenViewModel(backendClient);
+            ViewModel = new VideoGenViewModel(AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(), backendClient);
             this.DataContext = ViewModel;
 
             // Initialize services

@@ -194,7 +194,8 @@ namespace VoiceStudio.App.Views.Panels
     public bool IsLogSelected(string logId) => _logsMultiSelectState?.SelectedIds.Contains(logId) ?? false;
     public bool IsErrorLogSelected(string errorLogId) => _errorLogsMultiSelectState?.SelectedIds.Contains(errorLogId) ?? false;
 
-    public DiagnosticsViewModel(IBackendClient backendClient)
+    public DiagnosticsViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

@@ -96,7 +96,8 @@ namespace VoiceStudio.App.ViewModels
             ExportVisualizationCommand.NotifyCanExecuteChanged();
         }
 
-        public EmbeddingExplorerViewModel(IBackendClient backendClient)
+        public EmbeddingExplorerViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

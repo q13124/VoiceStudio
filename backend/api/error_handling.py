@@ -408,6 +408,39 @@ async def general_exception_handler(
     )
 
 
+# Simple in-memory error tracking for metrics
+_error_counts: Dict[str, int] = {}
+_recent_errors: list = []
+_MAX_RECENT_ERRORS = 100
+
+
+def get_error_metrics() -> Dict[str, Any]:
+    """
+    Get current error metrics summary.
+    
+    Returns:
+        Dictionary with error counts by type and recent errors.
+    """
+    return {
+        "total": sum(_error_counts.values()),
+        "by_type": dict(_error_counts),
+        "recent_count": len(_recent_errors),
+    }
+
+
+def _track_error(error_type: str, message: str) -> None:
+    """Track an error for metrics."""
+    _error_counts[error_type] = _error_counts.get(error_type, 0) + 1
+    _recent_errors.append({
+        "type": error_type,
+        "message": message[:200],  # Truncate long messages
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+    # Keep only recent errors
+    if len(_recent_errors) > _MAX_RECENT_ERRORS:
+        _recent_errors.pop(0)
+
+
 async def add_request_id_middleware(request: Request, call_next):
     """Middleware to add request ID to all requests."""
     request_id = generate_request_id()

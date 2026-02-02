@@ -116,7 +116,7 @@ jobs:
           else
             echo "Placeholder verification script not found, skipping..."
           fi
-        continue-on-error: true
+        # Placeholder check should fail if placeholders found
         
       - name: Verify no TODO/FIXME in code
         run: |
@@ -155,7 +155,46 @@ jobs:
       - name: Run old project integration tests
         run: |
           pytest tests/integration/old_project/ -v --tb=short
+        # Old project integration tests should pass before merging
+
+  xaml-lint:
+    name: XAML Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
+      - name: XAML Page Count Check
+        run: |
+          if [ -f scripts/check_xaml_page_count.py ]; then
+            python scripts/check_xaml_page_count.py
+          else
+            echo "XAML page count check script not found, skipping..."
+          fi
+          
+      - name: Hardcoded Colors Check
+        run: |
+          if [ -f scripts/check_hardcoded_colors.py ]; then
+            python scripts/check_hardcoded_colors.py --strict || echo "Found hardcoded colors (advisory)"
+          else
+            echo "Hardcoded colors check script not found, skipping..."
+          fi
         continue-on-error: true
+        
+      - name: Check for WPF-only Syntax (StringFormat, etc.)
+        run: |
+          echo "Checking for WPF-only XAML syntax..."
+          if grep -r "StringFormat=" --include="*.xaml" src/ 2>/dev/null; then
+            echo "ERROR: Found StringFormat in XAML bindings - not supported in WinUI!"
+            exit 1
+          fi
+          echo "No WPF-only syntax found."
 
   verify-gates:
     name: Verify Gate Status and Ledger

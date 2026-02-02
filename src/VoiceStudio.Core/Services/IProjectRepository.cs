@@ -41,5 +41,15 @@ namespace VoiceStudio.Core.Services
         /// Check if project exists.
         /// </summary>
         Task<bool> ExistsAsync(string projectId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// List all projects (alias for GetAllMetadataAsync for compatibility).
+        /// </summary>
+        Task<IReadOnlyList<ProjectMetadata>> ListProjectsAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Open a project by ID (alias for GetByIdAsync for compatibility).
+        /// </summary>
+        Task<Project?> OpenAsync(string projectId, CancellationToken cancellationToken = default);
     }
 }

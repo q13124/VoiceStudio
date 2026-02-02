@@ -19,6 +19,15 @@ namespace VoiceStudio.Core.Models
         public string Id { get; set; } = string.Empty;
 
         /// <summary>
+        /// Alias for Id for compatibility.
+        /// </summary>
+        public string ProjectId
+        {
+            get => Id;
+            set => Id = value;
+        }
+
+        /// <summary>
         /// Project name.
         /// </summary>
         public string Name { get; set; } = string.Empty;
@@ -34,9 +43,27 @@ namespace VoiceStudio.Core.Models
         public DateTime Created { get; set; }
 
         /// <summary>
+        /// Alias for Created for compatibility.
+        /// </summary>
+        public DateTime CreatedAt
+        {
+            get => Created;
+            set => Created = value;
+        }
+
+        /// <summary>
         /// Last modification timestamp.
         /// </summary>
         public DateTime Modified { get; set; }
+
+        /// <summary>
+        /// Alias for Modified for compatibility.
+        /// </summary>
+        public DateTime ModifiedAt
+        {
+            get => Modified;
+            set => Modified = value;
+        }
 
         /// <summary>
         /// Audio tracks in project.

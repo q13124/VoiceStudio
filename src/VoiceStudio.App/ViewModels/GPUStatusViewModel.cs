@@ -46,7 +46,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private int refreshIntervalSeconds = 5;
 
-        public GPUStatusViewModel(IBackendClient backendClient)
+        public GPUStatusViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

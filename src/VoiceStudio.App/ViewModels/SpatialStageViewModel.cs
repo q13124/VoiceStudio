@@ -65,7 +65,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private bool enableHrtf = true;
 
-        public SpatialStageViewModel(IBackendClient backendClient)
+        public SpatialStageViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

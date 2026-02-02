@@ -134,7 +134,8 @@ namespace VoiceStudio.App.Views.Panels
         public CommunityToolkit.Mvvm.Input.IRelayCommand PlaySampleACommand { get; }
         public CommunityToolkit.Mvvm.Input.IRelayCommand PlaySampleBCommand { get; }
 
-        public ABTestingViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+        public ABTestingViewModel(IViewModelContext context, IBackendClient backendClient, IAudioPlayerService audioPlayer)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));

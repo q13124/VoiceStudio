@@ -1,0 +1,34 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- VoiceStudio Color Palette -->
+    <!-- These colors are shared across all modules -->
+
+    <!-- Primary Brand Colors -->
+    <Color x:Key="VoiceStudioPrimaryColor">#0078D4</Color>
+    <Color x:Key="VoiceStudioSecondaryColor">#106EBE</Color>
+    <Color x:Key="VoiceStudioAccentColor">#00B7C3</Color>
+
+    <!-- Semantic Colors -->
+    <Color x:Key="VoiceStudioSuccessColor">#107C10</Color>
+    <Color x:Key="VoiceStudioWarningColor">#FF8C00</Color>
+    <Color x:Key="VoiceStudioErrorColor">#E81123</Color>
+    <Color x:Key="VoiceStudioInfoColor">#0078D4</Color>
+
+    <!-- Audio Visualization Colors -->
+    <Color x:Key="WaveformPrimaryColor">#00B7C3</Color>
+    <Color x:Key="WaveformSecondaryColor">#0078D4</Color>
+    <Color x:Key="SpectrogramLowColor">#001F3F</Color>
+    <Color x:Key="SpectrogramHighColor">#FF4136</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="VoiceStudioPrimaryBrush" Color="{StaticResource VoiceStudioPrimaryColor}" />
+    <SolidColorBrush x:Key="VoiceStudioSecondaryBrush" Color="{StaticResource VoiceStudioSecondaryColor}" />
+    <SolidColorBrush x:Key="VoiceStudioAccentBrush" Color="{StaticResource VoiceStudioAccentColor}" />
+    <SolidColorBrush x:Key="VoiceStudioSuccessBrush" Color="{StaticResource VoiceStudioSuccessColor}" />
+    <SolidColorBrush x:Key="VoiceStudioWarningBrush" Color="{StaticResource VoiceStudioWarningColor}" />
+    <SolidColorBrush x:Key="VoiceStudioErrorBrush" Color="{StaticResource VoiceStudioErrorColor}" />
+    <SolidColorBrush x:Key="VoiceStudioInfoBrush" Color="{StaticResource VoiceStudioInfoColor}" />
+
+</ResourceDictionary>

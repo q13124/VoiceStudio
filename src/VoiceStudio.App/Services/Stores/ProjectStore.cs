@@ -153,8 +153,8 @@ namespace VoiceStudio.App.Services.Stores
                         var localMatch = localProjects.FirstOrDefault(p => p.ProjectId == projectId);
                         if (localMatch != null)
                         {
-                            var localProject = await _projectRepository.OpenAsync(localMatch.Path);
-                            project = MapDataToProject(localProject);
+                            // OpenAsync returns Project directly
+                            project = await _projectRepository.OpenAsync(localMatch.ProjectId);
                         }
                     }
                     catch (Exception)
@@ -272,20 +272,21 @@ namespace VoiceStudio.App.Services.Stores
                 Id = metadata.ProjectId,
                 Name = metadata.Name,
                 Description = string.Empty,
-                CreatedAt = metadata.CreatedAt.UtcDateTime.ToString("o"),
-                UpdatedAt = metadata.ModifiedAt.UtcDateTime.ToString("o")
+                CreatedAt = metadata.CreatedAt.ToUniversalTime().ToString("o"),
+                UpdatedAt = metadata.ModifiedAt.ToUniversalTime().ToString("o")
             };
         }
 
-        private static Project MapDataToProject(ProjectData data)
+        private static Project? MapDataToProject(ProjectData? data)
         {
+            if (data == null) return null;
             return new Project
             {
                 Id = data.ProjectId,
                 Name = data.Name,
                 Description = string.Empty,
-                CreatedAt = data.CreatedAt.UtcDateTime.ToString("o"),
-                UpdatedAt = data.ModifiedAt.UtcDateTime.ToString("o")
+                CreatedAt = data.CreatedAt.ToUniversalTime().ToString("o"),
+                UpdatedAt = data.ModifiedAt.ToUniversalTime().ToString("o")
             };
         }
     }

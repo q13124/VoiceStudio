@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Input;
 using VoiceStudio.App.ViewModels;
 using VoiceStudio.App.Controls;
 using VoiceStudio.App.Services;
+using VoiceStudio.Core.Services;
 using Windows.System;
 
 namespace VoiceStudio.App.Views.Panels
@@ -14,7 +15,7 @@ namespace VoiceStudio.App.Views.Panels
         public PluginManagementView()
         {
             this.InitializeComponent();
-            ViewModel = new PluginManagementViewModel();
+            ViewModel = new PluginManagementViewModel(AppServices.GetRequiredService<IViewModelContext>());
             this.DataContext = ViewModel;
 
             // Add keyboard navigation

@@ -21,7 +21,7 @@ namespace VoiceStudio.App.Views.Panels
         {
             this.InitializeComponent();
             var backendClient = VoiceStudio.App.Services.ServiceProvider.GetBackendClient();
-            ViewModel = new ImageGenViewModel(backendClient);
+            ViewModel = new ImageGenViewModel(AppServices.GetRequiredService<VoiceStudio.Core.Services.IViewModelContext>(), backendClient);
             this.DataContext = ViewModel;
 
             // Initialize services

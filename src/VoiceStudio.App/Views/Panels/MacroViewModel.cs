@@ -120,7 +120,8 @@ namespace VoiceStudio.App.Views.Panels
         return ResourceHelper.FormatString("Macro.TimeRemainingSeconds", remaining.TotalSeconds);
     }
 
-    public MacroViewModel(IBackendClient backendClient)
+    public MacroViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

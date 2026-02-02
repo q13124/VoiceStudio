@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using VoiceStudio.App.ViewModels;
 using VoiceStudio.App.Services;
+using VoiceStudio.Core.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using System;
 using System.Linq;
@@ -29,10 +30,8 @@ namespace VoiceStudio.App.Views.Panels
     {
       this.InitializeComponent();
       ViewModel = new EnsembleSynthesisViewModel(
-          ServiceProvider.GetBackendClient(),
-          ServiceProvider.GetMultiSelectService(),
-          ServiceProvider.GetToastNotificationService(),
-          ServiceProvider.GetUndoRedoService()
+          AppServices.GetRequiredService<IViewModelContext>(),
+          ServiceProvider.GetBackendClient()
       );
       DataContext = ViewModel;
 
@@ -158,7 +157,7 @@ namespace VoiceStudio.App.Views.Panels
     {
       if (_parentPanelHost != null && ViewModel != null)
       {
-        _parentPanelHost.QualityMetrics = ViewModel.QualityMetrics;
+        _parentPanelHost.QualityMetrics = ViewModel.QualityMetrics as VoiceStudio.Core.Models.QualityMetrics;
       }
     }
 

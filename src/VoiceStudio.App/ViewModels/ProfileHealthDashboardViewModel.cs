@@ -51,7 +51,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private int criticalProfiles;
 
-        public ProfileHealthDashboardViewModel(IBackendClient backendClient)
+        public ProfileHealthDashboardViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>

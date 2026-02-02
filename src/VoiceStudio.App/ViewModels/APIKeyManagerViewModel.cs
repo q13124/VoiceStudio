@@ -58,7 +58,8 @@ namespace VoiceStudio.App.ViewModels
         public Visibility SelectedKeyVisibility =>
             SelectedKey != null ? Visibility.Visible : Visibility.Collapsed;
 
-        public APIKeyManagerViewModel(IBackendClient backendClient)
+        public APIKeyManagerViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

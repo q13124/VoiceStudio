@@ -77,7 +77,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private string? statusMessage;
 
-        public EmotionControlViewModel(IBackendClient backendClient)
+        public EmotionControlViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
             

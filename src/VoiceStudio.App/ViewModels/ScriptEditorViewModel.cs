@@ -63,7 +63,8 @@ namespace VoiceStudio.App.ViewModels
 
     public bool IsScriptSelected(string scriptId) => _multiSelectState?.SelectedIds.Contains(scriptId) ?? false;
 
-    public ScriptEditorViewModel(IBackendClient backendClient)
+    public ScriptEditorViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

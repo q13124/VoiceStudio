@@ -1,5 +1,6 @@
 using System;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 using VoiceStudio.App.Views.Panels;
 using VoiceStudio.App.ViewModels;
 

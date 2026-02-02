@@ -153,7 +153,8 @@ namespace VoiceStudio.App.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> availableCategories = new() { "UI", "Performance", "Audio Processing", "Engine", "System" };
 
-        public AdvancedSettingsViewModel(IBackendClient backendClient)
+        public AdvancedSettingsViewModel(IViewModelContext context, IBackendClient backendClient)
+            : base(context)
         {
             _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

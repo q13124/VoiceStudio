@@ -39,7 +39,8 @@ namespace VoiceStudio.App.ViewModels
     private ObservableCollection<string> _qualityPresets = new();
     private string? _selectedQuality;
 
-    public VideoEditViewModel(IBackendClient backendClient)
+    public VideoEditViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

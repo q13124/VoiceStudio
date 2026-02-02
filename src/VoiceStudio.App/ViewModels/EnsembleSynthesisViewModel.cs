@@ -72,9 +72,14 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private bool hasMultipleJobSelection = false;
 
+    // Quality metrics for synthesis results
+    [ObservableProperty]
+    private object? qualityMetrics;
+
     public bool IsJobSelected(string jobId) => _multiSelectState?.SelectedIds.Contains(jobId) ?? false;
 
-    public EnsembleSynthesisViewModel(IBackendClient backendClient)
+    public EnsembleSynthesisViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 

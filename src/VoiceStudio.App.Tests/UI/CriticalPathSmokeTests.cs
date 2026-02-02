@@ -35,8 +35,7 @@ namespace VoiceStudio.App.Tests.UI
       // In a real implementation, this would test the full workflow:
       // 1. Create profile → 2. Synthesize → 3. Apply effect → 4. Export
 
-      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
-      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(_mockBackendClient!);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
           profilesUseCase,
@@ -64,8 +63,7 @@ namespace VoiceStudio.App.Tests.UI
     public void Workflow_CommandsAreInitialized()
     {
       // Arrange
-      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
-      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(_mockBackendClient!);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
           profilesUseCase,
@@ -92,8 +90,7 @@ namespace VoiceStudio.App.Tests.UI
       // Arrange & Act
       // Verify all ViewModels in the critical path can be instantiated
 
-      var backendGateway = new VoiceStudio.App.Infrastructure.Backend.BackendGateway(_mockBackendClient!);
-      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(backendGateway);
+      var profilesUseCase = new VoiceStudio.App.UseCases.ProfilesUseCase(_mockBackendClient!);
       var profilesViewModel = new VoiceStudio.App.Views.Panels.ProfilesViewModel(
           _mockBackendClient!,
           profilesUseCase,
