@@ -1,6 +1,6 @@
 # VoiceStudio Technical Debt Register
 
-> **Last Updated**: 2026-02-01  
+> **Last Updated**: 2026-02-02  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Canonical registry of all known technical debt, limitations, and future enhancements
 
@@ -25,7 +25,7 @@
 | **TD-003** | Python CVE: protobuf | protobuf <5.28.3 has CVE-2024-7254 | Security vulnerability | Role 4 | 2026-01-29 | Sprint 2 |
 | **TD-004** | ViewModel DI migration | TD-004 DI migration incomplete, some commented imports | Code cleanup needed | Role 3 | 2026-01-28 | Sprint 2 |
 | **TD-005** | Wizard e2e proof incomplete | Wizard flow e2e proof run blocked on reference audio | QA incomplete | Role 3/5 | 2026-01-29 | TASK-0020 |
-| **TD-016** | Engine Manifest Schema v2 | Current engine configs lack capability declarations per spec | Limited metadata | Role 5 | 2026-01-30 | Phase 6+ |
+| **TD-017** | OpenAPI spec regeneration | docs/api/openapi.json stale (22 paths vs 100+ actual); boundary checker fails | Verification incomplete | Role 4 | 2026-02-02 | Sprint 2 |
 
 ### LOW Priority
 
@@ -47,6 +47,7 @@
 |----|-------|-------------|------------|-------|
 | **TD-006** | Ledger warnings | 2026-01-29 | Documented as expected warnings | TASK-0018 |
 | **TD-008** | Git History Reconstruction | 2026-01-30 | 11 recovery commits, 80+ files recovered | TASK-0022 |
+| **TD-016** | Engine Manifest Schema v2 | 2026-02-02 | verify_engine_tasks_targeted.py 4/4 PASS | ENGINE_ENGINEER_STATUS_2026-02-01 |
 
 ---
 
@@ -71,6 +72,7 @@
 | TD-007 | Build | High warning count |
 | TD-009 | Process | Commit discipline enforcement |
 | TD-010 | Process | Branch merge policy |
+| TD-017 | Documentation | Stale OpenAPI spec |
 
 ### Code Quality
 
@@ -189,3 +191,4 @@
 | 2026-01-30 | Created register; added TD-001 through TD-016 |
 | 2026-01-30 | Added Architecture Gaps from cross-reference analysis |
 | 2026-01-30 | Closed TD-006 (TASK-0018) and TD-008 (TASK-0022) |
+| 2026-02-02 | Added TD-017 (OpenAPI spec regeneration); Closed TD-016 (Engine Manifest verified) |
