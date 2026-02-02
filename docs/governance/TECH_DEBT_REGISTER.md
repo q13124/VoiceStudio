@@ -14,9 +14,9 @@
 |----|-------|-------------|--------|-------|---------|--------|
 | **TD-001** | Chatterbox torch+SM120 | chatterbox-tts pins torch==2.6.0; SM 120 (RTX 5070 Ti) needs torch 2.11+ nightly. Upstream issue. | GPU unusable for Chatterbox | Role 5 | 2026-01-29 | Blocked (upstream) |
 | **TD-002** | Release build suppressions | Release build passes (0 warnings, 0 errors); no suppressions needed | Build clean | Role 2 | 2026-01-29 | CLOSED |
-| **TD-013** | VRAM Resource Scheduler | No explicit VRAM budgeting per ChatGPT spec Part 7 | Potential OOM with multi-engine | Role 4/5 | 2026-01-30 | Phase 6+ |
+| **TD-013** | VRAM Resource Scheduler | Implemented: per-engine VRAM budgets, eviction policy for low-priority jobs | OOM prevention implemented | Role 4/5 | 2026-01-30 | CLOSED |
 | **TD-014** | Circuit Breaker Pattern | Implemented and wired into voice, image_gen, video_gen, rvc routes | Cascading failures prevented | Role 4 | 2026-01-30 | CLOSED |
-| **TD-015** | Venv Families Strategy | Single venv instead of 12 families per ChatGPT spec Part 4 | Dependency conflicts, limits expansion | Role 5 | 2026-01-30 | Phase 6+ |
+| **TD-015** | Venv Families Strategy | Analysis complete: 8 families proposed, 3-family minimal plan recommended. See `docs/design/VENV_FAMILIES_ANALYSIS.md` | Dependency conflicts, limits expansion | Role 5 | 2026-01-30 | Phase 6 (Option 2: 16-20h) |
 
 ### MEDIUM Priority
 
@@ -57,6 +57,7 @@
 | **TD-002** | Release build suppressions | 2026-02-02 | Release build 0 warnings, 0 errors; no suppressions needed | dotnet build -c Release |
 | **TD-004** | ViewModel DI migration | 2026-02-02 | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Grep: IViewModelContext |
 | **TD-011** | Interface Implementations | 2026-02-02 | ViewModelContext, TelemetryServiceStub, JsonProjectRepository implemented | Grep: class.*: I*Service |
+| **TD-013** | VRAM Resource Scheduler | 2026-02-02 | Per-engine VRAM budgets, eviction policy, priority-based preemption | tests/unit/core/runtime/test_resource_manager.py (11/11 PASS) |
 | **TD-012** | Namespace Cleanup | 2026-02-02 | UseCases namespace correctly defined and used; no issues found | Grep: App.UseCases |
 | **TD-010** | Branch Merge Policy | 2026-02-02 | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | BRANCH_MERGE_POLICY.md |
 
