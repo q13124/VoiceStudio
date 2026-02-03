@@ -81,15 +81,15 @@ Steps 1-38 completed and archived. Summary: TASK-0004 Complete (Gate C UI smoke 
 
 ## Next 3 Steps
 
-1. **TASK-0010 (Role 5):** Piper/Chatterbox Integration - Complete engine integration (blocked TD-001)
-2. **TASK-0020 (Role 3/5):** Wizard E2E Flow - Full end-to-end wizard proof with speech reference
+1. **No Active Tasks:** All Phase 6 tasks complete (TASK-0010, TASK-0020 DONE; TD-001, TD-005 CLOSED)
+2. **Optional:** Incremental XAML panel updates (Phase 3 roadmap item)
 3. **Optional:** Additional UI polish, visual regression testing, or performance optimization
 
 **Phase 6+ Task Briefs Status:**
 | Task ID | Title | Owner | Priority | Status |
 |---------|-------|-------|----------|--------|
-| TASK-0010 | Piper/Chatterbox Integration | Role 5 | Medium | Partial (blocked TD-001) |
-| TASK-0020 | Wizard E2E Flow | Role 3/5 | Medium | Blocked (needs speech reference) |
+| TASK-0010 | Piper/Chatterbox Integration | Role 5 | Medium | **Complete** (2026-02-02) |
+| TASK-0020 | Wizard E2E Flow | Role 3/5 | Medium | **Complete** (2026-02-02) |
 | TASK-0027 | Accessibility Enhancements | Role 3 | Medium | **Complete** (2026-02-02) |
 | TASK-0028 | UI Automation Framework | Role 3 | Medium | **Complete** (2026-02-02) |
 | TASK-0029 | Advanced Panel Backend Integration | Role 3 | Medium | **Complete** (2026-02-02) |
