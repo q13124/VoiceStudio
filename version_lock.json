@@ -35,12 +35,12 @@
       "whisperx": "Stay on Faster-Whisper 1.0.3 instead"
     },
     "windows_ui": {
-      "dotnet_sdk": "8.0.303",
-      "winui3": "1.5.0",
-      "winappsdk": "1.5.0",
-      "communitytoolkit": "8.1.2409",
-      "pyside6": "6.8.0.1",
-      "qfluentwidgets": "1.4.3"
+      "dotnet_sdk": "8.0.417",
+      "winui3": "1.8.251106002",
+      "winappsdk": "1.8.251106002",
+      "communitytoolkit_winui": "7.1.2",
+      "communitytoolkit_mvvm": "8.2.2",
+      "naudio": "2.2.1"
     },
     "warnings": [
       "Do not downgrade librosa, numpy, or transformers - XTTS will break",

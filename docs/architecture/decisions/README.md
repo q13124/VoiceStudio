@@ -77,6 +77,8 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-019](ADR-019-orchestration-in-python.md) | Orchestration in Python | Accepted | 2026-01-30 |
 | [ADR-023](ADR-023-ui-assembly-split.md) | UI Assembly Split into Feature Modules | Accepted | 2026-02-01 |
 | [ADR-024](ADR-024-completion-evidence-guard.md) | Completion Evidence Guard | Accepted | 2026-02-01 |
+| [ADR-025](ADR-025-compatibility-matrix-and-scaffolding.md) | Compatibility Matrix and Scaffolding | Accepted | 2026-02-02 |
+| [ADR-026](ADR-026-infrastructure-remediation.md) | Infrastructure Remediation | Accepted | 2026-02-02 |
 
 ## Status Legend
 

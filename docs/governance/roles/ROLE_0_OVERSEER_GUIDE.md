@@ -101,7 +101,7 @@ The Overseer:
 
 | Gate | Entry Criteria | Overseer Tasks | Deliverables | Exit Criteria | Proof Requirements |
 |------|----------------|----------------|--------------|---------------|-------------------|
-| **A** | Repository accessible | Freeze invariants, establish discipline, create lock docs | `GOVERNANCE_LOCK.md`, `COMPATIBILITY_SNAPSHOT.md` | Lock docs exist, ADRs established | Lock document checksums |
+| **A** | Repository accessible | Freeze invariants, establish discipline, create lock docs | `GOVERNANCE_LOCK.md`, `COMPATIBILITY_MATRIX.md` | Lock docs exist, ADRs established | Lock document checksums |
 | **B** | Gate A complete | Validate build proof, enforce RuleGuard | Gate status update | Build succeeds from clean, RuleGuard pass | Build binlog archived |
 | **C** | Gate B complete | Coordinate boot testing, collect crash artifacts | Boot proof, crash artifact paths | App launches without runtime exceptions | UI smoke summary |
 | **D** | Gate C complete | Validate persistence proofs, coordinate runtime testing | Storage/runtime proof index | Persistence across restart verified | Test execution logs |

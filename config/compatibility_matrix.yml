@@ -160,7 +160,7 @@ contracts:
       voice_clone:
         path: "/api/voice/clone"
         method: "POST"
-        request_schema: "shared/schemas/voice_clone_request.json"
+        request_schema: null  # API shape defined in OpenAPI spec
       voice_synthesize:
         path: "/api/voice/synthesize"
         method: "POST"
@@ -172,7 +172,7 @@ contracts:
   
   engines:
     base_protocol: "app/core/engines/base.py"
-    manifest_schema: "shared/schemas/engine_manifest.schema.json"
+    manifest_schema: "app/schemas/engine.manifest.v1_1.json"
     required_methods:
       - "synthesize"
       - "get_supported_sample_rates"

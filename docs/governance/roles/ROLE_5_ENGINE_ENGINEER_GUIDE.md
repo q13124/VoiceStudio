@@ -425,7 +425,7 @@ Common fixes:
   ↓
 Test on target hardware
   ↓
-Document in COMPATIBILITY_SNAPSHOT.md
+Document in COMPATIBILITY_MATRIX.md
 ```
 
 **Worked Example (VS-0034)**:

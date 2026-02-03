@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-02 (Branch Merge Policy added; TD-010 closed)
+> **Last Updated**: 2026-02-02 (ADR status sync; version_lock alignment; System Architect review)
 
 ---
 
@@ -43,24 +43,25 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Decisions (ADRs) | `docs/architecture/decisions/ADR-*.md` | 2026-01-25 | Architecture Decision Records |
 | ADR Index | `docs/architecture/decisions/README.md` | 2026-01-25 | ADR listing and template |
 | Rulebook Integration ADR | `docs/architecture/decisions/ADR-001-rulebook-integration.md` | 2026-01-25 | Rulebook and rule governance |
-| Document Governance ADR | `docs/architecture/decisions/ADR-002-document-governance.md` | — | **PLANNED** — Not yet created |
+| Document Governance ADR | `docs/architecture/decisions/ADR-002-document-governance.md` | 2026-01-25 | Document governance and lifecycle |
 | Agent Governance Framework ADR | `docs/architecture/decisions/ADR-003-agent-governance-framework.md` | 2026-01-25 | Agent governance and roles |
-| MessagePack IPC ADR | `docs/architecture/decisions/ADR-004-messagepack-ipc.md` | — | **PLANNED** — Not yet created |
-| Context Management ADR | `docs/architecture/decisions/ADR-005-context-management-system.md` | — | **PLANNED** — Not yet created |
-| Enhanced Rules ADR | `docs/architecture/decisions/ADR-006-enhanced-cursor-rules-system.md` | — | **PLANNED** — Not yet created |
-| IPC Boundary ADR | `docs/architecture/decisions/ADR-007-ipc-boundary.md` | — | **PLANNED** — Not yet created |
-| Architecture Patterns ADR | `docs/architecture/decisions/ADR-008-architecture-patterns.md` | — | **PLANNED** — Not yet created |
-| AI-Native Development ADR | `docs/architecture/decisions/ADR-009-ai-native-development-patterns.md` | — | **PLANNED** — Not yet created |
-| Native Windows Platform ADR | `docs/architecture/decisions/ADR-010-native-windows-platform.md` | — | **PLANNED** — Not yet created |
-| Context Manager Architecture ADR | `docs/architecture/decisions/ADR-011-context-manager-architecture.md` | — | **PLANNED** — Not yet created |
-| Roadmap Integration Scaffolding ADR | `docs/architecture/decisions/ADR-012-roadmap-integration-scaffolding.md` | — | **PLANNED** — Not yet created |
-| OpenTelemetry Distributed Tracing ADR | `docs/architecture/decisions/ADR-013-opentelemetry-distributed-tracing.md` | — | **PLANNED** — Not yet created |
-| Agent Skills Integration ADR | `docs/architecture/decisions/ADR-014-agent-skills-integration.md` | — | **PLANNED** — Not yet created |
+| MessagePack IPC ADR | `docs/architecture/decisions/ADR-004-messagepack-ipc.md` | 2026-01-25 | MessagePack for IPC serialization |
+| Context Management ADR | `docs/architecture/decisions/ADR-005-context-management.md` | 2026-01-25 | Context management system |
+| Cursor Rules ADR | `docs/architecture/decisions/ADR-006-cursor-rules-system.md` | 2026-01-25 | Enhanced Cursor rules system |
+| IPC Boundary ADR | `docs/architecture/decisions/ADR-007-ipc-boundary.md` | 2026-01-25 | UI-Backend IPC boundary definition |
+| Architecture Patterns ADR | `docs/architecture/decisions/ADR-008-architecture-patterns.md` | 2026-01-25 | Core architecture patterns |
+| AI-Native Development ADR | `docs/architecture/decisions/ADR-009-ai-native-development.md` | 2026-01-25 | AI-native development patterns |
+| Native Windows Platform ADR | `docs/architecture/decisions/ADR-010-native-windows-platform.md` | 2026-01-25 | WinUI 3 native platform choice |
+| Context Manager Architecture ADR | `docs/architecture/decisions/ADR-011-context-manager-architecture.md` | 2026-01-25 | Context manager architecture |
+| Roadmap Integration ADR | `docs/architecture/decisions/ADR-012-roadmap-integration.md` | 2026-01-25 | Roadmap integration scaffolding |
+| OpenTelemetry Tracing ADR | `docs/architecture/decisions/ADR-013-opentelemetry-tracing.md` | 2026-01-25 | OpenTelemetry distributed tracing |
+| Agent Skills ADR | `docs/architecture/decisions/ADR-014-agent-skills.md` | 2026-01-25 | Agent skills integration |
 | Architecture Integration Contract ADR | `docs/architecture/decisions/ADR-015-architecture-integration-contract.md` | 2026-01-25 | Integration contract |
 | **Gate C Artifact Choice ADR** | `docs/architecture/decisions/ADR-016-gate-c-artifact-choice.md` | 2026-01-29 | Unpackaged self-contained apphost EXE as Gate C launch artifact |
-| Debug Role Architecture ADR | `docs/architecture/decisions/ADR-017-debug-role-architecture.md` | — | **PLANNED** — Not yet created |
-| IPC Architecture Deviation ADR | `docs/architecture/decisions/ADR-018-ipc-architecture-deviation.md` | — | **PLANNED** — Not yet created |
-| Orchestration Architecture ADR | `docs/architecture/decisions/ADR-019-orchestration-architecture.md` | — | **PLANNED** — Not yet created |
+| Engine Subprocess Model ADR | `docs/architecture/decisions/ADR-017-engine-subprocess-model.md` | 2026-01-25 | Engine subprocess isolation model |
+| Named Pipes to HTTP ADR | `docs/architecture/decisions/ADR-018-named-pipes-http.md` | 2026-01-25 | Named pipes replaced with HTTP |
+| Orchestration in Python ADR | `docs/architecture/decisions/ADR-019-orchestration-in-python.md` | 2026-01-25 | C# orchestration moved to Python |
+| UI Assembly Split ADR | `docs/architecture/decisions/ADR-023-ui-assembly-split.md` | 2026-01-30 | UI assembly modularization |
 | Completion Evidence Guard ADR | `docs/architecture/decisions/ADR-024-completion-evidence-guard.md` | 2026-02-01 | Enforce completion markers committed before verification passes |
 | **Compatibility Matrix ADR** | `docs/architecture/decisions/ADR-025-compatibility-matrix-and-scaffolding.md` | 2026-02-02 | Centralized version pins, scaffolding tools, CODEOWNERS, AI agent safety |
 | **Infrastructure Remediation ADR** | `docs/architecture/decisions/ADR-026-infrastructure-remediation.md` | 2026-02-02 | Activation of dormant development infrastructure (telemetry, issues, context) |
@@ -176,7 +177,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | --- | --- | --- | --- |
 | Organization Map | `docs/governance/PROJECT_ORGANIZATION_MAP.md` | 2026-01-25 | Project structure map |
 | Reorg Log | `docs/governance/PROJECT_REORG_LOG.md` | 2026-01-25 | Reorganization history |
-| Compatibility | `docs/governance/COMPATIBILITY_SNAPSHOT.md` | 2026-01-25 | Compatibility matrix |
+| Compatibility Matrix (Design) | `docs/design/COMPATIBILITY_MATRIX.md` | 2026-01-30 | Human-readable compatibility matrix; see also `config/compatibility_matrix.yml` |
 | Production Build | `docs/governance/VoiceStudio_Production_Build_Plan.md` | 2026-01-25 | Production build plan |
 
 ## Security

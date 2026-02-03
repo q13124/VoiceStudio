@@ -50,7 +50,7 @@ Preserve module boundaries and contract stability while aligning compatibility d
 - Module boundaries and dependency direction
 - Public contracts and interfaces
 - Architecture Decision Records (`docs/architecture/decisions/`)
-- Compatibility documentation (`docs/governance/COMPATIBILITY_SNAPSHOT.md`)
+- Compatibility documentation (`docs/design/COMPATIBILITY_MATRIX.md`, `config/compatibility_matrix.yml`)
 - Plugin contracts and extension points
 - Shared JSON schemas (`shared/`)
 - Architectural interfaces in `src/VoiceStudio.Core/`
@@ -102,7 +102,7 @@ The System Architect:
 
 | Gate | Entry Criteria | Architect Tasks | Deliverables | Exit Criteria | Proof Requirements |
 |------|----------------|-----------------|--------------|---------------|-------------------|
-| **A** | Repository accessible | Freeze architecture invariants, establish ADR process | ADRs for key decisions, `COMPATIBILITY_SNAPSHOT.md` | Invariants documented, boundaries defined | ADR checksums |
+| **A** | Repository accessible | Freeze architecture invariants, establish ADR process | ADRs for key decisions, `COMPATIBILITY_MATRIX.md` | Invariants documented, boundaries defined | ADR checksums |
 | **B** | Gate A complete | Validate contract stability, review dependency changes | Contract validation report | Dependency graph verified | Dependency diff |
 | **C** | Gate B complete | Review boot-path contracts | Contract review notes | No contract violations at boot | Contract test results |
 | **D** | Gate D complete | Validate storage/runtime interfaces | Interface compliance report | Storage contracts stable | Schema validation |
@@ -200,7 +200,7 @@ Rules:
 
 When dependencies change:
 
-1. Check `docs/governance/COMPATIBILITY_SNAPSHOT.md` for current baseline
+1. Check `docs/design/COMPATIBILITY_MATRIX.md` for current baseline
 2. Verify against `version_lock.json` and `requirements_engines.txt`
 3. Test on target hardware (currently RTX 5070 Ti, sm_120)
 4. Document any compatibility breaks
@@ -284,7 +284,7 @@ When reviewing a contract change:
 |----------|---------|
 | `docs/architecture/README.md` | Architecture overview |
 | `docs/architecture/decisions/` | All ADRs |
-| `docs/governance/COMPATIBILITY_SNAPSHOT.md` | Version locks |
+| `docs/design/COMPATIBILITY_MATRIX.md` | Version locks and compatibility |
 | `version_lock.json` | Python dependency pins |
 | `Directory.Build.props` | .NET dependency pins |
 | `shared/` | Shared JSON schemas |
@@ -344,7 +344,7 @@ Test on target hardware
   ↓
 Update version_lock.json / requirements
   ↓
-Document in COMPATIBILITY_SNAPSHOT.md
+Document in COMPATIBILITY_MATRIX.md
 ```
 
 **Worked Example (VS-0018)**:
@@ -445,7 +445,7 @@ Defer to other roles for:
 |----------|----------------|-------------|
 | ADRs | Primary author | Contributors (context) |
 | Shared schemas | Owner | Consumers |
-| COMPATIBILITY_SNAPSHOT | Primary owner | Build & Tooling (contributor) |
+| COMPATIBILITY_MATRIX | Primary owner | Build & Tooling (contributor) |
 | Architecture docs | Primary author | All (readers) |
 
 ---

@@ -115,9 +115,9 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **QA evidence**: `docs/reports/verification/QA_EXECUTION_REPORT_2026-01-20.md` includes DSP-ready RVC pass (clears RVC skip)
 - **Overseer role tasks**: `docs/governance/overseer/role_tasks/OVERSEER.md` now reflects canonical roadmap mapping completion.
 - **Execution ownership**: Overseer covers roles 1-7; avoid worker labels in current planning docs.
-- **Compatibility snapshot (cu128)**: `docs/governance/COMPATIBILITY_SNAPSHOT.md` defines the canonical baseline (torch/torchaudio 2.5.1+cu128, transformers 4.47.0). Historical compatibility docs are marked superseded; GPU validation proof exists for sm_120 in `env\venv_xtts_gpu_sm120`.
+- **Compatibility matrix (cu121)**: `docs/design/COMPATIBILITY_MATRIX.md` and `config/compatibility_matrix.yml` define the canonical baseline (torch/torchaudio 2.2.2+cu121, transformers 4.55.4, numpy 1.26.4). Historical compatibility docs are marked superseded.
 - **Upgrade-lane XTTS proof status**: torchaudio 2.10.0+cu128 still triggers torchcodec load failures on Windows (WinError 127), so XTTS adds a `torchaudio.load` → `soundfile` fallback in `app/core/engines/xtts_engine.py`. Upgrade-lane proof succeeded at `.buildlogs\proof_runs\upgrade_lane_workflow_20260121-220357\proof_data.json` (see VS-0034).
-- **Compatibility docs alignment**: Upgrade-lane references remain at PyTorch 2.10.0+cu128 and Transformers 4.57.3 in `docs/governance/ROADMAP_COMPATIBILITY_UPDATE.md` and related audit docs; baseline references now point to `docs/governance/COMPATIBILITY_SNAPSHOT.md`.
+- **Compatibility docs alignment**: Baseline is PyTorch 2.2.2+cu121 and Transformers 4.55.4; canonical source is `docs/design/COMPATIBILITY_MATRIX.md` and `config/compatibility_matrix.yml`.
 - **Baseline stack**: Python 3.11.9 + Torch/Torchaudio 2.5.1+cu128 + Transformers 4.47.0; engines requiring newer stacks run in isolated venvs.
 - **So-VITS proof prerequisite**: `scripts/sovits_svc_conversion_proof.py` expects `E:\VoiceStudio\models\checkpoints\Lain_SVC4\model.pth` + `config.json` (now populated from `therealvul/so-vits-svc-4.0` BaseModelv2 `G_202000.pth`). Conversion still needs an inference command (`SOVITS_SVC_INFER_COMMAND` or engine `infer_command`).
 

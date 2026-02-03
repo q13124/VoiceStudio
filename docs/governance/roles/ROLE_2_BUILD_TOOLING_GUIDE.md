@@ -190,7 +190,7 @@ Upgrade request received
 Identify affected components (SDK, tools, packages)
   ↓
 Check compatibility with:
-  - COMPATIBILITY_SNAPSHOT.md
+  - docs/design/COMPATIBILITY_MATRIX.md
   - Target hardware (RTX 5070 Ti, sm_120)
   - Other dependencies
   ↓
@@ -288,7 +288,7 @@ When diagnosing build issues:
 | `.github/workflows/` | CI pipeline definitions |
 | `scripts/` | Build and verification scripts |
 | `.editorconfig` | Code style configuration |
-| `docs/governance/COMPATIBILITY_SNAPSHOT.md` | Version compatibility |
+| `docs/design/COMPATIBILITY_MATRIX.md` | Version compatibility |
 
 ### Useful Scripts
 

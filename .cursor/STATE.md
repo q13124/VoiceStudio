@@ -38,11 +38,14 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **ID**: None
 - **Title**: —
 - **Priority**: —
-- **Status**: **UI Engineer Sprint complete (2026-02-02)** — TASK-0027 (Accessibility), TASK-0028 (UI Automation), TASK-0029 (Backend Integration) all CLOSED. 659 AutomationProperties added. UI_TESTING_GUIDE.md created. UI_COMPLIANCE_AUDIT_2026-02-02.md generated. All gates GREEN. **Next:** Assign new task or continue optional enhancements.
+- **Status**: **UI Completion Roadmap Phase 1-2 Complete (2026-02-02)** — Window title "VoiceStudio" set, backend health check on startup, toolbar wired to GetEnginesAsync(), PanelRegistry integration complete with panel factory. Phase 3 XAML updates require incremental changes due to XAML compiler stability. All gates GREEN. **Next:** Incremental XAML panel updates or new task assignment.
 
 ## Last Milestone
 
-- **Completed**: UI Engineer Sprint (TASK-0027, TASK-0028, TASK-0029)
+- **Completed**: UI Completion Roadmap Phases 1-2, 4-5
+- **Date**: 2026-02-02
+- **Proof**: Window title set in MainWindow constructor. Backend health check with status bar feedback. Toolbar engine dropdown wired to BackendClient.GetEnginesAsync(). PanelRegistry enhanced with CreatePanel() and GetDescriptor(). RestorePanelsFromLayout() implemented. Panel factory with 90+ panels registered. AnalyticsChartControl updated with placeholder UI. Verification PASS. Build succeeds with 0 errors.
+- **Previous**: UI Engineer Sprint (TASK-0027, TASK-0028, TASK-0029)
 - **Date**: 2026-02-02
 - **Proof**: 659 AutomationProperties across 92 views. UI_TESTING_GUIDE.md created. 3 new UI test files (Settings, Wizard, Keyboard). CI ui-automation job added. UI_COMPLIANCE_AUDIT_2026-02-02.md generated. Gate C UI smoke PASS (exit 0, 11/11 nav steps, 0 binding failures). All 9 panels verified with BackendClient integration (371 usages across 68 ViewModels).
 - **Previous**: Engine Engineer Quality Improvements
@@ -201,10 +204,10 @@ _Previous:_
 
 ## Context Acknowledgment
 
-- **Acknowledged At**: 2026-02-01 (Role 0 Overseer — continue Overseer tasks, Session 6)
-- **Acknowledged By**: Role 0 Overseer
-- **Previous**: 2026-02-01 (Overseer — completion-evidence guard prep; verification PASS with committed state)
-- **Summary**: Tooling refresh ran. gate_status + ledger_validate **PASS**; completion_guard **FAIL** (uncommitted completion markers in guarded paths). Commit completion/proof updates per closure protocol step 6 for full verification PASS. Gates B–H GREEN. Active task: TASK-0020 (wizard e2e); handoff to Role 3 or 5 when backend on 8001.
+- **Acknowledged At**: 2026-02-02 (Role 1 System Architect — continue architect tasks)
+- **Acknowledged By**: Role 1 System Architect
+- **Previous**: 2026-02-01 (Role 0 Overseer — continue Overseer tasks, Session 6)
+- **Summary**: Contract path alignment: compatibility_matrix.yml updated (voice_clone request_schema → null; engine manifest_schema → app/schemas/engine.manifest.v1_1.json). docs/architecture/README.md updated (23 ADRs, ADR-018/019 links fixed, contract source of truth note). Verification PASS (gate_status, ledger_validate, compatibility_matrix, boundary_checker). No active task; Next 3 Steps: TASK-0010, TASK-0020, optional UI polish.
 
 
 ## SSOT Pointers

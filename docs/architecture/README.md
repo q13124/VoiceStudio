@@ -1,8 +1,9 @@
 # VoiceStudio Architecture Documentation
 
-> **Last Updated**: 2026-01-29  
+> **Last Updated**: 2026-02-02  
 > **Owner**: System Architect (Role 1)  
-> **Purpose**: Entry point to VoiceStudio architecture documentation
+> **Purpose**: Entry point to VoiceStudio architecture documentation  
+> **Contract source of truth**: `config/compatibility_matrix.yml`
 
 ---
 
@@ -30,10 +31,10 @@ All architecture decisions are documented in `docs/architecture/decisions/`. See
 | [ADR-003](decisions/ADR-003-agent-governance-framework.md) | Agent Governance Framework | ACCEPTED | 2026-01-25 |
 | [ADR-007](decisions/ADR-007-ipc-boundary.md) | IPC Boundary | PENDING | 2026-01-29 |
 | [ADR-010](decisions/ADR-010-native-windows-platform.md) | Native Windows Platform | PENDING | 2026-01-29 |
-| [ADR-018](decisions/ADR-018-ipc-architecture-deviation.md) | IPC Architecture Deviation | ACCEPTED | 2026-01-30 |
-| [ADR-019](decisions/ADR-019-orchestration-architecture.md) | Orchestration Architecture | ACCEPTED | 2026-01-30 |
+| [ADR-018](decisions/ADR-018-named-pipes-http.md) | Named Pipes Replaced with HTTP | ACCEPTED | 2026-01-30 |
+| [ADR-019](decisions/ADR-019-orchestration-in-python.md) | Orchestration in Python | ACCEPTED | 2026-01-30 |
 
-**Full List**: See [decisions/README.md](decisions/README.md) for all 19 ADRs.
+**Full List**: See [decisions/README.md](decisions/README.md) for all 23 ADRs.
 
 ---
 
@@ -55,7 +56,7 @@ All architecture decisions are documented in `docs/architecture/decisions/`. See
 | **Control Plane** | UI ↔ Backend | HTTP REST + WebSocket | `src/VoiceStudio.App/Services/BackendClient.cs`, `backend/api/routes/` |
 | **Data Plane** | Backend ↔ Engine subprocess | IPC (subprocess) | `app/core/runtime/`, engine adapters |
 
-**Decision**: [ADR-007](decisions/ADR-007-ipc-boundary.md), [ADR-018](decisions/ADR-018-ipc-architecture-deviation.md)
+**Decision**: [ADR-007](decisions/ADR-007-ipc-boundary.md), [ADR-018](decisions/ADR-018-named-pipes-http.md)
 
 ---
 
