@@ -68,7 +68,7 @@ namespace VoiceStudio.App.ViewModels
     private string targetTier = "standard";
 
     [ObservableProperty]
-    private bool preferSpeed = false;
+    private bool preferSpeed;
 
     [ObservableProperty]
     private string? selectedEngine;
@@ -96,7 +96,7 @@ namespace VoiceStudio.App.ViewModels
     private int consistencyTimePeriodDays = 30;
 
     [ObservableProperty]
-    private bool isCheckingConsistency = false;
+    private bool isCheckingConsistency;
 
     // Advanced Quality Metrics Visualization (IDEA 60)
     [ObservableProperty]
@@ -130,7 +130,7 @@ namespace VoiceStudio.App.ViewModels
     private double anomalyThresholdStd = 2.0;
 
     [ObservableProperty]
-    private bool isGeneratingVisualizations = false;
+    private bool isGeneratingVisualizations;
 
     public QualityControlViewModel(IViewModelContext context, IBackendClient backendClient)
         : base(context)
@@ -404,7 +404,7 @@ namespace VoiceStudio.App.ViewModels
         };
 
         CurrentRecommendation = await _backendClient.GetEngineRecommendationAsync(request);
-        if (CurrentRecommendation != null && CurrentRecommendation.Recommendations.Any())
+        if (CurrentRecommendation?.Recommendations.Any() == true)
         {
           SelectedEngine = CurrentRecommendation.Recommendations.First().RecommendedEngine;
         }
@@ -528,12 +528,10 @@ namespace VoiceStudio.App.ViewModels
       {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var trends = await _backendClient.GetProjectQualityTrendsAsync(
+        SelectedProjectTrends = await _backendClient.GetProjectQualityTrendsAsync(
             SelectedProjectId,
             ConsistencyTimePeriodDays
         );
-
-        SelectedProjectTrends = trends;
       }
       catch (OperationCanceledException)
       {
@@ -901,14 +899,14 @@ namespace VoiceStudio.App.ViewModels
             csv.AppendLine("Metric,Value");
             if (CurrentAnalysis != null)
             {
-              csv.AppendLine($"Meets Target,{CurrentAnalysis.MeetsTarget}");
-              csv.AppendLine($"Quality Score,{CurrentAnalysis.QualityScore:F2}");
+              csv.AppendLine($"Meets Target,{CurrentAnalysis.MeetsTarget}")
+                .AppendLine($"Quality Score,{CurrentAnalysis.QualityScore:F2}");
             }
             if (SelectedProjectReport != null)
             {
-              csv.AppendLine($"Consistency Score,{SelectedProjectReport.ConsistencyScore:P0}");
-              csv.AppendLine($"Is Consistent,{SelectedProjectReport.IsConsistent}");
-              csv.AppendLine($"Total Samples,{SelectedProjectReport.TotalSamples}");
+              csv.AppendLine($"Consistency Score,{SelectedProjectReport.ConsistencyScore:P0}")
+                .AppendLine($"Is Consistent,{SelectedProjectReport.IsConsistent}")
+                .AppendLine($"Total Samples,{SelectedProjectReport.TotalSamples}");
             }
             await Windows.Storage.FileIO.WriteTextAsync(file, csv.ToString());
           }

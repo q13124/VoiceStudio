@@ -26,7 +26,7 @@ namespace VoiceStudio.App.Views.Panels
     private readonly IErrorLoggingService? _logService;
     private MultiSelectState? _multiSelectState;
     private CancellationTokenSource? _pollingCts;
-    private bool _isPolling = false;
+    private bool _isPolling;
 
     public string PanelId => "effectsmixer";
     public string DisplayName => ResourceHelper.GetString("Panel.EffectsMixer.DisplayName", "Effects & Mixer");
@@ -64,7 +64,7 @@ namespace VoiceStudio.App.Views.Panels
     private string? errorMessage;
 
     [ObservableProperty]
-    private bool isRealTimeUpdatesEnabled = false;
+    private bool isRealTimeUpdatesEnabled;
 
     // Effect chain management
     [ObservableProperty]
@@ -99,10 +99,10 @@ namespace VoiceStudio.App.Views.Panels
 
     // Multi-select support
     [ObservableProperty]
-    private int selectedChannelCount = 0;
+    private int selectedChannelCount;
 
     [ObservableProperty]
-    private bool hasMultipleChannelSelection = false;
+    private bool hasMultipleChannelSelection;
 
     public bool IsChannelSelected(string channelId) => _multiSelectState?.SelectedIds.Contains(channelId) ?? false;
 
@@ -163,7 +163,7 @@ namespace VoiceStudio.App.Views.Panels
       _logService = ServiceProvider.TryGetErrorLoggingService();
 
       // Multi-select commands
-      SelectAllChannelsCommand = new RelayCommand(SelectAllChannels, () => Channels != null && Channels.Count > 0);
+      SelectAllChannelsCommand = new RelayCommand(SelectAllChannels, () => Channels?.Count > 0);
       ClearChannelSelectionCommand = new RelayCommand(ClearChannelSelection);
 
       // Subscribe to selection changes
@@ -200,43 +200,43 @@ namespace VoiceStudio.App.Views.Panels
       {
         using var profiler = PerformanceProfiler.StartCommand("CreateEffectChain");
         await CreateEffectChainAsync(name, ct);
-      }, (string? name) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
+      }, (string? _) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
 
       DeleteEffectChainCommand = new EnhancedAsyncRelayCommand<string>(async (string? chainId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("DeleteEffectChain");
         await DeleteEffectChainAsync(chainId, ct);
-      }, (string? chainId) => !IsLoading);
+      }, (string? _) => !IsLoading);
 
       ApplyEffectChainCommand = new EnhancedAsyncRelayCommand<string>(async (string? chainId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("ApplyEffectChain");
         await ApplyEffectChainAsync(chainId, ct);
-      }, (string? chainId) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId) && !string.IsNullOrWhiteSpace(SelectedAudioId));
+      }, (string? _) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId) && !string.IsNullOrWhiteSpace(SelectedAudioId));
 
       AddEffectCommand = new EnhancedAsyncRelayCommand<string>(async (string? effectType, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("AddEffect");
         await AddEffectToChainAsync(effectType, ct);
-      }, (string? effectType) => !IsLoading && SelectedEffectChain != null);
+      }, (string? _) => !IsLoading && SelectedEffectChain != null);
 
       RemoveEffectCommand = new EnhancedAsyncRelayCommand<string>(async (string? effectId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("RemoveEffect");
         await RemoveEffectFromChainAsync(effectId, ct);
-      }, (string? effectId) => !IsLoading && SelectedEffectChain != null);
+      }, (string? _) => !IsLoading && SelectedEffectChain != null);
 
       MoveEffectUpCommand = new EnhancedAsyncRelayCommand<string>(async (string? effectId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("MoveEffectUp");
         await MoveEffectUpAsync(effectId, ct);
-      }, (string? effectId) => !IsLoading && SelectedEffectChain != null);
+      }, (string? _) => !IsLoading && SelectedEffectChain != null);
 
       MoveEffectDownCommand = new EnhancedAsyncRelayCommand<string>(async (string? effectId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("MoveEffectDown");
         await MoveEffectDownAsync(effectId, ct);
-      }, (string? effectId) => !IsLoading && SelectedEffectChain != null);
+      }, (string? _) => !IsLoading && SelectedEffectChain != null);
 
       SaveEffectChainCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -273,13 +273,13 @@ namespace VoiceStudio.App.Views.Panels
       {
         using var profiler = PerformanceProfiler.StartCommand("CreateMixerPreset");
         await CreateMixerPresetAsync(name, ct);
-      }, (string? name) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
+      }, (string? _) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
 
       ApplyMixerPresetCommand = new EnhancedAsyncRelayCommand<string>(async (string? presetId, CancellationToken ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("ApplyMixerPreset");
         await ApplyMixerPresetAsync(presetId, ct);
-      }, (string? presetId) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
+      }, (string? _) => !IsLoading && !string.IsNullOrWhiteSpace(SelectedProjectId));
 
       // Mixer sends/returns/sub-groups commands
       CreateSendCommand = new EnhancedAsyncRelayCommand(async (ct) =>
@@ -535,7 +535,7 @@ namespace VoiceStudio.App.Views.Panels
         var meters = await _backendClient.GetAudioMetersAsync(SelectedAudioId, cancellationToken);
 
         // Update channels with meter data
-        if (meters.Channels != null && meters.Channels.Count > 0)
+        if (meters.Channels?.Count > 0)
         {
           // Ensure we have enough channels (only add if needed, don't recreate)
           while (Channels.Count < meters.Channels.Count)
@@ -727,10 +727,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedEffectChain = EffectChains.FirstOrDefault();
                 }
               },
-              onRedo: (c) =>
-              {
-                SelectedEffectChain = c;
-              });
+              onRedo: (c) => SelectedEffectChain = c);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -790,10 +787,7 @@ namespace VoiceStudio.App.Views.Panels
                   _backendClient,
                   deletedChain,
                   originalIndex,
-                  onUndo: (c) =>
-                  {
-                    SelectedEffectChain = c;
-                  },
+                  onUndo: (c) => SelectedEffectChain = c,
                   onRedo: (c) =>
                   {
                     if (SelectedEffectChain?.Id == c.Id)
@@ -915,10 +909,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedEffect = null;
                 }
               },
-              onRedo: (e) =>
-              {
-                SelectedEffect = e;
-              });
+              onRedo: (e) => SelectedEffect = e);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -981,10 +972,7 @@ namespace VoiceStudio.App.Views.Panels
                 chain.Id,
                 removedEffect,
                 originalOrder,
-                onUndo: (e) =>
-                {
-                  SelectedEffect = e;
-                },
+                onUndo: (e) => SelectedEffect = e,
                 onRedo: (e) =>
                 {
                   if (SelectedEffect?.Id == e.Id)
@@ -1031,7 +1019,7 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var effect = SelectedEffectChain.Effects.FirstOrDefault(e => e.Id == effectId);
-        if (effect != null && effect.Order > 0)
+        if (effect?.Order > 0)
         {
           var previousEffect = SelectedEffectChain.Effects.FirstOrDefault(e => e.Order == effect.Order - 1);
           if (previousEffect != null)
@@ -1419,7 +1407,10 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         // Convert ViewModel.MixerChannel to Core.Models.MixerChannel
-        var coreChannels = Channels.Select(vmCh => new Core.Models.MixerChannel
+
+
+        // Update state from current UI values
+        MixerState.Channels = Channels.Select(vmCh => new Core.Models.MixerChannel
         {
           Id = vmCh.Id,
           ChannelNumber = vmCh.ChannelNumber,
@@ -1435,9 +1426,6 @@ namespace VoiceStudio.App.Views.Panels
           SendLevels = new Dictionary<string, double>(vmCh.SendLevels),
           SendEnabled = new Dictionary<string, bool>(vmCh.SendEnabled)
         }).ToList();
-
-        // Update state from current UI values
-        MixerState.Channels = coreChannels;
         MixerState.Master = Master;
         MixerState.Sends = Sends.ToList();
         MixerState.Returns = Returns.ToList();
@@ -2078,22 +2066,22 @@ namespace VoiceStudio.App.Views.Panels
     public string Name { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private double peakLevel = 0.0;
+    private double peakLevel;
 
     [ObservableProperty]
-    private double rmsLevel = 0.0;
+    private double rmsLevel;
 
     [ObservableProperty]
     private double volume = 1.0; // 0.0 to 2.0 (0 = -∞ dB, 1.0 = 0 dB, 2.0 = +6 dB)
 
     [ObservableProperty]
-    private double pan = 0.0; // -1.0 (left) to 1.0 (right), 0.0 = center
+    private double pan; // -1.0 (left) to 1.0 (right), 0.0 = center
 
     [ObservableProperty]
-    private bool isMuted = false;
+    private bool isMuted;
 
     [ObservableProperty]
-    private bool isSoloed = false;
+    private bool isSoloed;
 
     // Routing properties
     [ObservableProperty]
@@ -2134,8 +2122,8 @@ namespace VoiceStudio.App.Views.Panels
         var percent = Pan * 100.0;
         if (Pan < 0)
           return $"L {Math.Abs(percent):F0}%";
-        else
-          return $"R {percent:F0}%";
+
+        return $"R {percent:F0}%";
       }
     }
 
@@ -2150,7 +2138,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-
-
-
-

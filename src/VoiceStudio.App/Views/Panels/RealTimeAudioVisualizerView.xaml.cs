@@ -31,7 +31,7 @@ namespace VoiceStudio.App.Views.Panels
       _toastService = ServiceProvider.GetToastNotificationService();
 
       // Subscribe to ViewModel events for toast notifications
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(RealTimeAudioVisualizerViewModel.ErrorMessage) && !string.IsNullOrEmpty(ViewModel.ErrorMessage))
         {
@@ -56,12 +56,12 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void RealTimeAudioVisualizerView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void RealTimeAudioVisualizerView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Real-Time Audio Visualizer Help";
       HelpOverlay.HelpText = "The Real-Time Audio Visualizer provides live audio visualization via WebSocket streaming. Choose visualization type (waveform, spectrogram, or both), configure FFT parameters and update rate, then start a visualization session. The visualizer updates in real-time as audio is streamed, allowing you to monitor audio characteristics as they happen.";
@@ -88,7 +88,7 @@ namespace VoiceStudio.App.Views.Panels
         var menu = new MenuFlyout();
 
         var copyIdItem = new MenuFlyoutItem { Text = "Copy Session ID" };
-        copyIdItem.Click += (s, args) =>
+        copyIdItem.Click += (_, _) =>
         {
           var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
           dataPackage.SetText(ViewModel.SessionId);
@@ -106,4 +106,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using VoiceStudio.App.Core.ErrorHandling;
+using VoiceStudio.App.Logging;
 using VoiceStudio.App.Services;
 using VoiceStudio.Core.Models;
 using Windows.Foundation;
@@ -20,7 +22,7 @@ namespace VoiceStudio.App.Views.Panels
   public sealed partial class TimelineView : UserControl
   {
     public TimelineViewModel ViewModel { get; }
-    private bool _isDragging = false;
+    private bool _isDragging;
     private AudioClip? _draggedClip;
 
     private Storyboard? _playheadPulseAnimation;
@@ -110,7 +112,7 @@ namespace VoiceStudio.App.Views.Panels
       _dragDropService = ServiceProvider.GetDragDropVisualFeedbackService();
     }
 
-    private void TimelineView_Loaded(object sender, RoutedEventArgs e)
+    private void TimelineView_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
@@ -166,7 +168,7 @@ namespace VoiceStudio.App.Views.Panels
           "timeline_zoom_in",
           VirtualKey.Add,
           VirtualKeyModifiers.Control,
-          () => { ViewModel.ZoomInCommand.Execute(null); },
+          () => ViewModel.ZoomInCommand.Execute(null),
           "Zoom in timeline"
       );
 
@@ -174,12 +176,12 @@ namespace VoiceStudio.App.Views.Panels
           "timeline_zoom_out",
           VirtualKey.Subtract,
           VirtualKeyModifiers.Control,
-          () => { ViewModel.ZoomOutCommand.Execute(null); },
+          () => ViewModel.ZoomOutCommand.Execute(null),
           "Zoom out timeline"
       );
     }
 
-    private void HelpButton_Click(object sender, RoutedEventArgs e)
+    private void HelpButton_Click(object _, RoutedEventArgs __)
     {
       HelpOverlay.Title = "Timeline Help";
       HelpOverlay.HelpText = "The Timeline panel is your main workspace for arranging and editing audio clips. Add tracks, place clips on the timeline, and arrange them in time. Use the playhead to navigate and preview your composition. Zoom controls help you work at different time scales. Multi-select clips with Ctrl+Click or Shift+Click to perform batch operations. Drag clips to reposition them on the timeline.";
@@ -283,7 +285,7 @@ namespace VoiceStudio.App.Views.Panels
         TimelineScrubCanvas.ReleasePointerCapture(e.Pointer);
 
         // Stop preview when scrubbing ends
-        if (ViewModel != null && ViewModel.IsPreviewing)
+        if (ViewModel?.IsPreviewing == true)
         {
           var audioPlayerService = ServiceProvider.GetAudioPlayerService() as AudioPlayerService;
           audioPlayerService?.StopPreview();
@@ -357,7 +359,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         if (item is MenuFlyoutItem menuItem)
         {
-          menuItem.Click += (s, e) => HandleClipMenuClick(menuItem.Text, clip);
+          menuItem.Click += (_, _) => HandleClipMenuClick(menuItem.Text, clip);
         }
       }
     }
@@ -368,12 +370,12 @@ namespace VoiceStudio.App.Views.Panels
       {
         if (item is MenuFlyoutItem menuItem)
         {
-          menuItem.Click += (s, e) => HandleTrackMenuClick(menuItem.Text, track);
+          menuItem.Click += (_, _) => HandleTrackMenuClick(menuItem.Text, track);
         }
         else if (item is ToggleMenuFlyoutItem toggleItem)
         {
           toggleItem.IsChecked = track.IsMuted || track.IsSolo; // Update based on track state
-          toggleItem.Click += (s, e) => HandleTrackMenuClick(toggleItem.Text, track);
+          toggleItem.Click += (_, _) => HandleTrackMenuClick(toggleItem.Text, track);
         }
       }
     }
@@ -384,7 +386,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         if (item is MenuFlyoutItem menuItem)
         {
-          menuItem.Click += (s, e) => HandleTimelineMenuClick(menuItem.Text);
+          menuItem.Click += (_, _) => HandleTimelineMenuClick(menuItem.Text);
         }
       }
     }
@@ -553,7 +555,7 @@ namespace VoiceStudio.App.Views.Panels
                               pastedClip
                           );
                 }
-                catch { }
+                catch (Exception ex) { ErrorLogger.LogWarning($"Undo paste sync failed: {ex.Message}", "TimelineView"); }
               }
             }
         );
@@ -562,12 +564,11 @@ namespace VoiceStudio.App.Views.Panels
         try
         {
           var backendClient = ServiceProvider.GetBackendClient();
-          var savedClip = await backendClient.CreateClipAsync(
+          pastedClip = await backendClient.CreateClipAsync(
               ViewModel.SelectedProject.Id,
               ViewModel.SelectedTrack.Id,
               pastedClip
           );
-          pastedClip = savedClip;
         }
         catch (Exception ex)
         {
@@ -636,7 +637,7 @@ namespace VoiceStudio.App.Views.Panels
                               duplicatedClip
                           );
                 }
-                catch { }
+                catch (Exception ex) { ErrorLogger.LogWarning($"Undo duplicate sync failed: {ex.Message}", "TimelineView"); }
               }
             }
         );
@@ -645,12 +646,11 @@ namespace VoiceStudio.App.Views.Panels
         try
         {
           var backendClient = ServiceProvider.GetBackendClient();
-          var savedClip = await backendClient.CreateClipAsync(
+          duplicatedClip = await backendClient.CreateClipAsync(
               ViewModel.SelectedProject.Id,
               ViewModel.SelectedTrack.Id,
               duplicatedClip
           );
-          duplicatedClip = savedClip;
         }
         catch (Exception ex)
         {
@@ -730,13 +730,11 @@ namespace VoiceStudio.App.Views.Panels
         stackPanel.Children.Add(grid);
       }
 
-      var scrollViewer = new ScrollViewer
+      return new ScrollViewer
       {
         Content = stackPanel,
         MaxHeight = 400
       };
-
-      return scrollViewer;
     }
 
     private async Task DeleteClipAsync(AudioClip clip, bool showToast = true)
@@ -785,7 +783,7 @@ namespace VoiceStudio.App.Views.Panels
                 var backendClient = ServiceProvider.GetBackendClient();
                 await backendClient.CreateClipAsync(project.Id, track.Id, clipToDelete);
               }
-              catch { }
+              catch (Exception ex) { ErrorLogger.LogWarning($"Undo delete sync failed: {ex.Message}", "TimelineView"); }
             },
             async () =>
             {
@@ -796,7 +794,7 @@ namespace VoiceStudio.App.Views.Panels
                 var backendClient = ServiceProvider.GetBackendClient();
                 await backendClient.DeleteClipAsync(project.Id, track.Id, clipToDelete.Id);
               }
-              catch { }
+              catch (Exception ex) { ErrorLogger.LogWarning($"Redo delete sync failed: {ex.Message}", "TimelineView"); }
             }
         );
 
@@ -884,7 +882,7 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "zoom to fit":
             // Note: Zoom to fit will be implemented when zoom command is available
-            System.Diagnostics.Debug.WriteLine($"Zoom to fit");
+            System.Diagnostics.Debug.WriteLine("Zoom to fit");
             break;
         }
       }
@@ -1077,10 +1075,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private void Clip_DragLeave(object sender, DragEventArgs e)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private void TrackClipsArea_DragOver(object sender, DragEventArgs e)
@@ -1126,10 +1121,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private void TrackClipsArea_DragLeave(object sender, DragEventArgs e)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private DropPosition DetermineDropPosition(Border target, Point position)

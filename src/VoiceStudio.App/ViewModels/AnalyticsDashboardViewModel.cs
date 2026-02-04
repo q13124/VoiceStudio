@@ -56,7 +56,7 @@ namespace VoiceStudio.App.ViewModels
     private StatisticalAnalysisItem? statisticalAnalysis;
 
     [ObservableProperty]
-    private bool showStatisticalAnalysis = false;
+    private bool showStatisticalAnalysis;
 
     public AnalyticsDashboardViewModel(IViewModelContext context, IBackendClient backendClient)
         : base(context)
@@ -539,4 +539,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

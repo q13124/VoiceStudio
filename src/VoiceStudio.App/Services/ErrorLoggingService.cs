@@ -10,246 +10,246 @@ using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.Services
 {
-    /// <summary>
-    /// Implementation of IErrorLoggingService for centralized error logging with structured logging support.
-    /// </summary>
-    public class ErrorLoggingService : IErrorLoggingService, IDisposable
+  /// <summary>
+  /// Implementation of IErrorLoggingService for centralized error logging with structured logging support.
+  /// </summary>
+  public class ErrorLoggingService : IErrorLoggingService, IDisposable
+  {
+    private readonly List<ErrorLogEntry> _logEntries = new();
+    private readonly Dictionary<string, List<Breadcrumb>> _breadcrumbs = new();
+    private readonly Dictionary<string, CorrelationContext> _correlations = new();
+    private readonly object _lock = new();
+    private const int MaxLogEntries = 1000;
+    private const int MaxBreadcrumbsPerCorrelation = 100;
+    private readonly string _logDirectory;
+    private readonly string _logFilePath;
+    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly StreamWriter? _logFileWriter;
+    private bool _disposed;
+
+    public event EventHandler<ErrorLogEntry>? ErrorLogged;
+
+    public ErrorLoggingService()
     {
-        private readonly List<ErrorLogEntry> _logEntries = new();
-        private readonly Dictionary<string, List<Breadcrumb>> _breadcrumbs = new();
-        private readonly Dictionary<string, CorrelationContext> _correlations = new();
-        private readonly object _lock = new();
-        private const int MaxLogEntries = 1000;
-        private const int MaxBreadcrumbsPerCorrelation = 100;
-        private readonly string _logDirectory;
-        private readonly string _logFilePath;
-        private readonly JsonSerializerOptions _jsonOptions;
-        private readonly StreamWriter? _logFileWriter;
-        private bool _disposed = false;
+      // Set up log directory
+      var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+      _logDirectory = Path.Combine(appDataPath, "VoiceStudio", "Logs");
+      Directory.CreateDirectory(_logDirectory);
 
-        public event EventHandler<ErrorLogEntry>? ErrorLogged;
+      // Create daily log file
+      var logFileName = $"voicestudio_{DateTime.Now:yyyyMMdd}.jsonl";
+      _logFilePath = Path.Combine(_logDirectory, logFileName);
 
-        public ErrorLoggingService()
+      // JSON serializer options
+      _jsonOptions = new JsonSerializerOptions
+      {
+        WriteIndented = false,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+      };
+
+      // Open log file for appending
+      try
+      {
+        _logFileWriter = new StreamWriter(_logFilePath, append: true)
         {
-            // Set up log directory
-            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _logDirectory = Path.Combine(appDataPath, "VoiceStudio", "Logs");
-            Directory.CreateDirectory(_logDirectory);
-            
-            // Create daily log file
-            var logFileName = $"voicestudio_{DateTime.Now:yyyyMMdd}.jsonl";
-            _logFilePath = Path.Combine(_logDirectory, logFileName);
-            
-            // JSON serializer options
-            _jsonOptions = new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+          AutoFlush = true
+        };
+      }
+      catch
+      {
+        // If file writing fails, continue with in-memory logging only
+        _logFileWriter = null;
+      }
+    }
 
-            // Open log file for appending
-            try
-            {
-                _logFileWriter = new StreamWriter(_logFilePath, append: true)
-                {
-                    AutoFlush = true
-                };
-            }
-            catch
-            {
-                // If file writing fails, continue with in-memory logging only
-                _logFileWriter = null;
-            }
+    public void LogError(Exception exception, string context = "", Dictionary<string, object>? metadata = null)
+    {
+      if (exception == null)
+        return;
+
+      var entry = new ErrorLogEntry
+      {
+        Timestamp = DateTime.UtcNow,
+        Level = "Error",
+        Message = LogRedactionHelper.Redact(GetErrorMessage(exception)),
+        Context = context,
+        ExceptionType = exception.GetType().Name,
+        StackTrace = exception.StackTrace,
+        Metadata = LogRedactionHelper.RedactMetadata(metadata)
+      };
+
+      // Add BackendException-specific metadata
+      if (exception is BackendException bex)
+      {
+        entry.Metadata ??= new Dictionary<string, object>();
+        if (bex.StatusCode.HasValue)
+          entry.Metadata["StatusCode"] = bex.StatusCode.Value;
+        if (!string.IsNullOrEmpty(bex.ErrorCode))
+          entry.Metadata["ErrorCode"] = bex.ErrorCode;
+        entry.Metadata["IsRetryable"] = bex.IsRetryable;
+      }
+
+      lock (_lock)
+      {
+        _logEntries.Add(entry);
+
+        // Keep only the most recent entries
+        if (_logEntries.Count > MaxLogEntries)
+        {
+          _logEntries.RemoveAt(0);
         }
+      }
 
-        public void LogError(Exception exception, string context = "", Dictionary<string, object>? metadata = null)
+      // Write structured log to file
+      WriteStructuredLog(entry);
+
+      ErrorLogged?.Invoke(this, entry);
+    }
+
+    public void LogWarning(string message, string context = "", Dictionary<string, object>? metadata = null)
+    {
+      var correlationId = GetCurrentCorrelationId();
+      var entry = new ErrorLogEntry
+      {
+        Timestamp = DateTime.UtcNow,
+        Level = "Warning",
+        Message = LogRedactionHelper.Redact(message),
+        Context = context,
+        Metadata = LogRedactionHelper.RedactMetadata(metadata),
+        CorrelationId = correlationId
+      };
+
+      lock (_lock)
+      {
+        _logEntries.Add(entry);
+
+        if (_logEntries.Count > MaxLogEntries)
         {
-            if (exception == null)
-                return;
-
-            var entry = new ErrorLogEntry
-            {
-                Timestamp = DateTime.UtcNow,
-                Level = "Error",
-                Message = LogRedactionHelper.Redact(GetErrorMessage(exception)),
-                Context = context,
-                ExceptionType = exception.GetType().Name,
-                StackTrace = exception.StackTrace,
-                Metadata = LogRedactionHelper.RedactMetadata(metadata)
-            };
-
-            // Add BackendException-specific metadata
-            if (exception is BackendException bex)
-            {
-                entry.Metadata ??= new Dictionary<string, object>();
-                if (bex.StatusCode.HasValue)
-                    entry.Metadata["StatusCode"] = bex.StatusCode.Value;
-                if (!string.IsNullOrEmpty(bex.ErrorCode))
-                    entry.Metadata["ErrorCode"] = bex.ErrorCode;
-                entry.Metadata["IsRetryable"] = bex.IsRetryable;
-            }
-
-            lock (_lock)
-            {
-                _logEntries.Add(entry);
-                
-                // Keep only the most recent entries
-                if (_logEntries.Count > MaxLogEntries)
-                {
-                    _logEntries.RemoveAt(0);
-                }
-            }
-
-            // Write structured log to file
-            WriteStructuredLog(entry);
-
-            ErrorLogged?.Invoke(this, entry);
+          _logEntries.RemoveAt(0);
         }
+      }
 
-        public void LogWarning(string message, string context = "", Dictionary<string, object>? metadata = null)
+      // Write structured log to file
+      WriteStructuredLog(entry);
+
+      ErrorLogged?.Invoke(this, entry);
+    }
+
+    public void LogInfo(string message, string context = "", Dictionary<string, object>? metadata = null)
+    {
+      var correlationId = GetCurrentCorrelationId();
+      var entry = new ErrorLogEntry
+      {
+        Timestamp = DateTime.UtcNow,
+        Level = "Info",
+        Message = LogRedactionHelper.Redact(message),
+        Context = context,
+        Metadata = LogRedactionHelper.RedactMetadata(metadata),
+        CorrelationId = correlationId
+      };
+
+      lock (_lock)
+      {
+        _logEntries.Add(entry);
+
+        if (_logEntries.Count > MaxLogEntries)
         {
-            var correlationId = GetCurrentCorrelationId();
-            var entry = new ErrorLogEntry
-            {
-                Timestamp = DateTime.UtcNow,
-                Level = "Warning",
-                Message = LogRedactionHelper.Redact(message),
-                Context = context,
-                Metadata = LogRedactionHelper.RedactMetadata(metadata),
-                CorrelationId = correlationId
-            };
-
-            lock (_lock)
-            {
-                _logEntries.Add(entry);
-                
-                if (_logEntries.Count > MaxLogEntries)
-                {
-                    _logEntries.RemoveAt(0);
-                }
-            }
-
-            // Write structured log to file
-            WriteStructuredLog(entry);
-
-            ErrorLogged?.Invoke(this, entry);
+          _logEntries.RemoveAt(0);
         }
+      }
 
-        public void LogInfo(string message, string context = "", Dictionary<string, object>? metadata = null)
+      // Write structured log to file
+      WriteStructuredLog(entry);
+
+      ErrorLogged?.Invoke(this, entry);
+    }
+
+    /// <summary>
+    /// Writes a structured log entry to file in JSON Lines format (JSONL).
+    /// </summary>
+    private void WriteStructuredLog(ErrorLogEntry entry)
+    {
+      if (_logFileWriter == null)
+        return;
+
+      try
+      {
+        // Create structured log object
+        var structuredLog = new
         {
-            var correlationId = GetCurrentCorrelationId();
-            var entry = new ErrorLogEntry
-            {
-                Timestamp = DateTime.UtcNow,
-                Level = "Info",
-                Message = LogRedactionHelper.Redact(message),
-                Context = context,
-                Metadata = LogRedactionHelper.RedactMetadata(metadata),
-                CorrelationId = correlationId
-            };
+          timestamp = entry.Timestamp.ToString("O"), // ISO 8601 format
+          level = entry.Level,
+          message = entry.Message,
+          context = entry.Context ?? string.Empty,
+          exceptionType = entry.ExceptionType ?? string.Empty,
+          stackTrace = entry.StackTrace ?? string.Empty,
+          metadata = entry.Metadata ?? new Dictionary<string, object>()
+        };
 
-            lock (_lock)
-            {
-                _logEntries.Add(entry);
-                
-                if (_logEntries.Count > MaxLogEntries)
-                {
-                    _logEntries.RemoveAt(0);
-                }
-            }
+        // Serialize to JSON and write as single line (JSONL format)
+        var jsonLine = JsonSerializer.Serialize(structuredLog, _jsonOptions);
+        _logFileWriter.WriteLine(jsonLine);
+      }
+      catch
+      {
+        // Silently fail - don't break application if logging fails
+      }
+    }
 
-            // Write structured log to file
-            WriteStructuredLog(entry);
+    /// <summary>
+    /// Exports logs in structured JSON format.
+    /// </summary>
+    public string ExportLogsAsJson(int count = 1000)
+    {
+      lock (_lock)
+      {
+        var entries = _logEntries
+            .OrderByDescending(e => e.Timestamp)
+            .Take(count)
+            .ToList();
 
-            ErrorLogged?.Invoke(this, entry);
-        }
-
-        /// <summary>
-        /// Writes a structured log entry to file in JSON Lines format (JSONL).
-        /// </summary>
-        private void WriteStructuredLog(ErrorLogEntry entry)
+        var exportData = new
         {
-            if (_logFileWriter == null)
-                return;
+          exportTimestamp = DateTime.UtcNow.ToString("O"),
+          totalEntries = entries.Count,
+          entries = entries.Select(e => new
+          {
+            timestamp = e.Timestamp.ToString("O"),
+            level = e.Level,
+            message = e.Message,
+            context = e.Context ?? string.Empty,
+            exceptionType = e.ExceptionType ?? string.Empty,
+            stackTrace = e.StackTrace ?? string.Empty,
+            metadata = e.Metadata ?? new Dictionary<string, object>()
+          })
+        };
 
-            try
-            {
-                // Create structured log object
-                var structuredLog = new
-                {
-                    timestamp = entry.Timestamp.ToString("O"), // ISO 8601 format
-                    level = entry.Level,
-                    message = entry.Message,
-                    context = entry.Context ?? string.Empty,
-                    exceptionType = entry.ExceptionType ?? string.Empty,
-                    stackTrace = entry.StackTrace ?? string.Empty,
-                    metadata = entry.Metadata ?? new Dictionary<string, object>()
-                };
-
-                // Serialize to JSON and write as single line (JSONL format)
-                var jsonLine = JsonSerializer.Serialize(structuredLog, _jsonOptions);
-                _logFileWriter.WriteLine(jsonLine);
-            }
-            catch
-            {
-                // Silently fail - don't break application if logging fails
-            }
-        }
-
-        /// <summary>
-        /// Exports logs in structured JSON format.
-        /// </summary>
-        public string ExportLogsAsJson(int count = 1000)
+        var jsonOptions = new JsonSerializerOptions
         {
-            lock (_lock)
-            {
-                var entries = _logEntries
-                    .OrderByDescending(e => e.Timestamp)
-                    .Take(count)
-                    .ToList();
+          WriteIndented = true,
+          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
-                var exportData = new
-                {
-                    exportTimestamp = DateTime.UtcNow.ToString("O"),
-                    totalEntries = entries.Count,
-                    entries = entries.Select(e => new
-                    {
-                        timestamp = e.Timestamp.ToString("O"),
-                        level = e.Level,
-                        message = e.Message,
-                        context = e.Context ?? string.Empty,
-                        exceptionType = e.ExceptionType ?? string.Empty,
-                        stackTrace = e.StackTrace ?? string.Empty,
-                        metadata = e.Metadata ?? new Dictionary<string, object>()
-                    })
-                };
+        return JsonSerializer.Serialize(exportData, jsonOptions);
+      }
+    }
 
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
+    /// <summary>
+    /// Exports logs in key-value format (for easy parsing).
+    /// </summary>
+    public string ExportLogsAsKeyValue(int count = 1000)
+    {
+      lock (_lock)
+      {
+        var entries = _logEntries
+            .OrderByDescending(e => e.Timestamp)
+            .Take(count)
+            .ToList();
 
-                return JsonSerializer.Serialize(exportData, jsonOptions);
-            }
-        }
-
-        /// <summary>
-        /// Exports logs in key-value format (for easy parsing).
-        /// </summary>
-        public string ExportLogsAsKeyValue(int count = 1000)
+        var lines = new List<string>();
+        foreach (var entry in entries)
         {
-            lock (_lock)
-            {
-                var entries = _logEntries
-                    .OrderByDescending(e => e.Timestamp)
-                    .Take(count)
-                    .ToList();
-
-                var lines = new List<string>();
-                foreach (var entry in entries)
-                {
-                    var kvp = new List<string>
+          var kvp = new List<string>
                     {
                         $"timestamp={entry.Timestamp:O}",
                         $"level={entry.Level}",
@@ -257,216 +257,214 @@ namespace VoiceStudio.App.Services
                         $"context={EscapeValue(entry.Context ?? string.Empty)}"
                     };
 
-                    if (!string.IsNullOrEmpty(entry.ExceptionType))
-                        kvp.Add($"exceptionType={entry.ExceptionType}");
+          if (!string.IsNullOrEmpty(entry.ExceptionType))
+            kvp.Add($"exceptionType={entry.ExceptionType}");
 
-                    if (!string.IsNullOrEmpty(entry.StackTrace))
-                        kvp.Add($"stackTrace={EscapeValue(entry.StackTrace)}");
+          if (!string.IsNullOrEmpty(entry.StackTrace))
+            kvp.Add($"stackTrace={EscapeValue(entry.StackTrace)}");
 
-                    if (entry.Metadata != null && entry.Metadata.Count > 0)
-                    {
-                        foreach (var meta in entry.Metadata)
-                        {
-                            kvp.Add($"metadata.{meta.Key}={EscapeValue(meta.Value?.ToString() ?? string.Empty)}");
-                        }
-                    }
-
-                    lines.Add(string.Join(" ", kvp));
-                }
-
-                return string.Join(Environment.NewLine, lines);
+          if (entry.Metadata?.Count > 0)
+          {
+            foreach (var meta in entry.Metadata)
+            {
+              kvp.Add($"metadata.{meta.Key}={EscapeValue(meta.Value?.ToString() ?? string.Empty)}");
             }
+          }
+
+          lines.Add(string.Join(" ", kvp));
         }
 
-        private static string EscapeValue(string value)
-        {
-            return value
-                .Replace(" ", "\\ ")
-                .Replace("=", "\\=")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r");
-        }
-
-        public IReadOnlyList<ErrorLogEntry> GetRecentErrors(int count = 100)
-        {
-            lock (_lock)
-            {
-                return _logEntries
-                    .OrderByDescending(e => e.Timestamp)
-                    .Take(count)
-                    .ToList()
-                    .AsReadOnly();
-            }
-        }
-
-        public void ClearLogs()
-        {
-            lock (_lock)
-            {
-                _logEntries.Clear();
-            }
-        }
-
-        private string GetErrorMessage(Exception ex)
-        {
-            return ex switch
-            {
-                BackendException bex => bex.Message,
-                _ => ex.Message
-            };
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public string StartCorrelation(string action, Dictionary<string, object>? metadata = null)
-        {
-            var correlationId = Guid.NewGuid().ToString("N");
-            var context = new CorrelationContext
-            {
-                CorrelationId = correlationId,
-                Action = action,
-                StartTime = DateTime.UtcNow,
-                Metadata = metadata ?? new Dictionary<string, object>()
-            };
-
-            lock (_lock)
-            {
-                _correlations[correlationId] = context;
-            }
-
-            LogInfo($"Correlation started: {action}", "Correlation", new Dictionary<string, object>
-            {
-                ["correlationId"] = correlationId,
-                ["action"] = action
-            }.Merge(metadata));
-
-            return correlationId;
-        }
-
-        public void EndCorrelation(string correlationId, bool success = true, string? message = null)
-        {
-            CorrelationContext? context;
-            lock (_lock)
-            {
-                if (!_correlations.TryGetValue(correlationId, out context))
-                    return;
-
-                context.EndTime = DateTime.UtcNow;
-                context.Success = success;
-            }
-
-            var duration = context.EndTime.HasValue 
-                ? (context.EndTime.Value - context.StartTime).TotalMilliseconds 
-                : 0;
-            var level = success ? "Info" : "Warning";
-            var logMessage = message ?? $"Correlation ended: {context.Action} ({(success ? "success" : "failed")})";
-
-            LogInfo(logMessage, "Correlation", new Dictionary<string, object>
-            {
-                ["correlationId"] = correlationId,
-                ["action"] = context.Action,
-                ["success"] = success,
-                ["durationMs"] = duration
-            });
-
-            // Clean up old correlations (keep last 100)
-            lock (_lock)
-            {
-                if (_correlations.Count > 100)
-                {
-                    var oldest = _correlations.OrderBy(c => c.Value.StartTime).First();
-                    _correlations.Remove(oldest.Key);
-                    _breadcrumbs.Remove(oldest.Key);
-                }
-            }
-        }
-
-        public void AddBreadcrumb(string message, string category = "UserAction", Dictionary<string, object>? metadata = null)
-        {
-            var correlationId = GetCurrentCorrelationId();
-            var breadcrumb = new Breadcrumb
-            {
-                Timestamp = DateTime.UtcNow,
-                Message = message,
-                Category = category,
-                CorrelationId = correlationId,
-                Metadata = metadata
-            };
-
-            if (string.IsNullOrEmpty(correlationId))
-                return;
-
-            lock (_lock)
-            {
-                if (!_breadcrumbs.TryGetValue(correlationId, out var crumbs))
-                {
-                    crumbs = new List<Breadcrumb>();
-                    _breadcrumbs[correlationId] = crumbs;
-                }
-
-                crumbs.Add(breadcrumb);
-
-                // Keep only recent breadcrumbs
-                if (crumbs.Count > MaxBreadcrumbsPerCorrelation)
-                {
-                    crumbs.RemoveAt(0);
-                }
-            }
-        }
-
-        public IReadOnlyList<Breadcrumb> GetBreadcrumbs(string correlationId)
-        {
-            lock (_lock)
-            {
-                if (_breadcrumbs.TryGetValue(correlationId, out var crumbs))
-                {
-                    return crumbs.AsReadOnly();
-                }
-                return Array.Empty<Breadcrumb>().AsReadOnly();
-            }
-        }
-
-        private string? GetCurrentCorrelationId()
-        {
-            // Try to get correlation ID from AsyncLocal or current context
-            // For now, return the most recent correlation ID
-            lock (_lock)
-            {
-                var mostRecent = _correlations.Values
-                    .Where(c => c.EndTime == null)
-                    .OrderByDescending(c => c.StartTime)
-                    .FirstOrDefault();
-
-                return mostRecent?.CorrelationId;
-            }
-        }
-
-        private class CorrelationContext
-        {
-            public string CorrelationId { get; set; } = string.Empty;
-            public string Action { get; set; } = string.Empty;
-            public DateTime StartTime { get; set; }
-            public DateTime? EndTime { get; set; }
-            public bool Success { get; set; }
-            public Dictionary<string, object> Metadata { get; set; } = new();
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _logFileWriter?.Dispose();
-                }
-                _disposed = true;
-            }
-        }
+        return string.Join(Environment.NewLine, lines);
+      }
     }
 
-}
+    private static string EscapeValue(string value)
+    {
+      return value
+          .Replace(" ", "\\ ")
+          .Replace("=", "\\=")
+          .Replace("\n", "\\n")
+          .Replace("\r", "\\r");
+    }
 
+    public IReadOnlyList<ErrorLogEntry> GetRecentErrors(int count = 100)
+    {
+      lock (_lock)
+      {
+        return _logEntries
+            .OrderByDescending(e => e.Timestamp)
+            .Take(count)
+            .ToList()
+            .AsReadOnly();
+      }
+    }
+
+    public void ClearLogs()
+    {
+      lock (_lock)
+      {
+        _logEntries.Clear();
+      }
+    }
+
+    private string GetErrorMessage(Exception ex)
+    {
+      return ex switch
+      {
+        BackendException bex => bex.Message,
+        _ => ex.Message
+      };
+    }
+
+    public void Dispose()
+    {
+      Dispose(true);
+      GC.SuppressFinalize(this);
+    }
+
+    public string StartCorrelation(string action, Dictionary<string, object>? metadata = null)
+    {
+      var correlationId = Guid.NewGuid().ToString("N");
+      var context = new CorrelationContext
+      {
+        CorrelationId = correlationId,
+        Action = action,
+        StartTime = DateTime.UtcNow,
+        Metadata = metadata ?? new Dictionary<string, object>()
+      };
+
+      lock (_lock)
+      {
+        _correlations[correlationId] = context;
+      }
+
+      LogInfo($"Correlation started: {action}", "Correlation", new Dictionary<string, object>
+      {
+        ["correlationId"] = correlationId,
+        ["action"] = action
+      }.Merge(metadata));
+
+      return correlationId;
+    }
+
+    public void EndCorrelation(string correlationId, bool success = true, string? message = null)
+    {
+      CorrelationContext? context;
+      lock (_lock)
+      {
+        if (!_correlations.TryGetValue(correlationId, out context))
+          return;
+
+        context.EndTime = DateTime.UtcNow;
+        context.Success = success;
+      }
+
+      var duration = context.EndTime.HasValue
+          ? (context.EndTime.Value - context.StartTime).TotalMilliseconds
+          : 0;
+      var level = success ? "Info" : "Warning";
+      var logMessage = message ?? $"Correlation ended: {context.Action} ({(success ? "success" : "failed")})";
+
+      LogInfo(logMessage, "Correlation", new Dictionary<string, object>
+      {
+        ["correlationId"] = correlationId,
+        ["action"] = context.Action,
+        ["success"] = success,
+        ["durationMs"] = duration
+      });
+
+      // Clean up old correlations (keep last 100)
+      lock (_lock)
+      {
+        if (_correlations.Count > 100)
+        {
+          var oldest = _correlations.OrderBy(c => c.Value.StartTime).First();
+          _correlations.Remove(oldest.Key);
+          _breadcrumbs.Remove(oldest.Key);
+        }
+      }
+    }
+
+    public void AddBreadcrumb(string message, string category = "UserAction", Dictionary<string, object>? metadata = null)
+    {
+      var correlationId = GetCurrentCorrelationId();
+      var breadcrumb = new Breadcrumb
+      {
+        Timestamp = DateTime.UtcNow,
+        Message = message,
+        Category = category,
+        CorrelationId = correlationId,
+        Metadata = metadata
+      };
+
+      if (string.IsNullOrEmpty(correlationId))
+        return;
+
+      lock (_lock)
+      {
+        if (!_breadcrumbs.TryGetValue(correlationId, out var crumbs))
+        {
+          crumbs = new List<Breadcrumb>();
+          _breadcrumbs[correlationId] = crumbs;
+        }
+
+        crumbs.Add(breadcrumb);
+
+        // Keep only recent breadcrumbs
+        if (crumbs.Count > MaxBreadcrumbsPerCorrelation)
+        {
+          crumbs.RemoveAt(0);
+        }
+      }
+    }
+
+    public IReadOnlyList<Breadcrumb> GetBreadcrumbs(string correlationId)
+    {
+      lock (_lock)
+      {
+        if (_breadcrumbs.TryGetValue(correlationId, out var crumbs))
+        {
+          return crumbs.AsReadOnly();
+        }
+        return Array.Empty<Breadcrumb>().AsReadOnly();
+      }
+    }
+
+    private string? GetCurrentCorrelationId()
+    {
+      // Try to get correlation ID from AsyncLocal or current context
+      // For now, return the most recent correlation ID
+      lock (_lock)
+      {
+        var mostRecent = _correlations.Values
+            .Where(c => c.EndTime == null)
+            .OrderByDescending(c => c.StartTime)
+            .FirstOrDefault();
+
+        return mostRecent?.CorrelationId;
+      }
+    }
+
+    private class CorrelationContext
+    {
+      public string CorrelationId { get; set; } = string.Empty;
+      public string Action { get; set; } = string.Empty;
+      public DateTime StartTime { get; set; }
+      public DateTime? EndTime { get; set; }
+      public bool Success { get; set; }
+      public Dictionary<string, object> Metadata { get; set; } = new();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!_disposed)
+      {
+        if (disposing)
+        {
+          _logFileWriter?.Dispose();
+        }
+        _disposed = true;
+      }
+    }
+  }
+}

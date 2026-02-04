@@ -13,435 +13,435 @@ using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.ViewModels
 {
-    /// <summary>
-    /// ViewModel for the VoiceMorphingBlendingView panel - Voice morphing and blending.
-    /// </summary>
-    public partial class VoiceMorphingBlendingViewModel : BaseViewModel, IPanelView
+  /// <summary>
+  /// ViewModel for the VoiceMorphingBlendingView panel - Voice morphing and blending.
+  /// </summary>
+  public partial class VoiceMorphingBlendingViewModel : BaseViewModel, IPanelView
+  {
+    private readonly IBackendClient _backendClient;
+    private readonly ToastNotificationService? _toastNotificationService;
+
+    public string PanelId => "voice-morphing-blending";
+    public string DisplayName => ResourceHelper.GetString("Panel.VoiceMorphingBlending.DisplayName", "Voice Morphing/Blending");
+    public PanelRegion Region => PanelRegion.Center;
+
+    [ObservableProperty]
+    private string selectedMode = "Blend Voices";
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableModes = new() { "Blend Voices", "Morph Timeline" };
+
+    // Blend Voices Mode
+    [ObservableProperty]
+    private string? voiceAId;
+
+    [ObservableProperty]
+    private string? voiceBId;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableVoiceProfiles = new();
+
+    [ObservableProperty]
+    private float blendRatio = 0.5f;
+
+    [ObservableProperty]
+    private string? previewText = ResourceHelper.GetString("VoiceMorphingBlending.PreviewTextDefault", "Hello, this is a preview of the blended voice.");
+
+    [ObservableProperty]
+    private bool isBlending;
+
+    [ObservableProperty]
+    private string? blendedProfileId;
+
+    [ObservableProperty]
+    private string? previewAudioId;
+
+    [ObservableProperty]
+    private string? previewAudioUrl;
+
+    [ObservableProperty]
+    private bool saveAsProfile;
+
+    // Morph Timeline Mode
+    [ObservableProperty]
+    private string? sourceAudioId;
+
+    [ObservableProperty]
+    private string? morphVoiceAId;
+
+    [ObservableProperty]
+    private string? morphVoiceBId;
+
+    [ObservableProperty]
+    private float startRatio;
+
+    [ObservableProperty]
+    private float endRatio = 1.0f;
+
+    [ObservableProperty]
+    private float morphSpeed = 1.0f;
+
+    [ObservableProperty]
+    private bool isMorphing;
+
+    [ObservableProperty]
+    private string? morphedAudioId;
+
+    [ObservableProperty]
+    private string? morphedAudioUrl;
+
+    public VoiceMorphingBlendingViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
-        private readonly IBackendClient _backendClient;
-        private readonly ToastNotificationService? _toastNotificationService;
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
-        public string PanelId => "voice-morphing-blending";
-        public string DisplayName => ResourceHelper.GetString("Panel.VoiceMorphingBlending.DisplayName", "Voice Morphing/Blending");
-        public PanelRegion Region => PanelRegion.Center;
+      // Get toast notification service (may be null if not initialized)
+      try
+      {
+        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+      }
+      catch
+      {
+        // Service may not be initialized yet - that's okay
+        _toastNotificationService = null;
+      }
 
-        [ObservableProperty]
-        private string selectedMode = "Blend Voices";
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableModes = new() { "Blend Voices", "Morph Timeline" };
-
-        // Blend Voices Mode
-        [ObservableProperty]
-        private string? voiceAId;
-
-        [ObservableProperty]
-        private string? voiceBId;
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableVoiceProfiles = new();
-
-        [ObservableProperty]
-        private float blendRatio = 0.5f;
-
-        [ObservableProperty]
-        private string? previewText = ResourceHelper.GetString("VoiceMorphingBlending.PreviewTextDefault", "Hello, this is a preview of the blended voice.");
-
-        [ObservableProperty]
-        private bool isBlending;
-
-        [ObservableProperty]
-        private string? blendedProfileId;
-
-        [ObservableProperty]
-        private string? previewAudioId;
-
-        [ObservableProperty]
-        private string? previewAudioUrl;
-
-        [ObservableProperty]
-        private bool saveAsProfile = false;
-
-        // Morph Timeline Mode
-        [ObservableProperty]
-        private string? sourceAudioId;
-
-        [ObservableProperty]
-        private string? morphVoiceAId;
-
-        [ObservableProperty]
-        private string? morphVoiceBId;
-
-        [ObservableProperty]
-        private float startRatio = 0.0f;
-
-        [ObservableProperty]
-        private float endRatio = 1.0f;
-
-        [ObservableProperty]
-        private float morphSpeed = 1.0f;
-
-        [ObservableProperty]
-        private bool isMorphing;
-
-        [ObservableProperty]
-        private string? morphedAudioId;
-
-        [ObservableProperty]
-        private string? morphedAudioUrl;
-
-        public VoiceMorphingBlendingViewModel(IViewModelContext context, IBackendClient backendClient)
-            : base(context)
-        {
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            
-            // Get toast notification service (may be null if not initialized)
-            try
-            {
-                _toastNotificationService = ServiceProvider.GetToastNotificationService();
-            }
-            catch
-            {
-                // Service may not be initialized yet - that's okay
-                _toastNotificationService = null;
-            }
-
-            LoadVoiceProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("LoadVoiceProfiles");
-                await LoadVoiceProfilesAsync(ct);
-            }, () => !IsLoading);
-            PreviewBlendCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("PreviewBlend");
-                await PreviewBlendAsync(ct);
-            }, () => !string.IsNullOrWhiteSpace(VoiceAId) && !string.IsNullOrWhiteSpace(VoiceBId) && !IsBlending && !IsLoading);
-            BlendVoicesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("BlendVoices");
-                await BlendVoicesAsync(ct);
-            }, () => !string.IsNullOrWhiteSpace(VoiceAId) && !string.IsNullOrWhiteSpace(VoiceBId) && !IsBlending && !IsLoading);
-            MorphVoiceCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("MorphVoice");
-                await MorphVoiceAsync(ct);
-            }, () => !string.IsNullOrWhiteSpace(SourceAudioId) && !string.IsNullOrWhiteSpace(MorphVoiceAId) && !string.IsNullOrWhiteSpace(MorphVoiceBId) && !IsMorphing && !IsLoading);
-        }
-
-        public IAsyncRelayCommand LoadVoiceProfilesCommand { get; }
-        public IAsyncRelayCommand PreviewBlendCommand { get; }
-        public IAsyncRelayCommand BlendVoicesCommand { get; }
-        public IAsyncRelayCommand MorphVoiceCommand { get; }
-
-        partial void OnVoiceAIdChanged(string? value)
-        {
-            PreviewBlendCommand.NotifyCanExecuteChanged();
-            BlendVoicesCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnVoiceBIdChanged(string? value)
-        {
-            PreviewBlendCommand.NotifyCanExecuteChanged();
-            BlendVoicesCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnIsBlendingChanged(bool value)
-        {
-            PreviewBlendCommand.NotifyCanExecuteChanged();
-            BlendVoicesCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnSourceAudioIdChanged(string? value)
-        {
-            MorphVoiceCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnMorphVoiceAIdChanged(string? value)
-        {
-            MorphVoiceCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnMorphVoiceBIdChanged(string? value)
-        {
-            MorphVoiceCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnIsMorphingChanged(bool value)
-        {
-            MorphVoiceCommand.NotifyCanExecuteChanged();
-        }
-
-        private async Task LoadVoiceProfilesAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = null;
-
-                var profiles = await _backendClient.SendRequestAsync<object, List<VoiceProfileData>>(
-                    "/api/profiles",
-                    null,
-                    System.Net.Http.HttpMethod.Get,
-                    cancellationToken
-                );
-
-                if (profiles != null)
-                {
-                    AvailableVoiceProfiles.Clear();
-                    foreach (var profile in profiles)
-                    {
-                        AvailableVoiceProfiles.Add(profile.ProfileId ?? profile.Name ?? "");
-                    }
-                }
-                _toastNotificationService?.ShowInfo(
-                    ResourceHelper.FormatString("VoiceMorphingBlending.ProfilesLoaded", AvailableVoiceProfiles.Count),
-                    ResourceHelper.GetString("Toast.Title.ProfilesLoaded", "Profiles Loaded"));
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("VoiceMorphingBlending.LoadProfilesFailed", ex.Message);
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.GetString("Toast.Title.LoadFailed", "Load Failed"),
-                    ex.Message);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task PreviewBlendAsync(CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(VoiceAId) || string.IsNullOrWhiteSpace(VoiceBId) || IsBlending)
-            {
-                return;
-            }
-
-            IsBlending = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new VoicePreviewRequest
-                {
-                    VoiceAId = VoiceAId,
-                    VoiceBId = VoiceBId,
-                    BlendRatio = BlendRatio,
-                    Text = PreviewText ?? ResourceHelper.GetString("VoiceMorphingBlending.PreviewTextDefault", "Hello, this is a preview of the blended voice.")
-                };
-
-                var response = await _backendClient.SendRequestAsync<VoicePreviewRequest, VoicePreviewResponse>(
-                    "/api/voice-morph/voice/preview",
-                    request,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                if (response != null)
-                {
-                    PreviewAudioId = response.PreviewAudioId;
-                    PreviewAudioUrl = response.PreviewAudioUrl;
-                    StatusMessage = ResourceHelper.FormatString("VoiceMorphingBlending.PreviewGenerated", response.Duration.ToString("F2"));
-                    _toastNotificationService?.ShowSuccess(
-                        ResourceHelper.FormatString("VoiceMorphingBlending.PreviewGeneratedDetail", response.Duration.ToString("F2")),
-                        ResourceHelper.GetString("Toast.Title.PreviewReady", "Preview Ready"));
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "PreviewBlend");
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.GetString("Toast.Title.PreviewFailed", "Preview Failed"),
-                    ResourceHelper.FormatString("VoiceMorphingBlending.PreviewBlendFailed", ex.Message));
-            }
-            finally
-            {
-                IsBlending = false;
-            }
-        }
-
-        private async Task BlendVoicesAsync(CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(VoiceAId) || string.IsNullOrWhiteSpace(VoiceBId) || IsBlending)
-            {
-                return;
-            }
-
-            IsBlending = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new VoiceBlendRequest
-                {
-                    VoiceAId = VoiceAId ?? "",
-                    VoiceBId = VoiceBId ?? "",
-                    BlendRatio = BlendRatio,
-                    Text = PreviewText,
-                    SaveProfile = SaveAsProfile
-                };
-
-                var response = await _backendClient.SendRequestAsync<VoiceBlendRequest, VoiceBlendResponse>(
-                    "/api/voice-morph/voice/blend",
-                    request,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                if (response != null)
-                {
-                    BlendedProfileId = response.BlendedProfileId;
-                    PreviewAudioId = response.PreviewAudioId;
-                    PreviewAudioUrl = response.PreviewAudioUrl;
-                    StatusMessage = SaveAsProfile && !string.IsNullOrWhiteSpace(BlendedProfileId)
-                        ? ResourceHelper.FormatString("VoiceMorphingBlending.BlendedVoiceSavedAsProfile", BlendedProfileId)
-                        : ResourceHelper.GetString("VoiceMorphingBlending.BlendedVoiceCreated", "Blended voice created");
-                    
-                    if (SaveAsProfile && !string.IsNullOrWhiteSpace(BlendedProfileId))
-                    {
-                        _toastNotificationService?.ShowSuccess(
-                            ResourceHelper.FormatString("VoiceMorphingBlending.BlendedVoiceSavedAsProfile", BlendedProfileId),
-                            ResourceHelper.GetString("Toast.Title.ProfileCreated", "Profile Created"));
-                    }
-                    else
-                    {
-                        _toastNotificationService?.ShowSuccess(
-                            ResourceHelper.GetString("VoiceMorphingBlending.BlendedVoiceCreated", "Blended voice created successfully"),
-                            ResourceHelper.GetString("Toast.Title.BlendComplete", "Blend Complete"));
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "BlendVoices");
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.GetString("Toast.Title.BlendFailed", "Blend Failed"),
-                    ResourceHelper.FormatString("VoiceMorphingBlending.BlendVoicesFailed", ex.Message));
-            }
-            finally
-            {
-                IsBlending = false;
-            }
-        }
-
-        private async Task MorphVoiceAsync(CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(SourceAudioId) || string.IsNullOrWhiteSpace(MorphVoiceAId) || string.IsNullOrWhiteSpace(MorphVoiceBId) || IsMorphing)
-            {
-                return;
-            }
-
-            IsMorphing = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new VoiceMorphRequest
-                {
-                    SourceAudioId = SourceAudioId ?? "",
-                    VoiceAId = MorphVoiceAId ?? "",
-                    VoiceBId = MorphVoiceBId ?? "",
-                    StartRatio = StartRatio,
-                    EndRatio = EndRatio,
-                    MorphSpeed = MorphSpeed
-                };
-
-                var response = await _backendClient.SendRequestAsync<VoiceMorphRequest, VoiceMorphResponse>(
-                    "/api/voice-morph/voice/morph",
-                    request,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                if (response != null)
-                {
-                    MorphedAudioId = response.MorphedAudioId;
-                    MorphedAudioUrl = response.MorphedAudioUrl;
-                    StatusMessage = ResourceHelper.FormatString("VoiceMorphingBlending.VoiceMorphed", response.Duration.ToString("F2"));
-                    _toastNotificationService?.ShowSuccess(
-                        ResourceHelper.FormatString("VoiceMorphingBlending.VoiceMorphedDetail", response.Duration.ToString("F2")),
-                        ResourceHelper.GetString("Toast.Title.MorphComplete", "Morph Complete"));
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "MorphVoice");
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.FormatString("VoiceMorphingBlending.MorphVoiceFailed", ex.Message),
-                    ResourceHelper.GetString("Toast.Title.MorphFailed", "Morph Failed"));
-            }
-            finally
-            {
-                IsMorphing = false;
-            }
-        }
-
-        // Request/Response models
-        private class VoiceProfileData
-        {
-            public string? ProfileId { get; set; }
-            public string? Name { get; set; }
-        }
-
-        private class VoicePreviewRequest
-        {
-            public string? VoiceAId { get; set; }
-            public string? VoiceBId { get; set; }
-            public float? BlendRatio { get; set; }
-            public string Text { get; set; } = string.Empty;
-        }
-
-        private class VoicePreviewResponse
-        {
-            public string PreviewAudioId { get; set; } = string.Empty;
-            public string PreviewAudioUrl { get; set; } = string.Empty;
-            public float Duration { get; set; }
-        }
-
-        private class VoiceBlendRequest
-        {
-            public string VoiceAId { get; set; } = string.Empty;
-            public string VoiceBId { get; set; } = string.Empty;
-            public float BlendRatio { get; set; }
-            public string? Text { get; set; }
-            public bool SaveProfile { get; set; }
-        }
-
-        private class VoiceBlendResponse
-        {
-            public string? BlendedProfileId { get; set; }
-            public string? PreviewAudioId { get; set; }
-            public string? PreviewAudioUrl { get; set; }
-            public float BlendRatio { get; set; }
-        }
-
-        private class VoiceMorphRequest
-        {
-            public string SourceAudioId { get; set; } = string.Empty;
-            public string VoiceAId { get; set; } = string.Empty;
-            public string VoiceBId { get; set; } = string.Empty;
-            public float StartRatio { get; set; }
-            public float EndRatio { get; set; }
-            public float MorphSpeed { get; set; }
-        }
-
-        private class VoiceMorphResponse
-        {
-            public string MorphedAudioId { get; set; } = string.Empty;
-            public string MorphedAudioUrl { get; set; } = string.Empty;
-            public float Duration { get; set; }
-        }
+      LoadVoiceProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("LoadVoiceProfiles");
+        await LoadVoiceProfilesAsync(ct);
+      }, () => !IsLoading);
+      PreviewBlendCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("PreviewBlend");
+        await PreviewBlendAsync(ct);
+      }, () => !string.IsNullOrWhiteSpace(VoiceAId) && !string.IsNullOrWhiteSpace(VoiceBId) && !IsBlending && !IsLoading);
+      BlendVoicesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("BlendVoices");
+        await BlendVoicesAsync(ct);
+      }, () => !string.IsNullOrWhiteSpace(VoiceAId) && !string.IsNullOrWhiteSpace(VoiceBId) && !IsBlending && !IsLoading);
+      MorphVoiceCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("MorphVoice");
+        await MorphVoiceAsync(ct);
+      }, () => !string.IsNullOrWhiteSpace(SourceAudioId) && !string.IsNullOrWhiteSpace(MorphVoiceAId) && !string.IsNullOrWhiteSpace(MorphVoiceBId) && !IsMorphing && !IsLoading);
     }
+
+    public IAsyncRelayCommand LoadVoiceProfilesCommand { get; }
+    public IAsyncRelayCommand PreviewBlendCommand { get; }
+    public IAsyncRelayCommand BlendVoicesCommand { get; }
+    public IAsyncRelayCommand MorphVoiceCommand { get; }
+
+    partial void OnVoiceAIdChanged(string? value)
+    {
+      PreviewBlendCommand.NotifyCanExecuteChanged();
+      BlendVoicesCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnVoiceBIdChanged(string? value)
+    {
+      PreviewBlendCommand.NotifyCanExecuteChanged();
+      BlendVoicesCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsBlendingChanged(bool value)
+    {
+      PreviewBlendCommand.NotifyCanExecuteChanged();
+      BlendVoicesCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSourceAudioIdChanged(string? value)
+    {
+      MorphVoiceCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnMorphVoiceAIdChanged(string? value)
+    {
+      MorphVoiceCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnMorphVoiceBIdChanged(string? value)
+    {
+      MorphVoiceCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsMorphingChanged(bool value)
+    {
+      MorphVoiceCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task LoadVoiceProfilesAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var profiles = await _backendClient.SendRequestAsync<object, List<VoiceProfileData>>(
+            "/api/profiles",
+            null,
+            System.Net.Http.HttpMethod.Get,
+            cancellationToken
+        );
+
+        if (profiles != null)
+        {
+          AvailableVoiceProfiles.Clear();
+          foreach (var profile in profiles)
+          {
+            AvailableVoiceProfiles.Add(profile.ProfileId ?? profile.Name ?? "");
+          }
+        }
+        _toastNotificationService?.ShowInfo(
+            ResourceHelper.FormatString("VoiceMorphingBlending.ProfilesLoaded", AvailableVoiceProfiles.Count),
+            ResourceHelper.GetString("Toast.Title.ProfilesLoaded", "Profiles Loaded"));
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("VoiceMorphingBlending.LoadProfilesFailed", ex.Message);
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.LoadFailed", "Load Failed"),
+            ex.Message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task PreviewBlendAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(VoiceAId) || string.IsNullOrWhiteSpace(VoiceBId) || IsBlending)
+      {
+        return;
+      }
+
+      IsBlending = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new VoicePreviewRequest
+        {
+          VoiceAId = VoiceAId,
+          VoiceBId = VoiceBId,
+          BlendRatio = BlendRatio,
+          Text = PreviewText ?? ResourceHelper.GetString("VoiceMorphingBlending.PreviewTextDefault", "Hello, this is a preview of the blended voice.")
+        };
+
+        var response = await _backendClient.SendRequestAsync<VoicePreviewRequest, VoicePreviewResponse>(
+            "/api/voice-morph/voice/preview",
+            request,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        if (response != null)
+        {
+          PreviewAudioId = response.PreviewAudioId;
+          PreviewAudioUrl = response.PreviewAudioUrl;
+          StatusMessage = ResourceHelper.FormatString("VoiceMorphingBlending.PreviewGenerated", response.Duration.ToString("F2"));
+          _toastNotificationService?.ShowSuccess(
+              ResourceHelper.FormatString("VoiceMorphingBlending.PreviewGeneratedDetail", response.Duration.ToString("F2")),
+              ResourceHelper.GetString("Toast.Title.PreviewReady", "Preview Ready"));
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "PreviewBlend");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.PreviewFailed", "Preview Failed"),
+            ResourceHelper.FormatString("VoiceMorphingBlending.PreviewBlendFailed", ex.Message));
+      }
+      finally
+      {
+        IsBlending = false;
+      }
+    }
+
+    private async Task BlendVoicesAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(VoiceAId) || string.IsNullOrWhiteSpace(VoiceBId) || IsBlending)
+      {
+        return;
+      }
+
+      IsBlending = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new VoiceBlendRequest
+        {
+          VoiceAId = VoiceAId ?? "",
+          VoiceBId = VoiceBId ?? "",
+          BlendRatio = BlendRatio,
+          Text = PreviewText,
+          SaveProfile = SaveAsProfile
+        };
+
+        var response = await _backendClient.SendRequestAsync<VoiceBlendRequest, VoiceBlendResponse>(
+            "/api/voice-morph/voice/blend",
+            request,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        if (response != null)
+        {
+          BlendedProfileId = response.BlendedProfileId;
+          PreviewAudioId = response.PreviewAudioId;
+          PreviewAudioUrl = response.PreviewAudioUrl;
+          StatusMessage = SaveAsProfile && !string.IsNullOrWhiteSpace(BlendedProfileId)
+              ? ResourceHelper.FormatString("VoiceMorphingBlending.BlendedVoiceSavedAsProfile", BlendedProfileId)
+              : ResourceHelper.GetString("VoiceMorphingBlending.BlendedVoiceCreated", "Blended voice created");
+
+          if (SaveAsProfile && !string.IsNullOrWhiteSpace(BlendedProfileId))
+          {
+            _toastNotificationService?.ShowSuccess(
+                ResourceHelper.FormatString("VoiceMorphingBlending.BlendedVoiceSavedAsProfile", BlendedProfileId),
+                ResourceHelper.GetString("Toast.Title.ProfileCreated", "Profile Created"));
+          }
+          else
+          {
+            _toastNotificationService?.ShowSuccess(
+                ResourceHelper.GetString("VoiceMorphingBlending.BlendedVoiceCreated", "Blended voice created successfully"),
+                ResourceHelper.GetString("Toast.Title.BlendComplete", "Blend Complete"));
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "BlendVoices");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.BlendFailed", "Blend Failed"),
+            ResourceHelper.FormatString("VoiceMorphingBlending.BlendVoicesFailed", ex.Message));
+      }
+      finally
+      {
+        IsBlending = false;
+      }
+    }
+
+    private async Task MorphVoiceAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(SourceAudioId) || string.IsNullOrWhiteSpace(MorphVoiceAId) || string.IsNullOrWhiteSpace(MorphVoiceBId) || IsMorphing)
+      {
+        return;
+      }
+
+      IsMorphing = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new VoiceMorphRequest
+        {
+          SourceAudioId = SourceAudioId ?? "",
+          VoiceAId = MorphVoiceAId ?? "",
+          VoiceBId = MorphVoiceBId ?? "",
+          StartRatio = StartRatio,
+          EndRatio = EndRatio,
+          MorphSpeed = MorphSpeed
+        };
+
+        var response = await _backendClient.SendRequestAsync<VoiceMorphRequest, VoiceMorphResponse>(
+            "/api/voice-morph/voice/morph",
+            request,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        if (response != null)
+        {
+          MorphedAudioId = response.MorphedAudioId;
+          MorphedAudioUrl = response.MorphedAudioUrl;
+          StatusMessage = ResourceHelper.FormatString("VoiceMorphingBlending.VoiceMorphed", response.Duration.ToString("F2"));
+          _toastNotificationService?.ShowSuccess(
+              ResourceHelper.FormatString("VoiceMorphingBlending.VoiceMorphedDetail", response.Duration.ToString("F2")),
+              ResourceHelper.GetString("Toast.Title.MorphComplete", "Morph Complete"));
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "MorphVoice");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.FormatString("VoiceMorphingBlending.MorphVoiceFailed", ex.Message),
+            ResourceHelper.GetString("Toast.Title.MorphFailed", "Morph Failed"));
+      }
+      finally
+      {
+        IsMorphing = false;
+      }
+    }
+
+    // Request/Response models
+    private class VoiceProfileData
+    {
+      public string? ProfileId { get; set; }
+      public string? Name { get; set; }
+    }
+
+    private class VoicePreviewRequest
+    {
+      public string? VoiceAId { get; set; }
+      public string? VoiceBId { get; set; }
+      public float? BlendRatio { get; set; }
+      public string Text { get; set; } = string.Empty;
+    }
+
+    private class VoicePreviewResponse
+    {
+      public string PreviewAudioId { get; set; } = string.Empty;
+      public string PreviewAudioUrl { get; set; } = string.Empty;
+      public float Duration { get; set; }
+    }
+
+    private class VoiceBlendRequest
+    {
+      public string VoiceAId { get; set; } = string.Empty;
+      public string VoiceBId { get; set; } = string.Empty;
+      public float BlendRatio { get; set; }
+      public string? Text { get; set; }
+      public bool SaveProfile { get; set; }
+    }
+
+    private class VoiceBlendResponse
+    {
+      public string? BlendedProfileId { get; set; }
+      public string? PreviewAudioId { get; set; }
+      public string? PreviewAudioUrl { get; set; }
+      public float BlendRatio { get; set; }
+    }
+
+    private class VoiceMorphRequest
+    {
+      public string SourceAudioId { get; set; } = string.Empty;
+      public string VoiceAId { get; set; } = string.Empty;
+      public string VoiceBId { get; set; } = string.Empty;
+      public float StartRatio { get; set; }
+      public float EndRatio { get; set; }
+      public float MorphSpeed { get; set; }
+    }
+
+    private class VoiceMorphResponse
+    {
+      public string MorphedAudioId { get; set; } = string.Empty;
+      public string MorphedAudioUrl { get; set; } = string.Empty;
+      public float Duration { get; set; }
+    }
+  }
 }

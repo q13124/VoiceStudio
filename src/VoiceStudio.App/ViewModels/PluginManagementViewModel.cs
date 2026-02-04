@@ -259,9 +259,8 @@ namespace VoiceStudio.App.ViewModels
     public string Author { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsEnabled { get; set; } = true;
-    public bool IsInitialized { get; set; } = false;
+    public bool IsInitialized { get; set; }
     public string Status { get; set; } = ResourceHelper.GetString("PluginManagement.PluginStatusUnknown", "Unknown");
     public string? ErrorMessage { get; set; }
   }
 }
-

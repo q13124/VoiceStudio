@@ -48,7 +48,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Subscribe to selection changes to update UI
       var multiSelectService = ServiceProvider.GetMultiSelectService();
-      multiSelectService.SelectionChanged += (s, e) =>
+      multiSelectService.SelectionChanged += (_, e) =>
       {
         if (e.PanelId == ViewModel.PanelId)
         {
@@ -72,7 +72,7 @@ namespace VoiceStudio.App.Views.Panels
       });
 
       // Update visuals when assets change
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(LibraryViewModel.Assets) ||
                   e.PropertyName == nameof(LibraryViewModel.SelectedAssetCount))
@@ -82,7 +82,7 @@ namespace VoiceStudio.App.Views.Panels
       };
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Library Help";
       HelpOverlay.HelpText = "The Library panel provides access to all your audio assets, voice profiles, projects, and other content. Browse, search, and filter your library. View asset details, preview audio, and organize content with tags. The library is your central hub for all VoiceStudio content.";
@@ -148,7 +148,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         if (item is MenuFlyoutItem menuItem)
         {
-          menuItem.Click += (s, e) => HandleFileMenuClick(menuItem.Text, fileData);
+          menuItem.Click += (_, __) => HandleFileMenuClick(menuItem.Text, fileData);
         }
       }
     }
@@ -159,17 +159,17 @@ namespace VoiceStudio.App.Views.Panels
       menu.Items.Clear();
 
       var newFolderItem = new MenuFlyoutItem { Text = "New Folder" };
-      newFolderItem.Click += (s, e) => HandleFolderMenuClick("New Folder", folder);
+      newFolderItem.Click += (_, __) => HandleFolderMenuClick("New Folder", folder);
       menu.Items.Add(newFolderItem);
 
       menu.Items.Add(new MenuFlyoutSeparator());
 
       var renameItem = new MenuFlyoutItem { Text = "Rename" };
-      renameItem.Click += (s, e) => HandleFolderMenuClick("Rename", folder);
+      renameItem.Click += (_, __) => HandleFolderMenuClick("Rename", folder);
       menu.Items.Add(renameItem);
 
       var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-      deleteItem.Click += (s, e) => HandleFolderMenuClick("Delete", folder);
+      deleteItem.Click += (_, __) => HandleFolderMenuClick("Delete", folder);
       menu.Items.Add(deleteItem);
     }
 
@@ -280,10 +280,7 @@ namespace VoiceStudio.App.Views.Panels
           return;
         }
 
-        await _audioPlayer.PlayFileAsync(audioPath, () =>
-        {
-          _toastService?.ShowToast(ToastType.Info, "Playback Complete", $"Finished playing {assetName}");
-        });
+        await _audioPlayer.PlayFileAsync(audioPath, () => _toastService?.ShowToast(ToastType.Info, "Playback Complete", $"Finished playing {assetName}"));
 
         _toastService?.ShowToast(ToastType.Success, "Playing", $"Now playing: {assetName}");
       }
@@ -428,9 +425,7 @@ namespace VoiceStudio.App.Views.Panels
       var stackPanel = new StackPanel { Spacing = 8 };
 
       // Add properties dynamically
-      var properties = new[] { "Id", "Name", "Type", "Url", "FilePath", "Duration", "Size", "Created", "Modified" };
-
-      foreach (var propName in properties)
+      foreach (var propName in new[] { "Id", "Name", "Type", "Url", "FilePath", "Duration", "Size", "Created", "Modified" })
       {
         var value = GetPropertyValue(fileData, propName);
         if (value != null)
@@ -460,13 +455,11 @@ namespace VoiceStudio.App.Views.Panels
         }
       }
 
-      var scrollViewer = new ScrollViewer
+      return new ScrollViewer
       {
         Content = stackPanel,
         MaxHeight = 400
       };
-
-      return scrollViewer;
     }
 
     private async Task DeleteAssetAsync(string assetId, string assetName)
@@ -661,7 +654,7 @@ namespace VoiceStudio.App.Views.Panels
           XamlRoot = this.XamlRoot
         };
 
-        textBox.Loaded += (s, e) =>
+        textBox.Loaded += (_, __) =>
         {
           textBox.SelectAll();
           textBox.Focus(FocusState.Programmatic);
@@ -803,7 +796,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void LibraryView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void LibraryView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
@@ -899,7 +892,7 @@ namespace VoiceStudio.App.Views.Panels
       return null;
     }
 
-    private async void BatchExportAssets_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void BatchExportAssets_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       try
       {
@@ -964,7 +957,7 @@ namespace VoiceStudio.App.Views.Panels
 
             // Get file extension
             var extension = System.IO.Path.GetExtension(sourcePath);
-            var fileName = $"{assetName}{extension}";
+            var fileName = assetName + extension;
             var destPath = System.IO.Path.Combine(folder.Path, fileName);
 
             // Handle duplicate names
@@ -1139,10 +1132,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private void Asset_DragLeave(object sender, DragEventArgs e)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private DropPosition DetermineDropPosition(Border target, Point position)
@@ -1160,4 +1150,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

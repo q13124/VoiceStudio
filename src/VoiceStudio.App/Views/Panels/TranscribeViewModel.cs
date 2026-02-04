@@ -15,64 +15,64 @@ using VoiceStudio.App.ViewModels;
 
 namespace VoiceStudio.App.Views.Panels
 {
-    public partial class TranscribeViewModel : BaseViewModel, IPanelView
-    {
-        private readonly IBackendClient _backendClient;
-        private readonly ToastNotificationService? _toastNotificationService;
-        private readonly UndoRedoService? _undoRedoService;
-        private readonly MultiSelectService _multiSelectService;
-        private MultiSelectState? _multiSelectState;
+  public partial class TranscribeViewModel : BaseViewModel, IPanelView
+  {
+    private readonly IBackendClient _backendClient;
+    private readonly ToastNotificationService? _toastNotificationService;
+    private readonly UndoRedoService? _undoRedoService;
+    private readonly MultiSelectService _multiSelectService;
+    private MultiSelectState? _multiSelectState;
 
-        public string PanelId => "transcribe";
-        public string DisplayName => ResourceHelper.GetString("Panel.Transcribe.DisplayName", "Transcribe");
-        public PanelRegion Region => PanelRegion.Bottom;
+    public string PanelId => "transcribe";
+    public string DisplayName => ResourceHelper.GetString("Panel.Transcribe.DisplayName", "Transcribe");
+    public PanelRegion Region => PanelRegion.Bottom;
 
-        [ObservableProperty]
-        private ObservableCollection<TranscriptionResponse> transcriptions = new();
+    [ObservableProperty]
+    private ObservableCollection<TranscriptionResponse> transcriptions = new();
 
-        [ObservableProperty]
-        private TranscriptionResponse? selectedTranscription;
+    [ObservableProperty]
+    private TranscriptionResponse? selectedTranscription;
 
-        [ObservableProperty]
-        private string? selectedAudioId;
+    [ObservableProperty]
+    private string? selectedAudioId;
 
-        [ObservableProperty]
-        private string? selectedProjectId;
+    [ObservableProperty]
+    private string? selectedProjectId;
 
-        [ObservableProperty]
-        private string selectedEngine = "whisper";
+    [ObservableProperty]
+    private string selectedEngine = "whisper";
 
-        [ObservableProperty]
-        private string? selectedLanguage;
+    [ObservableProperty]
+    private string? selectedLanguage;
 
-        [ObservableProperty]
-        private bool wordTimestamps = false;
+    [ObservableProperty]
+    private bool wordTimestamps;
 
-        [ObservableProperty]
-        private bool diarization = false;
+    [ObservableProperty]
+    private bool diarization;
 
-        [ObservableProperty]
-        private bool useVad = false;
+    [ObservableProperty]
+    private bool useVad;
 
-        [ObservableProperty]
-        private bool isLoading;
+    [ObservableProperty]
+    private bool isLoading;
 
-        [ObservableProperty]
-        private string? errorMessage;
+    [ObservableProperty]
+    private string? errorMessage;
 
-        [ObservableProperty]
-        private string transcriptionText = string.Empty;
+    [ObservableProperty]
+    private string transcriptionText = string.Empty;
 
-        // Multi-select support
-        [ObservableProperty]
-        private int selectedTranscriptionCount = 0;
+    // Multi-select support
+    [ObservableProperty]
+    private int selectedTranscriptionCount;
 
-        [ObservableProperty]
-        private bool hasMultipleTranscriptionSelection = false;
+    [ObservableProperty]
+    private bool hasMultipleTranscriptionSelection;
 
-        public bool IsTranscriptionSelected(string transcriptionId) => _multiSelectState?.SelectedIds.Contains(transcriptionId) ?? false;
+    public bool IsTranscriptionSelected(string transcriptionId) => _multiSelectState?.SelectedIds.Contains(transcriptionId) ?? false;
 
-        public ObservableCollection<string> Engines { get; } = new()
+    public ObservableCollection<string> Engines { get; } = new()
         {
             "whisper",
             "whisperx",
@@ -80,360 +80,361 @@ namespace VoiceStudio.App.Views.Panels
             "vosk"
         };
 
-        public ObservableCollection<SupportedLanguage> Languages { get; } = new();
+    public ObservableCollection<SupportedLanguage> Languages { get; } = new();
 
-        public TranscribeViewModel(IViewModelContext context, IBackendClient backendClient)
-            : base(context)
+    public TranscribeViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
+    {
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+
+      // Get multi-select service
+      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectState = _multiSelectService.GetState(PanelId);
+
+      // Get services (may be null if not initialized)
+      try
+      {
+        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _undoRedoService = ServiceProvider.GetUndoRedoService();
+      }
+      catch
+      {
+        // Services may not be initialized yet - that's okay
+        _toastNotificationService = null;
+        _undoRedoService = null;
+      }
+
+      LoadLanguagesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("LoadLanguages");
+        await LoadLanguagesAsync(ct);
+      }, () => !IsLoading);
+      TranscribeCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("Transcribe");
+        await TranscribeAsync(ct);
+      }, () => !IsLoading && CanTranscribe());
+      LoadTranscriptionsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("LoadTranscriptions");
+        await LoadTranscriptionsAsync(ct);
+      }, () => !IsLoading);
+      DeleteTranscriptionCommand = new EnhancedAsyncRelayCommand<TranscriptionResponse>(async (transcription, ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("DeleteTranscription");
+        await DeleteTranscriptionAsync(transcription, ct);
+      }, t => t != null && !IsLoading);
+
+      // Multi-select commands
+      SelectAllTranscriptionsCommand = new RelayCommand(SelectAllTranscriptions, () => Transcriptions?.Count > 0);
+      ClearTranscriptionSelectionCommand = new RelayCommand(ClearTranscriptionSelection);
+
+      // Subscribe to selection changes
+      _multiSelectService.SelectionChanged += (s, e) =>
+      {
+        if (e.PanelId == PanelId)
         {
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            
-            // Get multi-select service
-            _multiSelectService = ServiceProvider.GetMultiSelectService();
-            _multiSelectState = _multiSelectService.GetState(PanelId);
-            
-            // Get services (may be null if not initialized)
-            try
-            {
-                _toastNotificationService = ServiceProvider.GetToastNotificationService();
-                _undoRedoService = ServiceProvider.GetUndoRedoService();
-            }
-            catch
-            {
-                // Services may not be initialized yet - that's okay
-                _toastNotificationService = null;
-                _undoRedoService = null;
-            }
-            
-            LoadLanguagesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("LoadLanguages");
-                await LoadLanguagesAsync(ct);
-            }, () => !IsLoading);
-            TranscribeCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("Transcribe");
-                await TranscribeAsync(ct);
-            }, () => !IsLoading && CanTranscribe());
-            LoadTranscriptionsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("LoadTranscriptions");
-                await LoadTranscriptionsAsync(ct);
-            }, () => !IsLoading);
-            DeleteTranscriptionCommand = new EnhancedAsyncRelayCommand<TranscriptionResponse>(async (transcription, ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("DeleteTranscription");
-                await DeleteTranscriptionAsync(transcription, ct);
-            }, t => t != null && !IsLoading);
-            
-            // Multi-select commands
-            SelectAllTranscriptionsCommand = new RelayCommand(SelectAllTranscriptions, () => Transcriptions != null && Transcriptions.Count > 0);
-            ClearTranscriptionSelectionCommand = new RelayCommand(ClearTranscriptionSelection);
-            
-            // Subscribe to selection changes
-            _multiSelectService.SelectionChanged += (s, e) =>
-            {
-                if (e.PanelId == PanelId)
-                {
-                    UpdateTranscriptionSelectionProperties();
-                    OnPropertyChanged(nameof(SelectedTranscriptionCount));
-                    OnPropertyChanged(nameof(HasMultipleTranscriptionSelection));
-                }
-            };
+          UpdateTranscriptionSelectionProperties();
+          OnPropertyChanged(nameof(SelectedTranscriptionCount));
+          OnPropertyChanged(nameof(HasMultipleTranscriptionSelection));
         }
-
-        public IAsyncRelayCommand LoadLanguagesCommand { get; }
-        public IAsyncRelayCommand TranscribeCommand { get; }
-        public IAsyncRelayCommand LoadTranscriptionsCommand { get; }
-        public IAsyncRelayCommand<TranscriptionResponse> DeleteTranscriptionCommand { get; }
-        
-        // Multi-select commands
-        public IRelayCommand SelectAllTranscriptionsCommand { get; }
-        public IRelayCommand ClearTranscriptionSelectionCommand { get; }
-
-        private bool CanTranscribe()
-        {
-            return !string.IsNullOrWhiteSpace(SelectedAudioId);
-        }
-
-        partial void OnSelectedAudioIdChanged(string? value)
-        {
-            TranscribeCommand.NotifyCanExecuteChanged();
-        }
-
-        partial void OnIsLoadingChanged(bool value)
-        {
-            LoadLanguagesCommand.NotifyCanExecuteChanged();
-            TranscribeCommand.NotifyCanExecuteChanged();
-            LoadTranscriptionsCommand.NotifyCanExecuteChanged();
-            DeleteTranscriptionCommand.NotifyCanExecuteChanged();
-        }
-
-        private async Task LoadLanguagesAsync(CancellationToken cancellationToken)
-        {
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var languages = await _backendClient.GetSupportedLanguagesAsync(cancellationToken);
-                Languages.Clear();
-                foreach (var lang in languages)
-                {
-                    Languages.Add(lang);
-                }
-
-                // Set default to auto-detect if not set
-                if (string.IsNullOrEmpty(SelectedLanguage))
-                {
-                    SelectedLanguage = "auto";
-                }
-                
-                if (Languages.Count > 0)
-                {
-                    _toastNotificationService?.ShowSuccess("Languages Loaded", $"Loaded {Languages.Count} supported languages");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load languages: {ex.Message}";
-                await HandleErrorAsync(ex, "LoadLanguages");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task TranscribeAsync(CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(SelectedAudioId))
-                return;
-
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = null;
-
-                var request = new TranscriptionRequest
-                {
-                    AudioId = SelectedAudioId,
-                    Engine = SelectedEngine,
-                    Language = SelectedLanguage == "auto" ? null : SelectedLanguage,
-                    WordTimestamps = WordTimestamps,
-                    Diarization = Diarization,
-                    UseVad = UseVad
-                };
-
-                var transcription = await _backendClient.TranscribeAudioAsync(request, SelectedProjectId, cancellationToken);
-
-                // Add to collection
-                Transcriptions.Insert(0, transcription);
-                SelectedTranscription = transcription;
-                TranscriptionText = transcription.Text;
-
-                // Reload transcriptions list
-                await LoadTranscriptionsAsync(cancellationToken);
-                
-                _toastNotificationService?.ShowSuccess("Transcription Complete", $"Transcribed audio using {SelectedEngine} engine");
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Transcription failed: {ex.Message}";
-                _toastNotificationService?.ShowError("Transcription Failed", ex.Message);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task LoadTranscriptionsAsync(CancellationToken cancellationToken)
-        {
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var transcriptions = await _backendClient.ListTranscriptionsAsync(SelectedAudioId, SelectedProjectId, cancellationToken);
-                
-                Transcriptions.Clear();
-                foreach (var transcription in transcriptions.OrderByDescending(t => t.Created))
-                {
-                    Transcriptions.Add(transcription);
-                }
-                
-                if (Transcriptions.Count > 0)
-                {
-                    _toastNotificationService?.ShowSuccess("Transcriptions Loaded", $"Loaded {Transcriptions.Count} transcription(s)");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load transcriptions: {ex.Message}";
-                await HandleErrorAsync(ex, "LoadTranscriptions");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task DeleteTranscriptionAsync(TranscriptionResponse? transcription, CancellationToken cancellationToken)
-        {
-            if (transcription == null)
-                return;
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                await _backendClient.DeleteTranscriptionAsync(transcription.Id, cancellationToken);
-                
-                var transcriptionToDelete = transcription;
-                var originalIndex = Transcriptions.IndexOf(transcription);
-                
-                // Remove from collection
-                Transcriptions.Remove(transcription);
-                
-                if (SelectedTranscription == transcription)
-                {
-                    SelectedTranscription = null;
-                    TranscriptionText = string.Empty;
-                }
-                
-                // Register undo action
-                if (_undoRedoService != null && originalIndex >= 0)
-                {
-                    var action = new DeleteTranscriptionAction(
-                        Transcriptions,
-                        _backendClient,
-                        transcriptionToDelete,
-                        originalIndex,
-                        onUndo: (t) => {
-                            SelectedTranscription = t;
-                            TranscriptionText = t.Text;
-                        },
-                        onRedo: (t) => {
-                            if (SelectedTranscription?.Id == t.Id)
-                            {
-                                SelectedTranscription = null;
-                                TranscriptionText = string.Empty;
-                            }
-                        });
-                    _undoRedoService.RegisterAction(action);
-                }
-                
-                _toastNotificationService?.ShowSuccess("Transcription Deleted", "Transcription deleted successfully");
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to delete transcription: {ex.Message}";
-                await HandleErrorAsync(ex, "DeleteTranscription");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        partial void OnSelectedTranscriptionChanged(TranscriptionResponse? value)
-        {
-            if (value != null)
-            {
-                TranscriptionText = value.Text;
-            }
-            else
-            {
-                TranscriptionText = string.Empty;
-            }
-        }
-
-        // Multi-select methods
-        public void ToggleTranscriptionSelection(string transcriptionId, bool isCtrlPressed, bool isShiftPressed)
-        {
-            if (_multiSelectState == null)
-                return;
-
-            if (isShiftPressed && !string.IsNullOrEmpty(_multiSelectState.RangeAnchorId))
-            {
-                // Range selection
-                var allTranscriptionIds = Transcriptions.Select(t => t.Id).ToList();
-                _multiSelectState.SetRange(_multiSelectState.RangeAnchorId, transcriptionId, allTranscriptionIds);
-            }
-            else if (isCtrlPressed)
-            {
-                // Toggle selection
-                _multiSelectState.Toggle(transcriptionId);
-            }
-            else
-            {
-                // Single selection (clear others)
-                _multiSelectState.SetSingle(transcriptionId);
-            }
-
-            UpdateTranscriptionSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-        }
-
-        private void SelectAllTranscriptions()
-        {
-            if (_multiSelectState == null)
-                return;
-
-            _multiSelectState.Clear();
-            foreach (var transcription in Transcriptions)
-            {
-                _multiSelectState.Add(transcription.Id);
-            }
-            if (Transcriptions.Count > 0)
-            {
-                _multiSelectState.RangeAnchorId = Transcriptions[0].Id;
-            }
-
-            UpdateTranscriptionSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-            SelectAllTranscriptionsCommand.NotifyCanExecuteChanged();
-        }
-
-        private void ClearTranscriptionSelection()
-        {
-            if (_multiSelectState == null)
-                return;
-
-            _multiSelectState.Clear();
-            UpdateTranscriptionSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-        }
-
-        private void UpdateTranscriptionSelectionProperties()
-        {
-            if (_multiSelectState == null)
-            {
-                SelectedTranscriptionCount = 0;
-                HasMultipleTranscriptionSelection = false;
-            }
-            else
-            {
-                SelectedTranscriptionCount = _multiSelectState.Count;
-                HasMultipleTranscriptionSelection = _multiSelectState.IsMultipleSelection;
-            }
-
-            OnPropertyChanged(nameof(SelectedTranscriptionCount));
-            OnPropertyChanged(nameof(HasMultipleTranscriptionSelection));
-        }
+      };
     }
-}
 
+    public IAsyncRelayCommand LoadLanguagesCommand { get; }
+    public IAsyncRelayCommand TranscribeCommand { get; }
+    public IAsyncRelayCommand LoadTranscriptionsCommand { get; }
+    public IAsyncRelayCommand<TranscriptionResponse> DeleteTranscriptionCommand { get; }
+
+    // Multi-select commands
+    public IRelayCommand SelectAllTranscriptionsCommand { get; }
+    public IRelayCommand ClearTranscriptionSelectionCommand { get; }
+
+    private bool CanTranscribe()
+    {
+      return !string.IsNullOrWhiteSpace(SelectedAudioId);
+    }
+
+    partial void OnSelectedAudioIdChanged(string? value)
+    {
+      TranscribeCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsLoadingChanged(bool value)
+    {
+      LoadLanguagesCommand.NotifyCanExecuteChanged();
+      TranscribeCommand.NotifyCanExecuteChanged();
+      LoadTranscriptionsCommand.NotifyCanExecuteChanged();
+      DeleteTranscriptionCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task LoadLanguagesAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var languages = await _backendClient.GetSupportedLanguagesAsync(cancellationToken);
+        Languages.Clear();
+        foreach (var lang in languages)
+        {
+          Languages.Add(lang);
+        }
+
+        // Set default to auto-detect if not set
+        if (string.IsNullOrEmpty(SelectedLanguage))
+        {
+          SelectedLanguage = "auto";
+        }
+
+        if (Languages.Count > 0)
+        {
+          _toastNotificationService?.ShowSuccess("Languages Loaded", $"Loaded {Languages.Count} supported languages");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to load languages: {ex.Message}";
+        await HandleErrorAsync(ex, "LoadLanguages");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task TranscribeAsync(CancellationToken cancellationToken = default)
+    {
+      if (string.IsNullOrWhiteSpace(SelectedAudioId))
+        return;
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var request = new TranscriptionRequest
+        {
+          AudioId = SelectedAudioId,
+          Engine = SelectedEngine,
+          Language = SelectedLanguage == "auto" ? null : SelectedLanguage,
+          WordTimestamps = WordTimestamps,
+          Diarization = Diarization,
+          UseVad = UseVad
+        };
+
+        var transcription = await _backendClient.TranscribeAudioAsync(request, SelectedProjectId, cancellationToken);
+
+        // Add to collection
+        Transcriptions.Insert(0, transcription);
+        SelectedTranscription = transcription;
+        TranscriptionText = transcription.Text;
+
+        // Reload transcriptions list
+        await LoadTranscriptionsAsync(cancellationToken);
+
+        _toastNotificationService?.ShowSuccess("Transcription Complete", $"Transcribed audio using {SelectedEngine} engine");
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Transcription failed: {ex.Message}";
+        _toastNotificationService?.ShowError("Transcription Failed", ex.Message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task LoadTranscriptionsAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var transcriptions = await _backendClient.ListTranscriptionsAsync(SelectedAudioId, SelectedProjectId, cancellationToken);
+
+        Transcriptions.Clear();
+        foreach (var transcription in transcriptions.OrderByDescending(t => t.Created))
+        {
+          Transcriptions.Add(transcription);
+        }
+
+        if (Transcriptions.Count > 0)
+        {
+          _toastNotificationService?.ShowSuccess("Transcriptions Loaded", $"Loaded {Transcriptions.Count} transcription(s)");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to load transcriptions: {ex.Message}";
+        await HandleErrorAsync(ex, "LoadTranscriptions");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task DeleteTranscriptionAsync(TranscriptionResponse? transcription, CancellationToken cancellationToken)
+    {
+      if (transcription == null)
+        return;
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        await _backendClient.DeleteTranscriptionAsync(transcription.Id, cancellationToken);
+
+        var transcriptionToDelete = transcription;
+        var originalIndex = Transcriptions.IndexOf(transcription);
+
+        // Remove from collection
+        Transcriptions.Remove(transcription);
+
+        if (SelectedTranscription == transcription)
+        {
+          SelectedTranscription = null;
+          TranscriptionText = string.Empty;
+        }
+
+        // Register undo action
+        if (_undoRedoService != null && originalIndex >= 0)
+        {
+          var action = new DeleteTranscriptionAction(
+              Transcriptions,
+              _backendClient,
+              transcriptionToDelete,
+              originalIndex,
+              onUndo: (t) =>
+              {
+                SelectedTranscription = t;
+                TranscriptionText = t.Text;
+              },
+              onRedo: (t) =>
+              {
+                if (SelectedTranscription?.Id == t.Id)
+                {
+                  SelectedTranscription = null;
+                  TranscriptionText = string.Empty;
+                }
+              });
+          _undoRedoService.RegisterAction(action);
+        }
+
+        _toastNotificationService?.ShowSuccess("Transcription Deleted", "Transcription deleted successfully");
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to delete transcription: {ex.Message}";
+        await HandleErrorAsync(ex, "DeleteTranscription");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    partial void OnSelectedTranscriptionChanged(TranscriptionResponse? value)
+    {
+      if (value != null)
+      {
+        TranscriptionText = value.Text;
+      }
+      else
+      {
+        TranscriptionText = string.Empty;
+      }
+    }
+
+    // Multi-select methods
+    public void ToggleTranscriptionSelection(string transcriptionId, bool isCtrlPressed, bool isShiftPressed)
+    {
+      if (_multiSelectState == null)
+        return;
+
+      if (isShiftPressed && !string.IsNullOrEmpty(_multiSelectState.RangeAnchorId))
+      {
+        // Range selection
+        var allTranscriptionIds = Transcriptions.Select(t => t.Id).ToList();
+        _multiSelectState.SetRange(_multiSelectState.RangeAnchorId, transcriptionId, allTranscriptionIds);
+      }
+      else if (isCtrlPressed)
+      {
+        // Toggle selection
+        _multiSelectState.Toggle(transcriptionId);
+      }
+      else
+      {
+        // Single selection (clear others)
+        _multiSelectState.SetSingle(transcriptionId);
+      }
+
+      UpdateTranscriptionSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+    }
+
+    private void SelectAllTranscriptions()
+    {
+      if (_multiSelectState == null)
+        return;
+
+      _multiSelectState.Clear();
+      foreach (var transcription in Transcriptions)
+      {
+        _multiSelectState.Add(transcription.Id);
+      }
+      if (Transcriptions.Count > 0)
+      {
+        _multiSelectState.RangeAnchorId = Transcriptions[0].Id;
+      }
+
+      UpdateTranscriptionSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+      SelectAllTranscriptionsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ClearTranscriptionSelection()
+    {
+      if (_multiSelectState == null)
+        return;
+
+      _multiSelectState.Clear();
+      UpdateTranscriptionSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+    }
+
+    private void UpdateTranscriptionSelectionProperties()
+    {
+      if (_multiSelectState == null)
+      {
+        SelectedTranscriptionCount = 0;
+        HasMultipleTranscriptionSelection = false;
+      }
+      else
+      {
+        SelectedTranscriptionCount = _multiSelectState.Count;
+        HasMultipleTranscriptionSelection = _multiSelectState.IsMultipleSelection;
+      }
+
+      OnPropertyChanged(nameof(SelectedTranscriptionCount));
+      OnPropertyChanged(nameof(HasMultipleTranscriptionSelection));
+    }
+  }
+}

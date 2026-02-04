@@ -33,7 +33,7 @@ namespace VoiceStudio.App.Views.Panels
       _undoRedoService = ServiceProvider.GetUndoRedoService();
 
       // Subscribe to ViewModel events for toast notifications and waveform updates
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(RecordingViewModel.ErrorMessage) && !string.IsNullOrEmpty(ViewModel.ErrorMessage))
         {
@@ -76,13 +76,13 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void RecordingView_Loaded(object sender, RoutedEventArgs e)
+    private void RecordingView_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Recording Help";
       HelpOverlay.HelpText = "The Recording panel allows you to record audio directly in VoiceStudio. Select input device, configure recording settings (sample rate, bit depth, channels), and record audio. Recorded audio is automatically saved and can be used in projects, for training, or for voice synthesis.";
@@ -110,7 +110,7 @@ namespace VoiceStudio.App.Views.Panels
         var menu = new MenuFlyout();
 
         var refreshItem = new MenuFlyoutItem { Text = "Refresh Devices" };
-        refreshItem.Click += (s, args) => ViewModel.LoadDevicesCommand.Execute(null);
+        refreshItem.Click += (_, _) => ViewModel.LoadDevicesCommand.Execute(null);
         menu.Items.Add(refreshItem);
 
         var target = sender as UIElement;
@@ -122,4 +122,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

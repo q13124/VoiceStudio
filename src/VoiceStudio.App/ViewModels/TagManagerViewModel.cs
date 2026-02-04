@@ -14,753 +14,746 @@ using VoiceStudio.Core.Models;
 
 namespace VoiceStudio.App.ViewModels
 {
-    /// <summary>
-    /// ViewModel for the TagManagerView panel - Tag management.
-    /// </summary>
-    public partial class TagManagerViewModel : BaseViewModel, IPanelView
+  /// <summary>
+  /// ViewModel for the TagManagerView panel - Tag management.
+  /// </summary>
+  public partial class TagManagerViewModel : BaseViewModel, IPanelView
+  {
+    private readonly IBackendClient _backendClient;
+    private readonly UndoRedoService? _undoRedoService;
+    private readonly ToastNotificationService? _toastNotificationService;
+    private readonly MultiSelectService _multiSelectService;
+    private MultiSelectState? _multiSelectState;
+
+    public string PanelId => "tag_manager";
+    public string DisplayName => ResourceHelper.GetString("Panel.TagManager.DisplayName", "Tag Manager");
+    public PanelRegion Region => PanelRegion.Right;
+
+    [ObservableProperty]
+    private ObservableCollection<TagItem> tags = new();
+
+    [ObservableProperty]
+    private TagItem? selectedTag;
+
+    // Multi-select support
+    [ObservableProperty]
+    private int selectedTagCount;
+
+    [ObservableProperty]
+    private bool hasMultipleTagSelection;
+
+    public bool IsTagSelected(string tagId) => _multiSelectState?.SelectedIds.Contains(tagId) ?? false;
+
+    [ObservableProperty]
+    private string? searchQuery;
+
+    [ObservableProperty]
+    private string? selectedCategory;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableCategories = new();
+
+    [ObservableProperty]
+    private bool isEditing;
+
+    [ObservableProperty]
+    private string? editingName;
+
+    [ObservableProperty]
+    private string? editingCategory;
+
+    [ObservableProperty]
+    private string? editingColor;
+
+    [ObservableProperty]
+    private string? editingDescription;
+
+    public TagManagerViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
     {
-        private readonly IBackendClient _backendClient;
-        private readonly UndoRedoService? _undoRedoService;
-        private readonly ToastNotificationService? _toastNotificationService;
-        private readonly MultiSelectService _multiSelectService;
-        private MultiSelectState? _multiSelectState;
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
-        public string PanelId => "tag_manager";
-        public string DisplayName => ResourceHelper.GetString("Panel.TagManager.DisplayName", "Tag Manager");
-        public PanelRegion Region => PanelRegion.Right;
+      // Get undo/redo service (may be null if not initialized)
+      try
+      {
+        _undoRedoService = ServiceProvider.GetUndoRedoService();
+      }
+      catch
+      {
+        // Service may not be initialized yet - that's okay
+        _undoRedoService = null;
+      }
 
-        [ObservableProperty]
-        private ObservableCollection<TagItem> tags = new();
+      // Get toast notification service (may be null if not initialized)
+      try
+      {
+        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+      }
+      catch
+      {
+        // Service may not be initialized yet - that's okay
+        _toastNotificationService = null;
+      }
 
-        [ObservableProperty]
-        private TagItem? selectedTag;
+      // Get multi-select service
+      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectState = _multiSelectService.GetState(PanelId);
 
-        // Multi-select support
-        [ObservableProperty]
-        private int selectedTagCount = 0;
+      LoadTagsCommand = new AsyncRelayCommand(LoadTagsAsync);
+      SearchTagsCommand = new AsyncRelayCommand(SearchTagsAsync);
+      CreateTagCommand = new AsyncRelayCommand(CreateTagAsync);
+      UpdateTagCommand = new AsyncRelayCommand<TagItem>(UpdateTagAsync);
+      DeleteTagCommand = new AsyncRelayCommand<TagItem>(DeleteTagAsync);
+      StartEditCommand = new CommunityToolkit.Mvvm.Input.RelayCommand<TagItem>(StartEdit);
+      CancelEditCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(CancelEdit);
+      SaveEditCommand = new AsyncRelayCommand(SaveEditAsync);
+      LoadCategoriesCommand = new AsyncRelayCommand(LoadCategoriesAsync);
+      MergeTagsCommand = new AsyncRelayCommand<TagItem>(MergeTagsAsync);
 
-        [ObservableProperty]
-        private bool hasMultipleTagSelection = false;
+      // Multi-select commands
+      SelectAllTagsCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(SelectAllTags, () => Tags?.Count > 0);
+      ClearTagSelectionCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(ClearTagSelection);
+      DeleteSelectedTagsCommand = new AsyncRelayCommand(DeleteSelectedTagsAsync, () => SelectedTagCount > 0 && !IsLoading);
 
-        public bool IsTagSelected(string tagId) => _multiSelectState?.SelectedIds.Contains(tagId) ?? false;
-
-        [ObservableProperty]
-        private string? searchQuery;
-
-        [ObservableProperty]
-        private string? selectedCategory;
-
-        [ObservableProperty]
-        private ObservableCollection<string> availableCategories = new();
-
-        [ObservableProperty]
-        private bool isEditing = false;
-
-        [ObservableProperty]
-        private string? editingName;
-
-        [ObservableProperty]
-        private string? editingCategory;
-
-        [ObservableProperty]
-        private string? editingColor;
-
-        [ObservableProperty]
-        private string? editingDescription;
-
-        public TagManagerViewModel(IViewModelContext context, IBackendClient backendClient)
-            : base(context)
+      // Subscribe to selection changes
+      _multiSelectService.SelectionChanged += (_, e) =>
+      {
+        if (e.PanelId == PanelId)
         {
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+          UpdateTagSelectionProperties();
+          OnPropertyChanged(nameof(SelectedTagCount));
+          OnPropertyChanged(nameof(HasMultipleTagSelection));
+        }
+      };
 
-            // Get undo/redo service (may be null if not initialized)
-            try
-            {
-                _undoRedoService = ServiceProvider.GetUndoRedoService();
-            }
-            catch
-            {
-                // Service may not be initialized yet - that's okay
-                _undoRedoService = null;
-            }
+      // Load initial data
+      _ = LoadCategoriesAsync(CancellationToken.None);
+      _ = LoadTagsAsync(CancellationToken.None);
+    }
 
-            // Get toast notification service (may be null if not initialized)
-            try
-            {
-                _toastNotificationService = ServiceProvider.GetToastNotificationService();
-            }
-            catch
-            {
-                // Service may not be initialized yet - that's okay
-                _toastNotificationService = null;
-            }
+    public IAsyncRelayCommand LoadTagsCommand { get; }
+    public IAsyncRelayCommand SearchTagsCommand { get; }
+    public IAsyncRelayCommand CreateTagCommand { get; }
+    public IAsyncRelayCommand<TagItem> UpdateTagCommand { get; }
+    public IAsyncRelayCommand<TagItem> DeleteTagCommand { get; }
+    public IRelayCommand<TagItem> StartEditCommand { get; }
+    public IRelayCommand CancelEditCommand { get; }
+    public IAsyncRelayCommand SaveEditCommand { get; }
+    public IAsyncRelayCommand LoadCategoriesCommand { get; }
+    public IAsyncRelayCommand<TagItem> MergeTagsCommand { get; }
 
-            // Get multi-select service
-            _multiSelectService = ServiceProvider.GetMultiSelectService();
-            _multiSelectState = _multiSelectService.GetState(PanelId);
+    // Multi-select commands
+    public IRelayCommand SelectAllTagsCommand { get; }
+    public IRelayCommand ClearTagSelectionCommand { get; }
+    public IAsyncRelayCommand DeleteSelectedTagsCommand { get; }
 
-            LoadTagsCommand = new AsyncRelayCommand(LoadTagsAsync);
-            SearchTagsCommand = new AsyncRelayCommand(SearchTagsAsync);
-            CreateTagCommand = new AsyncRelayCommand(CreateTagAsync);
-            UpdateTagCommand = new AsyncRelayCommand<TagItem>(UpdateTagAsync);
-            DeleteTagCommand = new AsyncRelayCommand<TagItem>(DeleteTagAsync);
-            StartEditCommand = new CommunityToolkit.Mvvm.Input.RelayCommand<TagItem>(StartEdit);
-            CancelEditCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(CancelEdit);
-            SaveEditCommand = new AsyncRelayCommand(SaveEditAsync);
-            LoadCategoriesCommand = new AsyncRelayCommand(LoadCategoriesAsync);
-            MergeTagsCommand = new AsyncRelayCommand<TagItem>(MergeTagsAsync);
+    private async Task LoadTagsAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
 
-            // Multi-select commands
-            SelectAllTagsCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(SelectAllTags, () => Tags != null && Tags.Count > 0);
-            ClearTagSelectionCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(ClearTagSelection);
-            DeleteSelectedTagsCommand = new AsyncRelayCommand(DeleteSelectedTagsAsync, () => SelectedTagCount > 0 && !IsLoading);
+        var queryParams = new System.Collections.Specialized.NameValueCollection();
+        if (!string.IsNullOrEmpty(SelectedCategory))
+          queryParams.Add("category", SelectedCategory);
+        if (!string.IsNullOrEmpty(SearchQuery))
+          queryParams.Add("search", SearchQuery);
 
-            // Subscribe to selection changes
-            _multiSelectService.SelectionChanged += (s, e) =>
-            {
-                if (e.PanelId == PanelId)
-                {
-                    UpdateTagSelectionProperties();
-                    OnPropertyChanged(nameof(SelectedTagCount));
-                    OnPropertyChanged(nameof(HasMultipleTagSelection));
-                }
-            };
+        var queryString = string.Join("&",
+            queryParams.AllKeys.SelectMany(key =>
+                queryParams.GetValues(key)?.Select(value => $"{key}={Uri.EscapeDataString(value)}") ?? Array.Empty<string>()
+            )
+        );
 
-            // Load initial data
-            _ = LoadCategoriesAsync(CancellationToken.None);
-            _ = LoadTagsAsync(CancellationToken.None);
+        var url = "/api/tags";
+        if (!string.IsNullOrEmpty(queryString))
+          url += $"?{queryString}";
+
+        var tags = await _backendClient.SendRequestAsync<object, Tag[]>(
+            url,
+            null,
+            System.Net.Http.HttpMethod.Get,
+            cancellationToken
+        );
+
+        Tags.Clear();
+        if (tags != null)
+        {
+          foreach (var tag in tags)
+          {
+            Tags.Add(new TagItem(tag));
+          }
         }
 
-        public IAsyncRelayCommand LoadTagsCommand { get; }
-        public IAsyncRelayCommand SearchTagsCommand { get; }
-        public IAsyncRelayCommand CreateTagCommand { get; }
-        public IAsyncRelayCommand<TagItem> UpdateTagCommand { get; }
-        public IAsyncRelayCommand<TagItem> DeleteTagCommand { get; }
-        public IRelayCommand<TagItem> StartEditCommand { get; }
-        public IRelayCommand CancelEditCommand { get; }
-        public IAsyncRelayCommand SaveEditCommand { get; }
-        public IAsyncRelayCommand LoadCategoriesCommand { get; }
-        public IAsyncRelayCommand<TagItem> MergeTagsCommand { get; }
-
-        // Multi-select commands
-        public IRelayCommand SelectAllTagsCommand { get; }
-        public IRelayCommand ClearTagSelectionCommand { get; }
-        public IAsyncRelayCommand DeleteSelectedTagsCommand { get; }
-
-        private async Task LoadTagsAsync(CancellationToken cancellationToken)
+        if (Tags.Count > 0)
         {
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = null;
-
-                var queryParams = new System.Collections.Specialized.NameValueCollection();
-                if (!string.IsNullOrEmpty(SelectedCategory))
-                    queryParams.Add("category", SelectedCategory);
-                if (!string.IsNullOrEmpty(SearchQuery))
-                    queryParams.Add("search", SearchQuery);
-
-                var queryString = string.Join("&",
-                    queryParams.AllKeys.SelectMany(key =>
-                        queryParams.GetValues(key)?.Select(value => $"{key}={Uri.EscapeDataString(value)}") ?? Array.Empty<string>()
-                    )
-                );
-
-                var url = "/api/tags";
-                if (!string.IsNullOrEmpty(queryString))
-                    url += $"?{queryString}";
-
-                var tags = await _backendClient.SendRequestAsync<object, Tag[]>(
-                    url,
-                    null,
-                    System.Net.Http.HttpMethod.Get,
-                    cancellationToken
-                );
-
-                Tags.Clear();
-                if (tags != null)
-                {
-                    foreach (var tag in tags)
-                    {
-                        Tags.Add(new TagItem(tag));
-                    }
-                }
-
-                if (Tags.Count > 0)
-                {
-                    _toastNotificationService?.ShowSuccess(
-                        ResourceHelper.FormatString("TagManager.TagsLoaded", Tags.Count),
-                        ResourceHelper.GetString("Toast.Title.TagsLoaded", "Tags Loaded"));
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TagManager.LoadTagsFailed", ex.Message);
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.GetString("Toast.Title.LoadTagsFailed", "Failed to Load Tags"),
-                    ex.Message);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          _toastNotificationService?.ShowSuccess(
+              ResourceHelper.FormatString("TagManager.TagsLoaded", Tags.Count),
+              ResourceHelper.GetString("Toast.Title.TagsLoaded", "Tags Loaded"));
         }
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TagManager.LoadTagsFailed", ex.Message);
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.LoadTagsFailed", "Failed to Load Tags"),
+            ex.Message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
 
-        private async Task SearchTagsAsync(CancellationToken cancellationToken)
+    private async Task SearchTagsAsync(CancellationToken cancellationToken)
+    {
+      await LoadTagsAsync(cancellationToken);
+    }
+
+    private async Task CreateTagAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
         {
-            await LoadTagsAsync(cancellationToken);
-        }
+          name = ResourceHelper.GetString("TagManager.NewTag", "New Tag"),
+          category = (string?)null,
+          color = (string?)null,
+          description = (string?)null
+        };
 
-        private async Task CreateTagAsync(CancellationToken cancellationToken)
+        var created = await _backendClient.SendRequestAsync<object, Tag>(
+            "/api/tags",
+            request,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        if (created != null)
         {
-            IsLoading = true;
-            ErrorMessage = null;
+          var tagItem = new TagItem(created);
+          Tags.Add(tagItem);
+          SelectedTag = tagItem;
 
-            try
-            {
-                var request = new
+          // Register undo action
+          if (_undoRedoService != null)
+          {
+            var action = new CreateTagAction(
+                Tags,
+                _backendClient,
+                tagItem,
+                onUndo: (t) =>
                 {
-                    name = ResourceHelper.GetString("TagManager.NewTag", "New Tag"),
-                    category = (string?)null,
-                    color = (string?)null,
-                    description = (string?)null
-                };
-
-                var created = await _backendClient.SendRequestAsync<object, Tag>(
-                    "/api/tags",
-                    request,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                if (created != null)
-                {
-                    var tagItem = new TagItem(created);
-                    Tags.Add(tagItem);
-                    SelectedTag = tagItem;
-
-                    // Register undo action
-                    if (_undoRedoService != null)
-                    {
-                        var action = new CreateTagAction(
-                            Tags,
-                            _backendClient,
-                            tagItem,
-                            onUndo: (t) =>
-                            {
-                                if (SelectedTag?.Id == t.Id)
-                                {
-                                    SelectedTag = Tags.FirstOrDefault();
-                                    IsEditing = false;
-                                }
-                            },
-                            onRedo: (t) =>
-                            {
-                                SelectedTag = t;
-                            });
-                        _undoRedoService.RegisterAction(action);
-                    }
-
-                    StartEdit(SelectedTag);
-                    StatusMessage = ResourceHelper.GetString("TagManager.TagCreated", "Tag created");
-                    _toastNotificationService?.ShowSuccess(
-                        ResourceHelper.FormatString("TagManager.TagCreatedSuccess", created.Name),
-                        ResourceHelper.GetString("Toast.Title.TagCreated", "Tag Created"));
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "CreateTag");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task UpdateTagAsync(TagItem? tag, CancellationToken cancellationToken)
-        {
-            if (tag == null)
-                return;
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                var request = new
-                {
-                    name = tag.Name,
-                    category = tag.Category,
-                    color = tag.Color,
-                    description = tag.Description
-                };
-
-                var updated = await _backendClient.SendRequestAsync<object, Tag>(
-                    $"/api/tags/{tag.Id}",
-                    request,
-                    System.Net.Http.HttpMethod.Put,
-                    cancellationToken
-                );
-
-                if (updated != null)
-                {
-                    tag.UpdateFrom(updated);
-                }
-
-                await LoadTagsAsync(cancellationToken);
-                StatusMessage = ResourceHelper.GetString("TagManager.TagUpdated", "Tag updated");
-                _toastNotificationService?.ShowSuccess(
-                    ResourceHelper.FormatString("TagManager.TagUpdatedSuccess", tag.Name),
-                    ResourceHelper.GetString("Toast.Title.TagUpdated", "Tag Updated"));
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "UpdateTag");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private async Task DeleteTagAsync(TagItem? tag, CancellationToken cancellationToken)
-        {
-            if (tag == null)
-                return;
-
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = null;
-
-                await _backendClient.SendRequestAsync<object, object>(
-                    $"/api/tags/{tag.Id}",
-                    null,
-                    System.Net.Http.HttpMethod.Delete
-                );
-
-                var tagToDelete = tag;
-                var originalIndex = Tags.IndexOf(tag);
-                if (SelectedTag == tag)
-                {
-                    SelectedTag = null;
+                  if (SelectedTag?.Id == t.Id)
+                  {
+                    SelectedTag = Tags.FirstOrDefault();
                     IsEditing = false;
-                }
+                  }
+                },
+                onRedo: (t) => SelectedTag = t);
+            _undoRedoService.RegisterAction(action);
+          }
 
-                // Register undo action before reloading
-                if (_undoRedoService != null)
+          StartEdit(SelectedTag);
+          StatusMessage = ResourceHelper.GetString("TagManager.TagCreated", "Tag created");
+          _toastNotificationService?.ShowSuccess(
+              ResourceHelper.FormatString("TagManager.TagCreatedSuccess", created.Name),
+              ResourceHelper.GetString("Toast.Title.TagCreated", "Tag Created"));
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "CreateTag");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task UpdateTagAsync(TagItem? tag, CancellationToken cancellationToken)
+    {
+      if (tag == null)
+        return;
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var request = new
+        {
+          name = tag.Name,
+          category = tag.Category,
+          color = tag.Color,
+          description = tag.Description
+        };
+
+        var updated = await _backendClient.SendRequestAsync<object, Tag>(
+            $"/api/tags/{tag.Id}",
+            request,
+            System.Net.Http.HttpMethod.Put,
+            cancellationToken
+        );
+
+        if (updated != null)
+        {
+          tag.UpdateFrom(updated);
+        }
+
+        await LoadTagsAsync(cancellationToken);
+        StatusMessage = ResourceHelper.GetString("TagManager.TagUpdated", "Tag updated");
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.FormatString("TagManager.TagUpdatedSuccess", tag.Name),
+            ResourceHelper.GetString("Toast.Title.TagUpdated", "Tag Updated"));
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "UpdateTag");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task DeleteTagAsync(TagItem? tag, CancellationToken cancellationToken)
+    {
+      if (tag == null)
+        return;
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        await _backendClient.SendRequestAsync<object, object>(
+            $"/api/tags/{tag.Id}",
+            null,
+            System.Net.Http.HttpMethod.Delete
+        );
+
+        var tagToDelete = tag;
+        var originalIndex = Tags.IndexOf(tag);
+        if (SelectedTag == tag)
+        {
+          SelectedTag = null;
+          IsEditing = false;
+        }
+
+        // Register undo action before reloading
+        if (_undoRedoService != null)
+        {
+          var action = new DeleteTagAction(
+              Tags,
+              _backendClient,
+              tagToDelete,
+              originalIndex,
+              onUndo: (t) => SelectedTag = t,
+              onRedo: (t) =>
+              {
+                if (SelectedTag?.Id == t.Id)
                 {
-                    var action = new DeleteTagAction(
-                        Tags,
-                        _backendClient,
-                        tagToDelete,
-                        originalIndex,
-                        onUndo: (t) =>
-                        {
-                            SelectedTag = t;
-                        },
-                        onRedo: (t) =>
-                        {
-                            if (SelectedTag?.Id == t.Id)
-                            {
-                                SelectedTag = null;
-                                IsEditing = false;
-                            }
-                        });
-                    _undoRedoService.RegisterAction(action);
+                  SelectedTag = null;
+                  IsEditing = false;
                 }
-
-                await LoadTagsAsync(cancellationToken);
-                StatusMessage = ResourceHelper.GetString("TagManager.TagDeleted", "Tag deleted");
-                var tagName = tagToDelete?.Name ?? ResourceHelper.GetString("TagManager.UnknownTag", "Unknown Tag");
-                _toastNotificationService?.ShowSuccess(
-                    ResourceHelper.FormatString("TagManager.TagDeletedDetail", tagName),
-                    ResourceHelper.GetString("Toast.Title.TagDeleted", "Tag Deleted"));
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TagManager.DeleteTagFailed", ex.Message);
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.FormatString("TagManager.DeleteTagFailed", ex.Message),
-                    ResourceHelper.GetString("Toast.Title.DeleteTagFailed", "Failed to Delete Tag"));
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+              });
+          _undoRedoService.RegisterAction(action);
         }
 
-        private void StartEdit(TagItem? tag)
-        {
-            if (tag == null)
-                return;
+        await LoadTagsAsync(cancellationToken);
+        StatusMessage = ResourceHelper.GetString("TagManager.TagDeleted", "Tag deleted");
+        var tagName = tagToDelete?.Name ?? ResourceHelper.GetString("TagManager.UnknownTag", "Unknown Tag");
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.FormatString("TagManager.TagDeletedDetail", tagName),
+            ResourceHelper.GetString("Toast.Title.TagDeleted", "Tag Deleted"));
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TagManager.DeleteTagFailed", ex.Message);
+        _toastNotificationService?.ShowError(
+            ResourceHelper.FormatString("TagManager.DeleteTagFailed", ex.Message),
+            ResourceHelper.GetString("Toast.Title.DeleteTagFailed", "Failed to Delete Tag"));
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
 
-            SelectedTag = tag;
-            EditingName = tag.Name;
-            EditingCategory = tag.Category;
-            EditingColor = tag.Color;
-            EditingDescription = tag.Description;
-            IsEditing = true;
+    private void StartEdit(TagItem? tag)
+    {
+      if (tag == null)
+        return;
+
+      SelectedTag = tag;
+      EditingName = tag.Name;
+      EditingCategory = tag.Category;
+      EditingColor = tag.Color;
+      EditingDescription = tag.Description;
+      IsEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+      IsEditing = false;
+      EditingName = null;
+      EditingCategory = null;
+      EditingColor = null;
+      EditingDescription = null;
+      SelectedTag = null;
+    }
+
+    private async Task SaveEditAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedTag == null || string.IsNullOrEmpty(EditingName))
+        return;
+
+      try
+      {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var request = new
+        {
+          name = EditingName,
+          category = EditingCategory,
+          color = EditingColor,
+          description = EditingDescription
+        };
+
+        var updated = await _backendClient.SendRequestAsync<object, Tag>(
+            $"/api/tags/{SelectedTag.Id}",
+            request,
+            System.Net.Http.HttpMethod.Put
+        );
+
+        if (updated != null)
+        {
+          SelectedTag.UpdateFrom(updated);
         }
 
-        private void CancelEdit()
+        CancelEdit();
+        await LoadTagsAsync(cancellationToken);
+        StatusMessage = ResourceHelper.GetString("TagManager.TagUpdated", "Tag updated");
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.FormatString("TagManager.TagSavedSuccess", SelectedTag?.Name ?? ResourceHelper.GetString("TagManager.Unknown", "Unknown")),
+            ResourceHelper.GetString("Toast.Title.TagSaved", "Tag Saved"));
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TagManager.SaveTagFailed", ex.Message);
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Toast.Title.SaveTagFailed", "Failed to Save Tag"),
+            ex.Message);
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task MergeTagsAsync(TagItem? sourceTag, CancellationToken cancellationToken)
+    {
+      if (sourceTag == null || SelectedTag == null || sourceTag.Id == SelectedTag.Id)
+        return;
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        await _backendClient.SendRequestAsync<object, object>(
+            $"/api/tags/merge?source_tag_id={sourceTag.Id}&target_tag_id={SelectedTag.Id}",
+            null,
+            System.Net.Http.HttpMethod.Post,
+            cancellationToken
+        );
+
+        await LoadTagsAsync(cancellationToken);
+        StatusMessage = ResourceHelper.FormatString("TagManager.TagsMerged", SelectedTag.Name);
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.FormatString("TagManager.TagsMergedDetail", SelectedTag.Name),
+            ResourceHelper.GetString("Toast.Title.TagsMerged", "Tags Merged"));
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "MergeTags");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task LoadCategoriesAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        var response = await _backendClient.SendRequestAsync<object, TagCategoriesResponse>(
+            "/api/tags/categories/list",
+            null,
+            System.Net.Http.HttpMethod.Get,
+            cancellationToken
+        );
+
+        AvailableCategories.Clear();
+        if (response?.Categories != null)
         {
-            IsEditing = false;
-            EditingName = null;
-            EditingCategory = null;
-            EditingColor = null;
-            EditingDescription = null;
-            SelectedTag = null;
+          foreach (var category in response.Categories)
+          {
+            AvailableCategories.Add(category);
+          }
         }
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("TagManager.LoadCategoriesFailed", ex.Message);
+      }
+    }
 
-        private async Task SaveEditAsync(CancellationToken cancellationToken)
+    partial void OnSelectedCategoryChanged(string? value)
+    {
+      _ = LoadTagsAsync(CancellationToken.None);
+    }
+
+    partial void OnSearchQueryChanged(string? value)
+    {
+      _ = SearchTagsAsync(CancellationToken.None);
+    }
+
+    public void ToggleTagSelection(string tagId, bool isCtrlPressed, bool isShiftPressed)
+    {
+      if (_multiSelectState == null)
+        return;
+
+      if (isShiftPressed && !string.IsNullOrEmpty(_multiSelectState.RangeAnchorId))
+      {
+        // Range selection
+        var allIds = Tags.Select(t => t.Id).ToList();
+        _multiSelectState.SetRange(_multiSelectState.RangeAnchorId, tagId, allIds);
+      }
+      else if (isCtrlPressed)
+      {
+        // Toggle selection
+        _multiSelectState.Toggle(tagId);
+        if (!_multiSelectState.SelectedIds.Contains(tagId))
         {
-            if (SelectedTag == null || string.IsNullOrEmpty(EditingName))
-                return;
-
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = null;
-
-                var request = new
-                {
-                    name = EditingName,
-                    category = EditingCategory,
-                    color = EditingColor,
-                    description = EditingDescription
-                };
-
-                var updated = await _backendClient.SendRequestAsync<object, Tag>(
-                    $"/api/tags/{SelectedTag.Id}",
-                    request,
-                    System.Net.Http.HttpMethod.Put
-                );
-
-                if (updated != null)
-                {
-                    SelectedTag.UpdateFrom(updated);
-                }
-
-                CancelEdit();
-                await LoadTagsAsync(cancellationToken);
-                StatusMessage = ResourceHelper.GetString("TagManager.TagUpdated", "Tag updated");
-                _toastNotificationService?.ShowSuccess(
-                    ResourceHelper.FormatString("TagManager.TagSavedSuccess", SelectedTag?.Name ?? ResourceHelper.GetString("TagManager.Unknown", "Unknown")),
-                    ResourceHelper.GetString("Toast.Title.TagSaved", "Tag Saved"));
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TagManager.SaveTagFailed", ex.Message);
-                _toastNotificationService?.ShowError(
-                    ResourceHelper.GetString("Toast.Title.SaveTagFailed", "Failed to Save Tag"),
-                    ex.Message);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          _multiSelectState.RangeAnchorId = null;
         }
-
-        private async Task MergeTagsAsync(TagItem? sourceTag, CancellationToken cancellationToken)
+        else if (_multiSelectState.RangeAnchorId == null)
         {
-            if (sourceTag == null || SelectedTag == null || sourceTag.Id == SelectedTag.Id)
-                return;
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                await _backendClient.SendRequestAsync<object, object>(
-                    $"/api/tags/merge?source_tag_id={sourceTag.Id}&target_tag_id={SelectedTag.Id}",
-                    null,
-                    System.Net.Http.HttpMethod.Post,
-                    cancellationToken
-                );
-
-                await LoadTagsAsync(cancellationToken);
-                StatusMessage = ResourceHelper.FormatString("TagManager.TagsMerged", SelectedTag.Name);
-                _toastNotificationService?.ShowSuccess(
-                    ResourceHelper.FormatString("TagManager.TagsMergedDetail", SelectedTag.Name),
-                    ResourceHelper.GetString("Toast.Title.TagsMerged", "Tags Merged"));
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "MergeTags");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          _multiSelectState.RangeAnchorId = tagId;
         }
+      }
+      else
+      {
+        // Single selection
+        _multiSelectState.SetSingle(tagId);
+      }
 
-        private async Task LoadCategoriesAsync(CancellationToken cancellationToken)
+      UpdateTagSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+    }
+
+    private void SelectAllTags()
+    {
+      if (_multiSelectState == null)
+        return;
+
+      _multiSelectState.Clear();
+      foreach (var tag in Tags)
+      {
+        _multiSelectState.Add(tag.Id);
+      }
+      UpdateTagSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+    }
+
+    private void ClearTagSelection()
+    {
+      if (_multiSelectState == null)
+        return;
+
+      _multiSelectState.Clear();
+      UpdateTagSelectionProperties();
+      _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+      DeleteSelectedTagsCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task DeleteSelectedTagsAsync(CancellationToken cancellationToken)
+    {
+      if (_multiSelectState == null || _multiSelectState.SelectedIds.Count == 0)
+        return;
+
+      var selectedIds = new System.Collections.Generic.List<string>(_multiSelectState.SelectedIds);
+
+      // Show confirmation dialog
+      var confirmed = await VoiceStudio.App.Utilities.ConfirmationDialog.ShowDeleteConfirmationAsync(
+          $"{selectedIds.Count} tag(s)",
+          "tags"
+      );
+
+      if (!confirmed)
+        return;
+
+      IsLoading = true;
+      ErrorMessage = null;
+
+      try
+      {
+        var tagsToDelete = new System.Collections.Generic.List<TagItem>();
+        int deletedCount = 0;
+
+        foreach (var tagId in selectedIds)
         {
-            try
-            {
-                var response = await _backendClient.SendRequestAsync<object, TagCategoriesResponse>(
-                    "/api/tags/categories/list",
-                    null,
-                    System.Net.Http.HttpMethod.Get,
-                    cancellationToken
-                );
+          cancellationToken.ThrowIfCancellationRequested();
 
-                AvailableCategories.Clear();
-                if (response?.Categories != null)
-                {
-                    foreach (var category in response.Categories)
-                    {
-                        AvailableCategories.Add(category);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("TagManager.LoadCategoriesFailed", ex.Message);
-            }
-        }
-
-        partial void OnSelectedCategoryChanged(string? value)
-        {
-            _ = LoadTagsAsync(CancellationToken.None);
-        }
-
-        partial void OnSearchQueryChanged(string? value)
-        {
-            _ = SearchTagsAsync(CancellationToken.None);
-        }
-
-        public void ToggleTagSelection(string tagId, bool isCtrlPressed, bool isShiftPressed)
-        {
-            if (_multiSelectState == null)
-                return;
-
-            if (isShiftPressed && !string.IsNullOrEmpty(_multiSelectState.RangeAnchorId))
-            {
-                // Range selection
-                var allIds = Tags.Select(t => t.Id).ToList();
-                _multiSelectState.SetRange(_multiSelectState.RangeAnchorId, tagId, allIds);
-            }
-            else if (isCtrlPressed)
-            {
-                // Toggle selection
-                _multiSelectState.Toggle(tagId);
-                if (!_multiSelectState.SelectedIds.Contains(tagId))
-                {
-                    _multiSelectState.RangeAnchorId = null;
-                }
-                else if (_multiSelectState.RangeAnchorId == null)
-                {
-                    _multiSelectState.RangeAnchorId = tagId;
-                }
-            }
-            else
-            {
-                // Single selection
-                _multiSelectState.SetSingle(tagId);
-            }
-
-            UpdateTagSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-        }
-
-        private void SelectAllTags()
-        {
-            if (_multiSelectState == null)
-                return;
-
-            _multiSelectState.Clear();
-            foreach (var tag in Tags)
-            {
-                _multiSelectState.Add(tag.Id);
-            }
-            UpdateTagSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-        }
-
-        private void ClearTagSelection()
-        {
-            if (_multiSelectState == null)
-                return;
-
-            _multiSelectState.Clear();
-            UpdateTagSelectionProperties();
-            _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
-            DeleteSelectedTagsCommand.NotifyCanExecuteChanged();
-        }
-
-        private async Task DeleteSelectedTagsAsync(CancellationToken cancellationToken)
-        {
-            if (_multiSelectState == null || _multiSelectState.SelectedIds.Count == 0)
-                return;
-
-            var selectedIds = new System.Collections.Generic.List<string>(_multiSelectState.SelectedIds);
-
-            // Show confirmation dialog
-            var confirmed = await VoiceStudio.App.Utilities.ConfirmationDialog.ShowDeleteConfirmationAsync(
-                $"{selectedIds.Count} tag(s)",
-                "tags"
+          try
+          {
+            await _backendClient.SendRequestAsync<object, object>(
+                $"/api/tags/{Uri.EscapeDataString(tagId)}",
+                null,
+                System.Net.Http.HttpMethod.Delete,
+                cancellationToken
             );
 
-            if (!confirmed)
-                return;
-
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
+            var tag = Tags.FirstOrDefault(t => t.Id == tagId);
+            if (tag != null)
             {
-                var tagsToDelete = new System.Collections.Generic.List<TagItem>();
-                int deletedCount = 0;
-
-                foreach (var tagId in selectedIds)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    try
-                    {
-                        await _backendClient.SendRequestAsync<object, object>(
-                            $"/api/tags/{Uri.EscapeDataString(tagId)}",
-                            null,
-                            System.Net.Http.HttpMethod.Delete,
-                            cancellationToken
-                        );
-
-                        var tag = Tags.FirstOrDefault(t => t.Id == tagId);
-                        if (tag != null)
-                        {
-                            tagsToDelete.Add(tag);
-                            Tags.Remove(tag);
-                            if (SelectedTag?.Id == tagId)
-                            {
-                                SelectedTag = null;
-                            }
-                            deletedCount++;
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw; // Re-throw cancellation to abort batch deletion
-                    }
-                    catch
-                    {
-                        // Continue even if one deletion fails
-                    }
-                }
-
-                // Clear selection after deletion
-                ClearTagSelection();
-
-                // Show success toast
-                if (deletedCount > 0)
-                {
-                    StatusMessage = ResourceHelper.FormatString("TagManager.TagsDeleted", deletedCount);
-                    _toastNotificationService?.ShowSuccess(
-                        ResourceHelper.FormatString("TagManager.TagsDeletedDetail", deletedCount),
-                        ResourceHelper.GetString("Toast.Title.BatchDeleteComplete", "Batch Delete Complete"));
-                }
-                if (deletedCount < selectedIds.Count)
-                {
-                    _toastNotificationService?.ShowWarning(
-                        ResourceHelper.FormatString("TagManager.PartialDeleteWarning", deletedCount, selectedIds.Count),
-                        ResourceHelper.GetString("Toast.Title.PartialDelete", "Partial Delete"));
-                }
+              tagsToDelete.Add(tag);
+              Tags.Remove(tag);
+              if (SelectedTag?.Id == tagId)
+              {
+                SelectedTag = null;
+              }
+              deletedCount++;
             }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(ex, "DeleteSelectedTags");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          }
+          catch (OperationCanceledException)
+          {
+            throw; // Re-throw cancellation to abort batch deletion
+          }
+          catch
+          {
+            // Continue even if one deletion fails
+          }
         }
 
-        private void UpdateTagSelectionProperties()
+        // Clear selection after deletion
+        ClearTagSelection();
+
+        // Show success toast
+        if (deletedCount > 0)
         {
-            if (_multiSelectState == null)
-            {
-                SelectedTagCount = 0;
-                HasMultipleTagSelection = false;
-            }
-            else
-            {
-                SelectedTagCount = _multiSelectState.Count;
-                HasMultipleTagSelection = _multiSelectState.Count > 1;
-            }
-            DeleteSelectedTagsCommand.NotifyCanExecuteChanged();
+          StatusMessage = ResourceHelper.FormatString("TagManager.TagsDeleted", deletedCount);
+          _toastNotificationService?.ShowSuccess(
+              ResourceHelper.FormatString("TagManager.TagsDeletedDetail", deletedCount),
+              ResourceHelper.GetString("Toast.Title.BatchDeleteComplete", "Batch Delete Complete"));
         }
-
-        // Response models
-        private class TagCategoriesResponse
+        if (deletedCount < selectedIds.Count)
         {
-            public string[] Categories { get; set; } = Array.Empty<string>();
+          _toastNotificationService?.ShowWarning(
+              ResourceHelper.FormatString("TagManager.PartialDeleteWarning", deletedCount, selectedIds.Count),
+              ResourceHelper.GetString("Toast.Title.PartialDelete", "Partial Delete"));
         }
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        await HandleErrorAsync(ex, "DeleteSelectedTags");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
     }
 
-    // Data models
-    public class Tag
+    private void UpdateTagSelectionProperties()
     {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Category { get; set; }
-        public string? Color { get; set; }
-        public string? Description { get; set; }
-        public int UsageCount { get; set; }
-        public string Created { get; set; } = string.Empty;
-        public string Modified { get; set; } = string.Empty;
+      if (_multiSelectState == null)
+      {
+        SelectedTagCount = 0;
+        HasMultipleTagSelection = false;
+      }
+      else
+      {
+        SelectedTagCount = _multiSelectState.Count;
+        HasMultipleTagSelection = _multiSelectState.Count > 1;
+      }
+      DeleteSelectedTagsCommand.NotifyCanExecuteChanged();
     }
 
-    public class TagItem : ObservableObject
+    // Response models
+    private class TagCategoriesResponse
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string? Category { get; set; }
-        public string? Color { get; set; }
-        public string? Description { get; set; }
-        public int UsageCount { get; set; }
-
-        public TagItem(Tag tag)
-        {
-            Id = tag.Id;
-            Name = tag.Name;
-            Category = tag.Category;
-            Color = tag.Color;
-            Description = tag.Description;
-            UsageCount = tag.UsageCount;
-        }
-
-        public void UpdateFrom(Tag tag)
-        {
-            Name = tag.Name;
-            Category = tag.Category;
-            Color = tag.Color;
-            Description = tag.Description;
-            UsageCount = tag.UsageCount;
-            OnPropertyChanged(nameof(Name));
-            OnPropertyChanged(nameof(Category));
-            OnPropertyChanged(nameof(Color));
-            OnPropertyChanged(nameof(Description));
-            OnPropertyChanged(nameof(UsageCount));
-        }
+      public string[] Categories { get; set; } = Array.Empty<string>();
     }
+  }
+
+  // Data models
+  public class Tag
+  {
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Category { get; set; }
+    public string? Color { get; set; }
+    public string? Description { get; set; }
+    public int UsageCount { get; set; }
+    public string Created { get; set; } = string.Empty;
+    public string Modified { get; set; } = string.Empty;
+  }
+
+  public class TagItem : ObservableObject
+  {
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string? Category { get; set; }
+    public string? Color { get; set; }
+    public string? Description { get; set; }
+    public int UsageCount { get; set; }
+
+    public TagItem(Tag tag)
+    {
+      Id = tag.Id;
+      Name = tag.Name;
+      Category = tag.Category;
+      Color = tag.Color;
+      Description = tag.Description;
+      UsageCount = tag.UsageCount;
+    }
+
+    public void UpdateFrom(Tag tag)
+    {
+      Name = tag.Name;
+      Category = tag.Category;
+      Color = tag.Color;
+      Description = tag.Description;
+      UsageCount = tag.UsageCount;
+      OnPropertyChanged(nameof(Name));
+      OnPropertyChanged(nameof(Category));
+      OnPropertyChanged(nameof(Color));
+      OnPropertyChanged(nameof(Description));
+      OnPropertyChanged(nameof(UsageCount));
+    }
+  }
 }
-

@@ -20,7 +20,7 @@ namespace VoiceStudio.App.Services
   {
     private readonly IBackendClient _backendClient;
     private readonly ConcurrentDictionary<string, IEngine> _engines = new();
-    private bool _isInitialized = false;
+    private bool _isInitialized;
 
     public EngineManager(IBackendClient backendClient)
     {
@@ -36,13 +36,13 @@ namespace VoiceStudio.App.Services
 
       try
       {
-                // Fetch list of engines from backend
-                // GET /api/engines/list
-                var response = await _backendClient.SendRequestAsync<object, EnginesListResponse>(
-                    "/api/engines/list",
-                    null,
-                    HttpMethod.Get,
-                    cancellationToken);
+        // Fetch list of engines from backend
+        // GET /api/engines/list
+        var response = await _backendClient.SendRequestAsync<object, EnginesListResponse>(
+            "/api/engines/list",
+            null,
+            HttpMethod.Get,
+            cancellationToken);
 
         if (response?.Engines != null)
         {

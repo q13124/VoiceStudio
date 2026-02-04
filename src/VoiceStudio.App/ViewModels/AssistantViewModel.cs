@@ -637,4 +637,3 @@ namespace VoiceStudio.App.ViewModels
     public string DisplayName => !string.IsNullOrEmpty(Name) ? Name : Id;
   }
 }
-

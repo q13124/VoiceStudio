@@ -46,4 +46,3 @@ namespace VoiceStudio.App.Converters
     }
   }
 }
-

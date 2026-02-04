@@ -28,7 +28,7 @@ namespace VoiceStudio.App.Services.Stores
     private ObservableCollection<EngineStoreItem> activeEngines = new();
 
     [ObservableProperty]
-    private bool isLoading = false;
+    private bool isLoading;
 
     [ObservableProperty]
     private string? errorMessage;
@@ -92,9 +92,7 @@ namespace VoiceStudio.App.Services.Stores
         {
           // Use EngineManager to discover engines
           await _engineManager.InitializeAsync();
-          var engines = _engineManager.GetEngines();
-
-          foreach (var engine in engines)
+          foreach (var engine in _engineManager.GetEngines())
           {
             var typeStr = "unknown";
             if (engine.Capabilities.HasFlag(VoiceStudio.Core.Engines.EngineCapabilities.TextToSpeech)) typeStr = "tts";
@@ -219,4 +217,3 @@ namespace VoiceStudio.App.Services.Stores
     public Dictionary<string, object> Metadata { get; set; } = new();
   }
 }
-

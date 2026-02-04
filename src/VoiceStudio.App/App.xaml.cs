@@ -17,7 +17,7 @@ namespace VoiceStudio.App
     public static Window? MainWindowInstance { get; private set; }
     private static readonly object _bindingFailureLock = new();
     private static readonly List<string> _bindingFailures = new();
-    private static bool _bindingFailureLoggingEnabled = false;
+    private static bool _bindingFailureLoggingEnabled;
     private static string? _bindingFailureLogPath;
 
     public App()
@@ -63,22 +63,32 @@ namespace VoiceStudio.App
 
         // Construct detailed crash log
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("═══════════════════════════════════════════════════");
-        sb.AppendLine("VoiceStudio Unhandled Exception Report");
-        sb.AppendLine("═══════════════════════════════════════════════════");
-        sb.AppendLine();
-        sb.AppendLine($"Timestamp (UTC): {timestamp}");
-        sb.AppendLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
-        sb.AppendLine($"Thread ID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
-        sb.AppendLine();
+        sb.AppendLine("═══════════════════════════════════════════════════")
+          .AppendLine("VoiceStudio Unhandled Exception Report")
+          .AppendLine("═══════════════════════════════════════════════════")
+          .AppendLine()
+          .AppendLine($"Timestamp (UTC): {timestamp}")
+          .AppendLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}")
+          .AppendLine($"Thread ID: {System.Threading.Thread.CurrentThread.ManagedThreadId}")
+          .AppendLine()
+          .AppendLine("--- Startup Stage ---")
+          .AppendLine($"App Startup Time: {_appStartTime:yyyy-MM-dd_HH:mm:ss.fff}")
+          .AppendLine($"Uptime at crash: {(DateTime.UtcNow - _appStartTime).TotalSeconds:F3}s");
+
+
+
+
+
+
+
 
         // Startup stage indicator
-        sb.AppendLine("--- Startup Stage ---");
-        sb.AppendLine($"App Startup Time: {_appStartTime:yyyy-MM-dd_HH:mm:ss.fff}");
-        sb.AppendLine($"Uptime at crash: {(DateTime.UtcNow - _appStartTime).TotalSeconds:F3}s");
+
+
+
         if (_startupProfiler != null)
         {
-          sb.AppendLine($"Startup Profiler: Active (within startup phase)");
+          sb.AppendLine("Startup Profiler: Active (within startup phase)");
         }
         sb.AppendLine();
 
@@ -640,7 +650,19 @@ namespace VoiceStudio.App
           failures = _bindingFailures.ToArray();
         }
 
-        var exitCode = timedOut ? 5 : (failures.Length == 0 ? 0 : 1);
+        int exitCode;
+        if (timedOut)
+        {
+          exitCode = 5;
+        }
+        else if (failures.Length == 0)
+        {
+          exitCode = 0;
+        }
+        else
+        {
+          exitCode = 1;
+        }
 
         return new GateCUiSmokeResult
         {
@@ -703,4 +725,3 @@ namespace VoiceStudio.App
     private Window? m_window;
   }
 }
-

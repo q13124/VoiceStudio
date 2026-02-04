@@ -22,7 +22,6 @@ namespace VoiceStudio.App.Services
     private readonly BackendClientConfig _config;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly Utilities.CircuitBreaker _circuitBreaker;
-    private readonly IWebSocketService? _webSocketService;
     private const int MaxRetries = 3;
     private const int RetryDelayMs = 1000;
 
@@ -31,7 +30,7 @@ namespace VoiceStudio.App.Services
     private DateTime _lastConnectionCheck = DateTime.MinValue;
     private const int ConnectionCheckIntervalSeconds = 5;
 
-    public IWebSocketService? WebSocketService => _webSocketService;
+    public IWebSocketService? WebSocketService { get; }
 
     public BackendClient(BackendClientConfig config)
     {
@@ -71,7 +70,7 @@ namespace VoiceStudio.App.Services
           wsUrl = wsUrl.TrimEnd('/') + "/realtime";
         }
 
-        _webSocketService = new WebSocketService(wsUrl);
+        WebSocketService = new WebSocketService(wsUrl);
       }
     }
 
@@ -320,7 +319,7 @@ namespace VoiceStudio.App.Services
         content.Add(new StringContent(request.Language), "language");
 
         // Add prosody parameters as JSON if provided
-        if (request.ProsodyParams != null && request.ProsodyParams.Count > 0)
+        if (request.ProsodyParams?.Count > 0)
         {
           var prosodyJson = System.Text.Json.JsonSerializer.Serialize(request.ProsodyParams);
           content.Add(new StringContent(prosodyJson), "prosody_params");
@@ -565,7 +564,6 @@ namespace VoiceStudio.App.Services
       });
     }
 
-
     public async Task<List<ProjectAudioFile>> ListProjectAudioAsync(string projectId, CancellationToken cancellationToken = default)
     {
       return await ExecuteWithRetryAsync(async () =>
@@ -722,7 +720,6 @@ namespace VoiceStudio.App.Services
         {
           throw await CreateExceptionFromResponseAsync(response);
         }
-
 
         // Backend returns dict with filename, url, saved_path
         var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(_jsonOptions, cancellationToken)
@@ -1093,8 +1090,6 @@ namespace VoiceStudio.App.Services
         _ => new BackendServerException(errorMessage, statusCode)
       };
     }
-
-
 
     // Macro management
     public async Task<List<Macro>> GetMacrosAsync(string? projectId = null, CancellationToken cancellationToken = default)
@@ -3216,21 +3211,21 @@ namespace VoiceStudio.App.Services
     public async Task<EngineRecommendationResponse> GetEngineRecommendationAsync(EngineRecommendationRequest request, CancellationToken cancellationToken = default)
     {
       // Use POST endpoint for engine recommendations
-      var url = "/api/engines/recommend";
+      const string url = "/api/engines/recommend";
       return await PostAsync<EngineRecommendationRequest, EngineRecommendationResponse>(url, request, cancellationToken)
           ?? throw new BackendDeserializationException("Failed to deserialize engine recommendation");
     }
 
     public async Task<ABTestResponse> RunABTestAsync(ABTestRequest request, CancellationToken cancellationToken = default)
     {
-      var url = "/api/voice/ab-test";
+      const string url = "/api/voice/ab-test";
       return await PostAsync<ABTestRequest, ABTestResponse>(url, request, cancellationToken)
           ?? throw new BackendDeserializationException("Failed to deserialize A/B test response");
     }
 
     public async Task<BenchmarkResponse> RunBenchmarkAsync(BenchmarkRequest request, CancellationToken cancellationToken = default)
     {
-      var url = "/api/quality/benchmark";
+      const string url = "/api/quality/benchmark";
       return await PostAsync<BenchmarkRequest, BenchmarkResponse>(url, request, cancellationToken)
           ?? throw new BackendDeserializationException("Failed to deserialize benchmark response");
     }
@@ -3419,7 +3414,7 @@ namespace VoiceStudio.App.Services
       // Compute simplified trend from full trends data
       QualityTrend trend = QualityTrend.Stable;
 
-      if (trends.Statistics != null && trends.Statistics.Count > 0)
+      if (trends.Statistics?.Count > 0)
       {
         // Calculate overall trend from quality_score if available
         if (trends.Statistics.TryGetValue("quality_score", out var qualityStats))
@@ -3620,7 +3615,7 @@ namespace VoiceStudio.App.Services
     {
       return await ExecuteWithRetryAsync(async () =>
       {
-        var url = "/api/quality/consistency/standard";
+        const string url = "/api/quality/consistency/standard";
         var request = new
         {
           project_id = projectId,
@@ -3636,7 +3631,7 @@ namespace VoiceStudio.App.Services
 
         // Backend returns {"message": "..."} on success
         var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(_jsonOptions, cancellationToken);
-        return result != null && result.ContainsKey("message");
+        return result?.ContainsKey("message") == true;
       });
     }
 
@@ -3664,7 +3659,7 @@ namespace VoiceStudio.App.Services
 
         // Backend returns {"message": "..."} on success
         var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(_jsonOptions, cancellationToken);
-        return result != null && result.ContainsKey("message");
+        return result?.ContainsKey("message") == true;
       });
     }
 
@@ -3727,7 +3722,7 @@ namespace VoiceStudio.App.Services
     {
       return await ExecuteWithRetryAsync(async () =>
       {
-        var url = "/api/quality/visualization/heatmap";
+        const string url = "/api/quality/visualization/heatmap";
 
         var response = await _httpClient.PostAsJsonAsync(url, request, _jsonOptions, cancellationToken);
 
@@ -3745,7 +3740,7 @@ namespace VoiceStudio.App.Services
     {
       return await ExecuteWithRetryAsync(async () =>
       {
-        var url = "/api/quality/visualization/correlations";
+        const string url = "/api/quality/visualization/correlations";
 
         var response = await _httpClient.PostAsJsonAsync(url, qualityData, _jsonOptions, cancellationToken);
 
@@ -3781,7 +3776,7 @@ namespace VoiceStudio.App.Services
     {
       return await ExecuteWithRetryAsync(async () =>
       {
-        var url = "/api/quality/visualization/predict";
+        const string url = "/api/quality/visualization/predict";
 
         var response = await _httpClient.PostAsJsonAsync(url, request, _jsonOptions, cancellationToken);
 
@@ -3875,7 +3870,7 @@ namespace VoiceStudio.App.Services
 
     public void Dispose()
     {
-      _webSocketService?.Dispose();
+      WebSocketService?.Dispose();
       _httpClient?.Dispose();
       // CircuitBreaker doesn't implement IDisposable - no cleanup needed
     }

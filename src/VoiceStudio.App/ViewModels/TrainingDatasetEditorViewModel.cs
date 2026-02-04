@@ -232,10 +232,7 @@ namespace VoiceStudio.App.ViewModels
                     SelectedAudioFile = null;
                   }
                 },
-                onRedo: (af) =>
-                {
-                  SelectedAudioFile = af;
-                });
+                onRedo: (af) => SelectedAudioFile = af);
             _undoRedoService.RegisterAction(action);
           }
 
@@ -386,10 +383,7 @@ namespace VoiceStudio.App.ViewModels
                 audioFileToRemove,
                 _backendClient,
                 originalIndex,
-                onUndo: (af) =>
-                {
-                  SelectedAudioFile = af;
-                },
+                onUndo: (af) => SelectedAudioFile = af,
                 onRedo: (af) =>
                 {
                   if (SelectedAudioFile?.Id == af.Id)
@@ -606,4 +600,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

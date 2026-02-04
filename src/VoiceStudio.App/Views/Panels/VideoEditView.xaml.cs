@@ -55,12 +55,12 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void VideoEditView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void VideoEditView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Video Editing Help";
       HelpOverlay.HelpText = "The Video Editing panel allows you to edit videos by trimming, splitting, applying effects and transitions, and exporting in various formats. Select a video file, use the trim controls to set start and end times, apply effects or transitions, and export your edited video.";
@@ -92,7 +92,7 @@ namespace VoiceStudio.App.Views.Panels
         var menu = new MenuFlyout();
 
         var copyPathItem = new MenuFlyoutItem { Text = "Copy Path" };
-        copyPathItem.Click += (s, args) =>
+        copyPathItem.Click += (_, _) =>
         {
           var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
           dataPackage.SetText(ViewModel.SelectedVideoPath);
@@ -102,7 +102,7 @@ namespace VoiceStudio.App.Views.Panels
         menu.Items.Add(copyPathItem);
 
         var openFolderItem = new MenuFlyoutItem { Text = "Open in File Explorer" };
-        openFolderItem.Click += async (s, args) =>
+        openFolderItem.Click += async (_, _) =>
         {
           try
           {
@@ -117,11 +117,11 @@ namespace VoiceStudio.App.Views.Panels
         };
         menu.Items.Add(openFolderItem);
 
-                var target = sender as UIElement;
-                if (target != null)
-                {
-                    _contextMenuService.ShowContextMenu(menu, target, e.GetPosition(target));
-                }
+        var target = sender as UIElement;
+        if (target != null)
+        {
+          _contextMenuService.ShowContextMenu(menu, target, e.GetPosition(target));
+        }
       }
     }
   }

@@ -49,7 +49,7 @@ namespace VoiceStudio.App.ViewModels
     private ObservableCollection<string> availableTimeRanges = new() { "7d", "30d", "90d", "1y", "all" };
 
     [ObservableProperty]
-    private bool dashboardAvailable = false;
+    private bool dashboardAvailable;
 
     [ObservableProperty]
     private string dashboardStatusMessage = ResourceHelper.GetString("QualityDashboard.StatusMessageRequiresDB", "Quality dashboard requires database integration for full functionality. Basic quality metrics and presets are available.");
@@ -143,17 +143,15 @@ namespace VoiceStudio.App.ViewModels
         // Backend will generate matplotlib/plotly charts and return image URLs
         // These endpoints will be created when visualization libraries are integrated
         var timeRangeDays = GetDaysFromTimeRange(SelectedTimeRange);
-        var baseUrl = "http://localhost:8000"; // Default backend URL
+        const string baseUrl = "http://localhost:8000"; // Default backend URL
 
         // For trends visualization - construct URL for backend endpoint
         // Endpoint: /api/quality/trends/visualization?type={type}&days={days}
-        var trendsUrl = $"{baseUrl}/api/quality/trends/visualization?type={SelectedVisualizationType}&days={timeRangeDays}";
-        TrendsVisualizationImageUrl = trendsUrl;
+        TrendsVisualizationImageUrl = $"{baseUrl}/api/quality/trends/visualization?type={SelectedVisualizationType}&days={timeRangeDays}";
 
         // For distribution visualization - construct URL for backend endpoint
         // Endpoint: /api/quality/distribution/visualization?type={type}
-        var distributionUrl = $"{baseUrl}/api/quality/distribution/visualization?type={SelectedVisualizationType}";
-        DistributionVisualizationImageUrl = distributionUrl;
+        DistributionVisualizationImageUrl = $"{baseUrl}/api/quality/distribution/visualization?type={SelectedVisualizationType}";
       }
       catch (OperationCanceledException)
       {
@@ -242,7 +240,7 @@ namespace VoiceStudio.App.ViewModels
       {
         var presets = await _backendClient.GetQualityPresetsAsync(cancellationToken);
 
-        if (presets != null && presets.Count > 0)
+        if (presets?.Count > 0)
         {
           QualityPresets.Clear();
           foreach (var preset in presets)
@@ -444,7 +442,7 @@ namespace VoiceStudio.App.ViewModels
         QualityDistribution = new ObservableCollection<QualityDistributionItem>();
         foreach (var dist in dashboard.Distribution)
         {
-          if (dist.Value != null && dist.Value.Histogram != null)
+          if (dist.Value?.Histogram != null)
           {
             // QualityDistribution has a Histogram dictionary with range->count mappings
             foreach (var histogramEntry in dist.Value.Histogram)
@@ -529,4 +527,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

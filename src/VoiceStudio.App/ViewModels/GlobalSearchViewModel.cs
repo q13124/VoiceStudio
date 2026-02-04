@@ -141,4 +141,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

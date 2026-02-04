@@ -25,7 +25,7 @@ namespace VoiceStudio.App.Views.Panels
     private readonly MultiSelectService _multiSelectService;
     private MultiSelectState? _multiSelectState;
     private CancellationTokenSource? _pollingCts;
-    private bool _isPolling = false;
+    private bool _isPolling;
 
     public string PanelId => "training";
     public string DisplayName => ResourceHelper.GetString("Panel.Training.DisplayName", "Training");
@@ -80,33 +80,33 @@ namespace VoiceStudio.App.Views.Panels
     private string? errorMessage;
 
     [ObservableProperty]
-    private bool autoRefresh = false;
+    private bool autoRefresh;
 
     [ObservableProperty]
     private string? filterStatus;
 
     // Multi-select support
     [ObservableProperty]
-    private int selectedDatasetCount = 0;
+    private int selectedDatasetCount;
 
     [ObservableProperty]
-    private bool hasMultipleDatasetSelection = false;
+    private bool hasMultipleDatasetSelection;
 
     [ObservableProperty]
-    private int selectedTrainingJobCount = 0;
+    private int selectedTrainingJobCount;
 
     [ObservableProperty]
-    private bool hasMultipleTrainingJobSelection = false;
+    private bool hasMultipleTrainingJobSelection;
 
     // Quality monitoring (IDEA 54)
     [ObservableProperty]
     private ObservableCollection<TrainingQualityMetrics> qualityHistory = new();
 
     [ObservableProperty]
-    private bool isLoadingQualityHistory = false;
+    private bool isLoadingQualityHistory;
 
     [ObservableProperty]
-    private bool hasQualityHistory = false;
+    private bool hasQualityHistory;
 
     // Progress predictions (IDEA 28)
     public string EstimatedTimeRemaining
@@ -277,9 +277,9 @@ namespace VoiceStudio.App.Views.Panels
       }, () => !IsLoading && SelectedTrainingJob != null && !IsLoadingQualityHistory);
 
       // Multi-select commands
-      SelectAllDatasetsCommand = new RelayCommand(SelectAllDatasets, () => Datasets != null && Datasets.Count > 0);
+      SelectAllDatasetsCommand = new RelayCommand(SelectAllDatasets, () => Datasets?.Count > 0);
       ClearDatasetSelectionCommand = new RelayCommand(ClearDatasetSelection);
-      SelectAllTrainingJobsCommand = new RelayCommand(SelectAllTrainingJobs, () => TrainingJobs != null && TrainingJobs.Count > 0);
+      SelectAllTrainingJobsCommand = new RelayCommand(SelectAllTrainingJobs, () => TrainingJobs?.Count > 0);
       ClearTrainingJobSelectionCommand = new RelayCommand(ClearTrainingJobSelection);
 
       // Subscribe to selection changes
@@ -464,10 +464,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedDataset = Datasets.FirstOrDefault();
                 }
               },
-              onRedo: (d) =>
-              {
-                SelectedDataset = d;
-              });
+              onRedo: (d) => SelectedDataset = d);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -934,8 +931,7 @@ namespace VoiceStudio.App.Views.Panels
         return;
 
       // Remove only dataset selections
-      var datasetIds = _multiSelectState.SelectedIds.Where(id => id.StartsWith("dataset_")).ToList();
-      foreach (var id in datasetIds)
+      foreach (var id in _multiSelectState.SelectedIds.Where(id => id.StartsWith("dataset_")).ToList())
       {
         _multiSelectState.Remove(id);
       }
@@ -1025,8 +1021,7 @@ namespace VoiceStudio.App.Views.Panels
         return;
 
       // Remove only training job selections
-      var jobIds = _multiSelectState.SelectedIds.Where(id => id.StartsWith("job_")).ToList();
-      foreach (var id in jobIds)
+      foreach (var id in _multiSelectState.SelectedIds.Where(id => id.StartsWith("job_")).ToList())
       {
         _multiSelectState.Remove(id);
       }

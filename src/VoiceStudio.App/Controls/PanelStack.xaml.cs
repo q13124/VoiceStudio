@@ -147,7 +147,7 @@ namespace VoiceStudio.App.Controls
         Padding = new Thickness(0)
       };
 
-      tabButton.Click += (s, e) =>
+      tabButton.Click += (s, _) =>
       {
         if (s is ToggleButton btn && btn.Tag is string panelId)
         {
@@ -172,8 +172,8 @@ namespace VoiceStudio.App.Controls
       };
 
       closeButton.Click += CloseButton_Click;
-      closeButton.PointerEntered += (s, e) => { if (s is Button btn) btn.Opacity = 1.0; };
-      closeButton.PointerExited += (s, e) => { if (s is Button btn) btn.Opacity = 0.6; };
+      closeButton.PointerEntered += (s, _) => { if (s is Button btn) btn.Opacity = 1.0; };
+      closeButton.PointerExited += (s, _) => { if (s is Button btn) btn.Opacity = 0.6; };
 
       stackPanel.Children.Add(tabButton);
       stackPanel.Children.Add(closeButton);
@@ -189,7 +189,7 @@ namespace VoiceStudio.App.Controls
       return container;
     }
 
-    private void Tab_DragStarting(object sender, DragStartingEventArgs e, PanelStackItem panel, int index)
+    private void Tab_DragStarting(object _, DragStartingEventArgs e, PanelStackItem panel, int index)
     {
       _draggedItem = panel;
       _dragStartIndex = index;
@@ -222,17 +222,14 @@ namespace VoiceStudio.App.Controls
         return;
 
       if (e.Data.Properties.TryGetValue("SourceIndex", out var sourceIndexObj) &&
-          sourceIndexObj is int sourceIndex)
+          sourceIndexObj is int sourceIndex && sourceIndex != targetIndex)
       {
-        if (sourceIndex != targetIndex)
-        {
-          Panels.Move(sourceIndex, targetIndex);
+        Panels.Move(sourceIndex, targetIndex);
 
-          // If we moved the active panel, update ActivePanelId to maintain selection
-          if (_draggedItem.PanelId == ActivePanelId)
-          {
-            ActivePanelId = _draggedItem.PanelId;
-          }
+        // If we moved the active panel, update ActivePanelId to maintain selection
+        if (_draggedItem.PanelId == ActivePanelId)
+        {
+          ActivePanelId = _draggedItem.PanelId;
         }
       }
 
@@ -240,7 +237,7 @@ namespace VoiceStudio.App.Controls
       _dragStartIndex = -1;
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    private void CloseButton_Click(object sender, RoutedEventArgs _)
     {
       if (sender is Button btn && btn.Tag is string panelId)
       {
@@ -361,4 +358,3 @@ namespace VoiceStudio.App.Controls
     public UIElement Content { get; set; } = null!;
   }
 }
-

@@ -95,8 +95,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private ObservableCollection<QualityCandidateItem> candidateMetrics = new();
 
-        [ObservableProperty]
-        private string? device;
+    [ObservableProperty]
+    private string? device;
 
     public VoiceCloningWizardViewModel(IViewModelContext context, IBackendClient backendClient)
         : base(context)
@@ -168,7 +168,7 @@ namespace VoiceStudio.App.ViewModels
       }
     }
 
-        private bool CanStartProcessing => CurrentStep == 2 && !string.IsNullOrWhiteSpace(ProfileName) && !string.IsNullOrWhiteSpace(SelectedEngine) && UploadedAudioIds.Count > 0;
+    private bool CanStartProcessing => CurrentStep == 2 && !string.IsNullOrWhiteSpace(ProfileName) && !string.IsNullOrWhiteSpace(SelectedEngine) && UploadedAudioIds.Count > 0;
 
     private bool CanFinalize => CurrentStep == 4 && ProcessingStatus == "completed" && !string.IsNullOrWhiteSpace(CreatedProfileId);
 
@@ -230,7 +230,7 @@ namespace VoiceStudio.App.ViewModels
         var files = await picker.PickMultipleFilesAsync();
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (files != null && files.Any())
+        if (files?.Any() == true)
         {
           SelectedAudioFiles.Clear();
           foreach (var f in files)
@@ -266,19 +266,19 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-                UploadedAudioIds.Clear();
-                UploadedAudioId = null;
-                if (SelectedAudioFiles.Count > 0)
-                {
-                    foreach (var file in SelectedAudioFiles)
-                    {
-                        var uploadedId = await UploadAudioFileAsync(file, cancellationToken);
-                        if (!string.IsNullOrEmpty(uploadedId))
-                        {
-                            UploadedAudioIds.Add(uploadedId);
-                        }
-                    }
-                }
+        UploadedAudioIds.Clear();
+        UploadedAudioId = null;
+        if (SelectedAudioFiles.Count > 0)
+        {
+          foreach (var file in SelectedAudioFiles)
+          {
+            var uploadedId = await UploadAudioFileAsync(file, cancellationToken);
+            if (!string.IsNullOrEmpty(uploadedId))
+            {
+              UploadedAudioIds.Add(uploadedId);
+            }
+          }
+        }
 
         AudioValidations.Clear();
 
@@ -355,7 +355,7 @@ namespace VoiceStudio.App.ViewModels
         using var httpClient = new HttpClient();
         httpClient.BaseAddress = new Uri(baseUrl);
 
-        using var fileStream = await file.OpenStreamForReadAsync();
+        await using var fileStream = await file.OpenStreamForReadAsync();
         cancellationToken.ThrowIfCancellationRequested();
 
         var fileName = file.Name;
@@ -549,40 +549,40 @@ namespace VoiceStudio.App.ViewModels
             ProcessingProgress = status.Progress;
             ProcessingStatus = status.Status;
 
-                        if (status.Status == "completed")
+            if (status.Status == "completed")
             {
               CreatedProfileId = status.ProfileId;
               if (status.QualityMetrics != null)
               {
-                                QualityMetrics = new QualityMetricsItem(status.QualityMetrics);
+                QualityMetrics = new QualityMetricsItem(status.QualityMetrics);
               }
-                            else
-                            {
-                                QualityMetrics = null;
-                            }
+              else
+              {
+                QualityMetrics = null;
+              }
 
-                            // Device and candidate metrics can arrive at top-level (preferred) or inside quality metrics fallback.
-                            Device = status.Device ?? QualityMetrics?.Device;
+              // Device and candidate metrics can arrive at top-level (preferred) or inside quality metrics fallback.
+              Device = status.Device ?? QualityMetrics?.Device;
 
-                            CandidateMetrics.Clear();
-                            if (status.CandidateMetrics != null && status.CandidateMetrics.Count > 0)
-                            {
-                                foreach (var c in status.CandidateMetrics)
-                                {
-                                    var item = QualityCandidateItem.FromDictionary(c.ToDictionary());
-                                    if (item != null)
-                                    {
-                                        CandidateMetrics.Add(item);
-                                    }
-                                }
-                            }
-                            else if (QualityMetrics != null)
-                            {
-                                foreach (var c in QualityMetrics.Candidates)
-                                {
-                                    CandidateMetrics.Add(c);
-                                }
-                            }
+              CandidateMetrics.Clear();
+              if (status.CandidateMetrics?.Count > 0)
+              {
+                foreach (var c in status.CandidateMetrics)
+                {
+                  var item = QualityCandidateItem.FromDictionary(c.ToDictionary());
+                  if (item != null)
+                  {
+                    CandidateMetrics.Add(item);
+                  }
+                }
+              }
+              else if (QualityMetrics != null)
+              {
+                foreach (var c in QualityMetrics.Candidates)
+                {
+                  CandidateMetrics.Add(c);
+                }
+              }
 
               TestSynthesisAudioUrl = status.TestSynthesisAudioUrl;
               CurrentStep = 4;
@@ -656,7 +656,7 @@ namespace VoiceStudio.App.ViewModels
             cancellationToken
         );
 
-        if (response != null && response.Success)
+        if (response?.Success == true)
         {
           StatusMessage = ResourceHelper.FormatString("VoiceCloningWizard.ProfileCreatedSuccess", response.ProfileName);
           _toastNotificationService?.ShowSuccess(
@@ -735,7 +735,7 @@ namespace VoiceStudio.App.ViewModels
       CreatedProfileId = null;
       QualityMetrics = null;
       CandidateMetrics.Clear();
-            Device = null;
+      Device = null;
       TestSynthesisAudioUrl = null;
       UploadedAudioId = null;
       UploadedAudioIds.Clear();
@@ -762,7 +762,7 @@ namespace VoiceStudio.App.ViewModels
       public double? QualityScore { get; set; }
     }
 
-        private class WizardStartRequest
+    private class WizardStartRequest
     {
       public string ReferenceAudioId { get; set; } = string.Empty;
       public string Engine { get; set; } = "xtts";
@@ -778,7 +778,7 @@ namespace VoiceStudio.App.ViewModels
       public string Status { get; set; } = string.Empty;
     }
 
-        private class WizardStatusResponse
+    private class WizardStatusResponse
     {
       public string JobId { get; set; } = string.Empty;
       public int Step { get; set; }
@@ -789,11 +789,11 @@ namespace VoiceStudio.App.ViewModels
       public string? TestSynthesisAudioUrl { get; set; }
       public string? ErrorMessage { get; set; }
 
-            [JsonPropertyName("device")]
-            public string? Device { get; set; }
+      [JsonPropertyName("device")]
+      public string? Device { get; set; }
 
-            [JsonPropertyName("candidate_metrics")]
-            public List<CandidateMetricDto>? CandidateMetrics { get; set; }
+      [JsonPropertyName("candidate_metrics")]
+      public List<CandidateMetricDto>? CandidateMetrics { get; set; }
     }
 
     private class WizardFinalizeRequest
@@ -1105,14 +1105,14 @@ namespace VoiceStudio.App.ViewModels
     public string? Label { get; set; }
     public double? Score { get; set; }
     public string? Device { get; set; }
-        public Dictionary<string, object>? Metrics { get; set; }
-        public string? ReferenceAudio { get; set; }
-        public bool? Selected { get; set; }
+    public Dictionary<string, object>? Metrics { get; set; }
+    public string? ReferenceAudio { get; set; }
+    public bool? Selected { get; set; }
 
     public string LabelDisplay => string.IsNullOrWhiteSpace(Label) ? "Candidate" : Label;
     public string ScoreDisplay => Score.HasValue ? $"{Score.Value:F3}" : "N/A";
     public string DeviceDisplay => string.IsNullOrWhiteSpace(Device) ? "N/A" : Device;
-        public string SelectedDisplay => Selected.HasValue ? (Selected.Value ? "Selected" : "Not selected") : "Unknown";
+    public string SelectedDisplay => Selected.HasValue ? (Selected.Value ? "Selected" : "Not selected") : "Unknown";
 
     public static QualityCandidateItem? FromDictionary(Dictionary<string, object> dict)
     {
@@ -1128,7 +1128,7 @@ namespace VoiceStudio.App.ViewModels
           dict.TryGetValue("candidate", out label);
         }
 
-                dict.TryGetValue("score", out var score);
+        dict.TryGetValue("score", out var score);
         if (score == null && dict.TryGetValue("mos", out var mosScore))
         {
           score = mosScore;
@@ -1140,18 +1140,18 @@ namespace VoiceStudio.App.ViewModels
           device = deviceName;
         }
 
-                dict.TryGetValue("metrics", out var metrics);
-                dict.TryGetValue("reference_audio", out var referenceAudio);
-                dict.TryGetValue("selected", out var selected);
+        dict.TryGetValue("metrics", out var metrics);
+        dict.TryGetValue("reference_audio", out var referenceAudio);
+        dict.TryGetValue("selected", out var selected);
 
         return new QualityCandidateItem
         {
           Label = label?.ToString(),
           Score = score == null ? null : QualityMetricsItem.ReadDouble(score),
-                    Device = device?.ToString(),
-                    ReferenceAudio = referenceAudio?.ToString(),
-                    Metrics = metrics as Dictionary<string, object>,
-                    Selected = selected is bool b ? b : null
+          Device = device?.ToString(),
+          ReferenceAudio = referenceAudio?.ToString(),
+          Metrics = metrics as Dictionary<string, object>,
+          Selected = selected is bool b ? b : null
         };
       }
       catch
@@ -1161,26 +1161,26 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 
-    public class CandidateMetricDto
+  public class CandidateMetricDto
+  {
+    [JsonPropertyName("reference_audio")]
+    public string? ReferenceAudio { get; set; }
+
+    [JsonPropertyName("metrics")]
+    public Dictionary<string, object>? Metrics { get; set; }
+
+    [JsonPropertyName("score")]
+    public double? Score { get; set; }
+
+    [JsonPropertyName("selected")]
+    public bool? Selected { get; set; }
+
+    [JsonPropertyName("device")]
+    public string? Device { get; set; }
+
+    public Dictionary<string, object> ToDictionary()
     {
-        [JsonPropertyName("reference_audio")]
-        public string? ReferenceAudio { get; set; }
-
-        [JsonPropertyName("metrics")]
-        public Dictionary<string, object>? Metrics { get; set; }
-
-        [JsonPropertyName("score")]
-        public double? Score { get; set; }
-
-        [JsonPropertyName("selected")]
-        public bool? Selected { get; set; }
-
-        [JsonPropertyName("device")]
-        public string? Device { get; set; }
-
-        public Dictionary<string, object> ToDictionary()
-        {
-            return new Dictionary<string, object>
+      return new Dictionary<string, object>
             {
                 { "reference_audio", ReferenceAudio ?? string.Empty },
                 { "metrics", Metrics ?? new Dictionary<string, object>() },
@@ -1188,6 +1188,6 @@ namespace VoiceStudio.App.ViewModels
                 { "selected", Selected ?? false },
                 { "device", Device ?? string.Empty },
             };
-        }
     }
+  }
 }

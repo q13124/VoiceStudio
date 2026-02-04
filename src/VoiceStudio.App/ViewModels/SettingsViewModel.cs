@@ -16,158 +16,158 @@ using Windows.UI;
 
 namespace VoiceStudio.App.ViewModels
 {
-    /// <summary>
-    /// ViewModel for settings panel.
-    /// </summary>
-    public partial class SettingsViewModel : BaseViewModel, IPanelView
-    {
-        public string PanelId => "settings";
-        public string DisplayName => ResourceHelper.GetString("Panel.Settings.DisplayName", "Settings");
-        public PanelRegion Region => PanelRegion.Floating;
-        private readonly ISettingsService _settingsService;
-        private readonly IBackendClient _backendClient;
-        private readonly PluginManager? _pluginManager;
-        private readonly ITelemetryService? _telemetryService;
+  /// <summary>
+  /// ViewModel for settings panel.
+  /// </summary>
+  public partial class SettingsViewModel : BaseViewModel, IPanelView
+  {
+    public string PanelId => "settings";
+    public string DisplayName => ResourceHelper.GetString("Panel.Settings.DisplayName", "Settings");
+    public PanelRegion Region => PanelRegion.Floating;
+    private readonly ISettingsService _settingsService;
+    private readonly IBackendClient _backendClient;
+    private readonly PluginManager? _pluginManager;
+    private readonly ITelemetryService? _telemetryService;
 
-        // General Settings
-        [ObservableProperty]
-        private string theme = "Dark";
+    // General Settings
+    [ObservableProperty]
+    private string theme = "Dark";
 
-        [ObservableProperty]
-        private string language = "en-US";
+    [ObservableProperty]
+    private string language = "en-US";
 
-        [ObservableProperty]
-        private bool autoSave = true;
+    [ObservableProperty]
+    private bool autoSave = true;
 
-        [ObservableProperty]
-        private int autoSaveInterval = 300; // seconds
+    [ObservableProperty]
+    private int autoSaveInterval = 300; // seconds
 
-        // Engine Settings
-        [ObservableProperty]
-        private string defaultAudioEngine = "xtts";
+    // Engine Settings
+    [ObservableProperty]
+    private string defaultAudioEngine = "xtts";
 
-        [ObservableProperty]
-        private string defaultImageEngine = "sdxl";
+    [ObservableProperty]
+    private string defaultImageEngine = "sdxl";
 
-        [ObservableProperty]
-        private string defaultVideoEngine = "svd";
+    [ObservableProperty]
+    private string defaultVideoEngine = "svd";
 
-        [ObservableProperty]
-        private int qualityLevel = 5; // 1-10
+    [ObservableProperty]
+    private int qualityLevel = 5; // 1-10
 
-        // Audio Settings
-        [ObservableProperty]
-        private string audioOutputDevice = "Default";
+    // Audio Settings
+    [ObservableProperty]
+    private string audioOutputDevice = "Default";
 
-        [ObservableProperty]
-        private string audioInputDevice = "Default";
+    [ObservableProperty]
+    private string audioInputDevice = "Default";
 
-        [ObservableProperty]
-        private int sampleRate = 44100;
+    [ObservableProperty]
+    private int sampleRate = 44100;
 
-        [ObservableProperty]
-        private int bufferSize = 1024;
+    [ObservableProperty]
+    private int bufferSize = 1024;
 
-        // Timeline Settings
-        [ObservableProperty]
-        private string timeFormat = "Timecode";
+    // Timeline Settings
+    [ObservableProperty]
+    private string timeFormat = "Timecode";
 
-        [ObservableProperty]
-        private bool snapEnabled = true;
+    [ObservableProperty]
+    private bool snapEnabled = true;
 
-        [ObservableProperty]
-        private double snapInterval = 0.1; // seconds
+    [ObservableProperty]
+    private double snapInterval = 0.1; // seconds
 
-        [ObservableProperty]
-        private bool gridEnabled = true;
+    [ObservableProperty]
+    private bool gridEnabled = true;
 
-        [ObservableProperty]
-        private double gridInterval = 1.0; // seconds
+    [ObservableProperty]
+    private double gridInterval = 1.0; // seconds
 
-        // Backend Settings
-        [ObservableProperty]
-        private string apiUrl = "http://localhost:8001";
+    // Backend Settings
+    [ObservableProperty]
+    private string apiUrl = "http://localhost:8001";
 
-        [ObservableProperty]
-        private int apiTimeout = 30; // seconds
+    [ObservableProperty]
+    private int apiTimeout = 30; // seconds
 
-        [ObservableProperty]
-        private int apiRetryCount = 3;
+    [ObservableProperty]
+    private int apiRetryCount = 3;
 
-        // Performance Settings
-        [ObservableProperty]
-        private bool cachingEnabled = true;
+    // Performance Settings
+    [ObservableProperty]
+    private bool cachingEnabled = true;
 
-        [ObservableProperty]
-        private int cacheSize = 512; // MB
+    [ObservableProperty]
+    private int cacheSize = 512; // MB
 
-        [ObservableProperty]
-        private int maxThreads = 4;
+    [ObservableProperty]
+    private int maxThreads = 4;
 
-        [ObservableProperty]
-        private int memoryLimit = 4096; // MB
+    [ObservableProperty]
+    private int memoryLimit = 4096; // MB
 
-        // Plugin Settings
-        [ObservableProperty]
-        private ObservableCollection<PluginInfo> plugins = new();
+    // Plugin Settings
+    [ObservableProperty]
+    private ObservableCollection<PluginInfo> plugins = new();
 
-        [ObservableProperty]
-        private PluginInfo? selectedPlugin;
+    [ObservableProperty]
+    private PluginInfo? selectedPlugin;
 
-        [ObservableProperty]
-        private bool isLoadingPlugins;
+    [ObservableProperty]
+    private bool isLoadingPlugins;
 
-        // MCP Settings
-        [ObservableProperty]
-        private bool mcpEnabled = false;
+    // MCP Settings
+    [ObservableProperty]
+    private bool mcpEnabled;
 
-        [ObservableProperty]
-        private string mcpServerUrl = "http://localhost:8080";
+    [ObservableProperty]
+    private string mcpServerUrl = "http://localhost:8080";
 
-        // Diagnostics Settings
-        [ObservableProperty]
-        private bool telemetryEnabled = false;
+    // Diagnostics Settings
+    [ObservableProperty]
+    private bool telemetryEnabled;
 
-        [ObservableProperty]
-        private bool crashReportingEnabled = true;
+    [ObservableProperty]
+    private bool crashReportingEnabled = true;
 
-        [ObservableProperty]
-        private bool includeLogsInCrashReport = true;
+    [ObservableProperty]
+    private bool includeLogsInCrashReport = true;
 
-        // System/Dependency Status
-        [ObservableProperty]
-        private ObservableCollection<DependencyStatusItem> dependencyStatusList = new();
+    // System/Dependency Status
+    [ObservableProperty]
+    private ObservableCollection<DependencyStatusItem> dependencyStatusList = new();
 
-        [ObservableProperty]
-        private int totalDependencies = 0;
+    [ObservableProperty]
+    private int totalDependencies;
 
-        [ObservableProperty]
-        private int installedDependencies = 0;
+    [ObservableProperty]
+    private int installedDependencies;
 
-        [ObservableProperty]
-        private int missingDependencies = 0;
+    [ObservableProperty]
+    private int missingDependencies;
 
-        // UI State
-        [ObservableProperty]
-        private bool isLoading;
+    // UI State
+    [ObservableProperty]
+    private bool isLoading;
 
-        [ObservableProperty]
-        private string? errorMessage;
+    [ObservableProperty]
+    private string? errorMessage;
 
-        [ObservableProperty]
-        private string? statusMessage;
+    [ObservableProperty]
+    private string? statusMessage;
 
-        [ObservableProperty]
-        private bool hasUnsavedChanges;
+    [ObservableProperty]
+    private bool hasUnsavedChanges;
 
-        public ObservableCollection<string> AvailableThemes { get; } = new()
+    public ObservableCollection<string> AvailableThemes { get; } = new()
         {
             "Light",
             "Dark",
             "System"
         };
 
-        public ObservableCollection<string> AvailableLanguages { get; } = new()
+    public ObservableCollection<string> AvailableLanguages { get; } = new()
         {
             "en-US",
             "zh-CN",
@@ -177,7 +177,7 @@ namespace VoiceStudio.App.ViewModels
             "de-DE"
         };
 
-        public ObservableCollection<string> AvailableTimeFormats { get; } = new()
+    public ObservableCollection<string> AvailableTimeFormats { get; } = new()
         {
             "Timecode",
             "Seconds",
@@ -185,7 +185,7 @@ namespace VoiceStudio.App.ViewModels
             "Bars/Beats"
         };
 
-        public ObservableCollection<string> AvailableAudioEngines { get; } = new()
+    public ObservableCollection<string> AvailableAudioEngines { get; } = new()
         {
             "xtts",
             "coqui",
@@ -202,7 +202,7 @@ namespace VoiceStudio.App.ViewModels
             "mockingbird"
         };
 
-        public ObservableCollection<string> AvailableImageEngines { get; } = new()
+    public ObservableCollection<string> AvailableImageEngines { get; } = new()
         {
             "sdxl",
             "sdxl_comfy",
@@ -218,7 +218,7 @@ namespace VoiceStudio.App.ViewModels
             "fastsd_cpu"
         };
 
-        public ObservableCollection<string> AvailableVideoEngines { get; } = new()
+    public ObservableCollection<string> AvailableVideoEngines { get; } = new()
         {
             "svd",
             "deforum",
@@ -231,521 +231,517 @@ namespace VoiceStudio.App.ViewModels
             "voice_ai"
         };
 
-        public SettingsViewModel(
-            IViewModelContext context,
-            ISettingsService settingsService,
-            IBackendClient backendClient,
-            PluginManager? pluginManager = null,
-            ITelemetryService? telemetryService = null)
-            : base(context)
+    public SettingsViewModel(
+        IViewModelContext context,
+        ISettingsService settingsService,
+        IBackendClient backendClient,
+        PluginManager? pluginManager = null,
+        ITelemetryService? telemetryService = null)
+        : base(context)
+    {
+      _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _pluginManager = pluginManager;
+      _telemetryService = telemetryService;
+    }
+
+    public SettingsViewModel(
+        ISettingsService settingsService,
+        IBackendClient? backendClient = null,
+        PluginManager? pluginManager = null)
+        : this(
+              AppServices.GetRequiredService<IViewModelContext>(),
+              settingsService,
+              backendClient ?? AppServices.GetBackendClient(),
+              pluginManager ?? AppServices.GetService<PluginManager>(),
+              AppServices.GetService<ITelemetryService>())
+    {
+      LoadSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("LoadSettings");
+        await LoadSettingsAsync(ct);
+      });
+      SaveSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("SaveSettings");
+        await SaveSettingsAsync(ct);
+      }, () => HasUnsavedChanges);
+      ResetSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("ResetSettings");
+        await ResetSettingsAsync(ct);
+      });
+      RefreshPluginsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("RefreshPlugins");
+        await RefreshPluginsAsync(ct);
+      });
+      RefreshDependencyStatusCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("RefreshDependencyStatus");
+        await RefreshDependencyStatusAsync(ct);
+      });
+
+      // Load plugins on initialization
+      _ = LoadPluginsAsync();
+
+      // Load dependency status on initialization
+      _ = RefreshDependencyStatusAsync(CancellationToken.None);
+    }
+
+    public IAsyncRelayCommand LoadSettingsCommand { get; } = null!;
+    public IAsyncRelayCommand SaveSettingsCommand { get; } = null!;
+    public IAsyncRelayCommand ResetSettingsCommand { get; } = null!;
+    public IAsyncRelayCommand RefreshPluginsCommand { get; } = null!;
+    public IAsyncRelayCommand RefreshDependencyStatusCommand { get; } = null!;
+
+    private async Task LoadSettingsAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+      StatusMessage = ResourceHelper.GetString("Settings.LoadingSettings", "Loading settings...");
+
+      try
+      {
+        // Load settings from service (backend or local storage)
+        var settings = await _settingsService.LoadSettingsAsync(cancellationToken);
+
+        ApplySettings(settings);
+        HasUnsavedChanges = false;
+        StatusMessage = ResourceHelper.GetString("Settings.SettingsLoaded", "Settings loaded successfully");
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("Settings.LoadSettingsFailed", ex.Message);
+        StatusMessage = null;
+        await HandleErrorAsync(ex, "LoadSettings");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task SaveSettingsAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+      StatusMessage = ResourceHelper.GetString("Settings.SavingSettings", "Saving settings...");
+
+      try
+      {
+        var settings = GetSettingsData();
+
+        // Save via service (backend and local storage)
+        await _settingsService.SaveSettingsAsync(settings, cancellationToken);
+
+        var telemetryService = _telemetryService;
+        if (telemetryService != null && settings.Diagnostics != null)
         {
-            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            _pluginManager = pluginManager;
-            _telemetryService = telemetryService;
+          telemetryService.ApplyDiagnosticsSettings(settings.Diagnostics);
         }
 
-        public SettingsViewModel(
-            ISettingsService settingsService,
-            IBackendClient? backendClient = null,
-            PluginManager? pluginManager = null)
-            : this(
-                  AppServices.GetRequiredService<IViewModelContext>(),
-                  settingsService,
-                  backendClient ?? AppServices.GetBackendClient(),
-                  pluginManager ?? AppServices.GetService<PluginManager>(),
-                  AppServices.GetService<ITelemetryService>())
+        HasUnsavedChanges = false;
+        StatusMessage = ResourceHelper.GetString("Settings.SettingsSaved", "Settings saved successfully");
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("Settings.SaveSettingsFailed", ex.Message);
+        StatusMessage = null;
+        await HandleErrorAsync(ex, "SaveSettings");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task ResetSettingsAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
+      StatusMessage = ResourceHelper.GetString("Settings.ResettingSettings", "Resetting settings...");
+
+      try
+      {
+        // Reset to defaults
+        ResetToDefaults();
+
+        // Save reset settings
+        await SaveSettingsAsync(cancellationToken);
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("Settings.ResetSettingsFailed", ex.Message);
+        StatusMessage = null;
+        await HandleErrorAsync(ex, "ResetSettings");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    private async Task LoadPluginsAsync()
+    {
+      if (_pluginManager == null)
+        return;
+
+      IsLoadingPlugins = true;
+
+      try
+      {
+        await _pluginManager.LoadPluginsAsync();
+        UpdatePluginList();
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to load plugins: {ex.Message}";
+        await HandleErrorAsync(ex, "LoadPlugins");
+      }
+      finally
+      {
+        IsLoadingPlugins = false;
+      }
+    }
+
+    private async Task RefreshPluginsAsync(CancellationToken cancellationToken)
+    {
+      await LoadPluginsAsync();
+      StatusMessage = ResourceHelper.GetString("Settings.PluginsRefreshed", "Plugins refreshed");
+    }
+
+    private void UpdatePluginList()
+    {
+      if (_pluginManager == null)
+        return;
+
+      Plugins.Clear();
+      foreach (var plugin in _pluginManager.Plugins)
+      {
+        Plugins.Add(new PluginInfo
         {
-            LoadSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("LoadSettings");
-                await LoadSettingsAsync(ct);
-            });
-            SaveSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("SaveSettings");
-                await SaveSettingsAsync(ct);
-            }, () => HasUnsavedChanges);
-            ResetSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("ResetSettings");
-                await ResetSettingsAsync(ct);
-            });
-            RefreshPluginsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("RefreshPlugins");
-                await RefreshPluginsAsync(ct);
-            });
-            RefreshDependencyStatusCommand = new EnhancedAsyncRelayCommand(async (ct) =>
-            {
-                using var profiler = PerformanceProfiler.StartCommand("RefreshDependencyStatus");
-                await RefreshDependencyStatusAsync(ct);
-            });
+          Name = plugin.Name,
+          Version = plugin.Version,
+          Author = plugin.Author,
+          Description = plugin.Description,
+          IsEnabled = true, // Plugins are enabled by default when loaded
+          IsInitialized = plugin.IsInitialized
+        });
+      }
+    }
 
-            // Load plugins on initialization
-            _ = LoadPluginsAsync();
+    private void ApplySettings(CoreSettingsData settings)
+    {
+      // General
+      Theme = settings.General?.Theme ?? "Dark";
+      Language = settings.General?.Language ?? "en-US";
+      AutoSave = settings.General?.AutoSave ?? true;
+      AutoSaveInterval = settings.General?.AutoSaveInterval ?? 300;
 
-            // Load dependency status on initialization
-            _ = RefreshDependencyStatusAsync(CancellationToken.None);
+      // Engine
+      DefaultAudioEngine = settings.Engine?.DefaultAudioEngine ?? "xtts";
+      DefaultImageEngine = settings.Engine?.DefaultImageEngine ?? "sdxl";
+      DefaultVideoEngine = settings.Engine?.DefaultVideoEngine ?? "svd";
+      QualityLevel = settings.Engine?.QualityLevel ?? 5;
+
+      // Audio
+      AudioOutputDevice = settings.Audio?.OutputDevice ?? "Default";
+      AudioInputDevice = settings.Audio?.InputDevice ?? "Default";
+      SampleRate = settings.Audio?.SampleRate ?? 44100;
+      BufferSize = settings.Audio?.BufferSize ?? 1024;
+
+      // Timeline
+      TimeFormat = settings.Timeline?.TimeFormat ?? "Timecode";
+      SnapEnabled = settings.Timeline?.SnapEnabled ?? true;
+      SnapInterval = settings.Timeline?.SnapInterval ?? 0.1;
+      GridEnabled = settings.Timeline?.GridEnabled ?? true;
+      GridInterval = settings.Timeline?.GridInterval ?? 1.0;
+
+      // Backend
+      ApiUrl = settings.Backend?.ApiUrl ?? "http://localhost:8001";
+      ApiTimeout = settings.Backend?.Timeout ?? 30;
+      ApiRetryCount = settings.Backend?.RetryCount ?? 3;
+
+      // Performance
+      CachingEnabled = settings.Performance?.CachingEnabled ?? true;
+      CacheSize = settings.Performance?.CacheSize ?? 512;
+      MaxThreads = settings.Performance?.MaxThreads ?? 4;
+      MemoryLimit = settings.Performance?.MemoryLimit ?? 4096;
+
+      // Plugins - Load plugins from PluginManager if available
+      if (_pluginManager != null)
+      {
+        _ = LoadPluginsAsync();
+      }
+
+      // MCP
+      McpEnabled = settings.Mcp?.Enabled ?? false;
+      McpServerUrl = settings.Mcp?.ServerUrl ?? "http://localhost:8080";
+
+      // Diagnostics
+      TelemetryEnabled = settings.Diagnostics?.TelemetryEnabled ?? false;
+      CrashReportingEnabled = settings.Diagnostics?.CrashReportingEnabled ?? true;
+      IncludeLogsInCrashReport = settings.Diagnostics?.IncludeLogsInCrashReport ?? true;
+    }
+
+    private CoreSettingsData GetSettingsData()
+    {
+      return new CoreSettingsData
+      {
+        General = new VoiceStudio.Core.Models.GeneralSettings
+        {
+          Theme = Theme,
+          Language = Language,
+          AutoSave = AutoSave,
+          AutoSaveInterval = AutoSaveInterval
+        },
+        Engine = new VoiceStudio.Core.Models.EngineSettings
+        {
+          DefaultAudioEngine = DefaultAudioEngine,
+          DefaultImageEngine = DefaultImageEngine,
+          DefaultVideoEngine = DefaultVideoEngine,
+          QualityLevel = QualityLevel
+        },
+        Audio = new VoiceStudio.Core.Models.AudioSettings
+        {
+          OutputDevice = AudioOutputDevice,
+          InputDevice = AudioInputDevice,
+          SampleRate = SampleRate,
+          BufferSize = BufferSize
+        },
+        Timeline = new VoiceStudio.Core.Models.TimelineSettings
+        {
+          TimeFormat = TimeFormat,
+          SnapEnabled = SnapEnabled,
+          SnapInterval = SnapInterval,
+          GridEnabled = GridEnabled,
+          GridInterval = GridInterval
+        },
+        Backend = new VoiceStudio.Core.Models.BackendSettings
+        {
+          ApiUrl = ApiUrl,
+          Timeout = ApiTimeout,
+          RetryCount = ApiRetryCount
+        },
+        Performance = new VoiceStudio.Core.Models.PerformanceSettings
+        {
+          CachingEnabled = CachingEnabled,
+          CacheSize = CacheSize,
+          MaxThreads = MaxThreads,
+          MemoryLimit = MemoryLimit
+        },
+        Plugins = new VoiceStudio.Core.Models.PluginSettings
+        {
+          EnabledPlugins = new System.Collections.Generic.List<string>(
+                  Plugins.Where(p => p.IsEnabled).Select(p => p.Name)
+              )
+        },
+        Mcp = new VoiceStudio.Core.Models.McpSettings
+        {
+          Enabled = McpEnabled,
+          ServerUrl = McpServerUrl
+        },
+        Diagnostics = new VoiceStudio.Core.Models.DiagnosticsSettings
+        {
+          TelemetryEnabled = TelemetryEnabled,
+          CrashReportingEnabled = CrashReportingEnabled,
+          IncludeLogsInCrashReport = IncludeLogsInCrashReport
+        }
+      };
+    }
+
+    private void ResetToDefaults()
+    {
+      Theme = "Dark";
+      Language = "en-US";
+      AutoSave = true;
+      AutoSaveInterval = 300;
+      DefaultAudioEngine = "xtts";
+      DefaultImageEngine = "sdxl";
+      DefaultVideoEngine = "svd";
+      QualityLevel = 5;
+      AudioOutputDevice = "Default";
+      AudioInputDevice = "Default";
+      SampleRate = 44100;
+      BufferSize = 1024;
+      TimeFormat = "Timecode";
+      SnapEnabled = true;
+      SnapInterval = 0.1;
+      GridEnabled = true;
+      GridInterval = 1.0;
+      ApiUrl = "http://localhost:8001";
+      ApiTimeout = 30;
+      ApiRetryCount = 3;
+      CachingEnabled = true;
+      CacheSize = 512;
+      MaxThreads = 4;
+      MemoryLimit = 4096;
+      // Plugins are managed by PluginManager, not reset here
+      McpEnabled = false;
+      McpServerUrl = "http://localhost:8080";
+      TelemetryEnabled = false;
+      CrashReportingEnabled = true;
+      IncludeLogsInCrashReport = true;
+    }
+
+    private Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      try
+      {
+        var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+        var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
+
+        if (container.Values.ContainsKey("General"))
+        {
+          var generalJson = container.Values["General"]?.ToString();
+          if (!string.IsNullOrEmpty(generalJson))
+          {
+            var general = System.Text.Json.JsonSerializer.Deserialize<GeneralSettings>(generalJson);
+            if (general != null)
+            {
+              Theme = general.Theme;
+              Language = general.Language;
+              AutoSave = general.AutoSave;
+              AutoSaveInterval = general.AutoSaveInterval;
+            }
+          }
         }
 
-        public IAsyncRelayCommand LoadSettingsCommand { get; } = null!;
-        public IAsyncRelayCommand SaveSettingsCommand { get; } = null!;
-        public IAsyncRelayCommand ResetSettingsCommand { get; } = null!;
-        public IAsyncRelayCommand RefreshPluginsCommand { get; } = null!;
-        public IAsyncRelayCommand RefreshDependencyStatusCommand { get; } = null!;
-
-        private async Task LoadSettingsAsync(CancellationToken cancellationToken)
+        if (container.Values.ContainsKey("Engine"))
         {
-            IsLoading = true;
-            ErrorMessage = null;
-            StatusMessage = ResourceHelper.GetString("Settings.LoadingSettings", "Loading settings...");
-
-            try
+          var engineJson = container.Values["Engine"]?.ToString();
+          if (!string.IsNullOrEmpty(engineJson))
+          {
+            var engine = System.Text.Json.JsonSerializer.Deserialize<EngineSettings>(engineJson);
+            if (engine != null)
             {
-                // Load settings from service (backend or local storage)
-                var settings = await _settingsService.LoadSettingsAsync(cancellationToken);
-
-                ApplySettings(settings);
-                HasUnsavedChanges = false;
-                StatusMessage = ResourceHelper.GetString("Settings.SettingsLoaded", "Settings loaded successfully");
+              DefaultAudioEngine = engine.DefaultAudioEngine;
+              DefaultImageEngine = engine.DefaultImageEngine;
+              DefaultVideoEngine = engine.DefaultVideoEngine;
+              QualityLevel = engine.QualityLevel;
             }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("Settings.LoadSettingsFailed", ex.Message);
-                StatusMessage = null;
-                await HandleErrorAsync(ex, "LoadSettings");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          }
         }
 
-        private async Task SaveSettingsAsync(CancellationToken cancellationToken)
+        if (container.Values.ContainsKey("Backend"))
         {
-            IsLoading = true;
-            ErrorMessage = null;
-            StatusMessage = ResourceHelper.GetString("Settings.SavingSettings", "Saving settings...");
-
-            try
+          var backendJson = container.Values["Backend"]?.ToString();
+          if (!string.IsNullOrEmpty(backendJson))
+          {
+            var backend = System.Text.Json.JsonSerializer.Deserialize<BackendSettings>(backendJson);
+            if (backend != null)
             {
-                var settings = GetSettingsData();
-
-                // Save via service (backend and local storage)
-                await _settingsService.SaveSettingsAsync(settings, cancellationToken);
-
-                var telemetryService = _telemetryService;
-                if (telemetryService != null && settings.Diagnostics != null)
-                {
-                    telemetryService.ApplyDiagnosticsSettings(settings.Diagnostics);
-                }
-
-                HasUnsavedChanges = false;
-                StatusMessage = ResourceHelper.GetString("Settings.SettingsSaved", "Settings saved successfully");
+              ApiUrl = backend.ApiUrl;
+              ApiTimeout = backend.Timeout;
+              ApiRetryCount = backend.RetryCount;
             }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("Settings.SaveSettingsFailed", ex.Message);
-                StatusMessage = null;
-                await HandleErrorAsync(ex, "SaveSettings");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          }
         }
 
-        private async Task ResetSettingsAsync(CancellationToken cancellationToken)
+        if (container.Values.ContainsKey("Diagnostics"))
         {
-            IsLoading = true;
-            ErrorMessage = null;
-            StatusMessage = ResourceHelper.GetString("Settings.ResettingSettings", "Resetting settings...");
+          var diagnosticsJson = container.Values["Diagnostics"]?.ToString();
+          if (!string.IsNullOrEmpty(diagnosticsJson))
+          {
+            var diagnostics = System.Text.Json.JsonSerializer.Deserialize<DiagnosticsSettings>(diagnosticsJson);
+            if (diagnostics != null)
+            {
+              TelemetryEnabled = diagnostics.TelemetryEnabled;
+              CrashReportingEnabled = diagnostics.CrashReportingEnabled;
+              IncludeLogsInCrashReport = diagnostics.IncludeLogsInCrashReport;
+            }
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        throw; // Re-throw cancellation
+      }
+      catch
+      {
+        // If loading fails, use defaults
+        ResetToDefaults();
+      }
 
-            try
-            {
-                // Reset to defaults
-                ResetToDefaults();
+      return Task.CompletedTask;
+    }
 
-                // Save reset settings
-                await SaveSettingsAsync(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ResourceHelper.FormatString("Settings.ResetSettingsFailed", ex.Message);
-                StatusMessage = null;
-                await HandleErrorAsync(ex, "ResetSettings");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+    private Task SaveToLocalStorageAsync(SettingsData settings)
+    {
+      try
+      {
+        var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+        var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
+
+        if (settings.General != null)
+        {
+          container.Values["General"] = System.Text.Json.JsonSerializer.Serialize(settings.General);
         }
 
-        private async Task LoadPluginsAsync()
+        if (settings.Engine != null)
         {
-            if (_pluginManager == null)
-                return;
-
-            IsLoadingPlugins = true;
-
-            try
-            {
-                await _pluginManager.LoadPluginsAsync();
-                UpdatePluginList();
-            }
-            catch (OperationCanceledException)
-            {
-                return; // User cancelled
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load plugins: {ex.Message}";
-                await HandleErrorAsync(ex, "LoadPlugins");
-            }
-            finally
-            {
-                IsLoadingPlugins = false;
-            }
+          container.Values["Engine"] = System.Text.Json.JsonSerializer.Serialize(settings.Engine);
         }
 
-        private async Task RefreshPluginsAsync(CancellationToken cancellationToken)
+        if (settings.Backend != null)
         {
-            await LoadPluginsAsync();
-            StatusMessage = ResourceHelper.GetString("Settings.PluginsRefreshed", "Plugins refreshed");
+          container.Values["Backend"] = System.Text.Json.JsonSerializer.Serialize(settings.Backend);
         }
 
-        private void UpdatePluginList()
+        if (settings.Diagnostics != null)
         {
-            if (_pluginManager == null)
-                return;
-
-            Plugins.Clear();
-            foreach (var plugin in _pluginManager.Plugins)
-            {
-                Plugins.Add(new PluginInfo
-                {
-                    Name = plugin.Name,
-                    Version = plugin.Version,
-                    Author = plugin.Author,
-                    Description = plugin.Description,
-                    IsEnabled = true, // Plugins are enabled by default when loaded
-                    IsInitialized = plugin.IsInitialized
-                });
-            }
+          container.Values["Diagnostics"] = System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics);
         }
+      }
+      catch
+      {
+        // Log error but don't fail
+        System.Diagnostics.Debug.WriteLine("Failed to save settings to local storage");
+      }
 
-        private void ApplySettings(CoreSettingsData settings)
-        {
-            // General
-            Theme = settings.General?.Theme ?? "Dark";
-            Language = settings.General?.Language ?? "en-US";
-            AutoSave = settings.General?.AutoSave ?? true;
-            AutoSaveInterval = settings.General?.AutoSaveInterval ?? 300;
+      return Task.CompletedTask;
+    }
 
-            // Engine
-            DefaultAudioEngine = settings.Engine?.DefaultAudioEngine ?? "xtts";
-            DefaultImageEngine = settings.Engine?.DefaultImageEngine ?? "sdxl";
-            DefaultVideoEngine = settings.Engine?.DefaultVideoEngine ?? "svd";
-            QualityLevel = settings.Engine?.QualityLevel ?? 5;
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+      base.OnPropertyChanged(e);
+      if (e.PropertyName != nameof(HasUnsavedChanges) &&
+          e.PropertyName != nameof(IsLoading) &&
+          e.PropertyName != nameof(ErrorMessage) &&
+          e.PropertyName != nameof(StatusMessage))
+      {
+        HasUnsavedChanges = true;
+      }
+    }
 
-            // Audio
-            AudioOutputDevice = settings.Audio?.OutputDevice ?? "Default";
-            AudioInputDevice = settings.Audio?.InputDevice ?? "Default";
-            SampleRate = settings.Audio?.SampleRate ?? 44100;
-            BufferSize = settings.Audio?.BufferSize ?? 1024;
+    private async Task RefreshDependencyStatusAsync(CancellationToken cancellationToken)
+    {
+      IsLoading = true;
+      ErrorMessage = null;
 
-            // Timeline
-            TimeFormat = settings.Timeline?.TimeFormat ?? "Timecode";
-            SnapEnabled = settings.Timeline?.SnapEnabled ?? true;
-            SnapInterval = settings.Timeline?.SnapInterval ?? 0.1;
-            GridEnabled = settings.Timeline?.GridEnabled ?? true;
-            GridInterval = settings.Timeline?.GridInterval ?? 1.0;
-
-            // Backend
-            ApiUrl = settings.Backend?.ApiUrl ?? "http://localhost:8001";
-            ApiTimeout = settings.Backend?.Timeout ?? 30;
-            ApiRetryCount = settings.Backend?.RetryCount ?? 3;
-
-            // Performance
-            CachingEnabled = settings.Performance?.CachingEnabled ?? true;
-            CacheSize = settings.Performance?.CacheSize ?? 512;
-            MaxThreads = settings.Performance?.MaxThreads ?? 4;
-            MemoryLimit = settings.Performance?.MemoryLimit ?? 4096;
-
-            // Plugins - Load plugins from PluginManager if available
-            if (_pluginManager != null)
-            {
-                _ = LoadPluginsAsync();
-            }
-
-            // MCP
-            McpEnabled = settings.Mcp?.Enabled ?? false;
-            McpServerUrl = settings.Mcp?.ServerUrl ?? "http://localhost:8080";
-
-            // Diagnostics
-            TelemetryEnabled = settings.Diagnostics?.TelemetryEnabled ?? false;
-            CrashReportingEnabled = settings.Diagnostics?.CrashReportingEnabled ?? true;
-            IncludeLogsInCrashReport = settings.Diagnostics?.IncludeLogsInCrashReport ?? true;
-        }
-
-        private CoreSettingsData GetSettingsData()
-        {
-            return new CoreSettingsData
-            {
-                General = new VoiceStudio.Core.Models.GeneralSettings
-                {
-                    Theme = Theme,
-                    Language = Language,
-                    AutoSave = AutoSave,
-                    AutoSaveInterval = AutoSaveInterval
-                },
-                Engine = new VoiceStudio.Core.Models.EngineSettings
-                {
-                    DefaultAudioEngine = DefaultAudioEngine,
-                    DefaultImageEngine = DefaultImageEngine,
-                    DefaultVideoEngine = DefaultVideoEngine,
-                    QualityLevel = QualityLevel
-                },
-                Audio = new VoiceStudio.Core.Models.AudioSettings
-                {
-                    OutputDevice = AudioOutputDevice,
-                    InputDevice = AudioInputDevice,
-                    SampleRate = SampleRate,
-                    BufferSize = BufferSize
-                },
-                Timeline = new VoiceStudio.Core.Models.TimelineSettings
-                {
-                    TimeFormat = TimeFormat,
-                    SnapEnabled = SnapEnabled,
-                    SnapInterval = SnapInterval,
-                    GridEnabled = GridEnabled,
-                    GridInterval = GridInterval
-                },
-                Backend = new VoiceStudio.Core.Models.BackendSettings
-                {
-                    ApiUrl = ApiUrl,
-                    Timeout = ApiTimeout,
-                    RetryCount = ApiRetryCount
-                },
-                Performance = new VoiceStudio.Core.Models.PerformanceSettings
-                {
-                    CachingEnabled = CachingEnabled,
-                    CacheSize = CacheSize,
-                    MaxThreads = MaxThreads,
-                    MemoryLimit = MemoryLimit
-                },
-                Plugins = new VoiceStudio.Core.Models.PluginSettings
-                {
-                    EnabledPlugins = new System.Collections.Generic.List<string>(
-                        Plugins.Where(p => p.IsEnabled).Select(p => p.Name)
-                    )
-                },
-                Mcp = new VoiceStudio.Core.Models.McpSettings
-                {
-                    Enabled = McpEnabled,
-                    ServerUrl = McpServerUrl
-                },
-                Diagnostics = new VoiceStudio.Core.Models.DiagnosticsSettings
-                {
-                    TelemetryEnabled = TelemetryEnabled,
-                    CrashReportingEnabled = CrashReportingEnabled,
-                    IncludeLogsInCrashReport = IncludeLogsInCrashReport
-                }
-            };
-        }
-
-        private void ResetToDefaults()
-        {
-            Theme = "Dark";
-            Language = "en-US";
-            AutoSave = true;
-            AutoSaveInterval = 300;
-            DefaultAudioEngine = "xtts";
-            DefaultImageEngine = "sdxl";
-            DefaultVideoEngine = "svd";
-            QualityLevel = 5;
-            AudioOutputDevice = "Default";
-            AudioInputDevice = "Default";
-            SampleRate = 44100;
-            BufferSize = 1024;
-            TimeFormat = "Timecode";
-            SnapEnabled = true;
-            SnapInterval = 0.1;
-            GridEnabled = true;
-            GridInterval = 1.0;
-            ApiUrl = "http://localhost:8001";
-            ApiTimeout = 30;
-            ApiRetryCount = 3;
-            CachingEnabled = true;
-            CacheSize = 512;
-            MaxThreads = 4;
-            MemoryLimit = 4096;
-            // Plugins are managed by PluginManager, not reset here
-            McpEnabled = false;
-            McpServerUrl = "http://localhost:8080";
-            TelemetryEnabled = false;
-            CrashReportingEnabled = true;
-            IncludeLogsInCrashReport = true;
-        }
-
-        private Task LoadFromLocalStorageAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            try
-            {
-                var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-                var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
-
-                if (container.Values.ContainsKey("General"))
-                {
-                    var generalJson = container.Values["General"]?.ToString();
-                    if (!string.IsNullOrEmpty(generalJson))
-                    {
-                        var general = System.Text.Json.JsonSerializer.Deserialize<GeneralSettings>(generalJson);
-                        if (general != null)
-                        {
-                            Theme = general.Theme;
-                            Language = general.Language;
-                            AutoSave = general.AutoSave;
-                            AutoSaveInterval = general.AutoSaveInterval;
-                        }
-                    }
-                }
-
-                if (container.Values.ContainsKey("Engine"))
-                {
-                    var engineJson = container.Values["Engine"]?.ToString();
-                    if (!string.IsNullOrEmpty(engineJson))
-                    {
-                        var engine = System.Text.Json.JsonSerializer.Deserialize<EngineSettings>(engineJson);
-                        if (engine != null)
-                        {
-                            DefaultAudioEngine = engine.DefaultAudioEngine;
-                            DefaultImageEngine = engine.DefaultImageEngine;
-                            DefaultVideoEngine = engine.DefaultVideoEngine;
-                            QualityLevel = engine.QualityLevel;
-                        }
-                    }
-                }
-
-                if (container.Values.ContainsKey("Backend"))
-                {
-                    var backendJson = container.Values["Backend"]?.ToString();
-                    if (!string.IsNullOrEmpty(backendJson))
-                    {
-                        var backend = System.Text.Json.JsonSerializer.Deserialize<BackendSettings>(backendJson);
-                        if (backend != null)
-                        {
-                            ApiUrl = backend.ApiUrl;
-                            ApiTimeout = backend.Timeout;
-                            ApiRetryCount = backend.RetryCount;
-                        }
-                    }
-                }
-
-                if (container.Values.ContainsKey("Diagnostics"))
-                {
-                    var diagnosticsJson = container.Values["Diagnostics"]?.ToString();
-                    if (!string.IsNullOrEmpty(diagnosticsJson))
-                    {
-                        var diagnostics = System.Text.Json.JsonSerializer.Deserialize<DiagnosticsSettings>(diagnosticsJson);
-                        if (diagnostics != null)
-                        {
-                            TelemetryEnabled = diagnostics.TelemetryEnabled;
-                            CrashReportingEnabled = diagnostics.CrashReportingEnabled;
-                            IncludeLogsInCrashReport = diagnostics.IncludeLogsInCrashReport;
-                        }
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                throw; // Re-throw cancellation
-            }
-            catch
-            {
-                // If loading fails, use defaults
-                ResetToDefaults();
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private Task SaveToLocalStorageAsync(SettingsData settings)
-        {
-            try
-            {
-                var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-                var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
-
-                if (settings.General != null)
-                {
-                    var generalJson = System.Text.Json.JsonSerializer.Serialize(settings.General);
-                    container.Values["General"] = generalJson;
-                }
-
-                if (settings.Engine != null)
-                {
-                    var engineJson = System.Text.Json.JsonSerializer.Serialize(settings.Engine);
-                    container.Values["Engine"] = engineJson;
-                }
-
-                if (settings.Backend != null)
-                {
-                    var backendJson = System.Text.Json.JsonSerializer.Serialize(settings.Backend);
-                    container.Values["Backend"] = backendJson;
-                }
-
-                if (settings.Diagnostics != null)
-                {
-                    var diagnosticsJson = System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics);
-                    container.Values["Diagnostics"] = diagnosticsJson;
-                }
-            }
-            catch
-            {
-                // Log error but don't fail
-                System.Diagnostics.Debug.WriteLine("Failed to save settings to local storage");
-            }
-
-            return Task.CompletedTask;
-        }
-
-        protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            base.OnPropertyChanged(e);
-            if (e.PropertyName != nameof(HasUnsavedChanges) &&
-                e.PropertyName != nameof(IsLoading) &&
-                e.PropertyName != nameof(ErrorMessage) &&
-                e.PropertyName != nameof(StatusMessage))
-            {
-                HasUnsavedChanges = true;
-            }
-        }
-
-        private async Task RefreshDependencyStatusAsync(CancellationToken cancellationToken)
-        {
-            IsLoading = true;
-            ErrorMessage = null;
-
-            try
-            {
-                // Define known dependencies based on MISSING_DEPENDENCIES_AUDIT
-                var dependencies = new List<DependencyStatusItem>
+      try
+      {
+        // Define known dependencies based on MISSING_DEPENDENCIES_AUDIT
+        var dependencies = new List<DependencyStatusItem>
                 {
                     new DependencyStatusItem { Name = "TensorFlow", Description = "Required for DeepFaceLab engine", Category = "Engine", IsInstalled = false },
                     new DependencyStatusItem { Name = "SpeechBrain", Description = "Required for Speaker Encoder and Quality Metrics", Category = "Engine", IsInstalled = false },
@@ -759,159 +755,155 @@ namespace VoiceStudio.App.ViewModels
                     new DependencyStatusItem { Name = "NumPy", Description = "Required for numerical operations", Category = "Core", IsInstalled = false }
                 };
 
-                // Check dependency status via backend
-                try
-                {
-                    var response = await _backendClient.SendRequestAsync<object, Dictionary<string, object>>(
-                        "/api/system/dependencies",
-                        new { },
-                        cancellationToken
-                    );
+        // Check dependency status via backend
+        try
+        {
+          var response = await _backendClient.SendRequestAsync<object, Dictionary<string, object>>(
+              "/api/system/dependencies",
+              new { },
+              cancellationToken
+          );
 
-                    if (response != null)
-                    {
-                        foreach (var dep in dependencies)
-                        {
-                            if (response.TryGetValue(dep.Name.ToLower().Replace(" ", "_"), out var statusObj))
-                            {
-                                if (statusObj is bool isInstalled)
-                                    dep.IsInstalled = isInstalled;
-                                else if (statusObj is string statusStr)
-                                    dep.IsInstalled = statusStr.ToLower() == "installed" || statusStr.ToLower() == "true";
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    // Backend check failed, mark all as not installed
-                    foreach (var dep in dependencies)
-                    {
-                        dep.IsInstalled = false;
-                    }
-                }
-
-                DependencyStatusList.Clear();
-                foreach (var dep in dependencies)
-                {
-                    DependencyStatusList.Add(dep);
-                }
-
-                TotalDependencies = DependencyStatusList.Count;
-                InstalledDependencies = DependencyStatusList.Count(d => d.IsInstalled);
-                MissingDependencies = DependencyStatusList.Count(d => !d.IsInstalled && !d.IsOptional);
-
-                StatusMessage = $"Dependency status refreshed: {InstalledDependencies}/{TotalDependencies} installed";
-            }
-            catch (OperationCanceledException)
+          if (response != null)
+          {
+            foreach (var dep in dependencies)
             {
-                return; // User cancelled
+              if (response.TryGetValue(dep.Name.ToLower().Replace(" ", "_"), out var statusObj))
+              {
+                if (statusObj is bool isInstalled)
+                  dep.IsInstalled = isInstalled;
+                else if (statusObj is string statusStr)
+                  dep.IsInstalled = statusStr.ToLower() == "installed" || statusStr.ToLower() == "true";
+              }
             }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to refresh dependency status: {ex.Message}";
-                await HandleErrorAsync(ex, "RefreshDependencyStatus");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+          }
         }
-    }
+        catch
+        {
+          // Backend check failed, mark all as not installed
+          foreach (var dep in dependencies)
+          {
+            dep.IsInstalled = false;
+          }
+        }
 
-    // Settings data models
-    public class SettingsData
-    {
-        public GeneralSettings? General { get; set; }
-        public EngineSettings? Engine { get; set; }
-        public AudioSettings? Audio { get; set; }
-        public TimelineSettings? Timeline { get; set; }
-        public BackendSettings? Backend { get; set; }
-        public PerformanceSettings? Performance { get; set; }
-        public PluginSettings? Plugins { get; set; }
-        public McpSettings? Mcp { get; set; }
-        public DiagnosticsSettings? Diagnostics { get; set; }
-    }
+        DependencyStatusList.Clear();
+        foreach (var dep in dependencies)
+        {
+          DependencyStatusList.Add(dep);
+        }
 
-    public class GeneralSettings
-    {
-        public string Theme { get; set; } = "Dark";
-        public string Language { get; set; } = "en-US";
-        public bool AutoSave { get; set; } = true;
-        public int AutoSaveInterval { get; set; } = 300;
-    }
+        TotalDependencies = DependencyStatusList.Count;
+        InstalledDependencies = DependencyStatusList.Count(d => d.IsInstalled);
+        MissingDependencies = DependencyStatusList.Count(d => !d.IsInstalled && !d.IsOptional);
 
-    public class EngineSettings
-    {
-        public string DefaultAudioEngine { get; set; } = "xtts";
-        public string DefaultImageEngine { get; set; } = "sdxl";
-        public string DefaultVideoEngine { get; set; } = "svd";
-        public int QualityLevel { get; set; } = 5;
+        StatusMessage = $"Dependency status refreshed: {InstalledDependencies}/{TotalDependencies} installed";
+      }
+      catch (OperationCanceledException)
+      {
+        return; // User cancelled
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to refresh dependency status: {ex.Message}";
+        await HandleErrorAsync(ex, "RefreshDependencyStatus");
+      }
+      finally
+      {
+        IsLoading = false;
+      }
     }
+  }
 
-    public class AudioSettings
-    {
-        public string OutputDevice { get; set; } = "Default";
-        public string InputDevice { get; set; } = "Default";
-        public int SampleRate { get; set; } = 44100;
-        public int BufferSize { get; set; } = 1024;
-    }
+  // Settings data models
+  public class SettingsData
+  {
+    public GeneralSettings? General { get; set; }
+    public EngineSettings? Engine { get; set; }
+    public AudioSettings? Audio { get; set; }
+    public TimelineSettings? Timeline { get; set; }
+    public BackendSettings? Backend { get; set; }
+    public PerformanceSettings? Performance { get; set; }
+    public PluginSettings? Plugins { get; set; }
+    public McpSettings? Mcp { get; set; }
+    public DiagnosticsSettings? Diagnostics { get; set; }
+  }
 
-    public class TimelineSettings
-    {
-        public string TimeFormat { get; set; } = "Timecode";
-        public bool SnapEnabled { get; set; } = true;
-        public double SnapInterval { get; set; } = 0.1;
-        public bool GridEnabled { get; set; } = true;
-        public double GridInterval { get; set; } = 1.0;
-    }
+  public class GeneralSettings
+  {
+    public string Theme { get; set; } = "Dark";
+    public string Language { get; set; } = "en-US";
+    public bool AutoSave { get; set; } = true;
+    public int AutoSaveInterval { get; set; } = 300;
+  }
 
-    public class BackendSettings
-    {
-        public string ApiUrl { get; set; } = "http://localhost:8001";
-        public int Timeout { get; set; } = 30;
-        public int RetryCount { get; set; } = 3;
-    }
+  public class EngineSettings
+  {
+    public string DefaultAudioEngine { get; set; } = "xtts";
+    public string DefaultImageEngine { get; set; } = "sdxl";
+    public string DefaultVideoEngine { get; set; } = "svd";
+    public int QualityLevel { get; set; } = 5;
+  }
 
-    public class PerformanceSettings
-    {
-        public bool CachingEnabled { get; set; } = true;
-        public int CacheSize { get; set; } = 512;
-        public int MaxThreads { get; set; } = 4;
-        public int MemoryLimit { get; set; } = 4096;
-    }
+  public class AudioSettings
+  {
+    public string OutputDevice { get; set; } = "Default";
+    public string InputDevice { get; set; } = "Default";
+    public int SampleRate { get; set; } = 44100;
+    public int BufferSize { get; set; } = 1024;
+  }
 
-    public class PluginSettings
-    {
-        public System.Collections.Generic.List<string> EnabledPlugins { get; set; } = new();
-    }
+  public class TimelineSettings
+  {
+    public string TimeFormat { get; set; } = "Timecode";
+    public bool SnapEnabled { get; set; } = true;
+    public double SnapInterval { get; set; } = 0.1;
+    public bool GridEnabled { get; set; } = true;
+    public double GridInterval { get; set; } = 1.0;
+  }
 
-    public class McpSettings
-    {
-        public bool Enabled { get; set; } = false;
-        public string ServerUrl { get; set; } = "http://localhost:8080";
-    }
+  public class BackendSettings
+  {
+    public string ApiUrl { get; set; } = "http://localhost:8001";
+    public int Timeout { get; set; } = 30;
+    public int RetryCount { get; set; } = 3;
+  }
 
-    public class DiagnosticsSettings
-    {
-        public bool TelemetryEnabled { get; set; } = false;
-        public bool CrashReportingEnabled { get; set; } = true;
-        public bool IncludeLogsInCrashReport { get; set; } = true;
-    }
+  public class PerformanceSettings
+  {
+    public bool CachingEnabled { get; set; } = true;
+    public int CacheSize { get; set; } = 512;
+    public int MaxThreads { get; set; } = 4;
+    public int MemoryLimit { get; set; } = 4096;
+  }
 
-    public class DependencyStatusItem : ObservableObject
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public bool IsInstalled { get; set; }
-        public bool IsOptional { get; set; }
-        public string Status => IsInstalled ? "Installed" : (IsOptional ? "Optional" : "Missing");
-        public Windows.UI.Color StatusColor => IsInstalled ? Microsoft.UI.Colors.Green : (IsOptional ? Microsoft.UI.Colors.Orange : Microsoft.UI.Colors.Red);
-        public Microsoft.UI.Xaml.Media.SolidColorBrush StatusBrush => new Microsoft.UI.Xaml.Media.SolidColorBrush(StatusColor);
-    }
+  public class PluginSettings
+  {
+    public System.Collections.Generic.List<string> EnabledPlugins { get; set; } = new();
+  }
+
+  public class McpSettings
+  {
+    public bool Enabled { get; set; }
+    public string ServerUrl { get; set; } = "http://localhost:8080";
+  }
+
+  public class DiagnosticsSettings
+  {
+    public bool TelemetryEnabled { get; set; }
+    public bool CrashReportingEnabled { get; set; } = true;
+    public bool IncludeLogsInCrashReport { get; set; } = true;
+  }
+
+  public class DependencyStatusItem : ObservableObject
+  {
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public bool IsInstalled { get; set; }
+    public bool IsOptional { get; set; }
+    public string Status => IsInstalled ? "Installed" : (IsOptional ? "Optional" : "Missing");
+    public Windows.UI.Color StatusColor => IsInstalled ? Microsoft.UI.Colors.Green : (IsOptional ? Microsoft.UI.Colors.Orange : Microsoft.UI.Colors.Red);
+    public Microsoft.UI.Xaml.Media.SolidColorBrush StatusBrush => new Microsoft.UI.Xaml.Media.SolidColorBrush(StatusColor);
+  }
 }
-
-
-
-

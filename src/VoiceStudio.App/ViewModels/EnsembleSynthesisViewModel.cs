@@ -67,10 +67,10 @@ namespace VoiceStudio.App.ViewModels
 
     // Multi-select support
     [ObservableProperty]
-    private int selectedJobCount = 0;
+    private int selectedJobCount;
 
     [ObservableProperty]
-    private bool hasMultipleJobSelection = false;
+    private bool hasMultipleJobSelection;
 
     // Quality metrics for synthesis results
     [ObservableProperty]
@@ -141,7 +141,7 @@ namespace VoiceStudio.App.ViewModels
       }, (job) => job != null && !IsLoading);
 
       // Multi-select commands
-      SelectAllJobsCommand = new RelayCommand(SelectAllJobs, () => Jobs != null && Jobs.Count > 0);
+      SelectAllJobsCommand = new RelayCommand(SelectAllJobs, () => Jobs?.Count > 0);
       ClearJobSelectionCommand = new RelayCommand(ClearJobSelection);
       DeleteSelectedJobsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -150,7 +150,7 @@ namespace VoiceStudio.App.ViewModels
       }, () => SelectedJobCount > 0 && !IsLoading);
 
       // Subscribe to selection changes
-      _multiSelectService.SelectionChanged += (s, e) =>
+      _multiSelectService.SelectionChanged += (_, e) =>
       {
         if (e.PanelId == PanelId)
         {
@@ -207,10 +207,7 @@ namespace VoiceStudio.App.ViewModels
                   SelectedVoice = Voices.FirstOrDefault();
                 }
               },
-              onRedo: (v) =>
-              {
-                SelectedVoice = v;
-              });
+              onRedo: (v) => SelectedVoice = v);
           _undoRedoService.RegisterAction(action);
         }
       }
@@ -246,10 +243,7 @@ namespace VoiceStudio.App.ViewModels
               Voices,
               voice,
               originalIndex,
-              onUndo: (v) =>
-              {
-                SelectedVoice = v;
-              },
+              onUndo: (v) => SelectedVoice = v,
               onRedo: (v) =>
               {
                 if (SelectedVoice == v)
@@ -666,4 +660,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

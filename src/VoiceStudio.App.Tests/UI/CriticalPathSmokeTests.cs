@@ -8,9 +8,9 @@ namespace VoiceStudio.App.Tests.UI
   /// Smoke tests for critical user workflows.
   /// Verifies that end-to-end workflows like creating a profile, synthesizing voice, applying effects, and exporting work.
   /// </summary>
-    [TestClass]
-    [TestCategory("UI")]
-    public class CriticalPathSmokeTests : SmokeTestBase
+  [TestClass]
+  [TestCategory("UI")]
+  public class CriticalPathSmokeTests : SmokeTestBase
   {
     private MockBackendClient? _mockBackendClient;
 

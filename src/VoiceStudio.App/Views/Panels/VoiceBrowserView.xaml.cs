@@ -55,13 +55,13 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void VoiceBrowserView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void VoiceBrowserView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Voice Browser Help";
       HelpOverlay.HelpText = "The Voice Browser panel allows you to browse, search, and discover voice profiles. Filter and sort voices by quality, language, emotion, and other characteristics. Preview voices, compare multiple voices side-by-side, and select voices for synthesis. The browser provides a comprehensive interface for exploring the available voice library and finding the perfect voice for your project.";
@@ -93,21 +93,21 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var previewItem = new MenuFlyoutItem { Text = "Preview" };
-            previewItem.Click += async (s, e2) => await HandleVoiceMenuClick("Preview", voice);
+            previewItem.Click += async (_, _) => await HandleVoiceMenuClick("Preview", voice);
             menu.Items.Add(previewItem);
 
             var useItem = new MenuFlyoutItem { Text = "Use for Synthesis" };
-            useItem.Click += async (s, e2) => await HandleVoiceMenuClick("Use", voice);
+            useItem.Click += async (_, _) => await HandleVoiceMenuClick("Use", voice);
             menu.Items.Add(useItem);
 
             var compareItem = new MenuFlyoutItem { Text = "Compare" };
-            compareItem.Click += async (s, e2) => await HandleVoiceMenuClick("Compare", voice);
+            compareItem.Click += async (_, _) => await HandleVoiceMenuClick("Compare", voice);
             menu.Items.Add(compareItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var exportItem = new MenuFlyoutItem { Text = "Export" };
-            exportItem.Click += async (s, e2) => await HandleVoiceMenuClick("Export", voice);
+            exportItem.Click += async (_, _) => await HandleVoiceMenuClick("Export", voice);
             menu.Items.Add(exportItem);
 
             var position = e.GetPosition(listView);
@@ -191,4 +191,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

@@ -91,15 +91,38 @@ namespace VoiceStudio.App.Views.Panels
       var voiceBlocks = new List<Controls.VoiceTimelineBlock>();
 
       // Create blocks based on job progress from backend API
-      var estimatedDurationPerVoice = 5.0; // 5 seconds per voice (estimate)
+      const double estimatedDurationPerVoice = 5.0; // 5 seconds per voice (estimate)
       var startTime = 0.0;
 
       for (int i = 0; i < ViewModel.SelectedJob.TotalVoices; i++)
       {
-        var status = i < ViewModel.SelectedJob.CompletedVoices ? "completed" :
-                    (i == ViewModel.SelectedJob.CompletedVoices && ViewModel.SelectedJob.Status == "processing") ? "processing" : "pending";
-        var progress = i < ViewModel.SelectedJob.CompletedVoices ? 1.0 :
-                      (i == ViewModel.SelectedJob.CompletedVoices && ViewModel.SelectedJob.Status == "processing") ? ViewModel.SelectedJob.Progress : 0.0;
+        string status;
+        if (i < ViewModel.SelectedJob.CompletedVoices)
+        {
+          status = "completed";
+        }
+        else if (i == ViewModel.SelectedJob.CompletedVoices && ViewModel.SelectedJob.Status == "processing")
+        {
+          status = "processing";
+        }
+        else
+        {
+          status = "pending";
+        }
+
+        double progress;
+        if (i < ViewModel.SelectedJob.CompletedVoices)
+        {
+          progress = 1.0;
+        }
+        else if (i == ViewModel.SelectedJob.CompletedVoices && ViewModel.SelectedJob.Status == "processing")
+        {
+          progress = ViewModel.SelectedJob.Progress;
+        }
+        else
+        {
+          progress = 0.0;
+        }
 
         voiceBlocks.Add(new Controls.VoiceTimelineBlock
         {
@@ -185,7 +208,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Ensemble Synthesis Help";
       HelpOverlay.HelpText = "The Ensemble Synthesis panel allows you to create multi-voice synthesis by combining multiple voices in different configurations. Add multiple voices with different profiles, engines, and text, then synthesize them together using sequential, parallel, or layered mixing modes. Monitor synthesis jobs and track progress.";
@@ -218,13 +241,13 @@ namespace VoiceStudio.App.Views.Panels
           var menu = new MenuFlyout();
 
           var duplicateItem = new MenuFlyoutItem { Text = "Duplicate Voice" };
-          duplicateItem.Click += async (s, e2) => await HandleVoiceMenuClick("Duplicate", voice);
+          duplicateItem.Click += async (_, _) => await HandleVoiceMenuClick("Duplicate", voice);
           menu.Items.Add(duplicateItem);
 
           menu.Items.Add(new MenuFlyoutSeparator());
 
           var removeItem = new MenuFlyoutItem { Text = "Remove" };
-          removeItem.Click += async (s, e2) => await HandleVoiceMenuClick("Remove", voice);
+          removeItem.Click += async (_, _) => await HandleVoiceMenuClick("Remove", voice);
           menu.Items.Add(removeItem);
 
           var position = e.GetPosition(border);
@@ -246,17 +269,17 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var viewDetailsItem = new MenuFlyoutItem { Text = "View Details" };
-            viewDetailsItem.Click += async (s, e2) => await HandleJobMenuClick("View Details", job);
+            viewDetailsItem.Click += async (_, _) => await HandleJobMenuClick("View Details", job);
             menu.Items.Add(viewDetailsItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export Result" };
-            exportItem.Click += async (s, e2) => await HandleJobMenuClick("Export", job);
+            exportItem.Click += async (_, _) => await HandleJobMenuClick("Export", job);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleJobMenuClick("Delete", job);
+            deleteItem.Click += async (_, _) => await HandleJobMenuClick("Delete", job);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -310,7 +333,7 @@ namespace VoiceStudio.App.Views.Panels
               var dialog = new ContentDialog
               {
                 Title = "Delete Job",
-                Content = $"Are you sure you want to delete this ensemble synthesis job? This action cannot be undone.",
+                Content = "Are you sure you want to delete this ensemble synthesis job? This action cannot be undone.",
                 PrimaryButtonText = "Delete",
                 CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.Close,
@@ -335,7 +358,7 @@ namespace VoiceStudio.App.Views.Panels
                   _undoRedoService.RegisterAction(actionObj);
                 }
 
-                _toastService?.ShowToast(ToastType.Success, "Deleted", $"Deleted ensemble synthesis job");
+                _toastService?.ShowToast(ToastType.Success, "Deleted", "Deleted ensemble synthesis job");
               }
             }
             break;
@@ -408,10 +431,7 @@ namespace VoiceStudio.App.Views.Panels
         border.Opacity = 1.0;
       }
 
-      if (_dragDropService != null)
-      {
-        _dragDropService.Cleanup();
-      }
+      _dragDropService?.Cleanup();
 
       _draggedVoice = null;
       _draggedVoiceIndex = -1;
@@ -490,10 +510,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private void Voice_DragLeave(object sender, DragEventArgs e)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private DropPosition DetermineVoiceDropPosition(Border target, Windows.Foundation.Point position)
@@ -516,6 +533,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-
-
-

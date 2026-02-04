@@ -282,7 +282,7 @@ namespace VoiceStudio.App.ViewModels
               cancellationToken
           );
 
-          if (sessionResponse != null && sessionResponse.ContainsKey("session_id"))
+          if (sessionResponse?.ContainsKey("session_id") == true)
           {
             EditSessionId = sessionResponse["session_id"]?.ToString();
           }
@@ -805,4 +805,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

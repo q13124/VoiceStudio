@@ -21,7 +21,7 @@ namespace VoiceStudio.App.ViewModels
     private readonly IBackendClient _backendClient;
     private readonly JobProgressWebSocketClient? _webSocketClient;
     private CancellationTokenSource? _pollingCts;
-    private bool _isPolling = false;
+    private bool _isPolling;
     private DispatcherQueue? _dispatcherQueue;
 
     public string PanelId => "job_progress";
@@ -144,9 +144,7 @@ namespace VoiceStudio.App.ViewModels
     private void OnJobProgressUpdated(object? sender, JobProgressUpdate update)
     {
       // Update job progress on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
           if (job != null)
@@ -164,15 +162,12 @@ namespace VoiceStudio.App.ViewModels
             _ = LoadJobsAsync(CancellationToken.None);
           }
         });
-      }
     }
 
     private void OnJobStatusChanged(object? sender, JobStatusUpdate update)
     {
       // Update job status on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
           if (job != null)
@@ -191,15 +186,12 @@ namespace VoiceStudio.App.ViewModels
           // Refresh summary when status changes
           _ = LoadSummaryAsync(CancellationToken.None);
         });
-      }
     }
 
     private void OnJobCompleted(object? sender, JobCompletedUpdate update)
     {
       // Update job completion on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
           if (job != null)
@@ -216,15 +208,12 @@ namespace VoiceStudio.App.ViewModels
           _ = LoadSummaryAsync(CancellationToken.None);
           _ = LoadJobsAsync(CancellationToken.None);
         });
-      }
     }
 
     private void OnJobFailed(object? sender, JobFailedUpdate update)
     {
       // Update job failure on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
           if (job != null)
@@ -236,7 +225,6 @@ namespace VoiceStudio.App.ViewModels
           _ = LoadSummaryAsync(CancellationToken.None);
           _ = LoadJobsAsync(CancellationToken.None);
         });
-      }
     }
 
     public IAsyncRelayCommand LoadJobsCommand { get; }
@@ -564,10 +552,10 @@ namespace VoiceStudio.App.ViewModels
 
     protected override void Dispose(bool disposing)
     {
-            if (IsDisposed)
-            {
-                return;
-            }
+      if (IsDisposed)
+      {
+        return;
+      }
 
       if (disposing)
       {
@@ -585,7 +573,7 @@ namespace VoiceStudio.App.ViewModels
       public string Name { get; set; } = string.Empty;
       public string Type { get; set; } = string.Empty;
       public string Status { get; set; } = string.Empty;
-      public double Progress { get; set; } = 0.0;
+      public double Progress { get; set; }
       public string? CurrentStep { get; set; }
       public int? TotalSteps { get; set; }
       public int? CurrentStepIndex { get; set; }
@@ -661,4 +649,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

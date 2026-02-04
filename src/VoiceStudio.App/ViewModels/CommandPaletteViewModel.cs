@@ -131,4 +131,3 @@ namespace VoiceStudio.App.ViewModels
     public string? Shortcut { get; set; }
   }
 }
-

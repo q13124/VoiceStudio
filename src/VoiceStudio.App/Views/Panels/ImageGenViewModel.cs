@@ -97,7 +97,7 @@ namespace VoiceStudio.App.Views.Panels
     private string upscaleFactor = "4x";
 
     [ObservableProperty]
-    private bool hasQualityComparison = false;
+    private bool hasQualityComparison;
 
     [ObservableProperty]
     private string? currentQualityMetrics;
@@ -106,19 +106,19 @@ namespace VoiceStudio.App.Views.Panels
     private string? presetQualityMetrics;
 
     [ObservableProperty]
-    private double imageClarity = 0.0;
+    private double imageClarity;
 
     [ObservableProperty]
-    private double imageDetail = 0.0;
+    private double imageDetail;
 
     [ObservableProperty]
-    private double imageStyleFidelity = 0.0;
+    private double imageStyleFidelity;
 
     [ObservableProperty]
-    private double imageOverallQuality = 0.0;
+    private double imageOverallQuality;
 
     [ObservableProperty]
-    private bool enablePreprocessing = false;
+    private bool enablePreprocessing;
 
     [ObservableProperty]
     private string denoisingMethod = "None";
@@ -489,4 +489,3 @@ namespace VoiceStudio.App.Views.Panels
     public string DetailLevel { get; set; } = string.Empty;
   }
 }
-

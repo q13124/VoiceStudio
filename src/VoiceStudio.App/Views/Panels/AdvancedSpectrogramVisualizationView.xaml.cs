@@ -3,16 +3,16 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VoiceStudio.App.Views.Panels
 {
-    // Phase 0: code-only placeholder to avoid XamlCompiler.exe crashes.
-    public sealed partial class AdvancedSpectrogramVisualizationView : UserControl
+  // Phase 0: code-only placeholder to avoid XamlCompiler.exe crashes.
+  public sealed partial class AdvancedSpectrogramVisualizationView : UserControl
+  {
+    public AdvancedSpectrogramVisualizationView()
     {
-        public AdvancedSpectrogramVisualizationView()
-        {
-            Content = new StackPanel
-            {
-                Spacing = 12,
-                Padding = new Thickness(16),
-                Children =
+      Content = new StackPanel
+      {
+        Spacing = 12,
+        Padding = new Thickness(16),
+        Children =
                 {
                     new TextBlock
                     {
@@ -27,7 +27,7 @@ namespace VoiceStudio.App.Views.Panels
                         TextWrapping = TextWrapping.Wrap
                     }
                 }
-            };
-        }
+      };
     }
+  }
 }

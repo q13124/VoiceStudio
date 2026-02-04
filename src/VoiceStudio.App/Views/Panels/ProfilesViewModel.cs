@@ -84,29 +84,29 @@ namespace VoiceStudio.App.Views.Panels
     private string? errorMessage;
 
     [ObservableProperty]
-    private bool isPreviewing = false;
+    private bool isPreviewing;
 
     [ObservableProperty]
-    private bool canPreview = false;
+    private bool canPreview;
 
     [ObservableProperty]
     private QualityMetrics? previewQualityMetrics;
 
     [ObservableProperty]
-    private bool hasPreviewQualityMetrics = false;
+    private bool hasPreviewQualityMetrics;
 
     [ObservableProperty]
     private double? previewQualityScore;
 
     // Reference audio enhancement
     [ObservableProperty]
-    private bool isEnhancing = false;
+    private bool isEnhancing;
 
     [ObservableProperty]
     private ReferenceAudioPreprocessResponse? enhancementResult;
 
     [ObservableProperty]
-    private bool hasEnhancementResult = false;
+    private bool hasEnhancementResult;
 
     [ObservableProperty]
     private bool autoEnhance = true;
@@ -115,7 +115,7 @@ namespace VoiceStudio.App.Views.Panels
     private bool selectOptimalSegments = true;
 
     [ObservableProperty]
-    private bool isPlayingEnhanced = false;
+    private bool isPlayingEnhanced;
 
     // Quality history (IDEA 30)
     [ObservableProperty]
@@ -125,7 +125,7 @@ namespace VoiceStudio.App.Views.Panels
     private QualityTrends? qualityTrends;
 
     [ObservableProperty]
-    private bool isLoadingQualityHistory = false;
+    private bool isLoadingQualityHistory;
 
     [ObservableProperty]
     private string selectedTimeRange = "30d";
@@ -134,7 +134,7 @@ namespace VoiceStudio.App.Views.Panels
     private ObservableCollection<string> availableTimeRanges = new() { "7d", "30d", "90d", "1y", "all" };
 
     [ObservableProperty]
-    private bool hasQualityHistory = false;
+    private bool hasQualityHistory;
 
     // Quality Degradation Detection (IDEA 56)
     [ObservableProperty]
@@ -147,10 +147,10 @@ namespace VoiceStudio.App.Views.Panels
     private QualityBaseline? qualityBaseline;
 
     [ObservableProperty]
-    private bool isLoadingDegradation = false;
+    private bool isLoadingDegradation;
 
     [ObservableProperty]
-    private bool hasQualityDegradation = false;
+    private bool hasQualityDegradation;
 
     [ObservableProperty]
     private int degradationTimeWindowDays = 7;
@@ -160,12 +160,12 @@ namespace VoiceStudio.App.Views.Panels
     private MultiSelectState? _multiSelectState;
 
     [ObservableProperty]
-    private int selectedCount = 0;
+    private int selectedCount;
 
     [ObservableProperty]
-    private bool hasMultipleSelection = false;
+    private bool hasMultipleSelection;
 
-    public bool HasProfiles => FilteredProfiles != null && FilteredProfiles.Count > 0;
+    public bool HasProfiles => FilteredProfiles?.Count > 0;
 
     public bool IsProfileSelected(string profileId) => _multiSelectState?.SelectedIds.Contains(profileId) ?? false;
 
@@ -1005,10 +1005,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedProfile = null;
                 }
               },
-              onRedo: (p) =>
-              {
-                SelectedProfile = p;
-              });
+              onRedo: (p) => SelectedProfile = p);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -1084,10 +1081,7 @@ namespace VoiceStudio.App.Views.Panels
                   Profiles,
                   _backendClient,
                   profileToDelete,
-                  onUndo: (p) =>
-                  {
-                    SelectedProfile = p;
-                  },
+                  onUndo: (p) => SelectedProfile = p,
                   onRedo: (p) =>
                   {
                     if (SelectedProfile?.Id == p.Id)
@@ -1619,7 +1613,6 @@ namespace VoiceStudio.App.Views.Panels
       ApplyFilters();
     }
 
-
     partial void OnEnhancementResultChanged(ReferenceAudioPreprocessResponse? value)
     {
       HasEnhancementResult = value != null;
@@ -1846,13 +1839,11 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        var trends = await _backendClient.GetQualityTrendsAsync(
+        QualityTrends = await _backendClient.GetQualityTrendsAsync(
             SelectedProfile.Id,
             SelectedTimeRange,
             cancellationToken
         );
-
-        QualityTrends = trends;
       }
       catch (OperationCanceledException)
       {
@@ -1972,13 +1963,11 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        var baseline = await _backendClient.GetQualityBaselineAsync(
+        QualityBaseline = await _backendClient.GetQualityBaselineAsync(
             SelectedProfile.Id,
             timePeriodDays: 30,
             cancellationToken
         );
-
-        QualityBaseline = baseline;
       }
       catch (OperationCanceledException)
       {
@@ -2000,5 +1989,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-
-

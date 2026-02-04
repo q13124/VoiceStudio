@@ -11,287 +11,286 @@ using NetWebSocketState = System.Net.WebSockets.WebSocketState;
 
 namespace VoiceStudio.App.Services
 {
-    /// <summary>
-    /// WebSocket service implementation for real-time communication.
-    /// Implements React/TypeScript WebSocket patterns in C#.
-    /// </summary>
-    public class WebSocketService : IWebSocketService
+  /// <summary>
+  /// WebSocket service implementation for real-time communication.
+  /// Implements React/TypeScript WebSocket patterns in C#.
+  /// </summary>
+  public class WebSocketService : IWebSocketService
+  {
+    private ClientWebSocket? _webSocket;
+    private CancellationTokenSource? _cancellationTokenSource;
+    private Task? _receiveTask;
+    private readonly string _webSocketUrl;
+    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly HashSet<string> _subscribedTopics;
+    private CoreWebSocketState _state = CoreWebSocketState.Disconnected;
+
+    public event EventHandler? Connected;
+    public event EventHandler<string>? Disconnected;
+    public event EventHandler<Exception>? Error;
+    public event EventHandler<WebSocketMessage>? MessageReceived;
+
+    public CoreWebSocketState State => _state;
+    public bool IsConnected => _state == CoreWebSocketState.Connected && _webSocket?.State == NetWebSocketState.Open;
+
+    public WebSocketService(string webSocketUrl)
     {
-        private ClientWebSocket? _webSocket;
-        private CancellationTokenSource? _cancellationTokenSource;
-        private Task? _receiveTask;
-        private readonly string _webSocketUrl;
-        private readonly JsonSerializerOptions _jsonOptions;
-        private readonly HashSet<string> _subscribedTopics;
-        private CoreWebSocketState _state = CoreWebSocketState.Disconnected;
-
-        public event EventHandler? Connected;
-        public event EventHandler<string>? Disconnected;
-        public event EventHandler<Exception>? Error;
-        public event EventHandler<WebSocketMessage>? MessageReceived;
-
-        public CoreWebSocketState State => _state;
-        public bool IsConnected => _state == CoreWebSocketState.Connected && _webSocket?.State == NetWebSocketState.Open;
-
-        public WebSocketService(string webSocketUrl)
-        {
-            _webSocketUrl = webSocketUrl ?? throw new ArgumentNullException(nameof(webSocketUrl));
-            _subscribedTopics = new HashSet<string>();
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-        }
-
-        public async Task ConnectAsync(string[]? topics = null, CancellationToken cancellationToken = default)
-        {
-            if (_state == CoreWebSocketState.Connected || _state == CoreWebSocketState.Connecting)
-            {
-                return;
-            }
-
-            try
-            {
-                _state = CoreWebSocketState.Connecting;
-                _webSocket = new ClientWebSocket();
-                _cancellationTokenSource = new CancellationTokenSource();
-
-                // Build WebSocket URL with topics query parameter
-                var uriBuilder = new UriBuilder(_webSocketUrl);
-                if (topics != null && topics.Length > 0)
-                {
-                    uriBuilder.Query = $"topics={string.Join(",", topics)}";
-                    foreach (var topic in topics)
-                    {
-                        _subscribedTopics.Add(topic);
-                    }
-                }
-                else
-                {
-                    _subscribedTopics.Add("general");
-                }
-
-                await _webSocket.ConnectAsync(uriBuilder.Uri, cancellationToken);
-                _state = CoreWebSocketState.Connected;
-
-                // Start receiving messages
-                _receiveTask = Task.Run(() => ReceiveMessagesAsync(_cancellationTokenSource.Token));
-
-                Connected?.Invoke(this, EventArgs.Empty);
-            }
-            catch (Exception ex)
-            {
-                _state = CoreWebSocketState.Error;
-                Error?.Invoke(this, ex);
-                throw;
-            }
-        }
-
-        public async Task DisconnectAsync()
-        {
-            if (_state == CoreWebSocketState.Disconnected || _state == CoreWebSocketState.Disconnecting)
-            {
-                return;
-            }
-
-            try
-            {
-                _state = CoreWebSocketState.Disconnecting;
-
-                _cancellationTokenSource?.Cancel();
-
-                if (_webSocket != null && _webSocket.State == NetWebSocketState.Open)
-                {
-                    await _webSocket.CloseAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "Client disconnecting",
-                        CancellationToken.None);
-                }
-
-                _webSocket?.Dispose();
-                _webSocket = null;
-
-                if (_receiveTask != null)
-                {
-                    try
-                    {
-                        await _receiveTask;
-                    }
-                    catch
-                    {
-                        // Ignore errors during cleanup
-                    }
-                }
-
-                _state = CoreWebSocketState.Disconnected;
-                _subscribedTopics.Clear();
-
-                Disconnected?.Invoke(this, "Normal closure");
-            }
-            catch (Exception ex)
-            {
-                _state = CoreWebSocketState.Error;
-                Error?.Invoke(this, ex);
-            }
-        }
-
-        public async Task SubscribeAsync(string topic)
-        {
-            if (!IsConnected)
-            {
-                throw new InvalidOperationException("WebSocket is not connected");
-            }
-
-            var message = new
-            {
-                type = "subscribe",
-                topic = topic
-            };
-
-            await SendMessageAsync(message);
-            _subscribedTopics.Add(topic);
-        }
-
-        public async Task UnsubscribeAsync(string topic)
-        {
-            if (!IsConnected)
-            {
-                throw new InvalidOperationException("WebSocket is not connected");
-            }
-
-            var message = new
-            {
-                type = "unsubscribe",
-                topic = topic
-            };
-
-            await SendMessageAsync(message);
-            _subscribedTopics.Remove(topic);
-        }
-
-        public async Task PingAsync()
-        {
-            if (!IsConnected)
-            {
-                throw new InvalidOperationException("WebSocket is not connected");
-            }
-
-            var message = new
-            {
-                type = "ping"
-            };
-
-            await SendMessageAsync(message);
-        }
-
-        public async Task SendMessageAsync(object message)
-        {
-            if (!IsConnected || _webSocket == null)
-            {
-                throw new InvalidOperationException("WebSocket is not connected");
-            }
-
-            var json = JsonSerializer.Serialize(message, _jsonOptions);
-            var bytes = Encoding.UTF8.GetBytes(json);
-            var buffer = new ArraySegment<byte>(bytes);
-
-            await _webSocket.SendAsync(
-                buffer,
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None);
-        }
-
-        private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
-        {
-            if (_webSocket == null)
-            {
-                return;
-            }
-
-            var buffer = new byte[4096];
-
-            try
-            {
-                while (_webSocket.State == NetWebSocketState.Open && !cancellationToken.IsCancellationRequested)
-                {
-                    var result = await _webSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer),
-                        cancellationToken);
-
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        await _webSocket.CloseAsync(
-                            WebSocketCloseStatus.NormalClosure,
-                            "Server closed connection",
-                            cancellationToken);
-                        break;
-                    }
-
-                    if (result.MessageType == WebSocketMessageType.Text)
-                    {
-                        var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        ProcessMessage(messageJson);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when disconnecting
-            }
-            catch (Exception ex)
-            {
-                _state = CoreWebSocketState.Error;
-                Error?.Invoke(this, ex);
-            }
-        }
-
-        private void ProcessMessage(string messageJson)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(messageJson);
-                var root = doc.RootElement;
-
-                var message = new WebSocketMessage
-                {
-                    Topic = root.TryGetProperty("topic", out var topicProp) ? topicProp.GetString() ?? "general" : "general",
-                    Type = root.TryGetProperty("type", out var typeProp) ? typeProp.GetString() ?? "update" : "update",
-                    Payload = root.TryGetProperty("payload", out var payloadProp) ? JsonSerializer.Deserialize<object>(payloadProp.GetRawText(), _jsonOptions) : null,
-                    Timestamp = root.TryGetProperty("timestamp", out var timestampProp) && timestampProp.TryGetDateTime(out var timestamp)
-                        ? timestamp
-                        : DateTime.UtcNow
-                };
-
-                // Handle pong responses
-                if (message.Type == "pong")
-                {
-                    // Connection is alive
-                    return;
-                }
-
-                // Handle heartbeat
-                if (message.Type == "heartbeat")
-                {
-                    // Connection is alive
-                    return;
-                }
-
-                MessageReceived?.Invoke(this, message);
-            }
-            catch (JsonException ex)
-            {
-                Error?.Invoke(this, new Exception($"Failed to parse WebSocket message: {ex.Message}", ex));
-            }
-        }
-
-        public void Dispose()
-        {
-            DisconnectAsync().GetAwaiter().GetResult();
-            _cancellationTokenSource?.Dispose();
-            _webSocket?.Dispose();
-        }
+      _webSocketUrl = webSocketUrl ?? throw new ArgumentNullException(nameof(webSocketUrl));
+      _subscribedTopics = new HashSet<string>();
+      _jsonOptions = new JsonSerializerOptions
+      {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+      };
     }
-}
 
+    public async Task ConnectAsync(string[]? topics = null, CancellationToken cancellationToken = default)
+    {
+      if (_state == CoreWebSocketState.Connected || _state == CoreWebSocketState.Connecting)
+      {
+        return;
+      }
+
+      try
+      {
+        _state = CoreWebSocketState.Connecting;
+        _webSocket = new ClientWebSocket();
+        _cancellationTokenSource = new CancellationTokenSource();
+
+        // Build WebSocket URL with topics query parameter
+        var uriBuilder = new UriBuilder(_webSocketUrl);
+        if (topics?.Length > 0)
+        {
+          uriBuilder.Query = $"topics={string.Join(",", topics)}";
+          foreach (var topic in topics)
+          {
+            _subscribedTopics.Add(topic);
+          }
+        }
+        else
+        {
+          _subscribedTopics.Add("general");
+        }
+
+        await _webSocket.ConnectAsync(uriBuilder.Uri, cancellationToken);
+        _state = CoreWebSocketState.Connected;
+
+        // Start receiving messages
+        _receiveTask = Task.Run(() => ReceiveMessagesAsync(_cancellationTokenSource.Token));
+
+        Connected?.Invoke(this, EventArgs.Empty);
+      }
+      catch (Exception ex)
+      {
+        _state = CoreWebSocketState.Error;
+        Error?.Invoke(this, ex);
+        throw;
+      }
+    }
+
+    public async Task DisconnectAsync()
+    {
+      if (_state == CoreWebSocketState.Disconnected || _state == CoreWebSocketState.Disconnecting)
+      {
+        return;
+      }
+
+      try
+      {
+        _state = CoreWebSocketState.Disconnecting;
+
+        _cancellationTokenSource?.Cancel();
+
+        if (_webSocket != null && _webSocket.State == NetWebSocketState.Open)
+        {
+          await _webSocket.CloseAsync(
+              WebSocketCloseStatus.NormalClosure,
+              "Client disconnecting",
+              CancellationToken.None);
+        }
+
+        _webSocket?.Dispose();
+        _webSocket = null;
+
+        if (_receiveTask != null)
+        {
+          try
+          {
+            await _receiveTask;
+          }
+          catch
+          {
+            // Ignore errors during cleanup
+          }
+        }
+
+        _state = CoreWebSocketState.Disconnected;
+        _subscribedTopics.Clear();
+
+        Disconnected?.Invoke(this, "Normal closure");
+      }
+      catch (Exception ex)
+      {
+        _state = CoreWebSocketState.Error;
+        Error?.Invoke(this, ex);
+      }
+    }
+
+    public async Task SubscribeAsync(string topic)
+    {
+      if (!IsConnected)
+      {
+        throw new InvalidOperationException("WebSocket is not connected");
+      }
+
+      var message = new
+      {
+        type = "subscribe",
+        topic = topic
+      };
+
+      await SendMessageAsync(message);
+      _subscribedTopics.Add(topic);
+    }
+
+    public async Task UnsubscribeAsync(string topic)
+    {
+      if (!IsConnected)
+      {
+        throw new InvalidOperationException("WebSocket is not connected");
+      }
+
+      var message = new
+      {
+        type = "unsubscribe",
+        topic = topic
+      };
+
+      await SendMessageAsync(message);
+      _subscribedTopics.Remove(topic);
+    }
+
+    public async Task PingAsync()
+    {
+      if (!IsConnected)
+      {
+        throw new InvalidOperationException("WebSocket is not connected");
+      }
+
+      var message = new
+      {
+        type = "ping"
+      };
+
+      await SendMessageAsync(message);
+    }
+
+    public async Task SendMessageAsync(object message)
+    {
+      if (!IsConnected || _webSocket == null)
+      {
+        throw new InvalidOperationException("WebSocket is not connected");
+      }
+
+      var json = JsonSerializer.Serialize(message, _jsonOptions);
+      var bytes = Encoding.UTF8.GetBytes(json);
+      var buffer = new ArraySegment<byte>(bytes);
+
+      await _webSocket.SendAsync(
+          buffer,
+          WebSocketMessageType.Text,
+          true,
+          CancellationToken.None);
+    }
+
+    private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
+    {
+      if (_webSocket == null)
+      {
+        return;
+      }
+
+      var buffer = new byte[4096];
+
+      try
+      {
+        while (_webSocket.State == NetWebSocketState.Open && !cancellationToken.IsCancellationRequested)
+        {
+          var result = await _webSocket.ReceiveAsync(
+              new ArraySegment<byte>(buffer),
+              cancellationToken);
+
+          if (result.MessageType == WebSocketMessageType.Close)
+          {
+            await _webSocket.CloseAsync(
+                WebSocketCloseStatus.NormalClosure,
+                "Server closed connection",
+                cancellationToken);
+            break;
+          }
+
+          if (result.MessageType == WebSocketMessageType.Text)
+          {
+            var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            ProcessMessage(messageJson);
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        // Expected when disconnecting
+      }
+      catch (Exception ex)
+      {
+        _state = CoreWebSocketState.Error;
+        Error?.Invoke(this, ex);
+      }
+    }
+
+    private void ProcessMessage(string messageJson)
+    {
+      try
+      {
+        using var doc = JsonDocument.Parse(messageJson);
+        var root = doc.RootElement;
+
+        var message = new WebSocketMessage
+        {
+          Topic = root.TryGetProperty("topic", out var topicProp) ? topicProp.GetString() ?? "general" : "general",
+          Type = root.TryGetProperty("type", out var typeProp) ? typeProp.GetString() ?? "update" : "update",
+          Payload = root.TryGetProperty("payload", out var payloadProp) ? JsonSerializer.Deserialize<object>(payloadProp.GetRawText(), _jsonOptions) : null,
+          Timestamp = root.TryGetProperty("timestamp", out var timestampProp) && timestampProp.TryGetDateTime(out var timestamp)
+                ? timestamp
+                : DateTime.UtcNow
+        };
+
+        // Handle pong responses
+        if (message.Type == "pong")
+        {
+          // Connection is alive
+          return;
+        }
+
+        // Handle heartbeat
+        if (message.Type == "heartbeat")
+        {
+          // Connection is alive
+          return;
+        }
+
+        MessageReceived?.Invoke(this, message);
+      }
+      catch (JsonException ex)
+      {
+        Error?.Invoke(this, new Exception($"Failed to parse WebSocket message: {ex.Message}", ex));
+      }
+    }
+
+    public void Dispose()
+    {
+      DisconnectAsync().GetAwaiter().GetResult();
+      _cancellationTokenSource?.Dispose();
+      _webSocket?.Dispose();
+    }
+  }
+}

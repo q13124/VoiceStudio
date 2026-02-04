@@ -29,7 +29,7 @@ namespace VoiceStudio.App.Views.Panels
       _toastService = ServiceProvider.GetToastNotificationService();
 
       // Subscribe to ViewModel events for toast notifications
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(MixAssistantViewModel.ErrorMessage) && !string.IsNullOrEmpty(ViewModel.ErrorMessage))
         {
@@ -54,12 +54,12 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void MixAssistantView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void MixAssistantView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "AI Mix Assistant Help";
       HelpOverlay.HelpText = "The AI Mix Assistant analyzes your audio mix and provides intelligent suggestions for improving levels, frequency balance, stereo field, and dynamics. Select a project, configure analysis options, and let AI analyze your mix to generate actionable recommendations. You can filter suggestions by category and priority, apply individual suggestions or apply all at once. Generate AI-powered mix presets based on your genre preferences for quick setup.";
@@ -97,13 +97,13 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var applyItem = new MenuFlyoutItem { Text = "Apply" };
-            applyItem.Click += async (s, e2) => await HandleSuggestionMenuClick("Apply", suggestion);
+            applyItem.Click += async (_, __) => await HandleSuggestionMenuClick("Apply", suggestion);
             menu.Items.Add(applyItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var dismissItem = new MenuFlyoutItem { Text = "Dismiss" };
-            dismissItem.Click += async (s, e2) => await HandleSuggestionMenuClick("Dismiss", suggestion);
+            dismissItem.Click += async (_, __) => await HandleSuggestionMenuClick("Dismiss", suggestion);
             menu.Items.Add(dismissItem);
 
             var position = e.GetPosition(listView);
@@ -138,4 +138,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

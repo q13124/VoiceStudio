@@ -40,7 +40,7 @@ namespace VoiceStudio.App.Controls
       Loaded += CollaborationIndicator_Loaded;
     }
 
-    private void CollaborationIndicator_Loaded(object sender, RoutedEventArgs e)
+    private void CollaborationIndicator_Loaded(object _, RoutedEventArgs e)
     {
       _collaborationService = Services.ServiceProvider.TryGetCollaborationService();
       if (_collaborationService != null)

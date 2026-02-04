@@ -284,7 +284,7 @@ namespace VoiceStudio.App.ViewModels
               cancellationToken
           );
 
-          if (response != null && response.Items != null)
+          if (response?.Items != null)
           {
             GenerationQueue.Clear();
             foreach (var itemData in response.Items)
@@ -796,5 +796,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-
-

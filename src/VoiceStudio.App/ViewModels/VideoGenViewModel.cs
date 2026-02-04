@@ -44,14 +44,14 @@ namespace VoiceStudio.App.ViewModels
     private VideoQualityPreset? _selectedQualityPreset;
     private double _bitrate = 10.0;
     private string _codec = "H.264";
-    private bool _hasQualityComparison = false;
+    private bool _hasQualityComparison;
     private string? _currentQualityMetrics;
     private string? _presetQualityMetrics;
-    private double _videoClarity = 0.0;
-    private double _videoCompression = 0.0;
+    private double _videoClarity;
+    private double _videoCompression;
     private string _videoResolution = string.Empty;
-    private double _videoFrameRate = 0.0;
-    private bool _enablePreprocessing = false;
+    private double _videoFrameRate;
+    private bool _enablePreprocessing;
     private string _denoisingMethod = "None";
     private string _enhancementMethod = "None";
     private double _enhancementStrength = 50.0;
@@ -110,8 +110,7 @@ namespace VoiceStudio.App.ViewModels
         // If no engines loaded, use fallback list
         if (Engines.Count == 0)
         {
-          var fallbackEngines = new[] { "svd", "deforum", "fomm", "sadtalker", "deepfacelab", "moviepy", "ffmpeg_ai", "video_creator", "voice_ai", "lyrebird" };
-          foreach (var engine in fallbackEngines)
+          foreach (var engine in new[] { "svd", "deforum", "fomm", "sadtalker", "deepfacelab", "moviepy", "ffmpeg_ai", "video_creator", "voice_ai", "lyrebird" })
           {
             Engines.Add(engine);
           }
@@ -172,7 +171,6 @@ namespace VoiceStudio.App.ViewModels
       get => _selectedAudioPath;
       set => SetProperty(ref _selectedAudioPath, value);
     }
-
 
     public double Duration
     {
@@ -311,13 +309,10 @@ namespace VoiceStudio.App.ViewModels
       get => _selectedQualityPreset;
       set
       {
-        if (SetProperty(ref _selectedQualityPreset, value))
+        if (SetProperty(ref _selectedQualityPreset, value) && value != null)
         {
-          if (value != null)
-          {
-            ApplyQualityPreset(value);
-            UpdateQualityComparison();
-          }
+          ApplyQualityPreset(value);
+          UpdateQualityComparison();
         }
       }
     }
@@ -776,4 +771,3 @@ namespace VoiceStudio.App.ViewModels
     public string Codec { get; set; } = "H.264";
   }
 }
-

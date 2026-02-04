@@ -210,7 +210,7 @@ namespace VoiceStudio.App.ViewModels
         ProcessingProgress = 0.1f;
 
         // Upload audio file
-        using var audioStream = await selectedAudioFile.OpenStreamForReadAsync();
+        await using var audioStream = await selectedAudioFile.OpenStreamForReadAsync();
         cancellationToken.ThrowIfCancellationRequested();
         ProcessingProgress = 0.2f;
         ProcessingStatus = ResourceHelper.GetString("VoiceQuickClone.AnalyzingAudio", "Analyzing audio...");
@@ -293,4 +293,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

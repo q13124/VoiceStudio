@@ -9,9 +9,9 @@ namespace VoiceStudio.App.Tests.UI
   /// Smoke tests for panel navigation functionality.
   /// Verifies that panels can be navigated to and displayed correctly.
   /// </summary>
-    [TestClass]
-    [TestCategory("UI")]
-    public class PanelNavigationSmokeTests : SmokeTestBase
+  [TestClass]
+  [TestCategory("UI")]
+  public class PanelNavigationSmokeTests : SmokeTestBase
   {
     private MockBackendClient? _mockBackendClient;
 

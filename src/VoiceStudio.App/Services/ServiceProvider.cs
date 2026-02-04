@@ -20,6 +20,12 @@ namespace VoiceStudio.App.Services
     public static IErrorDialogService GetErrorDialogService() => AppServices.GetErrorDialogService();
     public static IErrorLoggingService GetErrorLoggingService() => AppServices.GetErrorLoggingService();
     public static IErrorLoggingService? TryGetErrorLoggingService() => AppServices.TryGetErrorLoggingService();
+    public static IAuditLoggingService GetAuditLoggingService() => AppServices.GetAuditLoggingService();
+    public static IAuditLoggingService? TryGetAuditLoggingService()
+    {
+      try { return AppServices.TryGetAuditLoggingService(); }
+      catch { return null; }
+    }
     public static OperationQueueService GetOperationQueueService() => AppServices.GetOperationQueueService();
     public static StatePersistenceService GetStatePersistenceService() => AppServices.GetStatePersistenceService();
     public static StateCacheService GetStateCacheService() => AppServices.GetStateCacheService();

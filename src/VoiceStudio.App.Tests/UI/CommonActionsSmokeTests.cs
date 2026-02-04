@@ -8,9 +8,9 @@ namespace VoiceStudio.App.Tests.UI
   /// Smoke tests for common user actions.
   /// Verifies that basic operations like creating profiles, synthesizing voice, and applying effects work.
   /// </summary>
-    [TestClass]
-    [TestCategory("UI")]
-    public class CommonActionsSmokeTests : SmokeTestBase
+  [TestClass]
+  [TestCategory("UI")]
+  public class CommonActionsSmokeTests : SmokeTestBase
   {
     private MockBackendClient? _mockBackendClient;
 

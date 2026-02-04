@@ -112,4 +112,3 @@ namespace VoiceStudio.App.Tests.UI
     }
   }
 }
-

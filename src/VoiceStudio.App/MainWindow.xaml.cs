@@ -32,14 +32,14 @@ namespace VoiceStudio.App
     private readonly PanelStateService? _panelStateService;
     private readonly RecentProjectsService? _recentProjectsService;
     private const string ShowWelcomeKey = "ShowWelcomeDialog";
-    private bool _disposed = false;
+    private bool _disposed;
     private System.Threading.Timer? _clockTimer;
     private PanelPreviewPopup? _panelPreviewPopup;
     private System.Threading.Timer? _previewHideTimer;
     private Popup? _panelQuickSwitchPopup;
     private PanelQuickSwitchIndicator? _panelQuickSwitchIndicator;
     private DispatcherTimer? _quickSwitchHideTimer;
-    private bool _isMiniTimelineVisible = false;
+    private bool _isMiniTimelineVisible;
 
     // Phase 0: avoid MenuBar XAML compiler crashes by creating menu items in code.
     private MenuFlyoutSubItem? _recentProjectsSubMenu;
@@ -214,55 +214,55 @@ namespace VoiceStudio.App
 
     #region Navigation Button Click Handlers
 
-    private void NavStudio_Click(object sender, RoutedEventArgs e)
+    private void NavStudio_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Center, "Timeline", () => new TimelineView());
       SetActiveNavButton("NavStudio");
     }
 
-    private void NavProfiles_Click(object sender, RoutedEventArgs e)
+    private void NavProfiles_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Profiles", () => new ProfilesView());
       SetActiveNavButton("NavProfiles");
     }
 
-    private void NavLibrary_Click(object sender, RoutedEventArgs e)
+    private void NavLibrary_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Library", () => new LibraryView());
       SetActiveNavButton("NavLibrary");
     }
 
-    private void NavEffects_Click(object sender, RoutedEventArgs e)
+    private void NavEffects_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
       SetActiveNavButton("NavEffects");
     }
 
-    private void NavTrain_Click(object sender, RoutedEventArgs e)
+    private void NavTrain_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Left, "Training", () => new TrainingView());
       SetActiveNavButton("NavTrain");
     }
 
-    private void NavAnalyze_Click(object sender, RoutedEventArgs e)
+    private void NavAnalyze_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Analyzer", () => new AnalyzerView());
       SetActiveNavButton("NavAnalyze");
     }
 
-    private void NavSettings_Click(object sender, RoutedEventArgs e)
+    private void NavSettings_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Right, "Settings", () => new SettingsView());
       SetActiveNavButton("NavSettings");
     }
 
-    private void NavLogs_Click(object sender, RoutedEventArgs e)
+    private void NavLogs_Click(object _, RoutedEventArgs __)
     {
       SwitchToPanel(Core.Panels.PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
       SetActiveNavButton("NavLogs");
     }
 
-    #endregion
+    #endregion Navigation Button Click Handlers
 
     private void SetActiveNavButton(string activeButtonName)
     {
@@ -456,10 +456,7 @@ namespace VoiceStudio.App
     private void ActivityService_ActivityStatusChanged(object? sender, ActivityStatusChangedEventArgs e)
     {
       // Update on UI thread
-      this.DispatcherQueue.TryEnqueue(() =>
-      {
-        UpdateActivityIndicators(e);
-      });
+      this.DispatcherQueue.TryEnqueue(() => UpdateActivityIndicators(e));
     }
 
     /// <summary>
@@ -508,8 +505,7 @@ namespace VoiceStudio.App
     /// </summary>
     private void UpdateProcessingIndicator(ProcessingStatus status, int activeJobCount, int queuedCount)
     {
-      var processingIndicator = FindNameOnContent("ProcessingIndicator") as FrameworkElement;
-      if (processingIndicator == null)
+      if (!(FindNameOnContent("ProcessingIndicator") is FrameworkElement processingIndicator))
         return;
 
       var tooltip = status switch
@@ -539,8 +535,7 @@ namespace VoiceStudio.App
     /// </summary>
     private void UpdateNetworkIndicator(NetworkStatus status)
     {
-      var networkIndicator = FindNameOnContent("NetworkIndicator") as FrameworkElement;
-      if (networkIndicator == null)
+      if (!(FindNameOnContent("NetworkIndicator") is FrameworkElement networkIndicator))
         return;
 
       var tooltip = status switch
@@ -569,8 +564,7 @@ namespace VoiceStudio.App
     /// </summary>
     private void UpdateEngineIndicator(EngineStatus status)
     {
-      var engineIndicator = FindNameOnContent("EngineIndicator") as FrameworkElement;
-      if (engineIndicator == null)
+      if (!(FindNameOnContent("EngineIndicator") is FrameworkElement engineIndicator))
         return;
 
       var tooltip = status switch
@@ -601,19 +595,16 @@ namespace VoiceStudio.App
     /// </summary>
     private void UpdateStatusText(ActivityStatusChangedEventArgs status)
     {
-      var statusText = FindNameOnContent("StatusText") as TextBlock;
-      if (statusText == null)
+      if (!(FindNameOnContent("StatusText") is TextBlock statusText))
         return;
 
-      var statusMessage = status.ProcessingStatus switch
+      statusText.Text = status.ProcessingStatus switch
       {
         ProcessingStatus.Processing => $"Processing ({status.ActiveJobCount} job(s))",
         ProcessingStatus.Paused => "Paused",
         ProcessingStatus.Error => "Error",
         _ => "Ready"
       };
-
-      statusText.Text = statusMessage;
     }
 
     /// <summary>
@@ -628,14 +619,14 @@ namespace VoiceStudio.App
       }
     }
 
-    #endregion
+    #endregion Status Bar Activity Indicators (IDEA 19)
 
     #region Panel Preview on Hover (IDEA 20)
 
     /// <summary>
     /// Handles pointer entered event for navigation buttons to show panel preview.
     /// </summary>
-    private void NavButton_PointerEntered(object sender, PointerRoutedEventArgs e)
+    private void NavButton_PointerEntered(object sender, PointerRoutedEventArgs _)
     {
       if (sender is not ToggleButton button)
         return;
@@ -665,16 +656,13 @@ namespace VoiceStudio.App
     /// <summary>
     /// Handles pointer exited event for navigation buttons to hide panel preview.
     /// </summary>
-    private void NavButton_PointerExited(object sender, PointerRoutedEventArgs e)
+    private void NavButton_PointerExited(object _, PointerRoutedEventArgs __)
     {
       // Delay hiding to allow moving to preview popup
       _previewHideTimer?.Dispose();
       _previewHideTimer = new System.Threading.Timer(_ =>
       {
-        this.DispatcherQueue.TryEnqueue(() =>
-              {
-                _panelPreviewPopup?.Hide();
-              });
+        this.DispatcherQueue.TryEnqueue(() => _panelPreviewPopup?.Hide());
       }, null, TimeSpan.FromMilliseconds(300), System.Threading.Timeout.InfiniteTimeSpan);
     }
 
@@ -755,7 +743,7 @@ namespace VoiceStudio.App
       return stackPanel;
     }
 
-    #endregion
+    #endregion Panel Preview on Hover (IDEA 20)
 
     #region Panel Docking (IDEA 14)
 
@@ -817,7 +805,7 @@ namespace VoiceStudio.App
       storyboard.Children.Add(sourceFadeOut);
       storyboard.Children.Add(targetFadeIn);
 
-      storyboard.Completed += (s, e) =>
+      storyboard.Completed += (_, _) =>
       {
         var sourceRegion = sourceHost.PanelRegion;
         var targetRegion = targetHost.PanelRegion;
@@ -842,7 +830,7 @@ namespace VoiceStudio.App
       storyboard.Begin();
     }
 
-    #endregion
+    #endregion Panel Docking (IDEA 14)
 
     private void GlobalSearchView_NavigateRequested(object? sender, Views.SearchNavigationEventArgs e)
     {
@@ -946,7 +934,7 @@ namespace VoiceStudio.App
     /// Attempts to select an item in a panel by ID. Each panel should implement
     /// its own item selection logic if needed.
     /// </summary>
-    private void TrySelectItemInPanel(UserControl panelView, string itemId, string itemType)
+    private void TrySelectItemInPanel(UserControl panelView, string _, string __)
     {
       // Panel-specific item selection logic
       // Each panel can implement INavigatablePanel interface in the future for standardized navigation
@@ -1225,7 +1213,7 @@ namespace VoiceStudio.App
     /// <summary>
     /// Registers a panel quick-switch shortcut (IDEA 1).
     /// </summary>
-    private void RegisterPanelQuickSwitchShortcut(int number, Core.Panels.PanelRegion region, int index, string panelName, Func<UserControl> panelFactory)
+    private void RegisterPanelQuickSwitchShortcut(int number, Core.Panels.PanelRegion region, int _, string panelName, Func<UserControl> panelFactory)
     {
       VirtualKey key = number switch
       {
@@ -1268,8 +1256,7 @@ namespace VoiceStudio.App
         return;
 
       // Switch panel content
-      var panelView = panelFactory();
-      targetHost.Content = panelView;
+      targetHost.Content = panelFactory();
 
       if (IsGateCSmokeMode())
       {
@@ -1326,16 +1313,13 @@ namespace VoiceStudio.App
       }
 
       // Hide after 1.5 seconds
-      if (_quickSwitchHideTimer != null)
-      {
-        _quickSwitchHideTimer.Stop();
-      }
+      _quickSwitchHideTimer?.Stop();
 
       _quickSwitchHideTimer = new DispatcherTimer
       {
         Interval = TimeSpan.FromMilliseconds(1500) // 1.5 seconds display time
       };
-      _quickSwitchHideTimer.Tick += (s, e) =>
+      _quickSwitchHideTimer.Tick += (_, _) =>
       {
         _quickSwitchHideTimer.Stop();
         HidePanelQuickSwitchIndicator();
@@ -1348,7 +1332,7 @@ namespace VoiceStudio.App
     /// </summary>
     private void HidePanelQuickSwitchIndicator()
     {
-      if (_panelQuickSwitchPopup == null || !_panelQuickSwitchPopup.IsOpen || _panelQuickSwitchIndicator == null)
+      if (_panelQuickSwitchPopup?.IsOpen != true || _panelQuickSwitchIndicator == null)
         return;
 
       // Animate out
@@ -1364,7 +1348,7 @@ namespace VoiceStudio.App
       {
         Interval = TimeSpan.FromMilliseconds(200)
       };
-      timer.Tick += (s, e) =>
+      timer.Tick += (_, _) =>
       {
         timer.Stop();
         _panelQuickSwitchPopup.IsOpen = false;
@@ -1516,7 +1500,7 @@ namespace VoiceStudio.App
       }
     }
 
-    private void GlobalSearchOverlay_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+    private void GlobalSearchOverlay_Tapped(object _, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
       // Close search when clicking on overlay background
       var globalSearchOverlay = FindNameOnContent("GlobalSearchOverlay") as FrameworkElement;
@@ -1549,12 +1533,9 @@ namespace VoiceStudio.App
           try
           {
             // Save mixer state if EffectsMixerView is active
-            if (rightPanelHost?.Content is EffectsMixerView mixerView && mixerView.ViewModel != null)
+            if (rightPanelHost?.Content is EffectsMixerView mixerView && mixerView.ViewModel != null && mixerView.ViewModel.SaveMixerStateCommand.CanExecute(null))
             {
-              if (mixerView.ViewModel.SaveMixerStateCommand.CanExecute(null))
-              {
-                await mixerView.ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
-              }
+              await mixerView.ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
             }
           }
           catch
@@ -2000,7 +1981,7 @@ namespace VoiceStudio.App
             Text = "Open",
             Tag = project.Path
           };
-          openItem.Click += (s, evt) => OpenRecentProject(project.Path, project.Name);
+          openItem.Click += (_, _) => OpenRecentProject(project.Path, project.Name);
           subMenu.Items.Add(openItem);
           subMenu.Items.Add(new MenuFlyoutSeparator());
 
@@ -2009,7 +1990,7 @@ namespace VoiceStudio.App
             Text = "Unpin",
             Tag = project.Path
           };
-          unpinItem.Click += (s, evt) => UnpinRecentProject(project.Path);
+          unpinItem.Click += (_, _) => UnpinRecentProject(project.Path);
           subMenu.Items.Add(unpinItem);
 
           _recentProjectsSubMenu!.Items.Add(subMenu);
@@ -2033,7 +2014,7 @@ namespace VoiceStudio.App
           Text = "Open",
           Tag = project.Path
         };
-        openItem2.Click += (s, evt) => OpenRecentProject(project.Path, project.Name);
+        openItem2.Click += (_, _) => OpenRecentProject(project.Path, project.Name);
         subMenu.Items.Add(openItem2);
         subMenu.Items.Add(new MenuFlyoutSeparator());
 
@@ -2042,7 +2023,7 @@ namespace VoiceStudio.App
           Text = "Pin",
           Tag = project.Path
         };
-        pinItem.Click += (s, e) => PinRecentProject(project.Path);
+        pinItem.Click += (_, _) => PinRecentProject(project.Path);
         subMenu.Items.Add(pinItem);
 
         var removeItem = new MenuFlyoutItem
@@ -2050,7 +2031,7 @@ namespace VoiceStudio.App
           Text = "Remove from list",
           Tag = project.Path
         };
-        removeItem.Click += async (s, evt) =>
+        removeItem.Click += async (_, _) =>
         {
           if (_recentProjectsService != null)
           {
@@ -2070,7 +2051,7 @@ namespace VoiceStudio.App
         {
           Text = "Clear Recent Projects"
         };
-        clearItem.Click += (s, e) => ClearRecentProjects();
+        clearItem.Click += (_, _) => ClearRecentProjects();
         _recentProjectsSubMenu!.Items.Add(clearItem);
       }
     }
@@ -2115,8 +2096,7 @@ namespace VoiceStudio.App
     {
       try
       {
-        var rightPanelHost = FindNameOnContent("RightPanelHost") as Controls.PanelHost;
-        if (rightPanelHost == null)
+        if (!(FindNameOnContent("RightPanelHost") is Controls.PanelHost rightPanelHost))
         {
           return;
         }

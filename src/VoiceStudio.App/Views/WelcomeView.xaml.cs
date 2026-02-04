@@ -4,22 +4,20 @@ namespace VoiceStudio.App.Views;
 
 public sealed partial class WelcomeView : ContentDialog
 {
-    public bool ShowOnStartup
+  public bool ShowOnStartup
+  {
+    get => ShowOnStartupCheckBox?.IsChecked ?? true;
+    set
     {
-        get => ShowOnStartupCheckBox?.IsChecked ?? true;
-        set
-        {
-            if (ShowOnStartupCheckBox != null)
-            {
-                ShowOnStartupCheckBox.IsChecked = value;
-            }
-        }
+      if (ShowOnStartupCheckBox != null)
+      {
+        ShowOnStartupCheckBox.IsChecked = value;
+      }
     }
+  }
 
-    public WelcomeView()
-    {
-        this.InitializeComponent();
-    }
+  public WelcomeView()
+  {
+    this.InitializeComponent();
+  }
 }
-
-

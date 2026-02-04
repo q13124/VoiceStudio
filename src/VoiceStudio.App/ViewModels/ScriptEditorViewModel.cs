@@ -56,10 +56,10 @@ namespace VoiceStudio.App.ViewModels
 
     // Multi-select support
     [ObservableProperty]
-    private int selectedScriptCount = 0;
+    private int selectedScriptCount;
 
     [ObservableProperty]
-    private bool hasMultipleScriptSelection = false;
+    private bool hasMultipleScriptSelection;
 
     public bool IsScriptSelected(string scriptId) => _multiSelectState?.SelectedIds.Contains(scriptId) ?? false;
 
@@ -136,7 +136,7 @@ namespace VoiceStudio.App.ViewModels
       }, () => !IsLoading);
 
       // Multi-select commands
-      SelectAllScriptsCommand = new RelayCommand(SelectAllScripts, () => Scripts != null && Scripts.Count > 0);
+      SelectAllScriptsCommand = new RelayCommand(SelectAllScripts, () => Scripts?.Count > 0);
       ClearScriptSelectionCommand = new RelayCommand(ClearScriptSelection);
       DeleteSelectedScriptsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -145,7 +145,7 @@ namespace VoiceStudio.App.ViewModels
       }, () => SelectedScriptCount > 0 && !IsLoading);
 
       // Subscribe to selection changes
-      _multiSelectService.SelectionChanged += (s, e) =>
+      _multiSelectService.SelectionChanged += (_, e) =>
       {
         if (e.PanelId == PanelId)
         {
@@ -260,10 +260,7 @@ namespace VoiceStudio.App.ViewModels
                     SelectedScript = Scripts.FirstOrDefault();
                   }
                 },
-                onRedo: (s) =>
-                {
-                  SelectedScript = s;
-                });
+                onRedo: (s) => SelectedScript = s);
             _undoRedoService.RegisterAction(action);
           }
 
@@ -360,10 +357,7 @@ namespace VoiceStudio.App.ViewModels
               _backendClient,
               scriptToDelete,
               originalIndex,
-              onUndo: (s) =>
-              {
-                SelectedScript = s;
-              },
+              onUndo: (s) => SelectedScript = s,
               onRedo: (s) =>
               {
                 if (SelectedScript?.Id == s.Id)
@@ -465,10 +459,7 @@ namespace VoiceStudio.App.ViewModels
                     SelectedSegment = null;
                   }
                 },
-                onRedo: (seg) =>
-                {
-                  SelectedSegment = seg;
-                });
+                onRedo: (seg) => SelectedSegment = seg);
             _undoRedoService.RegisterAction(action);
           }
         }
@@ -519,10 +510,7 @@ namespace VoiceStudio.App.ViewModels
               segmentToRemove,
               _backendClient,
               originalIndex,
-              onUndo: (seg) =>
-              {
-                SelectedSegment = seg;
-              },
+              onUndo: (seg) => SelectedSegment = seg,
               onRedo: (seg) =>
               {
                 if (SelectedSegment?.Id == seg.Id)

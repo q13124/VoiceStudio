@@ -44,13 +44,13 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void MacroView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void MacroView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
     }
 
-    private async void NewMacroButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void NewMacroButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       var textBox = new TextBox
       {
@@ -68,26 +68,23 @@ namespace VoiceStudio.App.Views.Panels
       };
 
       var result = await dialog.ShowAsync();
-      if (result == ContentDialogResult.Primary)
+      if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
       {
-        if (!string.IsNullOrWhiteSpace(textBox.Text))
-        {
-          await ViewModel.CreateMacroCommand.ExecuteAsync(textBox.Text);
-        }
+        await ViewModel.CreateMacroCommand.ExecuteAsync(textBox.Text);
       }
     }
 
-    private void AutomationToggleButton_Checked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void AutomationToggleButton_Checked(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       ViewModel.ShowMacrosView = false;
     }
 
-    private void AutomationToggleButton_Unchecked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void AutomationToggleButton_Unchecked(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       ViewModel.ShowMacrosView = true;
     }
 
-    private void EditMacroButton_Click(object sender, RoutedEventArgs e)
+    private void EditMacroButton_Click(object sender, RoutedEventArgs _)
     {
       if (sender is Button button && button.CommandParameter is Macro macro)
       {
@@ -95,7 +92,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private async void CreateCurveButton_Click(object sender, RoutedEventArgs e)
+    private async void CreateCurveButton_Click(object _, RoutedEventArgs __)
     {
       // Get selected parameter from ComboBox
       var parameterCombo = this.FindName("ParameterCombo") as ComboBox;
@@ -111,7 +108,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Macros & Automation Help";
       HelpOverlay.HelpText = "The Macros & Automation panel allows you to create and manage automation macros and curves. Macros are sequences of actions that can be executed to automate tasks. Automation curves let you control parameter changes over time, such as volume fades, pan sweeps, or effect parameter automation.";
@@ -144,27 +141,27 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var executeItem = new MenuFlyoutItem { Text = "Execute" };
-            executeItem.Click += async (s, e2) => await HandleMacroMenuClick("Execute", macro);
+            executeItem.Click += async (_, __) => await HandleMacroMenuClick("Execute", macro);
             menu.Items.Add(executeItem);
 
             var editItem = new MenuFlyoutItem { Text = "Edit" };
-            editItem.Click += async (s, e2) => await HandleMacroMenuClick("Edit", macro);
+            editItem.Click += async (_, __) => await HandleMacroMenuClick("Edit", macro);
             menu.Items.Add(editItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
-            duplicateItem.Click += async (s, e2) => await HandleMacroMenuClick("Duplicate", macro);
+            duplicateItem.Click += async (_, __) => await HandleMacroMenuClick("Duplicate", macro);
             menu.Items.Add(duplicateItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export" };
-            exportItem.Click += async (s, e2) => await HandleMacroMenuClick("Export", macro);
+            exportItem.Click += async (_, __) => await HandleMacroMenuClick("Export", macro);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleMacroMenuClick("Delete", macro);
+            deleteItem.Click += async (_, __) => await HandleMacroMenuClick("Delete", macro);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -187,17 +184,17 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
-            duplicateItem.Click += async (s, e2) => await HandleAutomationCurveMenuClick("Duplicate", curve);
+            duplicateItem.Click += async (_, __) => await HandleAutomationCurveMenuClick("Duplicate", curve);
             menu.Items.Add(duplicateItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export" };
-            exportItem.Click += async (s, e2) => await HandleAutomationCurveMenuClick("Export", curve);
+            exportItem.Click += async (_, __) => await HandleAutomationCurveMenuClick("Export", curve);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleAutomationCurveMenuClick("Delete", curve);
+            deleteItem.Click += async (_, __) => await HandleAutomationCurveMenuClick("Delete", curve);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);

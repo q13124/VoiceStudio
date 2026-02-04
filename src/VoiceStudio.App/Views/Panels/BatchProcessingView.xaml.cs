@@ -130,8 +130,7 @@ namespace VoiceStudio.App.Views.Panels
         var qualityMetricsProperty = ViewModel.GetType().GetProperty("QualityMetrics");
         if (qualityMetricsProperty != null)
         {
-          var qualityMetrics = qualityMetricsProperty.GetValue(ViewModel) as VoiceStudio.Core.Models.QualityMetrics;
-          _parentPanelHost.QualityMetrics = qualityMetrics;
+          _parentPanelHost.QualityMetrics = qualityMetricsProperty.GetValue(ViewModel) as VoiceStudio.Core.Models.QualityMetrics;
         }
       }
     }
@@ -206,7 +205,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void StatusFilter_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
+    private void StatusFilter_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs _)
     {
       if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
       {
@@ -221,7 +220,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Batch Processing Help";
       HelpOverlay.HelpText = "The Batch Processing panel allows you to create and manage batch synthesis jobs. Create jobs with multiple text inputs, configure engines and settings, and process them all in a queue. Monitor job progress, filter by status, and manage the processing queue. Auto-refresh keeps the status updated automatically.";
@@ -255,27 +254,27 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var startItem = new MenuFlyoutItem { Text = "Start Job" };
-            startItem.Click += async (s, e2) => await HandleJobMenuClick("Start", job);
+            startItem.Click += async (_, _) => await HandleJobMenuClick("Start", job);
             menu.Items.Add(startItem);
 
             var cancelItem = new MenuFlyoutItem { Text = "Cancel Job" };
-            cancelItem.Click += async (s, e2) => await HandleJobMenuClick("Cancel", job);
+            cancelItem.Click += async (_, _) => await HandleJobMenuClick("Cancel", job);
             menu.Items.Add(cancelItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
-            duplicateItem.Click += async (s, e2) => await HandleJobMenuClick("Duplicate", job);
+            duplicateItem.Click += async (_, _) => await HandleJobMenuClick("Duplicate", job);
             menu.Items.Add(duplicateItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export Results" };
-            exportItem.Click += async (s, e2) => await HandleJobMenuClick("Export", job);
+            exportItem.Click += async (_, _) => await HandleJobMenuClick("Export", job);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleJobMenuClick("Delete", job);
+            deleteItem.Click += async (_, _) => await HandleJobMenuClick("Delete", job);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -411,7 +410,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void Job_DragItemsCompleted(UIElement sender, DragItemsCompletedEventArgs e)
+    private void Job_DragItemsCompleted(UIElement sender, DragItemsCompletedEventArgs _)
     {
       // Clean up drag state
       if (sender is ListViewItem listViewItem)
@@ -419,10 +418,7 @@ namespace VoiceStudio.App.Views.Panels
         listViewItem.Opacity = 1.0;
       }
 
-      if (_dragDropService != null)
-      {
-        _dragDropService.Cleanup();
-      }
+      _dragDropService?.Cleanup();
 
       _draggedJob = null;
     }
@@ -498,12 +494,9 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void Job_DragLeave(object sender, DragEventArgs e)
+    private void Job_DragLeave(object _, DragEventArgs __)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private void BatchProcessingView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
@@ -527,4 +520,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

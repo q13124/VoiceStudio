@@ -2,12 +2,11 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VoiceStudio.App.Views.Shell
 {
-    public sealed partial class NavigationView : UserControl
+  public sealed partial class NavigationView : UserControl
+  {
+    public NavigationView()
     {
-        public NavigationView()
-        {
-            this.InitializeComponent();
-        }
+      this.InitializeComponent();
     }
+  }
 }
-

@@ -27,47 +27,47 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void CacheSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void CacheSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.CacheSizeMb = (int)sender.Value;
     }
 
-    private void MaxThreadsBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void MaxThreadsBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.MaxThreads = (int)sender.Value;
     }
 
-    private void MemoryLimitBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void MemoryLimitBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.MemoryLimitMb = sender.Value;
     }
 
-    private void SampleRateBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void SampleRateBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.DefaultSampleRate = (int)sender.Value;
     }
 
-    private void BitDepthBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void BitDepthBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.DefaultBitDepth = (int)sender.Value;
     }
 
-    private void FadeDurationBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void FadeDurationBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.FadeDurationMs = (int)sender.Value;
     }
 
-    private void TimeoutBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void TimeoutBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.TimeoutSeconds = (int)sender.Value;
     }
 
-    private void RetryBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void RetryBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.RetryAttempts = (int)sender.Value;
     }
 
-    private void BatchSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    private void BatchSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs _)
     {
       ViewModel.BatchSize = (int)sender.Value;
     }

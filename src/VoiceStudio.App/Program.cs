@@ -86,7 +86,7 @@ namespace VoiceStudio.App
           WriteBootMarker(crashDir, "bootstrap_initialize_done", args);
         }
 
-        Application.Start((p) =>
+        Application.Start((_) =>
         {
           WriteBootMarker(crashDir, "application_start_callback_entered", args);
           var context = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());

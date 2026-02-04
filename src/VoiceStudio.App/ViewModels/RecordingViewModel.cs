@@ -381,7 +381,7 @@ namespace VoiceStudio.App.ViewModels
         RecordingDurationDisplay = RecordingDuration.ToString(@"mm\:ss");
 
         // Update waveform samples if available
-        if (status.WaveformSamples != null && status.WaveformSamples.Length > 0)
+        if (status.WaveformSamples?.Length > 0)
         {
           WaveformSamples.Clear();
           foreach (var sample in status.WaveformSamples)
@@ -436,4 +436,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

@@ -44,42 +44,42 @@ namespace VoiceStudio.App.ViewModels
     private ObservableCollection<string> availableProfiles = new();
 
     [ObservableProperty]
-    private bool isStreaming = false;
+    private bool isStreaming;
 
     [ObservableProperty]
-    private bool isPaused = false;
+    private bool isPaused;
 
     // Latency monitoring
     [ObservableProperty]
-    private double currentLatencyMs = 0.0;
+    private double currentLatencyMs;
 
     [ObservableProperty]
-    private double averageLatencyMs = 0.0;
+    private double averageLatencyMs;
 
     [ObservableProperty]
-    private double minLatencyMs = 0.0;
+    private double minLatencyMs;
 
     [ObservableProperty]
-    private double maxLatencyMs = 0.0;
+    private double maxLatencyMs;
 
     // Quality metrics
     [ObservableProperty]
-    private double qualityScore = 0.0;
+    private double qualityScore;
 
     [ObservableProperty]
-    private double mosScore = 0.0;
+    private double mosScore;
 
     [ObservableProperty]
-    private double similarityScore = 0.0;
+    private double similarityScore;
 
     [ObservableProperty]
-    private double naturalnessScore = 0.0;
+    private double naturalnessScore;
 
     [ObservableProperty]
-    private double snrDb = 0.0;
+    private double snrDb;
 
     [ObservableProperty]
-    private double clarity = 0.0;
+    private double clarity;
 
     [ObservableProperty]
     private string qualityMetricsDisplay = "No metrics available";
@@ -333,23 +333,18 @@ namespace VoiceStudio.App.ViewModels
     {
       // Handle received audio data for playback
       // This would typically be sent to the audio player service
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           // Update UI or send to audio player
           // Audio data received from WebSocket connection
           System.Diagnostics.Debug.WriteLine($"Received audio data: {data.AudioData.Length} bytes, {data.SampleRate}Hz, {data.Channels} channels");
         });
-      }
     }
 
     private void OnConversionStatusChanged(object? sender, RealtimeConversionStatus status)
     {
       // Update conversion status on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           var statusValue = status.Status ?? string.Empty;
           StatusMessage = status.Message ?? statusValue;
@@ -376,15 +371,12 @@ namespace VoiceStudio.App.ViewModels
               break;
           }
         });
-      }
     }
 
     private void OnQualityMetricsUpdated(object? sender, RealtimeQualityMetrics metrics)
     {
       // Update quality metrics on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
+      _dispatcherQueue?.TryEnqueue(() =>
         {
           SimilarityScore = metrics.Similarity;
           NaturalnessScore = metrics.Naturalness;
@@ -396,19 +388,12 @@ namespace VoiceStudio.App.ViewModels
 
           QualityMetricsDisplay = $"MOS: {MosScore:F2} | Similarity: {SimilarityScore:P0} | Naturalness: {NaturalnessScore:P0}";
         });
-      }
     }
 
     private void OnLatencyInfoReceived(object? sender, RealtimeLatencyInfo latency)
     {
       // Update latency information on UI thread
-      if (_dispatcherQueue != null)
-      {
-        _dispatcherQueue.TryEnqueue(() =>
-        {
-          RecordLatency(latency.TotalLatency);
-        });
-      }
+      _dispatcherQueue?.TryEnqueue(() => RecordLatency(latency.TotalLatency));
     }
 
     protected override void Dispose(bool disposing)
@@ -721,7 +706,7 @@ namespace VoiceStudio.App.ViewModels
               cancellationToken: cancellationToken
           );
 
-          if (sessionsList != null && sessionsList.Sessions != null)
+          if (sessionsList?.Sessions != null)
           {
             Sessions.Clear();
             foreach (var session in sessionsList.Sessions)
@@ -904,4 +889,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

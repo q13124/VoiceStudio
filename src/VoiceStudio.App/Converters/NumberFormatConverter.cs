@@ -4,69 +4,68 @@ using Microsoft.UI.Xaml.Data;
 
 namespace VoiceStudio.App.Converters
 {
+  /// <summary>
+  /// Converter to format numbers with a specified format string.
+  /// Used for WinUI 3 which doesn't support StringFormat on x:Bind.
+  /// </summary>
+  public class NumberFormatConverter : IValueConverter
+  {
     /// <summary>
-    /// Converter to format numbers with a specified format string.
-    /// Used for WinUI 3 which doesn't support StringFormat on x:Bind.
+    /// Format string (e.g., "F0", "F1", "N2", "C")
     /// </summary>
-    public class NumberFormatConverter : IValueConverter
+    public string Format { get; set; } = "F0";
+
+    /// <summary>
+    /// Optional suffix to append (e.g., "%", "ms")
+    /// </summary>
+    public string? Suffix { get; set; }
+
+    public object? Convert(object? value, Type targetType, object? parameter, string language)
     {
-        /// <summary>
-        /// Format string (e.g., "F0", "F1", "N2", "C")
-        /// </summary>
-        public string Format { get; set; } = "F0";
+      if (value == null)
+        return string.Empty;
 
-        /// <summary>
-        /// Optional suffix to append (e.g., "%", "ms")
-        /// </summary>
-        public string? Suffix { get; set; }
+      var format = Format;
+      if (parameter is string p && !string.IsNullOrWhiteSpace(p))
+      {
+        format = p;
+      }
 
-        public object? Convert(object? value, Type targetType, object? parameter, string language)
+      string formatted;
+      try
+      {
+        if (value is IFormattable formattable)
         {
-            if (value == null)
-                return string.Empty;
-
-            var format = Format;
-            if (parameter is string p && !string.IsNullOrWhiteSpace(p))
-            {
-                format = p;
-            }
-
-            string formatted;
-            try
-            {
-                if (value is IFormattable formattable)
-                {
-                    formatted = formattable.ToString(format, CultureInfo.InvariantCulture);
-                }
-                else if (double.TryParse(
-                    value.ToString(),
-                    NumberStyles.Float | NumberStyles.AllowThousands,
-                    CultureInfo.InvariantCulture,
-                    out var numValue))
-                {
-                    formatted = numValue.ToString(format, CultureInfo.InvariantCulture);
-                }
-                else
-                {
-                    return value.ToString() ?? string.Empty;
-                }
-            }
-            catch (FormatException)
-            {
-                // Invalid format string - return value as string instead
-                return value.ToString() ?? string.Empty;
-            }
-            
-            if (!string.IsNullOrEmpty(Suffix))
-                formatted += Suffix;
-
-            return formatted;
+          formatted = formattable.ToString(format, CultureInfo.InvariantCulture);
         }
-
-        public object? ConvertBack(object? value, Type targetType, object? parameter, string language)
+        else if (double.TryParse(
+            value.ToString(),
+            NumberStyles.Float | NumberStyles.AllowThousands,
+            CultureInfo.InvariantCulture,
+            out var numValue))
         {
-            throw new NotSupportedException();
+          formatted = numValue.ToString(format, CultureInfo.InvariantCulture);
         }
+        else
+        {
+          return value.ToString() ?? string.Empty;
+        }
+      }
+      catch (FormatException)
+      {
+        // Invalid format string - return value as string instead
+        return value.ToString() ?? string.Empty;
+      }
+
+      if (!string.IsNullOrEmpty(Suffix))
+        formatted += Suffix;
+
+      return formatted;
     }
-}
 
+    public object? ConvertBack(object? value, Type targetType, object? parameter, string language)
+    {
+      throw new NotSupportedException();
+    }
+  }
+}

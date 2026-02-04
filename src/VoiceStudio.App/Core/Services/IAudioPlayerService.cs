@@ -3,90 +3,89 @@ using System.Threading.Tasks;
 
 namespace VoiceStudio.Core.Services
 {
+  /// <summary>
+  /// Service interface for audio playback functionality.
+  /// Supports playing audio files, streams, and managing playback state.
+  /// </summary>
+  public interface IAudioPlayerService
+  {
     /// <summary>
-    /// Service interface for audio playback functionality.
-    /// Supports playing audio files, streams, and managing playback state.
+    /// Plays an audio file from a file path.
     /// </summary>
-    public interface IAudioPlayerService
-    {
-        /// <summary>
-        /// Plays an audio file from a file path.
-        /// </summary>
-        /// <param name="filePath">Path to the audio file</param>
-        /// <param name="onPlaybackComplete">Optional callback when playback completes</param>
-        /// <returns>Task representing the playback operation</returns>
-        Task PlayFileAsync(string filePath, Action? onPlaybackComplete = null);
+    /// <param name="filePath">Path to the audio file</param>
+    /// <param name="onPlaybackComplete">Optional callback when playback completes</param>
+    /// <returns>Task representing the playback operation</returns>
+    Task PlayFileAsync(string filePath, Action? onPlaybackComplete = null);
 
-        /// <summary>
-        /// Plays audio from a stream (e.g., from backend API).
-        /// </summary>
-        /// <param name="audioStream">Stream containing audio data</param>
-        /// <param name="sampleRate">Sample rate of the audio (default: 22050)</param>
-        /// <param name="channels">Number of audio channels (default: 1 for mono)</param>
-        /// <param name="onPlaybackComplete">Optional callback when playback completes</param>
-        /// <returns>Task representing the playback operation</returns>
-        Task PlayStreamAsync(System.IO.Stream audioStream, int sampleRate = 22050, int channels = 1, Action? onPlaybackComplete = null);
+    /// <summary>
+    /// Plays audio from a stream (e.g., from backend API).
+    /// </summary>
+    /// <param name="audioStream">Stream containing audio data</param>
+    /// <param name="sampleRate">Sample rate of the audio (default: 22050)</param>
+    /// <param name="channels">Number of audio channels (default: 1 for mono)</param>
+    /// <param name="onPlaybackComplete">Optional callback when playback completes</param>
+    /// <returns>Task representing the playback operation</returns>
+    Task PlayStreamAsync(System.IO.Stream audioStream, int sampleRate = 22050, int channels = 1, Action? onPlaybackComplete = null);
 
-        /// <summary>
-        /// Stops the current playback.
-        /// </summary>
-        void Stop();
+    /// <summary>
+    /// Stops the current playback.
+    /// </summary>
+    void Stop();
 
-        /// <summary>
-        /// Pauses the current playback.
-        /// </summary>
-        void Pause();
+    /// <summary>
+    /// Pauses the current playback.
+    /// </summary>
+    void Pause();
 
-        /// <summary>
-        /// Resumes paused playback.
-        /// </summary>
-        void Resume();
+    /// <summary>
+    /// Resumes paused playback.
+    /// </summary>
+    void Resume();
 
-        /// <summary>
-        /// Gets whether audio is currently playing.
-        /// </summary>
-        bool IsPlaying { get; }
+    /// <summary>
+    /// Gets whether audio is currently playing.
+    /// </summary>
+    bool IsPlaying { get; }
 
-        /// <summary>
-        /// Gets whether audio is currently paused.
-        /// </summary>
-        bool IsPaused { get; }
+    /// <summary>
+    /// Gets whether audio is currently paused.
+    /// </summary>
+    bool IsPaused { get; }
 
-        /// <summary>
-        /// Gets the current playback position in seconds.
-        /// </summary>
-        double Position { get; }
+    /// <summary>
+    /// Gets the current playback position in seconds.
+    /// </summary>
+    double Position { get; }
 
-        /// <summary>
-        /// Gets the total duration of the current audio in seconds.
-        /// </summary>
-        double Duration { get; }
+    /// <summary>
+    /// Gets the total duration of the current audio in seconds.
+    /// </summary>
+    double Duration { get; }
 
-        /// <summary>
-        /// Sets the playback volume (0.0 to 1.0).
-        /// </summary>
-        double Volume { get; set; }
+    /// <summary>
+    /// Sets the playback volume (0.0 to 1.0).
+    /// </summary>
+    double Volume { get; set; }
 
-        /// <summary>
-        /// Seeks to a specific position in seconds.
-        /// </summary>
-        /// <param name="position">Position in seconds to seek to</param>
-        void Seek(double position);
+    /// <summary>
+    /// Seeks to a specific position in seconds.
+    /// </summary>
+    /// <param name="position">Position in seconds to seek to</param>
+    void Seek(double position);
 
-        /// <summary>
-        /// Event raised when playback position changes.
-        /// </summary>
-        event EventHandler<double>? PositionChanged;
+    /// <summary>
+    /// Event raised when playback position changes.
+    /// </summary>
+    event EventHandler<double>? PositionChanged;
 
-        /// <summary>
-        /// Event raised when playback completes.
-        /// </summary>
-        event EventHandler? PlaybackCompleted;
+    /// <summary>
+    /// Event raised when playback completes.
+    /// </summary>
+    event EventHandler? PlaybackCompleted;
 
-        /// <summary>
-        /// Event raised when playback state changes.
-        /// </summary>
-        event EventHandler<bool>? IsPlayingChanged;
-    }
+    /// <summary>
+    /// Event raised when playback state changes.
+    /// </summary>
+    event EventHandler<bool>? IsPlayingChanged;
+  }
 }
-

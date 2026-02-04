@@ -29,7 +29,7 @@ namespace VoiceStudio.App.Views.Panels
       _toastService = ServiceProvider.GetToastNotificationService();
 
       // Subscribe to ViewModel events for toast notifications
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(JobProgressViewModel.ErrorMessage) && !string.IsNullOrEmpty(ViewModel.ErrorMessage))
         {
@@ -54,12 +54,12 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
-    private void JobProgressView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void JobProgressView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Job Progress Help";
       HelpOverlay.HelpText = "The Job Progress panel allows you to monitor all running jobs in VoiceStudio. View job status, progress, and details. Use filters to find specific jobs, pause/resume running jobs, cancel pending jobs, and delete completed jobs.";
@@ -92,21 +92,21 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var pauseItem = new MenuFlyoutItem { Text = "Pause" };
-            pauseItem.Click += async (s, e2) => await HandleJobMenuClick("Pause", job);
+            pauseItem.Click += async (_, __) => await HandleJobMenuClick("Pause", job);
             menu.Items.Add(pauseItem);
 
             var resumeItem = new MenuFlyoutItem { Text = "Resume" };
-            resumeItem.Click += async (s, e2) => await HandleJobMenuClick("Resume", job);
+            resumeItem.Click += async (_, __) => await HandleJobMenuClick("Resume", job);
             menu.Items.Add(resumeItem);
 
             var cancelItem = new MenuFlyoutItem { Text = "Cancel" };
-            cancelItem.Click += async (s, e2) => await HandleJobMenuClick("Cancel", job);
+            cancelItem.Click += async (_, __) => await HandleJobMenuClick("Cancel", job);
             menu.Items.Add(cancelItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleJobMenuClick("Delete", job);
+            deleteItem.Click += async (_, __) => await HandleJobMenuClick("Delete", job);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -145,4 +145,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

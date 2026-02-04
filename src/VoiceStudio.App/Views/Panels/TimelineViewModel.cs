@@ -48,7 +48,7 @@ namespace VoiceStudio.App.Views.Panels
     private string selectedEngine = "xtts"; // xtts, chatterbox, tortoise
 
     [ObservableProperty]
-    private bool enhanceQuality = false;
+    private bool enhanceQuality;
 
     [ObservableProperty]
     private string synthesisText = string.Empty;
@@ -78,16 +78,16 @@ namespace VoiceStudio.App.Views.Panels
     private double? lastSynthesizedDuration;
 
     [ObservableProperty]
-    private bool canPlayAudio = false;
+    private bool canPlayAudio;
 
     [ObservableProperty]
-    private bool isPlaying = false;
+    private bool isPlaying;
 
     [ObservableProperty]
-    private double currentPlaybackPosition = 0.0;
+    private double currentPlaybackPosition;
 
     [ObservableProperty]
-    private bool isPreviewing = false;
+    private bool isPreviewing;
 
     // Current audio file path for preview (stored when playing audio)
     private string? _currentAudioFilePath;
@@ -117,10 +117,10 @@ namespace VoiceStudio.App.Views.Panels
     private MultiSelectState? _multiSelectState;
 
     [ObservableProperty]
-    private int selectedClipCount = 0;
+    private int selectedClipCount;
 
     [ObservableProperty]
-    private bool hasMultipleClipSelection = false;
+    private bool hasMultipleClipSelection;
 
     // Pixels per second for timeline rendering (can be adjusted)
     private const double PIXELS_PER_SECOND = 100.0;
@@ -181,15 +181,15 @@ namespace VoiceStudio.App.Views.Panels
     private bool showSpectrogram = true;
 
     [ObservableProperty]
-    private bool showWaveform = false;
+    private bool showWaveform;
 
     public Visibility SpectrogramVisibility => ShowSpectrogram ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility WaveformVisibility => ShowWaveform ? Visibility.Visible : Visibility.Collapsed;
 
-    public bool HasTracks => Tracks != null && Tracks.Count > 0;
+    public bool HasTracks => Tracks?.Count > 0;
 
-    public bool HasProjectAudioFiles => ProjectAudioFiles != null && ProjectAudioFiles.Count > 0;
+    public bool HasProjectAudioFiles => ProjectAudioFiles?.Count > 0;
 
     public TimelineViewModel(
       IBackendClient backendClient,
@@ -321,10 +321,7 @@ namespace VoiceStudio.App.Views.Panels
         OnPropertyChanged(nameof(IsPlayheadVisible));
       };
 
-      _audioPlayer.PositionChanged += (s, position) =>
-      {
-        CurrentPlaybackPosition = position;
-      };
+      _audioPlayer.PositionChanged += (s, position) => CurrentPlaybackPosition = position;
 
       // Load preview settings
       _ = LoadPreviewSettingsAsync();
@@ -891,10 +888,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedTrack = Tracks.FirstOrDefault();
                 }
               },
-              onRedo: (t) =>
-              {
-                SelectedTrack = t;
-              });
+              onRedo: (t) => SelectedTrack = t);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -949,10 +943,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedTrack = Tracks.FirstOrDefault();
                 }
               },
-              onRedo: (t) =>
-              {
-                SelectedTrack = t;
-              });
+              onRedo: (t) => SelectedTrack = t);
           _undoRedoService.RegisterAction(action);
         }
       }
@@ -1007,14 +998,13 @@ namespace VoiceStudio.App.Views.Panels
         // Save clip to backend
         try
         {
-          var savedClip = await _backendClient.CreateClipAsync(
+          // Use the saved clip (with backend-assigned ID if different)
+          newClip = await _backendClient.CreateClipAsync(
               SelectedProject!.Id,
               SelectedTrack.Id,
               newClip,
               cancellationToken
           );
-          // Use the saved clip (with backend-assigned ID if different)
-          newClip = savedClip;
         }
         catch (Exception ex)
         {
@@ -1190,7 +1180,7 @@ namespace VoiceStudio.App.Views.Panels
         }
 
         // Get audio stream from backend
-        using var audioStream = await _backendClient.GetProjectAudioAsync(SelectedProject.Id, filename, cancellationToken);
+        await using var audioStream = await _backendClient.GetProjectAudioAsync(SelectedProject.Id, filename, cancellationToken);
 
         if (audioStream != null)
         {
@@ -1351,10 +1341,7 @@ namespace VoiceStudio.App.Views.Panels
               timeInSeconds,
               _previewDuration,
               _previewVolume,
-              () =>
-              {
-                IsPreviewing = false;
-              }
+              () => IsPreviewing = false
           );
         }
       }
@@ -1459,8 +1446,7 @@ namespace VoiceStudio.App.Views.Panels
         // Delete clips from tracks
         foreach (var track in Tracks.ToList())
         {
-          var clipsToRemove = track.Clips?.Where(c => selectedIds.Contains(c.Id)).ToList() ?? new List<AudioClip>();
-          foreach (var clip in clipsToRemove)
+          foreach (var clip in track.Clips?.Where(c => selectedIds.Contains(c.Id)).ToList() ?? new List<AudioClip>())
           {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -1547,6 +1533,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-
-
-

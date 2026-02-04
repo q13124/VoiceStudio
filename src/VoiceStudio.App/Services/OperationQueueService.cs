@@ -27,7 +27,7 @@ namespace VoiceStudio.App.Services
     public string Name { get; set; } = string.Empty;
     public Func<CancellationToken, Task> Operation { get; set; } = null!;
     public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
-    public int RetryCount { get; set; } = 0;
+    public int RetryCount { get; set; }
     public int MaxRetries { get; set; } = 3;
     public object? State { get; set; }
     public OperationPriority Priority { get; set; } = OperationPriority.Normal;
@@ -42,7 +42,7 @@ namespace VoiceStudio.App.Services
   {
     private readonly List<QueuedOperation> _queue = new();
     private readonly object _lock = new();
-    private bool _isProcessing = false;
+    private bool _isProcessing;
 
     public event EventHandler<int>? QueueCountChanged;
     public event EventHandler<QueuedOperation>? OperationQueued;
@@ -106,7 +106,7 @@ namespace VoiceStudio.App.Services
     /// </summary>
     public string QueueOperation(string name, Func<Task> operation, object? state = null, int maxRetries = 3, OperationPriority priority = OperationPriority.Normal)
     {
-      return QueueOperation(name, (ct) => operation(), state, maxRetries, priority);
+      return QueueOperation(name, (_) => operation(), state, maxRetries, priority);
     }
 
     /// <summary>
@@ -245,4 +245,3 @@ namespace VoiceStudio.App.Services
     }
   }
 }
-

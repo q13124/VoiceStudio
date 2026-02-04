@@ -6,39 +6,38 @@ using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Views.Panels
 {
-    /// <summary>
-    /// Advanced Real-Time Visualization view.
-    /// Implements IDEA 131: Advanced Visualization and Real-Time Audio Display (remaining 50%).
-    /// </summary>
-    public sealed partial class AdvancedRealTimeVisualizationView : UserControl
+  /// <summary>
+  /// Advanced Real-Time Visualization view.
+  /// Implements IDEA 131: Advanced Visualization and Real-Time Audio Display (remaining 50%).
+  /// </summary>
+  public sealed partial class AdvancedRealTimeVisualizationView : UserControl
+  {
+    public AdvancedRealTimeVisualizationViewModel ViewModel { get; }
+
+    public AdvancedRealTimeVisualizationView()
     {
-        public AdvancedRealTimeVisualizationViewModel ViewModel { get; }
+      this.InitializeComponent();
+      ViewModel = new AdvancedRealTimeVisualizationViewModel(
+          ServiceProvider.GetBackendClient()
+      );
+      this.DataContext = ViewModel;
 
-        public AdvancedRealTimeVisualizationView()
+      // Setup keyboard navigation
+      this.Loaded += AdvancedRealTimeVisualizationView_KeyboardNavigation_Loaded;
+
+      // Setup Escape key to close help overlay
+      KeyboardNavigationHelper.SetupEscapeKeyHandling(this, () =>
+      {
+        if (HelpOverlay.IsVisible)
         {
-            this.InitializeComponent();
-            ViewModel = new AdvancedRealTimeVisualizationViewModel(
-                ServiceProvider.GetBackendClient()
-            );
-            this.DataContext = ViewModel;
-            
-            // Setup keyboard navigation
-            this.Loaded += AdvancedRealTimeVisualizationView_KeyboardNavigation_Loaded;
-            
-            // Setup Escape key to close help overlay
-            KeyboardNavigationHelper.SetupEscapeKeyHandling(this, () =>
-            {
-                if (HelpOverlay.IsVisible)
-                {
-                    HelpOverlay.IsVisible = false;
-                }
-            });
+          HelpOverlay.IsVisible = false;
         }
-        
-        private void AdvancedRealTimeVisualizationView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
-        {
-            KeyboardNavigationHelper.SetupTabNavigation(this);
-        }
+      });
     }
-}
 
+    private void AdvancedRealTimeVisualizationView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    {
+      KeyboardNavigationHelper.SetupTabNavigation(this);
+    }
+  }
+}

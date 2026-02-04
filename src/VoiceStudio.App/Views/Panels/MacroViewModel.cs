@@ -66,33 +66,33 @@ namespace VoiceStudio.App.Views.Panels
 
     // Multi-select support for macros
     [ObservableProperty]
-    private int selectedMacroCount = 0;
+    private int selectedMacroCount;
 
     [ObservableProperty]
-    private bool hasMultipleMacroSelection = false;
+    private bool hasMultipleMacroSelection;
 
     public bool IsMacroSelected(string macroId) => _macroMultiSelectState?.SelectedIds.Contains(macroId) ?? false;
 
     // Multi-select support for automation curves
     [ObservableProperty]
-    private int selectedAutomationCurveCount = 0;
+    private int selectedAutomationCurveCount;
 
     [ObservableProperty]
-    private bool hasMultipleAutomationCurveSelection = false;
+    private bool hasMultipleAutomationCurveSelection;
 
     public bool IsAutomationCurveSelected(string curveId) => _automationCurveMultiSelectState?.SelectedIds.Contains(curveId) ?? false;
 
     private System.Threading.CancellationTokenSource? _statusPollingCts;
-    private bool _isPollingStatus = false;
+    private bool _isPollingStatus;
 
     /// <summary>
     /// Computed property for showing automation view (inverse of showMacrosView).
     /// </summary>
     public bool ShowAutomationView => !ShowMacrosView;
 
-    public bool HasMacros => Macros != null && Macros.Count > 0;
+    public bool HasMacros => Macros?.Count > 0;
 
-    public bool HasAutomationCurves => AutomationCurves != null && AutomationCurves.Count > 0;
+    public bool HasAutomationCurves => AutomationCurves?.Count > 0;
 
     /// <summary>
     /// Calculate estimated time remaining for macro execution.
@@ -188,7 +188,7 @@ namespace VoiceStudio.App.Views.Panels
       }, (string? curveId) => !IsLoading);
 
       // Multi-select commands for macros
-      SelectAllMacrosCommand = new RelayCommand(SelectAllMacros, () => Macros != null && Macros.Count > 0);
+      SelectAllMacrosCommand = new RelayCommand(SelectAllMacros, () => Macros?.Count > 0);
       ClearMacroSelectionCommand = new RelayCommand(ClearMacroSelection);
       DeleteSelectedMacrosCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -197,7 +197,7 @@ namespace VoiceStudio.App.Views.Panels
       }, () => SelectedMacroCount > 0 && !IsLoading);
 
       // Multi-select commands for automation curves
-      SelectAllAutomationCurvesCommand = new RelayCommand(SelectAllAutomationCurves, () => AutomationCurves != null && AutomationCurves.Count > 0);
+      SelectAllAutomationCurvesCommand = new RelayCommand(SelectAllAutomationCurves, () => AutomationCurves?.Count > 0);
       ClearAutomationCurveSelectionCommand = new RelayCommand(ClearAutomationCurveSelection);
       DeleteSelectedAutomationCurvesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -320,10 +320,7 @@ namespace VoiceStudio.App.Views.Panels
                   SelectedMacro = Macros.FirstOrDefault();
                 }
               },
-              onRedo: (m) =>
-              {
-                SelectedMacro = m;
-              });
+              onRedo: (m) => SelectedMacro = m);
           _undoRedoService.RegisterAction(action);
         }
 
@@ -389,10 +386,7 @@ namespace VoiceStudio.App.Views.Panels
                   _backendClient,
                   deletedMacro,
                   originalIndex,
-                  onUndo: (m) =>
-                  {
-                    SelectedMacro = m;
-                  },
+                  onUndo: (m) => SelectedMacro = m,
                   onRedo: (m) =>
                   {
                     if (SelectedMacro?.Id == m.Id)
@@ -487,31 +481,28 @@ namespace VoiceStudio.App.Views.Panels
 
             // Update on UI thread using DispatcherQueue
             var dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-            if (dispatcherQueue != null)
-            {
-              dispatcherQueue.TryEnqueue(() =>
+            dispatcherQueue?.TryEnqueue(() =>
                     {
-                        ExecutionStatus = status;
+                      ExecutionStatus = status;
 
                       // Stop polling if execution is complete or failed
-                        if (status.Status == "completed" || status.Status == "failed")
-                        {
-                          StopStatusPolling();
-                          ExecutingMacroId = null;
-                          IsLoading = false;
+                      if (status.Status == "completed" || status.Status == "failed")
+                      {
+                        StopStatusPolling();
+                        ExecutingMacroId = null;
+                        IsLoading = false;
 
-                          if (status.Status == "failed" && !string.IsNullOrEmpty(status.ErrorMessage))
-                          {
-                            ErrorMessage = $"Macro execution failed: {status.ErrorMessage}";
-                            _toastNotificationService?.ShowError("Macro Execution Failed", status.ErrorMessage);
-                          }
-                          else if (status.Status == "completed")
-                          {
-                            _toastNotificationService?.ShowSuccess("Macro Execution Complete", "Macro executed successfully");
-                          }
+                        if (status.Status == "failed" && !string.IsNullOrEmpty(status.ErrorMessage))
+                        {
+                          ErrorMessage = $"Macro execution failed: {status.ErrorMessage}";
+                          _toastNotificationService?.ShowError("Macro Execution Failed", status.ErrorMessage);
                         }
-                      });
-            }
+                        else if (status.Status == "completed")
+                        {
+                          _toastNotificationService?.ShowSuccess("Macro Execution Complete", "Macro executed successfully");
+                        }
+                      }
+                    });
           }
           catch (Exception ex)
           {
@@ -1025,4 +1016,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-

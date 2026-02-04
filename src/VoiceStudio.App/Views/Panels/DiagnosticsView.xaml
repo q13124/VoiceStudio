@@ -6,6 +6,7 @@
         <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
         <TabView x:Name="DiagnosticsTabView">
             <TabViewItem Header="Errors" />
+            <TabViewItem Header="Audit Log" />
             <TabViewItem Header="Analytics" />
             <TabViewItem Header="Performance" />
             <TabViewItem Header="Feature Flags" />
@@ -13,6 +14,7 @@
         </TabView>
 
         <Grid x:Name="ErrorsTabGrid" Visibility="Visible" />
+        <Grid x:Name="AuditLogTabGrid" Visibility="Collapsed" />
         <Grid x:Name="AnalyticsTabGrid" Visibility="Collapsed" />
         <Grid x:Name="PerformanceTabGrid" Visibility="Collapsed" />
         <Grid x:Name="FeatureFlagsTabGrid" Visibility="Collapsed" />

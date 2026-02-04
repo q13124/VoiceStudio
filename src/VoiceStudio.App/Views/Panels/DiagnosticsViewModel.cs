@@ -28,7 +28,7 @@ namespace VoiceStudio.App.Views.Panels
     private MultiSelectState? _logsMultiSelectState;
     private MultiSelectState? _errorLogsMultiSelectState;
     private CancellationTokenSource? _telemetryCancellationTokenSource;
-    private long _peakMemoryBytes = 0;
+    private long _peakMemoryBytes;
     private readonly List<BudgetViolationEventArgs> _budgetViolations = new();
 
     public string PanelId => "diagnostics";
@@ -139,21 +139,36 @@ namespace VoiceStudio.App.Views.Panels
 
     // Multi-select support for logs
     [ObservableProperty]
-    private int selectedLogCount = 0;
+    private int selectedLogCount;
 
     [ObservableProperty]
-    private bool hasMultipleLogSelection = false;
+    private bool hasMultipleLogSelection;
 
     // Multi-select support for error logs
     [ObservableProperty]
-    private int selectedErrorLogCount = 0;
+    private int selectedErrorLogCount;
 
     [ObservableProperty]
-    private bool hasMultipleErrorLogSelection = false;
+    private bool hasMultipleErrorLogSelection;
 
     // Analytics tab
     [ObservableProperty]
     private ObservableCollection<AnalyticsEvent> recentAnalyticsEvents = new();
+
+    // Audit Log tab
+    [ObservableProperty]
+    private ObservableCollection<AuditEntryViewModel> auditEntries = new();
+
+    [ObservableProperty]
+    private int auditEntryCount;
+
+    [ObservableProperty]
+    private string auditFilter = string.Empty;
+
+    [ObservableProperty]
+    private bool isAuditLoading;
+
+    private IAuditLoggingService? _auditLoggingService;
 
     // Commands
 
@@ -164,7 +179,6 @@ namespace VoiceStudio.App.Views.Panels
     // Feature flags tab
     [ObservableProperty]
     private ObservableCollection<FeatureFlagViewModel> featureFlags = new();
-
 
     // Environment tab
     private string appVersion = string.Empty;
@@ -215,9 +229,15 @@ namespace VoiceStudio.App.Views.Panels
         LoadAnalyticsEvents();
       }
 
-      // Get feature flags service
       // Get feature flags service using helper (reduces code duplication)
       _featureFlagsService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetFeatureFlagsService());
+
+      // Get audit logging service
+      _auditLoggingService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetAuditLoggingService());
+      if (_auditLoggingService != null)
+      {
+        _auditLoggingService.AuditEntryLogged += OnAuditEntryLogged;
+      }
       if (_featureFlagsService != null)
       {
         LoadFeatureFlags();
@@ -273,12 +293,12 @@ namespace VoiceStudio.App.Views.Panels
       }
 
       // Multi-select commands for logs
-      SelectAllLogsCommand = new RelayCommand(SelectAllLogs, () => Logs != null && Logs.Count > 0);
+      SelectAllLogsCommand = new RelayCommand(SelectAllLogs, () => Logs?.Count > 0);
       ClearLogSelectionCommand = new RelayCommand(ClearLogSelection);
       DeleteSelectedLogsCommand = new RelayCommand(DeleteSelectedLogs, () => SelectedLogCount > 0);
 
       // Multi-select commands for error logs
-      SelectAllErrorLogsCommand = new RelayCommand(SelectAllErrorLogs, () => ErrorLogs != null && ErrorLogs.Count > 0);
+      SelectAllErrorLogsCommand = new RelayCommand(SelectAllErrorLogs, () => ErrorLogs?.Count > 0);
       ClearErrorLogSelectionCommand = new RelayCommand(ClearErrorLogSelection);
       DeleteSelectedErrorLogsCommand = new RelayCommand(DeleteSelectedErrorLogs, () => SelectedErrorLogCount > 0);
       ExportSelectedErrorLogsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
@@ -313,7 +333,7 @@ namespace VoiceStudio.App.Views.Panels
         var degradationService = ServiceProvider.GetGracefulDegradationService();
         if (degradationService != null)
         {
-          degradationService.DegradedModeChanged += (s, isDegraded) =>
+          degradationService.DegradedModeChanged += (_, isDegraded) =>
           {
             IsDegradedMode = isDegraded;
             DegradationReason = degradationService.DegradationReason;
@@ -325,10 +345,7 @@ namespace VoiceStudio.App.Views.Panels
         var queueService = ServiceProvider.GetOperationQueueService();
         if (queueService != null)
         {
-          queueService.QueueCountChanged += (s, count) =>
-          {
-            QueuedOperationsCount = count;
-          };
+          queueService.QueueCountChanged += (_, count) => QueuedOperationsCount = count;
           QueuedOperationsCount = queueService.QueueCount;
         }
       }
@@ -574,7 +591,7 @@ namespace VoiceStudio.App.Views.Panels
       while (len >= 1024 && order < sizes.Length - 1)
       {
         order++;
-        len = len / 1024;
+        len /= 1024;
       }
       return $"{len:0.##} {sizes[order]}";
     }
@@ -680,10 +697,7 @@ namespace VoiceStudio.App.Views.Panels
           _budgetViolations.RemoveAt(0);
         }
       }
-      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
-      {
-        LoadPerformanceData();
-      });
+      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() => LoadPerformanceData());
     }
 
     private void LoadAnalyticsEvents()
@@ -737,6 +751,54 @@ namespace VoiceStudio.App.Views.Panels
       {
         flag.IsEnabled = !flag.IsEnabled;
       }
+    }
+
+    /// <summary>
+    /// Load audit log entries from the audit service.
+    /// </summary>
+    public async Task LoadAuditEntriesAsync()
+    {
+      if (_auditLoggingService == null)
+        return;
+
+      IsAuditLoading = true;
+      try
+      {
+        await Task.Run(() =>
+        {
+          var entries = _auditLoggingService.GetRecentEntries(100);
+          Dispatcher?.TryEnqueue(() =>
+          {
+            AuditEntries.Clear();
+            foreach (var entry in entries)
+            {
+              AuditEntries.Add(new AuditEntryViewModel(entry));
+            }
+            AuditEntryCount = AuditEntries.Count;
+          });
+        });
+      }
+      finally
+      {
+        IsAuditLoading = false;
+      }
+    }
+
+    private void OnAuditEntryLogged(object? sender, AuditEntry entry)
+    {
+      // Add new entry to the top of the list on the UI thread
+      Dispatcher?.TryEnqueue(() =>
+      {
+        AuditEntries.Insert(0, new AuditEntryViewModel(entry));
+
+        // Keep only the most recent 500 entries in the UI
+        while (AuditEntries.Count > 500)
+        {
+          AuditEntries.RemoveAt(AuditEntries.Count - 1);
+        }
+
+        AuditEntryCount = AuditEntries.Count;
+      });
     }
 
     private void LoadEnvironmentInfo()
@@ -1315,15 +1377,15 @@ namespace VoiceStudio.App.Views.Panels
           await File.WriteAllTextAsync(metadataPath, System.Text.Json.JsonSerializer.Serialize(metadata, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
 
           // 5. Create ZIP archive
-          using (var zipStream = await file.OpenStreamForWriteAsync())
+          await using (var zipStream = await file.OpenStreamForWriteAsync())
           using (var archive = new System.IO.Compression.ZipArchive(zipStream, System.IO.Compression.ZipArchiveMode.Create))
           {
             foreach (var filePath in Directory.GetFiles(tempDir))
             {
               var entryName = Path.GetFileName(filePath);
               var entry = archive.CreateEntry(entryName);
-              using (var entryStream = entry.Open())
-              using (var fileStream = File.OpenRead(filePath))
+              await using (var entryStream = entry.Open())
+              await using (var fileStream = File.OpenRead(filePath))
               {
                 await fileStream.CopyToAsync(entryStream);
               }
@@ -1484,5 +1546,51 @@ namespace VoiceStudio.App.Views.Panels
     public string Key { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
   }
-}
 
+  /// <summary>
+  /// ViewModel for audit log entry display.
+  /// </summary>
+  public class AuditEntryViewModel
+  {
+    public AuditEntryViewModel(AuditEntry entry)
+    {
+      EntryId = entry.EntryId;
+      Timestamp = entry.Timestamp;
+      EventType = entry.EventType;
+      TaskId = entry.TaskId ?? "-";
+      Role = entry.Role ?? "System";
+      FilePath = entry.FilePath ?? "-";
+      FileName = string.IsNullOrEmpty(entry.FilePath) ? "-" : Path.GetFileName(entry.FilePath);
+      Summary = entry.Summary;
+      Subsystem = entry.Subsystem ?? "unknown";
+      Severity = entry.Severity ?? "info";
+      ErrorCode = entry.ErrorCode ?? "";
+      Message = entry.Message ?? "";
+    }
+
+    public string EntryId { get; }
+    public string Timestamp { get; }
+    public string EventType { get; }
+    public string TaskId { get; }
+    public string Role { get; }
+    public string FilePath { get; }
+    public string FileName { get; }
+    public string Summary { get; }
+    public string Subsystem { get; }
+    public string Severity { get; }
+    public string ErrorCode { get; }
+    public string Message { get; }
+
+    public string TimestampFormatted => Timestamp.Length > 19
+      ? Timestamp[..19].Replace("T", " ")
+      : Timestamp;
+
+    public string SeverityColor => Severity.ToLowerInvariant() switch
+    {
+      "error" => "#FF5252",
+      "warning" => "#FFC107",
+      "info" => "#2196F3",
+      _ => "#9E9E9E"
+    };
+  }
+}

@@ -104,29 +104,23 @@ namespace VoiceStudio.App.Views.Panels
       if (e.Key == Windows.System.VirtualKey.Enter)
       {
         var focusedElement = Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(this.XamlRoot);
-        if (focusedElement is ComboBox comboBox && comboBox.Name == "SourceAudioComboBox")
+        if (focusedElement is ComboBox comboBox && comboBox.Name == "SourceAudioComboBox" && ViewModel.ExtractEmbeddingCommand.CanExecute(null))
         {
-          if (ViewModel.ExtractEmbeddingCommand.CanExecute(null))
-          {
-            ViewModel.ExtractEmbeddingCommand.Execute(null);
-            e.Handled = true;
-            return;
-          }
+          ViewModel.ExtractEmbeddingCommand.Execute(null);
+          e.Handled = true;
+          return;
         }
       }
 
       // Handle F5 for refresh
-      if (e.Key == Windows.System.VirtualKey.F5)
+      if (e.Key == Windows.System.VirtualKey.F5 && ViewModel.RefreshCommand.CanExecute(null))
       {
-        if (ViewModel.RefreshCommand.CanExecute(null))
-        {
-          ViewModel.RefreshCommand.Execute(null);
-          e.Handled = true;
-        }
+        ViewModel.RefreshCommand.Execute(null);
+        e.Handled = true;
       }
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Speaker Embedding Explorer Help";
       HelpOverlay.HelpText = "The Speaker Embedding Explorer allows you to extract, compare, visualize, and cluster speaker embeddings from audio. Speaker embeddings are numerical representations of voice characteristics that can be used for voice similarity analysis, clustering similar voices, and visualizing voice relationships. Extract embeddings from audio files, compare them to find similar voices, visualize embeddings in 2D/3D space, and cluster them to identify voice groups.";
@@ -162,21 +156,21 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var compareItem = new MenuFlyoutItem { Text = "Compare" };
-            compareItem.Click += async (s, e2) => await HandleEmbeddingMenuClick("Compare", embedding);
+            compareItem.Click += async (_, _) => await HandleEmbeddingMenuClick("Compare", embedding);
             menu.Items.Add(compareItem);
 
             var visualizeItem = new MenuFlyoutItem { Text = "Visualize" };
-            visualizeItem.Click += async (s, e2) => await HandleEmbeddingMenuClick("Visualize", embedding);
+            visualizeItem.Click += async (_, _) => await HandleEmbeddingMenuClick("Visualize", embedding);
             menu.Items.Add(visualizeItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export" };
-            exportItem.Click += async (s, e2) => await HandleEmbeddingMenuClick("Export", embedding);
+            exportItem.Click += async (_, _) => await HandleEmbeddingMenuClick("Export", embedding);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete" };
-            deleteItem.Click += async (s, e2) => await HandleEmbeddingMenuClick("Delete", embedding);
+            deleteItem.Click += async (_, _) => await HandleEmbeddingMenuClick("Delete", embedding);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -199,17 +193,17 @@ namespace VoiceStudio.App.Views.Panels
             var menu = new MenuFlyout();
 
             var visualizeItem = new MenuFlyoutItem { Text = "Visualize Cluster" };
-            visualizeItem.Click += async (s, e2) => await HandleClusterMenuClick("Visualize", cluster);
+            visualizeItem.Click += async (_, _) => await HandleClusterMenuClick("Visualize", cluster);
             menu.Items.Add(visualizeItem);
 
             var exportItem = new MenuFlyoutItem { Text = "Export Cluster" };
-            exportItem.Click += async (s, e2) => await HandleClusterMenuClick("Export", cluster);
+            exportItem.Click += async (_, _) => await HandleClusterMenuClick("Export", cluster);
             menu.Items.Add(exportItem);
 
             menu.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem { Text = "Delete Cluster" };
-            deleteItem.Click += async (s, e2) => await HandleClusterMenuClick("Delete", cluster);
+            deleteItem.Click += async (_, _) => await HandleClusterMenuClick("Delete", cluster);
             menu.Items.Add(deleteItem);
 
             var position = e.GetPosition(listView);
@@ -408,5 +402,3 @@ namespace VoiceStudio.App.Views.Panels
     }
   }
 }
-
-

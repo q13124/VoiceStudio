@@ -47,7 +47,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Subscribe to selection changes to update UI
       var multiSelectService = AppServices.GetMultiSelectService();
-      multiSelectService.SelectionChanged += (s, e) =>
+      multiSelectService.SelectionChanged += (_, e) =>
       {
         if (e.PanelId == ViewModel.PanelId)
         {
@@ -68,7 +68,7 @@ namespace VoiceStudio.App.Views.Panels
       });
 
       // Update visuals when profiles change
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(ProfilesViewModel.Profiles) ||
                   e.PropertyName == nameof(ProfilesViewModel.SelectedCount))
@@ -78,7 +78,7 @@ namespace VoiceStudio.App.Views.Panels
       };
     }
 
-    private void HelpButton_Click(object sender, RoutedEventArgs e)
+    private void HelpButton_Click(object _, RoutedEventArgs __)
     {
       HelpOverlay.Title = "Voice Profiles Help";
       HelpOverlay.HelpText = "The Profiles panel displays all your voice profiles in a grid layout. Each profile card shows the voice name, quality score, language, emotion, and tags. Click a profile to select it and view details in the side panel. Use multi-select (Ctrl+Click or Shift+Click) to select multiple profiles for batch operations. Drag profiles to reorder them or move them to other panels. Right-click profiles for context menus with additional options.";
@@ -142,7 +142,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         if (item is MenuFlyoutItem menuItem)
         {
-          menuItem.Click += (s, e) => HandleProfileMenuClick(menuItem.Text, profile);
+          menuItem.Click += (_, __) => HandleProfileMenuClick(menuItem.Text, profile);
         }
       }
     }
@@ -299,7 +299,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void ProfilesView_KeyDown(object sender, KeyRoutedEventArgs e)
+    private void ProfilesView_KeyDown(object _, KeyRoutedEventArgs e)
     {
       var isCtrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
@@ -390,7 +390,7 @@ namespace VoiceStudio.App.Views.Panels
       return null;
     }
 
-    private async void BatchExport_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void BatchExport_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       _errorLoggingService?.LogInfo($"Batch export requested for {ViewModel.SelectedCount} profiles", "ProfilesView");
       await ViewModel.ExportSelectedProfilesAsync();
@@ -420,10 +420,7 @@ namespace VoiceStudio.App.Views.Panels
         border.Opacity = 1.0;
       }
 
-      if (_dragDropService != null)
-      {
-        _dragDropService.Cleanup();
-      }
+      _dragDropService?.Cleanup();
 
       _draggedProfile = null;
     }
@@ -473,12 +470,9 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void Profile_DragLeave(object sender, DragEventArgs e)
+    private void Profile_DragLeave(object _, DragEventArgs __)
     {
-      if (_dragDropService != null)
-      {
-        _dragDropService.HideDropTargetIndicator();
-      }
+      _dragDropService?.HideDropTargetIndicator();
     }
 
     private DropPosition DetermineDropPosition(Border target, Point position)
@@ -495,7 +489,7 @@ namespace VoiceStudio.App.Views.Panels
         return DropPosition.On;
     }
 
-    private void QualityBadge_Clicked(object sender, RoutedEventArgs e)
+    private void QualityBadge_Clicked(object sender, RoutedEventArgs __)
     {
       // Find the profile card that contains this badge
       if (sender is Controls.QualityBadgeControl badge)
@@ -533,17 +527,16 @@ namespace VoiceStudio.App.Views.Panels
       if (sender is Border border && border.DataContext is QualityDegradationAlert alert)
       {
         // Set background color based on severity
-        var brush = alert.Severity.ToLower() switch
+        border.Background = alert.Severity.ToLower() switch
         {
           "critical" => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.RedBrush"],
           "warning" => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.OrangeBrush"],
           _ => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.YellowBrush"]
         };
-        border.Background = brush;
       }
     }
 
-    private void ProfilesView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void ProfilesView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
@@ -554,13 +547,12 @@ namespace VoiceStudio.App.Views.Panels
       if (sender is ProgressBar progressBar && progressBar.DataContext is QualityDegradationAlert alert)
       {
         // Set foreground color based on severity
-        var brush = alert.Severity.ToLower() switch
+        progressBar.Foreground = alert.Severity.ToLower() switch
         {
           "critical" => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.RedBrush"],
           "warning" => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.OrangeBrush"],
           _ => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["VSQ.Accent.YellowBrush"]
         };
-        progressBar.Foreground = brush;
       }
     }
   }

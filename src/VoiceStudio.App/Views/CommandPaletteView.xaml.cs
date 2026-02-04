@@ -2,12 +2,11 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VoiceStudio.App.Views
 {
-    public sealed partial class CommandPaletteView : UserControl
+  public sealed partial class CommandPaletteView : UserControl
+  {
+    public CommandPaletteView()
     {
-        public CommandPaletteView()
-        {
-            this.InitializeComponent();
-        }
+      this.InitializeComponent();
     }
+  }
 }
-

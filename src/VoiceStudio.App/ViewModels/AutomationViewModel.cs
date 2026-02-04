@@ -45,7 +45,7 @@ namespace VoiceStudio.App.ViewModels
     private ObservableCollection<ParameterInfo> availableParameters = new();
 
     [ObservableProperty]
-    private bool isEditing = false;
+    private bool isEditing;
 
     public AutomationViewModel(IViewModelContext context, IBackendClient backendClient)
         : base(context)
@@ -244,10 +244,7 @@ namespace VoiceStudio.App.ViewModels
                     SelectedCurve = Curves.FirstOrDefault();
                   }
                 },
-                onRedo: (c) =>
-                {
-                  SelectedCurve = c;
-                });
+                onRedo: (c) => SelectedCurve = c);
             _undoRedoService.RegisterAction(action);
           }
         }
@@ -356,10 +353,7 @@ namespace VoiceStudio.App.ViewModels
               _backendClient,
               curveToDelete,
               originalIndex,
-              onUndo: (c) =>
-              {
-                SelectedCurve = c;
-              },
+              onUndo: (c) => SelectedCurve = c,
               onRedo: (c) =>
               {
                 if (SelectedCurve?.Id == c.Id)
@@ -528,4 +522,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

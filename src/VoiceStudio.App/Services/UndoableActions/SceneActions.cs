@@ -6,108 +6,107 @@ using SceneItem = VoiceStudio.App.ViewModels.SceneItem;
 
 namespace VoiceStudio.App.Services.UndoableActions
 {
-    /// <summary>
-    /// Undoable action for creating a scene.
-    /// </summary>
-    public class CreateSceneAction : IUndoableAction
+  /// <summary>
+  /// Undoable action for creating a scene.
+  /// </summary>
+  public class CreateSceneAction : IUndoableAction
+  {
+    private readonly ObservableCollection<SceneItem> _scenes;
+    private readonly IBackendClient _backendClient;
+    private readonly SceneItem _scene;
+    private readonly Action<SceneItem>? _onUndo;
+    private readonly Action<SceneItem>? _onRedo;
+
+    public string ActionName => $"Create Scene '{_scene.Name ?? "Unnamed"}'";
+
+    public CreateSceneAction(
+        ObservableCollection<SceneItem> scenes,
+        IBackendClient backendClient,
+        SceneItem scene,
+        Action<SceneItem>? onUndo = null,
+        Action<SceneItem>? onRedo = null)
     {
-        private readonly ObservableCollection<SceneItem> _scenes;
-        private readonly IBackendClient _backendClient;
-        private readonly SceneItem _scene;
-        private readonly Action<SceneItem>? _onUndo;
-        private readonly Action<SceneItem>? _onRedo;
-
-        public string ActionName => $"Create Scene '{_scene.Name ?? "Unnamed"}'";
-
-        public CreateSceneAction(
-            ObservableCollection<SceneItem> scenes,
-            IBackendClient backendClient,
-            SceneItem scene,
-            Action<SceneItem>? onUndo = null,
-            Action<SceneItem>? onRedo = null)
-        {
-            _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            _scene = scene ?? throw new ArgumentNullException(nameof(scene));
-            _onUndo = onUndo;
-            _onRedo = onRedo;
-        }
-
-        public void Undo()
-        {
-            var sceneToRemove = _scenes.FirstOrDefault(s => s.Id == _scene.Id);
-            if (sceneToRemove != null)
-            {
-                _scenes.Remove(sceneToRemove);
-                _onUndo?.Invoke(sceneToRemove);
-            }
-        }
-
-        public void Redo()
-        {
-            if (!_scenes.Any(s => s.Id == _scene.Id))
-            {
-                _scenes.Add(_scene);
-                _onRedo?.Invoke(_scene);
-            }
-        }
+      _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _scene = scene ?? throw new ArgumentNullException(nameof(scene));
+      _onUndo = onUndo;
+      _onRedo = onRedo;
     }
 
-    /// <summary>
-    /// Undoable action for deleting a scene.
-    /// </summary>
-    public class DeleteSceneAction : IUndoableAction
+    public void Undo()
     {
-        private readonly ObservableCollection<SceneItem> _scenes;
-        private readonly IBackendClient _backendClient;
-        private readonly SceneItem _scene;
-        private readonly int _originalIndex;
-        private readonly Action<SceneItem>? _onUndo;
-        private readonly Action<SceneItem>? _onRedo;
-
-        public string ActionName => $"Delete Scene '{_scene.Name ?? "Unnamed"}'";
-
-        public DeleteSceneAction(
-            ObservableCollection<SceneItem> scenes,
-            IBackendClient backendClient,
-            SceneItem scene,
-            int originalIndex,
-            Action<SceneItem>? onUndo = null,
-            Action<SceneItem>? onRedo = null)
-        {
-            _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
-            _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-            _scene = scene ?? throw new ArgumentNullException(nameof(scene));
-            _originalIndex = originalIndex;
-            _onUndo = onUndo;
-            _onRedo = onRedo;
-        }
-
-        public void Undo()
-        {
-            if (!_scenes.Any(s => s.Id == _scene.Id))
-            {
-                if (_originalIndex >= 0 && _originalIndex <= _scenes.Count)
-                {
-                    _scenes.Insert(_originalIndex, _scene);
-                }
-                else
-                {
-                    _scenes.Add(_scene);
-                }
-                _onUndo?.Invoke(_scene);
-            }
-        }
-
-        public void Redo()
-        {
-            var sceneToRemove = _scenes.FirstOrDefault(s => s.Id == _scene.Id);
-            if (sceneToRemove != null)
-            {
-                _scenes.Remove(sceneToRemove);
-                _onRedo?.Invoke(sceneToRemove);
-            }
-        }
+      var sceneToRemove = _scenes.FirstOrDefault(s => s.Id == _scene.Id);
+      if (sceneToRemove != null)
+      {
+        _scenes.Remove(sceneToRemove);
+        _onUndo?.Invoke(sceneToRemove);
+      }
     }
+
+    public void Redo()
+    {
+      if (!_scenes.Any(s => s.Id == _scene.Id))
+      {
+        _scenes.Add(_scene);
+        _onRedo?.Invoke(_scene);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Undoable action for deleting a scene.
+  /// </summary>
+  public class DeleteSceneAction : IUndoableAction
+  {
+    private readonly ObservableCollection<SceneItem> _scenes;
+    private readonly IBackendClient _backendClient;
+    private readonly SceneItem _scene;
+    private readonly int _originalIndex;
+    private readonly Action<SceneItem>? _onUndo;
+    private readonly Action<SceneItem>? _onRedo;
+
+    public string ActionName => $"Delete Scene '{_scene.Name ?? "Unnamed"}'";
+
+    public DeleteSceneAction(
+        ObservableCollection<SceneItem> scenes,
+        IBackendClient backendClient,
+        SceneItem scene,
+        int originalIndex,
+        Action<SceneItem>? onUndo = null,
+        Action<SceneItem>? onRedo = null)
+    {
+      _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _scene = scene ?? throw new ArgumentNullException(nameof(scene));
+      _originalIndex = originalIndex;
+      _onUndo = onUndo;
+      _onRedo = onRedo;
+    }
+
+    public void Undo()
+    {
+      if (!_scenes.Any(s => s.Id == _scene.Id))
+      {
+        if (_originalIndex >= 0 && _originalIndex <= _scenes.Count)
+        {
+          _scenes.Insert(_originalIndex, _scene);
+        }
+        else
+        {
+          _scenes.Add(_scene);
+        }
+        _onUndo?.Invoke(_scene);
+      }
+    }
+
+    public void Redo()
+    {
+      var sceneToRemove = _scenes.FirstOrDefault(s => s.Id == _scene.Id);
+      if (sceneToRemove != null)
+      {
+        _scenes.Remove(sceneToRemove);
+        _onRedo?.Invoke(sceneToRemove);
+      }
+    }
+  }
 }
-

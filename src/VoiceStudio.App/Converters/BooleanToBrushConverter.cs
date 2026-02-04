@@ -11,60 +11,60 @@ namespace VoiceStudio.App.Converters;
 /// </summary>
 public sealed class BooleanToBrushConverter : IValueConverter
 {
-    public Brush? TrueBrush { get; set; }
-    public Brush? FalseBrush { get; set; }
-    public Brush? NullBrush { get; set; }
+  public Brush? TrueBrush { get; set; }
+  public Brush? FalseBrush { get; set; }
+  public Brush? NullBrush { get; set; }
 
-    public object Convert(object value, Type targetType, object parameter, string language)
+  public object Convert(object value, Type targetType, object parameter, string language)
+  {
+    if (value is bool b)
     {
-        if (value is bool b)
-        {
-            return b ? ResolveTrueBrush() : ResolveFalseBrush();
-        }
-
-        return ResolveNullBrush();
+      return b ? ResolveTrueBrush() : ResolveFalseBrush();
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    return ResolveNullBrush();
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, string language)
+  {
+    throw new NotSupportedException();
+  }
+
+  private Brush ResolveTrueBrush()
+  {
+    return TrueBrush
+        ?? TryGetAppBrush("VSQ.Success.Brush")
+        ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+  }
+
+  private Brush ResolveFalseBrush()
+  {
+    return FalseBrush
+        ?? TryGetAppBrush("VSQ.Warn.Brush")
+        ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+  }
+
+  private Brush ResolveNullBrush()
+  {
+    return NullBrush
+        ?? TryGetAppBrush("VSQ.Text.SecondaryBrush")
+        ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+  }
+
+  private static Brush? TryGetAppBrush(string key)
+  {
+    try
     {
-        throw new NotSupportedException();
+      var resources = Application.Current?.Resources;
+      if (resources?.ContainsKey(key) == true)
+      {
+        return resources[key] as Brush;
+      }
+    }
+    catch
+    {
     }
 
-    private Brush ResolveTrueBrush()
-    {
-        return TrueBrush
-            ?? TryGetAppBrush("VSQ.Success.Brush")
-            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-    }
-
-    private Brush ResolveFalseBrush()
-    {
-        return FalseBrush
-            ?? TryGetAppBrush("VSQ.Warn.Brush")
-            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-    }
-
-    private Brush ResolveNullBrush()
-    {
-        return NullBrush
-            ?? TryGetAppBrush("VSQ.Text.SecondaryBrush")
-            ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-    }
-
-    private static Brush? TryGetAppBrush(string key)
-    {
-        try
-        {
-            var resources = Application.Current?.Resources;
-            if (resources != null && resources.ContainsKey(key))
-            {
-                return resources[key] as Brush;
-            }
-        }
-        catch
-        {
-        }
-
-        return null;
-    }
+    return null;
+  }
 }

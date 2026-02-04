@@ -61,7 +61,7 @@ namespace VoiceStudio.App.ViewModels
     private ObservableCollection<string> availableEngines = new();
 
     [ObservableProperty]
-    private bool ssmlMode = false;
+    private bool ssmlMode;
 
     [ObservableProperty]
     private string editedTranscript = string.Empty;
@@ -245,10 +245,7 @@ namespace VoiceStudio.App.ViewModels
                     SelectedSession = Sessions.FirstOrDefault();
                   }
                 },
-                onRedo: (s) =>
-                {
-                  SelectedSession = s;
-                });
+                onRedo: (s) => SelectedSession = s);
             _undoRedoService.RegisterAction(action);
           }
         }
@@ -435,10 +432,7 @@ namespace VoiceStudio.App.ViewModels
                 SelectedSegment = null;
               }
             },
-            onRedo: (s) =>
-            {
-              SelectedSegment = s;
-            });
+            onRedo: (s) => SelectedSegment = s);
         _undoRedoService.RegisterAction(action);
       }
 
@@ -468,10 +462,7 @@ namespace VoiceStudio.App.ViewModels
             SelectedSession,
             segmentToRemove,
             originalIndex,
-            onUndo: (s) =>
-            {
-              SelectedSegment = s;
-            },
+            onUndo: (s) => SelectedSegment = s,
             onRedo: (s) =>
             {
               if (SelectedSegment?.Id == s.Id)
@@ -779,4 +770,3 @@ namespace VoiceStudio.App.ViewModels
     }
   }
 }
-

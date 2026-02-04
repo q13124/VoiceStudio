@@ -34,7 +34,7 @@ namespace VoiceStudio.App.Views.Panels
       _undoRedoService = ServiceProvider.GetUndoRedoService();
 
       // Update spectrogram control when data changes
-      ViewModel.PropertyChanged += (s, e) =>
+      ViewModel.PropertyChanged += (_, e) =>
       {
         if (e.PropertyName == nameof(ViewModel.SpectrogramData))
         {
@@ -80,7 +80,7 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void HelpButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
       HelpOverlay.Title = "Spectrogram Help";
       HelpOverlay.HelpText = "The Spectrogram panel displays frequency content over time for audio files. Spectrograms help visualize audio characteristics, identify frequencies, and analyze audio quality. Adjust parameters like window size and overlap to customize the visualization.";
@@ -111,7 +111,7 @@ namespace VoiceStudio.App.Views.Panels
         var menu = new MenuFlyout();
 
         var exportItem = new MenuFlyoutItem { Text = "Export Spectrogram" };
-        exportItem.Click += (s, args) =>
+        exportItem.Click += (_, _) =>
         {
           try
           {
@@ -126,7 +126,7 @@ namespace VoiceStudio.App.Views.Panels
         menu.Items.Add(exportItem);
 
         var refreshItem = new MenuFlyoutItem { Text = "Refresh" };
-        refreshItem.Click += async (s, args) =>
+        refreshItem.Click += async (_, _) =>
         {
           if (ViewModel.LoadSpectrogramCommand.CanExecute(null))
             await ViewModel.LoadSpectrogramCommand.ExecuteAsync(null);
@@ -147,7 +147,7 @@ namespace VoiceStudio.App.Views.Panels
           var menu = new MenuFlyout();
 
           var loadItem = new MenuFlyoutItem { Text = "Load Spectrogram" };
-          loadItem.Click += async (s, args) =>
+          loadItem.Click += async (_, _) =>
           {
             if (ViewModel.LoadSpectrogramCommand.CanExecute(null))
               await ViewModel.LoadSpectrogramCommand.ExecuteAsync(null);
@@ -159,10 +159,9 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void SpectrogramView_KeyboardNavigation_Loaded(object sender, RoutedEventArgs e)
+    private void SpectrogramView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
   }
 }
-
