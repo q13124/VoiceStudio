@@ -5,15 +5,12 @@ Targeted verification script for Engine Engineer tasks.
 Avoids heavy imports (transformers/torch distributed) by direct file imports.
 """
 
+from _env_setup import PROJECT_ROOT
+
 import json
 import os
 import sys
 from pathlib import Path
-
-# Add workspace root to path
-workspace_root = Path(__file__).parent.parent
-if str(workspace_root) not in sys.path:
-    sys.path.insert(0, str(workspace_root))
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == "win32":
@@ -44,7 +41,7 @@ def test_quality_metrics_error_handling_direct():
     try:
         # Direct file import to avoid heavy engine package dependencies
         import importlib.util
-        quality_metrics_path = workspace_root / "app" / "core" / "engines" / "quality_metrics.py"
+        quality_metrics_path = PROJECT_ROOT / "app" / "core" / "engines" / "quality_metrics.py"
         
         if not quality_metrics_path.exists():
             print(f"  [X] ERROR: quality_metrics.py not found at {quality_metrics_path}")
@@ -173,7 +170,7 @@ def test_sovits_engine_integration():
     try:
         # Test engine file exists
         print("\n[2.1] Testing So-VITS-SVC engine file...")
-        engine_file = workspace_root / "app" / "core" / "engines" / "sovits_svc_engine.py"
+        engine_file = PROJECT_ROOT / "app" / "core" / "engines" / "sovits_svc_engine.py"
         if engine_file.exists():
             print(f"  [OK] Engine file exists: {engine_file.name}")
             
@@ -204,7 +201,7 @@ def test_sovits_engine_integration():
         
         # Test engine manifest exists
         print("\n[2.2] Testing engine manifest...")
-        manifest_path = workspace_root / "engines" / "audio" / "sovits" / "engine.manifest.json"
+        manifest_path = PROJECT_ROOT / "engines" / "audio" / "sovits" / "engine.manifest.json"
         if manifest_path.exists():
             print(f"  [OK] Engine manifest exists: {manifest_path.name}")
             try:
@@ -249,7 +246,7 @@ def test_sovits_engine_integration():
         
         # Test preflight check exists
         print("\n[2.3] Testing preflight check integration...")
-        preflight_path = workspace_root / "backend" / "services" / "model_preflight.py"
+        preflight_path = PROJECT_ROOT / "backend" / "services" / "model_preflight.py"
         if preflight_path.exists():
             with open(preflight_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -273,7 +270,7 @@ def test_sovits_engine_integration():
         print("\n[2.4] Testing manifest discovery system...")
         try:
             import importlib.util
-            manifest_loader_path = workspace_root / "app" / "core" / "engines" / "manifest_loader.py"
+            manifest_loader_path = PROJECT_ROOT / "app" / "core" / "engines" / "manifest_loader.py"
             if manifest_loader_path.exists():
                 spec = importlib.util.spec_from_file_location("manifest_loader", manifest_loader_path)
                 manifest_loader = importlib.util.module_from_spec(spec)
@@ -313,7 +310,7 @@ def test_default_engine_selection():
     try:
         # Test voice route default engine logic
         print("\n[3.1] Testing voice route default engine selection...")
-        voice_route_path = workspace_root / "backend" / "api" / "routes" / "voice.py"
+        voice_route_path = PROJECT_ROOT / "backend" / "api" / "routes" / "voice.py"
         if not voice_route_path.exists():
             print(f"  [X] ERROR: voice.py not found at {voice_route_path}")
             return False
@@ -366,7 +363,7 @@ def test_default_engine_selection():
         
         # Test transcribe route default
         print("\n[3.2] Testing transcribe route default engine...")
-        transcribe_route_path = workspace_root / "backend" / "api" / "routes" / "transcribe.py"
+        transcribe_route_path = PROJECT_ROOT / "backend" / "api" / "routes" / "transcribe.py"
         if transcribe_route_path.exists():
             with open(transcribe_route_path, 'r', encoding='utf-8') as f:
                 transcribe_content = f.read()
@@ -383,7 +380,7 @@ def test_default_engine_selection():
         
         # Test EngineConfigService integration (static check)
         print("\n[3.3] Testing EngineConfigService integration...")
-        engine_config_path = workspace_root / "backend" / "services" / "EngineConfigService.py"
+        engine_config_path = PROJECT_ROOT / "backend" / "services" / "EngineConfigService.py"
         if engine_config_path.exists():
             with open(engine_config_path, 'r', encoding='utf-8') as f:
                 config_content = f.read()
@@ -417,7 +414,7 @@ def test_quality_metrics_confidence_fix():
     print("="*70)
     
     try:
-        quality_metrics_path = workspace_root / "app" / "core" / "engines" / "quality_metrics.py"
+        quality_metrics_path = PROJECT_ROOT / "app" / "core" / "engines" / "quality_metrics.py"
         if not quality_metrics_path.exists():
             print(f"  [X] ERROR: quality_metrics.py not found")
             return False

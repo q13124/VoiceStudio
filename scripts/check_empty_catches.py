@@ -1,0 +1,186 @@
+#!/usr/bin/env python3
+# Copyright (c) VoiceStudio. All rights reserved.
+# Licensed under the MIT License.
+
+"""
+Pre-commit hook to detect empty catch blocks in C# and Python files.
+
+This script blocks commits that contain empty catch blocks, which hide errors
+and make debugging difficult. Use ErrorBoundary patterns instead.
+
+Usage:
+    python scripts/check_empty_catches.py [files...]
+    
+If no files are provided, checks all C# and Python files in the repository.
+"""
+
+import re
+import sys
+from pathlib import Path
+from typing import List, Tuple, Set
+
+# Patterns that indicate empty or near-empty catch blocks
+CSHARP_EMPTY_CATCH_PATTERNS = [
+    # Empty catch block: catch { } or catch (Exception) { }
+    (r'catch\s*(?:\([^)]*\))?\s*\{\s*\}', "Empty catch block"),
+    # Catch with only a comment
+    (r'catch\s*(?:\([^)]*\))?\s*\{\s*//[^\n]*\s*\}', "Catch block with only comment"),
+    (r'catch\s*(?:\([^)]*\))?\s*\{\s*/\*[^*]*\*/\s*\}', "Catch block with only block comment"),
+]
+
+PYTHON_BARE_EXCEPT_PATTERNS = [
+    # Bare except with pass
+    (r'except\s*:\s*\n\s*pass\s*$', "Bare except with pass"),
+    # Bare except with only comment
+    (r'except\s*:\s*\n\s*#[^\n]*\s*$', "Bare except with only comment"),
+    # except Exception with pass (also problematic)
+    (r'except\s+\w+(?:\s+as\s+\w+)?:\s*\n\s*pass\s*$', "Exception catch with pass"),
+]
+
+# Allowlist patterns - legitimate uses that should not be flagged
+ALLOWLIST_PATTERNS = [
+    r'# noqa: empty-catch',  # Explicit suppression with comment
+    r'// ALLOWED: empty catch',  # C# explicit allowance
+    r'# ALLOWED: bare except',  # Python explicit allowance
+]
+
+# Directories to skip
+SKIP_DIRS = {
+    '.git', '__pycache__', 'node_modules', 'bin', 'obj',
+    '.venv', 'venv', '.tox', 'dist', 'build', '.buildlogs',
+    'runtime/external',  # External dependencies
+}
+
+
+def should_skip_path(path: Path) -> bool:
+    """Check if a path should be skipped."""
+    parts = set(path.parts)
+    return bool(parts & SKIP_DIRS)
+
+
+def is_allowlisted(content: str, match_start: int, match_end: int) -> bool:
+    """Check if a match is within an allowlisted context."""
+    # Check surrounding lines for allowlist patterns
+    line_start = content.rfind('\n', 0, match_start) + 1
+    line_end = content.find('\n', match_end)
+    if line_end == -1:
+        line_end = len(content)
+    
+    # Check 2 lines before and the current line for allowlist
+    context_start = content.rfind('\n', 0, line_start - 1) + 1 if line_start > 0 else 0
+    context = content[context_start:line_end]
+    
+    for pattern in ALLOWLIST_PATTERNS:
+        if re.search(pattern, context):
+            return True
+    return False
+
+
+def check_csharp_file(path: Path) -> List[Tuple[int, str, str]]:
+    """Check a C# file for empty catch blocks."""
+    issues = []
+    try:
+        content = path.read_text(encoding='utf-8')
+    except Exception as e:
+        print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
+        return issues
+    
+    for pattern, description in CSHARP_EMPTY_CATCH_PATTERNS:
+        for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
+            if not is_allowlisted(content, match.start(), match.end()):
+                line_num = content.count('\n', 0, match.start()) + 1
+                issues.append((line_num, description, match.group(0)[:50]))
+    
+    return issues
+
+
+def check_python_file(path: Path) -> List[Tuple[int, str, str]]:
+    """Check a Python file for bare except blocks."""
+    issues = []
+    try:
+        content = path.read_text(encoding='utf-8')
+    except Exception as e:
+        print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
+        return issues
+    
+    for pattern, description in PYTHON_BARE_EXCEPT_PATTERNS:
+        for match in re.finditer(pattern, content, re.MULTILINE):
+            if not is_allowlisted(content, match.start(), match.end()):
+                line_num = content.count('\n', 0, match.start()) + 1
+                issues.append((line_num, description, match.group(0).strip()[:50]))
+    
+    return issues
+
+
+def get_all_files(root: Path, extensions: Set[str]) -> List[Path]:
+    """Get all files with the given extensions, respecting skip dirs."""
+    files = []
+    for path in root.rglob('*'):
+        if path.is_file() and path.suffix.lower() in extensions:
+            if not should_skip_path(path):
+                files.append(path)
+    return files
+
+
+def main(args: List[str]) -> int:
+    """Main entry point."""
+    exit_code = 0
+    issues_found: List[Tuple[Path, int, str, str]] = []
+    
+    if args:
+        # Check specific files
+        files = [Path(f) for f in args if Path(f).exists()]
+    else:
+        # Check all relevant files in the repo
+        root = Path(__file__).parent.parent
+        files = get_all_files(root, {'.cs', '.py'})
+    
+    for path in files:
+        if should_skip_path(path):
+            continue
+            
+        if path.suffix.lower() == '.cs':
+            for line_num, desc, snippet in check_csharp_file(path):
+                issues_found.append((path, line_num, desc, snippet))
+        elif path.suffix.lower() == '.py':
+            # Skip this script itself
+            if path.name == 'check_empty_catches.py':
+                continue
+            for line_num, desc, snippet in check_python_file(path):
+                issues_found.append((path, line_num, desc, snippet))
+    
+    if issues_found:
+        print("\n" + "=" * 70)
+        print("EMPTY CATCH BLOCK CHECK FAILED")
+        print("=" * 70)
+        print("\nThe following empty catch blocks were found:\n")
+        
+        for path, line_num, desc, snippet in issues_found:
+            print(f"  {path}:{line_num}")
+            print(f"    Issue: {desc}")
+            print(f"    Code:  {snippet}...")
+            print()
+        
+        print("=" * 70)
+        print("FIX: Use ErrorBoundary patterns instead of empty catches.")
+        print()
+        print("C# Example:")
+        print("  var result = ErrorBoundary.Execute(() => SomeOperation(), fallback);")
+        print()
+        print("Python Example:")
+        print("  result = try_execute(lambda: some_operation(), fallback, context='...')")
+        print()
+        print("To allow an empty catch (rare), add comment on preceding line:")
+        print("  C#:     // ALLOWED: empty catch - [reason]")
+        print("  Python: # ALLOWED: bare except - [reason]")
+        print("=" * 70 + "\n")
+        
+        exit_code = 1
+    else:
+        print("Empty catch block check: PASS")
+    
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

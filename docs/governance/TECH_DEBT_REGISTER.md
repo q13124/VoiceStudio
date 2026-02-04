@@ -32,7 +32,7 @@
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
 | **TD-018** | Empty Catch Remediation | All empty catches remediated: 27 core + 87 remaining = 114 total. All now use ErrorLogger.LogWarning(). | Error visibility | Role 7 | 2026-02-04 | CLOSED |
-| **TD-019** | Python Path Standardization | Migrate remaining scripts to use _env_setup.py | Import reliability | Role 4 | 2026-02-04 | Phase 7+ |
+| **TD-019** | Python Path Standardization | **CLOSED.** 27 scripts migrated to use `_env_setup.py`. All manual `sys.path` manipulation removed. Standard pattern: `from _env_setup import PROJECT_ROOT`. 26 standalone scripts unchanged. | Import reliability | Role 4 | 2026-02-04 | CLOSED |
 | **TD-020** | XAML Safety Tooling | Infrastructure complete; remaining work is documentation | Build stability | Role 2 | 2026-02-04 | CLOSED |
 | **TD-021** | Observability Infrastructure | Phase 8: DiagnosticsPanel enhanced with correlation ID filtering, copy, search. Full trace view pending. | Debugging ease | Role 4 | 2026-02-04 | CLOSED |
 | **TD-022** | Contract Validation | Phase 8: 44 engine manifests now have contract specs. add_engine_contracts.py script available. | API consistency | Role 1/5 | 2026-02-04 | CLOSED |
@@ -42,7 +42,7 @@
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
 | **TD-023** | Route Boundary Violations | **CLOSED.** All 37 violations in 20 files fixed. EngineService extended with quality metrics, engine accessors. All routes now use EngineService instead of direct app.core.engines imports. | Architecture | Role 4 | 2026-02-04 | CLOSED |
-| **TD-024** | Static ServiceProvider Calls | 34 ViewModels still use static ServiceProvider calls. migrate_di.py audit script created. | DI consistency | Role 3 | 2026-02-04 | Phase 8+ |
+| **TD-024** | Static ServiceProvider Calls | **CLOSED.** All 47 static calls in 43 ViewModels migrated to AppServices.TryGetXxx() pattern. fix_static_service_calls.py script created. migrate_di.py shows 0 remaining issues. | DI consistency | Role 3 | 2026-02-04 | CLOSED |
 | **TD-025** | ADR Formalization | ADR-017, ADR-008, ADR-011 formalized with decisions. All 22 ADRs now have formal decisions. | Documentation | Role 1 | 2026-02-04 | CLOSED |
 
 ### LOW Priority

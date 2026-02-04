@@ -13,9 +13,7 @@ import logging
 import sys
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+from _env_setup import PROJECT_ROOT
 
 from app.core.runtime.venv_family_manager import (
     VenvFamily,

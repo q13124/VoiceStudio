@@ -10,6 +10,8 @@ Exit codes:
   1 - Import validation failed
 """
 
+from _env_setup import PROJECT_ROOT
+
 import io
 import sys
 from pathlib import Path
@@ -22,12 +24,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
 
 def validate_imports():
     """Validate that critical modules can be imported."""
-    project_root = Path(__file__).parent.parent
     errors = []
-    
-    # Add project root to path
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
     
     # Critical modules to validate (must be importable for governance tooling)
     # Only includes modules required for verification/governance; backend/engines have optional deps

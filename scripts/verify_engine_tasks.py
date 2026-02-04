@@ -7,22 +7,11 @@ Verification script for Engine Engineer tasks:
 3. Default engine selection
 """
 
+from _env_setup import PROJECT_ROOT
+
 import sys
 import os
 from pathlib import Path
-
-# Add workspace root and subdirectories to path
-workspace_root = Path(__file__).parent.parent
-if str(workspace_root) not in sys.path:
-    sys.path.insert(0, str(workspace_root))
-# Also add app directory directly for imports
-app_dir = workspace_root / "app"
-if app_dir.exists() and str(app_dir) not in sys.path:
-    sys.path.insert(0, str(app_dir))
-# Add backend directory for backend imports
-backend_dir = workspace_root / "backend"
-if backend_dir.exists() and str(backend_dir) not in sys.path:
-    sys.path.insert(0, str(backend_dir))
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == "win32":
@@ -277,14 +266,8 @@ def test_default_engine_selection():
         # Test voice route default engine logic
         print("\n[3.1] Testing voice route default engine selection logic...")
         try:
-            # Import the function that handles default engine selection
-            import sys
-            backend_path = Path(__file__).parent.parent / "backend"
-            if str(backend_path) not in sys.path:
-                sys.path.insert(0, str(backend_path))
-            
-            # Check the voice route file directly
-            voice_route_path = backend_path / "api" / "routes" / "voice.py"
+            # Check the voice route file directly (path via _env_setup)
+            voice_route_path = PROJECT_ROOT / "backend" / "api" / "routes" / "voice.py"
             if voice_route_path.exists():
                 with open(voice_route_path, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -320,7 +303,7 @@ def test_default_engine_selection():
         # Test transcribe route default
         print("\n[3.2] Testing transcribe route default engine...")
         try:
-            transcribe_route_path = backend_path / "api" / "routes" / "transcribe.py"
+            transcribe_route_path = PROJECT_ROOT / "backend" / "api" / "routes" / "transcribe.py"
             if transcribe_route_path.exists():
                 with open(transcribe_route_path, 'r', encoding='utf-8') as f:
                     content = f.read()

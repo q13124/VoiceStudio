@@ -8,10 +8,8 @@ import json
 import sys
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "backend"))
+from _env_setup import PROJECT_ROOT
+# Backend path already in sys.path via _env_setup
 
 try:
     from backend.api.main import app
@@ -20,7 +18,7 @@ try:
     openapi_schema = app.openapi()
 
     # Ensure docs/api directory exists
-    output_dir = project_root / "docs" / "api"
+    output_dir = PROJECT_ROOT / "docs" / "api"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Write schema to file

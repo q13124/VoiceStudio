@@ -27,9 +27,7 @@ import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Add project root
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+from _env_setup import PROJECT_ROOT
 
 logging.basicConfig(
     level=logging.INFO,
@@ -227,15 +225,15 @@ def download_model(model_id: str) -> bool:
         return download_xtts()
     
     elif method == "url":
-        local_path = project_root / model["local_path"]
+        local_path = PROJECT_ROOT / model["local_path"]
         success = download_file(model["url"], local_path, model["name"])
         if success and "json_url" in model:
-            json_path = project_root / model["local_json"]
+            json_path = PROJECT_ROOT / model["local_json"]
             download_file(model["json_url"], json_path, f"{model['name']} config")
         return success
     
     elif method == "faster_whisper":
-        local_path = project_root / model["local_path"]
+        local_path = PROJECT_ROOT / model["local_path"]
         return download_faster_whisper(model["model_size"], local_path)
     
     elif method == "torch_hub":

@@ -10,6 +10,8 @@ Exit codes:
   1 - One or more checks failed
 """
 
+from _env_setup import PROJECT_ROOT
+
 import io
 import json
 import subprocess
@@ -108,6 +110,7 @@ def main():
     
     # Define checks
     skip_guard = "--skip-guard" in sys.argv
+    skip_quality = "--skip-quality" in sys.argv
     checks = [
         {
             "name": "gate_status",
@@ -124,11 +127,36 @@ def main():
             "command": f"{sys.executable} -m tools.overseer.verification.completion_guard"
         })
     
+    # Quality checks (WS-1, WS-4) - can be skipped with --skip-quality
+    if not skip_quality:
+        # Empty catch block check (WS-1)
+        empty_catch_script = project_root / "scripts" / "check_empty_catches.py"
+        if empty_catch_script.exists():
+            checks.append({
+                "name": "empty_catch_check",
+                "command": f"{sys.executable} {empty_catch_script}"
+            })
+        
+        # XAML safety check (WS-4)
+        xaml_lint_script = project_root / "scripts" / "lint_xaml.py"
+        if xaml_lint_script.exists():
+            checks.append({
+                "name": "xaml_safety_check",
+                "command": f"{sys.executable} {xaml_lint_script}"
+            })
+    
     # Optionally add build check if --build flag
     if "--build" in sys.argv:
         checks.append({
             "name": "build_smoke",
             "command": "dotnet build VoiceStudio.sln -c Debug -p:Platform=x64 --verbosity minimal"
+        })
+    
+    # Optionally add release build check if --release flag (WS-5)
+    if "--release" in sys.argv:
+        checks.append({
+            "name": "release_build_smoke",
+            "command": "dotnet build VoiceStudio.sln -c Release -p:Platform=x64 --verbosity minimal"
         })
     
     # Run checks
