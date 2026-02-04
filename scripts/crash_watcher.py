@@ -114,6 +114,7 @@ def process_new_crashes(
         try:
             with open(processed_file, "r") as f:
                 processed = set(json.load(f))
+        # Best effort - failure is acceptable here
         except (json.JSONDecodeError, IOError):
             pass
     

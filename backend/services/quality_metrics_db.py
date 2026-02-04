@@ -302,12 +302,14 @@ class QualityMetricsDatabase:
         if metrics_json:
             try:
                 metrics = json.loads(metrics_json)
+            # Best effort - failure is acceptable here
             except (json.JSONDecodeError, TypeError):
                 pass
         metadata = None
         if metadata_json and metadata_json != "null":
             try:
                 metadata = json.loads(metadata_json)
+            # Best effort - failure is acceptable here
             except (json.JSONDecodeError, TypeError):
                 pass
         return {

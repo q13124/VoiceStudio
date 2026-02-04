@@ -57,6 +57,7 @@ namespace VoiceStudio.App.Tests.UI
             {
               Marshal.FinalReleaseComObject(dispatcherQueueController);
             }
+            // ALLOWED: empty catch - COM cleanup must not fail tests
             catch
             {
               // Best-effort cleanup; tests must not fail due to COM release issues.

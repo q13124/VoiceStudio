@@ -64,6 +64,7 @@ def extract_imports(file_path):
                 else:
                     module = line.split()[1].split(".")[0]
                 imports.append(module)
+    # Best effort - failure is acceptable here
     except Exception:
         pass
     return imports

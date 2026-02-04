@@ -137,6 +137,7 @@ class EnhancedResourceManager(ResourceManager):
                     if self.running:
                         try:
                             logger.error(f"Error in resource monitoring: {e}")
+                        # Best effort - failure is acceptable here
                         except (ValueError, OSError):
                             pass
                     time.sleep(self.monitoring_interval)

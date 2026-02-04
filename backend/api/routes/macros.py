@@ -740,6 +740,7 @@ def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
             if tmp_path is not None and tmp_path.exists():
                 try:
                     tmp_path.unlink()
+                # Best effort - failure is acceptable here
                 except Exception:
                     pass
             logger.error(f"Failed to save output: {e}")

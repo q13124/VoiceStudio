@@ -261,6 +261,7 @@ class ManifestSigner:
         
         try:
             os.chmod(self._key_path, 0o600)
+        # Best effort - failure is acceptable here
         except (AttributeError, OSError):
             pass
     

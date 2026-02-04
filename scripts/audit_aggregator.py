@@ -116,6 +116,7 @@ def aggregate_by_task(entries: List[AuditEntry], output_dir: Path):
             try:
                 with open(task_path, "r", encoding="utf-8") as f:
                     existing = json.load(f)
+            # Best effort - failure is acceptable here
             except json.JSONDecodeError:
                 pass
         
@@ -251,6 +252,7 @@ def update_index(entries: List[AuditEntry], output_dir: Path):
         try:
             with open(index_path, "r", encoding="utf-8") as f:
                 index = json.load(f)
+        # Best effort - failure is acceptable here
         except json.JSONDecodeError:
             pass
     

@@ -131,6 +131,7 @@ def get_file_changes_from_git() -> List[dict]:
                     "lines_added": 0,
                     "lines_removed": 0,
                 })
+    # Best effort - failure is acceptable here
     except (subprocess.SubprocessError, FileNotFoundError):
         pass
     
@@ -160,6 +161,7 @@ def get_diff_stats(file_path: str) -> Tuple[int, int]:
                 added = int(parts[0]) if parts[0] != "-" else 0
                 removed = int(parts[1]) if parts[1] != "-" else 0
                 return added, removed
+    # Best effort - failure is acceptable here
     except (subprocess.SubprocessError, FileNotFoundError, ValueError):
         pass
     

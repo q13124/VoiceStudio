@@ -65,10 +65,12 @@ def _file_lock(log_file: Path):
         if fd is not None:
             try:
                 os.close(fd)
+            # Best effort - failure is acceptable here
             except OSError:
                 pass
         try:
             lock_file.unlink(missing_ok=True)
+        # Best effort - failure is acceptable here
         except OSError:
             pass
 
@@ -284,6 +286,7 @@ class IssueStore:
                         continue
                     if end_time is not None and file_date.date() > end_time.date():
                         continue
+            # Best effort - failure is acceptable here
             except (IndexError, ValueError):
                 pass
 

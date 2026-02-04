@@ -1,0 +1,54 @@
+#!/bin/bash
+# VoiceStudio Post-Commit Hook: Update audit entries with commit hash
+# This hook updates recent audit entries with the final commit hash
+
+set -e
+
+# Configuration
+AUDIT_ENABLED="${VOICESTUDIO_AUDIT_ENABLED:-1}"
+
+# Skip if audit is disabled
+if [ "$AUDIT_ENABLED" != "1" ]; then
+    exit 0
+fi
+
+# Get commit hash
+COMMIT_HASH=$(git rev-parse HEAD)
+SHORT_HASH=$(git rev-parse --short HEAD)
+
+# Get repo root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Check if update_commit_hash.py exists
+UPDATE_SCRIPT="$REPO_ROOT/scripts/update_commit_hash.py"
+
+if [ ! -f "$UPDATE_SCRIPT" ]; then
+    # Script not found - that's OK, audit logging is optional
+    exit 0
+fi
+
+# Run update
+python "$UPDATE_SCRIPT" --commit "$COMMIT_HASH" 2>/dev/null || true
+
+# Optionally log the commit to audit
+python -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT')
+try:
+    from app.core.audit import get_audit_logger
+    logger = get_audit_logger()
+    logger.log_file_change(
+        file_path='git commit',
+        operation='commit',
+        role='Developer',
+        task_id='',
+        summary='Committed $SHORT_HASH',
+        actor='human'
+    )
+except ImportError:
+    pass
+except Exception:
+    pass
+" 2>/dev/null || true
+
+exit 0

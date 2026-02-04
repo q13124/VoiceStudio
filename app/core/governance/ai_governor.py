@@ -372,6 +372,7 @@ class AIGovernor:
             if tmp_path is not None and tmp_path.exists():
                 try:
                     tmp_path.unlink()
+                # Best effort - failure is acceptable here
                 except Exception:
                     pass
             logger.error(f"Failed to save reward model: {e}")
@@ -405,6 +406,7 @@ class AIGovernor:
             if tmp_path is not None and tmp_path.exists():
                 try:
                     tmp_path.unlink()
+                # Best effort - failure is acceptable here
                 except Exception:
                     pass
             logger.error(f"Failed to save A/B test data: {e}")

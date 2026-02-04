@@ -488,6 +488,7 @@ class AudioQualityBenchmark:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
+                # Best effort - failure is acceptable here
                 except Exception:
                     pass
             raise

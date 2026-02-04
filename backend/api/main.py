@@ -95,6 +95,7 @@ if os.environ.get("VOICESTUDIO_JSON_LOGGING", "").lower() in ("1", "true", "yes"
 
         setup_json_logging()
         logging.getLogger(__name__).info("JSON logging enabled via VOICESTUDIO_JSON_LOGGING")
+    # Optional dependency - import failure is acceptable
     except ImportError:
         pass
 
@@ -312,28 +313,115 @@ async def startup_event():
 
 # Registered below after the FastAPI `app` is created.
 async def shutdown_event():
-    """Cleanup on application shutdown."""
-    # Cleanup temp files on shutdown
-    try:
-        from app.core.utils.temp_file_manager import get_temp_file_manager
-
-        temp_manager = get_temp_file_manager()
-        temp_manager.cleanup_on_shutdown()
-        logger.info("Temp file manager shutdown cleanup performed")
-    except Exception as e:
-        logger.warning(f"Failed to cleanup temp files on shutdown: {e}")
-    try:
-        # Stop background task scheduler
+    """Graceful shutdown with engine cleanup and 30-second timeout."""
+    import asyncio
+    
+    shutdown_timeout = 30  # seconds
+    logger.info("Initiating graceful shutdown (timeout: %ds)", shutdown_timeout)
+    
+    async def _shutdown_engines():
+        """Shutdown all running engines gracefully."""
+        try:
+            from app.core.runtime.runtime_engine_enhanced import get_engine_lifecycle_manager
+            
+            manager = get_engine_lifecycle_manager()
+            if manager:
+                running_engines = manager.get_running_engines()
+                if running_engines:
+                    logger.info("Shutting down %d running engine(s)...", len(running_engines))
+                    for engine_id in running_engines:
+                        try:
+                            await manager.stop_engine(engine_id, timeout=10)
+                            logger.info("Engine '%s' stopped", engine_id)
+                        except Exception as e:
+                            logger.warning("Failed to stop engine '%s': %s", engine_id, e)
+                else:
+                    logger.info("No running engines to shutdown")
+        except ImportError:
+            logger.debug("Engine lifecycle manager not available")
+        except Exception as e:
+            logger.warning("Engine shutdown error: %s", e)
+    
+    async def _shutdown_job_queue():
+        """Wait for in-flight jobs to complete."""
+        try:
+            from app.core.runtime.job_queue_enhanced import get_job_queue
+            
+            queue = get_job_queue()
+            if queue:
+                pending = queue.get_pending_count()
+                if pending > 0:
+                    logger.info("Waiting for %d pending job(s) to complete...", pending)
+                    # Give jobs a chance to complete (max 10s)
+                    for _ in range(20):
+                        if queue.get_pending_count() == 0:
+                            break
+                        await asyncio.sleep(0.5)
+        # Optional dependency - import failure is acceptable
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("Job queue shutdown error: %s", e)
+    
+    async def _shutdown_temp_files():
+        """Cleanup temp files."""
+        try:
+            from app.core.utils.temp_file_manager import get_temp_file_manager
+            
+            temp_manager = get_temp_file_manager()
+            temp_manager.cleanup_on_shutdown()
+            logger.info("Temp file cleanup completed")
+        except Exception as e:
+            logger.warning("Failed to cleanup temp files: %s", e)
+    
+    async def _shutdown_scheduler():
+        """Stop background task scheduler."""
         try:
             from app.core.tasks.scheduler import get_scheduler
-
+            
             scheduler = get_scheduler()
             scheduler.stop()
             logger.info("Background task scheduler stopped")
         except Exception as e:
-            logger.warning(f"Failed to stop task scheduler: {e}")
+            logger.warning("Failed to stop task scheduler: %s", e)
+    
+    async def _shutdown_database():
+        """Close database connections."""
+        try:
+            from app.core.database.query_optimizer import close_database_connections
+            
+            await close_database_connections()
+            logger.info("Database connections closed")
+        # Optional dependency - import failure is acceptable
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("Failed to close database connections: %s", e)
+    
+    # Run shutdown sequence with timeout
+    try:
+        # Phase 1: Wait for in-flight jobs
+        await asyncio.wait_for(_shutdown_job_queue(), timeout=shutdown_timeout * 0.3)
+        
+        # Phase 2: Shutdown engines
+        await asyncio.wait_for(_shutdown_engines(), timeout=shutdown_timeout * 0.4)
+        
+        # Phase 3: Cleanup and scheduler
+        await asyncio.wait_for(
+            asyncio.gather(
+                _shutdown_temp_files(),
+                _shutdown_scheduler(),
+                _shutdown_database(),
+                return_exceptions=True
+            ),
+            timeout=shutdown_timeout * 0.3
+        )
+        
+        logger.info("Graceful shutdown completed successfully")
+    except asyncio.TimeoutError:
+        logger.warning("Shutdown timed out after %ds - forcing exit", shutdown_timeout)
     except Exception as e:
-        logger.error(f"Error during shutdown: {e}", exc_info=True)
+        logger.error("Error during shutdown: %s", e, exc_info=True)
 
 
 app = FastAPI(
@@ -721,15 +809,29 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["*", "X-Correlation-ID"],
     expose_headers=[
         "X-Request-ID",
+        "X-Correlation-ID",
         "X-RateLimit-Remaining",
         "X-RateLimit-Limit",
         "X-RateLimit-Reset",
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Initialize correlation ID middleware for request tracing
+try:
+    from backend.api.middleware.correlation_id import (
+        CorrelationIdMiddleware,
+        setup_correlation_logging,
+    )
+
+    app.add_middleware(CorrelationIdMiddleware)
+    setup_correlation_logging()
+    logger.info("Correlation ID middleware initialized")
+except ImportError as e:
+    logger.warning(f"Correlation ID middleware not available: {e}")
 
 # Initialize middleware before app starts (must be done before startup_event)
 # Initialize validation optimization middleware

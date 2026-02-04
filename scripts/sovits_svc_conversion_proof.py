@@ -82,6 +82,7 @@ class SovitsSvcConversionProof:
                 spec = response.json()
                 paths = spec.get("paths", {}) if isinstance(spec, dict) else {}
                 return "/api/voice/clone" in paths and "/api/rvc/convert" in paths
+        # Best effort - failure is acceptable here
         except (requests.exceptions.RequestException, ValueError):
             pass
 

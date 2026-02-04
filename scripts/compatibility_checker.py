@@ -81,6 +81,7 @@ def parse_version_lock(path: Path) -> Dict[str, str]:
                 elif isinstance(value, dict) and "version" in value:
                     result[key.lower()] = value["version"]
             return result
+    # Best effort - failure is acceptable here
     except (json.JSONDecodeError, IOError):
         pass
     

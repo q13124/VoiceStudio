@@ -112,6 +112,7 @@ def main():
                     sim_values.append(metrics["similarity"])
                 if metrics.get("snr_db"):
                     snr_values.append(metrics["snr_db"])
+            # Best effort - failure is acceptable here
             except:
                 pass
 

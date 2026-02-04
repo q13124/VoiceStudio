@@ -1,0 +1,191 @@
+{
+  "description": "Maps file paths to logical subsystems for audit logging context enrichment",
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "glob": "src/VoiceStudio.App/Views/Panels/*View*",
+      "subsystem": "UI.Panels",
+      "description": "UI Panel views"
+    },
+    {
+      "glob": "src/VoiceStudio.App/Views/MainWindow*",
+      "subsystem": "UI.MainWindow",
+      "description": "Main application window"
+    },
+    {
+      "glob": "src/VoiceStudio.App/ViewModels/*",
+      "subsystem": "UI.ViewModels",
+      "description": "MVVM ViewModels"
+    },
+    {
+      "glob": "src/VoiceStudio.App/Resources/Styles/*",
+      "subsystem": "UI.Styles.Global",
+      "description": "Global UI styles and design tokens"
+    },
+    {
+      "glob": "src/VoiceStudio.App/Resources/Controls/*",
+      "subsystem": "UI.Controls",
+      "description": "Custom UI controls"
+    },
+    {
+      "glob": "src/VoiceStudio.App/Services/*",
+      "subsystem": "App.Services",
+      "description": "Application services layer"
+    },
+    {
+      "glob": "src/VoiceStudio.App/Utilities/*",
+      "subsystem": "App.Utilities",
+      "description": "Utility classes"
+    },
+    {
+      "glob": "src/VoiceStudio.Core/*",
+      "subsystem": "Core",
+      "description": "Core library contracts and interfaces"
+    },
+    {
+      "glob": "backend/api/routes/*",
+      "subsystem": "Backend.API.Routes",
+      "description": "FastAPI route handlers"
+    },
+    {
+      "glob": "backend/api/middleware/*",
+      "subsystem": "Backend.API.Middleware",
+      "description": "API middleware"
+    },
+    {
+      "glob": "backend/api/models*",
+      "subsystem": "Backend.API.Models",
+      "description": "Pydantic API models"
+    },
+    {
+      "glob": "backend/api/*",
+      "subsystem": "Backend.API",
+      "description": "Backend API general"
+    },
+    {
+      "glob": "backend/services/*",
+      "subsystem": "Backend.Services",
+      "description": "Backend service layer"
+    },
+    {
+      "glob": "app/core/engines/*",
+      "subsystem": "Engines",
+      "description": "TTS/STT engine implementations"
+    },
+    {
+      "glob": "app/core/audio/*",
+      "subsystem": "Audio",
+      "description": "Audio processing modules"
+    },
+    {
+      "glob": "app/core/monitoring/*",
+      "subsystem": "Monitoring",
+      "description": "Monitoring and telemetry"
+    },
+    {
+      "glob": "app/core/audit/*",
+      "subsystem": "Audit",
+      "description": "Audit logging system"
+    },
+    {
+      "glob": "app/core/runtime/*",
+      "subsystem": "Runtime",
+      "description": "Runtime engine orchestration"
+    },
+    {
+      "glob": "app/core/training/*",
+      "subsystem": "Training",
+      "description": "Model training modules"
+    },
+    {
+      "glob": "app/core/resilience/*",
+      "subsystem": "Resilience",
+      "description": "Circuit breakers and retry logic"
+    },
+    {
+      "glob": "app/core/security/*",
+      "subsystem": "Security",
+      "description": "Security and watermarking"
+    },
+    {
+      "glob": "app/core/tts/*",
+      "subsystem": "TTS",
+      "description": "Text-to-speech utilities"
+    },
+    {
+      "glob": "app/core/nlp/*",
+      "subsystem": "NLP",
+      "description": "Natural language processing"
+    },
+    {
+      "glob": "tests/unit/*",
+      "subsystem": "Tests.Unit",
+      "description": "Unit tests"
+    },
+    {
+      "glob": "tests/integration/*",
+      "subsystem": "Tests.Integration",
+      "description": "Integration tests"
+    },
+    {
+      "glob": "tests/*",
+      "subsystem": "Tests",
+      "description": "Test files"
+    },
+    {
+      "glob": "docs/architecture/*",
+      "subsystem": "Documentation.Architecture",
+      "description": "Architecture documentation and ADRs"
+    },
+    {
+      "glob": "docs/governance/*",
+      "subsystem": "Documentation.Governance",
+      "description": "Governance documentation"
+    },
+    {
+      "glob": "docs/*",
+      "subsystem": "Documentation",
+      "description": "General documentation"
+    },
+    {
+      "glob": ".cursor/rules/*",
+      "subsystem": "Governance.Rules",
+      "description": "Cursor AI rules"
+    },
+    {
+      "glob": ".cursor/STATE.md",
+      "subsystem": "Governance.State",
+      "description": "Session state"
+    },
+    {
+      "glob": "scripts/*",
+      "subsystem": "Scripts",
+      "description": "Build and utility scripts"
+    },
+    {
+      "glob": "tools/*",
+      "subsystem": "Tools",
+      "description": "Development tools"
+    },
+    {
+      "glob": "installer/*",
+      "subsystem": "Installer",
+      "description": "Installer and packaging"
+    },
+    {
+      "glob": ".github/workflows/*",
+      "subsystem": "CI.Workflows",
+      "description": "GitHub Actions workflows"
+    },
+    {
+      "glob": "engines/*.json",
+      "subsystem": "Engines.Manifests",
+      "description": "Engine manifest files"
+    },
+    {
+      "glob": "Recovery Plan/*",
+      "subsystem": "Governance.Ledger",
+      "description": "Quality Ledger and recovery"
+    }
+  ]
+}

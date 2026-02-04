@@ -453,6 +453,7 @@ class VoiceProfileManager:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
+                # Best effort - failure is acceptable here
                 except Exception:
                     pass
             logger.error(f"Failed to save profile {profile_id}: {e}")

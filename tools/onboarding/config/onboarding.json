@@ -1,0 +1,11 @@
+{
+  "output_format": "markdown",
+  "include_context_bundle": true,
+  "include_handoff_queue": true,
+  "sections": ["prompt", "guide", "state", "context", "issues"],
+  "context_budget_chars": 20000,
+  "max_guide_lines": 200,
+  "max_prompt_lines": 150,
+  "include_role_metadata": true,
+  "include_timestamp": true
+}

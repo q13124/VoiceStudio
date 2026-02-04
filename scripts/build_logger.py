@@ -124,6 +124,7 @@ def get_current_commit() -> Optional[str]:
         )
         if result.returncode == 0:
             return result.stdout.strip()
+    # Best effort - failure is acceptable here
     except (subprocess.SubprocessError, FileNotFoundError):
         pass
     return None

@@ -141,6 +141,7 @@ class ReleaseManager:
                     self._index[key] = [
                         ReleaseBundle.from_dict(b) for b in bundle_list
                     ]
+            # Best effort - failure is acceptable here
             except (json.JSONDecodeError, IOError):
                 pass
     

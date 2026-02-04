@@ -1,0 +1,50 @@
+#!/bin/bash
+# VoiceStudio Pre-Commit Hook: Verify audit log entries
+# This hook checks that changed files have corresponding audit log entries
+
+set -e
+
+# Configuration
+AUDIT_ENABLED="${VOICESTUDIO_AUDIT_ENABLED:-1}"
+AUDIT_STRICT="${VOICESTUDIO_AUDIT_STRICT:-0}"
+
+# Skip if audit is disabled
+if [ "$AUDIT_ENABLED" != "1" ]; then
+    exit 0
+fi
+
+# Get list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# Get repo root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Check if verify_audit_entries.py exists
+VERIFY_SCRIPT="$REPO_ROOT/scripts/verify_audit_entries.py"
+
+if [ ! -f "$VERIFY_SCRIPT" ]; then
+    echo "Warning: verify_audit_entries.py not found, skipping audit check"
+    exit 0
+fi
+
+# Run verification
+echo "Checking audit log entries for staged files..."
+if python "$VERIFY_SCRIPT" $STAGED_FILES; then
+    echo "Audit log entries verified."
+    exit 0
+else
+    if [ "$AUDIT_STRICT" = "1" ]; then
+        echo ""
+        echo "ERROR: Some staged files are missing audit log entries."
+        echo "Run: python scripts/patch_wrapper.py --files <files> --summary \"<description>\""
+        echo "Or bypass with: git commit --no-verify"
+        exit 1
+    else
+        echo "Warning: Some files may be missing audit entries (non-strict mode)"
+        exit 0
+    fi
+fi

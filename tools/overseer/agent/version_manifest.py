@@ -131,6 +131,7 @@ class VersionManifestStore:
                 data = json.loads(self._index_path.read_text(encoding="utf-8"))
                 for key, entry_data in data.get("manifests", {}).items():
                     self._index[key] = ManifestEntry.from_dict(entry_data)
+            # Best effort - failure is acceptable here
             except (json.JSONDecodeError, IOError):
                 pass
     

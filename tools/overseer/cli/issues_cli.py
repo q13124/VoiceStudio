@@ -392,6 +392,7 @@ def _watch(args: argparse.Namespace) -> int:
                     msg = (i.message or "")[:60]
                     print(f"{i.id} | {ts} | {i.instance_type.value} | {i.severity.value} | {i.status.value} | {msg}")
             time.sleep(interval)
+    # Best effort - failure is acceptable here
     except KeyboardInterrupt:
         pass
     return 0

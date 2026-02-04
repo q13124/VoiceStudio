@@ -53,10 +53,14 @@
     <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.12.0" />
     <!-- Required for in-proc XAML compiler task dependency (matches app project) -->
     <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <!-- FlaUI for real UI automation testing -->
+    <PackageReference Include="FlaUI.Core" Version="4.0.0" />
+    <PackageReference Include="FlaUI.UIA3" Version="4.0.0" />
   </ItemGroup>
 
   <!-- Project references -->

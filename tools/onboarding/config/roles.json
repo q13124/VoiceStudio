@@ -1,0 +1,104 @@
+{
+  "roles": {
+    "0": {
+      "name": "overseer",
+      "display_name": "Overseer",
+      "prompt": "ROLE_0_OVERSEER_PROMPT.md",
+      "guide": "ROLE_0_OVERSEER_GUIDE.md",
+      "context_profile": "overseer.json",
+      "gates": ["A", "B", "C", "D", "E", "F", "G", "H"],
+      "boundary": "tooling-only"
+    },
+    "1": {
+      "name": "system-architect",
+      "display_name": "System Architect",
+      "prompt": "ROLE_1_SYSTEM_ARCHITECT_PROMPT.md",
+      "guide": "ROLE_1_SYSTEM_ARCHITECT_GUIDE.md",
+      "context_profile": "system-architect.json",
+      "gates": ["A", "B", "C"],
+      "boundary": "contracts-and-boundaries"
+    },
+    "2": {
+      "name": "build-tooling",
+      "display_name": "Build & Tooling",
+      "prompt": "ROLE_2_BUILD_TOOLING_PROMPT.md",
+      "guide": "ROLE_2_BUILD_TOOLING_GUIDE.md",
+      "context_profile": "build-tooling.json",
+      "gates": ["B", "C"],
+      "boundary": "build-and-ci"
+    },
+    "3": {
+      "name": "ui-engineer",
+      "display_name": "UI Engineer",
+      "prompt": "ROLE_3_UI_ENGINEER_PROMPT.md",
+      "guide": "ROLE_3_UI_ENGINEER_GUIDE.md",
+      "context_profile": "ui-engineer.json",
+      "gates": ["C", "F", "G"],
+      "boundary": "ui-layer"
+    },
+    "4": {
+      "name": "core-platform",
+      "display_name": "Core Platform",
+      "prompt": "ROLE_4_CORE_PLATFORM_PROMPT.md",
+      "guide": "ROLE_4_CORE_PLATFORM_GUIDE.md",
+      "context_profile": "core-platform.json",
+      "gates": ["C", "D"],
+      "boundary": "backend-services"
+    },
+    "5": {
+      "name": "engine-engineer",
+      "display_name": "Engine Engineer",
+      "prompt": "ROLE_5_ENGINE_ENGINEER_PROMPT.md",
+      "guide": "ROLE_5_ENGINE_ENGINEER_GUIDE.md",
+      "context_profile": "engine-engineer.json",
+      "gates": ["D", "E"],
+      "boundary": "ml-engines"
+    },
+    "6": {
+      "name": "release-engineer",
+      "display_name": "Release Engineer",
+      "prompt": "ROLE_6_RELEASE_ENGINEER_PROMPT.md",
+      "guide": "ROLE_6_RELEASE_ENGINEER_GUIDE.md",
+      "context_profile": "release-engineer.json",
+      "gates": ["C", "H"],
+      "boundary": "packaging-and-release"
+    },
+    "7": {
+      "name": "debug-agent",
+      "display_name": "Debug Agent",
+      "prompt": "ROLE_7_DEBUG_AGENT_PROMPT.md",
+      "guide": "ROLE_7_DEBUG_AGENT_GUIDE.md",
+      "context_profile": "debug-agent.json",
+      "gates": ["C", "D", "E"],
+      "boundary": "issue-triage"
+    },
+    "validator": {
+      "name": "skeptical-validator",
+      "display_name": "Skeptical Validator",
+      "prompt": "SKEPTICAL_VALIDATOR_PROMPT.md",
+      "guide": "SKEPTICAL_VALIDATOR_GUIDE.md",
+      "context_profile": "validator.json",
+      "gates": ["A", "B", "C", "D", "E", "F", "G", "H"],
+      "boundary": "verification-only"
+    }
+  },
+  "aliases": {
+    "overseer": "0",
+    "architect": "1",
+    "system-architect": "1",
+    "build": "2",
+    "build-tooling": "2",
+    "ui": "3",
+    "ui-engineer": "3",
+    "core": "4",
+    "core-platform": "4",
+    "engine": "5",
+    "engine-engineer": "5",
+    "release": "6",
+    "release-engineer": "6",
+    "debug": "7",
+    "debug-agent": "7",
+    "validator": "validator",
+    "skeptical-validator": "validator"
+  }
+}

@@ -35,6 +35,7 @@ def get_current_commit() -> Optional[str]:
         )
         if result.returncode == 0:
             return result.stdout.strip()
+    # Best effort - failure is acceptable here
     except (subprocess.SubprocessError, FileNotFoundError):
         pass
     return None
@@ -73,6 +74,7 @@ def parse_input_json(input_path: Path) -> List[str]:
                                     if path_key in item:
                                         files.append(item[path_key])
                                         break
+    # Best effort - failure is acceptable here
     except (json.JSONDecodeError, IOError):
         pass
     

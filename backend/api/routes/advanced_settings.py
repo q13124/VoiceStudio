@@ -165,6 +165,7 @@ async def update_advanced_settings(
         if tmp_path and tmp_path.exists():
             try:
                 tmp_path.unlink()
+            # Best effort - failure is acceptable here
             except Exception:
                 pass
         raise HTTPException(

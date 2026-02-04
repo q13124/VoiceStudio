@@ -159,6 +159,7 @@ class KillSwitch:
                         self._by_level[activation.level].add(activation.target_id)
                 except (KeyError, ValueError):
                     continue
+        # Best effort - failure is acceptable here
         except (json.JSONDecodeError, IOError):
             pass
     

@@ -539,6 +539,7 @@ class EngineLifecycleManager:
                         try:
                             engine.process.kill()
                             engine.process.wait()
+                        # Best effort - failure is acceptable here
                         except Exception:
                             pass
 
@@ -698,6 +699,7 @@ class EngineLifecycleManager:
                 for engine in pool:
                     try:
                         self._stop_engine(engine)
+                    # Best effort - failure is acceptable here
                     except Exception:
                         pass
 

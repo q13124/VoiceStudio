@@ -238,6 +238,7 @@ namespace VoiceStudio.IntegrationTests
                         CancellationToken.None
                     );
                 }
+                // ALLOWED: empty catch - test cleanup must not throw
                 catch
                 {
                     // Ignore cleanup errors

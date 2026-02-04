@@ -151,6 +151,7 @@ def _load_config(path: Path) -> Dict:
         for f in sorted(roles_dir.glob("*.json")):
             try:
                 config["roles"][f.stem] = json.loads(f.read_text(encoding="utf-8"))
+            # Best effort - failure is acceptable here
             except Exception:
                 pass
     return config
