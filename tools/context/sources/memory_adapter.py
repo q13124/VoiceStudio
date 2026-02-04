@@ -18,8 +18,35 @@ PROJECT_ID = "wtsteward11/VoiceStudio"
 # Memory types relevant for context injection
 RELEVANT_MEMORY_TYPES = ["component", "implementation", "project_info", "debug"]
 
-# Timeout for MCP search-memory call (seconds)
+# Timeout for MCP operations (seconds)
 _MCP_SEARCH_TIMEOUT = 15.0
+
+# MCP server configurations
+# OpenMemory (local HSG) uses openmemory_query
+# Mem0 (cloud) uses search-memory
+_MCP_TOOL_CONFIGS = {
+    "openmemory": {
+        "command": "npx",
+        "args": ["-y", "openmemory-mcp"],
+        "tool_name": "openmemory_query",
+        "param_mapping": {
+            "query": "query",
+            "max_results": "k",
+            "query_type": "type",
+        },
+    },
+    "mem0": {
+        "command": "npx",
+        "args": ["-y", "@mem0/mcp"],
+        "tool_name": "search-memory",
+        "param_mapping": {
+            "query": "query",
+            "max_results": "limit",
+            "project_id": "project_id",
+            "memory_types": "memory_types",
+        },
+    },
+}
 
 
 def _resolve_openmemory_path() -> Optional[str]:
@@ -52,90 +79,202 @@ def _resolve_openmemory_path() -> Optional[str]:
     return None
 
 
-def _run_mcp_search(query: str, max_results: int) -> Optional[List[Dict[str, Any]]]:
+def _run_mcp_search(
+    query: str,
+    max_results: int,
+    query_type: str = "contextual",
+    provider: str = "openmemory",
+) -> Optional[List[Dict[str, Any]]]:
     """
-    Run OpenMemory search-memory via MCP stdio client.
-    Spawns npx -y openmemory-js mcp, calls search-memory, parses response.
+    Run memory search via MCP stdio client.
+    
+    Supports two providers:
+    - "openmemory": Local HSG memory (openmemory_query tool)
+    - "mem0": Cloud-based memory (search-memory tool)
+    
     Returns None on any failure (caller falls back to file).
     """
     try:
         from mcp import ClientSession, StdioServerParameters
         from mcp.client.stdio import stdio_client
     except ImportError:
-        logger.debug("mcp package not installed; skipping OpenMemory MCP.")
+        logger.debug("mcp package not installed; skipping MCP memory search.")
+        return None
+
+    config = _MCP_TOOL_CONFIGS.get(provider)
+    if not config:
+        logger.debug("Unknown MCP provider: %s", provider)
         return None
 
     async def _search() -> Optional[List[Dict[str, Any]]]:
         env = os.environ.copy()
-        env.setdefault("OM_TIER", "hybrid")
-        env.setdefault("OM_EMBEDDINGS", "synthetic")
+        # OpenMemory-specific environment
+        if provider == "openmemory":
+            env.setdefault("OM_TIER", "hybrid")
+            env.setdefault("OM_EMBEDDINGS", "synthetic")
+        
         params = StdioServerParameters(
-            command="npx",
-            args=["-y", "openmemory-js", "mcp"],
+            command=config["command"],
+            args=config["args"],
             env=env,
         )
+        
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                tool_args: Dict[str, Any] = {
-                    "query": query,
-                    "project_id": PROJECT_ID,
-                    "memory_types": RELEVANT_MEMORY_TYPES,
-                    "k": min(max_results, 32),
-                }
-                result = await session.call_tool("search-memory", tool_args)
+                
+                # Build tool arguments based on provider
+                tool_args: Dict[str, Any] = {}
+                param_map = config["param_mapping"]
+                
+                if "query" in param_map:
+                    tool_args[param_map["query"]] = query
+                if "max_results" in param_map:
+                    tool_args[param_map["max_results"]] = min(max_results, 32)
+                if "query_type" in param_map:
+                    tool_args[param_map["query_type"]] = query_type
+                if "project_id" in param_map:
+                    tool_args[param_map["project_id"]] = PROJECT_ID
+                if "memory_types" in param_map:
+                    tool_args[param_map["memory_types"]] = RELEVANT_MEMORY_TYPES
+                
+                tool_name = config["tool_name"]
+                logger.debug("Calling MCP tool %s with args: %s", tool_name, tool_args)
+                result = await session.call_tool(tool_name, tool_args)
                 return _parse_mcp_tool_result(result, max_results)
 
     try:
         return asyncio.run(asyncio.wait_for(_search(), timeout=_MCP_SEARCH_TIMEOUT))
     except asyncio.TimeoutError:
-        logger.debug("OpenMemory MCP search timed out after %s s", _MCP_SEARCH_TIMEOUT)
+        logger.debug("MCP search timed out after %s s (provider=%s)", _MCP_SEARCH_TIMEOUT, provider)
         return None
     except Exception as e:
-        logger.debug("OpenMemory MCP search error: %s", e)
+        logger.debug("MCP search error (provider=%s): %s", provider, e)
         return None
+
+
+def _try_all_mcp_providers(
+    query: str,
+    max_results: int,
+    query_type: str = "contextual",
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Try all configured MCP providers in order until one succeeds.
+    Returns None if all providers fail.
+    """
+    for provider in _MCP_TOOL_CONFIGS.keys():
+        result = _run_mcp_search(query, max_results, query_type, provider)
+        if result:
+            logger.debug("MCP provider %s returned %d results", provider, len(result))
+            return result
+    return None
 
 
 def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[str, Any]]]:
-    """Parse MCP call_tool result into [{"content": str, "source": str}]. Returns None if invalid."""
+    """
+    Parse MCP call_tool result into [{"content": str, "source": str, "relevance": float}].
+    
+    Handles multiple response formats:
+    - OpenMemory HSG: {memories: [{content, sector, salience, ...}]}
+    - Mem0: {results: [{memory: {content}, metadata: {source}}]}
+    - Plain list: [{content, source}]
+    - Raw text fallback
+    
+    Returns None if invalid/empty.
+    """
     out: List[Dict[str, Any]] = []
     raw_text = ""
+    
+    # Extract text content from MCP result blocks
     if hasattr(result, "content") and result.content:
         for block in result.content:
             if hasattr(block, "type") and block.type == "text" and hasattr(block, "text"):
                 raw_text += block.text
             elif isinstance(block, dict):
-                t = block.get("type") == "text"
-                txt = block.get("text")
-                if t and txt:
-                    raw_text += txt
+                if block.get("type") == "text" and block.get("text"):
+                    raw_text += block["text"]
+    
     if not raw_text:
         return None
+    
+    # Try to parse as JSON
     try:
         data = json.loads(raw_text)
     except json.JSONDecodeError:
-        out.append({"content": raw_text[:2000], "source": "openmemory"})
+        # Fallback: treat raw text as single memory
+        out.append({"content": raw_text[:2000], "source": "openmemory", "relevance": 0.5})
         return out[:max_results]
+    
+    def _extract_memory(item: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract memory content from various item formats."""
+        # Content extraction (try multiple fields)
+        content = (
+            item.get("content")
+            or item.get("text")
+            or (item.get("memory") or {}).get("content")
+            or (item.get("memory") or {}).get("text")
+        )
+        if isinstance(content, dict):
+            content = content.get("text") or content.get("content") or json.dumps(content)
+        
+        # Source extraction
+        source = (
+            item.get("source")
+            or item.get("sector")  # OpenMemory HSG sector
+            or (item.get("metadata") or {}).get("source")
+            or "openmemory"
+        )
+        
+        # Relevance/salience extraction
+        relevance = (
+            item.get("salience")  # OpenMemory HSG
+            or item.get("relevance")
+            or item.get("score")
+            or item.get("similarity")
+            or 0.5
+        )
+        
+        return {
+            "content": (str(content) if content else "")[:2000],
+            "source": str(source),
+            "relevance": float(relevance) if isinstance(relevance, (int, float)) else 0.5,
+        }
+    
+    # Parse based on structure
     if isinstance(data, list):
         for item in data[:max_results]:
-            c = item.get("content") or item.get("memory", {}).get("content") or item.get("text") or str(item)
-            s = item.get("source") or item.get("metadata", {}).get("source") or "openmemory"
-            if isinstance(c, dict):
-                c = c.get("text") or c.get("content") or json.dumps(c)
-            out.append({"content": (c or "")[:2000], "source": str(s)})
+            if isinstance(item, dict):
+                mem = _extract_memory(item)
+                if mem["content"]:
+                    out.append(mem)
+            elif isinstance(item, str):
+                out.append({"content": item[:2000], "source": "openmemory", "relevance": 0.5})
     elif isinstance(data, dict):
-        lst = data.get("memories") or data.get("results") or data.get("data") or []
-        for item in (lst if isinstance(lst, list) else [])[:max_results]:
-            c = item.get("content") or (item.get("memory") or {}).get("content") or item.get("text") or str(item)
-            s = item.get("source") or (item.get("metadata") or {}).get("source") or "openmemory"
-            if isinstance(c, dict):
-                c = c.get("text") or c.get("content") or json.dumps(c)
-            out.append({"content": (c or "")[:2000], "source": str(s)})
+        # Try common wrapper keys
+        items = (
+            data.get("memories")
+            or data.get("results")
+            or data.get("data")
+            or data.get("items")
+            or []
+        )
+        
+        if isinstance(items, list):
+            for item in items[:max_results]:
+                if isinstance(item, dict):
+                    mem = _extract_memory(item)
+                    if mem["content"]:
+                        out.append(mem)
+        
+        # Fallback: top-level content
         if not out and "content" in data:
-            out.append({"content": str(data["content"])[:2000], "source": "openmemory"})
-    if not out:
-        return None
-    return out[:max_results]
+            out.append({
+                "content": str(data["content"])[:2000],
+                "source": data.get("source", "openmemory"),
+                "relevance": data.get("salience", data.get("relevance", 0.5)),
+            })
+    
+    return out[:max_results] if out else None
 
 
 class MemorySourceAdapter(BaseSourceAdapter):
@@ -175,12 +314,20 @@ class MemorySourceAdapter(BaseSourceAdapter):
         self, query: str, max_results: int
     ) -> Optional[List[Dict[str, Any]]]:
         """
-        Attempt OpenMemory MCP protocol (search-memory).
-        Spawns openmemory-js MCP via stdio, calls search-memory, parses response.
-        Returns None if no MCP client is available or call fails (fallback to file).
+        Attempt OpenMemory MCP protocol via stdio client.
+        
+        Tries configured MCP providers (openmemory, mem0) in order:
+        1. openmemory: Local HSG memory (openmemory_query tool)
+        2. mem0: Cloud-based memory (search-memory tool)
+        
+        Returns None if no MCP client is available or all calls fail (fallback to file).
         """
         try:
-            return _run_mcp_search(query, max_results)
+            return _try_all_mcp_providers(
+                query=query,
+                max_results=max_results,
+                query_type=self._query_type,
+            )
         except Exception as e:
             logger.debug("OpenMemory MCP search failed: %s", e)
             return None
