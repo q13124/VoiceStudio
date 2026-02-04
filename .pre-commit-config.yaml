@@ -55,12 +55,24 @@ repos:
         pass_filenames: true
         stages: [pre-commit]
 
-  # Python linters (ruff)
+  # C# formatting (dotnet format)
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: Format C# Code
+        entry: dotnet format VoiceStudio.sln --verbosity quiet --no-restore
+        language: system
+        types: [csharp]
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # Python linters (ruff) - Updated to latest
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
+    rev: v0.4.0
     hooks:
       - id: ruff
         args: [--fix]
+      - id: ruff-format
         
   # Python formatter (black)
   - repo: https://github.com/psf/black

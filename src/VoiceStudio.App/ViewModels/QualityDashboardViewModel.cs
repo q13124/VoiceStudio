@@ -72,7 +72,7 @@ namespace VoiceStudio.App.ViewModels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get toast notification service using helper (reduces code duplication)
-      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetToastNotificationService());
+      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
       _errorService = ServiceProvider.TryGetErrorPresentationService();
       _logService = ServiceProvider.TryGetErrorLoggingService();
 

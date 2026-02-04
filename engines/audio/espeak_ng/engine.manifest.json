@@ -13,7 +13,9 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\espeak_ng",
     "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\espeak_ng\\voices"
   },
-  "supported_formats": ["wav"],
+  "supported_formats": [
+    "wav"
+  ],
   "capabilities": [
     "text_to_speech",
     "multilingual",
@@ -52,6 +54,33 @@
       "maximum": 99,
       "description": "Pitch (0-99)"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 1024,
+      "timeout_seconds": 120
+    }
   }
 }
-

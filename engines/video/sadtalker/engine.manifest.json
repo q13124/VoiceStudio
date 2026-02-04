@@ -19,7 +19,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\sadtalker",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\sadtalker\\checkpoints"
   },
-  "supported_formats": ["mp4", "avi", "mov"],
+  "supported_formats": [
+    "mp4",
+    "avi",
+    "mov"
+  ],
   "capabilities": [
     "talking_head",
     "lip_sync",
@@ -36,7 +40,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "face_enhance": {
@@ -54,9 +61,35 @@
     "size": {
       "type": "integer",
       "default": 512,
-      "enum": [256, 512],
+      "enum": [
+        256,
+        512
+      ],
       "description": "Output video resolution"
+    }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 600
     }
   }
 }
-

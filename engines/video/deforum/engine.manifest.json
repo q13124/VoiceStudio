@@ -18,7 +18,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\deforum",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\deforum\\checkpoints"
   },
-  "supported_formats": ["mp4", "gif", "webm"],
+  "supported_formats": [
+    "mp4",
+    "gif",
+    "webm"
+  ],
   "capabilities": [
     "keyframed_animation",
     "video_generation",
@@ -40,7 +44,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "num_frames": {
@@ -62,6 +69,29 @@
       "maximum": 1.0,
       "description": "Keyframe interpolation strength"
     }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 8192,
+      "ram_mb": 16384,
+      "timeout_seconds": 600
+    }
   }
 }
-

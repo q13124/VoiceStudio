@@ -13,7 +13,10 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\rhvoice",
     "voices": "%PROGRAMDATA%\\VoiceStudio\\models\\rhvoice\\voices"
   },
-  "supported_formats": ["wav", "mp3"],
+  "supported_formats": [
+    "wav",
+    "mp3"
+  ],
   "capabilities": [
     "text_to_speech",
     "multilingual",
@@ -42,6 +45,33 @@
       "default": "ru",
       "description": "Language code"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 2048,
+      "timeout_seconds": 120
+    }
   }
 }
-

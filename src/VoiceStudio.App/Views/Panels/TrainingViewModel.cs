@@ -198,13 +198,13 @@ namespace VoiceStudio.App.Views.Panels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get multi-select service
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = AppServices.TryGetMultiSelectService();
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       // Get services (may be null if not initialized)
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
       }
       catch
       {
@@ -215,7 +215,7 @@ namespace VoiceStudio.App.Views.Panels
       // Get undo/redo service (may be null if not initialized)
       try
       {
-        _undoRedoService = ServiceProvider.GetUndoRedoService();
+        _undoRedoService = AppServices.TryGetUndoRedoService();
       }
       catch
       {

@@ -126,11 +126,11 @@ namespace VoiceStudio.App.Views.Panels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get optional services using helper (reduces code duplication)
-      _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
-      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetToastNotificationService());
+      _undoRedoService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetUndoRedoService());
+      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
 
       // Get multi-select service
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = AppServices.TryGetMultiSelectService();
       _macroMultiSelectState = _multiSelectService.GetState($"{PanelId}_macros");
       _automationCurveMultiSelectState = _multiSelectService.GetState($"{PanelId}_curves");
 

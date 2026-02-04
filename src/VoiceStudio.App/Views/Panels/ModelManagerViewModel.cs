@@ -76,7 +76,7 @@ namespace VoiceStudio.App.Views.Panels
       // Get undo/redo service (may be null if not initialized)
       try
       {
-        _undoRedoService = ServiceProvider.GetUndoRedoService();
+        _undoRedoService = AppServices.TryGetUndoRedoService();
       }
       catch
       {

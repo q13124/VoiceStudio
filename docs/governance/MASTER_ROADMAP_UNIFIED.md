@@ -130,7 +130,7 @@ This is the **single source of truth** for VoiceStudio's development roadmap. Al
 
 | Feature | Description | Effort | Priority | Owner |
 |---------|-------------|--------|----------|-------|
-| Advanced panel backend integration | Wire backend APIs for 9 innovative panels (Text Speech Editor, Prosody, Spatial Audio, AI Mixing, etc.) | 36-72h | Medium | Role 3 |
+| Advanced panel backend integration | **COMPLETE.** All 9 innovative panels (TextSpeechEditor, Prosody, SpatialAudio, AIMixingMastering, EffectsMixer, etc.) have comprehensive backend integration. 210 methods in BackendClient, 184 in IBackendClient. | 36-72h | Medium | Role 3 |
 | UI automation framework | Playwright/WinAppDriver setup + tests | 16-24h | Medium | Role 3 |
 | Wizard e2e automation | Execute wizard_flow_proof.py with ≥3s speech reference | 1-2h | Medium | Role 3/5 |
 | OpenMemory MCP wiring | Complete stubbed `_try_openmemory_mcp_protocol()` in memory_adapter.py | 4-8h | Medium | Role 4 |
@@ -139,7 +139,32 @@ This is the **single source of truth** for VoiceStudio's development roadmap. Al
 | UI performance optimization | Virtualization, caching, profiling | 8-16h | Low | Role 3/4 |
 | UX refinements | Animations, tooltips | 8-16h | Low | Role 3 |
 
-### Phase 7: Tech Debt Remediation
+### Phase 7: Quality Infrastructure (NEW)
+
+**Status**: IN PROGRESS  
+**Entry Criteria**: All gates B-H GREEN ✓ (satisfied)  
+**Goal**: Encode lessons from Error Pattern Retrospective into architecture
+
+| Work Stream | Description | Effort | Owner | Status |
+|-------------|-------------|--------|-------|--------|
+| WS-1 | Error Visibility Layer (ErrorBoundary.cs, error_boundary.py) | 16-24h | Role 4 | Complete |
+| WS-2 | Python Path Standardization (_env_setup.py) | 8-16h | Role 4 | Complete |
+| WS-3 | Empty Catch Block Remediation (infrastructure) | 24-32h | Role 7 | Complete |
+| WS-4 | XAML Safety Protocol (lint_xaml.py, xaml_bisect.py) | 16-24h | Role 2 | Complete |
+| WS-5 | Configuration Matrix Testing (Debug+Release CI) | 8-16h | Role 2/5 | Complete |
+| WS-6 | Observability Infrastructure (correlation IDs) | 24-32h | Role 4 | Complete |
+| WS-7 | Contract Validation (OpenAPI, engine manifests) | 16-24h | Role 1/5 | Complete |
+| WS-8 | Verification Automation (run_verification.py, quick_verify.ps1) | 8-16h | Role 2 | Complete |
+
+**Total Effort**: 120-184 hours (15-23 person-days)
+
+**References**:
+- [Error Pattern Retrospective](../reports/post_mortem/ERROR_PATTERN_RETROSPECTIVE_2026-02-04.md)
+- [XAML Change Protocol](../developer/XAML_CHANGE_PROTOCOL.md)
+
+---
+
+### Phase 8: Tech Debt Remediation (formerly Phase 7)
 
 Per [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md):
 
@@ -152,7 +177,7 @@ Per [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md):
 | TD-005 | Wizard flow e2e automation | MEDIUM | Role 3/5 | Sprint 2 (TASK-0020) |
 | TD-007 | Warning count reduction (~4990) | LOW | Role 2/3 | Phase 6+ (optional) |
 
-### Phase 8: Architecture Gap Remediation
+### Phase 9: Architecture Gap Remediation (formerly Phase 8)
 
 Per [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md):
 
@@ -163,7 +188,7 @@ Per [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITE
 | TD-015 | Venv Families (12 families) | ChatGPT Part 4 | MEDIUM | Role 5 |
 | TD-016 | Engine Manifest Schema v2 | ChatGPT Part 4 | LOW | Role 5 |
 
-### Phase 9: Documentation Completeness
+### Phase 10: Documentation Completeness (formerly Phase 9)
 
 Per [FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md](../reports/verification/FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md):
 
@@ -193,7 +218,7 @@ Per [FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md](../reports/verification/FINAL
 
 ---
 
-## Future Phases (Phase 10+)
+## Future Phases (Phase 11+)
 
 ### Advanced Features (Phase 6+ Optional)
 
@@ -289,3 +314,4 @@ See [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md) for complete list. Summary:
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-01-29 | Initial creation — consolidates roadmap state post-Phase-5 | Overseer (Role 0) |
+| 2026-02-04 | Added Phase 7: Quality Infrastructure; renumbered subsequent phases | Phase 7 Plan Implementation |

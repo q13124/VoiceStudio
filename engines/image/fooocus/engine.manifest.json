@@ -16,7 +16,11 @@
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\fooocus\\models\\checkpoints",
     "loras": "%PROGRAMDATA%\\VoiceStudio\\models\\fooocus\\models\\loras"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "text_to_image",
     "image_to_image",
@@ -40,15 +44,42 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "performance": {
       "type": "string",
       "default": "quality",
-      "enum": ["speed", "quality", "extreme_speed", "extreme_quality"],
+      "enum": [
+        "speed",
+        "quality",
+        "extreme_speed",
+        "extreme_quality"
+      ],
       "description": "Performance preset"
+    }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 300
     }
   }
 }
-

@@ -18,7 +18,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\fomm",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\fomm\\checkpoints"
   },
-  "supported_formats": ["mp4", "avi", "mov"],
+  "supported_formats": [
+    "mp4",
+    "avi",
+    "mov"
+  ],
   "capabilities": [
     "motion_transfer",
     "avatar_animation",
@@ -35,7 +39,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "relative": {
@@ -48,6 +55,29 @@
       "default": true,
       "description": "Adapt movement scale to source image"
     }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 600
+    }
   }
 }
-

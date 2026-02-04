@@ -293,14 +293,14 @@ namespace VoiceStudio.App.Views.Panels
       CopyCorrelationIdCommand = new RelayCommand<string>(CopyCorrelationIdToClipboard);
 
       // Get multi-select service
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = AppServices.TryGetMultiSelectService();
       _logsMultiSelectState = _multiSelectService.GetState($"{PanelId}_logs");
       _errorLogsMultiSelectState = _multiSelectService.GetState($"{PanelId}_errorlogs");
 
       // Get toast notification service (may be null if not initialized)
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
       }
       catch
       {

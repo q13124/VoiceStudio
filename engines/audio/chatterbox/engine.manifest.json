@@ -20,9 +20,29 @@
     "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\chatterbox\\cache"
   },
   "supported_languages": [
-    "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl",
-    "cs", "ar", "zh-cn", "ja", "ko", "hi", "sv", "da", "no", "fi",
-    "el", "hu", "ro"
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "pl",
+    "tr",
+    "ru",
+    "nl",
+    "cs",
+    "ar",
+    "zh-cn",
+    "ja",
+    "ko",
+    "hi",
+    "sv",
+    "da",
+    "no",
+    "fi",
+    "el",
+    "hu",
+    "ro"
   ],
   "capabilities": [
     "voice_cloning",
@@ -47,7 +67,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -58,7 +81,17 @@
     "emotion": {
       "type": "string",
       "default": "neutral",
-      "enum": ["neutral", "happy", "sad", "angry", "excited", "calm", "fearful", "disgusted", "surprised"],
+      "enum": [
+        "neutral",
+        "happy",
+        "sad",
+        "angry",
+        "excited",
+        "calm",
+        "fearful",
+        "disgusted",
+        "surprised"
+      ],
       "description": "Emotion/style control for synthesis"
     }
   },
@@ -67,5 +100,33 @@
     "similarity_score": "high",
     "naturalness": "very_high",
     "zero_shot_capability": true
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 120
+    }
   }
 }

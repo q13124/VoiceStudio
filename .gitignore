@@ -18,7 +18,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .venv/
+.venvs/
 venv/
+venv_*/
 env/
 
 # Node / web tooling caches

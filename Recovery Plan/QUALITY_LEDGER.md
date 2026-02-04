@@ -1,9 +1,11 @@
 # Quality Ledger — Single Source of Truth
 
-Last updated: 2026-01-27  
+Last updated: 2026-02-04  
 Owner: [OVERSEER]
 
 *Proof-section backfill (2026-01-27): Added Summary + Proof run detail blocks for VS-0001, VS-0002, VS-0004–VS-0011, VS-0013–VS-0016 per TASK-0003. Evidence references finalization list, Gate B/C/D/E proofs, and existing artifacts; no proof invented.*
+
+*Professional Completion Plan (2026-02-04): Executed voicestudio_professional_completion plan. Completed Phase 1 (UI Smoke Testing), Phase 2 (E2E Testing), Phase 3 (Core View Completion), Phase 4 (Final Verification). All gates passing (B-H). Evidence collected to docs/release/evidence/v1.0.1.*
 
 This file is the canonical ledger for **every** bug, crash, build failure, missing feature, UX regression, rule violation, or architecture drift item.
 
@@ -85,7 +87,7 @@ Use exactly one:
 | VS-0033 | DONE  | S2 Major    | D    | Core Platform Engineer   | RUNTIME         | Ensure /api/voice/clone route registers at startup                            |
 | VS-0034 | DONE  | S2 Major    | E    | Engine Engineer          | ENGINE,AUDIO,RUNTIME | Upgrade-lane XTTS synthesis blocked by torchcodec load failure (cu128)     |
 | VS-0035 | DONE  | S0 Blocker  | B    | Build & Tooling Engineer | BUILD           | XAML compiler exits code 1 with no output (WinAppSDK 1.8)                     |
-| VS-0040 | FIXED_PENDING_PROOF | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
+| VS-0040 | DONE | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
 
 ---
 
@@ -1398,14 +1400,15 @@ Previous wrapper fixes (VS-0001 PowerShell delegation, VS-0005 XAML Page items) 
 
 ### VS-0040 — XAML compiler silent crash on TextElement.Foreground attached property
 
-**State:** FIXED_PENDING_PROOF  
+**State:** DONE  
 **Severity:** S0 Blocker  
 **Gate:** B  
 **Owner role:** Build & Tooling Engineer  
 **Reviewer role:** Overseer  
 **Categories:** BUILD  
 **Introduced:** Pre-2026-02-03 (pre-existing)  
-**Last verified:** 2026-02-04 (Windows 10.0.26200)
+**Last verified:** 2026-02-04 (Windows 10.0.26200)  
+**Closed:** 2026-02-04
 
 **Summary**
 
@@ -1450,6 +1453,12 @@ Further isolation identified TWO issues in VSQ.Button.NavToggle:
 
 - Controls.xaml isolated test: Exit code 0, output.json created
 - All 158 XAML pages require C# compilation to complete for Pass 2
+- **Final verification (2026-02-04):**
+  - Command: `dotnet build VoiceStudio.sln -c Debug -p:Platform=x64`
+  - XAML compiler exit code: 0
+  - Build result: `Build succeeded. 0 Error(s)`
+  - Build time: 33.80 seconds
+  - Output: `VoiceStudio.App.dll`, `VoiceStudio.App.Tests.dll`
 
 **Links**
 

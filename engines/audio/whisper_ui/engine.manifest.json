@@ -16,7 +16,13 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\whisper_ui",
     "models": "%PROGRAMDATA%\\VoiceStudio\\models\\whisper_ui\\models"
   },
-  "supported_formats": ["wav", "mp3", "m4a", "flac", "ogg"],
+  "supported_formats": [
+    "wav",
+    "mp3",
+    "m4a",
+    "flac",
+    "ogg"
+  ],
   "capabilities": [
     "speech_to_text",
     "transcription",
@@ -35,7 +41,15 @@
     "model": {
       "type": "string",
       "default": "base",
-      "enum": ["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"],
+      "enum": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large",
+        "large-v2",
+        "large-v3"
+      ],
       "description": "Whisper model size"
     },
     "language": {
@@ -46,7 +60,10 @@
     "device": {
       "type": "string",
       "default": "cpu",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "use_faster_whisper": {
@@ -54,6 +71,38 @@
       "default": true,
       "description": "Use faster-whisper for faster inference"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg",
+        "m4a"
+      ],
+      "sample_rates": [
+        8000,
+        16000,
+        22050,
+        44100,
+        48000
+      ],
+      "max_duration_seconds": 3600,
+      "min_duration_seconds": 0.1
+    },
+    "output": {
+      "format": "json",
+      "includes": [
+        "text",
+        "segments",
+        "timestamps"
+      ]
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 2048,
+      "timeout_seconds": 300
+    }
   }
 }
-

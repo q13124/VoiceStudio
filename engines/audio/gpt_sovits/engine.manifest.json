@@ -18,7 +18,10 @@
     "gpt_models": "%PROGRAMDATA%\\VoiceStudio\\models\\gpt_sovits\\gpt",
     "sovits_models": "%PROGRAMDATA%\\VoiceStudio\\models\\gpt_sovits\\sovits"
   },
-  "supported_formats": ["wav", "mp3"],
+  "supported_formats": [
+    "wav",
+    "mp3"
+  ],
   "capabilities": [
     "voice_conversion",
     "voice_cloning",
@@ -35,7 +38,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpt_model_path": {
@@ -48,6 +54,33 @@
       "default": "",
       "description": "Path to SoVITS model checkpoint"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 120
+    }
   }
 }
-

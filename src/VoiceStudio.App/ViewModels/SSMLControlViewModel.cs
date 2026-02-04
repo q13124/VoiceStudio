@@ -121,8 +121,8 @@ namespace VoiceStudio.App.ViewModels
       // Get services (may be null if not initialized)
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
-        _undoRedoService = ServiceProvider.GetUndoRedoService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
+        _undoRedoService = AppServices.TryGetUndoRedoService();
       }
       catch
       {

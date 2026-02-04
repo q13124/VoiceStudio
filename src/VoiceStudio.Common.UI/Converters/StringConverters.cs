@@ -20,7 +20,8 @@ public class StringToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -40,7 +41,8 @@ public class StringFormatConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -61,7 +63,8 @@ public class FirstLetterConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -88,6 +91,7 @@ public class InitialsConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }

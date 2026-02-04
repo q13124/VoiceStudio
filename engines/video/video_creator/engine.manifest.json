@@ -14,7 +14,12 @@
     "numpy": ">=1.21.0"
   },
   "model_paths": {},
-  "supported_formats": ["mp4", "avi", "mov", "gif"],
+  "supported_formats": [
+    "mp4",
+    "avi",
+    "mov",
+    "gif"
+  ],
   "capabilities": [
     "image_to_video",
     "audio_sync",
@@ -41,7 +46,12 @@
     "transition_type": {
       "type": "string",
       "default": "fade",
-      "enum": ["fade", "crossfade", "slide", "none"],
+      "enum": [
+        "fade",
+        "crossfade",
+        "slide",
+        "none"
+      ],
       "description": "Transition type between images"
     },
     "image_duration": {
@@ -49,6 +59,29 @@
       "default": 3.0,
       "description": "Duration each image is displayed (seconds)"
     }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 4096,
+      "timeout_seconds": 600
+    }
   }
 }
-

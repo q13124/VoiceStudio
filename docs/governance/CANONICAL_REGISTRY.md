@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-04 (Error Pattern Retrospective report added)
+> **Last Updated**: 2026-02-04 (Phase 8 ADRs completed, architecture docs consolidated)
 
 ---
 
@@ -38,6 +38,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
+| **Architecture (Comprehensive)** | `docs/developer/ARCHITECTURE.md` | 2026-02-04 | **CANONICAL** — Complete architecture reference (2400+ lines); supersedes all docs/design/architecture*.md files (archived to `docs/archive/architecture_consolidated/`) |
 | Architecture Index | `docs/architecture/README.md` | 2026-01-25 | Entry point; architecture content lives in README + ADRs. |
 | System Architecture (Part series) | `docs/architecture/Part*.md` | — | **DEFERRED** — 10-part series from ChatGPT spec; use `docs/architecture/README.md` + ADRs as canonical architecture source |
 | Decisions (ADRs) | `docs/architecture/decisions/ADR-*.md` | 2026-01-25 | Architecture Decision Records |

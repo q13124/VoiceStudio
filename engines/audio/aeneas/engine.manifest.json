@@ -14,7 +14,12 @@
     "numpy": ">=1.21.0"
   },
   "model_paths": {},
-  "supported_formats": ["wav", "mp3", "m4a", "flac"],
+  "supported_formats": [
+    "wav",
+    "mp3",
+    "m4a",
+    "flac"
+  ],
   "capabilities": [
     "audio_text_alignment",
     "subtitle_generation",
@@ -33,13 +38,22 @@
     "alignment_type": {
       "type": "string",
       "default": "auto",
-      "enum": ["auto", "forced", "sentence"],
+      "enum": [
+        "auto",
+        "forced",
+        "sentence"
+      ],
       "description": "Alignment type"
     },
     "output_format": {
       "type": "string",
       "default": "srt",
-      "enum": ["srt", "vtt", "json", "smil"],
+      "enum": [
+        "srt",
+        "vtt",
+        "json",
+        "smil"
+      ],
       "description": "Output subtitle format"
     },
     "language": {
@@ -47,6 +61,33 @@
       "default": "en",
       "description": "Language code for alignment"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 2048,
+      "timeout_seconds": 120
+    }
   }
 }
-

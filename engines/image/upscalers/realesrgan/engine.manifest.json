@@ -16,7 +16,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\realesrgan",
     "models": "%PROGRAMDATA%\\VoiceStudio\\models\\realesrgan\\models"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "image_upscaling",
     "face_enhancement",
@@ -33,21 +37,50 @@
     "model_name": {
       "type": "string",
       "default": "RealESRGAN_x4plus",
-      "enum": ["RealESRGAN_x4plus", "RealESRGAN_x4plus_anime", "RealESRNet_x4plus"],
+      "enum": [
+        "RealESRGAN_x4plus",
+        "RealESRGAN_x4plus_anime",
+        "RealESRNet_x4plus"
+      ],
       "description": "Real-ESRGAN model to use"
     },
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "scale": {
       "type": "integer",
       "default": 4,
-      "enum": [2, 4],
+      "enum": [
+        2,
+        4
+      ],
       "description": "Upscaling factor"
+    }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 2048,
+      "ram_mb": 4096,
+      "timeout_seconds": 300
     }
   }
 }
-

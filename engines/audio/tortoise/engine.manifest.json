@@ -41,7 +41,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -52,7 +55,13 @@
     "quality_preset": {
       "type": "string",
       "default": "high_quality",
-      "enum": ["ultra_fast", "fast", "standard", "high_quality", "ultra_quality"],
+      "enum": [
+        "ultra_fast",
+        "fast",
+        "standard",
+        "high_quality",
+        "ultra_quality"
+      ],
       "description": "Quality preset (higher quality = slower synthesis)"
     }
   },
@@ -67,6 +76,34 @@
       "standard": "good quality",
       "high_quality": "high quality (default)",
       "ultra_quality": "maximum quality, slow synthesis"
+    }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 6144,
+      "ram_mb": 16384,
+      "timeout_seconds": 120
     }
   }
 }

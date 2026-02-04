@@ -18,7 +18,11 @@
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\fastsd_cpu\\checkpoints",
     "onnx": "%PROGRAMDATA%\\VoiceStudio\\models\\fastsd_cpu\\onnx"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "text_to_image",
     "image_to_image",
@@ -42,7 +46,9 @@
     "device": {
       "type": "string",
       "default": "cpu",
-      "enum": ["cpu"],
+      "enum": [
+        "cpu"
+      ],
       "description": "Device (CPU only)"
     },
     "use_onnx": {
@@ -57,6 +63,25 @@
       "maximum": 16,
       "description": "Number of CPU threads to use"
     }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 8192,
+      "timeout_seconds": 300
+    }
   }
 }
-

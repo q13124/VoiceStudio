@@ -49,7 +49,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -66,6 +69,33 @@
       "type": "integer",
       "default": 128,
       "description": "Hop length for processing"
+    }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        44100,
+        48000
+      ],
+      "max_duration_seconds": 60
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 44100,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 2048,
+      "ram_mb": 4096,
+      "timeout_seconds": 180
     }
   }
 }

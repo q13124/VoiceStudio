@@ -30,6 +30,27 @@
     "vram_min_gb": 4,
     "ram_min_gb": 8
   },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac", "ogg"],
+      "sample_rates": [16000, 22050, 24000, 44100, 48000],
+      "max_duration_seconds": 30,
+      "min_duration_seconds": 1,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 24000,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "cpu_threads": 4,
+      "timeout_seconds": 120
+    }
+  },
   "entry_point": "app.core.engines.xtts_engine.XTTSEngine",
   "config_schema": {
     "model_name": {

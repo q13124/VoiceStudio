@@ -74,12 +74,12 @@ namespace VoiceStudio.App.ViewModels
         : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = AppServices.TryGetMultiSelectService();
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       // Get optional services using helper (reduces code duplication)
-      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetToastNotificationService());
-      _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
+      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
+      _undoRedoService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetUndoRedoService());
 
       LoadFoldersCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {

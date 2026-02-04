@@ -78,7 +78,7 @@ namespace VoiceStudio.App.ViewModels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get undo/redo service using helper (reduces code duplication)
-      _undoRedoService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetUndoRedoService());
+      _undoRedoService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetUndoRedoService());
 
       LoadSessionsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {

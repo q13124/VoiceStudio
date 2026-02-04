@@ -222,7 +222,7 @@ namespace VoiceStudio.App.Views.Panels
       // Get toast notification service (may be null if not initialized)
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
       }
       catch
       {

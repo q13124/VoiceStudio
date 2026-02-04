@@ -17,7 +17,11 @@
     "loras": "%PROGRAMDATA%\\VoiceStudio\\models\\automatic1111\\models\\Lora",
     "embeddings": "%PROGRAMDATA%\\VoiceStudio\\models\\automatic1111\\embeddings"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "text_to_image",
     "image_to_image",
@@ -50,7 +54,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "sampler": {
@@ -72,6 +79,25 @@
       "maximum": 30.0,
       "description": "Classifier-free guidance scale"
     }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 300
+    }
   }
 }
-

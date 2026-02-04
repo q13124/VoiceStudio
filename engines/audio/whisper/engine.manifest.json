@@ -18,11 +18,72 @@
     "download": "%PROGRAMDATA%\\VoiceStudio\\models\\whisper\\downloads"
   },
   "supported_languages": [
-    "auto", "en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh", "ar", "hi",
-    "nl", "pl", "tr", "sv", "no", "fi", "da", "cs", "hu", "ro", "vi", "id", "th",
-    "uk", "he", "fa", "ta", "ur", "bn", "te", "kn", "ml", "si", "my", "km", "lo",
-    "ka", "am", "sw", "af", "az", "mk", "be", "bs", "eu", "gl", "ha", "jv", "kk",
-    "ky", "lb", "mg", "ms", "ne", "ny", "ps", "so", "su", "tg", "uz", "yi", "yo", "zu"
+    "auto",
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "ru",
+    "ja",
+    "ko",
+    "zh",
+    "ar",
+    "hi",
+    "nl",
+    "pl",
+    "tr",
+    "sv",
+    "no",
+    "fi",
+    "da",
+    "cs",
+    "hu",
+    "ro",
+    "vi",
+    "id",
+    "th",
+    "uk",
+    "he",
+    "fa",
+    "ta",
+    "ur",
+    "bn",
+    "te",
+    "kn",
+    "ml",
+    "si",
+    "my",
+    "km",
+    "lo",
+    "ka",
+    "am",
+    "sw",
+    "af",
+    "az",
+    "mk",
+    "be",
+    "bs",
+    "eu",
+    "gl",
+    "ha",
+    "jv",
+    "kk",
+    "ky",
+    "lb",
+    "mg",
+    "ms",
+    "ne",
+    "ny",
+    "ps",
+    "so",
+    "su",
+    "tg",
+    "uz",
+    "yi",
+    "yo",
+    "zu"
   ],
   "capabilities": [
     "speech_to_text",
@@ -41,13 +102,24 @@
     "model_name": {
       "type": "string",
       "default": "base",
-      "enum": ["tiny", "base", "small", "medium", "large-v2", "large-v3", "large-v3-turbo"],
+      "enum": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large-v2",
+        "large-v3",
+        "large-v3-turbo"
+      ],
       "description": "Whisper model size (tiny=fastest, large-v3-turbo=best quality)"
     },
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -58,7 +130,13 @@
     "compute_type": {
       "type": "string",
       "default": "float16",
-      "enum": ["float16", "int8", "int8_float16", "int8_bfloat16", "float32"],
+      "enum": [
+        "float16",
+        "int8",
+        "int8_float16",
+        "int8_bfloat16",
+        "float32"
+      ],
       "description": "Compute type for faster-whisper (float16 for GPU, int8 for CPU)"
     }
   },
@@ -69,7 +147,9 @@
     "language_detection"
   ],
   "resources": {
-    "needs": ["cuda_optional"],
+    "needs": [
+      "cuda_optional"
+    ],
     "vram_gb": 2,
     "ram_gb": 4
   },
@@ -78,7 +158,9 @@
     "idle_timeout_seconds": 300,
     "startup_timeout_seconds": 30
   },
-  "preHooks": ["ensure_models"],
+  "preHooks": [
+    "ensure_models"
+  ],
   "postHooks": [],
   "log": {
     "stderr_to_file": true,
@@ -94,6 +176,38 @@
     ],
     "allowed_hosts": [],
     "allowed_ports": []
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg",
+        "m4a"
+      ],
+      "sample_rates": [
+        8000,
+        16000,
+        22050,
+        44100,
+        48000
+      ],
+      "max_duration_seconds": 3600,
+      "min_duration_seconds": 0.1
+    },
+    "output": {
+      "format": "json",
+      "includes": [
+        "text",
+        "segments",
+        "timestamps"
+      ]
+    },
+    "resources": {
+      "vram_mb": 2048,
+      "ram_mb": 4096,
+      "timeout_seconds": 300
+    }
   }
 }
-

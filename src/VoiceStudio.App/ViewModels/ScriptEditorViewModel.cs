@@ -72,7 +72,7 @@ namespace VoiceStudio.App.ViewModels
       // Get undo/redo service (may be null if not initialized)
       try
       {
-        _undoRedoService = ServiceProvider.GetUndoRedoService();
+        _undoRedoService = AppServices.TryGetUndoRedoService();
       }
       catch
       {
@@ -83,7 +83,7 @@ namespace VoiceStudio.App.ViewModels
       // Get toast notification service (may be null if not initialized)
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
       }
       catch
       {
@@ -92,7 +92,7 @@ namespace VoiceStudio.App.ViewModels
       }
 
       // Get multi-select service
-      _multiSelectService = ServiceProvider.GetMultiSelectService();
+      _multiSelectService = AppServices.TryGetMultiSelectService();
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       LoadScriptsCommand = new EnhancedAsyncRelayCommand(async (ct) =>

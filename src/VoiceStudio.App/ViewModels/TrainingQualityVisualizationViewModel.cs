@@ -71,7 +71,7 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        _toastNotificationService = ServiceProvider.GetToastNotificationService();
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
       }
       catch
       {

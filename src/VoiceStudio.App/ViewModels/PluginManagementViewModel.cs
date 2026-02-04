@@ -47,7 +47,7 @@ namespace VoiceStudio.App.ViewModels
     {
       try
       {
-        _pluginManager = ServiceProvider.GetPluginManager();
+        _pluginManager = AppServices.GetPluginManager();
       }
       catch
       {

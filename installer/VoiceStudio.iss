@@ -110,6 +110,9 @@ Root: HKCR; Subkey: "VoiceStudio.Profile\shell\open\command"; ValueType: string;
 ; Application Registry
 Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "DataPath"; ValueData: "{commonappdata}\VoiceStudio"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "ModelsPath"; ValueData: "{commonappdata}\VoiceStudio\models"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "CachePath"; ValueData: "{commonappdata}\VoiceStudio\cache"; Flags: uninsdeletekey
 
 [Run]
 ; Install Python Packages (if Python is installed)
@@ -117,6 +120,13 @@ Filename: "python"; Parameters: "-m pip install -r ""{app}\Backend\requirements.
 
 ; Create User Data Directories
 Filename: "powershell"; Parameters: "-Command ""New-Item -ItemType Directory -Force -Path $env:APPDATA\VoiceStudio"""; StatusMsg: "Creating user data directories..."; Flags: runhidden
+
+[Dirs]
+; Create data directories with appropriate permissions
+Name: "{commonappdata}\VoiceStudio"; Permissions: users-modify
+Name: "{commonappdata}\VoiceStudio\models"; Permissions: users-modify
+Name: "{commonappdata}\VoiceStudio\cache"; Permissions: users-modify
+Name: "{commonappdata}\VoiceStudio\logs"; Permissions: users-modify
 
 [Code]
 function IsPythonInstalled: Boolean;
@@ -130,6 +140,18 @@ begin
     Result := RegQueryStringValue(HKLM, 'SOFTWARE\Python\PythonCore\3.12\InstallPath', 'ExecutablePath', PythonPath);
 end;
 
+function IsDotNet8DesktopInstalled: Boolean;
+var
+  FindRec: TFindRec;
+  SearchPath: String;
+begin
+  // Check for .NET 8 Windows Desktop Runtime
+  SearchPath := ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App\8.*');
+  Result := FindFirst(SearchPath, FindRec);
+  if Result then
+    FindClose(FindRec);
+end;
+
 function InitializeSetup(): Boolean;
 begin
   Result := True;
@@ -139,6 +161,22 @@ begin
   begin
     MsgBox('VoiceStudio Quantum+ requires 64-bit Windows.', mbError, MB_OK);
     Result := False;
+    Exit;
+  end;
+
+  // Check .NET 8 Desktop Runtime
+  if not IsDotNet8DesktopInstalled then
+  begin
+    if MsgBox('VoiceStudio Quantum+ requires .NET 8 Desktop Runtime.'#13#10#13#10 +
+              'The runtime was not found on this system.'#13#10#13#10 +
+              'Would you like to download it from Microsoft?'#13#10#13#10 +
+              '(Click Yes to open the download page, or No to cancel installation)',
+              mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      ShellExec('open', 'https://dotnet.microsoft.com/en-us/download/dotnet/8.0', '', '', SW_SHOW, ewNoWait, Result);
+    end;
+    Result := False;
+    Exit;
   end;
 end;
 

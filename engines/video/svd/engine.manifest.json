@@ -17,7 +17,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\svd",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\svd\\checkpoints"
   },
-  "supported_formats": ["mp4", "gif", "webm"],
+  "supported_formats": [
+    "mp4",
+    "gif",
+    "webm"
+  ],
   "capabilities": [
     "image_to_video",
     "video_generation",
@@ -38,7 +42,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "num_frames": {
@@ -53,6 +60,29 @@
       "default": 7,
       "description": "Frames per second"
     }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 12288,
+      "ram_mb": 16384,
+      "timeout_seconds": 600
+    }
   }
 }
-

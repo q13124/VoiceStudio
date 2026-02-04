@@ -28,7 +28,8 @@ public class NumberFormatConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -56,7 +57,8 @@ public class CountToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -86,7 +88,8 @@ public class SubtractConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -119,6 +122,7 @@ public class SizeConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }

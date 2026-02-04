@@ -63,7 +63,7 @@ namespace VoiceStudio.App.ViewModels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get services using helper (reduces code duplication)
-      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => ServiceProvider.GetToastNotificationService());
+      _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
 
       Engines = new ObservableCollection<string>();
       GeneratedVideos = new ObservableCollection<GeneratedVideo>();

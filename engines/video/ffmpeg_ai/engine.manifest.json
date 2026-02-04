@@ -14,7 +14,17 @@
   "model_paths": {
     "ai_models": "%PROGRAMDATA%\\VoiceStudio\\models\\ffmpeg_ai"
   },
-  "supported_formats": ["mp4", "avi", "mov", "mkv", "webm", "flv", "wav", "mp3", "aac"],
+  "supported_formats": [
+    "mp4",
+    "avi",
+    "mov",
+    "mkv",
+    "webm",
+    "flv",
+    "wav",
+    "mp3",
+    "aac"
+  ],
   "capabilities": [
     "transcoding",
     "muxing",
@@ -47,15 +57,52 @@
     "ai_model": {
       "type": "string",
       "default": "realesrgan",
-      "enum": ["realesrgan", "waifu2x", "esrgan"],
+      "enum": [
+        "realesrgan",
+        "waifu2x",
+        "esrgan"
+      ],
       "description": "AI upscaling model"
     },
     "preset": {
       "type": "string",
       "default": "medium",
-      "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"],
+      "enum": [
+        "ultrafast",
+        "superfast",
+        "veryfast",
+        "faster",
+        "fast",
+        "medium",
+        "slow",
+        "slower",
+        "veryslow"
+      ],
       "description": "Encoding preset"
+    }
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 2048,
+      "timeout_seconds": 600
     }
   }
 }
-

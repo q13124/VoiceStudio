@@ -18,7 +18,8 @@ public class NullToBooleanConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }
 
@@ -37,6 +38,7 @@ public class NullToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter - return unset value
+        return DependencyProperty.UnsetValue;
     }
 }

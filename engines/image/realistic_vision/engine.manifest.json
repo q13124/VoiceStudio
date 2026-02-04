@@ -16,7 +16,11 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\realistic_vision",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\realistic_vision\\checkpoints"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "text_to_image",
     "image_to_image",
@@ -39,7 +43,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "vae": {
@@ -47,6 +54,25 @@
       "default": "vae-ft-mse-840000-ema-pruned",
       "description": "VAE model to use"
     }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 300
+    }
   }
 }
-

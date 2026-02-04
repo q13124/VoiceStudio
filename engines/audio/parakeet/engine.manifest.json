@@ -16,7 +16,10 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\parakeet",
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\parakeet\\checkpoints"
   },
-  "supported_formats": ["wav", "mp3"],
+  "supported_formats": [
+    "wav",
+    "mp3"
+  ],
   "capabilities": [
     "text_to_speech",
     "fast_synthesis",
@@ -33,13 +36,20 @@
     "device": {
       "type": "string",
       "default": "cpu",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "model": {
       "type": "string",
       "default": "fastspeech2",
-      "enum": ["fastspeech2", "tacotron2", "transformer_tts"],
+      "enum": [
+        "fastspeech2",
+        "tacotron2",
+        "transformer_tts"
+      ],
       "description": "Parakeet model type"
     },
     "language": {
@@ -47,6 +57,33 @@
       "default": "en",
       "description": "Language code"
     }
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
+      "max_duration_seconds": 30,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 4096,
+      "timeout_seconds": 120
+    }
   }
 }
-

@@ -17,7 +17,11 @@
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\checkpoints",
     "refiner": "%PROGRAMDATA%\\VoiceStudio\\models\\sdxl\\refiner"
   },
-  "supported_formats": ["png", "jpg", "webp"],
+  "supported_formats": [
+    "png",
+    "jpg",
+    "webp"
+  ],
   "capabilities": [
     "text_to_image",
     "image_to_image",
@@ -46,7 +50,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "use_refiner": {
@@ -57,9 +64,38 @@
     "resolution": {
       "type": "string",
       "default": "1024x1024",
-      "enum": ["1024x1024", "1152x896", "896x1152", "1216x832", "832x1216", "1344x768", "768x1344", "1536x640", "640x1536"],
+      "enum": [
+        "1024x1024",
+        "1152x896",
+        "896x1152",
+        "1216x832",
+        "832x1216",
+        "1344x768",
+        "768x1344",
+        "1536x640",
+        "640x1536"
+      ],
       "description": "Output resolution"
+    }
+  },
+  "contract": {
+    "input": {
+      "image_formats": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "max_resolution": "2048x2048",
+      "prompt_max_chars": 2000
+    },
+    "output": {
+      "image_format": "png",
+      "default_resolution": "512x512"
+    },
+    "resources": {
+      "vram_mb": 8192,
+      "ram_mb": 16384,
+      "timeout_seconds": 300
     }
   }
 }
-

@@ -1,0 +1,54 @@
+{
+  "version": "1.0.1",
+  "collected_at": "2026-02-04T00:00:41.644270",
+  "build": {
+    "build_success": false,
+    "test_success": false,
+    "artifacts": [
+      "build_logs\\backend-uvicorn.err.log",
+      "build_logs\\backend-uvicorn.gpu.err.log",
+      "build_logs\\backend-uvicorn.gpu.out.log",
+      "build_logs\\backend-uvicorn.out.log",
+      "build_logs\\backend_uvicorn_stderr.log",
+      "build_logs\\backend_uvicorn_stdout.log",
+      "build_logs\\build_20251223_203811.log",
+      "build_logs\\dump-compile-items.log",
+      "build_logs\\engine-deps-install-20260114-194442-18648.log",
+      "build_logs\\engine-deps-install-20260114-195053-17344.log",
+      "build_logs\\engine-deps-install-20260114-195240-18156.log",
+      "build_logs\\engine-deps-install-20260114-195335-20536.log",
+      "build_logs\\engine-deps-install-20260114-195501-6732.log",
+      "build_logs\\engine-deps-install-20260114-200541-21832.log",
+      "build_logs\\engine-deps-install-20260114-200711-7732.log",
+      "build_logs\\engine-deps-install-20260114-201025-6304.log",
+      "build_logs\\engine-deps-install-20260115-213116-32948.log",
+      "build_logs\\engine-deps-install.log",
+      "build_logs\\engine-deps-xtts-clean_verify.log",
+      "build_logs\\engine-deps-xtts-task.log",
+      "build_logs\\engine-preflight-20260116-224224-13152.log",
+      "build_logs\\engine-preflight-20260116-224255-6944.log",
+      "build_logs\\restore_20251223_203811.log",
+      "build_logs\\xaml_pass2_analyzerview.log"
+    ]
+  },
+  "tests": {
+    "csharp_tests": {
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "success": false
+    },
+    "python_tests": {
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "success": false
+    },
+    "artifacts": []
+  },
+  "quality_ledger": {
+    "open_p0": 0,
+    "open_p1": 0,
+    "total_issues": 0
+  }
+}

@@ -18,7 +18,11 @@
     "checkpoints": "%PROGRAMDATA%\\VoiceStudio\\models\\deepfacelab\\checkpoints",
     "workspace": "%PROGRAMDATA%\\VoiceStudio\\models\\deepfacelab\\workspace"
   },
-  "supported_formats": ["mp4", "avi", "mov"],
+  "supported_formats": [
+    "mp4",
+    "avi",
+    "mov"
+  ],
   "capabilities": [
     "face_swap",
     "face_replacement",
@@ -35,19 +39,31 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "model_type": {
       "type": "string",
       "default": "SAEHD",
-      "enum": ["SAEHD", "Quick96", "H128", "H64"],
+      "enum": [
+        "SAEHD",
+        "Quick96",
+        "H128",
+        "H64"
+      ],
       "description": "DeepFaceLab model type"
     },
     "resolution": {
       "type": "integer",
       "default": 256,
-      "enum": [128, 256, 512],
+      "enum": [
+        128,
+        256,
+        512
+      ],
       "description": "Face resolution"
     }
   },
@@ -55,6 +71,29 @@
     "consent_required": true,
     "watermark_default": true,
     "audit_log": true
+  },
+  "contract": {
+    "input": {
+      "video_formats": [
+        "mp4",
+        "webm",
+        "avi"
+      ],
+      "audio_formats": [
+        "wav",
+        "mp3"
+      ],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "video_format": "mp4",
+      "codec": "h264",
+      "default_fps": 24
+    },
+    "resources": {
+      "vram_mb": 6144,
+      "ram_mb": 16384,
+      "timeout_seconds": 600
+    }
   }
 }
-
