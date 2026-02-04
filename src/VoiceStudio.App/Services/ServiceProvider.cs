@@ -1,6 +1,7 @@
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.UseCases;
+using VoiceStudio.App.ViewModels;
 
 namespace VoiceStudio.App.Services
 {
@@ -125,5 +126,6 @@ namespace VoiceStudio.App.Services
     public static IErrorCoordinator? TryGetErrorCoordinator() => AppServices.TryGetErrorCoordinator();
     public static IViewModelFactory GetViewModelFactory() => AppServices.GetViewModelFactory();
     public static IViewModelFactory? TryGetViewModelFactory() => AppServices.TryGetViewModelFactory();
+    public static IViewModelContext GetViewModelContext() => AppServices.GetViewModelContext();
   }
 }

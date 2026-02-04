@@ -36,6 +36,7 @@ namespace VoiceStudio.App.Tests.Integration
 
             // Act
             // await viewModel.LoadDataAsync();
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsNotNull(viewModel.Data);
@@ -50,6 +51,7 @@ namespace VoiceStudio.App.Tests.Integration
 
             // Act
             // var isConnected = await client.ConnectAsync();
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsTrue(isConnected);
@@ -66,6 +68,7 @@ namespace VoiceStudio.App.Tests.Integration
             // Act
             // await panel.InitializeAsync();
             // await viewModel.LoadDataAsync();
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsTrue(panel.IsInitialized);

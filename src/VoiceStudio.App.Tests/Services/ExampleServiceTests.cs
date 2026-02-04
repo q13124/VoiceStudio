@@ -41,6 +41,7 @@ namespace VoiceStudio.App.Tests.Services
 
             // Act
             // var result = await service.SomeMethodAsync();
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsNotNull(result);
@@ -65,6 +66,7 @@ namespace VoiceStudio.App.Tests.Services
 
             // Act
             // await service.AsyncOperationAsync();
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsTrue(service.OperationCompleted);

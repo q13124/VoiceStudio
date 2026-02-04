@@ -56,6 +56,7 @@ namespace VoiceStudio.App.Tests.UI
       // Assert
       // Verify command can be executed (when conditions are met)
       // Note: Actual execution would require proper setup (profile name, etc.)
+      await Task.CompletedTask;
     }
 
     [TestMethod]
@@ -79,6 +80,7 @@ namespace VoiceStudio.App.Tests.UI
 
       // Assert
       // Verify command structure is correct
+      await Task.CompletedTask;
     }
 
     [TestMethod]
@@ -100,6 +102,7 @@ namespace VoiceStudio.App.Tests.UI
 
       // Assert
       // This is a placeholder - full implementation would test actual effect application
+      await Task.CompletedTask;
     }
 
     [TestMethod]

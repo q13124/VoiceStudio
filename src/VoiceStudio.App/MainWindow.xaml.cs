@@ -1376,8 +1376,9 @@ namespace VoiceStudio.App
     {
       try
       {
-        // Create UpdateViewModel with the update service
-        var updateViewModel = new ViewModels.UpdateViewModel(_updateService);
+        // Create UpdateViewModel with the context and update service
+        var context = ServiceProvider.GetViewModelContext();
+        var updateViewModel = new ViewModels.UpdateViewModel(context, _updateService);
 
         // Create and show update dialog
         var updateDialog = new Views.UpdateDialog(updateViewModel);

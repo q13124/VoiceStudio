@@ -92,8 +92,7 @@ namespace VoiceStudio.App.Tests.Services
     {
       // Arrange
       var message = "An error occurred";
-      var actionCalled = false;
-      Action action = () => actionCalled = true;
+      Action action = () => { /* action callback */ };
 
       // Act
       _service!.ShowError(message, null, action);

@@ -13,6 +13,10 @@
     <Nullable>enable</Nullable>
     <UseWinUI>true</UseWinUI>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- Tell platform compatibility analyzer about minimum supported Windows version -->
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <!-- Suppress platform compatibility warnings - this app is Windows-only (CA1416 is false positive for Windows-only app) -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
     <!-- Ensure WinRT.Runtime reference assemblies are available to XAML compiler. -->
     <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
     <Platform>x64</Platform>

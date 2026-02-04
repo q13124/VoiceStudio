@@ -85,6 +85,7 @@ Use exactly one:
 | VS-0033 | DONE  | S2 Major    | D    | Core Platform Engineer   | RUNTIME         | Ensure /api/voice/clone route registers at startup                            |
 | VS-0034 | DONE  | S2 Major    | E    | Engine Engineer          | ENGINE,AUDIO,RUNTIME | Upgrade-lane XTTS synthesis blocked by torchcodec load failure (cu128)     |
 | VS-0035 | DONE  | S0 Blocker  | B    | Build & Tooling Engineer | BUILD           | XAML compiler exits code 1 with no output (WinAppSDK 1.8)                     |
+| VS-0040 | FIXED_PENDING_PROOF | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
 
 ---
 
@@ -1392,5 +1393,68 @@ Previous wrapper fixes (VS-0001 PowerShell delegation, VS-0005 XAML Page items) 
 - Related commits:
 - Related entries:
 - ADRs:
+
+---
+
+### VS-0040 — XAML compiler silent crash on TextElement.Foreground attached property
+
+**State:** FIXED_PENDING_PROOF  
+**Severity:** S0 Blocker  
+**Gate:** B  
+**Owner role:** Build & Tooling Engineer  
+**Reviewer role:** Overseer  
+**Categories:** BUILD  
+**Introduced:** Pre-2026-02-03 (pre-existing)  
+**Last verified:** 2026-02-04 (Windows 10.0.26200)
+
+**Summary**
+
+- WinAppSDK 1.8 XAML compiler (`XamlCompiler.exe`) crashes silently (exit code 1, no output) when processing `Controls.xaml`.
+- Root cause: The `VSQ.Button.NavToggle` style uses `TextElement.Foreground` attached property syntax on a ContentPresenter.
+- The compiler cannot handle this attached property syntax and exits with code 1, no output.json or error message.
+- Different from VS-0035 (wrapper syntax fix); this is a content-related compiler crash.
+
+**Environment**
+
+- OS: Windows 10.0.26200  
+- .NET SDK: 8.0.417  
+- WinAppSDK: 1.8.251106002 (project), WinUI tools 1.8.251105000 (cached)
+- Repo path: `E:\VoiceStudio`
+
+**Root Cause Analysis (Debug Agent investigation 2026-02-03/04)**
+
+Binary search isolated the issue to `src\VoiceStudio.App\Resources\Styles\Controls.xaml`:
+- Style 1-7: OK
+- Style 8 (`VSQ.Button.NavToggle`): FAIL
+
+Further isolation identified TWO issues in VSQ.Button.NavToggle:
+1. Line 84: `TextElement.Foreground="{TemplateBinding Foreground}"` on ContentPresenter
+2. Lines 135-138: `ObjectAnimationUsingKeyFrames` targeting `(TextElement.Foreground)`
+
+**Fix Applied (2026-02-04)**
+
+1. Changed line 84 from:
+   `TextElement.Foreground="{TemplateBinding Foreground}"`
+   to:
+   `Foreground="{TemplateBinding Foreground}"`
+
+2. Removed the `(TextElement.Foreground)` animation (lines 135-138), replaced with comment:
+   `<!-- VS-0040: Removed (TextElement.Foreground) animation - causes WinAppSDK 1.8 XAML compiler crash -->`
+
+**Verification**
+
+- XAML Pass 1 now succeeds (exit code 0, output.json generated)
+- Full build blocked by unrelated C# interface implementation errors (separate issue)
+
+**Proof run**
+
+- Controls.xaml isolated test: Exit code 0, output.json created
+- All 158 XAML pages require C# compilation to complete for Pass 2
+
+**Links**
+
+- Related: VS-0001, VS-0005, VS-0035 (Gate B XAML chain)
+- Investigation log: Debug Agent session 2026-02-03/04
+- Files modified: `src/VoiceStudio.App/Resources/Styles/Controls.xaml`
 
 ---

@@ -57,6 +57,7 @@ namespace VoiceStudio.App.Tests.UI
       Assert.IsNotNull(synthesisViewModel, "VoiceSynthesisViewModel should exist");
       Assert.IsNotNull(profilesViewModel.CreateProfileCommand, "CreateProfile command should exist");
       Assert.IsNotNull(synthesisViewModel.SynthesizeCommand, "Synthesize command should exist");
+      await Task.CompletedTask;
     }
 
     [TestMethod]
@@ -118,6 +119,7 @@ namespace VoiceStudio.App.Tests.UI
       Assert.IsNotNull(profilesViewModel, "ProfilesViewModel creation should succeed");
       Assert.IsNotNull(synthesisViewModel, "VoiceSynthesisViewModel creation should succeed");
       Assert.IsNotNull(timelineViewModel, "TimelineViewModel creation should succeed");
+      await Task.CompletedTask;
     }
 
     [TestMethod]

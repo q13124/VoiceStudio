@@ -58,6 +58,7 @@ namespace VoiceStudio.App.Tests.ViewModels
 
             // Act
             // await viewModel.SomeCommand.ExecuteAsync(null);
+            await Task.CompletedTask; // Placeholder until implementation
 
             // Assert
             // Assert.IsTrue(viewModel.CommandExecuted);

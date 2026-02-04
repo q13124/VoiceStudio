@@ -91,6 +91,7 @@ namespace VoiceStudio.App.Tests.ViewModels
             // Verify IsLoading state changed appropriately
             // Note: This is a placeholder test structure
             Assert.IsNotNull(_viewModel, "ViewModel should exist");
+            await Task.CompletedTask;
         }
 
         [TestMethod]

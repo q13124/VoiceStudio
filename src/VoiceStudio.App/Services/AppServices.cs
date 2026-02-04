@@ -90,6 +90,15 @@ namespace VoiceStudio.App.Services
             // ISecretsService: use available implementation
             services.AddSingleton<ISecretsService, DevVaultSecretsService>();
 
+            // Module loader for UI modules
+            services.AddSingleton<ModuleLoader>();
+
+            // Error coordination service
+            services.AddSingleton<IErrorCoordinator, ErrorCoordinator>();
+
+            // ViewModel factory (needs service provider, so use factory registration)
+            services.AddSingleton<IViewModelFactory>(sp => new ViewModelFactory(sp));
+
             _provider = services.BuildServiceProvider();
         }
 
@@ -155,6 +164,12 @@ namespace VoiceStudio.App.Services
         public static IProfilesUseCase? TryGetProfilesUseCase() => GetService<IProfilesUseCase>();
         public static IProjectRepository GetProjectRepository() => GetRequiredService<IProjectRepository>();
         public static IProjectRepository? TryGetProjectRepository() => GetService<IProjectRepository>();
+        public static ModuleLoader GetModuleLoader() => GetRequiredService<ModuleLoader>();
+        public static ModuleLoader? TryGetModuleLoader() => GetService<ModuleLoader>();
+        public static IErrorCoordinator GetErrorCoordinator() => GetRequiredService<IErrorCoordinator>();
+        public static IErrorCoordinator? TryGetErrorCoordinator() => GetService<IErrorCoordinator>();
+        public static IViewModelFactory GetViewModelFactory() => GetRequiredService<IViewModelFactory>();
+        public static IViewModelFactory? TryGetViewModelFactory() => GetService<IViewModelFactory>();
     }
 
     /// <summary>
@@ -167,6 +182,7 @@ namespace VoiceStudio.App.Services
         public void TrackException(Exception exception, IDictionary<string, string>? properties = null) { }
         public IDisposable TrackOperation(string operationName) => new TelemetryOperationStub();
         public void Flush() { }
+        public void ApplyDiagnosticsSettings(object settings) { }
     }
 
     internal sealed class TelemetryOperationStub : IDisposable
