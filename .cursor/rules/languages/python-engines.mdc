@@ -1,0 +1,41 @@
+---
+description: "Engine layer guidance for VoiceStudio Python runtime."
+globs: ["app/core/**/*.py"]
+alwaysApply: false
+---
+# Engine layer guidance
+
+## Engine contracts
+
+- Implement the engine protocol from `app/core/engines/base.py`.
+- Keep engine behavior aligned with manifests in `engines/*.json`.
+
+## Integration discipline
+
+- Prefer adapters over invasive changes to core protocols.
+- Treat engine isolation as a first-class constraint.
+
+## Runtime orchestration
+
+- Prefer `app/core/runtime/runtime_engine_enhanced.py` as the canonical runtime.
+- Keep engine execution isolated and deterministic.
+
+## Audio processing
+
+- Validate input file paths and formats before processing.
+- Write outputs to explicit paths; return metadata for downstream use.
+
+## Dependency handling
+
+- Treat optional DSP/ML deps as optional; fail gracefully with clear messages.
+- Avoid importing heavy libraries at module import time when possible.
+
+## Error handling
+
+- **No error suppression** — no `noqa`, `pylint: disable`, `# type: ignore`, or bare `except: pass`.
+- Handle errors explicitly; log and re-raise or return error state.
+- See `no-suppression.mdc` for full policy.
+
+## Proof requirements
+
+- Health check passes or one E2E engine path is exercised.

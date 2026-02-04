@@ -1,0 +1,32 @@
+---
+description: "Code review checklist for VoiceStudio changes."
+alwaysApply: false
+---
+# Code review checklist
+
+## Correctness
+- Behavior matches requirements and edge cases are handled.
+- Error handling is explicit and safe.
+- **No error suppression** — no `#pragma`, `noqa`, `SuppressMessage`, empty catch (see `no-suppression.mdc`).
+
+## Security
+- No secrets or tokens are introduced.
+- Input validation and safe defaults are in place.
+
+## Performance
+- Hot paths avoid allocations, locks, and blocking calls.
+- Caching and batching changes are validated for regressions.
+
+## Observability
+- Logs and metrics include actionable context.
+- Failures are detectable with clear signals.
+
+## Maintainability
+- Changes are localized and readable.
+- Naming is consistent with surrounding code.
+
+## Rollback
+- Reversibility and migration/flag strategy are documented.
+
+## Tests
+- New or changed behavior has test coverage.

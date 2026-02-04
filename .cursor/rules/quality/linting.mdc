@@ -1,0 +1,15 @@
+---
+description: "Formatting and linting guidance."
+alwaysApply: false
+---
+# Formatting and linting
+
+## Formatting
+- Follow `.editorconfig` for indentation and line endings.
+- Keep changes consistent with surrounding style.
+
+## Linting
+- Use available linters or IDE diagnostics when present.
+- Fix new warnings introduced by the change.
+- **Never suppress errors or warnings** — see `no-suppression.mdc` for prohibited patterns.
+- All linter issues must be resolved, not hidden.

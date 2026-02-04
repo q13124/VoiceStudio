@@ -1,0 +1,47 @@
+---
+description: "C# and WinUI 3 guidance for VoiceStudio frontend."
+globs: ["src/**/*.cs", "src/**/*.xaml"]
+alwaysApply: false
+---
+# C# and WinUI guidance
+
+## MVVM conventions
+
+- Keep UI logic in ViewModels; keep code-behind minimal.
+- Prefer `ObservableObject` and `RelayCommand` from CommunityToolkit.Mvvm.
+- Use DI for services; avoid static service access in ViewModels.
+
+## Panels and Views
+
+- Panels follow the `IPanelView` contract (see `src/VoiceStudio.Core/Panels/IPanelView.cs`).
+- New panels should include both `Views/Panels/` and `ViewModels/` entries.
+
+## UI invariants (non-negotiable)
+
+- Preserve PanelHost usage and panel lattice layout.
+- Keep View and ViewModel files separate (no merges).
+- Use VSQ.* DesignTokens for all colors, typography, and spacing.
+
+## UI and XAML
+
+- Prefer bindings and commands over event handlers.
+- Use VSQ.* design tokens where applicable.
+- Keep XAML layouts simple and testable.
+- Follow `docs/design/UI_IMPLEMENTATION_SPEC.md` for layout and panel requirements.
+
+## Performance
+
+- Virtualize long lists and avoid UI thread blocking.
+- Show loading states for async work.
+
+## Async and error handling
+
+- Use async/await for I/O and backend calls.
+- Throw specific exceptions with meaningful messages; log failures.
+- **No error suppression** — no `#pragma warning disable`, `SuppressMessage`, or empty catch blocks.
+- See `no-suppression.mdc` for full policy.
+
+## Proof requirements
+
+- Build succeeds with XAML compilation.
+- Smoke launch the affected UI area.

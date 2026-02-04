@@ -1,0 +1,35 @@
+---
+description: "Python FastAPI guidance for VoiceStudio backend."
+globs: ["backend/**/*.py"]
+alwaysApply: false
+---
+# FastAPI backend guidance
+
+## Structure
+- Keep route handlers in `backend/api/routes/`.
+- Keep business logic in `backend/services/`.
+- Define Pydantic models in `backend/api/models*.py`.
+
+## API conventions
+- Validate inputs with Pydantic models and types.
+- Use explicit response models where possible.
+- Return clear HTTP errors with appropriate status codes.
+
+## Dependency discipline
+- Do not upgrade dependencies casually; document the reason.
+- Keep dependency pins aligned with compatibility snapshots.
+
+## Async and performance
+- Use async for I/O-bound work; avoid blocking calls in async routes.
+- Prefer BackgroundTasks for long-running work.
+- Keep route handlers thin and delegate to services.
+
+## Error handling
+- Catch and rethrow as `HTTPException` with safe messages.
+- Log internal details without leaking secrets.
+- **No error suppression** — no `noqa`, `pylint: disable`, `# type: ignore`, or bare `except: pass`.
+- See `no-suppression.mdc` for full policy.
+
+## Proof requirements
+- Run relevant unit or integration tests for touched routes.
+- Provide an API smoke step for modified endpoints.

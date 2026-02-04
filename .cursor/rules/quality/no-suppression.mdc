@@ -1,0 +1,207 @@
+---
+description: "Prohibits error suppression - all errors must be fixed, never hidden."
+alwaysApply: true
+---
+
+# No Error Suppression Policy
+
+## Core Principle
+
+**Errors are NEVER suppressed. Errors are ALWAYS fixed.**
+
+This is a non-negotiable project standard. Suppressing errors hides problems, creates technical debt, and leads to production failures.
+
+## Prohibited Patterns
+
+### C# / .NET
+
+```csharp
+// ❌ PROHIBITED - Pragma warning disable
+#pragma warning disable CS8618
+#pragma warning disable nullable
+
+// ❌ PROHIBITED - SuppressMessage attribute
+[SuppressMessage("Style", "IDE0044")]
+[SuppressMessage("Design", "CA1031")]
+
+// ❌ PROHIBITED - NoWarn in project files
+<NoWarn>CS8618;CS0168</NoWarn>
+
+// ❌ PROHIBITED - Empty catch blocks
+try { ... } catch { }
+try { ... } catch (Exception) { }
+
+// ❌ PROHIBITED - Catching and ignoring
+catch (Exception ex) { _ = ex; }
+```
+
+### Python
+
+```python
+# ❌ PROHIBITED - noqa comments
+import something  # noqa
+x = bad_code  # noqa: E501
+# type: ignore
+
+# ❌ PROHIBITED - pylint disable
+# pylint: disable=all
+# pylint: disable=missing-docstring
+
+# ❌ PROHIBITED - Bare except
+try:
+    ...
+except:
+    pass
+
+# ❌ PROHIBITED - Silent exception swallowing
+except Exception:
+    pass
+```
+
+### XAML
+
+```xml
+<!-- ❌ PROHIBITED - Ignoring binding errors -->
+<!-- ❌ PROHIBITED - FallbackValue to hide missing bindings -->
+<TextBlock Text="{Binding MissingProperty, FallbackValue=''}" />
+```
+
+### Build Configuration
+
+```xml
+<!-- ❌ PROHIBITED in .csproj -->
+<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+<WarningsNotAsErrors>...</WarningsNotAsErrors>
+<NoWarn>...</NoWarn>
+
+<!-- ❌ PROHIBITED - Disabling analyzers -->
+<RunAnalyzers>false</RunAnalyzers>
+```
+
+### Linter Configuration
+
+```yaml
+# ❌ PROHIBITED in .pylintrc, pyproject.toml, etc.
+disable=...
+
+# ❌ PROHIBITED in .editorconfig
+dotnet_diagnostic.*.severity = none
+```
+
+## Required Behavior
+
+### When an Error Occurs
+
+1. **STOP** — Do not proceed until the error is understood
+2. **DIAGNOSE** — Find the root cause
+3. **FIX** — Correct the underlying issue
+4. **VERIFY** — Confirm the fix resolves the error
+5. **DOCUMENT** — Note what was wrong and how it was fixed
+
+### Acceptable Alternatives to Suppression
+
+| Situation | Correct Response |
+|-----------|------------------|
+| Warning about unused variable | Remove the variable or use it |
+| Nullable reference warning | Add null checks or use null-forgiving only with `// SAFETY:` comment |
+| Deprecated API warning | Migrate to the new API |
+| Style warning | Follow the style guide |
+| Security warning | Fix the security issue |
+| Pre-existing error in codebase | Log in Quality Ledger, fix when touching that code |
+
+### Exception Handling
+
+```csharp
+// ✅ CORRECT - Specific exception, logged, handled
+try { ... }
+catch (FileNotFoundException ex)
+{
+    _logger.LogWarning(ex, "Config file not found, using defaults");
+    return DefaultConfig;
+}
+
+// ✅ CORRECT - Re-throw after logging
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Unexpected error during processing");
+    throw;
+}
+```
+
+```python
+# ✅ CORRECT - Specific exception, logged
+try:
+    ...
+except FileNotFoundError as e:
+    logger.warning(f"Config not found: {e}")
+    return default_config
+
+# ✅ CORRECT - Re-raise after logging
+except Exception as e:
+    logger.error(f"Unexpected error: {e}")
+    raise
+```
+
+## Null-Forgiving Operator (C# Only Exception)
+
+The null-forgiving operator (`!`) is allowed ONLY with a safety comment:
+
+```csharp
+// ✅ ALLOWED - With explicit safety justification
+// SAFETY: Guaranteed non-null after TryGetValue check above
+var value = dictionary[key]!;
+
+// SAFETY: Constructor ensures this is always initialized
+private readonly IService _service = null!;
+```
+
+## Enforcement
+
+### Pre-Commit Check
+
+Any code containing suppression patterns will be flagged during review:
+- `#pragma warning disable` without `// SAFETY:` comment
+- `noqa` or `type: ignore` comments
+- `<NoWarn>` in project files
+- Empty or pass-only catch blocks
+
+### Code Review Gate
+
+PRs with error suppression will be **REJECTED** unless:
+1. There is a documented safety justification
+2. The suppression is for a known framework limitation
+3. The issue is logged in Quality Ledger for future fix
+
+### Verification Command
+
+```bash
+# Check for suppression patterns
+rg -i "(pragma\s+warning\s+disable|noqa|pylint:\s*disable|SuppressMessage|\<NoWarn\>)" --type-add 'code:*.{cs,py,csproj,props}'
+```
+
+## Rationale
+
+| Suppression | Consequence |
+|-------------|-------------|
+| Hiding warnings | Warnings become errors in production |
+| Empty catch blocks | Failures go undetected, data corruption |
+| Ignoring null warnings | NullReferenceException in production |
+| Disabling analyzers | Security vulnerabilities, code quality decay |
+
+## Integration
+
+This rule is enforced alongside:
+- `error-resolution.mdc` — Error lifecycle management
+- `code-review.mdc` — Review checklist includes suppression check
+- `closure-protocol.mdc` — Verification requires error-free state
+
+## Quick Reference
+
+```
+Error occurs → FIX IT
+Warning appears → RESOLVE IT
+Lint fails → CORRECT IT
+Test fails → REPAIR IT
+
+NEVER: #pragma, noqa, SuppressMessage, NoWarn, bare except, empty catch
+```

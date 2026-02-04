@@ -1,0 +1,167 @@
+---
+description: "Error resolution lifecycle and professional quality standards for code modifications."
+alwaysApply: true
+---
+
+# Error Resolution & Professional Quality Standard
+
+## Mandatory Error Lifecycle
+
+Every task involving code modification MUST follow this error lifecycle:
+
+### 1. Discovery Phase (During Work)
+
+**Log every error discovered**, regardless of severity:
+
+| Error Type | Required Log Entry | Format |
+|-----------|-------------------|---------|
+| Build error | File, line, error code, message | `[BUILD] CS1234 @ File.cs:42: Missing semicolon` |
+| Test failure | Test name, expected vs actual | `[TEST] TestName: Expected X, got Y` |
+| Lint/warning | Tool, severity, location | `[LINT] CS8669 @ Schema.cs:15: Nullable reference` |
+| Runtime error | Stack trace, reproduction steps | `[RUNTIME] NullReferenceException @ Service.cs:89` |
+| Logic bug | Symptom, root cause (if known) | `[LOGIC] Incorrect calculation in PriceCalculator` |
+
+**Where to log**:
+- Task brief (if using task system)
+- Commit message (for fixes)
+- Quality Ledger (for blockers/S0-S2 issues)
+
+### 2. Resolution Phase (Before Completion)
+
+**All discovered errors MUST be resolved** before marking a task complete.
+
+**Resolution standards** (Professional Senior Software Architect Engineer level):
+
+#### Build Errors
+- ✅ Zero build errors or warnings in modified code
+- ✅ Root cause identified and fixed (**NEVER suppressed** — see `no-suppression.mdc`)
+- ✅ No `#pragma warning disable`, `NoWarn`, or `SuppressMessage`
+- ✅ Build succeeds on clean workspace
+
+#### Test Failures
+- ✅ All tests pass (existing + new)
+- ✅ No test skips/ignores without documented reason and plan
+- ✅ Coverage maintained or improved for changed code
+- ✅ Edge cases validated
+
+#### Code Quality
+- ✅ **No error suppression** — no `noqa`, `pylint: disable`, `# type: ignore`
+- ✅ Follows project patterns and conventions
+- ✅ SOLID principles applied where applicable
+- ✅ Error handling is explicit and logged
+- ✅ No silent failures (`try/catch` with empty/log-only blocks)
+- ✅ See `no-suppression.mdc` for full prohibited patterns list
+
+#### Architecture & Design
+- ✅ Sacred boundaries respected (UI ↔ Core ↔ Engine)
+- ✅ No circular dependencies introduced
+- ✅ Contracts/interfaces stable (breaking changes require ADR)
+- ✅ Thread-safety considered for shared state
+
+### 3. Verification Phase (Closure Gate)
+
+**Before** invoking Closure Protocol:
+
+```
+☐ Error log created during work (if any errors found)
+☐ All logged errors have resolution status
+☐ Build succeeds (use verification commands from task brief)
+☐ Tests pass (unit + integration for affected components)
+☐ Linter clean for modified files (ReadLints tool)
+☐ No regressions introduced (smoke test affected features)
+☐ Proof artifacts captured (build output, test results, logs)
+```
+
+### 4. Peer Review Standard
+
+**Would a senior peer approve this?** Self-check:
+
+| Criterion | Pass/Fail |
+|-----------|-----------|
+| Code is self-documenting or well-commented | |
+| Error messages are actionable | |
+| Rollback path is clear and documented | |
+| Performance impact considered | |
+| Security implications assessed | |
+| Follows repository conventions | |
+| No copy-paste duplication | |
+| Idiomatic language use | |
+
+**If ANY criterion fails → fix before marking complete.**
+
+## Integration Points
+
+### With Anti-Drift Protocol (`anti-drift.mdc`)
+- Errors discovered during work → log in the "Plan" section
+- Verification commands → capture error state before/after
+- Proof requirement → includes error-free build/test output
+
+### With Closure Protocol (`closure-protocol.mdc`)
+- Add error resolution checklist to STATE.md update
+- Link proof artifacts showing error-free state
+- Update Quality Ledger if any S0-S2 issues resolved
+
+### With Definition of Done (`DEFINITION_OF_DONE.md`)
+- Extends DoD with explicit error resolution requirement
+- Proof must show zero errors in modified scope
+
+## Error Deferral (When Acceptable)
+
+Deferring an error is allowed ONLY when:
+1. Error is pre-existing (not introduced by current work)
+2. Error is out of scope for current task
+3. Error is logged in Quality Ledger with owner/priority
+4. Current changes do not worsen the error
+
+**Format**: `[DEFERRED] Issue description → Ledger ID VS-XXXX`
+
+## Enforcement
+
+**Hard gate**: No task marked complete without:
+- Error log (if errors found) or explicit "No errors discovered" note
+- All discovered errors resolved or deferred with justification
+- Verification proof showing clean state
+
+**Verification by Overseer/Verifier subagent**:
+- Read error log
+- Execute verification commands
+- Confirm error-free state or justified deferrals
+- Report PASS/FAIL to task owner
+
+## Examples
+
+### Good: Complete Error Lifecycle
+```
+[During work]
+- Discovered CS8669 nullable warning in Schema.cs:15
+- Discovered test failure: SettingsViewModelTests.TestSave
+
+[Before completion]
+- Fixed CS8669: Added #nullable enable + null checks
+- Fixed test: Updated mock to return non-null config
+- Verified: dotnet build → 0 errors, 0 warnings
+- Verified: dotnet test → All passed
+
+[Closure]
+- Proof: build_output.txt (clean)
+- Proof: test_results.xml (100% pass)
+```
+
+### Bad: Incomplete Resolution
+```
+[During work]
+- Build had some errors
+
+[Closure]
+- Fixed the main issue
+[NO proof, no specifics, no verification]
+```
+
+## Quick Reference
+
+```
+Error discovered → Log it
+All logged → Must resolve or defer
+Task complete → Requires proof of error-free state
+Peer-level quality → Self-check before closure
+```

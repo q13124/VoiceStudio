@@ -15,6 +15,7 @@
 - `.cursor/rules/workflows/planning.mdc` — Multi-phase execution plan standards
 - `.cursor/rules/mcp/mcp-usage.mdc`
 - `.cursor/rules/quality/repo-hygiene.mdc`
+- `.cursor/rules/quality/no-suppression.mdc` — Errors are NEVER suppressed, always fixed
 - `.cursor/rules/workflows/state-gate.mdc`
 - `.cursor/rules/workflows/closure-protocol.mdc`
 - `.cursor/rules/workflows/verifier-subagent.mdc`
