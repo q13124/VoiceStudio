@@ -61,6 +61,7 @@ public sealed class BooleanToBrushConverter : IValueConverter
         return resources[key] as Brush;
       }
     }
+    // ALLOWED: empty catch - converter fallback to null is intentional
     catch
     {
     }

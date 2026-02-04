@@ -69,6 +69,7 @@ namespace VoiceStudio.App.Converters
           return b;
         }
       }
+      // ALLOWED: empty catch - resource lookup fallback is intentional
       catch
       {
       }
@@ -164,6 +165,7 @@ namespace VoiceStudio.App.Converters
           return true;
         }
       }
+      // ALLOWED: empty catch - named color lookup fallback is intentional
       catch
       {
       }

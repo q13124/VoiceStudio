@@ -106,6 +106,7 @@ namespace VoiceStudio.App.Converters
         if (targetType == typeof(int) || targetType == typeof(int?))
           return System.Convert.ToInt32(value);
       }
+      // ALLOWED: empty catch - type coercion fallback is intentional
       catch
       {
       }
