@@ -1,6 +1,6 @@
 # VoiceStudio Technical Debt Register
 
-> **Last Updated**: 2026-02-02  
+> **Last Updated**: 2026-02-04  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Canonical registry of all known technical debt, limitations, and future enhancements
 
@@ -26,6 +26,24 @@
 | **TD-004** | ViewModel DI migration | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Migration complete | Role 3 | 2026-01-28 | CLOSED |
 | **TD-005** | Wizard e2e proof | Wizard flow proof passes (4 PASS, 2 SKIP due to engine deps) | QA complete | Role 3/5 | 2026-01-29 | CLOSED |
 | **TD-017** | OpenAPI spec regeneration | docs/api/openapi.json regenerated (508 paths) | Verification complete | Role 4 | 2026-02-02 | CLOSED |
+
+### Phase 7 Quality Infrastructure (from Error Pattern Retrospective)
+
+| ID | Title | Description | Impact | Owner | Created | Target |
+|----|-------|-------------|--------|-------|---------|--------|
+| **TD-018** | Empty Catch Remediation | All empty catches remediated: 27 core + 87 remaining = 114 total. All now use ErrorLogger.LogWarning(). | Error visibility | Role 7 | 2026-02-04 | CLOSED |
+| **TD-019** | Python Path Standardization | Migrate remaining scripts to use _env_setup.py | Import reliability | Role 4 | 2026-02-04 | Phase 7+ |
+| **TD-020** | XAML Safety Tooling | Infrastructure complete; remaining work is documentation | Build stability | Role 2 | 2026-02-04 | CLOSED |
+| **TD-021** | Observability Infrastructure | Phase 8: DiagnosticsPanel enhanced with correlation ID filtering, copy, search. Full trace view pending. | Debugging ease | Role 4 | 2026-02-04 | CLOSED |
+| **TD-022** | Contract Validation | Phase 8: 44 engine manifests now have contract specs. add_engine_contracts.py script available. | API consistency | Role 1/5 | 2026-02-04 | CLOSED |
+
+### Phase 8 Architecture Optimization
+
+| ID | Title | Description | Impact | Owner | Created | Target |
+|----|-------|-------------|--------|-------|---------|--------|
+| **TD-023** | Route Boundary Violations | 30 violations in 16 files (reduced from 37/20). EngineService extended. 5 files fixed: health.py, dataset.py, training.py, spatial_audio.py, voice.py (partial). | Architecture | Role 4 | 2026-02-04 | In Progress |
+| **TD-024** | Static ServiceProvider Calls | 34 ViewModels still use static ServiceProvider calls. migrate_di.py audit script created. | DI consistency | Role 3 | 2026-02-04 | Phase 8+ |
+| **TD-025** | ADR Formalization | ADR-017, ADR-008, ADR-011 formalized with decisions. All 22 ADRs now have formal decisions. | Documentation | Role 1 | 2026-02-04 | CLOSED |
 
 ### LOW Priority
 
@@ -209,3 +227,5 @@
 | 2026-02-02 | Closed TD-007 (warning reduction 54%), TD-009 (pre-commit verified), TD-014 (circuit breaker wired) |
 | 2026-02-02 | Closed TD-017 (OpenAPI spec regenerated with 508 paths from running backend) |
 | 2026-02-02 | Closed TD-005 (Wizard e2e proof 4/4 PASS, 2 SKIP) |
+| 2026-02-04 | Added TD-018 through TD-022 from Phase 7 Quality Infrastructure plan |
+| 2026-02-04 | Closed TD-020 (XAML Safety Tooling infrastructure complete) |

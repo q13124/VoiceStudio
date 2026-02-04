@@ -21,6 +21,8 @@ from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from backend.services.engine_service import get_engine_service
+
 from ..ml_optimization import HyperparameterOptimizer
 from ..models import ApiOk
 from ..models_additional import (
@@ -440,20 +442,11 @@ async def optimize_training_data(
         augmentation_suggestions = []
 
         if req.analyze_quality and dataset.audio_files:
-            # Analyze quality of audio files
+            # Analyze quality of audio files (ADR-008 compliant)
             try:
-                import sys
-
-                app_path = os.path.join(
-                    os.path.dirname(__file__), "..", "..", "..", "app"
-                )
-                if os.path.exists(app_path) and app_path not in sys.path:
-                    sys.path.insert(0, app_path)
-
-                from app.core.engines.quality_metrics import calculate_mos_score
-
                 from ..routes.audio import _get_audio_path
 
+                engine_service = get_engine_service()
                 quality_scores = []
                 for audio_file in dataset.audio_files[:20]:  # Limit analysis
                     audio_path = (
@@ -469,7 +462,7 @@ async def optimize_training_data(
                             audio, sr = sf.read(audio_path)
                             if len(audio.shape) > 1:
                                 audio = np.mean(audio, axis=1)
-                            mos = calculate_mos_score(audio)
+                            mos = engine_service.calculate_mos_score(audio)
                             quality_scores.append((audio_file, mos))
                         except:
                             ...

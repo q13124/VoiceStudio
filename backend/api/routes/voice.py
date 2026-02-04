@@ -32,6 +32,7 @@ from backend.services.circuit_breaker import (
     get_engine_breaker,
     CircuitBreakerOpenError,
 )
+from backend.services.engine_service import get_engine_service
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
@@ -1546,7 +1547,7 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
             "phase_issues",
         ]
 
-        # Import artifact detection functions
+        # Import artifact detection functions (ADR-008 compliant)
         try:
             import sys
 
@@ -1556,10 +1557,10 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
 
             from core.audio.audio_utils import remove_artifacts as remove_artifacts_func
 
-            from app.core.engines.quality_metrics import detect_artifacts
+            engine_service = get_engine_service()
 
-            # Detect artifacts using quality metrics
-            artifact_results = detect_artifacts(audio_mono, sample_rate)
+            # Detect artifacts using quality metrics via EngineService
+            artifact_results = engine_service.detect_artifacts(audio_mono, sample_rate)
 
             # Check for clicks
             if "clicks" in artifact_types_to_check and artifact_results.get(
@@ -2107,7 +2108,8 @@ async def post_process_pipeline(
                     remove_artifacts,
                 )
 
-                from app.core.engines.quality_metrics import calculate_mos_score
+                # Use EngineService for quality metrics (ADR-008 compliant)
+                engine_svc = get_engine_service()
 
                 processed_audio = audio.copy()
                 stages_applied = []
@@ -2115,12 +2117,12 @@ async def post_process_pipeline(
 
                 # Calculate initial quality
                 initial_quality = (
-                    calculate_mos_score(processed_audio) / 5.0
+                    engine_svc.calculate_mos_score(processed_audio) / 5.0
                 )  # Normalize to 0-1
 
                 # Apply each stage
                 for stage_name in stages:
-                    quality_before = calculate_mos_score(processed_audio) / 5.0
+                    quality_before = engine_svc.calculate_mos_score(processed_audio) / 5.0
 
                     if stage_name == "denoise":
                         processed_audio = enhance_voice_quality(
@@ -2137,7 +2139,7 @@ async def post_process_pipeline(
                     elif stage_name == "repair":
                         processed_audio = remove_artifacts(processed_audio, sample_rate)
 
-                    quality_after = calculate_mos_score(processed_audio) / 5.0
+                    quality_after = engine_svc.calculate_mos_score(processed_audio) / 5.0
                     improvement = quality_after - quality_before
 
                     stages_applied.append(
@@ -2150,7 +2152,7 @@ async def post_process_pipeline(
                     )
 
                 # Calculate total improvement
-                final_quality = calculate_mos_score(processed_audio) / 5.0
+                final_quality = engine_svc.calculate_mos_score(processed_audio) / 5.0
                 total_quality_improvement = final_quality - initial_quality
 
                 # Save processed audio if not preview

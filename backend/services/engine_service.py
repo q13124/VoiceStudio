@@ -116,8 +116,27 @@ class IEngineService(ABC):
         ...
 
     @abstractmethod
-    def calculate_mos_score(self, audio_path: AudioPath) -> float:
-        """Calculate Mean Opinion Score for an audio file."""
+    def calculate_mos_score(self, audio: Union[AudioPath, Any]) -> float:
+        """Calculate Mean Opinion Score for audio (path or numpy array)."""
+        ...
+
+    @abstractmethod
+    def calculate_snr(
+        self, audio: Union[AudioPath, "np.ndarray"], sample_rate: Optional[int] = None
+    ) -> float:
+        """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
+        ...
+
+    @abstractmethod
+    def detect_artifacts(
+        self, audio_path: AudioPath, sample_rate: int = 22050
+    ) -> Dict[str, Any]:
+        """Detect audio artifacts (clipping, distortion, noise)."""
+        ...
+
+    @abstractmethod
+    def get_engine_performance_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics for all engines."""
         ...
 
     # -------------------------------------------------------------------------
@@ -138,6 +157,26 @@ class IEngineService(ABC):
         """Get synthesis parameters for a quality preset."""
         ...
 
+    # -------------------------------------------------------------------------
+    # Engine Router Access
+    # -------------------------------------------------------------------------
+
+    @abstractmethod
+    def route_synthesis(
+        self,
+        text: str,
+        voice_id: Optional[str] = None,
+        engine_preference: Optional[str] = None,
+        **kwargs: Any,
+    ) -> SynthesisResult:
+        """Route synthesis to the best available engine."""
+        ...
+
+    @abstractmethod
+    def get_available_voices(self, engine_id: Optional[EngineId] = None) -> List[Dict[str, Any]]:
+        """Get list of available voices, optionally filtered by engine."""
+        ...
+
 
 class EngineService(IEngineService):
     """Concrete implementation of the engine service.
@@ -153,6 +192,7 @@ class EngineService(IEngineService):
         self._quality_metrics = None
         self._quality_optimizer = None
         self._quality_presets = None
+        self._performance_metrics = None
         self._engines_loaded = False
 
     def _ensure_engines_loaded(self):
@@ -358,16 +398,70 @@ class EngineService(IEngineService):
         except Exception:
             return 0.0
 
-    def calculate_mos_score(self, audio_path: AudioPath) -> float:
-        """Calculate Mean Opinion Score for an audio file."""
+    def calculate_mos_score(self, audio: Union[AudioPath, Any]) -> float:
+        """Calculate Mean Opinion Score for audio (path or numpy array)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return 0.0
         
         try:
-            return self._quality_metrics.calculate_mos_score(str(audio_path))
+            # Check if input is a numpy array (duck typing to avoid import)
+            if hasattr(audio, "shape") and hasattr(audio, "dtype"):
+                return self._quality_metrics.calculate_mos_score(audio)
+            # Otherwise treat as path
+            return self._quality_metrics.calculate_mos_score(str(audio))
         except Exception:
             return 0.0
+
+    def calculate_snr(
+        self, audio: Union[AudioPath, Any], sample_rate: Optional[int] = None
+    ) -> float:
+        """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
+        self._ensure_engines_loaded()
+        if self._quality_metrics is None:
+            return 0.0
+        
+        try:
+            # Check if input is a numpy array (duck typing to avoid import)
+            if hasattr(audio, "shape") and hasattr(audio, "dtype"):
+                return self._quality_metrics.calculate_snr(audio)
+            # Otherwise treat as path
+            return self._quality_metrics.calculate_snr(str(audio))
+        except Exception:
+            return 0.0
+
+    def detect_artifacts(
+        self, audio: Union[AudioPath, Any], sample_rate: int = 22050
+    ) -> Dict[str, Any]:
+        """Detect audio artifacts (clipping, distortion, noise)."""
+        self._ensure_engines_loaded()
+        if self._quality_metrics is None:
+            return {"error": "Quality metrics not available"}
+        
+        try:
+            # Check if input is a numpy array (duck typing to avoid import)
+            if hasattr(audio, "shape") and hasattr(audio, "dtype"):
+                return self._quality_metrics.detect_artifacts(audio, sample_rate=sample_rate)
+            # Otherwise treat as path
+            return self._quality_metrics.detect_artifacts(str(audio), sample_rate=sample_rate)
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_engine_performance_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics for all engines."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.performance_metrics import get_engine_metrics
+            metrics = get_engine_metrics()
+            # Normalize to dict format for API consumption
+            return {
+                "summary": metrics.get_summary() if hasattr(metrics, "get_summary") else {},
+                "all_stats": metrics.get_all_stats() if hasattr(metrics, "get_all_stats") else [],
+            }
+        except ImportError:
+            return {"error": "Performance metrics not available"}
+        except Exception as e:
+            return {"error": str(e)}
 
     # -------------------------------------------------------------------------
     # Quality Optimization
@@ -401,6 +495,48 @@ class EngineService(IEngineService):
             )
         except Exception:
             return {}
+
+    # -------------------------------------------------------------------------
+    # Engine Router Access
+    # -------------------------------------------------------------------------
+
+    def route_synthesis(
+        self,
+        text: str,
+        voice_id: Optional[str] = None,
+        engine_preference: Optional[str] = None,
+        **kwargs: Any,
+    ) -> SynthesisResult:
+        """Route synthesis to the best available engine."""
+        self._ensure_engines_loaded()
+        if self._engine_router is None:
+            return {"error": "Engine router not available"}
+        
+        try:
+            return self._engine_router.synthesize(
+                text=text,
+                voice_id=voice_id,
+                engine_preference=engine_preference,
+                **kwargs,
+            )
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_available_voices(self, engine_id: Optional[EngineId] = None) -> List[Dict[str, Any]]:
+        """Get list of available voices, optionally filtered by engine."""
+        self._ensure_engines_loaded()
+        if self._engine_router is None:
+            return []
+        
+        try:
+            if engine_id:
+                engine = self._engine_router.get_engine(engine_id)
+                if engine and hasattr(engine, "list_voices"):
+                    return engine.list_voices()
+                return []
+            return self._engine_router.list_voices()
+        except Exception:
+            return []
 
 
 # Singleton instance for dependency injection

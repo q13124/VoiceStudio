@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.config.path_config import get_models_path
 from backend.services.circuit_breaker import get_engine_breaker_stats
+from backend.services.engine_service import get_engine_service
 
 from app.core.resilience.health_check import (
     HealthCheckResult,
@@ -387,15 +388,15 @@ def _get_resource_usage() -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"Failed to get WebSocket stats: {e}")
 
-    # Engine performance metrics
+    # Engine performance metrics (via EngineService - ADR-008 compliant)
     try:
-        from app.core.engines.performance_metrics import get_engine_metrics
-
-        metrics = get_engine_metrics()
-        resources["engine_metrics"] = {
-            "summary": metrics.get_summary(),
-            "total_engines": len(metrics.get_all_stats()),
-        }
+        engine_service = get_engine_service()
+        metrics = engine_service.get_engine_performance_metrics()
+        if "error" not in metrics:
+            resources["engine_metrics"] = {
+                "summary": metrics.get("summary", {}),
+                "total_engines": len(metrics.get("all_stats", [])),
+            }
     except Exception as e:
         logger.debug(f"Failed to get engine performance metrics: {e}")
 

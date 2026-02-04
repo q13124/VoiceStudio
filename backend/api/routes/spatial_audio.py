@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from backend.services.engine_service import get_engine_service
+
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
@@ -319,13 +321,10 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
         output_audio_id = f"spatial_{uuid.uuid4().hex[:8]}"
         _register_audio_file(output_audio_id, output_path)
 
-        # Calculate quality metrics
+        # Calculate quality metrics (ADR-008 compliant)
         quality_metrics = {}
         try:
-            from app.core.engines.quality_metrics import (
-                calculate_mos_score,
-                calculate_snr,
-            )
+            engine_service = get_engine_service()
 
             # Calculate metrics on processed audio
             if len(processed_audio.shape) > 1:
@@ -341,8 +340,8 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
                 mono_audio_normalized = mono_audio
 
             quality_metrics = {
-                "mos_score": float(calculate_mos_score(mono_audio_normalized)),
-                "snr_db": float(calculate_snr(mono_audio_normalized)),
+                "mos_score": float(engine_service.calculate_mos_score(mono_audio_normalized)),
+                "snr_db": float(engine_service.calculate_snr(mono_audio_normalized)),
                 "dynamic_range": float(np.max(mono_audio) - np.min(mono_audio)),
                 "rms_level": float(np.sqrt(np.mean(mono_audio**2))),
                 "peak_level": float(np.max(np.abs(mono_audio))),
@@ -729,10 +728,7 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
         # Calculate quality metrics for binaural audio
         quality_metrics: Dict[str, Any] = {}
         try:
-            from app.core.engines.quality_metrics import (
-                calculate_mos_score,
-                calculate_snr,
-            )
+            engine_service = get_engine_service()
 
             # Calculate metrics on binaural audio (use left channel)
             mono_audio = binaural_audio[:, 0]
@@ -744,8 +740,8 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
                 mono_audio_normalized = mono_audio
 
             quality_metrics = {
-                "mos_score": float(calculate_mos_score(mono_audio_normalized)),
-                "snr_db": float(calculate_snr(mono_audio_normalized)),
+                "mos_score": float(engine_service.calculate_mos_score(mono_audio_normalized)),
+                "snr_db": float(engine_service.calculate_snr(mono_audio_normalized)),
                 "dynamic_range": float(np.max(mono_audio) - np.min(mono_audio)),
                 "rms_level": float(np.sqrt(np.mean(mono_audio**2))),
                 "peak_level": float(np.max(np.abs(mono_audio))),

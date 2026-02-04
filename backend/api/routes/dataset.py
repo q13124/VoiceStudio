@@ -23,12 +23,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/dataset", tags=["dataset"])
 
+# Import engine service for quality metrics (ADR-008 compliant)
+from backend.services.engine_service import get_engine_service
+
 # Try to import audio processing libraries
 try:
     import numpy as np
 
     from app.core.audio import audio_utils
-    from app.core.engines.quality_metrics import calculate_snr
 
     HAS_AUDIO_PROCESSING = True
 except ImportError:
@@ -98,9 +100,10 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
                 if len(audio.shape) > 1:
                     audio = np.mean(audio, axis=1)
 
-                # Calculate SNR
+                # Calculate SNR via EngineService (ADR-008 compliant)
                 try:
-                    snr = calculate_snr(audio)
+                    engine_service = get_engine_service()
+                    snr = engine_service.calculate_snr(audio)
                     if np.isnan(snr) or np.isinf(snr):
                         snr = 0.0
                 except Exception as e:
