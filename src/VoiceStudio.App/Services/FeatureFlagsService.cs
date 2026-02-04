@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Windows.Storage;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -103,9 +104,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // If loading fails, use defaults
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "FeatureFlagsService.LoadFlags");
       }
     }
 
@@ -123,9 +124,9 @@ namespace VoiceStudio.App.Services
 
         localSettings.Values[SettingsKey] = composite;
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // If saving fails, continue with in-memory state
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "FeatureFlagsService.SaveFlags");
       }
     }
   }

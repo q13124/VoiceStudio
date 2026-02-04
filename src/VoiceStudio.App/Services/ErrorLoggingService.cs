@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Exceptions;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -190,9 +191,9 @@ namespace VoiceStudio.App.Services
         var jsonLine = JsonSerializer.Serialize(structuredLog, _jsonOptions);
         _logFileWriter.WriteLine(jsonLine);
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail - don't break application if logging fails
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ErrorLoggingService.WriteStructuredLog");
       }
     }
 

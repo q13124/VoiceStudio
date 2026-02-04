@@ -12,7 +12,7 @@
         <converters:NumberFormatConverter x:Key="F2FormatConverter" Format="F2" />
         <converters:StringFormatConverter x:Key="StringFormatConverter" />
     </UserControl.Resources>
-    <Grid>
+    <Grid AutomationProperties.AutomationId="TextBasedSpeechEditorView_Root">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

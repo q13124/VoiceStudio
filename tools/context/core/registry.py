@@ -149,4 +149,17 @@ def build_default_registry(config: dict) -> SourceRegistry:
             )
         )
 
+    # Audit log adapter (enabled by default - reads from .audit/)
+    audit_cfg = config.get("audit", {})
+    if audit_cfg.get("enabled", True):
+        from tools.context.sources.audit_adapter import AuditSourceAdapter
+        
+        registry.register(
+            AuditSourceAdapter(
+                max_entries=audit_cfg.get("max_entries", 20),
+                severity_filter=audit_cfg.get("severity_filter", ["error", "warning", "critical"]),
+                hours_lookback=audit_cfg.get("hours_lookback", 24),
+            )
+        )
+
     return registry

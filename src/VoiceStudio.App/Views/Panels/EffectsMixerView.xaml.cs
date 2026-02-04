@@ -610,6 +610,19 @@ namespace VoiceStudio.App.Views.Panels
       return null;
     }
 
+    private async void AddEffectComboBox_SelectionChanged(object sender, SelectionChangedEventArgsAlias e)
+    {
+      if (sender is ComboBox comboBox && comboBox.SelectedItem is string effectType)
+      {
+        if (ViewModel.AddEffectCommand.CanExecute(effectType))
+        {
+          await ViewModel.AddEffectCommand.ExecuteAsync(effectType);
+        }
+        // Reset selection to allow re-adding the same effect type
+        comboBox.SelectedIndex = -1;
+      }
+    }
+
     private void HelpButton_Click(object _, RoutedEventArgs __)
     {
       // Set up help content

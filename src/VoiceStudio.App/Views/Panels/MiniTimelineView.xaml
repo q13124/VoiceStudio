@@ -6,7 +6,7 @@
   <UserControl.Resources>
     <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
   </UserControl.Resources>
-  <Grid Height="{StaticResource VSQ.Control.Height.Large}" Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
+  <Grid Height="{StaticResource VSQ.Control.Height.Large}" Background="{StaticResource VSQ.Panel.Background.DarkBrush}" AutomationProperties.AutomationId="MiniTimelineView_Root">
     <Grid.RowDefinitions>
       <RowDefinition Height="{StaticResource VSQ.Control.Height.Small}"/>
       <RowDefinition Height="*"/>

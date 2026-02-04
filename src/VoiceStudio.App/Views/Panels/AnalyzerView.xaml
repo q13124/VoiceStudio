@@ -7,7 +7,7 @@
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
   </UserControl.Resources>
-  <Grid>
+  <Grid AutomationProperties.AutomationId="AnalyzerView_Root">
     <Grid.RowDefinitions>
       <RowDefinition Height="48" />
       <RowDefinition Height="*" />

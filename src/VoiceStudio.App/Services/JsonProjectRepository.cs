@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -60,10 +61,10 @@ namespace VoiceStudio.App.Services
               metadataList.Add(MapToMetadata(project, file));
             }
           }
-          catch (JsonException)
-          {
-            // Skip malformed project files
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JsonProjectRepository.Task");
+      }
         }
 
         return metadataList.OrderByDescending(m => m.Modified).ToList();

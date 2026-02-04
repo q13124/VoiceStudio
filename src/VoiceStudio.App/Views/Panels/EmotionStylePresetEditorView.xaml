@@ -1,8 +1,26 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.EmotionStylePresetEditorView"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:controls="using:VoiceStudio.App.Controls">
-  <Grid>
-    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />
-  </Grid>
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls">
+    <Grid x:Name="EmotionStylePresetEditorView_Root" 
+          AutomationProperties.AutomationId="EmotionStylePresetEditorView_Root"
+          Background="{StaticResource VSQ.Panel.Background}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" 
+                Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" 
+                Padding="{StaticResource VSQ.Spacing.Medium}">
+            <TextBlock Text="Emotion Style Preset Editor" 
+                       FontSize="{StaticResource VSQ.FontSize.Title}" 
+                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+        </Border>
+
+        <controls:HelpOverlay x:Name="HelpOverlay" 
+                              Grid.RowSpan="2"
+                              IsVisible="False" 
+                              Visibility="Collapsed" />
+    </Grid>
 </UserControl>

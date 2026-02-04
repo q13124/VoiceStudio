@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-02 (ADR status sync; version_lock alignment; System Architect review)
+> **Last Updated**: 2026-02-04 (Error Pattern Retrospective report added)
 
 ---
 
@@ -190,6 +190,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
+| **Error Pattern Retrospective** | `docs/reports/post_mortem/ERROR_PATTERN_RETROSPECTIVE_2026-02-04.md` | 2026-02-04 | Comprehensive analysis of systemic behaviors causing recurring errors; 36 issues analyzed, role responsibility ranking, anti-pattern inventory |
 | **Architecture Peer Review Package (Gate C / TASK-0004)** | `docs/reports/verification/ARCHITECTURE_PEER_REVIEW_PACKAGE_2026-01-27.md` | 2026-01-27 | Overseer-owned single entry point for architecture peer review; consolidates blockers, decisions, evidence, next tasks, approval map |
 | **Complete Project Report (Start → 2026-02-02)** | `docs/reports/verification/VOICESTUDIO_COMPLETE_PROJECT_REPORT_2026-02-02.md` | 2026-02-02 | Single narrative + status + remaining gaps; links to SSOT; includes peer approval checklist |
 | Session 11 Overseer Next Steps | `docs/reports/verification/SESSION11_OVERSEER_NEXT_STEPS_2026-01-27.md` | 2026-01-27 | Overseer run: tooling refresh, Task B deferred (venv), Task C partial (Install OK, Launch V1 fail); §6 peer approval |

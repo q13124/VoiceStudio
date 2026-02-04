@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -43,9 +44,9 @@ namespace VoiceStudio.App.Services
         var json = JsonSerializer.Serialize(state, _jsonOptions);
         await File.WriteAllTextAsync(filePath, json);
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StateCacheService.CacheStateAsync");
       }
     }
 
@@ -77,9 +78,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StateCacheService.Task");
       }
 
       return null;
@@ -100,9 +101,9 @@ namespace VoiceStudio.App.Services
           File.Delete(filePath);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StateCacheService.ClearCachedState");
       }
     }
 
@@ -121,15 +122,15 @@ namespace VoiceStudio.App.Services
           {
             File.Delete(file);
           }
-          catch
-          {
-            // Ignore individual file deletion errors
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StateCacheService.ClearAllCachedState");
+      }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StateCacheService.ClearAllCachedState");
       }
     }
 

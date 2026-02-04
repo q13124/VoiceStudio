@@ -257,10 +257,15 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
+        // Stop any existing playback
+        _audioPlayer.Stop();
+        
         var audioStream = await _backendClient.GetAudioStreamAsync(SampleA.AudioId);
-        // Play audio using audio player service
-        // Note: AudioPlayerService may need to be extended to support streams
-        // For now, this is a placeholder
+        if (audioStream != null)
+        {
+          // Play audio using audio player service
+          await _audioPlayer.PlayStreamAsync(audioStream, sampleRate: 22050, channels: 1);
+        }
       }
       catch (Exception ex)
       {
@@ -276,10 +281,15 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
+        // Stop any existing playback
+        _audioPlayer.Stop();
+        
         var audioStream = await _backendClient.GetAudioStreamAsync(SampleB.AudioId);
-        // Play audio using audio player service
-        // Note: AudioPlayerService may need to be extended to support streams
-        // For now, this is a placeholder
+        if (audioStream != null)
+        {
+          // Play audio using audio player service
+          await _audioPlayer.PlayStreamAsync(audioStream, sampleRate: 22050, channels: 1);
+        }
       }
       catch (Exception ex)
       {

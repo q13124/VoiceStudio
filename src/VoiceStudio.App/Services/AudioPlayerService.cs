@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -176,9 +177,9 @@ namespace VoiceStudio.App.Services
         IsPaused = false;
         IsPlayingChanged?.Invoke(this, false);
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during cleanup
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "AudioPlayerService.Stop");
       }
     }
 
@@ -315,9 +316,9 @@ namespace VoiceStudio.App.Services
         _previewCancellation?.Dispose();
         _previewCancellation = null;
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during preview cleanup
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "AudioPlayerService.StopPreview");
       }
     }
 

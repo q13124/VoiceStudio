@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -89,10 +90,10 @@ namespace VoiceStudio.App.Services
           await _webSocketService.UnsubscribeAsync("batch");
           await _webSocketService.UnsubscribeAsync("training");
         }
-        catch
-        {
-          // Ignore errors during unsubscribe
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JobProgressWebSocketClient.DisconnectAsync");
+      }
         _isSubscribed = false;
       }
     }
@@ -152,9 +153,9 @@ namespace VoiceStudio.App.Services
           ProgressUpdated?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JobProgressWebSocketClient.HandleProgressUpdate");
       }
     }
 
@@ -168,9 +169,9 @@ namespace VoiceStudio.App.Services
           StatusChanged?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JobProgressWebSocketClient.HandleStatusUpdate");
       }
     }
 
@@ -184,9 +185,9 @@ namespace VoiceStudio.App.Services
           JobCompleted?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JobProgressWebSocketClient.HandleJobCompleted");
       }
     }
 
@@ -200,9 +201,9 @@ namespace VoiceStudio.App.Services
           JobFailed?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "JobProgressWebSocketClient.HandleJobFailed");
       }
     }
 

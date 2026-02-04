@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Windows.Storage;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -89,10 +90,10 @@ namespace VoiceStudio.App.Services
             config = config.Merge(fileConfig);
           }
         }
-        catch
-        {
-          // Best effort: fall back to defaults/env overrides
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "UpdateService.Unknown");
+      }
       }
 
       var envServer = Environment.GetEnvironmentVariable("VOICESTUDIO_UPDATE_SERVER_URL");
@@ -142,9 +143,9 @@ namespace VoiceStudio.App.Services
         File.WriteAllText(historyPath, json);
         _lastUpdateHistory = history;
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "UpdateService.SaveUpdateHistory");
       }
     }
 

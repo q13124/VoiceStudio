@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -121,9 +122,9 @@ namespace VoiceStudio.App.Services
 
         await File.WriteAllBytesAsync(_vaultPath, encryptedData);
       }
-      catch
+      catch (Exception ex)
       {
-        // If saving fails, continue without persistence
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "DevVaultSecretsService.SaveVaultAsync");
       }
     }
 

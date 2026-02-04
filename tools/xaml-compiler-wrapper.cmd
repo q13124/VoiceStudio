@@ -183,4 +183,11 @@ if "%RAW_LOG_ENABLED%"=="1" (
   echo XAML compilation failed. Re-run with VSQ_XAML_RAW_LOG=1 to capture a raw log.
 )
 
+rem Log XAML compilation failure to audit system
+if "%EXIT_CODE%" NEQ "0" (
+  if exist "%REPO_ROOT%\scripts\xaml_audit_log.py" (
+    python "%REPO_ROOT%\scripts\xaml_audit_log.py" --input "!INPUT_JSON!" --exit-code %EXIT_CODE% 2>nul
+  )
+)
+
 exit /b %EXIT_CODE%

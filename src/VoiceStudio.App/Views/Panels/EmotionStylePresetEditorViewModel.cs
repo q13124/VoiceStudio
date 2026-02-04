@@ -359,20 +359,37 @@ namespace VoiceStudio.App.Views.Panels
 
     private async Task PreviewPresetAsync()
     {
-      if (SelectedPreset == null || string.IsNullOrWhiteSpace(PreviewText))
+      if (string.IsNullOrWhiteSpace(PreviewText))
         return;
 
       try
       {
-        // Preview functionality would synthesize audio with the preset
-        // For now, this is a placeholder - would need a profile selected and synthesis endpoint
-        // In a full implementation, this would:
-        // 1. Get a default profile or use selected profile
-        // 2. Call synthesis endpoint with emotion parameters from preset
-        // 3. Play the preview audio
+        // Get the primary emotion from the preset or current selection
+        var primaryEmotion = SelectedEmotions.FirstOrDefault()?.Name ?? "neutral";
 
-        System.Diagnostics.Debug.WriteLine($"Preview preset '{SelectedPreset.Name}' with text: {PreviewText}");
-        await Task.CompletedTask;
+        // Build synthesis request with emotion parameter
+        var request = new VoiceSynthesisRequest
+        {
+          Text = PreviewText,
+          ProfileId = string.Empty,  // Use default profile for preview
+          Engine = "piper",  // Use fast engine for preview
+          Emotion = primaryEmotion,
+          EnhanceQuality = false  // Skip quality enhancement for quick preview
+        };
+
+        // Synthesize preview audio
+        var response = await _backendClient.SynthesizeVoiceAsync(request);
+        
+        if (response != null && !string.IsNullOrEmpty(response.AudioId))
+        {
+          // Log the preview audio ID for playback
+          // In a full implementation, this would play the audio via IAudioPlayerService
+          System.Diagnostics.Debug.WriteLine($"Preview generated: {response.AudioId}, Duration: {response.Duration}s");
+          
+          // Future enhancement: Store the audio ID and play via audio player service
+          // _lastPreviewAudioId = response.AudioId;
+          // await _audioPlayer.PlayAsync(response.AudioUrl);
+        }
       }
       catch (Exception ex)
       {

@@ -22,6 +22,8 @@ using VoiceStudio.App.Controls;
 using VoiceStudio.App.Views.Dialogs;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel;
+using VoiceStudio.App.Logging;
+using VoiceStudio.Core.Panels;
 
 namespace VoiceStudio.App
 {
@@ -115,10 +117,10 @@ namespace VoiceStudio.App
       var centerPanelHost = FindNameOnContent("CenterPanelHost") as Controls.PanelHost;
       var rightPanelHost = FindNameOnContent("RightPanelHost") as Controls.PanelHost;
       var bottomPanelHost = FindNameOnContent("BottomPanelHost") as Controls.PanelHost;
-      if (leftPanelHost != null) leftPanelHost.PanelRegion = Core.Panels.PanelRegion.Left;
-      if (centerPanelHost != null) centerPanelHost.PanelRegion = Core.Panels.PanelRegion.Center;
-      if (rightPanelHost != null) rightPanelHost.PanelRegion = Core.Panels.PanelRegion.Right;
-      if (bottomPanelHost != null) bottomPanelHost.PanelRegion = Core.Panels.PanelRegion.Bottom;
+      if (leftPanelHost != null) leftPanelHost.PanelRegion = PanelRegion.Left;
+      if (centerPanelHost != null) centerPanelHost.PanelRegion = PanelRegion.Center;
+      if (rightPanelHost != null) rightPanelHost.PanelRegion = PanelRegion.Right;
+      if (bottomPanelHost != null) bottomPanelHost.PanelRegion = PanelRegion.Bottom;
       profiler.Checkpoint("PanelRegions Set");
 
       // Wire up panel docking handlers (IDEA 14)
@@ -216,49 +218,49 @@ namespace VoiceStudio.App
 
     private void NavStudio_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Center, "Timeline", () => new TimelineView());
+      SwitchToPanel(PanelRegion.Center, "Timeline", () => new TimelineView());
       SetActiveNavButton("NavStudio");
     }
 
     private void NavProfiles_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Left, "Profiles", () => new ProfilesView());
+      SwitchToPanel(PanelRegion.Left, "Profiles", () => new ProfilesView());
       SetActiveNavButton("NavProfiles");
     }
 
     private void NavLibrary_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Left, "Library", () => new LibraryView());
+      SwitchToPanel(PanelRegion.Left, "Library", () => new LibraryView());
       SetActiveNavButton("NavLibrary");
     }
 
     private void NavEffects_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
+      SwitchToPanel(PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
       SetActiveNavButton("NavEffects");
     }
 
     private void NavTrain_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Left, "Training", () => new TrainingView());
+      SwitchToPanel(PanelRegion.Left, "Training", () => new TrainingView());
       SetActiveNavButton("NavTrain");
     }
 
     private void NavAnalyze_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Right, "Analyzer", () => new AnalyzerView());
+      SwitchToPanel(PanelRegion.Right, "Analyzer", () => new AnalyzerView());
       SetActiveNavButton("NavAnalyze");
     }
 
     private void NavSettings_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Right, "Settings", () => new SettingsView());
+      SwitchToPanel(PanelRegion.Right, "Settings", () => new SettingsView());
       SetActiveNavButton("NavSettings");
     }
 
     private void NavLogs_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(Core.Panels.PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
+      SwitchToPanel(PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
       SetActiveNavButton("NavLogs");
     }
 
@@ -305,9 +307,9 @@ namespace VoiceStudio.App
           $"timestamp_utc\t{DateTime.UtcNow:o}{Environment.NewLine}",
           System.Text.Encoding.UTF8);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.Task");
       }
 
       void AppendStepLog(string line)
@@ -319,10 +321,10 @@ namespace VoiceStudio.App
             $"{DateTime.UtcNow:o}\t{line}{Environment.NewLine}",
             System.Text.Encoding.UTF8);
         }
-        catch
-        {
-          // Best effort
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.AppendStepLog");
+      }
       }
 
       var dispatcher = this.DispatcherQueue;
@@ -387,6 +389,7 @@ namespace VoiceStudio.App
 
       var steps = new (string Name, Action Action)[]
       {
+        // Primary navigation buttons (8 steps)
         ("NavStudio", () => NavStudio_Click(this, new RoutedEventArgs())),
         ("NavProfiles", () => NavProfiles_Click(this, new RoutedEventArgs())),
         ("NavLibrary", () => NavLibrary_Click(this, new RoutedEventArgs())),
@@ -396,10 +399,32 @@ namespace VoiceStudio.App
         ("NavSettings", () => NavSettings_Click(this, new RoutedEventArgs())),
         ("NavLogs", () => NavLogs_Click(this, new RoutedEventArgs())),
 
-        // Additional frequently-used panels reachable via quick-switch shortcuts.
-        ("QuickSwitchVoiceSynthesis", () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView())),
-        ("QuickSwitchTextSpeechEditor", () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Text Speech Editor", () => new TextSpeechEditorView())),
-        ("QuickSwitchQualityControl", () => SwitchToPanel(Core.Panels.PanelRegion.Right, "Quality Control", () => new QualityControlView())),
+        // Core synthesis panels (4 steps)
+        ("PanelVoiceSynthesis", () => SwitchToPanel(PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView())),
+        ("PanelEnsembleSynthesis", () => SwitchToPanel(PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView())),
+        ("PanelBatchProcessing", () => SwitchToPanel(PanelRegion.Center, "Batch Processing", () => new BatchProcessingView())),
+        ("PanelTextSpeechEditor", () => SwitchToPanel(PanelRegion.Center, "Text Speech Editor", () => new TextSpeechEditorView())),
+
+        // Training panels (3 steps)
+        ("PanelTrainingDatasetEditor", () => SwitchToPanel(PanelRegion.Center, "Training Dataset Editor", () => new TrainingDatasetEditorView())),
+        ("PanelModelManager", () => SwitchToPanel(PanelRegion.Center, "Model Manager", () => new ModelManagerView())),
+        ("PanelTraining", () => SwitchToPanel(PanelRegion.Center, "Training", () => new TrainingView())),
+
+        // Audio processing panels (4 steps)
+        ("PanelTranscribe", () => SwitchToPanel(PanelRegion.Center, "Transcribe", () => new TranscribeView())),
+        ("PanelRecording", () => SwitchToPanel(PanelRegion.Center, "Recording", () => new RecordingView())),
+        ("PanelAudioAnalysis", () => SwitchToPanel(PanelRegion.Center, "Audio Analysis", () => new AudioAnalysisView())),
+        ("PanelQualityControl", () => SwitchToPanel(PanelRegion.Right, "Quality Control", () => new QualityControlView())),
+
+        // Utility panels (3 steps)
+        ("PanelTimeline", () => SwitchToPanel(PanelRegion.Center, "Timeline", () => new TimelineView())),
+        ("PanelDiagnostics", () => SwitchToPanel(PanelRegion.Right, "Diagnostics", () => new DiagnosticsView())),
+        ("PanelHelp", () => SwitchToPanel(PanelRegion.Right, "Help", () => new HelpView())),
+
+        // Voice control panels (3 steps)
+        ("PanelVoiceMorph", () => SwitchToPanel(PanelRegion.Center, "Voice Morph", () => new VoiceMorphView())),
+        ("PanelProsody", () => SwitchToPanel(PanelRegion.Right, "Prosody", () => new ProsodyView())),
+        ("PanelEmotionControl", () => SwitchToPanel(PanelRegion.Right, "Emotion Control", () => new EmotionControlView())),
       };
 
       foreach (var step in steps)
@@ -758,10 +783,10 @@ namespace VoiceStudio.App
       // Get the target PanelHost based on target region
       Controls.PanelHost? targetHost = e.TargetRegion switch
       {
-        Core.Panels.PanelRegion.Left => FindNameOnContent("LeftPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Center => FindNameOnContent("CenterPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Right => FindNameOnContent("RightPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Bottom => FindNameOnContent("BottomPanelHost") as Controls.PanelHost,
+        PanelRegion.Left => FindNameOnContent("LeftPanelHost") as Controls.PanelHost,
+        PanelRegion.Center => FindNameOnContent("CenterPanelHost") as Controls.PanelHost,
+        PanelRegion.Right => FindNameOnContent("RightPanelHost") as Controls.PanelHost,
+        PanelRegion.Bottom => FindNameOnContent("BottomPanelHost") as Controls.PanelHost,
         _ => null
       };
 
@@ -983,9 +1008,9 @@ namespace VoiceStudio.App
           root.KeyDown += MainWindow_KeyDown;
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.MainWindow_Activated");
       }
 
       if (e.WindowActivationState != WindowActivationState.CodeActivated)
@@ -1113,10 +1138,10 @@ namespace VoiceStudio.App
                 undoService.Undo();
               }
             }
-            catch
-            {
-              // Service may not be initialized - ignore
-            }
+            catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.RegisterKeyboardShortcuts");
+      }
           },
           "Undo");
 
@@ -1134,10 +1159,10 @@ namespace VoiceStudio.App
                 undoService.Redo();
               }
             }
-            catch
-            {
-              // Service may not be initialized - ignore
-            }
+            catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.Unknown");
+      }
           },
           "Redo");
 
@@ -1195,25 +1220,25 @@ namespace VoiceStudio.App
 
       // Panel Quick-Switch (IDEA 1): Ctrl+1-9 for direct panel switching
       // Left PanelHost: Ctrl+1-3
-      RegisterPanelQuickSwitchShortcut(1, Core.Panels.PanelRegion.Left, 0, "Profiles", () => new ProfilesView());
-      RegisterPanelQuickSwitchShortcut(2, Core.Panels.PanelRegion.Left, 1, "Library", () => new LibraryView());
-      RegisterPanelQuickSwitchShortcut(3, Core.Panels.PanelRegion.Left, 2, "Training", () => new TrainingView());
+      RegisterPanelQuickSwitchShortcut(1, PanelRegion.Left, 0, "Profiles", () => new ProfilesView());
+      RegisterPanelQuickSwitchShortcut(2, PanelRegion.Left, 1, "Library", () => new LibraryView());
+      RegisterPanelQuickSwitchShortcut(3, PanelRegion.Left, 2, "Training", () => new TrainingView());
 
       // Center PanelHost: Ctrl+4-6
-      RegisterPanelQuickSwitchShortcut(4, Core.Panels.PanelRegion.Center, 0, "Timeline", () => new TimelineView());
-      RegisterPanelQuickSwitchShortcut(5, Core.Panels.PanelRegion.Center, 1, "Voice Synthesis", () => new VoiceSynthesisView());
-      RegisterPanelQuickSwitchShortcut(6, Core.Panels.PanelRegion.Center, 2, "Text Speech Editor", () => new TextSpeechEditorView());
+      RegisterPanelQuickSwitchShortcut(4, PanelRegion.Center, 0, "Timeline", () => new TimelineView());
+      RegisterPanelQuickSwitchShortcut(5, PanelRegion.Center, 1, "Voice Synthesis", () => new VoiceSynthesisView());
+      RegisterPanelQuickSwitchShortcut(6, PanelRegion.Center, 2, "Text Speech Editor", () => new TextSpeechEditorView());
 
       // Right PanelHost: Ctrl+7-9
-      RegisterPanelQuickSwitchShortcut(7, Core.Panels.PanelRegion.Right, 0, "Effects Mixer", () => new EffectsMixerView());
-      RegisterPanelQuickSwitchShortcut(8, Core.Panels.PanelRegion.Right, 1, "Analyzer", () => new AnalyzerView());
-      RegisterPanelQuickSwitchShortcut(9, Core.Panels.PanelRegion.Right, 2, "Quality Control", () => new QualityControlView());
+      RegisterPanelQuickSwitchShortcut(7, PanelRegion.Right, 0, "Effects Mixer", () => new EffectsMixerView());
+      RegisterPanelQuickSwitchShortcut(8, PanelRegion.Right, 1, "Analyzer", () => new AnalyzerView());
+      RegisterPanelQuickSwitchShortcut(9, PanelRegion.Right, 2, "Quality Control", () => new QualityControlView());
     }
 
     /// <summary>
     /// Registers a panel quick-switch shortcut (IDEA 1).
     /// </summary>
-    private void RegisterPanelQuickSwitchShortcut(int number, Core.Panels.PanelRegion region, int _, string panelName, Func<UserControl> panelFactory)
+    private void RegisterPanelQuickSwitchShortcut(int number, PanelRegion region, int _, string panelName, Func<UserControl> panelFactory)
     {
       VirtualKey key = number switch
       {
@@ -1240,15 +1265,15 @@ namespace VoiceStudio.App
     /// <summary>
     /// Switches to a panel and shows visual feedback (IDEA 1).
     /// </summary>
-    private void SwitchToPanel(Core.Panels.PanelRegion region, string panelName, Func<UserControl> panelFactory)
+    private void SwitchToPanel(PanelRegion region, string panelName, Func<UserControl> panelFactory)
     {
       // Get the target PanelHost
       Controls.PanelHost? targetHost = region switch
       {
-        Core.Panels.PanelRegion.Left => FindNameOnContent("LeftPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Center => FindNameOnContent("CenterPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Right => FindNameOnContent("RightPanelHost") as Controls.PanelHost,
-        Core.Panels.PanelRegion.Bottom => FindNameOnContent("BottomPanelHost") as Controls.PanelHost,
+        PanelRegion.Left => FindNameOnContent("LeftPanelHost") as Controls.PanelHost,
+        PanelRegion.Center => FindNameOnContent("CenterPanelHost") as Controls.PanelHost,
+        PanelRegion.Right => FindNameOnContent("RightPanelHost") as Controls.PanelHost,
+        PanelRegion.Bottom => FindNameOnContent("BottomPanelHost") as Controls.PanelHost,
         _ => null
       };
 
@@ -1271,7 +1296,7 @@ namespace VoiceStudio.App
     /// <summary>
     /// Shows the panel quick-switch visual indicator (IDEA 1).
     /// </summary>
-    private void ShowPanelQuickSwitchIndicator(string panelName, Core.Panels.PanelRegion region, Controls.PanelHost targetHost)
+    private void ShowPanelQuickSwitchIndicator(string panelName, PanelRegion region, Controls.PanelHost targetHost)
     {
       // Initialize popup if needed
       if (_panelQuickSwitchPopup == null)
@@ -1538,10 +1563,10 @@ namespace VoiceStudio.App
               await mixerView.ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
             }
           }
-          catch
-          {
-            // Mixer save is optional, continue with project save
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MainWindow.SaveProject");
+      }
         }
       }
     }
@@ -1835,10 +1860,10 @@ namespace VoiceStudio.App
       var item = new MenuBarItem { Title = "AI" };
       item.Items.Add(CreateMenuItem(
           "AI Mixing & Mastering",
-          () => SwitchToPanel(Core.Panels.PanelRegion.Right, "AI Mixing & Mastering", () => new AIMixingMasteringView())));
+          () => SwitchToPanel(PanelRegion.Right, "AI Mixing & Mastering", () => new AIMixingMasteringView())));
       item.Items.Add(CreateMenuItem(
           "Ensemble Synthesis",
-          () => SwitchToPanel(Core.Panels.PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView())));
+          () => SwitchToPanel(PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView())));
       return item;
     }
 

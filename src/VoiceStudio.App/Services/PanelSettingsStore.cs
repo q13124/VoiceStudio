@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -94,10 +95,10 @@ namespace VoiceStudio.App.Services
             }
           }
         }
-        catch
-        {
-          // If loading fails, start with empty settings
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "PanelSettingsStore.LoadSettings");
+      }
       }
     }
 
@@ -108,9 +109,9 @@ namespace VoiceStudio.App.Services
         var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(_settingsPath, json);
       }
-      catch
+      catch (Exception ex)
       {
-        // If saving fails, continue without persistence
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "PanelSettingsStore.SaveSettings");
       }
     }
   }

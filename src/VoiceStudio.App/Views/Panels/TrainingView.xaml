@@ -6,7 +6,7 @@
   <UserControl.Resources>
     <converters:NumberFormatConverter x:Key="PercentFormatConverter" Format="P0" />
   </UserControl.Resources>
-  <Grid ColumnSpacing="12" RowSpacing="12" Padding="12">
+  <Grid ColumnSpacing="12" RowSpacing="12" Padding="12" AutomationProperties.AutomationId="TrainingView_Root">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="2*" />
       <ColumnDefinition Width="3*" />

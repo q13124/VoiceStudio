@@ -17,6 +17,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -699,13 +700,9 @@ namespace VoiceStudio.App.ViewModels
                 cancellationToken
             );
           }
-          catch (OperationCanceledException)
+          catch (Exception ex)
           {
-            // Ignore cancellation when canceling
-          }
-          catch
-          {
-            // Ignore errors when canceling
+            ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "VoiceCloningWizardViewModel.CancelWizardAsync");
           }
         }
 

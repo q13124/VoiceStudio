@@ -12,7 +12,7 @@
     <converters:NumberFormatConverter x:Key="F1FormatConverter" Format="F1" />
     <converters:NumberFormatConverter x:Key="F0FormatConverter" Format="F0" />
   </UserControl.Resources>
-  <Grid>
+  <Grid AutomationProperties.AutomationId="QualityControlView_Root">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />

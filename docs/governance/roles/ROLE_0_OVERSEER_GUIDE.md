@@ -248,6 +248,30 @@ When reviewing a proof submission:
 
 ---
 
+## 5.5. Audit Logging Requirements
+
+All file changes must be logged via the audit system for traceability:
+
+1. **Use `scripts/patch_wrapper.py` for AI-assisted changes**
+   ```bash
+   python scripts/patch_wrapper.py --role "Role 0" --task "VS-XXXX" --files <files>
+   ```
+
+2. **Ensure TASK_ID environment variable is set** when making changes related to a Quality Ledger task
+
+3. **Verify audit entries exist before committing** (pre-commit hook will check)
+
+4. **Review daily audit summary** for your role's subsystems:
+   - `.audit/log-YYYY-MM-DD.md` for daily summary
+   - `.audit/tasks/VS-XXXX.json` for task-specific history
+
+5. **As Overseer, verify audit trail completeness** during closure protocol:
+   - Check that completed tasks have corresponding audit entries
+   - Ensure proof artifacts are cross-referenced in audit log
+   - Validate that gate transitions are logged
+
+---
+
 ## 6. Tooling and Resources
 
 ### Required Tools

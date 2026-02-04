@@ -25,7 +25,7 @@ namespace VoiceStudio.App.Views.Panels
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
     private DragDropVisualFeedbackService? _dragDropService;
-    private Core.Models.ScriptSegment? _draggedSegment;
+    private ScriptSegmentModel? _draggedSegment;
 
     public ScriptEditorView()
     {

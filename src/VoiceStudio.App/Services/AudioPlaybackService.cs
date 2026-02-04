@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -269,9 +270,9 @@ namespace VoiceStudio.App.Services
         _audioFileReader?.Dispose();
         _waveStream?.Dispose();
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore disposal errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "AudioPlaybackService.StopInternal");
       }
 
       _waveOut = null;

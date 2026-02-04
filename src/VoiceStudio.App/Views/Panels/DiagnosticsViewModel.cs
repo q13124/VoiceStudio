@@ -14,6 +14,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.ViewModels;
 using Microsoft.UI.Dispatching;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -115,6 +116,16 @@ namespace VoiceStudio.App.Views.Panels
 
     [ObservableProperty]
     private string selectedErrorLevel = "All"; // All, Error, Warning, Info
+
+    // Correlation ID tracking
+    [ObservableProperty]
+    private string? currentCorrelationId;
+
+    [ObservableProperty]
+    private string correlationIdFilter = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<CorrelationIdEntry> recentCorrelationIds = new();
 
     [ObservableProperty]
     private int errorLogCount;
@@ -275,6 +286,11 @@ namespace VoiceStudio.App.Views.Panels
       RefreshFeatureFlagsCommand = new RelayCommand(LoadFeatureFlags);
       RefreshEnvironmentCommand = new RelayCommand(LoadEnvironmentInfo);
       ToggleFeatureFlagCommand = new RelayCommand<string>(ToggleFeatureFlag);
+      
+      // Correlation ID commands
+      FilterByCorrelationIdCommand = new RelayCommand<string>(FilterByCorrelationId);
+      ClearCorrelationIdFilterCommand = new RelayCommand(ClearCorrelationIdFilter);
+      CopyCorrelationIdCommand = new RelayCommand<string>(CopyCorrelationIdToClipboard);
 
       // Get multi-select service
       _multiSelectService = ServiceProvider.GetMultiSelectService();
@@ -349,9 +365,9 @@ namespace VoiceStudio.App.Views.Panels
           QueuedOperationsCount = queueService.QueueCount;
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Services may not be available
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "DiagnosticsViewModel.Unknown");
       }
     }
 
@@ -377,6 +393,11 @@ namespace VoiceStudio.App.Views.Panels
     public IRelayCommand ClearErrorLogSelectionCommand { get; }
     public IRelayCommand DeleteSelectedErrorLogsCommand { get; }
     public IAsyncRelayCommand ExportSelectedErrorLogsCommand { get; }
+    
+    // Correlation ID commands
+    public IRelayCommand<string> FilterByCorrelationIdCommand { get; }
+    public IRelayCommand ClearCorrelationIdFilterCommand { get; }
+    public IRelayCommand<string> CopyCorrelationIdCommand { get; }
 
     partial void OnAutoRefreshTelemetryChanged(bool value)
     {
@@ -414,10 +435,10 @@ namespace VoiceStudio.App.Views.Panels
           // Also update memory metrics (doesn't require backend call)
           UpdateMemoryMetrics();
         }
-        catch
-        {
-          // Silently fail - telemetry refresh should not break the UI
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "DiagnosticsViewModel.RefreshTelemetryLoop");
+      }
         await Task.Delay(2000, cancellationToken); // Refresh every 2 seconds
       }
     }
@@ -927,6 +948,91 @@ namespace VoiceStudio.App.Views.Panels
       // This would filter the displayed error logs
       // For now, we'll just update counts
       UpdateErrorCounts();
+    }
+
+    private void FilterByCorrelationId(string? correlationId)
+    {
+      if (string.IsNullOrWhiteSpace(correlationId))
+        return;
+      
+      CorrelationIdFilter = correlationId;
+      CurrentCorrelationId = correlationId;
+      
+      // Add to recent correlation IDs
+      var existing = RecentCorrelationIds.FirstOrDefault(c => c.CorrelationId == correlationId);
+      if (existing != null)
+      {
+        RecentCorrelationIds.Remove(existing);
+      }
+      RecentCorrelationIds.Insert(0, new CorrelationIdEntry 
+      { 
+        CorrelationId = correlationId, 
+        Timestamp = DateTime.Now,
+        Source = "Manual Filter"
+      });
+      
+      // Keep only last 20 correlation IDs
+      while (RecentCorrelationIds.Count > 20)
+      {
+        RecentCorrelationIds.RemoveAt(RecentCorrelationIds.Count - 1);
+      }
+      
+      // Apply filter to logs
+      ApplyCorrelationIdFilter();
+      
+      _toastNotificationService?.ShowSuccess(
+          "Correlation ID Filter",
+          $"Filtering logs by: {correlationId[..Math.Min(8, correlationId.Length)]}...");
+    }
+    
+    private void ClearCorrelationIdFilter()
+    {
+      CorrelationIdFilter = string.Empty;
+      CurrentCorrelationId = null;
+      ApplyFilters();
+    }
+    
+    private void ApplyCorrelationIdFilter()
+    {
+      // Filter error logs by correlation ID
+      if (string.IsNullOrEmpty(CorrelationIdFilter))
+      {
+        ApplyFilters();
+        return;
+      }
+      
+      // Count matching logs
+      var matchingCount = ErrorLogs.Count(e => 
+        e.Metadata?.ContainsKey("correlation_id") == true && 
+        e.Metadata["correlation_id"]?.ToString() == CorrelationIdFilter);
+      
+      AddLog("INFO", $"Found {matchingCount} log entries matching correlation ID: {CorrelationIdFilter}");
+    }
+    
+    private void CopyCorrelationIdToClipboard(string? correlationId)
+    {
+      if (string.IsNullOrWhiteSpace(correlationId))
+        return;
+      
+      try
+      {
+        var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        dataPackage.SetText(correlationId);
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+        
+        _toastNotificationService?.ShowSuccess(
+            "Copied",
+            "Correlation ID copied to clipboard");
+      }
+      catch (Exception ex)
+      {
+        AddLog("WARNING", $"Failed to copy to clipboard: {ex.Message}");
+      }
+    }
+    
+    partial void OnCorrelationIdFilterChanged(string value)
+    {
+      ApplyCorrelationIdFilter();
     }
 
     private void UpdateErrorCounts()
@@ -1592,5 +1698,23 @@ namespace VoiceStudio.App.Views.Panels
       "info" => "#2196F3",
       _ => "#9E9E9E"
     };
+  }
+
+  /// <summary>
+  /// Entry for tracking correlation IDs.
+  /// Used for distributed tracing and log correlation.
+  /// </summary>
+  public class CorrelationIdEntry
+  {
+    public string CorrelationId { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public string Source { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    
+    public string ShortId => CorrelationId.Length > 8 
+        ? $"{CorrelationId[..8]}..." 
+        : CorrelationId;
+    
+    public string FormattedEntry => $"[{Timestamp:HH:mm:ss}] {ShortId} ({Source})";
   }
 }

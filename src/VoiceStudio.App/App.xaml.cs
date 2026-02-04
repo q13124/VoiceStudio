@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App
 {
@@ -136,7 +137,7 @@ namespace VoiceStudio.App
           }
           System.IO.File.WriteAllText(latestLink, $"See: {logPath}");
         }
-        catch { /* Best effort */ }
+        catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Unknown"); }
 
         // Debug output
         Debug.WriteLine($"💥 Unhandled exception logged to: {logPath}");
@@ -187,10 +188,10 @@ namespace VoiceStudio.App
             var pluginManager = ServiceProvider.GetPluginManager();
             await pluginManager.LoadPluginsAsync();
           }
-          catch
-          {
-            // Silently fail - plugins are optional
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.OnLaunched");
+      }
         });
       }
 
@@ -215,10 +216,10 @@ namespace VoiceStudio.App
             var staleSteps = Path.Combine(crashDir, "ui_smoke_steps_latest.log");
             if (File.Exists(staleSteps)) File.Delete(staleSteps);
           }
-          catch
-          {
-            // Best effort
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Unknown");
+      }
 
           m_window = new MainWindow();
           MainWindowInstance = m_window;
@@ -252,9 +253,9 @@ namespace VoiceStudio.App
                 Directory.CreateDirectory(crashDir);
                 File.WriteAllText(Path.Combine(crashDir, "ui_smoke_exception.log"), ex.ToString());
               }
-              catch
+              catch (Exception logEx)
               {
-                // Best effort
+                ErrorLogger.LogWarning($"Best effort operation failed: {logEx.Message}", "App.UiSmoke");
               }
 
               result = new GateCUiSmokeResult
@@ -279,9 +280,9 @@ namespace VoiceStudio.App
             Directory.CreateDirectory(crashDir);
             File.WriteAllText(Path.Combine(crashDir, "ui_smoke_exception.log"), ex.ToString());
           }
-          catch
+          catch (Exception logEx)
           {
-            // Best effort
+            ErrorLogger.LogWarning($"Best effort operation failed: {logEx.Message}", "App.UiSmoke");
           }
 
           // Ensure the automation always gets a summary file, even if MainWindow cannot be created.
@@ -334,10 +335,10 @@ namespace VoiceStudio.App
           {
             Microsoft.UI.Xaml.Application.Current.Exit();
           }
-          catch
-          {
-            // Best effort shutdown; process exit will end the smoke run.
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Unknown");
+      }
         }
       }
 
@@ -433,9 +434,9 @@ namespace VoiceStudio.App
           return true;
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.HasCommandLineFlag");
       }
 
       return false;
@@ -518,9 +519,9 @@ namespace VoiceStudio.App
 
         File.WriteAllText(path, json, Encoding.UTF8);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.WriteUiSmokeDebugSnapshot");
       }
     }
 
@@ -548,9 +549,9 @@ namespace VoiceStudio.App
         this.DebugSettings.IsBindingTracingEnabled = true;
         this.DebugSettings.BindingFailed += OnBindingFailed;
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort: if the event isn't available on this platform/runtime, smoke will still run.
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.EnableBindingFailureLogging");
       }
     }
 
@@ -567,9 +568,9 @@ namespace VoiceStudio.App
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? GetCrashDir());
         File.WriteAllText(path, string.Empty);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.ClearBindingFailures");
       }
     }
 
@@ -591,9 +592,9 @@ namespace VoiceStudio.App
           File.AppendAllText(path, message + Environment.NewLine);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.OnBindingFailed");
       }
     }
 
@@ -635,10 +636,10 @@ namespace VoiceStudio.App
               Path.Combine(crashDir, "ui_smoke_exception.log"),
               $"UI smoke timed out after a panel switch. Step: {timedOutStep ?? "(unknown)"}{Environment.NewLine}See: ui_smoke_steps_latest.log");
           }
-          catch
-          {
-            // Best effort
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Task");
+      }
         }
 
         // Allow any async binding/visual tree work to flush.
@@ -680,9 +681,9 @@ namespace VoiceStudio.App
           Directory.CreateDirectory(crashDir);
           File.WriteAllText(Path.Combine(crashDir, "ui_smoke_exception.log"), ex.ToString());
         }
-        catch
+        catch (Exception logEx)
         {
-          // Best effort
+          ErrorLogger.LogWarning($"Best effort operation failed: {logEx.Message}", "App.UiSmokeResult");
         }
 
         return result with { ExitCode = 3 };
@@ -713,9 +714,9 @@ namespace VoiceStudio.App
 
         File.WriteAllText(summaryPath, json, Encoding.UTF8);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.WriteGateCUiSmokeSummary");
       }
     }
 

@@ -3,18 +3,19 @@ Pytest configuration and fixtures for VoiceStudio Quantum+ test suite.
 Provides shared fixtures and test utilities for all test modules.
 """
 
-import pytest
+# Standard path setup - MUST be first
 import sys
-import os
 from pathlib import Path
+
+# Add project root to path (single canonical location)
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+import pytest
+import os
 from typing import Generator, Any
 import logging
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "app"))
-sys.path.insert(0, str(project_root / "backend"))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

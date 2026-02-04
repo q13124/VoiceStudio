@@ -51,8 +51,8 @@ namespace VoiceStudio.App.Views.Panels
       // Setup tab selection changed handler
       DiagnosticsTabView.SelectionChanged += TabView_SelectionChanged;
 
-      // Initialize Errors tab as visible (default selected)
-      ErrorsTabGrid.Visibility = Visibility.Visible;
+      // Initialize System Info tab as visible (default selected)
+      SystemInfoGrid.Visibility = Visibility.Visible;
     }
 
     private void TabView_SelectionChanged(object? sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
@@ -60,7 +60,14 @@ namespace VoiceStudio.App.Views.Panels
       // Show/hide tab content based on selection
       if (DiagnosticsTabView?.SelectedItem is TabViewItem selectedTab)
       {
-        // Hide all tab grids
+        // Hide all content grids
+        SystemInfoGrid.Visibility = Visibility.Collapsed;
+        LogsGrid.Visibility = Visibility.Collapsed;
+        NetworkGrid.Visibility = Visibility.Collapsed;
+        EnginesGrid.Visibility = Visibility.Collapsed;
+        EnvironmentGrid.Visibility = Visibility.Collapsed;
+
+        // Legacy grids
         ErrorsTabGrid.Visibility = Visibility.Collapsed;
         AuditLogTabGrid.Visibility = Visibility.Collapsed;
         AnalyticsTabGrid.Visibility = Visibility.Collapsed;
@@ -71,12 +78,26 @@ namespace VoiceStudio.App.Views.Panels
         // Show selected tab grid based on header
         switch (selectedTab.Header?.ToString())
         {
+          case "System Info":
+            SystemInfoGrid.Visibility = Visibility.Visible;
+            break;
+          case "Logs":
+            LogsGrid.Visibility = Visibility.Visible;
+            break;
+          case "Network":
+            NetworkGrid.Visibility = Visibility.Visible;
+            break;
+          case "Engines":
+            EnginesGrid.Visibility = Visibility.Visible;
+            break;
+          case "Environment":
+            EnvironmentGrid.Visibility = Visibility.Visible;
+            break;
           case "Errors":
             ErrorsTabGrid.Visibility = Visibility.Visible;
             break;
           case "Audit Log":
             AuditLogTabGrid.Visibility = Visibility.Visible;
-            // Load audit entries when tab is selected
             _ = ViewModel.LoadAuditEntriesAsync();
             break;
           case "Analytics":
@@ -87,9 +108,6 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "Feature Flags":
             FeatureFlagsTabGrid.Visibility = Visibility.Visible;
-            break;
-          case "Environment":
-            EnvironmentTabGrid.Visibility = Visibility.Visible;
             break;
         }
       }

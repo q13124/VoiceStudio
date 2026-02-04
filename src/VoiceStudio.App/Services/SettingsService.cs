@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -82,9 +83,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Backend unavailable, fall back to local storage
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.Task");
       }
 
       // Fall back to local storage
@@ -118,9 +119,9 @@ namespace VoiceStudio.App.Services
           return categorySettings;
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Backend unavailable, try local storage
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.Task");
       }
 
       // Fall back to local storage
@@ -144,9 +145,9 @@ namespace VoiceStudio.App.Services
         // Save to backend
         await _backendClient.PostAsync<SettingsData, SettingsData>("/api/settings", settings, cancellationToken).ConfigureAwait(false);
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Backend unavailable, but continue to save locally
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.SaveSettingsAsync");
       }
 
       // Always save to local storage as backup
@@ -195,9 +196,9 @@ namespace VoiceStudio.App.Services
           return updated;
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Backend unavailable, update local storage only
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.Task");
       }
 
       // Update local storage
@@ -236,9 +237,9 @@ namespace VoiceStudio.App.Services
           return reset;
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Backend unavailable, reset local storage only
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.Task");
       }
 
       // Reset local storage
@@ -441,9 +442,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // If loading fails, return defaults
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.Unknown");
       }
 
       // Return defaults if loading fails
@@ -462,9 +463,9 @@ namespace VoiceStudio.App.Services
 
         container.Values[LocalSettingsKey] = JsonSerializer.Serialize(settings, _jsonOptions);
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // Log error but don't fail - settings persistence is best-effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SettingsService.SaveToLocalStorageAsync");
       }
 
       return Task.CompletedTask;

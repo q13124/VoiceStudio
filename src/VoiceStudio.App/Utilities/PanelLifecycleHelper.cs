@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Utilities
 {
@@ -101,9 +102,9 @@ namespace VoiceStudio.App.Utilities
         if (task != null)
           await task;
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during restore
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "PanelLifecycleHelper.InvokeRestoreAsync");
       }
     }
 
@@ -128,9 +129,9 @@ namespace VoiceStudio.App.Utilities
         if (task != null)
           await task;
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during lifecycle method invocation
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "PanelLifecycleHelper.InvokeLifecycleMethodAsync");
       }
     }
 

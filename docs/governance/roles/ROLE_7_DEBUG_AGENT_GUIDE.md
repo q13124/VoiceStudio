@@ -204,6 +204,50 @@ python -m tools.overseer.cli.main issues trace <correlation-id>
 
 **See**: [CROSS_ROLE_ESCALATION_MATRIX.md](../CROSS_ROLE_ESCALATION_MATRIX.md) for full decision tree.
 
+### Automatic Error Routing from Audit System
+
+**As of 2026-02-04**: The Debug Agent receives automatic notifications when errors are logged to the audit system.
+
+**How it works**:
+
+1. **AuditLogger** logs error-severity events (runtime exceptions, build errors, XAML failures)
+2. **AuditIssueBridge** automatically creates issues in IssueStore for qualifying errors
+3. **DebugRoleNotifier** routes high-severity issues (CRITICAL, HIGH) to Debug Agent via HandoffQueue
+4. **Context Manager** includes audit data in Debug Agent's context allocation
+
+**Automatic routing categories**:
+
+| Audit Event Type | Category | Auto-Route to Debug? |
+|------------------|----------|----------------------|
+| `runtime_exception` | EXCEPTION | Yes (if HIGH/CRITICAL) |
+| `build_error` | BUILD | Yes (if HIGH/CRITICAL) |
+| `xaml_compile_failure` | UI | Yes |
+| `compatibility_drift` | RUNTIME | Yes (if WARNING+) |
+| `test_failure` | DEBUG | Yes |
+
+**Commands for checking auto-routed issues**:
+
+```bash
+# Check handoff queue for pending Debug Agent issues
+python -m tools.overseer.cli.main debug triage --limit 20
+
+# View recent audit entries
+python scripts/context_manager_health.py --json
+
+# Query issues auto-created from audit
+python -m tools.overseer.cli.main issues query --category ERROR,EXCEPTION,DEBUG
+```
+
+**Audit context in allocations**:
+
+The Debug Agent receives audit entries in its context allocation with high priority (weight: 0.95). This includes:
+- Recent error entries (last 24 hours)
+- Build failures with error codes
+- Exception stack traces
+- XAML compilation issues
+
+**See**: [`app/core/audit/issue_bridge.py`](../../../app/core/audit/issue_bridge.py), [`app/core/audit/debug_notifier.py`](../../../app/core/audit/debug_notifier.py)
+
 ---
 
 ## 4. Operational Workflows

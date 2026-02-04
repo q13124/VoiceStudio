@@ -16,7 +16,7 @@ namespace VoiceStudio.App.Views.Panels
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
     private DragDropVisualFeedbackService? _dragDropService;
-    private Core.Models.TranscriptionResponse? _draggedTranscription;
+    private TranscriptionResponse? _draggedTranscription;
 
     public TranscribeView()
     {
@@ -193,7 +193,7 @@ namespace VoiceStudio.App.Views.Panels
         {
           case "edit":
             // Select the transcription for editing
-            ViewModel.SelectedTranscription = (VoiceStudio.Core.Models.TranscriptionResponse)transcription;
+            ViewModel.SelectedTranscription = (TranscriptionResponse)transcription;
             _toastService?.ShowToast(ToastType.Info, "Edit Transcription", "Transcription selected for editing");
             break;
           case "export":
@@ -215,7 +215,7 @@ namespace VoiceStudio.App.Views.Panels
               var result = await dialog.ShowAsync();
               if (result == ContentDialogResult.Primary)
               {
-                var transcriptionToDelete = (VoiceStudio.Core.Models.TranscriptionResponse)transcription;
+                var transcriptionToDelete = (TranscriptionResponse)transcription;
                 var transcriptionIndex = ViewModel.Transcriptions.IndexOf(transcriptionToDelete);
 
                 await ViewModel.DeleteTranscriptionCommand.ExecuteAsync(transcriptionToDelete);
@@ -245,7 +245,7 @@ namespace VoiceStudio.App.Views.Panels
     // Drag-and-drop handlers for transcription item reordering
     private void Transcription_DragStarting(UIElement sender, DragStartingEventArgs e)
     {
-      if (sender is ListViewItem listViewItem && listViewItem.DataContext is Core.Models.TranscriptionResponse transcription)
+      if (sender is ListViewItem listViewItem && listViewItem.DataContext is TranscriptionResponse transcription)
       {
         _draggedTranscription = transcription;
 
@@ -298,7 +298,7 @@ namespace VoiceStudio.App.Views.Panels
         _dragDropService.Cleanup();
 
         // Get target transcription
-        if (listViewItem.DataContext is Core.Models.TranscriptionResponse targetTranscription)
+        if (listViewItem.DataContext is TranscriptionResponse targetTranscription)
         {
           var draggedTranscription = _draggedTranscription;
           var draggedIndex = ViewModel.Transcriptions.IndexOf(draggedTranscription);

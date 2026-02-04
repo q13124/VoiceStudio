@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VoiceStudio.App.Logging;
 // using VoiceStudio.App.Services.Persistence;  // Commented - namespace missing
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
@@ -157,10 +158,10 @@ namespace VoiceStudio.App.Services.Stores
               project = await _projectRepository.OpenAsync(localMatch.ProjectId);
             }
           }
-          catch (Exception)
-          {
-            // Fallback to backend
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ProjectStore.LoadProjectAsync");
+      }
         }
 
         project ??= await _backendClient.GetProjectAsync(projectId);

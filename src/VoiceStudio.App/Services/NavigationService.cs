@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -135,9 +136,9 @@ namespace VoiceStudio.App.Services
           // For now, we'll start fresh on app restart
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // If loading fails, start fresh
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "NavigationService.LoadNavigationState");
       }
     }
 
@@ -155,9 +156,9 @@ namespace VoiceStudio.App.Services
 
         localSettings.Values[NavigationStateKey] = composite;
       }
-      catch
+      catch (Exception ex)
       {
-        // If saving fails, continue without persistence
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "NavigationService.SaveNavigationState");
       }
     }
   }

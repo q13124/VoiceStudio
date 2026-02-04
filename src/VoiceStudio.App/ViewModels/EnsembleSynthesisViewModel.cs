@@ -11,6 +11,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.Core.Models;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -548,10 +549,10 @@ namespace VoiceStudio.App.ViewModels
           {
             throw; // Re-throw cancellation to abort batch deletion
           }
-          catch
-          {
-            // Continue even if one deletion fails
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "EnsembleSynthesisViewModel.DeleteSelectedJobsAsync");
+      }
         }
 
         // Clear selection after deletion

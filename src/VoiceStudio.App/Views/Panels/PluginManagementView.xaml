@@ -13,7 +13,7 @@
             FalseBrush="{StaticResource VSQ.Warn.Brush}"
             NullBrush="{StaticResource VSQ.Text.SecondaryBrush}" />
     </UserControl.Resources>
-    <Grid>
+    <Grid AutomationProperties.AutomationId="PluginManagementView_Root">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Windows.System;
 using Windows.UI;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Controls
 {
@@ -275,9 +276,9 @@ namespace VoiceStudio.App.Controls
         // Restore selection
         document.Selection.SetRange(selectionStart, selectionEnd);
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during syntax highlighting
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SSMLEditorControl.Unknown");
       }
       finally
       {
@@ -313,9 +314,9 @@ namespace VoiceStudio.App.Controls
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors during error highlighting
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "SSMLEditorControl.HighlightErrors");
       }
     }
 

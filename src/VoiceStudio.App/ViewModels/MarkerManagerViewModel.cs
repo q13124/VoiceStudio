@@ -10,6 +10,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.Core.Models;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -538,10 +539,10 @@ namespace VoiceStudio.App.ViewModels
               deletedCount++;
             }
           }
-          catch
-          {
-            // Continue even if one deletion fails
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "MarkerManagerViewModel.DeleteSelectedMarkersAsync");
+      }
         }
 
         // Clear selection after deletion

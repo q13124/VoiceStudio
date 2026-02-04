@@ -1,18 +1,50 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.TimelineView"
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:controls="using:VoiceStudio.App.Controls">
-  <Grid>
-    <!-- Minimal placeholders to satisfy code-behind references during Phase 0 -->
-    <ScrollViewer x:Name="TimelineScrollViewer" />
-    <ListView x:Name="TracksListView" />
-    <Canvas x:Name="TimelineScrubCanvas" Background="Transparent" />
-    <Canvas x:Name="PlayheadCanvas">
-      <Line x:Name="PlayheadLine" />
-    </Canvas>
-    <Canvas x:Name="DragDropCanvas" IsHitTestVisible="False" Background="Transparent" />
-    <controls:SpectrogramControl x:Name="SpectrogramVisualizer" />
-    <controls:WaveformControl x:Name="WaveformVisualizer" />
-    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />
-  </Grid>
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls">
+
+    <Grid x:Name="TimelineView_Root" 
+          AutomationProperties.AutomationId="TimelineView_Root"
+          Background="{StaticResource VSQ.Panel.Background}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="160" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" 
+                Padding="{StaticResource VSQ.Spacing.Medium}">
+            <TextBlock Text="Timeline" 
+                       FontSize="{StaticResource VSQ.FontSize.Title}" 
+                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+        </Border>
+
+        <!-- Timeline Area -->
+        <Grid Grid.Row="1">
+            <ScrollViewer x:Name="TimelineScrollViewer" />
+            <ListView x:Name="TracksListView" ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}" />
+            <Canvas x:Name="TimelineScrubCanvas" Background="Transparent" 
+                    PointerPressed="TimelineScrubCanvas_PointerPressed"
+                    PointerMoved="TimelineScrubCanvas_PointerMoved"
+                    PointerReleased="TimelineScrubCanvas_PointerReleased" />
+            <Canvas x:Name="PlayheadCanvas">
+                <Line x:Name="PlayheadLine" Stroke="{StaticResource VSQ.Accent.CyanBrush}" StrokeThickness="2" />
+            </Canvas>
+            <Canvas x:Name="DragDropCanvas" IsHitTestVisible="False" Background="Transparent" />
+        </Grid>
+
+        <!-- Visualizer Row -->
+        <Grid Grid.Row="2" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}">
+            <controls:SpectrogramControl x:Name="SpectrogramVisualizer" />
+            <controls:WaveformControl x:Name="WaveformVisualizer" />
+        </Grid>
+
+        <!-- Help Overlay -->
+        <controls:HelpOverlay x:Name="HelpOverlay" 
+                              Grid.RowSpan="3"
+                              IsVisible="False" 
+                              Visibility="Collapsed" />
+    </Grid>
 </UserControl>

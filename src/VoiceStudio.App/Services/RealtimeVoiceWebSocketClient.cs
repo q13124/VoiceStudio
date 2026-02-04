@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -112,10 +113,10 @@ namespace VoiceStudio.App.Services
         {
           await _webSocketService.UnsubscribeAsync("realtime_voice");
         }
-        catch
-        {
-          // Ignore errors during unsubscribe
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealtimeVoiceWebSocketClient.DisconnectAsync");
+      }
         _isSubscribed = false;
       }
     }
@@ -175,9 +176,9 @@ namespace VoiceStudio.App.Services
           AudioDataReceived?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealtimeVoiceWebSocketClient.HandleAudioData");
       }
     }
 
@@ -191,9 +192,9 @@ namespace VoiceStudio.App.Services
           StatusChanged?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealtimeVoiceWebSocketClient.HandleStatusUpdate");
       }
     }
 
@@ -207,9 +208,9 @@ namespace VoiceStudio.App.Services
           QualityMetricsUpdated?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealtimeVoiceWebSocketClient.HandleQualityMetrics");
       }
     }
 
@@ -223,9 +224,9 @@ namespace VoiceStudio.App.Services
           LatencyInfoReceived?.Invoke(this, update);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore deserialization errors
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealtimeVoiceWebSocketClient.HandleLatencyInfo");
       }
     }
 

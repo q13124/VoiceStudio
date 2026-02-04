@@ -5,6 +5,7 @@
     "brief": 0.9,
     "ledger": 0.85,
     "issues": 0.82,
+    "audit": 0.75,
     "rules": 0.6,
     "memory": 0.5,
     "telemetry": 0.4,
@@ -21,6 +22,7 @@
     "brief_chars": 3000,
     "ledger_chars": 2500,
     "issues_chars": 2500,
+    "audit_chars": 2000,
     "rules_chars": 2000,
     "memory_chars": 2000,
     "telemetry_chars": 1000,
@@ -80,5 +82,11 @@
     "severity_filter": ["critical", "high"],
     "time_window_hours": 24,
     "include_recommendations": true
+  },
+  "audit": {
+    "enabled": true,
+    "max_entries": 20,
+    "severity_filter": ["error", "warning", "critical"],
+    "hours_lookback": 24
   }
 }

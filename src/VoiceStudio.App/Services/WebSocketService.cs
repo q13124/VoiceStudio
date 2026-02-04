@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using VoiceStudio.Core.Services;
 using CoreWebSocketState = VoiceStudio.Core.Services.WebSocketState;
 using NetWebSocketState = System.Net.WebSockets.WebSocketState;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -118,10 +119,10 @@ namespace VoiceStudio.App.Services
           {
             await _receiveTask;
           }
-          catch
-          {
-            // Ignore errors during cleanup
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "WebSocketService.DisconnectAsync");
+      }
         }
 
         _state = CoreWebSocketState.Disconnected;
@@ -236,12 +237,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch (OperationCanceledException)
-      {
-        // Expected when disconnecting
-      }
       catch (Exception ex)
       {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "WebSocketService.ReceiveMessagesAsync");
         _state = CoreWebSocketState.Error;
         Error?.Invoke(this, ex);
       }

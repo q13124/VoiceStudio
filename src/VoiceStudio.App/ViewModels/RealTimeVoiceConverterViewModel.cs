@@ -11,6 +11,7 @@ using VoiceStudio.Core.Services;
 using VoiceStudio.App.Services;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -287,10 +288,10 @@ namespace VoiceStudio.App.ViewModels
             return;
           }
         }
-        catch
-        {
-          // Fallback: calculate quality metrics from latency and session performance
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RealTimeVoiceConverterViewModel.LoadQualityMetricsAsync");
+      }
 
         // Fallback calculation based on latency and session status
         var calculatedQuality = CalculateSimulatedQuality();

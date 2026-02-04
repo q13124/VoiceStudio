@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml.Data;
 using System;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Converters
 {
@@ -32,9 +33,9 @@ namespace VoiceStudio.App.Converters
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Swallow and fall through to default
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "IsSelectedConverter.Unknown");
       }
 
       return false;

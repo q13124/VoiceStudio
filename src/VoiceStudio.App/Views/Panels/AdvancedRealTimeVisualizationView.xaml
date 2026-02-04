@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:VoiceStudio.App.Controls">
   <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
-  <Grid>
+  <Grid AutomationProperties.AutomationId="AdvancedRealTimeVisualizationView_Root">
     <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed"/>
     <StackPanel Spacing="12" Padding="16">
       <TextBlock Text="Advanced Real-Time Visualization"

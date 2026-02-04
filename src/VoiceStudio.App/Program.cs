@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App
 {
@@ -64,9 +65,9 @@ namespace VoiceStudio.App
           Environment.SetEnvironmentVariable("VOICE_STUDIO_SMOKE_EXIT", "1");
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.HasFlag");
       }
     }
 
@@ -139,10 +140,10 @@ namespace VoiceStudio.App
             var payload = ex != null ? ex.ToString() : $"Unhandled: {evt.ExceptionObject}";
             WriteTextBestEffort(crashDir, "appdomain_unhandled", payload);
           }
-          catch
-          {
-            // Best effort
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.RegisterEarlyUnhandledHandlers");
+      }
         };
 
         TaskScheduler.UnobservedTaskException += (sender, evt) =>
@@ -152,15 +153,15 @@ namespace VoiceStudio.App
             WriteTextBestEffort(crashDir, "unobserved_task", evt.Exception.ToString());
             evt.SetObserved();
           }
-          catch
-          {
-            // Best effort
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.RegisterEarlyUnhandledHandlers");
+      }
         };
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.RegisterEarlyUnhandledHandlers");
       }
     }
 
@@ -187,9 +188,9 @@ namespace VoiceStudio.App
 
         File.WriteAllText(Path.Combine(crashDir, "boot_latest.json"), json);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort; this must never prevent startup.
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.WriteBootMarker");
       }
     }
 
@@ -219,9 +220,9 @@ namespace VoiceStudio.App
           Path.Combine(crashDir, "latest_startup_exception.log"),
           $"See: {logPath}");
       }
-      catch
+      catch (Exception logEx)
       {
-        // Best effort; nothing else to do.
+        ErrorLogger.LogWarning($"Best effort operation failed: {logEx.Message}", "Program.WriteStartupException");
       }
     }
 
@@ -234,9 +235,9 @@ namespace VoiceStudio.App
         var logPath = Path.Combine(crashDir, $"{prefix}_{timestamp}.log");
         File.WriteAllText(logPath, payload);
       }
-      catch
+      catch (Exception ex)
       {
-        // Best effort
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Program.WriteTextBestEffort");
       }
     }
   }

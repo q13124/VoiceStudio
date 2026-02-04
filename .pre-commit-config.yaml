@@ -38,6 +38,23 @@ repos:
         stages: [pre-commit]
         files: ^(global\.json|requirements.*\.txt|version_lock\.json|Directory\.Build\.props|config/compatibility_matrix\.yml)$
 
+      - id: no-empty-catch
+        name: No Empty Catch Blocks
+        entry: python scripts/check_empty_catches.py
+        language: system
+        types_or: [csharp, python]
+        pass_filenames: true
+        stages: [pre-commit]
+
+      - id: xaml-safety-check
+        name: XAML Safety Check
+        entry: python scripts/lint_xaml.py
+        language: system
+        types: [xml]
+        files: \.xaml$
+        pass_filenames: true
+        stages: [pre-commit]
+
   # Python linters (ruff)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.9

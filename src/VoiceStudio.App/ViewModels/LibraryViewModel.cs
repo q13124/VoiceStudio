@@ -14,6 +14,7 @@ using VoiceStudio.Core.Models;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -605,10 +606,10 @@ namespace VoiceStudio.App.ViewModels
           {
             throw; // Re-throw cancellation
           }
-          catch
-          {
-            // Continue even if deletion fails for one asset
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "LibraryViewModel.DeleteSelectedAssetsAsync");
+      }
         }
 
         // Register batch undo action before reload

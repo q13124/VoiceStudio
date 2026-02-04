@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -334,9 +335,9 @@ namespace VoiceStudio.App.Views.Panels
           return TimeSpan.FromSeconds(seconds);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Fallback: return zero if API fails
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "AdvancedRealTimeVisualizationViewModel.Task");
       }
 
       return TimeSpan.Zero;

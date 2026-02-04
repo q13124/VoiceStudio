@@ -281,6 +281,29 @@ When reviewing UI changes:
 
 ---
 
+## 5.5. Audit Logging Requirements
+
+All file changes must be logged via the audit system for traceability:
+
+1. **Use `scripts/patch_wrapper.py` for AI-assisted changes**
+   ```bash
+   python scripts/patch_wrapper.py --role "Role 3" --task "VS-XXXX" --files <files>
+   ```
+
+2. **Ensure TASK_ID environment variable is set** when making changes related to a Quality Ledger task
+
+3. **Verify audit entries exist before committing** (pre-commit hook will check)
+
+4. **XAML failures are automatically logged** by the XAML compiler wrapper:
+   - Check `.audit/` for XAML failure entries after failed builds
+   - Use `scripts/xaml_audit_log.py` for manual logging if needed
+
+5. **Review daily audit summary** for UI-related subsystems:
+   - `.audit/log-YYYY-MM-DD.md` for daily summary
+   - Check `UI.Panels`, `UI.ViewModels`, `UI.XAML` subsystem entries
+
+---
+
 ## 6. Tooling and Resources
 
 ### Required Tools

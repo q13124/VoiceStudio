@@ -268,6 +268,30 @@ When diagnosing build issues:
 
 ---
 
+## 5.5. Audit Logging Requirements
+
+All file changes must be logged via the audit system for traceability:
+
+1. **Use `scripts/patch_wrapper.py` for AI-assisted changes**
+   ```bash
+   python scripts/patch_wrapper.py --role "Role 2" --task "VS-XXXX" --files <files>
+   ```
+
+2. **Ensure TASK_ID environment variable is set** when making changes related to a Quality Ledger task
+
+3. **Verify audit entries exist before committing** (pre-commit hook will check)
+
+4. **Log build results to audit system**:
+   ```bash
+   dotnet build 2>&1 | python scripts/build_logger.py --stdin --task VS-XXXX
+   ```
+
+5. **Review daily audit summary** for build-related subsystems:
+   - `.audit/log-YYYY-MM-DD.md` for daily summary
+   - Check `Engines`, `Tools`, `Scripts` subsystem entries
+
+---
+
 ## 6. Tooling and Resources
 
 ### Required Tools

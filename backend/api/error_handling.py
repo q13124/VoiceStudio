@@ -446,23 +446,44 @@ async def add_request_id_middleware(request: Request, call_next):
     request_id = generate_request_id()
     request.state.request_id = request_id
     
-    # Add request ID to response headers
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    
-    # Log request completion with structured logger if available
-    if HAS_MONITORING:
+    try:
+        # Add request ID to response headers
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        
+        # Log request completion with structured logger if available
+        if HAS_MONITORING:
+            try:
+                structured_logger = get_structured_logger()
+                structured_logger.info(
+                    f"{request.method} {request.url.path}",
+                    request_id=request_id,
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=response.status_code,
+                )
+            except Exception:
+                pass  # Structured logging is optional
+        
+        return response
+    except Exception as exc:
+        # Log exception to audit system
         try:
-            structured_logger = get_structured_logger()
-            structured_logger.info(
-                f"{request.method} {request.url.path}",
-                request_id=request_id,
-                method=request.method,
-                path=request.url.path,
-                status_code=response.status_code,
+            from app.core.audit import get_audit_logger
+            audit_logger = get_audit_logger()
+            audit_logger.log_runtime_exception(
+                exception=exc,
+                context={
+                    "request_id": request_id,
+                    "path": str(request.url.path),
+                    "method": request.method,
+                    "task_id": request.headers.get("X-Task-ID"),
+                    "subsystem": "Backend.API",
+                }
             )
+        except ImportError:
+            pass  # Audit system is optional
         except Exception:
-            pass  # Structured logging is optional
-    
-    return response
+            pass  # Don't let audit logging break the request
+        raise
 

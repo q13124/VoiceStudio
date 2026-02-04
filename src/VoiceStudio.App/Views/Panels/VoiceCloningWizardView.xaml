@@ -9,7 +9,7 @@
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     <converters:StringFormatConverter x:Key="StringFormatConverter" />
   </UserControl.Resources>
-  <Grid>
+  <Grid AutomationProperties.AutomationId="VoiceCloningWizardView_Root">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />

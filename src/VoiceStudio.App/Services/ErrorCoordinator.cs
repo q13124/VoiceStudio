@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -68,9 +69,9 @@ namespace VoiceStudio.App.Services
       {
         _loggingService?.LogError(ex, context);
       }
-      catch
+      catch (Exception logEx)
       {
-        // Don't let logging failures propagate
+        ErrorLogger.LogWarning($"Best effort operation failed: {logEx.Message}", "ErrorCoordinator.HandleErrorAsync");
       }
 
       // Update state
@@ -96,9 +97,9 @@ namespace VoiceStudio.App.Services
       {
         ErrorOccurred?.Invoke(errorInfo);
       }
-      catch
+      catch (Exception eventEx)
       {
-        // Don't let event handlers crash error handling
+        ErrorLogger.LogWarning($"Best effort operation failed: {eventEx.Message}", "ErrorCoordinator.HandleErrorAsync");
       }
 
       // Show dialog if requested
@@ -108,9 +109,9 @@ namespace VoiceStudio.App.Services
         {
           await _dialogService.ShowErrorAsync(ex, context);
         }
-        catch
+        catch (Exception dialogEx)
         {
-          // Dialog display failures shouldn't propagate
+          ErrorLogger.LogWarning($"Best effort operation failed: {dialogEx.Message}", "ErrorCoordinator.HandleErrorAsync");
         }
       }
     }
@@ -128,9 +129,9 @@ namespace VoiceStudio.App.Services
       {
         ErrorCleared?.Invoke();
       }
-      catch
+      catch (Exception ex)
       {
-        // Don't let event handlers crash
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ErrorCoordinator.ClearError");
       }
     }
   }

@@ -35,6 +35,9 @@ xc_stderr.txt
 xaml_debug_chunk.txt
 xaml_debug_include_*.txt
 
+# Audit logs (local only, not committed)
+.audit/
+
 # Local diagnostic captures (repo root)
 _build_output.txt
 _corecompile_errors.txt

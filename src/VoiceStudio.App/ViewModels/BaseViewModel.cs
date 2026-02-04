@@ -8,6 +8,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Exceptions;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -98,9 +99,9 @@ namespace VoiceStudio.App.ViewModels
           return context;
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // AppServices not initialized; fall back to minimal context
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "BaseViewModel.Unknown");
       }
 
       var dispatcher = DispatcherQueue.GetForCurrentThread()

@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services.AgentGovernance;
 
@@ -262,9 +263,9 @@ public sealed class ApprovalService : IApprovalService, IDisposable
       {
         await _listenerTask.ConfigureAwait(false);
       }
-      catch (OperationCanceledException)
+      catch (Exception ex)
       {
-        // Expected
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ApprovalService.StopListeningAsync");
       }
 
       _listenerTask = null;

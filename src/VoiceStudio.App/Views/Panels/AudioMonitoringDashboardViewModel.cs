@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Media;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 using Windows.UI;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -203,10 +204,10 @@ namespace VoiceStudio.App.Views.Panels
             LufsLevel = loudnessData.IntegratedLufs.Value;
           }
         }
-        catch
-        {
-          // LUFS may not be available, continue
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "AudioMonitoringDashboardViewModel.LoadAudioAsync");
+      }
 
         StatusText = "Monitoring active";
       }

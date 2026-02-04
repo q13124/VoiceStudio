@@ -1,0 +1,262 @@
+<Window x:Class="VoiceStudio.App.Views.FirstRunWizard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VoiceStudio Setup Wizard">
+
+    <Grid Background="{StaticResource VSQ.Window.Background}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource VSQ.Panel.Background}"
+                Padding="24,16">
+            <StackPanel>
+                <TextBlock Text="VoiceStudio Quantum+ Setup"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                <TextBlock x:Name="StepIndicatorText"
+                           Text="Step 1 of 4: Welcome"
+                           FontSize="14"
+                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <ScrollViewer Grid.Row="1" Padding="24">
+            <Grid x:Name="ContentGrid">
+                <!-- Step 1: Welcome -->
+                <StackPanel x:Name="Step1Welcome" Spacing="16">
+                    <TextBlock Text="Welcome to VoiceStudio Quantum+"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                    <TextBlock Text="Professional Voice Cloning and Audio Production Studio"
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                    <Border Background="{StaticResource VSQ.Panel.Background}"
+                            CornerRadius="8"
+                            Padding="16"
+                            Margin="0,16,0,0">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="This wizard will help you:"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock Text="1. Verify your system meets the requirements"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            <TextBlock Text="2. Connect to the backend processing engine"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            <TextBlock Text="3. Get started with your first project"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="VersionText"
+                               Text="Version 1.0.0"
+                               FontSize="12"
+                               Foreground="{StaticResource VSQ.Text.TertiaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,16,0,0"/>
+                </StackPanel>
+
+                <!-- Step 2: System Check -->
+                <StackPanel x:Name="Step2SystemCheck" 
+                            Spacing="16"
+                            Visibility="Collapsed">
+                    <TextBlock Text="System Requirements Check"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                    <TextBlock Text="Checking your system configuration..."
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                    
+                    <StackPanel Spacing="12" Margin="0,16,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon x:Name="DotNetIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                            <TextBlock Text=".NET 8 Desktop Runtime" VerticalAlignment="Center"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock x:Name="DotNetStatus" Text="Checking..."
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon x:Name="PythonIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                            <TextBlock Text="Python 3.10+" VerticalAlignment="Center"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock x:Name="PythonStatus" Text="Checking..."
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon x:Name="GpuIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                            <TextBlock Text="GPU (CUDA)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock x:Name="GpuStatus" Text="Checking..."
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon x:Name="DiskIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                            <TextBlock Text="Disk Space" VerticalAlignment="Center"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock x:Name="DiskStatus" Text="Checking..."
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon x:Name="RamIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                            <TextBlock Text="RAM" VerticalAlignment="Center"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock x:Name="RamStatus" Text="Checking..."
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <ProgressRing x:Name="SystemCheckProgress" 
+                                  IsActive="True" 
+                                  Width="32" 
+                                  Height="32"
+                                  HorizontalAlignment="Center"
+                                  Margin="0,16,0,0"/>
+                </StackPanel>
+
+                <!-- Step 3: Backend Health -->
+                <StackPanel x:Name="Step3BackendHealth" 
+                            Spacing="16"
+                            Visibility="Collapsed">
+                    <TextBlock Text="Backend Connection"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                    <TextBlock Text="Connecting to the VoiceStudio processing backend..."
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                    
+                    <Border Background="{StaticResource VSQ.Panel.Background}"
+                            CornerRadius="8"
+                            Padding="16"
+                            Margin="0,16,0,0">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon x:Name="BackendIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                                <TextBlock Text="Backend API" VerticalAlignment="Center"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                <TextBlock x:Name="BackendStatus" Text="Connecting..."
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon x:Name="EnginesIcon" Glyph="&#xE73E;" Foreground="Green"/>
+                                <TextBlock Text="Voice Engines" VerticalAlignment="Center"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                <TextBlock x:Name="EnginesStatus" Text="Checking..."
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <ProgressRing x:Name="BackendProgress" 
+                                  IsActive="True" 
+                                  Width="32" 
+                                  Height="32"
+                                  HorizontalAlignment="Center"
+                                  Margin="0,16,0,0"/>
+
+                    <StackPanel x:Name="BackendWarningPanel" 
+                                Visibility="Collapsed"
+                                Margin="0,16,0,0">
+                        <Border Background="{StaticResource VSQ.Error.Background}"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Backend Not Running"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                <TextBlock Text="The backend service is not responding. You can continue, but some features may be unavailable."
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                <Button x:Name="StartBackendButton" 
+                                        Content="Start Backend" 
+                                        Click="StartBackendButton_Click"
+                                        Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Step 4: Complete -->
+                <StackPanel x:Name="Step4Complete" 
+                            Spacing="16"
+                            Visibility="Collapsed">
+                    <TextBlock Text="Setup Complete!"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                    <TextBlock Text="VoiceStudio is ready to use."
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                    
+                    <Border Background="{StaticResource VSQ.Panel.Background}"
+                            CornerRadius="8"
+                            Padding="16"
+                            Margin="0,24,0,0">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="What's Next?" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <TextBlock Text="- Create your first voice profile in the Profiles panel"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            <TextBlock Text="- Import audio samples for voice cloning"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            <TextBlock Text="- Start synthesizing with the Voice Synthesis panel"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            <TextBlock Text="- Use Command Palette (Ctrl+P) for quick access"
+                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <CheckBox x:Name="DontShowAgainCheckBox"
+                              Content="Don't show this wizard on startup"
+                              Margin="0,16,0,0"
+                              Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Footer with Navigation -->
+        <Border Grid.Row="2"
+                Background="{StaticResource VSQ.Panel.Background}"
+                Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="SkipButton"
+                        Content="Skip Setup"
+                        Click="SkipButton_Click"/>
+
+                <Button x:Name="BackButton"
+                        Grid.Column="1"
+                        Content="Back"
+                        Margin="0,0,8,0"
+                        Click="BackButton_Click"
+                        Visibility="Collapsed"/>
+
+                <Button x:Name="NextButton"
+                        Grid.Column="2"
+                        Content="Get Started"
+                        Style="{StaticResource VSQ.Button.Primary}"
+                        Click="NextButton_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

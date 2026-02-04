@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -248,9 +249,9 @@ namespace VoiceStudio.App.Services
         var localSettings = ApplicationData.Current.LocalSettings;
         localSettings.Values[SettingsKey] = json;
       }
-      catch (Exception)
+      catch (Exception ex)
       {
-        // If saving fails, log but don't throw
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "RecentProjectsService.SaveRecentProjectsAsync");
       }
 
       return Task.CompletedTask;

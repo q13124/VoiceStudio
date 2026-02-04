@@ -14,6 +14,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using Microsoft.UI.Xaml;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -343,9 +344,9 @@ namespace VoiceStudio.App.Views.Panels
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Use defaults if settings loading fails
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "TimelineViewModel.LoadPreviewSettingsAsync");
       }
     }
 
@@ -646,7 +647,7 @@ namespace VoiceStudio.App.Views.Panels
             if (System.IO.File.Exists(tempPath))
               System.IO.File.Delete(tempPath);
           }
-          catch { /* Ignore cleanup errors */ }
+          catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "TimelineViewModel.PlayAudioAsync"); }
 
           _currentAudioFilePath = null;
           IsPlaying = false;
@@ -737,10 +738,10 @@ namespace VoiceStudio.App.Views.Panels
             _ = recentProjectsService.AddRecentProjectAsync(value.Id, value.Name ?? ResourceHelper.GetString("Project.Unnamed", "Unnamed Project"));
           }
         }
-        catch
-        {
-          // Service may not be available - ignore
-        }
+        catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "TimelineViewModel.OnSelectedProjectChanged");
+      }
 
         // Load tracks for the selected project
         var ct = new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token;
@@ -1116,12 +1117,9 @@ namespace VoiceStudio.App.Views.Panels
         AddClipToTrackCommand.NotifyCanExecuteChanged();
         PlayAudioCommand.NotifyCanExecuteChanged();
       }
-      catch (OperationCanceledException)
-      {
-        // user cancelled
-      }
       catch (Exception ex)
       {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "TimelineViewModel.LoadAudioFileIntoClipAsync");
         ErrorMessage = ErrorHandler.GetUserFriendlyMessage(ex);
         _errorService?.ShowError(ex, ResourceHelper.GetString("Timeline.LoadAudioIntoClipFailed", "Failed to load audio into clip"));
         _logService?.LogError(ex, "LoadAudioFileIntoClip");
@@ -1455,10 +1453,10 @@ namespace VoiceStudio.App.Views.Panels
             {
               await _backendClient.DeleteClipAsync(SelectedProject.Id, track.Id, clip.Id, cancellationToken);
             }
-            catch
-            {
-              // Continue even if backend deletion fails
-            }
+            catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "TimelineViewModel.DeleteSelectedClipsAsync");
+      }
 
             // Remove from track
             track.Clips?.Remove(clip);

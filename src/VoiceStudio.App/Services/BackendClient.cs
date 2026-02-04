@@ -13,6 +13,7 @@ using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 using VoiceStudio.Core.Exceptions;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -1058,9 +1059,9 @@ namespace VoiceStudio.App.Services
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Ignore errors reading response
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "BackendAudioClip.Task");
       }
 
       // Default messages based on status code
@@ -3557,10 +3558,10 @@ namespace VoiceStudio.App.Services
               });
             }
           }
-          catch
-          {
-            // Skip if preset fails to load
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "BackendAudioClip.Task");
+      }
         }
 
         return pipelines;

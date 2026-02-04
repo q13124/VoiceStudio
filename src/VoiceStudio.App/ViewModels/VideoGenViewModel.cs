@@ -15,6 +15,7 @@ using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -513,9 +514,9 @@ namespace VoiceStudio.App.ViewModels
       {
         return; // User cancelled
       }
-      catch
+      catch (Exception ex)
       {
-        // Fall through to calculate from properties
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "VideoGenViewModel.LoadVideoQualityMetricsAsync");
       }
 
       CalculateQualityMetricsFromProperties(video);

@@ -1337,7 +1337,7 @@ namespace VoiceStudio.App.Views.Panels
         MixerState = state;
         Master = state.Master ?? new MixerMaster { Id = "master", Volume = 1.0, Pan = 0.0, IsMuted = false };
 
-        // Update channels from state (convert Core.Models.MixerChannel to ViewModel.MixerChannel)
+        // Update channels from state (convert VoiceStudio.Core.Models.MixerChannel to ViewModel.MixerChannel)
         Channels.Clear();
         foreach (var coreChannel in state.Channels)
         {
@@ -1406,11 +1406,11 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        // Convert ViewModel.MixerChannel to Core.Models.MixerChannel
+        // Convert ViewModel.MixerChannel to VoiceStudio.Core.Models.MixerChannel
 
 
         // Update state from current UI values
-        MixerState.Channels = Channels.Select(vmCh => new Core.Models.MixerChannel
+        MixerState.Channels = Channels.Select(vmCh => new VoiceStudio.Core.Models.MixerChannel
         {
           Id = vmCh.Id,
           ChannelNumber = vmCh.ChannelNumber,
@@ -1471,7 +1471,7 @@ namespace VoiceStudio.App.Views.Panels
         MixerState = state;
         Master = state.Master ?? new MixerMaster { Id = "master", Volume = 1.0, Pan = 0.0, IsMuted = false };
 
-        // Reload channels (convert Core.Models.MixerChannel to ViewModel.MixerChannel)
+        // Reload channels (convert VoiceStudio.Core.Models.MixerChannel to ViewModel.MixerChannel)
         Channels.Clear();
         foreach (var coreChannel in state.Channels)
         {
@@ -1600,7 +1600,7 @@ namespace VoiceStudio.App.Views.Panels
         MixerState = state;
         Master = state.Master ?? new MixerMaster { Id = "master", Volume = 1.0, Pan = 0.0, IsMuted = false };
 
-        // Reload channels (convert Core.Models.MixerChannel to ViewModel.MixerChannel)
+        // Reload channels (convert VoiceStudio.Core.Models.MixerChannel to ViewModel.MixerChannel)
         Channels.Clear();
         foreach (var coreChannel in state.Channels)
         {
@@ -1782,7 +1782,7 @@ namespace VoiceStudio.App.Views.Panels
         {
           if (channel.SubGroupId == subGroup.Id)
           {
-            channel.MainDestination = Core.Models.RoutingDestination.Master;
+            channel.MainDestination = VoiceStudio.Core.Models.RoutingDestination.Master;
             channel.SubGroupId = null;
           }
         }
@@ -2085,7 +2085,7 @@ namespace VoiceStudio.App.Views.Panels
 
     // Routing properties
     [ObservableProperty]
-    private Core.Models.RoutingDestination mainDestination = Core.Models.RoutingDestination.Master;
+    private RoutingDestination mainDestination = RoutingDestination.Master;
 
     [ObservableProperty]
     private string? subGroupId;

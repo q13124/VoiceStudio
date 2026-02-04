@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using Microsoft.UI.Xaml.Data;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Converters
 {
@@ -37,9 +38,9 @@ namespace VoiceStudio.App.Converters
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Fall through to return "?"
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "InitialsConverter.Convert");
       }
       return "?";
     }

@@ -16,6 +16,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -1288,7 +1289,7 @@ namespace VoiceStudio.App.Views.Panels
               if (System.IO.File.Exists(tempPath))
                 System.IO.File.Delete(tempPath);
             }
-            catch { /* Ignore cleanup errors */ }
+            catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ProfileExportBundle.Unknown"); }
 
             IsPreviewing = false;
             IsLoading = false;
@@ -1435,10 +1436,10 @@ namespace VoiceStudio.App.Views.Panels
               }
             }
           }
-          catch
-          {
-            // Continue even if one deletion fails
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "ProfileExportBundle.DeleteSelectedAsync");
+      }
         }
 
         // Register batch undo action if any profiles were deleted

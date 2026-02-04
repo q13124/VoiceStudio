@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Utilities
 {
@@ -63,10 +64,10 @@ namespace VoiceStudio.App.Utilities
                 _action();
               }
             }
-            catch (OperationCanceledException)
-            {
-              // Expected when debouncing
-            }
+            catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Debouncer.Invoke");
+      }
           }, token);
         }
         else if (_asyncAction != null)
@@ -81,10 +82,10 @@ namespace VoiceStudio.App.Utilities
                 await _asyncAction();
               }
             }
-            catch (OperationCanceledException)
-            {
-              // Expected when debouncing
-            }
+            catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "Debouncer.Invoke");
+      }
           }, token);
         }
       }

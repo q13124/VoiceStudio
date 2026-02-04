@@ -41,6 +41,12 @@ jobs:
       - name: Gate C publish check (no launch)
         run: powershell -ExecutionPolicy Bypass -File scripts/gatec-publish-launch.ps1 -Configuration Release -RuntimeIdentifier win-x64 -NoLaunch
 
+      - name: Log Build Results to Audit System
+        if: always()
+        run: |
+          python scripts/build_logger.py --output .buildlogs/build_output.txt --json > .buildlogs/audit_build_results.json 2>&1 || true
+        continue-on-error: true
+
       - name: Installer build validation (scripts + publish output)
         run: |
           powershell -ExecutionPolicy Bypass -File installer/verify-installer-build.ps1 -InstallerType InnoSetup -Version 0.0.0
@@ -64,6 +70,18 @@ jobs:
             .buildlogs/gatec-publish*.binlog
             .buildlogs/x64/Release/gatec-publish/gatec-launch.log
           retention-days: 7
+
+      - name: Upload Audit Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-logs
+          path: |
+            .audit/log-*.jsonl
+            .audit/log-*.md
+            .buildlogs/audit_build_results.json
+          retention-days: 14
+          if-no-files-found: ignore
 
   validate-platform:
     name: Validate Native Windows Platform

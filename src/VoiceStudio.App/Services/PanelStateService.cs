@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -237,10 +238,10 @@ namespace VoiceStudio.App.Services
             if (profile != null)
               profiles.Add(profile);
           }
-          catch
-          {
-            // Skip invalid profile files
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "PanelStateService.Task");
+      }
         }
       }
       catch (Exception ex)

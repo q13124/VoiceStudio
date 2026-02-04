@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -126,17 +127,17 @@ namespace VoiceStudio.App.Services
               {
                 File.Delete(group[i]);
               }
-              catch
-              {
-                // Ignore deletion errors
-              }
+              catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StatePersistenceService.CleanupOldBackups");
+      }
             }
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Silently fail
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "StatePersistenceService.CleanupOldBackups");
       }
     }
   }

@@ -2,24 +2,179 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:VoiceStudio.App.Controls">
-    <Grid>
-        <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
-        <TabView x:Name="DiagnosticsTabView">
-            <TabViewItem Header="Errors" />
-            <TabViewItem Header="Audit Log" />
-            <TabViewItem Header="Analytics" />
-            <TabViewItem Header="Performance" />
-            <TabViewItem Header="Feature Flags" />
-            <TabViewItem Header="Environment" />
-        </TabView>
+    <Grid Background="{StaticResource VSQ.Window.Background}" AutomationProperties.AutomationId="DiagnosticsView_Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Grid x:Name="ErrorsTabGrid" Visibility="Visible" />
-        <Grid x:Name="AuditLogTabGrid" Visibility="Collapsed" />
-        <Grid x:Name="AnalyticsTabGrid" Visibility="Collapsed" />
-        <Grid x:Name="PerformanceTabGrid" Visibility="Collapsed" />
-        <Grid x:Name="FeatureFlagsTabGrid" Visibility="Collapsed" />
-        <Grid x:Name="EnvironmentTabGrid" Visibility="Collapsed" />
+        <!-- Header -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource VSQ.Panel.Background}" 
+                Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon Glyph="&#xE9D9;" FontSize="20"/>
+                    <TextBlock Text="Diagnostics" 
+                               FontSize="{StaticResource VSQ.FontSize.Title}"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="?" Click="HelpButton_Click" ToolTipService.ToolTip="Help"/>
+            </Grid>
+        </Border>
 
-        <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />
+        <!-- Tab Navigation -->
+        <Grid Grid.Row="1">
+            <TabView x:Name="DiagnosticsTabView" 
+                     TabWidthMode="Equal"
+                     IsAddTabButtonVisible="False">
+                <TabViewItem Header="System Info"/>
+                <TabViewItem Header="Logs"/>
+                <TabViewItem Header="Network"/>
+                <TabViewItem Header="Engines"/>
+                <TabViewItem Header="Environment"/>
+            </TabView>
+
+            <!-- System Info Content -->
+            <Grid x:Name="SystemInfoGrid" Visibility="Visible" Margin="0,48,0,0">
+                <ScrollViewer Padding="16">
+                    <StackPanel Spacing="16">
+                        <Border Background="{StaticResource VSQ.Panel.Background}" 
+                                CornerRadius="8" Padding="16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="System Overview" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                <Grid RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="OS Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="OsVersionText" Text="Windows 11" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Text=".NET Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DotNetVersionText" Text=".NET 8.0" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="2" Text="App Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AppVersionText" Text="1.0.0" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="3" Text="RAM:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="RamText" Text="Loading..." Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="4" Text="GPU:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="GpuText" Text="Checking..." Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Logs Content -->
+            <Grid x:Name="LogsGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <Grid Padding="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+                        <ComboBox x:Name="LogLevelFilter" PlaceholderText="Log Level" Width="120"/>
+                        <TextBox x:Name="LogSearchBox" PlaceholderText="Search logs..." Width="200"/>
+                        <Button Content="Export"/>
+                    </StackPanel>
+                    <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
+                        <ListView x:Name="LogsListView" Padding="8"/>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Network Content -->
+            <Grid x:Name="NetworkGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <ScrollViewer Padding="16">
+                    <StackPanel Spacing="16">
+                        <Border Background="{StaticResource VSQ.Panel.Background}" 
+                                CornerRadius="8" Padding="16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Connection Status" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                <Grid RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Backend API:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="BackendStatusText" Text="Connected" Foreground="Green"/>
+                                    <TextBlock Grid.Row="1" Text="Base URL:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="BaseUrlText" Text="http://localhost:8000" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="2" Text="Last Ping:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LastPingText" Text="--" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Test Connection" x:Name="TestConnectionButton"/>
+                            <Button Content="Reconnect" x:Name="ReconnectButton"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Engines Content -->
+            <Grid x:Name="EnginesGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <Grid Padding="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+                        <Button Content="Refresh Engines" x:Name="RefreshEnginesButton"/>
+                        <Button Content="Stop All" x:Name="StopAllEnginesButton"/>
+                    </StackPanel>
+                    <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
+                        <ListView x:Name="EnginesListView" Padding="8"/>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Environment Content -->
+            <Grid x:Name="EnvironmentGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <ScrollViewer Padding="16">
+                    <Border Background="{StaticResource VSQ.Panel.Background}" 
+                            CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Environment Variables" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                            <ListView x:Name="EnvVarsListView" MaxHeight="400"/>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Legacy grids for backwards compatibility -->
+        <Grid x:Name="ErrorsTabGrid" Visibility="Collapsed"/>
+        <Grid x:Name="AuditLogTabGrid" Visibility="Collapsed"/>
+        <Grid x:Name="AnalyticsTabGrid" Visibility="Collapsed"/>
+        <Grid x:Name="PerformanceTabGrid" Visibility="Collapsed"/>
+        <Grid x:Name="FeatureFlagsTabGrid" Visibility="Collapsed"/>
+        <Grid x:Name="EnvironmentTabGrid" Visibility="Collapsed"/>
+
+        <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed"/>
     </Grid>
 </UserControl>

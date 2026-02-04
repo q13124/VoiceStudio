@@ -7,7 +7,7 @@
     <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
   </UserControl.Resources>
-  <Grid RowSpacing="8" ColumnSpacing="8" Padding="12">
+  <Grid RowSpacing="8" ColumnSpacing="8" Padding="12" AutomationProperties.AutomationId="MacroView_Root">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />

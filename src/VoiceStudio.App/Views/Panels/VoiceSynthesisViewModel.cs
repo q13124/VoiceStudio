@@ -13,6 +13,7 @@ using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -187,9 +188,9 @@ namespace VoiceStudio.App.Views.Panels
           }
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Use default if settings not available
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "VoiceSynthesisViewModel.Unknown");
       }
 
       // Try to get quality service (may not be available)
@@ -213,9 +214,9 @@ namespace VoiceStudio.App.Views.Panels
         _errorLoggingService = ServiceProvider.GetErrorLoggingService();
         _errorDialogService = ServiceProvider.GetErrorDialogService();
       }
-      catch
+      catch (Exception ex)
       {
-        // Services may not be initialized
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "VoiceSynthesisViewModel.Unknown");
       }
 
       // Get toast notification service (may be null if not initialized)
@@ -816,7 +817,7 @@ namespace VoiceStudio.App.Views.Panels
               if (File.Exists(tempPath))
                 File.Delete(tempPath);
             }
-            catch { /* Ignore cleanup errors */ }
+            catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "full.Unknown"); }
           });
         }
         else if (audioStream != null)
@@ -838,7 +839,7 @@ namespace VoiceStudio.App.Views.Panels
                 File.Delete(tempPath);
               audioStream?.Dispose();
             }
-            catch { /* Ignore cleanup errors */ }
+            catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "full.Unknown"); }
           });
         }
         else
@@ -1299,10 +1300,10 @@ namespace VoiceStudio.App.Views.Panels
           {
             config = await _backendClient.GetQualityPipelineAsync(SelectedEngine, presetName, cancellationToken);
           }
-          catch
-          {
-            // Use default preset if loading fails
-          }
+          catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "full.PreviewPipelineAsync");
+      }
         }
         else
         {
@@ -1422,9 +1423,9 @@ namespace VoiceStudio.App.Views.Panels
           return System.IO.File.OpenRead(url);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Return null on error
+        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "full.Task");
       }
       return null;
     }
