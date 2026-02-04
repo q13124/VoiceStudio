@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from backend.services.circuit_breaker import get_engine_breaker
 from backend.services.model_preflight import ensure_whisper_cpp
+from backend.services.engine_service import get_engine_service
 
 from ..models import ApiOk
 from ..optimization import cache_response
@@ -74,52 +75,19 @@ def _cleanup_old_transcriptions():
         logger.info(f"Cleaned up {len(to_remove)} old transcriptions from cache")
 
 
-# STT engine router (for dynamic discovery)
+# STT engine via EngineService (ADR-008 compliant)
 STT_ENGINE_AVAILABLE = False
-engine_router = None
 
 try:
-    # Try to import engine router if available
-    import sys
-
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import router as engine_router
-    from app.core.engines.whisper_engine import WhisperEngine
-
-    STT_ENGINE_AVAILABLE = True
-
-    # Auto-load all engines from manifests (preferred method)
-    try:
-        if engine_router:
-            engine_router.load_all_engines("engines")
-            loaded_engines = engine_router.list_engines()
-            logger.info(
-                f"Engine router initialized. Auto-loaded "
-                f"{len(loaded_engines)} engines from manifests: "
-                f"{', '.join(loaded_engines)}"
-            )
-    except Exception as e:
-        logger.warning(f"Failed to auto-load engines from manifests: {e}")
-        # Fallback: Manual registration if auto-load fails
-        try:
-            if engine_router:
-                engine_router.register_engine("whisper", WhisperEngine)
-                logger.info(
-                    "Engine router initialized with manual registration "
-                    "(fallback mode)"
-                )
-        except Exception as reg_error:
-            logger.error(f"Failed to register Whisper engine manually: {reg_error}")
-
-except (ImportError, ModuleNotFoundError) as e:
-    logger.warning(
-        f"Engine router not available: {e}. "
-        "STT engines will not be dynamically discovered. "
-        "Install with: pip install faster-whisper==1.0.3"
-    )
+    _engine_service = get_engine_service()
+    engines = _engine_service.list_engines()
+    STT_ENGINE_AVAILABLE = len(engines) > 0
+    if STT_ENGINE_AVAILABLE:
+        logger.info(f"EngineService available with {len(engines)} engines for transcription")
+    else:
+        logger.warning("No engines available for transcription")
+except Exception as e:
+    logger.warning(f"EngineService not available for transcription: {e}")
     STT_ENGINE_AVAILABLE = False
 
 
@@ -273,95 +241,42 @@ async def transcribe_audio(
         if request.engine == "whisper_cpp":
             ensure_whisper_cpp(auto_download=True)
 
-        # Get engine instance - try router first, fallback to direct creation
+        # Get engine instance via EngineService (ADR-008 compliant)
         stt_engine = None
+        engine_service = get_engine_service()
 
-        # Try to get from engine router first
-        if STT_ENGINE_AVAILABLE and engine_router:
+        # Try to get from EngineService first
+        if STT_ENGINE_AVAILABLE:
             try:
-                # Try loading engines from manifests if not already loaded
-                valid_engines = engine_router.list_engines()
-                if not valid_engines:
-                    try:
-                        engine_router.load_all_engines("engines")
-                        valid_engines = engine_router.list_engines()
-                    except Exception as e:
-                        logger.debug(f"Could not auto-load engines: {e}")
+                valid_engines = engine_service.list_engines()
+                engine_names = [e.get("id", e.get("name", "")) for e in valid_engines]
 
-                # Try to get engine from router
-                if valid_engines:
-                    if request.engine in valid_engines:
-                        stt_engine = engine_router.get_engine(request.engine, gpu=True)
-                    else:
-                        logger.warning(
-                            f"Engine '{request.engine}' not in router. "
-                            f"Available: {valid_engines}. Will try direct creation."
-                        )
-                else:
-                    # Try to get anyway (might be registered but not in list)
-                    try:
-                        stt_engine = engine_router.get_engine(request.engine, gpu=True)
-                    except Exception:
-                        ...
+                if request.engine in engine_names:
+                    stt_engine = engine_service.get_engine(request.engine)
+                elif valid_engines:
+                    logger.warning(
+                        f"Engine '{request.engine}' not in EngineService. "
+                        f"Available: {engine_names}. Will try direct creation."
+                    )
             except Exception as e:
-                logger.debug(f"Could not get engine from router: {e}")
+                logger.debug(f"Could not get engine from EngineService: {e}")
 
-        # If not found and requesting whisper_cpp, create directly (honor model_path override)
-        if not stt_engine and request.engine == "whisper_cpp":
+        # If not found, try to get via EngineService accessors (ADR-008 compliant)
+        if not stt_engine and request.engine in ("whisper_cpp", "whisper"):
             try:
-                from app.core.engines.whisper_cpp_engine import (
-                    WhisperCPPEngine,
-                    create_whisper_cpp_engine,
-                )
-
-                logger.info(
-                    "Creating Whisper.cpp engine directly (not available in router)"
-                )
-                model_kwargs = {}
-                if request.model_path:
-                    model_kwargs["model_path"] = request.model_path
-                stt_engine = create_whisper_cpp_engine(**model_kwargs)
+                logger.info(f"Getting {request.engine} engine via EngineService")
+                stt_engine = engine_service.get_whisper_engine()
                 if not stt_engine:
-                    stt_engine = WhisperCPPEngine(**model_kwargs)
-            except ImportError as e:
-                logger.error(f"Whisper.cpp engine not available: {e}.")
-                raise HTTPException(
-                    status_code=503,
-                    detail=(
-                        f"Transcription engine '{request.engine}' is not available. "
-                        "Please ensure the engine is properly installed. "
-                        "For Whisper.cpp engine, install with: pip install whisper-cpp-python"
-                    ),
-                )
+                    raise Exception(f"Engine {request.engine} not available")
             except Exception as e:
-                logger.error(f"Failed to create Whisper.cpp engine: {e}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to initialize Whisper.cpp engine: {str(e)}",
-                )
-        elif not stt_engine and request.engine == "whisper":
-            try:
-                from app.core.engines.whisper_engine import create_whisper_engine
-
-                logger.info(
-                    "Creating Whisper engine directly (not available in router)"
-                )
-                stt_engine = create_whisper_engine(model_name="base", gpu=True)
-            except ImportError as e:
                 logger.error(f"Whisper engine not available: {e}.")
                 raise HTTPException(
                     status_code=503,
                     detail=(
                         f"Transcription engine '{request.engine}' is not available. "
                         "Please ensure the engine is properly installed. "
-                        "For Whisper engine, install with: pip install faster-whisper==1.0.3"
+                        "Install with: pip install faster-whisper==1.0.3"
                     ),
-                )
-            except Exception as e:
-                logger.error(f"Failed to create Whisper engine: {e}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to initialize Whisper engine: {str(e)}",
                 )
         elif not stt_engine:
             # Engine not available - return proper error

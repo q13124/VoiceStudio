@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -189,12 +190,11 @@ async def align_transcript(request: AlignRequest):
                 detail=f"Audio file at '{audio_path}' does not exist",
             )
 
-        # Try to use Aeneas engine for forced alignment
+        # Try to use Aeneas engine for forced alignment (ADR-008 compliant)
         try:
-            from app.core.engines.aeneas_engine import AeneasEngine
-
-            engine = AeneasEngine()
-            if engine.is_available():
+            engine_service = get_engine_service()
+            engine = engine_service.get_aeneas_engine()
+            if engine and engine.is_available():
                 # Use Aeneas for forced alignment
                 alignment_result = engine.align(
                     audio_path=audio_path,
@@ -232,12 +232,10 @@ async def align_transcript(request: AlignRequest):
         except (ImportError, AttributeError, Exception) as e:
             logger.debug(f"Aeneas engine not available: {e}")
 
-        # Fallback: Use Whisper for word-level timestamps
+        # Fallback: Use Whisper for word-level timestamps (ADR-008 compliant)
         try:
-            from app.core.engines.whisper_engine import WhisperEngine
-
-            whisper = WhisperEngine()
-            if whisper.is_available():
+            whisper = engine_service.get_whisper_engine()
+            if whisper and whisper.is_available():
                 # Transcribe with word timestamps
                 result = whisper.transcribe(audio_path, return_word_timestamps=True)
 

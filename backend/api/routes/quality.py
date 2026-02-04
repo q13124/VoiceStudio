@@ -14,33 +14,27 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from ..optimization import cache_response
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/quality", tags=["quality"])
 
-# Try importing quality optimization modules
+# Quality optimization via EngineService (ADR-008 compliant)
 HAS_QUALITY_OPTIMIZATION = False
 HAS_QUALITY_PRESETS = False
 HAS_QUALITY_COMPARISON = False
+_quality_engine_service = None
 
 try:
-    from app.core.engines import (
-        QualityComparison,
-        QualityOptimizer,
-        compare_audio_samples,
-        get_preset_description,
-        get_preset_target_metrics,
-        get_quality_preset,
-        get_synthesis_params_from_preset,
-        list_quality_presets,
-        optimize_synthesis_for_quality,
-    )
-
+    _quality_engine_service = get_engine_service()
+    # Check if quality features are available
+    presets = _quality_engine_service.get_quality_presets()
+    HAS_QUALITY_PRESETS = len(presets) > 0
     HAS_QUALITY_OPTIMIZATION = True
-    HAS_QUALITY_PRESETS = True
     HAS_QUALITY_COMPARISON = True
-except ImportError as e:
+    logger.info(f"Quality EngineService initialized with {len(presets)} presets")
+except Exception as e:
     logger.warning(f"Quality optimization modules not available: {e}")
 
 
@@ -518,20 +512,11 @@ async def run_benchmark(request: BenchmarkRequest):
         Benchmark results for all engines
     """
     try:
-        # Import engines and router
+        # Get engine service (ADR-008 compliant)
         import os
-        import sys
         from pathlib import Path
 
-        app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-        if os.path.exists(app_path) and app_path not in sys.path:
-            sys.path.insert(0, app_path)
-
-        from app.core.engines import ChatterboxEngine, TortoiseEngine, XTTSEngine
-        from app.core.engines.quality_metrics import calculate_all_metrics
-        from app.core.engines.router import router as engine_router_instance
-
-        engine_router = engine_router_instance
+        engine_service = get_engine_service()
 
         # Get reference audio path
         reference_audio_path = None
@@ -587,16 +572,10 @@ async def run_benchmark(request: BenchmarkRequest):
             engine_result = BenchmarkResult(engine=engine_name, success=False)
 
             try:
-                # Get engine instance
-                engine_instance = None
-                if engine_name.lower() == "xtts":
-                    engine_instance = XTTSEngine()
-                elif engine_name.lower() == "chatterbox":
-                    engine_instance = ChatterboxEngine()
-                elif engine_name.lower() == "tortoise":
-                    engine_instance = TortoiseEngine()
-                else:
-                    engine_result.error = f"Unknown engine: {engine_name}"
+                # Get engine instance via EngineService (ADR-008 compliant)
+                engine_instance = engine_service.get_engine(engine_name.lower())
+                if engine_instance is None:
+                    engine_result.error = f"Engine not available: {engine_name}"
                     results.append(engine_result)
                     continue
 
@@ -647,10 +626,10 @@ async def run_benchmark(request: BenchmarkRequest):
                         tmp_path = tmp.name
 
                     try:
-                        all_metrics = calculate_all_metrics(
+                        # Calculate metrics via EngineService
+                        all_metrics = engine_service.calculate_all_metrics(
                             audio=tmp_path,
-                            reference_audio=reference_audio_path,
-                            sample_rate=22050,
+                            reference=reference_audio_path,
                         )
                         metrics = all_metrics
                     finally:

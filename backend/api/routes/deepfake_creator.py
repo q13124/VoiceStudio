@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -300,12 +301,11 @@ async def _process_deepfake_job(job_id: str):
         job.progress = 5.0
         _deepfake_jobs[job_id] = job
 
-        # Try to use deepfake engine
+        # Try to use deepfake engine (ADR-008 compliant)
         try:
-            from app.core.engines.deepfacelab_engine import DeepFaceLabEngine
-
-            engine = DeepFaceLabEngine()
-            if not engine.is_available():
+            engine_service = get_engine_service()
+            engine = engine_service.get_deepfacelab_engine()
+            if not engine or not engine.is_available():
                 raise Exception("DeepFaceLab engine not available")
 
             job.progress = 15.0

@@ -72,15 +72,12 @@ from ..utils.quality_batch import calculate_batch_quality_score
 
 logger = logging.getLogger(__name__)
 
-# Quality optimization and presets
+# Quality optimization via EngineService (ADR-008 compliant)
+HAS_QUALITY_OPTIMIZATION = False
 try:
-    from app.core.engines import (
-        QualityOptimizer,
-        get_synthesis_params_from_preset,
-        optimize_synthesis_for_quality,
-    )
-
-    HAS_QUALITY_OPTIMIZATION = True
+    _voice_engine_service = get_engine_service()
+    presets = _voice_engine_service.get_quality_presets()
+    HAS_QUALITY_OPTIMIZATION = len(presets) >= 0  # Always true if service works
 except Exception as e:
     HAS_QUALITY_OPTIMIZATION = False
     logger.warning("Quality optimization not available: %s", e)
@@ -334,64 +331,41 @@ ENGINE_AVAILABLE = False
 engine_router = None
 quality_metrics = None
 
+# Voice engine initialization via EngineService (ADR-008 compliant)
+ENGINE_AVAILABLE = False
+
 try:
-    # Try to import engine router if available
-    import sys
-
-    # Add app directory to path if needed
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import (
-        ChatterboxEngine,
-        TortoiseEngine,
-        XTTSEngine,
-        calculate_all_metrics,
-        calculate_mos_score,
-        calculate_naturalness,
-        calculate_similarity,
-        calculate_snr,
-    )
-    from app.core.engines import router as engine_router
-
-    quality_metrics = {
-        "calculate_all": calculate_all_metrics,
-        "mos": calculate_mos_score,
-        "similarity": calculate_similarity,
-        "naturalness": calculate_naturalness,
-        "snr": calculate_snr,
-    }
-
-    ENGINE_AVAILABLE = True
-
-    # Auto-load all engines from manifests (preferred method)
-    try:
-        engine_router.load_all_engines("engines")
-        loaded_engines = engine_router.list_engines()
-        logger.info(
-            f"Engine router initialized. Auto-loaded {len(loaded_engines)} "
-            f"engines from manifests: {', '.join(loaded_engines)}"
-        )
-    except Exception as e:
-        logger.warning(f"Failed to auto-load engines from manifests: {e}")
-        # Fallback: Manual registration if auto-load fails
-        try:
-            engine_router.register_engine("xtts_v2", XTTSEngine)
-            engine_router.register_engine("chatterbox", ChatterboxEngine)
-            engine_router.register_engine("tortoise", TortoiseEngine)
-            logger.info(
-                "Engine router initialized with manual registration " "(fallback mode)"
-            )
-        except Exception as reg_error:
-            logger.error(f"Failed to register engines manually: {reg_error}")
+    # Ensure _voice_engine_service is available (may already be set above)
+    if "_voice_engine_service" not in dir() or _voice_engine_service is None:
+        _voice_engine_service = get_engine_service()
+    
+    engines = _voice_engine_service.list_engines()
+    ENGINE_AVAILABLE = len(engines) > 0
+    if ENGINE_AVAILABLE:
+        engine_names = [e.get("id", e.get("name", "")) for e in engines]
+        logger.info(f"Voice EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
+    else:
+        logger.warning("No engines available for voice synthesis")
 except Exception as e:
     logger.warning(
-        "Engine router not available: %s. Voice synthesis endpoints will "
+        "EngineService not available: %s. Voice synthesis endpoints will "
         "return 503 Service Unavailable when engines are not available.",
         e,
     )
     ENGINE_AVAILABLE = False
+
+
+def _get_quality_metrics():
+    """Get quality metrics functions via EngineService."""
+    if _voice_engine_service is None:
+        return {}
+    return {
+        "calculate_all": _voice_engine_service.calculate_all_metrics,
+        "mos": _voice_engine_service.calculate_mos_score,
+        "similarity": _voice_engine_service.calculate_similarity,
+        "naturalness": _voice_engine_service.calculate_naturalness,
+        "snr": _voice_engine_service.calculate_snr,
+    }
 
 
 @router.post("/synthesize", response_model=VoiceSynthesizeResponse)
@@ -2223,9 +2197,9 @@ async def post_process_pipeline(
                 # Determine enhancement stages
                 stages = req.enhancement_stages or ["upscale", "enhance", "denoise"]
 
-                # Try to use Real-ESRGAN engine for upscaling/enhancement
+                # Try to use Real-ESRGAN engine for upscaling/enhancement (ADR-008 compliant)
                 try:
-                    from app.core.engines.realesrgan_engine import RealESRGANEngine
+                    realesrgan_engine = _voice_engine_service.get_realesrgan_engine() if _voice_engine_service else None
 
                     processed_image = input_image.copy()
                     stages_applied = []
@@ -2243,12 +2217,12 @@ async def post_process_pipeline(
                         )
 
                         if stage_name == "upscale":
-                            # Use Real-ESRGAN for upscaling
-                            engine = RealESRGANEngine()
-                            output_path = tempfile.mktemp(suffix=".png")
-                            processed_image = engine.upscale(
-                                processed_image, output_path=output_path
-                            )
+                            # Use Real-ESRGAN for upscaling via EngineService
+                            if realesrgan_engine:
+                                output_path = tempfile.mktemp(suffix=".png")
+                                processed_image = realesrgan_engine.upscale(
+                                    processed_image, output_path=output_path
+                                )
                             if processed_image:
                                 quality_after = min(1.0, quality_before + 0.15)
                         elif stage_name == "enhance":

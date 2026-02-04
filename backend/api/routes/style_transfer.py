@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -575,9 +576,9 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
         except ImportError:
             raise ValueError("Audio processing libraries not available")
 
-        # Try to use RVC engine for voice conversion if available
+        # Try to use RVC engine for voice conversion if available (ADR-008 compliant)
         try:
-            from app.core.engines.rvc_engine import RVCEngine
+            engine_service = get_engine_service()
 
             # Check if target_style_id is a voice profile
             from .profiles import _profiles
@@ -588,8 +589,8 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
 
             if target_profile and target_profile.get("reference_audio_id"):
                 # Use RVC for voice conversion
-                rvc_engine = RVCEngine()
-                if rvc_engine.is_available():
+                rvc_engine = engine_service.get_rvc_engine()
+                if rvc_engine and rvc_engine.is_available():
                     target_audio_path = _audio_storage.get(
                         target_profile["reference_audio_id"]
                     )
@@ -630,13 +631,14 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
             from ..models_additional import VoiceSynthesizeRequest
             from .voice import synthesize
 
-            # Transcribe source audio to get text
+            # Transcribe source audio to get text (ADR-008 compliant)
             try:
-                from app.core.engines.whisper_engine import WhisperEngine
-
-                whisper = WhisperEngine()
-                transcription = whisper.transcribe(source_audio_path)
-                text = transcription.get("text", "Hello, this is a test.")
+                whisper = engine_service.get_whisper_engine()
+                if whisper:
+                    transcription = whisper.transcribe(source_audio_path)
+                    text = transcription.get("text", "Hello, this is a test.")
+                else:
+                    text = "Hello, this is a test of style transfer."
             except Exception as e:
                 logger.warning(f"Failed to transcribe source audio: {e}")
                 text = "Hello, this is a test of style transfer."

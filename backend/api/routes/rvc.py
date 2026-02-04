@@ -27,6 +27,7 @@ from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
 )
+from backend.services.engine_service import get_engine_service
 
 from ..models import ApiOk
 from ..models_additional import RvcStartRequest
@@ -53,38 +54,31 @@ ENGINE_AVAILABLE = False
 engine_router = None
 quality_metrics = None
 
+# RVC engine initialization via EngineService (ADR-008 compliant)
+ENGINE_AVAILABLE = False
+_rvc_engine_service = None
+
 try:
-    import sys
-
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import calculate_all_metrics, calculate_similarity
-    from app.core.engines import router as rvc_engine_router
-
-    quality_metrics = {
-        "calculate_all": calculate_all_metrics,
-        "similarity": calculate_similarity,
-    }
-
-    engine_router = rvc_engine_router
-    ENGINE_AVAILABLE = True
-
-    # Auto-load all engines from manifests
-    try:
-        engine_router.load_all_engines("engines")
-        loaded_engines = engine_router.list_engines()
-        logger.info(f"RVC Engine router initialized. " f"Loaded {len(loaded_engines)} engines")
-    except Exception as e:
-        logger.warning(f"Failed to auto-load engines: {e}")
-
-except (ImportError, ModuleNotFoundError) as e:
-    logger.warning(
-        f"RVC Engine router not available: {e}. "
-        "RVC conversion will return errors when engines unavailable."
-    )
+    _rvc_engine_service = get_engine_service()
+    engines = _rvc_engine_service.list_engines()
+    ENGINE_AVAILABLE = len(engines) > 0
+    if ENGINE_AVAILABLE:
+        logger.info(f"RVC EngineService initialized with {len(engines)} engines")
+    else:
+        logger.warning("No engines available for RVC")
+except Exception as e:
+    logger.warning(f"RVC EngineService not available: {e}")
     ENGINE_AVAILABLE = False
+
+
+def _get_quality_metrics():
+    """Get quality metrics via EngineService."""
+    if _rvc_engine_service is None:
+        return {}
+    return {
+        "calculate_all": _rvc_engine_service.calculate_all_metrics,
+        "similarity": _rvc_engine_service.calculate_similarity,
+    }
 
 
 @router.post("/convert")
@@ -122,8 +116,8 @@ async def convert_voice(
         if engine_key == "sovits_svc":
             ensure_sovits(auto_download=False)
 
-        # Get conversion engine
-        engine = engine_router.get_engine(engine_key)
+        # Get conversion engine via EngineService
+        engine = _rvc_engine_service.get_engine(engine_key) if _rvc_engine_service else None
         if engine is None:
             raise HTTPException(
                 status_code=503,
@@ -262,8 +256,8 @@ async def convert_realtime(websocket: WebSocket):
                 protect = request.get("protect", 0.33)
                 index_rate = request.get("index_rate", 0.75)
 
-                # Get RVC engine
-                engine = engine_router.get_engine("rvc")
+                # Get RVC engine via EngineService
+                engine = _rvc_engine_service.get_rvc_engine() if _rvc_engine_service else None
                 if engine is None:
                     await websocket.send_json(
                         {"type": "error", "message": "RVC engine is not available"}

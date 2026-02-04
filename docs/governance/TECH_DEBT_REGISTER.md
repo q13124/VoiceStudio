@@ -41,7 +41,7 @@
 
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
-| **TD-023** | Route Boundary Violations | 30 violations in 16 files (reduced from 37/20). EngineService extended. 5 files fixed: health.py, dataset.py, training.py, spatial_audio.py, voice.py (partial). | Architecture | Role 4 | 2026-02-04 | In Progress |
+| **TD-023** | Route Boundary Violations | **CLOSED.** All 37 violations in 20 files fixed. EngineService extended with quality metrics, engine accessors. All routes now use EngineService instead of direct app.core.engines imports. | Architecture | Role 4 | 2026-02-04 | CLOSED |
 | **TD-024** | Static ServiceProvider Calls | 34 ViewModels still use static ServiceProvider calls. migrate_di.py audit script created. | DI consistency | Role 3 | 2026-02-04 | Phase 8+ |
 | **TD-025** | ADR Formalization | ADR-017, ADR-008, ADR-011 formalized with decisions. All 22 ADRs now have formal decisions. | Documentation | Role 1 | 2026-02-04 | CLOSED |
 

@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 from ..optimization import cache_response
 
@@ -181,38 +182,17 @@ async def converter_stream(websocket: WebSocket, session_id: str):
         source_profile_id = session["source_profile_id"]
         target_profile_id = session["target_profile_id"]
 
-        # Try to get RVC engine for voice conversion
-        ENGINE_AVAILABLE = False
-        engine_router = None
-
-        try:
-            import os
-            import sys
-
-            app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-            if os.path.exists(app_path) and app_path not in sys.path:
-                sys.path.insert(0, app_path)
-
-            from app.core.engines import router as engine_router
-
-            ENGINE_AVAILABLE = True
-
-            # Try to load engines
-            try:
-                engine_router.load_all_engines("engines")
-            except Exception as e:
-                logger.warning(f"Could not load engines for realtime conversion: {e}")
-        except ImportError:
-            logger.warning("Engine router not available for realtime conversion")
-            ENGINE_AVAILABLE = False
-
-        # Get RVC engine if available
+        # Try to get RVC engine for voice conversion (ADR-008 compliant)
         rvc_engine = None
-        if ENGINE_AVAILABLE and engine_router:
-            try:
-                rvc_engine = engine_router.get_engine("rvc")
-            except Exception as e:
-                logger.debug(f"RVC engine not available: {e}")
+        try:
+            engine_service = get_engine_service()
+            rvc_engine = engine_service.get_rvc_engine()
+            if rvc_engine:
+                logger.debug("RVC engine available for realtime conversion")
+            else:
+                logger.debug("RVC engine not available for realtime conversion")
+        except Exception as e:
+            logger.warning(f"Could not get RVC engine: {e}")
 
         # Get target profile audio path
         from .profiles import _profiles

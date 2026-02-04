@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from ..models import ApiOk
 from ..optimization import cache_response
 from ...services.JobStateStore import get_job_state_store
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -107,27 +108,19 @@ def _get_enhanced_job_queue():
 
 
 # Try to import engine router for batch processing
+# Engine availability checked via EngineService (ADR-008 compliant)
 ENGINE_AVAILABLE = False
-engine_router = None
 
 try:
-    # Add app directory to path if needed
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import router as engine_router
-
-    # Try to load engines
-    try:
-        engine_router.load_all_engines("engines")
-        ENGINE_AVAILABLE = True
-        logger.info("Engine router available for batch processing")
-    except Exception as e:
-        logger.warning(f"Could not load engines for batch processing: {e}")
-        ENGINE_AVAILABLE = False
-except ImportError as e:
-    logger.warning(f"Engine router not available for batch processing: {e}")
+    _engine_service = get_engine_service()
+    engines = _engine_service.list_engines()
+    ENGINE_AVAILABLE = len(engines) > 0
+    if ENGINE_AVAILABLE:
+        logger.info("EngineService available for batch processing")
+    else:
+        logger.warning("No engines available for batch processing")
+except Exception as e:
+    logger.warning(f"EngineService not available for batch processing: {e}")
     ENGINE_AVAILABLE = False
 
 # Try to import WebSocket broadcasting
@@ -570,21 +563,22 @@ async def _process_batch_job(job_id: str):
                 )
             return
 
-        # Get engine instance
+        # Get engine instance via EngineService (ADR-008 compliant)
         try:
             if not ENGINE_AVAILABLE:
                 raise Exception(
-                    "Engine router is not available. Engines may not be loaded properly."
+                    "EngineService not available. Engines may not be loaded properly."
                 )
 
-            engine = engine_router.get_engine(job.engine_id)
+            engine_service = get_engine_service()
+            engine = engine_service.get_engine(job.engine_id)
             if engine is None:
                 raise Exception(
                     f"Engine '{job.engine_id}' is not available. "
                     f"Please check that the engine is installed and configured correctly."
                 )
         except AttributeError as e:
-            error_msg = f"Engine router error: {str(e)}. Engine system may not be properly initialized."
+            error_msg = f"EngineService error: {str(e)}. Engine system may not be properly initialized."
             logger.error(f"Batch job {job_id} failed: {error_msg}", exc_info=True)
             job_data["status"] = JobStatus.FAILED.value
             job_data["error_message"] = error_msg

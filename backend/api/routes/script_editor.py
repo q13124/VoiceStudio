@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -477,17 +478,17 @@ async def synthesize_script(script_id: str):
             from pathlib import Path
 
             from core.audio import audio_utils
-            from app.core.engines import router as engine_router
 
-            # Get default engine
-            available_engines = engine_router.list_engines() if engine_router else []
+            # Get default engine via EngineService (ADR-008 compliant)
+            engine_service = get_engine_service()
+            available_engines = engine_service.list_engines()
             if not available_engines:
                 raise HTTPException(
                     status_code=503, detail="No voice synthesis engines available"
                 )
 
-            engine_name = available_engines[0]  # Use first available engine
-            engine = engine_router.get_engine(engine_name)
+            engine_name = available_engines[0].get("id", available_engines[0].get("name", ""))
+            engine = engine_service.get_engine(engine_name)
 
             if not engine:
                 raise HTTPException(

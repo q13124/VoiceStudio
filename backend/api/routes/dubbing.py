@@ -7,6 +7,7 @@ Endpoints for video dubbing operations including translation and synchronization
 from fastapi import APIRouter, HTTPException
 from ..models_additional import DubTranslateRequest
 from ..models import ApiOk
+from backend.services.engine_service import get_engine_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -162,10 +163,11 @@ async def sync(req: dict) -> dict:
                 sys.path.insert(0, str(app_path))
 
             try:
-                from app.core.engines.aeneas_engine import AeneasEngine
-
-                # Initialize Aeneas engine
-                engine = AeneasEngine()
+                # Get Aeneas engine via EngineService (ADR-008 compliant)
+                engine_service = get_engine_service()
+                engine = engine_service.get_aeneas_engine()
+                if not engine:
+                    raise ImportError("Aeneas engine not available")
 
                 # Perform alignment
                 # Segment translated text into sentences

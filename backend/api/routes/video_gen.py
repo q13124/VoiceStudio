@@ -21,6 +21,7 @@ from ..models_additional import (
     VideoUpscaleRequest,
     VideoUpscaleResponse,
 )
+from backend.services.engine_service import get_engine_service
 from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
@@ -36,61 +37,23 @@ _video_storage: dict[str, str] = {}  # video_id -> file_path
 
 # Engine router for video generation
 ENGINE_AVAILABLE = False
-engine_router = None
+# _video_engine_service replaced by _video_engine_service (ADR-008)
+
+# Video engine initialization via EngineService (ADR-008 compliant)
+ENGINE_AVAILABLE = False
+_video_engine_service = None
 
 try:
-    import sys
-
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import (
-        DeepFaceLabEngine,
-        DeforumEngine,
-        FFmpegAIEngine,
-        FOMMEngine,
-        LyrebirdEngine,
-        MoviePyEngine,
-        SadTalkerEngine,
-        SVDEngine,
-        VideoCreatorEngine,
-        VoiceAIEngine,
-    )
-    from app.core.engines import router as engine_router
-
-    ENGINE_AVAILABLE = True
-
-    # Auto-load all engines from manifests
-    try:
-        engine_router.load_all_engines("engines")
-        loaded_engines = engine_router.list_engines()
-        logger.info(
-            f"Video engine router initialized. Auto-loaded {len(loaded_engines)} "
-            f"engines from manifests: {', '.join(loaded_engines)}"
-        )
-    except Exception as e:
-        logger.warning(f"Failed to auto-load engines from manifests: {e}")
-        # Fallback: Manual registration
-        try:
-            engine_router.register_engine("svd", SVDEngine)
-            engine_router.register_engine("deforum", DeforumEngine)
-            engine_router.register_engine("fomm", FOMMEngine)
-            engine_router.register_engine("sadtalker", SadTalkerEngine)
-            engine_router.register_engine("deepfacelab", DeepFaceLabEngine)
-            engine_router.register_engine("moviepy", MoviePyEngine)
-            engine_router.register_engine("ffmpeg_ai", FFmpegAIEngine)
-            engine_router.register_engine("video_creator", VideoCreatorEngine)
-            engine_router.register_engine("voice_ai", VoiceAIEngine)
-            engine_router.register_engine("lyrebird", LyrebirdEngine)
-            logger.info("Video engine router initialized with manual registration (fallback mode)")
-        except Exception as reg_error:
-            logger.error(f"Failed to register engines manually: {reg_error}")
-except (ImportError, ModuleNotFoundError) as e:
-    logger.warning(
-        f"Video engine router not available: {e}. "
-        "Video generation will return errors when engines unavailable."
-    )
+    _video_engine_service = get_engine_service()
+    engines = _video_engine_service.list_engines()
+    ENGINE_AVAILABLE = len(engines) > 0
+    if ENGINE_AVAILABLE:
+        engine_names = [e.get("id", e.get("name", "")) for e in engines]
+        logger.info(f"Video EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
+    else:
+        logger.warning("No engines available for video generation")
+except Exception as e:
+    logger.warning(f"Video EngineService not available: {e}")
     ENGINE_AVAILABLE = False
 
 
@@ -102,17 +65,11 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
     Engines are dynamically discovered from engine manifests.
     """
     try:
-        # Dynamically discover available engines
+        # Dynamically discover available engines via EngineService
         valid_engines: list[str] = []
-        if ENGINE_AVAILABLE and engine_router:
-            valid_engines = engine_router.list_engines()
-            if not valid_engines:
-                try:
-                    engine_router.load_all_engines("engines")
-                    valid_engines = engine_router.list_engines()
-                except Exception as e:
-                    logger.warning(f"Failed to auto-load engines: {e}")
-                    valid_engines = []
+        if ENGINE_AVAILABLE and _video_engine_service:
+            engine_list = _video_engine_service.list_engines()
+            valid_engines = [e.get("id", e.get("name", "")) for e in engine_list]
 
         # Validate engine
         if valid_engines and req.engine not in valid_engines:
@@ -125,10 +82,10 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
             logger.warning("No engines available - engine router not initialized")
 
         # Generate video if engines available
-        if ENGINE_AVAILABLE and engine_router:
+        if ENGINE_AVAILABLE and _video_engine_service:
             try:
                 # Get engine instance
-                engine = engine_router.get_engine(req.engine)
+                engine = _video_engine_service.get_engine(req.engine)
                 if engine is None:
                     raise HTTPException(
                         status_code=503,
@@ -254,12 +211,12 @@ async def upscale_video(
     Upscale video using Real-ESRGAN or other upscaling engines.
     """
     try:
-        if not ENGINE_AVAILABLE or not engine_router:
+        if not ENGINE_AVAILABLE or not _video_engine_service:
             raise HTTPException(status_code=503, detail="Upscaling engines are not available")
 
         # Get upscaling engine (default: realesrgan)
         engine_name = req.engine or "realesrgan"
-        engine = engine_router.get_engine(engine_name)
+        engine = _video_engine_service.get_engine(engine_name)
 
         if engine is None:
             raise HTTPException(
@@ -550,7 +507,7 @@ async def convert_voice(
         **kwargs: Additional parameters
     """
     try:
-        if not ENGINE_AVAILABLE or not engine_router:
+        if not ENGINE_AVAILABLE or not _video_engine_service:
             raise HTTPException(
                 status_code=503, detail="Voice conversion engines are not available"
             )
@@ -562,7 +519,7 @@ async def convert_voice(
             )
 
         # Get engine instance
-        voice_engine = engine_router.get_engine(engine)
+        voice_engine = _video_engine_service.get_engine(engine)
         if voice_engine is None:
             raise HTTPException(status_code=503, detail=f"Engine '{engine}' is not available")
 
@@ -631,11 +588,11 @@ async def convert_voice(
 @router.get("/engines/list")
 async def list_engines() -> dict:
     """List all available video generation engines."""
-    if not ENGINE_AVAILABLE or not engine_router:
+    if not ENGINE_AVAILABLE or not _video_engine_service:
         return {"engines": [], "available": False}
 
     try:
-        engines = engine_router.list_engines()
+        engines = _video_engine_service.list_engines()
         # Filter for video engines
         video_engines = [
             e

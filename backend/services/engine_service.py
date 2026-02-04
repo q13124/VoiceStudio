@@ -177,6 +177,50 @@ class IEngineService(ABC):
         """Get list of available voices, optionally filtered by engine."""
         ...
 
+    @abstractmethod
+    def calculate_all_metrics(
+        self,
+        audio: Union[AudioPath, Any],
+        reference: Optional[Union[AudioPath, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Calculate all quality metrics for audio."""
+        ...
+
+    @abstractmethod
+    def calculate_naturalness(self, audio: Union[AudioPath, Any]) -> float:
+        """Calculate naturalness score for audio."""
+        ...
+
+    @abstractmethod
+    def get_whisper_engine(self) -> Optional[Any]:
+        """Get Whisper transcription engine."""
+        ...
+
+    @abstractmethod
+    def get_aeneas_engine(self) -> Optional[Any]:
+        """Get Aeneas forced alignment engine."""
+        ...
+
+    @abstractmethod
+    def get_rvc_engine(self) -> Optional[Any]:
+        """Get RVC voice conversion engine."""
+        ...
+
+    @abstractmethod
+    def get_realesrgan_engine(self) -> Optional[Any]:
+        """Get Real-ESRGAN upscaling engine."""
+        ...
+
+    @abstractmethod
+    def get_deepfacelab_engine(self) -> Optional[Any]:
+        """Get DeepFaceLab engine."""
+        ...
+
+    @abstractmethod
+    def get_speaker_encoder_engine(self) -> Optional[Any]:
+        """Get speaker encoder engine."""
+        ...
+
 
 class EngineService(IEngineService):
     """Concrete implementation of the engine service.
@@ -537,6 +581,111 @@ class EngineService(IEngineService):
             return self._engine_router.list_voices()
         except Exception:
             return []
+
+    def calculate_all_metrics(
+        self,
+        audio: Union[AudioPath, Any],
+        reference: Optional[Union[AudioPath, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Calculate all quality metrics for audio."""
+        self._ensure_engines_loaded()
+        if self._quality_metrics is None:
+            return {"error": "Quality metrics not available"}
+        
+        try:
+            # Check if input is a numpy array
+            if hasattr(audio, "shape") and hasattr(audio, "dtype"):
+                if reference is not None and hasattr(reference, "shape"):
+                    return self._quality_metrics.calculate_all_metrics(audio, reference)
+                return self._quality_metrics.calculate_all_metrics(audio)
+            # Path-based
+            ref_path = str(reference) if reference else None
+            return self._quality_metrics.calculate_all_metrics(str(audio), ref_path)
+        except Exception as e:
+            return {"error": str(e)}
+
+    def calculate_naturalness(self, audio: Union[AudioPath, Any]) -> float:
+        """Calculate naturalness score for audio."""
+        self._ensure_engines_loaded()
+        if self._quality_metrics is None:
+            return 0.0
+        
+        try:
+            if hasattr(audio, "shape") and hasattr(audio, "dtype"):
+                return self._quality_metrics.calculate_naturalness(audio)
+            return self._quality_metrics.calculate_naturalness(str(audio))
+        except Exception:
+            return 0.0
+
+    # -------------------------------------------------------------------------
+    # Specific Engine Accessors
+    # -------------------------------------------------------------------------
+
+    def get_whisper_engine(self) -> Optional[Any]:
+        """Get Whisper transcription engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.whisper_engine import WhisperEngine
+            return WhisperEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
+
+    def get_aeneas_engine(self) -> Optional[Any]:
+        """Get Aeneas forced alignment engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.aeneas_engine import AeneasEngine
+            return AeneasEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
+
+    def get_rvc_engine(self) -> Optional[Any]:
+        """Get RVC voice conversion engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.rvc_engine import RVCEngine
+            return RVCEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
+
+    def get_realesrgan_engine(self) -> Optional[Any]:
+        """Get Real-ESRGAN upscaling engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.realesrgan_engine import RealESRGANEngine
+            return RealESRGANEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
+
+    def get_deepfacelab_engine(self) -> Optional[Any]:
+        """Get DeepFaceLab engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.deepfacelab_engine import DeepFaceLabEngine
+            return DeepFaceLabEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
+
+    def get_speaker_encoder_engine(self) -> Optional[Any]:
+        """Get speaker encoder engine."""
+        self._ensure_engines_loaded()
+        try:
+            from app.core.engines.speaker_encoder_engine import SpeakerEncoderEngine
+            return SpeakerEncoderEngine()
+        except ImportError:
+            return None
+        except Exception:
+            return None
 
 
 # Singleton instance for dependency injection

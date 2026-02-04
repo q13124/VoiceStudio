@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 from ..optimization import cache_response
 from ..voice_speech import Phonemizer
@@ -656,11 +657,12 @@ async def estimate_phonemes(request: PhonemeEstimateRequest):
                         detail=f"Audio file at '{audio_path}' does not exist",
                     )
 
-                # Try to use Whisper for transcription
+                # Try to use Whisper for transcription (ADR-008 compliant)
                 try:
-                    from app.core.engines.whisper_engine import WhisperEngine
-
-                    engine = WhisperEngine()
+                    engine_service = get_engine_service()
+                    engine = engine_service.get_whisper_engine()
+                    if not engine:
+                        raise Exception("Whisper engine not available")
                     transcription = engine.transcribe(
                         audio_path, language=request.language
                     )

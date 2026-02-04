@@ -28,6 +28,7 @@ from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
 )
+from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -207,68 +208,21 @@ def _analyze_image_realism(img_array: "np.ndarray") -> float:
 
 
 # Engine router for image generation
+# Image engine initialization via EngineService (ADR-008 compliant)
 ENGINE_AVAILABLE = False
-engine_router = None
+_image_engine_service = None
 
 try:
-    import sys
-
-    app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-    if os.path.exists(app_path) and app_path not in sys.path:
-        sys.path.insert(0, app_path)
-
-    from app.core.engines import (
-        Automatic1111Engine,
-        ComfyUIEngine,
-        FastSDCPUEngine,
-        FooocusEngine,
-        InvokeAIEngine,
-        LocalAIEngine,
-        OpenJourneyEngine,
-        RealESRGANEngine,
-        RealisticVisionEngine,
-        SDCPUEngine,
-        SDNextEngine,
-        SDXLComfyEngine,
-        SDXLEngine,
-    )
-    from app.core.engines import router as engine_router
-
-    ENGINE_AVAILABLE = True
-
-    # Auto-load all engines from manifests
-    try:
-        engine_router.load_all_engines("engines")
-        loaded_engines = engine_router.list_engines()
-        logger.info(
-            f"Image engine router initialized. Auto-loaded {len(loaded_engines)} "
-            f"engines from manifests: {', '.join(loaded_engines)}"
-        )
-    except Exception as e:
-        logger.warning(f"Failed to auto-load engines from manifests: {e}")
-        # Fallback: Manual registration
-        try:
-            engine_router.register_engine("sdxl_comfy", SDXLComfyEngine)
-            engine_router.register_engine("comfyui", ComfyUIEngine)
-            engine_router.register_engine("automatic1111", Automatic1111Engine)
-            engine_router.register_engine("sdnext", SDNextEngine)
-            engine_router.register_engine("invokeai", InvokeAIEngine)
-            engine_router.register_engine("fooocus", FooocusEngine)
-            engine_router.register_engine("localai", LocalAIEngine)
-            engine_router.register_engine("sdxl", SDXLEngine)
-            engine_router.register_engine("realistic_vision", RealisticVisionEngine)
-            engine_router.register_engine("openjourney", OpenJourneyEngine)
-            engine_router.register_engine("sd_cpu", SDCPUEngine)
-            engine_router.register_engine("fastsd_cpu", FastSDCPUEngine)
-            engine_router.register_engine("realesrgan", RealESRGANEngine)
-            logger.info("Image engine router initialized with manual registration (fallback mode)")
-        except Exception as reg_error:
-            logger.error(f"Failed to register engines manually: {reg_error}")
-except (ImportError, ModuleNotFoundError) as e:
-    logger.warning(
-        f"Image engine router not available: {e}. "
-        "Image generation will return errors when engines unavailable."
-    )
+    _image_engine_service = get_engine_service()
+    engines = _image_engine_service.list_engines()
+    ENGINE_AVAILABLE = len(engines) > 0
+    if ENGINE_AVAILABLE:
+        engine_names = [e.get("id", e.get("name", "")) for e in engines]
+        logger.info(f"Image EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
+    else:
+        logger.warning("No engines available for image generation")
+except Exception as e:
+    logger.warning(f"Image EngineService not available: {e}")
     ENGINE_AVAILABLE = False
 
 
@@ -281,17 +235,11 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
     Any engine with an engine.manifest.json file in engines/ will be available.
     """
     try:
-        # Dynamically discover available engines
+        # Dynamically discover available engines via EngineService
         valid_engines: list[str] = []
-        if ENGINE_AVAILABLE and engine_router:
-            valid_engines = engine_router.list_engines()
-            if not valid_engines:
-                try:
-                    engine_router.load_all_engines("engines")
-                    valid_engines = engine_router.list_engines()
-                except Exception as e:
-                    logger.warning(f"Failed to auto-load engines: {e}")
-                    valid_engines = []
+        if ENGINE_AVAILABLE and _image_engine_service:
+            engine_list = _image_engine_service.list_engines()
+            valid_engines = [e.get("id", e.get("name", "")) for e in engine_list]
 
         # Validate engine
         if valid_engines and req.engine not in valid_engines:
@@ -304,10 +252,10 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
             logger.warning("No engines available - engine router not initialized")
 
         # Generate image if engines available
-        if ENGINE_AVAILABLE and engine_router:
+        if ENGINE_AVAILABLE and _image_engine_service:
             try:
                 # Get engine instance
-                engine = engine_router.get_engine(req.engine)
+                engine = _image_engine_service.get_engine(req.engine)
                 if engine is None:
                     raise HTTPException(
                         status_code=503,
@@ -412,12 +360,12 @@ async def upscale_image(
     Upscale image using Real-ESRGAN or other upscaling engines.
     """
     try:
-        if not ENGINE_AVAILABLE or not engine_router:
+        if not ENGINE_AVAILABLE or not _image_engine_service:
             raise HTTPException(status_code=503, detail="Upscaling engines are not available")
 
         # Get upscaling engine (default: realesrgan)
         engine_name = req.engine or "realesrgan"
-        engine = engine_router.get_engine(engine_name)
+        engine = _image_engine_service.get_engine(engine_name)
 
         if engine is None:
             raise HTTPException(
@@ -555,11 +503,11 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
 
             if req.multi_stage or req.face_specific:
                 # Apply upscaling for face enhancement
-                if ENGINE_AVAILABLE and engine_router:
+                if ENGINE_AVAILABLE and _image_engine_service:
                     try:
                         # Use face-specific upscaling if available
                         engine_name = "realesrgan"  # Default
-                        engine = engine_router.get_engine(engine_name)
+                        engine = _image_engine_service.get_engine(engine_name)
 
                         if engine and hasattr(engine, "upscale"):
                             enhanced_image_id = (
@@ -655,11 +603,11 @@ async def get_image(image_id: str):
 @router.get("/engines/list")
 async def list_engines() -> dict:
     """List all available image generation engines."""
-    if not ENGINE_AVAILABLE or not engine_router:
+    if not ENGINE_AVAILABLE or not _image_engine_service:
         return {"engines": [], "available": False}
 
     try:
-        engines = engine_router.list_engines()
+        engines = _image_engine_service.list_engines() if _image_engine_service else []
         return {"engines": engines, "available": True, "count": len(engines)}
     except Exception as e:
         logger.error(f"Error listing engines: {e}")

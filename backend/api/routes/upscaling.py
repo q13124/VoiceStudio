@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from backend.services.engine_service import get_engine_service
 
 from ..optimization import cache_response
 
@@ -394,11 +395,15 @@ async def _process_upscaling_job(
         job.progress = 30.0
         _upscaling_jobs[job_id] = job
 
-        # Try to use Real-ESRGAN engine
+        # Try to use Real-ESRGAN engine (ADR-008 compliant)
         try:
-            from app.core.engines.realesrgan_engine import RealESRGANEngine
-
-            engine = RealESRGANEngine(scale=int(request.scale_factor))
+            engine_service = get_engine_service()
+            engine = engine_service.get_realesrgan_engine()
+            if not engine:
+                raise Exception("Real-ESRGAN engine not available")
+            # Set scale factor if engine supports it
+            if hasattr(engine, "scale"):
+                engine.scale = int(request.scale_factor)
             if not engine.initialize():
                 raise Exception("Real-ESRGAN engine initialization failed")
 
