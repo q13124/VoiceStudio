@@ -31,7 +31,7 @@
 
 | ID | Title | Description | Impact | Owner | Created | Target |
 |----|-------|-------------|--------|-------|---------|--------|
-| **TD-018** | Empty Catch Remediation | All empty catches remediated: 27 core + 87 remaining = 114 total. All now use ErrorLogger.LogWarning(). | Error visibility | Role 7 | 2026-02-04 | CLOSED |
+| **TD-018** | Empty Catch Remediation | All empty catches remediated: 118 C# + 57 Python = 175 total. C# uses ErrorLogger.LogWarning(); Python has allowlist comments. Scripts: fix_empty_catches.py, fix_bare_excepts.py. | Error visibility | Role 7 | 2026-02-04 | CLOSED |
 | **TD-019** | Python Path Standardization | **CLOSED.** 27 scripts migrated to use `_env_setup.py`. All manual `sys.path` manipulation removed. Standard pattern: `from _env_setup import PROJECT_ROOT`. 26 standalone scripts unchanged. | Import reliability | Role 4 | 2026-02-04 | CLOSED |
 | **TD-020** | XAML Safety Tooling | Infrastructure complete; remaining work is documentation | Build stability | Role 2 | 2026-02-04 | CLOSED |
 | **TD-021** | Observability Infrastructure | Phase 8: DiagnosticsPanel enhanced with correlation ID filtering, copy, search. Full trace view pending. | Debugging ease | Role 4 | 2026-02-04 | CLOSED |
