@@ -43,20 +43,31 @@ dotnet build --configuration Debug
 ### 3. Python Dependencies
 
 ```bash
-pip install Appium-Python-Client selenium
+cd tests/ui
+pip install -r requirements.txt
 ```
+
+This installs:
+- Appium-Python-Client (WinAppDriver integration)
+- Selenium (WebDriver support)
+- pytest with plugins (timeout, parallel execution, HTML reports)
+- tenacity (retry utilities)
 
 ## Test Structure
 
 ```
 tests/ui/
-├── README.md                    # This file
-├── conftest.py                  # Pytest configuration and fixtures
-├── test_panel_functionality.py  # Panel interaction tests
-├── test_navigation.py           # Navigation and routing tests
-├── test_user_interactions.py    # User interaction tests
-├── test_command_palette.py      # Command palette tests
-└── test_keyboard_shortcuts.py   # Keyboard shortcut tests
+├── README.md                          # This file
+├── requirements.txt                   # Python dependencies
+├── conftest.py                        # Pytest configuration and fixtures
+├── helpers.py                         # Common test utilities and helpers
+├── test_navigation.py                 # Navigation and routing tests
+├── test_panel_functionality.py        # Panel interaction tests
+├── test_expanded_panel_functionality.py  # Extended panel tests
+├── test_user_interactions.py          # User interaction tests
+├── test_command_palette.py            # Command palette tests
+├── test_keyboard_shortcuts.py         # Keyboard shortcut tests
+└── PANEL_TESTING_SPECIFICATION.md     # Test specification document
 ```
 
 ## Running Tests
@@ -95,7 +106,13 @@ pytest tests/ui/test_panel_functionality.py::test_profiles_panel_loads -v
 
 ### Application Path
 
-Update `conftest.py` with the correct path to your application executable:
+Set the application path using environment variable (recommended for CI):
+
+```powershell
+$env:VS_APP_PATH = "C:\path\to\VoiceStudio.App.exe"
+```
+
+Or update `conftest.py` directly:
 
 ```python
 APP_PATH = r"C:\path\to\VoiceStudio.App.exe"
@@ -103,23 +120,33 @@ APP_PATH = r"C:\path\to\VoiceStudio.App.exe"
 
 ### Timeout Settings
 
-Default timeouts can be adjusted in `conftest.py`:
+Configure timeouts via environment variables:
+
+```powershell
+$env:UI_TEST_IMPLICIT_WAIT = "10"  # seconds
+$env:UI_TEST_EXPLICIT_WAIT = "30"  # seconds
+```
+
+Or adjust in `conftest.py`:
 
 ```python
 IMPLICIT_WAIT = 10  # seconds
 EXPLICIT_WAIT = 30  # seconds
 ```
 
+### Screenshots
+
+Screenshots are automatically captured on test failure and saved to:
+`.buildlogs/ui_tests/screenshots/`
+
 ## Writing New Tests
 
-### Example Test
+### Basic Example
 
 ```python
 import pytest
-from appium import webdriver
-from appium.options.windows import WindowsOptions
 
-def test_profiles_panel_loads(driver):
+def test_profiles_panel_loads(driver, app_launched):
     """Test that Profiles panel loads correctly."""
     # Find and click Profiles panel button
     profiles_button = driver.find_element("accessibility id", "NavRail_ProfilesButton")
@@ -128,10 +155,51 @@ def test_profiles_panel_loads(driver):
     # Wait for panel to load
     profiles_panel = driver.find_element("accessibility id", "ProfilesView_Root")
     assert profiles_panel is not None
+```
+
+### Using Fixtures
+
+```python
+def test_navigate_to_settings(driver, navigate_to_panel):
+    """Test navigating to settings using fixture."""
+    panel = navigate_to_panel("NavRail_SettingsButton", "SettingsView_Root")
+    assert panel is not None
+
+def test_capture_screenshot(driver, screenshot):
+    """Test with manual screenshot capture."""
+    # Do some action
+    screenshot("before_action")
+    driver.find_element("accessibility id", "SomeButton").click()
+    screenshot("after_action")
+```
+
+### Using Helper Module
+
+```python
+from helpers import NavigationHelper, ElementHelper, assert_panel_loaded, CORE_PANELS
+
+def test_navigate_all_panels(driver, app_launched):
+    """Test navigating through all panels using helpers."""
+    nav = NavigationHelper(driver)
+    results = nav.cycle_all_panels()
     
-    # Verify panel content
-    profile_list = driver.find_element("accessibility id", "ProfilesView_ProfileList")
-    assert profile_list is not None
+    # Check at least core panels loaded
+    for name, success in results:
+        print(f"Panel {name}: {'OK' if success else 'FAILED'}")
+
+def test_element_visibility(driver, app_launched):
+    """Test using element helpers."""
+    element = ElementHelper(driver)
+    
+    # Wait for element with retry
+    assert element.is_visible("MainWindow_Root")
+    
+    # Click button
+    assert element.click_button("NavRail_ProfilesButton")
+    
+    # Check panel loaded
+    profiles = next(p for p in CORE_PANELS if p.name == "Profiles")
+    assert_panel_loaded(driver, profiles)
 ```
 
 ### Automation IDs
@@ -250,16 +318,26 @@ Examples:
 - Tests require Windows 10 version 1809 or later
 - Some UI elements may not be accessible if not properly configured
 
+## Implemented Features
+
+- [x] Screenshot capture on test failure
+- [x] Environment variable configuration
+- [x] Retry utilities for flaky tests
+- [x] Helper module with common operations
+- [x] CI workflow integration (manual trigger)
+- [x] pytest-html report generation
+- [x] Parallel test execution support
+
 ## Future Enhancements
 
-- [ ] Screenshot capture on test failure
 - [ ] Video recording of test execution
 - [ ] Performance metrics during UI tests
 - [ ] Cross-browser testing (if web components added)
 - [ ] Accessibility testing integration
+- [ ] Allure report integration
 
 ---
 
-**Last Updated:** 2025-01-28  
-**Status:** Framework Ready - Requires Application Build and WinAppDriver
+**Last Updated:** 2026-02-04  
+**Status:** Framework Ready with Enhanced Infrastructure
 

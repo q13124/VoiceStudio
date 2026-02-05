@@ -5,10 +5,22 @@ This directory contains contract tests that validate API contracts match the Ope
 ## Purpose
 
 Contract tests ensure that:
+- API responses match the documented OpenAPI schema
 - The generated C# client matches the OpenAPI schema
 - API changes don't break client compatibility
 - Request/response models are correctly generated
 - Required fields are properly handled
+- Schema drift is detected before deployment
+
+## Test Files
+
+| File | Description |
+|------|-------------|
+| `test_openapi_schema_drift.py` | Schema hash and drift detection tests |
+| `test_api_contracts.py` | API response contract validation tests |
+| `conftest.py` | Contract test fixtures and validators |
+| `ApiContractTests.cs` | C# contract tests |
+| `SchemaValidationTests.cs` | C# schema validation tests |
 
 ## Setup
 

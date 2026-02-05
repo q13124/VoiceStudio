@@ -1,0 +1,26 @@
+# Requirements for WinAppDriver/Appium UI Tests
+# Install with: pip install -r requirements.txt
+
+# Appium Python client for WinAppDriver
+Appium-Python-Client>=4.0.0,<5.0.0
+
+# Selenium WebDriver (dependency of Appium client)
+selenium>=4.15.0,<5.0.0
+
+# Pytest for test execution
+pytest>=8.0.0,<9.0.0
+pytest-timeout>=2.2.0
+pytest-xdist>=3.5.0  # Parallel test execution
+
+# Requests for WinAppDriver health checks
+requests>=2.31.0
+
+# Retry utilities for flaky tests
+tenacity>=8.2.0
+
+# Reporting
+pytest-html>=4.1.0
+allure-pytest>=2.13.0
+
+# Type hints support
+types-requests>=2.31.0
