@@ -42,12 +42,23 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 
 ## Active Task
 
-- **ID**: 3.1.1
-- **Title**: NSwag integration for C# client generation
+- **ID**: 1.1.5
+- **Title**: Add CI binding validation
 - **Priority**: HIGH
-- **Owner**: Engine Engineer (Role 5)
-- **Phase**: 3 - API/Contract Synchronization
-- **Status**: **IN PROGRESS**
+- **Owner**: UI Engineer (Role 3)
+- **Phase**: 1 - XAML Reliability & AI Safety
+- **Status**: **PENDING**
+
+## Recently Completed Tasks (Phase 1)
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 1.1.1 | Audit {Binding} vs {x:Bind} | ✅ COMPLETE | 97.9% compile-time coverage |
+| 1.1.2 | Add x:DataType to all controls | ✅ COMPLETE | 43 controls updated |
+| 1.1.3 | Migrate core panels to {x:Bind} | ✅ COMPLETE | 3 migrated, 9 acceptable |
+| 1.3.1 | StaticResource audit | ✅ COMPLETE | 150 defined, 0 missing |
+| 1.4.1 | AI DO NOT EDIT markers | ✅ COMPLETE | Already in 13 files |
+| 1.4.2 | Enhance xaml-safety.mdc | ✅ COMPLETE | 6 pattern sections |
 
 ### Phase 2 Summary — COMPLETE (19/22 tasks, 86%)
 
