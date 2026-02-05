@@ -1,7 +1,7 @@
 # XAML Binding Audit Report
 
+**Task**: 1.1.1 — Audit {Binding} vs {x:Bind} usage across all Views
 **Date**: 2026-02-05
-**Task**: 1.1.1 — Audit {Binding} vs {x:Bind} usage
 **Role**: UI Engineer (Role 3)
 **Phase**: 1 — XAML Reliability & AI Safety
 
@@ -9,107 +9,232 @@
 
 ## Executive Summary
 
-| Metric | Count | Status |
+| Metric | Value | Status |
 |--------|-------|--------|
-| **{Binding} usage** | 8 | ⚠️ Needs migration |
-| **{x:Bind} usage** | 593 | ✅ Good |
-| **x:DataType declarations** | 107 | ✅ Good |
-| **Views with x:DataType** | 95 | ✅ Good |
-
-**Binding Migration Status**: 98.7% complete (593 / 601 bindings use {x:Bind})
-
----
-
-## Files Requiring {Binding} Migration
-
-### Priority: HIGH (Core Panels)
-
-| File | {Binding} Count | Action |
-|------|-----------------|--------|
-| `QualityControlView.xaml` | 2 | Migrate to {x:Bind} |
-| `TextBasedSpeechEditorView.xaml` | 2 | Migrate to {x:Bind} |
-| `EnsembleSynthesisView.xaml` | 4 | Migrate to {x:Bind} |
-
-**Total files to fix**: 3 files, 8 bindings
+| Total XAML Files | 160 | — |
+| Files with {x:Bind} | 42 | ✅ |
+| Files with {Binding} | 5 | ⚠️ Needs Migration |
+| Files with x:DataType | 98 | ✅ |
+| {x:Bind} Instances | 575+ | ✅ |
+| {Binding} Instances | 12 | ⚠️ Needs Migration |
+| **Compile-Time Binding Coverage** | **97.9%** | ✅ GOOD |
 
 ---
 
-## Views Using {x:Bind} (Good Pattern)
+## {Binding} Instances Requiring Migration
 
-| View | {x:Bind} Count |
-|------|----------------|
-| SettingsView.xaml | 60 |
-| VoiceCloningWizardView.xaml | 48 |
-| EffectsMixerView.xaml | 41 |
-| QualityControlView.xaml | 40 |
-| TextBasedSpeechEditorView.xaml | 39 |
-| PluginManagementView.xaml | 36 |
-| EnsembleSynthesisView.xaml | 32 |
-| RealTimeVoiceConverterView.xaml | 30 |
-| AnalyzerView.xaml | 29 |
-| SpectrogramView.xaml | 23 |
-| VoiceSynthesisView.xaml | 22 |
-| MacroView.xaml | 15 |
-| GlobalSearchView.xaml | 15 |
-| ProfilesView.xaml | 14 |
-| TrainingView.xaml | 13 |
-| UpdateDialog.xaml | 12 |
+### 1. QualityControlView.xaml (2 instances)
+
+**Location**: `src/VoiceStudio.App/Views/Panels/QualityControlView.xaml`
+
+```xml
+<!-- Line 237-238: ItemsControl DataTemplate -->
+<Run Text="{Binding Key}" />: <Run Text="{Binding Value}" />
+```
+
+**Issue**: Inside `DataTemplate` without `x:DataType`
+**Fix**: Add `x:DataType` to DataTemplate and convert to `{x:Bind}`
+
+---
+
+### 2. TextBasedSpeechEditorView.xaml (2 instances)
+
+**Location**: `src/VoiceStudio.App/Views/Panels/TextBasedSpeechEditorView.xaml`
+
+```xml
+<!-- Line 160-162: ItemsControl DataTemplate -->
+<Run Text="{Binding StartTime, Converter={StaticResource F2FormatConverter}}" />
+<Run Text="{Binding EndTime, Converter={StaticResource F2FormatConverter}}" />
+```
+
+**Issue**: Inside `DataTemplate` without `x:DataType`
+**Fix**: Add `x:DataType` to DataTemplate and convert to `{x:Bind}`
+
+---
+
+### 3. EnsembleSynthesisView.xaml (4 instances)
+
+**Location**: `src/VoiceStudio.App/Views/Panels/EnsembleSynthesisView.xaml`
+
+```xml
+<!-- Line 139, 148: ComboBox ItemsSource with ElementName -->
+ItemsSource="{Binding DataContext.AvailableProfiles, ElementName=EnsembleSynthesisView_Root}"
+ItemsSource="{Binding DataContext.AvailableEngines, ElementName=EnsembleSynthesisView_Root}"
+
+<!-- Line 197, 341: Button Command with ElementName -->
+Command="{Binding DataContext.RemoveVoiceCommand, ElementName=EnsembleSynthesisView_Root}"
+Command="{Binding DataContext.DeleteJobCommand, ElementName=EnsembleSynthesisView_Root}"
+```
+
+**Issue**: Using `ElementName` binding (not supported by {x:Bind})
+**Fix**: Refactor to use `x:Bind` with function bindings or ancestor binding
+
+---
+
+### 4. UserCursorIndicator.xaml (3 instances)
+
+**Location**: `src/VoiceStudio.App/Controls/UserCursorIndicator.xaml`
+
+```xml
+<!-- Line 11, 17-18: Control DataTemplate -->
+Fill="{Binding Color, Converter={StaticResource StringToBrushConverter}}"
+Canvas.Left="{Binding X}" Canvas.Top="{Binding Y}"
+Text="{Binding UserName}"
+```
+
+**Issue**: Control template bindings (requires investigation)
+**Fix**: Add `x:DataType` and migrate if supported
+
+---
+
+### 5. FloatingWindowHost.xaml (1 instance)
+
+**Location**: `src/VoiceStudio.App/Controls/FloatingWindowHost.xaml`
+
+```xml
+<!-- Line 6: ControlTemplate Content binding -->
+Content="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}"
+```
+
+**Issue**: `RelativeSource TemplatedParent` (not supported by {x:Bind})
+**Fix**: Use `TemplateBinding` instead (WinUI 3 native)
 
 ---
 
 ## x:DataType Coverage
 
-**95 views** have x:DataType declarations, indicating strong compile-time binding support.
+**Files with x:DataType declaration**: 98 out of 160 (61%)
 
-### Sample x:DataType declarations:
+Views/Panels with x:DataType (sample):
+- TimelineView.xaml ✅
+- ProfilesView.xaml ✅ (2 declarations)
+- EffectsMixerView.xaml ✅ (5 declarations)
+- AnalyzerView.xaml ✅
+- VoiceSynthesisView.xaml ✅
+- MacroView.xaml ✅ (3 declarations)
+- DiagnosticsView.xaml ✅
+- VoiceCloningWizardView.xaml ✅ (5 declarations)
+- SettingsView.xaml ✅ (3 declarations)
 
-- ProfilesView.xaml: 2 declarations (nested DataTemplates)
-- EffectsMixerView.xaml: 5 declarations
-- VoiceCloningWizardView.xaml: 5 declarations
-- SettingsView.xaml: 3 declarations
-- TextBasedSpeechEditorView.xaml: 3 declarations
+---
+
+## Migration Priority
+
+| Priority | File | Instances | Complexity |
+|----------|------|-----------|------------|
+| HIGH | EnsembleSynthesisView.xaml | 4 | Medium (ElementName) |
+| HIGH | UserCursorIndicator.xaml | 3 | Medium (Control) |
+| MEDIUM | QualityControlView.xaml | 2 | Low (DataTemplate) |
+| MEDIUM | TextBasedSpeechEditorView.xaml | 2 | Low (DataTemplate) |
+| LOW | FloatingWindowHost.xaml | 1 | Low (TemplateBinding) |
 
 ---
 
 ## Recommendations
 
-### Exceptions (Acceptable {Binding} Usage)
+### Immediate Actions (Task 1.1.2-1.1.4)
 
-The 8 remaining {Binding} usages are in DataTemplates where {x:Bind} has limitations:
+1. **Add x:DataType to remaining 62 files** without declarations
+2. **Migrate 12 {Binding} instances** in 5 files
+3. **Prioritize EnsembleSynthesisView.xaml** (most instances)
 
-| File | Pattern | Reason |
-|------|---------|--------|
-| QualityControlView.xaml | `{Binding Key}`, `{Binding Value}` | KeyValuePair in ItemsControl - x:DataType complex |
-| TextBasedSpeechEditorView.xaml | `{Binding StartTime}`, `{Binding EndTime}` | Inline Runs in TextBlock - x:Bind limited |
-| EnsembleSynthesisView.xaml | `{Binding DataContext.X, ElementName=Root}` | Parent context access from DataTemplate |
+### Migration Patterns
 
-**Recommendation**: Accept these 8 bindings as acceptable exceptions. No further migration needed.
+#### DataTemplate Migration
 
-### Validation Steps
+```xml
+<!-- Before -->
+<DataTemplate>
+    <TextBlock Text="{Binding Name}" />
+</DataTemplate>
 
-After migration:
-```powershell
-# Verify no {Binding} remains
-rg "\{Binding\s" src/VoiceStudio.App/Views --glob "*.xaml"
+<!-- After -->
+<DataTemplate x:DataType="models:ItemModel">
+    <TextBlock Text="{x:Bind Name}" />
+</DataTemplate>
+```
 
-# Verify build succeeds
-dotnet build VoiceStudio.sln -c Debug -p:Platform=x64
+#### ElementName Migration
+
+```xml
+<!-- Before -->
+<Button Command="{Binding DataContext.SaveCommand, ElementName=Root}" />
+
+<!-- After (Option 1: x:Bind with path) -->
+<Button Command="{x:Bind ViewModel.SaveCommand}" />
+
+<!-- After (Option 2: Keep in code-behind) -->
+<Button x:Name="SaveButton" Click="SaveButton_Click" />
+```
+
+#### TemplateBinding Migration
+
+```xml
+<!-- Before -->
+Content="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}"
+
+<!-- After -->
+Content="{TemplateBinding Content}"
 ```
 
 ---
 
-## Task Completion Status
+## Files Without x:DataType (62 files)
 
-- [x] **1.1.1** — Audit {Binding} vs {x:Bind} — **COMPLETE**
-- [x] **1.1.2** — Add x:DataType to all Page/UserControl roots — **COMPLETE** (95 views have x:DataType)
-- [x] **1.1.3** — Migrate core panels to {x:Bind} — **COMPLETE** (98.7% migrated, 8 acceptable exceptions)
-- [x] **1.1.4** — Migrate Tier 2 panels — **COMPLETE** (all advanced panels use {x:Bind})
-- [x] **1.1.5** — CI binding validation — **COMPLETE** (exists in .github/workflows/build.yml:68-108)
+These files need `x:DataType` added in Task 1.1.2:
+
+### Resource Dictionaries (8 files) — N/A
+- DesignTokens.xaml
+- Theme.Dark.xaml
+- Theme.Light.xaml
+- Theme.SciFi.xaml
+- Density.Compact.xaml
+- Density.Comfort.xaml
+- PanelTemplates.xaml
+- Styles/*.xaml
+
+### Views/Controls Requiring x:DataType (54 files)
+
+*To be identified in Task 1.1.2 by comparing full file list against x:DataType grep results*
 
 ---
 
-## Proof Artifacts
+## Verification Commands
 
-- Audit method: `rg` search for binding patterns
-- Files scanned: `src/VoiceStudio.App/Views/**/*.xaml`
-- Timestamp: 2026-02-05T00:00:00Z
+```powershell
+# Count {Binding} instances
+rg "\{Binding\s" src/VoiceStudio.App --glob "*.xaml" -c
+
+# Count {x:Bind} instances
+rg "\{x:Bind\s" src/VoiceStudio.App --glob "*.xaml" -c
+
+# Count x:DataType declarations
+rg "x:DataType=" src/VoiceStudio.App --glob "*.xaml" -c
+
+# Find files without x:DataType
+rg -L "x:DataType=" src/VoiceStudio.App/Views --glob "*.xaml"
+```
+
+---
+
+## Task 1.1.1 Status
+
+- [x] Audit completed
+- [x] {Binding} instances identified (12 in 5 files)
+- [x] {x:Bind} coverage calculated (97.9%)
+- [x] x:DataType coverage calculated (61%)
+- [x] Migration priorities documented
+- [x] Report generated
+
+**Result**: PASS — Audit complete, 97.9% compile-time binding coverage
+
+---
+
+## Next Tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| 1.1.2 | Add x:DataType to all Page/UserControl roots | PENDING |
+| 1.1.3 | Migrate core panels to {x:Bind} | PENDING |
+| 1.1.4 | Migrate Tier 2 panels | PENDING |
+| 1.1.5 | Add CI binding validation | PENDING |
