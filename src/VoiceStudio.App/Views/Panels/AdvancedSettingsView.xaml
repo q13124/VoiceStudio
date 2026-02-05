@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.AdvancedSettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:VoiceStudio.App.Controls">
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    x:DataType="local:AdvancedSettingsView">
     <Grid AutomationProperties.AutomationId="AdvancedSettingsView_Root">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

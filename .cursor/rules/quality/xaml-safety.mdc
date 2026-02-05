@@ -1,0 +1,361 @@
+# XAML Safety Rules
+
+## Overview
+
+This rule defines mandatory safety guardrails for XAML changes in VoiceStudio.
+WinUI 3 with WinAppSDK 1.8 has known XAML compiler fragility that can cause
+silent build failures (exit code 1, no output.json).
+
+**Canonical Documentation:**
+- `docs/developer/XAML_CHANGE_PROTOCOL.md` - Mandatory change procedures
+- `docs/developer/UI_HARDENING_GUIDELINES.md` - Best practices & merge order
+- `docs/developer/XAML_DESIGN_TIME_GUIDE.md` - Design-time patterns (x:DataType, d:DataContext, d:Visibility)
+- `scripts/validate_xaml_resources.py` - StaticResource validation tool
+
+## Non-Destructive Operations
+
+When debugging XAML issues:
+
+- **NEVER** delete XAML files without explicit user approval
+- **NEVER** revert XAML changes by rewriting the working tree directly
+- **NEVER** run `git checkout HEAD -- *.xaml` without user confirmation
+- **NEVER** run `git reset --hard` without user confirmation
+
+If rollback is needed:
+1. Create a new commit that reverts the changes
+2. Or suggest `git stash push -u -m "description"` for temporary rollback
+3. Let the user decide the appropriate recovery action
+
+## Mandatory Pre-Change Protocol
+
+Before making ANY XAML change:
+
+1. **Create a checkpoint** using one of:
+   - `git stash push -u -m "pre-xaml-fix"` (quick, reversible)
+   - `git add -A && git commit -m "WIP: pre-XAML checkpoint"` (persistent)
+
+2. **Verify checkpoint exists**:
+   - `git stash list` or `git log -1`
+
+3. **Make changes to ONE XAML file at a time**
+
+4. **Build after each file change**:
+   - `dotnet build VoiceStudio.sln -c Debug -p:Platform=x64`
+
+5. **If build fails silently (exit code 1, no error)**:
+   - DO NOT make more changes
+   - Run: `.\scripts\build-with-binlog.ps1`
+   - Run: `.\scripts\analyze-binlog.ps1`
+   - Run: `.\scripts\xaml-binary-search.ps1` to isolate the problematic file
+
+## Forbidden XAML Patterns
+
+These patterns WILL crash the XAML compiler. NEVER use them:
+
+### Attached Properties on ContentPresenter
+
+```xml
+<!-- FORBIDDEN -->
+<ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+
+<!-- SAFE ALTERNATIVE -->
+<ContentPresenter Foreground="{TemplateBinding Foreground}" />
+```
+
+### Animations Targeting Attached Properties
+
+```xml
+<!-- FORBIDDEN -->
+<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(TextElement.Foreground)">
+    ...
+</ObjectAnimationUsingKeyFrames>
+
+<!-- SAFE ALTERNATIVE -->
+<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Foreground">
+    ...
+</ObjectAnimationUsingKeyFrames>
+```
+
+### Deeply Nested Views Subfolders
+
+```
+<!-- FORBIDDEN: 3+ levels under Views/ -->
+Views/UI/Panels/MyView.xaml
+
+<!-- SAFE: Max 2 levels -->
+Views/Panels/MyView.xaml
+```
+
+**Reference:** GitHub Issue #10947 - XamlCompiler.exe exits code 1 for Views subfolders
+
+## Silent Build Failure Response
+
+When the build exits with code 1 and no error output:
+
+1. **DO NOT** make additional changes
+2. **DO NOT** attempt random fixes
+3. **DO** run the diagnostic workflow:
+
+```powershell
+# Step 1: Diagnostic build with binlog
+.\scripts\build-with-binlog.ps1
+
+# Step 2: Analyze binlog for XamlCompiler issues
+.\scripts\analyze-binlog.ps1
+
+# Step 3: Binary search to isolate problematic file
+.\scripts\xaml-binary-search.ps1
+```
+
+4. **Report findings** to the user with specific file paths and recommendations
+
+## Build Configuration
+
+VoiceStudio uses these XAML compiler settings (DO NOT change without ADR):
+
+```xml
+<UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
+<XAMLFingerprint>false</XAMLFingerprint>
+<EnableWin32Codegen>false</EnableWin32Codegen>
+<UseVCMetaManaged>false</UseVCMetaManaged>
+```
+
+**Rationale:** The external compiler goes through our wrapper
+(`tools/xaml-compiler-wrapper.cmd`) which handles false-positive exit code 1.
+
+DO NOT set `UseXamlCompilerExecutable=false` - this triggers .NET loading
+issues with `System.Security.Permissions`.
+
+## Single-Threaded Builds for Diagnosis
+
+When debugging XAML issues, ALWAYS use single-threaded builds:
+
+```powershell
+dotnet build VoiceStudio.sln -c Debug -p:Platform=x64 -m:1
+```
+
+Multi-threaded builds can mask or introduce race conditions that make
+XAML compiler problems appear intermittent.
+
+## AI-Assisted Development Guidelines
+
+When making XAML changes with AI assistance:
+
+### Binding Patterns (Priority Order)
+
+1. **Prefer `{x:Bind}` over `{Binding}`**
+   - Compile-time type checking prevents runtime errors
+   - Always specify `Mode=OneWay` or `Mode=TwoWay` explicitly
+   - Always include `x:DataType` on DataTemplates
+
+2. **For DataTemplates inside ItemsControl/ListView/GridView**:
+   ```xml
+   <!-- CORRECT -->
+   <DataTemplate x:DataType="models:MyItemType">
+     <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+   </DataTemplate>
+   
+   <!-- INCORRECT - No x:DataType -->
+   <DataTemplate>
+     <TextBlock Text="{Binding Name}" />
+   </DataTemplate>
+   ```
+
+3. **When `{Binding}` is required** (ElementName, Run elements):
+   ```xml
+   <!-- ElementName still requires {Binding} -->
+   <Button CommandParameter="{Binding Text, ElementName=MyTextBox}" />
+   
+   <!-- Run elements in WinUI 3 don't support x:Bind -->
+   <Run Text="{Binding StartTime}" />
+   ```
+
+### Defensive Binding Practices
+
+1. **Add FallbackValue for display bindings**:
+   ```xml
+   <TextBlock Text="{x:Bind Name, Mode=OneWay, 
+       FallbackValue='Unnamed', 
+       TargetNullValue='—'}" />
+   ```
+
+2. **Use converters consistently**:
+   - `BooleanToVisibilityConverter` for showing/hiding
+   - `InverseBooleanToVisibilityConverter` for inverse logic
+   - `NullToVisibilityConverter` for null checks
+   - `StringFormatConverter` for formatted text
+
+### ViewModel Namespace Awareness
+
+Some ViewModels are located outside the standard `VoiceStudio.App.ViewModels` namespace:
+
+| ViewModel Location | Namespace Alias |
+|---|---|
+| `Views/Panels/*.cs` | `xmlns:local="using:VoiceStudio.App.Views.Panels"` |
+| `ViewModels/*.cs` | `xmlns:vm="using:VoiceStudio.App.ViewModels"` |
+| `Core/Models/*.cs` | `xmlns:models="using:VoiceStudio.Core.Models"` |
+
+Always verify the ViewModel namespace before adding `x:DataType`.
+
+### Comments for AI Guidance
+
+Add header comments in XAML files to guide AI assistants:
+
+```xml
+<!--
+  ViewName.xaml - Brief description
+  
+  AI GUIDELINES:
+  - Key binding patterns used
+  - Important ViewModel properties
+  - DO NOT modify warnings
+  - Architecture notes
+-->
+```
+
+## PDF-Recommended Patterns (Phase 1 XAML Reliability)
+
+These patterns are the result of systematic hardening and MUST be followed.
+
+### 1. x:DataType Requirements
+
+**Every UserControl MUST declare x:DataType on the root element:**
+
+```xml
+<UserControl x:Class="VoiceStudio.App.Views.Panels.ExampleView"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    x:DataType="local:ExampleView">
+```
+
+**Every DataTemplate MUST declare x:DataType:**
+
+```xml
+<DataTemplate x:DataType="models:VoiceProfile">
+    <TextBlock Text="{x:Bind Name, Mode=OneWay}"/>
+</DataTemplate>
+```
+
+**CI Enforcement:** The build workflow validates x:DataType presence on all panels.
+
+### 2. Design-Time Support Patterns
+
+**Add d:DataContext for XAML designer IntelliSense:**
+
+```xml
+<UserControl 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance Type=local:ExampleViewModel, IsDesignTimeCreatable=False}">
+```
+
+**Use d:Visibility to control design-time visibility:**
+
+| Element Type | Runtime State | Design-Time | d:Visibility |
+|---|----|-----|-----|
+| Loading overlays | Bound to IsLoading | Hide | `d:Visibility="Collapsed"` |
+| Error displays | Bound to HasError | Hide | `d:Visibility="Collapsed"` |
+| Help overlays | Usually collapsed | Hide | `d:Visibility="Collapsed"` |
+| Conditional panels | Bound to condition | Show | `d:Visibility="Visible"` |
+
+**Reference:** `docs/developer/XAML_DESIGN_TIME_GUIDE.md`
+
+### 3. Defensive Binding (FallbackValue/TargetNullValue)
+
+**Add FallbackValue to text bindings that may be null or unset:**
+
+```xml
+<!-- Critical bindings (error messages, status) -->
+<TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, FallbackValue='An error occurred'}"/>
+<TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay, FallbackValue='Ready'}"/>
+
+<!-- Collection item bindings -->
+<TextBlock Text="{x:Bind Name, Mode=OneWay, FallbackValue='Unnamed'}"/>
+<TextBlock Text="{x:Bind Count, Mode=OneWay, FallbackValue='0'}"/>
+```
+
+**Required for:**
+- All ErrorMessage bindings
+- All StatusMessage bindings
+- All Name bindings in DataTemplates
+- All Count/Order bindings in collections
+
+### 4. StaticResource Validation
+
+**All VSQ.* resources must be defined before use:**
+
+```powershell
+# Validate resources before commit
+python scripts/validate_xaml_resources.py
+
+# Run as pre-commit hook (automatic)
+pre-commit run xaml-resource-validation
+```
+
+**Adding new VSQ resources:**
+1. Define in `src/VoiceStudio.App/Resources/DesignTokens.xaml`
+2. Follow naming: `VSQ.{Category}.{Name}` or `VSQ.{Category}.{Subcategory}.{Name}`
+3. Run validation script before commit
+
+### 5. ResourceDictionary Merge Order
+
+**Critical:** Merge order determines resource availability.
+
+```xml
+<ResourceDictionary.MergedDictionaries>
+    <!-- 1. DesignTokens FIRST - base values -->
+    <ResourceDictionary Source="ms-appx:///Resources/DesignTokens.xaml" />
+    
+    <!-- 2. Typography - depends on DesignTokens -->
+    <ResourceDictionary Source="ms-appx:///Resources/Styles/Text.xaml" />
+    
+    <!-- 3. Controls - depends on tokens, may reference text -->
+    <ResourceDictionary Source="ms-appx:///Resources/Styles/Controls.xaml" />
+    
+    <!-- 4. Theme-specific - overrides base -->
+    <ResourceDictionary Source="ms-appx:///Resources/Theme.Dark.xaml" />
+    
+    <!-- 5. Panels - can reference all above -->
+    <ResourceDictionary Source="ms-appx:///Resources/Styles/Panels.xaml" />
+</ResourceDictionary.MergedDictionaries>
+```
+
+**Rules:**
+- Tokens before Styles
+- Text before Controls
+- Base before Theme overrides
+
+**Reference:** `docs/developer/UI_HARDENING_GUIDELINES.md` §3.2
+
+### 6. ResourceDictionary Protection
+
+**All ResourceDictionary files have AI GUIDELINES comments. Respect them:**
+
+- DO NOT DELETE existing resource keys
+- DO NOT RENAME resource keys
+- Adding NEW resources is allowed following VSQ.* convention
+- Run `python scripts/validate_xaml_resources.py` before committing changes
+
+## Post-Change Verification
+
+After XAML changes:
+
+1. Run XAML lint: `python scripts/lint_xaml.py`
+2. Run resource validation: `python scripts/validate_xaml_resources.py`
+3. Build succeeds with exit code 0
+4. No new warnings in build output
+5. Commit with descriptive message
+
+## GitHub Issue References
+
+- **GitHub #10027**: Can't get error output from XamlCompiler.exe
+  https://github.com/microsoft/microsoft-ui-xaml/issues/10027
+- **GitHub #10947**: XamlCompiler.exe exits code 1 for Views subfolders
+  https://github.com/microsoft/microsoft-ui-xaml/issues/10947
+
+## Related Quality Ledger Entries
+
+- VS-0001: XAML compiler false-positive exit code 1 fix
+- VS-0005: XAML Page items disabled causing missing XAML copy failures
+- VS-0035: XAML compiler exits code 1 with no output (WinAppSDK 1.8)
+- VS-0040: XAML compiler silent crash on TextElement.Foreground attached property

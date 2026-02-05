@@ -1,6 +1,7 @@
 <UserControl x:Class="VoiceStudio.App.Views.CommandPaletteView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewmodels="using:VoiceStudio.App.ViewModels"
              Background="{StaticResource VSQ.Surface}">
   <Grid Padding="{StaticResource VSQ.PanelPadding}" Width="860">
     <Grid.RowDefinitions>
@@ -11,19 +12,19 @@
     <TextBox Grid.Row="0"
              Height="{StaticResource VSQ.ControlHeight}"
              PlaceholderText="Search commands and panels (Ctrl+P)"
-             Text="{Binding FilterText, Mode=TwoWay}"/>
+             Text="{x:Bind ViewModel.FilterText, Mode=TwoWay}"/>
     <ListView Grid.Row="1" 
-              ItemsSource="{Binding FilteredItems}"
-              SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+              ItemsSource="{x:Bind ViewModel.FilteredItems, Mode=OneWay}"
+              SelectedItem="{x:Bind ViewModel.SelectedItem, Mode=TwoWay}">
       <ListView.ItemTemplate>
-        <DataTemplate>
+        <DataTemplate x:DataType="viewmodels:CommandItem">
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding Kind}" 
+            <TextBlock Text="{x:Bind Kind}" 
                        Width="90" 
                        Foreground="{StaticResource VSQ.SubtleText}"/>
-            <TextBlock Text="{Binding Title}" 
+            <TextBlock Text="{x:Bind Title}" 
                        Foreground="{StaticResource VSQ.Text}"/>
-            <TextBlock Text="{Binding Shortcut}" 
+            <TextBlock Text="{x:Bind Shortcut}" 
                        Margin="12,0,0,0" 
                        Foreground="{StaticResource VSQ.SubtleText}"/>
           </StackPanel>

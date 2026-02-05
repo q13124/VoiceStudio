@@ -1,3 +1,12 @@
+<!--
+  ============================================================================
+  EmptyStateStyles.xaml - Empty state visual styles
+  
+  AI GUIDELINES:
+  - DO NOT DELETE empty state styles - used across panels for no-data views
+  - References DesignTokens.xaml colors and Text.xaml typography
+  ============================================================================
+-->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- Empty State Container Style -->

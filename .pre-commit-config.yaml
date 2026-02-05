@@ -55,6 +55,14 @@ repos:
         pass_filenames: true
         stages: [pre-commit]
 
+      - id: xaml-resource-validation
+        name: XAML Resource Validation
+        entry: python scripts/validate_xaml_resources.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: (\.xaml$|Resources/.*\.xaml$)
+
   # C# formatting (dotnet format)
   - repo: local
     hooks:

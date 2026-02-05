@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.PronunciationLexiconView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:VoiceStudio.App.Controls">
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    x:DataType="local:PronunciationLexiconView">
     <Grid x:Name="PronunciationLexiconView_Root" 
           AutomationProperties.AutomationId="PronunciationLexiconView_Root"
           Background="{StaticResource VSQ.Panel.Background}">

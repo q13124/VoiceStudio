@@ -30,6 +30,33 @@ jobs:
         run: dotnet tool install --global MSBuild.StructuredLogger.Tool || true
         continue-on-error: true
 
+      - name: Verify StructuredLogger CLI installation
+        id: structuredlogger-check
+        run: |
+          Write-Host "=== StructuredLogger CLI Verification ===" -ForegroundColor Cyan
+          
+          # Check if binlog command is available
+          $binlogCmd = Get-Command "binlog" -ErrorAction SilentlyContinue
+          
+          if ($binlogCmd) {
+            Write-Host "StructuredLogger CLI found at: $($binlogCmd.Source)" -ForegroundColor Green
+            
+            # Verify version
+            try {
+              $version = & binlog --version 2>&1
+              Write-Host "Version: $version" -ForegroundColor Green
+              echo "structuredlogger_available=true" >> $env:GITHUB_OUTPUT
+            } catch {
+              Write-Host "Warning: Could not get version info" -ForegroundColor Yellow
+              echo "structuredlogger_available=true" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "StructuredLogger CLI not found in PATH" -ForegroundColor Yellow
+            Write-Host "Binlog analysis will use fallback methods" -ForegroundColor Yellow
+            echo "structuredlogger_available=false" >> $env:GITHUB_OUTPUT
+          }
+        continue-on-error: true
+
       - name: Restore dependencies
         run: dotnet restore
 
@@ -37,6 +64,48 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File scripts/proactive-xaml-check.ps1 -OutputFile .buildlogs/xaml-health.json
         continue-on-error: false
+
+      - name: Validate XAML bindings (x:Bind and x:DataType)
+        run: |
+          Write-Host "=== XAML Binding Validation ===" -ForegroundColor Cyan
+          
+          # Check that all UserControls in Views/Panels have x:DataType
+          $panelFiles = Get-ChildItem -Path "src/VoiceStudio.App/Views/Panels/*.xaml" -ErrorAction SilentlyContinue
+          $missingDataType = @()
+          
+          foreach ($file in $panelFiles) {
+            $content = Get-Content $file.FullName -Raw
+            if ($content -match "<UserControl" -and $content -notmatch "x:DataType=") {
+              $missingDataType += $file.Name
+            }
+          }
+          
+          if ($missingDataType.Count -gt 0) {
+            Write-Host "ERROR: The following panels are missing x:DataType:" -ForegroundColor Red
+            $missingDataType | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+            exit 1
+          }
+          
+          Write-Host "All panel UserControls have x:DataType defined" -ForegroundColor Green
+          
+          # Check for legacy {Binding} usage that should be {x:Bind}
+          $bindingWarnings = @()
+          $xamlFiles = Get-ChildItem -Path "src/VoiceStudio.App/Views/**/*.xaml" -Recurse -ErrorAction SilentlyContinue
+          
+          foreach ($file in $xamlFiles) {
+            $content = Get-Content $file.FullName -Raw
+            # Check for {Binding that is NOT in a DataTemplate or ControlTemplate (allowed there for now)
+            if ($content -match '\{Binding\s+[^}]+\}' -and $content -notmatch 'TemplatedParent') {
+              $bindingWarnings += $file.Name
+            }
+          }
+          
+          if ($bindingWarnings.Count -gt 0) {
+            Write-Host "WARNING: Legacy {Binding} found in files (consider converting to {x:Bind}):" -ForegroundColor Yellow
+            $bindingWarnings | Select-Object -Unique | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+          }
+          
+          Write-Host "XAML binding validation passed" -ForegroundColor Green
 
       - name: Build solution (Debug, x64) with binlog
         run: |
@@ -47,6 +116,56 @@ jobs:
         run: |
           dotnet build --configuration Release --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\" /bl:.buildlogs/build_release.binlog
         id: build-release
+
+      - name: Extract binlog metrics (proactive analysis)
+        if: always()
+        run: |
+          Write-Host "=== Proactive Binlog Analysis ===" -ForegroundColor Cyan
+          New-Item -ItemType Directory -Path .buildlogs/binlog-metrics -Force | Out-Null
+          
+          # Extract build metrics from binlogs for trend analysis
+          $metrics = @{
+            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            commit = "${{ github.sha }}"
+            branch = "${{ github.ref_name }}"
+            build_debug_success = "${{ steps.build-debug.outcome }}" -eq "success"
+            build_release_success = "${{ steps.build-release.outcome }}" -eq "success"
+          }
+          
+          # Count XAML files
+          $xamlFiles = Get-ChildItem -Path "src/VoiceStudio.App" -Filter "*.xaml" -Recurse
+          $metrics.xaml_file_count = $xamlFiles.Count
+          
+          # Count binlog sizes (indicator of build complexity)
+          if (Test-Path ".buildlogs/build_debug.binlog") {
+            $metrics.binlog_debug_size_mb = [math]::Round((Get-Item ".buildlogs/build_debug.binlog").Length / 1MB, 2)
+          }
+          if (Test-Path ".buildlogs/build_release.binlog") {
+            $metrics.binlog_release_size_mb = [math]::Round((Get-Item ".buildlogs/build_release.binlog").Length / 1MB, 2)
+          }
+          
+          # Extract XAML-specific metrics using StructuredLogger CLI if available
+          $structuredLoggerCli = Get-Command "binlog" -ErrorAction SilentlyContinue
+          if ($structuredLoggerCli) {
+            Write-Host "Using StructuredLogger CLI for detailed analysis..."
+            try {
+              # Count XamlCompiler invocations and durations
+              $xamlAnalysis = binlog search ".buildlogs/build_debug.binlog" "XamlCompiler" 2>$null | Measure-Object -Line
+              $metrics.xaml_compiler_invocations = $xamlAnalysis.Lines
+            } catch {
+              Write-Host "StructuredLogger analysis skipped: $_"
+            }
+          }
+          
+          # Save metrics as JSON
+          $metrics | ConvertTo-Json -Depth 3 | Set-Content -Path ".buildlogs/binlog-metrics/build-metrics.json"
+          Write-Host "Build metrics saved to .buildlogs/binlog-metrics/build-metrics.json"
+          
+          # Append to trend file (for historical tracking)
+          $trendFile = ".buildlogs/binlog-metrics/build-trend.jsonl"
+          $metrics | ConvertTo-Json -Compress | Add-Content -Path $trendFile
+          Write-Host "Metrics appended to trend file"
+        continue-on-error: true
 
       - name: Analyze binlog on build failure
         if: failure() && (steps.build-debug.outcome == 'failure' || steps.build-release.outcome == 'failure')
@@ -160,6 +279,7 @@ jobs:
             .buildlogs/analysis-output.txt
             .buildlogs/analysis-output.json
             .buildlogs/xaml-health.json
+            .buildlogs/binlog-metrics/
           retention-days: 14
           if-no-files-found: ignore
 

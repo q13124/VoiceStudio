@@ -1,6 +1,7 @@
 <UserControl x:Class="VoiceStudio.App.Controls.SSMLEditorControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -72,17 +73,17 @@
                             ItemClick="AutoCompleteList_ItemClick"
                             KeyDown="AutoCompleteList_KeyDown">
                             <ListView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="local:AutoCompleteItem">
                                     <Grid Padding="8,4">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
-                                            Text="{Binding DisplayText}"
+                                            Text="{x:Bind DisplayText}"
                                             Style="{StaticResource VSQ.Text.Body}" />
                                         <TextBlock Grid.Column="1"
-                                            Text="{Binding Description}"
+                                            Text="{x:Bind Description}"
                                             Style="{StaticResource VSQ.Text.Caption}"
                                             Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                             Margin="8,0,0,0" />

@@ -1,3 +1,13 @@
+<!--
+  ============================================================================
+  Theme.Dark.xaml - Dark theme overrides for VoiceStudio
+  
+  AI GUIDELINES:
+  - DO NOT DELETE theme color keys - used by theme system
+  - DO NOT RENAME keys - must match base theme structure
+  - Color values can be modified but verify contrast accessibility
+  ============================================================================
+-->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <SolidColorBrush x:Key="VSQ.Background" Color="#101319"/>

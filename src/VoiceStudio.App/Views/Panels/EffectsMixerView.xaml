@@ -245,7 +245,8 @@
                 <Border Grid.Row="1"
                         Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
                         Padding="{StaticResource VSQ.Spacing.Small}"
-                        Visibility="{x:Bind ViewModel.HasMultipleChannelSelection, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        Visibility="{x:Bind ViewModel.HasMultipleChannelSelection, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        d:Visibility="Visible">
                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                         <TextBlock Text="{x:Bind ViewModel.SelectedChannelCount, Mode=OneWay}" 
                                    Foreground="{StaticResource VSQ.Accent.CyanBrush}"
@@ -335,12 +336,12 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" 
-                                               Text="{x:Bind Name, Mode=OneWay}" 
+                                               Text="{x:Bind Name, Mode=OneWay, FallbackValue='Chain', TargetNullValue='Chain'}" 
                                                Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
                                                TextTrimming="CharacterEllipsis"
                                                VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" 
-                                               Text="{x:Bind Effects.Count, Mode=OneWay}" 
+                                               Text="{x:Bind Effects.Count, Mode=OneWay, FallbackValue='0', TargetNullValue='0'}" 
                                                Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                                FontSize="{StaticResource VSQ.FontSize.Caption}"
                                                VerticalAlignment="Center" />
@@ -417,13 +418,13 @@
                                                   MinWidth="0" />
 
                                         <TextBlock Grid.Column="1"
-                                                   Text="{x:Bind Name, Mode=OneWay}"
+                                                   Text="{x:Bind Name, Mode=OneWay, FallbackValue='Effect', TargetNullValue='Effect'}"
                                                    Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
                                                    VerticalAlignment="Center"
                                                    Margin="4,0" />
 
                                         <TextBlock Grid.Column="2"
-                                                   Text="{x:Bind Order, Mode=OneWay}"
+                                                   Text="{x:Bind Order, Mode=OneWay, FallbackValue='0', TargetNullValue='0'}"
                                                    Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                                    FontSize="{StaticResource VSQ.FontSize.Caption}"
                                                    VerticalAlignment="Center" />
@@ -540,7 +541,8 @@
         <!-- Loading Overlay -->
         <Grid Grid.RowSpan="3"
               Background="{StaticResource VSQ.Loading.BackgroundBrush}"
-              Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+              d:Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
                               Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
@@ -556,15 +558,17 @@
                  IsOpen="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource NullToBooleanConverter}}"
                  Severity="Error"
                  Title="Error"
-                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, FallbackValue='An error occurred', TargetNullValue='An error occurred'}"
                  IsClosable="True"
                  Margin="8"
-                 VerticalAlignment="Top" />
+                 VerticalAlignment="Top"
+                 d:Visibility="Collapsed" />
 
         <!-- Help Overlay -->
         <controls:HelpOverlay x:Name="HelpOverlay" 
                               Grid.RowSpan="3"
                               IsVisible="False" 
-                              Visibility="Collapsed" />
+                              Visibility="Collapsed"
+                              d:Visibility="Collapsed" />
     </Grid>
 </UserControl>

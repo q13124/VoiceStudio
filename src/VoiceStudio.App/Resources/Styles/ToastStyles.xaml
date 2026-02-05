@@ -1,3 +1,13 @@
+<!--
+  ============================================================================
+  ToastStyles.xaml - Toast notification styles for VoiceStudio
+  
+  AI GUIDELINES:
+  - DO NOT DELETE existing styles - they are used by toast notification system
+  - DO NOT RENAME style keys - ToastService depends on exact key names
+  - References DesignTokens.xaml - ensure merge order is correct
+  ============================================================================
+-->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- Toast Container Style -->

@@ -173,7 +173,7 @@
       </Button>
       <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
                     Width="24" Height="24" Margin="8,0,0,0"/>
-      <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+      <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay, FallbackValue='Ready', TargetNullValue='Ready'}"
                  VerticalAlignment="Center" Opacity="0.7" Margin="8,0,0,0"/>
     </StackPanel>
     
@@ -183,16 +183,17 @@
              IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
              Severity="Error"
              Title="Synthesis Error"
-             Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+             Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, FallbackValue='An error occurred', TargetNullValue='An error occurred'}"
              IsClosable="True"/>
     
     <!-- Help Overlay -->
-    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" Grid.RowSpan="6"/>
+    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" d:Visibility="Collapsed" Grid.RowSpan="6"/>
     
     <!-- Loading Overlay -->
     <Grid Grid.RowSpan="6" 
           Background="{ThemeResource SystemControlBackgroundAltMediumHighBrush}"
-          Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}">
+          Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+          d:Visibility="Collapsed">
       <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
         <ProgressRing IsActive="True" Width="48" Height="48"/>
         <TextBlock Text="Synthesizing..." FontSize="16" Opacity="0.8"/>

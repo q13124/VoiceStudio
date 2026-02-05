@@ -1,3 +1,13 @@
+<!--
+  ============================================================================
+  Panels.xaml - Panel-specific styles for VoiceStudio
+  
+  AI GUIDELINES:
+  - DO NOT DELETE existing styles - panels reference them
+  - DO NOT RENAME style keys - downstream references will break
+  - Merged after DesignTokens.xaml, Text.xaml, and Controls.xaml
+  ============================================================================
+-->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">

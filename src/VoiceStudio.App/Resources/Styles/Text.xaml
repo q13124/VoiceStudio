@@ -1,3 +1,14 @@
+<!--
+  ============================================================================
+  Text.xaml - Typography styles for VoiceStudio
+  
+  AI GUIDELINES:
+  - DO NOT DELETE existing styles - they are referenced across Views
+  - DO NOT RENAME style keys - downstream references will break
+  - All styles depend on DesignTokens.xaml being merged first
+  - Adding new text styles is allowed following VSQ.Text.* pattern
+  ============================================================================
+-->
 <ResourceDictionary
     x:Class="VoiceStudio.App.Resources.Styles.Text"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -5,6 +16,18 @@
     <Style x:Key="VSQ.Text.Body" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{ThemeResource VSQ.FontSize.Body}" />
         <Setter Property="Foreground" Value="{ThemeResource VSQ.Text.PrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="VSQ.Text.BodyStrong" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{ThemeResource VSQ.FontSize.Body}" />
+        <Setter Property="Foreground" Value="{ThemeResource VSQ.Text.PrimaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="VSQ.Text.Subtitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{ThemeResource VSQ.FontSize.Subtitle}" />
+        <Setter Property="Foreground" Value="{ThemeResource VSQ.Text.PrimaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
     <Style x:Key="VSQ.Text.Caption" TargetType="TextBlock">

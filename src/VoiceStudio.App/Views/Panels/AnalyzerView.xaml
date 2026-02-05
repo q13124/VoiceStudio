@@ -1,8 +1,14 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.AnalyzerView"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:controls="using:VoiceStudio.App.Controls"
-  xmlns:converters="using:VoiceStudio.App.Converters">
+  xmlns:converters="using:VoiceStudio.App.Converters"
+  xmlns:local="using:VoiceStudio.App.Views.Panels"
+  mc:Ignorable="d"
+  d:DataContext="{d:DesignInstance Type=local:AnalyzerViewModel, IsDesignTimeCreatable=False}"
+  x:DataType="local:AnalyzerView">
   <UserControl.Resources>
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -127,14 +133,16 @@
         <Grid Grid.Row="1">
           <!-- Error Message -->
           <controls:ErrorMessage x:Uid="AnalyzerView_ErrorMessage"
-            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, FallbackValue='An error occurred', TargetNullValue='An error occurred'}"
             Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}"
+            d:Visibility="Collapsed"
             ActionCommand="{x:Bind ViewModel.LoadVisualizationCommand, Mode=OneWay}"
             AutomationProperties.Name="Error message"
             AutomationProperties.LiveSetting="Assertive" />
           <!-- Loading Overlay -->
           <controls:LoadingOverlay IsLoading="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
-            x:Uid="AnalyzerView_LoadingOverlay" />
+            x:Uid="AnalyzerView_LoadingOverlay"
+            d:Visibility="Collapsed" />
           <!-- Empty State -->
           <controls:EmptyState Icon="📊" Title="No Audio Loaded"
             Message="Enter an audio ID or filename above and click 'Load' to analyze audio. You can view waveforms, spectrograms, loudness analysis, and more."
@@ -183,6 +191,6 @@
       </Grid>
     </Border>
     <!-- Help Overlay -->
-    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />
+    <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" d:Visibility="Collapsed" />
   </Grid>
 </UserControl>

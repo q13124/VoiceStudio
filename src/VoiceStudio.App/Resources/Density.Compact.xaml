@@ -1,3 +1,13 @@
+<!--
+  ============================================================================
+  Density.Compact.xaml - Compact density settings for VoiceStudio
+  
+  AI GUIDELINES:
+  - DO NOT DELETE density keys - used by settings system
+  - DO NOT RENAME keys - must match density settings structure
+  - Values define UI density; changing affects layout globally
+  ============================================================================
+-->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <x:Double x:Key="VSQ.PanelPadding">8</x:Double>

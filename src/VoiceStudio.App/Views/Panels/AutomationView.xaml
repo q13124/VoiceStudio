@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Views.Panels.AutomationView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:VoiceStudio.App.Controls">
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    x:DataType="local:AutomationView">
     <Grid AutomationProperties.AutomationId="AutomationView_Root">
         <controls:AutomationCurveEditorControl x:Name="CurveEditor" />
         <controls:HelpOverlay x:Name="HelpOverlay" IsVisible="False" Visibility="Collapsed" />

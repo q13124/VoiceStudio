@@ -22,3 +22,51 @@ dotnet_diagnostic.CA1031.severity = warning
 # RCS1163: Unused parameter (from Debugrolereport.md)
 dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_diagnostic.RCS1163.severity = warning
+
+# ===== C# Specific Settings =====
+[*.cs]
+indent_size = 4
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_using_directive_placement = outside_namespace:suggestion
+dotnet_sort_system_directives_first = true
+
+# MVVM Source Generator compatibility
+# Ensure partial classes work correctly with source generators
+csharp_style_prefer_readonly_struct = true:suggestion
+
+# ===== XAML Settings =====
+[*.xaml]
+indent_size = 2
+max_line_length = 200
+
+# Rapid XAML Toolkit Configuration
+# Note: Install 'Rapid XAML Toolkit' VS extension for full functionality
+# https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.RapidXamlToolkit
+
+# RXT150: Use Name not x:Name (prefer x:Name for WinUI 3)
+dotnet_diagnostic.RXT150.severity = none
+
+# RXT160: Accessibility - Button should have AutomationProperties.Name
+dotnet_diagnostic.RXT160.severity = warning
+
+# RXT170: Accessibility - Image should have AutomationProperties.Name
+dotnet_diagnostic.RXT170.severity = warning
+
+# RXT200: Attribute formatting (multi-line vs single-line)
+dotnet_diagnostic.RXT200.severity = suggestion
+
+# XAML Binding Analyzer Rules (custom)
+# These work with scripts/lint_xaml.py and build validation
+
+# Require x:DataType on UserControl root
+# Enforced via CI (see .github/workflows/build.yml)
+
+# Prefer x:Bind over Binding
+# Enforced via lint_xaml.py and pre-commit hooks
+
+# ===== VoiceStudio XAML Conventions =====
+# - All UserControls must have x:DataType
+# - All panels must have d:DataContext for designer support
+# - Loading overlays must have d:Visibility="Collapsed"
+# - StaticResource references must use VSQ.* tokens
+# - See: docs/developer/XAML_AI_CHECKLIST.md

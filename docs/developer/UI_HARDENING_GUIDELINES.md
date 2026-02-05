@@ -145,7 +145,53 @@ Resources/
     └── Panels.xaml          # Panel-specific styles
 ```
 
-### 3.2 Splitting Guidelines (If Needed)
+### 3.2 ResourceDictionary Merge Order
+
+**Critical:** ResourceDictionary merge order determines which resources are available. Merged dictionaries are processed in order, and later definitions override earlier ones.
+
+**Required Merge Order (in App.xaml or equivalent):**
+
+```xml
+<Application.Resources>
+    <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <!-- 1. Design Tokens FIRST - base values that everything depends on -->
+            <ResourceDictionary Source="ms-appx:///Resources/DesignTokens.xaml" />
+            
+            <!-- 2. Typography styles - depends on font sizes from DesignTokens -->
+            <ResourceDictionary Source="ms-appx:///Resources/Styles/Text.xaml" />
+            
+            <!-- 3. Control styles - depends on tokens and may reference text styles -->
+            <ResourceDictionary Source="ms-appx:///Resources/Styles/Controls.xaml" />
+            
+            <!-- 4. Theme-specific (optional) - overrides for theme -->
+            <ResourceDictionary Source="ms-appx:///Resources/Theme.Dark.xaml" />
+            
+            <!-- 5. Panel styles - can reference all of the above -->
+            <ResourceDictionary Source="ms-appx:///Resources/Styles/Panels.xaml" />
+            
+            <!-- 6. Toast/Overlay styles - highest layer -->
+            <ResourceDictionary Source="ms-appx:///Resources/Styles/ToastStyles.xaml" />
+        </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+</Application.Resources>
+```
+
+**Merge Order Rules:**
+1. **Tokens before Styles**: DesignTokens.xaml must load before any style files
+2. **Text before Controls**: Typography styles before control styles
+3. **Base before Theme**: Theme overrides come after base styles
+4. **Component before Composite**: Panel styles can depend on all others
+
+**Common Merge Order Issues:**
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `The resource X could not be resolved` | Style merged before token it references | Move token file earlier in merge order |
+| `Ambiguous resource reference` | Same key in multiple dictionaries | Remove duplicate, use single definition |
+| `Null reference in style setter` | ThemeResource before tokens loaded | Use StaticResource or fix merge order |
+
+### 3.4 Splitting Guidelines (If Needed)
 
 If XAML compiler instability persists, consider splitting `DesignTokens.xaml`:
 
@@ -161,7 +207,7 @@ Resources/
 
 **Trade-off:** This adds complexity. Only implement if compiler issues recur.
 
-### 3.3 ResourceDictionary Anti-Patterns
+### 3.5 ResourceDictionary Anti-Patterns
 
 ```xml
 <!-- ❌ BAD: Circular reference (A merges B, B merges A) -->
@@ -380,3 +426,5 @@ Before committing XAML changes:
 - [xaml-compiler-wrapper.cmd](../../tools/xaml-compiler-wrapper.cmd) - Compiler wrapper
 - [build-with-binlog.ps1](../../scripts/build-with-binlog.ps1) - Diagnostic build script
 - [analyze-binlog.ps1](../../scripts/analyze-binlog.ps1) - Binlog analysis tool
+- [validate_xaml_resources.py](../../scripts/validate_xaml_resources.py) - StaticResource validation
+- [XAML_DESIGN_TIME_GUIDE.md](XAML_DESIGN_TIME_GUIDE.md) - Design-time preview patterns

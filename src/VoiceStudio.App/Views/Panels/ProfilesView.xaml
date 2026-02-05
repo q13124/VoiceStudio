@@ -157,7 +157,8 @@
                     <Border Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
                             CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
                             Padding="12"
-                            Visibility="{x:Bind ViewModel.HasMultipleSelection, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.HasMultipleSelection, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            d:Visibility="Visible">
                         <StackPanel Spacing="8">
                             <TextBlock Text="Batch Actions"
                                        FontWeight="SemiBold"
@@ -191,7 +192,8 @@
         <!-- Loading Overlay -->
         <Grid Grid.RowSpan="3"
               Background="{StaticResource VSQ.Loading.BackgroundBrush}"
-              Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+              d:Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
                               Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
@@ -207,15 +209,17 @@
                  IsOpen="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource NullToBooleanConverter}}"
                  Severity="Error"
                  Title="Error"
-                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, FallbackValue='An error occurred', TargetNullValue='An error occurred'}"
                  IsClosable="True"
                  Margin="8"
-                 VerticalAlignment="Top" />
+                 VerticalAlignment="Top"
+                 d:Visibility="Collapsed" />
 
         <!-- Help Overlay -->
         <controls:HelpOverlay x:Name="HelpOverlay" 
                               Grid.RowSpan="3"
                               IsVisible="False" 
-                              Visibility="Collapsed" />
+                              Visibility="Collapsed"
+                              d:Visibility="Collapsed" />
     </Grid>
 </UserControl>
