@@ -26,14 +26,97 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install MSBuild Structured Log Viewer CLI
+        run: dotnet tool install --global MSBuild.StructuredLogger.Tool || true
+        continue-on-error: true
+
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build solution (Debug, x64)
-        run: dotnet build --configuration Debug --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\"
+      - name: Check for nested Views XAML (GitHub #10947)
+        run: |
+          $nested = Get-ChildItem -Recurse -Filter "*.xaml" -Path "src/VoiceStudio.App/Views" -ErrorAction SilentlyContinue |
+            Where-Object { $_.DirectoryName -match "Views\\[^\\]+\\[^\\]+\\[^\\]+" }
+          if ($nested) {
+            Write-Error "BLOCKED: Deeply nested Views subfolders detected. See GitHub #10947."
+            $nested | ForEach-Object { Write-Error "  - $($_.FullName)" }
+            exit 1
+          }
+          Write-Host "Views structure check passed: No deeply nested subfolders."
 
-      - name: Build solution (Release, x64)
-        run: dotnet build --configuration Release --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\"
+      - name: Build solution (Debug, x64) with binlog
+        run: |
+          dotnet build --configuration Debug --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\" /bl:.buildlogs/build_debug.binlog
+        id: build-debug
+
+      - name: Build solution (Release, x64) with binlog
+        run: |
+          dotnet build --configuration Release --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\" /bl:.buildlogs/build_release.binlog
+        id: build-release
+
+      - name: Analyze binlog on build failure
+        if: failure() && (steps.build-debug.outcome == 'failure' || steps.build-release.outcome == 'failure')
+        run: |
+          Write-Host "Build failed. Analyzing binlog for XAML compiler issues..."
+          New-Item -ItemType Directory -Path .buildlogs -Force | Out-Null
+          if (Test-Path scripts/analyze-binlog.ps1) {
+            # Output text to file for PR comment, also print summary to console
+            powershell -ExecutionPolicy Bypass -File scripts/analyze-binlog.ps1 -OutputFormat text -OutputFile .buildlogs/analysis-output.txt
+            # Also generate JSON for programmatic consumption
+            powershell -ExecutionPolicy Bypass -File scripts/analyze-binlog.ps1 -OutputFormat json -OutputFile .buildlogs/analysis-output.json
+          } else {
+            Write-Host "analyze-binlog.ps1 not found - check binlogs manually"
+            "analyze-binlog.ps1 not found - check binlogs manually" | Set-Content -Path .buildlogs/analysis-output.txt
+          }
+        continue-on-error: true
+
+      - name: Post XAML diagnostic comment to PR
+        if: failure() && github.event_name == 'pull_request' && (steps.build-debug.outcome == 'failure' || steps.build-release.outcome == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let analysisOutput = 'Binlog analysis not available';
+            let nestedViewsFound = false;
+            
+            // Read analysis from file (more reliable than capturing stdout)
+            try {
+              if (fs.existsSync('.buildlogs/analysis-output.txt')) {
+                analysisOutput = fs.readFileSync('.buildlogs/analysis-output.txt', 'utf8');
+              }
+              
+              // Check for nested Views issues from JSON
+              if (fs.existsSync('.buildlogs/analysis-output.json')) {
+                const analysis = JSON.parse(fs.readFileSync('.buildlogs/analysis-output.json', 'utf8'));
+                nestedViewsFound = analysis.NestedViewsXaml && analysis.NestedViewsXaml.length > 0;
+              }
+            } catch (e) {
+              console.log('Failed to read analysis files:', e.message);
+            }
+            
+            // Format the comment body
+            let body = `## XAML Compiler Failure Analysis\n\n`;
+            
+            if (nestedViewsFound) {
+              body += `**WARNING: Nested Views XAML detected!** This is a known cause of silent XamlCompiler.exe failures.\n`;
+              body += `See [GitHub #10947](https://github.com/microsoft/microsoft-ui-xaml/issues/10947)\n\n`;
+            }
+            
+            body += `### Analysis Output\n\`\`\`\n${analysisOutput.substring(0, 3000)}\n\`\`\`\n\n`;
+            body += `### Next Steps\n`;
+            body += `1. Download the \`build-binlogs\` artifact from this workflow run\n`;
+            body += `2. Open in [MSBuild Structured Log Viewer](https://msbuildlog.com/)\n`;
+            body += `3. Search for "XamlCompiler" to find the failing task\n`;
+            body += `4. See [XAML Change Protocol](docs/developer/XAML_CHANGE_PROTOCOL.md) for troubleshooting\n`;
+            
+            // Post the comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+        continue-on-error: true
 
       - name: RuleGuard (no stubs/placeholders)
         run: python tools/verify_no_stubs_placeholders.py
@@ -70,6 +153,20 @@ jobs:
             .buildlogs/gatec-publish*.binlog
             .buildlogs/x64/Release/gatec-publish/gatec-launch.log
           retention-days: 7
+
+      - name: Upload build binlogs (XAML diagnostics)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-binlogs
+          path: |
+            .buildlogs/build_debug.binlog
+            .buildlogs/build_release.binlog
+            .buildlogs/build_diagnostic_*.binlog
+            .buildlogs/analysis-output.txt
+            .buildlogs/analysis-output.json
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload Audit Logs
         uses: actions/upload-artifact@v4

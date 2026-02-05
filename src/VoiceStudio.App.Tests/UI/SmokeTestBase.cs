@@ -46,6 +46,7 @@ namespace VoiceStudio.App.Tests.UI
     /// <summary>
     /// Registry of panel names to their AutomationId patterns.
     /// Maps panel friendly name to AutomationId.
+    /// Complete list of all 90 panels in VoiceStudio.
     /// </summary>
     protected static readonly Dictionary<string, string> PanelAutomationIds = new()
     {
@@ -64,34 +65,102 @@ namespace VoiceStudio.App.Tests.UI
       { "EnsembleSynthesis", "EnsembleSynthesisView_Root" },
       { "BatchProcessing", "BatchProcessingView_Root" },
       { "MultiVoiceGenerator", "MultiVoiceGeneratorView_Root" },
+      { "TextSpeechEditor", "TextSpeechEditorView_Root" },
+      { "TextBasedSpeechEditor", "TextBasedSpeechEditorView_Root" },
       
       // Training panels
       { "Training", "TrainingView_Root" },
       { "TrainingDatasetEditor", "TrainingDatasetEditorView_Root" },
+      { "TrainingQualityVisualization", "TrainingQualityVisualizationView_Root" },
       { "ModelManager", "ModelManagerView_Root" },
+      { "DatasetQA", "DatasetQAView_Root" },
       
       // Audio panels
       { "Transcribe", "TranscribeView_Root" },
       { "Recording", "RecordingView_Root" },
       { "AudioAnalysis", "AudioAnalysisView_Root" },
+      { "AudioMonitoringDashboard", "AudioMonitoringDashboardView_Root" },
       { "QualityControl", "QualityControlView_Root" },
       { "QualityDashboard", "QualityDashboardView_Root" },
+      { "QualityBenchmark", "QualityBenchmarkView_Root" },
+      { "QualityOptimizationWizard", "QualityOptimizationWizardView_Root" },
       
       // Settings/utility panels
       { "AdvancedSettings", "AdvancedSettingsView_Root" },
       { "KeyboardShortcuts", "KeyboardShortcutsView_Root" },
       { "PluginManagement", "PluginManagementView_Root" },
       { "APIKeyManager", "APIKeyManagerView_Root" },
+      { "BackupRestore", "BackupRestoreView_Root" },
       
-      // Additional panels
+      // Help and status panels
       { "Help", "HelpView_Root" },
       { "GPUStatus", "GPUStatusView_Root" },
+      { "JobProgress", "JobProgressView_Root" },
+      { "MCPDashboard", "MCPDashboardView_Root" },
+      { "AnalyticsDashboard", "AnalyticsDashboardView_Root" },
+      { "UltimateDashboard", "UltimateDashboardView_Root" },
+      
+      // Voice control panels
       { "VoiceMorph", "VoiceMorphView_Root" },
+      { "VoiceMorphingBlending", "VoiceMorphingBlendingView_Root" },
+      { "VoiceBrowser", "VoiceBrowserView_Root" },
+      { "VoiceQuickClone", "VoiceQuickCloneView_Root" },
+      { "VoiceCloningWizard", "VoiceCloningWizardView_Root" },
+      { "VoiceStyleTransfer", "VoiceStyleTransferView_Root" },
       { "StyleTransfer", "StyleTransferView_Root" },
       { "EmotionControl", "EmotionControlView_Root" },
+      { "EmotionStyleControl", "EmotionStyleControlView_Root" },
+      { "EmotionStylePresetEditor", "EmotionStylePresetEditorView_Root" },
       { "Prosody", "ProsodyView_Root" },
       { "SSML", "SSMLControlView_Root" },
+      { "Lexicon", "LexiconView_Root" },
+      { "PronunciationLexicon", "PronunciationLexiconView_Root" },
+      { "MultilingualSupport", "MultilingualSupportView_Root" },
+      { "RealTimeVoiceConverter", "RealTimeVoiceConverterView_Root" },
+      
+      // Visualization panels
       { "Spectrogram", "SpectrogramView_Root" },
+      { "SonographyVisualization", "SonographyVisualizationView_Root" },
+      { "RealTimeAudioVisualizer", "RealTimeAudioVisualizerView_Root" },
+      { "AdvancedRealTimeVisualization", "AdvancedRealTimeVisualizationView_Root" },
+      { "EmbeddingExplorer", "EmbeddingExplorerView_Root" },
+      { "ProfileComparison", "ProfileComparisonView_Root" },
+      { "ProfileHealthDashboard", "ProfileHealthDashboardView_Root" },
+      
+      // Image/video panels
+      { "ImageGen", "ImageGenView_Root" },
+      { "ImageSearch", "ImageSearchView_Root" },
+      { "VideoGen", "VideoGenView_Root" },
+      { "VideoEdit", "VideoEditView_Root" },
+      { "Upscaling", "UpscalingView_Root" },
+      { "ImageVideoEnhancementPipeline", "ImageVideoEnhancementPipelineView_Root" },
+      
+      // Scene and spatial panels
+      { "SceneBuilder", "SceneBuilderView_Root" },
+      { "SpatialAudio", "SpatialAudioView_Root" },
+      { "SpatialStage", "SpatialStageView_Root" },
+      
+      // Organization panels
+      { "TagManager", "TagManagerView_Root" },
+      { "TagOrganization", "TagOrganizationView_Root" },
+      { "MarkerManager", "MarkerManagerView_Root" },
+      { "PresetLibrary", "PresetLibraryView_Root" },
+      { "TemplateLibrary", "TemplateLibraryView_Root" },
+      
+      // Script and automation panels
+      { "ScriptEditor", "ScriptEditorView_Root" },
+      { "Automation", "AutomationView_Root" },
+      { "WorkflowAutomation", "WorkflowAutomationView_Root" },
+      { "TodoPanel", "TodoPanelView_Root" },
+      
+      // Advanced panels
+      { "ABTesting", "ABTestingView_Root" },
+      { "AdvancedSearch", "AdvancedSearchView_Root" },
+      { "MixAssistant", "MixAssistantView_Root" },
+      { "AIProductionAssistant", "AIProductionAssistantView_Root" },
+      { "EngineParameterTuning", "EngineParameterTuningView_Root" },
+      { "EngineRecommendation", "EngineRecommendationView_Root" },
+      { "TextHighlighting", "TextHighlightingView_Root" },
     };
 
     /// <summary>

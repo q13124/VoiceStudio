@@ -364,6 +364,530 @@ namespace VoiceStudio.App.Tests.UI
 
     #endregion
 
+    #region Text/Speech Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_TextSpeechEditor_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("TextSpeechEditor");
+      Assert.IsTrue(result, "TextSpeechEditor panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ScriptEditor_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ScriptEditor");
+      Assert.IsTrue(result, "ScriptEditor panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_Lexicon_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("Lexicon");
+      Assert.IsTrue(result, "Lexicon panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_MultilingualSupport_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("MultilingualSupport");
+      Assert.IsTrue(result, "MultilingualSupport panel should be visible");
+    }
+
+    #endregion
+
+    #region Voice Cloning/Morphing Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VoiceMorphingBlending_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VoiceMorphingBlending");
+      Assert.IsTrue(result, "VoiceMorphingBlending panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VoiceCloningWizard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VoiceCloningWizard");
+      Assert.IsTrue(result, "VoiceCloningWizard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VoiceQuickClone_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VoiceQuickClone");
+      Assert.IsTrue(result, "VoiceQuickClone panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VoiceBrowser_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VoiceBrowser");
+      Assert.IsTrue(result, "VoiceBrowser panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_RealTimeVoiceConverter_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("RealTimeVoiceConverter");
+      Assert.IsTrue(result, "RealTimeVoiceConverter panel should be visible");
+    }
+
+    #endregion
+
+    #region Emotion/Style Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_EmotionStyleControl_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("EmotionStyleControl");
+      Assert.IsTrue(result, "EmotionStyleControl panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_EmotionStylePresetEditor_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("EmotionStylePresetEditor");
+      Assert.IsTrue(result, "EmotionStylePresetEditor panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VoiceStyleTransfer_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VoiceStyleTransfer");
+      Assert.IsTrue(result, "VoiceStyleTransfer panel should be visible");
+    }
+
+    #endregion
+
+    #region Visualization Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_RealTimeAudioVisualizer_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("RealTimeAudioVisualizer");
+      Assert.IsTrue(result, "RealTimeAudioVisualizer panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_SonographyVisualization_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("SonographyVisualization");
+      Assert.IsTrue(result, "SonographyVisualization panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_EmbeddingExplorer_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("EmbeddingExplorer");
+      Assert.IsTrue(result, "EmbeddingExplorer panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ProfileComparison_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ProfileComparison");
+      Assert.IsTrue(result, "ProfileComparison panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ProfileHealthDashboard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ProfileHealthDashboard");
+      Assert.IsTrue(result, "ProfileHealthDashboard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_TrainingQualityVisualization_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("TrainingQualityVisualization");
+      Assert.IsTrue(result, "TrainingQualityVisualization panel should be visible");
+    }
+
+    #endregion
+
+    #region Image/Video Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ImageGen_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ImageGen");
+      Assert.IsTrue(result, "ImageGen panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ImageSearch_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ImageSearch");
+      Assert.IsTrue(result, "ImageSearch panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VideoGen_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VideoGen");
+      Assert.IsTrue(result, "VideoGen panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_VideoEdit_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("VideoEdit");
+      Assert.IsTrue(result, "VideoEdit panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_Upscaling_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("Upscaling");
+      Assert.IsTrue(result, "Upscaling panel should be visible");
+    }
+
+    #endregion
+
+    #region Scene/Spatial Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_SceneBuilder_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("SceneBuilder");
+      Assert.IsTrue(result, "SceneBuilder panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_SpatialAudio_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("SpatialAudio");
+      Assert.IsTrue(result, "SpatialAudio panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_SpatialStage_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("SpatialStage");
+      Assert.IsTrue(result, "SpatialStage panel should be visible");
+    }
+
+    #endregion
+
+    #region Organization Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_TagManager_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("TagManager");
+      Assert.IsTrue(result, "TagManager panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_MarkerManager_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("MarkerManager");
+      Assert.IsTrue(result, "MarkerManager panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_PresetLibrary_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("PresetLibrary");
+      Assert.IsTrue(result, "PresetLibrary panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_TemplateLibrary_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("TemplateLibrary");
+      Assert.IsTrue(result, "TemplateLibrary panel should be visible");
+    }
+
+    #endregion
+
+    #region Automation/Workflow Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_Automation_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("Automation");
+      Assert.IsTrue(result, "Automation panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_WorkflowAutomation_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("WorkflowAutomation");
+      Assert.IsTrue(result, "WorkflowAutomation panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_TodoPanel_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("TodoPanel");
+      Assert.IsTrue(result, "TodoPanel panel should be visible");
+    }
+
+    #endregion
+
+    #region Dashboard Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_AnalyticsDashboard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("AnalyticsDashboard");
+      Assert.IsTrue(result, "AnalyticsDashboard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_UltimateDashboard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("UltimateDashboard");
+      Assert.IsTrue(result, "UltimateDashboard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_MCPDashboard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("MCPDashboard");
+      Assert.IsTrue(result, "MCPDashboard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_JobProgress_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("JobProgress");
+      Assert.IsTrue(result, "JobProgress panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_AudioMonitoringDashboard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("AudioMonitoringDashboard");
+      Assert.IsTrue(result, "AudioMonitoringDashboard panel should be visible");
+    }
+
+    #endregion
+
+    #region Quality Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_QualityBenchmark_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("QualityBenchmark");
+      Assert.IsTrue(result, "QualityBenchmark panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_QualityOptimizationWizard_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("QualityOptimizationWizard");
+      Assert.IsTrue(result, "QualityOptimizationWizard panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_DatasetQA_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("DatasetQA");
+      Assert.IsTrue(result, "DatasetQA panel should be visible");
+    }
+
+    #endregion
+
+    #region Advanced/AI Panels
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_ABTesting_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("ABTesting");
+      Assert.IsTrue(result, "ABTesting panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_AdvancedSearch_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("AdvancedSearch");
+      Assert.IsTrue(result, "AdvancedSearch panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_MixAssistant_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("MixAssistant");
+      Assert.IsTrue(result, "MixAssistant panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_AIProductionAssistant_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("AIProductionAssistant");
+      Assert.IsTrue(result, "AIProductionAssistant panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_EngineParameterTuning_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("EngineParameterTuning");
+      Assert.IsTrue(result, "EngineParameterTuning panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_EngineRecommendation_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("EngineRecommendation");
+      Assert.IsTrue(result, "EngineRecommendation panel should be visible");
+    }
+
+    [TestMethod]
+    [TestCategory("Smoke")]
+    [TestCategory("UI")]
+    public async Task Panel_AdvancedRealTimeVisualization_CanNavigate()
+    {
+      VerifyApplicationStarted();
+      var result = await NavigateToPanelAsync("AdvancedRealTimeVisualization");
+      Assert.IsTrue(result, "AdvancedRealTimeVisualization panel should be visible");
+    }
+
+    #endregion
+
     #region Multi-Panel Navigation Tests
 
     [TestMethod]

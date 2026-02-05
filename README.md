@@ -263,6 +263,63 @@ Complete documentation is available in the `docs/` directory:
 ⏳ MCP bridge implementation (pending)
 ⏳ Full workspace migration (pending)
 
+## Troubleshooting WinUI XAML Compiler Errors
+
+VoiceStudio uses WinUI 3 with Windows App SDK 1.8. The XAML compiler can sometimes fail silently with exit code 1 and no error output.
+
+**For comprehensive troubleshooting, see the [XAML Compiler Playbook](docs/build/XAML_COMPILER_PLAYBOOK.md)** - a consolidated runbook with decision trees, copy-paste commands, and emergency recovery procedures.
+
+Use the following workflow for quick diagnosis:
+
+### Quick Diagnostic Build
+
+For silent XAML compiler failures (exit code 1, no output), use:
+
+1. Run reproducible single-threaded diagnostic build:
+
+   ```powershell
+   .\scripts\build-with-binlog.ps1
+   ```
+
+2. Analyze the binlog:
+
+   ```powershell
+   .\scripts\analyze-binlog.ps1 -BinlogPath .buildlogs\build_diagnostic_*.binlog
+   ```
+
+3. If the issue persists, use binary search to isolate the problematic XAML file:
+
+   ```powershell
+   .\scripts\xaml-binary-search.ps1
+   ```
+
+### Common XAML Compiler Issues
+
+| Symptom | Likely Cause | Solution |
+|---------|--------------|----------|
+| Exit code 1, no output.json | Attached property on ContentPresenter | Remove `TextElement.*` attached properties |
+| Exit code 1 for nested Views | XAML in `Views/subfolder/` | Flatten to `Views/` root |
+| Missing output.json intermittently | File lock contention | Build single-threaded with `-m:1` |
+| WMC9999 in-process error | Task-based compiler issue | Use `UseXamlCompilerExecutable=true` |
+
+### Key Resources
+
+- **[XAML Compiler Playbook](docs/build/XAML_COMPILER_PLAYBOOK.md)** - Single operational runbook for all XAML troubleshooting
+- **[XAML Change Protocol](docs/developer/XAML_CHANGE_PROTOCOL.md)** - Mandatory procedures for XAML changes
+- **[UI Hardening Guidelines](docs/developer/UI_HARDENING_GUIDELINES.md)** - Best practices for XAML stability
+- **[GitHub #10027](https://github.com/microsoft/microsoft-ui-xaml/issues/10027)** - Can't get error output from XamlCompiler.exe
+- **[GitHub #10947](https://github.com/microsoft/microsoft-ui-xaml/issues/10947)** - XamlCompiler.exe exits code 1 for Views subfolders
+
+### Diagnostic Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/build-with-binlog.ps1` | Clean single-threaded build with binlog capture |
+| `scripts/analyze-binlog.ps1` | Extract XamlCompiler invocations from binlog |
+| `scripts/xaml-binary-search.ps1` | Binary search to isolate problematic XAML |
+| `scripts/build/diagnose_xaml_compiler.ps1` | Comprehensive XAML diagnostics |
+| `tools/xaml-compiler-wrapper.cmd` | Wrapper handling false-positive exit code 1 |
+
 ## License
 
 [To be determined]

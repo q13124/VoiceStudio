@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-04 (Phase 8 ADRs completed, architecture docs consolidated)
+> **Last Updated**: 2026-02-04 (XAML Compiler Reliability Playbook implementation; new diagnostic scripts, UI hardening guidelines, XAML safety rules)
 
 ---
 
@@ -158,6 +158,18 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Compatibility Matrix Guide** | `docs/developer/COMPATIBILITY_MATRIX_GUIDE.md` | 2026-02-02 | How to use and update the compatibility matrix; validation workflow |
 | **AI Agent Development Guide** | `docs/developer/AI_AGENT_DEVELOPMENT_GUIDE.md` | 2026-02-02 | AI-assisted development best practices; scaffold usage, matrix checks |
 | **Scaffolding Tools** | `tools/scaffolds/` | 2026-02-02 | CLI scaffolds: `generate_panel.py`, `generate_route.py`, `generate_engine.py` |
+| **XAML Change Protocol** | `docs/developer/XAML_CHANGE_PROTOCOL.md` | 2026-02-04 | Mandatory procedures for XAML changes; forbidden patterns, binlog analysis workflow, Views subfolder protection |
+| **UI Hardening Guidelines** | `docs/developer/UI_HARDENING_GUIDELINES.md` | 2026-02-04 | XAML stability best practices; UserControl extraction, ResourceDictionary organization, binding anti-patterns |
+
+## Build and Diagnostic Tools
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **XAML Compiler Playbook** | `docs/build/XAML_COMPILER_PLAYBOOK.md` | 2026-02-04 | Single operational runbook for XAML compiler troubleshooting; decision tree, copy-paste commands, emergency recovery |
+| **XAML Diagnostic Build** | `scripts/build-with-binlog.ps1` | 2026-02-04 | Reproducible single-threaded build with binlog capture for XAML debugging |
+| **Binlog Analysis (PS)** | `scripts/analyze-binlog.ps1` | 2026-02-04 | PowerShell script to extract XamlCompiler invocations and detect nested Views issues; supports file output |
+| **Binlog Analysis (Python)** | `scripts/analyze_binlog.py` | 2026-02-04 | Python alternative for binlog analysis; supports file output for CI integration |
+| **XAML Safety Rule** | `.cursor/rules/quality/xaml-safety.mdc` | 2026-02-04 | Cursor agent safety guardrails for XAML changes; forbidden patterns, non-destructive operations |
 
 ## Design and Specifications
 
