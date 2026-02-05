@@ -121,6 +121,19 @@ class PartStructure:
 
 
 @dataclass
+class ProgressContext:
+    """Project progress tracking context."""
+    
+    current_gate: str = ""
+    current_phase: str = ""
+    progress_percent: float = 0.0
+    blockers_count: int = 0
+    in_progress_count: int = 0
+    next_actions: List[str] = field(default_factory=list)
+    gate_details: List[Dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
 class ContextBundle:
     task: TaskContext = field(default_factory=TaskContext)
     state: StateContext = field(default_factory=StateContext)
@@ -131,6 +144,7 @@ class ContextBundle:
     ledger: Optional[List[Dict[str, Any]]] = None
     telemetry: Optional[Dict[str, Any]] = None
     proof_index: Optional[List[Dict[str, Any]]] = None
+    progress: Optional[ProgressContext] = None
     meta: dict = field(default_factory=dict)
     
     # P.A.R.T. structure metadata
@@ -164,6 +178,8 @@ class ContextBundle:
             out["telemetry"] = _serialize(self.telemetry)
         if self.proof_index is not None:
             out["proof_index"] = _serialize(self.proof_index)
+        if self.progress is not None:
+            out["progress"] = _serialize(self.progress)
         return out
 
     def to_json(self) -> str:
@@ -189,10 +205,18 @@ class ContextBundle:
             part.prompt["acceptance"] = self.brief.acceptance
         part.prompt["role"] = self.meta.get("role")
         
-        # ARCHIVE: Recent history (next steps, proof index)
+        # ARCHIVE: Recent history (next steps, proof index, progress)
         part.archive["next_steps"] = self.state.next_steps or []
         part.archive["proof_index"] = self.proof_index or []
         part.archive["started"] = self.state.started
+        if self.progress:
+            part.archive["progress"] = {
+                "current_gate": self.progress.current_gate,
+                "progress_percent": self.progress.progress_percent,
+                "blockers_count": self.progress.blockers_count,
+                "in_progress_count": self.progress.in_progress_count,
+                "next_actions": self.progress.next_actions,
+            }
         
         # RESOURCES: Domain knowledge (rules, memory, ledger)
         part.resources["rules"] = [
@@ -320,9 +344,22 @@ class ContextBundle:
             if self.brief.proofs:
                 parts.append(f"- Proofs: {self.brief.proofs}")
             parts.append("")
-        # Archive (Recent History): last steps, proof index
+        # Archive (Recent History): progress, last steps, proof index
         parts.append("## Archive (Recent History)")
         parts.append("")
+        if self.progress:
+            parts.append("### Progress")
+            parts.append(f"- Current Gate: {self.progress.current_gate}")
+            parts.append(f"- Progress: {self.progress.progress_percent:.1f}%")
+            if self.progress.blockers_count > 0:
+                parts.append(f"- Blockers: {self.progress.blockers_count}")
+            if self.progress.in_progress_count > 0:
+                parts.append(f"- In Progress: {self.progress.in_progress_count}")
+            if self.progress.next_actions:
+                parts.append("- Next Actions:")
+                for action in self.progress.next_actions[:5]:
+                    parts.append(f"  - {action}")
+            parts.append("")
         if self.state.next_steps:
             parts.append("- Next steps:")
             parts.extend([f"  - {step}" for step in self.state.next_steps])

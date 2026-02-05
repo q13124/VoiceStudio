@@ -2,9 +2,14 @@
     x:Class="VoiceStudio.App.Views.Panels.TextBasedSpeechEditorView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:VoiceStudio.App.Controls"
     xmlns:vm="using:VoiceStudio.App.ViewModels"
     xmlns:converters="using:VoiceStudio.App.Converters"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance Type=vm:TextBasedSpeechEditorViewModel, IsDesignTimeCreatable=False}"
+    x:DataType="vm:TextBasedSpeechEditorViewModel"
     x:Name="Root">
     <UserControl.Resources>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
@@ -140,14 +145,14 @@
                             SelectedItem="{x:Bind ViewModel.SelectedSegment, Mode=TwoWay}"
                             RightTapped="Segment_RightTapped">
                             <ListView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="vm:TranscriptSegmentItem">
                                     <Grid Padding="{StaticResource VSQ.Spacing.Value.Small}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Text}"
+                                            <TextBlock Text="{x:Bind Text, Mode=OneWay}"
                                                 Style="{StaticResource VSQ.Text.Body}" />
                                             <TextBlock Style="{StaticResource VSQ.Text.Caption}"
                                                 Foreground="{StaticResource VSQ.Text.SecondaryBrush}">
@@ -158,21 +163,21 @@
                                                 s </TextBlock>
                                         </StackPanel>
                                         <ItemsControl Grid.Column="1"
-                                            ItemsSource="{Binding Words}">
+                                            ItemsSource="{x:Bind Words, Mode=OneWay}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <StackPanel Orientation="Horizontal" Spacing="4" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
+                                                <DataTemplate x:DataType="vm:WordAlignmentItem">
                                                     <Border
                                                         Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
                                                         BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="2"
                                                         Padding="4,2">
-                                                        <TextBlock Text="{Binding Word}"
+                                                        <TextBlock Text="{x:Bind Word, Mode=OneWay}"
                                                             Style="{StaticResource VSQ.Text.Caption}"
                                                             FontSize="10" />
                                                     </Border>

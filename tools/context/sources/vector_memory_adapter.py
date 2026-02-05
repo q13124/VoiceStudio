@@ -62,6 +62,11 @@ class VectorMemoryAdapter(BaseSourceAdapter):
 
     Uses persist_directory for local storage. When chromadb or embedding is
     unavailable, returns empty list so MemorySourceAdapter (file) remains the fallback.
+    
+    Features:
+    - Semantic similarity search for memory retrieval
+    - Persistent vector storage for long-term memory
+    - Health checking for chromadb availability
     """
 
     def __init__(
@@ -76,6 +81,18 @@ class VectorMemoryAdapter(BaseSourceAdapter):
         self._client = None
         self._collection = None
         self._ef = _get_embedding_function()
+    
+    def health_check(self) -> bool:
+        """Check if vector memory is available."""
+        if not _CHROMA_AVAILABLE:
+            return False
+        
+        try:
+            root = Path(__file__).resolve().parents[4]
+            client = self._get_client(root)
+            return client is not None
+        except Exception:
+            return False
 
     def _get_client(self, root: Path) -> Optional[Any]:
         """Lazy-init Chroma client; returns None if chromadb unavailable or error."""
@@ -164,3 +181,86 @@ class VectorMemoryAdapter(BaseSourceAdapter):
     def estimate_size(self, context: AllocationContext) -> int:
         """Estimate size of vector fetch (typical top_k snippets)."""
         return self._top_k * 256
+    
+    def store_memory(
+        self,
+        content: str,
+        memory_id: str,
+        source: str = "context",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """
+        Store a memory in the vector store.
+        
+        Args:
+            content: Memory content
+            memory_id: Unique ID for the memory
+            source: Source identifier
+            metadata: Additional metadata
+        
+        Returns:
+            True if stored successfully
+        """
+        if not _CHROMA_AVAILABLE:
+            return False
+        
+        try:
+            root = Path(__file__).resolve().parents[4]
+            coll = self._get_collection(root)
+            if coll is None:
+                return False
+            
+            meta = metadata or {}
+            meta["source"] = source
+            meta["stored_at"] = __import__("datetime").datetime.now().isoformat()
+            
+            coll.add(
+                documents=[content],
+                ids=[memory_id],
+                metadatas=[meta],
+            )
+            
+            logger.info("Stored vector memory: %s", memory_id)
+            return True
+            
+        except Exception as e:
+            logger.error("Failed to store vector memory: %s", e)
+            return False
+    
+    def delete_memory(self, memory_id: str) -> bool:
+        """Delete a memory by ID."""
+        if not _CHROMA_AVAILABLE:
+            return False
+        
+        try:
+            root = Path(__file__).resolve().parents[4]
+            coll = self._get_collection(root)
+            if coll is None:
+                return False
+            
+            coll.delete(ids=[memory_id])
+            return True
+            
+        except Exception:
+            return False
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get vector store statistics."""
+        if not _CHROMA_AVAILABLE:
+            return {"available": False}
+        
+        try:
+            root = Path(__file__).resolve().parents[4]
+            coll = self._get_collection(root)
+            if coll is None:
+                return {"available": False}
+            
+            return {
+                "available": True,
+                "collection": COLLECTION_NAME,
+                "count": coll.count(),
+                "persist_directory": self._persist_directory,
+            }
+            
+        except Exception as e:
+            return {"available": False, "error": str(e)}

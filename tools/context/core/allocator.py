@@ -10,6 +10,7 @@ from tools.context.core.models import (
     ContextLevel,
     GitContext,
     MemoryItem,
+    ProgressContext,
     RuleContext,
     SourceResult,
     StateContext,
@@ -23,6 +24,7 @@ SOURCE_LEVEL_MAP = {
     # Level 1 (HIGH): Always loaded
     "state": ContextLevel.HIGH,
     "task": ContextLevel.HIGH,
+    "progress": ContextLevel.HIGH,  # Progress tracking is critical context
     
     # Level 2 (MID): Loaded if budget allows
     "brief": ContextLevel.MID,
@@ -118,6 +120,18 @@ class ContextAllocator(AllocatorProtocol):
                 }
             if "proof_index" in data and isinstance(data.get("proof_index"), list) and bundle.proof_index is None:
                 bundle.proof_index = data["proof_index"]
+            if "progress" in data and bundle.progress is None:
+                prog_data = data["progress"]
+                if isinstance(prog_data, dict):
+                    bundle.progress = ProgressContext(
+                        current_gate=prog_data.get("current_gate", ""),
+                        current_phase=prog_data.get("current_phase", ""),
+                        progress_percent=prog_data.get("progress_percent", 0.0),
+                        blockers_count=prog_data.get("blockers_count", 0),
+                        in_progress_count=prog_data.get("in_progress_count", 0),
+                        next_actions=prog_data.get("next_actions", []),
+                        gate_details=prog_data.get("gate_details", []),
+                    )
 
         self._apply_budget(bundle, budget)
         return bundle.with_meta(budget_chars=budget.total_chars)

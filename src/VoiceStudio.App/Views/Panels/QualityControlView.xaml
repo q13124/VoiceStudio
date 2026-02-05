@@ -1,9 +1,25 @@
+<!--
+  QualityControlView.xaml - Audio quality analysis and metrics panel
+  
+  AI GUIDELINES:
+  - Displays computed audio quality metrics (PESQ, STOI, SNR, etc.)
+  - Metrics are calculated async by backend - bindings must handle loading state
+  - Use NumberFormatConverter (F0/F1/F2) for metric display formatting
+  - DO NOT change metric calculation thresholds without backend coordination
+  - Color-coded quality indicators use VSQ.* semantic color tokens
+  - Chart/visualization controls may require data template updates for new metrics
+-->
 <UserControl x:Class="VoiceStudio.App.Views.Panels.QualityControlView"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:controls="using:VoiceStudio.App.Controls"
   xmlns:vm="using:VoiceStudio.App.ViewModels"
-  xmlns:converters="using:VoiceStudio.App.Converters">
+  xmlns:converters="using:VoiceStudio.App.Converters"
+  mc:Ignorable="d"
+  d:DataContext="{d:DesignInstance Type=vm:QualityControlViewModel, IsDesignTimeCreatable=False}"
+  x:DataType="vm:QualityControlViewModel">
   <UserControl.Resources>
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -182,8 +198,8 @@
                 <ItemsControl
                   ItemsSource="{x:Bind ViewModel.CurrentAnalysis.Recommendations, Mode=OneWay}">
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <TextBlock Text="{Binding}"
+                    <DataTemplate x:DataType="x:String">
+                      <TextBlock Text="{x:Bind}"
                         Style="{StaticResource VSQ.Text.Caption}"
                         Margin="20,0,0,0" />
                     </DataTemplate>

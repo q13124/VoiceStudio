@@ -288,8 +288,26 @@ class MemorySourceAdapter(BaseSourceAdapter):
     When mcp_enabled=True and offline=False, attempts OpenMemory MCP protocol
     (search-memory) first; on failure or when no MCP client is available,
     falls back to file/openmemory.md and logs once (ADR-015, option C).
+    
+    Features:
+    - Role-aware memory retrieval based on role responsibilities
+    - Task context injection for relevant memories
+    - Health checking for memory sources availability
     """
     _mcp_unavailable_logged: bool = False
+    
+    # Role-specific memory query hints
+    ROLE_QUERY_HINTS = {
+        "overseer": ["project state", "milestones", "blockers", "governance"],
+        "system-architect": ["architecture", "boundaries", "contracts", "ADRs"],
+        "build-tooling": ["build", "CI/CD", "toolchain", "dependencies"],
+        "ui-engineer": ["UI", "XAML", "MVVM", "views", "bindings"],
+        "core-platform": ["runtime", "preflight", "storage", "jobs"],
+        "engine-engineer": ["engines", "synthesis", "inference", "audio"],
+        "release-engineer": ["installer", "packaging", "release", "versioning"],
+        "debug-agent": ["errors", "exceptions", "debugging", "diagnostics"],
+        "validator": ["verification", "proofs", "acceptance", "validation"],
+    }
 
     def __init__(
         self,
@@ -302,6 +320,26 @@ class MemorySourceAdapter(BaseSourceAdapter):
         self._max_results = max_results
         self._query_type = query_type
         self._mcp_enabled = mcp_enabled
+    
+    def health_check(self) -> bool:
+        """Check if memory sources are available."""
+        try:
+            # Check for openmemory.md
+            openmemory_path = _resolve_openmemory_path()
+            if openmemory_path and os.path.exists(openmemory_path):
+                return True
+            
+            # Check for CONTEXT_MEMO env
+            if os.getenv("CONTEXT_MEMO"):
+                return True
+            
+            # If MCP is enabled and not offline, consider it available
+            if self._mcp_enabled and not self._offline:
+                return True
+            
+            return False
+        except Exception:
+            return False
 
     def _fetch_env_hint(self) -> List[MemoryItem]:
         """Fallback: read from CONTEXT_MEMO environment variable."""
@@ -418,7 +456,7 @@ class MemorySourceAdapter(BaseSourceAdapter):
         return sections
 
     def _build_query(self, context: AllocationContext) -> str:
-        """Build search query from allocation context."""
+        """Build role-aware search query from allocation context."""
         parts = []
         
         if context.task_id:
@@ -427,13 +465,46 @@ class MemorySourceAdapter(BaseSourceAdapter):
         if context.phase:
             parts.append(f"phase:{context.phase}")
             
+        # Add role-specific query hints
         if context.role:
             parts.append(f"role:{context.role}")
+            hints = self.ROLE_QUERY_HINTS.get(context.role, [])
+            if hints:
+                # Add top 2 role hints to improve relevance
+                parts.extend(hints[:2])
             
         if not parts:
             parts.append("VoiceStudio project context")
             
         return " ".join(parts)
+    
+    def _get_role_relevant_sections(
+        self,
+        sections: Dict[str, str],
+        role: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Filter sections relevant to a specific role."""
+        if not role:
+            return []
+        
+        hints = self.ROLE_QUERY_HINTS.get(role, [])
+        if not hints:
+            return []
+        
+        relevant = []
+        for section_name, content in sections.items():
+            # Check if section matches role hints
+            section_lower = section_name.lower()
+            for hint in hints:
+                if hint.lower() in section_lower or hint.lower() in content.lower()[:200]:
+                    relevant.append({
+                        "content": content[:500],
+                        "source": f"openmemory:{section_name}",
+                        "relevance": 0.85,
+                    })
+                    break  # Only add once per section
+        
+        return relevant[:self._max_results]
 
     def _convert_to_memory_items(
         self, memories: List[Dict[str, Any]]
@@ -451,14 +522,17 @@ class MemorySourceAdapter(BaseSourceAdapter):
 
     def fetch(self, context: AllocationContext) -> SourceResult:
         """
-        Fetch memories from OpenMemory MCP or fallback to env hint.
+        Fetch memories from OpenMemory with role-aware retrieval.
         
         Priority:
-        1. OpenMemory MCP query (if available)
-        2. Local openmemory.md file
-        3. CONTEXT_MEMO environment variable
+        1. OpenMemory MCP query (if available and not offline)
+        2. Local openmemory.md file with role-aware section filtering
+        3. Query-based local search
+        4. CONTEXT_MEMO environment variable
         """
         def _load():
+            all_memories = []
+            
             # Try OpenMemory MCP integration
             if not self._offline:
                 query = self._build_query(context)
@@ -467,19 +541,48 @@ class MemorySourceAdapter(BaseSourceAdapter):
                 if mcp_memories:
                     items = self._convert_to_memory_items(mcp_memories)
                     if items:
-                        return {"memory": items}
+                        all_memories.extend(items)
             
-            # Try local openmemory.md as fallback
-            query = self._build_query(context)
-            local_memories = self._try_mcp_query({"query": query, "k": self._max_results})
-            
-            if local_memories:
-                items = self._convert_to_memory_items(local_memories)
-                if items:
-                    return {"memory": items}
+            # Try role-aware local retrieval
+            openmemory_path = _resolve_openmemory_path()
+            if openmemory_path and os.path.exists(openmemory_path):
+                try:
+                    with open(openmemory_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    
+                    sections = self._parse_openmemory_sections(content)
+                    
+                    # Get role-relevant sections first
+                    if context.role:
+                        role_memories = self._get_role_relevant_sections(
+                            sections, context.role
+                        )
+                        items = self._convert_to_memory_items(role_memories)
+                        all_memories.extend(items)
+                    
+                    # If still under limit, add query-matched sections
+                    if len(all_memories) < self._max_results:
+                        query = self._build_query(context)
+                        query_memories = self._try_mcp_query({
+                            "query": query,
+                            "k": self._max_results - len(all_memories),
+                        })
+                        if query_memories:
+                            items = self._convert_to_memory_items(query_memories)
+                            # Avoid duplicates
+                            existing_contents = {m.content[:100] for m in all_memories}
+                            for item in items:
+                                if item.content[:100] not in existing_contents:
+                                    all_memories.append(item)
+                
+                except Exception as e:
+                    logger.debug("Failed to read openmemory.md: %s", e)
             
             # Final fallback: environment variable
-            return {"memory": self._fetch_env_hint()}
+            if not all_memories:
+                all_memories = self._fetch_env_hint()
+            
+            return {"memory": all_memories[:self._max_results]}
 
         return self._measure(_load, context)
 
@@ -489,3 +592,124 @@ class MemorySourceAdapter(BaseSourceAdapter):
         if not mem:
             return 0
         return sum(len(m.content) for m in mem)
+    
+    def store_memory(
+        self,
+        content: str,
+        title: str,
+        memory_type: str = "project_info",
+        section: Optional[str] = None,
+    ) -> bool:
+        """
+        Store a memory to the local openmemory.md file.
+        
+        Args:
+            content: Memory content to store
+            title: Memory title
+            memory_type: Type of memory (component, implementation, debug, etc.)
+            section: Optional section to add to in openmemory.md
+        
+        Returns:
+            True if stored successfully
+        """
+        openmemory_path = _resolve_openmemory_path()
+        if not openmemory_path:
+            # Create in cwd if not exists
+            openmemory_path = str(Path(os.getcwd()) / "openmemory.md")
+        
+        try:
+            path = Path(openmemory_path)
+            
+            # Read existing content or create template
+            if path.exists():
+                existing = path.read_text(encoding="utf-8")
+            else:
+                existing = self._create_openmemory_template()
+            
+            # Format the new memory entry
+            timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d")
+            entry = f"\n### {title}\n- Type: {memory_type}\n- Added: {timestamp}\n\n{content}\n"
+            
+            # Find the right section to add to
+            target_section = section or self._memory_type_to_section(memory_type)
+            updated = self._insert_memory_entry(existing, entry, target_section)
+            
+            path.write_text(updated, encoding="utf-8")
+            logger.info("Stored memory: %s (type: %s)", title, memory_type)
+            return True
+            
+        except Exception as e:
+            logger.error("Failed to store memory: %s", e)
+            return False
+    
+    def _create_openmemory_template(self) -> str:
+        """Create a new openmemory.md template."""
+        return """# VoiceStudio OpenMemory
+
+## Overview
+Project knowledge and accumulated context.
+
+## Architecture
+System architecture and design decisions.
+
+## Components
+Major components and their responsibilities.
+
+## Patterns
+Coding patterns and conventions.
+
+## Debug History
+Notable debugging sessions and solutions.
+
+## User Defined Namespaces
+- [Leave blank - user populates]
+"""
+    
+    def _memory_type_to_section(self, memory_type: str) -> str:
+        """Map memory type to openmemory.md section."""
+        mapping = {
+            "component": "Components",
+            "implementation": "Patterns",
+            "debug": "Debug History",
+            "project_info": "Overview",
+            "user_preference": "User Defined Namespaces",
+        }
+        return mapping.get(memory_type, "Overview")
+    
+    def _insert_memory_entry(
+        self,
+        content: str,
+        entry: str,
+        section: str,
+    ) -> str:
+        """Insert a memory entry into the appropriate section."""
+        lines = content.split("\n")
+        result = []
+        in_section = False
+        entry_added = False
+        
+        for i, line in enumerate(lines):
+            result.append(line)
+            
+            # Check if we're entering the target section
+            if line.startswith("## ") and section.lower() in line.lower():
+                in_section = True
+                continue
+            
+            # Check if we're leaving a section
+            if in_section and line.startswith("## "):
+                if not entry_added:
+                    result.insert(len(result) - 1, entry)
+                    entry_added = True
+                in_section = False
+        
+        # If section was at the end, add entry
+        if in_section and not entry_added:
+            result.append(entry)
+        
+        # If section not found, add at end
+        if not entry_added:
+            result.append(f"\n## {section}")
+            result.append(entry)
+        
+        return "\n".join(result)

@@ -1,4 +1,4 @@
 {
-  "weights": { "brief": 0.9, "rules": 0.6, "state": 0.8 },
-  "budgets": { "brief_chars": 3500, "rules_chars": 2000, "state_chars": 2200 }
+  "weights": { "brief": 0.9, "progress": 0.85, "rules": 0.6, "state": 0.8 },
+  "budgets": { "brief_chars": 3500, "progress_chars": 1500, "rules_chars": 2000, "state_chars": 2200 }
 }

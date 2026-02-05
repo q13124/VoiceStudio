@@ -1,22 +1,60 @@
 #!/bin/bash
-# VoiceStudio Pre-Commit Hook: Verify audit log entries
-# This hook checks that changed files have corresponding audit log entries
+# VoiceStudio Pre-Commit Hook
+# Checks:
+# 1. XAML safety (nested Views, compile-time validation)
+# 2. Audit log entries for changed files
 
 set -e
 
 # Configuration
 AUDIT_ENABLED="${VOICESTUDIO_AUDIT_ENABLED:-1}"
 AUDIT_STRICT="${VOICESTUDIO_AUDIT_STRICT:-0}"
+XAML_CHECK_ENABLED="${VOICESTUDIO_XAML_CHECK:-1}"
 
-# Skip if audit is disabled
-if [ "$AUDIT_ENABLED" != "1" ]; then
-    exit 0
-fi
+# Get repo root
+REPO_ROOT=$(git rev-parse --show-toplevel)
 
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
 
 if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# =============================================================================
+# XAML Safety Check (GitHub #10947)
+# =============================================================================
+
+if [ "$XAML_CHECK_ENABLED" = "1" ]; then
+    STAGED_XAML=$(echo "$STAGED_FILES" | grep '\.xaml$' || true)
+    
+    if [ -n "$STAGED_XAML" ]; then
+        echo "Running XAML pre-commit checks..."
+        
+        # Check for deeply nested Views (causes silent XamlCompiler failures)
+        for file in $STAGED_XAML; do
+            if echo "$file" | grep -qE 'Views/[^/]+/[^/]+/[^/]+\.xaml$'; then
+                echo ""
+                echo "ERROR: XAML file in deeply nested Views subfolder detected!"
+                echo "  File: $file"
+                echo "  This can cause silent XamlCompiler.exe failures (GitHub #10947)"
+                echo "  Move to Views/ root or Views/{Category}/ (max 1 level deep)"
+                echo ""
+                echo "Bypass with: git commit --no-verify"
+                exit 1
+            fi
+        done
+        
+        echo "XAML pre-commit checks passed."
+    fi
+fi
+
+# =============================================================================
+# Audit Log Check
+# =============================================================================
+
+# Skip if audit is disabled
+if [ "$AUDIT_ENABLED" != "1" ]; then
     exit 0
 fi
 

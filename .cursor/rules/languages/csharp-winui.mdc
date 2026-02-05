@@ -29,6 +29,45 @@ alwaysApply: false
 - Keep XAML layouts simple and testable.
 - Follow `docs/design/UI_IMPLEMENTATION_SPEC.md` for layout and panel requirements.
 
+### XAML Binding Standards
+
+1. **Always use `{x:Bind}` with explicit Mode**:
+   ```xml
+   <!-- CORRECT -->
+   <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
+   <TextBox Text="{x:Bind ViewModel.Input, Mode=TwoWay}" />
+   
+   <!-- INCORRECT - No Mode specified -->
+   <TextBlock Text="{x:Bind ViewModel.Title}" />
+   ```
+
+2. **DataTemplates require `x:DataType`**:
+   ```xml
+   <DataTemplate x:DataType="models:MyItem">
+     <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+   </DataTemplate>
+   ```
+
+3. **Add `d:DataContext` for design-time support**:
+   ```xml
+   <UserControl 
+     d:DataContext="{d:DesignInstance Type=vm:MyViewModel, IsDesignTimeCreatable=False}"
+     x:DataType="vm:MyViewModel">
+   ```
+
+4. **Use FallbackValue for defensive bindings**:
+   ```xml
+   <TextBlock Text="{x:Bind Name, Mode=OneWay, FallbackValue='Unknown'}" />
+   ```
+
+5. **Reference `xaml-safety.mdc` for compiler-safe patterns**
+
+### Command Patterns
+
+- Use `IRelayCommand` and `IAsyncRelayCommand` from CommunityToolkit.Mvvm
+- Commands should have matching `CanExecute` logic when applicable
+- Button Command bindings: `Command="{x:Bind ViewModel.SaveCommand}"`
+
 ## Performance
 
 - Virtualize long lists and avoid UI thread blocking.

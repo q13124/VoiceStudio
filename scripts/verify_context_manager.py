@@ -245,6 +245,58 @@ def verify_audit_adapter() -> Tuple[bool, str, Dict[str, Any]]:
         return False, f"Audit adapter verification failed: {e}", {}
 
 
+def verify_source_health() -> Tuple[bool, str, Dict[str, Any]]:
+    """Verify health checks for all context sources."""
+    try:
+        from tools.context.core.manager import ContextManager
+
+        manager = ContextManager.from_config()
+        health = manager.health_check()
+
+        info = {
+            "overall_healthy": health.get("overall_healthy", False),
+            "healthy_count": health.get("healthy_count", 0),
+            "total_count": health.get("total_count", 0),
+            "unhealthy_sources": health.get("unhealthy_sources", []),
+        }
+
+        if not info["overall_healthy"]:
+            return (
+                False,
+                f"Health check failed: {info['unhealthy_sources']}",
+                info,
+            )
+
+        return (
+            True,
+            f"All {info['healthy_count']} sources healthy",
+            info,
+        )
+
+    except Exception as e:
+        return False, f"Health check verification failed: {e}", {}
+
+
+def verify_telemetry() -> Tuple[bool, str, Dict[str, Any]]:
+    """Verify telemetry collection is working."""
+    try:
+        from tools.context.sources.base import get_source_telemetry
+
+        telemetry = get_source_telemetry()
+        summary = telemetry.get_summary()
+
+        info = {
+            "total_sources": summary.get("total_sources", 0),
+            "healthy_sources": summary.get("healthy_sources", 0),
+            "collection_started": summary.get("collection_started"),
+        }
+
+        return True, f"Telemetry active: tracking {info['total_sources']} sources", info
+
+    except Exception as e:
+        return False, f"Telemetry verification failed: {e}", {}
+
+
 def generate_report(results: List[Tuple[str, bool, str, Any]]) -> str:
     """Generate a verification report."""
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -267,18 +319,15 @@ def generate_report(results: List[Tuple[str, bool, str, Any]]) -> str:
         status = "PASS" if ok else "FAIL"
         report += f"| {name} | {status} | {msg} |\n"
     
-    report += f"""
+    report += """
 
 ## Summary
 
-- Configuration: {'OK' if results[0][1] else 'FAIL'}
-- Role Configs: {'OK' if results[1][1] else 'FAIL'}
-- Source Adapters: {'OK' if results[2][1] else 'FAIL'}
-- Registry Build: {'OK' if results[3][1] else 'FAIL'}
-- Allocation Test: {'OK' if results[4][1] else 'FAIL'}
-- Audit Adapter: {'OK' if results[5][1] else 'FAIL'}
-
 """
+    for name, ok, _, _ in results:
+        report += f"- {name}: {'OK' if ok else 'FAIL'}\n"
+
+    report += "\n"
     return report
 
 
@@ -298,6 +347,8 @@ def main() -> int:
         ("Registry Build", verify_registry_build),
         ("Allocation Test", verify_allocation),
         ("Audit Adapter", verify_audit_adapter),
+        ("Source Health", verify_source_health),
+        ("Telemetry", verify_telemetry),
     ]
     
     for name, check_fn in checks:

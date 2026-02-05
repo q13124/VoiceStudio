@@ -2,7 +2,13 @@
   x:Class="VoiceStudio.App.Views.UpdateDialog"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:vm="using:VoiceStudio.App.ViewModels"
   xmlns:converters="using:VoiceStudio.App.Converters"
+  mc:Ignorable="d"
+  d:DataContext="{d:DesignInstance Type=vm:UpdateViewModel, IsDesignTimeCreatable=False}"
+  x:DataType="vm:UpdateViewModel"
   Title="Update Available"
   PrimaryButtonText="Download"
   SecondaryButtonText="Later"
@@ -28,30 +34,30 @@
         Margin="0,0,0,8" />
       <TextBlock>
         <Run Text="Current version: " />
-        <Run Text="{Binding CurrentVersion}" FontWeight="SemiBold" />
+        <Run Text="{x:Bind ViewModel.CurrentVersion, Mode=OneWay}" FontWeight="SemiBold" />
       </TextBlock>
       <TextBlock>
         <Run Text="Latest version: " />
-        <Run Text="{Binding LatestVersion}" FontWeight="SemiBold"
+        <Run Text="{x:Bind ViewModel.LatestVersion, Mode=OneWay}" FontWeight="SemiBold"
           Foreground="{StaticResource VSQ.Accent.CyanBrush}" />
       </TextBlock>
     </StackPanel>
     <!-- Download Progress -->
     <StackPanel Grid.Row="1" Margin="0,0,0,16"
-      Visibility="{Binding IsDownloadingUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
-      <TextBlock Text="{Binding DownloadStatusText}"
+      Visibility="{x:Bind ViewModel.IsDownloadingUpdate, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+      <TextBlock Text="{x:Bind ViewModel.DownloadStatusText, Mode=OneWay}"
         Margin="0,0,0,8" />
-      <ProgressBar Value="{Binding DownloadProgress}"
+      <ProgressBar Value="{x:Bind ViewModel.DownloadProgress, Mode=OneWay}"
         Maximum="1.0"
         Height="8"
-        IsIndeterminate="{Binding IsDownloadingUpdate}" />
+        IsIndeterminate="{x:Bind ViewModel.IsDownloadingUpdate, Mode=OneWay}" />
     </StackPanel>
     <!-- Release Notes -->
     <ScrollViewer Grid.Row="2"
       Margin="0,0,0,16"
       VerticalScrollBarVisibility="Auto"
       HorizontalScrollBarVisibility="Disabled">
-      <TextBlock Text="{Binding ReleaseNotes}"
+      <TextBlock Text="{x:Bind ViewModel.ReleaseNotes, Mode=OneWay}"
         TextWrapping="Wrap"
         IsTextSelectionEnabled="True" />
     </ScrollViewer>
@@ -64,7 +70,7 @@
       Padding="12"
       Margin="0,0,0,16"
       Visibility="Collapsed">
-      <TextBlock Text="{Binding ErrorMessage}"
+      <TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
         Foreground="{StaticResource VSQ.Error.Brush}"
         TextWrapping="Wrap" />
     </Border>
@@ -74,12 +80,12 @@
       HorizontalAlignment="Right"
       Spacing="8">
       <Button Content="Check for Updates"
-        Command="{Binding CheckForUpdatesCommand}" />
+        Command="{x:Bind ViewModel.CheckForUpdatesCommand, Mode=OneWay}" />
       <Button Content="Download Update"
-        Command="{Binding DownloadUpdateCommand}"
-        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        Command="{x:Bind ViewModel.DownloadUpdateCommand, Mode=OneWay}"
+        Visibility="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <Button Content="Install Update"
-        Command="{Binding InstallUpdateCommand}"
+        Command="{x:Bind ViewModel.InstallUpdateCommand, Mode=OneWay}"
         Visibility="Collapsed"
         Style="{StaticResource VSQ.Button.Primary}" />
     </StackPanel>

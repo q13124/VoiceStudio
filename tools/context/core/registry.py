@@ -162,4 +162,17 @@ def build_default_registry(config: dict) -> SourceRegistry:
             )
         )
 
+    # Progress tracking adapter (enabled by default - reads from ledger and state)
+    progress_cfg = config.get("progress", {})
+    if progress_cfg.get("enabled", True):
+        from tools.context.sources.progress_adapter import ProgressSourceAdapter
+        
+        registry.register(
+            ProgressSourceAdapter(
+                include_gate_details=progress_cfg.get("include_gate_details", True),
+                include_milestones=progress_cfg.get("include_milestones", True),
+                max_actions=progress_cfg.get("max_actions", 5),
+            )
+        )
+
     return registry

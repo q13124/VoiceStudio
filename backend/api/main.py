@@ -109,6 +109,15 @@ from .error_handling import (
     validation_exception_handler,
 )
 from .version_info import get_version_info, get_version_string
+from .versioning import (
+    APIVersion,
+    CURRENT_VERSION,
+    MIN_SUPPORTED_VERSION,
+    HEADER_API_VERSION,
+    HEADER_MIN_VERSION,
+    VersionNegotiator,
+    get_version_headers,
+)
 
 # API versioning
 API_VERSION_PREFIX = "/api/v1"
@@ -490,6 +499,10 @@ app = FastAPI(
             "name": "documentation",
             "description": "API documentation and validation operations.",
         },
+        {
+            "name": "versioning",
+            "description": "API versioning and compatibility information.",
+        },
     ],
 )
 
@@ -636,23 +649,43 @@ async def request_id_middleware(request: Request, call_next):
     return await add_request_id_middleware(request, call_next)
 
 
-# API versioning middleware
+# API versioning middleware with enhanced version negotiation
 @app.middleware("http")
 async def api_versioning_middleware(request: Request, call_next):
     path = request.scope.get("path", "")
+    
+    # Negotiate API version from headers
+    requested_version = request.headers.get(HEADER_API_VERSION)
+    accept_header = request.headers.get("Accept")
+    negotiated = VersionNegotiator.negotiate(requested_version, accept_header)
+    
+    # Store negotiated version in request state for endpoint access
+    request.state.api_version = negotiated.version
+    request.state.api_version_warnings = negotiated.warnings or []
+    
     if path.startswith(API_VERSION_PREFIX):
         versioned_path = path[len(API_VERSION_PREFIX) :] or "/"
         request.scope["path"] = versioned_path
         request.scope["root_path"] = API_VERSION_PREFIX
-        return await call_next(request)
-
-    response = await call_next(request)
-    if path.startswith(LEGACY_API_PREFIX):
-        response.headers["Deprecation"] = "true"
-        response.headers["Sunset"] = API_SUNSET_DATE
-        response.headers[
-            "Link"
-        ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
+        response = await call_next(request)
+    else:
+        response = await call_next(request)
+        if path.startswith(LEGACY_API_PREFIX):
+            response.headers["Deprecation"] = "true"
+            response.headers["Sunset"] = API_SUNSET_DATE
+            response.headers[
+                "Link"
+            ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
+    
+    # Add version headers to all responses
+    version_headers = get_version_headers()
+    for header_name, header_value in version_headers.items():
+        response.headers[header_name] = header_value
+    
+    # Add version warnings if any
+    if negotiated.warnings:
+        response.headers["X-API-Version-Warnings"] = "; ".join(negotiated.warnings)
+    
     return response
 
 
@@ -809,13 +842,19 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*", "X-Correlation-ID"],
+    allow_headers=["*", "X-Correlation-ID", "X-API-Version"],
     expose_headers=[
         "X-Request-ID",
         "X-Correlation-ID",
         "X-RateLimit-Remaining",
         "X-RateLimit-Limit",
         "X-RateLimit-Reset",
+        # API versioning headers
+        "X-API-Version",
+        "X-Min-Version",
+        "X-Deprecated",
+        "X-Sunset-Date",
+        "X-API-Version-Warnings",
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
@@ -1171,6 +1210,37 @@ def root():
         "version_string": get_version_string(),
         "build_date": version_info.get("build_date"),
         "git_commit": version_info.get("git_commit"),
+    }
+
+
+@app.get("/api/version", tags=["versioning"])
+def api_version_info(request: Request):
+    """
+    Get API version information including negotiated version and compatibility.
+    
+    Returns:
+        - current_version: The current API version
+        - min_supported_version: Minimum supported API version
+        - negotiated_version: The version negotiated for this request
+        - supported_versions: List of all supported versions
+        - version_info: Application version details
+    """
+    version_info = get_version_info()
+    negotiated = getattr(request.state, "api_version", CURRENT_VERSION)
+    warnings = getattr(request.state, "api_version_warnings", [])
+    
+    return {
+        "current_version": CURRENT_VERSION.value,
+        "min_supported_version": MIN_SUPPORTED_VERSION.value,
+        "negotiated_version": negotiated.value,
+        "supported_versions": [v.value for v in APIVersion],
+        "version_info": {
+            "version": version_info["version"],
+            "version_string": get_version_string(),
+            "build_date": version_info.get("build_date"),
+            "git_commit": version_info.get("git_commit"),
+        },
+        "warnings": warnings,
     }
 
 

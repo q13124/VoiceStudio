@@ -33,16 +33,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Check for nested Views XAML (GitHub #10947)
+      - name: Proactive XAML health check
         run: |
-          $nested = Get-ChildItem -Recurse -Filter "*.xaml" -Path "src/VoiceStudio.App/Views" -ErrorAction SilentlyContinue |
-            Where-Object { $_.DirectoryName -match "Views\\[^\\]+\\[^\\]+\\[^\\]+" }
-          if ($nested) {
-            Write-Error "BLOCKED: Deeply nested Views subfolders detected. See GitHub #10947."
-            $nested | ForEach-Object { Write-Error "  - $($_.FullName)" }
-            exit 1
-          }
-          Write-Host "Views structure check passed: No deeply nested subfolders."
+          powershell -ExecutionPolicy Bypass -File scripts/proactive-xaml-check.ps1 -OutputFile .buildlogs/xaml-health.json
+        continue-on-error: false
 
       - name: Build solution (Debug, x64) with binlog
         run: |
@@ -165,6 +159,7 @@ jobs:
             .buildlogs/build_diagnostic_*.binlog
             .buildlogs/analysis-output.txt
             .buildlogs/analysis-output.json
+            .buildlogs/xaml-health.json
           retention-days: 14
           if-no-files-found: ignore
 
@@ -357,3 +352,34 @@ jobs:
           name: verification-report
           path: .buildlogs/verification/last_run.json
           retention-days: 30
+
+  validate-contracts:
+    name: Validate API Contracts
+    runs-on: windows-latest
+    needs: [build-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate NSwag client is up-to-date
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/nswag/generate-client.ps1 -ValidateOnly
+        continue-on-error: true
+        id: client-check
+
+      - name: Validate contract compatibility
+        run: python tools/nswag/validate-contract.py
+        continue-on-error: true
+        id: contract-check
+
+      - name: Report contract validation status
+        if: steps.client-check.outcome == 'failure' || steps.contract-check.outcome == 'failure'
+        run: |
+          Write-Host "[WARN] Contract validation issues detected" -ForegroundColor Yellow
+          Write-Host "Run 'powershell tools/nswag/generate-client.ps1 -Force' to regenerate client"

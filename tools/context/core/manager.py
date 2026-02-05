@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -17,6 +18,7 @@ from tools.context.core.models import (
 from tools.context.core.registry import SourceRegistry, build_default_registry
 from tools.context.infra.cache import InMemoryCache
 from tools.context.infra.validation import validate_config
+from tools.context.sources.base import get_source_telemetry
 
 if TYPE_CHECKING:
     from tools.overseer.agent.registry import AgentRegistry
@@ -73,6 +75,7 @@ class ContextManager:
             "memory": int(base_budgets.get("memory_chars", 2000)),
             "telemetry": int(base_budgets.get("telemetry_chars", 1000)),
             "git": int(base_budgets.get("git_chars", 1000)),
+            "progress": int(base_budgets.get("progress_chars", 1500)),
         }
         priority_order = sorted(base_weights.keys(), key=lambda k: base_weights[k], reverse=True)
         return BudgetConstraints(total_chars=total, source_limits=source_limits, priority_order=priority_order)
@@ -138,6 +141,68 @@ class ContextManager:
         bundle.meta["role"] = ctx.role
         self.cache.put(cache_key, bundle, ttl_seconds=self.cache_ttl_seconds)
         return bundle
+
+    def health_check(self) -> Dict[str, Any]:
+        """
+        Perform health checks on all registered sources.
+
+        Returns:
+            Dict with overall health status and per-source details
+        """
+        telemetry = get_source_telemetry()
+        results = []
+        healthy_count = 0
+        unhealthy_sources = []
+
+        for source in self.registry.all():
+            try:
+                is_healthy = source.health_check() if hasattr(source, "health_check") else True
+                source_name = getattr(source, "source_name", str(source))
+                status = telemetry.get_or_create(source_name)
+
+                results.append({
+                    "source": source_name,
+                    "healthy": is_healthy,
+                    "status": status.to_dict(),
+                })
+
+                if is_healthy:
+                    healthy_count += 1
+                else:
+                    unhealthy_sources.append(source_name)
+
+            except Exception as e:
+                source_name = getattr(source, "source_name", str(source))
+                logger.warning("Health check failed for source %s: %s", source_name, e)
+                results.append({
+                    "source": source_name,
+                    "healthy": False,
+                    "error": str(e),
+                })
+                unhealthy_sources.append(source_name)
+
+        total = len(results)
+        return {
+            "overall_healthy": len(unhealthy_sources) == 0,
+            "healthy_count": healthy_count,
+            "total_count": total,
+            "unhealthy_sources": unhealthy_sources,
+            "timestamp": datetime.now().isoformat(),
+            "sources": results,
+        }
+
+    def get_telemetry_summary(self) -> Dict[str, Any]:
+        """
+        Get telemetry summary for all sources.
+
+        Returns:
+            Dict with aggregated telemetry data
+        """
+        return get_source_telemetry().get_summary()
+
+    def clear_cache(self) -> None:
+        """Clear the context cache."""
+        self.cache = InMemoryCache(max_entries=16)
 
 
 def _load_config(path: Path) -> Dict:

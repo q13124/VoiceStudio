@@ -1,8 +1,26 @@
+<!--
+  EffectsMixerView.xaml - Audio effects and mixer control panel
+  
+  AI GUIDELINES:
+  - ViewModel is in VoiceStudio.App.Views.Panels namespace (not ViewModels)
+  - Use local:MixerChannel for channel DataTemplates
+  - Use models:EffectChain, models:Effect for effect chain DataTemplates
+  - Volume/Pan sliders use TwoWay binding to update model in real-time
+  - DO NOT change slider ranges (Volume: 0-2, Pan: -1 to 1)
+  - Multi-select is supported via MultiSelectService
+-->
 <UserControl x:Class="VoiceStudio.App.Views.Panels.EffectsMixerView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:VoiceStudio.App.Controls"
-    xmlns:converters="using:VoiceStudio.App.Converters">
+    xmlns:converters="using:VoiceStudio.App.Converters"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    xmlns:models="using:VoiceStudio.Core.Models"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance Type=local:EffectsMixerViewModel, IsDesignTimeCreatable=False}"
+    x:DataType="local:EffectsMixerViewModel">
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -46,8 +64,8 @@
                               MinWidth="150"
                               VerticalAlignment="Center">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
+                            <DataTemplate x:DataType="models:MixerPreset">
+                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
@@ -123,9 +141,9 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="local:MixerChannel">
                                 <Border x:Name="ChannelBorder"
-                                        Tag="{Binding Id}"
+                                        Tag="{x:Bind Id, Mode=OneWay}"
                                         Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
                                         BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
                                         BorderThickness="1"
@@ -145,7 +163,7 @@
 
                                         <!-- Channel Name -->
                                         <TextBlock Grid.Row="0" 
-                                                   Text="{Binding Name}" 
+                                                   Text="{x:Bind Name, Mode=OneWay, FallbackValue='Channel', TargetNullValue='Channel'}" 
                                                    FontSize="{StaticResource VSQ.FontSize.Body}"
                                                    Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis"
@@ -163,7 +181,7 @@
                                                     <Border Background="{StaticResource VSQ.Success.Brush}"
                                                             VerticalAlignment="Bottom"
                                                             CornerRadius="2"
-                                                            Height="{Binding PeakLevel, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=120}" />
+                                                            Height="{x:Bind PeakLevel, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=120}" />
                                                 </Grid>
                                             </Border>
                                         </Grid>
@@ -172,14 +190,14 @@
                                         <Slider Grid.Row="2"
                                                 Orientation="Vertical"
                                                 Minimum="0" Maximum="2" StepFrequency="0.01"
-                                                Value="{Binding Volume, Mode=TwoWay}"
+                                                Value="{x:Bind Volume, Mode=TwoWay}"
                                                 Height="80"
                                                 HorizontalAlignment="Center"
                                                 AutomationProperties.AutomationId="EffectsMixerView_VolumeSlider" />
 
                                         <!-- Volume Display -->
                                         <TextBlock Grid.Row="3"
-                                                   Text="{Binding VolumeDisplay}"
+                                                   Text="{x:Bind VolumeDisplay, Mode=OneWay}"
                                                    FontSize="{StaticResource VSQ.FontSize.Caption}"
                                                    Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -189,18 +207,18 @@
                                         <StackPanel Grid.Row="4" Spacing="4">
                                             <!-- Pan Slider -->
                                             <Slider Minimum="-1" Maximum="1" StepFrequency="0.01"
-                                                    Value="{Binding Pan, Mode=TwoWay}"
+                                                    Value="{x:Bind Pan, Mode=TwoWay}"
                                                     AutomationProperties.AutomationId="EffectsMixerView_PanSlider" />
                                             
                                             <!-- Mute/Solo Buttons -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
-                                                <ToggleButton IsChecked="{Binding IsMuted, Mode=TwoWay}"
+                                                <ToggleButton IsChecked="{x:Bind IsMuted, Mode=TwoWay}"
                                                               Width="28" Height="24"
                                                               ToolTipService.ToolTip="Mute"
                                                               AutomationProperties.AutomationId="EffectsMixerView_MuteButton">
                                                     <TextBlock Text="M" FontSize="10" FontWeight="Bold" />
                                                 </ToggleButton>
-                                                <ToggleButton IsChecked="{Binding IsSoloed, Mode=TwoWay}"
+                                                <ToggleButton IsChecked="{x:Bind IsSoloed, Mode=TwoWay}"
                                                               Width="28" Height="24"
                                                               ToolTipService.ToolTip="Solo"
                                                               AutomationProperties.AutomationId="EffectsMixerView_SoloButton">
@@ -310,19 +328,19 @@
                               RightTapped="EffectChain_RightTapped"
                               SelectionMode="Single">
                         <ListView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:EffectChain">
                                 <Grid Padding="4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" 
-                                               Text="{Binding Name}" 
+                                               Text="{x:Bind Name, Mode=OneWay}" 
                                                Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
                                                TextTrimming="CharacterEllipsis"
                                                VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" 
-                                               Text="{Binding Effects.Count}" 
+                                               Text="{x:Bind Effects.Count, Mode=OneWay}" 
                                                Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                                FontSize="{StaticResource VSQ.FontSize.Caption}"
                                                VerticalAlignment="Center" />
@@ -374,7 +392,7 @@
                               AllowDrop="True"
                               SelectionMode="Single">
                         <ListView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Effect">
                                 <Border Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
                                         CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
                                         Padding="8,4"
@@ -394,18 +412,18 @@
                                         </Grid.ColumnDefinitions>
 
                                         <CheckBox Grid.Column="0"
-                                                  IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                                  IsChecked="{x:Bind Enabled, Mode=TwoWay}"
                                                   VerticalAlignment="Center"
                                                   MinWidth="0" />
 
                                         <TextBlock Grid.Column="1"
-                                                   Text="{Binding Name}"
+                                                   Text="{x:Bind Name, Mode=OneWay}"
                                                    Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
                                                    VerticalAlignment="Center"
                                                    Margin="4,0" />
 
                                         <TextBlock Grid.Column="2"
-                                                   Text="{Binding Order}"
+                                                   Text="{x:Bind Order, Mode=OneWay}"
                                                    Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                                    FontSize="{StaticResource VSQ.FontSize.Caption}"
                                                    VerticalAlignment="Center" />

@@ -22,6 +22,28 @@ class GitSourceAdapter(BaseSourceAdapter):
         self._include_status = include_status
         self._include_shortlog = include_shortlog
         self._shortlog_limit = max(1, int(shortlog_limit))
+        self._git_available: Optional[bool] = None
+
+    def health_check(self) -> bool:
+        """
+        Check if git is available and the repo is accessible.
+
+        Returns:
+            True if git commands work in the repo
+        """
+        try:
+            # Try current directory first, then fall back to parent resolution
+            root = Path.cwd()
+            result = self._run_git(["rev-parse", "--git-dir"], root)
+            if result is None:
+                # Fall back to path relative to script
+                root = Path(__file__).resolve().parents[4]
+                result = self._run_git(["rev-parse", "--git-dir"], root)
+            self._git_available = result is not None
+            return self._git_available
+        except Exception:
+            self._git_available = False
+            return False
 
     def _run_git(self, args: list[str], root: Path) -> Optional[str]:
         try:

@@ -174,6 +174,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Binlog Analysis (PS)** | `scripts/analyze-binlog.ps1` | 2026-02-04 | PowerShell script to extract XamlCompiler invocations and detect nested Views issues; supports file output |
 | **Binlog Analysis (Python)** | `scripts/analyze_binlog.py` | 2026-02-04 | Python alternative for binlog analysis; supports file output for CI integration |
 | **XAML Safety Rule** | `.cursor/rules/quality/xaml-safety.mdc` | 2026-02-04 | Cursor agent safety guardrails for XAML changes; forbidden patterns, non-destructive operations |
+| **C#/WinUI Rule** | `.cursor/rules/languages/csharp-winui.mdc` | 2026-02-04 | MVVM conventions, XAML binding standards, command patterns for WinUI 3 development |
+| **Proactive XAML Check** | `scripts/proactive-xaml-check.ps1` | 2026-02-04 | CI health check for XAML issues: nested Views, missing x:DataType, legacy bindings |
 
 ## Design and Specifications
 

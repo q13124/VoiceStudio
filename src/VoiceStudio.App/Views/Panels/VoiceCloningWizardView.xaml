@@ -1,9 +1,26 @@
+<!--
+  VoiceCloningWizardView.xaml - Multi-step voice cloning wizard
+  
+  AI GUIDELINES:
+  - This is a wizard with multiple steps controlled by CurrentStep property
+  - Use {x:Bind ViewModel.Property, Mode=OneWay/TwoWay} for all bindings
+  - DataTemplates for file/audio items must specify x:DataType
+  - Visibility bindings should use converters (BooleanToVisibility, etc.)
+  - DO NOT modify step transitions without updating CurrentStep validation
+  - All async operations use CancellableCommand pattern
+-->
 <UserControl x:Class="VoiceStudio.App.Views.Panels.VoiceCloningWizardView"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:controls="using:VoiceStudio.App.Controls"
   xmlns:vm="using:VoiceStudio.App.ViewModels"
-  xmlns:converters="using:VoiceStudio.App.Converters">
+  xmlns:storage="using:Windows.Storage"
+  xmlns:converters="using:VoiceStudio.App.Converters"
+  mc:Ignorable="d"
+  d:DataContext="{d:DesignInstance Type=vm:VoiceCloningWizardViewModel, IsDesignTimeCreatable=False}"
+  x:DataType="vm:VoiceCloningWizardViewModel">
   <UserControl.Resources>
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -33,7 +50,7 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal"
           Spacing="{StaticResource VSQ.Spacing.Value.Small}">
           <Button Content="Cancel"
-            Command="{Binding CancelWizardCommand}" />
+            Command="{x:Bind ViewModel.CancelWizardCommand, Mode=OneWay}" />
           <Button Content="?"
             Click="HelpButton_Click"
             Style="{StaticResource VSQ.Button.Icon}" />
@@ -120,34 +137,32 @@
 
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
               <Button Content="Browse Audio File"
-                Command="{Binding BrowseAudioCommand}" />
+                Command="{x:Bind ViewModel.BrowseAudioCommand, Mode=OneWay}" />
               <Button Content="Validate Audio"
-                Command="{Binding ValidateAudioCommand}" />
+                Command="{x:Bind ViewModel.ValidateAudioCommand, Mode=OneWay}" />
             </StackPanel>
 
             <TextBlock
-              Text="{Binding AudioFileName}"
+              Text="{x:Bind ViewModel.AudioFileName, Mode=OneWay}"
               Style="{StaticResource VSQ.Text.Body}"
-              Visibility="{Binding AudioFileName, Converter={StaticResource NullToVisibilityConverter}}" />
+              Visibility="{x:Bind ViewModel.AudioFileName, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
 
-            <ItemsControl ItemsSource="{Binding SelectedAudioFiles}"
-              Visibility="{Binding SelectedAudioFiles.Count, Converter={StaticResource NullToVisibilityConverter}}">
+            <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedAudioFiles, Mode=OneWay}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="storage:StorageFile">
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="•" Style="{StaticResource VSQ.Text.Body}" />
-                    <TextBlock Text="{Binding Name}" Style="{StaticResource VSQ.Text.Body}" />
+                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
 
             <!-- Validation Results -->
-            <ItemsControl ItemsSource="{Binding AudioValidations}"
-              Visibility="{Binding AudioValidations.Count, Converter={StaticResource NullToVisibilityConverter}}">
+            <ItemsControl ItemsSource="{x:Bind ViewModel.AudioValidations, Mode=OneWay}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="vm:AudioValidationItem">
                   <Border Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
                     BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
                     BorderThickness="1"
@@ -158,37 +173,36 @@
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                         <TextBlock Text="Clip:" Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding SourceAudioId}"
+                        <TextBlock Text="{x:Bind SourceAudioId}"
                           Style="{StaticResource VSQ.Text.Body}" />
                       </StackPanel>
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                         <TextBlock Text="Valid:" Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding IsValid}" Style="{StaticResource VSQ.Text.Body}" />
+                        <TextBlock Text="{x:Bind IsValid}" Style="{StaticResource VSQ.Text.Body}" />
                       </StackPanel>
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                         <TextBlock Text="Duration:" Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding DurationDisplay}"
+                        <TextBlock Text="{x:Bind DurationDisplay}"
                           Style="{StaticResource VSQ.Text.Body}" />
                       </StackPanel>
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                         <TextBlock Text="Sample Rate:" Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding SampleRateDisplay}"
+                        <TextBlock Text="{x:Bind SampleRateDisplay}"
                           Style="{StaticResource VSQ.Text.Body}" />
                       </StackPanel>
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                         <TextBlock Text="Channels:" Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding ChannelsDisplay}"
+                        <TextBlock Text="{x:Bind ChannelsDisplay}"
                           Style="{StaticResource VSQ.Text.Body}" />
                       </StackPanel>
-                      <ItemsControl ItemsSource="{Binding Issues}"
-                        Visibility="{Binding Issues, Converter={StaticResource NullToVisibilityConverter}}">
+                      <ItemsControl ItemsSource="{x:Bind Issues}">
                         <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <TextBlock Text="{Binding}"
+                          <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{x:Bind}"
                               Style="{StaticResource VSQ.Text.Caption}"
                               Foreground="Orange"
                               Margin="20,0,0,0" />
@@ -219,7 +233,7 @@
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
               <TextBlock Text="Profile Name:" Width="150" Style="{StaticResource VSQ.Text.Body}"
                 VerticalAlignment="Center" />
-              <TextBox Text="{Binding ProfileName, Mode=TwoWay}"
+              <TextBox Text="{x:Bind ViewModel.ProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Width="300"
                 PlaceholderText="Enter profile name" />
             </StackPanel>
@@ -227,7 +241,7 @@
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
               <TextBlock Text="Description:" Width="150" Style="{StaticResource VSQ.Text.Body}"
                 VerticalAlignment="Center" />
-              <TextBox Text="{Binding ProfileDescription, Mode=TwoWay}"
+              <TextBox Text="{x:Bind ViewModel.ProfileDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Width="300"
                 PlaceholderText="Optional description"
                 AcceptsReturn="True"
@@ -238,21 +252,21 @@
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
               <TextBlock Text="Engine:" Width="150" Style="{StaticResource VSQ.Text.Body}"
                 VerticalAlignment="Center" />
-              <ComboBox ItemsSource="{Binding AvailableEngines}"
-                SelectedItem="{Binding SelectedEngine, Mode=TwoWay}"
+              <ComboBox ItemsSource="{x:Bind ViewModel.AvailableEngines, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedEngine, Mode=TwoWay}"
                 Width="300" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
               <TextBlock Text="Quality Mode:" Width="150" Style="{StaticResource VSQ.Text.Body}"
                 VerticalAlignment="Center" />
-              <ComboBox ItemsSource="{Binding QualityModes}"
-                SelectedItem="{Binding SelectedQualityMode, Mode=TwoWay}"
+              <ComboBox ItemsSource="{x:Bind ViewModel.QualityModes, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedQualityMode, Mode=TwoWay}"
                 Width="300" />
             </StackPanel>
 
             <Button Content="Start Processing"
-              Command="{Binding StartProcessingCommand}"
+              Command="{x:Bind ViewModel.StartProcessingCommand, Mode=OneWay}"
               HorizontalAlignment="Left" />
           </StackPanel>
         </Border>
@@ -270,10 +284,10 @@
               Style="{StaticResource VSQ.Text.Heading}"
               Margin="0,0,0,4" />
 
-            <ProgressBar Value="{Binding ProcessingProgress}"
+            <ProgressBar Value="{x:Bind ViewModel.ProcessingProgress, Mode=OneWay}"
               Maximum="100"
               Height="20" />
-            <TextBlock Text="{Binding ProcessingStatus}"
+            <TextBlock Text="{x:Bind ViewModel.ProcessingStatus, Mode=OneWay}"
               Style="{StaticResource VSQ.Text.Body}" />
           </StackPanel>
         </Border>
@@ -291,9 +305,9 @@
               Margin="0,0,0,4" />
 
             <TextBlock
-              Text="{Binding CreatedProfileId}"
+              Text="{x:Bind ViewModel.CreatedProfileId, Mode=OneWay}"
               Style="{StaticResource VSQ.Text.Body}"
-              Visibility="{Binding CreatedProfileId, Converter={StaticResource NullToVisibilityConverter}}" />
+              Visibility="{x:Bind ViewModel.CreatedProfileId, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
 
             <!-- Quality Metrics -->
             <Border Background="{StaticResource VSQ.Panel.Background.HeaderBrush}"
@@ -301,106 +315,103 @@
               BorderThickness="1"
               CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
               Padding="{StaticResource VSQ.Spacing.Medium}"
-              Visibility="{Binding QualityMetrics, Converter={StaticResource NullToVisibilityConverter}}"
+              Visibility="{x:Bind ViewModel.QualityMetrics, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
               RightTapped="QualityMetrics_RightTapped">
               <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
-                <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}"
-                  DataContext="{Binding QualityMetrics}">
+                <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                   <TextBlock Text="Quality Metrics" Style="{StaticResource VSQ.Text.Body}"
                     FontWeight="SemiBold" />
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="MOS:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding MosScoreDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.MosScoreDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Similarity:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding SimilarityDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.SimilarityDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Naturalness:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding NaturalnessDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.NaturalnessDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="SNR:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding SnrDbDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.SnrDbDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Silence ratio:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding SilenceRatioDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.SilenceRatioDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Speaking rate:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding SpeakingRateDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.SpeakingRateDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Artifacts:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding ArtifactScoreDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.ArtifactScoreDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Clicks:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding HasClicksDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.HasClicksDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Distortion:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding HasDistortionDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.HasDistortionDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                   <StackPanel Orientation="Horizontal"
                     Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                     <TextBlock Text="Device:" Style="{StaticResource VSQ.Text.Caption}" />
                     <TextBlock
-                      Text="{Binding DeviceDisplay}"
+                      Text="{x:Bind ViewModel.QualityMetrics.DeviceDisplay, Mode=OneWay}"
                       Style="{StaticResource VSQ.Text.Body}" />
                   </StackPanel>
                 </StackPanel>
                 <TextBlock Text="Candidate Metrics"
                   Style="{StaticResource VSQ.Text.Body}"
                   FontWeight="SemiBold"
-                  Margin="0,8,0,4"
-                  Visibility="{Binding CandidateMetrics.Count, Converter={StaticResource NullToVisibilityConverter}}" />
-                <ItemsControl ItemsSource="{Binding CandidateMetrics}"
-                  Visibility="{Binding CandidateMetrics.Count, Converter={StaticResource NullToVisibilityConverter}}">
+                  Margin="0,8,0,4" />
+                <ItemsControl ItemsSource="{x:Bind ViewModel.CandidateMetrics, Mode=OneWay}">
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="vm:QualityCandidateItem">
                       <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource VSQ.Spacing.Value.Small}">
-                        <TextBlock Text="{Binding LabelDisplay}"
+                        <TextBlock Text="{x:Bind LabelDisplay}"
                           Style="{StaticResource VSQ.Text.Caption}" />
-                        <TextBlock Text="{Binding ScoreDisplay}"
+                        <TextBlock Text="{x:Bind ScoreDisplay}"
                           Style="{StaticResource VSQ.Text.Body}" />
                         <TextBlock Text="(" Style="{StaticResource VSQ.Text.Body}" />
-                        <TextBlock Text="{Binding DeviceDisplay}"
+                        <TextBlock Text="{x:Bind DeviceDisplay}"
                           Style="{StaticResource VSQ.Text.Body}" />
                         <TextBlock Text=")" Style="{StaticResource VSQ.Text.Body}" />
-                        <TextBlock Text="{Binding SelectedDisplay}"
+                        <TextBlock Text="{x:Bind SelectedDisplay}"
                           Style="{StaticResource VSQ.Text.Caption}" Margin="8,0,0,0" />
-                        <TextBlock Text="{Binding ReferenceAudio}"
+                        <TextBlock Text="{x:Bind ReferenceAudio}"
                           Style="{StaticResource VSQ.Text.Caption}" Margin="8,0,0,0" />
                       </StackPanel>
                     </DataTemplate>
@@ -425,18 +436,18 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Column="0"
-          Text="{Binding ErrorMessage}"
+          Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
           Style="{StaticResource VSQ.Text.Caption}"
           Foreground="Red"
-          Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
+          Visibility="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
         <StackPanel Grid.Column="1" Orientation="Horizontal"
           Spacing="{StaticResource VSQ.Spacing.Value.Small}">
           <Button Content="Previous"
-            Command="{Binding PreviousStepCommand}" />
+            Command="{x:Bind ViewModel.PreviousStepCommand, Mode=OneWay}" />
           <Button Content="Next"
-            Command="{Binding NextStepCommand}" />
+            Command="{x:Bind ViewModel.NextStepCommand, Mode=OneWay}" />
           <Button Content="Finalize"
-            Command="{Binding FinalizeWizardCommand}"
+            Command="{x:Bind ViewModel.FinalizeWizardCommand, Mode=OneWay}"
             Visibility="Collapsed" />
         </StackPanel>
       </Grid>

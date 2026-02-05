@@ -60,6 +60,22 @@ class StateSourceAdapter(BaseSourceAdapter):
         super().__init__(source_name="state", priority=100, offline=True)
         self.path = path
 
+    def health_check(self) -> bool:
+        """
+        Check if STATE.md exists and is readable.
+
+        Returns:
+            True if STATE.md exists and can be parsed
+        """
+        try:
+            if not self.path.exists():
+                return True  # Missing file is OK (will use defaults)
+            # Try to read and parse
+            text = self.path.read_text(encoding="utf-8")
+            return len(text) > 0
+        except Exception:
+            return False
+
     def _read_state(self) -> StateContext:
         if not self.path.exists():
             return StateContext()

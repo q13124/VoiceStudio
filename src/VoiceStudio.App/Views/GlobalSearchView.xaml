@@ -1,7 +1,25 @@
+<!--
+  GlobalSearchView.xaml - Application-wide search overlay
+  
+  AI GUIDELINES:
+  - This is a modal overlay, not a panel - uses different lifecycle
+  - Search results use models:SearchResult with Title, Preview, Description
+  - Use FallbackValue for all text bindings (results may have nulls)
+  - Keyboard navigation (Up/Down/Enter/Escape) is handled in code-behind
+  - DO NOT change the visual overlay structure or z-index behavior
+  - SearchCommand is throttled/debounced - do not add additional delay
+-->
 <UserControl x:Class="VoiceStudio.App.Views.GlobalSearchView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="using:VoiceStudio.App.Controls">
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:VoiceStudio.App.Controls"
+             xmlns:vm="using:VoiceStudio.App.ViewModels"
+             xmlns:models="using:VoiceStudio.Core.Models"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:GlobalSearchViewModel, IsDesignTimeCreatable=False}"
+             x:DataType="vm:GlobalSearchViewModel">
     <Border Background="{StaticResource VSQ.Panel.Background}"
             BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
             BorderThickness="1"
@@ -72,7 +90,7 @@
                      AutomationProperties.HelpText="List of search results. Use arrow keys to navigate, Enter to select, or click to navigate"
                      ToolTipService.ToolTip="Search results. Use arrow keys to navigate, Enter or click to navigate to result">
                 <ListView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="models:SearchResultItem">
                         <Grid Padding="12,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -89,18 +107,18 @@
                             </TextBlock>
                             <!-- Result Content -->
                             <StackPanel Grid.Column="1" Spacing="{StaticResource VSQ.Spacing.Value.Small}">
-                                <TextBlock Text="{Binding Title}" 
+                                <TextBlock Text="{x:Bind Title, Mode=OneWay, FallbackValue='Untitled', TargetNullValue='Untitled'}" 
                                           Style="{StaticResource VSQ.Text.Body}" 
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="Result title"/>
-                                <TextBlock Text="{Binding Preview}" 
+                                <TextBlock Text="{x:Bind Preview, Mode=OneWay, FallbackValue='', TargetNullValue=''}" 
                                           Style="{StaticResource VSQ.Text.Caption}" 
                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                           TextWrapping="Wrap"
                                           MaxLines="2"
                                           TextTrimming="CharacterEllipsis"
                                           AutomationProperties.Name="Result preview"/>
-                                <TextBlock Text="{Binding Description}" 
+                                <TextBlock Text="{x:Bind Description, Mode=OneWay, FallbackValue='', TargetNullValue=''}" 
                                           Style="{StaticResource VSQ.Text.Caption}" 
                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
                                           TextWrapping="Wrap"
@@ -110,7 +128,7 @@
                             </StackPanel>
                             <!-- Panel Indicator -->
                             <TextBlock Grid.Column="2" 
-                                      Text="{Binding PanelId}" 
+                                      Text="{x:Bind PanelId, Mode=OneWay}" 
                                       Style="{StaticResource VSQ.Text.Caption}" 
                                       Foreground="{StaticResource VSQ.Accent.CyanBrush}"
                                       Margin="12,0,0,0"
