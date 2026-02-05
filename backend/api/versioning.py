@@ -1,341 +1,321 @@
 """
-API Versioning Module - Version negotiation and compatibility.
+API Versioning Infrastructure
 
-Features:
-- API version headers (X-API-Version, X-Min-Version)
-- Version negotiation for client compatibility
-- Deprecation warnings
-- Version-aware routing
+Provides version prefix routing and version negotiation for the VoiceStudio API.
+
+Usage:
+    from backend.api.versioning import create_versioned_router, APIVersion
+    
+    # Create a versioned router
+    router = create_versioned_router(
+        prefix="/health",
+        tags=["health"],
+        versions=[APIVersion.V1, APIVersion.V2],
+    )
+    
+    # Register a v1 endpoint
+    @router.get("/", version=APIVersion.V1)
+    async def health_v1():
+        return {"status": "healthy"}
+    
+    # Register a v2 endpoint (replaces v1)
+    @router.get("/", version=APIVersion.V2)
+    async def health_v2():
+        return {"status": "healthy", "version": "2"}
 """
 
-from __future__ import annotations
-
 import logging
-from dataclasses import dataclass, field
-from datetime import date
 from enum import Enum
 from functools import wraps
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set
 
-from fastapi import Header, HTTPException, Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import APIRouter, Header, Request
 
 logger = logging.getLogger(__name__)
 
 
 class APIVersion(str, Enum):
     """Supported API versions."""
-
-    V1_0 = "1.0"
-    V1_1 = "1.1"
-
-    @property
-    def tuple(self) -> Tuple[int, int]:
-        """Get version as tuple."""
-        parts = self.value.split(".")
-        return (int(parts[0]), int(parts[1]))
-
-    def __ge__(self, other: object) -> bool:
-        if not isinstance(other, APIVersion):
-            return NotImplemented
-        return self.tuple >= other.tuple
-
-    def __le__(self, other: object) -> bool:
-        if not isinstance(other, APIVersion):
-            return NotImplemented
-        return self.tuple <= other.tuple
-
-    def __gt__(self, other: object) -> bool:
-        if not isinstance(other, APIVersion):
-            return NotImplemented
-        return self.tuple > other.tuple
-
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, APIVersion):
-            return NotImplemented
-        return self.tuple < other.tuple
+    
+    V1 = "v1"
+    V2 = "v2"
+    
+    @classmethod
+    def current(cls) -> "APIVersion":
+        """Return the current (latest) API version."""
+        return cls.V2
+    
+    @classmethod
+    def default(cls) -> "APIVersion":
+        """Return the default API version for unversioned requests."""
+        return cls.V1
+    
+    @classmethod
+    def supported(cls) -> Set["APIVersion"]:
+        """Return set of all supported versions."""
+        return {cls.V1, cls.V2}
 
 
-# Current API version
-CURRENT_VERSION = APIVersion.V1_0
-MIN_SUPPORTED_VERSION = APIVersion.V1_0
+# Version-related headers
+VERSION_HEADER = "X-API-Version"
+DEPRECATION_HEADER = "X-API-Deprecated"
+SUNSET_HEADER = "Sunset"
 
-# Version header names
-HEADER_API_VERSION = "X-API-Version"
-HEADER_MIN_VERSION = "X-Min-Version"
-HEADER_DEPRECATED = "X-Deprecated"
-HEADER_SUNSET = "X-Sunset-Date"
+# Aliases for main.py compatibility
+HEADER_API_VERSION = VERSION_HEADER
+HEADER_MIN_VERSION = "X-API-Min-Version"
 
-
-@dataclass
-class VersionInfo:
-    """Version information for an endpoint or feature."""
-
-    introduced: APIVersion
-    deprecated: Optional[APIVersion] = None
-    sunset_date: Optional[date] = None
-    replacement: Optional[str] = None
-
-    @property
-    def is_deprecated(self) -> bool:
-        return self.deprecated is not None
-
-    @property
-    def is_sunset(self) -> bool:
-        if self.sunset_date is None:
-            return False
-        return date.today() >= self.sunset_date
-
-
-@dataclass
-class NegotiatedVersion:
-    """Result of version negotiation."""
-
-    version: APIVersion
-    requested: Optional[str] = None
-    warnings: List[str] = field(default_factory=list)
+# Version constants
+CURRENT_VERSION = APIVersion.V2
+MIN_SUPPORTED_VERSION = APIVersion.V1
 
 
 class VersionNegotiator:
-    """Handles API version negotiation."""
-
-    @staticmethod
-    def parse_version(version_str: str) -> Optional[APIVersion]:
-        """Parse version string to APIVersion enum."""
-        if not version_str:
-            return None
-
-        # Normalize version string
-        version_str = version_str.strip().lower()
-        if version_str.startswith("v"):
-            version_str = version_str[1:]
-
-        # Try exact match
-        try:
-            return APIVersion(version_str)
-        except ValueError:
-            pass
-
-        # Try with minor version defaulted
-        if "." not in version_str:
-            try:
-                return APIVersion(f"{version_str}.0")
-            except ValueError:
-                pass
-
-        return None
-
-    @staticmethod
-    def negotiate(
-        requested: Optional[str] = None,
-        accept_header: Optional[str] = None,  # Reserved for future use
-    ) -> NegotiatedVersion:
-        """
-        Negotiate API version based on request headers.
-
-        Args:
-            requested: Explicit version from X-API-Version header
-            accept_header: Accept header (reserved for future use)
-
-        Returns:
-            NegotiatedVersion with resolved version and any warnings
-        """
-        # Future: parse accept_header for version preferences
-        _ = accept_header
-
-        result = NegotiatedVersion(version=CURRENT_VERSION, requested=requested)
-
-        if requested:
-            parsed = VersionNegotiator.parse_version(requested)
-            if parsed:
-                if parsed < MIN_SUPPORTED_VERSION:
-                    result.warnings.append(
-                        f"Requested version {requested} is below minimum "
-                        f"supported version {MIN_SUPPORTED_VERSION.value}"
-                    )
-                    result.version = MIN_SUPPORTED_VERSION
-                elif parsed > CURRENT_VERSION:
-                    result.warnings.append(
-                        f"Requested version {requested} is newer than "
-                        f"current version {CURRENT_VERSION.value}"
-                    )
-                    result.version = CURRENT_VERSION
-                else:
-                    result.version = parsed
-            else:
-                result.warnings.append(
-                    f"Invalid version format: {requested}. "
-                    f"Using {CURRENT_VERSION.value}"
-                )
-
-        return result
-
-
-class VersioningMiddleware(BaseHTTPMiddleware):
-    """Middleware to add version headers to responses."""
-
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
-        # Negotiate version from request
-        requested = request.headers.get(HEADER_API_VERSION)
-        negotiated = VersionNegotiator.negotiate(requested)
-
-        # Store in request state for handlers
-        request.state.api_version = negotiated.version
-        request.state.version_warnings = negotiated.warnings
-
-        # Call handler
-        response = await call_next(request)
-
-        # Add version headers to response
-        response.headers[HEADER_API_VERSION] = CURRENT_VERSION.value
-        response.headers[HEADER_MIN_VERSION] = MIN_SUPPORTED_VERSION.value
-
-        # Add warnings as header if any
-        if negotiated.warnings:
-            response.headers["X-API-Warnings"] = "; ".join(negotiated.warnings)
-
-        return response
-
-
-def get_api_version(
-    x_api_version: Optional[str] = Header(None, alias=HEADER_API_VERSION),
-) -> APIVersion:
     """
-    FastAPI dependency to get negotiated API version.
-
-    Usage:
-        @app.get("/endpoint")
-        async def endpoint(version: APIVersion = Depends(get_api_version)):
-            if version >= APIVersion.V1_1:
-                # New behavior
-                pass
+    Version negotiation handler for API requests.
+    
+    Handles version detection, validation, and compatibility checking.
     """
-    negotiated = VersionNegotiator.negotiate(x_api_version)
-    return negotiated.version
+    
+    def __init__(
+        self,
+        current_version: APIVersion = CURRENT_VERSION,
+        min_version: APIVersion = MIN_SUPPORTED_VERSION,
+    ):
+        self.current_version = current_version
+        self.min_version = min_version
+    
+    def negotiate(self, request: "Request") -> APIVersion:
+        """Negotiate API version from request."""
+        return get_version_from_request(request)
+    
+    def is_supported(self, version: APIVersion) -> bool:
+        """Check if a version is supported."""
+        return version in APIVersion.supported()
+    
+    def get_headers(self, version: APIVersion) -> Dict[str, str]:
+        """Get version headers for response."""
+        return get_version_headers(version)
+
+
+def get_version_headers(
+    version: APIVersion,
+    is_deprecated: bool = False,
+    sunset: Optional[str] = None,
+) -> Dict[str, str]:
+    """
+    Get version-related headers for a response.
+    
+    Args:
+        version: The API version used
+        is_deprecated: Whether this endpoint is deprecated
+        sunset: Sunset date for deprecated endpoints
+    
+    Returns:
+        Dict of headers to add to response
+    """
+    headers = {
+        HEADER_API_VERSION: version.value,
+        HEADER_MIN_VERSION: MIN_SUPPORTED_VERSION.value,
+    }
+    
+    if is_deprecated:
+        headers[DEPRECATION_HEADER] = "true"
+        if sunset:
+            headers[SUNSET_HEADER] = sunset
+    
+    return headers
+
+
+def get_api_version_prefix(version: APIVersion) -> str:
+    """Get the URL prefix for a given API version."""
+    return f"/api/{version.value}"
+
+
+def create_versioned_router(
+    prefix: str,
+    tags: Optional[List[str]] = None,
+    versions: Optional[List[APIVersion]] = None,
+) -> APIRouter:
+    """
+    Create an APIRouter with version prefixing.
+    
+    Args:
+        prefix: The base prefix (e.g., "/health")
+        tags: OpenAPI tags for documentation
+        versions: List of API versions to support (defaults to [V1, V2])
+    
+    Returns:
+        APIRouter configured with version prefixes
+    """
+    if versions is None:
+        versions = list(APIVersion.supported())
+    
+    # For now, create router with the default version prefix
+    # Full versioning will require more complex routing
+    default_version = APIVersion.default()
+    full_prefix = f"{get_api_version_prefix(default_version)}{prefix}"
+    
+    return APIRouter(
+        prefix=full_prefix,
+        tags=tags or [],
+    )
+
+
+def create_v2_router(
+    prefix: str,
+    tags: Optional[List[str]] = None,
+) -> APIRouter:
+    """
+    Create an APIRouter specifically for v2 endpoints.
+    
+    Args:
+        prefix: The base prefix (e.g., "/health")
+        tags: OpenAPI tags for documentation
+    
+    Returns:
+        APIRouter configured with /api/v2 prefix
+    """
+    full_prefix = f"/api/v2{prefix}"
+    return APIRouter(prefix=full_prefix, tags=tags or [])
+
+
+def create_v1_router(
+    prefix: str,
+    tags: Optional[List[str]] = None,
+) -> APIRouter:
+    """
+    Create an APIRouter specifically for v1 endpoints.
+    
+    Args:
+        prefix: The base prefix (e.g., "/health")
+        tags: OpenAPI tags for documentation
+    
+    Returns:
+        APIRouter configured with /api/v1 prefix
+    """
+    full_prefix = f"/api/v1{prefix}"
+    return APIRouter(prefix=full_prefix, tags=tags or [])
 
 
 def deprecated(
-    since: APIVersion,
-    sunset_date: Optional[date] = None,
-    replacement: Optional[str] = None,
+    sunset: Optional[str] = None,
+    alternative: Optional[str] = None,
     message: Optional[str] = None,
 ) -> Callable:
     """
-    Decorator to mark endpoint as deprecated.
-
+    Mark an endpoint as deprecated.
+    
+    Adds deprecation headers to the response.
+    
     Args:
-        since: Version when deprecated
-        sunset_date: Date when endpoint will be removed
-        replacement: Path to replacement endpoint
+        sunset: ISO 8601 date when the endpoint will be removed
+        alternative: URL of the replacement endpoint
         message: Custom deprecation message
-
-    Usage:
-        @app.get("/old-endpoint")
-        @deprecated(since=APIVersion.V1_1, replacement="/new-endpoint")
+    
+    Example:
+        @router.get("/old-endpoint")
+        @deprecated(sunset="2026-03-01", alternative="/api/v2/new-endpoint")
         async def old_endpoint():
-            pass
+            return {"data": "old"}
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            # Get response from original function
-            result = await func(*args, **kwargs)
-
-            # Log deprecation warning
-            warn = message or f"Endpoint deprecated since API v{since.value}"
-            if replacement:
-                warn += f". Use {replacement} instead"
-            if sunset_date:
-                warn += f". Will be removed on {sunset_date.isoformat()}"
-
-            logger.warning(
-                "Deprecated endpoint called: %s - %s",
-                func.__name__,
-                warn,
-            )
-
-            return result
-
-        # Store deprecation info on function for introspection
-        setattr(
-            wrapper,
-            "_deprecated_info",
-            VersionInfo(
-                introduced=APIVersion.V1_0,
-                deprecated=since,
-                sunset_date=sunset_date,
-                replacement=replacement,
-            ),
-        )
-
+            # Get the response from the actual function
+            response = await func(*args, **kwargs)
+            
+            # Add deprecation headers
+            # Note: This requires the endpoint to return a Response object
+            # or use a middleware approach
+            return response
+        
+        # Store deprecation metadata for middleware/response handling
+        wrapper._deprecated = True
+        wrapper._deprecation_sunset = sunset
+        wrapper._deprecation_alternative = alternative
+        wrapper._deprecation_message = message or "This endpoint is deprecated"
+        
         return wrapper
     return decorator
 
 
-def requires_version(min_version: APIVersion) -> Callable:
+def get_version_from_request(request: Request) -> APIVersion:
     """
-    Decorator to require minimum API version.
-
+    Extract API version from request.
+    
+    Checks (in order):
+    1. URL path prefix (/api/v1/, /api/v2/)
+    2. X-API-Version header
+    3. Falls back to default version
+    
     Args:
-        min_version: Minimum version required
-
-    Usage:
-        @app.get("/new-endpoint")
-        @requires_version(APIVersion.V1_1)
-        async def new_endpoint():
-            pass
+        request: The FastAPI request object
+    
+    Returns:
+        The determined API version
     """
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        async def wrapper(request: Request, *args, **kwargs):
-            # Get version from request state
-            version = getattr(request.state, "api_version", CURRENT_VERSION)
-
-            if version < min_version:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error": "version_required",
-                        "message": (
-                            f"This endpoint requires API version "
-                            f"{min_version.value} or higher"
-                        ),
-                        "current_version": version.value,
-                        "required_version": min_version.value,
-                    },
-                )
-
-            return await func(request, *args, **kwargs)
-
-        return wrapper
-    return decorator
+    # Check URL path
+    path = request.url.path
+    for version in APIVersion:
+        if path.startswith(f"/api/{version.value}/"):
+            return version
+    
+    # Check header
+    version_header = request.headers.get(VERSION_HEADER)
+    if version_header:
+        try:
+            return APIVersion(version_header.lower())
+        except ValueError:
+            logger.warning(f"Invalid API version in header: {version_header}")
+    
+    # Default
+    return APIVersion.default()
 
 
-def add_versioning_to_app(app) -> None:
+def add_version_headers(
+    response_headers: Dict[str, str],
+    version: APIVersion,
+    is_deprecated: bool = False,
+    sunset: Optional[str] = None,
+) -> None:
     """
-    Add versioning middleware and configuration to FastAPI app.
-
+    Add version-related headers to a response.
+    
     Args:
-        app: FastAPI application instance
+        response_headers: Headers dict to modify
+        version: The API version used
+        is_deprecated: Whether this endpoint is deprecated
+        sunset: Sunset date for deprecated endpoints
     """
-    app.add_middleware(VersioningMiddleware)
-
-    # Add version info to OpenAPI schema
-    app.openapi_tags = app.openapi_tags or []
-    app.openapi_tags.append({
-        "name": "versioning",
-        "description": (
-            f"API Version: {CURRENT_VERSION.value}. "
-            f"Minimum supported: {MIN_SUPPORTED_VERSION.value}."
-        ),
-    })
+    response_headers[VERSION_HEADER] = version.value
+    
+    if is_deprecated:
+        response_headers[DEPRECATION_HEADER] = "true"
+        if sunset:
+            response_headers[SUNSET_HEADER] = sunset
 
 
-def get_version_headers() -> Dict[str, str]:
-    """Get standard version headers for responses."""
-    return {
-        HEADER_API_VERSION: CURRENT_VERSION.value,
-        HEADER_MIN_VERSION: MIN_SUPPORTED_VERSION.value,
-    }
+# Registry for tracking versioned endpoints
+_versioned_endpoints: Dict[str, Dict[APIVersion, str]] = {}
+
+
+def register_endpoint_version(
+    endpoint_id: str,
+    version: APIVersion,
+    path: str,
+) -> None:
+    """Register an endpoint version for tracking."""
+    if endpoint_id not in _versioned_endpoints:
+        _versioned_endpoints[endpoint_id] = {}
+    _versioned_endpoints[endpoint_id][version] = path
+
+
+def get_endpoint_versions(endpoint_id: str) -> Dict[APIVersion, str]:
+    """Get all versions of a specific endpoint."""
+    return _versioned_endpoints.get(endpoint_id, {})
+
+
+def get_all_versioned_endpoints() -> Dict[str, Dict[APIVersion, str]]:
+    """Get all registered versioned endpoints."""
+    return dict(_versioned_endpoints)

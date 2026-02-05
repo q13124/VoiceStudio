@@ -9,6 +9,7 @@ using VoiceStudio.Core.Services;
 using CoreWebSocketState = VoiceStudio.Core.Services.WebSocketState;
 using NetWebSocketState = System.Net.WebSockets.WebSocketState;
 using VoiceStudio.App.Logging;
+using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.Services
 {
@@ -38,11 +39,8 @@ namespace VoiceStudio.App.Services
     {
       _webSocketUrl = webSocketUrl ?? throw new ArgumentNullException(nameof(webSocketUrl));
       _subscribedTopics = new HashSet<string>();
-      _jsonOptions = new JsonSerializerOptions
-      {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-      };
+      // Use snake_case to match Python backend conventions
+      _jsonOptions = JsonSerializerOptionsFactory.BackendApi;
     }
 
     public async Task ConnectAsync(string[]? topics = null, CancellationToken cancellationToken = default)

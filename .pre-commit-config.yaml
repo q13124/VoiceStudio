@@ -63,6 +63,14 @@ repos:
         stages: [pre-commit]
         files: (\.xaml$|Resources/.*\.xaml$)
 
+      - id: contract-validation
+        name: API Contract Validation
+        entry: python scripts/check_contract_validation.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: (openapi\.json$|BackendClient\.g\.cs$|backend/api/.*\.py$)
+
   # C# formatting (dotnet format)
   - repo: local
     hooks:

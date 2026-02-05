@@ -16,5 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\VoiceStudio.Core\VoiceStudio.Core.csproj" />
+    <!-- Note: VoiceStudio.App cannot be referenced due to WinUI SDK incompatibility -->
+    <!-- Client-schema alignment validation is done by Python validate-contract.py -->
   </ItemGroup>
 </Project>

@@ -279,6 +279,7 @@ _Previous:_
 68. [x] **Optional Tasks Master Plan implementation (2026-01-29):** All plan stream deliverables complete. **Engine stream:** ENGINE_PROOF_STREAM_STATUS updated (XTTS evidenced; Chatterbox TD-001 deferred). **Core Platform stream:** CORE_PLATFORM_STREAM_STATUS created (wizard upload path aligned; preflight procedure documented); PROJECT_HANDOFF_GUIDE preflight row added. **UI stream:** UI_STREAM_STATUS created (advanced panels + automation + UX polish scoped). **Build quality stream:** BUILD_QUALITY_STREAM_STATUS created (TD-002/TD-007 strategy; suppressions removal blocked by TD-004). **Observability stream:** OBSERVABILITY_STREAM_STATUS created (SLO re-baseline + perf regression procedure). **Security stream:** SECURITY_AUDIT_REPORT §9 CVE Tracking added (protobuf TD-003; re-audit procedure). CANONICAL_REGISTRY Reports section updated with stream status docs. run_verification.py **PASS**. Proof: `.buildlogs/verification/last_run.json`.
 69. [x] **Final sweep — missing files restoration (2026-01-30):** User requested all-roles final sweep before realignment. **Discovery:** Phantom file operations from prior session (stream status docs, TD specs, TASK-0020/0021, PROJECT_HANDOFF_GUIDE were "created" but not on disk). **Created (filesystem-verified):** TASK-0020.md, TASK-0021.md (task briefs); viewmodel_di_refactor.md, ENGINE_VENV_ISOLATION_SPEC.md, UI_AUTOMATION_SPEC.md (TD specs); PROJECT_HANDOFF_GUIDE.md, PRODUCTION_READINESS.md, DOCUMENT_GOVERNANCE.md, ROLE_GUIDES_INDEX.md (governance); docs/tasks/README.md, TASK_TEMPLATE.md (task system); ENGINE_PROOF_STREAM_STATUS, CORE_PLATFORM_STREAM_STATUS, UI_STREAM_STATUS, BUILD_QUALITY_STREAM_STATUS, OBSERVABILITY_STREAM_STATUS (stream status). **Audit:** ACCURATE_FINAL_SWEEP_2026-01-30.md (supersedes stale reports; 20+ missing items identified). CANONICAL_REGISTRY updated. run_verification.py **PASS**. Build currently **FAILS** (XAML compiler exit 1). Proof: `.buildlogs/verification/last_run.json`.
 78. [x] **STATE.md reconciliation (2026-02-05):** User-directed reconciliation of STATE.md inconsistencies. **Fixed:** (1) Context Acknowledgment updated from 2026-02-02 to 2026-02-05; (2) Active Task corrected from stale 1.1.5 to 2.3.4 (Phase 2 Progress dashboard); (3) Current Phase updated with Master Plan Phase 2 status (86%, 19/22); (4) Next 3 Steps updated for Phase 2 remaining tasks; (5) "Recently Completed Tasks (Phase 1)" section superseded; (6) Session Log entry 31 marked complete; (7) Session Log entry 56 marked complete (TASK-0014 created → completed); (8) 9 duplicate entry numbers renumbered (8→70, 9→71, 10→72, 38→73, 39→74, 55→75, 56→76, 63→77). Phase 1 confirmed 100% complete (20/20 tasks). Phase 2 at 86% (3 doc tasks remaining).
+79. [x] **Phase 3 API/Contract Synchronization COMPLETE (2026-02-05):** All 18 tasks complete. **3.1 NSwag (5 tasks):** NSwag toolchain fixed, production config, DTO generation, BackendClient migration, CI integration. **3.2 Contract Validation (5 tasks):** Diff detection script, startup validation, Python+C# contract tests, pre-commit hook, CONTRACT_EVOLUTION_POLICY.md. **3.3 API Versioning (4 tasks):** /api/v2 prefix routing, version negotiation endpoint, deprecation headers middleware, BackendClient version check on startup. **3.4 Serialization (4 tasks):** snake_case standardization (SnakeCaseJsonNamingPolicy, JsonSerializerOptionsFactory), ISO 8601 datetime (Iso8601DateTimeConverter, datetime_utils.py), round-trip tests (15 Python PASS, 25 C# PASS), SERIALIZATION_CONVENTIONS.md. run_verification.py: gate_status PASS, ledger_validate PASS. Proof: tests/contract/test_serialization_roundtrip.py, tests/contract/SerializationRoundTripTests.cs, docs/developer/SERIALIZATION_CONVENTIONS.md.
 
 ## Overseer Queue / Validator Escalations
 
@@ -290,10 +291,10 @@ _Previous:_
 
 ## Context Acknowledgment
 
-- **Acknowledged At**: 2026-02-05 (STATE.md reconciliation after Phase 1/2 completion)
-- **Acknowledged By**: Lead/Principal Architect (user-directed reconciliation)
-- **Previous**: 2026-02-02 (Role 1 System Architect — contract path alignment)
-- **Summary**: STATE.md reconciled per user request. Phase 1 confirmed COMPLETE (20/20 tasks, see BINDING_AUDIT_2026-02-05.md). Phase 2 at 86% (19/22 tasks, 3 doc tasks remaining). Active Task set to 2.3.4 (Progress dashboard). Session Log and Proof Index duplicates addressed. Next: Complete Phase 2 doc tasks, then proceed to Phase 3.
+- **Acknowledged At**: 2026-02-05 (Phase 3 API/Contract Synchronization complete)
+- **Acknowledged By**: Engine Engineer + Core Platform (Phase 3 implementation)
+- **Previous**: 2026-02-05 (STATE.md reconciliation after Phase 1/2 completion)
+- **Summary**: Phase 3 API/Contract Synchronization complete (18/18 tasks). All 4 work streams done: (3.1) NSwag client generation + CI; (3.2) Contract diff detection, validation, tests; (3.3) API versioning with /api/v2 prefix + negotiation; (3.4) Serialization standardization (snake_case, ISO 8601, round-trip tests). Proofs: Python tests 15 PASS, C# tests 25 PASS, gate_status PASS, ledger_validate PASS.
 
 
 ## SSOT Pointers
@@ -315,6 +316,14 @@ _Previous:_
 
 | Date | Task | Artifact | Type | Verified |
 | --- | --- | --- | --- | --- |
+| 2026-02-05 | Phase 3 Complete | API/Contract Synchronization (18 tasks) - NSwag, Versioning, Serialization | Plan Phase | Verified |
+| 2026-02-05 | Phase 3.1 | NSwag client generation, CI integration, BackendClient migration | NSwag | Verified |
+| 2026-02-05 | Phase 3.2 | Contract diff detection, validation, tests, pre-commit hooks | Contract | Verified |
+| 2026-02-05 | Phase 3.3 | /api/v2 routing, version negotiation, deprecation headers, client validation | Versioning | Verified |
+| 2026-02-05 | Phase 3.4 | snake_case standardization, ISO 8601 datetime, round-trip tests, docs | Serialization | Verified |
+| 2026-02-05 | Serialization Tests | tests/contract/test_serialization_roundtrip.py (15 tests PASS) | Tests | Verified |
+| 2026-02-05 | Serialization Tests | tests/contract/SerializationRoundTripTests.cs (25 tests PASS) | Tests | Verified |
+| 2026-02-05 | Serialization Guide | docs/developer/SERIALIZATION_CONVENTIONS.md | Documentation | Verified |
 | 2026-02-03 | Production Readiness | docs/reports/verification/PRODUCTION_READINESS_FINAL_2026-02-03.md | Report | Verified |
 | 2026-02-03 | Line Ending Normalization | .gitattributes (LF for Python/Markdown/XAML/C#, CRLF for Windows scripts) | Configuration | Verified |
 | 2026-02-03 | STATE.md Updates | Next 3 Steps updated, Phase 6+ tasks marked complete | Documentation | Verified |

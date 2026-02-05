@@ -4,7 +4,7 @@
   "documentGenerator": {
     "fromDocument": {
       "json": "$(OpenApiPath)",
-      "url": null,
+      "url": "http://localhost:8000/openapi.json",
       "output": null,
       "newLineBehavior": "Auto"
     }
@@ -14,7 +14,7 @@
       "operationGenerationMode": "SingleClientFromOperationId",
       "clientBaseClass": null,
       "clientClassAccessModifier": "public",
-      "className": "BackendApiClient",
+      "className": "GeneratedBackendClient",
       "useBaseUrl": true,
       "generateBaseUrlProperty": true,
       "generateSyncMethods": false,
@@ -27,7 +27,7 @@
       "useTransformOptionsMethod": false,
       "useTransformResultMethod": false,
       "generateClientInterfaces": true,
-      "clientInterfaceName": "IBackendApiClient",
+      "clientInterfaceName": "IGeneratedBackendClient",
       "generateDtoTypes": true,
       "generateOptionalParameters": false,
       "generateJsonMethods": false,
@@ -54,10 +54,10 @@
       "generateImmutableArrayProperties": false,
       "generateImmutableDictionaryProperties": false,
       "jsonSerializerSettingsTransformationMethod": null,
-      "inlineNamedArrays": false,
-      "inlineNamedDictionaries": false,
+      "inlineNamedArrays": true,
+      "inlineNamedDictionaries": true,
       "inlineNamedTuples": true,
-      "inlineNamedAny": false,
+      "inlineNamedAny": true,
       "generateOptionalPropertiesAsNullable": true,
       "generateNullableReferenceTypes": true,
       "templateDirectory": null,
@@ -65,12 +65,11 @@
       "serviceSchemes": null,
       "output": "$(OutputPath)",
       "newLineBehavior": "Auto",
-      "namespace": "VoiceStudio.Core.Services.Generated",
+      "namespace": "VoiceStudio.App.Services.Generated",
       "generateExceptionClasses": true,
       "exceptionClass": "ApiException",
       "wrapDtoExceptions": true,
       "httpClientType": "System.Net.Http.HttpClient",
-      "useBaseUrl": true,
       "baseUrlTokenName": "BASE_URL",
       "queryNullValue": "",
       "parameterDateTimeFormat": null,
@@ -78,7 +77,7 @@
       "generateUpdateJsonSerializerSettingsMethod": true,
       "useRequestAndResponseSerializationSettings": false,
       "serializeTypeInformation": false,
-      "generateContractsOutput": true
+      "generateContractsOutput": false
     }
   }
 }

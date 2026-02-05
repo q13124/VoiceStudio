@@ -258,6 +258,49 @@ def _perform_startup_sanity_checks():
 _ROUTES_LOADED = False
 
 
+def _perform_contract_validation():
+    """
+    Validate OpenAPI contract at startup.
+    
+    Checks:
+    - Schema is well-formed
+    - Schema has required fields
+    - Compare with exported schema for drift detection
+    """
+    from pathlib import Path
+    
+    try:
+        from .contract_validation import (
+            compare_with_exported_schema,
+            validate_schema_at_startup,
+        )
+        
+        # Path to exported schema (used for drift detection)
+        project_root = Path(__file__).parent.parent.parent
+        schema_path = project_root / "docs" / "api" / "openapi.json"
+        
+        # Validate the current schema
+        validate_schema_at_startup(
+            app,
+            export_path=None,  # Don't auto-export at startup
+            fail_on_error=False,  # Log errors but don't fail startup
+        )
+        
+        # Check for drift against exported schema
+        if schema_path.exists():
+            compare_with_exported_schema(app, schema_path)
+        else:
+            logger.info(
+                f"No exported schema at {schema_path}. "
+                "Run 'python scripts/export_openapi_schema.py' to create baseline."
+            )
+            
+    except ImportError as e:
+        logger.debug(f"Contract validation not available: {e}")
+    except Exception as e:
+        logger.warning(f"Contract validation failed: {e}")
+
+
 # Load plugins and routes on application startup (lazy initialization)
 # Registered below after the FastAPI `app` is created.
 async def startup_event():
@@ -308,6 +351,9 @@ async def startup_event():
 
         # Startup sanity checks: verify critical dependencies and assets
         _perform_startup_sanity_checks()
+        
+        # Validate OpenAPI contract at startup
+        _perform_contract_validation()
 
         # Load plugins after all routes are registered (lazy import)
         load_all_plugins = _lazy_import_plugins()
@@ -909,6 +955,15 @@ try:
 except ImportError as e:
     logger.debug(f"Input validation middleware not available: {e}")
 
+# Add deprecation headers middleware
+try:
+    from backend.api.middleware.deprecation import DeprecationMiddleware
+
+    app.add_middleware(DeprecationMiddleware, log_deprecation_warnings=True)
+    logger.info("Deprecation middleware initialized")
+except ImportError as e:
+    logger.debug(f"Deprecation middleware not available: {e}")
+
 # Add compression middleware for large responses (lazy initialization)
 _compression_middleware_loaded = False
 
@@ -1026,6 +1081,7 @@ def _register_all_routes():
         "ultimate_dashboard",
         "upscaling",
         "video_edit",
+        "version",
         "video_gen",
         "voice",
         "voice_browser",
@@ -1095,6 +1151,7 @@ def _register_all_routes():
     _include_route("ml_optimization")
     _include_route("docs")
     _include_route("health")
+    _include_route("version")
     _include_route("monitoring")
     _include_route("tracing")
     _include_route("slo")
@@ -1189,6 +1246,15 @@ def _register_all_routes():
         logger.debug("Registered mcp_router")
     except Exception as e:
         logger.warning(f"Failed to register mcp_router: {e}")
+
+    # Register API v2 routes
+    try:
+        from .routes.v2 import health_router as v2_health_router
+
+        app.include_router(v2_health_router)
+        logger.debug("Registered v2 health router")
+    except Exception as e:
+        logger.warning(f"Failed to register v2 routes: {e}")
 
     load_time = (time.time() - start_time) * 1000
     logger.info(f"Routes loaded in {load_time:.2f}ms")

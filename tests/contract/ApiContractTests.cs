@@ -1,96 +1,160 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
 using Xunit;
-using VoiceStudio.Core.Services.Generated;
 
 namespace VoiceStudio.ContractTests
 {
     /// <summary>
-    /// Tests that validate API contracts match between OpenAPI schema and generated C# client.
+    /// Tests that validate API contracts defined in the OpenAPI schema.
+    /// Client-schema alignment validation is done by Python validate-contract.py.
     /// </summary>
     public class ApiContractTests : ContractTestBase
     {
-        private readonly Type _clientType;
-
-        public ApiContractTests()
-        {
-            // Get the generated client type
-            _clientType = typeof(Client);
-        }
-
         [Fact]
-        public void GeneratedClient_Exists()
-        {
-            Assert.NotNull(_clientType);
-            Assert.Equal("Client", _clientType.Name);
-        }
-
-        [Fact]
-        public void GeneratedClient_HasAllEndpoints()
+        public void Schema_AllOperationsHaveOperationIds()
         {
             var paths = OpenApiSchema.RootElement.GetProperty("paths");
-            
-            // Get all client types (Client, HealthClient, StatsClient, etc.)
-            var clientTypes = typeof(Client).Assembly
-                .GetTypes()
-                .Where(t => t.Name.EndsWith("Client") && t.IsClass && !t.IsAbstract)
-                .ToList();
-            
-            var allEndpointMethods = clientTypes
-                .SelectMany(ct => GetEndpointMethods(ct))
-                .ToList();
+            var missingOperationIds = new List<string>();
 
             foreach (var path in paths.EnumerateObject())
             {
-                var pathName = path.Name;
                 var pathValue = path.Value;
 
                 foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
                 {
                     if (pathValue.TryGetProperty(operationType, out var operation))
                     {
-                        var operationId = operation.TryGetProperty("operationId", out var opId)
-                            ? opId.GetString()
-                            : null;
-
-                        // Check if method exists in any client class
-                        // Methods might be named by operationId, path, or just HTTP method
-                        var methodExists = allEndpointMethods.Any(m =>
-                            (!string.IsNullOrEmpty(operationId) && 
-                             (m.Name.Contains(operationId.Replace("_", ""), StringComparison.OrdinalIgnoreCase) ||
-                              m.Name.Contains(operationId.Split('_').FirstOrDefault() ?? "", StringComparison.OrdinalIgnoreCase))) ||
-                            m.Name.Contains(GetMethodNameFromPath(pathName), StringComparison.OrdinalIgnoreCase) ||
-                            (operationType == "get" && m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase)) ||
-                            (operationType == "post" && m.Name.StartsWith("Post", StringComparison.OrdinalIgnoreCase)) ||
-                            (operationType == "put" && m.Name.StartsWith("Put", StringComparison.OrdinalIgnoreCase)) ||
-                            (operationType == "delete" && m.Name.StartsWith("Delete", StringComparison.OrdinalIgnoreCase)) ||
-                            (operationType == "patch" && m.Name.StartsWith("Patch", StringComparison.OrdinalIgnoreCase))
-                        );
-
-                        // For root path, check if there's a GetAsync method with no parameters
-                        if (pathName == "/" && operationType == "get")
+                        if (!operation.TryGetProperty("operationId", out var opId) ||
+                            string.IsNullOrEmpty(opId.GetString()))
                         {
-                            methodExists = allEndpointMethods.Any(m =>
-                                m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) &&
-                                m.GetParameters().Length <= 1); // No params or just CancellationToken
+                            missingOperationIds.Add($"{operationType.ToUpper()} {path.Name}");
                         }
-
-                        Assert.True(
-                            methodExists,
-                            $"Method for {operationType.ToUpper()} {pathName} (operationId: {operationId}) not found in generated client. Available methods: {string.Join(", ", allEndpointMethods.Select(m => m.Name).Take(10))}"
-                        );
                     }
                 }
+            }
+
+            Assert.Empty(missingOperationIds);
+        }
+
+        [Fact]
+        public void Schema_OperationIdsAreValidCSharpIdentifiers()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var invalidOperationIds = new List<string>();
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        if (operation.TryGetProperty("operationId", out var opId))
+                        {
+                            var operationId = opId.GetString();
+                            if (!string.IsNullOrEmpty(operationId))
+                            {
+                                // Check for characters that would break C# naming
+                                if (operationId.StartsWith("-") || char.IsDigit(operationId[0]))
+                                {
+                                    invalidOperationIds.Add($"{operationId} (invalid start)");
+                                }
+                                if (operationId.Contains(".") || operationId.Contains("/") ||
+                                    operationId.Contains("\\") || operationId.Contains(" "))
+                                {
+                                    invalidOperationIds.Add($"{operationId} (invalid chars)");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Assert.Empty(invalidOperationIds);
+        }
+
+        [Theory]
+        [InlineData("/health")]
+        [InlineData("/api/health")]
+        public void Schema_HealthEndpointExists(string path)
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var hasPath = paths.TryGetProperty(path, out _);
+
+            // At least one health endpoint should exist
+            if (!hasPath && path == "/health")
+            {
+                Assert.True(paths.TryGetProperty("/api/health", out _),
+                    "No health endpoint found (neither /health nor /api/health)");
             }
         }
 
         [Fact]
-        public void GeneratedClient_RequestModelsMatchSchema()
+        public void Schema_AllOperationsHaveResponses()
         {
             var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var missingResponses = new List<string>();
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        if (!operation.TryGetProperty("responses", out var responses) ||
+                            responses.ValueKind != JsonValueKind.Object)
+                        {
+                            missingResponses.Add($"{operationType.ToUpper()} {path.Name}");
+                        }
+                    }
+                }
+            }
+
+            Assert.Empty(missingResponses);
+        }
+
+        [Fact]
+        public void Schema_AllOperationsHaveSuccessResponse()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var missingSuccessResponse = new List<string>();
+
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
+                    {
+                        if (operation.TryGetProperty("responses", out var responses))
+                        {
+                            var successCodes = new[] { "200", "201", "204" };
+                            var hasSuccess = successCodes.Any(code =>
+                                responses.TryGetProperty(code, out _));
+
+                            if (!hasSuccess)
+                            {
+                                missingSuccessResponse.Add($"{operationType.ToUpper()} {path.Name}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            Assert.Empty(missingSuccessResponse);
+        }
+
+        [Fact]
+        public void Schema_RequestBodiesHaveContentType()
+        {
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var missingContentType = new List<string>();
 
             foreach (var path in paths.EnumerateObject())
             {
@@ -102,183 +166,90 @@ namespace VoiceStudio.ContractTests
                     {
                         if (operation.TryGetProperty("requestBody", out var requestBody))
                         {
-                            var requestSchema = GetRequestSchema(requestBody);
-                            var modelType = FindModelType(requestSchema);
-
-                            if (modelType != null)
+                            if (!requestBody.TryGetProperty("content", out var content) ||
+                                content.ValueKind != JsonValueKind.Object)
                             {
-                                ValidateModelProperties(modelType, requestSchema);
+                                missingContentType.Add($"{operationType.ToUpper()} {path.Name}");
                             }
                         }
                     }
                 }
             }
+
+            Assert.Empty(missingContentType);
         }
 
         [Fact]
-        public void GeneratedClient_ResponseModelsMatchSchema()
+        public void Schema_ModelsHaveTypeDefinitions()
         {
-            var paths = OpenApiSchema.RootElement.GetProperty("paths");
-
-            foreach (var path in paths.EnumerateObject())
-            {
-                var pathValue = path.Value;
-
-                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
-                {
-                    if (pathValue.TryGetProperty(operationType, out var operation))
-                    {
-                        if (operation.TryGetProperty("responses", out var responses))
-                        {
-                            if (responses.TryGetProperty("200", out var successResponse))
-                            {
-                                var responseSchema = GetResponseSchema(successResponse);
-                                var modelType = FindModelType(responseSchema);
-
-                                if (modelType != null)
-                                {
-                                    ValidateModelProperties(modelType, responseSchema);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        [Fact]
-        public void GeneratedClient_RequiredFieldsMatchSchema()
-        {
-            var paths = OpenApiSchema.RootElement.GetProperty("paths");
-
-            foreach (var path in paths.EnumerateObject())
-            {
-                var pathValue = path.Value;
-
-                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
-                {
-                    if (pathValue.TryGetProperty(operationType, out var operation))
-                    {
-                        if (operation.TryGetProperty("requestBody", out var requestBody))
-                        {
-                            var requestSchema = GetRequestSchema(requestBody);
-                            ValidateRequiredFields(requestSchema);
-                        }
-
-                        if (operation.TryGetProperty("responses", out var responses))
-                        {
-                            if (responses.TryGetProperty("200", out var successResponse))
-                            {
-                                var responseSchema = GetResponseSchema(successResponse);
-                                ValidateRequiredFields(responseSchema);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private IEnumerable<MethodInfo> GetEndpointMethods(Type clientType)
-        {
-            return clientType
-                .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Where(m => m.ReturnType.Name.Contains("Task"));
-        }
-
-        private string GetMethodNameFromPath(string path)
-        {
-            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            var lastSegment = segments.LastOrDefault() ?? "Root";
-            return lastSegment.Replace("{", "").Replace("}", "");
-        }
-
-        private JsonElement GetRequestSchema(JsonElement requestBody)
-        {
-            if (!requestBody.TryGetProperty("content", out var content))
-                throw new InvalidOperationException("Request body missing 'content'");
-
-            if (!content.TryGetProperty("application/json", out var jsonContent))
-                throw new InvalidOperationException("Request body missing 'application/json' content");
-
-            if (!jsonContent.TryGetProperty("schema", out var schema))
-                throw new InvalidOperationException("Request body missing 'schema'");
-
-            return schema;
-        }
-
-        private JsonElement GetResponseSchema(JsonElement response)
-        {
-            if (!response.TryGetProperty("content", out var content))
-                throw new InvalidOperationException("Response missing 'content'");
-
-            if (!content.TryGetProperty("application/json", out var jsonContent))
-                throw new InvalidOperationException("Response missing 'application/json' content");
-
-            if (!jsonContent.TryGetProperty("schema", out var schema))
-                throw new InvalidOperationException("Response missing 'schema'");
-
-            return schema;
-        }
-
-        private Type? FindModelType(JsonElement schema)
-        {
-            if (schema.TryGetProperty("$ref", out var reference))
-            {
-                var referencePath = reference.GetString();
-                if (referencePath == null)
-                    return null;
-
-                var schemaName = referencePath.Split('/').Last();
-
-                var modelType = typeof(Client).Assembly
-                    .GetTypes()
-                    .FirstOrDefault(t => t.Name.Equals(schemaName, StringComparison.OrdinalIgnoreCase));
-
-                return modelType;
-            }
-
-            return null;
-        }
-
-        private void ValidateModelProperties(Type modelType, JsonElement schema)
-        {
-            if (!schema.TryGetProperty("properties", out var properties))
+            if (!OpenApiSchema.RootElement.TryGetProperty("components", out var components))
                 return;
 
-            var modelProperties = modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            if (!components.TryGetProperty("schemas", out var schemas))
+                return;
 
-            foreach (var property in properties.EnumerateObject())
+            var untypedSchemas = new List<string>();
+
+            foreach (var schema in schemas.EnumerateObject())
             {
-                var propertyName = property.Name;
-                var modelProperty = modelProperties.FirstOrDefault(p =>
-                    p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+                var schemaValue = schema.Value;
 
-                Assert.True(
-                    modelProperty != null,
-                    $"Property '{propertyName}' not found in model '{modelType.Name}'");
+                var hasType = schemaValue.TryGetProperty("type", out _) ||
+                              schemaValue.TryGetProperty("$ref", out _) ||
+                              schemaValue.TryGetProperty("allOf", out _) ||
+                              schemaValue.TryGetProperty("anyOf", out _) ||
+                              schemaValue.TryGetProperty("oneOf", out _);
+
+                if (!hasType)
+                {
+                    untypedSchemas.Add(schema.Name);
+                }
+            }
+
+            // Allow some untyped schemas for backward compatibility (up to 10%)
+            var totalSchemas = schemas.EnumerateObject().Count();
+            if (untypedSchemas.Count > totalSchemas * 0.1)
+            {
+                Assert.Fail($"Too many untyped schemas ({untypedSchemas.Count}/{totalSchemas}): " +
+                    string.Join(", ", untypedSchemas.Take(10)));
             }
         }
 
-        private void ValidateRequiredFields(JsonElement schema)
+        [Fact]
+        public void Schema_OperationsHaveUniqueOperationIds()
         {
-            if (schema.TryGetProperty("required", out var required))
-            {
-                foreach (var requiredProperty in required.EnumerateArray())
-                {
-                    var propertyName = requiredProperty.GetString();
-                    if (propertyName == null)
-                        continue;
+            var paths = OpenApiSchema.RootElement.GetProperty("paths");
+            var operationIds = new Dictionary<string, List<string>>();
 
-                    var modelType = FindModelType(schema);
-                    if (modelType != null)
+            foreach (var path in paths.EnumerateObject())
+            {
+                var pathValue = path.Value;
+
+                foreach (var operationType in new[] { "get", "post", "put", "delete", "patch" })
+                {
+                    if (pathValue.TryGetProperty(operationType, out var operation))
                     {
-                        var modelProperty = modelType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                        Assert.NotNull(modelProperty);
-                        Assert.False(modelProperty!.PropertyType.IsGenericType &&
-                                     modelProperty.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>),
-                            $"Property '{propertyName}' in model '{modelType.Name}' should be non-nullable (required by schema)");
+                        if (operation.TryGetProperty("operationId", out var opId))
+                        {
+                            var operationId = opId.GetString();
+                            if (!string.IsNullOrEmpty(operationId))
+                            {
+                                if (!operationIds.ContainsKey(operationId))
+                                    operationIds[operationId] = new List<string>();
+
+                                operationIds[operationId].Add($"{operationType.ToUpper()} {path.Name}");
+                            }
+                        }
                     }
                 }
+            }
+
+            var duplicates = operationIds.Where(kv => kv.Value.Count > 1).ToList();
+            if (duplicates.Any())
+            {
+                var message = string.Join("\n", duplicates.Select(d =>
+                    $"{d.Key}: {string.Join(", ", d.Value)}"));
+                Assert.Fail($"Duplicate operationIds found:\n{message}");
             }
         }
     }

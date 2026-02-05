@@ -18,7 +18,7 @@ $configFile = Join-Path $PSScriptRoot "nswag.json"
 if ([string]::IsNullOrEmpty($OpenApiPath)) {
     $OpenApiPath = Join-Path $projectRoot "docs\api\openapi.json"
 }
-$outputPath = Join-Path $projectRoot "src\VoiceStudio.App\Core\Services\Generated\BackendClient.generated.cs"
+$outputPath = Join-Path $projectRoot "src\VoiceStudio.App\Services\Generated\BackendClient.g.cs"
 $outputDir = Split-Path -Parent $outputPath
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -140,6 +140,17 @@ try {
     
     # Verify output
     if (Test-Path $outputPath) {
+        # Post-processing: Fix NSwag pragma bug
+        # NSwag incorrectly generates "#pragma restore disable" instead of "#pragma warning restore"
+        $content = Get-Content $outputPath -Raw
+        $originalContent = $content
+        $content = $content -replace '#pragma restore disable', '#pragma warning restore'
+        
+        if ($content -ne $originalContent) {
+            $content | Out-File -FilePath $outputPath -Encoding UTF8 -NoNewline
+            Write-Host "[FIX] Corrected pragma directive in generated file" -ForegroundColor Yellow
+        }
+        
         $size = (Get-Item $outputPath).Length
         $lines = (Get-Content $outputPath).Count
         

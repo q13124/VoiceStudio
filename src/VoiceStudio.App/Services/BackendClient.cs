@@ -14,6 +14,8 @@ using VoiceStudio.Core.Services;
 using VoiceStudio.Core.Exceptions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
+// Generated client types available for migration - see docs/developer/API_MIGRATION_GUIDE.md
+using Generated = VoiceStudio.App.Services.Generated;
 
 namespace VoiceStudio.App.Services
 {
@@ -42,11 +44,8 @@ namespace VoiceStudio.App.Services
         Timeout = config.RequestTimeout
       };
 
-      _jsonOptions = new JsonSerializerOptions
-      {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = SnakeCaseJsonNamingPolicy.Instance
-      };
+      // Use centralized JSON options for consistent snake_case serialization
+      _jsonOptions = JsonSerializerOptionsFactory.BackendApi;
 
       // Initialize circuit breaker (5 failures before opening, 30s timeout)
       _circuitBreaker = new Utilities.CircuitBreaker(failureThreshold: 5, timeout: TimeSpan.FromSeconds(30));
@@ -223,6 +222,172 @@ namespace VoiceStudio.App.Services
         _lastConnectionCheck = DateTime.UtcNow;
         return false;
       }
+    }
+
+    /// <summary>
+    /// Expected API version for this client.
+    /// </summary>
+    public const string ExpectedApiVersion = "v2";
+
+    /// <summary>
+    /// Minimum supported API version.
+    /// </summary>
+    public const string MinimumApiVersion = "v1";
+
+    /// <summary>
+    /// Checks API version compatibility with the backend.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Version compatibility result</returns>
+    public async Task<ApiVersionCheckResult> CheckApiVersionAsync(CancellationToken cancellationToken = default)
+    {
+      try
+      {
+        var response = await _httpClient.GetAsync("/api/version/compatibility", cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          // Version endpoint not available - assume compatible for backwards compatibility
+          return new ApiVersionCheckResult
+          {
+            IsCompatible = true,
+            ServerVersion = "unknown",
+            ClientVersion = ExpectedApiVersion,
+            Message = "Version endpoint not available. Assuming compatible."
+          };
+        }
+
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var serverVersion = root.TryGetProperty("server_version", out var sv) ? sv.GetString() ?? "unknown" : "unknown";
+        var isCompatible = root.TryGetProperty("compatible", out var compat) && compat.GetBoolean();
+        var supportedVersions = new List<string>();
+
+        if (root.TryGetProperty("supported_versions", out var supported) && supported.ValueKind == JsonValueKind.Array)
+        {
+          foreach (var v in supported.EnumerateArray())
+          {
+            if (v.ValueKind == JsonValueKind.String)
+            {
+              supportedVersions.Add(v.GetString() ?? "");
+            }
+          }
+        }
+
+        string? recommendation = null;
+        if (root.TryGetProperty("recommendation", out var rec) && rec.ValueKind == JsonValueKind.String)
+        {
+          recommendation = rec.GetString();
+        }
+
+        // Check if our expected version is in supported versions
+        var clientVersionSupported = supportedVersions.Contains(ExpectedApiVersion) ||
+                                     supportedVersions.Contains(MinimumApiVersion);
+
+        var message = isCompatible ?
+          $"API version compatible. Server: {serverVersion}, Client: {ExpectedApiVersion}" :
+          $"API version mismatch. Server: {serverVersion}, Client expected: {ExpectedApiVersion}";
+
+        return new ApiVersionCheckResult
+        {
+          IsCompatible = isCompatible && clientVersionSupported,
+          ServerVersion = serverVersion,
+          ClientVersion = ExpectedApiVersion,
+          SupportedVersions = supportedVersions,
+          Message = message,
+          Recommendation = recommendation
+        };
+      }
+      catch (Exception ex)
+      {
+        // Log but don't fail - version check is informational
+        return new ApiVersionCheckResult
+        {
+          IsCompatible = true, // Assume compatible on error for backwards compatibility
+          ServerVersion = "unknown",
+          ClientVersion = ExpectedApiVersion,
+          Message = $"Version check failed: {ex.Message}",
+          Error = ex.Message
+        };
+      }
+    }
+
+    /// <summary>
+    /// Gets version information from the backend.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>API version information</returns>
+    public async Task<ApiVersionInfo?> GetApiVersionInfoAsync(CancellationToken cancellationToken = default)
+    {
+      try
+      {
+        var response = await _httpClient.GetAsync("/api/version/", cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          return null;
+        }
+
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var currentVersion = root.TryGetProperty("current_version", out var cv) ? cv.GetString() : null;
+        var defaultVersion = root.TryGetProperty("default_version", out var dv) ? dv.GetString() : null;
+        var supportedVersions = new List<string>();
+
+        if (root.TryGetProperty("supported_versions", out var supported) && supported.ValueKind == JsonValueKind.Array)
+        {
+          foreach (var v in supported.EnumerateArray())
+          {
+            if (v.ValueKind == JsonValueKind.String)
+            {
+              supportedVersions.Add(v.GetString() ?? "");
+            }
+          }
+        }
+
+        return new ApiVersionInfo
+        {
+          CurrentVersion = currentVersion ?? "unknown",
+          DefaultVersion = defaultVersion ?? "unknown",
+          SupportedVersions = supportedVersions
+        };
+      }
+      catch
+      {
+        return null;
+      }
+    }
+
+    /// <summary>
+    /// Validates API version on startup and logs warnings if there are compatibility issues.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if compatible, false if incompatible</returns>
+    public async Task<bool> ValidateApiVersionOnStartupAsync(CancellationToken cancellationToken = default)
+    {
+      var result = await CheckApiVersionAsync(cancellationToken);
+
+      if (!result.IsCompatible)
+      {
+        // Log warning about version mismatch
+        System.Diagnostics.Debug.WriteLine(
+          $"[WARNING] API version mismatch: {result.Message}. " +
+          $"Recommendation: {result.Recommendation ?? "Update client"}");
+        return false;
+      }
+
+      if (!string.IsNullOrEmpty(result.Recommendation))
+      {
+        // Log recommendation even if compatible
+        System.Diagnostics.Debug.WriteLine(
+          $"[INFO] API version note: {result.Recommendation}");
+      }
+
+      return true;
     }
 
     public async Task<VoiceSynthesisResponse> SynthesizeVoiceAsync(

@@ -476,30 +476,157 @@ jobs:
   validate-contracts:
     name: Validate API Contracts
     runs-on: windows-latest
-    needs: [build-frontend]
+    needs: [build-frontend, build-backend]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Validate NSwag client is up-to-date
-        run: |
-          powershell -ExecutionPolicy Bypass -File tools/nswag/generate-client.ps1 -ValidateOnly
+      - name: Install NSwag CLI
+        run: dotnet tool install -g NSwag.ConsoleCore || true
         continue-on-error: true
-        id: client-check
+
+      - name: Download OpenAPI schema artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: openapi-schema
+          path: docs/api/
+        continue-on-error: true
+
+      - name: Regenerate C# client from OpenAPI
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/nswag/generate-client.ps1 -Force
+        id: generate-client
+
+      - name: Check for uncommitted generated code changes (drift detection)
+        id: drift-check
+        run: |
+          # Check if generated file has uncommitted changes
+          $diff = git diff --name-only src/VoiceStudio.App/Services/Generated/
+          
+          if ($diff) {
+            Write-Host "[WARN] Generated client has uncommitted changes:" -ForegroundColor Yellow
+            Write-Host $diff
+            git diff src/VoiceStudio.App/Services/Generated/BackendClient.g.cs | Select-Object -First 50
+            
+            echo "drift_detected=true" >> $env:GITHUB_OUTPUT
+            
+            # Create drift report
+            New-Item -ItemType Directory -Path .buildlogs/contract-drift -Force | Out-Null
+            git diff src/VoiceStudio.App/Services/Generated/ > .buildlogs/contract-drift/generated-diff.txt
+            
+            @{
+              timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+              commit = "${{ github.sha }}"
+              drift_detected = $true
+              files_changed = $diff
+            } | ConvertTo-Json | Set-Content -Path .buildlogs/contract-drift/drift-report.json
+          } else {
+            Write-Host "[OK] Generated client is in sync with OpenAPI schema" -ForegroundColor Green
+            echo "drift_detected=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Verify generated client compiles
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/nswag/verify-client.ps1 -Quick
+        id: verify-client
 
       - name: Validate contract compatibility
         run: python tools/nswag/validate-contract.py
         continue-on-error: true
         id: contract-check
 
-      - name: Report contract validation status
-        if: steps.client-check.outcome == 'failure' || steps.contract-check.outcome == 'failure'
+      - name: Detect breaking changes
         run: |
-          Write-Host "[WARN] Contract validation issues detected" -ForegroundColor Yellow
-          Write-Host "Run 'powershell tools/nswag/generate-client.ps1 -Force' to regenerate client"
+          python tools/nswag/detect-breaking-changes.py --json > .buildlogs/breaking-changes.json 2>&1 || true
+          python tools/nswag/detect-breaking-changes.py
+        continue-on-error: true
+        id: breaking-changes
+
+      - name: Run Python contract tests
+        run: |
+          python -m pip install pytest --quiet
+          python -m pytest tests/contract/test_openapi_contract.py -v --tb=short
+        continue-on-error: true
+        id: python-contract-tests
+
+      - name: Run C# contract tests
+        run: |
+          dotnet test tests/contract/VoiceStudio.ContractTests.csproj --logger "console;verbosity=normal" --no-restore
+        continue-on-error: true
+        id: csharp-contract-tests
+
+      - name: Report contract validation status
+        if: steps.drift-check.outputs.drift_detected == 'true' || steps.contract-check.outcome == 'failure' || steps.breaking-changes.outcome == 'failure' || steps.python-contract-tests.outcome == 'failure' || steps.csharp-contract-tests.outcome == 'failure'
+        run: |
+          Write-Host "============================================" -ForegroundColor Yellow
+          Write-Host " CONTRACT VALIDATION ISSUES DETECTED" -ForegroundColor Yellow
+          Write-Host "============================================" -ForegroundColor Yellow
+          
+          if ("${{ steps.drift-check.outputs.drift_detected }}" -eq "true") {
+            Write-Host ""
+            Write-Host "[DRIFT] Generated client differs from committed version" -ForegroundColor Red
+            Write-Host "The OpenAPI schema has changed but the C# client was not regenerated."
+            Write-Host ""
+            Write-Host "To fix:" -ForegroundColor Cyan
+            Write-Host "  1. Run: powershell tools/nswag/generate-client.ps1 -Force"
+            Write-Host "  2. Review the changes in src/VoiceStudio.App/Services/Generated/"
+            Write-Host "  3. Commit the regenerated client"
+          }
+          
+          if ("${{ steps.contract-check.outcome }}" -eq "failure") {
+            Write-Host ""
+            Write-Host "[COMPAT] Contract compatibility check failed" -ForegroundColor Red
+            Write-Host "See contract-check step output for details"
+          }
+          
+          if ("${{ steps.breaking-changes.outcome }}" -eq "failure") {
+            Write-Host ""
+            Write-Host "[BREAKING] Breaking changes detected in API contract" -ForegroundColor Red
+            Write-Host "Review the changes before merging to ensure compatibility."
+            Write-Host ""
+            Write-Host "Options:" -ForegroundColor Cyan
+            Write-Host "  1. Bump API version if changes are intentional"
+            Write-Host "  2. Add deprecation period for removed endpoints"
+            Write-Host "  3. Document migration path for breaking changes"
+          }
+          
+          if ("${{ steps.python-contract-tests.outcome }}" -eq "failure") {
+            Write-Host ""
+            Write-Host "[TESTS] Python contract tests failed" -ForegroundColor Red
+            Write-Host "Run: python -m pytest tests/contract/test_openapi_contract.py -v"
+          }
+          
+          if ("${{ steps.csharp-contract-tests.outcome }}" -eq "failure") {
+            Write-Host ""
+            Write-Host "[TESTS] C# contract tests failed" -ForegroundColor Red
+            Write-Host "Run: dotnet test tests/contract/VoiceStudio.ContractTests.csproj"
+          }
+
+      - name: Upload contract validation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-validation
+          path: |
+            .buildlogs/contract-drift/
+            .buildlogs/breaking-changes.json
+            src/VoiceStudio.App/Services/Generated/BackendClient.g.cs
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Fail build on contract drift (PR only)
+        if: github.event_name == 'pull_request' && steps.drift-check.outputs.drift_detected == 'true'
+        run: |
+          Write-Host "::error::Generated C# client is out of sync with OpenAPI schema. Regenerate and commit."
+          exit 1

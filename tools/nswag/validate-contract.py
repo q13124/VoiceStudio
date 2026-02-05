@@ -6,10 +6,18 @@ Checks:
 1. All OpenAPI endpoints have corresponding C# methods
 2. Request/response types match between schema and generated client
 3. HTTP methods and paths are consistent
+4. Breaking changes detection (when --check-breaking is used)
+
+Usage:
+    python validate-contract.py              # Basic validation
+    python validate-contract.py --check-breaking  # Include breaking change detection
+    python validate-contract.py --json       # JSON output for CI
 """
 
+import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -107,10 +115,9 @@ def parse_csharp_client(client_path: Path) -> Set[str]:
 
 
 def normalize_operation_id(operation_id: str) -> str:
-    """Normalize operation ID for comparison."""
-    # Convert snake_case to PascalCase
-    parts = operation_id.replace("-", "_").split("_")
-    return "".join(part.capitalize() for part in parts)
+    """Normalize operation ID for comparison (case-insensitive)."""
+    # Just lowercase for comparison - NSwag may use different casing
+    return operation_id.lower().replace("-", "_")
 
 
 def validate_contract(
@@ -137,36 +144,35 @@ def validate_contract(
         result.errors.append(f"Failed to parse C# client: {e}")
         return result
     
+    # Normalize client methods for comparison (case-insensitive)
+    client_methods_normalized = {normalize_operation_id(m): m for m in client_methods}
+    
     # Check each endpoint has a method
     for endpoint in endpoints:
         normalized = normalize_operation_id(endpoint.operation_id)
         
-        # Try different naming conventions
-        found = False
-        for variant in [normalized, endpoint.operation_id]:
-            if variant in client_methods:
-                found = True
-                result.matched += 1
-                break
+        # Try exact match first
+        if normalized in client_methods_normalized:
+            result.matched += 1
+            continue
         
-        if not found:
-            # Check for partial matches
-            partial = any(
-                normalized.lower() in method.lower()
-                for method in client_methods
+        # Check for partial matches
+        partial = any(
+            normalized in method_norm
+            for method_norm in client_methods_normalized.keys()
+        )
+        
+        if partial:
+            result.warnings.append(
+                f"Endpoint '{endpoint.method} {endpoint.path}' "
+                f"(operationId: {endpoint.operation_id}) has partial match"
             )
-            
-            if partial:
-                result.warnings.append(
-                    f"Endpoint '{endpoint.method} {endpoint.path}' "
-                    f"(operationId: {endpoint.operation_id}) has partial match"
-                )
-            else:
-                result.errors.append(
-                    f"Missing method for endpoint '{endpoint.method} {endpoint.path}' "
-                    f"(operationId: {endpoint.operation_id})"
-                )
-                result.passed = False
+        else:
+            result.errors.append(
+                f"Missing method for endpoint '{endpoint.method} {endpoint.path}' "
+                f"(operationId: {endpoint.operation_id})"
+            )
+            result.passed = False
     
     # Check for extra methods (methods without endpoints)
     schema_ids = {
@@ -174,78 +180,165 @@ def validate_contract(
         for e in endpoints
     }
     
-    for method in client_methods:
-        if method not in schema_ids and not method.lower().startswith("get"):
+    for method_norm, method_orig in client_methods_normalized.items():
+        if method_norm not in schema_ids:
             # Skip common helper methods
-            if method not in ["UpdateJsonSerializerSettings", "CreateSerializerSettings"]:
+            if method_orig.lower() not in ["updatejsonserializersettings", "createserializersettings"]:
                 result.warnings.append(
-                    f"Client method '{method}' not found in OpenAPI schema"
+                    f"Client method '{method_orig}' not found in OpenAPI schema"
                 )
     
     return result
 
 
+def run_breaking_change_detection(project_root: Path, json_output: bool = False) -> int:
+    """Run breaking change detection using the detector script."""
+    detector_path = project_root / "tools" / "nswag" / "detect-breaking-changes.py"
+    
+    if not detector_path.exists():
+        if not json_output:
+            print("[WARN] Breaking change detector not found")
+        return 0
+    
+    args = [sys.executable, str(detector_path)]
+    if json_output:
+        args.append("--json")
+    
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            cwd=project_root,
+        )
+        
+        if result.stdout:
+            print(result.stdout)
+        
+        return result.returncode
+    except Exception as e:
+        if not json_output:
+            print(f"[ERROR] Breaking change detection failed: {e}")
+        return 1
+
+
 def main():
     """Run contract validation."""
+    parser = argparse.ArgumentParser(description="Validate API contracts")
+    parser.add_argument(
+        "--check-breaking",
+        action="store_true",
+        help="Run breaking change detection",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output as JSON",
+    )
+    args = parser.parse_args()
+    
     project_root = Path(__file__).parent.parent.parent
     
     schema_path = project_root / "docs" / "api" / "openapi.json"
-    client_path = project_root / "src" / "VoiceStudio.App" / "Core" / "Services" / "Generated" / "BackendClient.generated.cs"
+    client_path = project_root / "src" / "VoiceStudio.App" / "Services" / "Generated" / "BackendClient.g.cs"
     
-    print("=" * 60)
-    print(" Contract Validation: OpenAPI -> C# Client")
-    print("=" * 60)
-    print()
+    if args.json:
+        output = {
+            "contract_validation": {},
+            "breaking_changes": None,
+        }
+    else:
+        print("=" * 60)
+        print(" Contract Validation: OpenAPI -> C# Client")
+        print("=" * 60)
+        print()
     
     # Check files exist
     if not schema_path.exists():
-        print(f"[ERROR] OpenAPI schema not found: {schema_path}")
-        print("  Generate with: python scripts/export_openapi_schema.py")
+        if args.json:
+            output["contract_validation"]["error"] = f"OpenAPI schema not found: {schema_path}"
+            print(json.dumps(output, indent=2))
+        else:
+            print(f"[ERROR] OpenAPI schema not found: {schema_path}")
+            print("  Generate with: python scripts/export_openapi_schema.py")
         return 1
     
     if not client_path.exists():
-        print(f"[ERROR] C# client not found: {client_path}")
-        print("  Generate with: powershell tools/nswag/generate-client.ps1")
+        if args.json:
+            output["contract_validation"]["error"] = f"C# client not found: {client_path}"
+            print(json.dumps(output, indent=2))
+        else:
+            print(f"[ERROR] C# client not found: {client_path}")
+            print("  Generate with: powershell tools/nswag/generate-client.ps1")
         return 1
     
-    print(f"Schema: {schema_path.relative_to(project_root)}")
-    print(f"Client: {client_path.relative_to(project_root)}")
-    print()
+    if not args.json:
+        print(f"Schema: {schema_path.relative_to(project_root)}")
+        print(f"Client: {client_path.relative_to(project_root)}")
+        print()
     
-    # Validate
+    # Validate contract
     result = validate_contract(schema_path, client_path)
     
-    # Report results
-    print(f"Endpoints in schema: {result.endpoints_in_schema}")
-    print(f"Methods in client:   {result.endpoints_in_client}")
-    print(f"Matched:             {result.matched}")
-    print()
-    
-    if result.errors:
-        print(f"[ERRORS] ({len(result.errors)})")
-        for error in result.errors:
-            print(f"  - {error}")
-        print()
-    
-    if result.warnings:
-        print(f"[WARNINGS] ({len(result.warnings)})")
-        for warning in result.warnings[:10]:  # Limit output
-            print(f"  - {warning}")
-        if len(result.warnings) > 10:
-            print(f"  ... and {len(result.warnings) - 10} more")
-        print()
-    
-    if result.passed:
-        print("[PASS] Contract validation passed!")
-        return 0
+    if args.json:
+        output["contract_validation"] = {
+            "passed": result.passed,
+            "endpoints_in_schema": result.endpoints_in_schema,
+            "endpoints_in_client": result.endpoints_in_client,
+            "matched": result.matched,
+            "errors": result.errors,
+            "warnings": result.warnings,
+        }
     else:
-        print("[FAIL] Contract validation failed!")
+        # Report results
+        print(f"Endpoints in schema: {result.endpoints_in_schema}")
+        print(f"Methods in client:   {result.endpoints_in_client}")
+        print(f"Matched:             {result.matched}")
         print()
-        print("Next steps:")
-        print("  1. Regenerate client: powershell tools/nswag/generate-client.ps1 -Force")
-        print("  2. Update OpenAPI schema if backend changed")
-        print("  3. Review mismatched endpoints")
+        
+        if result.errors:
+            print(f"[ERRORS] ({len(result.errors)})")
+            for error in result.errors:
+                print(f"  - {error}")
+            print()
+        
+        if result.warnings:
+            print(f"[WARNINGS] ({len(result.warnings)})")
+            for warning in result.warnings[:10]:  # Limit output
+                print(f"  - {warning}")
+            if len(result.warnings) > 10:
+                print(f"  ... and {len(result.warnings) - 10} more")
+            print()
+    
+    # Run breaking change detection if requested
+    breaking_exit = 0
+    if args.check_breaking:
+        if not args.json:
+            print()
+            print("=" * 60)
+            print(" Breaking Change Detection")
+            print("=" * 60)
+            print()
+        breaking_exit = run_breaking_change_detection(project_root, args.json)
+    
+    # Summary
+    if args.json:
+        print(json.dumps(output, indent=2))
+    else:
+        if result.passed:
+            print("[PASS] Contract validation passed!")
+        else:
+            print("[FAIL] Contract validation failed!")
+            print()
+            print("Next steps:")
+            print("  1. Regenerate client: powershell tools/nswag/generate-client.ps1 -Force")
+            print("  2. Update OpenAPI schema if backend changed")
+            print("  3. Review mismatched endpoints")
+    
+    # Return failure if either check failed
+    if not result.passed or breaking_exit != 0:
         return 1
+    return 0
 
 
 if __name__ == "__main__":

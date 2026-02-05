@@ -39,10 +39,15 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements_engines.txt ]; then pip install -r requirements_engines.txt; fi
           
-      - name: Run unit tests
+      - name: Run unit tests with coverage
         run: |
-          pytest tests/unit/ -v --cov=backend --cov-report=xml --cov-report=html
+          pytest tests/unit/ -v --cov=backend --cov-report=xml --cov-report=html --cov-report=term-missing
         # NOTE: Critical tests - failures will block the workflow
+        
+      - name: Enforce coverage threshold (95%)
+        run: |
+          coverage report --fail-under=95
+        # Phase 4: Coverage threshold enforcement at 95%
         
       - name: Run integration tests
         run: |
@@ -83,9 +88,29 @@ jobs:
       - name: Build solution (${{ matrix.configuration }})
         run: dotnet build VoiceStudio.sln -c ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-restore
         
-      - name: Run unit tests (${{ matrix.configuration }})
-        run: dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --filter "TestCategory!=Smoke"
+      - name: Run unit tests with coverage (${{ matrix.configuration }})
+        run: dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --filter "TestCategory!=Smoke" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
         # NOTE: Critical tests - failures will block the workflow
+        
+      - name: Check coverage threshold
+        if: matrix.configuration == 'Release'
+        run: |
+          $coverageFiles = Get-ChildItem -Path . -Recurse -Filter "coverage.cobertura.xml"
+          if ($coverageFiles.Count -gt 0) {
+            $lastFile = $coverageFiles[-1].FullName
+            [xml]$coverage = Get-Content $lastFile
+            $lineRate = [double]$coverage.coverage.'line-rate' * 100
+            $branchRate = [double]$coverage.coverage.'branch-rate' * 100
+            Write-Host "Line Coverage: $([math]::Round($lineRate, 2))%"
+            Write-Host "Branch Coverage: $([math]::Round($branchRate, 2))%"
+            if ($lineRate -lt 95) {
+              Write-Host "::warning::Line coverage ($([math]::Round($lineRate, 2))%) is below 95% threshold"
+            }
+          } else {
+            Write-Host "::warning::No coverage files found"
+          }
+        shell: powershell
+        # Phase 4: Coverage threshold check at 95%
         
       - name: Run smoke tests (${{ matrix.configuration }})
         run: dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-build --verbosity normal --filter "TestCategory=Smoke"
@@ -275,24 +300,215 @@ jobs:
           
       - name: Run integration tests
         run: |
-          BACKEND_AVAILABLE=true pytest tests/integration/backend_frontend/ -v --tb=short
+          BACKEND_AVAILABLE=true pytest tests/integration/backend_frontend/ -v --tb=short --junitxml=.buildlogs/integration-results.xml
+        timeout-minutes: 20
         # NOTE: Integration tests are now blocking - failures will block the workflow
         
-      - name: Run E2E workflow tests
+      - name: Run E2E mock tests
         run: |
-          pytest tests/e2e/ -v --tb=short
+          pytest tests/e2e/ -v --tb=short -m "not requires_app" --junitxml=.buildlogs/e2e-mock-results.xml
         timeout-minutes: 15
-        # NOTE: E2E tests are blocking - failures will block the workflow
+        # NOTE: E2E mock tests run without the actual application
+        
+      - name: Run E2E backend integration tests
+        run: |
+          pytest tests/e2e/ -v --tb=short -m "requires_backend" --junitxml=.buildlogs/e2e-backend-results.xml
+        timeout-minutes: 20
+        # NOTE: E2E backend tests validate API integration
         
       - name: Stop backend server
         if: always()
         run: |
           pkill -f "uvicorn backend.api.main" || true
+          
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: |
+            .buildlogs/integration-results.xml
+            .buildlogs/e2e-mock-results.xml
+            .buildlogs/e2e-backend-results.xml
+          retention-days: 14
+  
+  e2e-full-app:
+    name: E2E Full Application Tests
+    runs-on: windows-latest
+    # Manual trigger or scheduled - requires desktop session
+    if: github.event_name == 'workflow_dispatch'
+    needs: [test-frontend, test-backend]
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install WinAppDriver
+        run: choco install winappdriver -y
+        continue-on-error: true
+        
+      - name: Enable Developer Mode
+        run: |
+          reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v "AllowDevelopmentWithoutDevLicense" /d "1"
+        shell: powershell
+        
+      - name: Build application
+        run: |
+          dotnet restore VoiceStudio.sln
+          dotnet publish src/VoiceStudio.App -c Release -r win-x64 --self-contained false -o .buildlogs/app-publish
+        timeout-minutes: 15
+        
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-timeout pytest-html requests Appium-Python-Client psutil
+        
+      - name: Create test output directory
+        run: |
+          New-Item -ItemType Directory -Force -Path ".buildlogs/e2e"
+          New-Item -ItemType Directory -Force -Path ".buildlogs/e2e/screenshots"
+        shell: powershell
+          
+      - name: Start WinAppDriver
+        run: |
+          Start-Process "C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe" -PassThru
+          Start-Sleep -Seconds 5
+        shell: powershell
+        
+      - name: Start backend server
+        run: |
+          $env:VOICESTUDIO_DEBUG = "true"
+          Start-Process python -ArgumentList "-m", "uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000" -PassThru
+          Start-Sleep -Seconds 10
+        shell: powershell
+        
+      - name: Set test environment
+        run: |
+          echo "VS_APP_PATH=${{ github.workspace }}\.buildlogs\app-publish\VoiceStudio.App.exe" >> $env:GITHUB_ENV
+          echo "E2E_SCREENSHOT_DIR=${{ github.workspace }}\.buildlogs\e2e\screenshots" >> $env:GITHUB_ENV
+          echo "WINAPPDRIVER_URL=http://127.0.0.1:4723" >> $env:GITHUB_ENV
+        shell: powershell
+          
+      - name: Run E2E wizard flow tests
+        run: |
+          pytest tests/e2e/test_wizard_flow.py -v --tb=short -m "e2e and requires_app" --timeout=300 --html=.buildlogs/e2e/wizard-report.html --self-contained-html
+        timeout-minutes: 15
+        continue-on-error: true
+        
+      - name: Run E2E synthesis flow tests
+        run: |
+          pytest tests/e2e/test_synthesis_flow.py -v --tb=short -m "e2e and requires_app" --timeout=300 --html=.buildlogs/e2e/synthesis-report.html --self-contained-html
+        timeout-minutes: 15
+        continue-on-error: true
+        
+      - name: Run E2E project flow tests
+        run: |
+          pytest tests/e2e/test_project_flow.py -v --tb=short -m "e2e and requires_app" --timeout=300 --html=.buildlogs/e2e/project-report.html --self-contained-html
+        timeout-minutes: 15
+        continue-on-error: true
+        
+      - name: Run E2E performance tests
+        run: |
+          pytest tests/e2e/ -v --tb=short -m "e2e and performance" --timeout=600 --html=.buildlogs/e2e/performance-report.html --self-contained-html
+        timeout-minutes: 30
+        continue-on-error: true
+        
+      - name: Collect test results
+        if: always()
+        run: |
+          if (Test-Path "tests/e2e/screenshots") {
+            Copy-Item -Path "tests/e2e/screenshots/*" -Destination ".buildlogs/e2e/screenshots/" -Force -ErrorAction SilentlyContinue
+          }
+        shell: powershell
+        
+      - name: Stop servers
+        if: always()
+        run: |
+          Stop-Process -Name "WinAppDriver" -Force -ErrorAction SilentlyContinue
+          Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
+        shell: powershell
+        
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-full-app-results
+          path: |
+            .buildlogs/e2e/*.html
+            .buildlogs/e2e/screenshots/
+          retention-days: 14
+          
+      - name: Upload E2E failure logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-failure-logs
+          path: |
+            .buildlogs/app-publish/logs/
+            .buildlogs/e2e/
+          retention-days: 7
+
+  coverage-gate:
+    name: Coverage Threshold Gate (95%)
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov coverage
+          
+      - name: Run tests with coverage
+        run: |
+          pytest tests/unit/ -v --cov=backend --cov=app --cov-report=xml --cov-report=term-missing
+          
+      - name: Enforce 95% coverage threshold
+        run: |
+          coverage report --fail-under=95
+        # This will fail the job if coverage is below 95%
+        
+      - name: Generate coverage badge data
+        if: always()
+        run: |
+          coverage json -o .buildlogs/coverage-data.json
+        continue-on-error: true
+        
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-gate-data
+          path: |
+            coverage.xml
+            .buildlogs/coverage-data.json
+          retention-days: 30
 
   verify-gates:
     name: Verify Gate Status and Ledger
     runs-on: ubuntu-latest
-    needs: [test-backend]
+    needs: [test-backend, coverage-gate]
 
     steps:
       - name: Checkout code

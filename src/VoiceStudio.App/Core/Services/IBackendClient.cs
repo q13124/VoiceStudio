@@ -27,6 +27,22 @@ namespace VoiceStudio.Core.Services
     Task<bool> CheckHealthAsync(CancellationToken cancellationToken = default);
     Task<Telemetry> GetTelemetryAsync(CancellationToken cancellationToken = default);
 
+    // API Version validation
+    /// <summary>
+    /// Checks API version compatibility with the backend.
+    /// </summary>
+    Task<VoiceStudio.App.Services.ApiVersionCheckResult> CheckApiVersionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets version information from the backend.
+    /// </summary>
+    Task<VoiceStudio.App.Services.ApiVersionInfo?> GetApiVersionInfoAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validates API version on startup and logs warnings if there are compatibility issues.
+    /// </summary>
+    Task<bool> ValidateApiVersionOnStartupAsync(CancellationToken cancellationToken = default);
+
     // Voice cloning endpoints
     Task<VoiceSynthesisResponse> SynthesizeVoiceAsync(VoiceSynthesisRequest request, CancellationToken cancellationToken = default);
     Task<VoiceAnalysisResponse> AnalyzeVoiceAsync(Stream audioFile, string? metrics = null, CancellationToken cancellationToken = default);
