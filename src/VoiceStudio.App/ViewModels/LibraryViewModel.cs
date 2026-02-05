@@ -74,7 +74,8 @@ namespace VoiceStudio.App.ViewModels
         : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
-      _multiSelectService = AppServices.TryGetMultiSelectService();
+      var multiSelectService = AppServices.TryGetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new InvalidOperationException("MultiSelectService is required but not registered");
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       // Get optional services using helper (reduces code duplication)

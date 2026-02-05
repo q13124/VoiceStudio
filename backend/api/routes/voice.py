@@ -4,7 +4,9 @@ Voice Cloning and Synthesis Routes
 High-quality voice cloning endpoints with support for multiple engines.
 """
 
+import asyncio
 import base64
+import hashlib
 import json
 import logging
 import os
@@ -13,8 +15,17 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import numpy as np
+
+# Try to import HTTP client for URL downloads
+try:
+    import httpx
+    HAS_HTTPX = True
+except ImportError:
+    HAS_HTTPX = False
+    httpx = None
 from fastapi import (
     APIRouter,
     File,
@@ -81,6 +92,60 @@ try:
 except Exception as e:
     HAS_QUALITY_OPTIMIZATION = False
     logger.warning("Quality optimization not available: %s", e)
+
+# URL download cache directory
+_URL_CACHE_DIR = Path(tempfile.gettempdir()) / "voicestudio_url_cache"
+_URL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+async def _download_url_to_file(url: str, timeout: float = 30.0) -> Optional[str]:
+    """
+    Download a file from URL and cache it locally.
+    
+    Args:
+        url: The URL to download from
+        timeout: Download timeout in seconds
+        
+    Returns:
+        Path to the downloaded file, or None if download failed
+    """
+    if not HAS_HTTPX:
+        logger.warning("httpx not available for URL downloads")
+        return None
+    
+    try:
+        # Generate cache key from URL
+        url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+        parsed = urlparse(url)
+        ext = Path(parsed.path).suffix or ".wav"
+        cache_path = _URL_CACHE_DIR / f"{url_hash}{ext}"
+        
+        # Check if already cached
+        if cache_path.exists():
+            logger.debug(f"Using cached file for {url}: {cache_path}")
+            return str(cache_path)
+        
+        # Download the file
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(url, follow_redirects=True)
+            response.raise_for_status()
+            
+            # Verify content type is audio
+            content_type = response.headers.get("content-type", "")
+            if not any(t in content_type.lower() for t in ["audio", "octet-stream", "wav", "mp3", "flac"]):
+                logger.warning(f"Unexpected content type for audio URL: {content_type}")
+            
+            # Write to cache
+            with open(cache_path, "wb") as f:
+                f.write(response.content)
+            
+            logger.info(f"Downloaded {len(response.content)} bytes from {url} to {cache_path}")
+            return str(cache_path)
+            
+    except Exception as e:
+        logger.error(f"Failed to download URL {url}: {e}")
+        return None
+
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
@@ -488,11 +553,16 @@ async def synthesize(
                     if profile.reference_audio_url:
                         # Extract path from URL or use directly if it's a path
                         if profile.reference_audio_url.startswith("http"):
-                            # URL - download if needed
-                            logger.warning(
-                                f"Profile has URL reference audio: {profile.reference_audio_url}. "
-                                f"Downloading not yet implemented, using local path if available."
-                            )
+                            # URL - download the audio file
+                            logger.info(f"Downloading reference audio from URL: {profile.reference_audio_url}")
+                            downloaded_path = await _download_url_to_file(profile.reference_audio_url)
+                            if downloaded_path and os.path.exists(downloaded_path):
+                                profile_audio_path = downloaded_path
+                                logger.info(f"Using downloaded reference audio: {profile_audio_path}")
+                            else:
+                                logger.warning(
+                                    f"Failed to download reference audio from URL: {profile.reference_audio_url}"
+                                )
                         else:
                             profile_audio_path = profile.reference_audio_url
 
@@ -1050,10 +1120,16 @@ async def synthesize_multipass(
         profile = _profiles[req.profile_id]
         profile_audio_path = None
 
-        if profile.reference_audio_url and not profile.reference_audio_url.startswith(
-            "http"
-        ):
-            profile_audio_path = profile.reference_audio_url
+        if profile.reference_audio_url:
+            if profile.reference_audio_url.startswith("http"):
+                # Download from URL
+                logger.info(f"Downloading reference audio from URL: {profile.reference_audio_url}")
+                downloaded_path = await _download_url_to_file(profile.reference_audio_url)
+                if downloaded_path and os.path.exists(downloaded_path):
+                    profile_audio_path = downloaded_path
+                    logger.info(f"Using downloaded reference audio: {profile_audio_path}")
+            else:
+                profile_audio_path = profile.reference_audio_url
 
         if not profile_audio_path:
             profile_dir = os.path.join(

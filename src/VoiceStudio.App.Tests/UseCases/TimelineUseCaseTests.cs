@@ -168,7 +168,7 @@ namespace VoiceStudio.App.Tests.UseCases
     {
       // Arrange
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object>(
+          .Setup(x => x.PostAsync<object, object?>(
               "/api/timeline/undo",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))
@@ -227,7 +227,7 @@ namespace VoiceStudio.App.Tests.UseCases
       var options = new ExportOptions { Format = "wav", SampleRate = 44100 };
 
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object>(
+          .Setup(x => x.PostAsync<object, object?>(
               "/api/timeline/export",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))

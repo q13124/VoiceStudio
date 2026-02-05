@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-04 (XAML Compiler Reliability Playbook implementation; new diagnostic scripts, UI hardening guidelines, XAML safety rules)
+> **Last Updated**: 2026-02-04 (Gap remediation: 10 ADRs finalized, 4 feature documentation guides, API validation CI integration)
 
 ---
 
@@ -160,6 +160,10 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Scaffolding Tools** | `tools/scaffolds/` | 2026-02-02 | CLI scaffolds: `generate_panel.py`, `generate_route.py`, `generate_engine.py` |
 | **XAML Change Protocol** | `docs/developer/XAML_CHANGE_PROTOCOL.md` | 2026-02-04 | Mandatory procedures for XAML changes; forbidden patterns, binlog analysis workflow, Views subfolder protection |
 | **UI Hardening Guidelines** | `docs/developer/UI_HARDENING_GUIDELINES.md` | 2026-02-04 | XAML stability best practices; UserControl extraction, ResourceDictionary organization, binding anti-patterns |
+| **Error Handling Guide** | `docs/developer/ERROR_HANDLING_GUIDE.md` | 2026-02-04 | Unified error envelope, error codes, severity levels, propagation patterns (GAP-010) |
+| **WebSocket Guide** | `docs/developer/WEBSOCKET_GUIDE.md` | 2026-02-04 | WebSocket architecture, topics, message format, connection management (GAP-013) |
+| **UI Virtualization Guide** | `docs/developer/UI_VIRTUALIZATION_GUIDE.md` | 2026-02-04 | List virtualization patterns, incremental loading, performance guidelines (GAP-014) |
+| **Command Palette Guide** | `docs/developer/COMMAND_PALETTE_GUIDE.md` | 2026-02-04 | Command registry, keyboard shortcuts, search algorithm (GAP-015) |
 
 ## Build and Diagnostic Tools
 

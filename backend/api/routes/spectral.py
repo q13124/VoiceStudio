@@ -12,16 +12,25 @@ import uuid
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..models_additional import SpectralInpaintRequest
 
 logger = logging.getLogger(__name__)
 
+
+class SpectralInpaintResponse(BaseModel):
+    """Response model for spectral inpainting."""
+    audio_id: str
+    inpainted_audio_id: str
+    mask_type: str
+    mask: str
+
 router = APIRouter(prefix="/api/spectral", tags=["spectral"])
 
 
-@router.post("/inpaint")
-async def inpaint(req: SpectralInpaintRequest) -> dict:
+@router.post("/inpaint", response_model=SpectralInpaintResponse)
+async def inpaint(req: SpectralInpaintRequest) -> SpectralInpaintResponse:
     """
     Perform spectral inpainting to reconstruct missing or damaged
     audio regions.
@@ -228,12 +237,12 @@ async def inpaint(req: SpectralInpaintRequest) -> dict:
             f"(mask_type={mask_type}, mask={mask})"
         )
 
-        return {
-            "audio_id": audio_id,
-            "inpainted_audio_id": inpainted_audio_id,
-            "mask_type": mask_type,
-            "mask": mask,
-        }
+        return SpectralInpaintResponse(
+            audio_id=audio_id,
+            inpainted_audio_id=inpainted_audio_id,
+            mask_type=mask_type,
+            mask=mask,
+        )
 
     except HTTPException:
         raise

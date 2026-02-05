@@ -169,7 +169,7 @@ namespace VoiceStudio.App.Services
       return folder?.Path;
     }
 
-    public async Task<IProgressDialog> ShowProgressAsync(string title, string message, bool cancellable = true)
+    public Task<IProgressDialog> ShowProgressAsync(string title, string message, bool cancellable = true)
     {
       var progressRing = new ProgressRing { IsActive = true };
       var messageText = new TextBlock { Text = message };
@@ -191,7 +191,7 @@ namespace VoiceStudio.App.Services
       // Show dialog without awaiting (let caller control when to close)
       _ = dialog.ShowAsync();
       
-      return progressDialog;
+      return Task.FromResult<IProgressDialog>(progressDialog);
     }
 
     public async Task ShowErrorAsync(string title, string message, string? details = null)

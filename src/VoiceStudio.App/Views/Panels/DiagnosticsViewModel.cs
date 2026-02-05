@@ -293,7 +293,8 @@ namespace VoiceStudio.App.Views.Panels
       CopyCorrelationIdCommand = new RelayCommand<string>(CopyCorrelationIdToClipboard);
 
       // Get multi-select service
-      _multiSelectService = AppServices.TryGetMultiSelectService();
+      var multiSelectService = AppServices.TryGetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new InvalidOperationException("MultiSelectService is required but not registered");
       _logsMultiSelectState = _multiSelectService.GetState($"{PanelId}_logs");
       _errorLogsMultiSelectState = _multiSelectService.GetState($"{PanelId}_errorlogs");
 

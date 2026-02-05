@@ -13,7 +13,10 @@ from typing import Dict
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
-from ..models_additional import RmTrainRequest
+from ..models_additional import (
+    RmTrainRequest, RmTrainResponse, RmPredictRequest, RmPredictResponse,
+    RmModelsListResponse, RmModelInfo, RmTrainingJobResponse
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +27,8 @@ _reward_models: Dict[str, Dict] = {}
 _reward_training_jobs: Dict[str, Dict] = {}
 
 
-@router.post("/train")
-async def train(req: RmTrainRequest) -> dict:
+@router.post("/train", response_model=RmTrainResponse)
+async def train(req: RmTrainRequest) -> RmTrainResponse:
     """
     Train a reward model from ratings data.
 
@@ -103,13 +106,13 @@ async def train(req: RmTrainRequest) -> dict:
             f"({len(ratings)} samples, mean_score={avg_score:.2f})"
         )
 
-        return {
-            "status": "completed",
-            "job_id": job_id,
-            "model_id": model_id,
-            "samples": len(ratings),
-            "message": f"Reward model trained on {len(ratings)} samples",
-        }
+        return RmTrainResponse(
+            status="completed",
+            job_id=job_id,
+            model_id=model_id,
+            samples=len(ratings),
+            message=f"Reward model trained on {len(ratings)} samples",
+        )
 
     except HTTPException:
         raise
@@ -120,8 +123,8 @@ async def train(req: RmTrainRequest) -> dict:
         ) from e
 
 
-@router.post("/predict")
-async def predict(req: dict) -> dict:
+@router.post("/predict", response_model=RmPredictResponse)
+async def predict(req: RmPredictRequest) -> RmPredictResponse:
     """
     Predict reward score for audio using trained reward model.
 
@@ -129,12 +132,12 @@ async def predict(req: dict) -> dict:
         req: Request with model_id (optional) and audio_id or features
 
     Returns:
-        Dictionary with predicted reward score
+        RmPredictResponse with predicted reward score
     """
     try:
-        model_id = req.get("model_id")
-        audio_id = req.get("audio_id")
-        features = req.get("features")  # Optional pre-computed features
+        model_id = req.model_id
+        audio_id = req.audio_id
+        features = req.features  # Optional pre-computed features
 
         if not model_id:
             # Use most recent model if available
@@ -214,12 +217,12 @@ async def predict(req: dict) -> dict:
             f"audio_id={audio_id}, score={predicted_score:.2f}, confidence={confidence:.2f}"
         )
 
-        return {
-            "score": float(predicted_score),
-            "model_id": model_id,
-            "audio_id": audio_id,
-            "confidence": float(confidence),
-        }
+        return RmPredictResponse(
+            score=float(predicted_score),
+            model_id=model_id,
+            audio_id=audio_id,
+            confidence=float(confidence),
+        )
 
     except HTTPException:
         raise
@@ -230,32 +233,40 @@ async def predict(req: dict) -> dict:
         ) from e
 
 
-@router.get("/models")
-async def list_models() -> dict:
+@router.get("/models", response_model=RmModelsListResponse)
+async def list_models() -> RmModelsListResponse:
     """List all trained reward models."""
     models = [
-        {
-            "id": m["id"],
-            "training_samples": m["training_samples"],
-            "mean_score": m["mean_score"],
-            "created": m["created"],
-            "status": m["status"],
-        }
+        RmModelInfo(
+            id=m["id"],
+            training_samples=m["training_samples"],
+            mean_score=m["mean_score"],
+            created=m["created"],
+            status=m["status"],
+        )
         for m in _reward_models.values()
     ]
 
-    return {
-        "models": models,
-        "count": len(models),
-    }
+    return RmModelsListResponse(
+        models=models,
+        count=len(models),
+    )
 
 
-@router.get("/jobs/{job_id}")
-async def get_training_job(job_id: str) -> dict:
+@router.get("/jobs/{job_id}", response_model=RmTrainingJobResponse)
+async def get_training_job(job_id: str) -> RmTrainingJobResponse:
     """Get training job status."""
     if job_id not in _reward_training_jobs:
         raise HTTPException(
             status_code=404, detail=f"Training job '{job_id}' not found"
         )
 
-    return _reward_training_jobs[job_id]
+    job = _reward_training_jobs[job_id]
+    return RmTrainingJobResponse(
+        job_id=job["job_id"],
+        model_id=job["model_id"],
+        status=job["status"],
+        samples=job["samples"],
+        started=job["started"],
+        completed=job.get("completed"),
+    )

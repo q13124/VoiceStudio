@@ -10,16 +10,27 @@ from typing import Dict, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..models_additional import AdrAlignRequest
 
 logger = logging.getLogger(__name__)
 
+
+class AdrAlignResponse(BaseModel):
+    """Response model for ADR alignment."""
+    ok: bool
+    offset_ms: int
+    offset_seconds: float
+    video_id: str
+    audio_id: str
+    method: str
+
 router = APIRouter(prefix="/api/adr", tags=["adr"])
 
 
-@router.post("/align")
-async def align(req: AdrAlignRequest) -> dict:
+@router.post("/align", response_model=AdrAlignResponse)
+async def align(req: AdrAlignRequest) -> AdrAlignResponse:
     """
     Align audio with video for ADR (Automatic Dialogue Replacement).
 
@@ -137,28 +148,28 @@ async def align(req: AdrAlignRequest) -> dict:
                     f"audio={audio_id}, offset={offset_ms}ms"
                 )
 
-                return {
-                    "ok": True,
-                    "offset_ms": offset_ms,
-                    "offset_seconds": round(offset_seconds, 3),
-                    "video_id": video_id,
-                    "audio_id": audio_id,
-                    "method": "onset_detection",
-                }
+                return AdrAlignResponse(
+                    ok=True,
+                    offset_ms=offset_ms,
+                    offset_seconds=round(offset_seconds, 3),
+                    video_id=video_id,
+                    audio_id=audio_id,
+                    method="onset_detection",
+                )
             else:
                 # No onsets detected, use zero offset
                 logger.warning(
                     f"No onsets detected in audio {audio_id}, "
                     "using zero offset"
                 )
-                return {
-                    "ok": True,
-                    "offset_ms": 0,
-                    "offset_seconds": 0.0,
-                    "video_id": video_id,
-                    "audio_id": audio_id,
-                    "method": "no_onsets",
-                }
+                return AdrAlignResponse(
+                    ok=True,
+                    offset_ms=0,
+                    offset_seconds=0.0,
+                    video_id=video_id,
+                    audio_id=audio_id,
+                    method="no_onsets",
+                )
 
         except Exception as e:
             logger.warning(
@@ -168,14 +179,14 @@ async def align(req: AdrAlignRequest) -> dict:
             # Fallback: simple offset estimation
             # In production, this would use more sophisticated methods
             offset_ms = 120  # Default offset
-            return {
-                "ok": True,
-                "offset_ms": offset_ms,
-                "offset_seconds": offset_ms / 1000.0,
-                "video_id": video_id,
-                "audio_id": audio_id,
-                "method": "fallback",
-            }
+            return AdrAlignResponse(
+                ok=True,
+                offset_ms=offset_ms,
+                offset_seconds=offset_ms / 1000.0,
+                video_id=video_id,
+                audio_id=audio_id,
+                method="fallback",
+            )
 
     except HTTPException:
         raise

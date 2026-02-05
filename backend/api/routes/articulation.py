@@ -7,17 +7,32 @@ Endpoints for analyzing speech articulation patterns and identifying issues.
 import logging
 import os
 
+from typing import List, Dict, Any
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
 from ..models_additional import ArticulationAnalyzeRequest
+
+
+class ArticulationIssue(BaseModel):
+    """An articulation issue detected in audio."""
+    t: float
+    type: str
+    severity: str
+    message: str
+
+
+class ArticulationAnalyzeResponse(BaseModel):
+    """Response model for articulation analysis."""
+    issues: List[ArticulationIssue]
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/articulation", tags=["articulation"])
 
 
-@router.post("/analyze")
-async def analyze(req: ArticulationAnalyzeRequest) -> dict:
+@router.post("/analyze", response_model=ArticulationAnalyzeResponse)
+async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeResponse:
     """
     Analyze articulation patterns in audio.
 
@@ -215,7 +230,9 @@ async def analyze(req: ArticulationAnalyzeRequest) -> dict:
             f"{len(issues)} issues found"
         )
 
-        return {"issues": issues}
+        return ArticulationAnalyzeResponse(
+            issues=[ArticulationIssue(**issue) for issue in issues]
+        )
 
     except HTTPException:
         raise

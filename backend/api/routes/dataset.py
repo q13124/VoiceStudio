@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ..models import ApiOk
-from ..models_additional import DatasetScoreRequest, ScoreResult
+from ..models_additional import DatasetScoreRequest, ScoreResult, DatasetCullRequest
 
 logger = logging.getLogger(__name__)
 
@@ -173,36 +173,18 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
 
 
 @router.post("/cull", response_model=ApiOk)
-async def cull(req: dict) -> ApiOk:
+async def cull(req: DatasetCullRequest) -> ApiOk:
     """
     Cull low-quality clips from a dataset.
 
     Removes clips that fall below quality thresholds.
     """
     try:
-        # Validate request
-        if not isinstance(req, dict):
-            raise HTTPException(status_code=400, detail="Request must be a dictionary")
-
-        # Extract parameters with defaults
-        dataset_id = req.get("dataset_id")
-        min_quality = req.get("min_quality", 0.7)
-        min_snr = req.get("min_snr", 20.0)
-        max_lufs = req.get("max_lufs", -10.0)
-
-        if not dataset_id:
-            raise HTTPException(status_code=400, detail="dataset_id is required")
-
-        if not isinstance(min_quality, (int, float)) or not 0.0 <= min_quality <= 1.0:
-            raise HTTPException(
-                status_code=400,
-                detail="min_quality must be a number between 0.0 and 1.0",
-            )
-
-        if not isinstance(min_snr, (int, float)) or min_snr < 0:
-            raise HTTPException(
-                status_code=400, detail="min_snr must be a non-negative number"
-            )
+        # Extract parameters (validated by Pydantic)
+        dataset_id = req.dataset_id
+        min_quality = req.min_quality
+        min_snr = req.min_snr
+        max_lufs = req.max_lufs
 
         # Score all clips in the dataset
         if not HAS_AUDIO_PROCESSING:
@@ -215,7 +197,7 @@ async def cull(req: dict) -> ApiOk:
             )
 
         # Get dataset clips (would come from dataset storage in production)
-        clips = req.get("clips", [])
+        clips = req.clips or []
         if not clips:
             # In production, load clips from dataset storage
             logger.warning(

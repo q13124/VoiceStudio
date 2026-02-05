@@ -28,6 +28,22 @@ except Exception as e:
     ENGINE_AVAILABLE = False
 
 
+class PreflightResult(BaseModel):
+    """Result of a single engine preflight check."""
+    ok: bool
+    downloaded: bool = False
+    message: Optional[str] = None
+    path: Optional[str] = None
+
+
+class PreflightResponse(BaseModel):
+    """Response model for preflight checks."""
+    results: Dict[str, PreflightResult]
+    all_ready: bool
+    ready_count: int
+    total_count: int
+
+
 class EngineRecommendationRequest(BaseModel):
     """Request for engine recommendation."""
 
@@ -135,14 +151,39 @@ async def get_engines() -> dict:
     return await list_engines()
 
 
-@router.get("/preflight")
-async def preflight(auto_download: bool = True) -> dict:
+@router.get("/preflight", response_model=PreflightResponse)
+async def preflight(auto_download: bool = True) -> PreflightResponse:
     """
     Run model pre-flight checks (and optional auto-downloads for HF-backed models).
 
     Returns a summary per engine with paths and download status.
     """
-    return run_preflight(auto_download=auto_download)
+    raw_results = run_preflight(auto_download=auto_download)
+    
+    # Convert to structured response
+    results = {}
+    ready_count = 0
+    for name, result in raw_results.items():
+        if isinstance(result, dict):
+            is_ok = result.get("ok", False)
+            results[name] = PreflightResult(
+                ok=is_ok,
+                downloaded=result.get("downloaded", False),
+                message=result.get("message"),
+                path=result.get("path"),
+            )
+            if is_ok:
+                ready_count += 1
+        else:
+            # Handle non-dict results
+            results[name] = PreflightResult(ok=False, message=str(result))
+    
+    return PreflightResponse(
+        results=results,
+        all_ready=ready_count == len(results),
+        ready_count=ready_count,
+        total_count=len(results),
+    )
 
 
 @router.post("/recommend", response_model=EngineRecommendationResponse)

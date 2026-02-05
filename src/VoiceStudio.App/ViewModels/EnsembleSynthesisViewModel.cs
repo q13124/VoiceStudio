@@ -107,7 +107,8 @@ namespace VoiceStudio.App.ViewModels
       }
 
       // Get multi-select service
-      _multiSelectService = AppServices.TryGetMultiSelectService();
+      var multiSelectService = AppServices.TryGetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new InvalidOperationException("MultiSelectService is required but not registered");
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       AddVoiceCommand = new EnhancedAsyncRelayCommand(async (ct) =>

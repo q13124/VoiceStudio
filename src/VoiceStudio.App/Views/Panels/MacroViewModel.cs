@@ -130,7 +130,8 @@ namespace VoiceStudio.App.Views.Panels
       _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
 
       // Get multi-select service
-      _multiSelectService = AppServices.TryGetMultiSelectService();
+      var multiSelectService = AppServices.TryGetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new InvalidOperationException("MultiSelectService is required but not registered");
       _macroMultiSelectState = _multiSelectService.GetState($"{PanelId}_macros");
       _automationCurveMultiSelectState = _multiSelectService.GetState($"{PanelId}_curves");
 

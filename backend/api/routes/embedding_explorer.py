@@ -5,12 +5,45 @@ Endpoints for exploring and visualizing speaker embeddings.
 """
 
 import logging
-from typing import Dict, List, Optional
+import os
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+# Try to import speaker embedding libraries
+HAS_RESEMBLYZER = False
+HAS_SPEECHBRAIN = False
+_voice_encoder = None
+
+try:
+    from resemblyzer import VoiceEncoder, preprocess_wav
+    from resemblyzer.audio import sampling_rate as RESEMBLYZER_SR
+    HAS_RESEMBLYZER = True
+    logger.info("Resemblyzer available for speaker embedding extraction")
+except ImportError:
+    logger.debug("Resemblyzer not installed. Install with: pip install resemblyzer")
+
+try:
+    from speechbrain.inference.speaker import EncoderClassifier
+    HAS_SPEECHBRAIN = True
+    logger.info("SpeechBrain available for speaker embedding extraction")
+except ImportError:
+    logger.debug("SpeechBrain not installed. Install with: pip install speechbrain")
+
+# Try to import audio loading libraries
+try:
+    import librosa
+    HAS_LIBROSA = True
+except ImportError:
+    HAS_LIBROSA = False
+    librosa = None
 
 router = APIRouter(prefix="/api/embedding-explorer", tags=["embedding-explorer"])
 
@@ -76,32 +109,123 @@ async def extract_embedding(request: EmbeddingExtractRequest):
     """
     Extract speaker embedding from audio.
 
-    Note: Speaker embedding extraction requires a speaker embedding model
-    (e.g., Resemblyzer, SpeechBrain, pyannote.audio) to extract voice
-    characteristics from audio. This feature is not yet implemented.
+    Supports multiple extraction methods:
+    - resemblyzer: Fast and lightweight speaker encoder
+    - speechbrain: High-quality embeddings using ECAPA-TDNN
     """
-    # Speaker embedding extraction requires:
-    # - Speaker embedding model (e.g., Resemblyzer, SpeechBrain)
-    # - Audio loading and preprocessing
-    # - Model inference to extract embedding vector
-    #
-    # Real implementation would:
-    # 1. Load audio file from storage using audio_id
-    # 2. Preprocess audio (normalize, resample, etc.)
-    # 3. Extract speaker embedding using model
-    # 4. Return embedding vector (typically 256-512 dimensions)
-    # 5. Store embedding for later use
-    #
-    # This feature requires a speaker embedding extraction library.
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "Speaker embedding extraction is not yet fully implemented. "
-            "Extraction requires a speaker embedding model. "
-            "To enable: install resemblyzer, speechbrain, or pyannote.audio. "
-            "Example: pip install resemblyzer"
-        ),
-    )
+    global _voice_encoder
+
+    # Check if any embedding library is available
+    if not (HAS_RESEMBLYZER or HAS_SPEECHBRAIN):
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Speaker embedding extraction requires an embedding library. "
+                "Install one of: pip install resemblyzer OR pip install speechbrain"
+            ),
+        )
+
+    if not HAS_LIBROSA:
+        raise HTTPException(
+            status_code=501,
+            detail="Audio loading requires librosa. Install with: pip install librosa",
+        )
+
+    try:
+        # Resolve audio file path from audio_id
+        # In a real implementation, this would look up the audio file in a database/storage
+        audio_storage_path = os.environ.get("VOICESTUDIO_AUDIO_STORAGE", "data/audio")
+        audio_path = Path(audio_storage_path) / f"{request.audio_id}.wav"
+        
+        # Try alternative extensions if .wav not found
+        if not audio_path.exists():
+            for ext in [".mp3", ".flac", ".ogg", ""]:
+                alt_path = Path(audio_storage_path) / f"{request.audio_id}{ext}"
+                if alt_path.exists():
+                    audio_path = alt_path
+                    break
+
+        if not audio_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Audio file not found for audio_id: {request.audio_id}",
+            )
+
+        # Extract embedding based on available library
+        embedding_vector: List[float] = []
+        
+        if HAS_RESEMBLYZER and (request.method == "default" or request.method == "resemblyzer"):
+            # Use Resemblyzer for embedding extraction
+            if _voice_encoder is None:
+                _voice_encoder = VoiceEncoder()
+                logger.info("Loaded Resemblyzer VoiceEncoder")
+            
+            # Load and preprocess audio
+            wav = preprocess_wav(str(audio_path))
+            
+            # Extract embedding (256-dimensional)
+            embedding = _voice_encoder.embed_utterance(wav)
+            embedding_vector = embedding.tolist()
+            
+        elif HAS_SPEECHBRAIN and (request.method == "default" or request.method == "speechbrain"):
+            # Use SpeechBrain for embedding extraction
+            classifier = EncoderClassifier.from_hparams(
+                source="speechbrain/spkrec-ecapa-voxceleb",
+                savedir="models/speechbrain_speaker",
+            )
+            
+            # Load audio
+            audio, sr = librosa.load(str(audio_path), sr=16000)
+            
+            # Extract embedding (192-dimensional for ECAPA-TDNN)
+            import torch
+            audio_tensor = torch.tensor(audio).unsqueeze(0)
+            embedding = classifier.encode_batch(audio_tensor)
+            embedding_vector = embedding.squeeze().numpy().tolist()
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown extraction method: {request.method}. Use 'resemblyzer' or 'speechbrain'",
+            )
+
+        # Generate embedding ID
+        embedding_id = str(uuid.uuid4())[:8]
+        voice_profile_id = request.voice_profile_id or request.audio_id
+
+        # Create embedding record
+        embedding_data = {
+            "embedding_id": embedding_id,
+            "voice_profile_id": voice_profile_id,
+            "vector": embedding_vector,
+            "dimension": len(embedding_vector),
+            "created": datetime.now().isoformat(),
+            "audio_id": request.audio_id,
+            "method": request.method,
+        }
+
+        # Store embedding
+        _embeddings[embedding_id] = embedding_data
+
+        logger.info(
+            f"Extracted {len(embedding_vector)}-dim embedding for audio {request.audio_id}"
+        )
+
+        return EmbeddingVector(
+            embedding_id=embedding_id,
+            voice_profile_id=voice_profile_id,
+            vector=embedding_vector,
+            dimension=len(embedding_vector),
+            created=embedding_data["created"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to extract embedding: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to extract embedding: {str(e)}",
+        ) from e
 
 
 @router.get("/embeddings", response_model=List[EmbeddingVector])

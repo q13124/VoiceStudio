@@ -354,7 +354,7 @@ public sealed partial class FirstRunWizard : Window
     }
   }
 
-  public static async Task<bool> ShouldShowWizardAsync()
+  public static Task<bool> ShouldShowWizardAsync()
   {
     try
     {
@@ -368,16 +368,16 @@ public sealed partial class FirstRunWizard : Window
           // Check if user wants to see wizard on startup
           if (localSettings.Values.TryGetValue("ShowWizardOnStartup", out var showOnStartup))
           {
-            return showOnStartup is bool show && show;
+            return Task.FromResult(showOnStartup is bool show && show);
           }
-          return false;
+          return Task.FromResult(false);
         }
       }
-      return true; // First run
+      return Task.FromResult(true); // First run
     }
     catch
     {
-      return false;
+      return Task.FromResult(false);
     }
   }
 }

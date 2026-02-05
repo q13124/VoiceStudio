@@ -12,16 +12,26 @@ from typing import Dict, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..models_additional import RepairClippingRequest
 
 logger = logging.getLogger(__name__)
 
+
+class RepairClippingResponse(BaseModel):
+    """Response model for clipping repair."""
+    audio_id: str
+    repaired_audio_id: str
+    clipped_samples: int
+    clipped_percentage: float
+    method: str
+
 router = APIRouter(prefix="/api/repair", tags=["repair"])
 
 
-@router.post("/clipping")
-async def clipping(req: RepairClippingRequest) -> dict:
+@router.post("/clipping", response_model=RepairClippingResponse)
+async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
     """
     Repair clipped audio by reconstructing clipped samples.
     
@@ -208,13 +218,13 @@ async def clipping(req: RepairClippingRequest) -> dict:
             f"({num_clipped} samples repaired, {clipped_percentage:.2f}%)"
         )
         
-        return {
-            "audio_id": audio_id,
-            "repaired_audio_id": repaired_audio_id,
-            "clipped_samples": int(num_clipped),
-            "clipped_percentage": float(clipped_percentage),
-            "method": "interpolation" if clipped_percentage <= 5.0 else "spectral_reconstruction",
-        }
+        return RepairClippingResponse(
+            audio_id=audio_id,
+            repaired_audio_id=repaired_audio_id,
+            clipped_samples=int(num_clipped),
+            clipped_percentage=float(clipped_percentage),
+            method="interpolation" if clipped_percentage <= 5.0 else "spectral_reconstruction",
+        )
     
     except HTTPException:
         raise

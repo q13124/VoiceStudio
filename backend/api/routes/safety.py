@@ -10,10 +10,41 @@ import re
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..models_additional import SafetyScanRequest
 
 logger = logging.getLogger(__name__)
+
+
+class SafetyFlag(BaseModel):
+    """A safety flag detected in content."""
+    category: str
+    severity: str
+    matches: int
+    message: str
+
+
+class SafetyScanResponse(BaseModel):
+    """Response model for safety scanning."""
+    flags: List[SafetyFlag]
+    overall_safe: bool
+    severity_scores: Dict[str, float]
+    max_severity: float
+    recommendations: List[str]
+    text_length: int
+
+
+class SafetyCategory(BaseModel):
+    """Info about a safety category."""
+    id: str
+    name: str
+    description: str
+
+
+class SafetyCategoriesResponse(BaseModel):
+    """Response model for safety categories."""
+    categories: List[SafetyCategory]
 
 router = APIRouter(prefix="/api/safety", tags=["safety"])
 
@@ -36,8 +67,8 @@ _SAFETY_PATTERNS = {
 }
 
 
-@router.post("/scan")
-async def scan(req: SafetyScanRequest) -> dict:
+@router.post("/scan", response_model=SafetyScanResponse)
+async def scan(req: SafetyScanRequest) -> SafetyScanResponse:
     """
     Scan text content for safety issues.
     
@@ -120,14 +151,14 @@ async def scan(req: SafetyScanRequest) -> dict:
             f"overall_safe={overall_safe}, max_severity={max_severity:.2f}"
         )
         
-        return {
-            "flags": flags,
-            "overall_safe": overall_safe,
-            "severity_scores": severity_scores,
-            "max_severity": float(max_severity),
-            "recommendations": recommendations,
-            "text_length": len(text),
-        }
+        return SafetyScanResponse(
+            flags=[SafetyFlag(**f) for f in flags],
+            overall_safe=overall_safe,
+            severity_scores=severity_scores,
+            max_severity=float(max_severity),
+            recommendations=recommendations,
+            text_length=len(text),
+        )
     
     except HTTPException:
         raise
@@ -139,30 +170,30 @@ async def scan(req: SafetyScanRequest) -> dict:
         ) from e
 
 
-@router.get("/categories")
-async def get_safety_categories() -> dict:
+@router.get("/categories", response_model=SafetyCategoriesResponse)
+async def get_safety_categories() -> SafetyCategoriesResponse:
     """Get list of safety categories that are scanned."""
-    return {
-        "categories": [
-            {
-                "id": "hate_speech",
-                "name": "Hate Speech",
-                "description": "Content containing hateful or discriminatory language",
-            },
-            {
-                "id": "violence",
-                "name": "Violence",
-                "description": "Content containing violent language or threats",
-            },
-            {
-                "id": "explicit",
-                "name": "Explicit Content",
-                "description": "Content containing explicit or adult material",
-            },
-            {
-                "id": "self_harm",
-                "name": "Self-Harm",
-                "description": "Content containing references to self-harm or suicide",
-            },
+    return SafetyCategoriesResponse(
+        categories=[
+            SafetyCategory(
+                id="hate_speech",
+                name="Hate Speech",
+                description="Content containing hateful or discriminatory language",
+            ),
+            SafetyCategory(
+                id="violence",
+                name="Violence",
+                description="Content containing violent language or threats",
+            ),
+            SafetyCategory(
+                id="explicit",
+                name="Explicit Content",
+                description="Content containing explicit or adult material",
+            ),
+            SafetyCategory(
+                id="self_harm",
+                name="Self-Harm",
+                description="Content containing references to self-harm or suicide",
+            ),
         ],
-    }
+    )

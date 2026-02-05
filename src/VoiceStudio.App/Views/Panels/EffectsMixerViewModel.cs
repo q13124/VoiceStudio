@@ -133,7 +133,8 @@ namespace VoiceStudio.App.Views.Panels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
       // Get multi-select service
-      _multiSelectService = AppServices.TryGetMultiSelectService();
+      var multiSelectService = AppServices.TryGetMultiSelectService();
+      _multiSelectService = multiSelectService ?? throw new InvalidOperationException("MultiSelectService is required but not registered");
       _multiSelectState = _multiSelectService.GetState(PanelId);
 
       // Get undo/redo service (may be null if not initialized)

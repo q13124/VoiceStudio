@@ -30,7 +30,15 @@ from backend.services.circuit_breaker import (
 from backend.services.engine_service import get_engine_service
 
 from ..models import ApiOk
+from pydantic import BaseModel
 from ..models_additional import RvcStartRequest
+
+
+class RvcStartResponse(BaseModel):
+    """Response model for RVC session start."""
+    session_id: str
+    status: str
+    message: str
 
 logger = logging.getLogger(__name__)
 
@@ -471,8 +479,8 @@ async def get_audio(audio_id: str):
     )
 
 
-@router.post("/start")
-async def start(req: RvcStartRequest) -> dict:
+@router.post("/start", response_model=RvcStartResponse)
+async def start(req: RvcStartRequest) -> RvcStartResponse:
     """
     Start RVC session (legacy endpoint).
 
@@ -482,7 +490,7 @@ async def start(req: RvcStartRequest) -> dict:
         req: Request with session configuration
 
     Returns:
-        Dictionary with session_id and status
+        RvcStartResponse with session_id and status
     """
     try:
         if not ENGINE_AVAILABLE or not engine_router:
@@ -495,11 +503,11 @@ async def start(req: RvcStartRequest) -> dict:
         # For now, we'll just return the session ID
         logger.info(f"RVC session started: {session_id}")
 
-        return {
-            "session_id": session_id,
-            "status": "started",
-            "message": "RVC session created successfully",
-        }
+        return RvcStartResponse(
+            session_id=session_id,
+            status="started",
+            message="RVC session created successfully",
+        )
 
     except HTTPException:
         raise

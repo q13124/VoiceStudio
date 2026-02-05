@@ -131,6 +131,123 @@ async def get_gpu_status():
             # nvidia-smi not available or failed
             ...
 
+        # Try to detect AMD GPUs
+        try:
+            # Method 1: Try pyamdgpuinfo library (preferred)
+            try:
+                import pyamdgpuinfo
+                
+                amd_count = pyamdgpuinfo.detect_gpus()
+                for i in range(amd_count):
+                    gpu = pyamdgpuinfo.get_gpu(i)
+                    device = GPUDevice(
+                        device_id=f"amd-{i}",
+                        name=gpu.name if hasattr(gpu, 'name') else f"AMD GPU {i}",
+                        vendor="AMD",
+                        memory_total_mb=int(gpu.memory_info['vram_size'] / (1024 * 1024)) if hasattr(gpu, 'memory_info') else 0,
+                        memory_used_mb=int(gpu.memory_info.get('vram_usage', 0) / (1024 * 1024)) if hasattr(gpu, 'memory_info') else 0,
+                        memory_free_mb=0,  # Will be calculated
+                        utilization_percent=gpu.gpu_load * 100 if hasattr(gpu, 'gpu_load') else 0.0,
+                        temperature_celsius=gpu.temperature if hasattr(gpu, 'temperature') else None,
+                        power_usage_watts=gpu.power if hasattr(gpu, 'power') else None,
+                        driver_version=None,
+                        is_available=True,
+                    )
+                    device.memory_free_mb = device.memory_total_mb - device.memory_used_mb
+                    devices.append(device)
+                logger.debug(f"Detected {amd_count} AMD GPU(s) via pyamdgpuinfo")
+            except ImportError:
+                # pyamdgpuinfo not installed, try fallback methods
+                
+                # Method 2: Try rocm-smi for AMD ROCm GPUs (Linux)
+                try:
+                    import subprocess
+                    import platform
+                    
+                    if platform.system() == "Linux":
+                        result = subprocess.run(
+                            ["rocm-smi", "--showid", "--showname", "--showmeminfo", "vram"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5,
+                        )
+                        if result.returncode == 0:
+                            # Parse rocm-smi output (format varies by version)
+                            lines = result.stdout.strip().split("\n")
+                            gpu_idx = 0
+                            for line in lines:
+                                if "GPU" in line and ":" in line:
+                                    parts = line.split(":")
+                                    if len(parts) >= 2:
+                                        device = GPUDevice(
+                                            device_id=f"amd-{gpu_idx}",
+                                            name=parts[1].strip() if len(parts) > 1 else f"AMD ROCm GPU {gpu_idx}",
+                                            vendor="AMD",
+                                            memory_total_mb=0,
+                                            memory_used_mb=0,
+                                            memory_free_mb=0,
+                                            utilization_percent=0.0,
+                                            temperature_celsius=None,
+                                            power_usage_watts=None,
+                                            driver_version=None,
+                                            is_available=True,
+                                        )
+                                        devices.append(device)
+                                        gpu_idx += 1
+                            logger.debug(f"Detected {gpu_idx} AMD GPU(s) via rocm-smi")
+                except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+                    pass
+                
+                # Method 3: Try WMI for Windows AMD GPUs
+                try:
+                    import platform
+                    
+                    if platform.system() == "Windows":
+                        import subprocess
+                        
+                        # Use WMIC to query AMD GPUs
+                        result = subprocess.run(
+                            ["wmic", "path", "win32_VideoController", "get", "Name,AdapterRAM,DriverVersion", "/format:csv"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5,
+                        )
+                        if result.returncode == 0:
+                            lines = result.stdout.strip().split("\n")
+                            gpu_idx = len([d for d in devices if d.vendor == "AMD"])  # Continue from existing AMD count
+                            for line in lines:
+                                if line.strip() and "AMD" in line.upper() and "Node" not in line:
+                                    parts = [p.strip() for p in line.split(",")]
+                                    if len(parts) >= 3:
+                                        # CSV format: Node,AdapterRAM,DriverVersion,Name
+                                        name = parts[-1] if parts[-1] else f"AMD GPU {gpu_idx}"
+                                        adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                                        driver_version = parts[2] if len(parts) > 2 else None
+                                        
+                                        # Skip if already detected
+                                        if not any(d.name == name and d.vendor == "AMD" for d in devices):
+                                            device = GPUDevice(
+                                                device_id=f"amd-{gpu_idx}",
+                                                name=name,
+                                                vendor="AMD",
+                                                memory_total_mb=adapter_ram,
+                                                memory_used_mb=0,
+                                                memory_free_mb=adapter_ram,
+                                                utilization_percent=0.0,
+                                                temperature_celsius=None,
+                                                power_usage_watts=None,
+                                                driver_version=driver_version,
+                                                is_available=True,
+                                            )
+                                            devices.append(device)
+                                            gpu_idx += 1
+                            if gpu_idx > 0:
+                                logger.debug(f"Detected AMD GPU(s) via WMI")
+                except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+                    pass
+        except Exception as e:
+            logger.debug(f"AMD GPU detection failed: {e}")
+
         # If no real GPUs detected, return empty device list
         # Client should handle empty device list as "no GPU available" state
         # Note: This is acceptable - not all systems have GPUs

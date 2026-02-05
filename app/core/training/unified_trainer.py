@@ -23,6 +23,15 @@ except ImportError:
     HAS_XTTS_TRAINER = False
     logger.warning("XTTS trainer not available")
 
+# Import RVC trainer
+try:
+    from .rvc_trainer import RVCTrainer, HAS_RVC_TRAINER
+
+except ImportError:
+    HAS_RVC_TRAINER = False
+    RVCTrainer = None
+    logger.warning("RVC trainer not available")
+
 # Try to import torch
 try:
     import torch
@@ -94,16 +103,28 @@ class UnifiedTrainer:
             else:
                 logger.warning("XTTS trainer not available")
         elif self.engine == "rvc":
-            logger.warning("RVC trainer not yet implemented, using XTTS as fallback")
-            if HAS_XTTS_TRAINER:
+            if HAS_RVC_TRAINER and RVCTrainer is not None:
                 try:
-                    self.trainer = XTTSTrainer(
+                    self.trainer = RVCTrainer(
                         device=self.device,
                         gpu=self.gpu,
                         output_dir=str(self.output_dir),
                     )
+                    logger.info("RVC trainer initialized")
                 except Exception as e:
-                    logger.error(f"Failed to initialize fallback trainer: {e}")
+                    logger.error(f"Failed to initialize RVC trainer: {e}")
+                    self.trainer = None
+            else:
+                logger.warning("RVC trainer not available, using XTTS as fallback")
+                if HAS_XTTS_TRAINER:
+                    try:
+                        self.trainer = XTTSTrainer(
+                            device=self.device,
+                            gpu=self.gpu,
+                            output_dir=str(self.output_dir),
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to initialize fallback trainer: {e}")
         else:
             logger.warning(f"Unknown engine: {self.engine}, using XTTS as fallback")
             if HAS_XTTS_TRAINER:

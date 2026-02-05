@@ -1119,3 +1119,417 @@ class PostProcessingPipelineResponse(BaseModel):
     stages_applied: List[EnhancementStageResult]
     total_quality_improvement: float  # 0.0-1.0
     preview_available: bool
+
+
+# ============================================================================
+# Dubbing Models
+# ============================================================================
+
+
+class DubSyncRequest(BaseModel):
+    """Request model for dubbing synchronization."""
+
+    audio_id: str = Field(..., description="Audio ID to sync")
+    translated_text: str = Field(..., description="Translated text to sync")
+    original_text: Optional[str] = Field(
+        default=None, description="Original text (optional)"
+    )
+    original_timing: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Original timing segments"
+    )
+    target_language: str = Field(default="en", description="Target language code")
+
+
+class DubSyncResponse(BaseModel):
+    """Response model for dubbing synchronization."""
+
+    audio_id: str
+    translated_text: str
+    alignment: Dict[str, Any]
+    message: str
+
+
+# ============================================================================
+# Dataset Cull Models
+# ============================================================================
+
+
+class DatasetCullRequest(BaseModel):
+    """Request model for dataset culling."""
+
+    dataset_id: str = Field(..., description="Dataset ID to cull")
+    clips: Optional[List[str]] = Field(
+        default=None, description="List of clips to evaluate"
+    )
+    min_quality: float = Field(
+        default=0.7, ge=0.0, le=1.0, description="Minimum quality threshold"
+    )
+    min_snr: float = Field(default=20.0, ge=0.0, description="Minimum SNR threshold")
+    max_lufs: float = Field(default=-10.0, description="Maximum LUFS threshold")
+
+
+# ============================================================================
+# Reward Model Prediction Models
+# ============================================================================
+
+
+class RmPredictRequest(BaseModel):
+    """Request model for reward model prediction."""
+
+    model_id: Optional[str] = Field(
+        default=None, description="Model ID to use (uses latest if not specified)"
+    )
+    audio_id: Optional[str] = Field(
+        default=None, description="Audio ID to predict score for"
+    )
+    features: Optional[List[float]] = Field(
+        default=None, description="Pre-computed features"
+    )
+
+
+class RmPredictResponse(BaseModel):
+    """Response model for reward model prediction."""
+
+    score: float
+    model_id: str
+    audio_id: Optional[str] = None
+    confidence: float
+
+
+class RmTrainResponse(BaseModel):
+    """Response model for reward model training."""
+
+    status: str
+    job_id: str
+    model_id: str
+    samples: int
+    message: str
+
+
+# ============================================================================
+# Dubbing Translation Response
+# ============================================================================
+
+
+class DubTranslateResponse(BaseModel):
+    """Response model for dubbing translation."""
+
+    text: str
+    source_language: str
+    target_language: str
+    confidence: float
+
+
+# ============================================================================
+# Reward Model Responses
+# ============================================================================
+
+
+class RmModelInfo(BaseModel):
+    """Info about a reward model."""
+
+    id: str
+    training_samples: int
+    mean_score: float
+    created: str
+    status: str
+
+
+class RmModelsListResponse(BaseModel):
+    """Response model for listing reward models."""
+
+    models: List[RmModelInfo]
+    count: int
+
+
+class RmTrainingJobResponse(BaseModel):
+    """Response model for training job status."""
+
+    job_id: str
+    model_id: str
+    status: str
+    samples: int
+    started: str
+    completed: Optional[str] = None
+
+
+# ============================================================================
+# Engine Responses
+# ============================================================================
+
+
+class EngineInfo(BaseModel):
+    """Info about an engine."""
+
+    id: str
+    name: str
+    description: Optional[str] = None
+    status: str = "available"
+    capabilities: Optional[List[str]] = None
+
+
+class EngineListResponse(BaseModel):
+    """Response model for listing engines."""
+
+    engines: List[EngineInfo]
+    count: int
+
+
+class TelemetryRecordResponse(BaseModel):
+    """Response model for telemetry recording."""
+
+    status: str
+    engine_id: str
+    recorded_at: str
+
+
+class PreflightResponse(BaseModel):
+    """Response model for engine preflight check."""
+
+    status: str
+    engines_ready: int
+    engines_missing: int
+    details: Dict[str, Any]
+
+
+class GPUSettingsResponse(BaseModel):
+    """Response model for GPU settings update."""
+
+    status: str
+    settings: Dict[str, Any]
+
+
+class DefaultEngineResponse(BaseModel):
+    """Response model for setting default engine."""
+
+    status: str
+    task_type: str
+    engine_id: str
+
+
+class ConfigValidationResponse(BaseModel):
+    """Response model for configuration validation."""
+
+    valid: bool
+    errors: List[str]
+    warnings: List[str]
+
+
+# ============================================================================
+# RVC Responses
+# ============================================================================
+
+
+class RvcStartResponse(BaseModel):
+    """Response model for RVC conversion start."""
+
+    conversion_id: str
+    status: str
+    target_voice: str
+    message: str
+
+
+# ============================================================================
+# Audio Processing Responses
+# ============================================================================
+
+
+class SpectralInpaintResponse(BaseModel):
+    """Response model for spectral inpainting."""
+
+    audio_id: str
+    processed_audio_id: str
+    status: str
+    message: str
+
+
+class RepairClippingResponse(BaseModel):
+    """Response model for clipping repair."""
+
+    audio_id: str
+    processed_audio_id: str
+    clipping_detected: bool
+    samples_repaired: int
+    status: str
+
+
+class NrApplyResponse(BaseModel):
+    """Response model for noise reduction."""
+
+    audio_id: str
+    processed_audio_id: str
+    noise_reduction_db: float
+    status: str
+
+
+class NoisePrintResponse(BaseModel):
+    """Response model for noise print creation."""
+
+    noise_print_id: str
+    name: str
+    audio_id: str
+    duration: float
+    status: str
+
+
+class GranularRenderResponse(BaseModel):
+    """Response model for granular synthesis render."""
+
+    audio_id: str
+    output_audio_id: str
+    duration: float
+    status: str
+
+
+class FormantAnalyzeResponse(BaseModel):
+    """Response model for formant analysis."""
+
+    audio_id: str
+    formants: List[Dict[str, float]]
+    f0_mean: Optional[float] = None
+    f0_std: Optional[float] = None
+
+
+class ArticulationAnalyzeResponse(BaseModel):
+    """Response model for articulation analysis."""
+
+    audio_id: str
+    articulation_rate: float
+    pause_ratio: float
+    syllable_count: int
+    phoneme_distribution: Optional[Dict[str, int]] = None
+
+
+# ============================================================================
+# Safety Responses
+# ============================================================================
+
+
+class SafetyScanResponse(BaseModel):
+    """Response model for safety scanning."""
+
+    text: str
+    is_safe: bool
+    violations: List[Dict[str, Any]]
+    categories: Dict[str, float]
+
+
+class SafetyCategoriesResponse(BaseModel):
+    """Response model for safety categories."""
+
+    categories: List[Dict[str, Any]]
+
+
+# ============================================================================
+# Model Inspection Responses
+# ============================================================================
+
+
+class ModelInspectResponse(BaseModel):
+    """Response model for model inspection."""
+
+    layer: int
+    layer_name: str
+    layer_type: str
+    input_shape: Optional[List[int]] = None
+    output_shape: Optional[List[int]] = None
+    parameters: int
+    activations: Optional[Dict[str, Any]] = None
+
+
+class ModelLayersResponse(BaseModel):
+    """Response model for listing model layers."""
+
+    model_name: str
+    layers: List[Dict[str, Any]]
+    total_parameters: int
+
+
+# ============================================================================
+# Image Sampler Responses
+# ============================================================================
+
+
+class ImgSamplerRenderResponse(BaseModel):
+    """Response model for image sampler render."""
+
+    image_id: str
+    sampler: str
+    steps: int
+    seed: int
+    status: str
+
+
+class SamplerInfo(BaseModel):
+    """Info about a sampler."""
+
+    name: str
+    description: Optional[str] = None
+    supports_cfg: bool = True
+    default_steps: int = 20
+
+
+class SamplersListResponse(BaseModel):
+    """Response model for listing samplers."""
+
+    samplers: List[SamplerInfo]
+
+
+# ============================================================================
+# ADR Response
+# ============================================================================
+
+
+class AdrAlignResponse(BaseModel):
+    """Response model for ADR alignment."""
+
+    video_id: str
+    audio_id: str
+    alignment_score: float
+    sync_offset_ms: float
+    status: str
+
+
+# ============================================================================
+# Emotion Analysis Response
+# ============================================================================
+
+
+class EmotionAnalyzeResponse(BaseModel):
+    """Response model for emotion analysis."""
+
+    audio_id: str
+    emotions: Dict[str, float]
+    dominant_emotion: str
+    confidence: float
+
+
+# ============================================================================
+# Assistant Run Responses
+# ============================================================================
+
+
+class AssistantRunResponse(BaseModel):
+    """Response model for assistant run."""
+
+    run_id: str
+    status: str
+    output: Optional[str] = None
+    actions_taken: List[str]
+    execution_time_ms: int
+
+
+class ActionInfo(BaseModel):
+    """Info about an action."""
+
+    id: str
+    name: str
+    description: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+
+
+class ActionsListResponse(BaseModel):
+    """Response model for listing actions."""
+
+    actions: List[ActionInfo]
+    count: int

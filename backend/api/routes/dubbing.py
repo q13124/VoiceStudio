@@ -5,7 +5,7 @@ Endpoints for video dubbing operations including translation and synchronization
 """
 
 from fastapi import APIRouter, HTTPException
-from ..models_additional import DubTranslateRequest
+from ..models_additional import DubTranslateRequest, DubTranslateResponse, DubSyncRequest, DubSyncResponse
 from ..models import ApiOk
 from backend.services.engine_service import get_engine_service
 import logging
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/dub", tags=["dub"])
 
 
-@router.post("/translate")
-async def translate(req: DubTranslateRequest) -> dict:
+@router.post("/translate", response_model=DubTranslateResponse)
+async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
     """
     Translate audio transcription for dubbing purposes.
     
@@ -88,12 +88,12 @@ async def translate(req: DubTranslateRequest) -> dict:
         # Use real translation service
         translation_result = await translate_text(translation_req)
         
-        return {
-            "text": translation_result.translated_text,
-            "source_language": translation_result.source_language,
-            "target_language": translation_result.target_language,
-            "confidence": translation_result.confidence
-        }
+        return DubTranslateResponse(
+            text=translation_result.translated_text,
+            source_language=translation_result.source_language,
+            target_language=translation_result.target_language,
+            confidence=translation_result.confidence
+        )
     
     except HTTPException:
         raise
@@ -105,8 +105,8 @@ async def translate(req: DubTranslateRequest) -> dict:
         )
 
 
-@router.post("/sync")
-async def sync(req: dict) -> dict:
+@router.post("/sync", response_model=DubSyncResponse)
+async def sync(req: DubSyncRequest) -> DubSyncResponse:
     """
     Synchronize translated text with audio/video timing.
     
@@ -117,11 +117,11 @@ async def sync(req: dict) -> dict:
         import os
         import re
 
-        audio_id = req.get("audio_id")
-        translated_text = req.get("translated_text")
-        original_text = req.get("original_text")
-        original_timing = req.get("original_timing")
-        target_language = req.get("target_language", "en")
+        audio_id = req.audio_id
+        translated_text = req.translated_text
+        original_text = req.original_text
+        original_timing = req.original_timing
+        target_language = req.target_language
 
         if not audio_id or not translated_text:
             raise HTTPException(
@@ -291,12 +291,12 @@ async def sync(req: dict) -> dict:
                 detail="Failed to generate alignment result",
             )
 
-        return {
-            "audio_id": audio_id,
-            "translated_text": translated_text,
-            "alignment": alignment_result,
-            "message": "Dubbing synchronization completed",
-        }
+        return DubSyncResponse(
+            audio_id=audio_id,
+            translated_text=translated_text,
+            alignment=alignment_result,
+            message="Dubbing synchronization completed",
+        )
 
     except HTTPException:
         raise
