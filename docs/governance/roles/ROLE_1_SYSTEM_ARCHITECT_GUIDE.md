@@ -1,9 +1,22 @@
 # Role 1: System Architect Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 1  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| Phase 2: Context Management Automation | Secondary | Support Core Platform |
+| Phase 6: Security Hardening | Secondary | Support Core Platform |
+
+**Current Assignment:** Cross-cutting architectural review and ADR discipline for all phases.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

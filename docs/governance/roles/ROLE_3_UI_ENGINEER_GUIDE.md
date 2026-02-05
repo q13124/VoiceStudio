@@ -1,9 +1,22 @@
 # Role 3: UI Engineer Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 3  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| **Phase 1: XAML Reliability & AI Safety** | **PRIMARY** | 20 tasks |
+| Phase 2-8 | — | — |
+
+**Current Assignment:** Phase 1 — Audit {Binding} vs {x:Bind}, add x:DataType, resource hardening, AI safety markers.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

@@ -1,10 +1,23 @@
 # Role 7: Debug Agent — Comprehensive Operational Guide
 
-**Version:** 1.0.0  
-**Last Updated:** 2026-01-30  
+**Version:** 1.1.0  
+**Last Updated:** 2026-02-04  
 **Owner:** Overseer (Role 0)  
 **Primary Gates:** All gates (cross-cutting role)  
 **Related:** [ROLE_7_DEBUG_AGENT_PROMPT.md](../../.cursor/prompts/ROLE_7_DEBUG_AGENT_PROMPT.md), [ADR-017](../../architecture/decisions/ADR-017-debug-role-architecture.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| Phase 4: Test Coverage | Secondary | Support Build/Tooling |
+| **Phase 5: Observability & Diagnostics** | **PRIMARY** | 17 tasks |
+
+**Current Assignment:** Phase 5 — Distributed tracing, SLO monitoring, diagnostic enhancement, error tracking.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

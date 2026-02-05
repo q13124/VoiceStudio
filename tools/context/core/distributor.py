@@ -394,6 +394,179 @@ class ContextDistributor:
         }
 
 
+    def get_plan_context(self) -> Dict[str, Any]:
+        """Get current plan context from distribution config."""
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+            return data.get("plan", {})
+        except Exception:
+            return {}
+
+    def get_phase_ownership(self, phase: int) -> Dict[str, Any]:
+        """Get ownership info for a specific phase."""
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+            ownership = data.get("phase_ownership", {})
+            return ownership.get(str(phase), {})
+        except Exception:
+            return {}
+
+    def get_role_for_current_phase(self) -> Optional[str]:
+        """Get the primary role for the current plan phase."""
+        plan = self.get_plan_context()
+        current_phase = plan.get("current_phase")
+        if current_phase:
+            ownership = self.get_phase_ownership(current_phase)
+            return ownership.get("primary")
+        return None
+
+    def distribute_for_current_phase(
+        self, force_refresh: bool = False
+    ) -> Dict[str, Optional[ContextBundle]]:
+        """
+        Distribute context to all roles involved in the current phase.
+
+        This is the main autonomous distribution method that:
+        1. Reads the current phase from the plan
+        2. Identifies primary, secondary, and validator roles
+        3. Distributes appropriate context to each
+
+        Returns:
+            Dict mapping role_id to ContextBundle
+        """
+        plan = self.get_plan_context()
+        current_phase = plan.get("current_phase", 1)
+        current_task = plan.get("current_task")
+
+        ownership = self.get_phase_ownership(current_phase)
+        if not ownership:
+            logger.warning("No ownership defined for phase %s", current_phase)
+            return {}
+
+        roles_to_distribute = []
+
+        # Primary role always gets context
+        primary = ownership.get("primary")
+        if primary:
+            roles_to_distribute.append(primary)
+
+        # Secondary role gets context
+        secondary = ownership.get("secondary")
+        if secondary:
+            roles_to_distribute.append(secondary)
+
+        # Validator gets context
+        validator = ownership.get("validator")
+        if validator:
+            roles_to_distribute.append(validator)
+
+        # Overseer always gets context
+        if "0" not in roles_to_distribute:
+            roles_to_distribute.append("0")
+
+        results = {}
+        phase_name = ownership.get("name", f"Phase {current_phase}")
+
+        for role_id in roles_to_distribute:
+            if force_refresh:
+                self.invalidate(role_id)
+            results[role_id] = self.distribute(
+                role_id=role_id,
+                task_id=current_task,
+                phase=phase_name,
+            )
+
+        logger.info(
+            "Distributed context for phase %s to %d roles",
+            current_phase,
+            len(results),
+        )
+
+        return results
+
+    def update_current_task(self, task_id: str) -> None:
+        """
+        Update the current task in the distribution config.
+
+        This triggers automatic context refresh for affected roles.
+        """
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+
+            if "plan" not in data:
+                data["plan"] = {}
+
+            data["plan"]["current_task"] = task_id
+
+            with open(self._config_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+
+            # Invalidate and redistribute
+            self.invalidate()
+            self.distribute_for_current_phase(force_refresh=True)
+
+            logger.info(
+                "Updated current task to %s and redistributed", task_id
+            )
+
+        except Exception as e:
+            logger.error("Failed to update current task: %s", e)
+
+    def advance_phase(self, new_phase: int) -> None:
+        """
+        Advance to a new phase and redistribute context.
+
+        This triggers automatic context refresh for all affected roles.
+        """
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+
+            if "plan" not in data:
+                data["plan"] = {}
+
+            old_phase = data["plan"].get("current_phase", 0)
+            data["plan"]["current_phase"] = new_phase
+            data["plan"]["current_task"] = None  # Reset task on phase change
+
+            with open(self._config_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+
+            # Invalidate all and redistribute
+            self.invalidate()
+            self.distribute_for_current_phase(force_refresh=True)
+
+            logger.info(
+                "Advanced from phase %s to phase %s and redistributed context",
+                old_phase,
+                new_phase,
+            )
+
+        except Exception as e:
+            logger.error("Failed to advance phase: %s", e)
+
+    def get_role_auto_context(self, role_id: str) -> Dict[str, bool]:
+        """Get auto-context flags for a role from distribution config."""
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+
+            for role_data in data.get("roles", []):
+                is_match = (
+                    role_data.get("id") == role_id
+                    or role_data.get("short_name") == role_id
+                )
+                if is_match:
+                    return role_data.get("auto_context", {})
+
+            return {}
+        except Exception:
+            return {}
+
+
 # Global distributor instance
 _global_distributor: Optional[ContextDistributor] = None
 
@@ -413,3 +586,18 @@ def distribute_to_role(
 ) -> Optional[ContextBundle]:
     """Convenience function to distribute context to a role."""
     return get_distributor().distribute(role_id, task_id, phase)
+
+
+def distribute_for_phase() -> Dict[str, Optional[ContextBundle]]:
+    """Convenience function to distribute context for the current phase."""
+    return get_distributor().distribute_for_current_phase()
+
+
+def update_task(task_id: str) -> None:
+    """Convenience function to update current task and redistribute."""
+    get_distributor().update_current_task(task_id)
+
+
+def advance_to_phase(phase: int) -> None:
+    """Convenience function to advance phase and redistribute."""
+    get_distributor().advance_phase(phase)

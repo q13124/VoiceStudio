@@ -1,4 +1,10 @@
 {
-  "weights": { "brief": 0.85, "rules": 0.65, "state": 0.8 },
-  "budgets": { "brief_chars": 3000, "rules_chars": 2100, "state_chars": 2200 }
+  "weights": { "brief": 0.85, "rules": 0.65, "state": 0.8, "progress": 0.85 },
+  "budgets": { "brief_chars": 3000, "rules_chars": 2100, "state_chars": 2200, "progress_chars": 1500 },
+  "plan_phases": {
+    "primary": [2, 6],
+    "secondary": [3, 5],
+    "current_phase": null,
+    "current_task": null
+  }
 }

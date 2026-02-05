@@ -1,9 +1,21 @@
 # Role 5: Engine Engineer Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 5  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| **Phase 3: API/Contract Synchronization** | **PRIMARY** | 17 tasks |
+
+**Current Assignment:** Phase 3 — NSwag integration, OpenAPI client generation, contract validation, API versioning.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

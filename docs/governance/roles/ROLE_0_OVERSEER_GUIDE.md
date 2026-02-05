@@ -1,9 +1,21 @@
 # Role 0: Overseer Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 0  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| **Phase 8: Continuous Improvement Infrastructure** | **PRIMARY** | 14 tasks |
+
+**Current Assignment:** Phase 8 — Feature flags, feedback collection, quality automation, documentation as code.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-04 (Gap remediation: 10 ADRs finalized, 4 feature documentation guides, API validation CI integration)
+> **Last Updated**: 2026-02-04 (Ultimate Master Plan 2026 Optimized added; role guides updated with phase ownership)
 
 ---
 
@@ -71,6 +71,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
+| **Ultimate Master Plan 2026 (Optimized)** | `docs/governance/ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md` | 2026-02-04 | **ACTIVE PLAN** — 8 phases, 145 tasks, optimized role assignments. Supersedes prior plan versions. |
 | **Unified Master Roadmap** | `docs/governance/MASTER_ROADMAP_UNIFIED.md` | 2026-01-25 | **Primary canonical roadmap** - consolidates all previous roadmaps |
 | **Optional Task Inventory** | `docs/governance/OPTIONAL_TASK_INVENTORY.md` | 2026-01-29 | Authoritative optional-task backlog and dependency map; Phase 1 Master Plan deliverable |
 | Master Roadmap (Legacy) | `docs/archive/governance/MASTER_ROADMAP.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md. Note: `docs/archive/governance/` may be missing; create and move legacy roadmaps if archive policy requires. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §2, §6.1. |

@@ -895,6 +895,20 @@ if os.environ.get("VOICESTUDIO_TELEMETRY", "").lower() in ("1", "true", "yes"):
     except ImportError as e:
         logger.debug(f"Telemetry middleware not available: {e}")
 
+# Add input validation middleware for security
+try:
+    from backend.api.middleware.input_validation import InputValidationMiddleware
+
+    app.add_middleware(
+        InputValidationMiddleware,
+        enabled=True,
+        strict_mode=False,  # Enable strict_mode for SQL injection checks
+        skip_paths=["/health", "/api/health", "/docs", "/openapi.json", "/redoc"],
+    )
+    logger.info("Input validation middleware initialized")
+except ImportError as e:
+    logger.debug(f"Input validation middleware not available: {e}")
+
 # Add compression middleware for large responses (lazy initialization)
 _compression_middleware_loaded = False
 
@@ -1082,6 +1096,10 @@ def _register_all_routes():
     _include_route("docs")
     _include_route("health")
     _include_route("monitoring")
+    _include_route("tracing")
+    _include_route("slo")
+    _include_route("diagnostics")
+    _include_route("errors")
 
     # Additional routes
     _include_route("eval_abx")

@@ -5,7 +5,8 @@
     "ledger": 0.9,
     "issues": 1.0,
     "audit": 0.95,
-    "rules": 0.7
+    "rules": 0.7,
+    "progress": 0.90
   },
   "budgets": {
     "state_chars": 2500,
@@ -13,6 +14,13 @@
     "ledger_chars": 3000,
     "issues_chars": 3000,
     "audit_chars": 2500,
-    "rules_chars": 2200
+    "rules_chars": 2200,
+    "progress_chars": 1500
+  },
+  "plan_phases": {
+    "primary": [5],
+    "secondary": [4],
+    "current_phase": null,
+    "current_task": null
   }
 }

@@ -1,9 +1,24 @@
 # Role 2: Build & Tooling Engineer Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 2  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| Phase 1: XAML Reliability | Secondary | Support UI Engineer |
+| **Phase 4: Test Coverage Expansion** | **PRIMARY** | 24 tasks |
+| Phase 7: Production Readiness | Secondary | Support Release Engineer |
+| Phase 8: Continuous Improvement | Secondary | Support Overseer |
+
+**Current Assignment:** Phase 4 — Integration tests, E2E automation, performance tests, contract tests, test infrastructure.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

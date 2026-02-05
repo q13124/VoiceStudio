@@ -308,7 +308,7 @@
                                                      AutomationProperties.AutomationId="EffectsMixerView_NewChainNameTextBox" />
                                             <Button Content="Create"
                                                     Command="{x:Bind ViewModel.CreateEffectChainCommand}"
-                                                    CommandParameter="{Binding Text, ElementName=NewChainNameTextBox}"
+                                                    CommandParameter="{x:Bind NewChainNameTextBox.Text, Mode=OneWay}"
                                                     HorizontalAlignment="Right"
                                                     AutomationProperties.AutomationId="EffectsMixerView_CreateChainButton" />
                                         </StackPanel>

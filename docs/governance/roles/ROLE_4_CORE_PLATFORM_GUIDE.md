@@ -1,9 +1,24 @@
 # Role 4: Core Platform Engineer Guide
 
-> **Version**: 1.1.0  
-> **Last Updated**: 2026-01-25  
+> **Version**: 1.2.0  
+> **Last Updated**: 2026-02-04  
 > **Role Number**: 4  
 > **Parent Document**: [ROLE_GUIDES_INDEX.md](../ROLE_GUIDES_INDEX.md)
+
+---
+
+## Ultimate Master Plan 2026 — Phase Ownership
+
+| Phase | Role | Tasks |
+|-------|------|-------|
+| **Phase 2: Context Management Automation** | **PRIMARY** | 22 tasks |
+| Phase 3: API/Contract Synchronization | Secondary | Support Engine Engineer |
+| Phase 5: Observability & Diagnostics | Secondary | Support Debug Agent |
+| **Phase 6: Security Hardening** | **PRIMARY** | 14 tasks |
+
+**Current Assignment:** Phase 2 — Context sources, auto-distribution, progress tracking, handoff automation, OpenMemory.
+
+See: [ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md](../ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md)
 
 ---
 

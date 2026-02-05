@@ -1,4 +1,10 @@
 {
-  "weights": { "brief": 0.9, "ledger": 0.8, "rules": 0.6 },
-  "budgets": { "brief_chars": 3400, "ledger_chars": 2600, "rules_chars": 2000 }
+  "weights": { "brief": 0.9, "ledger": 0.8, "rules": 0.6, "progress": 0.80 },
+  "budgets": { "brief_chars": 3400, "ledger_chars": 2600, "rules_chars": 2000, "progress_chars": 1500 },
+  "plan_phases": {
+    "primary": [3],
+    "secondary": [],
+    "current_phase": null,
+    "current_task": null
+  }
 }
