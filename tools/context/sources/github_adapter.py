@@ -29,37 +29,15 @@ class GitHubAdapter(BaseSourceAdapter):
         
         Falls back gracefully if MCP unavailable.
         """
-        start_ms = self._measure()
-        
-        if not self._mcp_enabled:
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"github_prs": [], "github_issues": [], "note": "GitHub MCP disabled"},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-            )
-        
-        try:
+        def _load() -> dict:
+            if not self._mcp_enabled:
+                return {"github_prs": [], "github_issues": [], "note": "GitHub MCP disabled"}
+            
             # Attempt MCP call to GitHub
             prs, issues = self._query_github(context)
-            
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"github_prs": prs, "github_issues": issues},
-                size_chars=sum(len(str(x)) for x in (prs + issues)),
-                fetch_time_ms=self._measure(start_ms),
-            )
-        except Exception as exc:
-            return SourceResult(
-                source_name=self.source_name,
-                success=False,
-                data={},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-                error=str(exc),
-            )
+            return {"github_prs": prs, "github_issues": issues}
+        
+        return self._measure(_load, context)
 
     def _query_github(self, context: AllocationContext) -> tuple[list, list]:
         """

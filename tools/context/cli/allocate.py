@@ -20,6 +20,9 @@ def main(argv=None) -> int:
     parser.add_argument("--budget", type=int, default=None, help="Total budget chars override")
     parser.add_argument("--include-git", action="store_true", help="Include git context")
     parser.add_argument("--preamble", action="store_true", help="Output markdown preamble instead of JSON")
+    parser.add_argument("--part", action="store_true", help="Output P.A.R.T. structured format")
+    parser.add_argument("--level", choices=["high", "mid", "low"], default="mid",
+                        help="Context level (high=minimal, mid=normal, low=all)")
     parser.add_argument("--config", help="Config path (default tools/context/config/context-sources.json)")
     args = parser.parse_args(argv)
 

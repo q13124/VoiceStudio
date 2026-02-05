@@ -29,37 +29,15 @@ class LinearAdapter(BaseSourceAdapter):
         
         Falls back gracefully if MCP unavailable.
         """
-        start_ms = self._measure()
-        
-        if not self._mcp_enabled:
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"linear_tasks": [], "note": "Linear MCP disabled"},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-            )
-        
-        try:
+        def _load() -> dict:
+            if not self._mcp_enabled:
+                return {"linear_tasks": [], "note": "Linear MCP disabled"}
+            
             # Attempt MCP call to Linear
             tasks = self._query_linear(context)
-            
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"linear_tasks": tasks},
-                size_chars=sum(len(str(t)) for t in tasks),
-                fetch_time_ms=self._measure(start_ms),
-            )
-        except Exception as exc:
-            return SourceResult(
-                source_name=self.source_name,
-                success=False,
-                data={},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-                error=str(exc),
-            )
+            return {"linear_tasks": tasks}
+        
+        return self._measure(_load, context)
 
     def _query_linear(self, context: AllocationContext) -> list:
         """

@@ -26,39 +26,17 @@ class Context7Adapter(BaseSourceAdapter):
         
         Falls back gracefully if MCP unavailable.
         """
-        start_ms = self._measure()
-        
-        if not self._mcp_enabled:
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"context7_docs": [], "note": "Context7 MCP disabled"},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-            )
-        
-        try:
+        def _load() -> dict:
+            if not self._mcp_enabled:
+                return {"context7_docs": [], "note": "Context7 MCP disabled"}
+            
             # Attempt MCP call to Context7
             # NOTE: Actual MCP integration requires CallMcpTool or context7 client
             # For now, return empty with success to indicate availability
             docs = self._query_context7(context)
-            
-            return SourceResult(
-                source_name=self.source_name,
-                success=True,
-                data={"context7_docs": docs},
-                size_chars=sum(len(d.get("content", "")) for d in docs),
-                fetch_time_ms=self._measure(start_ms),
-            )
-        except Exception as exc:
-            return SourceResult(
-                source_name=self.source_name,
-                success=False,
-                data={},
-                size_chars=0,
-                fetch_time_ms=self._measure(start_ms),
-                error=str(exc),
-            )
+            return {"context7_docs": docs}
+        
+        return self._measure(_load, context)
 
     def _query_context7(self, context: AllocationContext) -> list:
         """
