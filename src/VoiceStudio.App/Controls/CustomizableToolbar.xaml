@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Controls.CustomizableToolbar"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:services="using:VoiceStudio.App.Services">
+    xmlns:services="using:VoiceStudio.App.Services"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:CustomizableToolbar">
     <Grid x:Name="ToolbarGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>

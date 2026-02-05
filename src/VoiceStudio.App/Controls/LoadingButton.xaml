@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.LoadingButton"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:VoiceStudio.App.Controls"
+  x:DataType="local:LoadingButton">
   <Grid>
     <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
     <Button x:Name="ButtonControl"

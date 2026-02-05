@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Controls.LoadingOverlay"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="using:VoiceStudio.App.Converters">
+    xmlns:converters="using:VoiceStudio.App.Converters"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:LoadingOverlay">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Storyboard x:Key="FadeInAnimation">

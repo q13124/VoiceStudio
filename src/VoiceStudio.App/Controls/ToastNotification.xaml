@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.VSQToastNotification"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:VSQToastNotification">
     <Border x:Name="ToastBorder"
         BorderThickness="1"
         Padding="8"

@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.WaveformControl"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:VoiceStudio.App.Controls"
+  x:DataType="local:WaveformControl">
   <Grid x:Name="WaveformContainer" Background="Transparent">
     <Path x:Name="WaveformPath"
       Stroke="Cyan"

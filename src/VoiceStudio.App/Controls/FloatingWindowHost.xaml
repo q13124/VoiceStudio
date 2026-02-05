@@ -1,8 +1,10 @@
 <UserControl x:Class="VoiceStudio.App.Controls.FloatingWindowHost"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:VoiceStudio.App.Controls"
+             x:DataType="local:FloatingWindowHost">
     <Grid Background="{StaticResource VSQ.Panel.Background.DarkBrush}">
         <ContentPresenter x:Name="ContentPresenter"
-                         Content="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}"/>
+                         Content="{x:Bind Content, Mode=OneWay}"/>
     </Grid>
 </UserControl>

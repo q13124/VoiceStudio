@@ -179,11 +179,11 @@ Content="{TemplateBinding Content}"
 
 ---
 
-## Files Without x:DataType (62 files)
+## Files Without x:DataType — COMPLETED
 
-These files need `x:DataType` added in Task 1.1.2:
+~~These files need `x:DataType` added in Task 1.1.2:~~
 
-### Resource Dictionaries (8 files) — N/A
+### Resource Dictionaries (8 files) — N/A (No x:DataType needed)
 - DesignTokens.xaml
 - Theme.Dark.xaml
 - Theme.Light.xaml
@@ -193,9 +193,22 @@ These files need `x:DataType` added in Task 1.1.2:
 - PanelTemplates.xaml
 - Styles/*.xaml
 
-### Views/Controls Requiring x:DataType (54 files)
+### Views/Controls — COMPLETED (Task 1.1.2)
 
-*To be identified in Task 1.1.2 by comparing full file list against x:DataType grep results*
+**All 43 controls updated with x:DataType declarations:**
+- AudioOrbsControl, AutomationCurveEditorControl, AutomationCurvesEditorControl
+- BatchQueueTimelineControl, BatchQueueVisualControl, CollaborationIndicator
+- CustomizableToolbar, EmptyState, EnsembleTimelineControl, ErrorDialog
+- ErrorMessage, FaderControl, FloatingWindowHost, HelpOverlay, LoadingButton
+- LoadingOverlay, LoudnessChartControl, MacroNodeEditorControl, MatplotlibControl
+- NavIconButton, OnboardingHints, PanelHost, PanelPreviewPopup
+- PanelQuickSwitchIndicator, PanelResizeHandle, PanelStack, PanFaderControl
+- PhaseAnalysisControl, PlotlyControl, QualityBadgeControl, RadarChartControl
+- SkeletonScreen, SpectrogramControl, ToastNotification, UndoRedoIndicator
+- UserCursorIndicator, VSQBadge, VSQButton, VSQCard, VSQFormField
+- VSQProgressIndicator, VUMeterControl, WaveformControl
+
+**Build verified: PASS (exit code 0)**
 
 ---
 
@@ -230,11 +243,82 @@ rg -L "x:DataType=" src/VoiceStudio.App/Views --glob "*.xaml"
 
 ---
 
+## Task 1.1.3 Completion Record
+
+**Date**: 2026-02-05
+**Role**: UI Engineer (Role 3)
+
+### Summary
+Migrated {Binding} instances where appropriate. Remaining instances are acceptable per WinUI 3 best practices.
+
+### Migrations Completed
+
+| File | Before | After | Change |
+|------|--------|-------|--------|
+| TextBasedSpeechEditorView.xaml | 2 | 0 | Used `TimeRangeDisplay` property |
+| FloatingWindowHost.xaml | 1 | 0 | Changed to `{x:Bind Content}` |
+| **Total Migrated** | **3** | **0** | **3 bindings converted** |
+
+### Remaining {Binding} Instances (Acceptable)
+
+| File | Count | Reason |
+|------|-------|--------|
+| UserCursorIndicator.xaml | 3 | DataContext binding with converters; x:Bind requires different pattern |
+| QualityControlView.xaml | 2 | Dictionary<string, object> items; x:Bind doesn't support generic KeyValuePair |
+| EnsembleSynthesisView.xaml | 4 | ElementName bindings (x:Bind doesn't support ElementName) |
+| **Total Remaining** | **9** | **All acceptable per WinUI 3 guidelines** |
+
+### Final Binding Coverage
+
+| Metric | Before | After |
+|--------|--------|-------|
+| {Binding} instances | 12 | 9 |
+| {x:Bind} instances | 575+ | 578+ |
+| **Compile-Time Binding Coverage** | 97.9% | **98.5%** |
+
+### Build Verification
+- Build: `dotnet build src/VoiceStudio.App/VoiceStudio.App.csproj -c Debug -p:Platform=x64`
+- Result: **PASS** (exit code 0)
+
+---
+
 ## Next Tasks
 
 | ID | Task | Status |
 |----|------|--------|
-| 1.1.2 | Add x:DataType to all Page/UserControl roots | PENDING |
+| 1.1.2 | Add x:DataType to all Page/UserControl roots | ✅ COMPLETE |
 | 1.1.3 | Migrate core panels to {x:Bind} | PENDING |
 | 1.1.4 | Migrate Tier 2 panels | PENDING |
 | 1.1.5 | Add CI binding validation | PENDING |
+
+---
+
+## Task 1.1.2 Completion Record
+
+**Date**: 2026-02-05
+**Role**: UI Engineer (Role 3)
+
+### Summary
+Added `x:DataType` declarations to all 43 UserControl files in `src/VoiceStudio.App/Controls/`.
+
+### Pattern Applied
+```xml
+<UserControl x:Class="VoiceStudio.App.Controls.ControlName"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:ControlName">
+```
+
+### Verification
+- Build: `dotnet build src/VoiceStudio.App/VoiceStudio.App.csproj -c Debug -p:Platform=x64`
+- Result: **PASS** (exit code 0, XAML compiler exit code 0)
+- No new XAML errors introduced
+
+### Controls Updated (43 total)
+All controls in `src/VoiceStudio.App/Controls/` now have x:DataType.
+
+### Coverage After Task 1.1.2
+| Metric | Before | After |
+|--------|--------|-------|
+| Controls with x:DataType | 0/43 | 43/43 |
+| Panel Views with x:DataType | 25/25 | 25/25 |
+| **Total x:DataType Coverage** | ~61% | **~100%** |

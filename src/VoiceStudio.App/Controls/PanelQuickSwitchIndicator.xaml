@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.PanelQuickSwitchIndicator"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:PanelQuickSwitchIndicator">
     <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
     <Border Background="#181D26"
         CornerRadius="8"

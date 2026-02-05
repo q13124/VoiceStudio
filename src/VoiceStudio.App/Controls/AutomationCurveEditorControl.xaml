@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.AutomationCurveEditorControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:AutomationCurveEditorControl">
     <Grid>
         <TextBlock Text="Automation curve editor temporarily disabled (XAML compiler stability)"
             TextWrapping="Wrap"

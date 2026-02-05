@@ -155,12 +155,8 @@
                                             <TextBlock Text="{x:Bind Text, Mode=OneWay}"
                                                 Style="{StaticResource VSQ.Text.Body}" />
                                             <TextBlock Style="{StaticResource VSQ.Text.Caption}"
-                                                Foreground="{StaticResource VSQ.Text.SecondaryBrush}">
-                                                <Run
-                                                    Text="{Binding StartTime, Converter={StaticResource F2FormatConverter}}" />s
-                                                - <Run
-                                                    Text="{Binding EndTime, Converter={StaticResource F2FormatConverter}}" />
-                                                s </TextBlock>
+                                                Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                                Text="{x:Bind TimeRangeDisplay, Mode=OneWay}" />
                                         </StackPanel>
                                         <ItemsControl Grid.Column="1"
                                             ItemsSource="{x:Bind Words, Mode=OneWay}">

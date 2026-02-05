@@ -1,7 +1,9 @@
 <UserControl x:Class="VoiceStudio.App.Controls.OnboardingHints"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:converters="using:VoiceStudio.App.Converters">
+  xmlns:converters="using:VoiceStudio.App.Converters"
+  xmlns:local="using:VoiceStudio.App.Controls"
+  x:DataType="local:OnboardingHints">
   <UserControl.Resources>
     <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />

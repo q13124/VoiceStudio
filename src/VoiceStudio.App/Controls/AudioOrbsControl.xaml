@@ -1,6 +1,8 @@
 <UserControl x:Class="VoiceStudio.App.Controls.AudioOrbsControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    x:DataType="local:AudioOrbsControl">
     <Grid x:Name="AudioOrbsContainer" Background="Black">
         <Canvas x:Name="OrbsCanvas" />
         <TextBlock Text="No audio orbs data available"
