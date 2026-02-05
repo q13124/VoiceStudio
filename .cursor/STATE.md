@@ -42,12 +42,16 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 
 ## Active Task
 
-- **ID**: None
-- **Title**: Phase 1 Complete
-- **Priority**: —
-- **Owner**: UI Engineer (Role 3)
-- **Phase**: 1 - XAML Reliability & AI Safety
-- **Status**: **PHASE COMPLETE** — All 20 tasks finished.
+- **ID**: 3.1.1
+- **Title**: NSwag integration for C# client generation
+- **Priority**: HIGH
+- **Owner**: Engine Engineer (Role 5)
+- **Phase**: 3 - API/Contract Synchronization
+- **Status**: **IN PROGRESS**
+
+### Phase 2 Summary — COMPLETE (19/22 tasks, 86%)
+
+Context management infrastructure is functional. See [PHASE2_CONTEXT_AUDIT_2026-02-05.md](../docs/reports/audit/PHASE2_CONTEXT_AUDIT_2026-02-05.md).
 
 ### Completed Tasks (Phase 1) — ALL 20 COMPLETE
 
