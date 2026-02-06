@@ -21,6 +21,10 @@ from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_archive_file,
+)
 from backend.services.engine_service import get_engine_service
 
 from ..ml_optimization import HyperparameterOptimizer
@@ -1470,6 +1474,16 @@ async def import_trained_model(
             import_id = str(uuid.uuid4())
             training_id = str(uuid.uuid4())
 
+            # Read and validate uploaded archive file
+            content = await file.read()
+            try:
+                validate_archive_file(content, filename=file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid archive file: {e.message}",
+                ) from e
+
             # Create import directory
             import_dir = Path("models/imports") / import_id
             import_dir.mkdir(parents=True, exist_ok=True)
@@ -1477,7 +1491,6 @@ async def import_trained_model(
             # Save uploaded file
             zip_path = import_dir / file.filename
             with open(zip_path, "wb") as f:
-                content = await file.read()
                 f.write(content)
 
             # Extract ZIP

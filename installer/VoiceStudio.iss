@@ -21,6 +21,9 @@
 #endif
 #define MyAppId "A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D"
 
+; Include shared prerequisite detection functions
+#include "prerequisites.iss"
+
 [Setup]
 ; Basic Information
 AppId={#MyAppId}
@@ -128,7 +131,126 @@ Name: "{commonappdata}\VoiceStudio\models"; Permissions: users-modify
 Name: "{commonappdata}\VoiceStudio\cache"; Permissions: users-modify
 Name: "{commonappdata}\VoiceStudio\logs"; Permissions: users-modify
 
+[UninstallDelete]
+; Cleanup cache and log directories on uninstall (user data in %APPDATA% preserved)
+Type: filesandordirs; Name: "{commonappdata}\VoiceStudio\cache"
+Type: filesandordirs; Name: "{commonappdata}\VoiceStudio\logs"
+Type: filesandordirs; Name: "{commonappdata}\VoiceStudio\temp"
+
 [Code]
+// ============================================================================
+// Version Detection and Upgrade Path Functions
+// ============================================================================
+
+function GetPreviousVersion: String;
+var
+  Version: String;
+begin
+  Result := '';
+  if RegQueryStringValue(HKLM64, 'SOFTWARE\VoiceStudio', 'Version', Version) then
+    Result := Version;
+end;
+
+function GetPreviousInstallPath: String;
+var
+  InstallPath: String;
+begin
+  Result := '';
+  if RegQueryStringValue(HKLM64, 'SOFTWARE\VoiceStudio', 'InstallPath', InstallPath) then
+    Result := InstallPath;
+end;
+
+function IsUpgrade: Boolean;
+begin
+  Result := GetPreviousVersion <> '';
+end;
+
+function CompareVersions(V1, V2: String): Integer;
+var
+  V1Parts, V2Parts: array of String;
+  V1Num, V2Num, I: Integer;
+begin
+  // Simple version comparison: returns -1 if V1 < V2, 0 if equal, 1 if V1 > V2
+  // Format expected: X.Y.Z (major.minor.patch)
+  Result := 0;
+  
+  // Parse V1
+  SetArrayLength(V1Parts, 3);
+  V1Parts[0] := Copy(V1, 1, Pos('.', V1) - 1);
+  V1 := Copy(V1, Pos('.', V1) + 1, Length(V1));
+  if Pos('.', V1) > 0 then
+  begin
+    V1Parts[1] := Copy(V1, 1, Pos('.', V1) - 1);
+    V1Parts[2] := Copy(V1, Pos('.', V1) + 1, Length(V1));
+  end
+  else
+  begin
+    V1Parts[1] := V1;
+    V1Parts[2] := '0';
+  end;
+  
+  // Parse V2
+  SetArrayLength(V2Parts, 3);
+  V2Parts[0] := Copy(V2, 1, Pos('.', V2) - 1);
+  V2 := Copy(V2, Pos('.', V2) + 1, Length(V2));
+  if Pos('.', V2) > 0 then
+  begin
+    V2Parts[1] := Copy(V2, 1, Pos('.', V2) - 1);
+    V2Parts[2] := Copy(V2, Pos('.', V2) + 1, Length(V2));
+  end
+  else
+  begin
+    V2Parts[1] := V2;
+    V2Parts[2] := '0';
+  end;
+  
+  // Compare each part
+  for I := 0 to 2 do
+  begin
+    V1Num := StrToIntDef(V1Parts[I], 0);
+    V2Num := StrToIntDef(V2Parts[I], 0);
+    if V1Num < V2Num then
+    begin
+      Result := -1;
+      Exit;
+    end
+    else if V1Num > V2Num then
+    begin
+      Result := 1;
+      Exit;
+    end;
+  end;
+end;
+
+function IsDowngrade: Boolean;
+var
+  PrevVersion, NewVersion: String;
+begin
+  Result := False;
+  PrevVersion := GetPreviousVersion;
+  NewVersion := '{#MyAppVersion}';
+  if PrevVersion <> '' then
+    Result := CompareVersions(NewVersion, PrevVersion) < 0;
+end;
+
+procedure BackupUserSettings;
+var
+  BackupDir, SettingsPath: String;
+  ResultCode: Integer;
+begin
+  // Create a backup of user settings before upgrade
+  BackupDir := ExpandConstant('{commonappdata}\VoiceStudio\backup\pre-upgrade-{#MyAppVersion}');
+  SettingsPath := ExpandConstant('{commonappdata}\VoiceStudio\settings');
+  
+  if DirExists(SettingsPath) then
+  begin
+    // Create backup directory
+    ForceDirectories(BackupDir);
+    // Copy settings using xcopy
+    Exec('xcopy', '"' + SettingsPath + '" "' + BackupDir + '\settings" /E /I /H /Y', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+end;
+
 function IsPythonInstalled: Boolean;
 var
   PythonPath: String;
@@ -177,6 +299,42 @@ begin
     end;
     Result := False;
     Exit;
+  end;
+  
+  // Check Windows App SDK Runtime (required for WinUI 3 unpackaged)
+  if not IsWindowsAppSDKInstalled then
+  begin
+    PromptWindowsAppSDKDownload;
+    Result := False;
+    Exit;
+  end;
+  
+  // Upgrade path handling
+  if IsUpgrade then
+  begin
+    Log('Upgrade detected from version: ' + GetPreviousVersion);
+    
+    // Warn about downgrade
+    if IsDowngrade then
+    begin
+      if MsgBox('WARNING: You are about to install an older version ({#MyAppVersion}).'#13#10#13#10 +
+                'Currently installed: ' + GetPreviousVersion + #13#10#13#10 +
+                'Downgrading may cause compatibility issues with your existing projects.'#13#10#13#10 +
+                'Are you sure you want to continue?',
+                mbConfirmation, MB_YESNO) = IDNO then
+      begin
+        Result := False;
+        Exit;
+      end;
+    end;
+    
+    // Backup user settings before upgrade
+    BackupUserSettings;
+    Log('User settings backed up before upgrade.');
+  end
+  else
+  begin
+    Log('Fresh installation detected.');
   end;
 end;
 

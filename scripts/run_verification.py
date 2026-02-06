@@ -129,12 +129,13 @@ def main():
     
     # Quality checks (WS-1, WS-4) - can be skipped with --skip-quality
     if not skip_quality:
-        # Empty catch block check (WS-1)
+        # Empty catch block check (WS-1) - needs longer timeout due to large codebase scan
         empty_catch_script = project_root / "scripts" / "check_empty_catches.py"
         if empty_catch_script.exists():
             checks.append({
                 "name": "empty_catch_check",
-                "command": f"{sys.executable} {empty_catch_script}"
+                "command": f"{sys.executable} {empty_catch_script}",
+                "timeout": 60  # Extended timeout for large codebase scan
             })
         
         # XAML safety check (WS-4)
@@ -168,7 +169,8 @@ def main():
     if skip_guard:
         print("  [SKIP] completion_guard (--skip-guard flag)")
     for check in checks:
-        result = run_check(check["name"], check["command"])
+        timeout = check.get("timeout", 30)  # Default 30s, or per-check override
+        result = run_check(check["name"], check["command"], timeout=timeout)
         results.append(result)
         
         status = "PASS" if result["passed"] else "FAIL"

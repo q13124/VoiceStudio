@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import List, Tuple, Set
 
 # Patterns that cause XAML compiler crashes in WinAppSDK 1.8
+# Note: Patterns should be line-scoped or element-scoped to avoid matching comments
 FORBIDDEN_PATTERNS = [
     # Attached property on ContentPresenter (VS-0040)
     (
@@ -27,9 +28,10 @@ FORBIDDEN_PATTERNS = [
         "Attached property TextElement.Foreground on ContentPresenter causes XAML compiler crash",
         "Use explicit Foreground binding or move to child TextBlock"
     ),
-    # Animation targeting attached property
+    # Animation targeting attached property - match within same line or element (not across lines)
+    # Uses [^<>]* to stay within single element boundaries
     (
-        r'ObjectAnimationUsingKeyFrames.*\(TextElement\.',
+        r'<ObjectAnimationUsingKeyFrames[^>]*Storyboard\.TargetProperty="\(TextElement\.',
         "ObjectAnimationUsingKeyFrames targeting TextElement attached property",
         "Animate explicit property on child element instead"
     ),
@@ -39,15 +41,15 @@ FORBIDDEN_PATTERNS = [
         "Storyboard targeting TextElement attached property",
         "Target explicit property on child element instead"
     ),
-    # ColorAnimation on attached property
+    # ColorAnimation on attached property - element-scoped
     (
-        r'ColorAnimation.*\(TextElement\.',
+        r'<ColorAnimation[^>]*Storyboard\.TargetProperty="\(TextElement\.',
         "ColorAnimation targeting TextElement attached property",
         "Animate explicit property on child element instead"
     ),
-    # DoubleAnimation on attached property that may not exist
+    # DoubleAnimation on attached property that may not exist - element-scoped
     (
-        r'DoubleAnimation.*\(TextElement\.',
+        r'<DoubleAnimation[^>]*Storyboard\.TargetProperty="\(TextElement\.',
         "DoubleAnimation targeting TextElement attached property",
         "Verify property exists and is animatable"
     ),
@@ -72,7 +74,8 @@ WARNING_PATTERNS = [
 # Directories to skip
 SKIP_DIRS = {
     '.git', '__pycache__', 'node_modules', 'bin', 'obj',
-    '.venv', 'venv', 'runtime/external',
+    '.venv', 'venv', '.tox', 'dist', 'build', '.buildlogs',
+    'runtime/external',  # External dependencies
 }
 
 

@@ -63,6 +63,7 @@ namespace VoiceStudio.App.Views.Panels
         // Hide all content grids
         SystemInfoGrid.Visibility = Visibility.Collapsed;
         LogsGrid.Visibility = Visibility.Collapsed;
+        TracesGrid.Visibility = Visibility.Collapsed;
         NetworkGrid.Visibility = Visibility.Collapsed;
         EnginesGrid.Visibility = Visibility.Collapsed;
         EnvironmentGrid.Visibility = Visibility.Collapsed;
@@ -83,6 +84,10 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "Logs":
             LogsGrid.Visibility = Visibility.Visible;
+            break;
+          case "Traces":
+            TracesGrid.Visibility = Visibility.Visible;
+            _ = ViewModel.LoadTracesAsync();
             break;
           case "Network":
             NetworkGrid.Visibility = Visibility.Visible;

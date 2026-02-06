@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-04 (Ultimate Master Plan 2026 Optimized added; role guides updated with phase ownership)
+> **Last Updated**: 2026-02-05 (Phase 5 Observability Audit added; Phase 5 complete 15/15 tasks)
 
 ---
 
@@ -235,6 +235,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Final Sweep — One Last Time** | `docs/reports/audit/FINAL_SWEEP_ONE_LAST_TIME_2026-01-30.md` | 2026-01-30 | **Authoritative** all-roles sweep before realignment: verified present (19 ADRs, handoff, roadmap, PRODUCTION_READINESS, role guides, AppServices, UseCases); still missing (Domain/Infrastructure in App, ARCHIVE_POLICY, GOVERNANCE_LOCK, templates/, Part*.md, TASK-0009/0011–0019 briefs, commit-discipline.mdc, BRANCH_MERGE_POLICY); structures/layers/role checklist; realignment checklist (§5) |
 | **Final Sweep — All Roles (Pre-Realignment)** | `docs/reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md` | 2026-01-30 | **Authoritative** pre-realignment sweep: corrects record (what exists post–TASK-0022 vs missing); still-missing canonicals (ARCHIVE_POLICY, GOVERNANCE_LOCK, RULE_PROPOSAL_TEMPLATE, Part*.md, docs/archive/governance/); implementation/architecture gaps; checklist for realignment and roadmap update (§6) |
 | **Final Sweep — Consolidated for Realignment** | `docs/reports/audit/FINAL_SWEEP_CONSOLIDATED_FOR_REALIGNMENT_2026-01-30.md` | 2026-01-30 | **Single reference** for all roles before realignment: corrected record (what exists vs missing); still-missing files; implementation/architecture gaps; role expectations; realignment checklist (§6). Use for plan/roadmap/role update. |
+| **Phase 5 Observability Audit** | `docs/reports/audit/PHASE5_OBSERVABILITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 5 completion audit: 15/15 tasks complete; OpenTelemetry, trace propagation, SLO dashboard, Prometheus export, diagnostics, error tracking; gate_status PASS, ledger_validate PASS |
+| **Phase 6 Security Audit** | `docs/reports/audit/PHASE6_SECURITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 6 completion audit: 7/7 tasks complete; HMAC request signing (40 tests), file validation by magic bytes (58 tests), dependency policy, Dependabot config, SBOM generation, CVE monitoring workflow, secrets rotation guide; 98 tests PASS |
 
 ## Overseer Tooling
 

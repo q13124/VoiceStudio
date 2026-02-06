@@ -1,0 +1,409 @@
+"""
+Prometheus Metrics Export API — Phase 5.2.3
+
+Provides a /metrics endpoint exposing VoiceStudio metrics in Prometheus format.
+Supports both text (Prometheus exposition) and JSON formats.
+All operations are local-first with no external dependencies.
+"""
+
+import logging
+import time
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Any
+
+from fastapi import APIRouter, Query, Response
+from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/metrics", tags=["metrics"])
+
+
+# =============================================================================
+# Metric Types
+# =============================================================================
+
+
+class MetricValue(BaseModel):
+    """A single metric data point."""
+
+    name: str
+    value: float
+    labels: Dict[str, str] = {}
+    timestamp: Optional[float] = None
+    help_text: Optional[str] = None
+    metric_type: str = "gauge"  # gauge, counter, histogram, summary
+
+
+class MetricsResponse(BaseModel):
+    """Response containing all metrics."""
+
+    metrics: List[MetricValue]
+    timestamp: str
+    format: str = "json"
+
+
+# =============================================================================
+# Metrics Registry (in-memory, local-first)
+# =============================================================================
+
+
+class MetricsRegistry:
+    """
+    Local metrics registry for VoiceStudio.
+
+    Stores metrics in memory for Prometheus-style scraping.
+    Thread-safe and designed for local-first operation.
+    """
+
+    _instance: Optional["MetricsRegistry"] = None
+    _metrics: Dict[str, MetricValue] = {}
+    _start_time: float = time.time()
+
+    def __new__(cls) -> "MetricsRegistry":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._metrics = {}
+            cls._start_time = time.time()
+        return cls._instance
+
+    def set_gauge(
+        self,
+        name: str,
+        value: float,
+        labels: Optional[Dict[str, str]] = None,
+        help_text: Optional[str] = None,
+    ) -> None:
+        """Set a gauge metric value."""
+        key = self._make_key(name, labels or {})
+        self._metrics[key] = MetricValue(
+            name=name,
+            value=value,
+            labels=labels or {},
+            timestamp=time.time(),
+            help_text=help_text,
+            metric_type="gauge",
+        )
+
+    def inc_counter(
+        self,
+        name: str,
+        value: float = 1.0,
+        labels: Optional[Dict[str, str]] = None,
+        help_text: Optional[str] = None,
+    ) -> None:
+        """Increment a counter metric."""
+        key = self._make_key(name, labels or {})
+        current = self._metrics.get(key)
+        new_value = (current.value if current else 0) + value
+        self._metrics[key] = MetricValue(
+            name=name,
+            value=new_value,
+            labels=labels or {},
+            timestamp=time.time(),
+            help_text=help_text,
+            metric_type="counter",
+        )
+
+    def observe_histogram(
+        self,
+        name: str,
+        value: float,
+        labels: Optional[Dict[str, str]] = None,
+        help_text: Optional[str] = None,
+    ) -> None:
+        """Record a histogram observation (simplified as gauge for now)."""
+        # For full histogram support, use prometheus_client library
+        key = self._make_key(name + "_latest", labels or {})
+        self._metrics[key] = MetricValue(
+            name=name + "_latest",
+            value=value,
+            labels=labels or {},
+            timestamp=time.time(),
+            help_text=help_text,
+            metric_type="gauge",
+        )
+
+    def get_all_metrics(self) -> List[MetricValue]:
+        """Get all registered metrics."""
+        return list(self._metrics.values())
+
+    def get_uptime_seconds(self) -> float:
+        """Get server uptime in seconds."""
+        return time.time() - self._start_time
+
+    @staticmethod
+    def _make_key(name: str, labels: Dict[str, str]) -> str:
+        """Create unique key for metric+labels combination."""
+        if not labels:
+            return name
+        label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items()))
+        return f"{name}{{{label_str}}}"
+
+
+def get_metrics_registry() -> MetricsRegistry:
+    """Get the global metrics registry instance."""
+    return MetricsRegistry()
+
+
+# =============================================================================
+# Built-in Metrics Collection
+# =============================================================================
+
+
+def collect_system_metrics(registry: MetricsRegistry) -> None:
+    """Collect built-in system metrics."""
+    import os
+    import platform
+
+    # Process uptime
+    registry.set_gauge(
+        "voicestudio_uptime_seconds",
+        registry.get_uptime_seconds(),
+        help_text="VoiceStudio backend uptime in seconds",
+    )
+
+    # Python process info
+    registry.set_gauge(
+        "voicestudio_info",
+        1,
+        labels={
+            "version": "1.0.0",
+            "python_version": platform.python_version(),
+            "platform": platform.system(),
+        },
+        help_text="VoiceStudio version and platform info",
+    )
+
+    # Process ID for identification
+    registry.set_gauge(
+        "voicestudio_process_info",
+        float(os.getpid()),
+        help_text="VoiceStudio backend process ID",
+    )
+
+
+def collect_slo_metrics(registry: MetricsRegistry) -> None:
+    """Collect SLO-related metrics from slo_monitor service."""
+    try:
+        from backend.services.slo_monitor import get_slo_monitor
+
+        monitor = get_slo_monitor()
+        slo_statuses = monitor.get_all_slo_statuses()
+
+        for slo in slo_statuses:
+            labels = {"slo_id": slo.slo_id, "slo_name": slo.slo_name}
+
+            registry.set_gauge(
+                "voicestudio_slo_current_value",
+                slo.current_value,
+                labels=labels,
+                help_text="Current value of SLO metric",
+            )
+
+            registry.set_gauge(
+                "voicestudio_slo_target",
+                slo.target,
+                labels=labels,
+                help_text="Target value for SLO",
+            )
+
+            registry.set_gauge(
+                "voicestudio_slo_is_met",
+                1.0 if slo.is_met else 0.0,
+                labels=labels,
+                help_text="Whether SLO target is currently met (1=yes, 0=no)",
+            )
+
+            registry.set_gauge(
+                "voicestudio_slo_burn_rate",
+                slo.burn_rate,
+                labels=labels,
+                help_text="SLO error budget burn rate",
+            )
+
+            registry.set_gauge(
+                "voicestudio_slo_error_budget_remaining",
+                slo.error_budget_remaining,
+                labels=labels,
+                help_text="Remaining error budget percentage",
+            )
+
+    except ImportError:
+        logger.debug("SLO monitor not available for metrics collection")
+    except AttributeError as exc:
+        logger.warning("SLO monitor API changed: %s", exc)
+    except ValueError as exc:
+        logger.warning("Invalid SLO data: %s", exc)
+
+
+def collect_engine_metrics(registry: MetricsRegistry) -> None:
+    """Collect engine-related metrics."""
+    try:
+        # Placeholder for engine metrics
+        # Will be populated when app/core/engines/metrics.py is implemented
+        registry.set_gauge(
+            "voicestudio_engines_available",
+            1,
+            help_text="Number of available synthesis engines",
+        )
+    except (AttributeError, ValueError) as exc:
+        logger.debug("Engine metrics collection skipped: %s", exc)
+
+
+# =============================================================================
+# Prometheus Text Format Export
+# =============================================================================
+
+
+def format_prometheus_text(metrics: List[MetricValue]) -> str:
+    """
+    Format metrics in Prometheus text exposition format.
+
+    See: https://prometheus.io/docs/instrumenting/exposition_formats/
+    """
+    lines: List[str] = []
+    seen_help: set = set()
+
+    for metric in metrics:
+        # Add HELP and TYPE lines once per metric name
+        if metric.name not in seen_help:
+            if metric.help_text:
+                lines.append(f"# HELP {metric.name} {metric.help_text}")
+            lines.append(f"# TYPE {metric.name} {metric.metric_type}")
+            seen_help.add(metric.name)
+
+        # Format labels
+        if metric.labels:
+            label_str = ",".join(
+                f'{k}="{v}"' for k, v in sorted(metric.labels.items())
+            )
+            metric_line = f"{metric.name}{{{label_str}}} {metric.value}"
+        else:
+            metric_line = f"{metric.name} {metric.value}"
+
+        # Add timestamp if available
+        if metric.timestamp:
+            metric_line += f" {int(metric.timestamp * 1000)}"
+
+        lines.append(metric_line)
+
+    return "\n".join(lines) + "\n"
+
+
+# =============================================================================
+# API Endpoints
+# =============================================================================
+
+
+@router.get(
+    "",
+    summary="Get metrics in Prometheus format",
+    description="Returns all VoiceStudio metrics in Prometheus text format.",
+    response_class=PlainTextResponse,
+)
+async def get_metrics_prometheus() -> Response:
+    """
+    Get metrics in Prometheus text exposition format.
+
+    This endpoint is designed for Prometheus scraping.
+    Returns metrics with HELP and TYPE annotations.
+    """
+    registry = get_metrics_registry()
+
+    # Collect all metric sources
+    collect_system_metrics(registry)
+    collect_slo_metrics(registry)
+    collect_engine_metrics(registry)
+
+    metrics = registry.get_all_metrics()
+    text_output = format_prometheus_text(metrics)
+
+    return Response(
+        content=text_output,
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
+
+@router.get(
+    "/json",
+    response_model=MetricsResponse,
+    summary="Get metrics in JSON format",
+    description="Returns all VoiceStudio metrics in JSON format.",
+)
+async def get_metrics_json() -> MetricsResponse:
+    """
+    Get metrics in JSON format.
+
+    Useful for custom dashboards and debugging.
+    """
+    registry = get_metrics_registry()
+
+    # Collect all metric sources
+    collect_system_metrics(registry)
+    collect_slo_metrics(registry)
+    collect_engine_metrics(registry)
+
+    metrics = registry.get_all_metrics()
+
+    return MetricsResponse(
+        metrics=metrics,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        format="json",
+    )
+
+
+@router.get(
+    "/health",
+    summary="Metrics endpoint health check",
+    description="Verify the metrics endpoint is operational.",
+)
+async def metrics_health() -> Dict[str, Any]:
+    """Health check for metrics endpoint."""
+    registry = get_metrics_registry()
+    return {
+        "status": "healthy",
+        "uptime_seconds": registry.get_uptime_seconds(),
+        "metric_count": len(registry.get_all_metrics()),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.post(
+    "/record",
+    summary="Record a custom metric",
+    description="Record a custom metric value (for internal use).",
+)
+async def record_metric(
+    name: str = Query(..., description="Metric name"),
+    value: float = Query(..., description="Metric value"),
+    metric_type: str = Query("gauge", description="Metric type"),
+    labels: Optional[str] = Query(
+        None, description="Labels as key=value pairs"
+    ),
+) -> Dict[str, str]:
+    """
+    Record a custom metric.
+
+    This endpoint allows internal services to push metrics.
+    Labels should be provided as comma-separated key=value pairs.
+    """
+    registry = get_metrics_registry()
+
+    # Parse labels
+    label_dict: Dict[str, str] = {}
+    if labels:
+        for pair in labels.split(","):
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                label_dict[k.strip()] = v.strip()
+
+    if metric_type == "counter":
+        registry.inc_counter(name, value, label_dict)
+    elif metric_type == "histogram":
+        registry.observe_histogram(name, value, label_dict)
+    else:
+        registry.set_gauge(name, value, label_dict)
+
+    return {"status": "recorded", "metric": name, "value": str(value)}

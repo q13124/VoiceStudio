@@ -37,6 +37,7 @@
                      IsAddTabButtonVisible="False">
                 <TabViewItem Header="System Info"/>
                 <TabViewItem Header="Logs"/>
+                <TabViewItem Header="Traces"/>
                 <TabViewItem Header="Network"/>
                 <TabViewItem Header="Engines"/>
                 <TabViewItem Header="Environment"/>
@@ -95,6 +96,239 @@
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
                         <ListView x:Name="LogsListView" Padding="8"/>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Traces Content (Phase 5.1.3: Distributed Tracing Visualization) -->
+            <Grid x:Name="TracesGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <Grid Padding="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Trace Filters -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+                        <TextBox x:Name="TraceIdSearchBox" 
+                                 PlaceholderText="Search by Trace ID or Correlation ID..." 
+                                 Width="300"/>
+                        <ComboBox x:Name="TraceStatusFilter" PlaceholderText="Status" Width="120">
+                            <ComboBoxItem Content="All"/>
+                            <ComboBoxItem Content="Success"/>
+                            <ComboBoxItem Content="Error"/>
+                            <ComboBoxItem Content="Pending"/>
+                        </ComboBox>
+                        <ComboBox x:Name="TraceTimeRangeFilter" PlaceholderText="Time Range" Width="140">
+                            <ComboBoxItem Content="Last 5 min"/>
+                            <ComboBoxItem Content="Last 15 min"/>
+                            <ComboBoxItem Content="Last 1 hour"/>
+                            <ComboBoxItem Content="Last 24 hours"/>
+                            <ComboBoxItem Content="Custom"/>
+                        </ComboBox>
+                        <Button x:Name="RefreshTracesButton" Content="Refresh"/>
+                        <Button x:Name="ExportTracesButton" Content="Export"/>
+                    </StackPanel>
+                    
+                    <!-- Trace Summary -->
+                    <Border Grid.Row="1" 
+                            Background="{StaticResource VSQ.Panel.Background}" 
+                            CornerRadius="8" 
+                            Padding="16"
+                            Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Total Traces -->
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="Total Traces" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TotalTracesCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Success Rate -->
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="Success Rate" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TraceSuccessRate" 
+                                           Text="100%" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="Green"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Avg Duration -->
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="Avg Duration" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TraceAvgDuration" 
+                                           Text="--" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Error Count -->
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                                <TextBlock Text="Errors" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TraceErrorCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="Red"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Timeline View -->
+                    <Border Grid.Row="2" 
+                            Background="{StaticResource VSQ.Panel.Background}" 
+                            CornerRadius="8">
+                        <Grid Padding="16">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Timeline Header -->
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" 
+                                           Text="Trace ID" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Start Time" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                <TextBlock Grid.Column="2" 
+                                           Text="Timeline / Spans" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                <TextBlock Grid.Column="3" 
+                                           Text="Duration" 
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Right"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                            </Grid>
+                            
+                            <!-- Trace List with Timeline Bars -->
+                            <ListView x:Name="TracesListView" 
+                                      Grid.Row="1"
+                                      SelectionMode="Single">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="4,8" MinHeight="40">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="200"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="100"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Trace ID -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE9D9;" FontSize="12"/>
+                                                <TextBlock Text="{Binding ShortTraceId}" 
+                                                           FontFamily="Consolas"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            
+                                            <!-- Start Time -->
+                                            <TextBlock Grid.Column="1" 
+                                                       Text="{Binding StartTimeFormatted}" 
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            
+                                            <!-- Timeline Bar (Span Visualization) -->
+                                            <Grid Grid.Column="2" 
+                                                  Margin="8,0" 
+                                                  VerticalAlignment="Center">
+                                                <ProgressBar Minimum="0" 
+                                                             Maximum="100" 
+                                                             Value="{Binding DurationPercent}"
+                                                             Height="16"
+                                                             CornerRadius="3"/>
+                                                <ItemsControl ItemsSource="{Binding Spans}" 
+                                                              HorizontalAlignment="Left"
+                                                              VerticalAlignment="Center">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Width="{Binding WidthPercent}" 
+                                                                    Height="12"
+                                                                    Background="{Binding StatusColor}"
+                                                                    CornerRadius="2"
+                                                                    Margin="1,0"
+                                                                    ToolTipService.ToolTip="{Binding TooltipText}"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Grid>
+                                            
+                                            <!-- Duration -->
+                                            <TextBlock Grid.Column="3" 
+                                                       Text="{Binding DurationFormatted}" 
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                            
+                            <!-- Empty State -->
+                            <StackPanel x:Name="TracesEmptyState" 
+                                        Grid.Row="1"
+                                        HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed">
+                                <FontIcon Glyph="&#xE9D9;" FontSize="48" Opacity="0.3"/>
+                                <TextBlock Text="No traces available" 
+                                           Margin="0,12,0,0"
+                                           FontSize="14"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Traces will appear here when distributed tracing is active" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           Opacity="0.7"/>
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
             </Grid>

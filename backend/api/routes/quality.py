@@ -15,6 +15,10 @@ from pydantic import BaseModel
 
 from ..optimization import cache_response
 from backend.services.engine_service import get_engine_service
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_audio_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -400,19 +404,34 @@ async def compare_quality(
     try:
         comparison = QualityComparison()
 
-        # Save reference audio if provided
+        # Save and validate reference audio if provided
         ref_path = None
         if reference_audio:
+            ref_content = await reference_audio.read()
+            try:
+                validate_audio_file(ref_content, filename=reference_audio.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid reference audio file: {e.message}",
+                ) from e
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as ref_file:
-                ref_content = await reference_audio.read()
                 ref_file.write(ref_content)
                 ref_path = ref_file.name
 
         # Process each audio file
         for audio_file in audio_files:
+            # Read and validate audio file
+            content = await audio_file.read()
+            try:
+                validate_audio_file(content, filename=audio_file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid audio file '{audio_file.filename}': {e.message}",
+                ) from e
             # Save to temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-                content = await audio_file.read()
                 tmp_file.write(content)
                 tmp_path = tmp_file.name
 

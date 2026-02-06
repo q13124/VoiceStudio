@@ -1,0 +1,125 @@
+# Dependabot configuration for VoiceStudio
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Security updates are always enabled by default in GitHub.
+# This file configures version updates (non-security).
+
+version: 2
+
+updates:
+  # Python dependencies (root requirements.txt)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(python)"
+    open-pull-requests-limit: 10
+    groups:
+      # Group minor and patch updates together
+      python-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Python dependencies (backend-specific)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "python"
+      - "backend"
+    commit-message:
+      prefix: "deps(backend)"
+    open-pull-requests-limit: 5
+
+  # .NET/NuGet dependencies (main solution)
+  - package-ecosystem: "nuget"
+    directory: "/src"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "dotnet"
+    commit-message:
+      prefix: "deps(nuget)"
+    open-pull-requests-limit: 10
+    groups:
+      # Group Microsoft packages together
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group CommunityToolkit packages
+      community-toolkit:
+        patterns:
+          - "CommunityToolkit.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(actions)"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Git submodules (external runtime dependencies)
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "submodules"
+    commit-message:
+      prefix: "deps(submodule)"
+    open-pull-requests-limit: 3
+    # Submodules are sensitive - require manual review
+    ignore:
+      # Ignore patch updates for submodules (too noisy)
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
+
+# Note: Security updates are handled automatically by GitHub's
+# Dependabot security alerts feature, which is enabled by default.
+# Security updates bypass the schedule and are created immediately.

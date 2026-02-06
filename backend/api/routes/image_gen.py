@@ -15,6 +15,10 @@ from typing import Optional
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from PIL import Image
 
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_image_file,
+)
 from ..models_additional import (
     FaceEnhancementRequest,
     FaceEnhancementResponse,
@@ -376,6 +380,14 @@ async def upscale_image(
         # Load input image
         if image_file:
             image_data = await image_file.read()
+            # Validate image file type by magic bytes
+            try:
+                validate_image_file(image_data, filename=image_file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid image file: {e.message}",
+                ) from e
             input_image = Image.open(BytesIO(image_data))
         elif req.image_id:
             # Load from stored image

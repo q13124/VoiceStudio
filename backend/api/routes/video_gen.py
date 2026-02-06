@@ -12,6 +12,11 @@ from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_audio_file,
+    validate_video_file,
+)
 from ..models_additional import (
     TemporalAnalysis,
     TemporalConsistencyRequest,
@@ -227,6 +232,14 @@ async def upscale_video(
         # Load input video
         if video_file:
             video_data = await video_file.read()
+            # Validate video file type by magic bytes
+            try:
+                validate_video_file(video_data, filename=video_file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid video file: {e.message}",
+                ) from e
             # Save to temp file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
                 tmp_file.write(video_data)
@@ -525,6 +538,14 @@ async def convert_voice(
 
         # Save uploaded audio to temp file
         audio_data = await audio_file.read()
+        # Validate audio file type by magic bytes
+        try:
+            validate_audio_file(audio_data, filename=audio_file.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid audio file: {e.message}",
+            ) from e
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
             tmp_file.write(audio_data)
             input_audio_path = tmp_file.name

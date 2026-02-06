@@ -1,0 +1,230 @@
+# Security Monitoring Workflow
+# Runs daily to check for new CVEs in dependencies
+#
+# Phase 6.3.4 Security Hardening
+
+name: Security Monitor
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC (1:00 AM EST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      severity:
+        description: 'Minimum severity to report'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - low
+          - medium
+          - high
+          - critical
+      fail_on:
+        description: 'Fail if vulnerabilities at this level'
+        required: false
+        default: 'critical'
+        type: choice
+        options:
+          - none
+          - low
+          - medium
+          - high
+          - critical
+
+env:
+  PYTHON_VERSION: '3.11'
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  python-security-scan:
+    name: Python Dependency Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit safety
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          
+      - name: Run pip-audit
+        id: pip-audit
+        continue-on-error: true
+        run: |
+          mkdir -p .buildlogs/security
+          pip-audit --format json --output .buildlogs/security/pip-audit.json || true
+          pip-audit --format markdown --output .buildlogs/security/pip-audit.md || true
+          
+      - name: Run safety check
+        id: safety
+        continue-on-error: true
+        run: |
+          safety check --json > .buildlogs/security/safety.json 2>&1 || true
+          
+      - name: Upload Python scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-security-scan
+          path: .buildlogs/security/
+          retention-days: 30
+
+  dotnet-security-scan:
+    name: .NET Dependency Scan
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        continue-on-error: true
+        
+      - name: Run NuGet vulnerability scan
+        id: nuget-audit
+        continue-on-error: true
+        run: |
+          New-Item -ItemType Directory -Force -Path .buildlogs/security
+          dotnet list package --vulnerable > .buildlogs/security/nuget-vulnerable.txt 2>&1
+          
+      - name: Run NuGet outdated check
+        continue-on-error: true
+        run: |
+          dotnet list package --outdated > .buildlogs/security/nuget-outdated.txt 2>&1
+          
+      - name: Upload .NET scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-security-scan
+          path: .buildlogs/security/
+          retention-days: 30
+
+  aggregate-report:
+    name: Aggregate Security Report
+    runs-on: ubuntu-latest
+    needs: [python-security-scan, dotnet-security-scan]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit safety
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          
+      - name: Download Python scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: python-security-scan
+          path: .buildlogs/security/python/
+        continue-on-error: true
+        
+      - name: Download .NET scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-security-scan
+          path: .buildlogs/security/dotnet/
+        continue-on-error: true
+        
+      - name: Run CVE monitor script
+        id: cve-monitor
+        run: |
+          SEVERITY="${{ github.event.inputs.severity || 'all' }}"
+          FAIL_ON="${{ github.event.inputs.fail_on || 'critical' }}"
+          python scripts/monitor_cves.py \
+            --severity "$SEVERITY" \
+            --fail-on "$FAIL_ON" \
+            --output .buildlogs/security/cve-report.json
+        continue-on-error: true
+        
+      - name: Upload aggregate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: .buildlogs/security/
+          retention-days: 90
+          
+      - name: Check for critical vulnerabilities
+        if: github.event.inputs.fail_on == 'critical' || github.event_name == 'schedule'
+        run: |
+          if [ -f .buildlogs/security/cve-report.json ]; then
+            CRITICAL_COUNT=$(python -c "
+          import json
+          with open('.buildlogs/security/cve-report.json') as f:
+              data = json.load(f)
+              print(data.get('summary', {}).get('by_severity', {}).get('CRITICAL', 0))
+          ")
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "::error::Found $CRITICAL_COUNT critical vulnerabilities!"
+              exit 1
+            fi
+          fi
+          
+      - name: Create issue for high/critical vulnerabilities
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let reportContent = 'Unable to read report';
+            try {
+              const report = JSON.parse(fs.readFileSync('.buildlogs/security/cve-report.json', 'utf8'));
+              const critical = report.summary?.by_severity?.CRITICAL || 0;
+              const high = report.summary?.by_severity?.HIGH || 0;
+              
+              reportContent = `## Security Scan Results
+              
+            - **Critical**: ${critical}
+            - **High**: ${high}
+            - **Total**: ${report.summary?.total || 0}
+
+            ### Action Required
+            Please review the security scan artifacts and update affected dependencies.
+            
+            See: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+            `;
+            } catch (e) {
+              console.log('Could not parse report:', e);
+            }
+            
+            // Check for existing open security issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'security,dependencies',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔒 Security: Vulnerabilities detected in dependencies',
+                body: reportContent,
+                labels: ['security', 'dependencies', 'automated']
+              });
+            }

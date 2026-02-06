@@ -90,18 +90,21 @@ class Span:
     trace_id: str
     span_id: str
     name: str
-    start_time: float = field(default_factory=time.perf_counter)
+    start_time: float = field(default_factory=time.time)  # Unix timestamp
     end_time: Optional[float] = None
     status: SpanStatus = SpanStatus.OK
     attributes: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
     parent_span_id: Optional[str] = None
+    # Internal perf counter for accurate duration measurement
+    _perf_start: float = field(default_factory=time.perf_counter, repr=False)
+    _perf_end: Optional[float] = field(default=None, repr=False)
 
     @property
     def duration_ms(self) -> float:
-        if self.end_time is None:
-            return (time.perf_counter() - self.start_time) * 1000
-        return (self.end_time - self.start_time) * 1000
+        if self._perf_end is None:
+            return (time.perf_counter() - self._perf_start) * 1000
+        return (self._perf_end - self._perf_start) * 1000
 
     def set_attribute(self, key: str, value: Any) -> None:
         self.attributes[key] = value
@@ -111,7 +114,8 @@ class Span:
         self.error = error
 
     def end(self) -> None:
-        self.end_time = time.perf_counter()
+        self._perf_end = time.perf_counter()
+        self.end_time = time.time()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -119,6 +123,8 @@ class Span:
             "span_id": self.span_id,
             "parent_span_id": self.parent_span_id,
             "name": self.name,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
             "duration_ms": self.duration_ms,
             "status": self.status.value,
             "attributes": self.attributes,
@@ -299,8 +305,13 @@ class TelemetryService:
             setattr(log_record, k, v)
         logger.handle(log_record)
 
-    def get_recent_spans(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get recent spans for debugging."""
+    def get_recent_spans(self, limit: int = 100) -> List[Span]:
+        """Get recent spans as Span objects."""
+        with self._lock:
+            return list(self._spans[-limit:])
+
+    def get_recent_spans_dict(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get recent spans as dictionaries for debugging/API."""
         with self._lock:
             return [s.to_dict() for s in self._spans[-limit:]]
 

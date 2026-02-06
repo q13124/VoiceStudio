@@ -11,6 +11,12 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_image_file,
+    validate_video_file,
+)
 from backend.services.engine_service import get_engine_service
 
 from ..optimization import cache_response
@@ -97,6 +103,20 @@ async def upscale_media(
                 status_code=400,
                 detail="scale_factor must be 2.0, 4.0, or 8.0",
             )
+
+        # Validate file type by magic bytes based on media_type
+        file_content = await file.read()
+        await file.seek(0)  # Reset file position for later read
+        try:
+            if request.media_type == "image":
+                validate_image_file(file_content, filename=file.filename)
+            else:  # video
+                validate_video_file(file_content, filename=file.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid {request.media_type} file: {e.message}",
+            ) from e
 
         import uuid
         from datetime import datetime

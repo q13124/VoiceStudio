@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -19,6 +20,71 @@ using Generated = VoiceStudio.App.Services.Generated;
 
 namespace VoiceStudio.App.Services
 {
+  /// <summary>
+  /// HTTP handler that adds X-Correlation-Id and trace headers to all requests.
+  /// Implements Phase 5.1.2 trace propagation for distributed tracing.
+  /// </summary>
+  internal sealed class CorrelationIdHandler : DelegatingHandler
+  {
+    private const string CorrelationIdHeader = "X-Correlation-Id";
+    private const string TraceIdHeader = "X-Trace-Id";
+    private const string SpanIdHeader = "X-Span-Id";
+    private const string TraceParentHeader = "traceparent";
+
+    public CorrelationIdHandler() : base(new HttpClientHandler())
+    {
+    }
+
+    public CorrelationIdHandler(HttpMessageHandler innerHandler) : base(innerHandler)
+    {
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+      HttpRequestMessage request,
+      CancellationToken cancellationToken)
+    {
+      // Generate a new correlation ID for this request if not already present
+      if (!request.Headers.Contains(CorrelationIdHeader))
+      {
+        var correlationId = Guid.NewGuid().ToString("N");
+        request.Headers.Add(CorrelationIdHeader, correlationId);
+      }
+
+      // Add W3C Trace Context header for distributed tracing compatibility
+      // Format: version-trace_id-span_id-trace_flags
+      if (!request.Headers.Contains(TraceParentHeader))
+      {
+        var traceId = Guid.NewGuid().ToString("N");
+        var spanId = Guid.NewGuid().ToString("N").Substring(0, 16);
+        var traceParent = $"00-{traceId}-{spanId}-01";
+        request.Headers.Add(TraceParentHeader, traceParent);
+        request.Headers.Add(TraceIdHeader, traceId);
+        request.Headers.Add(SpanIdHeader, spanId);
+      }
+
+      // Use Activity if available for richer tracing context
+      var activity = Activity.Current;
+      if (activity != null)
+      {
+        // Override with actual activity trace context
+        request.Headers.Remove(TraceParentHeader);
+        request.Headers.Remove(TraceIdHeader);
+        request.Headers.Remove(SpanIdHeader);
+
+        var activityTraceId = activity.TraceId.ToString();
+        var activitySpanId = activity.SpanId.ToString();
+        request.Headers.Add(TraceIdHeader, activityTraceId);
+        request.Headers.Add(SpanIdHeader, activitySpanId);
+
+        // W3C Trace Context format
+        var actTraceParent = $"00-{activityTraceId}-{activitySpanId}-01";
+        request.Headers.Add(TraceParentHeader, actTraceParent);
+      }
+
+      return await base.SendAsync(request, cancellationToken);
+    }
+  }
+
   public class BackendClient : IBackendClient, IDisposable
   {
     private readonly HttpClient _httpClient;
@@ -38,7 +104,11 @@ namespace VoiceStudio.App.Services
     public BackendClient(BackendClientConfig config)
     {
       _config = config ?? throw new ArgumentNullException(nameof(config));
-      _httpClient = new HttpClient
+
+      // Use CorrelationIdHandler to add X-Correlation-Id headers to all requests
+      // This enables distributed tracing per Phase 5.1.2
+      var handler = new CorrelationIdHandler();
+      _httpClient = new HttpClient(handler)
       {
         BaseAddress = new Uri(config.BaseUrl),
         Timeout = config.RequestTimeout

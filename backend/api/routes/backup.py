@@ -25,6 +25,11 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_archive_file,
+)
+
 try:
     from ..optimization import cache_response
 except ImportError:
@@ -537,25 +542,27 @@ async def upload_backup(
                     detail="Insufficient disk space",
                 )
 
-        # Save uploaded file with size tracking
-        uploaded_size = 0
+        # Read and validate archive file
+        content = await file.read()
+        try:
+            validate_archive_file(content, filename=file.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid archive file: {e.message}",
+            ) from e
+
+        # Check size
+        max_size_bytes = _MAX_UPLOAD_SIZE_MB * 1024 * 1024
+        if len(content) > max_size_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Upload size exceeds maximum ({_MAX_UPLOAD_SIZE_MB}MB)",
+            )
+
+        # Save validated file
         with open(backup_path, "wb") as f:
-            while True:
-                chunk = await file.read(8192)  # 8KB chunks
-                if not chunk:
-                    break
-                uploaded_size += len(chunk)
-                # Check size during upload
-                max_size_bytes = _MAX_UPLOAD_SIZE_MB * 1024 * 1024
-                if uploaded_size > max_size_bytes:
-                    backup_path.unlink()
-                    raise HTTPException(
-                        status_code=413,
-                        detail=(
-                            f"Upload size exceeds maximum " f"({_MAX_UPLOAD_SIZE_MB}MB)"
-                        ),
-                    )
-                f.write(chunk)
+            f.write(content)
 
         # Extract and read metadata
         temp_dir = Path(f"temp_upload_{backup_id}")

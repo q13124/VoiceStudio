@@ -44,6 +44,10 @@ from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
 )
 from backend.services.engine_service import get_engine_service
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_audio_file,
+)
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
@@ -1283,9 +1287,18 @@ async def analyze(
     - naturalness: Naturalness score (0-1)
     """
     try:
+        # Read and validate uploaded file
+        content = await audio_file.read()
+        try:
+            validate_audio_file(content, filename=audio_file.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid audio file: {e.message}",
+            ) from e
+        
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-            content = await audio_file.read()
             tmp_file.write(content)
             tmp_path = tmp_file.name
 
@@ -1300,10 +1313,17 @@ async def analyze(
             # Save reference audio if provided
             ref_path = None
             if reference_audio:
+                ref_content = await reference_audio.read()
+                try:
+                    validate_audio_file(ref_content, filename=reference_audio.filename)
+                except FileValidationError as e:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid reference audio file: {e.message}",
+                    ) from e
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=".wav"
                 ) as ref_file:
-                    ref_content = await reference_audio.read()
                     ref_file.write(ref_content)
                     ref_path = ref_file.name
 
@@ -2692,12 +2712,19 @@ async def clone(
                 detail=f"Invalid quality_mode. Must be one of: {', '.join(valid_modes)}",
             )
 
-        # Save reference audio(s)
+        # Save and validate reference audio(s)
         ref_paths: List[str] = []
         reference_files = reference_audio or []
         for ref_file in reference_files:
+            content = await ref_file.read()
+            try:
+                validate_audio_file(content, filename=ref_file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid reference audio file '{ref_file.filename}': {e.message}",
+                ) from e
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-                content = await ref_file.read()
                 tmp_file.write(content)
                 ref_paths.append(tmp_file.name)
         ref_path = ref_paths[0] if ref_paths else None

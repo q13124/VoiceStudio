@@ -21,6 +21,12 @@ Step-by-step tutorials for common workflows.
 15. [Tutorial 15: Optimize Training Data for Better Models](#tutorial-15-optimize-training-data-for-better-models)
 16. [Tutorial 16: Use Post-Processing Pipeline](#tutorial-16-use-post-processing-pipeline)
 17. [Tutorial 17: Monitor Quality in Real-Time](#tutorial-17-monitor-quality-in-real-time)
+18. [Tutorial 18: Using Global Search](#tutorial-18-using-global-search)
+19. [Tutorial 19: Using Multi-Select and Batch Operations](#tutorial-19-using-multi-select-and-batch-operations)
+20. [Tutorial 20: Using Context Menus and Panel Actions](#tutorial-20-using-context-menus-and-panel-actions)
+21. [Tutorial 21: Configure Automatic Backups](#tutorial-21-configure-automatic-backups)
+22. [Tutorial 22: Recovering from a Crash](#tutorial-22-recovering-from-a-crash)
+23. [Tutorial 23: Understanding Graceful Degradation](#tutorial-23-understanding-graceful-degradation)
 
 ---
 
@@ -1896,6 +1902,148 @@ Step-by-step tutorials for common workflows.
 - Context menus provide quick access to relevant actions
 - Panel actions are context-sensitive
 - Keyboard shortcuts shown in tooltips
+
+---
+
+## Tutorial 21: Configure Automatic Backups
+
+**Goal:** Set up automatic data backup to protect your work.
+
+**Time:** 5 minutes
+
+### Step 1: Open Settings
+
+1. Open **Settings** panel (Ctrl+,)
+2. Navigate to **Data & Backup** section
+
+### Step 2: Enable Automatic Backups
+
+1. Toggle **"Enable Automatic Backups"** ON
+2. Set backup interval (default: 24 hours)
+3. Set maximum backup count (default: 10)
+
+### Step 3: Configure Backup Contents
+
+1. Select what to backup:
+   - **Settings:** Application preferences (recommended)
+   - **Presets:** Audio and voice presets (recommended)
+   - **Voices:** Custom voice profiles (recommended)
+   - **Projects:** Project files (optional, may be large)
+
+### Step 4: Manual Backup
+
+1. Click **"Create Backup Now"** button
+2. Wait for backup to complete
+3. Backup appears in backup list
+
+### Step 5: View Available Backups
+
+1. Scroll to **Available Backups** section
+2. See list of backups with:
+   - Date created
+   - Size
+   - Description
+
+### Step 6: Restore from Backup
+
+1. Select backup from list
+2. Click **"Restore"** button
+3. Confirm restoration
+4. Data restored from backup
+
+**Tips:**
+- Enable automatic backups to protect your work
+- Create manual backup before major changes
+- Keep multiple backups for safety
+- Older backups are automatically cleaned up
+
+---
+
+## Tutorial 22: Recovering from a Crash
+
+**Goal:** Recover your work after an application crash.
+
+**Time:** 5 minutes
+
+### Step 1: Reopen VoiceStudio After Crash
+
+1. Reopen VoiceStudio after unexpected closure
+2. If session data was saved, recovery dialog appears
+
+### Step 2: Review Recovery Information
+
+1. Recovery dialog shows:
+   - Last session time
+   - Active project (if any)
+   - Unsaved changes detected
+
+### Step 3: Choose Recovery Option
+
+1. **Recover Session:** Restores to last saved state
+2. **Start Fresh:** Ignores recovery data, starts new session
+3. **View Details:** Shows more information about recoverable data
+
+### Step 4: After Recovery
+
+1. Review recovered work
+2. Save any important changes immediately
+3. Check for missing data
+
+### Step 5: Reporting Issues (Optional)
+
+1. If crash was caused by a bug:
+2. Open **Settings** → **Error Reporting**
+3. Enable **"Submit Error Reports"** (opt-in)
+4. View pending reports
+5. Reports help improve VoiceStudio
+
+**Tips:**
+- VoiceStudio auto-saves session state periodically
+- Recovery works best if you save projects regularly
+- Error reporting is opt-in and privacy-respecting
+- All error data is stored locally unless you opt-in to submit
+
+---
+
+## Tutorial 23: Understanding Graceful Degradation
+
+**Goal:** Learn how VoiceStudio maintains functionality when engines fail.
+
+**Time:** 5 minutes
+
+### Step 1: Understand Fallback Behavior
+
+1. When a synthesis engine fails, VoiceStudio automatically tries alternative engines
+2. You'll see a notification indicating fallback was used
+3. Results may differ slightly but functionality continues
+
+### Step 2: Check Engine Health
+
+1. Open **Diagnostics** panel
+2. View **Engine Status** section
+3. See health status for each engine:
+   - **Healthy:** Normal operation
+   - **Degraded:** Experiencing issues, fallback may activate
+   - **Unavailable:** Engine not responding
+
+### Step 3: Understand Quality Indicators
+
+1. When fallback is used:
+   - Output includes "degraded" indicator
+   - Original and fallback engine shown
+   - Quality metrics help compare results
+
+### Step 4: Force Specific Engine
+
+1. If you need a specific engine:
+2. Disable fallback in synthesis settings
+3. Or select engine explicitly in synthesis panel
+
+**Tips:**
+- Graceful degradation ensures you can keep working
+- Check engine health if results seem different
+- Primary engine is always tried first
+- Fallback engines are selected based on compatibility
 
 ---
 

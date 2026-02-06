@@ -1,11 +1,13 @@
 # Quality Ledger — Single Source of Truth
 
-Last updated: 2026-02-04  
+Last updated: 2026-02-05  
 Owner: [OVERSEER]
 
 *Proof-section backfill (2026-01-27): Added Summary + Proof run detail blocks for VS-0001, VS-0002, VS-0004–VS-0011, VS-0013–VS-0016 per TASK-0003. Evidence references finalization list, Gate B/C/D/E proofs, and existing artifacts; no proof invented.*
 
 *Professional Completion Plan (2026-02-04): Executed voicestudio_professional_completion plan. Completed Phase 1 (UI Smoke Testing), Phase 2 (E2E Testing), Phase 3 (Core View Completion), Phase 4 (Final Verification). All gates passing (B-H). Evidence collected to docs/release/evidence/v1.0.1.*
+
+*Phase 7 Production Readiness (2026-02-05): Executed phase_7_production_readiness plan. Completed 12/17 tasks: Installer enhancement (prerequisites.iss, VoiceStudio.iss), Error recovery (CrashRecoveryService, ErrorReportingService, DataBackupService, circuit breakers), Performance optimization (VirtualizedListHelper, PanelLoader, DeferredServiceInitializer), Tutorial updates. XAML compiler fix: SLODashboardView.xaml UniformGrid namespace corrected. Build exit 0, 0 errors.*
 
 This file is the canonical ledger for **every** bug, crash, build failure, missing feature, UX regression, rule violation, or architecture drift item.
 
@@ -88,6 +90,7 @@ Use exactly one:
 | VS-0034 | DONE  | S2 Major    | E    | Engine Engineer          | ENGINE,AUDIO,RUNTIME | Upgrade-lane XTTS synthesis blocked by torchcodec load failure (cu128)     |
 | VS-0035 | DONE  | S0 Blocker  | B    | Build & Tooling Engineer | BUILD           | XAML compiler exits code 1 with no output (WinAppSDK 1.8)                     |
 | VS-0040 | DONE | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
+| VS-0041 | OPEN | S4 Chore | B | Build & Tooling Engineer | RULES,BUILD | Empty catch blocks detected (65 occurrences) - code quality remediation |
 
 ---
 
@@ -1465,5 +1468,74 @@ Further isolation identified TWO issues in VSQ.Button.NavToggle:
 - Related: VS-0001, VS-0005, VS-0035 (Gate B XAML chain)
 - Investigation log: Debug Agent session 2026-02-03/04
 - Files modified: `src/VoiceStudio.App/Resources/Styles/Controls.xaml`
+
+---
+
+### VS-0041 — Empty catch blocks detected (65 occurrences) - code quality remediation
+
+**State:** OPEN  
+**Severity:** S4 Chore  
+**Gate:** B  
+**Owner role:** Build & Tooling Engineer  
+**Reviewer role:** Overseer  
+**Categories:** RULES, BUILD  
+**Introduced:** Pre-existing (legacy code)  
+**Last verified:** 2026-02-05 (Windows 10.0.26200)
+
+**Summary**
+
+- Pre-commit verification check `empty_catch_check` detects 65 empty catch blocks across the codebase.
+- These violate `no-suppression.mdc` policy: "Errors are NEVER suppressed. Errors are ALWAYS fixed."
+- Patterns detected: `except Exception: pass`, `except ImportError: pass`, `catch (HttpRequestException) { }`, `catch { /* comment only */ }`
+- Files affected span: `app/core/`, `backend/api/`, `tests/`, `tools/`, `src/`
+
+**Environment**
+
+- OS: Windows 10.0.26200
+- Python: 3.12
+- Verification script: `scripts/check_empty_catches.py`
+- Repo path: `E:\VoiceStudio`
+
+**Detection**
+
+Command: `python scripts/run_verification.py`
+Result: `empty_catch_check` exit 1, 65 issues found
+
+**Distribution of Issues**
+
+| Area | Count | Notes |
+|------|-------|-------|
+| `tests/` | ~25 | Test fixtures and cleanup |
+| `tools/` | ~12 | Internal tooling |
+| `app/core/` | ~10 | Core business logic |
+| `backend/` | ~10 | API routes and services |
+| `src/` | ~8 | C# test infrastructure |
+
+**Fix Plan**
+
+- [ ] Categorize each occurrence: intentional (needs `# ALLOWED:` comment) vs anti-pattern (needs proper handling)
+- [ ] Add `# ALLOWED: <reason>` comments for justified cases (e.g., `ImportError` for optional imports)
+- [ ] Implement proper error handling for anti-pattern cases
+- [ ] Update verification check to pass
+
+**Remediation Priority**
+
+1. `app/core/` and `backend/` (production code) - highest priority
+2. `src/` (C# production/test) - high priority
+3. `tests/` (test infrastructure) - medium priority
+4. `tools/` (internal tooling) - lower priority
+
+**Proof run (discovery)**
+
+- Command: `python scripts/check_empty_catches.py`
+- Duration: 30.95s
+- Result: 65 empty catch blocks detected
+- Output: Full list in verification run 2026-02-05
+
+**Links**
+
+- Related rule: `.cursor/rules/quality/no-suppression.mdc`
+- Related ADR: ADR-001 (rulebook integration)
+- Discovery session: Debug Agent system health check 2026-02-05
 
 ---

@@ -20,6 +20,10 @@ from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFil
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_archive_file,
+)
 from ..models import ApiOk
 from ..optimization import cache_response
 
@@ -328,14 +332,24 @@ async def import_model(
         filename=file.filename if file else None,
     ):
         try:
+            # Read and validate archive file
+            content = await file.read()
+            try:
+                validate_archive_file(content, filename=file.filename)
+            except FileValidationError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid archive file: {e.message}",
+                ) from e
+
             # Save uploaded file temporarily
             temp_dir = tempfile.mkdtemp()
             temp_file = Path(temp_dir) / file.filename
 
             try:
-                # Write uploaded file
+                # Write validated file
                 with open(temp_file, "wb") as f:
-                    shutil.copyfileobj(file.file, f)
+                    f.write(content)
 
                 # Extract ZIP
                 extract_dir = Path(temp_dir) / "extracted"

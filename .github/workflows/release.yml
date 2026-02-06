@@ -48,6 +48,21 @@ jobs:
           pytest tests/unit/ -v --tb=short
         # Tests must pass for release - no continue-on-error
         
+      - name: Generate SBOM
+        run: |
+          pip install cyclonedx-bom pip-licenses
+          python scripts/generate_sbom.py --validate
+        continue-on-error: true  # SBOM generation should not block release
+        
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom
+          path: .buildlogs/sbom/
+          retention-days: 90
+          if-no-files-found: warn
+        
       - name: Build installer
         run: |
           if (Test-Path "installer/build-installer.ps1") {
@@ -73,6 +88,11 @@ jobs:
           
           if (Test-Path "installer/VoiceStudio.msi") {
             Copy-Item -Path "installer/VoiceStudio.msi" -Destination "release-artifacts/VoiceStudio-v$version.msi"
+          }
+          
+          # Include SBOM in release artifacts
+          if (Test-Path ".buildlogs/sbom/voicestudio-sbom.json") {
+            Copy-Item -Path ".buildlogs/sbom/voicestudio-sbom.json" -Destination "release-artifacts/VoiceStudio-v$version-sbom.json"
           }
           
       - name: Upload release artifacts

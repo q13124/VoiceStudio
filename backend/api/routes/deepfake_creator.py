@@ -9,6 +9,12 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+
+from backend.core.security.file_validation import (
+    FileValidationError,
+    validate_image_file,
+    validate_video_file,
+)
 from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
@@ -112,14 +118,36 @@ async def create_deepfake(
         source_face_path = temp_dir / f"source_{source_face.filename or 'face.jpg'}"
         target_media_path = temp_dir / f"target_{target_media.filename or 'media'}"
 
+        # Read uploaded files content
+        source_face_content = await source_face.read()
+        target_media_content = await target_media.read()
+
+        # Validate file types by magic bytes
+        try:
+            validate_image_file(source_face_content, filename=source_face.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid source face image: {e.message}",
+            ) from e
+
+        try:
+            if request.media_type == "image":
+                validate_image_file(target_media_content, filename=target_media.filename)
+            else:  # video
+                validate_video_file(target_media_content, filename=target_media.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid target media file: {e.message}",
+            ) from e
+
         # Write uploaded files
         with open(source_face_path, "wb") as f:
-            content = await source_face.read()
-            f.write(content)
+            f.write(source_face_content)
 
         with open(target_media_path, "wb") as f:
-            content = await target_media.read()
-            f.write(content)
+            f.write(target_media_content)
 
         # Validate file types
         source_ext = Path(source_face.filename or "").suffix.lower()

@@ -44,18 +44,30 @@ ALLOWLIST_PATTERNS = [
     r'# ALLOWED: bare except',  # Python explicit allowance
 ]
 
-# Directories to skip
+# Directories to skip (exact match)
 SKIP_DIRS = {
     '.git', '__pycache__', 'node_modules', 'bin', 'obj',
-    '.venv', 'venv', '.tox', 'dist', 'build', '.buildlogs',
-    'runtime/external',  # External dependencies
+    '.venv', 'venv', '.venvs', '.tox', 'dist', 'build', '.buildlogs',
+    'runtime', 'env',  # External dependencies and virtual environments
+    '.cursor',  # Cursor hooks and skills (intentional patterns)
 }
+
+# Directory prefixes to skip (partial match for venv_* patterns)
+SKIP_DIR_PREFIXES = {'venv_', 'env_'}
 
 
 def should_skip_path(path: Path) -> bool:
     """Check if a path should be skipped."""
     parts = set(path.parts)
-    return bool(parts & SKIP_DIRS)
+    # Exact match
+    if parts & SKIP_DIRS:
+        return True
+    # Prefix match (for venv_*, env_* directories)
+    for part in path.parts:
+        for prefix in SKIP_DIR_PREFIXES:
+            if part.startswith(prefix):
+                return True
+    return False
 
 
 def is_allowlisted(content: str, match_start: int, match_end: int) -> bool:
