@@ -30,7 +30,7 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 ## Current Phase
 
 - **Phase**: Implement (Post Gate D — Gate H)
-- **Master Plan Phase**: 8 - Continuous Improvement Infrastructure (IN PROGRESS, 8/21 tasks)
+- **Master Plan Phase**: 8 - Continuous Improvement Infrastructure (IN PROGRESS, 15/21 tasks)
 - **Started**: 2026-02-05
 - **Context**: Phase 1-7 COMPLETE. Phase 8 initiated with Quality Automation (8.3) and Documentation Automation (8.4) tooling. Build & Tooling Engineer (Role 2) implementing automated quality dashboards, regression detection, API docs generator, changelog automation, and architecture diagrams.
 
@@ -49,7 +49,7 @@ git reset --hard v1.0.0-baseline  # Reset current branch to baseline (destructiv
 - **Owner**: Build & Tooling Engineer (Role 2)
 - **Phase**: 8
 - **Status**: **IN PROGRESS**
-- **Note**: Quality Scorecard (8.3.1), Quality Dashboard (8.3.2), Regression Detection (8.3.3), Release Checklist (8.3.4), API Docs Generator (8.4.1), Arch Diagrams (8.4.2), Doc Coverage (8.4.3), Changelog Generator (8.4.4) implemented. CI integration pending.
+- **Note**: Quality Automation (8.3.1-8.3.4), Doc Automation (8.4.1-8.4.4) complete. Scalability (8.1.1-8.1.3): FeatureFlagsService.cs, ab_testing.py, FEATURE_FLAGS_GUIDE.md verified complete. Feedback (8.2.1-8.2.3): FeedbackDialog.xaml, AnalyticsService.cs, NPSSurvey.xaml implemented. CI integration complete.
 
 ## Phase 1 Status — COMPLETE (20/20 tasks, 100%)
 
@@ -90,12 +90,18 @@ Production readiness implementation by Release Engineer (Role 6):
 - Tests: Backend services 30/30 passed (circuit breaker tests included)
 - Documentation: CHANGELOG.md + RELEASE_NOTES_v1.0.1.md committed
 
-### Phase 8 Summary — IN PROGRESS (8/21 tasks, 38%)
+### Phase 8 Summary — IN PROGRESS (15/21 tasks, 71%)
 
 Continuous Improvement Infrastructure implementation by Build & Tooling Engineer (Role 2):
 
 | ID | Title | Status | Proof |
 |----|-------|--------|-------|
+| 8.1.1 | Feature Flag Service | ✅ COMPLETE | Services/FeatureFlagsService.cs |
+| 8.1.2 | A/B Testing Infrastructure | ✅ COMPLETE | backend/services/ab_testing.py |
+| 8.1.3 | Feature Flag Guide | ✅ COMPLETE | docs/developer/FEATURE_FLAGS_GUIDE.md |
+| 8.2.1 | Feedback Dialog | ✅ COMPLETE | Views/FeedbackDialog.xaml |
+| 8.2.2 | Analytics Service | ✅ COMPLETE | Services/AnalyticsService.cs |
+| 8.2.3 | NPS Survey | ✅ COMPLETE | Views/NPSSurvey.xaml, ViewModels/NPSSurveyViewModel.cs |
 | 8.3.1 | Quality Scorecard | ✅ COMPLETE | scripts/quality_scorecard.py |
 | 8.3.2 | Quality Dashboard | ✅ COMPLETE | tools/quality/dashboard.py |
 | 8.3.3 | Regression Detection | ✅ COMPLETE | scripts/detect_regressions.py |
@@ -104,12 +110,14 @@ Continuous Improvement Infrastructure implementation by Build & Tooling Engineer
 | 8.4.2 | Architecture Diagrams | ✅ COMPLETE | scripts/generate_arch_diagrams.py |
 | 8.4.3 | Doc Coverage | ✅ COMPLETE | scripts/doc_coverage.py |
 | 8.4.4 | Changelog Generator | ✅ COMPLETE | scripts/generate_changelog.py |
-| — | CI Integration | 🔄 IN PROGRESS | .github/workflows/build.yml |
+| — | CI Integration | ✅ COMPLETE | .github/workflows/build.yml (quality-scorecard, regression-detection jobs) |
 
-**Phase 8 In Progress (2026-02-05)**:
+**Phase 8 Progress (2026-02-05)**:
+- Scalability: 3/3 tasks complete (8.1.1-8.1.3) — Feature flags, A/B testing, documentation
+- Feedback Collection: 3/3 tasks complete (8.2.1-8.2.3) — Feedback dialog, analytics, NPS survey
 - Quality Automation: 4/4 tasks complete (8.3.1-8.3.4)
 - Documentation Automation: 4/4 tasks complete (8.4.1-8.4.4)
-- CI Integration: Pending
+- CI Integration: Complete (2 new workflow jobs added)
 
 ### Phase 4 Summary — COMPLETE (25/25 tasks, 100%)
 
@@ -469,11 +477,11 @@ _Previous:_
 
 ## Context Acknowledgment
 
-- **Acknowledged At**: 2026-02-05 (Phase 7 Complete)
-- **Acknowledged By**: Release Engineer (Role 6)
-- **Note**: Phase 7 Production Readiness complete. v1.0.1 release documentation created. All gates PASS except empty_catch_check (pre-existing VS-0041).
-- **Previous**: 2026-02-06 (Verification Refresh)
-- **Summary**: **Phase 4 Test Coverage Expansion COMPLETE** (25/25 tasks, 100%). All contract tests (93+ tests), test fixtures (factories, engines, mock_backend), coverage gate (95% threshold in CI), and TESTING_GUIDE.md documentation committed (d486934be). STATE.md updated with Phase 4 summary, proof index entries, and changelog. Phases 1-6 complete; Phase 7 remains **IN PROGRESS** (12/17 tasks, 70%). Next: Complete Phase 7 remaining tasks (7.1.1, 7.3.3, 7.4.1-7.4.3).
+- **Acknowledged At**: 2026-02-05 (Phase 8 In Progress)
+- **Acknowledged By**: Overseer (Role 0)
+- **Note**: Phase 8 Continuous Improvement Infrastructure in progress. Committed feat(phase8) feature flags + user feedback systems, quality automation scripts. Build verified 0 errors.
+- **Previous**: 2026-02-05 (Phase 7 Complete)
+- **Summary**: **Phase 8 Implementation Progress**: (8.1) Scalability Infrastructure — FeatureFlagsService.cs enhanced (rollouts, A/B, remote config), ab_testing.py created, FEATURE_FLAGS_GUIDE.md documented. (8.2) User Feedback — AnalyticsService.cs updated (opt-in consent, sessions), FeedbackDialog + NPSSurvey XAML implemented, MockAnalyticsService fixed, NPSSurveyViewModel property/command mismatches resolved. (8.3-8.4) Quality & Doc Automation scripts committed. Build: 0 errors, 2347 pre-existing warnings. Verification: gate_status PASS, ledger_validate PASS, completion_guard PASS, xaml_safety_check PASS; empty_catch_check FAIL (pre-existing VS-0041). Commits: 1fd6520fb, d791bdc4f.
 
 
 ## SSOT Pointers
