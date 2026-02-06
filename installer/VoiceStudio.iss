@@ -251,28 +251,7 @@ begin
   end;
 end;
 
-function IsPythonInstalled: Boolean;
-var
-  PythonPath: String;
-begin
-  Result := RegQueryStringValue(HKLM, 'SOFTWARE\Python\PythonCore\3.10\InstallPath', 'ExecutablePath', PythonPath);
-  if not Result then
-    Result := RegQueryStringValue(HKLM, 'SOFTWARE\Python\PythonCore\3.11\InstallPath', 'ExecutablePath', PythonPath);
-  if not Result then
-    Result := RegQueryStringValue(HKLM, 'SOFTWARE\Python\PythonCore\3.12\InstallPath', 'ExecutablePath', PythonPath);
-end;
-
-function IsDotNet8DesktopInstalled: Boolean;
-var
-  FindRec: TFindRec;
-  SearchPath: String;
-begin
-  // Check for .NET 8 Windows Desktop Runtime
-  SearchPath := ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App\8.*');
-  Result := FindFirst(SearchPath, FindRec);
-  if Result then
-    FindClose(FindRec);
-end;
+// IsPythonInstalled and IsDotNet8DesktopInstalled are now defined in prerequisites.iss
 
 function InitializeSetup(): Boolean;
 begin

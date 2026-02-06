@@ -62,6 +62,25 @@ begin
   Result := 'https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/downloads';
 end;
 
+// ============================================================================
+// .NET 8 Desktop Runtime Detection
+// ============================================================================
+// VoiceStudio requires .NET 8 Desktop Runtime for WinUI 3 components.
+// The runtime is typically installed at:
+//   C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\8.*
+
+function IsDotNet8DesktopInstalled: Boolean;
+var
+  FindRec: TFindRec;
+  SearchPath: String;
+begin
+  // Check for .NET 8 Windows Desktop Runtime
+  SearchPath := ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App\8.*');
+  Result := FindFirst(SearchPath, FindRec);
+  if Result then
+    FindClose(FindRec);
+end;
+
 procedure PromptWindowsAppSDKDownload;
 var
   ErrorCode: Integer;
