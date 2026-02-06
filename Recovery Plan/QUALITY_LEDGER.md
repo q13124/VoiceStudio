@@ -90,7 +90,7 @@ Use exactly one:
 | VS-0034 | DONE  | S2 Major    | E    | Engine Engineer          | ENGINE,AUDIO,RUNTIME | Upgrade-lane XTTS synthesis blocked by torchcodec load failure (cu128)     |
 | VS-0035 | DONE  | S0 Blocker  | B    | Build & Tooling Engineer | BUILD           | XAML compiler exits code 1 with no output (WinAppSDK 1.8)                     |
 | VS-0040 | DONE | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
-| VS-0041 | DEFERRED | S4 Chore | B | Build & Tooling Engineer | RULES,BUILD | Empty catch blocks detected (65 occurrences) - deferred to Phase 8.3 Quality Automation |
+| VS-0041 | BLOCKED | S4 Chore | B | Build & Tooling Engineer | RULES,BUILD | Empty catch blocks (65 occurrences) — blocked on Phase 8.3 quality automation tooling |
 
 ---
 
