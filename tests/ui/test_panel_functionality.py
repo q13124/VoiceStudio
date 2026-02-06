@@ -266,7 +266,7 @@ class TestTrainingPanel:
 
             job_list = driver.find_element("accessibility id", "TrainingView_JobList")
             assert job_list is not None
-RE        # ALLOWED: bare except - Automation ID may not be set
+        # ALLOWED: bare except - Automation ID may not be set
         except Exception:
             pytest.skip("Training panel automation IDs not set.")
 
