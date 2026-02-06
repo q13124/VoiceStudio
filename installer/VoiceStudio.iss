@@ -254,6 +254,8 @@ end;
 // IsPythonInstalled and IsDotNet8DesktopInstalled are now defined in prerequisites.iss
 
 function InitializeSetup(): Boolean;
+var
+  ErrorCode: Integer;
 begin
   Result := True;
   
@@ -274,7 +276,7 @@ begin
               '(Click Yes to open the download page, or No to cancel installation)',
               mbConfirmation, MB_YESNO) = IDYES then
     begin
-      ShellExec('open', 'https://dotnet.microsoft.com/en-us/download/dotnet/8.0', '', '', SW_SHOW, ewNoWait, Result);
+      ShellExec('open', 'https://dotnet.microsoft.com/en-us/download/dotnet/8.0', '', '', SW_SHOW, ewNoWait, ErrorCode);
     end;
     Result := False;
     Exit;

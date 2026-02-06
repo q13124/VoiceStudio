@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-02-05
+
+### Added
+
+#### Production Readiness
+- Installer prerequisite detection for .NET 8 Desktop Runtime and Windows App SDK
+- Python 3.10-3.12 detection with optional installation prompt
+- Silent installation mode for enterprise deployment (`/VERYSILENT /SUPPRESSMSGBOXES`)
+- Upgrade path validation with settings backup
+- Uninstall cleanup for cache and log directories
+- Crash recovery service with automatic session state restoration
+- Opt-in error reporting with privacy controls
+- Graceful degradation with circuit breaker pattern for engine failures
+- Automatic and manual data backup with configurable retention
+- UI virtualization for large lists (`IncrementalLoadingCollection`)
+- Lazy panel loading for improved startup time
+- Response caching for static API data
+- Deferred service initialization for non-critical components
+
+### Changed
+
+- Improved installer upgrade flow with version comparison
+- Enhanced engine service with fallback chain (XTTS → Chatterbox → Tortoise)
+- Startup time optimized through deferred initialization
+
+### Fixed
+
+- XAML compiler issue with SLODashboardView.xaml UniformGrid namespace
+- Ambiguous ColorHelper/Colors references in ViewModels
+- Missing ErrorLogEntryViewModel properties (Context/ExceptionType)
+
+---
+
 ## [1.0.0] - 2025-01-27
 
 ### Added
