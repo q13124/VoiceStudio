@@ -466,7 +466,7 @@
                 Visibility="{x:Bind ViewModel.IsLoadingPlugins, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                 <ListView.ItemTemplate>
                   <DataTemplate x:DataType="models:PluginInfo">
-                    <Grid Padding="{StaticResource VSQ.Spacing.Value.Small}">
+                    <Grid Padding="{StaticResource VSQ.Spacing.Small}">
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -555,7 +555,7 @@
               <ListView ItemsSource="{x:Bind ViewModel.DependencyStatusList, Mode=OneWay}">
                 <ListView.ItemTemplate>
                   <DataTemplate x:DataType="vm:DependencyStatusItem">
-                    <Grid Padding="{StaticResource VSQ.Spacing.Value.Small}">
+                    <Grid Padding="{StaticResource VSQ.Spacing.Small}">
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />

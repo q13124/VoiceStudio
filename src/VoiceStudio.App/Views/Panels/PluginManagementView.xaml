@@ -84,7 +84,7 @@
                     Visibility="{x:Bind ViewModel.HasFilteredPlugins, Mode=OneWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:PluginInfo">
-                            <Grid Padding="{StaticResource VSQ.Spacing.Value.Small}">
+                            <Grid Padding="{StaticResource VSQ.Spacing.Small}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />

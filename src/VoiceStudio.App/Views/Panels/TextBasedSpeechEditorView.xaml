@@ -146,7 +146,7 @@
                             RightTapped="Segment_RightTapped">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="vm:TranscriptSegmentItem">
-                                    <Grid Padding="{StaticResource VSQ.Spacing.Value.Small}">
+                                    <Grid Padding="{StaticResource VSQ.Spacing.Small}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
