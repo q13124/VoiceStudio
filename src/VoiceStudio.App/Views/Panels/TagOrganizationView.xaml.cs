@@ -76,27 +76,34 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void EditTag_Click(object sender, RoutedEventArgs e)
     {
-      if (sender is Button button && button.CommandParameter is TagListItem item)
+      try
       {
-        var textBox = new TextBox
+        if (sender is Button button && button.CommandParameter is TagListItem item)
         {
-          Text = item.Name,
-          PlaceholderText = "Tag name",
-          Width = 300
-        };
-        var dialog = new ContentDialog
-        {
-          Title = "Edit Tag",
-          Content = textBox,
-          PrimaryButtonText = "Save",
-          CloseButtonText = "Cancel",
-          XamlRoot = this.XamlRoot
-        };
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
-        {
-          await ViewModel.UpdateTag(item.Name, textBox.Text);
+          var textBox = new TextBox
+          {
+            Text = item.Name,
+            PlaceholderText = "Tag name",
+            Width = 300
+          };
+          var dialog = new ContentDialog
+          {
+            Title = "Edit Tag",
+            Content = textBox,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            XamlRoot = this.XamlRoot
+          };
+          var result = await dialog.ShowAsync();
+          if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
+          {
+            await ViewModel.UpdateTag(item.Name, textBox.Text);
+          }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
   }

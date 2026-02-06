@@ -117,6 +117,7 @@ from .versioning import (
     HEADER_MIN_VERSION,
     VersionNegotiator,
     get_version_headers,
+    get_version_from_request,
 )
 
 # API versioning
@@ -351,6 +352,23 @@ async def startup_event():
 
         # Startup sanity checks: verify critical dependencies and assets
         _perform_startup_sanity_checks()
+        
+        # Load all engines from manifests
+        try:
+            from app.core.engines.router import router as engine_router
+            engine_router.load_all_engines("engines")
+            engine_count = len(engine_router.list_engines())
+            failed_engines = engine_router.get_failed_engines()
+            failed_count = len(failed_engines)
+            
+            if failed_count == 0:
+                logger.info(f"Engine status: {engine_count} loaded, 0 failed")
+            else:
+                logger.warning(f"Engine status: {engine_count} loaded, {failed_count} failed")
+                for engine_id, error in failed_engines.items():
+                    logger.warning(f"  - {engine_id}: {error}")
+        except Exception as e:
+            logger.warning(f"Failed to load engines from manifests: {e}")
         
         # Validate OpenAPI contract at startup
         _perform_contract_validation()
@@ -700,14 +718,12 @@ async def request_id_middleware(request: Request, call_next):
 async def api_versioning_middleware(request: Request, call_next):
     path = request.scope.get("path", "")
     
-    # Negotiate API version from headers
-    requested_version = request.headers.get(HEADER_API_VERSION)
-    accept_header = request.headers.get("Accept")
-    negotiated = VersionNegotiator.negotiate(requested_version, accept_header)
+    # Negotiate API version from request (path, headers, or default)
+    negotiated_version = get_version_from_request(request)
     
     # Store negotiated version in request state for endpoint access
-    request.state.api_version = negotiated.version
-    request.state.api_version_warnings = negotiated.warnings or []
+    request.state.api_version = negotiated_version
+    request.state.api_version_warnings = []  # Warnings can be added if deprecated
     
     if path.startswith(API_VERSION_PREFIX):
         versioned_path = path[len(API_VERSION_PREFIX) :] or "/"
@@ -724,13 +740,9 @@ async def api_versioning_middleware(request: Request, call_next):
             ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
     
     # Add version headers to all responses
-    version_headers = get_version_headers()
+    version_headers = get_version_headers(negotiated_version)
     for header_name, header_value in version_headers.items():
         response.headers[header_name] = header_value
-    
-    # Add version warnings if any
-    if negotiated.warnings:
-        response.headers["X-API-Version-Warnings"] = "; ".join(negotiated.warnings)
     
     return response
 
@@ -1086,8 +1098,28 @@ def _register_all_routes():
         "voice",
         "voice_browser",
         "voice_cloning_wizard",
+        "voice_morph",
         "voice_speech",
+        "waveform",
         "workflows",
+        # Previously unregistered routes
+        "advanced_spectrogram",
+        "adr",
+        "ai_production_assistant",
+        "assistant",
+        "assistant_run",
+        "dataset_editor",
+        "diagnostics",
+        "emotion_style",
+        "errors",
+        "huggingface_fix",
+        "metrics",
+        "mix_assistant",
+        "multilingual",
+        "search",
+        "slo",
+        "spectrogram",
+        "tracing",
     ]
 
     route_modules = {}
@@ -1221,6 +1253,19 @@ def _register_all_routes():
     _include_route("api_key_manager")
     _include_route("plugins")
     _include_route("analytics")
+
+    # Previously missing route inclusions
+    _include_route("search")
+    _include_route("voice_morph")
+    _include_route("waveform")
+    _include_route("spectrogram")
+    _include_route("dataset_editor")
+    _include_route("emotion_style")
+    _include_route("multilingual")
+    _include_route("mix_assistant")
+    _include_route("huggingface_fix")
+    _include_route("advanced_spectrogram")
+    _include_route("metrics")
 
     # Register additional sub-routers for UI compatibility
     try:

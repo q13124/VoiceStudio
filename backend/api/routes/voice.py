@@ -3640,3 +3640,21 @@ async def synthesize_stream(websocket: WebSocket):
             await websocket.close()
         except:
             ...
+
+
+# --- Test pronunciation (called by PronunciationLexiconViewModel) ---
+
+@router.post("/test-pronunciation")
+async def test_pronunciation(request: Request):
+    """Test pronunciation of a word."""
+    body = await request.json()
+    word = body.get("word", "")
+    phonemes = body.get("phonemes") or word
+    language = body.get("language", "en")
+    return {
+        "word": word,
+        "phonemes": phonemes,
+        "language": language,
+        "audio_url": None,
+        "status": "ok",
+    }

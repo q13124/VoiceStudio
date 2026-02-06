@@ -259,19 +259,26 @@ async def get_gpu_status():
             primary_device=devices[0].device_id if devices else None,
         )
     except Exception as e:
-        logger.error(f"Failed to get GPU status: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get GPU status: {str(e)}",
-        ) from e
+        logger.warning(f"GPU detection encountered an error: {e}")
+        # Return empty device list instead of crashing - not all systems have GPUs
+        return GPUStatus(
+            devices=[],
+            total_devices=0,
+            available_devices=0,
+            primary_device=None,
+        )
 
 
 @router.get("/devices", response_model=List[GPUDevice])
 @cache_response(ttl=5)  # Cache for 5 seconds (device list updates frequently)
 async def list_gpu_devices():
     """List all GPU devices."""
-    status = await get_gpu_status()
-    return status.devices
+    try:
+        status = await get_gpu_status()
+        return status.devices
+    except Exception as e:
+        logger.warning(f"GPU device listing failed: {e}")
+        return []
 
 
 @router.get("/devices/{device_id}", response_model=GPUDevice)

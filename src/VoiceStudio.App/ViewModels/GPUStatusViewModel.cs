@@ -99,7 +99,15 @@ namespace VoiceStudio.App.ViewModels
       if (AutoRefresh && RefreshIntervalSeconds > 0)
       {
         _refreshTimer = new System.Timers.Timer(RefreshIntervalSeconds * 1000);
-        _refreshTimer.Elapsed += async (_, e) => await LoadGPUStatusAsync(CancellationToken.None);
+        _refreshTimer.Elapsed += (_, e) =>
+        {
+          // Marshal to UI thread to avoid cross-thread ObservableCollection crash
+          Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(async () =>
+          {
+            try { await LoadGPUStatusAsync(CancellationToken.None); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"GPU refresh error: {ex.Message}"); }
+          });
+        };
         _refreshTimer.AutoReset = true;
         _refreshTimer.Start();
       }
@@ -113,6 +121,15 @@ namespace VoiceStudio.App.ViewModels
         _refreshTimer.Dispose();
         _refreshTimer = null;
       }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        StopAutoRefresh();
+      }
+      base.Dispose(disposing);
     }
 
     private async Task LoadGPUStatusAsync(CancellationToken cancellationToken)
@@ -212,12 +229,25 @@ namespace VoiceStudio.App.ViewModels
     public string DeviceId { get; set; }
     public string Name { get; set; }
     public string Vendor { get; set; }
-    public int MemoryTotalMb { get; set; }
-    public int MemoryUsedMb { get; set; }
-    public int MemoryFreeMb { get; set; }
-    public double UtilizationPercent { get; set; }
-    public double? TemperatureCelsius { get; set; }
-    public double? PowerUsageWatts { get; set; }
+
+    private int _memoryTotalMb;
+    public int MemoryTotalMb { get => _memoryTotalMb; set { SetProperty(ref _memoryTotalMb, value); OnPropertyChanged(nameof(MemoryTotalDisplay)); OnPropertyChanged(nameof(MemoryUsagePercent)); } }
+
+    private int _memoryUsedMb;
+    public int MemoryUsedMb { get => _memoryUsedMb; set { SetProperty(ref _memoryUsedMb, value); OnPropertyChanged(nameof(MemoryUsedDisplay)); OnPropertyChanged(nameof(MemoryUsagePercent)); } }
+
+    private int _memoryFreeMb;
+    public int MemoryFreeMb { get => _memoryFreeMb; set { SetProperty(ref _memoryFreeMb, value); OnPropertyChanged(nameof(MemoryFreeDisplay)); } }
+
+    private double _utilizationPercent;
+    public double UtilizationPercent { get => _utilizationPercent; set { SetProperty(ref _utilizationPercent, value); OnPropertyChanged(nameof(UtilizationDisplay)); } }
+
+    private double? _temperatureCelsius;
+    public double? TemperatureCelsius { get => _temperatureCelsius; set { SetProperty(ref _temperatureCelsius, value); OnPropertyChanged(nameof(TemperatureDisplay)); } }
+
+    private double? _powerUsageWatts;
+    public double? PowerUsageWatts { get => _powerUsageWatts; set { SetProperty(ref _powerUsageWatts, value); OnPropertyChanged(nameof(PowerDisplay)); } }
+
     public string? DriverVersion { get; set; }
     public string? ComputeCapability { get; set; }
     public bool IsAvailable { get; set; }
@@ -225,7 +255,7 @@ namespace VoiceStudio.App.ViewModels
     public string MemoryTotalDisplay => $"{MemoryTotalMb / 1024.0:F1} GB";
     public string MemoryUsedDisplay => $"{MemoryUsedMb / 1024.0:F1} GB";
     public string MemoryFreeDisplay => $"{MemoryFreeMb / 1024.0:F1} GB";
-    public string MemoryUsagePercent => $"{MemoryUsedMb * 100.0 / MemoryTotalMb:F1}%";
+    public string MemoryUsagePercent => MemoryTotalMb > 0 ? $"{MemoryUsedMb * 100.0 / MemoryTotalMb:F1}%" : "0.0%";
     public string UtilizationDisplay => $"{UtilizationPercent:F1}%";
     public string TemperatureDisplay => TemperatureCelsius.HasValue ? $"{TemperatureCelsius:F1}°C" : "N/A";
     public string PowerDisplay => PowerUsageWatts.HasValue ? $"{PowerUsageWatts:F1}W" : "N/A";

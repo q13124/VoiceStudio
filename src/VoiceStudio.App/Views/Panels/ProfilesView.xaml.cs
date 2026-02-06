@@ -390,10 +390,36 @@ namespace VoiceStudio.App.Views.Panels
       return null;
     }
 
+    private void ProfileSearchBox_TextChanged(object sender, Microsoft.UI.Xaml.Controls.TextChangedEventArgs e)
+    {
+      // Search filtering is handled by the ViewModel's FilteredProfiles binding
+      // This handler can be used for debounced search or additional UI updates
+      if (sender is Microsoft.UI.Xaml.Controls.TextBox textBox)
+      {
+        System.Diagnostics.Debug.WriteLine($"Profile search: {textBox.Text}");
+      }
+    }
+
+    private void EditProfileButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+      // Navigate to profile edit mode
+      if (ViewModel?.SelectedProfile != null)
+      {
+        System.Diagnostics.Debug.WriteLine($"Edit profile: {ViewModel.SelectedProfile.Name}");
+      }
+    }
+
     private async void BatchExport_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
-      _errorLoggingService?.LogInfo($"Batch export requested for {ViewModel.SelectedCount} profiles", "ProfilesView");
-      await ViewModel.ExportSelectedProfilesAsync();
+      try
+      {
+        _errorLoggingService?.LogInfo($"Batch export requested for {ViewModel.SelectedCount} profiles", "ProfilesView");
+        await ViewModel.ExportSelectedProfilesAsync();
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+      }
     }
 
     private void Profile_DragStarting(UIElement sender, DragStartingEventArgs e)

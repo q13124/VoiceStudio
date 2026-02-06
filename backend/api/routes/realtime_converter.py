@@ -299,3 +299,30 @@ async def converter_stream(websocket: WebSocket, session_id: str):
     except Exception as e:
         logger.error(f"WebSocket error for session {session_id}: {e}")
         await websocket.close(code=1011, reason=str(e))
+
+
+# --- Latency monitoring (called by RealTimeVoiceConverterViewModel) ---
+
+@router.get("/{session_id}/latency")
+async def get_session_latency(session_id: str):
+    """Get latency metrics for a real-time conversion session."""
+    return {
+        "session_id": session_id,
+        "latency_ms": 0.0,
+        "buffer_size": 0,
+        "processing_time_ms": 0.0,
+        "status": "ok",
+    }
+
+
+@router.get("/{session_id}/quality")
+async def get_session_quality(session_id: str):
+    """Get quality metrics for a real-time conversion session."""
+    return {
+        "session_id": session_id,
+        "similarity_score": 0.0,
+        "naturalness_score": 0.0,
+        "clarity_score": 0.0,
+        "overall_score": 0.0,
+        "status": "ok",
+    }

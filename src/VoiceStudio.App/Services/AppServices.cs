@@ -67,7 +67,8 @@ namespace VoiceStudio.App.Services
       services.AddSingleton<GracefulDegradationService>();
       services.AddSingleton<PluginManager>();
       services.AddSingleton<RealTimeQualityService>();
-      services.AddSingleton<ToastNotificationService>();
+      // NOTE: ToastNotificationService requires a StackPanel container and cannot be auto-resolved.
+      // It must be registered manually via RegisterToastNotificationService() after UI is created.
       services.AddSingleton<MultiSelectService>();
       services.AddSingleton<DragDropVisualFeedbackService>();
       services.AddSingleton<ContextMenuService>();
@@ -130,8 +131,12 @@ namespace VoiceStudio.App.Services
     public static IHelpOverlayService GetHelpOverlayService() => GetRequiredService<IHelpOverlayService>();
     public static RealTimeQualityService GetRealTimeQualityService() => GetRequiredService<RealTimeQualityService>();
     public static PanelStateService GetPanelStateService() => GetRequiredService<PanelStateService>();
-    public static ToastNotificationService GetToastNotificationService() => _toastOverride ?? GetRequiredService<ToastNotificationService>();
-    public static ToastNotificationService? TryGetToastNotificationService() => _toastOverride ?? GetService<ToastNotificationService>();
+    // ToastNotificationService is NOT registered in DI - it must be set via RegisterToastNotificationService()
+    // Calling GetService<ToastNotificationService>() would fail because its constructor requires a StackPanel
+    public static ToastNotificationService GetToastNotificationService() =>
+        _toastOverride ?? throw new InvalidOperationException(
+            "ToastNotificationService not registered. Call RegisterToastNotificationService() after UI initialization.");
+    public static ToastNotificationService? TryGetToastNotificationService() => _toastOverride;
     public static MultiSelectService GetMultiSelectService() => GetRequiredService<MultiSelectService>();
     public static MultiSelectService? TryGetMultiSelectService() => GetService<MultiSelectService>();
     public static DragDropVisualFeedbackService GetDragDropVisualFeedbackService() => GetRequiredService<DragDropVisualFeedbackService>();

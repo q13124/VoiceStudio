@@ -602,16 +602,32 @@ namespace VoiceStudio.App.ViewModels
       public string Id { get; set; }
       public string Name { get; set; }
       public string Type { get; set; }
-      public string Status { get; set; }
-      public double Progress { get; set; }
-      public string ProgressDisplay { get; set; }
-      public string? CurrentStep { get; set; }
-      public string? StepDisplay { get; set; }
+
+      private string _status = "";
+      public string Status { get => _status; set => SetProperty(ref _status, value); }
+
+      private double _progress;
+      public double Progress { get => _progress; set => SetProperty(ref _progress, value); }
+
+      private string _progressDisplay = "";
+      public string ProgressDisplay { get => _progressDisplay; set => SetProperty(ref _progressDisplay, value); }
+
+      private string? _currentStep;
+      public string? CurrentStep { get => _currentStep; set => SetProperty(ref _currentStep, value); }
+
+      private string? _stepDisplay;
+      public string? StepDisplay { get => _stepDisplay; set => SetProperty(ref _stepDisplay, value); }
+
       public string Created { get; set; }
       public string? Started { get; set; }
       public string? Completed { get; set; }
-      public string? EstimatedTimeRemaining { get; set; }
-      public string? ErrorMessage { get; set; }
+
+      private string? _estimatedTimeRemaining;
+      public string? EstimatedTimeRemaining { get => _estimatedTimeRemaining; set => SetProperty(ref _estimatedTimeRemaining, value); }
+
+      private string? _errorMessage;
+      public string? ErrorMessage { get => _errorMessage; set => SetProperty(ref _errorMessage, value); }
+
       public string? ResultId { get; set; }
 
       public JobItem(Job job)

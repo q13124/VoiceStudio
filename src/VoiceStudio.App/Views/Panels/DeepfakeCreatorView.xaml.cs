@@ -66,59 +66,73 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void BrowseSourceFaceButton_Click(object _, RoutedEventArgs __)
     {
-      var picker = new FileOpenPicker();
-      picker.FileTypeFilter.Add(".jpg");
-      picker.FileTypeFilter.Add(".jpeg");
-      picker.FileTypeFilter.Add(".png");
-      picker.FileTypeFilter.Add(".bmp");
-      picker.FileTypeFilter.Add(".webp");
-
-      var window = App.MainWindowInstance;
-      if (window == null)
+      try
       {
-        return;
+        var picker = new FileOpenPicker();
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        picker.FileTypeFilter.Add(".png");
+        picker.FileTypeFilter.Add(".bmp");
+        picker.FileTypeFilter.Add(".webp");
+
+        var window = App.MainWindowInstance;
+        if (window == null)
+        {
+          return;
+        }
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file != null)
+        {
+          ViewModel.SourceFaceFilePath = file.Path;
+        }
       }
-      var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-      WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-      var file = await picker.PickSingleFileAsync();
-      if (file != null)
+      catch (Exception ex)
       {
-        ViewModel.SourceFaceFilePath = file.Path;
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void BrowseTargetMediaButton_Click(object _, RoutedEventArgs __)
     {
-      var picker = new FileOpenPicker();
-
-      // Add image formats
-      picker.FileTypeFilter.Add(".jpg");
-      picker.FileTypeFilter.Add(".jpeg");
-      picker.FileTypeFilter.Add(".png");
-      picker.FileTypeFilter.Add(".bmp");
-      picker.FileTypeFilter.Add(".gif");
-      picker.FileTypeFilter.Add(".webp");
-
-      // Add video formats
-      picker.FileTypeFilter.Add(".mp4");
-      picker.FileTypeFilter.Add(".avi");
-      picker.FileTypeFilter.Add(".mov");
-      picker.FileTypeFilter.Add(".mkv");
-      picker.FileTypeFilter.Add(".webm");
-
-      var window = App.MainWindowInstance;
-      if (window == null)
+      try
       {
-        return;
+        var picker = new FileOpenPicker();
+
+        // Add image formats
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        picker.FileTypeFilter.Add(".png");
+        picker.FileTypeFilter.Add(".bmp");
+        picker.FileTypeFilter.Add(".gif");
+        picker.FileTypeFilter.Add(".webp");
+
+        // Add video formats
+        picker.FileTypeFilter.Add(".mp4");
+        picker.FileTypeFilter.Add(".avi");
+        picker.FileTypeFilter.Add(".mov");
+        picker.FileTypeFilter.Add(".mkv");
+        picker.FileTypeFilter.Add(".webm");
+
+        var window = App.MainWindowInstance;
+        if (window == null)
+        {
+          return;
+        }
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file != null)
+        {
+          ViewModel.TargetMediaFilePath = file.Path;
+        }
       }
-      var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-      WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-      var file = await picker.PickSingleFileAsync();
-      if (file != null)
+      catch (Exception ex)
       {
-        ViewModel.TargetMediaFilePath = file.Path;
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -187,7 +201,7 @@ namespace VoiceStudio.App.Views.Panels
         switch (action.ToLower())
         {
           case "view":
-            ViewModel.SelectedJob = (DeepfakeJobItem)job;
+            ViewModel.SelectedJob = (job as DeepfakeJobItem);
             _toastService?.ShowToast(ToastType.Info, "View Details", "Showing job details");
             break;
           case "export":
@@ -207,7 +221,7 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var jobToDelete = (DeepfakeJobItem)job;
+              var jobToDelete = (job as DeepfakeJobItem);
               var jobIndex = ViewModel.DeepfakeJobs.IndexOf(jobToDelete);
 
               ViewModel.DeepfakeJobs.Remove(jobToDelete);

@@ -106,6 +106,12 @@ async def get_automation_curves(
     ]
 
 
+@router.get("/tracks")
+async def list_automation_tracks():
+    """List available automation tracks."""
+    return []
+
+
 @router.get("/{curve_id}", response_model=AutomationCurve)
 @cache_response(ttl=60)  # Cache for 60 seconds (curve info is relatively static)
 async def get_automation_curve(curve_id: str):
@@ -311,3 +317,6 @@ async def get_track_parameters(track_id: str):
             {"id": "delay", "name": "Delay", "min": 0.0, "max": 1.0},
         ]
     }
+
+
+    # Endpoint moved above parametric routes

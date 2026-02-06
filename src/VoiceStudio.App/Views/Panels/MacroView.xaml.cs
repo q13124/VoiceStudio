@@ -52,25 +52,33 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void NewMacroButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
     {
-      var textBox = new TextBox
+      try
       {
-        PlaceholderText = "Macro name",
-        Margin = new Microsoft.UI.Xaml.Thickness(0, 8, 0, 0)
-      };
+        var textBox = new TextBox
+        {
+          PlaceholderText = "Macro name",
+          Margin = new Microsoft.UI.Xaml.Thickness(0, 8, 0, 0)
+        };
 
-      var dialog = new ContentDialog
-      {
-        Title = "Create New Macro",
-        PrimaryButtonText = "Create",
-        SecondaryButtonText = "Cancel",
-        DefaultButton = ContentDialogButton.Primary,
-        Content = textBox
-      };
+        var dialog = new ContentDialog
+        {
+          Title = "Create New Macro",
+          PrimaryButtonText = "Create",
+          SecondaryButtonText = "Cancel",
+          DefaultButton = ContentDialogButton.Primary,
+          Content = textBox,
+          XamlRoot = this.XamlRoot
+        };
 
-      var result = await dialog.ShowAsync();
-      if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
+        {
+          await ViewModel.CreateMacroCommand.ExecuteAsync(textBox.Text);
+        }
+      }
+      catch (Exception ex)
       {
-        await ViewModel.CreateMacroCommand.ExecuteAsync(textBox.Text);
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -94,17 +102,24 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void CreateCurveButton_Click(object _, RoutedEventArgs __)
     {
-      // Get selected parameter from ComboBox
-      var parameterCombo = this.FindName("ParameterCombo") as ComboBox;
-      var selectedItem = parameterCombo?.SelectedItem as ComboBoxItem;
-      var parameterId = selectedItem?.Tag?.ToString() ?? "volume";
-
-      await ViewModel.CreateAutomationCurveCommand.ExecuteAsync(parameterId);
-
-      // Refresh the curve editor to show the new curve
-      if (CurveEditor != null)
+      try
       {
-        _ = CurveEditor.LoadCurvesAsync();
+        // Get selected parameter from ComboBox
+        var parameterCombo = this.FindName("ParameterCombo") as ComboBox;
+        var selectedItem = parameterCombo?.SelectedItem as ComboBoxItem;
+        var parameterId = selectedItem?.Tag?.ToString() ?? "volume";
+
+        await ViewModel.CreateAutomationCurveCommand.ExecuteAsync(parameterId);
+
+        // Refresh the curve editor to show the new curve
+        if (CurveEditor != null)
+        {
+          _ = CurveEditor.LoadCurvesAsync();
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 

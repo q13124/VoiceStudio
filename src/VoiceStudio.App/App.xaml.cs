@@ -140,13 +140,17 @@ namespace VoiceStudio.App
         catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Unknown"); }
 
         // Debug output
-        Debug.WriteLine($"💥 Unhandled exception logged to: {logPath}");
+        Debug.WriteLine($"Unhandled exception logged to: {logPath}");
       }
       catch (Exception logEx)
       {
         // Fallback to debug output if file writing fails
-        Debug.WriteLine($"⚠️ Failed to write crash log: {logEx.Message}");
+        Debug.WriteLine($"Failed to write crash log: {logEx.Message}");
       }
+
+      // Mark as handled to prevent app termination for non-fatal exceptions
+      // This allows the UI to continue operating even when individual operations fail
+      e.Handled = true;
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

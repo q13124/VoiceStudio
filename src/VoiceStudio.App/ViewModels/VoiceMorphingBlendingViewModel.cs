@@ -178,20 +178,12 @@ namespace VoiceStudio.App.ViewModels
         IsLoading = true;
         ErrorMessage = null;
 
-        var profiles = await _backendClient.SendRequestAsync<object, List<VoiceProfileData>>(
-            "/api/profiles",
-            null,
-            System.Net.Http.HttpMethod.Get,
-            cancellationToken
-        );
+        var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
 
-        if (profiles != null)
+        AvailableVoiceProfiles.Clear();
+        foreach (var profile in profiles)
         {
-          AvailableVoiceProfiles.Clear();
-          foreach (var profile in profiles)
-          {
-            AvailableVoiceProfiles.Add(profile.ProfileId ?? profile.Name ?? "");
-          }
+          AvailableVoiceProfiles.Add(profile.Id ?? profile.Name ?? "");
         }
         _toastNotificationService?.ShowInfo(
             ResourceHelper.FormatString("VoiceMorphingBlending.ProfilesLoaded", AvailableVoiceProfiles.Count),

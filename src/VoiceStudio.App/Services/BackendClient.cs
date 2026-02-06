@@ -598,7 +598,19 @@ namespace VoiceStudio.App.Services
           throw await CreateExceptionFromResponseAsync(response);
         }
 
-        return await response.Content.ReadFromJsonAsync<List<VoiceProfile>>(_jsonOptions, cancellationToken)
+        // Backend returns paginated response: {"items": [...], "pagination": {...}}
+        // Extract the items array from the wrapper
+        var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(jsonString);
+        
+        if (doc.RootElement.TryGetProperty("items", out var itemsElement))
+        {
+          return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(itemsElement.GetRawText(), _jsonOptions)
+                    ?? new List<VoiceProfile>();
+        }
+        
+        // Fallback: try parsing as direct array for backward compatibility
+        return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(jsonString, _jsonOptions)
                   ?? new List<VoiceProfile>();
       });
     }
@@ -700,7 +712,19 @@ namespace VoiceStudio.App.Services
           throw await CreateExceptionFromResponseAsync(response);
         }
 
-        return await response.Content.ReadFromJsonAsync<List<Project>>(_jsonOptions, cancellationToken)
+        // Backend returns paginated response: {"items": [...], "pagination": {...}}
+        // Extract the items array from the wrapper
+        var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(jsonString);
+
+        if (doc.RootElement.TryGetProperty("items", out var itemsElement))
+        {
+          return System.Text.Json.JsonSerializer.Deserialize<List<Project>>(itemsElement.GetRawText(), _jsonOptions)
+                    ?? new List<Project>();
+        }
+
+        // Fallback: try parsing as direct array for backward compatibility
+        return System.Text.Json.JsonSerializer.Deserialize<List<Project>>(jsonString, _jsonOptions)
                   ?? new List<Project>();
       });
     }

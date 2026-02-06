@@ -66,39 +66,46 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void BrowseButton_Click(object sender, RoutedEventArgs e)
     {
-      var picker = new FileOpenPicker();
+      try
+      {
+        var picker = new FileOpenPicker();
 
-      // Set up file type filters based on selected media type
-      if (ViewModel.SelectedMediaType == "image")
-      {
-        picker.FileTypeFilter.Add(".jpg");
-        picker.FileTypeFilter.Add(".jpeg");
-        picker.FileTypeFilter.Add(".png");
-        picker.FileTypeFilter.Add(".bmp");
-        picker.FileTypeFilter.Add(".gif");
-        picker.FileTypeFilter.Add(".webp");
-      }
-      else
-      {
-        picker.FileTypeFilter.Add(".mp4");
-        picker.FileTypeFilter.Add(".avi");
-        picker.FileTypeFilter.Add(".mov");
-        picker.FileTypeFilter.Add(".mkv");
-        picker.FileTypeFilter.Add(".webm");
-      }
+        // Set up file type filters based on selected media type
+        if (ViewModel.SelectedMediaType == "image")
+        {
+          picker.FileTypeFilter.Add(".jpg");
+          picker.FileTypeFilter.Add(".jpeg");
+          picker.FileTypeFilter.Add(".png");
+          picker.FileTypeFilter.Add(".bmp");
+          picker.FileTypeFilter.Add(".gif");
+          picker.FileTypeFilter.Add(".webp");
+        }
+        else
+        {
+          picker.FileTypeFilter.Add(".mp4");
+          picker.FileTypeFilter.Add(".avi");
+          picker.FileTypeFilter.Add(".mov");
+          picker.FileTypeFilter.Add(".mkv");
+          picker.FileTypeFilter.Add(".webm");
+        }
 
-      var window = App.MainWindowInstance;
-      if (window == null)
-      {
-        return;
-      }
-      var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-      WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        var window = App.MainWindowInstance;
+        if (window == null)
+        {
+          return;
+        }
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
-      var file = await picker.PickSingleFileAsync();
-      if (file != null)
+        var file = await picker.PickSingleFileAsync();
+        if (file != null)
+        {
+          ViewModel.SelectedFilePath = file.Path;
+        }
+      }
+      catch (Exception ex)
       {
-        ViewModel.SelectedFilePath = file.Path;
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -164,7 +171,7 @@ namespace VoiceStudio.App.Views.Panels
     {
       try
       {
-        var job = (UpscalingJobItem)jobObj;
+        var job = (jobObj as UpscalingJobItem);
         switch (action.ToLower())
         {
           case "view":

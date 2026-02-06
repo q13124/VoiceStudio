@@ -50,16 +50,23 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void ParameterInfo_Click(object sender, RoutedEventArgs _)
     {
-      if (sender is Button button && button.CommandParameter is EngineParameter parameter)
+      try
       {
-        var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+        if (sender is Button button && button.CommandParameter is EngineParameter parameter)
         {
-          Title = $"Parameter: {parameter.Name}",
-          Content = $"ID: {parameter.Id}\n\nDescription: {parameter.Description ?? "No description available"}\n\nType: {parameter.Type}\nRange: {parameter.MinValue} - {parameter.MaxValue}\nDefault: {parameter.DefaultValue}\nCurrent: {parameter.Value}",
-          CloseButtonText = "Close",
-          XamlRoot = this.XamlRoot
-        };
-        await dialog.ShowAsync();
+          var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+          {
+            Title = $"Parameter: {parameter.Name}",
+            Content = $"ID: {parameter.Id}\n\nDescription: {parameter.Description ?? "No description available"}\n\nType: {parameter.Type}\nRange: {parameter.MinValue} - {parameter.MaxValue}\nDefault: {parameter.DefaultValue}\nCurrent: {parameter.Value}",
+            CloseButtonText = "Close",
+            XamlRoot = this.XamlRoot
+          };
+          await dialog.ShowAsync();
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
   }

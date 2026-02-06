@@ -226,86 +226,93 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void Effect_Drop(object sender, DragEventArgs e)
     {
-      if (sender is Border border && _draggedEffect != null && _dragDropService != null)
+      try
       {
-        e.AcceptedOperation = DataPackageOperation.Move;
-
-        // Hide drop indicator
-        _dragDropService.HideDropTargetIndicator();
-        _dragDropService.Cleanup();
-
-        // Get target effect
-        if (border.DataContext is Effect targetEffect && ViewModel.SelectedEffectChain != null)
+        if (sender is Border border && _draggedEffect != null && _dragDropService != null)
         {
-          var draggedEffect = _draggedEffect;
-          var targetEffectOrder = targetEffect.Order;
-          var draggedEffectOrder = draggedEffect.Order;
+          e.AcceptedOperation = DataPackageOperation.Move;
 
-          // Determine drop position
-          var position = e.GetPosition(border);
-          var dropPosition = DetermineEffectDropPosition(border, position);
+          // Hide drop indicator
+          _dragDropService.HideDropTargetIndicator();
+          _dragDropService.Cleanup();
 
-          // Reorder effects
-          if (dropPosition == DropPosition.Before && draggedEffectOrder > targetEffectOrder)
+          // Get target effect
+          if (border.DataContext is Effect targetEffect && ViewModel.SelectedEffectChain != null)
           {
-            // Move dragged effect before target
-            if (ViewModel.MoveEffectUpCommand.CanExecute(draggedEffect.Id))
+            var draggedEffect = _draggedEffect;
+            var targetEffectOrder = targetEffect.Order;
+            var draggedEffectOrder = draggedEffect.Order;
+
+            // Determine drop position
+            var position = e.GetPosition(border);
+            var dropPosition = DetermineEffectDropPosition(border, position);
+
+            // Reorder effects
+            if (dropPosition == DropPosition.Before && draggedEffectOrder > targetEffectOrder)
             {
-              // Move up until we reach the target position
-              while (draggedEffect.Order > targetEffectOrder)
+              // Move dragged effect before target
+              if (ViewModel.MoveEffectUpCommand.CanExecute(draggedEffect.Id))
               {
-                await ViewModel.MoveEffectUpCommand.ExecuteAsync(draggedEffect.Id);
+                // Move up until we reach the target position
+                while (draggedEffect.Order > targetEffectOrder)
+                {
+                  await ViewModel.MoveEffectUpCommand.ExecuteAsync(draggedEffect.Id);
+                }
               }
             }
-          }
-          else if (dropPosition == DropPosition.After && draggedEffectOrder < targetEffectOrder)
-          {
-            // Move dragged effect after target
-            if (ViewModel.MoveEffectDownCommand.CanExecute(draggedEffect.Id))
+            else if (dropPosition == DropPosition.After && draggedEffectOrder < targetEffectOrder)
             {
-              // Move down until we reach the target position
-              while (draggedEffect.Order < targetEffectOrder)
+              // Move dragged effect after target
+              if (ViewModel.MoveEffectDownCommand.CanExecute(draggedEffect.Id))
               {
-                await ViewModel.MoveEffectDownCommand.ExecuteAsync(draggedEffect.Id);
+                // Move down until we reach the target position
+                while (draggedEffect.Order < targetEffectOrder)
+                {
+                  await ViewModel.MoveEffectDownCommand.ExecuteAsync(draggedEffect.Id);
+                }
               }
             }
-          }
-          else if (dropPosition == DropPosition.Before && draggedEffectOrder < targetEffectOrder)
-          {
-            // Move dragged effect before target (moving down)
-            if (ViewModel.MoveEffectDownCommand.CanExecute(draggedEffect.Id))
+            else if (dropPosition == DropPosition.Before && draggedEffectOrder < targetEffectOrder)
             {
-              // Move down until we're just before target
-              while (draggedEffect.Order < targetEffectOrder - 1)
+              // Move dragged effect before target (moving down)
+              if (ViewModel.MoveEffectDownCommand.CanExecute(draggedEffect.Id))
               {
-                await ViewModel.MoveEffectDownCommand.ExecuteAsync(draggedEffect.Id);
+                // Move down until we're just before target
+                while (draggedEffect.Order < targetEffectOrder - 1)
+                {
+                  await ViewModel.MoveEffectDownCommand.ExecuteAsync(draggedEffect.Id);
+                }
               }
             }
-          }
-          else if (dropPosition == DropPosition.After && draggedEffectOrder > targetEffectOrder)
-          {
-            // Move dragged effect after target (moving up)
-            if (ViewModel.MoveEffectUpCommand.CanExecute(draggedEffect.Id))
+            else if (dropPosition == DropPosition.After && draggedEffectOrder > targetEffectOrder)
             {
-              // Move up until we're just after target
-              while (draggedEffect.Order > targetEffectOrder + 1)
+              // Move dragged effect after target (moving up)
+              if (ViewModel.MoveEffectUpCommand.CanExecute(draggedEffect.Id))
               {
-                await ViewModel.MoveEffectUpCommand.ExecuteAsync(draggedEffect.Id);
+                // Move up until we're just after target
+                while (draggedEffect.Order > targetEffectOrder + 1)
+                {
+                  await ViewModel.MoveEffectUpCommand.ExecuteAsync(draggedEffect.Id);
+                }
               }
             }
+
+            _toastService?.ShowToast(ToastType.Success, "Reordered", $"Moved {draggedEffect.Name} in effect chain");
           }
 
-          _toastService?.ShowToast(ToastType.Success, "Reordered", $"Moved {draggedEffect.Name} in effect chain");
+          // Clean up drag state
+          _draggedEffect = null;
+
+          // Restore source element opacity
+          if (e.OriginalSource is Border sourceBorder)
+          {
+            sourceBorder.Opacity = 1.0;
+          }
         }
-
-        // Clean up drag state
-        _draggedEffect = null;
-
-        // Restore source element opacity
-        if (e.OriginalSource is Border sourceBorder)
-        {
-          sourceBorder.Opacity = 1.0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -346,39 +353,46 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void RoutingComboBox_SelectionChanged(object sender, SelectionChangedEventArgsAlias _)
     {
-      if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem item && item.Tag is string selectedTag)
+      try
       {
-        // Find the channel in the visual tree
-        var channel = GetChannelFromContext(comboBox);
-        if (channel != null)
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem item && item.Tag is string selectedTag)
         {
-          // Update channel routing destination
-          if (selectedTag == "Master")
+          // Find the channel in the visual tree
+          var channel = GetChannelFromContext(comboBox);
+          if (channel != null)
           {
-            channel.MainDestination = RoutingDestination.Master;
-            channel.SubGroupId = null;
-          }
-          else if (selectedTag == "SubGroup")
-          {
-            channel.MainDestination = RoutingDestination.SubGroup;
-            // SubGroupId will be set by the sub-group selection combo
-          }
+            // Update channel routing destination
+            if (selectedTag == "Master")
+            {
+              channel.MainDestination = RoutingDestination.Master;
+              channel.SubGroupId = null;
+            }
+            else if (selectedTag == "SubGroup")
+            {
+              channel.MainDestination = RoutingDestination.SubGroup;
+              // SubGroupId will be set by the sub-group selection combo
+            }
 
-          // Update sub-group combo visibility
-          var subGroupCombo = FindChild<ComboBox>(comboBox.Parent as DependencyObject, "SubGroupComboBox");
-          if (subGroupCombo != null)
-          {
-            subGroupCombo.Visibility = channel.MainDestination == RoutingDestination.SubGroup
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-          }
+            // Update sub-group combo visibility
+            var subGroupCombo = FindChild<ComboBox>(comboBox.Parent as DependencyObject, "SubGroupComboBox");
+            if (subGroupCombo != null)
+            {
+              subGroupCombo.Visibility = channel.MainDestination == RoutingDestination.SubGroup
+                  ? Visibility.Visible
+                  : Visibility.Collapsed;
+            }
 
-          // Auto-save if project is selected
-          if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
-          {
-            await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            // Auto-save if project is selected
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+            {
+              await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            }
           }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -395,20 +409,27 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void SubGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgsAlias e)
     {
-      if (sender is ComboBox comboBox)
+      try
       {
-        var channel = GetChannelFromContext(comboBox);
-        if (channel != null)
+        if (sender is ComboBox comboBox)
         {
-          // Update SubGroupId
-          channel.SubGroupId = comboBox.SelectedValue as string;
-
-          // Auto-save if project is selected
-          if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+          var channel = GetChannelFromContext(comboBox);
+          if (channel != null)
           {
-            await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            // Update SubGroupId
+            channel.SubGroupId = comboBox.SelectedValue as string;
+
+            // Auto-save if project is selected
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+            {
+              await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            }
           }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -452,147 +473,252 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void SendLevelSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.Tag is string sendId)
+      try
       {
-        var channel = GetChannelFromContext(slider);
-        if (channel != null)
+        if (sender is Slider slider && slider.Tag is string sendId)
         {
-          if (channel.SendLevels == null)
-            channel.SendLevels = new System.Collections.Generic.Dictionary<string, double>();
-
-          channel.SendLevels[sendId] = e.NewValue;
-
-          // Auto-save if project is selected
-          if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+          var channel = GetChannelFromContext(slider);
+          if (channel != null)
           {
-            await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            if (channel.SendLevels == null)
+              channel.SendLevels = new System.Collections.Generic.Dictionary<string, double>();
+
+            channel.SendLevels[sendId] = e.NewValue;
+
+            // Auto-save if project is selected
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+            {
+              await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            }
           }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SendToggleButton_Click(object sender, RoutedEventArgs e)
     {
-      if (sender is ToggleButton toggle && toggle.Tag is string sendId)
+      try
       {
-        var channel = GetChannelFromContext(toggle);
-        if (channel != null)
+        if (sender is ToggleButton toggle && toggle.Tag is string sendId)
         {
-          if (channel.SendEnabled == null)
-            channel.SendEnabled = new System.Collections.Generic.Dictionary<string, bool>();
-
-          channel.SendEnabled[sendId] = toggle.IsChecked == true;
-
-          // Auto-save if project is selected
-          if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+          var channel = GetChannelFromContext(toggle);
+          if (channel != null)
           {
-            await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            if (channel.SendEnabled == null)
+              channel.SendEnabled = new System.Collections.Generic.Dictionary<string, bool>();
+
+            channel.SendEnabled[sendId] = toggle.IsChecked == true;
+
+            // Auto-save if project is selected
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedProjectId))
+            {
+              await ViewModel.SaveMixerStateCommand.ExecuteAsync(null);
+            }
           }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SendVolume_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.DataContext is MixerSend send)
+      try
       {
-        await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        if (sender is Slider slider && slider.DataContext is MixerSend send)
+        {
+          await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SendEnabled_Checked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSend send)
+      try
       {
-        await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSend send)
+        {
+          await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SendEnabled_Unchecked(object sender, RoutedEventArgs _)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSend send)
+      try
       {
-        await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSend send)
+        {
+          await ViewModel.UpdateSendCommand.ExecuteAsync(send);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void ReturnVolume_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.DataContext is MixerReturn returnBus)
+      try
       {
-        await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        if (sender is Slider slider && slider.DataContext is MixerReturn returnBus)
+        {
+          await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void ReturnPan_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.DataContext is MixerReturn returnBus)
+      try
       {
-        await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        if (sender is Slider slider && slider.DataContext is MixerReturn returnBus)
+        {
+          await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void ReturnEnabled_Checked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerReturn returnBus)
+      try
       {
-        await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerReturn returnBus)
+        {
+          await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void ReturnEnabled_Unchecked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerReturn returnBus)
+      try
       {
-        await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerReturn returnBus)
+        {
+          await ViewModel.UpdateReturnCommand.ExecuteAsync(returnBus);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupVolume_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is Slider slider && slider.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupPan_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-      if (sender is Slider slider && slider.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is Slider slider && slider.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupMuted_Checked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupMuted_Unchecked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupSoloed_Checked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void SubGroupSoloed_Unchecked(object sender, RoutedEventArgs e)
     {
-      if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+      try
       {
-        await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        if (sender is CheckBox checkBox && checkBox.DataContext is MixerSubGroup subGroup)
+        {
+          await ViewModel.UpdateSubGroupCommand.ExecuteAsync(subGroup);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -612,14 +738,21 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void AddEffectComboBox_SelectionChanged(object sender, SelectionChangedEventArgsAlias e)
     {
-      if (sender is ComboBox comboBox && comboBox.SelectedItem is string effectType)
+      try
       {
-        if (ViewModel.AddEffectCommand.CanExecute(effectType))
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is string effectType)
         {
-          await ViewModel.AddEffectCommand.ExecuteAsync(effectType);
+          if (ViewModel.AddEffectCommand.CanExecute(effectType))
+          {
+            await ViewModel.AddEffectCommand.ExecuteAsync(effectType);
+          }
+          // Reset selection to allow re-adding the same effect type
+          comboBox.SelectedIndex = -1;
         }
-        // Reset selection to allow re-adding the same effect type
-        comboBox.SelectedIndex = -1;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 

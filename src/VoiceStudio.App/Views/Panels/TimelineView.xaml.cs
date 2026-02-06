@@ -247,17 +247,31 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void LoadAudioFileButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-      if (sender is Button button && button.DataContext is ProjectAudioFile audioFile)
+      try
       {
-        await ViewModel.LoadAudioFileIntoClipCommand.ExecuteAsync(audioFile);
+        if (sender is Button button && button.DataContext is ProjectAudioFile audioFile)
+        {
+          await ViewModel.LoadAudioFileIntoClipCommand.ExecuteAsync(audioFile);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void PlayAudioFile_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-      if (sender is Button button && button.Tag is string filename)
+      try
       {
-        await ViewModel.PlayProjectAudioCommand.ExecuteAsync(filename);
+        if (sender is Button button && button.Tag is string filename)
+        {
+          await ViewModel.PlayProjectAudioCommand.ExecuteAsync(filename);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 

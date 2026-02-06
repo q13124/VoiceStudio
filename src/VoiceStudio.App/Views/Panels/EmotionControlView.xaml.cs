@@ -171,17 +171,31 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void PresetLoadButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs _)
     {
-      if (sender is FrameworkElement element && element.DataContext != null)
+      try
       {
-        await HandlePresetMenuClick("Load", element.DataContext);
+        if (sender is FrameworkElement element && element.DataContext != null)
+        {
+          await HandlePresetMenuClick("Load", element.DataContext);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
     private async void PresetDeleteButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-      if (sender is FrameworkElement element && element.DataContext != null)
+      try
       {
-        await HandlePresetMenuClick("Delete", element.DataContext);
+        if (sender is FrameworkElement element && element.DataContext != null)
+        {
+          await HandlePresetMenuClick("Delete", element.DataContext);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -192,7 +206,7 @@ namespace VoiceStudio.App.Views.Panels
         switch (action.ToLower())
         {
           case "load":
-            ViewModel.SelectedPreset = (EmotionControlPresetItem)preset;
+            ViewModel.SelectedPreset = (preset as EmotionControlPresetItem);
             _toastService?.ShowToast(ToastType.Info, "Load Preset", "Preset loaded");
             break;
           case "duplicate":
@@ -212,7 +226,7 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var presetToDelete = (EmotionControlPresetItem)preset;
+              var presetToDelete = (preset as EmotionControlPresetItem);
               var presetIndex = ViewModel.Presets.IndexOf(presetToDelete);
 
               ViewModel.Presets.Remove(presetToDelete);

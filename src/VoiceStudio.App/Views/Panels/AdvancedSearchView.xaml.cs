@@ -43,9 +43,16 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void SearchBox_QuerySubmitted(AutoSuggestBox _, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-      if (!string.IsNullOrWhiteSpace(args.QueryText))
+      try
       {
-        await ViewModel.PerformSearchAsync(args.QueryText);
+        if (!string.IsNullOrWhiteSpace(args.QueryText))
+        {
+          await ViewModel.PerformSearchAsync(args.QueryText);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -64,10 +71,17 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void QueryHistory_ItemClick(object _, ItemClickEventArgs e)
     {
-      if (e.ClickedItem is string query)
+      try
       {
-        ViewModel.SearchQuery = query;
-        await ViewModel.PerformSearchAsync(query);
+        if (e.ClickedItem is string query)
+        {
+          ViewModel.SearchQuery = query;
+          await ViewModel.PerformSearchAsync(query);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 

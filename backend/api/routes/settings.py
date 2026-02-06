@@ -506,3 +506,34 @@ async def reset_settings():
         raise HTTPException(
             status_code=500, detail=f"Failed to reset settings: {str(e)}"
         )
+
+
+# --- System dependencies endpoint (called by SettingsViewModel) ---
+
+@router.get("/check/dependencies")
+async def get_system_dependencies():
+    """Check system dependency status."""
+    import importlib
+    deps = {
+        "torch": None, "torchaudio": None, "librosa": None, "soundfile": None,
+        "pyloudnorm": None, "noisereduce": None, "resemblyzer": None,
+        "ffmpeg": None, "mutagen": None, "aiohttp": None,
+    }
+    installed = 0
+    missing = 0
+    for dep in deps:
+        try:
+            mod = importlib.import_module(dep)
+            version = getattr(mod, "__version__", "installed")
+            deps[dep] = {"installed": True, "version": str(version)}
+            installed += 1
+        except ImportError:
+            deps[dep] = {"installed": False, "version": None}
+            missing += 1
+
+    return {
+        "dependencies": deps,
+        "total": len(deps),
+        "installed": installed,
+        "missing": missing,
+    }

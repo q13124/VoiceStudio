@@ -12,20 +12,50 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <!-- Transport Section -->
-        <StackPanel x:Name="TransportSection" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-            <!-- Items will be added dynamically -->
+        <StackPanel x:Name="TransportSection" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="2">
+            <Button ToolTipService.ToolTip="Rewind (Home)" MinWidth="32" Height="32" Padding="6"
+                Background="Transparent" BorderThickness="0">
+                <FontIcon Glyph="&#xEB9E;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <Button x:Name="ToolbarPlayButton" ToolTipService.ToolTip="Play (Space)" MinWidth="36" Height="36" Padding="6"
+                Background="{StaticResource VSQ.Accent.CyanBrush}" CornerRadius="18">
+                <FontIcon Glyph="&#xE768;" FontSize="16" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <Button ToolTipService.ToolTip="Stop (S)" MinWidth="32" Height="32" Padding="6"
+                Background="Transparent" BorderThickness="0">
+                <FontIcon Glyph="&#xE71A;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <Button ToolTipService.ToolTip="Record (R)" MinWidth="32" Height="32" Padding="6"
+                Background="Transparent" BorderThickness="0">
+                <FontIcon Glyph="&#xE7C8;" FontSize="14" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
+            </Button>
         </StackPanel>
         <!-- Project Section -->
-        <StackPanel x:Name="ProjectSection" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
-            <!-- Items will be added dynamically -->
+        <StackPanel x:Name="ProjectSection" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0" Spacing="8">
+            <TextBlock Text="Project:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" FontSize="12" />
+            <TextBlock x:Name="ProjectNameDisplay" Text="Untitled Project" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" />
+            <Rectangle Width="1" Height="20" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="8,0" />
+            <TextBlock Text="Engine:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" FontSize="12" />
+            <ComboBox x:Name="EngineSelector" Width="120" Height="28" FontSize="11" VerticalAlignment="Center" />
         </StackPanel>
         <!-- History/Workspace Section -->
-        <StackPanel x:Name="HistorySection" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="32,0,0,0">
-            <!-- Items will be added dynamically -->
+        <StackPanel x:Name="HistorySection" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="32,0,0,0" Spacing="2">
+            <Button ToolTipService.ToolTip="Undo (Ctrl+Z)" MinWidth="32" Height="32" Padding="6"
+                Background="Transparent" BorderThickness="0">
+                <FontIcon Glyph="&#xE7A7;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <Button ToolTipService.ToolTip="Redo (Ctrl+Y)" MinWidth="32" Height="32" Padding="6"
+                Background="Transparent" BorderThickness="0">
+                <FontIcon Glyph="&#xE7A6;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
         </StackPanel>
         <!-- Performance Section -->
-        <StackPanel x:Name="PerformanceSection" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <!-- Items will be added dynamically -->
+        <StackPanel x:Name="PerformanceSection" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="MOUT" FontSize="10" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <ProgressBar x:Name="PerfCpuBar" Value="12" Width="40" Height="4" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock x:Name="PerfLatency" Text="96 ms" FontSize="10" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -31,7 +31,14 @@ namespace VoiceStudio.App.Views.Panels
 
         private async void OnLoaded(object _, RoutedEventArgs __)
         {
-            await ViewModel.LoadHealthChecksAsync();
+          try
+          {
+              await ViewModel.LoadHealthChecksAsync();
+          }
+          catch (Exception ex)
+          {
+            System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+          }
         }
 
         private void HelpButton_Click(object _, RoutedEventArgs __)

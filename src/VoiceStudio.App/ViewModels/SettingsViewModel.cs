@@ -147,15 +147,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private int missingDependencies;
 
-    // UI State
-    [ObservableProperty]
-    private bool isLoading;
-
-    [ObservableProperty]
-    private string? errorMessage;
-
-    [ObservableProperty]
-    private string? statusMessage;
+    // UI State - use inherited IsLoading, ErrorMessage, StatusMessage from BaseViewModel
+    // Do NOT declare [ObservableProperty] here as it shadows the base class properties
 
     [ObservableProperty]
     private bool hasUnsavedChanges;
@@ -243,19 +236,8 @@ namespace VoiceStudio.App.ViewModels
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       _pluginManager = pluginManager;
       _telemetryService = telemetryService;
-    }
 
-    public SettingsViewModel(
-        ISettingsService settingsService,
-        IBackendClient? backendClient = null,
-        PluginManager? pluginManager = null)
-        : this(
-              AppServices.GetRequiredService<IViewModelContext>(),
-              settingsService,
-              backendClient ?? AppServices.GetBackendClient(),
-              pluginManager ?? AppServices.GetService<PluginManager>(),
-              AppServices.GetService<ITelemetryService>())
-    {
+      // Initialize commands in primary constructor so all construction paths have them
       LoadSettingsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("LoadSettings");
@@ -287,6 +269,20 @@ namespace VoiceStudio.App.ViewModels
 
       // Load dependency status on initialization
       _ = RefreshDependencyStatusAsync(CancellationToken.None);
+    }
+
+    public SettingsViewModel(
+        ISettingsService settingsService,
+        IBackendClient? backendClient = null,
+        PluginManager? pluginManager = null)
+        : this(
+              AppServices.GetRequiredService<IViewModelContext>(),
+              settingsService,
+              backendClient ?? AppServices.GetBackendClient(),
+              pluginManager ?? AppServices.GetService<PluginManager>(),
+              AppServices.GetService<ITelemetryService>())
+    {
+      // Commands are initialized in the primary constructor
     }
 
     public IAsyncRelayCommand LoadSettingsCommand { get; } = null!;
@@ -676,9 +672,10 @@ namespace VoiceStudio.App.ViewModels
       {
         throw; // Re-throw cancellation
       }
-      catch
+      catch (Exception ex)
       {
         // If loading fails, use defaults
+        System.Diagnostics.Debug.WriteLine($"Settings load failed, using defaults: {ex.Message}");
         ResetToDefaults();
       }
 
@@ -712,10 +709,9 @@ namespace VoiceStudio.App.ViewModels
           container.Values["Diagnostics"] = System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics);
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Log error but don't fail
-        System.Diagnostics.Debug.WriteLine("Failed to save settings to local storage");
+        System.Diagnostics.Debug.WriteLine($"Failed to save settings to local storage: {ex.Message}");
       }
 
       return Task.CompletedTask;
@@ -759,7 +755,7 @@ namespace VoiceStudio.App.ViewModels
         try
         {
           var response = await _backendClient.SendRequestAsync<object, Dictionary<string, object>>(
-              "/api/system/dependencies",
+              "/api/settings/check/dependencies",
               new { },
               cancellationToken
           );
@@ -778,8 +774,9 @@ namespace VoiceStudio.App.ViewModels
             }
           }
         }
-        catch
+        catch (Exception ex)
         {
+          System.Diagnostics.Debug.WriteLine($"Dependency check failed: {ex.Message}");
           // Backend check failed, mark all as not installed
           foreach (var dep in dependencies)
           {

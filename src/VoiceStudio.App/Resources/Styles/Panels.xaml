@@ -11,5 +11,56 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Panel-specific styles can be added here -->
+    <!-- Panel Card Style: used for content cards within panels -->
+    <Style x:Key="VSQ.Panel.CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource VSQ.Panel.BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource VSQ.CornerRadius.Panel}" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+
+    <!-- Panel Section Header Style: bold title with subtle separator below -->
+    <Style x:Key="VSQ.Panel.SectionHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource VSQ.FontSize.Subtitle}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.PrimaryBrush}" />
+        <Setter Property="Margin" Value="0,8,0,6" />
+    </Style>
+
+    <!-- Meter Bar Style: horizontal progress bar for audio meters -->
+    <Style x:Key="VSQ.Panel.MeterBarStyle" TargetType="ProgressBar">
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="100" />
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Accent.CyanBrush}" />
+    </Style>
+
+    <!-- Audio Slider Style: horizontal slider for volume/parameter controls -->
+    <Style x:Key="VSQ.Panel.AudioSliderStyle" TargetType="Slider">
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="1" />
+        <Setter Property="StepFrequency" Value="0.01" />
+    </Style>
+
+    <!-- Panel Info Label Style: secondary text labels for metadata display -->
+    <Style x:Key="VSQ.Panel.InfoLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource VSQ.Text.SecondaryBrush}" />
+    </Style>
+
+    <!-- Panel Badge Style: small colored tag/badge -->
+    <Style x:Key="VSQ.Panel.BadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource VSQ.Panel.Background.DarkerBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,2" />
+    </Style>
+
+    <!-- Panel Action Bar Style: horizontal bar with action buttons at panel bottom -->
+    <Style x:Key="VSQ.Panel.ActionBarStyle" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="Spacing" Value="8" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
 </ResourceDictionary>

@@ -66,11 +66,11 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <TextBlock Grid.Row="0" Text="OS Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="OsVersionText" Text="Windows 11" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="OsVersionText" Text="{x:Bind ViewModel.OsVersion, Mode=OneWay, FallbackValue='Detecting...'}" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                     <TextBlock Grid.Row="1" Text=".NET Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DotNetVersionText" Text=".NET 8.0" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DotNetVersionText" Text="{x:Bind ViewModel.DotNetVersion, Mode=OneWay, FallbackValue='Detecting...'}" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                     <TextBlock Grid.Row="2" Text="App Version:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AppVersionText" Text="1.0.0" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AppVersionText" Text="{x:Bind ViewModel.AppVersion, Mode=OneWay, FallbackValue='1.0.0'}" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                     <TextBlock Grid.Row="3" Text="RAM:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
                                     <TextBlock Grid.Row="3" Grid.Column="1" x:Name="RamText" Text="Loading..." Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                     <TextBlock Grid.Row="4" Text="GPU:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>

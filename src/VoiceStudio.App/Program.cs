@@ -14,10 +14,22 @@ namespace VoiceStudio.App
   public static class Program
   {
     private const uint WindowsAppSdkMajorMinorVersion = 0x00010008; // Windows App SDK 1.8
+    private const string SingleInstanceMutexName = "VoiceStudio_SingleInstance_Mutex_v1";
+    private static Mutex? _singleInstanceMutex;
 
     [STAThread]
     static void Main(string[] args)
     {
+      // Single-instance enforcement: prevent multiple app instances
+      bool createdNew;
+      _singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out createdNew);
+      if (!createdNew)
+      {
+        // Another instance is already running - exit silently
+        // Optionally: could bring existing window to foreground via IPC
+        return;
+      }
+
       var crashDir = GetCrashDir();
       WriteBootMarker(crashDir, "main_entered", args);
       ApplySmokeArgsToEnvironment(args);
@@ -35,6 +47,12 @@ namespace VoiceStudio.App
 
         // Re-throw to ensure process exit code reflects failure.
         throw;
+      }
+      finally
+      {
+        // Release mutex when app exits
+        _singleInstanceMutex?.ReleaseMutex();
+        _singleInstanceMutex?.Dispose();
       }
     }
 

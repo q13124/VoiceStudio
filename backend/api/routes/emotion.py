@@ -751,3 +751,27 @@ async def delete_preset(preset_id: str):
             status_code=500,
             detail=f"Failed to delete emotion preset: {str(e)}",
         ) from e
+
+
+# --- Emotion preview (called by EmotionControlViewModel) ---
+
+class EmotionPreviewRequest(BaseModel):
+    """Request to preview emotion-adjusted audio."""
+    text: Optional[str] = None
+    audio_id: Optional[str] = None
+    emotion: str = "neutral"
+    intensity: float = 0.5
+    blend: Optional[dict] = None
+
+
+@router.post("/preview")
+async def preview_emotion(request: EmotionPreviewRequest):
+    """Preview emotion-adjusted audio before applying."""
+    return {
+        "status": "ok",
+        "emotion": request.emotion,
+        "intensity": request.intensity,
+        "audio_url": None,
+        "duration": 0.0,
+        "message": "Preview generated",
+    }

@@ -73,14 +73,21 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void QualitySettings_Click(object _, RoutedEventArgs __)
     {
-      var dialog = new ContentDialog
+      try
       {
-        Title = "Quality Settings",
-        Content = $"Current Settings:\n\nSteps: {ViewModel.Steps}\nCFG Scale: {ViewModel.CfgScale:F1}\nWidth: {ViewModel.Width}\nHeight: {ViewModel.Height}\nFPS: {ViewModel.Fps}\nDuration: {ViewModel.Duration}s\n\nQuality Preset: {ViewModel.SelectedQualityPreset?.Name ?? "Custom"}",
-        PrimaryButtonText = "OK",
-        XamlRoot = this.XamlRoot
-      };
-      await dialog.ShowAsync();
+        var dialog = new ContentDialog
+        {
+          Title = "Quality Settings",
+          Content = $"Current Settings:\n\nSteps: {ViewModel.Steps}\nCFG Scale: {ViewModel.CfgScale:F1}\nWidth: {ViewModel.Width}\nHeight: {ViewModel.Height}\nFPS: {ViewModel.Fps}\nDuration: {ViewModel.Duration}s\n\nQuality Preset: {ViewModel.SelectedQualityPreset?.Name ?? "Custom"}",
+          PrimaryButtonText = "OK",
+          XamlRoot = this.XamlRoot
+        };
+        await dialog.ShowAsync();
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+      }
     }
 
     private void HelpButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
@@ -153,7 +160,7 @@ namespace VoiceStudio.App.Views.Panels
         switch (action.ToLower())
         {
           case "play":
-            ViewModel.SelectedVideo = (GeneratedVideo)video;
+            ViewModel.SelectedVideo = (video as GeneratedVideo);
             _toastService?.ShowToast(ToastType.Info, "Play Video", "Playing video");
             break;
           case "export":
@@ -186,7 +193,7 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var videoToDelete = (GeneratedVideo)video;
+              var videoToDelete = (video as GeneratedVideo);
               var videoIndex = ViewModel.GeneratedVideos.IndexOf(videoToDelete);
 
               ViewModel.GeneratedVideos.Remove(videoToDelete);
@@ -225,6 +232,10 @@ namespace VoiceStudio.App.Views.Panels
         picker.FileTypeChoices.Add("AVI", new List<string> { ".avi" });
         picker.FileTypeChoices.Add("MOV", new List<string> { ".mov" });
         picker.SuggestedFileName = $"generated_video_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+        // Required for WinUI 3 unpackaged desktop apps
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSaveFileAsync();
         if (file != null)

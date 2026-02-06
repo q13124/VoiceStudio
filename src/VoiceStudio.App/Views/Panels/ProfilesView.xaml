@@ -77,6 +77,13 @@
             </Grid>
         </Border>
 
+        <!-- Search and Filter Bar -->
+        <Grid Grid.Row="0" Margin="8,0,8,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
+
         <!-- Main Content Area -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -86,89 +93,199 @@
             </Grid.ColumnDefinitions>
 
             <!-- Profile Grid -->
-            <ScrollViewer Grid.Column="0" 
-                          Padding="{StaticResource VSQ.Spacing.Medium}"
-                          RightTapped="ProfilesEmptyArea_RightTapped">
-                <GridView x:Name="ProfilesGrid"
-                          AutomationProperties.AutomationId="ProfilesView_ProfilesGrid"
-                          ItemsSource="{x:Bind ViewModel.FilteredProfiles, Mode=OneWay}"
-                          SelectionMode="Single">
-                    <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="models:VoiceProfile">
-                            <Border Tag="{x:Bind Id, Mode=OneWay}"
-                                    Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
-                                    BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
-                                    Width="172"
-                                    Height="112"
-                                    Padding="8"
-                                    PointerPressed="ProfileCard_PointerPressed"
-                                    RightTapped="ProfileCard_RightTapped">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0"
-                                               Text="{x:Bind Name, Mode=OneWay, FallbackValue='Unnamed Profile', TargetNullValue='Unnamed Profile'}"
-                                               FontSize="{StaticResource VSQ.FontSize.Body}"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis"
-                                               MaxLines="1" />
+                <!-- Search and Tabs -->
+                <StackPanel Grid.Row="0" Margin="8,4,8,4" Spacing="8">
+                    <TextBox x:Name="ProfileSearchBox"
+                             PlaceholderText="Search profiles..."
+                             AutomationProperties.AutomationId="ProfilesView_SearchBox"
+                             TextChanged="ProfileSearchBox_TextChanged"
+                             Height="32" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button Content="All" FontSize="11" Padding="8,2" MinHeight="24" />
+                        <Button Content="Favorites" FontSize="11" Padding="8,2" MinHeight="24" Background="Transparent" />
+                        <Button Content="Recent" FontSize="11" Padding="8,2" MinHeight="24" Background="Transparent" />
+                    </StackPanel>
+                </StackPanel>
 
-                                    <StackPanel Grid.Row="1" Spacing="4" Margin="0,8,0,0">
-                                        <TextBlock Text="{x:Bind Language, Mode=OneWay, FallbackValue='—', TargetNullValue='—'}"
-                                                   FontSize="{StaticResource VSQ.FontSize.Caption}"
-                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
-                                    </StackPanel>
+                <ScrollViewer Grid.Row="1"
+                              Padding="{StaticResource VSQ.Spacing.Medium}"
+                              RightTapped="ProfilesEmptyArea_RightTapped">
+                    <GridView x:Name="ProfilesGrid"
+                              AutomationProperties.AutomationId="ProfilesView_ProfilesGrid"
+                              ItemsSource="{x:Bind ViewModel.FilteredProfiles, Mode=OneWay}"
+                              SelectionMode="Single">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:VoiceProfile">
+                                <Border Tag="{x:Bind Id, Mode=OneWay}"
+                                        Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                                        BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                                        Width="180"
+                                        Height="120"
+                                        Padding="10"
+                                        PointerPressed="ProfileCard_PointerPressed"
+                                        RightTapped="ProfileCard_RightTapped">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
 
-                                    <Border x:Name="SelectionIndicator"
-                                            Grid.RowSpan="2"
-                                            BorderBrush="{StaticResource VSQ.Accent.CyanBrush}"
-                                            BorderThickness="2"
-                                            CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
-                                            Visibility="Collapsed" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
-            </ScrollViewer>
+                                        <!-- Avatar circle with initials -->
+                                        <Border Grid.Column="0" Grid.RowSpan="3"
+                                                Width="40" Height="40"
+                                                CornerRadius="20"
+                                                Background="{StaticResource VSQ.Accent.CyanBrush}"
+                                                Margin="0,0,10,0"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="{x:Bind Name, Mode=OneWay, FallbackValue='?'}"
+                                                       FontSize="16" FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       MaxLines="1"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </Border>
+
+                                        <!-- Name -->
+                                        <TextBlock Grid.Column="1" Grid.Row="0"
+                                                   Text="{x:Bind Name, Mode=OneWay, FallbackValue='Unnamed Profile', TargetNullValue='Unnamed Profile'}"
+                                                   FontSize="{StaticResource VSQ.FontSize.Body}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxLines="1" />
+
+                                        <!-- Language + Emotion tags -->
+                                        <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                                            <Border Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                                                    CornerRadius="4" Padding="4,1">
+                                                <TextBlock Text="{x:Bind Language, Mode=OneWay, FallbackValue='en'}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource VSQ.Accent.CyanBrush}" />
+                                            </Border>
+                                            <Border Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                                                    CornerRadius="4" Padding="4,1">
+                                                <TextBlock Text="{x:Bind Emotion, Mode=OneWay, FallbackValue='neutral'}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Quality score indicator -->
+                                        <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0" VerticalAlignment="Bottom">
+                                            <ProgressBar Value="{x:Bind QualityScore, Mode=OneWay}" Maximum="1.0" Width="60" Height="3" />
+                                            <TextBlock FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}">
+                                                <Run Text="Q:" />
+                                                <Run Text="{x:Bind QualityScore, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Selection indicator -->
+                                        <Border x:Name="SelectionIndicator"
+                                                Grid.ColumnSpan="2" Grid.RowSpan="3"
+                                                BorderBrush="{StaticResource VSQ.Accent.CyanBrush}"
+                                                BorderThickness="2"
+                                                CornerRadius="{StaticResource VSQ.CornerRadius.Panel}"
+                                                Visibility="Collapsed" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </ScrollViewer>
+            </Grid>
 
             <!-- Splitter -->
             <Border Grid.Column="1" Width="1" Background="{StaticResource VSQ.Panel.BorderBrush}" Margin="4,8" />
 
             <!-- Detail Inspector Panel -->
             <ScrollViewer Grid.Column="2" Padding="{StaticResource VSQ.Spacing.Medium}">
-                <StackPanel Spacing="16">
+                <StackPanel Spacing="12">
                     <TextBlock Text="Profile Details"
-                               FontSize="{StaticResource VSQ.FontSize.Body}"
+                               FontSize="{StaticResource VSQ.FontSize.Subtitle}"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
 
-                    <TextBlock Text="Select a profile to view details"
-                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
-                               FontStyle="Italic" />
+                    <!-- Empty state -->
+                    <StackPanel Visibility="{x:Bind ViewModel.SelectedProfile, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"
+                                Spacing="8" Margin="0,20,0,0" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE77B;" FontSize="32" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="Select a profile to view details"
+                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                   FontStyle="Italic" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Selected profile details -->
+                    <StackPanel Visibility="{x:Bind ViewModel.SelectedProfile, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
+                                Spacing="12">
+                        <!-- Profile name -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Name" FontSize="11" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                            <TextBlock Text="{x:Bind ViewModel.SelectedProfile.Name, Mode=OneWay, FallbackValue='—'}"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Language -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Language" FontSize="11" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                            <TextBlock Text="{x:Bind ViewModel.SelectedProfile.Language, Mode=OneWay, FallbackValue='—'}"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Emotion -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Emotion" FontSize="11" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                            <TextBlock Text="{x:Bind ViewModel.SelectedProfile.Emotion, Mode=OneWay, FallbackValue='neutral'}"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Quality Score -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Quality Score" FontSize="11" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                            <ProgressBar Value="{x:Bind ViewModel.SelectedProfile.QualityScore, Mode=OneWay}" Maximum="1.0" Height="6" />
+                        </StackPanel>
+
+                        <!-- Action buttons -->
+                        <StackPanel Spacing="6" Margin="0,8,0,0">
+                            <Button Content="Preview Voice" HorizontalAlignment="Stretch" />
+                            <Button Content="Edit Profile" HorizontalAlignment="Stretch"
+                                    Click="EditProfileButton_Click" />
+                            <Button Content="Clone Profile" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!-- Multi-Select Actions -->
                     <Border Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
                             CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
                             Padding="12"
                             Visibility="{x:Bind ViewModel.HasMultipleSelection, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            d:Visibility="Visible">
+                            d:Visibility="Collapsed">
                         <StackPanel Spacing="8">
                             <TextBlock Text="Batch Actions"
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
                             <Button Content="Export Selected"
                                     Click="BatchExport_Click"
-                                    AutomationProperties.AutomationId="ProfilesView_BatchExportButton" />
+                                    AutomationProperties.AutomationId="ProfilesView_BatchExportButton"
+                                    HorizontalAlignment="Stretch" />
                             <Button Content="Delete Selected"
                                     Command="{x:Bind ViewModel.DeleteSelectedCommand}"
-                                    AutomationProperties.AutomationId="ProfilesView_BatchDeleteButton" />
+                                    AutomationProperties.AutomationId="ProfilesView_BatchDeleteButton"
+                                    HorizontalAlignment="Stretch" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

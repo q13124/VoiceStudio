@@ -174,10 +174,17 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void ConfigureStep_Click(object sender, RoutedEventArgs _)
     {
-      if (sender is Button button && button.CommandParameter is WorkflowStep step)
+      try
       {
-        ViewModel.SelectedStep = step;
-        await ShowStepConfigurationDialog(step);
+        if (sender is Button button && button.CommandParameter is WorkflowStep step)
+        {
+          ViewModel.SelectedStep = step;
+          await ShowStepConfigurationDialog(step);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 
@@ -210,7 +217,14 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void AddVariable_Click(object _, RoutedEventArgs __)
     {
-      await ShowAddVariableDialog();
+      try
+      {
+        await ShowAddVariableDialog();
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+      }
     }
 
     private async Task ShowAddVariableDialog()

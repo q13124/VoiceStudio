@@ -261,20 +261,12 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        var profiles = await _backendClient.SendRequestAsync<object, List<VoiceProfileData>>(
-            "/api/profiles",
-            null,
-            System.Net.Http.HttpMethod.Get,
-            cancellationToken
-        );
+        var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
 
-        if (profiles != null)
+        AvailableVoiceProfiles.Clear();
+        foreach (var profile in profiles)
         {
-          AvailableVoiceProfiles.Clear();
-          foreach (var profile in profiles)
-          {
-            AvailableVoiceProfiles.Add(profile.ProfileId ?? profile.Name ?? "");
-          }
+          AvailableVoiceProfiles.Add(profile.Id ?? profile.Name ?? "");
         }
         _toastNotificationService?.ShowInfo($"Loaded {AvailableVoiceProfiles.Count} voice profile(s)", "Profiles Loaded");
       }

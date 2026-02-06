@@ -352,9 +352,10 @@ namespace VoiceStudio.App.ViewModels
     {
       try
       {
-        const string baseUrl = "http://localhost:8001";
-        using var httpClient = new HttpClient();
-        httpClient.BaseAddress = new Uri(baseUrl);
+        // Use IBackendClient's configured base address
+        var baseAddress = _backendClient.BaseAddress ?? new Uri("http://localhost:8001");
+        using var httpClient = new System.Net.Http.HttpClient();
+        httpClient.BaseAddress = baseAddress;
 
         await using var fileStream = await file.OpenStreamForReadAsync();
         cancellationToken.ThrowIfCancellationRequested();

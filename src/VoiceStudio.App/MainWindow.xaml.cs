@@ -35,6 +35,7 @@ namespace VoiceStudio.App
     private readonly RecentProjectsService? _recentProjectsService;
     private const string ShowWelcomeKey = "ShowWelcomeDialog";
     private bool _disposed;
+    private bool _welcomeDialogShown;
     private System.Threading.Timer? _clockTimer;
     private PanelPreviewPopup? _panelPreviewPopup;
     private System.Threading.Timer? _previewHideTimer;
@@ -161,6 +162,9 @@ namespace VoiceStudio.App
       }
 
       SetActiveNavButton("NavStudio");
+
+      // Start status bar metrics timer
+      StartStatusBarTimer();
 
       // Update menu item state for Mini Timeline toggle (IDEA 6)
       UpdateMiniTimelineMenuItem();
@@ -1016,17 +1020,23 @@ namespace VoiceStudio.App
       if (e.WindowActivationState != WindowActivationState.CodeActivated)
         return;
 
-      // Check if we should show welcome dialog
-      var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-      var showWelcome = localSettings.Values[ShowWelcomeKey] as bool? ?? true;
+      // Check if we should show welcome dialog (only once per session)
+      // NOTE: ApplicationData.Current.LocalSettings is not available in unpackaged apps,
+      // so we use UnpackagedSettingsHelper for file-based settings storage.
+      if (_welcomeDialogShown)
+        return;
 
-      if (showWelcome)
+      var showWelcome = Helpers.UnpackagedSettingsHelper.GetValue<bool>(ShowWelcomeKey, true);
+
+      if (showWelcome && this.Content?.XamlRoot is not null)
       {
+        _welcomeDialogShown = true; // Prevent showing again on re-activation
         var welcomeDialog = new WelcomeView();
+        welcomeDialog.XamlRoot = this.Content.XamlRoot;
         var result = await welcomeDialog.ShowAsync();
 
         // Save preference
-        localSettings.Values[ShowWelcomeKey] = welcomeDialog.ShowOnStartup;
+        Helpers.UnpackagedSettingsHelper.SetValue(ShowWelcomeKey, welcomeDialog.ShowOnStartup);
       }
     }
 
@@ -1586,6 +1596,13 @@ namespace VoiceStudio.App
 
     private async void OpenProject()
     {
+      // First ensure the Timeline panel is visible in Center
+      SwitchToPanel(PanelRegion.Center, "Timeline", () => new TimelineView());
+      SetActiveNavButton("NavStudio");
+
+      // Give UI time to render the panel
+      await Task.Delay(100);
+
       var centerPanelHost = FindNameOnContent("CenterPanelHost") as Controls.PanelHost;
       if (centerPanelHost?.Content is TimelineView timelineView && timelineView.ViewModel != null)
       {
@@ -1594,6 +1611,49 @@ namespace VoiceStudio.App
         {
           await viewModel.LoadProjectsCommand.ExecuteAsync(null);
         }
+      }
+    }
+
+    private async void ImportAudioFile()
+    {
+      try
+      {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary;
+        picker.FileTypeFilter.Add(".wav");
+        picker.FileTypeFilter.Add(".mp3");
+        picker.FileTypeFilter.Add(".flac");
+        picker.FileTypeFilter.Add(".ogg");
+        picker.FileTypeFilter.Add(".m4a");
+        picker.FileTypeFilter.Add(".aac");
+        picker.FileTypeFilter.Add(".wma");
+        picker.FileTypeFilter.Add("*");
+
+        // Required for WinUI 3 desktop apps
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file != null)
+        {
+          // Switch to Voice Synthesis panel for immediate use
+          SwitchToPanel(PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView());
+          SetActiveNavButton("NavStudio");
+
+          var toastService = ServiceProvider.GetToastNotificationService();
+          toastService?.ShowToast(
+              Services.ToastType.Success,
+              "Audio Imported",
+              $"Imported: {file.Name}");
+        }
+      }
+      catch (Exception ex)
+      {
+        var toastService = ServiceProvider.GetToastNotificationService();
+        toastService?.ShowToast(
+            Services.ToastType.Error,
+            "Import Failed",
+            ex.Message);
       }
     }
 
@@ -1785,6 +1845,8 @@ namespace VoiceStudio.App
       item.Items.Add(CreateMenuItem("New Project", CreateNewProject));
       item.Items.Add(CreateMenuItem("Open Project", OpenProject));
       item.Items.Add(CreateMenuItem("Save Project", SaveProject));
+      item.Items.Add(new MenuFlyoutSeparator());
+      item.Items.Add(CreateMenuItem("Import Audio File...", ImportAudioFile));
       item.Items.Add(new MenuFlyoutSeparator());
       if (_recentProjectsSubMenu != null)
       {
@@ -2280,8 +2342,44 @@ namespace VoiceStudio.App
       }
     }
 
+    private Microsoft.UI.Xaml.DispatcherTimer? _statusBarTimer;
+
+    private void StartStatusBarTimer()
+    {
+      _statusBarTimer = new Microsoft.UI.Xaml.DispatcherTimer();
+      _statusBarTimer.Interval = TimeSpan.FromSeconds(2);
+      _statusBarTimer.Tick += (_, _) => UpdateStatusBarMetrics();
+      _statusBarTimer.Start();
+      // Update immediately
+      UpdateStatusBarMetrics();
+    }
+
+    private void UpdateStatusBarMetrics()
+    {
+      try
+      {
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        var ramMb = process.WorkingSet64 / (1024 * 1024);
+        var totalRamMb = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024 * 1024);
+        var ramPct = totalRamMb > 0 ? (int)(ramMb * 100 / totalRamMb) : 0;
+
+        var cpuText = FindNameOnContent("CpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
+        var gpuText = FindNameOnContent("GpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
+        var ramText = FindNameOnContent("RamText") as Microsoft.UI.Xaml.Controls.TextBlock;
+        var clockText = FindNameOnContent("ClockText") as Microsoft.UI.Xaml.Controls.TextBlock;
+
+        if (ramText != null) ramText.Text = $"RAM {ramPct}%";
+        if (clockText != null) clockText.Text = DateTime.Now.ToString("HH:mm");
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Status bar update error: {ex.Message}");
+      }
+    }
+
     private void MainWindow_Closed(object sender, WindowEventArgs e)
     {
+      _statusBarTimer?.Stop();
       // Save workspace layout before closing
       SaveWorkspaceLayout();
       Cleanup();

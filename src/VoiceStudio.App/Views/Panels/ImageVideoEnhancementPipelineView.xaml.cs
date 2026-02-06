@@ -51,22 +51,29 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void ConfigureStep_Click(object sender, RoutedEventArgs _)
     {
-      if (sender is Button button && button.CommandParameter is PipelineStep step)
+      try
       {
-        var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+        if (sender is Button button && button.CommandParameter is PipelineStep step)
         {
-          Title = $"Configure: {step.Name}",
-          Content = $"Step: {step.StepNumber}\n\nDescription: {step.Description}\n\nParameters: {step.ParametersSummary ?? "No parameters configured"}",
-          PrimaryButtonText = "Save",
-          CloseButtonText = "Cancel",
-          XamlRoot = this.XamlRoot
-        };
-        var result = await dialog.ShowAsync();
-        if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
-        {
-          // Parameters can be configured via ViewModel if needed
-          ViewModel.StatusMessage = $"Configuration saved for {step.Name}";
+          var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+          {
+            Title = $"Configure: {step.Name}",
+            Content = $"Step: {step.StepNumber}\n\nDescription: {step.Description}\n\nParameters: {step.ParametersSummary ?? "No parameters configured"}",
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            XamlRoot = this.XamlRoot
+          };
+          var result = await dialog.ShowAsync();
+          if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+          {
+            // Parameters can be configured via ViewModel if needed
+            ViewModel.StatusMessage = $"Configuration saved for {step.Name}";
+          }
         }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
       }
     }
 

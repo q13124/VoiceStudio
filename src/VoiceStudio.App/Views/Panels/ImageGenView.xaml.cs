@@ -134,14 +134,21 @@ namespace VoiceStudio.App.Views.Panels
 
     private async void QualitySettings_Click(object _, RoutedEventArgs __)
     {
-      var dialog = new ContentDialog
+      try
       {
-        Title = "Quality Settings",
-        Content = $"Current Settings:\n\nSteps: {ViewModel.Steps}\nCFG Scale: {ViewModel.CfgScale:F1}\nWidth: {ViewModel.Width}\nHeight: {ViewModel.Height}\n\nQuality Preset: {ViewModel.SelectedQualityPreset?.Name ?? "Custom"}\n\nImage Clarity: {ViewModel.ImageClarity:F1}%\nImage Detail: {ViewModel.ImageDetail:F1}%\nStyle Fidelity: {ViewModel.ImageStyleFidelity:F1}%\nOverall Quality: {ViewModel.ImageOverallQuality:F1}%",
-        PrimaryButtonText = "OK",
-        XamlRoot = this.XamlRoot
-      };
-      await dialog.ShowAsync();
+        var dialog = new ContentDialog
+        {
+          Title = "Quality Settings",
+          Content = $"Current Settings:\n\nSteps: {ViewModel.Steps}\nCFG Scale: {ViewModel.CfgScale:F1}\nWidth: {ViewModel.Width}\nHeight: {ViewModel.Height}\n\nQuality Preset: {ViewModel.SelectedQualityPreset?.Name ?? "Custom"}\n\nImage Clarity: {ViewModel.ImageClarity:F1}%\nImage Detail: {ViewModel.ImageDetail:F1}%\nStyle Fidelity: {ViewModel.ImageStyleFidelity:F1}%\nOverall Quality: {ViewModel.ImageOverallQuality:F1}%",
+          PrimaryButtonText = "OK",
+          XamlRoot = this.XamlRoot
+        };
+        await dialog.ShowAsync();
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+      }
     }
 
     private async System.Threading.Tasks.Task HandleImageMenuClick(string action, object image)
@@ -151,7 +158,7 @@ namespace VoiceStudio.App.Views.Panels
         switch (action.ToLower())
         {
           case "view":
-            ViewModel.SelectedImage = (GeneratedImage)image;
+            ViewModel.SelectedImage = (image as GeneratedImage);
             _toastService?.ShowToast(ToastType.Info, "View Image", "Viewing full size image");
             break;
           case "export":
@@ -184,7 +191,7 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var imageToDelete = (GeneratedImage)image;
+              var imageToDelete = (image as GeneratedImage);
               var imageIndex = ViewModel.GeneratedImages.IndexOf(imageToDelete);
 
               ViewModel.GeneratedImages.Remove(imageToDelete);
@@ -222,6 +229,10 @@ namespace VoiceStudio.App.Views.Panels
         picker.FileTypeChoices.Add("PNG", new List<string> { ".png" });
         picker.FileTypeChoices.Add("JPEG", new List<string> { ".jpg", ".jpeg" });
         picker.SuggestedFileName = $"generated_image_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+        // Required for WinUI 3 unpackaged desktop apps
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
         var file = await picker.PickSaveFileAsync();
         if (file != null)

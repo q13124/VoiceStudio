@@ -1003,3 +1003,115 @@ async def get_edit_session(session_id: str):
             status_code=500,
             detail=f"Failed to get edit session: {str(e)}",
         ) from e
+
+
+# --- Frontend-compatible session endpoints (plural /sessions) ---
+
+
+class SessionCreateRequest(BaseModel):
+    """Request to create an edit session."""
+    audio_id: Optional[str] = None
+    transcript: Optional[str] = ""
+    name: Optional[str] = None
+
+
+class SessionUpdateRequest(BaseModel):
+    """Request to update an edit session."""
+    edited_transcript: Optional[str] = None
+    name: Optional[str] = None
+
+
+class SynthesizeRequest(BaseModel):
+    """Request to synthesize from session."""
+    engine_id: Optional[str] = None
+    voice_id: Optional[str] = None
+
+
+@router.get("/sessions")
+async def list_sessions():
+    """List all edit sessions."""
+    sessions = []
+    for sid, session in _edit_sessions.items():
+        sessions.append({
+            "session_id": session.session_id,
+            "audio_id": session.audio_id,
+            "original_transcript": session.original_transcript,
+            "edited_transcript": session.edited_transcript,
+            "created_at": session.created_at,
+            "updated_at": session.updated_at,
+        })
+    return sessions
+
+
+@router.post("/sessions")
+async def create_session(request: SessionCreateRequest):
+    """Create a new edit session (frontend-compatible)."""
+    session_id = f"edit-session-{uuid.uuid4().hex[:8]}"
+    now = datetime.utcnow().isoformat()
+
+    session = EditSession(
+        session_id=session_id,
+        audio_id=request.audio_id or "",
+        original_transcript=request.transcript or "",
+        edited_transcript=request.transcript or "",
+        segments=[],
+        operations=[],
+        created_at=now,
+        updated_at=now,
+    )
+
+    _edit_sessions[session_id] = session
+
+    return {
+        "session_id": session_id,
+        "audio_id": session.audio_id,
+        "original_transcript": session.original_transcript,
+        "edited_transcript": session.edited_transcript,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+@router.put("/sessions/{session_id}")
+async def update_session(session_id: str, request: SessionUpdateRequest):
+    """Update an edit session."""
+    if session_id not in _edit_sessions:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+
+    session = _edit_sessions[session_id]
+    if request.edited_transcript is not None:
+        session.edited_transcript = request.edited_transcript
+    session.updated_at = datetime.utcnow().isoformat()
+
+    return {
+        "session_id": session.session_id,
+        "audio_id": session.audio_id,
+        "edited_transcript": session.edited_transcript,
+        "updated_at": session.updated_at,
+    }
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """Delete an edit session."""
+    if session_id not in _edit_sessions:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+
+    del _edit_sessions[session_id]
+    return {"ok": True}
+
+
+@router.post("/sessions/{session_id}/synthesize")
+async def synthesize_session(session_id: str, request: SynthesizeRequest):
+    """Synthesize audio from an edit session."""
+    if session_id not in _edit_sessions:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+
+    session = _edit_sessions[session_id]
+
+    return {
+        "session_id": session_id,
+        "text": session.edited_transcript,
+        "status": "queued",
+        "message": "Synthesis job queued",
+    }

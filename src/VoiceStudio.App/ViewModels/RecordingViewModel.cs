@@ -434,5 +434,15 @@ namespace VoiceStudio.App.ViewModels
       public string Id { get; set; } = string.Empty;
       public string Name { get; set; } = string.Empty;
     }
+
+    protected override void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        _statusTimer.Stop();
+        _statusTimer.Tick -= StatusTimer_Tick;
+      }
+      base.Dispose(disposing);
+    }
   }
 }

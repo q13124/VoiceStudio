@@ -14,6 +14,8 @@
           Background="{StaticResource VSQ.Panel.Background}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="160" />
         </Grid.RowDefinitions>
@@ -27,10 +29,96 @@
                        Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
         </Border>
 
+        <!-- Transport Bar -->
+        <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background.DarkBrush}" Padding="8,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
+                    <Button Command="{x:Bind ViewModel.PlayAudioCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Play">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                    <Button Command="{x:Bind ViewModel.StopAudioCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Stop">
+                        <FontIcon Glyph="&#xE71A;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                    <Button MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Record">
+                        <FontIcon Glyph="&#xE7C8;" FontSize="14" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="4,0" />
+                    <ToggleButton MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Loop">
+                        <FontIcon Glyph="&#xE8EE;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    </ToggleButton>
+                </StackPanel>
+                <TextBlock Grid.Column="1" x:Name="TimePositionDisplay" Text="00:00.000" FontSize="16" FontWeight="SemiBold"
+                           Foreground="{StaticResource VSQ.Accent.CyanBrush}" FontFamily="Consolas"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
+                    <Button Command="{x:Bind ViewModel.AddTrackCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Add Track">
+                        <FontIcon Glyph="&#xE710;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                    <Button Command="{x:Bind ViewModel.ZoomInCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom In">
+                        <FontIcon Glyph="&#xE8A3;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                    <Button Command="{x:Bind ViewModel.ZoomOutCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom Out">
+                        <FontIcon Glyph="&#xE71F;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Time Ruler -->
+        <Border Grid.Row="2" Height="24" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="160,0,0,0" Spacing="80">
+                <TextBlock Text="0:00" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:05" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:10" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:15" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:20" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:25" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="0:30" FontSize="9" Foreground="{StaticResource VSQ.Text.SecondaryBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
         <!-- Timeline Area -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="3">
             <ScrollViewer x:Name="TimelineScrollViewer" />
-            <ListView x:Name="TracksListView" ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}" />
+            <ListView x:Name="TracksListView" ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Height="60" Background="{StaticResource VSQ.Panel.Background.DarkBrush}"
+                              BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                                    BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,1,0" Padding="8,4">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="{Binding Name, FallbackValue='Track'}"
+                                               FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2" Margin="0,4,0,0">
+                                        <ToggleButton Content="M" Width="24" Height="20" FontSize="9" Padding="0" ToolTipService.ToolTip="Mute" />
+                                        <ToggleButton Content="S" Width="24" Height="20" FontSize="9" Padding="0" ToolTipService.ToolTip="Solo" />
+                                        <ToggleButton Content="R" Width="24" Height="20" FontSize="9" Padding="0" Foreground="#FF4060" ToolTipService.ToolTip="Record Arm" />
+                                        <Slider Minimum="0" Maximum="1" Value="0.8" Width="50" Height="16" Margin="4,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="1" Margin="1,2">
+                                <Rectangle Fill="{StaticResource VSQ.Panel.Background}" Opacity="0.3" RadiusX="2" RadiusY="2" />
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
             <Canvas x:Name="TimelineScrubCanvas" Background="Transparent" 
                     PointerPressed="TimelineScrubCanvas_PointerPressed"
                     PointerMoved="TimelineScrubCanvas_PointerMoved"
@@ -42,14 +130,14 @@
         </Grid>
 
         <!-- Visualizer Row -->
-        <Grid Grid.Row="2" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}">
+        <Grid Grid.Row="4" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}">
             <controls:SpectrogramControl x:Name="SpectrogramVisualizer" />
             <controls:WaveformControl x:Name="WaveformVisualizer" />
         </Grid>
 
         <!-- Help Overlay -->
         <controls:HelpOverlay x:Name="HelpOverlay" 
-                              Grid.RowSpan="3"
+                              Grid.RowSpan="5"
                               IsVisible="False" 
                               Visibility="Collapsed"
                               d:Visibility="Collapsed" />

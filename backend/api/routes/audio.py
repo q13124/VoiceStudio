@@ -7,12 +7,14 @@ Provides downsampled data optimized for real-time rendering in the UI.
 
 import logging
 import os
+import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from ..optimization import cache_response
@@ -929,3 +931,47 @@ def get_phase_data(
         raise HTTPException(
             status_code=500, detail=f"Failed to generate phase data: {str(e)}"
         )
+
+
+# --- Audio Upload ---
+
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data", "audio_uploads")
+
+
+class AudioUploadResponse(BaseModel):
+    """Response from audio upload."""
+    id: str
+    filename: str
+    path: str
+    size: int
+    content_type: Optional[str] = None
+
+
+@router.post("/upload", response_model=AudioUploadResponse, status_code=201)
+async def upload_audio(file: UploadFile = File(...)):
+    """Upload an audio file for processing."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    file_id = str(uuid.uuid4())
+    ext = os.path.splitext(file.filename or "audio.wav")[1] or ".wav"
+    safe_filename = f"{file_id}{ext}"
+    dest_path = os.path.join(UPLOAD_DIR, safe_filename)
+
+    try:
+        with open(dest_path, "wb") as out:
+            content = await file.read()
+            out.write(content)
+
+        return AudioUploadResponse(
+            id=file_id,
+            filename=file.filename or safe_filename,
+            path=dest_path,
+            size=len(content),
+            content_type=file.content_type,
+        )
+    except Exception as e:
+        # Clean up on failure
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        logger.error(f"Audio upload failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
