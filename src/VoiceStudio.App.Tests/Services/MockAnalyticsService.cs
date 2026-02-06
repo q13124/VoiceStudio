@@ -15,8 +15,54 @@ namespace VoiceStudio.App.Tests.Services
     private readonly List<AnalyticsEvent> _events = new();
     private readonly Dictionary<string, FlowContext> _activeFlows = new();
     private readonly object _lock = new();
+    private AnalyticsConsentStatus _consentStatus = AnalyticsConsentStatus.OptedIn;
 
     public event EventHandler<AnalyticsEvent>? EventTracked;
+    public event EventHandler<AnalyticsConsentStatus>? ConsentChanged;
+
+    /// <summary>
+    /// Gets whether analytics is enabled (always true in mock for testing).
+    /// </summary>
+    public bool IsEnabled => _consentStatus == AnalyticsConsentStatus.OptedIn;
+
+    /// <summary>
+    /// Gets the current consent status.
+    /// </summary>
+    public AnalyticsConsentStatus ConsentStatus => _consentStatus;
+
+    /// <summary>
+    /// Sets the user's consent preference.
+    /// </summary>
+    public void SetConsent(bool optIn)
+    {
+      _consentStatus = optIn ? AnalyticsConsentStatus.OptedIn : AnalyticsConsentStatus.OptedOut;
+      ConsentChanged?.Invoke(this, _consentStatus);
+    }
+
+    /// <summary>
+    /// Resets consent to NotAsked state.
+    /// </summary>
+    public void ResetConsent()
+    {
+      _consentStatus = AnalyticsConsentStatus.NotAsked;
+      ConsentChanged?.Invoke(this, _consentStatus);
+    }
+
+    /// <summary>
+    /// Clears all stored analytics data.
+    /// </summary>
+    public void ClearData()
+    {
+      Clear();
+    }
+
+    /// <summary>
+    /// Exports analytics data (mock returns empty path).
+    /// </summary>
+    public System.Threading.Tasks.Task<string> ExportDataAsync(string? outputPath = null)
+    {
+      return System.Threading.Tasks.Task.FromResult(outputPath ?? "mock_export.json");
+    }
 
     /// <summary>
     /// Gets all tracked events.
