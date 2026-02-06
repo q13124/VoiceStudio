@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-05 (Phase 5 Observability Audit added; Phase 5 complete 15/15 tasks)
+> **Last Updated**: 2026-02-05 (Phase 7 Production Readiness complete 17/17 tasks; v1.0.1 Release Notes added)
 
 ---
 
@@ -237,6 +237,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Final Sweep — Consolidated for Realignment** | `docs/reports/audit/FINAL_SWEEP_CONSOLIDATED_FOR_REALIGNMENT_2026-01-30.md` | 2026-01-30 | **Single reference** for all roles before realignment: corrected record (what exists vs missing); still-missing files; implementation/architecture gaps; role expectations; realignment checklist (§6). Use for plan/roadmap/role update. |
 | **Phase 5 Observability Audit** | `docs/reports/audit/PHASE5_OBSERVABILITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 5 completion audit: 15/15 tasks complete; OpenTelemetry, trace propagation, SLO dashboard, Prometheus export, diagnostics, error tracking; gate_status PASS, ledger_validate PASS |
 | **Phase 6 Security Audit** | `docs/reports/audit/PHASE6_SECURITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 6 completion audit: 7/7 tasks complete; HMAC request signing (40 tests), file validation by magic bytes (58 tests), dependency policy, Dependabot config, SBOM generation, CVE monitoring workflow, secrets rotation guide; 98 tests PASS |
+| **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release: Installer enhancements (prerequisites, silent mode, upgrade validation), Error recovery (crash recovery, error reporting, data backup), Performance optimization (UI virtualization, lazy loading, response caching), Release documentation |
 
 ## Overseer Tooling
 
