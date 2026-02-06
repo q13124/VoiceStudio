@@ -162,9 +162,9 @@ namespace VoiceStudio.App.Services
                         });
                     }
                 }
+                // ALLOWED: empty catch - Skip malformed reports, failure is acceptable
                 catch
                 {
-                    // Skip malformed reports
                 }
             }
             
@@ -191,9 +191,9 @@ namespace VoiceStudio.App.Services
                         await TrySubmitReportAsync(report);
                     }
                 }
+                // ALLOWED: empty catch - Skip problematic reports, failure is acceptable
                 catch
                 {
-                    // Skip problematic reports
                 }
             }
         }
@@ -213,9 +213,9 @@ namespace VoiceStudio.App.Services
                     }
                 }
             }
+            // ALLOWED: empty catch - Best effort cleanup, failure is acceptable
             catch
             {
-                // Best effort cleanup
             }
         }
         

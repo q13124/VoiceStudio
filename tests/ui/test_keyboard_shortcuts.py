@@ -86,10 +86,11 @@ class TestKeyboardShortcuts:
                 )
                 is_visible = command_palette.is_displayed()
                 assert not is_visible
-            except:
-                # Command palette not found, which means it's closed
-                ...
-        except:
+            # ALLOWED: bare except - Element not found means closed, which is expected
+            except Exception:
+                pass
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Escape key functionality automation IDs not set.")
 
 

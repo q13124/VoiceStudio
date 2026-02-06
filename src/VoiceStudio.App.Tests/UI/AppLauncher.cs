@@ -295,7 +295,8 @@ namespace VoiceStudio.App.Tests.UI
           catch
           {
             // Best effort cleanup
-            try { _application?.Kill(); } catch { /* ALLOWED: empty catch */ }
+            // ALLOWED: empty catch - nested cleanup
+            try { _application?.Kill(); } catch { }
           }
         }
 

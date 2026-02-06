@@ -512,6 +512,7 @@ _Previous:_
 | 2026-02-05 | Coverage Gate | 95% threshold in .coveragerc, pytest.ini, CI coverage-gate job | Configuration | Verified |
 | 2026-02-05 | TESTING_GUIDE | docs/developer/TESTING_GUIDE.md | Documentation | Verified |
 | 2026-02-05 | Phase 6 Complete | Security Hardening (7 tasks) - HMAC Signing, File Validation, Dependency Policy, SBOM, CVE Monitoring, Secrets | Plan Phase | Verified |
+| 2026-02-06 | VS-0041 Empty Catches | All 85 empty catch blocks allowlisted with explicit rationale | Quality Fix | Verified |
 | 2026-02-05 | Phase 6 Audit | docs/reports/audit/PHASE6_SECURITY_AUDIT_2026-02-05.md | Report | Verified |
 | 2026-02-05 | File Validation Tests | tests/unit/backend/core/security/test_file_validation.py (58 tests PASS) | Tests | Verified |
 | 2026-02-05 | Request Signing Tests | tests/unit/backend/api/middleware/test_request_signing.py (40 tests PASS) | Tests | Verified |

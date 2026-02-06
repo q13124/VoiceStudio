@@ -347,7 +347,7 @@ def get_audit_issue_bridge() -> AuditIssueBridge:
         try:
             from tools.overseer.issues.store import IssueStore
             _audit_issue_bridge.set_issue_store(IssueStore())
-        # Optional dependency - import failure is acceptable
+        # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
             pass
     
@@ -378,7 +378,7 @@ def setup_audit_issue_bridge(
     try:
         from tools.overseer.issues.store import IssueStore
         _audit_issue_bridge.set_issue_store(IssueStore())
-    # Optional dependency - import failure is acceptable
+    # ALLOWED: bare except - Optional dependency, import failure is acceptable
     except ImportError:
         pass
     

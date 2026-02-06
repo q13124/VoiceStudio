@@ -111,7 +111,7 @@ class PythonImportAnalyzer:
                 elif isinstance(item, ast.ImportFrom):
                     if item.module:
                         node.imports.add(item.module)
-                        
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
     
@@ -179,7 +179,7 @@ class ServiceAnalyzer:
             
             if service.endpoints:
                 self.services[service_name] = service
-                
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
 
@@ -222,7 +222,7 @@ class ViewModelAnalyzer:
                 view_name = xaml_file.stem
                 vm_name = match.group(1)
                 self.view_mapping[vm_name] = view_name
-                
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
     
@@ -253,7 +253,7 @@ class ViewModelAnalyzer:
                 viewmodel.commands.append(match.group(1))
             
             self.viewmodels[vm_name] = viewmodel
-            
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
 

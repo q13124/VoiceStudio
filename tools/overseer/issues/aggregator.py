@@ -192,7 +192,7 @@ def record_issue(
             enqueue_issue(issue)
             logger.debug("Issue enqueued (async): %s", issue.id)
             # Auto-task creation handled after store append
-        # Optional dependency - import failure is acceptable
+        # ALLOWED: bare except - Optional async dependency
         except ImportError:
             pass
     else:

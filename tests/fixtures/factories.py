@@ -584,6 +584,7 @@ class FixtureManager:
             try:
                 if path.exists():
                     path.unlink()
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
             except Exception:
                 pass
         self.created_files.clear()

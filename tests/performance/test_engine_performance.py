@@ -278,6 +278,7 @@ def benchmark_operation(
     for _ in range(warmup):
         try:
             operation()
+        # ALLOWED: bare except - Warmup phase, failure is acceptable
         except Exception:
             pass
     

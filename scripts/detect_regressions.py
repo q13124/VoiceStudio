@@ -282,7 +282,7 @@ class TestRegressionDetector:
                                 "failure_message": message,
                             }
                         ))
-                        
+            # ALLOWED: bare except - File parsing, individual file failure is acceptable
             except Exception:
                 pass
         
@@ -324,7 +324,7 @@ class TestRegressionDetector:
                             "failure_message": message,
                         }
                     ))
-                    
+            # ALLOWED: bare except - File parsing, individual file failure is acceptable
             except Exception:
                 pass
         
@@ -415,7 +415,7 @@ class XamlRegressionDetector:
                         if resource_name not in referenced_resources:
                             referenced_resources[resource_name] = []
                         referenced_resources[resource_name].append((rel_path, line_num))
-                        
+            # ALLOWED: bare except - File parsing, individual file failure is acceptable
             except Exception:
                 pass
         

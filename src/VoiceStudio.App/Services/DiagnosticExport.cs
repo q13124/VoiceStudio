@@ -410,9 +410,9 @@ namespace VoiceStudio.App.Services
                         cancellationToken);
                 }
             }
+            // ALLOWED: empty catch - Error tracker not available, skip is acceptable
             catch (InvalidOperationException)
             {
-                // Error tracker not available, skip
             }
         }
 

@@ -194,6 +194,7 @@ class CoverageCollector:
                 root = tree.getroot()
                 line_rate = float(root.get("line-rate", 0))
                 return line_rate * 100
+            # ALLOWED: bare except - File parsing, individual file failure is acceptable
             except Exception:
                 pass
         
@@ -209,6 +210,7 @@ class CoverageCollector:
             if result.returncode == 0:
                 # Output is just the percentage
                 return float(result.stdout.strip())
+        # ALLOWED: bare except - Subprocess, failure falls back to None
         except Exception:
             pass
         
@@ -230,6 +232,7 @@ class CoverageCollector:
                     root = tree.getroot()
                     line_rate = float(root.get("line-rate", 0))
                     return line_rate * 100
+                # ALLOWED: bare except - File parsing, try next file
                 except Exception:
                     pass
         

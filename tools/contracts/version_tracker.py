@@ -265,7 +265,7 @@ class VersionTracker:
                     breaking = True
                 elif new_count > old_version.endpoint_count:
                     changes.append(f"Endpoints increased from {old_version.endpoint_count} to {new_count}")
-                
+            # ALLOWED: bare except - Best effort version comparison
             except Exception:
                 pass
         

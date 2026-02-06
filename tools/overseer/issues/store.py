@@ -65,12 +65,12 @@ def _file_lock(log_file: Path):
         if fd is not None:
             try:
                 os.close(fd)
-            # Best effort - failure is acceptable here
+            # ALLOWED: bare except - Best effort file handle cleanup
             except OSError:
                 pass
         try:
             lock_file.unlink(missing_ok=True)
-        # Best effort - failure is acceptable here
+        # ALLOWED: bare except - Best effort lock file cleanup
         except OSError:
             pass
 

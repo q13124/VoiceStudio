@@ -162,8 +162,10 @@ class PythonDocAnalyzer:
                             docstring_length=len(docstring) if docstring else 0,
                         ))
                         
+        # ALLOWED: bare except - File parsing, skip files with errors
         except SyntaxError:
-            pass  # Skip files with syntax errors
+            pass
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
     
@@ -273,7 +275,7 @@ class CSharpDocAnalyzer:
                     line_number=line_num,
                     has_docstring=has_doc,
                 ))
-                
+        # ALLOWED: bare except - File parsing, individual file failure is acceptable
         except Exception:
             pass
     

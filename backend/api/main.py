@@ -95,7 +95,7 @@ if os.environ.get("VOICESTUDIO_JSON_LOGGING", "").lower() in ("1", "true", "yes"
 
         setup_json_logging()
         logging.getLogger(__name__).info("JSON logging enabled via VOICESTUDIO_JSON_LOGGING")
-    # Optional dependency - import failure is acceptable
+    # ALLOWED: bare except - Optional dependency, import failure is acceptable
     except ImportError:
         pass
 
@@ -412,7 +412,7 @@ async def shutdown_event():
                         if queue.get_pending_count() == 0:
                             break
                         await asyncio.sleep(0.5)
-        # Optional dependency - import failure is acceptable
+        # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
             pass
         except Exception as e:
@@ -447,7 +447,7 @@ async def shutdown_event():
             
             await close_database_connections()
             logger.info("Database connections closed")
-        # Optional dependency - import failure is acceptable
+        # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
             pass
         except Exception as e:

@@ -40,6 +40,7 @@ class TestQualityMetricsDatabase(IntegrationTestBase):
         # Cleanup
         try:
             os.unlink(db_path)
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except OSError:
             pass
 
@@ -256,6 +257,7 @@ class TestDatabaseTransactionRollback(IntegrationTestBase):
         yield db_path
         try:
             os.unlink(db_path)
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except OSError:
             pass
 
@@ -306,6 +308,7 @@ class TestDatabaseTransactionRollback(IntegrationTestBase):
             with conn:
                 conn.execute("INSERT INTO test_table VALUES ('id1', 'value1')")
                 raise ValueError("Simulated error")
+        # ALLOWED: bare except - Expected for negative test case
         except ValueError:
             pass
         
@@ -393,6 +396,7 @@ class TestDatabaseSchemaValidation(IntegrationTestBase):
         yield db_path
         try:
             os.unlink(db_path)
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except OSError:
             pass
 
@@ -466,6 +470,7 @@ class TestDatabaseCleanup(IntegrationTestBase):
         yield db_path
         try:
             os.unlink(db_path)
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except OSError:
             pass
 
@@ -514,6 +519,7 @@ class TestDatabaseServiceIntegration(IntegrationTestBase):
         yield db_path
         try:
             os.unlink(db_path)
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except OSError:
             pass
 
@@ -539,6 +545,7 @@ class TestDatabaseServiceIntegration(IntegrationTestBase):
             qm_module._quality_db = None
             try:
                 os.unlink(temp_path)
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
             except OSError:
                 pass
 

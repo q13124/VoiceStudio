@@ -277,9 +277,9 @@ namespace VoiceStudio.IntegrationTests
                 // If no exception, metrics might be null or empty
                 Assert.NotNull(metrics);
             }
+            // ALLOWED: empty catch - Expected for negative test case
             catch (HttpRequestException)
             {
-                // Expected for invalid engine - should return 404 or 400
             }
         }
 
@@ -304,9 +304,9 @@ namespace VoiceStudio.IntegrationTests
                 // May return empty recommendations or error
                 recommendations.Should().NotBeNull();
             }
+            // ALLOWED: empty catch - Expected for negative test case
             catch (HttpRequestException)
             {
-                // Expected for invalid task type
             }
         }
 
@@ -329,9 +329,9 @@ namespace VoiceStudio.IntegrationTests
                 // Should not succeed with invalid profile
                 Assert.Null(response);
             }
+            // ALLOWED: empty catch - Expected for negative test case
             catch (HttpRequestException)
             {
-                // Expected - should return 404 for invalid profile
             }
         }
 
@@ -375,9 +375,9 @@ namespace VoiceStudio.IntegrationTests
                     // Should not succeed with empty text
                     Assert.Null(response);
                 }
+                // ALLOWED: empty catch - Expected for negative test case
                 catch (HttpRequestException)
                 {
-                    // Expected - should return 400 for empty text
                 }
             }
             finally

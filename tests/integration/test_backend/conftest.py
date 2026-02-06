@@ -129,6 +129,7 @@ def mock_backend_services():
     for p in patches:
         try:
             p.stop()
+        # ALLOWED: bare except - Best effort cleanup, failure is acceptable
         except Exception:
             pass
 

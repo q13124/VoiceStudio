@@ -486,6 +486,7 @@ class ReleaseChecker:
                             matches = re.findall(rf"{pattern}[:\s]", content, re.IGNORECASE)
                             if matches:
                                 todos_found.append(f"{file.name}: {len(matches)}x {pattern}")
+                    # ALLOWED: bare except - File parsing, individual file failure is acceptable
                     except Exception:
                         pass
             

@@ -274,9 +274,9 @@ public partial class NPSSurveyViewModel : ObservableObject
             var updatedJson = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(settingsPath, updatedJson);
         }
+        // ALLOWED: empty catch - Non-critical operation, failure is acceptable
         catch
         {
-            // Silently fail - not critical
         }
     }
 

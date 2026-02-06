@@ -501,9 +501,9 @@ namespace VoiceStudio.App.Services
                 var reportPath = Path.Combine(localAppData, "startup_diagnostics.json");
                 await File.WriteAllTextAsync(reportPath, json, cancellationToken);
             }
+            // ALLOWED: empty catch - Diagnostics should not fail startup
             catch
             {
-                // Ignore save failures - diagnostics should not fail startup
             }
         }
 

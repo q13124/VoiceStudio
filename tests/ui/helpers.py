@@ -98,6 +98,7 @@ class ElementHelper:
             try:
                 if condition_fn():
                     return True
+            # ALLOWED: bare except - Polling for condition, retrying is expected
             except Exception:
                 pass
             time.sleep(poll_interval)

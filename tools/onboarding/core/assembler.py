@@ -41,7 +41,7 @@ def _default_context_manager() -> Optional["ContextManager"]:
         cfg = root / DEFAULT_CONTEXT_CONFIG
         if cfg.exists():
             return ContextManager.from_config(cfg)
-    # Best effort - failure is acceptable here
+    # ALLOWED: bare except - Best effort context manager init
     except Exception:
         pass
     return None

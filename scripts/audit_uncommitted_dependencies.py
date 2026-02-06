@@ -64,7 +64,7 @@ def extract_imports(file_path):
                 else:
                     module = line.split()[1].split(".")[0]
                 imports.append(module)
-    # Best effort - failure is acceptable here
+    # ALLOWED: bare except - Best effort file parsing, failure is acceptable
     except Exception:
         pass
     return imports

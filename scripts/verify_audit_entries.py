@@ -61,7 +61,7 @@ def get_recent_logged_files(hours: int = 1) -> Set[str]:
                                 logged_files.add(file_path.replace("\\", "/"))
                 except (json.JSONDecodeError, ValueError):
                     continue
-    # Best effort - failure is acceptable here
+    # ALLOWED: bare except - Best effort file parsing, failure is acceptable
     except IOError:
         pass
     

@@ -311,6 +311,7 @@ class SessionManager:
                 # Try graceful close first
                 self._driver.find_element("accessibility id", "CloseButton").click()
                 time.sleep(1)
+            # ALLOWED: bare except - Best effort close, failure falls back to close_session
             except Exception:
                 pass
         

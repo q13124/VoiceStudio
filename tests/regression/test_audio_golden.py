@@ -87,7 +87,7 @@ def get_backend_client():
             response = client.get("/api/health")
             if response.status_code == 200:
                 return client
-        # Best effort - failure is acceptable here
+        # ALLOWED: bare except - Best effort, failure is acceptable
         except Exception:
             pass
         

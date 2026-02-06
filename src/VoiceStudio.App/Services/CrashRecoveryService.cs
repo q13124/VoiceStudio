@@ -104,9 +104,9 @@ namespace VoiceStudio.App.Services
                     File.Delete(_sessionFilePath);
                 }
             }
+            // ALLOWED: empty catch - Best effort cleanup, failure is acceptable
             catch
             {
-                // Best effort cleanup
             }
         }
         

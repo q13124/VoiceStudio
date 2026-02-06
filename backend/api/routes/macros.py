@@ -200,15 +200,21 @@ def _validate_macro_structure(macro: Macro) -> List[str]:
     for conn in macro.connections:
         # Check source node exists
         if conn.source_node_id not in node_ids:
-            errors.append(f"Connection references non-existent source node: {conn.source_node_id}")
+            errors.append(
+                f"Connection references non-existent source node: {conn.source_node_id}"
+            )
 
         # Check target node exists
         if conn.target_node_id not in node_ids:
-            errors.append(f"Connection references non-existent target node: {conn.target_node_id}")
+            errors.append(
+                f"Connection references non-existent target node: {conn.target_node_id}"
+            )
 
         # Check for self-connections (may be valid, but warn)
         if conn.source_node_id == conn.target_node_id:
-            errors.append(f"Connection {conn.id} connects node to itself: {conn.source_node_id}")
+            errors.append(
+                f"Connection {conn.id} connects node to itself: {conn.source_node_id}"
+            )
 
     # Check for cycles (using DFS)
     if macro.connections:
@@ -268,7 +274,8 @@ def list_macros(
             macros = [m for m in macros if m.project_id == project_id]
 
         logger.info(
-            f"Listed {len(macros)} macros" + (f" (project: {project_id})" if project_id else "")
+            f"Listed {len(macros)} macros"
+            + (f" (project: {project_id})" if project_id else "")
         )
         return macros
     except HTTPException:
@@ -297,7 +304,9 @@ def get_macro(macro_id: str) -> Macro:
         raise
     except Exception as e:
         logger.error(f"Error retrieving macro {macro_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve macro: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve macro: {str(e)}"
+        )
 
 
 @router.post("", response_model=Macro)
@@ -313,7 +322,9 @@ def create_macro(request: MacroCreateRequest) -> Macro:
         _validate_project_id(request.project_id)
 
         # Check limit
-        project_macros = [m for m in _macros.values() if m.project_id == request.project_id]
+        project_macros = [
+            m for m in _macros.values() if m.project_id == request.project_id
+        ]
         if len(project_macros) >= _MAX_MACROS:
             raise HTTPException(
                 status_code=429,
@@ -373,11 +384,15 @@ def update_macro(macro_id: str, request: MacroUpdateRequest) -> Macro:
         # Update fields
         if request.name is not None:
             if not request.name.strip():
-                raise HTTPException(status_code=400, detail="Macro name cannot be empty")
+                raise HTTPException(
+                    status_code=400, detail="Macro name cannot be empty"
+                )
             macro.name = request.name.strip()
 
         if request.description is not None:
-            macro.description = request.description.strip() if request.description else None
+            macro.description = (
+                request.description.strip() if request.description else None
+            )
 
         if request.nodes is not None:
             macro.nodes = request.nodes
@@ -471,7 +486,9 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
         if macro_id in _macro_execution_status:
             status = _macro_execution_status[macro_id]
             if status.status == "running":
-                raise HTTPException(status_code=409, detail="Macro is already executing")
+                raise HTTPException(
+                    status_code=409, detail="Macro is already executing"
+                )
 
         # Initialize execution status
         now = datetime.utcnow().isoformat()
@@ -522,7 +539,9 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
                 except Exception as e:
                     logger.error(f"Node {node.name} execution failed: {e}")
                     execution_status.status = "failed"
-                    execution_status.error_message = f"Node '{node.name}' failed: {str(e)}"
+                    execution_status.error_message = (
+                        f"Node '{node.name}' failed: {str(e)}"
+                    )
                     execution_status.completed_at = datetime.utcnow().isoformat()
                     raise
 
@@ -547,9 +566,13 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
         if macro_id in _macro_execution_status:
             _macro_execution_status[macro_id].status = "failed"
             _macro_execution_status[macro_id].error_message = str(e)
-            _macro_execution_status[macro_id].completed_at = datetime.utcnow().isoformat()
+            _macro_execution_status[macro_id].completed_at = (
+                datetime.utcnow().isoformat()
+            )
 
-        raise HTTPException(status_code=500, detail=f"Failed to execute macro: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to execute macro: {str(e)}"
+        )
 
 
 def _build_execution_order(macro: Macro) -> List[str]:
@@ -685,7 +708,9 @@ def _execute_control_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, 
         return {"output": inputs.get("input", None)}
 
 
-def _execute_conditional_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_conditional_node(
+    node: MacroNode, inputs: Dict[str, Any]
+) -> Dict[str, Any]:
     """Execute a conditional node (if/else logic)."""
     condition_type = node.properties.get("condition_type", "equals")
 
@@ -740,7 +765,7 @@ def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
             if tmp_path is not None and tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                # Best effort - failure is acceptable here
+                # ALLOWED: bare except - Best effort cleanup, failure is acceptable
                 except Exception:
                     pass
             logger.error(f"Failed to save output: {e}")
@@ -750,7 +775,9 @@ def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
 
 
 @router.get("/{macro_id}/status", response_model=MacroExecutionStatus)
-@cache_response(ttl=5)  # Cache for 5 seconds (status changes frequently during execution)
+@cache_response(
+    ttl=5
+)  # Cache for 5 seconds (status changes frequently during execution)
 def get_macro_execution_status(macro_id: str) -> MacroExecutionStatus:
     """
     Get the execution status of a macro.
@@ -838,7 +865,9 @@ async def schedule_macro(macro_id: str, request: MacroScheduleRequest):
         macro = _macros[macro_id]
 
         if not macro.is_enabled:
-            raise HTTPException(status_code=400, detail="Cannot schedule disabled macro")
+            raise HTTPException(
+                status_code=400, detail="Cannot schedule disabled macro"
+            )
 
         # Validate scheduling parameters
         if not request.scheduled_at and not request.interval_seconds:
@@ -891,7 +920,9 @@ async def schedule_macro(macro_id: str, request: MacroScheduleRequest):
         schedule_info = {
             "macro_id": macro_id,
             "scheduled_at": request.scheduled_at,
-            "scheduled_datetime": (scheduled_datetime.isoformat() if scheduled_datetime else None),
+            "scheduled_datetime": (
+                scheduled_datetime.isoformat() if scheduled_datetime else None
+            ),
             "interval_seconds": request.interval_seconds,
             "max_executions": request.max_executions,
             "execution_count": 0,
@@ -971,7 +1002,9 @@ async def schedule_macro(macro_id: str, request: MacroScheduleRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to schedule macro {macro_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to schedule macro: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to schedule macro: {str(e)}"
+        ) from e
 
 
 @router.get("/{macro_id}/schedule", response_model=MacroScheduleResponse)
@@ -1022,7 +1055,9 @@ async def cancel_macro_schedule(macro_id: str) -> Dict[str, bool]:
         _validate_macro_id(macro_id)
 
         if macro_id not in _macro_schedules:
-            raise HTTPException(status_code=404, detail=f"Macro {macro_id} is not scheduled")
+            raise HTTPException(
+                status_code=404, detail=f"Macro {macro_id} is not scheduled"
+            )
 
         # Cancel in scheduler if available
         if HAS_SCHEDULER:
@@ -1052,7 +1087,9 @@ async def cancel_macro_schedule(macro_id: str) -> Dict[str, bool]:
 
 # Automation curves endpoints
 @router.get("/automation/curves", response_model=List[AutomationCurve])
-@cache_response(ttl=30)  # Cache for 30 seconds (automation curves may change frequently)
+@cache_response(
+    ttl=30
+)  # Cache for 30 seconds (automation curves may change frequently)
 def list_automation_curves(
     track_id: str = Query(..., description="Track ID")
 ) -> List[AutomationCurve]:
@@ -1074,7 +1111,9 @@ def list_automation_curves(
             f"Error listing automation curves for track {track_id}: {str(e)}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to list automation curves: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to list automation curves: {str(e)}"
+        )
 
 
 @router.post("/automation/curves", response_model=AutomationCurve)
@@ -1101,7 +1140,9 @@ def create_automation_curve(request: AutomationCurveCreateRequest) -> Automation
             )
 
         # Check limit
-        track_curves = [c for c in _automation_curves.values() if c.track_id == request.track_id]
+        track_curves = [
+            c for c in _automation_curves.values() if c.track_id == request.track_id
+        ]
         if len(track_curves) >= _MAX_AUTOMATION_CURVES:
             raise HTTPException(
                 status_code=429,
@@ -1129,7 +1170,9 @@ def create_automation_curve(request: AutomationCurveCreateRequest) -> Automation
         raise
     except Exception as e:
         logger.error(f"Error creating automation curve: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create automation curve: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create automation curve: {str(e)}"
+        )
 
 
 @router.put("/automation/curves/{curve_id}", response_model=AutomationCurve)
@@ -1144,19 +1187,25 @@ def update_automation_curve(
 
         if curve_id not in _automation_curves:
             logger.warning(f"Automation curve not found: {curve_id}")
-            raise HTTPException(status_code=404, detail=f"Automation curve not found: {curve_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Automation curve not found: {curve_id}"
+            )
 
         curve = _automation_curves[curve_id]
 
         # Update fields
         if request.name is not None:
             if not request.name.strip():
-                raise HTTPException(status_code=400, detail="Curve name cannot be empty")
+                raise HTTPException(
+                    status_code=400, detail="Curve name cannot be empty"
+                )
             curve.name = request.name.strip()
 
         if request.parameter_id is not None:
             if not request.parameter_id.strip():
-                raise HTTPException(status_code=400, detail="Parameter ID cannot be empty")
+                raise HTTPException(
+                    status_code=400, detail="Parameter ID cannot be empty"
+                )
             curve.parameter_id = request.parameter_id.strip()
 
         if request.points is not None:
@@ -1176,8 +1225,12 @@ def update_automation_curve(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating automation curve {curve_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update automation curve: {str(e)}")
+        logger.error(
+            f"Error updating automation curve {curve_id}: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update automation curve: {str(e)}"
+        )
 
 
 @router.delete("/automation/curves/{curve_id}")
@@ -1190,7 +1243,9 @@ def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
 
         if curve_id not in _automation_curves:
             logger.warning(f"Automation curve not found: {curve_id}")
-            raise HTTPException(status_code=404, detail=f"Automation curve not found: {curve_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Automation curve not found: {curve_id}"
+            )
 
         del _automation_curves[curve_id]
 
@@ -1199,5 +1254,9 @@ def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting automation curve {curve_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete automation curve: {str(e)}")
+        logger.error(
+            f"Error deleting automation curve {curve_id}: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete automation curve: {str(e)}"
+        )

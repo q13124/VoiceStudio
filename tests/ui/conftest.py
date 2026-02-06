@@ -201,9 +201,9 @@ def driver(winappdriver_service, request):
         test_name = request.node.name.replace("::", "_").replace("[", "_").replace("]", "_")
         capture_screenshot(driver, f"FAILED_{test_name}")
 
-    # Cleanup
     try:
         driver.quit()
+    # ALLOWED: bare except - Best effort cleanup, failure is acceptable
     except Exception:
         pass
 

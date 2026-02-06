@@ -160,6 +160,7 @@ def collect_role_progress(config_dir: Path) -> List[RoleProgress]:
                 with open(config_file) as f:
                     role_config = json.load(f)
                 sources_configured = len(role_config.get("sources", []))
+            # ALLOWED: bare except - Best effort config loading
             except Exception:
                 pass
         

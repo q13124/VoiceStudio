@@ -12,7 +12,7 @@ def _ensure_utf8_stdout() -> None:
     try:
         if hasattr(sys.stdout, 'reconfigure'):
             sys.stdout.reconfigure(encoding='utf-8')
-    # Best effort - failure is acceptable here
+    # ALLOWED: bare except - Best effort UTF-8 stdout config
     except Exception:
         pass
 

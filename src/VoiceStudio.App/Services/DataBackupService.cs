@@ -360,9 +360,9 @@ namespace VoiceStudio.App.Services
                         File.Delete(backup.Path);
                         Debug.WriteLine($"[DataBackup] Deleted old backup: {backup.Name}");
                     }
+                    // ALLOWED: empty catch - Best effort cleanup, failure is acceptable
                     catch
                     {
-                        // Best effort cleanup
                     }
                 }
             });

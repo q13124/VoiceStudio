@@ -212,6 +212,7 @@ class E2ETestBase:
                 element = self._find_element(locator, by)
                 if element is not None:
                     return element
+            # ALLOWED: bare except - Polling for element, retrying is expected
             except Exception:
                 pass
             time.sleep(0.5)
@@ -281,6 +282,7 @@ class E2ETestBase:
                 if element:
                     element.click()
                     time.sleep(0.5)
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
             except Exception:
                 pass
     

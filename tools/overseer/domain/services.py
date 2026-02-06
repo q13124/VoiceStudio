@@ -149,7 +149,7 @@ class RootCauseAnalyzer:
                         if len(file_line) == 2:
                             try:
                                 return CodeLocation(file=file_line[0], line=int(file_line[1]))
-                            # Best effort - failure is acceptable here
+                            # ALLOWED: bare except - Best effort line number parsing
                             except ValueError:
                                 pass
         

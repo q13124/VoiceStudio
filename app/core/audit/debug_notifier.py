@@ -218,7 +218,7 @@ def get_debug_notifier() -> DebugRoleNotifier:
         try:
             from tools.overseer.issues.handoff import HandoffQueue
             _debug_notifier.set_handoff_queue(HandoffQueue())
-        # Optional dependency - import failure is acceptable
+        # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
             pass
     
@@ -249,7 +249,7 @@ def setup_debug_notifier(
     try:
         from tools.overseer.issues.handoff import HandoffQueue
         _debug_notifier.set_handoff_queue(HandoffQueue())
-    # Optional dependency - import failure is acceptable
+    # ALLOWED: bare except - Optional dependency, import failure is acceptable
     except ImportError:
         pass
     

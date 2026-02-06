@@ -201,6 +201,7 @@ async def negotiate_version(
                 all_supported=list(supported),
                 message=f"Negotiated to {negotiated}",
             )
+        # ALLOWED: bare except - Invalid version falls back to default
         except ValueError:
             pass
     

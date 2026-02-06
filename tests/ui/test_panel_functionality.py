@@ -23,8 +23,8 @@ class TestProfilesPanel:
                 "accessibility id", "NavRail_ProfilesButton"
             )
             profiles_button.click()
-        except:
-            # Try alternative selector if automation ID not set
+        # ALLOWED: bare except - Fallback to alternative selector
+        except Exception:
             profiles_button = driver.find_element(By.NAME, "Profiles")
             profiles_button.click()
 
@@ -37,7 +37,8 @@ class TestProfilesPanel:
                 "accessibility id", "ProfilesView_Root"
             )
             assert profiles_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Profiles panel automation ID not set. Build application in DEBUG mode."
             )
@@ -57,7 +58,8 @@ class TestProfilesPanel:
                 "accessibility id", "ProfilesView_ProfileList"
             )
             assert profile_list is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Profiles panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -79,7 +81,8 @@ class TestTimelinePanel:
                 "accessibility id", "TimelineView_Root"
             )
             assert timeline_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Timeline panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -97,7 +100,8 @@ class TestTimelinePanel:
                 "accessibility id", "TimelineView_PlayButton"
             )
             assert play_button is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Timeline panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -119,7 +123,8 @@ class TestEffectsMixerPanel:
                 "accessibility id", "EffectsMixerView_Root"
             )
             assert mixer_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Effects Mixer panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -141,7 +146,8 @@ class TestAnalyzerPanel:
                 "accessibility id", "AnalyzerView_Root"
             )
             assert analyzer_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Analyzer panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -161,7 +167,8 @@ class TestMacroPanel:
 
             macro_panel = driver.find_element("accessibility id", "MacroView_Root")
             assert macro_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Macro panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -183,7 +190,8 @@ class TestDiagnosticsPanel:
                 "accessibility id", "DiagnosticsView_Root"
             )
             assert diagnostics_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Diagnostics panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -205,7 +213,8 @@ class TestVoiceSynthesisPanel:
                 "accessibility id", "VoiceSynthesisView_Root"
             )
             assert synthesis_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Voice Synthesis panel automation IDs not set.")
 
     def test_voice_synthesis_engine_selection(self, driver, app_launched):
@@ -221,7 +230,8 @@ class TestVoiceSynthesisPanel:
                 "accessibility id", "VoiceSynthesisView_EngineCombo"
             )
             assert engine_combo is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Voice Synthesis panel automation IDs not set.")
 
 
@@ -241,7 +251,8 @@ class TestTrainingPanel:
                 "accessibility id", "TrainingView_Root"
             )
             assert training_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Training panel automation IDs not set.")
 
     def test_training_job_list_displays(self, driver, app_launched):
@@ -255,7 +266,8 @@ class TestTrainingPanel:
 
             job_list = driver.find_element("accessibility id", "TrainingView_JobList")
             assert job_list is not None
-        except:
+RE        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Training panel automation IDs not set.")
 
 
@@ -275,7 +287,8 @@ class TestBatchProcessingPanel:
                 "accessibility id", "BatchProcessingView_Root"
             )
             assert batch_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Batch Processing panel automation IDs not set.")
 
 
@@ -295,7 +308,8 @@ class TestTranscribePanel:
                 "accessibility id", "TranscribeView_Root"
             )
             assert transcribe_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Transcribe panel automation IDs not set.")
 
 
@@ -315,7 +329,8 @@ class TestQualityControlPanel:
                 "accessibility id", "QualityControlView_Root"
             )
             assert quality_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Quality Control panel automation IDs not set.")
 
 
@@ -335,7 +350,8 @@ class TestSettingsPanel:
                 "accessibility id", "SettingsView_Root"
             )
             assert settings_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip("Settings panel automation IDs not set.")
 
 
@@ -355,7 +371,8 @@ class TestWorkflowAutomationPanel:
                 "accessibility id", "WorkflowAutomationView_Root"
             )
             assert workflow_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Workflow Automation panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -374,7 +391,8 @@ class TestWorkflowAutomationPanel:
                 "accessibility id", "WorkflowAutomationView_Content"
             )
             assert len(workflow_content) > 0 or True
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Workflow Automation panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -396,7 +414,8 @@ class TestEmbeddingExplorerPanel:
                 "accessibility id", "EmbeddingExplorerView_Root"
             )
             assert embedding_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Embedding Explorer panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -415,7 +434,8 @@ class TestEmbeddingExplorerPanel:
                 "accessibility id", "EmbeddingExplorerView_ExtractButton"
             )
             assert len(extract_button) > 0 or True
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Embedding Explorer panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -437,7 +457,8 @@ class TestAssistantPanel:
                 "accessibility id", "AssistantView_Root"
             )
             assert assistant_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Assistant panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -478,7 +499,8 @@ class TestModelManagerPanel:
                 "accessibility id", "ModelManagerView_Root"
             )
             assert model_manager_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Model Manager panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -497,7 +519,8 @@ class TestModelManagerPanel:
                 "accessibility id", "ModelManagerView_ModelList"
             )
             assert len(model_list) > 0 or True
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Model Manager panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -519,7 +542,8 @@ class TestPluginManagementPanel:
                 "accessibility id", "PluginManagementView_Root"
             )
             assert plugin_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Plugin Management panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -538,7 +562,8 @@ class TestPluginManagementPanel:
                 "accessibility id", "PluginManagementView_PluginList"
             )
             assert len(plugin_list) > 0 or True
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Plugin Management panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -560,7 +585,8 @@ class TestVoiceCloningWizardPanel:
                 "accessibility id", "VoiceCloningWizardView_Root"
             )
             assert wizard_panel is not None
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Voice Cloning Wizard panel automation IDs not set. Build application in DEBUG mode."
             )
@@ -579,7 +605,8 @@ class TestVoiceCloningWizardPanel:
                 "accessibility id", "VoiceCloningWizardView_Content"
             )
             assert len(wizard_content) > 0 or True
-        except:
+        # ALLOWED: bare except - Automation ID may not be set
+        except Exception:
             pytest.skip(
                 "Voice Cloning Wizard panel automation IDs not set. Build application in DEBUG mode."
             )

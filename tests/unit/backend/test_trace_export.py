@@ -339,6 +339,7 @@ class TestTraceAnalyzer:
         try:
             with telemetry.trace("error_op"):
                 raise ValueError("Test error")
+        # ALLOWED: bare except - Intentional error for test case
         except ValueError:
             pass
         
@@ -433,6 +434,7 @@ class TestFilterFunctions:
         try:
             with telemetry.trace("failure"):
                 raise RuntimeError("Test")
+        # ALLOWED: bare except - Intentional error for test case
         except RuntimeError:
             pass
         

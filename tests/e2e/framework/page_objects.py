@@ -133,6 +133,7 @@ class BasePage:
                 element = self.find_element(locator)
                 if element is not None and element.is_displayed():
                     return element
+            # ALLOWED: bare except - Polling for element, retrying is expected
             except Exception:
                 pass
             time.sleep(0.5)
@@ -156,6 +157,7 @@ class BasePage:
                 element = self.find_element(locator)
                 if element is not None and element.is_displayed() and element.is_enabled():
                     return element
+            # ALLOWED: bare except - Polling for element, retrying is expected
             except Exception:
                 pass
             time.sleep(0.5)

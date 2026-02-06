@@ -228,9 +228,9 @@ namespace VoiceStudio.App.Services
                         {
                             await backendClient.CheckHealthAsync(ct);
                         }
+                        // ALLOWED: empty catch - Backend may not be running yet, acceptable
                         catch
                         {
-                            // Backend may not be running yet - that's OK
                         }
                     }
                 },
