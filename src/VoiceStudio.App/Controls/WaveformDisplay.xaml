@@ -1,0 +1,126 @@
+<UserControl
+    x:Class="VoiceStudio.App.Controls.WaveformDisplay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoiceStudio.App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <!-- Phase 11.3: DAW-Inspired Waveform Display -->
+    <Grid x:Name="RootGrid" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Timeline Ruler -->
+        <Canvas x:Name="TimelineRuler" 
+                Grid.Row="0"
+                Height="24"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+
+        <!-- Main Waveform Area -->
+        <Grid Grid.Row="1">
+            <!-- Waveform Canvas -->
+            <Canvas x:Name="WaveformCanvas"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    PointerPressed="WaveformCanvas_PointerPressed"
+                    PointerMoved="WaveformCanvas_PointerMoved"
+                    PointerReleased="WaveformCanvas_PointerReleased"
+                    PointerWheelChanged="WaveformCanvas_PointerWheelChanged"/>
+
+            <!-- Selection Overlay -->
+            <Canvas x:Name="SelectionCanvas" 
+                    IsHitTestVisible="False"/>
+
+            <!-- Playhead -->
+            <Canvas x:Name="PlayheadCanvas" 
+                    IsHitTestVisible="False">
+                <Rectangle x:Name="Playhead"
+                           Width="2"
+                           Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                           Canvas.Left="0"/>
+            </Canvas>
+
+            <!-- Markers Canvas -->
+            <Canvas x:Name="MarkersCanvas"
+                    IsHitTestVisible="False"/>
+
+            <!-- Loading Overlay -->
+            <Grid x:Name="LoadingOverlay"
+                  Visibility="Collapsed"
+                  Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <ProgressRing IsActive="True" 
+                                  Width="48" 
+                                  Height="48"/>
+                    <TextBlock Text="Loading waveform..."
+                               Margin="0,12,0,0"
+                               Style="{ThemeResource BodyTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Bottom Controls -->
+        <Grid Grid.Row="2"
+              Padding="8,4"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Current Time Display -->
+            <TextBlock x:Name="CurrentTimeText"
+                       Grid.Column="0"
+                       Text="00:00.000"
+                       FontFamily="Consolas"
+                       VerticalAlignment="Center"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+
+            <!-- Zoom Controls -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="4">
+                <Button x:Name="ZoomOutButton"
+                        Content="&#xE71F;"
+                        FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                        Width="32"
+                        Height="32"
+                        Padding="0"
+                        Click="ZoomOutButton_Click"
+                        ToolTipService.ToolTip="Zoom Out"/>
+                <Slider x:Name="ZoomSlider"
+                        Width="100"
+                        Minimum="1"
+                        Maximum="100"
+                        Value="10"
+                        ValueChanged="ZoomSlider_ValueChanged"
+                        VerticalAlignment="Center"/>
+                <Button x:Name="ZoomInButton"
+                        Content="&#xE8A3;"
+                        FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                        Width="32"
+                        Height="32"
+                        Padding="0"
+                        Click="ZoomInButton_Click"
+                        ToolTipService.ToolTip="Zoom In"/>
+            </StackPanel>
+
+            <!-- Duration Display -->
+            <TextBlock x:Name="DurationText"
+                       Grid.Column="3"
+                       Text="00:00.000"
+                       FontFamily="Consolas"
+                       Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+    </Grid>
+</UserControl>

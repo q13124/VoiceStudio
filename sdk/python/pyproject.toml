@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voicestudio-sdk"
+version = "1.0.0"
+description = "Python SDK for VoiceStudio voice synthesis API"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "VoiceStudio Team", email = "sdk@voicestudio.local"}
+]
+keywords = ["voicestudio", "tts", "text-to-speech", "voice-synthesis", "voice-cloning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "aiohttp>=3.8.0",
+    "soundfile>=0.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+]
+numpy = [
+    "numpy>=1.21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/voicestudio/voicestudio"
+Documentation = "https://docs.voicestudio.local/sdk/python"
+Repository = "https://github.com/voicestudio/voicestudio"
+Issues = "https://github.com/voicestudio/voicestudio/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["voicestudio*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

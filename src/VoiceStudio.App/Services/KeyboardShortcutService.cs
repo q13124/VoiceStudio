@@ -1,102 +1,364 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Windows.System;
+using Windows.UI.Core;
 
 namespace VoiceStudio.App.Services;
 
+/// <summary>
+/// Keyboard shortcut management service.
+/// 
+/// Phase 15.1: Keyboard-First Workflow
+/// Provides comprehensive keyboard shortcut handling for power users.
+/// </summary>
 public class KeyboardShortcutService
 {
-  private readonly Dictionary<VirtualKey, List<KeyboardShortcut>> _shortcuts = new();
-  private readonly Dictionary<string, KeyboardShortcut> _shortcutsById = new();
+    private readonly Dictionary<string, ShortcutBinding> _shortcuts;
+    private readonly Dictionary<string, List<Action>> _handlers;
+    private readonly HashSet<string> _customizedShortcuts;
+    private bool _isEnabled = true;
 
-  public event EventHandler<KeyboardShortcutEventArgs>? ShortcutExecuted;
+    public event EventHandler<ShortcutExecutedEventArgs>? ShortcutExecuted;
 
-  public void RegisterShortcut(string id, VirtualKey key, VirtualKeyModifiers modifiers, Action action, string? description = null)
-  {
-    var shortcut = new KeyboardShortcut
+    public KeyboardShortcutService()
     {
-      Id = id,
-      Key = key,
-      Modifiers = modifiers,
-      Action = action,
-      Description = description
-    };
+        _shortcuts = new Dictionary<string, ShortcutBinding>();
+        _handlers = new Dictionary<string, List<Action>>();
+        _customizedShortcuts = new HashSet<string>();
 
-    if (!_shortcuts.ContainsKey(key))
-    {
-      _shortcuts[key] = new List<KeyboardShortcut>();
+        RegisterDefaultShortcuts();
     }
 
-    _shortcuts[key].Add(shortcut);
-    _shortcutsById[id] = shortcut;
-  }
-
-  public bool TryHandleKeyDown(VirtualKey key, VirtualKeyModifiers modifiers)
-  {
-    if (!_shortcuts.TryGetValue(key, out var shortcuts))
+    /// <summary>
+    /// Register default keyboard shortcuts.
+    /// </summary>
+    private void RegisterDefaultShortcuts()
     {
-      return false;
+        // File operations
+        RegisterShortcut("file.new", VirtualKey.N, VirtualKeyModifiers.Control, "New Project");
+        RegisterShortcut("file.open", VirtualKey.O, VirtualKeyModifiers.Control, "Open Project");
+        RegisterShortcut("file.save", VirtualKey.S, VirtualKeyModifiers.Control, "Save Project");
+        RegisterShortcut("file.saveAs", VirtualKey.S, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Save As");
+        RegisterShortcut("file.export", VirtualKey.E, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Export Audio");
+
+        // Edit operations
+        RegisterShortcut("edit.undo", VirtualKey.Z, VirtualKeyModifiers.Control, "Undo");
+        RegisterShortcut("edit.redo", VirtualKey.Y, VirtualKeyModifiers.Control, "Redo");
+        RegisterShortcut("edit.cut", VirtualKey.X, VirtualKeyModifiers.Control, "Cut");
+        RegisterShortcut("edit.copy", VirtualKey.C, VirtualKeyModifiers.Control, "Copy");
+        RegisterShortcut("edit.paste", VirtualKey.V, VirtualKeyModifiers.Control, "Paste");
+        RegisterShortcut("edit.selectAll", VirtualKey.A, VirtualKeyModifiers.Control, "Select All");
+        RegisterShortcut("edit.delete", VirtualKey.Delete, VirtualKeyModifiers.None, "Delete");
+
+        // Playback controls
+        RegisterShortcut("playback.play", VirtualKey.Space, VirtualKeyModifiers.None, "Play/Pause");
+        RegisterShortcut("playback.stop", VirtualKey.Escape, VirtualKeyModifiers.None, "Stop");
+        RegisterShortcut("playback.rewind", VirtualKey.Home, VirtualKeyModifiers.None, "Go to Start");
+        RegisterShortcut("playback.forward", VirtualKey.End, VirtualKeyModifiers.None, "Go to End");
+        RegisterShortcut("playback.stepBack", VirtualKey.Left, VirtualKeyModifiers.None, "Step Back");
+        RegisterShortcut("playback.stepForward", VirtualKey.Right, VirtualKeyModifiers.None, "Step Forward");
+
+        // Synthesis
+        RegisterShortcut("synthesis.generate", VirtualKey.Enter, VirtualKeyModifiers.Control, "Generate Audio");
+        RegisterShortcut("synthesis.preview", VirtualKey.P, VirtualKeyModifiers.Control, "Preview Voice");
+        RegisterShortcut("synthesis.regenerate", VirtualKey.R, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Regenerate");
+
+        // View controls
+        RegisterShortcut("view.zoomIn", VirtualKey.Add, VirtualKeyModifiers.Control, "Zoom In");
+        RegisterShortcut("view.zoomOut", VirtualKey.Subtract, VirtualKeyModifiers.Control, "Zoom Out");
+        RegisterShortcut("view.zoomFit", VirtualKey.Number0, VirtualKeyModifiers.Control, "Zoom to Fit");
+        RegisterShortcut("view.fullscreen", VirtualKey.F11, VirtualKeyModifiers.None, "Toggle Fullscreen");
+
+        // Panel navigation
+        RegisterShortcut("panel.synthesis", VirtualKey.Number1, VirtualKeyModifiers.Control, "Synthesis Panel");
+        RegisterShortcut("panel.library", VirtualKey.Number2, VirtualKeyModifiers.Control, "Library Panel");
+        RegisterShortcut("panel.profiles", VirtualKey.Number3, VirtualKeyModifiers.Control, "Profiles Panel");
+        RegisterShortcut("panel.effects", VirtualKey.Number4, VirtualKeyModifiers.Control, "Effects Panel");
+        RegisterShortcut("panel.settings", VirtualKey.Comma, VirtualKeyModifiers.Control, "Settings");
+
+        // Tools
+        RegisterShortcut("tools.commandPalette", VirtualKey.P, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Command Palette");
+        RegisterShortcut("tools.search", VirtualKey.F, VirtualKeyModifiers.Control, "Search");
+        RegisterShortcut("tools.help", VirtualKey.F1, VirtualKeyModifiers.None, "Help");
     }
 
-    var matchingShortcut = shortcuts.FirstOrDefault(s => s.Modifiers == modifiers);
-    if (matchingShortcut != null)
+    /// <summary>
+    /// Register a keyboard shortcut.
+    /// </summary>
+    public void RegisterShortcut(
+        string commandId,
+        VirtualKey key,
+        VirtualKeyModifiers modifiers,
+        string description)
     {
-      matchingShortcut.Action?.Invoke();
-      ShortcutExecuted?.Invoke(this, new KeyboardShortcutEventArgs(matchingShortcut));
-      return true;
+        _shortcuts[commandId] = new ShortcutBinding
+        {
+            CommandId = commandId,
+            Key = key,
+            Modifiers = modifiers,
+            Description = description,
+            IsDefault = !_customizedShortcuts.Contains(commandId),
+        };
     }
 
-    return false;
-  }
-
-  public string? GetShortcutDescription(string id)
-  {
-    return _shortcutsById.TryGetValue(id, out var shortcut) ? shortcut.Description : null;
-  }
-
-  public string? GetShortcutDisplayText(string id)
-  {
-    if (!_shortcutsById.TryGetValue(id, out var shortcut))
+    /// <summary>
+    /// Register a handler for a shortcut.
+    /// </summary>
+    public void RegisterHandler(string commandId, Action handler)
     {
-      return null;
+        if (!_handlers.ContainsKey(commandId))
+        {
+            _handlers[commandId] = new List<Action>();
+        }
+        _handlers[commandId].Add(handler);
     }
 
-    var parts = new List<string>();
-    if (shortcut.Modifiers.HasFlag(VirtualKeyModifiers.Control))
-      parts.Add("Ctrl");
-    if (shortcut.Modifiers.HasFlag(VirtualKeyModifiers.Shift))
-      parts.Add("Shift");
-    if (shortcut.Modifiers.HasFlag(VirtualKeyModifiers.Menu))
-      parts.Add("Alt");
+    /// <summary>
+    /// Unregister a handler.
+    /// </summary>
+    public void UnregisterHandler(string commandId, Action handler)
+    {
+        if (_handlers.TryGetValue(commandId, out var handlers))
+        {
+            handlers.Remove(handler);
+        }
+    }
 
-    parts.Add(shortcut.Key.ToString());
+    /// <summary>
+    /// Handle keyboard input.
+    /// </summary>
+    public bool HandleKeyDown(VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        if (!_isEnabled)
+            return false;
 
-    return string.Join(" + ", parts);
-  }
+        var binding = _shortcuts.Values.FirstOrDefault(s =>
+            s.Key == key && s.Modifiers == modifiers);
 
-  public IEnumerable<KeyboardShortcut> GetAllShortcuts()
-  {
-    return _shortcutsById.Values;
-  }
+        if (binding != null)
+        {
+            ExecuteShortcut(binding.CommandId);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Execute a shortcut by command ID.
+    /// </summary>
+    public void ExecuteShortcut(string commandId)
+    {
+        if (_handlers.TryGetValue(commandId, out var handlers))
+        {
+            foreach (var handler in handlers)
+            {
+                try
+                {
+                    handler();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Shortcut handler error: {ex.Message}");
+                }
+            }
+
+            ShortcutExecuted?.Invoke(this, new ShortcutExecutedEventArgs(commandId));
+        }
+    }
+
+    /// <summary>
+    /// Customize a shortcut.
+    /// </summary>
+    public void CustomizeShortcut(
+        string commandId,
+        VirtualKey key,
+        VirtualKeyModifiers modifiers)
+    {
+        if (_shortcuts.TryGetValue(commandId, out var binding))
+        {
+            binding.Key = key;
+            binding.Modifiers = modifiers;
+            binding.IsDefault = false;
+            _customizedShortcuts.Add(commandId);
+        }
+    }
+
+    /// <summary>
+    /// Reset a shortcut to default.
+    /// </summary>
+    public void ResetToDefault(string commandId)
+    {
+        _customizedShortcuts.Remove(commandId);
+        RegisterDefaultShortcuts();
+    }
+
+    /// <summary>
+    /// Reset all shortcuts to defaults.
+    /// </summary>
+    public void ResetAllToDefaults()
+    {
+        _customizedShortcuts.Clear();
+        _shortcuts.Clear();
+        RegisterDefaultShortcuts();
+    }
+
+    /// <summary>
+    /// Get all shortcuts.
+    /// </summary>
+    public IEnumerable<ShortcutBinding> GetAllShortcuts() => _shortcuts.Values;
+
+    /// <summary>
+    /// Get shortcuts by category.
+    /// </summary>
+    public IEnumerable<ShortcutBinding> GetShortcutsByCategory(string category)
+    {
+        return _shortcuts.Values.Where(s => s.CommandId.StartsWith(category + "."));
+    }
+
+    /// <summary>
+    /// Get shortcut display string.
+    /// </summary>
+    public string GetShortcutDisplayString(string commandId)
+    {
+        if (_shortcuts.TryGetValue(commandId, out var binding))
+        {
+            return binding.GetDisplayString();
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Enable or disable shortcuts.
+    /// </summary>
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set => _isEnabled = value;
+    }
+
+    /// <summary>
+    /// Check if a shortcut conflicts with another.
+    /// </summary>
+    public bool HasConflict(VirtualKey key, VirtualKeyModifiers modifiers, string excludeCommandId)
+    {
+        return _shortcuts.Values.Any(s =>
+            s.Key == key &&
+            s.Modifiers == modifiers &&
+            s.CommandId != excludeCommandId);
+    }
+
+    /// <summary>
+    /// Export shortcuts to JSON.
+    /// </summary>
+    public string ExportToJson()
+    {
+        var customized = _shortcuts
+            .Where(kvp => _customizedShortcuts.Contains(kvp.Key))
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => new { key = (int)kvp.Value.Key, modifiers = (int)kvp.Value.Modifiers }
+            );
+
+        return System.Text.Json.JsonSerializer.Serialize(customized);
+    }
+
+    /// <summary>
+    /// Import shortcuts from JSON.
+    /// </summary>
+    public void ImportFromJson(string json)
+    {
+        try
+        {
+            var customized = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, ShortcutImport>>(json);
+            if (customized != null)
+            {
+                foreach (var kvp in customized)
+                {
+                    CustomizeShortcut(kvp.Key, (VirtualKey)kvp.Value.Key, (VirtualKeyModifiers)kvp.Value.Modifiers);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to import shortcuts: {ex.Message}");
+        }
+    }
+
+    private class ShortcutImport
+    {
+        public int Key { get; set; }
+        public int Modifiers { get; set; }
+    }
 }
 
-public class KeyboardShortcut
+/// <summary>
+/// Keyboard shortcut binding.
+/// </summary>
+public class ShortcutBinding
 {
-  public string Id { get; set; } = string.Empty;
-  public VirtualKey Key { get; set; }
-  public VirtualKeyModifiers Modifiers { get; set; }
-  public Action? Action { get; set; }
-  public string? Description { get; set; }
+    public string CommandId { get; set; } = string.Empty;
+    public VirtualKey Key { get; set; }
+    public VirtualKeyModifiers Modifiers { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public bool IsDefault { get; set; } = true;
+
+    public string GetDisplayString()
+    {
+        var parts = new List<string>();
+
+        if (Modifiers.HasFlag(VirtualKeyModifiers.Control))
+            parts.Add("Ctrl");
+        if (Modifiers.HasFlag(VirtualKeyModifiers.Shift))
+            parts.Add("Shift");
+        if (Modifiers.HasFlag(VirtualKeyModifiers.Menu))
+            parts.Add("Alt");
+        if (Modifiers.HasFlag(VirtualKeyModifiers.Windows))
+            parts.Add("Win");
+
+        parts.Add(GetKeyDisplayName(Key));
+
+        return string.Join("+", parts);
+    }
+
+    private static string GetKeyDisplayName(VirtualKey key)
+    {
+        return key switch
+        {
+            VirtualKey.Add => "+",
+            VirtualKey.Subtract => "-",
+            VirtualKey.Space => "Space",
+            VirtualKey.Delete => "Del",
+            VirtualKey.Escape => "Esc",
+            VirtualKey.Enter => "Enter",
+            VirtualKey.Number0 => "0",
+            VirtualKey.Number1 => "1",
+            VirtualKey.Number2 => "2",
+            VirtualKey.Number3 => "3",
+            VirtualKey.Number4 => "4",
+            VirtualKey.Number5 => "5",
+            VirtualKey.Number6 => "6",
+            VirtualKey.Number7 => "7",
+            VirtualKey.Number8 => "8",
+            VirtualKey.Number9 => "9",
+            _ => key.ToString(),
+        };
+    }
 }
 
-public class KeyboardShortcutEventArgs : EventArgs
+/// <summary>
+/// Event args for shortcut execution.
+/// </summary>
+public class ShortcutExecutedEventArgs : EventArgs
 {
-  public KeyboardShortcut Shortcut { get; }
+    public string CommandId { get; }
 
-  public KeyboardShortcutEventArgs(KeyboardShortcut shortcut)
-  {
-    Shortcut = shortcut;
-  }
+    public ShortcutExecutedEventArgs(string commandId)
+    {
+        CommandId = commandId;
+    }
 }
