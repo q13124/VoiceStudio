@@ -205,11 +205,11 @@ public class OnboardingWizardService
         }
     }
 
-    public async Task ShowStepAsync(string stepId)
+    public Task ShowStepAsync(string stepId)
     {
         var step = GetStep(stepId);
         if (step == null)
-            return;
+            return Task.CompletedTask;
 
         _progress.CurrentStepId = stepId;
         StepStarted?.Invoke(this, new OnboardingStepEventArgs(step));
@@ -224,6 +224,8 @@ public class OnboardingWizardService
             HighlightType = step.HighlightType,
             Position = step.TooltipPosition,
         });
+
+        return Task.CompletedTask;
     }
 
     public async Task CompleteStepAsync(string stepId)

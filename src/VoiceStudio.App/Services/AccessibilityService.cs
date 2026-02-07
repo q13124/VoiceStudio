@@ -34,6 +34,7 @@ public class AccessibilityService
         // Initialize settings
         _isHighContrastEnabled = _accessibilitySettings.HighContrast;
         _isReducedMotionEnabled = !_uiSettings.AnimationsEnabled;
+        _isScreenReaderActive = CheckScreenReaderActive();
 
         // Listen for changes
         _accessibilitySettings.HighContrastChanged += OnHighContrastChanged;
@@ -65,6 +66,16 @@ public class AccessibilityService
     #endregion
 
     #region Screen Reader Support
+
+    /// <summary>
+    /// Checks if a screen reader is likely active.
+    /// </summary>
+    private static bool CheckScreenReaderActive()
+    {
+        // Check if automation listeners exist (heuristic for screen reader presence)
+        return AutomationPeer.ListenerExists(AutomationEvents.AutomationFocusChanged) ||
+               AutomationPeer.ListenerExists(AutomationEvents.LiveRegionChanged);
+    }
 
     /// <summary>
     /// Announce a message to screen readers.
