@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using Windows.Storage;
 using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
@@ -151,19 +150,11 @@ namespace VoiceStudio.App.Services
 
     private static string GetUpdateDirectory()
     {
-      string localAppData;
-      try
-      {
-        // Packaged app: use ApplicationData
-        localAppData = ApplicationData.Current.LocalFolder.Path;
-      }
-      catch (Exception)
-      {
-        // Unpackaged app: fall back to Environment (catches InvalidOperationException, COMException, etc.)
-        localAppData = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "VoiceStudio");
-      }
+      // Use Environment.SpecialFolder for unpackaged app compatibility
+      // ApplicationData.Current throws InvalidOperationException in unpackaged apps
+      var localAppData = Path.Combine(
+          Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+          "VoiceStudio");
       var downloadDir = Path.Combine(localAppData, "Updates");
       Directory.CreateDirectory(downloadDir);
       return downloadDir;

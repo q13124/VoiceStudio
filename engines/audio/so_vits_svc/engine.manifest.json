@@ -1,0 +1,104 @@
+{
+  "engine_id": "so_vits_svc",
+  "name": "So-VITS-SVC",
+  "type": "audio",
+  "subtype": "voice_conversion",
+  "version": "4.1",
+  "venv_family": "venv_voice_conversion",
+  "description": "So-VITS-SVC - SoftVC VITS Singing Voice Conversion for high-quality voice cloning and conversion",
+  "author": "svc-develop-team",
+  "license": "AGPL-3.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "torch": ">=2.0.0",
+    "torchaudio": ">=2.0.0",
+    "numpy": ">=1.24.0",
+    "scipy": ">=1.10.0",
+    "librosa": ">=0.10.0",
+    "soundfile": ">=0.12.0",
+    "faiss-cpu": ">=1.7.0",
+    "praat-parselmouth": ">=0.4.3"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\so_vits_svc",
+    "pretrained": "%PROGRAMDATA%\\VoiceStudio\\models\\so_vits_svc\\pretrained",
+    "trained": "%PROGRAMDATA%\\VoiceStudio\\models\\so_vits_svc\\trained"
+  },
+  "supported_languages": [
+    "universal"
+  ],
+  "capabilities": [
+    "voice_conversion",
+    "voice_cloning",
+    "singing_voice_conversion",
+    "pitch_shifting",
+    "real_time_conversion",
+    "high_quality_synthesis"
+  ],
+  "device_requirements": {
+    "gpu": "required",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.sovits_svc_engine.SoVITSSVCEngine",
+  "config_schema": {
+    "model_path": {
+      "type": "string",
+      "description": "Path to trained SVC model checkpoint"
+    },
+    "config_path": {
+      "type": "string",
+      "description": "Path to model configuration file"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "f0_predictor": {
+      "type": "string",
+      "default": "crepe",
+      "enum": ["crepe", "dio", "harvest", "parselmouth", "rmvpe"],
+      "description": "F0 pitch extraction method"
+    },
+    "pitch_shift": {
+      "type": "integer",
+      "default": 0,
+      "minimum": -12,
+      "maximum": 12,
+      "description": "Pitch shift in semitones"
+    },
+    "cluster_ratio": {
+      "type": "number",
+      "default": 0.5,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Ratio of clustering feature to encoder feature"
+    }
+  },
+  "quality_features": {
+    "mos_estimate": "4.5-5.0",
+    "similarity_score": "very_high",
+    "naturalness": "high",
+    "singing_support": true
+  },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac", "ogg"],
+      "sample_rates": [16000, 22050, 44100, 48000],
+      "max_duration_seconds": 300
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 44100,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 300
+    }
+  }
+}

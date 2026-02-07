@@ -14,10 +14,11 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-backend_path = Path(__file__).parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add project root to path to enable proper package imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from api.main import app
+from backend.api.main import app
 
 
 class TestAudioStorageWorkflow:
@@ -25,8 +26,9 @@ class TestAudioStorageWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_audio_retrieval_not_found(self, client: TestClient):
         """
@@ -61,8 +63,9 @@ class TestSynthesisStorageWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_synthesize_stores_audio(self, client: TestClient):
         """
@@ -141,8 +144,9 @@ class TestAudioFormatHandling:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_wav_format_synthesis(self, client: TestClient):
         """
@@ -193,8 +197,9 @@ class TestAudioMetadata:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_audio_info_endpoint(self, client: TestClient):
         """
@@ -238,8 +243,9 @@ class TestAudioAnalysis:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_audio_waveform(self, client: TestClient):
         """
@@ -307,8 +313,9 @@ class TestHealthChecks:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_health_endpoint(self, client: TestClient):
         """

@@ -191,9 +191,10 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var imageToDelete = (image as GeneratedImage);
+              var imageToDelete = image as GeneratedImage;
+              if (imageToDelete == null) break;
+              
               var imageIndex = ViewModel.GeneratedImages.IndexOf(imageToDelete);
-
               ViewModel.GeneratedImages.Remove(imageToDelete);
 
               // Register undo action

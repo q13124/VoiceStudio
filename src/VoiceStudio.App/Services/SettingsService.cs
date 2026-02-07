@@ -3,9 +3,9 @@ using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
@@ -426,19 +426,14 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        var container = localSettings.CreateContainer("Settings", ApplicationDataCreateDisposition.Always);
-
-        if (container.Values.ContainsKey(LocalSettingsKey))
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var json = UnpackagedSettingsHelper.GetValue<string>(LocalSettingsKey, null);
+        if (!string.IsNullOrWhiteSpace(json))
         {
-          var json = container.Values[LocalSettingsKey]?.ToString();
-          if (!string.IsNullOrWhiteSpace(json))
+          var settings = JsonSerializer.Deserialize<SettingsData>(json, _jsonOptions);
+          if (settings != null && ValidateSettings(settings, out _))
           {
-            var settings = JsonSerializer.Deserialize<SettingsData>(json, _jsonOptions);
-            if (settings != null && ValidateSettings(settings, out _))
-            {
-              return Task.FromResult(settings);
-            }
+            return Task.FromResult(settings);
           }
         }
       }
@@ -458,10 +453,9 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        var container = localSettings.CreateContainer("Settings", ApplicationDataCreateDisposition.Always);
-
-        container.Values[LocalSettingsKey] = JsonSerializer.Serialize(settings, _jsonOptions);
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var json = JsonSerializer.Serialize(settings, _jsonOptions);
+        UnpackagedSettingsHelper.SetValue(LocalSettingsKey, json);
       }
       catch (Exception ex)
       {

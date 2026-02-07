@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Logging;
 using VoiceStudio.App.Utilities;
-using Windows.Storage;
 
 namespace VoiceStudio.App.Views;
 
@@ -113,9 +113,9 @@ public sealed partial class FirstRunWizard : Window
   {
     try
     {
-      var localSettings = ApplicationData.Current.LocalSettings;
-      localSettings.Values["FirstRunComplete"] = true;
-      localSettings.Values["ShowWizardOnStartup"] = !DontShowAgain;
+      // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+      UnpackagedSettingsHelper.SetValue("FirstRunComplete", true);
+      UnpackagedSettingsHelper.SetValue("ShowWizardOnStartup", !DontShowAgain);
 
       await Task.CompletedTask;
     }
@@ -358,20 +358,14 @@ public sealed partial class FirstRunWizard : Window
   {
     try
     {
-      var localSettings = ApplicationData.Current.LocalSettings;
+      // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+      var firstRunComplete = UnpackagedSettingsHelper.GetValue<bool>("FirstRunComplete", false);
 
-      // Check if first run is complete
-      if (localSettings.Values.TryGetValue("FirstRunComplete", out var complete))
+      if (firstRunComplete)
       {
-        if (complete is bool completed && completed)
-        {
-          // Check if user wants to see wizard on startup
-          if (localSettings.Values.TryGetValue("ShowWizardOnStartup", out var showOnStartup))
-          {
-            return Task.FromResult(showOnStartup is bool show && show);
-          }
-          return Task.FromResult(false);
-        }
+        // Check if user wants to see wizard on startup
+        var showOnStartup = UnpackagedSettingsHelper.GetValue<bool>("ShowWizardOnStartup", false);
+        return Task.FromResult(showOnStartup);
       }
       return Task.FromResult(true); // First run
     }

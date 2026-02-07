@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Media;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
@@ -169,21 +170,17 @@ namespace VoiceStudio.App.Views.Panels
       _backendBaseUrl = "http://localhost:8000";
       try
       {
-        var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-        var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
-        if (container.Values.ContainsKey("Backend"))
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var backendJson = UnpackagedSettingsHelper.GetValue<string>("Settings.Backend", null);
+        if (!string.IsNullOrEmpty(backendJson))
         {
-          var backendJson = container.Values["Backend"]?.ToString();
-          if (!string.IsNullOrEmpty(backendJson))
+          using var doc = System.Text.Json.JsonDocument.Parse(backendJson);
+          if (doc.RootElement.TryGetProperty("ApiUrl", out var apiUrlElement))
           {
-            using var doc = System.Text.Json.JsonDocument.Parse(backendJson);
-            if (doc.RootElement.TryGetProperty("ApiUrl", out var apiUrlElement))
+            var apiUrl = apiUrlElement.GetString();
+            if (!string.IsNullOrEmpty(apiUrl))
             {
-              var apiUrl = apiUrlElement.GetString();
-              if (!string.IsNullOrEmpty(apiUrl))
-              {
-                _backendBaseUrl = apiUrl;
-              }
+              _backendBaseUrl = apiUrl;
             }
           }
         }

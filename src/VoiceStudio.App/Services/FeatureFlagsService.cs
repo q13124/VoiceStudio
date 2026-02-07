@@ -4,8 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.Storage;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
@@ -86,15 +86,16 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        if (localSettings.Values.TryGetValue(UserIdKey, out var value) && value is string userId)
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var userId = UnpackagedSettingsHelper.GetValue<string>(UserIdKey, null);
+        if (!string.IsNullOrEmpty(userId))
         {
           return userId;
         }
 
         // Generate new stable user ID
         var newUserId = Guid.NewGuid().ToString("N");
-        localSettings.Values[UserIdKey] = newUserId;
+        UnpackagedSettingsHelper.SetValue(UserIdKey, newUserId);
         return newUserId;
       }
       catch (Exception ex)
@@ -403,12 +404,13 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        if (localSettings.Values.TryGetValue(SettingsKey, out var value) && value is ApplicationDataCompositeValue composite)
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var savedFlags = UnpackagedSettingsHelper.GetValue<Dictionary<string, bool>>(SettingsKey, null);
+        if (savedFlags != null)
         {
           foreach (var flag in _flags.Keys.ToList())
           {
-            if (composite.TryGetValue(flag, out var flagValue) && flagValue is bool enabled)
+            if (savedFlags.TryGetValue(flag, out var enabled))
             {
               _flags[flag] = enabled;
             }
@@ -425,15 +427,9 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        var composite = new ApplicationDataCompositeValue();
-
-        foreach (var kvp in _flags)
-        {
-          composite[kvp.Key] = kvp.Value;
-        }
-
-        localSettings.Values[SettingsKey] = composite;
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var flagsToSave = new Dictionary<string, bool>(_flags);
+        UnpackagedSettingsHelper.SetValue(SettingsKey, flagsToSave);
       }
       catch (Exception ex)
       {

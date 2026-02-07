@@ -25,7 +25,7 @@ namespace VoiceStudio.App.Logging
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             _logDirectory = Path.Combine(appData, "VoiceStudio", "logs");
             Directory.CreateDirectory(_logDirectory);
-            
+
             var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
             _logFilePath = Path.Combine(_logDirectory, $"voicestudio-{date}.log");
         }

@@ -17,9 +17,10 @@ namespace VoiceStudio.App
     private static DateTime _appStartTime;
     public static Window? MainWindowInstance { get; private set; }
     private static readonly object _bindingFailureLock = new();
-    private static readonly List<string> _bindingFailures = new();
+    private static readonly List<string> _bindingFailures = [];
     private static bool _bindingFailureLoggingEnabled;
     private static string? _bindingFailureLogPath;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
     public App()
     {
@@ -69,23 +70,14 @@ namespace VoiceStudio.App
           .AppendLine("═══════════════════════════════════════════════════")
           .AppendLine()
           .AppendLine($"Timestamp (UTC): {timestamp}")
-          .AppendLine($"Process ID: {System.Diagnostics.Process.GetCurrentProcess().Id}")
-          .AppendLine($"Thread ID: {System.Threading.Thread.CurrentThread.ManagedThreadId}")
+          .AppendLine($"Process ID: {Environment.ProcessId}")
+          .AppendLine($"Thread ID: {Environment.CurrentManagedThreadId}")
           .AppendLine()
           .AppendLine("--- Startup Stage ---")
           .AppendLine($"App Startup Time: {_appStartTime:yyyy-MM-dd_HH:mm:ss.fff}")
           .AppendLine($"Uptime at crash: {(DateTime.UtcNow - _appStartTime).TotalSeconds:F3}s");
 
-
-
-
-
-
-
-
         // Startup stage indicator
-
-
 
         if (_startupProfiler != null)
         {
@@ -267,8 +259,8 @@ namespace VoiceStudio.App
                 ExitCode = 3,
                 ExePath = Environment.ProcessPath ?? string.Empty,
                 BindingLogPath = _bindingFailureLogPath ?? Path.Combine(crashDir, "binding_failures_latest.log"),
-                NavSteps = Array.Empty<string>(),
-                BindingFailures = Array.Empty<string>(),
+                NavSteps = [],
+                BindingFailures = [],
               };
             }
 
@@ -295,8 +287,8 @@ namespace VoiceStudio.App
             ExitCode = 4,
             ExePath = Environment.ProcessPath ?? string.Empty,
             BindingLogPath = _bindingFailureLogPath ?? Path.Combine(crashDir, "binding_failures_latest.log"),
-            NavSteps = Array.Empty<string>(),
-            BindingFailures = Array.Empty<string>(),
+            NavSteps = [],
+            BindingFailures = [],
           };
 
           WriteGateCUiSmokeSummary(crashDir, result);
@@ -372,7 +364,7 @@ namespace VoiceStudio.App
       try
       {
         var arguments = args?.Arguments ?? string.Empty;
-        if (arguments.IndexOf("--smoke-exit", StringComparison.OrdinalIgnoreCase) >= 0
+        if (arguments.Contains("--smoke-exit", StringComparison.OrdinalIgnoreCase)
             || HasCommandLineFlag("--smoke-exit"))
         {
           return true;
@@ -398,8 +390,8 @@ namespace VoiceStudio.App
       try
       {
         var arguments = args?.Arguments ?? string.Empty;
-        if (arguments.IndexOf("--smoke-ui", StringComparison.OrdinalIgnoreCase) >= 0
-            || arguments.IndexOf("--ui-smoke", StringComparison.OrdinalIgnoreCase) >= 0)
+        if (arguments.Contains("--smoke-ui", StringComparison.OrdinalIgnoreCase)
+            || arguments.Contains("--ui-smoke", StringComparison.OrdinalIgnoreCase))
         {
           return true;
         }
@@ -433,7 +425,7 @@ namespace VoiceStudio.App
 
         var raw = Environment.CommandLine ?? string.Empty;
         if (!string.IsNullOrWhiteSpace(raw)
-            && raw.IndexOf(flag, StringComparison.OrdinalIgnoreCase) >= 0)
+            && raw.Contains(flag, StringComparison.OrdinalIgnoreCase))
         {
           return true;
         }
@@ -464,8 +456,8 @@ namespace VoiceStudio.App
         }
 
         var raw = Environment.CommandLine ?? string.Empty;
-        return raw.IndexOf("--smoke", StringComparison.OrdinalIgnoreCase) >= 0
-            || raw.IndexOf("--ui-smoke", StringComparison.OrdinalIgnoreCase) >= 0;
+        return raw.Contains("--smoke", StringComparison.OrdinalIgnoreCase)
+            || raw.Contains("--ui-smoke", StringComparison.OrdinalIgnoreCase);
       }
       catch
       {
@@ -517,9 +509,7 @@ namespace VoiceStudio.App
           computed_ui_smoke = uiSmoke,
         };
 
-        var json = System.Text.Json.JsonSerializer.Serialize(
-          payload,
-          new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        var json = System.Text.Json.JsonSerializer.Serialize(payload, _jsonOptions);
 
         File.WriteAllText(path, json, Encoding.UTF8);
       }
@@ -606,9 +596,9 @@ namespace VoiceStudio.App
     {
       public int ExitCode { get; init; }
       public string ExePath { get; init; } = string.Empty;
-      public string[] NavSteps { get; init; } = Array.Empty<string>();
+      public string[] NavSteps { get; init; } = [];
       public string BindingLogPath { get; init; } = string.Empty;
-      public string[] BindingFailures { get; init; } = Array.Empty<string>();
+      public string[] BindingFailures { get; init; } = [];
     }
 
     private static async Task<GateCUiSmokeResult> RunGateCUiSmokeAsync(Window window, string crashDir)
@@ -712,9 +702,7 @@ namespace VoiceStudio.App
           binding_failures = result.BindingFailures,
         };
 
-        var json = System.Text.Json.JsonSerializer.Serialize(
-          payload,
-          new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        var json = System.Text.Json.JsonSerializer.Serialize(payload, _jsonOptions);
 
         File.WriteAllText(summaryPath, json, Encoding.UTF8);
       }

@@ -1,0 +1,125 @@
+{
+  "engine_id": "vosk",
+  "name": "Vosk STT",
+  "type": "audio",
+  "subtype": "stt",
+  "version": "1.0",
+  "venv_family": "venv_stt",
+  "description": "Vosk offline speech recognition for speech-to-text transcription with multiple language models",
+  "author": "Alpha Cephei",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "vosk": ">=0.3.45",
+    "numpy": ">=1.24.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\vosk",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\vosk\\cache",
+    "download": "%PROGRAMDATA%\\VoiceStudio\\models\\vosk\\downloads"
+  },
+  "supported_languages": [
+    "en", "en-us", "en-in", "cn", "ru", "fr", "de", "es", "pt", "it",
+    "nl", "ca", "fa", "uk", "kz", "ja", "eo", "hi", "cs", "pl", "uz",
+    "ko", "ar", "tl", "vi", "tr", "br", "sv", "el", "la"
+  ],
+  "capabilities": [
+    "speech_to_text",
+    "transcription",
+    "offline_stt",
+    "real_time_stt",
+    "word_timestamps"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 2
+  },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac", "ogg", "m4a"],
+      "sample_rates": [8000, 16000, 22050, 44100, 48000],
+      "max_duration_seconds": 3600,
+      "min_duration_seconds": 0.1
+    },
+    "output": {
+      "format": "json",
+      "includes": [
+        "text",
+        "confidence",
+        "word_timestamps"
+      ]
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 2048,
+      "timeout_seconds": 300
+    }
+  },
+  "entry_point": "app.core.engines.vosk_engine.VoskEngine",
+  "config_schema": {
+    "model_name": {
+      "type": "string",
+      "default": "vosk-model-small-en-us-0.15",
+      "description": "Vosk model name to use (see alphacephei.com/vosk/models)"
+    },
+    "model_path": {
+      "type": "string",
+      "default": null,
+      "description": "Custom path to pre-downloaded Vosk model"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "default": 16000,
+      "description": "Expected audio sample rate"
+    },
+    "words": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include word-level timestamps in output"
+    },
+    "max_alternatives": {
+      "type": "integer",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Number of alternative transcriptions to return"
+    }
+  },
+  "tasks": [
+    "transcribe",
+    "stt",
+    "speech_to_text"
+  ],
+  "resources": {
+    "needs": [],
+    "vram_gb": 0,
+    "ram_gb": 2
+  },
+  "lifecycle": {
+    "pool_size": 2,
+    "idle_timeout_seconds": 300,
+    "startup_timeout_seconds": 20
+  },
+  "preHooks": [
+    "ensure_models"
+  ],
+  "postHooks": [],
+  "log": {
+    "stderr_to_file": true,
+    "stdout_to_file": false,
+    "rotate_mb": 32,
+    "log_dir": "runtime/logs"
+  },
+  "security": {
+    "allow_net": true,
+    "allow_fs_roots": [
+      "%PROGRAMDATA%/VoiceStudio/models",
+      "%APPDATA%/VoiceStudio"
+    ],
+    "allowed_hosts": [
+      "alphacephei.com"
+    ],
+    "allowed_ports": [443, 80]
+  }
+}

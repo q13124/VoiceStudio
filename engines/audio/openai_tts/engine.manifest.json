@@ -1,0 +1,122 @@
+{
+  "engine_id": "openai_tts",
+  "name": "OpenAI TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "venv_family": "venv_core_tts",
+  "description": "Text-to-speech synthesis using OpenAI TTS API with multiple voices and HD quality option",
+  "author": "OpenAI",
+  "license": "Proprietary",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "openai": ">=1.0.0",
+    "requests": ">=2.28.0",
+    "soundfile": ">=0.12.0"
+  },
+  "model_paths": {
+    "cache": "%APPDATA%\\VoiceStudio\\cache\\openai_tts"
+  },
+  "supported_languages": [
+    "en", "es", "fr", "de", "it", "pt", "pl", "ja", "ko", "zh",
+    "ar", "cs", "da", "fi", "el", "he", "hi", "hu", "id", "nl",
+    "no", "ro", "ru", "sv", "th", "tr", "uk", "vi"
+  ],
+  "capabilities": [
+    "text_to_speech",
+    "multi_voice",
+    "hd_quality",
+    "streaming"
+  ],
+  "device_requirements": {
+    "gpu": "not_required",
+    "vram_min_gb": 0,
+    "ram_min_gb": 1
+  },
+  "contract": {
+    "input": {
+      "text_max_chars": 4096,
+      "text_min_chars": 1
+    },
+    "output": {
+      "audio_format": "mp3",
+      "sample_rate": 24000,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 0,
+      "ram_mb": 512,
+      "timeout_seconds": 60
+    }
+  },
+  "entry_point": "app.core.engines.openai_tts_engine.OpenAITTSEngine",
+  "config_schema": {
+    "api_key": {
+      "type": "string",
+      "required": true,
+      "env": "OPENAI_API_KEY",
+      "description": "OpenAI API key for TTS access"
+    },
+    "model": {
+      "type": "string",
+      "default": "tts-1",
+      "enum": ["tts-1", "tts-1-hd"],
+      "description": "TTS model (tts-1=faster, tts-1-hd=higher quality)"
+    },
+    "voice": {
+      "type": "string",
+      "default": "alloy",
+      "enum": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+      "description": "Voice to use for synthesis"
+    },
+    "speed": {
+      "type": "number",
+      "default": 1.0,
+      "minimum": 0.25,
+      "maximum": 4.0,
+      "description": "Speech speed multiplier"
+    },
+    "response_format": {
+      "type": "string",
+      "default": "mp3",
+      "enum": ["mp3", "opus", "aac", "flac", "wav", "pcm"],
+      "description": "Output audio format"
+    }
+  },
+  "tasks": [
+    "synthesize",
+    "tts",
+    "text_to_speech"
+  ],
+  "resources": {
+    "needs": [
+      "network"
+    ],
+    "vram_gb": 0,
+    "ram_gb": 1
+  },
+  "lifecycle": {
+    "pool_size": 4,
+    "idle_timeout_seconds": 300,
+    "startup_timeout_seconds": 5
+  },
+  "preHooks": [],
+  "postHooks": [],
+  "log": {
+    "stderr_to_file": true,
+    "stdout_to_file": false,
+    "rotate_mb": 32,
+    "log_dir": "runtime/logs"
+  },
+  "security": {
+    "allow_net": true,
+    "allow_fs_roots": [
+      "%APPDATA%/VoiceStudio"
+    ],
+    "allowed_hosts": [
+      "api.openai.com"
+    ],
+    "allowed_ports": [443]
+  }
+}

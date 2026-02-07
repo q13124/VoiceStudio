@@ -6,7 +6,7 @@ issues are created. Integrates with the HandoffQueue for cross-role
 escalation.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 import threading
 
@@ -119,7 +119,7 @@ class DebugRoleNotifier:
     def _check_rate_limit(self) -> bool:
         """Check if we're within rate limits."""
         now = datetime.now(timezone.utc)
-        one_hour_ago = now.replace(hour=now.hour - 1 if now.hour > 0 else 23)
+        one_hour_ago = now - timedelta(hours=1)
         
         with self._lock:
             # Clean up old entries
@@ -185,14 +185,14 @@ class DebugRoleNotifier:
         """Get count of pending notifications in the last hour."""
         with self._lock:
             now = datetime.now(timezone.utc)
-            one_hour_ago = now.replace(hour=now.hour - 1 if now.hour > 0 else 23)
+            one_hour_ago = now - timedelta(hours=1)
             return len([t for t in self._notification_times if t > one_hour_ago])
     
     def get_stats(self) -> Dict[str, Any]:
         """Get notification statistics."""
         with self._lock:
             now = datetime.now(timezone.utc)
-            one_hour_ago = now.replace(hour=now.hour - 1 if now.hour > 0 else 23)
+            one_hour_ago = now - timedelta(hours=1)
             recent = [t for t in self._notification_times if t > one_hour_ago]
             
             return {

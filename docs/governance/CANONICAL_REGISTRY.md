@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-05 (Phase 7 Production Readiness complete 17/17 tasks; v1.0.1 Release Notes added)
+> **Last Updated**: 2026-02-05 (Documentation reconciliation: archived outdated PyTorch 2.9.0 references)
 
 ---
 
@@ -262,6 +262,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Topic | Location | Notes |
 | --- | --- | --- |
 | Legacy Worker+Overseer System | `docs/archive/legacy_worker_system/` | 2026-01-30 — ChatGPT-era 3-Worker + Overseer docs; superseded by 8-role governance (ADR-003). See [README](../../archive/legacy_worker_system/README.md). |
+| Outdated Dependency Status (PyTorch 2.9.0) | `docs/archive/dependencies/DEPENDENCY_STATUS_2025-01-28.md` | 2026-02-05 — References PyTorch 2.9.0+cu128 which was NOT adopted; production uses 2.2.2+cu121 per compatibility_matrix.yml. |
 
 ---
 

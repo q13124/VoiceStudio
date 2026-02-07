@@ -104,6 +104,40 @@ namespace VoiceStudio.App.Views.Panels
       HelpOverlay.Show();
     }
 
+    private async void CreateProfileButton_Click(object sender, RoutedEventArgs e)
+    {
+      try
+      {
+        // Show a dialog to get the profile name
+        var dialog = new ContentDialog
+        {
+          Title = "Create New Profile",
+          PrimaryButtonText = "Create",
+          CloseButtonText = "Cancel",
+          DefaultButton = ContentDialogButton.Primary,
+          XamlRoot = this.XamlRoot
+        };
+
+        var nameBox = new TextBox
+        {
+          PlaceholderText = "Enter profile name...",
+          Width = 300
+        };
+        dialog.Content = nameBox;
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(nameBox.Text))
+        {
+          await ViewModel.CreateProfileCommand.ExecuteAsync(nameBox.Text);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error creating profile: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "CreateProfileButton_Click");
+      }
+    }
+
     private void ProfileCard_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
       if (sender is Border border && border.DataContext is VoiceProfile profile)
@@ -286,16 +320,24 @@ namespace VoiceStudio.App.Views.Panels
 
     private void ProfileCard_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-      if (sender is Border border && border.DataContext is VoiceProfile profile)
+      try
       {
-        var isCtrlPressed = InputHelper.IsControlPressed();
-        var isShiftPressed = InputHelper.IsShiftPressed();
+        if (sender is Border border && border.DataContext is VoiceProfile profile)
+        {
+          var isCtrlPressed = InputHelper.IsControlPressed();
+          var isShiftPressed = InputHelper.IsShiftPressed();
 
-        ViewModel.ToggleSelection(profile.Id, isCtrlPressed, isShiftPressed);
-        _lastSelectedProfile = profile;
+          ViewModel.ToggleSelection(profile.Id, isCtrlPressed, isShiftPressed);
+          _lastSelectedProfile = profile;
 
-        UpdateSelectionVisuals();
-        e.Handled = true;
+          UpdateSelectionVisuals();
+          e.Handled = true;
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error in ProfileCard_PointerPressed: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "ProfileCard_PointerPressed");
       }
     }
 

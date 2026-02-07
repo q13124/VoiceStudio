@@ -1,6 +1,6 @@
 // ============================================================================
 // DesignTimeData.cs - Design-time sample data providers for XAML designer
-// 
+//
 // AI GUIDELINES:
 // - This file provides sample data for XAML design-time preview
 // - All collections should have 2-5 sample items for realistic preview
@@ -22,7 +22,7 @@ public class DesignTimeData
     // ============================================
     // Voice Profile Sample Data
     // ============================================
-    
+
     public static ObservableCollection<VoiceProfile> SampleProfiles { get; } = new()
     {
         new VoiceProfile
@@ -54,7 +54,7 @@ public class DesignTimeData
     // ============================================
     // Timeline/Track Sample Data
     // ============================================
-    
+
     public static ObservableCollection<AudioTrack> SampleTracks { get; } = new()
     {
         new AudioTrack
@@ -86,7 +86,7 @@ public class DesignTimeData
     // ============================================
     // Effect Chain Sample Data
     // ============================================
-    
+
     public static ObservableCollection<string> SampleEffects { get; } = new()
     {
         "Noise Reduction",
@@ -99,7 +99,7 @@ public class DesignTimeData
     // ============================================
     // Quality Metrics Sample Data
     // ============================================
-    
+
     public static double SampleMosScore => 4.2;
     public static double SampleSnrDb => 35.5;
     public static double SampleSimilarityScore => 0.92;
@@ -109,7 +109,7 @@ public class DesignTimeData
     // ============================================
     // Status/State Sample Data
     // ============================================
-    
+
     public static bool IsProcessing => true;
     public static bool IsConnected => true;
     public static string StatusMessage => "Ready";

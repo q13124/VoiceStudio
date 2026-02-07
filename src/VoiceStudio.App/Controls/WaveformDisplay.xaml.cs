@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
+using Colors = Microsoft.UI.Colors;
 
 namespace VoiceStudio.App.Controls;
 

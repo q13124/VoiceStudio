@@ -8,7 +8,7 @@
   xmlns:local="using:VoiceStudio.App.Views.Panels"
   mc:Ignorable="d"
   d:DataContext="{d:DesignInstance Type=local:AnalyzerViewModel, IsDesignTimeCreatable=False}"
-  x:DataType="local:AnalyzerView">
+  x:DataType="local:AnalyzerViewModel">
   <UserControl.Resources>
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -64,20 +64,33 @@
         <TextBlock x:Name="AudioIdLabel" x:Uid="AnalyzerView_AudioIdLabel"
           Margin="0"
           VerticalAlignment="Center" AutomationProperties.Name="Audio ID label" />
+        <Button x:Uid="AnalyzerView_BrowseButton"
+          Command="{x:Bind ViewModel.BrowseAndUploadCommand}"
+          TabIndex="2" ToolTipService.ToolTip="Browse and upload an audio file"
+          AutomationProperties.Name="Browse audio file"
+          AutomationProperties.HelpText="Browse for an audio file to upload and analyze."
+          AutomationProperties.AutomationId="Analyzer_BrowseButton"
+          Style="{StaticResource AccentButtonStyle}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <FontIcon Glyph="&#xE8E5;" FontSize="12" />
+            <TextBlock Text="Browse" FontSize="12" />
+          </StackPanel>
+        </Button>
         <TextBox x:Name="AudioIdTextBox"
           Text="{x:Bind ViewModel.SelectedAudioId, Mode=TwoWay}"
           x:Uid="AnalyzerView_AudioIdTextBox"
           Width="{StaticResource VSQ.Input.Width.Wide}"
-          Margin="0" TabIndex="2"
-          ToolTipService.ToolTip="Enter audio ID or filename to analyze"
+          Margin="0" TabIndex="3"
+          PlaceholderText="or enter audio ID..."
+          ToolTipService.ToolTip="Enter audio ID if already uploaded"
           AutomationProperties.Name="Audio ID input"
-          AutomationProperties.HelpText="Enter the ID or filename of the audio file to analyze"
+          AutomationProperties.HelpText="Enter the ID of an already-uploaded audio file to analyze"
           AutomationProperties.LabeledBy="{x:Bind AudioIdLabel}"
           AutomationProperties.AutomationId="Analyzer_AudioIdTextBox"
           RightTapped="AudioIdTextBox_RightTapped" />
         <Button x:Uid="AnalyzerView_LoadButton"
           Command="{x:Bind ViewModel.LoadVisualizationCommand}"
-          TabIndex="3" ToolTipService.ToolTip="Load audio for analysis (Enter)"
+          TabIndex="4" ToolTipService.ToolTip="Load audio for analysis (Enter)"
           AutomationProperties.Name="Load audio"
           AutomationProperties.HelpText="Load the specified audio file for visualization and analysis. Press Enter to load."
           AutomationProperties.AutomationId="Analyzer_LoadButton">
@@ -177,11 +190,6 @@
           <!-- AudioOrbs Tab Content -->
           <controls:AudioOrbsControl x:Name="AudioOrbsControl"
             Visibility="{x:Bind ViewModel.IsAudioOrbsTab, Mode=OneWay}" />
-          <!-- Empty State -->
-          <controls:EmptyState Icon="📊" Title="No Audio Loaded"
-            Message="Load an audio file to view visualizations. Enter an audio ID or filename above and click Load."
-            Visibility="{x:Bind ViewModel.HasAudioData, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-            HorizontalAlignment="Center" VerticalAlignment="Center" />
           <!-- Empty state for unknown tabs -->
           <TextBlock x:Uid="AnalyzerView_NoVisualization" HorizontalAlignment="Center"
             VerticalAlignment="Center"

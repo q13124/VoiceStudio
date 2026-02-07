@@ -14,7 +14,6 @@ using Windows.Storage.Pickers;
 using Windows.Graphics.Printing;
 using Windows.Graphics.Printing.OptionDetails;
 using Windows.UI.Core;
-using KeyboardShortcut = VoiceStudio.App.Services.KeyboardShortcut;
 
 namespace VoiceStudio.App.Views
 {
@@ -53,10 +52,10 @@ namespace VoiceStudio.App.Views
         {
           var viewModel = new ShortcutViewModel
           {
-            Id = shortcut.Id,
-            Description = shortcut.Description ?? shortcut.Id,
+            Id = shortcut.CommandId,
+            Description = shortcut.Description ?? shortcut.CommandId,
             Category = category,
-            DisplayText = _shortcutService.GetShortcutDisplayText(shortcut.Id) ?? FormatShortcut(shortcut),
+            DisplayText = _shortcutService.GetShortcutDisplayString(shortcut.CommandId) ?? FormatShortcut(shortcut),
             Key = shortcut.Key,
             Modifiers = shortcut.Modifiers
           };
@@ -69,16 +68,16 @@ namespace VoiceStudio.App.Views
       ShortcutsItemsControl.ItemsSource = _filteredShortcuts;
     }
 
-    private Dictionary<string, List<KeyboardShortcut>> CategorizeShortcuts(List<KeyboardShortcut> shortcuts)
+    private Dictionary<string, List<ShortcutBinding>> CategorizeShortcuts(List<ShortcutBinding> shortcuts)
     {
-      var categories = new Dictionary<string, List<KeyboardShortcut>>();
+      var categories = new Dictionary<string, List<ShortcutBinding>>();
 
       foreach (var shortcut in shortcuts)
       {
         var category = DetermineCategory(shortcut);
         if (!categories.ContainsKey(category))
         {
-          categories[category] = new List<KeyboardShortcut>();
+          categories[category] = new List<ShortcutBinding>();
         }
         categories[category].Add(shortcut);
       }
@@ -86,10 +85,10 @@ namespace VoiceStudio.App.Views
       return categories;
     }
 
-    private string DetermineCategory(KeyboardShortcut shortcut)
+    private string DetermineCategory(ShortcutBinding shortcut)
     {
-      // Categorize based on description or ID
-      var id = shortcut.Id.ToLower();
+      // Categorize based on description or CommandId
+      var id = shortcut.CommandId.ToLower();
       var desc = (shortcut.Description ?? "").ToLower();
 
       if (id.Contains("file") || desc.Contains("file") || desc.Contains("open") || desc.Contains("save") || desc.Contains("new"))
@@ -110,7 +109,7 @@ namespace VoiceStudio.App.Views
       return "General";
     }
 
-    private string FormatShortcut(KeyboardShortcut shortcut)
+    private string FormatShortcut(ShortcutBinding shortcut)
     {
       var parts = new List<string>();
       if (shortcut.Modifiers.HasFlag(VirtualKeyModifiers.Control))

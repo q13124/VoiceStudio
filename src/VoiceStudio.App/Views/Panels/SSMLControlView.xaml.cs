@@ -189,8 +189,74 @@ namespace VoiceStudio.App.Views.Panels
 
     private void DuplicateDocument(object document)
     {
-      // Note: SSML document duplication not implemented due to nested class access issues
-      _toastService?.ShowToast(ToastType.Info, "Not Implemented", "Document duplication is not yet implemented");
+      try
+      {
+        if (document is not SSMLDocumentItem sourceDoc)
+        {
+          _toastService?.ShowToast(ToastType.Warning, "Warning", "Invalid document type");
+          return;
+        }
+
+        // Create a new SSMLDocument with a new ID and copied content
+        var newDocument = new SSMLDocument
+        {
+          Id = Guid.NewGuid().ToString(),
+          Name = $"{sourceDoc.Name} Copy",
+          Content = sourceDoc.Content,
+          ProfileId = sourceDoc.ProfileId,
+          ProjectId = sourceDoc.ProjectId,
+          Created = DateTime.UtcNow.ToString("o"),
+          Modified = DateTime.UtcNow.ToString("o")
+        };
+
+        // Wrap in SSMLDocumentItem and add to collection
+        var duplicatedItem = new SSMLDocumentItem(newDocument);
+
+        // Find the index to insert after the original document
+        var insertIndex = ViewModel.Documents.IndexOf(sourceDoc) + 1;
+        if (insertIndex < ViewModel.Documents.Count)
+        {
+          ViewModel.Documents.Insert(insertIndex, duplicatedItem);
+        }
+        else
+        {
+          ViewModel.Documents.Add(duplicatedItem);
+        }
+
+        // Register undo action
+        if (_undoRedoService != null)
+        {
+          var actionObj = new SimpleAction(
+              $"Duplicate Document: {sourceDoc.Name}",
+              () =>
+              {
+                ViewModel.Documents.Remove(duplicatedItem);
+                _toastService?.ShowToast(ToastType.Info, "Undo", $"Removed duplicated document '{duplicatedItem.Name}'");
+              },
+              () =>
+              {
+                if (insertIndex < ViewModel.Documents.Count)
+                {
+                  ViewModel.Documents.Insert(insertIndex, duplicatedItem);
+                }
+                else
+                {
+                  ViewModel.Documents.Add(duplicatedItem);
+                }
+                _toastService?.ShowToast(ToastType.Info, "Redo", $"Restored duplicated document '{duplicatedItem.Name}'");
+              });
+          _undoRedoService.RegisterAction(actionObj);
+        }
+
+        // Select the duplicated document
+        ViewModel.SelectedDocument = duplicatedItem;
+
+        _toastService?.ShowToast(ToastType.Success, "Duplicated", $"Duplicated document '{sourceDoc.Name}'");
+      }
+      catch (Exception ex)
+      {
+        _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to duplicate document: {ex.Message}");
+      }
     }
   }
 }

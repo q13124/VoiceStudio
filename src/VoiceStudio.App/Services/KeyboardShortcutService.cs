@@ -78,7 +78,7 @@ public class KeyboardShortcutService
         RegisterShortcut("panel.library", VirtualKey.Number2, VirtualKeyModifiers.Control, "Library Panel");
         RegisterShortcut("panel.profiles", VirtualKey.Number3, VirtualKeyModifiers.Control, "Profiles Panel");
         RegisterShortcut("panel.effects", VirtualKey.Number4, VirtualKeyModifiers.Control, "Effects Panel");
-        RegisterShortcut("panel.settings", VirtualKey.Comma, VirtualKeyModifiers.Control, "Settings");
+        RegisterShortcut("panel.settings", (VirtualKey)188, VirtualKeyModifiers.Control, "Settings"); // 188 = comma key
 
         // Tools
         RegisterShortcut("tools.commandPalette", VirtualKey.P, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Command Palette");
@@ -103,6 +103,28 @@ public class KeyboardShortcutService
             Description = description,
             IsDefault = !_customizedShortcuts.Contains(commandId),
         };
+    }
+
+    /// <summary>
+    /// Register a keyboard shortcut with an action handler.
+    /// </summary>
+    public void RegisterShortcut(
+        string commandId,
+        VirtualKey key,
+        VirtualKeyModifiers modifiers,
+        Action handler,
+        string description)
+    {
+        RegisterShortcut(commandId, key, modifiers, description);
+        RegisterHandler(commandId, handler);
+    }
+
+    /// <summary>
+    /// Try to handle a key down event. Returns true if handled.
+    /// </summary>
+    public bool TryHandleKeyDown(VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        return HandleKeyDown(key, modifiers);
     }
 
     /// <summary>

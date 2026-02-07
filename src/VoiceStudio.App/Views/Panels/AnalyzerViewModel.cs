@@ -120,6 +120,12 @@ namespace VoiceStudio.App.Views.Panels
         await LoadVisualizationAsync(ct);
       }, () => !string.IsNullOrWhiteSpace(SelectedAudioId) && !IsLoading);
 
+      BrowseAndUploadCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("BrowseAndUpload");
+        await BrowseAndUploadAsync(ct);
+      }, () => !IsLoading);
+
       // Subscribe to playback position updates if audio player is available
       if (_audioPlayer != null)
       {
@@ -150,6 +156,11 @@ namespace VoiceStudio.App.Views.Panels
     }
 
     public IAsyncRelayCommand LoadVisualizationCommand { get; }
+
+    /// <summary>
+    /// Command to browse for and upload an audio file for analysis.
+    /// </summary>
+    public IAsyncRelayCommand BrowseAndUploadCommand { get; }
 
     partial void OnErrorMessageChanged(string? value)
     {
@@ -182,6 +193,66 @@ namespace VoiceStudio.App.Views.Panels
       if (!string.IsNullOrWhiteSpace(value))
       {
         _ = LoadVisualizationAsync(CancellationToken.None);
+      }
+    }
+
+    private async Task BrowseAndUploadAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        // Create file picker
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+
+        // Initialize for unpackaged app
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
+
+        picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.List;
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary;
+        picker.FileTypeFilter.Add(".wav");
+        picker.FileTypeFilter.Add(".mp3");
+        picker.FileTypeFilter.Add(".flac");
+        picker.FileTypeFilter.Add(".m4a");
+        picker.FileTypeFilter.Add(".ogg");
+        picker.FileTypeFilter.Add(".aac");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null)
+          return; // User cancelled
+
+        IsLoading = true;
+        ErrorMessage = null;
+
+        // Upload file to backend
+        var response = await _backendClient.UploadAudioFileAsync(file.Path, cancellationToken);
+
+        // Set the audio ID - this will auto-trigger visualization loading
+        SelectedAudioId = response.Id;
+
+        _toastNotificationService?.ShowSuccess(
+            ResourceHelper.GetString("Analyzer.UploadSuccess", "Audio Uploaded"),
+            $"File '{response.Filename}' uploaded successfully.");
+      }
+      catch (OperationCanceledException)
+      {
+        // Cancelled - do nothing
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ResourceHelper.FormatString("Analyzer.UploadFailed", ex.Message);
+        OnPropertyChanged(nameof(HasError));
+        _errorLoggingService?.LogError(ex, "BrowseAndUpload");
+        _toastNotificationService?.ShowError(
+            ResourceHelper.GetString("Analyzer.UploadFailed", "Upload Failed"),
+            ex.Message);
+      }
+      finally
+      {
+        IsLoading = false;
       }
     }
 

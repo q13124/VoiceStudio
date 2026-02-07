@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
@@ -127,14 +127,14 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        if (localSettings.Values.TryGetValue(NavigationStateKey, out var value) && value is ApplicationDataCompositeValue composite && composite.TryGetValue("CurrentPanelId", out var panelId) && panelId is string panelIdStr)
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var savedPanelId = UnpackagedSettingsHelper.GetValue<string>(NavigationStateKey, null);
+        if (!string.IsNullOrEmpty(savedPanelId))
         {
-          _currentPanelId = panelIdStr;
-
-          // Note: Backstack restoration would require more complex serialization
-          // For now, we'll start fresh on app restart
+          _currentPanelId = savedPanelId;
         }
+        // Note: Backstack restoration would require more complex serialization
+        // For now, we'll start fresh on app restart
       }
       catch (Exception ex)
       {
@@ -146,15 +146,11 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        var composite = new ApplicationDataCompositeValue();
-
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
         if (!string.IsNullOrEmpty(_currentPanelId))
         {
-          composite["CurrentPanelId"] = _currentPanelId;
+          UnpackagedSettingsHelper.SetValue(NavigationStateKey, _currentPanelId);
         }
-
-        localSettings.Values[NavigationStateKey] = composite;
       }
       catch (Exception ex)
       {

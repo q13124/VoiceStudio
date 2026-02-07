@@ -9,6 +9,11 @@ Complete guide to updating VoiceStudio Quantum+.
 3. [Installing Updates](#installing-updates)
 4. [Update Preferences](#update-preferences)
 5. [Troubleshooting Updates](#troubleshooting-updates)
+6. [Update Information](#update-information)
+7. [Manual Update Installation](#manual-update-installation)
+8. [Update Best Practices](#update-best-practices)
+9. [Rollback Procedures](#rollback-procedures)
+10. [Support](#support)
 
 ---
 
@@ -376,11 +381,116 @@ For enterprise deployments, custom update servers can be configured:
 
 ### What if an update breaks something?
 
-**Answer:** Report the issue immediately. Previous versions may be available for rollback if needed.
+**Answer:** Report the issue immediately. See the [Rollback Procedures](#rollback-procedures) section for reverting to a previous version.
 
 ### Do I need to uninstall before updating?
 
 **Answer:** No, the installer handles upgrades automatically. No uninstallation needed.
+
+---
+
+## Rollback Procedures
+
+### When to Rollback
+
+Consider rolling back if:
+- Application crashes after update
+- Critical features stop working
+- Data corruption detected
+- Performance severely degraded
+
+### Pre-Rollback Checklist
+
+1. **Backup current state**
+   - Export projects: File → Export → Export All Projects
+   - Backup settings: Copy `%APPDATA%\VoiceStudio\settings.json`
+   - Note current version: Help → About
+
+2. **Document the issue**
+   - Screenshot error messages
+   - Note steps to reproduce
+   - Save relevant log files from `%APPDATA%\VoiceStudio\logs\`
+
+### Rollback Methods
+
+#### Method 1: Windows System Restore (Recommended)
+
+If you have a system restore point from before the update:
+
+1. Open Control Panel → Recovery
+2. Click "Open System Restore"
+3. Select restore point dated before the update
+4. Follow wizard to complete restore
+
+#### Method 2: Previous Installer
+
+1. **Uninstall current version:**
+   - Open Settings → Apps → Installed Apps
+   - Find "VoiceStudio Quantum+"
+   - Click "Uninstall"
+
+2. **Download previous version:**
+   - Visit GitHub Releases page
+   - Find the previous stable version
+   - Download the installer (.exe)
+
+3. **Install previous version:**
+   - Run the downloaded installer
+   - Follow installation wizard
+   - Select same installation directory
+
+4. **Restore data (if needed):**
+   - Copy backed-up settings.json to `%APPDATA%\VoiceStudio\`
+   - Import projects: File → Import → Import Project
+
+#### Method 3: Side-by-Side Installation (Advanced)
+
+For testing before committing to rollback:
+
+1. Install previous version to a different directory
+2. Test functionality
+3. If successful, uninstall newer version
+4. Optionally move installation
+
+### Post-Rollback Steps
+
+1. **Verify installation:**
+   - Launch VoiceStudio
+   - Check version: Help → About
+   - Test critical features
+
+2. **Restore data:**
+   - Verify projects load correctly
+   - Check voice profiles are accessible
+   - Confirm settings are preserved
+
+3. **Disable auto-update temporarily:**
+   - Settings → Updates
+   - Disable "Check for updates on startup"
+   - Wait for patch release
+
+4. **Report the issue:**
+   - File bug report on GitHub Issues
+   - Include version you rolled back from
+   - Describe the problem and steps to reproduce
+
+### Data Locations Reference
+
+| Data Type | Location |
+|-----------|----------|
+| Settings | `%APPDATA%\VoiceStudio\settings.json` |
+| Projects | `%USERPROFILE%\Documents\VoiceStudio\Projects\` |
+| Profiles | `%APPDATA%\VoiceStudio\profiles\` |
+| Logs | `%APPDATA%\VoiceStudio\logs\` |
+| Models | `%APPDATA%\VoiceStudio\models\` |
+| Cache | `%LOCALAPPDATA%\VoiceStudio\cache\` |
+
+### Version History
+
+Previous versions are available on the GitHub Releases page:
+- Each release includes installer and release notes
+- Checksums provided for verification
+- Minimum 3 previous stable versions maintained
 
 ---
 
@@ -398,6 +508,6 @@ For enterprise deployments, custom update servers can be configured:
 
 ---
 
-**Last Updated:** 2025-01-27  
-**Version:** 1.0
+**Last Updated:** 2026-02-04  
+**Version:** 1.1
 

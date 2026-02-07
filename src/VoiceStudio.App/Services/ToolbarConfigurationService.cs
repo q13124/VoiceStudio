@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Windows.Storage;
 using VoiceStudio.Core.Models;
 
 namespace VoiceStudio.App.Services
@@ -139,13 +138,14 @@ namespace VoiceStudio.App.Services
                     new ToolbarItem { Id = "record", Label = "Record", Icon = "⏺", IsVisible = true, Order = 3, Section = ToolbarSection.Transport },
                     new ToolbarItem { Id = "loop", Label = "Loop", Icon = "↻", IsVisible = true, Order = 4, Section = ToolbarSection.Transport },
                     new ToolbarItem { Id = "project", Label = "Project", Icon = "📁", IsVisible = true, Order = 5, Section = ToolbarSection.Project },
-                    new ToolbarItem { Id = "engine", Label = "Engine", Icon = "⚙", IsVisible = true, Order = 6, Section = ToolbarSection.Project },
-                    new ToolbarItem { Id = "undo", Label = "Undo", Icon = "↶", IsVisible = true, Order = 7, Section = ToolbarSection.History },
-                    new ToolbarItem { Id = "redo", Label = "Redo", Icon = "↷", IsVisible = true, Order = 8, Section = ToolbarSection.History },
-                    new ToolbarItem { Id = "workspace", Label = "Workspace", Icon = "🖥", IsVisible = true, Order = 9, Section = ToolbarSection.Workspace },
-                    new ToolbarItem { Id = "cpu", Label = "CPU", Icon = "💻", IsVisible = true, Order = 10, Section = ToolbarSection.Performance },
-                    new ToolbarItem { Id = "gpu", Label = "GPU", Icon = "🎮", IsVisible = true, Order = 11, Section = ToolbarSection.Performance },
-                    new ToolbarItem { Id = "latency", Label = "Latency", Icon = "⏱", IsVisible = true, Order = 12, Section = ToolbarSection.Performance }
+                    new ToolbarItem { Id = "import_audio", Label = "Import Audio", Icon = "📥", IsVisible = true, Order = 6, Section = ToolbarSection.Project },
+                    new ToolbarItem { Id = "engine", Label = "Engine", Icon = "⚙", IsVisible = true, Order = 7, Section = ToolbarSection.Project },
+                    new ToolbarItem { Id = "undo", Label = "Undo", Icon = "↶", IsVisible = true, Order = 8, Section = ToolbarSection.History },
+                    new ToolbarItem { Id = "redo", Label = "Redo", Icon = "↷", IsVisible = true, Order = 9, Section = ToolbarSection.History },
+                    new ToolbarItem { Id = "workspace", Label = "Workspace", Icon = "🖥", IsVisible = true, Order = 10, Section = ToolbarSection.Workspace },
+                    new ToolbarItem { Id = "cpu", Label = "CPU", Icon = "💻", IsVisible = true, Order = 11, Section = ToolbarSection.Performance },
+                    new ToolbarItem { Id = "gpu", Label = "GPU", Icon = "🎮", IsVisible = true, Order = 12, Section = ToolbarSection.Performance },
+                    new ToolbarItem { Id = "latency", Label = "Latency", Icon = "⏱", IsVisible = true, Order = 13, Section = ToolbarSection.Performance }
                 }
       };
     }
@@ -169,16 +169,23 @@ namespace VoiceStudio.App.Services
       return CreateDefaultConfiguration();
     }
 
+    private static string GetLocalFolderPath()
+    {
+      var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+      var folderPath = Path.Combine(appDataPath, "VoiceStudio");
+      Directory.CreateDirectory(folderPath);
+      return folderPath;
+    }
+
     private async Task<ToolbarConfiguration?> LoadConfigurationAsync()
     {
       try
       {
-        var localFolder = ApplicationData.Current.LocalFolder;
-        var configFile = await localFolder.TryGetItemAsync(ConfigFileName) as StorageFile;
-
-        if (configFile != null)
+        // Use regular file I/O for unpackaged app compatibility
+        var configFilePath = Path.Combine(GetLocalFolderPath(), ConfigFileName);
+        if (File.Exists(configFilePath))
         {
-          var json = await FileIO.ReadTextAsync(configFile);
+          var json = await File.ReadAllTextAsync(configFilePath);
           return JsonSerializer.Deserialize<ToolbarConfiguration>(json);
         }
       }
@@ -199,11 +206,10 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localFolder = ApplicationData.Current.LocalFolder;
-        var configFile = await localFolder.CreateFileAsync(ConfigFileName, CreationCollisionOption.ReplaceExisting);
-
+        // Use regular file I/O for unpackaged app compatibility
+        var configFilePath = Path.Combine(GetLocalFolderPath(), ConfigFileName);
         var json = JsonSerializer.Serialize(configuration, new JsonSerializerOptions { WriteIndented = true });
-        await FileIO.WriteTextAsync(configFile, json);
+        await File.WriteAllTextAsync(configFilePath, json);
       }
       catch (Exception ex)
       {
@@ -215,12 +221,11 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localFolder = ApplicationData.Current.LocalFolder;
-        var presetsFile = await localFolder.CreateFileAsync(PresetsFileName, CreationCollisionOption.ReplaceExisting);
-
+        // Use regular file I/O for unpackaged app compatibility
+        var presetsFilePath = Path.Combine(GetLocalFolderPath(), PresetsFileName);
         var customPresets = _presets.Where(p => p.IsCustom).ToList();
         var json = JsonSerializer.Serialize(customPresets, new JsonSerializerOptions { WriteIndented = true });
-        await FileIO.WriteTextAsync(presetsFile, json);
+        await File.WriteAllTextAsync(presetsFilePath, json);
       }
       catch (Exception ex)
       {

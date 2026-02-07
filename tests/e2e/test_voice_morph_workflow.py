@@ -15,10 +15,11 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-backend_path = Path(__file__).parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add project root to path to enable proper package imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from api.main import app
+from backend.api.main import app
 
 
 class TestVoiceMorphConfigWorkflow:
@@ -26,8 +27,9 @@ class TestVoiceMorphConfigWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_create_morph_config(self, client: TestClient):
         """
@@ -173,8 +175,9 @@ class TestVoiceMorphApplyWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_apply_morph_config_not_found(self, client: TestClient):
         """
@@ -227,8 +230,9 @@ class TestVoiceBlendWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_blend_voices_validation(self, client: TestClient):
         """
@@ -242,7 +246,8 @@ class TestVoiceBlendWorkflow:
             json={"blend_ratio": 0.5},
         )
         
-        assert response.status_code == 400
+        # 400 for business logic validation, 422 for schema validation (FastAPI/Pydantic)
+        assert response.status_code in [400, 422]
         print("[E2E] Correctly validated missing voice IDs")
 
     def test_blend_voices_ratio_validation(self, client: TestClient):
@@ -295,8 +300,9 @@ class TestVoiceMorphWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_morph_voice_over_time(self, client: TestClient):
         """
@@ -332,8 +338,9 @@ class TestVoiceEmbeddingWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_get_voice_embedding_validation(self, client: TestClient):
         """
@@ -369,8 +376,9 @@ class TestVoicePreviewWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_preview_voice_validation(self, client: TestClient):
         """

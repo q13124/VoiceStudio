@@ -4,11 +4,65 @@ Performance testing results and analysis for VoiceStudio Quantum+.
 
 ## Overview
 
-**Test Date:** [Date]  
-**Test Version:** 1.0.0  
-**Test Environment:** [Environment details]  
-**Tester:** [Name]  
-**Status:** [In Progress / Complete]
+**Test Date:** 2026-02-04  
+**Test Version:** 1.0.1  
+**Test Environment:** Windows 10/11  
+**Tester:** Automated + Manual Review  
+**Status:** Preliminary Assessment Complete
+
+## Automated Performance Testing Infrastructure
+
+VoiceStudio includes a comprehensive performance testing framework:
+
+### Test Files
+- `tests/performance/test_engine_performance.py` - Engine SLO validation
+- `tests/performance/test_quality_features_performance.py` - Quality feature benchmarks
+- `tests/performance/test_expanded_performance.py` - Expanded test coverage
+- `tests/performance/test_performance_benchmarks.py` - Benchmark tests
+
+### SLO Definitions (XTTS Workflow)
+
+| Engine Category | P50 Target | P95 Target | P99 Target |
+|-----------------|------------|------------|------------|
+| Fast (XTTS, Chatterbox) | 1.0s | 3.0s | 5.0s |
+| Standard (Tortoise, RVC) | 3.0s | 8.0s | 15.0s |
+| Heavy (Training) | 10.0s | 30.0s | 60.0s |
+
+### Running Automated Tests
+
+```bash
+# Run all performance tests
+pytest tests/performance/ -v
+
+# Run engine-specific tests
+pytest tests/performance/test_engine_performance.py -v
+
+# Run with performance markers
+pytest -m performance -v
+```
+
+## PerfView Profiling (Manual)
+
+For deep performance analysis of the XTTS workflow:
+
+### Prerequisites
+1. Download PerfView: https://github.com/microsoft/perfview/releases
+2. Build VoiceStudio in Release mode
+3. Start backend: `uvicorn backend.api.main:app`
+
+### Profiling Steps
+1. Launch PerfView as Administrator
+2. Click "Collect" → "Run"
+3. Set command: `dotnet run --project src/VoiceStudio.App/VoiceStudio.App.csproj -c Release`
+4. Perform XTTS synthesis workflow
+5. Stop collection and analyze traces
+
+### Key Metrics to Capture
+- CPU hotspots during synthesis
+- Memory allocation patterns
+- GPU utilization (if applicable)
+- Thread contention
+- GC pressure
 
 ---
 

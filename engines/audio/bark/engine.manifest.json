@@ -1,0 +1,93 @@
+{
+  "engine_id": "bark",
+  "name": "Bark TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "venv_family": "venv_advanced_tts",
+  "description": "Suno Bark - Transformer-based text-to-audio model for realistic speech, music, and sound effects",
+  "author": "Suno",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "bark": ">=1.0.0",
+    "torch": ">=2.0.0",
+    "transformers": ">=4.31.0",
+    "scipy": ">=1.10.0",
+    "numpy": ">=1.24.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\bark",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\bark\\cache"
+  },
+  "supported_languages": [
+    "en", "es", "fr", "de", "it", "pt", "pl", "ru", "zh-cn", "ja", "ko", "hi", "tr"
+  ],
+  "capabilities": [
+    "multi_language_tts",
+    "emotion_control",
+    "non_verbal_sounds",
+    "music_generation",
+    "sound_effects",
+    "laughter",
+    "high_quality_synthesis"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 6,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.bark_engine.BarkEngine",
+  "config_schema": {
+    "model_size": {
+      "type": "string",
+      "default": "suno/bark",
+      "enum": ["suno/bark", "suno/bark-small"],
+      "description": "Bark model size"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "speaker_history_prompt": {
+      "type": "string",
+      "default": "v2/en_speaker_6",
+      "description": "Speaker voice preset identifier"
+    },
+    "text_temp": {
+      "type": "number",
+      "default": 0.7,
+      "description": "Temperature for text generation"
+    },
+    "waveform_temp": {
+      "type": "number",
+      "default": 0.7,
+      "description": "Temperature for waveform generation"
+    }
+  },
+  "quality_features": {
+    "mos_estimate": "4.0-4.5",
+    "naturalness": "high",
+    "expressiveness": "very_high",
+    "non_speech_capability": true
+  },
+  "contract": {
+    "input": {
+      "text_max_chars": 1000,
+      "supports_ssml_tags": true
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 24000,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 6144,
+      "ram_mb": 8192,
+      "timeout_seconds": 180
+    }
+  }
+}

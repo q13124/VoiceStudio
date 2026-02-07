@@ -226,9 +226,10 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var presetToDelete = (preset as EmotionControlPresetItem);
+              var presetToDelete = preset as EmotionControlPresetItem;
+              if (presetToDelete == null) break;
+              
               var presetIndex = ViewModel.Presets.IndexOf(presetToDelete);
-
               ViewModel.Presets.Remove(presetToDelete);
 
               // Register undo action

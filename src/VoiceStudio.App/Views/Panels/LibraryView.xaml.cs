@@ -30,6 +30,7 @@ namespace VoiceStudio.App.Views.Panels
     private IAudioPlayerService? _audioPlayer;
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
+    private INavigationService? _navigationService;
 
     public LibraryView()
     {
@@ -45,6 +46,7 @@ namespace VoiceStudio.App.Views.Panels
       _audioPlayer = ServiceProvider.GetAudioPlayerService();
       _toastService = ServiceProvider.GetToastNotificationService();
       _undoRedoService = ServiceProvider.GetUndoRedoService();
+      _navigationService = ServiceProvider.TryGetNavigationService();
 
       // Subscribe to selection changes to update UI
       var multiSelectService = ServiceProvider.GetMultiSelectService();
@@ -352,12 +354,12 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private Task AnalyzeAssetAsync(string assetId, string assetName)
+    private async Task AnalyzeAssetAsync(string assetId, string assetName)
     {
       if (string.IsNullOrEmpty(assetId))
       {
         _toastService?.ShowToast(ToastType.Warning, "Analysis", "Asset ID required for analysis");
-        return Task.CompletedTask;
+        return;
       }
 
       try
@@ -365,23 +367,32 @@ namespace VoiceStudio.App.Views.Panels
         // Navigate to AnalyzerView with this asset
         _toastService?.ShowToast(ToastType.Info, "Analysis", $"Opening analyzer for {assetName}...");
 
-        // Note: Panel navigation will be implemented when PanelNavigationService is available
-        System.Diagnostics.Debug.WriteLine($"Navigate to analyzer with assetId: {assetId}");
+        if (_navigationService != null)
+        {
+          var parameters = new System.Collections.Generic.Dictionary<string, object>
+          {
+            { "assetId", assetId },
+            { "assetName", assetName }
+          };
+          await _navigationService.NavigateToPanelAsync("analyzer", parameters);
+        }
+        else
+        {
+          System.Diagnostics.Debug.WriteLine($"NavigationService not available. assetId: {assetId}");
+        }
       }
       catch (Exception ex)
       {
         _toastService?.ShowToast(ToastType.Error, "Analysis Error", $"Failed to analyze: {ex.Message}");
       }
-
-      return Task.CompletedTask;
     }
 
-    private Task ApplyEffectsToAssetAsync(string assetId, string assetName)
+    private async Task ApplyEffectsToAssetAsync(string assetId, string assetName)
     {
       if (string.IsNullOrEmpty(assetId))
       {
         _toastService?.ShowToast(ToastType.Warning, "Effects", "Asset ID required");
-        return Task.CompletedTask;
+        return;
       }
 
       try
@@ -389,15 +400,24 @@ namespace VoiceStudio.App.Views.Panels
         // Navigate to EffectsMixerView with this asset
         _toastService?.ShowToast(ToastType.Info, "Effects", $"Opening effects mixer for {assetName}...");
 
-        // Note: Panel navigation will be implemented when PanelNavigationService is available
-        System.Diagnostics.Debug.WriteLine($"Navigate to effects mixer with assetId: {assetId}");
+        if (_navigationService != null)
+        {
+          var parameters = new System.Collections.Generic.Dictionary<string, object>
+          {
+            { "assetId", assetId },
+            { "assetName", assetName }
+          };
+          await _navigationService.NavigateToPanelAsync("effectsmixer", parameters);
+        }
+        else
+        {
+          System.Diagnostics.Debug.WriteLine($"NavigationService not available. assetId: {assetId}");
+        }
       }
       catch (Exception ex)
       {
         _toastService?.ShowToast(ToastType.Error, "Effects Error", $"Failed to apply effects: {ex.Message}");
       }
-
-      return Task.CompletedTask;
     }
 
     private void ShowAssetProperties(object fileData, string assetName)

@@ -18,26 +18,63 @@ namespace VoiceStudio.App.Controls
     private readonly StackPanel _userListPanel = new();
     private readonly TextBlock _emptyStateText = new();
 
+    /// <summary>
+    /// Event raised when the user requests to close the indicator panel.
+    /// </summary>
+    public event EventHandler? CloseRequested;
+
     public CollaborationIndicator()
     {
       InitializeComponent();
       _rootPanel.Spacing = 6;
+
+      // Header row with title and close button
+      var headerRow = new Grid();
+      headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+      headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
       var header = new TextBlock
       {
         Text = "Active Collaborators",
-        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+        VerticalAlignment = VerticalAlignment.Center
       };
+      Grid.SetColumn(header, 0);
+      headerRow.Children.Add(header);
+
+      var closeButton = new Button
+      {
+        Content = new FontIcon
+        {
+          Glyph = "\uE711", // Close icon
+          FontSize = 12,
+          FontFamily = new FontFamily("Segoe Fluent Icons")
+        },
+        Padding = new Thickness(4),
+        Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+        BorderThickness = new Thickness(0)
+      };
+      ToolTipService.SetToolTip(closeButton, "Close");
+      closeButton.Click += CloseButton_Click;
+      Grid.SetColumn(closeButton, 1);
+      headerRow.Children.Add(closeButton);
+
       _emptyStateText.Text = "No collaborators connected";
       _emptyStateText.Opacity = 0.6;
       _emptyStateText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray);
 
-      _rootPanel.Children.Add(header);
+      _rootPanel.Children.Add(headerRow);
       _rootPanel.Children.Add(_emptyStateText);
       _rootPanel.Children.Add(_userListPanel);
 
       Content = _rootPanel;
 
       Loaded += CollaborationIndicator_Loaded;
+    }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+      CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void CollaborationIndicator_Loaded(object _, RoutedEventArgs e)

@@ -8,16 +8,17 @@ namespace VoiceStudio.App.Services
   /// </summary>
   public class ErrorPresentationService : IErrorPresentationService
   {
-    private readonly ToastNotificationService? _toastNotificationService;
     private readonly IErrorDialogService? _errorDialogService;
     private readonly IErrorLoggingService? _errorLoggingService;
 
+    // ToastNotificationService requires UI elements and is registered manually after UI creation.
+    // Access it lazily via AppServices to avoid DI resolution failures at startup.
+    private ToastNotificationService? ToastNotificationService => AppServices.TryGetToastNotificationService();
+
     public ErrorPresentationService(
-        ToastNotificationService? toastNotificationService = null,
         IErrorDialogService? errorDialogService = null,
         IErrorLoggingService? errorLoggingService = null)
     {
-      _toastNotificationService = toastNotificationService;
       _errorDialogService = errorDialogService;
       _errorLoggingService = errorLoggingService;
     }
@@ -67,7 +68,7 @@ namespace VoiceStudio.App.Services
       switch (type)
       {
         case ErrorPresentationType.Toast:
-          _toastNotificationService?.ShowError(message, "Error");
+          ToastNotificationService?.ShowError(message, "Error");
           break;
 
         case ErrorPresentationType.Dialog:
@@ -77,7 +78,7 @@ namespace VoiceStudio.App.Services
         case ErrorPresentationType.Inline:
           // Inline errors are typically handled by the ViewModel/View
           // This service can't directly set inline errors, so fall back to toast
-          _toastNotificationService?.ShowError(message, "Error");
+          ToastNotificationService?.ShowError(message, "Error");
           break;
       }
     }
@@ -124,7 +125,7 @@ namespace VoiceStudio.App.Services
     private void ShowErrorToast(Exception exception, string _)
     {
       var userMessage = GetUserFriendlyMessage(exception);
-      _toastNotificationService?.ShowError(userMessage, GetErrorTitle(exception));
+      ToastNotificationService?.ShowError(userMessage, GetErrorTitle(exception));
     }
 
     private void ShowErrorDialog(Exception exception, string context)

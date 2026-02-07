@@ -3,6 +3,7 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using WinRT;
 using WinRT.Interop;
 
 namespace VoiceStudio.App.Helpers;

@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
-using Windows.Storage;
 using Windows.Storage.Pickers;
 
 namespace VoiceStudio.App.Views.Panels
@@ -69,17 +68,19 @@ namespace VoiceStudio.App.Views.Panels
       ExportResultsCommand.NotifyCanExecuteChanged();
     }
 
-    private async void LoadQueryHistory()
+    private void LoadQueryHistory()
     {
       QueryHistory.Clear();
       try
       {
-        var localFolder = ApplicationData.Current.LocalFolder;
-        var historyFile = await localFolder.TryGetItemAsync("search_history.json");
+        // Use file-based storage for unpackaged app compatibility
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var voiceStudioDir = Path.Combine(appDataPath, "VoiceStudio");
+        var historyFilePath = Path.Combine(voiceStudioDir, "search_history.json");
 
-        if (historyFile != null)
+        if (File.Exists(historyFilePath))
         {
-          var content = await FileIO.ReadTextAsync((StorageFile)historyFile);
+          var content = File.ReadAllText(historyFilePath);
           var history = System.Text.Json.JsonSerializer.Deserialize<List<string>>(content);
           if (history != null)
           {
@@ -110,10 +111,14 @@ namespace VoiceStudio.App.Views.Panels
     {
       try
       {
-        var localFolder = ApplicationData.Current.LocalFolder;
-        var historyFile = await localFolder.CreateFileAsync("search_history.json", CreationCollisionOption.ReplaceExisting);
+        // Use file-based storage for unpackaged app compatibility
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var voiceStudioDir = Path.Combine(appDataPath, "VoiceStudio");
+        Directory.CreateDirectory(voiceStudioDir);
+        var historyFilePath = Path.Combine(voiceStudioDir, "search_history.json");
+
         var content = System.Text.Json.JsonSerializer.Serialize(QueryHistory.ToList());
-        await FileIO.WriteTextAsync(historyFile, content);
+        await File.WriteAllTextAsync(historyFilePath, content);
       }
       catch
       {
@@ -340,10 +345,15 @@ namespace VoiceStudio.App.Views.Panels
         picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
         picker.SuggestedFileName = $"search_results_{DateTime.Now:yyyyMMdd_HHmmss}";
 
+        // Initialize picker with window handle for unpackaged app
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
         var file = await picker.PickSaveFileAsync();
         if (file != null)
         {
           var extension = file.FileType.ToLower();
+          var filePath = file.Path;
           if (extension == ".csv")
           {
             var csv = new StringBuilder();
@@ -352,12 +362,12 @@ namespace VoiceStudio.App.Views.Panels
             {
               csv.AppendLine($"{result.Id},\"{result.Title}\",\"{result.Description}\",{result.Type},{result.Date:yyyy-MM-dd HH:mm:ss},{result.Quality?.ToString() ?? "N/A"}");
             }
-            await FileIO.WriteTextAsync(file, csv.ToString());
+            await File.WriteAllTextAsync(filePath, csv.ToString());
           }
           else if (extension == ".json")
           {
             var json = System.Text.Json.JsonSerializer.Serialize(SearchResults, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            await FileIO.WriteTextAsync(file, json);
+            await File.WriteAllTextAsync(filePath, json);
           }
         }
       }

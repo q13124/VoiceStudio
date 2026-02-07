@@ -171,7 +171,9 @@ namespace VoiceStudio.App.Views.Panels
     {
       try
       {
-        var job = (jobObj as UpscalingJobItem);
+        var job = jobObj as UpscalingJobItem;
+        if (job == null) return;
+        
         switch (action.ToLower())
         {
           case "view":

@@ -51,6 +51,44 @@ namespace VoiceStudio.App
     private MenuFlyoutItem? _checkForUpdatesMenuItem;
     private MenuFlyoutItem? _keyboardShortcutsMenuItem;
 
+    /// <summary>
+    /// Panel registry mapping panel IDs to their factory functions.
+    /// Used for restoring panels from saved workspace layouts.
+    /// </summary>
+    private readonly Dictionary<string, (PanelRegion DefaultRegion, string Title, Func<UserControl> Factory)> _panelRegistry = new(StringComparer.OrdinalIgnoreCase)
+    {
+      // Core synthesis panels
+      ["VoiceSynthesis"] = (PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView()),
+      ["EnsembleSynthesis"] = (PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView()),
+      ["BatchProcessing"] = (PanelRegion.Center, "Batch Processing", () => new BatchProcessingView()),
+      ["TextSpeechEditor"] = (PanelRegion.Center, "Text Speech Editor", () => new TextSpeechEditorView()),
+      // Training panels
+      ["TrainingDatasetEditor"] = (PanelRegion.Center, "Training Dataset Editor", () => new TrainingDatasetEditorView()),
+      ["ModelManager"] = (PanelRegion.Center, "Model Manager", () => new ModelManagerView()),
+      ["Training"] = (PanelRegion.Left, "Training", () => new TrainingView()),
+      // Audio processing panels
+      ["Transcribe"] = (PanelRegion.Center, "Transcribe", () => new TranscribeView()),
+      ["Recording"] = (PanelRegion.Center, "Recording", () => new RecordingView()),
+      ["AudioAnalysis"] = (PanelRegion.Center, "Audio Analysis", () => new AudioAnalysisView()),
+      ["QualityControl"] = (PanelRegion.Right, "Quality Control", () => new QualityControlView()),
+      // Navigation panels
+      ["Timeline"] = (PanelRegion.Center, "Timeline", () => new TimelineView()),
+      ["Profiles"] = (PanelRegion.Left, "Profiles", () => new ProfilesView()),
+      ["Library"] = (PanelRegion.Left, "Library", () => new LibraryView()),
+      // Effect panels
+      ["EffectsMixer"] = (PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView()),
+      ["Analyzer"] = (PanelRegion.Right, "Analyzer", () => new AnalyzerView()),
+      ["VoiceMorph"] = (PanelRegion.Center, "Voice Morph", () => new VoiceMorphView()),
+      ["Prosody"] = (PanelRegion.Right, "Prosody", () => new ProsodyView()),
+      ["EmotionControl"] = (PanelRegion.Right, "Emotion Control", () => new EmotionControlView()),
+      // Utility panels
+      ["Diagnostics"] = (PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView()),
+      ["Settings"] = (PanelRegion.Right, "Settings", () => new SettingsView()),
+      ["Help"] = (PanelRegion.Right, "Help", () => new HelpView()),
+      // Advanced panels
+      ["SSMLControl"] = (PanelRegion.Right, "SSML Control", () => new SSMLControlView()),
+    };
+
     private T? FindInContent<T>(string name) where T : class
     {
       return (Content as FrameworkElement)?.FindName(name) as T;
@@ -1111,6 +1149,13 @@ namespace VoiceStudio.App
           () => SaveProject(),
           "Save Project");
 
+      _keyboardShortcutService.RegisterShortcut(
+          "file.import",
+          VirtualKey.I,
+          VirtualKeyModifiers.Control,
+          () => ImportAudioFile(),
+          "Import Audio");
+
       // Playback
       _keyboardShortcutService.RegisterShortcut(
           "playback.play",
@@ -1553,6 +1598,27 @@ namespace VoiceStudio.App
       {
         globalSearchView.Hide();
         globalSearchOverlay.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+      }
+    }
+
+    // Collaboration Panel Toggle (IDEA 25)
+    private void CollaboratorsToggleButton_Click(object sender, RoutedEventArgs e)
+    {
+      var collaborationPanel = FindNameOnContent("CollaborationPanel") as FrameworkElement;
+      if (collaborationPanel != null)
+      {
+        collaborationPanel.Visibility = collaborationPanel.Visibility == Visibility.Visible
+          ? Visibility.Collapsed
+          : Visibility.Visible;
+      }
+    }
+
+    private void CollaborationIndicator_CloseRequested(object? sender, EventArgs e)
+    {
+      var collaborationPanel = FindNameOnContent("CollaborationPanel") as FrameworkElement;
+      if (collaborationPanel != null)
+      {
+        collaborationPanel.Visibility = Visibility.Collapsed;
       }
     }
 
@@ -2388,9 +2454,49 @@ namespace VoiceStudio.App
       {
         var layout = _panelStateService.GetCurrentLayout();
 
-        // For now, always use defaults as panel registry is not yet implemented
-        // Planned feature: When panel registry is implemented, restore panels from layout.Regions
-        return false;
+        // Check if there are any saved regions to restore
+        if (layout.Regions == null || layout.Regions.Count == 0)
+        {
+          System.Diagnostics.Debug.WriteLine("No saved regions to restore, using defaults.");
+          return false;
+        }
+
+        bool restoredAny = false;
+
+        foreach (var regionState in layout.Regions)
+        {
+          // Get the panel host for this region
+          Controls.PanelHost? targetHost = regionState.Region switch
+          {
+            PanelRegion.Left => FindNameOnContent("LeftPanelHost") as Controls.PanelHost,
+            PanelRegion.Center => FindNameOnContent("CenterPanelHost") as Controls.PanelHost,
+            PanelRegion.Right => FindNameOnContent("RightPanelHost") as Controls.PanelHost,
+            PanelRegion.Bottom => FindNameOnContent("BottomPanelHost") as Controls.PanelHost,
+            _ => null
+          };
+
+          if (targetHost == null)
+            continue;
+
+          // Try to restore the active panel for this region
+          var activePanelId = regionState.ActivePanelId;
+          if (!string.IsNullOrEmpty(activePanelId) && _panelRegistry.TryGetValue(activePanelId, out var panelInfo))
+          {
+            try
+            {
+              targetHost.Content = panelInfo.Factory();
+              targetHost.PanelTitle = panelInfo.Title;
+              restoredAny = true;
+              System.Diagnostics.Debug.WriteLine($"Restored panel '{activePanelId}' to {regionState.Region}");
+            }
+            catch (Exception panelEx)
+            {
+              System.Diagnostics.Debug.WriteLine($"Failed to restore panel '{activePanelId}': {panelEx.Message}");
+            }
+          }
+        }
+
+        return restoredAny;
       }
       catch (Exception ex)
       {
@@ -2443,6 +2549,11 @@ namespace VoiceStudio.App
     }
 
     private Microsoft.UI.Xaml.DispatcherTimer? _statusBarTimer;
+    private TimeSpan _lastProcessorTime;
+    private DateTime _lastCpuCheck = DateTime.MinValue;
+    private int _lastCpuPercent;
+    private int _lastGpuPercent;
+    private int _lastLatencyMs = -1;
 
     private void StartStatusBarTimer()
     {
@@ -2450,6 +2561,16 @@ namespace VoiceStudio.App
       _statusBarTimer.Interval = TimeSpan.FromSeconds(2);
       _statusBarTimer.Tick += (_, _) => UpdateStatusBarMetrics();
       _statusBarTimer.Start();
+
+      // Initialize CPU tracking
+      try
+      {
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        _lastProcessorTime = process.TotalProcessorTime;
+        _lastCpuCheck = DateTime.UtcNow;
+      }
+      catch { /* Ignore initialization errors */ }
+
       // Update immediately
       UpdateStatusBarMetrics();
     }
@@ -2459,21 +2580,89 @@ namespace VoiceStudio.App
       try
       {
         var process = System.Diagnostics.Process.GetCurrentProcess();
+
+        // Calculate RAM usage
         var ramMb = process.WorkingSet64 / (1024 * 1024);
         var totalRamMb = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024 * 1024);
         var ramPct = totalRamMb > 0 ? (int)(ramMb * 100 / totalRamMb) : 0;
+
+        // Calculate CPU usage based on process time delta
+        var now = DateTime.UtcNow;
+        var currentProcessorTime = process.TotalProcessorTime;
+        if (_lastCpuCheck != DateTime.MinValue)
+        {
+          var timeDelta = (now - _lastCpuCheck).TotalMilliseconds;
+          if (timeDelta > 0)
+          {
+            var cpuTimeDelta = (currentProcessorTime - _lastProcessorTime).TotalMilliseconds;
+            var cpuPct = (int)(cpuTimeDelta / timeDelta / Environment.ProcessorCount * 100);
+            _lastCpuPercent = Math.Clamp(cpuPct, 0, 100);
+          }
+        }
+        _lastProcessorTime = currentProcessorTime;
+        _lastCpuCheck = now;
+
+        // GPU usage: estimate from backend or use placeholder
+        // In production, this would query GPU utilization via backend API
+        // For now, use a heuristic based on whether synthesis is active
+        // TODO: Integrate with backend telemetry for real GPU metrics
 
         var cpuText = FindNameOnContent("CpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
         var gpuText = FindNameOnContent("GpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
         var ramText = FindNameOnContent("RamText") as Microsoft.UI.Xaml.Controls.TextBlock;
         var clockText = FindNameOnContent("ClockText") as Microsoft.UI.Xaml.Controls.TextBlock;
+        var latencyText = FindNameOnContent("LatencyText") as Microsoft.UI.Xaml.Controls.TextBlock;
 
+        if (cpuText != null) cpuText.Text = $"CPU {_lastCpuPercent}%";
+        if (gpuText != null) gpuText.Text = $"GPU {_lastGpuPercent}%";
         if (ramText != null) ramText.Text = $"RAM {ramPct}%";
         if (clockText != null) clockText.Text = DateTime.Now.ToString("HH:mm");
+        if (latencyText != null && _lastLatencyMs >= 0) latencyText.Text = $"{_lastLatencyMs}ms";
+
+        // Async update for GPU and latency (non-blocking)
+        _ = UpdateGpuAndLatencyAsync();
       }
       catch (Exception ex)
       {
         System.Diagnostics.Debug.WriteLine($"Status bar update error: {ex.Message}");
+      }
+    }
+
+    private async Task UpdateGpuAndLatencyAsync()
+    {
+      try
+      {
+        // Ping backend to get latency
+        var backendClient = ServiceProvider.GetBackendClient();
+        if (backendClient != null)
+        {
+          var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+          var isConnected = await backendClient.CheckHealthAsync();
+          stopwatch.Stop();
+
+          if (isConnected)
+          {
+            _lastLatencyMs = (int)stopwatch.ElapsedMilliseconds;
+
+            // Try to get GPU/VRAM usage from backend telemetry
+            try
+            {
+              var telemetry = await backendClient.GetTelemetryAsync();
+              if (telemetry != null)
+              {
+                _lastGpuPercent = (int)telemetry.VramPct;
+              }
+            }
+            catch
+            {
+              // GPU telemetry not available, keep last value
+            }
+          }
+        }
+      }
+      catch
+      {
+        // Non-critical - silently ignore network errors
       }
     }
 

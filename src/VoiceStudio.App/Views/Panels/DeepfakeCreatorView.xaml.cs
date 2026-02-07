@@ -221,9 +221,10 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var jobToDelete = (job as DeepfakeJobItem);
+              var jobToDelete = job as DeepfakeJobItem;
+              if (jobToDelete == null) break;
+              
               var jobIndex = ViewModel.DeepfakeJobs.IndexOf(jobToDelete);
-
               ViewModel.DeepfakeJobs.Remove(jobToDelete);
 
               // Register undo action

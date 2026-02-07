@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
 using VoiceStudio.App.Controls;
-using Services = VoiceStudio.App.Services;
 
 namespace VoiceStudio.App.Services
 {
@@ -19,7 +17,7 @@ namespace VoiceStudio.App.Services
     /// <param name="shortcuts">Optional keyboard shortcuts to display.</param>
     /// <param name="tips">Optional tips to display.</param>
     public void ShowHelp(HelpOverlay overlay, string title, string helpText,
-        IEnumerable<Services.KeyboardShortcut>? shortcuts = null,
+        IEnumerable<Controls.KeyboardShortcut>? shortcuts = null,
         IEnumerable<string>? tips = null)
     {
       if (overlay == null)
@@ -28,17 +26,13 @@ namespace VoiceStudio.App.Services
       overlay.Title = title;
       overlay.HelpText = helpText;
 
-      // Clear and set shortcuts (convert from Services.KeyboardShortcut to Controls.KeyboardShortcut)
+      // Clear and set shortcuts
       overlay.Shortcuts.Clear();
       if (shortcuts != null)
       {
         foreach (var shortcut in shortcuts)
         {
-          overlay.Shortcuts.Add(new Controls.KeyboardShortcut
-          {
-            Key = shortcut.Key.ToString(),
-            Description = shortcut.Description ?? string.Empty
-          });
+          overlay.Shortcuts.Add(shortcut);
         }
       }
 

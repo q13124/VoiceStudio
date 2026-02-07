@@ -15,6 +15,7 @@ using VoiceStudio.Core.Services;
 using VoiceStudio.Core.Exceptions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
+using VoiceStudio.App.Core.Models;
 // Generated client types available for migration - see docs/developer/API_MIGRATION_GUIDE.md
 using Generated = VoiceStudio.App.Services.Generated;
 
@@ -601,17 +602,41 @@ namespace VoiceStudio.App.Services
         // Backend returns paginated response: {"items": [...], "pagination": {...}}
         // Extract the items array from the wrapper
         var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
-        using var doc = System.Text.Json.JsonDocument.Parse(jsonString);
-        
-        if (doc.RootElement.TryGetProperty("items", out var itemsElement))
+
+        // Detect HTML responses (backend returning error page instead of JSON)
+        if (string.IsNullOrWhiteSpace(jsonString))
         {
-          return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(itemsElement.GetRawText(), _jsonOptions)
+          throw new BackendDeserializationException(
+            "Backend returned empty response for profiles. Verify backend is running.");
+        }
+
+        if (jsonString.TrimStart().StartsWith("<"))
+        {
+          var preview = jsonString.Substring(0, Math.Min(200, jsonString.Length));
+          throw new BackendDeserializationException(
+            $"Backend returned HTML instead of JSON. This typically means the backend server is not running or returned an error page. Preview: {preview}");
+        }
+
+        try
+        {
+          using var doc = System.Text.Json.JsonDocument.Parse(jsonString);
+
+          if (doc.RootElement.TryGetProperty("items", out var itemsElement))
+          {
+            return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(itemsElement.GetRawText(), _jsonOptions)
+                      ?? new List<VoiceProfile>();
+          }
+
+          // Fallback: try parsing as direct array for backward compatibility
+          return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(jsonString, _jsonOptions)
                     ?? new List<VoiceProfile>();
         }
-        
-        // Fallback: try parsing as direct array for backward compatibility
-        return System.Text.Json.JsonSerializer.Deserialize<List<VoiceProfile>>(jsonString, _jsonOptions)
-                  ?? new List<VoiceProfile>();
+        catch (System.Text.Json.JsonException ex)
+        {
+          var preview = jsonString.Substring(0, Math.Min(500, jsonString.Length));
+          throw new BackendDeserializationException(
+            $"Failed to parse profiles response. Ensure backend API is returning valid JSON. Content preview: {preview}", ex);
+        }
       });
     }
 
@@ -821,6 +846,49 @@ namespace VoiceStudio.App.Services
         }
 
         return await response.Content.ReadAsStreamAsync(cancellationToken);
+      });
+    }
+
+    /// <summary>
+    /// Uploads an audio file to the backend for analysis.
+    /// </summary>
+    /// <param name="filePath">Path to the audio file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Upload response containing the audio ID.</returns>
+    public async Task<AudioUploadResponse> UploadAudioFileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+      return await ExecuteWithRetryAsync(async () =>
+      {
+        using var content = new MultipartFormDataContent();
+        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        using var streamContent = new StreamContent(fileStream);
+
+        // Determine content type from extension
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        var contentType = extension switch
+        {
+          ".wav" => "audio/wav",
+          ".mp3" => "audio/mpeg",
+          ".flac" => "audio/flac",
+          ".m4a" => "audio/mp4",
+          ".ogg" => "audio/ogg",
+          ".aac" => "audio/aac",
+          _ => "audio/octet-stream"
+        };
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+        var fileName = Path.GetFileName(filePath);
+        content.Add(streamContent, "file", fileName);
+
+        var response = await _httpClient.PostAsync("/api/audio/upload", content, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          throw await CreateExceptionFromResponseAsync(response);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AudioUploadResponse>(_jsonOptions, cancellationToken)
+                  ?? throw new BackendDeserializationException("Failed to deserialize audio upload response");
       });
     }
 

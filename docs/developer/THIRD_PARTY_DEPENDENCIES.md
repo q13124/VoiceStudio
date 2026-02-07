@@ -2,9 +2,17 @@
 
 Complete documentation of all third-party libraries, frameworks, and tools used in VoiceStudio Quantum+.
 
-**Version:** 1.0  
-**Last Updated:** 2025-01-28  
-**Status:** Complete
+**Version:** 1.1  
+**Last Updated:** 2026-02-05  
+**Status:** Reference Document
+
+> **📋 Note:** For authoritative, locked production versions, see the **Compatibility Matrix**:
+> - **`config/compatibility_matrix.yml`** — Canonical version pins (machine-readable)
+> - **`version_lock.json`** — Version locks with rationale
+> - **`docs/design/COMPATIBILITY_MATRIX.md`** — Human-readable compatibility matrix
+>
+> This document provides descriptive information about dependencies (purpose, license, source).
+> The compatibility matrix is the single source of truth for locked versions.
 
 ---
 
@@ -134,20 +142,19 @@ SOFTWARE.
 ### Core ML/AI Framework
 
 #### torch (PyTorch)
-- **Version:** 2.9.0+cu128 (CUDA 12.8)
-- **Alternative Version:** 2.2.2+cu121 (CUDA 12.1)
+- **Version:** 2.2.2+cu121 (CUDA 12.1) — **PRODUCTION**
 - **License:** BSD-style
 - **Purpose:** Deep learning framework for AI models
 - **Usage:** Core framework for voice cloning engines, neural network inference
 - **Source:** https://pytorch.org/
 - **Installation:** 
   ```bash
-  pip install torch==2.9.0+cu128 torchaudio==2.9.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+  pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
   ```
-- **Critical:** Must match torchaudio version exactly
+- **Critical:** Must match torchaudio version exactly. See `config/compatibility_matrix.yml` for authoritative version.
 
 #### torchaudio
-- **Version:** 2.9.0+cu128 (matches torch)
+- **Version:** 2.2.2+cu121 (matches torch) — **PRODUCTION**
 - **License:** BSD-style
 - **Purpose:** Audio processing for PyTorch
 - **Usage:** Audio I/O, signal processing, audio preprocessing
@@ -346,8 +353,8 @@ SOFTWARE.
 
 | Category | Package | Version | License | Purpose |
 |----------|---------|---------|---------|---------|
-| **ML/AI** | torch | 2.9.0+cu128 | BSD | Deep learning |
-| | torchaudio | 2.9.0+cu128 | BSD | Audio processing |
+| **ML/AI** | torch | 2.2.2+cu121 | BSD | Deep learning |
+| | torchaudio | 2.2.2+cu121 | BSD | Audio processing |
 | | transformers | 4.57.1 | Apache 2.0 | Model loading |
 | | huggingface_hub | 0.36.0 | Apache 2.0 | Model hub |
 | **TTS** | coqui-tts | 0.27.2 | MPL-2.0 | Voice cloning |
@@ -511,8 +518,8 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install --upgrade pip wheel setuptools
 
-# Step 2: Install PyTorch (CUDA 12.8)
-pip install torch==2.9.0+cu128 torchaudio==2.9.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+# Step 2: Install PyTorch (CUDA 12.1)
+pip install torch==2.2.2+cu121 torchaudio==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121
 
 # Step 3: Install requirements
 pip install -r requirements_engines.txt
@@ -659,7 +666,7 @@ pip install -r requirements_engines.txt
 - NAudio (2.2.1) - Audio playback
 
 **Backend (Python):**
-- PyTorch (2.9.0+cu128) - Deep learning
+- PyTorch (2.2.2+cu121) - Deep learning
 - Coqui TTS (0.27.2) - Voice cloning
 - FastAPI (0.115.0) - API framework
 

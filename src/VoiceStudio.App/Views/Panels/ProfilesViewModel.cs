@@ -160,6 +160,9 @@ namespace VoiceStudio.App.Views.Panels
     private readonly MultiSelectService _multiSelectService;
     private MultiSelectState? _multiSelectState;
 
+    // Cancellation token source for profile change async operations
+    private CancellationTokenSource? _profileChangeCts;
+
     [ObservableProperty]
     private int selectedCount;
 
@@ -1132,6 +1135,18 @@ namespace VoiceStudio.App.Views.Panels
       CanPreview = SelectedProfile != null;
       PreviewProfileCommand.NotifyCanExecuteChanged();
 
+      // Cancel any pending profile change operations to avoid race conditions
+      try
+      {
+        _profileChangeCts?.Cancel();
+        _profileChangeCts?.Dispose();
+      }
+      catch (ObjectDisposedException)
+      {
+        // Already disposed, ignore
+      }
+      _profileChangeCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
       // Load cached quality metrics if available
       if (value != null && _previewQualityCache.ContainsKey(value.Id))
       {
@@ -1149,26 +1164,26 @@ namespace VoiceStudio.App.Views.Panels
       // Load quality history when profile is selected (IDEA 30)
       if (value != null)
       {
-        var ct = new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token;
+        var ct = _profileChangeCts.Token;
         _ = LoadQualityHistoryAsync(ct).ContinueWith(t =>
         {
-          if (t.IsFaulted)
+          if (t.IsFaulted && t.Exception?.InnerException is not OperationCanceledException)
             _logService?.LogError(t.Exception?.InnerException ?? new Exception("LoadQualityHistory failed"), "LoadQualityHistory");
         }, TaskScheduler.Default);
         _ = LoadQualityTrendsAsync(ct).ContinueWith(t =>
         {
-          if (t.IsFaulted)
+          if (t.IsFaulted && t.Exception?.InnerException is not OperationCanceledException)
             _logService?.LogError(t.Exception?.InnerException ?? new Exception("LoadQualityTrends failed"), "LoadQualityTrends");
         }, TaskScheduler.Default);
         // Also check for degradation (IDEA 56)
         _ = CheckQualityDegradationAsync(ct).ContinueWith(t =>
         {
-          if (t.IsFaulted)
+          if (t.IsFaulted && t.Exception?.InnerException is not OperationCanceledException)
             _logService?.LogError(t.Exception?.InnerException ?? new Exception("CheckQualityDegradation failed"), "CheckQualityDegradation");
         }, TaskScheduler.Default);
         _ = LoadQualityBaselineAsync(ct).ContinueWith(t =>
         {
-          if (t.IsFaulted)
+          if (t.IsFaulted && t.Exception?.InnerException is not OperationCanceledException)
             _logService?.LogError(t.Exception?.InnerException ?? new Exception("LoadQualityBaseline failed"), "LoadQualityBaseline");
         }, TaskScheduler.Default);
       }

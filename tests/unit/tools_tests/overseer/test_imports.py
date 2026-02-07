@@ -5,7 +5,14 @@ Prevents ModuleNotFoundError from breaking CLI commands.
 These tests act as smoke tests for the overseer package structure.
 """
 
+import sys
 from pathlib import Path
+
+# Add project root to path BEFORE any tools imports to avoid shadowing
+# by the test directory structure (tests/unit/tools/overseer/)
+_project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 
 def test_overseer_package_imports():
@@ -21,20 +28,22 @@ def test_overseer_package_imports():
     assert LedgerState.DONE is not None
     assert Severity.S0_BLOCKER is not None
     assert Gate.A is not None
-    assert GateStatus.GREEN is not None
+    # GateStatus is a dataclass with is_green property, not a constant
+    status = GateStatus(gate=Gate.A, total_entries=1, done_entries=1)
+    assert status.is_green is True
 
 
 def test_overseer_agent_imports():
     """Test agent governance imports."""
-    from tools.overseer.models import AgentIdentity, AgentRole, AgentState
+    from tools.overseer.agent.identity import AgentIdentity, AgentRole, AgentState
     
     assert AgentRole.OVERSEER is not None
     assert AgentRole.DEBUGGER is not None
-    assert AgentState.ACTIVE is not None
+    assert AgentState.RUNNING is not None  # API uses RUNNING, not ACTIVE
     
-    # Verify we can create an identity
-    identity = AgentIdentity(role=AgentRole.OVERSEER, role_id="0")
-    assert identity.is_active() is False  # Should be INITIALIZING
+    # Verify we can create an identity using the class factory
+    identity = AgentIdentity.create(role=AgentRole.OVERSEER, user_id="test")
+    assert identity.state == AgentState.CREATED  # Initial state is CREATED
 
 
 def test_overseer_cli_imports():
@@ -48,16 +57,17 @@ def test_overseer_cli_imports():
 def test_overseer_issues_imports():
     """Test issues system imports."""
     from tools.overseer.issues import (
-        IssueStore,
-        record_issue,
-        query_issues,
+        Issue,
+        IssuePriority,
+        IssueSeverity,
+        IssueStatus,
     )
-    from tools.overseer.issues.store import IssueStore as DirectIssueStore
     
-    assert IssueStore is not None
-    assert record_issue is not None
-    assert query_issues is not None
-    assert DirectIssueStore is not None
+    # Verify enum values exist (per actual API)
+    assert IssuePriority.HIGH is not None
+    assert IssueSeverity.CRITICAL is not None
+    assert IssueStatus.NEW is not None  # API uses NEW, not OPEN
+    assert Issue is not None
 
 
 def test_overseer_agent_package_exists():
@@ -96,31 +106,34 @@ def test_agent_identity_module():
     """Test agent.identity module can be imported (regression test for missing __init__.py)."""
     from tools.overseer.agent.identity import AgentRole, AgentIdentity, AgentState
     
-    # Verify all roles are defined
+    # Verify all roles are defined (per actual API)
     assert AgentRole.OVERSEER
     assert AgentRole.REVIEWER
     assert AgentRole.BUILDER
     assert AgentRole.CODER
     assert AgentRole.DEBUGGER
-    assert AgentRole.UNKNOWN
+    assert AgentRole.TESTER
+    assert AgentRole.SUPPORT
     
-    # Verify all states are defined
-    assert AgentState.INITIALIZING
-    assert AgentState.ACTIVE
-    assert AgentState.IDLE
-    assert AgentState.SUSPENDED
-    assert AgentState.ERROR
+    # Verify all states are defined (per actual API)
+    assert AgentState.CREATED
+    assert AgentState.RUNNING
+    assert AgentState.PAUSED
+    assert AgentState.AWAITING_APPROVAL
+    assert AgentState.COMPLETED
+    assert AgentState.QUARANTINED
+    assert AgentState.TERMINATED
 
 
 def test_agent_role_mapping():
     """Test role mapping functions."""
-    from tools.overseer.agent.role_mapping import voicestudio_role_to_agent
+    from tools.overseer.agent.role_mapping import role_to_agent_role
     from tools.overseer.agent.identity import AgentRole
     
     # Test all VoiceStudio roles map correctly
-    assert voicestudio_role_to_agent(0) == AgentRole.OVERSEER
-    assert voicestudio_role_to_agent(1) == AgentRole.REVIEWER
-    assert voicestudio_role_to_agent(2) == AgentRole.BUILDER
-    assert voicestudio_role_to_agent(7) == AgentRole.DEBUGGER
-    assert voicestudio_role_to_agent("debug-agent") == AgentRole.DEBUGGER
-    assert voicestudio_role_to_agent("overseer") == AgentRole.OVERSEER
+    assert role_to_agent_role(0) == AgentRole.OVERSEER
+    assert role_to_agent_role(1) == AgentRole.REVIEWER
+    assert role_to_agent_role(2) == AgentRole.BUILDER
+    assert role_to_agent_role(7) == AgentRole.DEBUGGER
+    assert role_to_agent_role("debug-agent") == AgentRole.DEBUGGER
+    assert role_to_agent_role("overseer") == AgentRole.OVERSEER

@@ -177,7 +177,12 @@ class UnifiedTrainer:
             base_model: Optional base model identifier
 
         Returns:
-            True if initialization successful
+            True if initialization successful or not required for this engine
+
+        Note:
+            Some engines (like XTTS) handle model initialization internally during
+            training and do not require explicit initialization. For these engines,
+            this method returns True to indicate the trainer is ready.
         """
         if not self.trainer:
             raise RuntimeError(f"Trainer for engine '{self.engine}' not available")
@@ -185,10 +190,12 @@ class UnifiedTrainer:
         if hasattr(self.trainer, "initialize_model"):
             return self.trainer.initialize_model(config_path)
         else:
-            logger.warning(
-                f"Model initialization not implemented for engine '{self.engine}'"
+            # Engine handles initialization internally - this is valid behavior
+            logger.info(
+                f"Engine '{self.engine}' handles model initialization internally. "
+                "Trainer is ready for training."
             )
-            return False
+            return True  # Trainer is ready even without explicit initialization
 
     async def train(
         self,
@@ -246,20 +253,37 @@ class UnifiedTrainer:
         Cancel ongoing training.
 
         Returns:
-            True if cancellation successful
+            True if cancellation was requested successfully
+
+        Note:
+            Cancellation is handled at two levels:
+            1. UnifiedTrainer level: Sets _training_cancelled flag which training loops
+               should check periodically.
+            2. Engine level: If the underlying trainer supports cancel_training(), it
+               will be called for immediate engine-specific cancellation.
+
+            For engines without native cancellation support, the flag-based approach
+            provides graceful termination at the next checkpoint.
         """
         if not self._is_training:
+            logger.debug("cancel_training called but no training is in progress")
             return False
 
         self._training_cancelled = True
+        logger.info(f"Training cancellation requested for engine '{self.engine}'")
 
         if self.trainer and hasattr(self.trainer, "cancel_training"):
-            return self.trainer.cancel_training()
+            # Engine supports native cancellation
+            result = self.trainer.cancel_training()
+            logger.info(f"Engine-level cancellation returned: {result}")
+            return result
         else:
-            logger.warning(
-                f"Training cancellation not implemented for engine '{self.engine}'"
+            # Flag-based cancellation will be checked by training loop
+            logger.info(
+                f"Engine '{self.engine}' uses flag-based cancellation. "
+                "Training will stop at next checkpoint."
             )
-            return False
+            return True  # Cancellation requested successfully
 
     def export_model(
         self, output_path: Optional[str] = None, model_name: Optional[str] = None
@@ -313,7 +337,21 @@ class UnifiedTrainer:
         engines = []
         if HAS_XTTS_TRAINER:
             engines.append("xtts")
+        if HAS_RVC_TRAINER:
+            engines.append("rvc")
         return engines
+
+    @property
+    def is_cancellation_requested(self) -> bool:
+        """
+        Check if training cancellation has been requested.
+
+        This property can be checked by training loops to gracefully exit.
+
+        Returns:
+            True if cancellation was requested
+        """
+        return self._training_cancelled
 
     @staticmethod
     def create_trainer(

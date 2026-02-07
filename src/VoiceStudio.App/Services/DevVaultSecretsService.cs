@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Logging;
 
@@ -27,7 +26,10 @@ namespace VoiceStudio.App.Services
 
     public DevVaultSecretsService()
     {
-      var localFolder = ApplicationData.Current.LocalFolder.Path;
+      // Use Environment.SpecialFolder for file-based storage (works for unpackaged apps)
+      var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+      var localFolder = Path.Combine(appDataPath, "VoiceStudio");
+      Directory.CreateDirectory(localFolder);
       _vaultPath = Path.Combine(localFolder, VaultFileName);
       _vaultKeyPath = Path.Combine(localFolder, VaultKeyFileName);
     }

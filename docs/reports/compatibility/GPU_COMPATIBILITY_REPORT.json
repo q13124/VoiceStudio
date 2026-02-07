@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-02-06T19:58:05.828867",
+  "system_info": {
+    "os": "Windows",
+    "os_version": "10.0.26200",
+    "python_version": "3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]",
+    "architecture": "AMD64",
+    "processor": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD"
+  },
+  "gpu_info": {
+    "name": "Unknown",
+    "driver_version": "591.74",
+    "cuda_version": "Unknown",
+    "compute_capability": [
+      0,
+      0
+    ],
+    "memory_total_gb": 0.0,
+    "memory_free_gb": 0.0,
+    "architecture": "Unknown"
+  },
+  "pytorch_info": {
+    "version": "2.8.0+cpu",
+    "cuda_available": "False",
+    "cuda_version": "N/A",
+    "cudnn_version": "N/A",
+    "torchaudio_version": "2.8.0+cpu"
+  },
+  "compatibility_checks": [
+    {
+      "check_name": "CUDA Availability",
+      "passed": false,
+      "message": "CUDA is not available. GPU acceleration will not work.",
+      "details": {
+        "torch_cuda_available": false
+      }
+    },
+    {
+      "check_name": "PyTorch/CUDA Version",
+      "passed": false,
+      "message": "CUDA version mismatch: expected 12.1, got Unknown; PyTorch version mismatch: expected 2.2.2, got 2.8.0",
+      "details": {
+        "expected_cuda": "12.1",
+        "actual_cuda": "Unknown",
+        "expected_torch": "2.2.2",
+        "actual_torch": "2.8.0+cpu"
+      }
+    },
+    {
+      "check_name": "Compute Capability",
+      "passed": false,
+      "message": "CUDA not available",
+      "details": {}
+    },
+    {
+      "check_name": "Memory Allocation",
+      "passed": false,
+      "message": "CUDA not available",
+      "details": {}
+    },
+    {
+      "check_name": "cuDNN",
+      "passed": false,
+      "message": "cuDNN is not available. Some operations may be slower.",
+      "details": {}
+    }
+  ],
+  "benchmarks": [
+    {
+      "test_name": "Tensor Operations",
+      "duration_ms": 0,
+      "memory_used_mb": 0,
+      "throughput": 0.0,
+      "details": {
+        "error": "CUDA not available"
+      }
+    },
+    {
+      "test_name": "Audio Inference",
+      "duration_ms": 0,
+      "memory_used_mb": 0,
+      "throughput": 0.0,
+      "details": {
+        "error": "CUDA not available"
+      }
+    }
+  ],
+  "overall_status": "FAIL",
+  "recommendations": [
+    "Install NVIDIA drivers and CUDA toolkit. See: https://developer.nvidia.com/cuda-downloads",
+    "Install NVIDIA drivers and CUDA toolkit. See: https://developer.nvidia.com/cuda-downloads",
+    "Limited GPU memory detected (<4GB). Some models may require CPU fallback. Consider using smaller model variants or enabling gradient checkpointing.",
+    "Audio inference is not meeting real-time targets. Consider enabling TorchScript optimization or using smaller model variants."
+  ]
+}

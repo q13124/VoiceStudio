@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_profile.schema.json",
+  "title": "VoiceProfile",
+  "description": "Schema for VoiceStudio voice profiles with avatar support",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the profile"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Display name of the voice profile"
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Primary language code (ISO 639-1)"
+    },
+    "emotion": {
+      "type": ["string", "null"],
+      "description": "Emotional tone or style of the voice"
+    },
+    "quality_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "default": 0.0,
+      "description": "Quality score from 0.0 to 1.0"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Tags for categorization and filtering"
+    },
+    "reference_audio_url": {
+      "type": ["string", "null"],
+      "format": "uri-reference",
+      "description": "URL or path to reference audio for voice cloning"
+    },
+    "avatar_url": {
+      "type": ["string", "null"],
+      "format": "uri-reference",
+      "description": "URL or path to profile avatar image"
+    }
+  },
+  "required": ["id", "name"],
+  "additionalProperties": false
+}

@@ -26,6 +26,8 @@ router = APIRouter(prefix="/api/profiles", tags=["profiles"])
 
 
 class VoiceProfile(BaseModel):
+    """Voice profile model with avatar support."""
+
     id: str
     name: str
     language: str = "en"
@@ -33,20 +35,27 @@ class VoiceProfile(BaseModel):
     quality_score: float = 0.0
     tags: List[str] = []
     reference_audio_url: Optional[str] = None
+    avatar_url: Optional[str] = None  # URL or path to profile avatar image
 
 
 class ProfileCreateRequest(BaseModel):
+    """Request model for creating a new voice profile."""
+
     name: str
     language: str = "en"
     emotion: Optional[str] = None
     tags: List[str] = []
+    avatar_url: Optional[str] = None
 
 
 class ProfileUpdateRequest(BaseModel):
+    """Request model for updating an existing voice profile."""
+
     name: Optional[str] = None
     language: Optional[str] = None
     emotion: Optional[str] = None
     tags: Optional[List[str]] = None
+    avatar_url: Optional[str] = None
 
 
 # In-memory storage (replace with database in production)

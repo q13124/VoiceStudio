@@ -14,7 +14,39 @@ import sys
 from pathlib import Path
 from typing import Generator, Optional
 
+# Set test mode BEFORE any backend imports - this must happen first
+# Use monkeypatch-style permanent setting
+os.environ["VOICESTUDIO_TEST_MODE"] = "1"
+
+
+def pytest_configure(config):
+    """Set test mode before any tests run."""
+    os.environ["VOICESTUDIO_TEST_MODE"] = "1"
+
 import pytest
+
+
+@pytest.fixture(autouse=True, scope="session")
+def set_test_mode():
+    """Ensure test mode environment variable is set for all tests."""
+    os.environ["VOICESTUDIO_TEST_MODE"] = "1"
+    
+    # Also set app.state.test_mode for reliable detection in FastAPI routes
+    try:
+        from backend.api.main import app
+        app.state.test_mode = True
+    except Exception:
+        pass
+    
+    yield
+    
+    # Clean up
+    try:
+        from backend.api.main import app
+        app.state.test_mode = False
+    except Exception:
+        pass
+    os.environ.pop("VOICESTUDIO_TEST_MODE", None)
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -148,7 +180,7 @@ def session_config(e2e_config, request) -> SessionConfig:
 
 
 @pytest.fixture(scope="session")
-def session_manager(session_config, request) -> SessionManager:
+def session_manager(session_config, request) -> Generator[SessionManager, None, None]:
     """
     Provide session manager for the test session.
     
@@ -159,7 +191,9 @@ def session_manager(session_config, request) -> SessionManager:
     
     if use_mock:
         logger.info("Using mock driver")
-        return MockSessionManager(session_config)
+        mock_manager = MockSessionManager(session_config)
+        yield mock_manager
+        return
     
     manager = SessionManager(session_config)
     
@@ -170,7 +204,9 @@ def session_manager(session_config, request) -> SessionManager:
         )
         if not manager.start_winappdriver():
             logger.warning("Could not start WinAppDriver. Using mock driver.")
-            return MockSessionManager(session_config)
+            mock_manager = MockSessionManager(session_config)
+            yield mock_manager
+            return
     
     yield manager
     
@@ -185,7 +221,16 @@ def app_session(session_manager, session_config, request):
     
     Creates a new session and closes it after the test.
     Captures screenshots on failure if configured.
+    
+    Skips tests marked with 'requires_app' when using mock session.
     """
+    # Skip tests that require real app when using mock session
+    is_mock_session = isinstance(session_manager, MockSessionManager)
+    requires_app_marker = request.node.get_closest_marker("requires_app")
+    
+    if is_mock_session and requires_app_marker:
+        pytest.skip("Test requires real application (WinAppDriver not available)")
+    
     driver = None
     
     try:

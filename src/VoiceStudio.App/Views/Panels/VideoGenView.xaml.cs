@@ -193,9 +193,10 @@ namespace VoiceStudio.App.Views.Panels
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-              var videoToDelete = (video as GeneratedVideo);
+              var videoToDelete = video as GeneratedVideo;
+              if (videoToDelete == null) break;
+              
               var videoIndex = ViewModel.GeneratedVideos.IndexOf(videoToDelete);
-
               ViewModel.GeneratedVideos.Remove(videoToDelete);
 
               // Register undo action

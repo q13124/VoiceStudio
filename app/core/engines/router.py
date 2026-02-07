@@ -76,6 +76,8 @@ class EngineRouter:
         self._auto_cleanup_enabled = auto_cleanup_enabled
         self._memory_pressure_threshold = memory_pressure_threshold
         self._low_memory_threshold = low_memory_threshold
+        # engine_id -> error_message (for engines that failed to load)
+        self._failed_engines: Dict[str, str] = {}
         self._process = None
         if HAS_PSUTIL:
             try:
@@ -180,6 +182,15 @@ class EngineRouter:
             List of registered engine names
         """
         return list(self._engine_types.keys())
+
+    def get_failed_engines(self) -> Dict[str, str]:
+        """
+        Get engines that failed to load during startup.
+
+        Returns:
+            Dict mapping engine_id to error message
+        """
+        return dict(self._failed_engines)
 
     def unregister_engine(self, name: str):
         """
@@ -600,9 +611,8 @@ class EngineRouter:
             try:
                 self.load_engine_from_manifest(manifest_path)
             except Exception as e:
-                import logging
-
-                logger = logging.getLogger(__name__)
+                # Track failed engine with error message
+                self._failed_engines[engine_id] = str(e)
                 logger.error(f"Failed to load engine {engine_id}: {e}")
 
     def get_manifest(self, engine_id: str) -> Optional[Dict[str, Any]]:

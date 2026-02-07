@@ -856,6 +856,12 @@ def _initialize_rate_limiting():
     if _rate_limit_middleware_loaded:
         return
 
+    # Skip rate limiting in test mode
+    if os.environ.get("VOICESTUDIO_TEST_MODE", "").lower() in ("1", "true", "yes"):
+        logger.info("Test mode: rate limiting disabled")
+        _rate_limit_middleware_loaded = True
+        return
+
     try:
         from .rate_limiting_enhanced import RateLimitMiddleware
 

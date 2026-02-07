@@ -467,6 +467,9 @@ async def synthesize(
         except Exception:
             # Fallback to XTTS if config service unavailable
             requested_engine = "xtts_v2"
+    else:
+        # Use the engine specified in the request
+        requested_engine = req.engine.strip()
 
     engine_id = _normalize_engine_id(requested_engine)
 

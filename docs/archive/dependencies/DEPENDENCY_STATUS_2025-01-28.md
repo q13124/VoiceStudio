@@ -1,8 +1,19 @@
 # Dependency Installation Status
 ## VoiceStudio Quantum+ - Dependency Check Results
 
+> **⚠️ ARCHIVED (2026-02-05):** This document references PyTorch 2.9.0+cu128, which was **NOT adopted** as the production stack. The actual locked production stack is:
+> - **PyTorch 2.2.2+cu121** (not 2.9.0+cu128)
+> - **Transformers 4.55.4** (not 4.57.1)
+>
+> See the canonical sources:
+> - **`config/compatibility_matrix.yml`** — Production version locks
+> - **`version_lock.json`** — Version pins with rationale
+> - **`docs/design/COMPATIBILITY_MATRIX.md`** — Human-readable matrix
+>
+> This document is retained for historical context only. Do not use for dependency decisions.
+
 **Date:** 2025-01-28  
-**Status:** ✅ **ALL CRITICAL PACKAGES INSTALLED**
+**Status:** ⚠️ **ARCHIVED - SEE NOTICE ABOVE**
 
 ---
 

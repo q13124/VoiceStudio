@@ -1,0 +1,35 @@
+# VoiceStudio Live Test Sample Sentences
+# Use these for voice synthesis and cloning tests
+# Date: 2026-02-06
+
+## Short Sentences (Under 20 words)
+1. Hello, this is a test of the VoiceStudio voice synthesis engine.
+2. The quick brown fox jumps over the lazy dog.
+3. Welcome to VoiceStudio, your professional voice cloning solution.
+4. Today's weather forecast calls for sunny skies and mild temperatures.
+5. Please remember to save your project before closing the application.
+
+## Medium Sentences (20-40 words)
+6. VoiceStudio provides enterprise-grade voice synthesis with support for multiple engines including XTTS, Chatterbox, and Tortoise, enabling users to create natural-sounding speech.
+7. The audio processing pipeline includes noise reduction, normalization, and quality metrics analysis to ensure optimal output for professional applications.
+8. Our voice cloning technology allows users to create custom voice profiles from just a few minutes of reference audio, with impressive similarity scores.
+9. The real-time preview feature lets you hear the synthesized voice immediately, making it easy to iterate on pronunciation and intonation settings.
+10. Integration with RVC and So-VITS-SVC engines provides advanced voice conversion capabilities for music production and content creation workflows.
+
+## Long Sentences (40+ words)
+11. VoiceStudio version one point zero point one introduces significant improvements to crash recovery, ensuring that your work is automatically saved and can be restored if the application unexpectedly terminates, providing peace of mind during long editing sessions.
+12. The circuit breaker pattern implemented in the backend automatically detects engine failures and switches to fallback engines when necessary, maintaining service availability even when individual components experience issues.
+13. Performance optimizations including UI virtualization for large audio libraries, deferred service initialization for faster startup times, and response caching for frequently accessed API endpoints have been implemented to ensure smooth operation.
+
+## Technical Pronunciation Tests
+14. The API endpoint slash api slash v1 slash voice slash synthesize accepts POST requests with JSON payload.
+15. Configure CUDA_VISIBLE_DEVICES equals zero to use the first GPU for acceleration.
+16. The MOS score of three point eight indicates good synthesis quality.
+17. HTTP status code four twenty-four indicates a failed dependency.
+
+## Emotional Expression Tests
+18. I'm so excited to share this wonderful news with everyone!
+19. Unfortunately, we regret to inform you that your application was not successful.
+20. Hmm, let me think about that for a moment before I respond.
+
+## End of sample sentences

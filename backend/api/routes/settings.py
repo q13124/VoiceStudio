@@ -512,28 +512,39 @@ async def reset_settings():
 
 @router.get("/check/dependencies")
 async def get_system_dependencies():
-    """Check system dependency status."""
+    """Check system dependency status.
+    
+    Returns package status in a format compatible with the frontend SettingsViewModel.
+    Keys match the frontend's Name.ToLower().Replace(" ", "_") transformation.
+    """
     import importlib
-    deps = {
-        "torch": None, "torchaudio": None, "librosa": None, "soundfile": None,
-        "pyloudnorm": None, "noisereduce": None, "resemblyzer": None,
-        "ffmpeg": None, "mutagen": None, "aiohttp": None,
+    import subprocess
+    
+    # Map frontend display names to actual Python package names
+    # Frontend uses: dep.Name.ToLower().Replace(" ", "_")
+    package_map = {
+        # Frontend key -> Python import name
+        "tensorflow": "tensorflow",
+        "speechbrain": "speechbrain",
+        "opencv_(cv2)": "cv2",
+        "face_alignment": "face_alignment",
+        "librosa": "librosa",
+        "soundfile": "soundfile",
+        "pyloudnorm": "pyloudnorm",
+        "resemblyzer": "resemblyzer",
+        "pytorch": "torch",
+        "numpy": "numpy",
     }
-    installed = 0
-    missing = 0
-    for dep in deps:
+    
+    result = {}
+    
+    for frontend_key, import_name in package_map.items():
         try:
-            mod = importlib.import_module(dep)
+            mod = importlib.import_module(import_name)
             version = getattr(mod, "__version__", "installed")
-            deps[dep] = {"installed": True, "version": str(version)}
-            installed += 1
+            # Frontend expects: bool or string "installed"/"true"
+            result[frontend_key] = True
         except ImportError:
-            deps[dep] = {"installed": False, "version": None}
-            missing += 1
-
-    return {
-        "dependencies": deps,
-        "total": len(deps),
-        "installed": installed,
-        "missing": missing,
-    }
+            result[frontend_key] = False
+    
+    return result

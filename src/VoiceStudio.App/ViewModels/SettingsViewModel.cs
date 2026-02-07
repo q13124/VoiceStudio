@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.Core.Models;
@@ -603,68 +606,54 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-        var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
-
-        if (container.Values.ContainsKey("General"))
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var generalJson = UnpackagedSettingsHelper.GetValue<string>("Settings.General", null);
+        if (!string.IsNullOrEmpty(generalJson))
         {
-          var generalJson = container.Values["General"]?.ToString();
-          if (!string.IsNullOrEmpty(generalJson))
+          var general = System.Text.Json.JsonSerializer.Deserialize<GeneralSettings>(generalJson);
+          if (general != null)
           {
-            var general = System.Text.Json.JsonSerializer.Deserialize<GeneralSettings>(generalJson);
-            if (general != null)
-            {
-              Theme = general.Theme;
-              Language = general.Language;
-              AutoSave = general.AutoSave;
-              AutoSaveInterval = general.AutoSaveInterval;
-            }
+            Theme = general.Theme;
+            Language = general.Language;
+            AutoSave = general.AutoSave;
+            AutoSaveInterval = general.AutoSaveInterval;
           }
         }
 
-        if (container.Values.ContainsKey("Engine"))
+        var engineJson = UnpackagedSettingsHelper.GetValue<string>("Settings.Engine", null);
+        if (!string.IsNullOrEmpty(engineJson))
         {
-          var engineJson = container.Values["Engine"]?.ToString();
-          if (!string.IsNullOrEmpty(engineJson))
+          var engine = System.Text.Json.JsonSerializer.Deserialize<EngineSettings>(engineJson);
+          if (engine != null)
           {
-            var engine = System.Text.Json.JsonSerializer.Deserialize<EngineSettings>(engineJson);
-            if (engine != null)
-            {
-              DefaultAudioEngine = engine.DefaultAudioEngine;
-              DefaultImageEngine = engine.DefaultImageEngine;
-              DefaultVideoEngine = engine.DefaultVideoEngine;
-              QualityLevel = engine.QualityLevel;
-            }
+            DefaultAudioEngine = engine.DefaultAudioEngine;
+            DefaultImageEngine = engine.DefaultImageEngine;
+            DefaultVideoEngine = engine.DefaultVideoEngine;
+            QualityLevel = engine.QualityLevel;
           }
         }
 
-        if (container.Values.ContainsKey("Backend"))
+        var backendJson = UnpackagedSettingsHelper.GetValue<string>("Settings.Backend", null);
+        if (!string.IsNullOrEmpty(backendJson))
         {
-          var backendJson = container.Values["Backend"]?.ToString();
-          if (!string.IsNullOrEmpty(backendJson))
+          var backend = System.Text.Json.JsonSerializer.Deserialize<BackendSettings>(backendJson);
+          if (backend != null)
           {
-            var backend = System.Text.Json.JsonSerializer.Deserialize<BackendSettings>(backendJson);
-            if (backend != null)
-            {
-              ApiUrl = backend.ApiUrl;
-              ApiTimeout = backend.Timeout;
-              ApiRetryCount = backend.RetryCount;
-            }
+            ApiUrl = backend.ApiUrl;
+            ApiTimeout = backend.Timeout;
+            ApiRetryCount = backend.RetryCount;
           }
         }
 
-        if (container.Values.ContainsKey("Diagnostics"))
+        var diagnosticsJson = UnpackagedSettingsHelper.GetValue<string>("Settings.Diagnostics", null);
+        if (!string.IsNullOrEmpty(diagnosticsJson))
         {
-          var diagnosticsJson = container.Values["Diagnostics"]?.ToString();
-          if (!string.IsNullOrEmpty(diagnosticsJson))
+          var diagnostics = System.Text.Json.JsonSerializer.Deserialize<DiagnosticsSettings>(diagnosticsJson);
+          if (diagnostics != null)
           {
-            var diagnostics = System.Text.Json.JsonSerializer.Deserialize<DiagnosticsSettings>(diagnosticsJson);
-            if (diagnostics != null)
-            {
-              TelemetryEnabled = diagnostics.TelemetryEnabled;
-              CrashReportingEnabled = diagnostics.CrashReportingEnabled;
-              IncludeLogsInCrashReport = diagnostics.IncludeLogsInCrashReport;
-            }
+            TelemetryEnabled = diagnostics.TelemetryEnabled;
+            CrashReportingEnabled = diagnostics.CrashReportingEnabled;
+            IncludeLogsInCrashReport = diagnostics.IncludeLogsInCrashReport;
           }
         }
       }
@@ -686,27 +675,25 @@ namespace VoiceStudio.App.ViewModels
     {
       try
       {
-        var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-        var container = localSettings.CreateContainer("Settings", Windows.Storage.ApplicationDataCreateDisposition.Always);
-
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
         if (settings.General != null)
         {
-          container.Values["General"] = System.Text.Json.JsonSerializer.Serialize(settings.General);
+          UnpackagedSettingsHelper.SetValue("Settings.General", System.Text.Json.JsonSerializer.Serialize(settings.General));
         }
 
         if (settings.Engine != null)
         {
-          container.Values["Engine"] = System.Text.Json.JsonSerializer.Serialize(settings.Engine);
+          UnpackagedSettingsHelper.SetValue("Settings.Engine", System.Text.Json.JsonSerializer.Serialize(settings.Engine));
         }
 
         if (settings.Backend != null)
         {
-          container.Values["Backend"] = System.Text.Json.JsonSerializer.Serialize(settings.Backend);
+          UnpackagedSettingsHelper.SetValue("Settings.Backend", System.Text.Json.JsonSerializer.Serialize(settings.Backend));
         }
 
         if (settings.Diagnostics != null)
         {
-          container.Values["Diagnostics"] = System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics);
+          UnpackagedSettingsHelper.SetValue("Settings.Diagnostics", System.Text.Json.JsonSerializer.Serialize(settings.Diagnostics));
         }
       }
       catch (Exception ex)
@@ -754,33 +741,100 @@ namespace VoiceStudio.App.ViewModels
         // Check dependency status via backend
         try
         {
+          System.Diagnostics.Debug.WriteLine("[DEP-CHECK] Starting dependency check...");
           var response = await _backendClient.SendRequestAsync<object, Dictionary<string, object>>(
               "/api/settings/check/dependencies",
-              new { },
+              null,
+              System.Net.Http.HttpMethod.Get,
               cancellationToken
           );
 
+          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Response received: {response != null}");
           if (response != null)
           {
+            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Response keys: {string.Join(", ", response.Keys)}");
+            int matchCount = 0;
             foreach (var dep in dependencies)
             {
-              if (response.TryGetValue(dep.Name.ToLower().Replace(" ", "_"), out var statusObj))
+              var key = dep.Name.ToLower().Replace(" ", "_");
+              System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Looking for key: '{key}'");
+              if (response.TryGetValue(key, out var statusObj))
               {
+                System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Found! Type: {statusObj?.GetType().Name ?? "null"}, Value: {statusObj}");
                 if (statusObj is bool isInstalled)
+                {
                   dep.IsInstalled = isInstalled;
+                  matchCount++;
+                }
+                else if (statusObj is System.Text.Json.JsonElement jsonElement)
+                {
+                  System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] JsonElement ValueKind: {jsonElement.ValueKind}");
+                  // Handle JsonElement (System.Text.Json deserializes to this type)
+                  if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.True)
+                  {
+                    dep.IsInstalled = true;
+                    matchCount++;
+                  }
+                  else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.False)
+                    dep.IsInstalled = false;
+                  else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                  {
+                    var str = jsonElement.GetString()?.ToLower();
+                    dep.IsInstalled = str == "installed" || str == "true";
+                    if (dep.IsInstalled) matchCount++;
+                  }
+                }
                 else if (statusObj is string statusStr)
+                {
                   dep.IsInstalled = statusStr.ToLower() == "installed" || statusStr.ToLower() == "true";
+                  if (dep.IsInstalled) matchCount++;
+                }
+              }
+              else
+              {
+                System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Key NOT found: '{key}'");
               }
             }
+            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Total matched as installed: {matchCount}");
+            
+            // Save successful results to cache for use when backend is unavailable
+            var cacheData = new Dictionary<string, bool>();
+            foreach (var dep in dependencies)
+            {
+              var cacheKey = dep.Name.ToLower().Replace(" ", "_");
+              cacheData[cacheKey] = dep.IsInstalled;
+            }
+            SaveDependencyCache(cacheData);
+          }
+          else
+          {
+            System.Diagnostics.Debug.WriteLine("[DEP-CHECK] Response was NULL");
           }
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"Dependency check failed: {ex.Message}");
-          // Backend check failed, mark all as not installed
-          foreach (var dep in dependencies)
+          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Stack: {ex.StackTrace}");
+          
+          // Backend check failed - use cached values instead of resetting to false
+          var cached = LoadCachedDependencyStatus();
+          if (cached != null && cached.Count > 0)
           {
-            dep.IsInstalled = false;
+            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Using cached status ({cached.Count} entries)");
+            foreach (var dep in dependencies)
+            {
+              var key = dep.Name.ToLower().Replace(" ", "_");
+              if (cached.TryGetValue(key, out var isInstalled))
+              {
+                dep.IsInstalled = isInstalled;
+              }
+              // If not in cache, leave as default (false)
+            }
+          }
+          else
+          {
+            System.Diagnostics.Debug.WriteLine("[DEP-CHECK] No cache available, showing as not installed");
+            // No cache available - keep as not installed (default)
           }
         }
 
@@ -810,6 +864,96 @@ namespace VoiceStudio.App.ViewModels
         IsLoading = false;
       }
     }
+
+    #region Dependency Cache Methods
+
+    private static readonly string DependencyCachePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "VoiceStudio",
+        "dependency_cache.json");
+
+    /// <summary>
+    /// Loads cached dependency status from local storage.
+    /// Returns null if cache doesn't exist or is expired (24 hours).
+    /// </summary>
+    private static Dictionary<string, bool>? LoadCachedDependencyStatus()
+    {
+      try
+      {
+        if (!File.Exists(DependencyCachePath))
+        {
+          System.Diagnostics.Debug.WriteLine("[DEP-CACHE] No cache file found");
+          return null;
+        }
+
+        var json = File.ReadAllText(DependencyCachePath);
+        var cache = JsonSerializer.Deserialize<DependencyCacheData>(json);
+
+        if (cache == null)
+        {
+          System.Diagnostics.Debug.WriteLine("[DEP-CACHE] Cache deserialization returned null");
+          return null;
+        }
+
+        // Check if cache is expired (24 hours)
+        var cacheAge = DateTime.UtcNow - cache.LastChecked;
+        if (cacheAge.TotalHours > 24)
+        {
+          System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Cache expired (age: {cacheAge.TotalHours:F1} hours)");
+          return null;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Loaded cache with {cache.Dependencies?.Count ?? 0} entries (age: {cacheAge.TotalMinutes:F0} minutes)");
+        return cache.Dependencies;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Error loading cache: {ex.Message}");
+        return null;
+      }
+    }
+
+    /// <summary>
+    /// Saves dependency status to local cache file.
+    /// </summary>
+    private static void SaveDependencyCache(Dictionary<string, bool> dependencies)
+    {
+      try
+      {
+        // Ensure directory exists
+        var directory = Path.GetDirectoryName(DependencyCachePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+          Directory.CreateDirectory(directory);
+        }
+
+        var cache = new DependencyCacheData
+        {
+          LastChecked = DateTime.UtcNow,
+          Dependencies = dependencies
+        };
+
+        var json = JsonSerializer.Serialize(cache, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(DependencyCachePath, json);
+
+        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Saved cache with {dependencies.Count} entries");
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Error saving cache: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// Data structure for dependency cache file.
+    /// </summary>
+    private class DependencyCacheData
+    {
+      public DateTime LastChecked { get; set; }
+      public Dictionary<string, bool>? Dependencies { get; set; }
+    }
+
+    #endregion
   }
 
   // Settings data models

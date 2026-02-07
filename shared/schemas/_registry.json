@@ -3,8 +3,13 @@
   "$id": "_registry.json",
   "title": "VoiceStudio Schema Registry",
   "description": "Registry of all shared schemas for VoiceStudio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "schemas": [
+    {
+      "id": "voice_profile.schema.json",
+      "path": "schemas/voice_profile.schema.json",
+      "description": "Voice profile schema with avatar support"
+    },
     {
       "id": "issue.schema.json",
       "path": "schemas/issue.schema.json",

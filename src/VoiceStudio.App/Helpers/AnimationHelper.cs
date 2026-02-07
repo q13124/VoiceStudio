@@ -89,8 +89,9 @@ public static class AnimationHelper
         duration ??= FastDuration;
 
         // Set center point for scaling
-        visual.CenterPoint = new Vector3((float)(element as FrameworkElement)?.ActualWidth / 2 ?? 0,
-                                         (float)(element as FrameworkElement)?.ActualHeight / 2 ?? 0, 0);
+        var fe = element as FrameworkElement;
+        visual.CenterPoint = new Vector3(fe != null ? (float)(fe.ActualWidth / 2) : 0,
+                                         fe != null ? (float)(fe.ActualHeight / 2) : 0, 0);
 
         var scaleAnimation = compositor.CreateVector3KeyFrameAnimation();
         scaleAnimation.InsertKeyFrame(0f, Vector3.One);
@@ -128,8 +129,9 @@ public static class AnimationHelper
         var compositor = ElementCompositionPreview.GetElementVisual(element).Compositor;
         var visual = ElementCompositionPreview.GetElementVisual(element);
 
-        visual.CenterPoint = new Vector3((float)(element as FrameworkElement)?.ActualWidth / 2 ?? 0,
-                                         (float)(element as FrameworkElement)?.ActualHeight / 2 ?? 0, 0);
+        var fe = element as FrameworkElement;
+        visual.CenterPoint = new Vector3(fe != null ? (float)(fe.ActualWidth / 2) : 0,
+                                         fe != null ? (float)(fe.ActualHeight / 2) : 0, 0);
 
         var springAnimation = compositor.CreateSpringVector3Animation();
         springAnimation.FinalValue = new Vector3(targetScale, targetScale, 1f);
@@ -229,8 +231,9 @@ public static class AnimationHelper
 
         duration ??= DefaultDuration;
 
-        visual.CenterPoint = new Vector3((float)(element as FrameworkElement)?.ActualWidth / 2 ?? 0,
-                                         (float)(element as FrameworkElement)?.ActualHeight / 2 ?? 0, 0);
+        var fe = element as FrameworkElement;
+        visual.CenterPoint = new Vector3(fe != null ? (float)(fe.ActualWidth / 2) : 0,
+                                         fe != null ? (float)(fe.ActualHeight / 2) : 0, 0);
 
         var rotationAnimation = compositor.CreateScalarKeyFrameAnimation();
         rotationAnimation.InsertKeyFrame(0f, visual.RotationAngleInDegrees);
@@ -251,8 +254,9 @@ public static class AnimationHelper
 
         cycleDuration ??= TimeSpan.FromSeconds(1);
 
-        visual.CenterPoint = new Vector3((float)(element as FrameworkElement)?.ActualWidth / 2 ?? 0,
-                                         (float)(element as FrameworkElement)?.ActualHeight / 2 ?? 0, 0);
+        var fe = element as FrameworkElement;
+        visual.CenterPoint = new Vector3(fe != null ? (float)(fe.ActualWidth / 2) : 0,
+                                         fe != null ? (float)(fe.ActualHeight / 2) : 0, 0);
 
         var rotationAnimation = compositor.CreateScalarKeyFrameAnimation();
         rotationAnimation.InsertKeyFrame(0f, 0f);

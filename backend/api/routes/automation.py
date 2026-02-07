@@ -108,8 +108,25 @@ async def get_automation_curves(
 
 @router.get("/tracks")
 async def list_automation_tracks():
-    """List available automation tracks."""
-    return []
+    """
+    List available automation tracks.
+
+    Returns unique track IDs from all stored automation curves.
+    In a production system, this would query from a database of tracks.
+    """
+    # Extract unique track IDs from stored automation curves
+    track_ids = set()
+    for curve in _automation_curves.values():
+        if "track_id" in curve:
+            track_ids.add(curve["track_id"])
+
+    if not track_ids:
+        # No automation curves exist yet - return empty list
+        # This is expected when no curves have been created
+        return []
+
+    # Return basic track info from existing curves
+    return [{"id": track_id, "has_automation": True} for track_id in sorted(track_ids)]
 
 
 @router.get("/{curve_id}", response_model=AutomationCurve)

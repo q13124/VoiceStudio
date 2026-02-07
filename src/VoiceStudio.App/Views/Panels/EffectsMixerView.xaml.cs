@@ -1093,17 +1093,59 @@ namespace VoiceStudio.App.Views.Panels
     {
       try
       {
-        // Note: Register undo action - commented out due to unimplemented MixerChannel
-        // if (_undoRedoService != null)
-        // {
-        //     var actionObj = new SimpleAction(
-        //         $"Duplicate Channel: {channel.Name}",
-        //         () => ViewModel.Channels.Remove(duplicatedChannel),
-        //         () => ViewModel.Channels.Add(duplicatedChannel));
-        //     _undoRedoService.RegisterAction(actionObj);
-        // }
+        // Create a deep copy of the channel with a new ID
+        var duplicatedChannel = new MixerChannel
+        {
+          Id = Guid.NewGuid().ToString(),
+          Name = $"{channel.Name} Copy",
+          ChannelNumber = ViewModel.Channels.Count + 1,
+          Volume = channel.Volume,
+          Pan = channel.Pan,
+          IsMuted = channel.IsMuted,
+          IsSoloed = false, // Don't duplicate solo state
+          MainDestination = channel.MainDestination,
+          SubGroupId = channel.SubGroupId,
+          SendLevels = new Dictionary<string, double>(channel.SendLevels ?? new Dictionary<string, double>()),
+          SendEnabled = new Dictionary<string, bool>(channel.SendEnabled ?? new Dictionary<string, bool>())
+        };
 
-        _toastService?.ShowToast(ToastType.Info, "Not Implemented", "Channel duplication is not yet implemented");
+        // Find the index to insert after the original channel
+        var insertIndex = ViewModel.Channels.IndexOf(channel) + 1;
+        if (insertIndex < ViewModel.Channels.Count)
+        {
+          ViewModel.Channels.Insert(insertIndex, duplicatedChannel);
+        }
+        else
+        {
+          ViewModel.Channels.Add(duplicatedChannel);
+        }
+
+        // Register undo action
+        if (_undoRedoService != null)
+        {
+          var actionObj = new SimpleAction(
+              $"Duplicate Channel: {channel.Name}",
+              () =>
+              {
+                ViewModel.Channels.Remove(duplicatedChannel);
+                _toastService?.ShowToast(ToastType.Info, "Undo", $"Removed duplicated channel '{duplicatedChannel.Name}'");
+              },
+              () =>
+              {
+                if (insertIndex < ViewModel.Channels.Count)
+                {
+                  ViewModel.Channels.Insert(insertIndex, duplicatedChannel);
+                }
+                else
+                {
+                  ViewModel.Channels.Add(duplicatedChannel);
+                }
+                _toastService?.ShowToast(ToastType.Info, "Redo", $"Restored duplicated channel '{duplicatedChannel.Name}'");
+              });
+          _undoRedoService.RegisterAction(actionObj);
+        }
+
+        _toastService?.ShowToast(ToastType.Success, "Duplicated", $"Duplicated channel '{channel.Name}'");
       }
       catch (Exception ex)
       {

@@ -72,54 +72,9 @@ namespace VoiceStudio.App.ViewModels
       GracefulDegradationService = gracefulDegradationService;
     }
 
-    /// <summary>
-    /// Temporary legacy constructor to preserve existing call sites.
-    /// TODO: remove once all ViewModels are migrated to DI constructors.
-    /// </summary>
-    [Obsolete("Use the DI-enabled constructor that accepts IViewModelContext and explicit services.")]
-    protected BaseViewModel()
-        : this(
-              ResolveContext(),
-              TryResolve<IErrorLoggingService>(),
-              TryResolve<IErrorDialogService>(),
-              TryResolve<StatePersistenceService>(),
-              TryResolve<OperationQueueService>(),
-              TryResolve<StateCacheService>(),
-              TryResolve<GracefulDegradationService>())
-    {
-    }
-
-    private static IViewModelContext ResolveContext()
-    {
-      try
-      {
-        var context = AppServices.GetService<IViewModelContext>();
-        if (context != null)
-        {
-          return context;
-        }
-      }
-      catch (Exception ex)
-      {
-        ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "BaseViewModel.Unknown");
-      }
-
-      var dispatcher = DispatcherQueue.GetForCurrentThread()
-          ?? Microsoft.UI.Dispatching.DispatcherQueueController.CreateOnDedicatedThread().DispatcherQueue;
-      return new ViewModelContext(NullLogger.Instance, dispatcher);
-    }
-
-    private static T? TryResolve<T>() where T : class
-    {
-      try
-      {
-        return AppServices.GetService<T>();
-      }
-      catch
-      {
-        return null;
-      }
-    }
+    // NOTE: Legacy parameterless constructor was removed 2026-02-06.
+    // All ViewModels have been migrated to use the DI-enabled constructor.
+    // See ADR-XXX for migration details.
 
     /// <summary>
     /// Executes an operation with state persistence before critical operations.

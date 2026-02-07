@@ -17,7 +17,7 @@ namespace VoiceStudio.App.Services
     /// <param name="shortcuts">Optional keyboard shortcuts to display.</param>
     /// <param name="tips">Optional tips to display.</param>
     void ShowHelp(HelpOverlay overlay, string title, string helpText,
-        IEnumerable<KeyboardShortcut>? shortcuts = null,
+        IEnumerable<Controls.KeyboardShortcut>? shortcuts = null,
         IEnumerable<string>? tips = null);
   }
 }

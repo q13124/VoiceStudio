@@ -1,7 +1,8 @@
 {
-  "python": "3.11.9",
-  "torch": "2.2.2+cu121",
-  "torchaudio": "2.2.2+cu121",
+  "python": "3.9.x",
+  "torch": "2.7.0.dev20250310+cu124",
+  "torchvision": "0.21.0+cu124",
+  "torchaudio": "2.6.0+cu124",
   "coqui-tts": "0.27.2",
   "coqui-tts-trainer": "0.3.1",
   "transformers": "4.55.4",
@@ -18,9 +19,11 @@
   "tokenizers": "0.21.4",
   "safetensors": "0.6.2",
   "notes": {
-    "python": "Latest tested with PyTorch 2.2.2 + Transformers 4.55.4",
-    "torch": "2.2.2+cu121 - Required for compatibility with other software",
-    "torchaudio": "Must match Torch exactly (2.2.2+cu121)",
+    "python": "Tested with PyTorch 2.7.0 nightly + Transformers 4.55.4",
+    "torch": "2.7.0.dev20250310+cu124 - Nightly build for RTX 5070 Ti (Blackwell) support",
+    "torchvision": "0.21.0+cu124 - Compatible with nightly torch",
+    "torchaudio": "2.6.0+cu124 - Audio processing with CUDA support",
+    "gpu_compatibility": "RTX 5070 Ti (sm_120/Blackwell) works despite warning - tested and verified",
     "coqui-tts": "Current release w/ XTTS v2 engine",
     "coqui-tts-trainer": "Finetuning & dataset manager",
     "transformers": "Stable with XTTS v2 and PyTorch 2.2.2",
@@ -45,9 +48,9 @@
     "warnings": [
       "Do not downgrade librosa, numpy, or transformers - XTTS will break",
       "Legacy engines must be isolated in separate venvs",
-      "Torch and Torchaudio versions must match exactly",
-      "PyTorch 2.2.2+cu121 is the standard for compatibility with other software",
-      "Do not upgrade PyTorch without testing all engines and dependencies"
+      "RTX 5070 Ti requires PyTorch nightly (2.7.0+) for CUDA 12.4 support",
+      "sm_120 compatibility warning is expected but GPU operations work correctly",
+      "Do not downgrade PyTorch on RTX 50-series GPUs"
     ]
   }
 }

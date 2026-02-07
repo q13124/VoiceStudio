@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Models;
+using VoiceStudio.App.Core.Models;
 
 namespace VoiceStudio.Core.Services
 {
@@ -69,6 +70,14 @@ namespace VoiceStudio.Core.Services
 
     // Audio retrieval
     Task<Stream> GetAudioStreamAsync(string audioId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uploads an audio file to the backend for analysis.
+    /// </summary>
+    /// <param name="filePath">Path to the local audio file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Upload response containing the audio ID.</returns>
+    Task<AudioUploadResponse> UploadAudioFileAsync(string filePath, CancellationToken cancellationToken = default);
 
     // Audio visualization data
     Task<WaveformData> GetWaveformDataAsync(string audioId, int width = 1024, string mode = "peak", CancellationToken cancellationToken = default);

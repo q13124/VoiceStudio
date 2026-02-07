@@ -4,17 +4,21 @@ End-to-End test for A/B Testing workflow.
 Tests the complete A/B testing workflow from start to results analysis.
 """
 
-# Import the FastAPI app
+import os
 import sys
 from pathlib import Path
+
+# Set test mode BEFORE any backend imports
+os.environ["VOICESTUDIO_TEST_MODE"] = "1"
 
 import pytest
 from fastapi.testclient import TestClient
 
-backend_path = Path(__file__).parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add project root to path to enable proper package imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from api.main import app
+from backend.api.main import app
 
 
 class TestABTestingWorkflow:
@@ -22,8 +26,9 @@ class TestABTestingWorkflow:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """Create a test client with proper startup/shutdown lifecycle."""
+        with TestClient(app) as client:
+            yield client
 
     def test_complete_ab_testing_workflow(self, client: TestClient):
         """
@@ -96,8 +101,8 @@ class TestABTestingWorkflow:
         invalid_response = client.post(
             "/api/eval/abx/start", json={"items": []}  # Empty items
         )
-        # Should either accept or return error
-        assert invalid_response.status_code in [200, 422]
+        # Should return validation error (400 for business logic, 422 for schema)
+        assert invalid_response.status_code in [400, 422]
 
         # Recover with valid request
         valid_response = client.post(

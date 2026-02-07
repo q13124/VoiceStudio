@@ -427,24 +427,25 @@ GPU compatibility issue
   ↓
 Check CUDA version and compute capability
   ↓
-Current target: RTX 5070 Ti (sm_120)
+Current production: PyTorch 2.2.2+cu121 (CUDA 12.1)
+Future target: RTX 5070 Ti (sm_120) may require cu128+
   ↓
 Common fixes:
-  ├─ torch version → Upgrade to cu128 for sm_120
+  ├─ torch version → See config/compatibility_matrix.yml for current pins
   ├─ torch.compile → Disable or use eager mode
   ├─ Memory issue → Add VRAM budgeting
   └─ Driver issue → Update NVIDIA driver
   ↓
 Test on target hardware
   ↓
-Document in COMPATIBILITY_MATRIX.md
+Document in config/compatibility_matrix.yml
 ```
 
 **Worked Example (VS-0034)**:
 - Issue: Upgrade-lane XTTS synthesis blocked by torchcodec load failure
 - Root cause: torchaudio 2.10 uses torchcodec which fails on Windows
 - Fix: Add torchaudio.load fallback to soundfile
-- Proof: XTTS synthesis succeeds in cu128 venv
+- Proof: XTTS synthesis succeeds (production uses 2.2.2+cu121)
 
 ### Scenario 4: So-VITS-SVC Integration
 

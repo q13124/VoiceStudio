@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Storage;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
@@ -196,34 +196,31 @@ namespace VoiceStudio.App.Services
     {
       try
       {
-        var localSettings = ApplicationData.Current.LocalSettings;
-        if (localSettings.Values.ContainsKey(SettingsKey))
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        var json = UnpackagedSettingsHelper.GetValue<string>(SettingsKey, null);
+        if (!string.IsNullOrEmpty(json))
         {
-          var json = localSettings.Values[SettingsKey] as string;
-          if (!string.IsNullOrEmpty(json))
+          var projects = JsonSerializer.Deserialize<List<RecentProject>>(json);
+          if (projects != null)
           {
-            var projects = JsonSerializer.Deserialize<List<RecentProject>>(json);
-            if (projects != null)
+            _pinnedProjects.Clear();
+            _recentProjects.Clear();
+
+            foreach (var project in projects)
             {
-              _pinnedProjects.Clear();
-              _recentProjects.Clear();
-
-              foreach (var project in projects)
+              if (project.IsPinned)
               {
-                if (project.IsPinned)
-                {
-                  _pinnedProjects.Add(project);
-                }
-                else
-                {
-                  _recentProjects.Add(project);
-                }
+                _pinnedProjects.Add(project);
               }
-
-              // Sort by last accessed
-              _pinnedProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
-              _recentProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
+              else
+              {
+                _recentProjects.Add(project);
+              }
             }
+
+            // Sort by last accessed
+            _pinnedProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
+            _recentProjects.Sort((a, b) => b.LastAccessed.CompareTo(a.LastAccessed));
           }
         }
       }
@@ -246,8 +243,8 @@ namespace VoiceStudio.App.Services
         allProjects.AddRange(_recentProjects);
 
         var json = JsonSerializer.Serialize(allProjects);
-        var localSettings = ApplicationData.Current.LocalSettings;
-        localSettings.Values[SettingsKey] = json;
+        // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)
+        UnpackagedSettingsHelper.SetValue(SettingsKey, json);
       }
       catch (Exception ex)
       {

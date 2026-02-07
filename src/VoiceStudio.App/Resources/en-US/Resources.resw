@@ -699,6 +699,12 @@
   <data name="Analyzer.LoadVisualizationFailed" xml:space="preserve">
     <value>Failed to load visualization data: {0}</value>
   </data>
+  <data name="Analyzer.UploadSuccess" xml:space="preserve">
+    <value>Audio Uploaded</value>
+  </data>
+  <data name="Analyzer.UploadFailed" xml:space="preserve">
+    <value>Failed to upload audio: {0}</value>
+  </data>
 
   <!-- Model Manager Messages -->
   <data name="ModelManager.ModelsLoaded" xml:space="preserve">

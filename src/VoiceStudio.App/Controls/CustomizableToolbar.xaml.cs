@@ -82,6 +82,7 @@ namespace VoiceStudio.App.Controls
         "record" => CreateButton("⏺", "Record (Ctrl+R)", item),
         "loop" => CreateToggleButton("Loop", "Toggle loop playback", item),
         "project" => CreateProjectControl(item),
+        "import_audio" => CreateButton("📥 Import", "Import Audio File (Ctrl+I)", item),
         "engine" => CreateEngineControl(item),
         "undo" => CreateButton("Undo", "Undo last action (Ctrl+Z)", item),
         "redo" => CreateButton("Redo", "Redo last action (Ctrl+Y)", item),
@@ -226,10 +227,8 @@ namespace VoiceStudio.App.Controls
 
       if (commandId != null)
       {
-        // Execute the command by finding the shortcut and invoking its action
-        var shortcuts = keyboardService.GetAllShortcuts();
-        var shortcut = shortcuts.FirstOrDefault(s => s.Id == commandId);
-        shortcut?.Action?.Invoke();
+        // Execute the command through the keyboard shortcut service
+        keyboardService.ExecuteShortcut(commandId);
       }
       // Note: "loop" toggle button is handled by its own click event
     }

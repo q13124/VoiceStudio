@@ -20,6 +20,14 @@ except ImportError:
     HAS_PSUTIL = False
     psutil = None
 
+try:
+    from pywinauto import Application, findwindows
+    HAS_PYWINAUTO = True
+except ImportError:
+    HAS_PYWINAUTO = False
+    Application = None
+    findwindows = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,9 +79,70 @@ class SessionConfig:
         return caps
     
     def _get_app_window_handle(self) -> str:
-        """Get window handle for running app (for debugging)."""
-        # This would use pywinauto or similar to find the window
-        raise NotImplementedError("Debug connection not implemented")
+        """
+        Get window handle for running VoiceStudio app (for debugging).
+
+        This method finds an already-running VoiceStudio instance and returns
+        its window handle in hexadecimal format for WinAppDriver to attach to.
+
+        Returns:
+            Window handle as hex string (e.g., "0x1234ABCD")
+
+        Raises:
+            RuntimeError: If pywinauto is not available or no window found
+        """
+        if not HAS_PYWINAUTO:
+            raise RuntimeError(
+                "Debug connection requires pywinauto. "
+                "Install with: pip install pywinauto"
+            )
+
+        try:
+            # Try to find VoiceStudio window by various methods
+            window_titles = [
+                "VoiceStudio",
+                "Voice Studio",
+                "VoiceStudio.App",
+            ]
+
+            for title in window_titles:
+                try:
+                    handles = findwindows.find_windows(title_re=f".*{title}.*")
+                    if handles:
+                        handle = handles[0]
+                        hex_handle = hex(handle)
+                        logger.info(f"Found VoiceStudio window: {hex_handle}")
+                        return hex_handle
+                except findwindows.ElementNotFoundError:
+                    continue
+
+            # Fallback: try to find by process name
+            if HAS_PSUTIL:
+                for proc in psutil.process_iter(['name', 'pid']):
+                    if 'VoiceStudio' in proc.info['name']:
+                        try:
+                            app = Application(backend="uia").connect(
+                                process=proc.info['pid']
+                            )
+                            window = app.top_window()
+                            handle = window.handle
+                            hex_handle = hex(handle)
+                            logger.info(
+                                f"Found VoiceStudio by process: {hex_handle}"
+                            )
+                            return hex_handle
+                        except Exception as e:
+                            logger.warning(f"Failed to connect to process: {e}")
+                            continue
+
+            raise RuntimeError(
+                "No running VoiceStudio window found. "
+                "Start the application before using debug_connect_to_running_app."
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to get window handle: {e}")
+            raise RuntimeError(f"Debug connection failed: {e}") from e
 
 
 # =============================================================================
