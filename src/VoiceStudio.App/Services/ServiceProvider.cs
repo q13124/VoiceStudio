@@ -133,5 +133,7 @@ namespace VoiceStudio.App.Services
     public static IViewModelFactory GetViewModelFactory() => AppServices.GetViewModelFactory();
     public static IViewModelFactory? TryGetViewModelFactory() => AppServices.TryGetViewModelFactory();
     public static IViewModelContext GetViewModelContext() => AppServices.GetViewModelContext();
+    public static BackendProcessManager GetBackendProcessManager() => AppServices.GetBackendProcessManager();
+    public static BackendProcessManager? TryGetBackendProcessManager() => AppServices.TryGetBackendProcessManager();
   }
 }

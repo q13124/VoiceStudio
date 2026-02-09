@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-05 (Documentation reconciliation: archived outdated PyTorch 2.9.0 references)
+> **Last Updated**: 2026-02-09 (Added verification harness, change control rules, AutomationId registry)
 
 ---
 
@@ -33,6 +33,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **CODEOWNERS** | `.github/CODEOWNERS` | 2026-02-02 | Protected surface ownership mapping for PR review auto-assignment |
 | **AI Agent Safety Rule** | `.cursor/rules/workflows/auto-mode-safety.mdc` | 2026-02-02 | Mandatory scaffolding, matrix checks, protected surface handling for AI agents |
 | **Branch Merge Policy** | `docs/governance/BRANCH_MERGE_POLICY.md` | 2026-02-02 | Divergence limits, branch lifecycle, merge strategies; closes TD-010 |
+| **Change Control Rules** | `docs/governance/CHANGE_CONTROL_RULES.md` | 2026-02-09 | Non-negotiable verification gate, stabilization protocol, Cursor agent operating protocol, blast radius limits |
+| **Verification Harness Rule** | `.cursor/rules/workflows/verification-harness.mdc` | 2026-02-09 | Agent rule for verify.ps1 usage; "no green = no merge" enforcement |
 
 ## Architecture
 
@@ -66,6 +68,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Completion Evidence Guard ADR | `docs/architecture/decisions/ADR-024-completion-evidence-guard.md` | 2026-02-01 | Enforce completion markers committed before verification passes |
 | **Compatibility Matrix ADR** | `docs/architecture/decisions/ADR-025-compatibility-matrix-and-scaffolding.md` | 2026-02-02 | Centralized version pins, scaffolding tools, CODEOWNERS, AI agent safety |
 | **Infrastructure Remediation ADR** | `docs/architecture/decisions/ADR-026-infrastructure-remediation.md` | 2026-02-02 | Activation of dormant development infrastructure (telemetry, issues, context) |
+| **Unified Verification Harness ADR** | `docs/architecture/decisions/ADR-027-unified-verification-harness.md` | 2026-02-09 | Single command verification, 8 stages, fail-fast, "no green = no merge" rule |
+| **Unified Command Architecture ADR** | `docs/architecture/decisions/ADR-028-unified-command-architecture.md` | 2026-02-08 | Hybrid command system: Registry for global/routed, ViewModel for panel-local |
 
 ## Planning and Roadmaps
 
@@ -93,6 +97,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | API Reference | `docs/REFERENCE/` | 2026-01-25 | Consolidated API docs |
 | Engine Reference | `docs/REFERENCE/ENGINE_REFERENCE.md` | 2026-01-25 | Engine capabilities and config |
 | Engine Config | `backend/config/engine_config.json` | 2026-01-25 | Runtime engine configuration |
+| **AutomationId Registry** | `docs/developer/AUTOMATION_ID_REGISTRY.md` | 2026-02-09 | Authoritative registry of stable AutomationIds; treat as public API; naming conventions and deprecation process |
 | Overseer Reference | `docs/REFERENCE/OVERSEER_REFERENCE.md` | 2026-01-25 | Overseer tooling guide |
 | Workers Reference | `docs/REFERENCE/WORKERS_REFERENCE.md` | 2026-01-25 | Worker system documentation |
 | Project Status | `docs/REFERENCE/PROJECT_STATUS_REFERENCE.md` | 2026-01-25 | Current project status |
@@ -170,6 +175,9 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
+| **Unified Verification Harness** | `scripts/verify.ps1` | 2026-02-09 | Single source of truth for product verification; 8 stages (build, lint, tests, contracts, integration, UI, gates); "no green = no merge" |
+| **Engine Adapter Contract Tests** | `tests/contract/test_engine_adapter_contracts.py` | 2026-02-09 | Protocol compliance tests for all engine adapters; method signatures, error handling, device contracts |
+| **AutomationId Validator** | `scripts/validate_automation_ids.py` | 2026-02-09 | Validates AutomationId registry against XAML files; detects drift between documentation and implementation |
 | **XAML Compiler Playbook** | `docs/build/XAML_COMPILER_PLAYBOOK.md` | 2026-02-04 | Single operational runbook for XAML compiler troubleshooting; decision tree, copy-paste commands, emergency recovery |
 | **XAML Diagnostic Build** | `scripts/build-with-binlog.ps1` | 2026-02-04 | Reproducible single-threaded build with binlog capture for XAML debugging |
 | **Binlog Analysis (PS)** | `scripts/analyze-binlog.ps1` | 2026-02-04 | PowerShell script to extract XamlCompiler invocations and detect nested Views issues; supports file output |

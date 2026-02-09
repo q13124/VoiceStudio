@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using VoiceStudio.App.Commands;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
@@ -35,6 +36,37 @@ namespace VoiceStudio.App
       // Initialize service provider
       ServiceProvider.Initialize();
       _startupProfiler.Checkpoint("ServiceProvider.Initialize");
+
+      // Bootstrap command handlers (registers all commands with the unified registry)
+      try
+      {
+        CommandHandlerBootstrapper.Initialize();
+        _startupProfiler.Checkpoint("CommandHandlerBootstrapper.Initialize");
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
+        // Non-fatal - app can continue without command handlers
+      }
+
+      // Start backend process in background (non-blocking)
+      _ = Task.Run(async () =>
+      {
+        try
+        {
+          var backendManager = ServiceProvider.TryGetBackendProcessManager();
+          if (backendManager != null)
+          {
+            var started = await backendManager.EnsureBackendRunningAsync();
+            Debug.WriteLine($"[App] Backend auto-start: {(started ? "SUCCESS" : "FAILED")}");
+          }
+        }
+        catch (Exception ex)
+        {
+          Debug.WriteLine($"[App] Backend auto-start error: {ex.Message}");
+          ErrorLogger.LogWarning($"Backend auto-start failed: {ex.Message}", "App.Constructor");
+        }
+      });
 
       // Gate C UI smoke relies on capturing binding failures deterministically.
       if (IsUiSmokeRequested())

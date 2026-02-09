@@ -1,8 +1,14 @@
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using UIColors = Microsoft.UI.Colors;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -10,6 +16,8 @@ namespace VoiceStudio.App.Views.Panels
   {
     public DiagnosticsViewModel ViewModel { get; }
     private ToastNotificationService? _toastService;
+    private IUnifiedCommandRegistry? _commandRegistry;
+    private ObservableCollection<CommandHealthItem> _commandHealthItems = new();
 
     public DiagnosticsView()
     {
@@ -20,6 +28,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _toastService = ServiceProvider.GetToastNotificationService();
+      _commandRegistry = AppServices.TryGetCommandRegistry();
 
       // Subscribe to ViewModel events for toast notifications
       ViewModel.PropertyChanged += (s, e) =>
@@ -66,6 +75,7 @@ namespace VoiceStudio.App.Views.Panels
         TracesGrid.Visibility = Visibility.Collapsed;
         NetworkGrid.Visibility = Visibility.Collapsed;
         EnginesGrid.Visibility = Visibility.Collapsed;
+        CommandsGrid.Visibility = Visibility.Collapsed;
         EnvironmentGrid.Visibility = Visibility.Collapsed;
 
         // Legacy grids
@@ -94,6 +104,10 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "Engines":
             EnginesGrid.Visibility = Visibility.Visible;
+            break;
+          case "Commands":
+            CommandsGrid.Visibility = Visibility.Visible;
+            LoadCommandHealth();
             break;
           case "Environment":
             EnvironmentGrid.Visibility = Visibility.Visible;
@@ -141,5 +155,140 @@ namespace VoiceStudio.App.Views.Panels
       HelpOverlay.Visibility = Visibility.Visible;
       HelpOverlay.Show();
     }
+
+    private void RefreshCommands_Click(object sender, RoutedEventArgs e)
+    {
+      LoadCommandHealth();
+    }
+
+    private void LoadCommandHealth()
+    {
+      if (_commandRegistry == null)
+      {
+        Debug.WriteLine("[DiagnosticsView] Command registry not available");
+        return;
+      }
+
+      try
+      {
+        var allCommands = _commandRegistry.GetAllCommands();
+        _commandHealthItems.Clear();
+
+        int totalCommands = 0;
+        int workingCount = 0;
+        int brokenCount = 0;
+        int totalExecutions = 0;
+
+        foreach (var descriptor in allCommands)
+        {
+          totalCommands++;
+          
+          // Get runtime state for this command
+          var state = _commandRegistry.GetState(descriptor.Id);
+          var status = state?.Status ?? CommandStatus.Unknown;
+          var successCount = state?.SuccessCount ?? 0;
+          var failureCount = state?.FailureCount ?? 0;
+          var avgMs = state?.AverageExecutionMs ?? 0.0;
+          var lastError = state?.LastError;
+          var lastExecuted = state?.LastExecuted;
+          
+          // Check live CanExecute status
+          var canExecute = _commandRegistry.CanExecute(descriptor.Id, null);
+          
+          if (status == CommandStatus.Working)
+            workingCount++;
+          else if (status == CommandStatus.Broken)
+            brokenCount++;
+
+          totalExecutions += successCount + failureCount;
+
+          _commandHealthItems.Add(new CommandHealthItem
+          {
+            CommandId = descriptor.Id,
+            Title = descriptor.Title,
+            Shortcut = descriptor.KeyboardShortcut ?? "",
+            Status = status,
+            CanExecute = canExecute,
+            SuccessCount = successCount,
+            FailureCount = failureCount,
+            AvgExecutionMs = avgMs.ToString("F1"),
+            LastError = lastError,
+            LastExecuted = lastExecuted
+          });
+        }
+
+        // Update summary counts
+        TotalCommandsCount.Text = totalCommands.ToString();
+        WorkingCommandsCount.Text = workingCount.ToString();
+        BrokenCommandsCount.Text = brokenCount.ToString();
+        TotalExecutionsCount.Text = totalExecutions.ToString();
+
+        CommandsListView.ItemsSource = _commandHealthItems;
+
+        Debug.WriteLine($"[DiagnosticsView] Loaded {totalCommands} commands");
+      }
+      catch (System.Exception ex)
+      {
+        Debug.WriteLine($"[DiagnosticsView] Failed to load command health: {ex.Message}");
+      }
+    }
+  }
+
+  /// <summary>
+  /// View model for command health display in diagnostics.
+  /// </summary>
+  public sealed class CommandHealthItem
+  {
+    public string CommandId { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Shortcut { get; set; } = "";
+    public CommandStatus Status { get; set; }
+    public bool CanExecute { get; set; }
+    public int SuccessCount { get; set; }
+    public int FailureCount { get; set; }
+    public string AvgExecutionMs { get; set; } = "0.0";
+    public string? LastError { get; set; }
+    public DateTime? LastExecuted { get; set; }
+
+    public string StatusGlyph => Status switch
+    {
+      CommandStatus.Working => "\uE73E",  // Checkmark
+      CommandStatus.Broken => "\uE711",   // Error
+      CommandStatus.Disabled => "\uE8D8", // Pause
+      _ => "\uE9CE"                       // Question mark
+    };
+
+    public SolidColorBrush StatusColor => Status switch
+    {
+      CommandStatus.Working => new SolidColorBrush(UIColors.Green),
+      CommandStatus.Broken => new SolidColorBrush(UIColors.Red),
+      CommandStatus.Disabled => new SolidColorBrush(UIColors.Gray),
+      _ => new SolidColorBrush(UIColors.Orange)
+    };
+
+    public string StatusText => Status switch
+    {
+      CommandStatus.Working => "Working",
+      CommandStatus.Broken => "Broken",
+      CommandStatus.Disabled => "Disabled",
+      CommandStatus.Unknown => "Unknown",
+      _ => "Unknown"
+    };
+
+    public string CanExecuteGlyph => CanExecute ? "\uE73E" : "\uE711";  // Check or X
+
+    public SolidColorBrush CanExecuteColor => CanExecute 
+      ? new SolidColorBrush(UIColors.Green) 
+      : new SolidColorBrush(UIColors.Red);
+
+    public string CanExecuteText => CanExecute ? "Ready" : "Blocked";
+
+    public string LastExecutedText => LastExecuted.HasValue 
+      ? LastExecuted.Value.ToLocalTime().ToString("HH:mm:ss") 
+      : "Never";
+
+    public SolidColorBrush FailureColor => FailureCount > 0 
+      ? new SolidColorBrush(UIColors.Red) 
+      : new SolidColorBrush(UIColors.Gray);
   }
 }

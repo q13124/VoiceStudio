@@ -40,6 +40,7 @@
                 <TabViewItem Header="Traces"/>
                 <TabViewItem Header="Network"/>
                 <TabViewItem Header="Engines"/>
+                <TabViewItem Header="Commands"/>
                 <TabViewItem Header="Environment"/>
             </TabView>
 
@@ -383,6 +384,219 @@
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
                         <ListView x:Name="EnginesListView" Padding="8"/>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Commands Content -->
+            <Grid x:Name="CommandsGrid" Visibility="Collapsed" Margin="0,48,0,0">
+                <Grid Padding="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Commands Summary -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource VSQ.Panel.Background}" 
+                            CornerRadius="8" 
+                            Padding="16"
+                            Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Total Commands -->
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="Total Commands" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TotalCommandsCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Working -->
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="Working" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="WorkingCommandsCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="Green"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Broken -->
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="Broken" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="BrokenCommandsCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="Red"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Total Executions -->
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                                <TextBlock Text="Total Executions" 
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="TotalExecutionsCount" 
+                                           Text="0" 
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Toolbar -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+                        <Button x:Name="RefreshCommandsButton" Content="Refresh" Click="RefreshCommands_Click"/>
+                        <ComboBox x:Name="CommandStatusFilter" PlaceholderText="Filter by Status" Width="150">
+                            <ComboBoxItem Content="All" IsSelected="True"/>
+                            <ComboBoxItem Content="Working"/>
+                            <ComboBoxItem Content="Broken"/>
+                            <ComboBoxItem Content="Unknown"/>
+                            <ComboBoxItem Content="Disabled"/>
+                        </ComboBox>
+                        <TextBox x:Name="CommandSearchBox" PlaceholderText="Search commands..." Width="200"/>
+                    </StackPanel>
+                    
+                    <!-- Commands List -->
+                    <Border Grid.Row="2" 
+                            Background="{StaticResource VSQ.Panel.Background}" 
+                            CornerRadius="8">
+                        <ListView x:Name="CommandsListView" Padding="8">
+                            <ListView.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" Background="{StaticResource VSQ.Panel.Background}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="70"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Status" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="1" Text="Exec" FontWeight="SemiBold" ToolTipService.ToolTip="Can Execute" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="2" Text="Command ID" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="3" Text="Title" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="4" Text="Shortcut" FontWeight="SemiBold" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="5" Text="Success" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="6" Text="Fails" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="7" Text="Avg (ms)" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock Grid.Column="8" Text="Last Run" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.HeaderTemplate>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" MinHeight="36">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="70"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Status Icon -->
+                                        <FontIcon Grid.Column="0" 
+                                                  Glyph="{Binding StatusGlyph}" 
+                                                  Foreground="{Binding StatusColor}"
+                                                  FontSize="16"
+                                                  VerticalAlignment="Center"
+                                                  ToolTipService.ToolTip="{Binding StatusText}"/>
+                                        
+                                        <!-- CanExecute Icon -->
+                                        <FontIcon Grid.Column="1" 
+                                                  Glyph="{Binding CanExecuteGlyph}" 
+                                                  Foreground="{Binding CanExecuteColor}"
+                                                  FontSize="14"
+                                                  VerticalAlignment="Center"
+                                                  ToolTipService.ToolTip="{Binding CanExecuteText}"/>
+                                        
+                                        <!-- Command ID -->
+                                        <TextBlock Grid.Column="2" 
+                                                   Text="{Binding CommandId}" 
+                                                   FontFamily="Consolas"
+                                                   FontSize="11"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        
+                                        <!-- Title -->
+                                        <TextBlock Grid.Column="3" 
+                                                   Text="{Binding Title}" 
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        
+                                        <!-- Shortcut -->
+                                        <TextBlock Grid.Column="4" 
+                                                   Text="{Binding Shortcut}" 
+                                                   FontSize="11"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        
+                                        <!-- Success Count -->
+                                        <TextBlock Grid.Column="5" 
+                                                   Text="{Binding SuccessCount}" 
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="Green"/>
+                                        
+                                        <!-- Failure Count -->
+                                        <TextBlock Grid.Column="6" 
+                                                   Text="{Binding FailureCount}" 
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding FailureColor}"/>
+                                        
+                                        <!-- Avg Execution Time -->
+                                        <TextBlock Grid.Column="7" 
+                                                   Text="{Binding AvgExecutionMs}" 
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"/>
+                                        
+                                        <!-- Last Executed -->
+                                        <TextBlock Grid.Column="8" 
+                                                   Text="{Binding LastExecutedText}" 
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                                   ToolTipService.ToolTip="{Binding LastExecuted}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
                     </Border>
                 </Grid>
             </Grid>

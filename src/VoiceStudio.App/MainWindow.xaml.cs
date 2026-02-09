@@ -24,6 +24,8 @@ using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel;
 using VoiceStudio.App.Logging;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App
 {
@@ -33,6 +35,7 @@ namespace VoiceStudio.App
     private readonly IUpdateService _updateService;
     private readonly PanelStateService? _panelStateService;
     private readonly RecentProjectsService? _recentProjectsService;
+    private readonly CommandRouter? _commandRouter;
     private const string ShowWelcomeKey = "ShowWelcomeDialog";
     private bool _disposed;
     private bool _welcomeDialogShown;
@@ -119,6 +122,9 @@ namespace VoiceStudio.App
       _recentProjectsService = ServiceProvider.GetRecentProjectsService();
       profiler.Checkpoint("RecentProjectsService Retrieved");
 
+      _commandRouter = AppServices.TryGetCommandRouter();
+      profiler.Checkpoint("CommandRouter Retrieved");
+
       // Initialize Toast Notification Service (IDEA 11)
       var toastContainer = FindInContent<StackPanel>("ToastContainer");
       if (toastContainer != null)
@@ -150,6 +156,52 @@ namespace VoiceStudio.App
       // Also register Activated handler for welcome dialog
       this.Activated += MainWindow_Activated;
       profiler.Checkpoint("Event Handlers Registered");
+      
+      // DEBUG: Add AddHandler with handledEventsToo to capture ALL pointer events (after Loaded)
+      if (this.Content is FrameworkElement contentFE)
+      {
+        contentFE.Loaded += (s, e) =>
+        {
+          // Log visual tree info after loaded
+          var diagPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoiceStudio", "crashes", "visualtree_diag.txt");
+          try
+          {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(diagPath)!);
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[{DateTime.UtcNow:O}] Visual Tree Diagnostic (Loaded event)");
+            sb.AppendLine($"  Content.ActualWidth: {contentFE.ActualWidth}");
+            sb.AppendLine($"  Content.ActualHeight: {contentFE.ActualHeight}");
+            sb.AppendLine($"  Content.IsLoaded: {contentFE.IsLoaded}");
+            sb.AppendLine($"  Content.XamlRoot is null: {contentFE.XamlRoot == null}");
+            if (contentFE.XamlRoot != null)
+            {
+              sb.AppendLine($"  Content.XamlRoot.Size: {contentFE.XamlRoot.Size}");
+              sb.AppendLine($"  Content.XamlRoot.IsHostVisible: {contentFE.XamlRoot.IsHostVisible}");
+            }
+            System.IO.File.WriteAllText(diagPath, sb.ToString());
+          }
+          catch { }
+          
+          // Add pointer event handler
+          contentFE.AddHandler(
+            UIElement.PointerPressedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler((sender, args) =>
+            {
+              var point = args.GetCurrentPoint(null);
+              var inputDiagPath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VoiceStudio", "crashes", "input_diag.txt");
+              try 
+              { 
+                System.IO.File.AppendAllText(inputDiagPath, $"[{DateTime.UtcNow:O}] PointerPressed at ({point.Position.X:F0}, {point.Position.Y:F0}) Handled={args.Handled}\n"); 
+              } 
+              catch { }
+            }),
+            true); // handledEventsToo = true
+        };
+      }
 
       // Set PanelRegion for each PanelHost
       var leftPanelHost = FindNameOnContent("LeftPanelHost") as Controls.PanelHost;
@@ -180,22 +232,58 @@ namespace VoiceStudio.App
       }
       profiler.Checkpoint("Workspace Profile Subscription");
 
+      // Subscribe to navigation service events (for command-driven navigation)
+      try
+      {
+        var navigationService = ServiceProvider.TryGetNavigationService();
+        if (navigationService != null)
+        {
+          navigationService.NavigationChanged += OnNavigationChanged;
+          Debug.WriteLine("[MainWindow] Subscribed to NavigationService.NavigationChanged");
+        }
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[MainWindow] Failed to subscribe to NavigationService: {ex.Message}");
+      }
+      profiler.Checkpoint("NavigationService Subscription");
+
       // Temporary content assignment (will be replaced with panel registry later)
       // If workspace layout has saved panels, restore them; otherwise use defaults
       if (!RestorePanelsFromLayout())
       {
-        if (leftPanelHost != null) leftPanelHost.Content = new ProfilesView();
+        if (leftPanelHost != null)
+        {
+          leftPanelHost.Content = new ProfilesView();
+          leftPanelHost.PanelTitle = "Voice Profiles";
+          leftPanelHost.PanelIcon = "👤";
+        }
         profiler.Checkpoint("ProfilesView Created (Default)");
 
-        if (centerPanelHost != null) centerPanelHost.Content = new TimelineView();
+        if (centerPanelHost != null)
+        {
+          centerPanelHost.Content = new TimelineView();
+          centerPanelHost.PanelTitle = "Timeline";
+          centerPanelHost.PanelIcon = "🎬";
+        }
         profiler.Checkpoint("TimelineView Created (Default)");
 
-        if (rightPanelHost != null) rightPanelHost.Content = new EffectsMixerView();
+        if (rightPanelHost != null)
+        {
+          rightPanelHost.Content = new EffectsMixerView();
+          rightPanelHost.PanelTitle = "Effects & Mixer";
+          rightPanelHost.PanelIcon = "🎚️";
+        }
         profiler.Checkpoint("EffectsMixerView Created (Default)");
 
         // BottomPanelHost can show MiniTimeline or MacroView
         // Default to MacroView (MiniTimeline can be toggled via View menu - IDEA 6)
-        if (bottomPanelHost != null) bottomPanelHost.Content = new MacroView();
+        if (bottomPanelHost != null)
+        {
+          bottomPanelHost.Content = new MacroView();
+          bottomPanelHost.PanelTitle = "Macros";
+          bottomPanelHost.PanelIcon = "⚡";
+        }
         profiler.Checkpoint("MacroView Created (Default)");
       }
 
@@ -258,55 +346,162 @@ namespace VoiceStudio.App
 
     #region Navigation Button Click Handlers
 
+    /// <summary>
+    /// Executes a navigation command via CommandRouter, falling back to direct panel switch if unavailable.
+    /// </summary>
+    private void ExecuteNavCommand(string commandId, string fallbackPanel, PanelRegion fallbackRegion, Func<UserControl> fallbackFactory, string buttonName)
+    {
+      if (_commandRouter != null)
+      {
+        // Use CommandRouter for unified command execution
+        _commandRouter.ExecuteFireAndForget(commandId);
+        Debug.WriteLine($"[MainWindow] Nav command executed via CommandRouter: {commandId}");
+      }
+      else
+      {
+        // Fallback to direct panel switch
+        SwitchToPanel(fallbackRegion, fallbackPanel, fallbackFactory);
+        SetActiveNavButton(buttonName);
+        Debug.WriteLine($"[MainWindow] Nav fallback executed: {fallbackPanel}");
+      }
+    }
+
     private void NavStudio_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Center, "Timeline", () => new TimelineView());
-      SetActiveNavButton("NavStudio");
+      Debug.WriteLine("[DEBUG] NavStudio_Click fired");
+      try
+      {
+        ExecuteNavCommand("nav.studio", "Timeline", PanelRegion.Center, () => new TimelineView(), "NavStudio");
+        Debug.WriteLine("[DEBUG] NavStudio_Click completed");
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[DEBUG] NavStudio_Click EXCEPTION: {ex}");
+        var diagPath = Path.Combine(
+          Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+          "VoiceStudio", "crashes", "click_diag.txt");
+        try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch { }
+      }
     }
 
     private void NavProfiles_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Left, "Profiles", () => new ProfilesView());
-      SetActiveNavButton("NavProfiles");
+      ExecuteNavCommand("nav.profiles", "Profiles", PanelRegion.Left, () => new ProfilesView(), "NavProfiles");
     }
 
     private void NavLibrary_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Left, "Library", () => new LibraryView());
-      SetActiveNavButton("NavLibrary");
+      ExecuteNavCommand("nav.library", "Library", PanelRegion.Left, () => new LibraryView(), "NavLibrary");
     }
 
     private void NavEffects_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
-      SetActiveNavButton("NavEffects");
+      ExecuteNavCommand("nav.effects", "Effects Mixer", PanelRegion.Right, () => new EffectsMixerView(), "NavEffects");
     }
 
     private void NavTrain_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Left, "Training", () => new TrainingView());
-      SetActiveNavButton("NavTrain");
+      ExecuteNavCommand("nav.train", "Training", PanelRegion.Left, () => new TrainingView(), "NavTrain");
     }
 
     private void NavAnalyze_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Right, "Analyzer", () => new AnalyzerView());
-      SetActiveNavButton("NavAnalyze");
+      ExecuteNavCommand("nav.analyze", "Analyzer", PanelRegion.Right, () => new AnalyzerView(), "NavAnalyze");
     }
 
     private void NavSettings_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Right, "Settings", () => new SettingsView());
-      SetActiveNavButton("NavSettings");
+      ExecuteNavCommand("nav.settings", "Settings", PanelRegion.Right, () => new SettingsView(), "NavSettings");
     }
 
     private void NavLogs_Click(object _, RoutedEventArgs __)
     {
-      SwitchToPanel(PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
-      SetActiveNavButton("NavLogs");
+      ExecuteNavCommand("nav.logs", "Diagnostics", PanelRegion.Bottom, () => new DiagnosticsView(), "NavLogs");
     }
 
     #endregion Navigation Button Click Handlers
+
+    #region Command-Driven Navigation
+
+    /// <summary>
+    /// Handles navigation events from the NavigationService (command-driven navigation).
+    /// </summary>
+    private void OnNavigationChanged(object? sender, VoiceStudio.Core.Models.NavigationEventArgs e)
+    {
+      if (string.IsNullOrEmpty(e.NewPanelId))
+      {
+        return;
+      }
+
+      // Map panel ID to panel info and switch
+      var panelId = e.NewPanelId.ToLowerInvariant();
+      Debug.WriteLine($"[MainWindow] OnNavigationChanged: {panelId}");
+
+      // Dispatch to UI thread
+      DispatcherQueue.TryEnqueue(() =>
+      {
+        try
+        {
+          switch (panelId)
+          {
+            case "studio":
+            case "timeline":
+            case "home":
+              SwitchToPanel(PanelRegion.Center, "Timeline", () => new TimelineView());
+              SetActiveNavButton("NavStudio");
+              break;
+            case "profiles":
+              SwitchToPanel(PanelRegion.Left, "Profiles", () => new ProfilesView());
+              SetActiveNavButton("NavProfiles");
+              break;
+            case "library":
+              SwitchToPanel(PanelRegion.Left, "Library", () => new LibraryView());
+              SetActiveNavButton("NavLibrary");
+              break;
+            case "effects":
+              SwitchToPanel(PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView());
+              SetActiveNavButton("NavEffects");
+              break;
+            case "train":
+              SwitchToPanel(PanelRegion.Left, "Training", () => new TrainingView());
+              SetActiveNavButton("NavTrain");
+              break;
+            case "analyze":
+              SwitchToPanel(PanelRegion.Right, "Analyzer", () => new AnalyzerView());
+              SetActiveNavButton("NavAnalyze");
+              break;
+            case "settings":
+              SwitchToPanel(PanelRegion.Right, "Settings", () => new SettingsView());
+              SetActiveNavButton("NavSettings");
+              break;
+            case "logs":
+              SwitchToPanel(PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView());
+              SetActiveNavButton("NavLogs");
+              break;
+            case "synthesis":
+              SwitchToPanel(PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView());
+              break;
+            default:
+              // Try generic panel registry lookup
+              if (_panelRegistry.TryGetValue(panelId, out var panelInfo))
+              {
+                SwitchToPanel(panelInfo.DefaultRegion, panelInfo.Title, panelInfo.Factory);
+              }
+              else
+              {
+                Debug.WriteLine($"[MainWindow] Unknown panel ID in navigation: {panelId}");
+              }
+              break;
+          }
+        }
+        catch (Exception ex)
+        {
+          Debug.WriteLine($"[MainWindow] Navigation failed: {ex.Message}");
+        }
+      });
+    }
+
+    #endregion Command-Driven Navigation
 
     private void SetActiveNavButton(string activeButtonName)
     {
@@ -1063,6 +1258,10 @@ namespace VoiceStudio.App
       // so we use UnpackagedSettingsHelper for file-based settings storage.
       if (_welcomeDialogShown)
         return;
+      
+      // DEBUG: Skip welcome dialog temporarily to test input
+      _welcomeDialogShown = true;
+      return;
 
       var showWelcome = Helpers.UnpackagedSettingsHelper.GetValue<bool>(ShowWelcomeKey, true);
 
@@ -1473,11 +1672,15 @@ namespace VoiceStudio.App
         {
           // Show Mini Timeline
           bottomPanelHost.Content = new MiniTimelineView();
+          bottomPanelHost.PanelTitle = "Mini Timeline";
+          bottomPanelHost.PanelIcon = "🎬";
         }
         else
         {
           // Show Macro View
           bottomPanelHost.Content = new MacroView();
+          bottomPanelHost.PanelTitle = "Macros";
+          bottomPanelHost.PanelIcon = "⚡";
         }
       }
 
@@ -1908,11 +2111,30 @@ namespace VoiceStudio.App
     private MenuBarItem BuildFileMenu()
     {
       var item = new MenuBarItem { Title = "File" };
-      item.Items.Add(CreateMenuItem("New Project", CreateNewProject));
-      item.Items.Add(CreateMenuItem("Open Project", OpenProject));
-      item.Items.Add(CreateMenuItem("Save Project", SaveProject));
-      item.Items.Add(new MenuFlyoutSeparator());
-      item.Items.Add(CreateMenuItem("Import Audio File...", ImportAudioFile));
+
+      // Use CommandRouter for file operations if available
+      if (_commandRouter != null)
+      {
+        item.Items.Add(CreateCommandMenuItem("New Project", "file.new", "Ctrl+N"));
+        item.Items.Add(CreateCommandMenuItem("Open Project", "file.open", "Ctrl+O"));
+        item.Items.Add(CreateCommandMenuItem("Save Project", "file.save", "Ctrl+S"));
+        item.Items.Add(CreateCommandMenuItem("Save As...", "file.saveAs", "Ctrl+Shift+S"));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateCommandMenuItem("Import Audio...", "file.import", "Ctrl+I"));
+        item.Items.Add(CreateCommandMenuItem("Export Audio...", "file.export", "Ctrl+E"));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateCommandMenuItem("Close Project", "file.close", "Ctrl+W"));
+      }
+      else
+      {
+        // Fallback to legacy method calls
+        item.Items.Add(CreateMenuItem("New Project", CreateNewProject));
+        item.Items.Add(CreateMenuItem("Open Project", OpenProject));
+        item.Items.Add(CreateMenuItem("Save Project", SaveProject));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateMenuItem("Import Audio File...", ImportAudioFile));
+      }
+
       item.Items.Add(new MenuFlyoutSeparator());
       if (_recentProjectsSubMenu != null)
       {
@@ -1934,6 +2156,21 @@ namespace VoiceStudio.App
     private MenuBarItem BuildViewMenu()
     {
       var item = new MenuBarItem { Title = "View" };
+
+      // Navigation shortcuts
+      if (_commandRouter != null)
+      {
+        item.Items.Add(CreateCommandMenuItem("Studio", "nav.studio", "Ctrl+1"));
+        item.Items.Add(CreateCommandMenuItem("Library", "nav.library", "Ctrl+2"));
+        item.Items.Add(CreateCommandMenuItem("Profiles", "nav.profiles", "Ctrl+3"));
+        item.Items.Add(CreateCommandMenuItem("Effects", "nav.effects", "Ctrl+4"));
+        item.Items.Add(CreateCommandMenuItem("Settings", "nav.settings", "Ctrl+,"));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateCommandMenuItem("Go Back", "nav.back", "Alt+Left"));
+        item.Items.Add(CreateCommandMenuItem("Go Forward", "nav.forward", "Alt+Right"));
+        item.Items.Add(new MenuFlyoutSeparator());
+      }
+
       if (_toggleMiniTimelineMenuItem != null)
       {
         item.Items.Add(_toggleMiniTimelineMenuItem);
@@ -2059,9 +2296,26 @@ namespace VoiceStudio.App
     private MenuBarItem BuildPlaybackMenu()
     {
       var item = new MenuBarItem { Title = "Playback" };
-      item.Items.Add(CreateMenuItem("Play/Pause", TogglePlayback));
-      item.Items.Add(CreateMenuItem("Stop", StopPlayback));
-      item.Items.Add(CreateMenuItem("Record", ToggleRecording));
+
+      if (_commandRouter != null)
+      {
+        item.Items.Add(CreateCommandMenuItem("Play/Pause", "playback.toggle", "Space"));
+        item.Items.Add(CreateCommandMenuItem("Stop", "playback.stop"));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateCommandMenuItem("Record", "playback.record", "R"));
+        item.Items.Add(new MenuFlyoutSeparator());
+        item.Items.Add(CreateCommandMenuItem("Rewind", "playback.rewind", "Home"));
+        item.Items.Add(CreateCommandMenuItem("Fast Forward", "playback.forward", "End"));
+        item.Items.Add(CreateCommandMenuItem("Step Back", "playback.stepBack", "Left"));
+        item.Items.Add(CreateCommandMenuItem("Step Forward", "playback.stepForward", "Right"));
+      }
+      else
+      {
+        item.Items.Add(CreateMenuItem("Play/Pause", TogglePlayback));
+        item.Items.Add(CreateMenuItem("Stop", StopPlayback));
+        item.Items.Add(CreateMenuItem("Record", ToggleRecording));
+      }
+
       return item;
     }
 
@@ -2107,6 +2361,32 @@ namespace VoiceStudio.App
     {
       var item = new MenuFlyoutItem { Text = text };
       item.Click += (_, __) => action();
+      return item;
+    }
+
+    /// <summary>
+    /// Creates a menu item wired to a registry command.
+    /// </summary>
+    private MenuFlyoutItem CreateCommandMenuItem(string text, string commandId, string? shortcut = null)
+    {
+      var item = new MenuFlyoutItem { Text = text };
+
+      // Add keyboard accelerator hint if provided
+      if (!string.IsNullOrEmpty(shortcut))
+      {
+        item.KeyboardAcceleratorTextOverride = shortcut;
+      }
+
+      if (_commandRouter != null)
+      {
+        _commandRouter.WireMenuItem(item, commandId);
+      }
+      else
+      {
+        // Fallback - just log that command router isn't available
+        item.Click += (_, __) => Debug.WriteLine($"[MainWindow] Command '{commandId}' unavailable - no CommandRouter");
+      }
+
       return item;
     }
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.UseCases;
 using VoiceStudio.App.ViewModels;
 
@@ -51,6 +52,7 @@ namespace VoiceStudio.App.Services
       });
 
       // Core app services (register implementations; order may matter for dependencies)
+      services.AddSingleton<IDialogService, DialogService>();
       services.AddSingleton<ISettingsService, SettingsService>();
       services.AddSingleton<IUpdateService, UpdateService>();
       services.AddSingleton<IPanelRegistry, PanelRegistry>();
@@ -77,7 +79,12 @@ namespace VoiceStudio.App.Services
       services.AddSingleton<ToolbarConfigurationService>();
       services.AddSingleton<StatusBarActivityService>();
       services.AddSingleton<KeyboardShortcutService>();
+      services.AddSingleton<IUnifiedCommandRegistry>(sp =>
+        new UnifiedCommandRegistry(sp.GetRequiredService<KeyboardShortcutService>()));
+      services.AddSingleton<CommandRouter>(sp =>
+        new CommandRouter(sp.GetRequiredService<IUnifiedCommandRegistry>()));
       services.AddSingleton<CollaborationService>();
+      services.AddSingleton<BackendProcessManager>();
       services.AddSingleton<IFeatureFlagsService, FeatureFlagsService>();
       services.AddSingleton<IErrorPresentationService, ErrorPresentationService>();
       services.AddSingleton<IAnalyticsService, AnalyticsService>();
@@ -178,6 +185,14 @@ namespace VoiceStudio.App.Services
     public static IErrorCoordinator? TryGetErrorCoordinator() => GetService<IErrorCoordinator>();
     public static IViewModelFactory GetViewModelFactory() => GetRequiredService<IViewModelFactory>();
     public static IViewModelFactory? TryGetViewModelFactory() => GetService<IViewModelFactory>();
+    public static IUnifiedCommandRegistry GetCommandRegistry() => GetRequiredService<IUnifiedCommandRegistry>();
+    public static IUnifiedCommandRegistry? TryGetCommandRegistry() => GetService<IUnifiedCommandRegistry>();
+    public static CommandRouter GetCommandRouter() => GetRequiredService<CommandRouter>();
+    public static CommandRouter? TryGetCommandRouter() => GetService<CommandRouter>();
+    public static IDialogService GetDialogService() => GetRequiredService<IDialogService>();
+    public static IDialogService? TryGetDialogService() => GetService<IDialogService>();
+    public static BackendProcessManager GetBackendProcessManager() => GetRequiredService<BackendProcessManager>();
+    public static BackendProcessManager? TryGetBackendProcessManager() => GetService<BackendProcessManager>();
   }
 
   /// <summary>
