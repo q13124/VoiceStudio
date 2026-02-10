@@ -809,11 +809,101 @@ class AIAudioEnhancementService:
         audio: np.ndarray,
         sample_rate: int,
     ) -> np.ndarray:
-        """Isolate voice using frequency-based separation."""
+        """
+        Isolate voice using AI-based source separation.
+        
+        Task 4.5.2: Replace placeholder separation model with real implementation.
+        """
+        # Try Demucs (state-of-the-art source separation)
+        try:
+            import torch
+            from demucs.pretrained import get_model
+            from demucs.apply import apply_model
+            
+            # Load model
+            model = get_model("htdemucs")
+            model.eval()
+            
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model.to(device)
+            
+            # Prepare audio
+            if len(audio.shape) == 1:
+                audio_tensor = torch.from_numpy(audio).float().unsqueeze(0).unsqueeze(0)
+            else:
+                audio_tensor = torch.from_numpy(audio).float().unsqueeze(0)
+            
+            audio_tensor = audio_tensor.to(device)
+            
+            # Separate
+            with torch.no_grad():
+                sources = apply_model(model, audio_tensor, device=device)
+            
+            # Get vocals (index 3 in htdemucs: drums, bass, other, vocals)
+            vocals = sources[:, 3, :, :].mean(dim=1).squeeze().cpu().numpy()
+            
+            logger.info("Voice isolated using Demucs")
+            return vocals.astype(np.float32)
+            
+        except ImportError:
+            logger.debug("Demucs not available, trying Spleeter")
+        except Exception as e:
+            logger.debug(f"Demucs separation failed: {e}")
+        
+        # Try Spleeter
+        try:
+            from spleeter.separator import Separator
+            import tempfile
+            import soundfile as sf
+            
+            separator = Separator("spleeter:2stems")
+            
+            # Save temp file
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                sf.write(tmp.name, audio, sample_rate)
+                
+                # Separate
+                prediction = separator.separate(audio.reshape(-1, 1))
+                
+                vocals = prediction["vocals"].mean(axis=1)
+                
+                logger.info("Voice isolated using Spleeter")
+                return vocals.astype(np.float32)
+                
+        except ImportError:
+            logger.debug("Spleeter not available")
+        except Exception as e:
+            logger.debug(f"Spleeter separation failed: {e}")
+        
+        # Try librosa HPSS (harmonic-percussive separation)
+        try:
+            import librosa
+            
+            # Separate harmonic (voice-like) from percussive
+            harmonic, percussive = librosa.effects.hpss(audio)
+            
+            # Apply bandpass for voice frequencies
+            from scipy import signal
+            
+            nyquist = sample_rate / 2
+            low = 80 / nyquist
+            high = min(8000 / nyquist, 0.99)
+            
+            b, a = signal.butter(4, [low, high], btype='band')
+            filtered = signal.filtfilt(b, a, harmonic)
+            
+            logger.info("Voice isolated using librosa HPSS + bandpass")
+            return filtered.astype(np.float32)
+            
+        except ImportError:
+            logger.debug("librosa not available")
+        except Exception as e:
+            logger.debug(f"librosa HPSS failed: {e}")
+        
+        # Final fallback: simple bandpass filter
         try:
             from scipy import signal
             
-            # Bandpass filter for voice frequencies (80Hz - 8000Hz)
             nyquist = sample_rate / 2
             low = 80 / nyquist
             high = min(8000 / nyquist, 0.99)
@@ -821,6 +911,7 @@ class AIAudioEnhancementService:
             b, a = signal.butter(4, [low, high], btype='band')
             filtered = signal.filtfilt(b, a, audio)
             
+            logger.warning("Voice isolation using basic bandpass filter (install demucs for better results)")
             return filtered.astype(np.float32)
         
         except Exception as e:

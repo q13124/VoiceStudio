@@ -2,27 +2,33 @@
 Voice Profile Management Routes
 
 CRUD operations for voice profiles.
+Uses ProfileStore for persistent, disk-backed storage.
 """
 
 import logging
 import time
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..error_handling import ErrorCodes
+from ..middleware.auth_middleware import require_auth_if_enabled
+from ..deps import ProfileStoreDep, get_profile_store_dep
 from ..exceptions import ProfileNotFoundException
 from ..models import ApiOk
 from ..models_additional import (
     ReferenceAudioPreprocessRequest,
     ReferenceAudioPreprocessResponse,
 )
-from ..optimization import PaginationParams, cache_response, get_pagination_params
+from ..optimization import cache_response, get_pagination_params
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/profiles", tags=["profiles"])
+router = APIRouter(
+    prefix="/api/profiles",
+    tags=["profiles"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 
 class VoiceProfile(BaseModel):
@@ -58,31 +64,8 @@ class ProfileUpdateRequest(BaseModel):
     avatar_url: Optional[str] = None
 
 
-# In-memory storage (replace with database in production)
-_profiles: dict[str, VoiceProfile] = {}
-_MAX_PROFILES = 1000  # Maximum number of profiles
-_profile_timestamps: dict[str, float] = {}  # profile_id -> creation_time
-
-
-def _cleanup_old_profiles():
-    """
-    Clean up old profiles from storage to prevent memory accumulation.
-
-    Removes profiles beyond MAX_PROFILES (oldest first based on creation time).
-    """
-    if len(_profiles) > _MAX_PROFILES:
-        # Sort by creation time (oldest first)
-        sorted_profiles = sorted(
-            _profile_timestamps.items(),
-            key=lambda x: x[1],
-        )
-        excess = len(_profiles) - _MAX_PROFILES
-        for profile_id, _ in sorted_profiles[:excess]:
-            if profile_id in _profiles:
-                del _profiles[profile_id]
-            if profile_id in _profile_timestamps:
-                del _profile_timestamps[profile_id]
-        logger.info(f"Cleaned up {excess} old profiles from storage")
+# ProfileStore is now used for persistent storage
+# Legacy in-memory dict removed - use ProfileStoreDep dependency instead
 
 
 @router.get(
@@ -139,7 +122,10 @@ def _cleanup_old_profiles():
     },
 )
 @cache_response(ttl=60)  # Cache for 60 seconds
-def list_profiles(request: Request) -> dict:
+def list_profiles(
+    request: Request,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+) -> dict:
     """
     List all voice profiles with pagination.
 
@@ -151,13 +137,30 @@ def list_profiles(request: Request) -> dict:
         # Get pagination parameters
         pagination = get_pagination_params(request, default_page_size=50)
 
-        # Get all profiles
-        all_profiles = list(_profiles.values())
+        # Get all profiles from persistent store
+        all_profiles = profile_store.list_profiles(
+            limit=pagination.page_size,
+            offset=(pagination.page - 1) * pagination.page_size,
+        )
 
-        # Paginate
-        result = pagination.paginate(all_profiles)
+        # Convert to Pydantic models
+        profile_models = [
+            VoiceProfile(
+                id=p.get("id", ""),
+                name=p.get("name", ""),
+                language=p.get("language", "en"),
+                quality_score=p.get("quality_score", 0.0),
+                tags=p.get("tags", []),
+            )
+            for p in all_profiles
+        ]
 
-        return result
+        return {
+            "items": [p.model_dump() for p in profile_models],
+            "total": profile_store.count(),
+            "page": pagination.page,
+            "page_size": pagination.page_size,
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -174,12 +177,25 @@ def list_profiles(request: Request) -> dict:
 
 @router.get("/{profile_id}", response_model=VoiceProfile)
 @cache_response(ttl=300)  # Cache for 5 minutes
-def get_profile(profile_id: str) -> VoiceProfile:
+def get_profile(
+    profile_id: str,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+) -> VoiceProfile:
     """Get a specific voice profile."""
     try:
-        if profile_id not in _profiles:
+        profile_data = profile_store.get(profile_id)
+        if profile_data is None:
             raise ProfileNotFoundException(profile_id)
-        return _profiles[profile_id]
+        return VoiceProfile(
+            id=profile_data.get("id", ""),
+            name=profile_data.get("name", ""),
+            language=profile_data.get("language", "en"),
+            emotion=profile_data.get("emotion"),
+            quality_score=profile_data.get("quality_score", 0.0),
+            tags=profile_data.get("tags", []),
+            reference_audio_url=profile_data.get("reference_audio_url"),
+            avatar_url=profile_data.get("avatar_url"),
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -196,7 +212,10 @@ def get_profile(profile_id: str) -> VoiceProfile:
 
 
 @router.post("", response_model=VoiceProfile)
-def create_profile(req: ProfileCreateRequest) -> VoiceProfile:
+def create_profile(
+    req: ProfileCreateRequest,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+) -> VoiceProfile:
     """Create a new voice profile."""
     try:
         # Validate input
@@ -212,26 +231,32 @@ def create_profile(req: ProfileCreateRequest) -> VoiceProfile:
 
         profile_id = str(uuid.uuid4())
 
+        profile_data = {
+            "id": profile_id,
+            "name": req.name.strip(),
+            "language": req.language.strip(),
+            "emotion": req.emotion.strip() if req.emotion else None,
+            "tags": [tag.strip() for tag in req.tags] if req.tags else [],
+            "quality_score": 0.0,
+            "avatar_url": req.avatar_url,
+            "created_at": time.time(),
+        }
+
+        # Save to persistent store
+        profile_store.save(profile_data)
+
         profile = VoiceProfile(
             id=profile_id,
-            name=req.name.strip(),
-            language=req.language.strip(),
-            emotion=req.emotion.strip() if req.emotion else None,
-            tags=[tag.strip() for tag in req.tags] if req.tags else [],
+            name=profile_data["name"],
+            language=profile_data["language"],
+            emotion=profile_data.get("emotion"),
+            tags=profile_data["tags"],
             quality_score=0.0,
+            avatar_url=profile_data.get("avatar_url"),
         )
-
-        _profiles[profile_id] = profile
-        _profile_timestamps[profile_id] = time.time()
-
-        # Clean up old profiles if needed
-        if len(_profiles) > _MAX_PROFILES:
-            _cleanup_old_profiles()
 
         logger.info(f"Created profile: {profile_id} - {profile.name}")
         return profile
-    except HTTPException:
-        raise
     except HTTPException:
         raise
     except Exception as e:
@@ -247,10 +272,15 @@ def create_profile(req: ProfileCreateRequest) -> VoiceProfile:
 
 
 @router.put("/{profile_id}", response_model=VoiceProfile)
-def update_profile(profile_id: str, req: ProfileUpdateRequest) -> VoiceProfile:
+def update_profile(
+    profile_id: str,
+    req: ProfileUpdateRequest,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+) -> VoiceProfile:
     """Update an existing voice profile."""
     try:
-        if profile_id not in _profiles:
+        profile_data = profile_store.get(profile_id)
+        if profile_data is None:
             raise ProfileNotFoundException(profile_id)
 
         # Validate input
@@ -262,18 +292,32 @@ def update_profile(profile_id: str, req: ProfileUpdateRequest) -> VoiceProfile:
             from ..exceptions import InvalidInputException
             raise InvalidInputException("Language cannot be empty", field="language", value=req.language)
 
-        profile = _profiles[profile_id]
-
+        # Update fields
         if req.name is not None:
-            profile.name = req.name.strip()
+            profile_data["name"] = req.name.strip()
         if req.language is not None:
-            profile.language = req.language.strip()
+            profile_data["language"] = req.language.strip()
         if req.emotion is not None:
-            profile.emotion = req.emotion.strip() if req.emotion else None
+            profile_data["emotion"] = req.emotion.strip() if req.emotion else None
         if req.tags is not None:
-            profile.tags = [tag.strip() for tag in req.tags] if req.tags else []
+            profile_data["tags"] = [tag.strip() for tag in req.tags] if req.tags else []
+        if req.avatar_url is not None:
+            profile_data["avatar_url"] = req.avatar_url
 
-        _profiles[profile_id] = profile
+        # Save back to persistent store
+        profile_store.save(profile_data)
+
+        profile = VoiceProfile(
+            id=profile_id,
+            name=profile_data.get("name", ""),
+            language=profile_data.get("language", "en"),
+            emotion=profile_data.get("emotion"),
+            quality_score=profile_data.get("quality_score", 0.0),
+            tags=profile_data.get("tags", []),
+            reference_audio_url=profile_data.get("reference_audio_url"),
+            avatar_url=profile_data.get("avatar_url"),
+        )
+
         logger.info(f"Updated profile: {profile_id} - {profile.name}")
         return profile
     except HTTPException:
@@ -286,15 +330,16 @@ def update_profile(profile_id: str, req: ProfileUpdateRequest) -> VoiceProfile:
 
 
 @router.delete("/{profile_id}", response_model=ApiOk)
-def delete_profile(profile_id: str) -> ApiOk:
+def delete_profile(
+    profile_id: str,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+) -> ApiOk:
     """Delete a voice profile."""
     try:
-        if profile_id not in _profiles:
+        if profile_store.get(profile_id) is None:
             raise ProfileNotFoundException(profile_id)
 
-        del _profiles[profile_id]
-        if profile_id in _profile_timestamps:
-            del _profile_timestamps[profile_id]
+        profile_store.delete(profile_id)
         logger.info(f"Deleted profile: {profile_id}")
         return ApiOk()
     except HTTPException:
@@ -317,7 +362,9 @@ def delete_profile(profile_id: str) -> ApiOk:
     response_model=ReferenceAudioPreprocessResponse,
 )
 async def preprocess_reference_audio(
-    profile_id: str, req: ReferenceAudioPreprocessRequest
+    profile_id: str,
+    req: ReferenceAudioPreprocessRequest,
+    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
 ) -> ReferenceAudioPreprocessResponse:
     """
     Advanced reference audio pre-processing and optimization (IDEA 62).
@@ -338,11 +385,18 @@ async def preprocess_reference_audio(
     )
 
     try:
-        # Get profile
-        if profile_id not in _profiles:
+        # Get profile from persistent store
+        profile_data = profile_store.get(profile_id)
+        if profile_data is None:
             raise ProfileNotFoundException(profile_id)
 
-        profile = _profiles[profile_id]
+        # Convert to VoiceProfile for compatibility
+        profile = VoiceProfile(
+            id=profile_data.get("id", ""),
+            name=profile_data.get("name", ""),
+            language=profile_data.get("language", "en"),
+            reference_audio_url=profile_data.get("reference_audio_url"),
+        )
 
         # Get reference audio path
         reference_audio_path = req.reference_audio_path
@@ -432,8 +486,8 @@ async def preprocess_reference_audio(
                 has_noise = True
                 quality_score -= 1.5
                 recommendations.append("Background noise detected - apply denoising")
-        except:
-            ...
+        except (ValueError, RuntimeError, TypeError) as spectral_err:
+            logger.debug(f"Spectral analysis for noise detection failed: {spectral_err}")
 
         # Check for distortion (unusual spectral characteristics)
         try:
@@ -444,8 +498,8 @@ async def preprocess_reference_audio(
                 recommendations.append(
                     "Possible distortion detected - check audio source"
                 )
-        except:
-            ...
+        except (ValueError, RuntimeError, TypeError) as zcr_err:
+            logger.debug(f"Zero crossing rate analysis failed: {zcr_err}")
 
         # Check sample rate (should be >= 16kHz for good quality)
         if sample_rate < 16000:

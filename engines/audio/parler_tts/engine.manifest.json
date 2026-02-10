@@ -1,0 +1,75 @@
+{
+  "engine_id": "parler_tts",
+  "name": "Parler TTS",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "venv_family": "venv_core_tts",
+  "description": "Parler TTS - Describe-to-synthesize text-to-speech with natural language prompts",
+  "author": "Hugging Face",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "torch": ">=2.0.0",
+    "transformers": ">=4.35.0",
+    "parler-tts": ">=0.1.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\parler_tts",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\parler_tts\\cache"
+  },
+  "supported_languages": ["en"],
+  "capabilities": [
+    "text_to_speech",
+    "voice_description",
+    "style_prompting",
+    "multi_speaker"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "contract": {
+    "input": {
+      "audio_formats": [],
+      "sample_rates": [],
+      "max_duration_seconds": 0,
+      "min_duration_seconds": 0,
+      "text_max_chars": 5000,
+      "description_max_chars": 500
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 44100,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "cpu_threads": 4,
+      "timeout_seconds": 120
+    }
+  },
+  "entry_point": "app.core.engines.parler_tts:ParlerTTSEngine",
+  "config_schema": {
+    "model_size": {
+      "type": "string",
+      "default": "mini",
+      "enum": ["mini", "large"],
+      "description": "Model size (mini = faster, large = better quality)"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    }
+  }
+}

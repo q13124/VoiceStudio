@@ -19,6 +19,7 @@ namespace VoiceStudio.App.Services
     public sealed class NavigationBridge : INavigationService
     {
         private readonly List<NavigationEntry> _backStack = new();
+        private readonly List<NavigationEntry> _forwardStack = new();
         private string? _currentPanelId;
         private Action<PanelRegion, string, Func<UserControl>>? _switchPanelCallback;
         private Action<string>? _setActiveNavButtonCallback;
@@ -88,6 +89,9 @@ namespace VoiceStudio.App.Services
                 BackStackChanged?.Invoke(this, EventArgs.Empty);
             }
 
+            // Clear forward stack when navigating to a new panel (new branch)
+            _forwardStack.Clear();
+
             _currentPanelId = panelId;
 
             // Invoke the MainWindow panel switch
@@ -125,6 +129,17 @@ namespace VoiceStudio.App.Services
             _backStack.RemoveAt(_backStack.Count - 1);
             BackStackChanged?.Invoke(this, EventArgs.Empty);
 
+            // Push current to forward stack before going back
+            if (!string.IsNullOrEmpty(_currentPanelId))
+            {
+                _forwardStack.Add(new NavigationEntry
+                {
+                    PanelId = _currentPanelId,
+                    Parameters = new Dictionary<string, object>(),
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             _currentPanelId = lastEntry.PanelId;
 
             if (_panelRegistry.TryGetValue(lastEntry.PanelId, out var panelInfo))
@@ -154,6 +169,62 @@ namespace VoiceStudio.App.Services
         public bool CanNavigateBack()
         {
             return _backStack.Count > 0;
+        }
+
+        /// <inheritdoc />
+        public Task NavigateForwardAsync(CancellationToken cancellationToken = default)
+        {
+            if (_forwardStack.Count == 0)
+            {
+                return Task.CompletedTask;
+            }
+
+            var previousPanelId = _currentPanelId;
+            var nextEntry = _forwardStack[_forwardStack.Count - 1];
+            _forwardStack.RemoveAt(_forwardStack.Count - 1);
+
+            // Push current to back stack before going forward
+            if (!string.IsNullOrEmpty(_currentPanelId))
+            {
+                _backStack.Add(new NavigationEntry
+                {
+                    PanelId = _currentPanelId,
+                    Parameters = new Dictionary<string, object>(),
+                    Timestamp = DateTime.UtcNow
+                });
+                BackStackChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            _currentPanelId = nextEntry.PanelId;
+
+            if (_panelRegistry.TryGetValue(nextEntry.PanelId, out var panelInfo))
+            {
+                _switchPanelCallback?.Invoke(panelInfo.DefaultRegion, panelInfo.Title, panelInfo.Factory);
+
+                var navButtonName = GetNavButtonName(nextEntry.PanelId);
+                if (!string.IsNullOrEmpty(navButtonName))
+                {
+                    _setActiveNavButtonCallback?.Invoke(navButtonName);
+                }
+            }
+
+            // Raise navigation changed event
+            NavigationChanged?.Invoke(this, new NavigationEventArgs
+            {
+                PreviousPanelId = previousPanelId,
+                NewPanelId = nextEntry.PanelId,
+                Parameters = nextEntry.Parameters,
+                IsBackNavigation = false // This is forward navigation
+            });
+
+            Debug.WriteLine($"[NavigationBridge] Navigated forward to: {nextEntry.PanelId}");
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public bool CanNavigateForward()
+        {
+            return _forwardStack.Count > 0;
         }
 
         public string? GetCurrentPanelId()

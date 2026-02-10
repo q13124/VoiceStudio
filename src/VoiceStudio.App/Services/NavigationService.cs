@@ -12,11 +12,13 @@ namespace VoiceStudio.App.Services
 {
   /// <summary>
   /// Implementation of navigation service for panel navigation, deep-links, and backstack management.
+  /// Phase 5.2.6: Added forward navigation support.
   /// </summary>
   public class NavigationService : INavigationService
   {
     private readonly PanelStateService _panelStateService;
     private readonly List<NavigationEntry> _backstack = new();
+    private readonly List<NavigationEntry> _forwardStack = new();
     private string? _currentPanelId;
     private const int MaxBackstackSize = 50;
     private const string NavigationStateKey = "NavigationState";
@@ -64,6 +66,9 @@ namespace VoiceStudio.App.Services
             _backstack.RemoveAt(0);
           }
         }
+
+        // Clear forward stack on new navigation (not back/forward navigation)
+        _forwardStack.Clear();
       }
 
       _currentPanelId = panelId;
@@ -96,14 +101,88 @@ namespace VoiceStudio.App.Services
       var previousEntry = _backstack.LastOrDefault();
       if (previousEntry != null)
       {
+        // Push current panel to forward stack before navigating back
+        if (!string.IsNullOrEmpty(_currentPanelId))
+        {
+          _forwardStack.Add(new NavigationEntry
+          {
+            PanelId = _currentPanelId,
+            Parameters = new Dictionary<string, object>(),
+            Timestamp = DateTime.UtcNow
+          });
+        }
+
         _backstack.RemoveAt(_backstack.Count - 1);
-        await NavigateToPanelAsync(previousEntry.PanelId, previousEntry.Parameters, cancellationToken);
+        _currentPanelId = previousEntry.PanelId;
+
+        // Save navigation state
+        SaveNavigationState();
+
+        // Raise events
+        var args = new NavigationEventArgs
+        {
+          PreviousPanelId = _currentPanelId,
+          NewPanelId = previousEntry.PanelId,
+          Parameters = previousEntry.Parameters ?? new Dictionary<string, object>(),
+          IsBackNavigation = true
+        };
+
+        NavigationChanged?.Invoke(this, args);
+        BackStackChanged?.Invoke(this, EventArgs.Empty);
       }
+    }
+
+    public async Task NavigateForwardAsync(CancellationToken cancellationToken = default)
+    {
+      if (!CanNavigateForward())
+        return;
+
+      cancellationToken.ThrowIfCancellationRequested();
+
+      var nextEntry = _forwardStack.LastOrDefault();
+      if (nextEntry != null)
+      {
+        // Push current panel to back stack before navigating forward
+        if (!string.IsNullOrEmpty(_currentPanelId))
+        {
+          _backstack.Add(new NavigationEntry
+          {
+            PanelId = _currentPanelId,
+            Parameters = new Dictionary<string, object>(),
+            Timestamp = DateTime.UtcNow
+          });
+        }
+
+        _forwardStack.RemoveAt(_forwardStack.Count - 1);
+        _currentPanelId = nextEntry.PanelId;
+
+        // Save navigation state
+        SaveNavigationState();
+
+        // Raise events
+        var args = new NavigationEventArgs
+        {
+          PreviousPanelId = _currentPanelId,
+          NewPanelId = nextEntry.PanelId,
+          Parameters = nextEntry.Parameters ?? new Dictionary<string, object>(),
+          IsBackNavigation = false
+        };
+
+        NavigationChanged?.Invoke(this, args);
+        BackStackChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      await Task.CompletedTask;
     }
 
     public bool CanNavigateBack()
     {
       return _backstack.Count > 0;
+    }
+
+    public bool CanNavigateForward()
+    {
+      return _forwardStack.Count > 0;
     }
 
     public string? GetCurrentPanelId()

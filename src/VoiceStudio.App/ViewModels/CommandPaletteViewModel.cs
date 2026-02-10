@@ -1,14 +1,19 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.App.Core.Commands;
+using VoiceStudio.App.Services;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.ViewModels
 {
-  public sealed partial class CommandPaletteViewModel : ObservableObject
+  public sealed partial class CommandPaletteViewModel : BaseViewModel
   {
     [ObservableProperty] private string filterText = string.Empty;
 
@@ -20,20 +25,29 @@ namespace VoiceStudio.App.ViewModels
     public IRelayCommand RunSelectedCmd { get; }
     public IRelayCommand<string?> RunByIdCmd { get; }
 
-    private readonly IPanelRegistry _registry;
+    private readonly IPanelRegistry _panelRegistry;
+    private readonly IUnifiedCommandRegistry? _commandRegistry;
 
     /// <summary>
     /// Event raised when a command is executed.
     /// </summary>
     public event EventHandler<CommandExecutedEventArgs>? CommandExecuted;
 
-    public CommandPaletteViewModel(IPanelRegistry registry)
+    public CommandPaletteViewModel(IPanelRegistry panelRegistry)
+      : this(panelRegistry, AppServices.TryGetCommandRegistry())
     {
-      _registry = registry;
+    }
+
+    public CommandPaletteViewModel(IPanelRegistry panelRegistry, IUnifiedCommandRegistry? commandRegistry)
+        : base(AppServices.GetViewModelContext())
+    {
+      _panelRegistry = panelRegistry;
+      _commandRegistry = commandRegistry;
       RunSelectedCmd = new RelayCommand(() => Run(SelectedItem?.Id));
       RunByIdCmd = new RelayCommand<string?>(Run);
 
       LoadDefaultItems();
+      LoadRegistryCommands();
       ApplyFilter();
 
       PropertyChanged += (_, e) =>
@@ -48,7 +62,7 @@ namespace VoiceStudio.App.ViewModels
       // Load panels from all regions
       foreach (var region in Enum.GetValues<PanelRegion>())
       {
-        foreach (var d in _registry.GetPanelsForRegion(region))
+        foreach (var d in _panelRegistry.GetPanelsForRegion(region))
         {
           Items.Add(new CommandItem
           {
@@ -65,6 +79,46 @@ namespace VoiceStudio.App.ViewModels
       Items.Add(new CommandItem { Id = "theme:Light", Title = "Theme: Light", Kind = "Theme" });
       Items.Add(new CommandItem { Id = "density:Compact", Title = "Density: Compact", Kind = "Theme" });
       Items.Add(new CommandItem { Id = "density:Comfort", Title = "Density: Comfort", Kind = "Theme" });
+    }
+
+    void LoadRegistryCommands()
+    {
+      if (_commandRegistry == null)
+      {
+        Debug.WriteLine("[CommandPalette] Command registry not available");
+        return;
+      }
+
+      // Get all registered commands from the unified registry
+      var commands = _commandRegistry.GetAllCommands();
+      Debug.WriteLine($"[CommandPalette] Loading {commands.Count} commands from registry");
+
+      foreach (var descriptor in commands)
+      {
+        // Skip commands already added from panels
+        if (Items.Any(i => i.Id == descriptor.Id))
+          continue;
+
+        // Map category to Kind
+        var kind = descriptor.Category switch
+        {
+          "file" => "File",
+          "profile" => "Profile",
+          "playback" => "Playback",
+          "nav" or "navigation" => "Navigation",
+          "settings" => "Settings",
+          _ => "Command"
+        };
+
+        Items.Add(new CommandItem
+        {
+          Id = descriptor.Id,
+          Title = descriptor.Title,
+          Kind = kind,
+          Shortcut = descriptor.KeyboardShortcut,
+          IsRegistryCommand = true
+        });
+      }
     }
 
     void ApplyFilter()
@@ -88,11 +142,20 @@ namespace VoiceStudio.App.ViewModels
     {
       if (string.IsNullOrEmpty(id)) return;
 
+      // Check if this is a registry command
+      var item = Items.FirstOrDefault(i => i.Id == id);
+      if (item?.IsRegistryCommand == true && _commandRegistry != null)
+      {
+        // Execute through the unified registry
+        _ = ExecuteRegistryCommandAsync(id);
+        return;
+      }
+
       // Parse command ID (format: "action:value")
       var parts = id.Split(':', 2);
       if (parts.Length != 2)
       {
-        System.Diagnostics.Debug.WriteLine($"[Palette] Invalid command format: {id}");
+        Debug.WriteLine($"[Palette] Invalid command format: {id}");
         return;
       }
 
@@ -109,7 +172,23 @@ namespace VoiceStudio.App.ViewModels
 
       CommandExecuted?.Invoke(this, args);
 
-      System.Diagnostics.Debug.WriteLine($"[Palette] Executed: {action} = {value}");
+      Debug.WriteLine($"[Palette] Executed: {action} = {value}");
+    }
+
+    private async Task ExecuteRegistryCommandAsync(string commandId)
+    {
+      if (_commandRegistry == null) return;
+
+      try
+      {
+        Debug.WriteLine($"[CommandPalette] Executing registry command: {commandId}");
+        await _commandRegistry.ExecuteAsync(commandId, null, CancellationToken.None);
+        Debug.WriteLine($"[CommandPalette] Registry command completed: {commandId}");
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[CommandPalette] Registry command failed: {commandId} - {ex.Message}");
+      }
     }
   }
 
@@ -129,5 +208,10 @@ namespace VoiceStudio.App.ViewModels
     public string Title { get; set; } = string.Empty;
     public string Kind { get; set; } = string.Empty;
     public string? Shortcut { get; set; }
+
+    /// <summary>
+    /// Indicates if this command is registered with the UnifiedCommandRegistry.
+    /// </summary>
+    public bool IsRegistryCommand { get; set; }
   }
 }

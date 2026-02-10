@@ -13,6 +13,10 @@ using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.ViewModels;
 
+// Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
+using BatchJob = VoiceStudio.Core.Models.BatchJob;
+using Macro = VoiceStudio.Core.Models.Macro;
+
 namespace VoiceStudio.App.Views.Panels
 {
   public partial class BatchProcessingViewModel : BaseViewModel, IPanelView

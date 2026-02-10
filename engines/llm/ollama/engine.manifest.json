@@ -1,0 +1,36 @@
+{
+  "engine_id": "ollama_llm",
+  "name": "Ollama LLM",
+  "type": "llm",
+  "subtype": "chat",
+  "version": "1.0.0",
+  "description": "Local-first LLM inference via Ollama. Supports streaming, function calling, and offline operation.",
+  "entry_point": "app.core.engines.llm_local_adapter:OllamaLLMProvider",
+  "dependencies": {
+    "python": ["httpx>=0.25.0"],
+    "system": ["ollama"]
+  },
+  "capabilities": [
+    "text_generation",
+    "streaming",
+    "function_calling",
+    "intent_classification",
+    "conversation",
+    "offline"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "config_schema": {
+    "model": {"type": "string", "default": "llama3.2", "description": "Ollama model name"},
+    "base_url": {"type": "string", "default": "http://localhost:11434", "description": "Ollama server URL"},
+    "temperature": {"type": "number", "default": 0.7, "min": 0.0, "max": 2.0},
+    "max_tokens": {"type": "integer", "default": 1024, "min": 1, "max": 128000}
+  },
+  "contract": {
+    "input": {"messages": "List[Message]", "config": "Optional[LLMConfig]", "functions": "Optional[List[FunctionSpec]]"},
+    "output": {"content": "str", "finish_reason": "str", "tool_calls": "Optional[List]", "usage": "Dict[str, int]"}
+  }
+}

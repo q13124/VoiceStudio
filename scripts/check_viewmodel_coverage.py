@@ -112,6 +112,31 @@ def calculate_coverage(viewmodels: set[str], tests: set[str]) -> tuple[set[str],
     return covered, uncovered, percent
 
 
+def generate_table_report(report: CoverageReport) -> str:
+    """Generate a simple table report for CI output."""
+    lines = [
+        "ViewModel Test Coverage Report",
+        "=" * 60,
+        "",
+        f"Coverage: {report.test_count}/{report.viewmodel_count} ({report.coverage_percent:.1f}%)",
+        f"Panel Coverage: {report.panel_test_count}/{report.panel_viewmodel_count} ({report.panel_coverage_percent:.1f}%)",
+        "",
+    ]
+    
+    if report.uncovered:
+        lines.extend([
+            "Uncovered ViewModels:",
+            "-" * 40,
+        ])
+        for vm in sorted(report.uncovered)[:20]:  # Limit to 20 for readability
+            lines.append(f"  [ ] {vm}")
+        if len(report.uncovered) > 20:
+            lines.append(f"  ... and {len(report.uncovered) - 20} more")
+        lines.append("")
+    
+    return "\n".join(lines)
+
+
 def generate_markdown_report(report: CoverageReport) -> str:
     """Generate a markdown report."""
     lines = [
@@ -195,8 +220,19 @@ def main() -> int:
         action="store_true",
         help="Output as JSON instead of markdown"
     )
+    parser.add_argument(
+        "--format", "-f",
+        type=str,
+        choices=["markdown", "json", "table"],
+        default="markdown",
+        help="Output format (default: markdown)"
+    )
     
     args = parser.parse_args()
+    
+    # --json is shorthand for --format json
+    if args.json:
+        args.format = "json"
     
     project_root = get_project_root()
     
@@ -232,11 +268,19 @@ def main() -> int:
         panel_coverage_percent=panel_coverage
     )
     
-    # Generate output
-    if args.json:
+    # Generate output based on format
+    if args.format == "json":
         output = json.dumps(report.to_dict(), indent=2)
-    else:
+    elif args.format == "table":
+        output = generate_table_report(report)
+    else:  # markdown
         output = generate_markdown_report(report)
+    
+    # Also write JSON report to buildlogs for artifact upload
+    buildlogs_dir = project_root / ".buildlogs"
+    buildlogs_dir.mkdir(exist_ok=True)
+    json_report_path = buildlogs_dir / "viewmodel-coverage.json"
+    json_report_path.write_text(json.dumps(report.to_dict(), indent=2), encoding='utf-8')
     
     if args.output:
         output_path = Path(args.output)

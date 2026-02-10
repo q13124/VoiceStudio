@@ -116,32 +116,8 @@ try:
 except ImportError:
     HAS_AUDIO_UTILS = False
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        from abc import ABC, abstractmethod
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self) -> bool:
-                return False
-
-            @abstractmethod
-            def cleanup(self) -> None:
-                return None
-
-            def is_initialized(self) -> bool:
-                return self._initialized
-
-            def get_device(self) -> str:
-                return self.device
+# Import base protocol from canonical source
+from .base import EngineProtocol
 
 
 class HiggsAudioEngine(EngineProtocol):

@@ -1,0 +1,355 @@
+# AutomationId Registry
+
+> **Version**: 1.0.0  
+> **Last Updated**: 2026-02-09  
+> **Status**: ACTIVE  
+> **Owner**: UI Engineer (Role 3)
+
+---
+
+## Purpose
+
+This document is the **authoritative registry** of all stable AutomationId values in VoiceStudio. AutomationIds are treated as **public APIs** — they must not be changed casually as they are used by:
+
+- UI automation tests (FlaUI, WinAppDriver)
+- Accessibility tools (screen readers, automation frameworks)
+- Quality assurance scripts
+- End-to-end testing infrastructure
+
+---
+
+## The Golden Rule
+
+> **AutomationIds are public contracts. Changing them is a breaking change.**
+
+Before modifying any AutomationId:
+1. Check if it's used in tests (`src/VoiceStudio.App.Tests/`)
+2. Check if it's used in Python UI tests (`tests/ui/`)
+3. Update all usages in a single coordinated change
+4. Run `scripts/verify.ps1` to ensure tests still pass
+
+---
+
+## Naming Convention
+
+### Standard Format
+
+```
+{ViewName}_{ControlType}_{Purpose}
+```
+
+Examples:
+- `VoiceSynthesisView_SynthesizeButton`
+- `ProfilesView_SearchBox`
+- `EffectsMixerView_VolumeSlider`
+
+### Panel Root Format
+
+```
+{ViewName}_Root
+```
+
+Every panel MUST have a root AutomationId on its outermost container:
+- `VoiceSynthesisView_Root`
+- `ProfilesView_Root`
+- `SettingsView_Root`
+
+### Control Type Abbreviations
+
+| Control Type | Abbreviation |
+|--------------|--------------|
+| Button | Button |
+| TextBox | TextBox |
+| ComboBox | ComboBox |
+| CheckBox | CheckBox |
+| Slider | Slider |
+| ListView | ListView |
+| Grid | Grid |
+| Toggle | Toggle |
+| InfoBar | InfoBar |
+| TabView | TabView |
+
+---
+
+## Registry by Panel
+
+### Core Panels
+
+#### VoiceSynthesisView
+Primary voice synthesis interface.
+
+| AutomationId | Control Type | Purpose | Stable Since |
+|--------------|--------------|---------|--------------|
+| `VoiceSynthesisView_Root` | Grid | Panel root container | v1.0.0 |
+| `VoiceSynthesisView_ProfileComboBox` | ComboBox | Voice profile selector | v1.0.0 |
+| `VoiceSynthesisView_EngineComboBox` | ComboBox | Engine selector | v1.0.0 |
+| `VoiceSynthesisView_LanguageComboBox` | ComboBox | Language selector | v1.0.0 |
+| `VoiceSynthesisView_EmotionComboBox` | ComboBox | Emotion selector | v1.0.0 |
+| `VoiceSynthesisView_TextInput` | TextBox | Text input for synthesis | v1.0.0 |
+| `VoiceSynthesisView_SynthesizeButton` | Button | Trigger synthesis | v1.0.0 |
+| `VoiceSynthesisView_PlayButton` | Button | Play synthesized audio | v1.0.0 |
+| `VoiceSynthesisView_StopButton` | Button | Stop playback | v1.0.0 |
+| `VoiceSynthesisView_AnalyzeButton` | Button | Analyze output | v1.0.0 |
+| `VoiceSynthesisView_RefreshButton` | Button | Refresh profiles | v1.0.0 |
+| `VoiceSynthesisView_HelpButton` | Button | Show help | v1.0.0 |
+| `VoiceSynthesisView_EnhanceQualityCheckBox` | CheckBox | Quality enhancement toggle | v1.0.0 |
+| `VoiceSynthesisView_MultiEngineCheckBox` | CheckBox | Multi-engine mode toggle | v1.0.0 |
+| `VoiceSynthesisView_AutoApplyCheckBox` | CheckBox | Auto-apply toggle | v1.0.0 |
+| `VoiceSynthesisView_ErrorInfoBar` | InfoBar | Error display | v1.0.0 |
+
+#### ProfilesView
+Voice profile management.
+
+| AutomationId | Control Type | Purpose | Stable Since |
+|--------------|--------------|---------|--------------|
+| `ProfilesView_Root` | Grid | Panel root container | v1.0.0 |
+| `ProfilesView_CreateButton` | Button | Create new profile | v1.0.0 |
+| `ProfilesView_RefreshButton` | Button | Refresh profile list | v1.0.0 |
+| `ProfilesView_HelpButton` | Button | Show help | v1.0.0 |
+| `ProfilesView_SearchBox` | TextBox | Search profiles | v1.0.0 |
+| `ProfilesView_ProfilesGrid` | DataGrid | Profile list display | v1.0.0 |
+| `ProfilesView_BatchExportButton` | Button | Batch export profiles | v1.0.0 |
+| `ProfilesView_BatchDeleteButton` | Button | Batch delete profiles | v1.0.0 |
+
+#### EffectsMixerView
+Audio effects and mixing.
+
+| AutomationId | Control Type | Purpose | Stable Since |
+|--------------|--------------|---------|--------------|
+| `EffectsMixerView_Root` | Grid | Panel root container | v1.0.0 |
+| `EffectsMixerView_MixerPresetsComboBox` | ComboBox | Mixer preset selector | v1.0.0 |
+| `EffectsMixerView_RealTimeToggle` | ToggleSwitch | Real-time processing toggle | v1.0.0 |
+| `EffectsMixerView_SaveMixerButton` | Button | Save mixer state | v1.0.0 |
+| `EffectsMixerView_ResetMixerButton` | Button | Reset mixer | v1.0.0 |
+| `EffectsMixerView_HelpButton` | Button | Show help | v1.0.0 |
+| `EffectsMixerView_ChannelsItemsControl` | ItemsControl | Channel list | v1.0.0 |
+| `EffectsMixerView_VolumeSlider` | Slider | Channel volume | v1.0.0 |
+| `EffectsMixerView_PanSlider` | Slider | Channel pan | v1.0.0 |
+| `EffectsMixerView_MuteButton` | Button | Mute channel | v1.0.0 |
+| `EffectsMixerView_SoloButton` | Button | Solo channel | v1.0.0 |
+| `EffectsMixerView_ClearSelectionButton` | Button | Clear selection | v1.0.0 |
+| `EffectsMixerView_AddChainButton` | Button | Add effect chain | v1.0.0 |
+| `EffectsMixerView_NewChainNameTextBox` | TextBox | New chain name input | v1.0.0 |
+| `EffectsMixerView_CreateChainButton` | Button | Create chain | v1.0.0 |
+| `EffectsMixerView_EffectChainsListView` | ListView | Effect chains list | v1.0.0 |
+| `EffectsMixerView_AddEffectComboBox` | ComboBox | Add effect selector | v1.0.0 |
+| `EffectsMixerView_EffectsListView` | ListView | Effects list | v1.0.0 |
+| `EffectsMixerView_MasterVolumeSlider` | Slider | Master volume | v1.0.0 |
+| `EffectsMixerView_MasterPanSlider` | Slider | Master pan | v1.0.0 |
+| `EffectsMixerView_MasterMuteButton` | Button | Master mute | v1.0.0 |
+
+#### AnalyzerView
+Audio analysis tools.
+
+| AutomationId | Control Type | Purpose | Stable Since |
+|--------------|--------------|---------|--------------|
+| `AnalyzerView_Root` | Grid | Panel root container | v1.0.0 |
+| `Analyzer_TabView` | TabView | Analysis mode tabs | v1.0.0 |
+| `Analyzer_HelpButton` | Button | Show help | v1.0.0 |
+| `Analyzer_BrowseButton` | Button | Browse for audio file | v1.0.0 |
+| `Analyzer_AudioIdTextBox` | TextBox | Audio ID input | v1.0.0 |
+| `Analyzer_LoadButton` | Button | Load audio | v1.0.0 |
+
+#### MiniTimelineView
+Compact playback timeline.
+
+| AutomationId | Control Type | Purpose | Stable Since |
+|--------------|--------------|---------|--------------|
+| `MiniTimelineView_Root` | Grid | Panel root container | v1.0.0 |
+| `MiniTimeline_PlayPauseButton` | Button | Play/pause toggle | v1.0.0 |
+| `MiniTimeline_StopButton` | Button | Stop playback | v1.0.0 |
+| `MiniTimeline_ZoomOutButton` | Button | Zoom out timeline | v1.0.0 |
+| `MiniTimeline_ZoomInButton` | Button | Zoom in timeline | v1.0.0 |
+
+### Panel Root IDs (All Panels)
+
+Every panel has a `_Root` AutomationId for test navigation:
+
+| Panel | AutomationId |
+|-------|--------------|
+| VoiceSynthesisView | `VoiceSynthesisView_Root` |
+| ProfilesView | `ProfilesView_Root` |
+| EffectsMixerView | `EffectsMixerView_Root` |
+| AnalyzerView | `AnalyzerView_Root` |
+| TimelineView | `TimelineView_Root` |
+| LibraryView | `LibraryView_Root` |
+| SettingsView | `SettingsView_Root` |
+| DiagnosticsView | `DiagnosticsView_Root` |
+| JobProgressView | `JobProgressView_Root` |
+| GPUStatusView | `GPUStatusView_Root` |
+| MCPDashboardView | `MCPDashboardView_Root` |
+| SLODashboardView | `SLODashboardView_Root` |
+| PluginManagementView | `PluginManagementView_Root` |
+| TextBasedSpeechEditorView | `TextBasedSpeechEditorView_Root` |
+| MiniTimelineView | `MiniTimelineView_Root` |
+| MacroView | `MacroView_Root` |
+| TodoPanelView | `TodoPanelView_Root` |
+| VoiceBrowserView | `VoiceBrowserView_Root` |
+| VoiceQuickCloneView | `VoiceQuickCloneView_Root` |
+| VoiceMorphView | `VoiceMorphView_Root` |
+| VoiceMorphingBlendingView | `VoiceMorphingBlendingView_Root` |
+| BatchProcessingView | `BatchProcessingView_Root` |
+| BackupRestoreView | `BackupRestoreView_Root` |
+| DatasetQAView | `DatasetQAView_Root` |
+| DeepfakeCreatorView | `DeepfakeCreatorView_Root` |
+| ImageGenView | `ImageGenView_Root` |
+| VideoGenView | `VideoGenView_Root` |
+| UpscalingView | `UpscalingView_Root` |
+| ImageVideoEnhancementPipelineView | `ImageVideoEnhancementPipelineView_Root` |
+
+---
+
+## Rules for Adding New AutomationIds
+
+### When to Add
+
+Add an AutomationId when the control:
+1. Is a primary action button (Save, Delete, Submit, etc.)
+2. Is a key input field (search, text input, etc.)
+3. Is needed for test navigation (panel roots)
+4. Must be accessible to automation tools
+5. Is part of a critical user workflow
+
+### How to Add
+
+1. **Choose a name** following the naming convention:
+   ```
+   {ViewName}_{ControlType}_{Purpose}
+   ```
+
+2. **Add to XAML**:
+   ```xml
+   <Button AutomationProperties.AutomationId="MyView_SaveButton"
+           Content="Save" />
+   ```
+
+3. **Update this registry** with:
+   - AutomationId
+   - Control type
+   - Purpose
+   - Version it was added
+
+4. **Add a test** that uses the new ID:
+   ```csharp
+   [TestMethod]
+   public async Task SaveButton_Exists()
+   {
+       await NavigateToPanelAsync("MyView");
+       var button = FindElement("MyView_SaveButton");
+       Assert.IsNotNull(button);
+   }
+   ```
+
+5. **Run verification**:
+   ```powershell
+   .\scripts\verify.ps1 -SkipIntegration
+   ```
+
+### What NOT to Do
+
+- Do NOT add AutomationIds to every control (only key ones)
+- Do NOT use dynamic or generated IDs
+- Do NOT change existing IDs without updating all usages
+- Do NOT use spaces or special characters in IDs
+
+---
+
+## Deprecation Process
+
+When an AutomationId must be changed or removed:
+
+1. **Mark as deprecated** in this registry with removal version
+2. **Add a migration note** to CHANGELOG.md
+3. **Update all test usages** in the same PR
+4. **Keep old ID for 1 minor version** if possible
+5. **Remove in next major version**
+
+### Deprecated IDs
+
+| Old ID | New ID | Deprecated Since | Remove In |
+|--------|--------|------------------|-----------|
+| (none) | — | — | — |
+
+---
+
+## Test Helper Integration
+
+### C# Test Helpers
+
+The `SmokeTestBase` class uses these IDs:
+
+```csharp
+// Find element by AutomationId
+var button = FindElement("VoiceSynthesisView_SynthesizeButton");
+
+// Click button by AutomationId
+await ClickButtonAsync("VoiceSynthesisView_SynthesizeButton");
+
+// Navigate to panel (uses _Root IDs)
+await NavigateToPanelAsync("VoiceSynthesis");
+```
+
+### Python Test Helpers
+
+The `ElementHelper` class uses these IDs:
+
+```python
+# Find element by AutomationId
+button = element_helper.find_by_id("VoiceSynthesisView_SynthesizeButton")
+
+# Click button
+element_helper.click_button("VoiceSynthesisView_SynthesizeButton")
+
+# Navigate to panel
+navigation_helper.navigate_to_panel("VoiceSynthesis")
+```
+
+---
+
+## Accessibility Integration
+
+AutomationIds work with other accessibility properties:
+
+```xml
+<Button AutomationProperties.AutomationId="VoiceSynthesisView_SynthesizeButton"
+        AutomationProperties.Name="Synthesize voice"
+        AutomationProperties.HelpText="Generate audio from the text input"
+        Content="Synthesize" />
+```
+
+| Property | Purpose |
+|----------|---------|
+| `AutomationId` | Stable identifier for automation |
+| `Name` | Human-readable label (read by screen readers) |
+| `HelpText` | Extended description (shown in tooltips) |
+
+---
+
+## Verification
+
+Run this command to check AutomationId coverage:
+
+```powershell
+# Count AutomationIds in XAML files
+Get-ChildItem -Path src -Filter *.xaml -Recurse | 
+    Select-String 'AutomationProperties.AutomationId' | 
+    Measure-Object
+
+# Check for missing _Root IDs
+Get-ChildItem -Path src/VoiceStudio.App/Views/Panels -Filter *View.xaml | 
+    ForEach-Object { 
+        $content = Get-Content $_.FullName -Raw
+        if ($content -notmatch 'AutomationProperties.AutomationId="\w+_Root"') {
+            Write-Host "MISSING ROOT: $($_.Name)"
+        }
+    }
+```
+
+---
+
+## Related Documents
+
+- [UI_TESTING_GUIDE.md](UI_TESTING_GUIDE.md) - UI testing documentation
+- [UI_TEST_HOOKS.md](../design/UI_TEST_HOOKS.md) - Test hook specification
+- [SmokeTestBase.cs](../../src/VoiceStudio.App.Tests/UI/SmokeTestBase.cs) - C# test base class
+- [helpers.py](../../tests/ui/helpers.py) - Python test helpers

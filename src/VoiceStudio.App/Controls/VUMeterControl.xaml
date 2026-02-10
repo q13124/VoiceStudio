@@ -1,13 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 5.5: Chart Control Implementations -->
+<!-- Task 5.5.2: VU Meter visualization control -->
 <UserControl
     x:Class="VoiceStudio.App.Controls.VUMeterControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VoiceStudio.App.Controls"
-    x:DataType="local:VUMeterControl">
-    <Grid x:Name="VUMeterContainer" Background="Black">
-        <Canvas x:Name="MeterCanvas">
-            <Rectangle x:Name="PeakBar" Fill="Green" />
-            <Rectangle x:Name="RmsBar" Fill="Green" />
-        </Canvas>
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    MinWidth="8"
+    MinHeight="50">
+
+    <Grid x:Name="MeterGrid"
+          Background="Transparent"
+          CornerRadius="2">
+        <!-- Content added programmatically -->
     </Grid>
 </UserControl>

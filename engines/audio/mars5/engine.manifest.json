@@ -1,0 +1,67 @@
+{
+  "engine_id": "mars5",
+  "name": "MARS5",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "venv_family": "venv_core_tts",
+  "description": "MARS5 - Efficient voice cloning and synthesis with low latency",
+  "author": "Camb.AI",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "torch": ">=2.0.0",
+    "torchaudio": ">=2.0.0",
+    "transformers": ">=4.30.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\mars5",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\mars5\\cache"
+  },
+  "supported_languages": ["en"],
+  "capabilities": [
+    "voice_cloning",
+    "low_latency_synthesis",
+    "prosody_control"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac"],
+      "sample_rates": [16000, 22050, 24000],
+      "max_duration_seconds": 15,
+      "min_duration_seconds": 1,
+      "text_max_chars": 3000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 24000,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "cpu_threads": 4,
+      "timeout_seconds": 60
+    }
+  },
+  "entry_point": "app.core.engines.mars5:MARS5Engine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    }
+  }
+}

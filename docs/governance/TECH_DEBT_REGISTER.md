@@ -211,7 +211,7 @@
 
 - [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md)
 - [TASK-0022_COMPLETE_RECOVERY_REPORT_2026-01-30.md](../reports/post_mortem/TASK-0022_COMPLETE_RECOVERY_REPORT_2026-01-30.md)
-- [ADR-018](../architecture/decisions/ADR-018-ipc-architecture-deviation.md) (IPC Deviation)
+- [ADR-018](../architecture/decisions/ADR-018-named-pipes-http.md) (Named Pipes over HTTP)
 - [ADR-019](../architecture/decisions/ADR-019-orchestration-architecture.md) (Orchestration Deviation)
 
 ---

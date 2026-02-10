@@ -308,7 +308,7 @@ def collect_dashboard_metrics(manager: ContextManager) -> DashboardMetrics:
 
 
 def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
-    """Render metrics as ASCII table."""
+    """Render metrics as ASCII table (Windows-compatible)."""
     lines = []
     
     lines.append("")
@@ -317,11 +317,11 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     lines.append("=" * 70)
     lines.append("")
     
-    # Overall progress
+    # Overall progress - use ASCII-safe characters
     pct = metrics.overall_progress_pct
     bar_width = 40
     filled = int(pct / 100 * bar_width)
-    bar = "█" * filled + "░" * (bar_width - filled)
+    bar = "#" * filled + "-" * (bar_width - filled)
     color = "\033[92m" if pct >= 80 else "\033[93m" if pct >= 50 else "\033[91m"
     reset = "\033[0m"
     lines.append(f"Overall Progress: {color}[{bar}] {pct:.1f}%{reset}")
@@ -330,7 +330,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     
     # Warnings
     if metrics.warnings:
-        lines.append("\033[93m⚠ Warnings:\033[0m")
+        lines.append("\033[93m[!] Warnings:\033[0m")
         for warning in metrics.warnings:
             lines.append(f"  - {warning}")
         lines.append("")
@@ -342,7 +342,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     lines.append(f"{'Role':<20} {'ID':<4} {'Config':<8} {'Sources':<10}")
     lines.append("-" * 70)
     for role in metrics.roles:
-        config_status = "\033[92m✓\033[0m" if role.config_exists else "\033[91m✗\033[0m"
+        config_status = "\033[92mOK\033[0m" if role.config_exists else "\033[91mNO\033[0m"
         lines.append(f"{role.role_name:<20} {role.role_id:<4} {config_status:<8} {role.sources_configured:<10}")
     lines.append("")
     
@@ -353,8 +353,8 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     lines.append(f"{'Source':<20} {'Healthy':<8} {'Fetches':<10} {'Fail%':<8} {'Offline':<8}")
     lines.append("-" * 70)
     for source in metrics.sources:
-        healthy_icon = "\033[92m✓\033[0m" if source.is_healthy else "\033[91m✗\033[0m"
-        offline_icon = "✓" if source.offline_capable else "-"
+        healthy_icon = "\033[92mOK\033[0m" if source.is_healthy else "\033[91mNO\033[0m"
+        offline_icon = "Y" if source.offline_capable else "-"
         lines.append(f"{source.source_name:<20} {healthy_icon:<8} {source.total_fetches:<10} {source.failure_rate:<8.1f} {offline_icon:<8}")
     lines.append("")
     

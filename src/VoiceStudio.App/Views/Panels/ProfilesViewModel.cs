@@ -1141,9 +1141,9 @@ namespace VoiceStudio.App.Views.Panels
         _profileChangeCts?.Cancel();
         _profileChangeCts?.Dispose();
       }
+      // ALLOWED: empty catch - already disposed is expected during cleanup
       catch (ObjectDisposedException)
       {
-        // Already disposed, ignore
       }
       _profileChangeCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 

@@ -1,0 +1,37 @@
+{
+  "engine_id": "localai_llm",
+  "name": "LocalAI LLM",
+  "type": "llm",
+  "subtype": "chat",
+  "version": "1.0.0",
+  "description": "OpenAI-compatible local LLM inference via LocalAI. Supports streaming, function calling, and multiple model backends.",
+  "entry_point": "app.core.engines.llm_local_adapter:LocalAILLMProvider",
+  "dependencies": {
+    "python": ["httpx>=0.25.0"],
+    "system": ["localai"]
+  },
+  "capabilities": [
+    "text_generation",
+    "streaming",
+    "function_calling",
+    "intent_classification",
+    "conversation",
+    "offline",
+    "openai_compatible"
+  ],
+  "device_requirements": {
+    "gpu": "optional",
+    "vram_min_gb": 0,
+    "ram_min_gb": 4
+  },
+  "config_schema": {
+    "model": {"type": "string", "default": "gpt-3.5-turbo", "description": "LocalAI model alias"},
+    "base_url": {"type": "string", "default": "http://localhost:8080", "description": "LocalAI server URL"},
+    "temperature": {"type": "number", "default": 0.7, "min": 0.0, "max": 2.0},
+    "max_tokens": {"type": "integer", "default": 1024, "min": 1, "max": 128000}
+  },
+  "contract": {
+    "input": {"messages": "List[Message]", "config": "Optional[LLMConfig]", "functions": "Optional[List[FunctionSpec]]"},
+    "output": {"content": "str", "finish_reason": "str", "tool_calls": "Optional[List]", "usage": "Dict[str, int]"}
+  }
+}

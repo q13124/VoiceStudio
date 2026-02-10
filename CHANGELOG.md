@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+#### Verification Infrastructure (2026-02-09)
+- Unified verification harness (`scripts/verify.ps1`) with 8 stages
+  - Clean Build (C#)
+  - Python Quality Checks (ruff, mypy)
+  - C# Unit Tests
+  - Python Unit Tests
+  - Contract Tests (C# ↔ Python)
+  - Backend Integration Tests
+  - UI Smoke Tests
+  - Gate/Ledger Validation
+- Change control rules (`docs/governance/CHANGE_CONTROL_RULES.md`)
+  - Non-negotiable "no green = no merge" policy
+  - Stabilization mode protocol
+  - Cursor agent operating protocol
+  - Blast radius limits (max files per change)
+- AutomationId registry (`docs/developer/AUTOMATION_ID_REGISTRY.md`)
+  - 50+ documented stable AutomationIds
+  - Naming conventions and rules
+  - Deprecation process
+- Engine adapter contract tests (`tests/contract/test_engine_adapter_contracts.py`)
+  - Protocol compliance verification
+  - Method signature validation
+  - Error handling contract tests
+- Verification harness agent rule (`.cursor/rules/workflows/verification-harness.mdc`)
+
+---
+
 ## [1.0.1] - 2026-02-05
 
 ### Added

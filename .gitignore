@@ -76,3 +76,6 @@ openmemory.md
 AGENTS.md
 .cursor\rules\openmemory.mdc
 AGENTS.md
+
+# Audio uploads (user data)
+data/audio_uploads/

@@ -26,9 +26,22 @@ namespace VoiceStudio.Core.Services
     Task NavigateBackAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Navigates forward to the next panel (after going back).
+    /// Phase 5.2.6: Forward navigation support.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task NavigateForwardAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Checks if back navigation is possible.
     /// </summary>
     bool CanNavigateBack();
+
+    /// <summary>
+    /// Checks if forward navigation is possible.
+    /// Phase 5.2.6: Forward navigation support.
+    /// </summary>
+    bool CanNavigateForward();
 
     /// <summary>
     /// Gets the current panel ID.

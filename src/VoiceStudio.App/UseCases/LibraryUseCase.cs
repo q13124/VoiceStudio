@@ -191,26 +191,26 @@ namespace VoiceStudio.App.UseCases
       return response?.ExportPath ?? exportPath;
     }
 
-    // Request/Response DTOs
-    private class LibraryFoldersResponse { public List<LibraryFolder>? Folders { get; set; } }
-    private class LibraryFolderContentsResponse
+    // Request/Response DTOs (public for testability)
+    public class LibraryFoldersResponse { public List<LibraryFolder>? Folders { get; set; } }
+    public class LibraryFolderContentsResponse
     {
       public LibraryFolder? Folder { get; set; }
       public List<LibraryFolder>? Subfolders { get; set; }
       public List<LibraryItem>? Items { get; set; }
     }
-    private class CreateFolderRequest { public string Name { get; set; } = ""; public string? ParentId { get; set; } }
-    private class RenameFolderRequest { public string Name { get; set; } = ""; }
-    private class ImportFilesRequest { public List<string> FilePaths { get; set; } = new(); public string? TargetFolderId { get; set; } }
-    private class ImportFilesResponse { public List<LibraryItem>? ImportedItems { get; set; } }
-    private class LibrarySearchResponse { public List<LibraryItem>? Results { get; set; } }
-    private class DeleteItemsRequest { public List<string> ItemIds { get; set; } = new(); }
-    private class DeleteItemsResponse { public int DeletedCount { get; set; } }
-    private class MoveItemsRequest { public List<string> ItemIds { get; set; } = new(); public string TargetFolderId { get; set; } = ""; }
-    private class MoveItemsResponse { public int MovedCount { get; set; } }
-    private class ExportItemsRequest { public List<string> ItemIds { get; set; } = new(); public string ExportPath { get; set; } = ""; }
-    private class ExportItemsResponse { public string? ExportPath { get; set; } }
-    private class DeleteFolderRequest { public string FolderId { get; set; } = ""; public bool DeleteContents { get; set; } }
-    private class DeleteResponse { public bool Success { get; set; } }
+    public class CreateFolderRequest { public string Name { get; set; } = ""; public string? ParentId { get; set; } }
+    public class RenameFolderRequest { public string Name { get; set; } = ""; }
+    public class ImportFilesRequest { public List<string> FilePaths { get; set; } = new(); public string? TargetFolderId { get; set; } }
+    public class ImportFilesResponse { public List<LibraryItem>? ImportedItems { get; set; } }
+    public class LibrarySearchResponse { public List<LibraryItem>? Results { get; set; } }
+    public class DeleteItemsRequest { public List<string> ItemIds { get; set; } = new(); }
+    public class DeleteItemsResponse { public int DeletedCount { get; set; } }
+    public class MoveItemsRequest { public List<string> ItemIds { get; set; } = new(); public string TargetFolderId { get; set; } = ""; }
+    public class MoveItemsResponse { public int MovedCount { get; set; } }
+    public class ExportItemsRequest { public List<string> ItemIds { get; set; } = new(); public string ExportPath { get; set; } = ""; }
+    public class ExportItemsResponse { public string? ExportPath { get; set; } }
+    public class DeleteFolderRequest { public string FolderId { get; set; } = ""; public bool DeleteContents { get; set; } }
+    public class DeleteResponse { public bool Success { get; set; } }
   }
 }

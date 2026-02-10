@@ -158,4 +158,4 @@ If generated types don't match expected format:
 - [NSwag Tooling](../../tools/nswag/README.md)
 - [Serialization Guide](./SERIALIZATION_GUIDE.md)
 - [API Contract Guide](./API_CONTRACT_GUIDE.md)
-- [ADR-007: IPC Architecture](../architecture/decisions/ADR-007-ipc-architecture.md)
+- [ADR-007: IPC Boundary](../architecture/decisions/ADR-007-ipc-boundary.md)

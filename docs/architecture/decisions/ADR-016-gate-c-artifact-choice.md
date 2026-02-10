@@ -1,10 +1,8 @@
 # ADR-016: Gate C Artifact Choice
 
-**Status**: Accepted
-
 ## Status
 
-**APPROVED** — Unpackaged self-contained apphost EXE (single lane)
+**Accepted** (2026-01-29)
 
 ## Context
 

@@ -57,17 +57,37 @@ class RoleRegistry:
         if path.exists():
             data = json.loads(path.read_text(encoding="utf-8"))
             roles = []
-            for entry in data.get("roles", []):
-                roles.append(
-                    RoleConfig(
-                        id=str(entry.get("id")),
-                        short_name=entry.get("short_name", "").strip(),
-                        name=entry.get("name", "").strip(),
-                        prompt_path=entry.get("prompt_path", "").strip(),
-                        guide_path=entry.get("guide_path"),
-                        primary_gates=list(entry.get("primary_gates", [])),
+            roles_data = data.get("roles", {})
+            # Handle both dict format {"0": {...}} and list format [{...}]
+            if isinstance(roles_data, dict):
+                for role_id, entry in roles_data.items():
+                    if not isinstance(entry, dict):
+                        continue
+                    roles.append(
+                        RoleConfig(
+                            id=str(role_id),
+                            short_name=entry.get("name", "").strip(),
+                            name=entry.get("display_name", entry.get("name", "")).strip(),
+                            prompt_path=entry.get("prompt", entry.get("prompt_path", "")).strip(),
+                            guide_path=entry.get("guide", entry.get("guide_path")),
+                            primary_gates=list(entry.get("gates", entry.get("primary_gates", []))),
+                        )
                     )
-                )
+            else:
+                # Legacy list format
+                for entry in roles_data:
+                    if not isinstance(entry, dict):
+                        continue
+                    roles.append(
+                        RoleConfig(
+                            id=str(entry.get("id")),
+                            short_name=entry.get("short_name", "").strip(),
+                            name=entry.get("name", "").strip(),
+                            prompt_path=entry.get("prompt_path", "").strip(),
+                            guide_path=entry.get("guide_path"),
+                            primary_gates=list(entry.get("primary_gates", [])),
+                        )
+                    )
             return cls(roles)
         return cls(cls._scan_roles(root))
 

@@ -1,7 +1,7 @@
 # VoiceStudio Quantum+ Master Roadmap (Unified)
 
 > **Version**: 1.0.0  
-> **Last Updated**: 2026-01-29  
+> **Last Updated**: 2026-02-10  
 > **Owner**: Overseer (Role 0)  
 > **Status**: ACTIVE — Primary canonical roadmap  
 > **Supersedes**: MASTER_ROADMAP.md, MASTER_ROADMAP_SUMMARY.md, MASTER_ROADMAP_INDEX.md (archived to `docs/archive/governance/`)
@@ -190,13 +190,21 @@ Per [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITE
 
 ### Phase 10: Documentation Completeness (formerly Phase 9)
 
+**Status**: IN PROGRESS (2026-02-10)  
+**Entry Criteria**: All gates B-H GREEN ✓ (satisfied)
+
 Per [FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md](../reports/verification/FINAL_SWEEP_MISSING_FILES_GAPS_2026-01-29.md):
 
-| Item | Description | Effort | Owner |
-|------|-------------|--------|-------|
-| 13 missing ADRs | Create placeholder or full ADRs (ADR-002, 004-014, 016) | 4-6h (placeholders) or 16-24h (full) | Role 1 |
-| Missing task briefs | Backfill TASK-0009, 0011-0019, 0021 | 8-11h | Role 0 |
-| Architecture README | Create docs/architecture/README.md | 1-2h | Role 1 |
+| Item | Description | Effort | Owner | Status |
+|------|-------------|--------|-------|--------|
+| ADR Index complete | All 30 ADRs indexed in decisions/README.md | 1h | Role 1 | ✓ DONE |
+| ADR-020 Debug Role | Debug Role Architecture ADR | 0.5h | Role 1 | ✓ DONE |
+| ADR-021 Voice Pipeline | Voice AI Pipeline Architecture ADR | 0.5h | Role 1 | ✓ DONE |
+| ADR-022 DDD Contexts | DDD Bounded Contexts ADR | 0.5h | Role 1 | ✓ DONE |
+| Broken ADR references | Fix references in 5 governance/developer docs | 0.5h | Role 1 | ✓ DONE |
+| Architecture README | Updated docs/architecture/README.md | 0.5h | Role 1 | ✓ DONE |
+| Missing task briefs | Backfill TASK-0009, 0011-0019, 0023, 0026 | 8-11h | Role 0 | ✓ DONE |
+| Remaining placeholders | ADR-002, 004-014, 016 | 4-6h | Role 1 | ✓ DONE |
 
 ---
 
@@ -315,3 +323,4 @@ See [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md) for complete list. Summary:
 |------|--------|--------|
 | 2026-01-29 | Initial creation — consolidates roadmap state post-Phase-5 | Overseer (Role 0) |
 | 2026-02-04 | Added Phase 7: Quality Infrastructure; renumbered subsequent phases | Phase 7 Plan Implementation |
+| 2026-02-10 | Phase 10 in progress: ADR-020/021/022 created, ADR index complete, architecture README updated | Phase 10 Implementation |

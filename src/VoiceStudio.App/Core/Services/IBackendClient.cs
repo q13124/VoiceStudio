@@ -79,6 +79,46 @@ namespace VoiceStudio.Core.Services
     /// <returns>Upload response containing the audio ID.</returns>
     Task<AudioUploadResponse> UploadAudioFileAsync(string filePath, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Uploads a file to a specified endpoint with progress reporting.
+    /// </summary>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="endpoint">The API endpoint.</param>
+    /// <param name="filePath">Path to the local file.</param>
+    /// <param name="fileFieldName">Name of the form field for the file.</param>
+    /// <param name="additionalData">Additional form data to include.</param>
+    /// <param name="progress">Progress reporter (0-100).</param>
+    /// <param name="timeout">Timeout for the upload operation.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The response from the API.</returns>
+    Task<TResponse?> UploadFileWithProgressAsync<TResponse>(
+        string endpoint,
+        string filePath,
+        string fileFieldName = "file",
+        Dictionary<string, string>? additionalData = null,
+        IProgress<double>? progress = null,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default) where TResponse : class;
+
+    /// <summary>
+    /// Uploads multiple files to a specified endpoint with progress reporting.
+    /// </summary>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="endpoint">The API endpoint.</param>
+    /// <param name="files">Dictionary of field names to file paths.</param>
+    /// <param name="additionalData">Additional form data to include.</param>
+    /// <param name="progress">Progress reporter (0-100).</param>
+    /// <param name="timeout">Timeout for the upload operation.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The response from the API.</returns>
+    Task<TResponse?> UploadFilesWithProgressAsync<TResponse>(
+        string endpoint,
+        Dictionary<string, string> files,
+        Dictionary<string, string>? additionalData = null,
+        IProgress<double>? progress = null,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default) where TResponse : class;
+
     // Audio visualization data
     Task<WaveformData> GetWaveformDataAsync(string audioId, int width = 1024, string mode = "peak", CancellationToken cancellationToken = default);
     Task<SpectrogramData> GetSpectrogramDataAsync(string audioId, int width = 512, int height = 256, CancellationToken cancellationToken = default);
@@ -338,6 +378,10 @@ namespace VoiceStudio.Core.Services
     Task<VideoUpscaleResponse> UpscaleVideoAsync(VideoUpscaleRequest request, CancellationToken cancellationToken = default);
     Task<VideoInfo> GetVideoInfoAsync(string videoPath, CancellationToken cancellationToken = default);
     Task<VideoEditResponse> EditVideoAsync(VideoEditRequest request, CancellationToken cancellationToken = default);
+
+    // Voice AI Pipeline
+    Task<VoiceStudio.App.Core.Models.PipelineProvidersResponse> GetPipelineProvidersAsync(CancellationToken cancellationToken = default);
+    Task<VoiceStudio.App.Core.Models.PipelineResponse> ProcessPipelineAsync(VoiceStudio.App.Core.Models.PipelineRequest request, CancellationToken cancellationToken = default);
 
     // Base address property
     System.Uri? BaseAddress { get; }

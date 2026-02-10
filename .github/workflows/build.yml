@@ -295,6 +295,60 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  xaml-quality:
+    name: XAML Quality Checks
+    runs-on: windows-latest
+    needs: [build-frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Run Unified XAML Quality Validation
+        run: |
+          python scripts/validate_xaml_quality.py --verbose
+        continue-on-error: true
+        id: xaml-quality
+        
+      - name: Run XAML Binding Validation
+        run: |
+          python scripts/validate_xaml_bindings.py --verbose
+        continue-on-error: true
+        id: xaml-bindings
+        
+      - name: XAML Quality Summary
+        if: always()
+        run: |
+          Write-Host "=== XAML Quality Summary ===" -ForegroundColor Cyan
+          
+          if ("${{ steps.xaml-quality.outcome }}" -eq "failure") {
+            Write-Host "[WARN] XAML quality checks found issues" -ForegroundColor Yellow
+          } else {
+            Write-Host "[OK] XAML quality checks passed" -ForegroundColor Green
+          }
+          
+          if ("${{ steps.xaml-bindings.outcome }}" -eq "failure") {
+            Write-Host "[WARN] XAML binding validation found issues" -ForegroundColor Yellow
+          } else {
+            Write-Host "[OK] XAML binding validation passed" -ForegroundColor Green
+          }
+          
+      - name: Upload XAML Quality Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xaml-quality-reports
+          path: |
+            .buildlogs/xaml-quality.json
+            .buildlogs/xaml-bindings.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   validate-platform:
     name: Validate Native Windows Platform
     runs-on: windows-latest

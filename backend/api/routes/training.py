@@ -17,9 +17,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
+from ..middleware.auth_middleware import require_auth_if_enabled
 
 from backend.core.security.file_validation import (
     FileValidationError,
@@ -47,7 +49,11 @@ except ImportError:
     HAS_WEBSOCKET = False
     logger.warning("WebSocket realtime module not available")
 
-router = APIRouter(prefix="/api/training", tags=["training"])
+router = APIRouter(
+    prefix="/api/training",
+    tags=["training"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # In-memory storage (replace with database in production)
 _training_jobs: dict[str, dict] = {}
@@ -468,8 +474,8 @@ async def optimize_training_data(
                                 audio = np.mean(audio, axis=1)
                             mos = engine_service.calculate_mos_score(audio)
                             quality_scores.append((audio_file, mos))
-                        except:
-                            ...
+                        except (OSError, ValueError, RuntimeError) as mos_err:
+                            logger.debug(f"MOS calculation failed for {audio_file}: {mos_err}")
 
                 if quality_scores:
                     # Calculate average quality

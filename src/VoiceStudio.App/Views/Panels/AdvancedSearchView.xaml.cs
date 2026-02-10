@@ -135,11 +135,31 @@ namespace VoiceStudio.App.Views.Panels
 
     private void HelpButton_Click(object _, RoutedEventArgs __)
     {
-      // Phase 0: placeholder help overlay.
+      // Phase 5.6: Updated help overlay with comprehensive guidance.
       if (HelpOverlay != null)
       {
         HelpOverlay.Title = "Advanced Search Help";
-        HelpOverlay.HelpText = "Advanced Search is temporarily simplified for build stability.";
+        HelpOverlay.HelpText = @"Advanced Search allows you to find voice profiles, audio files, and projects using powerful search criteria.
+
+Features:
+• Full-text search across all metadata fields
+• Filter by file type (voice profile, audio, project)
+• Filter by date range, duration, and quality scores
+• Tag-based filtering and categorization
+• Save and reuse search queries
+
+Tips:
+• Use quotes for exact phrase matching
+• Combine multiple filters for precise results
+• Click on results to navigate to the item
+• Use keyboard shortcuts for faster navigation";
+
+        HelpOverlay.Shortcuts.Clear();
+        HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "Ctrl+F", Description = "Focus search box" });
+        HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "Enter", Description = "Execute search" });
+        HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "Escape", Description = "Clear search" });
+        HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "F5", Description = "Refresh results" });
+
         HelpOverlay.Visibility = Visibility.Visible;
         HelpOverlay.Show();
       }

@@ -34,32 +34,8 @@ except ImportError:
         "diffusers not installed. Install with: pip install diffusers>=0.21.0"
     )
 
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self):
-                ...
-
-            @abstractmethod
-            def cleanup(self):
-                ...
-
-            def is_initialized(self):
-                return self._initialized
-
-            def get_device(self):
-                return self.device
+# Import base protocol from canonical source
+from .base import EngineProtocol
 
 
 class SDCPUEngine(EngineProtocol):

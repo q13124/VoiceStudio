@@ -8,7 +8,7 @@ import time
 import requests
 import logging
 import os
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional, List, Any, IO
 from pathlib import Path
 import json
 
@@ -81,6 +81,10 @@ class EnhancedRuntimeEngine:
         self.log_file: Optional[Path] = None
         self.stderr_file: Optional[Path] = None
         
+        # Open file handles for process output (to be closed on stop)
+        self._stdout_handle: Optional[IO] = None
+        self._stderr_handle: Optional[IO] = None
+        
         # Lifecycle configuration
         self.lifecycle_config = manifest.get("lifecycle", {})
         self.idle_timeout = self.lifecycle_config.get("idle_timeout_seconds")
@@ -116,6 +120,22 @@ class EnhancedRuntimeEngine:
         
         if self.log_config.get("stdout_to_file"):
             self.log_file = log_dir / f"{self.engine_id}_stdout.log"
+    
+    def _close_log_handles(self):
+        """Close any open log file handles to prevent resource leaks."""
+        if self._stdout_handle is not None:
+            try:
+                self._stdout_handle.close()
+            except Exception as e:
+                logger.debug(f"Error closing stdout handle: {e}")
+            self._stdout_handle = None
+        
+        if self._stderr_handle is not None:
+            try:
+                self._stderr_handle.close()
+            except Exception as e:
+                logger.debug(f"Error closing stderr handle: {e}")
+            self._stderr_handle = None
     
     def start(self, job_id: Optional[str] = None) -> bool:
         """
@@ -210,24 +230,24 @@ class EnhancedRuntimeEngine:
                 self.state = EngineState.ERROR
                 return False
             
-            # Setup log files
-            stdout_file = None
-            stderr_file = None
+            # Setup log files - store handles as instance variables for cleanup
+            self._stdout_handle = None
+            self._stderr_handle = None
             
             if self.log_file:
-                stdout_file = open(self.log_file, 'a')
+                self._stdout_handle = open(self.log_file, 'a')
             
             if self.stderr_file:
-                stderr_file = open(self.stderr_file, 'a')
+                self._stderr_handle = open(self.stderr_file, 'a')
             
             # Start process
             logger.info(f"Starting engine {self.engine_id} on port {self.port}: {cmd}")
             self.process = subprocess.Popen(
                 cmd,
                 cwd=str(self.workspace_root),
-                stdout=stdout_file or subprocess.PIPE,
-                stderr=stderr_file or subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_NO_WINDOW') else 0
+                stdout=self._stdout_handle or subprocess.PIPE,
+                stderr=self._stderr_handle or subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
             )
             
             self.pid = self.process.pid
@@ -248,10 +268,7 @@ class EnhancedRuntimeEngine:
             if self.process.poll() is not None:
                 logger.error(f"Engine {self.engine_id} exited immediately")
                 self.state = EngineState.ERROR
-                if stdout_file:
-                    stdout_file.close()
-                if stderr_file:
-                    stderr_file.close()
+                self._close_log_handles()
                 return False
             
             # Health check
@@ -303,6 +320,9 @@ class EnhancedRuntimeEngine:
             finally:
                 self.process = None
                 self.pid = None
+        
+        # Close log file handles to prevent resource leaks
+        self._close_log_handles()
         
         # Release port
         if self.port:

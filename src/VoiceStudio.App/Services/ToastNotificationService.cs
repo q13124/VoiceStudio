@@ -10,6 +10,18 @@ using Windows.UI;
 namespace VoiceStudio.App.Services
 {
   /// <summary>
+  /// Type of toast notification.
+  /// </summary>
+  public enum ToastType
+  {
+    Success,
+    Error,
+    Warning,
+    Info,
+    Progress
+  }
+
+  /// <summary>
   /// Service for displaying toast notifications.
   /// Implements IDEA 11: Toast Notification System for User Feedback.
   /// </summary>
@@ -250,12 +262,5 @@ namespace VoiceStudio.App.Services
   /// <summary>
   /// Toast notification type.
   /// </summary>
-  public enum ToastType
-  {
-    Success = 0,
-    Error = 1,
-    Warning = 2,
-    Info = 3,
-    Progress = 4
-  }
+  // ToastType enum is now defined in VoiceStudio.Core.Services.IToastNotificationService
 }

@@ -47,7 +47,7 @@ VoiceStudio Quantum+ follows a client-server architecture with clear separation 
 ┌──────────────────────▼──────────────────────────────────┐
 │         FastAPI Backend (Python 3.10+)                  │
 │  ┌──────────────────────────────────────────────────┐  │
-│  │  REST API Routes (133+ endpoints)                │  │
+│  │  REST API Routes (520+ endpoints)                │  │
 │  │  - /api/profiles, /api/voice, /api/projects      │  │
 │  │  - /api/effects, /api/mixer, /api/training       │  │
 │  └──────────────────────────────────────────────────┘  │

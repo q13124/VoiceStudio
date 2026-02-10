@@ -66,7 +66,7 @@ See `app/core/engines/` for current implementations.
 
 ## 🏗️ ENGINE ARCHITECTURE
 
-**Canonical engine layer architecture:** `docs/architecture/Part4_Engine_Layer.md`  
+**Canonical engine layer architecture:** `docs/architecture/README.md` (see Engine Layer section)  
 **Architecture index:** `docs/architecture/README.md`
 
 ### Engine Discovery System

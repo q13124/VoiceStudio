@@ -70,8 +70,8 @@ class JobStateStore:
                 try:
                     if tmp.exists():
                         tmp.unlink()
-                except Exception:
-                    ...
+                except OSError as cleanup_err:
+                    logger.debug(f"Failed to cleanup temp file {tmp}: {cleanup_err}")
 
     def get(self, job_id: str) -> Optional[Dict[str, Any]]:
         path = self._job_path(job_id)
@@ -89,8 +89,8 @@ class JobStateStore:
             try:
                 if path.exists():
                     path.unlink()
-            except Exception:
-                ...
+            except OSError as delete_err:
+                logger.debug(f"Failed to delete job state file {path}: {delete_err}")
 
     def load_all(self, limit: int = 5000) -> Dict[str, Dict[str, Any]]:
         with self._lock:

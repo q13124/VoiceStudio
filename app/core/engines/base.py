@@ -8,6 +8,7 @@ Includes @traced decorator for distributed tracing integration (Phase 5.1.4).
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Optional, Any, Dict, Callable, TypeVar
+import gc
 import logging
 import time
 import uuid
@@ -16,6 +17,21 @@ from pathlib import Path
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# Lazy import for torch to avoid import errors when torch not installed
+_torch = None
+
+
+def _get_torch():
+    """Lazy import torch to avoid import errors."""
+    global _torch
+    if _torch is None:
+        try:
+            import torch
+            _torch = torch
+        except ImportError:
+            _torch = False  # Mark as unavailable
+    return _torch if _torch is not False else None
 
 # Type variable for generic function decorator
 F = TypeVar('F', bound=Callable[..., Any])
@@ -142,6 +158,43 @@ def _write_trace(span_data: Dict[str, Any]) -> None:
         logger.warning("Failed to write trace: %s", exc)
 
 
+import threading
+
+
+class CancellationToken:
+    """
+    Cooperative cancellation token for long-running engine operations.
+    
+    Usage:
+        token = CancellationToken()
+        engine.synthesize(text, speaker_wav, cancellation_token=token)
+        
+        # From another thread:
+        token.cancel()
+    """
+    
+    def __init__(self):
+        self._cancelled = threading.Event()
+    
+    def cancel(self) -> None:
+        """Request cancellation of the operation."""
+        self._cancelled.set()
+    
+    def is_cancelled(self) -> bool:
+        """Check if cancellation has been requested."""
+        return self._cancelled.is_set()
+    
+    def raise_if_cancelled(self) -> None:
+        """Raise OperationCancelledError if cancellation requested."""
+        if self._cancelled.is_set():
+            raise OperationCancelledError("Operation was cancelled")
+
+
+class OperationCancelledError(Exception):
+    """Raised when an operation is cancelled via CancellationToken."""
+    pass
+
+
 class EngineProtocol(ABC):
     """
     Base protocol that all VoiceStudio engines must implement.
@@ -159,6 +212,7 @@ class EngineProtocol(ABC):
         """
         self.device = device or ("cuda" if gpu else "cpu")
         self._initialized = False
+        self._current_cancellation_token: Optional[CancellationToken] = None
         logger.info(f"{self.__class__.__name__} initialized (device: {self.device})")
     
     @abstractmethod
@@ -204,4 +258,214 @@ class EngineProtocol(ABC):
             "device": self.device,
             "initialized": self._initialized
         }
+    
+    def health_check(self) -> Dict[str, Any]:
+        """
+        Perform a health check on the engine.
+        
+        Optional method that engines can override to provide detailed health status.
+        Default implementation returns basic initialization status.
+        
+        Returns:
+            Dictionary with health status:
+                - healthy: bool indicating overall health
+                - initialized: bool indicating if engine is initialized
+                - device: current device
+                - details: optional additional details
+        """
+        return {
+            "healthy": self._initialized,
+            "initialized": self._initialized,
+            "device": self.device,
+            "details": None
+        }
+    
+    def get_resource_usage(self) -> Dict[str, Any]:
+        """
+        Get current resource usage for this engine.
+        
+        Optional method that engines can override to report resource consumption.
+        Default implementation returns GPU memory info if available.
+        
+        Returns:
+            Dictionary with resource usage:
+                - gpu_memory: GPU memory info (if available)
+                - model_loaded: whether a model is currently loaded
+        """
+        return {
+            "gpu_memory": self.get_gpu_memory_info(),
+            "model_loaded": self._initialized
+        }
+    
+    def warm_up(self) -> bool:
+        """
+        Warm up the engine by running a small inference.
+        
+        Optional method that engines can override to pre-warm the model.
+        This can help reduce latency on the first real inference.
+        
+        Returns:
+            True if warm-up succeeded, False otherwise
+        """
+        # Default: no-op, engines can override
+        return self._initialized
+    
+    def set_cancellation_token(self, token: Optional['CancellationToken']) -> None:
+        """Set the current cancellation token for the engine operation."""
+        self._current_cancellation_token = token
+    
+    def check_cancellation(self) -> None:
+        """
+        Check if cancellation has been requested and raise if so.
+        
+        Call this periodically during long-running operations to support
+        cooperative cancellation.
+        
+        Raises:
+            OperationCancelledError: If cancellation was requested
+        """
+        if self._current_cancellation_token is not None:
+            self._current_cancellation_token.raise_if_cancelled()
+    
+    def is_cancelled(self) -> bool:
+        """Check if cancellation has been requested."""
+        if self._current_cancellation_token is not None:
+            return self._current_cancellation_token.is_cancelled()
+        return False
+    
+    @staticmethod
+    def cleanup_gpu_memory(force_gc: bool = True) -> Dict[str, Any]:
+        """
+        Standardized GPU memory cleanup for all engines.
+        
+        This method provides a consistent way to release GPU memory across
+        all engine implementations. Should be called in cleanup() methods
+        and after large operations.
+        
+        Args:
+            force_gc: Whether to force Python garbage collection before
+                      clearing CUDA cache (recommended for thorough cleanup).
+        
+        Returns:
+            Dictionary with cleanup results:
+                - cuda_available: Whether CUDA is available
+                - memory_freed: Whether cache was cleared
+                - memory_before_mb: Memory allocated before cleanup (if available)
+                - memory_after_mb: Memory allocated after cleanup (if available)
+        """
+        result = {
+            "cuda_available": False,
+            "memory_freed": False,
+            "memory_before_mb": None,
+            "memory_after_mb": None,
+        }
+        
+        torch = _get_torch()
+        if torch is None:
+            return result
+        
+        if not torch.cuda.is_available():
+            result["cuda_available"] = False
+            # Still run gc for CPU memory
+            if force_gc:
+                gc.collect()
+            return result
+        
+        result["cuda_available"] = True
+        
+        try:
+            # Record memory before cleanup
+            result["memory_before_mb"] = torch.cuda.memory_allocated() / (1024 * 1024)
+            
+            # Force garbage collection first to release Python references
+            if force_gc:
+                gc.collect()
+            
+            # Clear CUDA cache
+            torch.cuda.empty_cache()
+            
+            # Record memory after cleanup
+            result["memory_after_mb"] = torch.cuda.memory_allocated() / (1024 * 1024)
+            result["memory_freed"] = True
+            
+            logger.debug(
+                f"GPU memory cleanup: {result['memory_before_mb']:.1f}MB -> "
+                f"{result['memory_after_mb']:.1f}MB"
+            )
+        except Exception as e:
+            logger.warning(f"GPU memory cleanup failed: {e}")
+        
+        return result
+    
+    @staticmethod
+    def get_gpu_memory_info() -> Dict[str, Any]:
+        """
+        Get current GPU memory usage information.
+        
+        Returns:
+            Dictionary with GPU memory info:
+                - cuda_available: Whether CUDA is available
+                - device_name: GPU device name
+                - total_memory_mb: Total GPU memory in MB
+                - allocated_mb: Currently allocated memory in MB
+                - reserved_mb: Currently reserved memory in MB
+                - free_mb: Estimated free memory in MB
+        """
+        result = {
+            "cuda_available": False,
+            "device_name": None,
+            "total_memory_mb": None,
+            "allocated_mb": None,
+            "reserved_mb": None,
+            "free_mb": None,
+        }
+        
+        torch = _get_torch()
+        if torch is None or not torch.cuda.is_available():
+            return result
+        
+        result["cuda_available"] = True
+        
+        try:
+            props = torch.cuda.get_device_properties(0)
+            result["device_name"] = props.name
+            result["total_memory_mb"] = props.total_memory / (1024 * 1024)
+            result["allocated_mb"] = torch.cuda.memory_allocated(0) / (1024 * 1024)
+            result["reserved_mb"] = torch.cuda.memory_reserved(0) / (1024 * 1024)
+            result["free_mb"] = result["total_memory_mb"] - result["allocated_mb"]
+        except Exception as e:
+            logger.warning(f"Failed to get GPU memory info: {e}")
+        
+        return result
+    
+    def _cleanup_model_references(self, *model_attrs: str) -> None:
+        """
+        Helper to clean up model references and free GPU memory.
+        
+        Args:
+            *model_attrs: Names of instance attributes holding model references.
+                          These will be set to None and then GPU memory will be
+                          cleared.
+        
+        Example:
+            def cleanup(self):
+                self._cleanup_model_references('model', 'tokenizer', 'processor')
+        """
+        # Delete model references
+        for attr in model_attrs:
+            if hasattr(self, attr):
+                try:
+                    delattr(self, attr)
+                except AttributeError:
+                    # ALLOWED: Attribute may have been deleted between hasattr and delattr
+                    # This is a race condition guard, not error suppression
+                    logger.debug(f"Attribute {attr} already deleted during cleanup")
+                setattr(self, attr, None)
+        
+        # Clear GPU memory
+        self.cleanup_gpu_memory(force_gc=True)
 
+
+# Backward-compatible alias for engines that reference BaseEngine
+# TODO: Migrate engines to use EngineProtocol directly, then remove this alias
+BaseEngine = EngineProtocol

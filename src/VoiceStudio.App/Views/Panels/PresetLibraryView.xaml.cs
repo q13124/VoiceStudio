@@ -60,6 +60,9 @@ namespace VoiceStudio.App.Views.Panels
 
     private void PresetLibraryView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
+      // Provide XamlRoot to ViewModel for MVVM-compliant dialog display
+      ViewModel.XamlRoot = this.XamlRoot;
+
       KeyboardNavigationHelper.SetupTabNavigation(this);
     }
 

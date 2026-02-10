@@ -28,6 +28,11 @@ __all__ = [
     "get_cache_stats",
     "QualityComparison",
     "compare_audio_samples",
+    # Cancellation support
+    "CancellationToken",
+    "OperationCancelledError",
+    "EngineProtocol",
+    "BaseEngine",  # Backward-compatible alias for EngineProtocol
 ]
 
 
@@ -95,6 +100,11 @@ def _discover_engines_from_manifests():
 
 
 _EXPLICIT_MODULES = {
+    # Base protocol and cancellation
+    "EngineProtocol": "app.core.engines.base",
+    "BaseEngine": "app.core.engines.base",  # Backward-compatible alias
+    "CancellationToken": "app.core.engines.base",
+    "OperationCancelledError": "app.core.engines.base",
     # Router and config
     "EngineRouter": "app.core.engines.router",
     "router": "app.core.engines.router",

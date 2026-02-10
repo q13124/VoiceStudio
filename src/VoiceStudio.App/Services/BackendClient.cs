@@ -19,6 +19,10 @@ using VoiceStudio.App.Core.Models;
 // Generated client types available for migration - see docs/developer/API_MIGRATION_GUIDE.md
 using Generated = VoiceStudio.App.Services.Generated;
 
+// Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
+using Macro = VoiceStudio.Core.Models.Macro;
+using BatchJob = VoiceStudio.Core.Models.BatchJob;
+
 namespace VoiceStudio.App.Services
 {
   /// <summary>
@@ -83,6 +87,52 @@ namespace VoiceStudio.App.Services
       }
 
       return await base.SendAsync(request, cancellationToken);
+    }
+  }
+
+  /// <summary>
+  /// Stream wrapper that reports read progress via a callback.
+  /// Used for tracking file upload progress.
+  /// </summary>
+  internal class ProgressStream : Stream
+  {
+    private readonly Stream _baseStream;
+    private readonly Action<long, long> _progressCallback;
+    private long _bytesRead;
+
+    public ProgressStream(Stream baseStream, Action<long, long> progressCallback)
+    {
+      _baseStream = baseStream;
+      _progressCallback = progressCallback;
+    }
+
+    public override bool CanRead => _baseStream.CanRead;
+    public override bool CanSeek => _baseStream.CanSeek;
+    public override bool CanWrite => _baseStream.CanWrite;
+    public override long Length => _baseStream.Length;
+    public override long Position
+    {
+      get => _baseStream.Position;
+      set => _baseStream.Position = value;
+    }
+
+    public override void Flush() => _baseStream.Flush();
+    public override long Seek(long offset, SeekOrigin origin) => _baseStream.Seek(offset, origin);
+    public override void SetLength(long value) => _baseStream.SetLength(value);
+    public override void Write(byte[] buffer, int offset, int count) => _baseStream.Write(buffer, offset, count);
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+      var bytesRead = _baseStream.Read(buffer, offset, count);
+      _bytesRead += bytesRead;
+      _progressCallback(_bytesRead, Length);
+      return bytesRead;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+      // Note: We don't dispose the base stream here as it may be used by the caller
+      base.Dispose(disposing);
     }
   }
 
@@ -4194,6 +4244,168 @@ namespace VoiceStudio.App.Services
     public async Task<ScriptSynthesisResponse> SynthesizeScriptAsync(string scriptId, CancellationToken cancellationToken = default)
     {
       return await PostAsync<object, ScriptSynthesisResponse>($"/api/script-editor/{Uri.EscapeDataString(scriptId)}/synthesize", new { }, cancellationToken);
+    }
+
+    // ========== Pipeline API (Phase 22) ==========
+
+    /// <summary>
+    /// Process text through the voice AI pipeline (LLM → TTS).
+    /// </summary>
+    /// <param name="request">Pipeline request with text and config.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Pipeline response with generated text and audio.</returns>
+    public async Task<VoiceStudio.App.Core.Models.PipelineResponse> ProcessPipelineAsync(VoiceStudio.App.Core.Models.PipelineRequest request, CancellationToken cancellationToken = default)
+    {
+      return await PostAsync<VoiceStudio.App.Core.Models.PipelineRequest, VoiceStudio.App.Core.Models.PipelineResponse>("/api/pipeline/process", request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get available pipeline providers (LLM, STT, TTS engines).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of available providers by type.</returns>
+    public async Task<VoiceStudio.App.Core.Models.PipelineProvidersResponse> GetPipelineProvidersAsync(CancellationToken cancellationToken = default)
+    {
+      return await GetAsync<VoiceStudio.App.Core.Models.PipelineProvidersResponse>("/api/pipeline/providers", cancellationToken)
+          ?? new VoiceStudio.App.Core.Models.PipelineProvidersResponse();
+    }
+
+    /// <summary>
+    /// Get pipeline metrics and usage statistics.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Pipeline metrics.</returns>
+    public async Task<PipelineMetricsResponse> GetPipelineMetricsAsync(CancellationToken cancellationToken = default)
+    {
+      return await GetAsync<PipelineMetricsResponse>("/api/pipeline/metrics", cancellationToken)
+          ?? new PipelineMetricsResponse();
+    }
+
+    // ========== File Upload with Progress (Phase 11) ==========
+
+    /// <inheritdoc />
+    public async Task<TResponse?> UploadFileWithProgressAsync<TResponse>(
+        string endpoint,
+        string filePath,
+        string fileFieldName = "file",
+        Dictionary<string, string>? additionalData = null,
+        IProgress<double>? progress = null,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default) where TResponse : class
+    {
+      return await UploadFilesWithProgressAsync<TResponse>(
+          endpoint,
+          new Dictionary<string, string> { { fileFieldName, filePath } },
+          additionalData,
+          progress,
+          timeout,
+          cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<TResponse?> UploadFilesWithProgressAsync<TResponse>(
+        string endpoint,
+        Dictionary<string, string> files,
+        Dictionary<string, string>? additionalData = null,
+        IProgress<double>? progress = null,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default) where TResponse : class
+    {
+      try
+      {
+        // Calculate total size for progress tracking
+        long totalSize = 0;
+        foreach (var kvp in files)
+        {
+          var fileInfo = new FileInfo(kvp.Value);
+          if (fileInfo.Exists)
+          {
+            totalSize += fileInfo.Length;
+          }
+        }
+
+        long uploadedBytes = 0;
+
+        using var content = new MultipartFormDataContent();
+
+        foreach (var kvp in files)
+        {
+          var filePath = kvp.Value;
+          var fieldName = kvp.Key;
+          var fileName = Path.GetFileName(filePath);
+
+          await using var fileStream = File.OpenRead(filePath);
+
+          // Create a progress tracking wrapper
+          var progressStream = new ProgressStream(fileStream, (bytesRead, _) =>
+          {
+            uploadedBytes += bytesRead;
+            if (totalSize > 0)
+            {
+              progress?.Report((double)uploadedBytes / totalSize * 100.0);
+            }
+          });
+
+          var streamContent = new StreamContent(progressStream);
+
+          // Set content type based on extension
+          var extension = Path.GetExtension(fileName).ToLowerInvariant();
+          var contentType = extension switch
+          {
+            ".wav" => "audio/wav",
+            ".mp3" => "audio/mpeg",
+            ".flac" => "audio/flac",
+            ".m4a" => "audio/mp4",
+            ".ogg" => "audio/ogg",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".mp4" => "video/mp4",
+            ".avi" => "video/x-msvideo",
+            ".mov" => "video/quicktime",
+            ".mkv" => "video/x-matroska",
+            _ => "application/octet-stream"
+          };
+
+          streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+          content.Add(streamContent, fieldName, fileName);
+        }
+
+        // Add additional form data
+        if (additionalData != null)
+        {
+          foreach (var kvp in additionalData)
+          {
+            content.Add(new StringContent(kvp.Value), kvp.Key);
+          }
+        }
+
+        // Set timeout
+        var originalTimeout = _httpClient.Timeout;
+        if (timeout.HasValue)
+        {
+          _httpClient.Timeout = timeout.Value;
+        }
+
+        try
+        {
+          var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
+          response.EnsureSuccessStatusCode();
+
+          var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+          return JsonSerializer.Deserialize<TResponse>(responseJson, _jsonOptions);
+        }
+        finally
+        {
+          _httpClient.Timeout = originalTimeout;
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"File upload failed for {endpoint}: {ex.Message}");
+        ErrorLogger.LogError($"File upload failed for {endpoint}: {ex.Message}", "BackendClient.UploadFilesWithProgressAsync");
+        throw;
+      }
     }
 
     public void Dispose()

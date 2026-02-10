@@ -1,10 +1,14 @@
 """
-AI Production Assistant Routes
+AI Production Assistant Routes (Phase 9.1.5)
 
 Endpoints for AI-powered production assistance and guidance.
+Replaces the 501 stub with real LLM integration using local-first
+Ollama provider with fallback to cloud providers.
 """
 
 import logging
+import uuid
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -14,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
-# In-memory conversation history (replace with database in production)
+# In-memory conversation history (future: persist via JsonFileStore)
 _conversations: Dict[str, Dict] = {}
 
 
@@ -45,6 +49,7 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     message: str
     context: Optional[Dict] = None  # Project context, current state, etc.
+    stream: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -55,6 +60,8 @@ class ChatResponse(BaseModel):
     content: str
     suggestions: List[str]
     timestamp: str
+    tool_calls: Optional[List[Dict]] = None
+    usage: Optional[Dict] = None
 
 
 class TaskSuggestion(BaseModel):
@@ -69,66 +76,213 @@ class TaskSuggestion(BaseModel):
     confidence: float = 0.0  # 0.0 to 1.0
 
 
+def _get_llm_provider():
+    """
+    Get the best available LLM provider.
+
+    Priority: Ollama (local) > LocalAI > OpenAI (cloud)
+    """
+    from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
+    from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
+    # Try local first (Ollama)
+    ollama = OllamaLLMProvider()
+    if ollama.is_available:
+        logger.info("Using Ollama LLM provider (local)")
+        return ollama
+
+    # Try LocalAI
+    localai = LocalAILLMProvider()
+    if localai.is_available:
+        logger.info("Using LocalAI LLM provider (local)")
+        return localai
+
+    # Fallback to OpenAI (cloud, requires API key)
+    openai = OpenAILLMProvider()
+    if openai.is_available:
+        logger.info("Using OpenAI LLM provider (cloud)")
+        return openai
+
+    return None
+
+
+def _build_system_prompt(context: Optional[Dict] = None) -> str:
+    """Build a system prompt with optional project context."""
+    base_prompt = (
+        "You are VoiceStudio AI Assistant, an expert in audio production, "
+        "voice synthesis, voice cloning, and audio engineering. You help users "
+        "with their voice production projects. You can suggest next steps, "
+        "explain audio concepts, and help optimize their workflow. "
+        "Keep responses concise and actionable."
+    )
+
+    if context:
+        context_parts = []
+        if context.get("project_name"):
+            context_parts.append(f"Current project: {context['project_name']}")
+        if context.get("active_engine"):
+            context_parts.append(f"Active engine: {context['active_engine']}")
+        if context.get("recent_action"):
+            context_parts.append(f"Recent action: {context['recent_action']}")
+
+        if context_parts:
+            base_prompt += "\n\nCurrent context:\n" + "\n".join(context_parts)
+
+    return base_prompt
+
+
+def _generate_suggestions(content: str) -> List[str]:
+    """Generate follow-up suggestions based on response content."""
+    suggestions = []
+    content_lower = content.lower()
+
+    if any(w in content_lower for w in ["synthesize", "voice", "speak"]):
+        suggestions.append("Try synthesizing with a different voice")
+    if any(w in content_lower for w in ["quality", "improve", "better"]):
+        suggestions.append("Run a quality analysis on the audio")
+    if any(w in content_lower for w in ["clone", "cloning"]):
+        suggestions.append("Upload a reference audio for cloning")
+    if any(w in content_lower for w in ["effect", "filter", "reverb"]):
+        suggestions.append("Preview the effect on your audio")
+
+    if not suggestions:
+        suggestions = [
+            "What would you like to do next?",
+            "Show me available voice profiles",
+        ]
+
+    return suggestions[:3]
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_assistant(request: ChatRequest):
     """Chat with AI production assistant."""
-    import uuid
-    from datetime import datetime
+    now = datetime.utcnow().isoformat()
 
-    try:
-        now = datetime.utcnow().isoformat()
-
-        # Get or create conversation
-        if request.conversation_id and request.conversation_id in _conversations:
-            conversation = Conversation(**_conversations[request.conversation_id])
-        else:
-            conversation_id = f"conv-{uuid.uuid4().hex[:8]}"
-            conversation = Conversation(
-                conversation_id=conversation_id,
-                title=request.message[:50] + "..." if len(request.message) > 50 else request.message,
-                messages=[],
-                created=now,
-                updated=now,
-            )
-            _conversations[conversation_id] = conversation.model_dump()
-
-        # Add user message
-        user_message = AssistantMessage(
-            message_id=f"msg-{uuid.uuid4().hex[:8]}",
-            conversation_id=conversation.conversation_id,
-            role="user",
-            content=request.message,
-            timestamp=now,
-        )
-        conversation.messages.append(user_message)
-
-        # AI assistant chat requires:
-        # - AI language model integration (e.g., GPT, Claude, local LLM)
-        # - Project context analysis
-        # - Response generation with suggestions
-        #
-        # Real implementation would:
-        # 1. Process user message with AI model (e.g., GPT, Claude)
-        # 2. Analyze project context if provided
-        # 3. Generate helpful response with suggestions
-        # 4. Return assistant message
-        #
-        # This feature requires AI model integration.
-        raise HTTPException(
-            status_code=501,
-            detail=(
-                "AI assistant chat is not yet fully implemented. "
-                "Chat requires an AI language model integration. "
-                "To enable: integrate with OpenAI API, Anthropic Claude, "
-                "or a local LLM. Example: pip install openai anthropic"
+    # Get or create conversation
+    if request.conversation_id and request.conversation_id in _conversations:
+        conversation = Conversation(**_conversations[request.conversation_id])
+    else:
+        conversation_id = f"conv-{uuid.uuid4().hex[:8]}"
+        conversation = Conversation(
+            conversation_id=conversation_id,
+            title=(
+                request.message[:50] + "..."
+                if len(request.message) > 50
+                else request.message
             ),
+            messages=[],
+            created=now,
+            updated=now,
         )
-    except Exception as e:
-        logger.error(f"Failed to chat with assistant: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process chat: {str(e)}",
-        ) from e
+
+    # Add user message
+    user_message = AssistantMessage(
+        message_id=f"msg-{uuid.uuid4().hex[:8]}",
+        conversation_id=conversation.conversation_id,
+        role="user",
+        content=request.message,
+        timestamp=now,
+    )
+    conversation.messages.append(user_message)
+
+    # Get LLM provider
+    provider = _get_llm_provider()
+
+    if provider is None:
+        # No LLM available - return helpful guidance
+        assistant_content = (
+            "I'm currently unable to connect to a language model. "
+            "To enable the AI assistant, please start Ollama locally "
+            "(ollama serve) or configure an API key for a cloud provider. "
+            f"\n\nYour message: \"{request.message}\""
+        )
+        suggestions = [
+            "Install Ollama: https://ollama.com",
+            "Start Ollama: ollama serve",
+            "Pull a model: ollama pull llama3.2",
+        ]
+    else:
+        try:
+            from app.core.engines.llm_interface import LLMConfig, Message, MessageRole
+            from backend.services.llm_function_calling import get_function_registry
+
+            # Build message history
+            llm_messages = []
+            for msg in conversation.messages:
+                role = MessageRole.USER if msg.role == "user" else MessageRole.ASSISTANT
+                llm_messages.append(Message(role=role, content=msg.content))
+
+            # Get function specs
+            registry = get_function_registry()
+            function_specs = registry.get_specs()
+
+            # Configure with system prompt
+            config = LLMConfig(
+                system_prompt=_build_system_prompt(request.context),
+                temperature=0.7,
+                max_tokens=1024,
+            )
+
+            # Generate response
+            response = await provider.generate(
+                messages=llm_messages,
+                config=config,
+                functions=function_specs if function_specs else None,
+            )
+
+            # Handle tool calls if any
+            tool_results = None
+            if response.tool_calls:
+                tool_results = await registry.process_tool_calls(response.tool_calls)
+                # Generate follow-up response with tool results
+                for result in tool_results:
+                    llm_messages.append(Message(
+                        role=MessageRole.TOOL,
+                        content=result["content"],
+                        tool_call_id=result.get("tool_call_id", ""),
+                    ))
+                follow_up = await provider.generate(
+                    messages=llm_messages,
+                    config=config,
+                )
+                assistant_content = follow_up.content
+            else:
+                assistant_content = response.content
+
+            suggestions = _generate_suggestions(assistant_content)
+
+        except Exception as exc:
+            logger.error(f"LLM generation failed: {exc}")
+            assistant_content = (
+                f"I encountered an error processing your request: {str(exc)}. "
+                "Please check that your LLM provider is running correctly."
+            )
+            suggestions = ["Check Ollama status", "Try again"]
+
+    # Add assistant message
+    assistant_msg_id = f"msg-{uuid.uuid4().hex[:8]}"
+    assistant_message = AssistantMessage(
+        message_id=assistant_msg_id,
+        conversation_id=conversation.conversation_id,
+        role="assistant",
+        content=assistant_content,
+        timestamp=datetime.utcnow().isoformat(),
+        suggestions=suggestions,
+    )
+    conversation.messages.append(assistant_message)
+
+    # Persist conversation
+    conversation.updated = datetime.utcnow().isoformat()
+    _conversations[conversation.conversation_id] = conversation.model_dump()
+
+    return ChatResponse(
+        conversation_id=conversation.conversation_id,
+        message_id=assistant_msg_id,
+        content=assistant_content,
+        suggestions=suggestions,
+        timestamp=assistant_message.timestamp,
+    )
 
 
 @router.get("/conversations", response_model=List[Conversation])
@@ -145,7 +299,6 @@ async def get_conversation(conversation_id: str):
         raise HTTPException(
             status_code=404, detail="Conversation not found"
         )
-
     return Conversation(**_conversations[conversation_id])
 
 
@@ -156,7 +309,6 @@ async def delete_conversation(conversation_id: str):
         raise HTTPException(
             status_code=404, detail="Conversation not found"
         )
-
     del _conversations[conversation_id]
     logger.info(f"Deleted conversation: {conversation_id}")
     return {"success": True}
@@ -168,34 +320,110 @@ async def suggest_tasks(
     context: Optional[Dict] = None,
 ):
     """Get AI-suggested production tasks."""
-    import uuid
-    from datetime import datetime
+    provider = _get_llm_provider()
 
-    try:
-        # AI task suggestion requires:
-        # - AI model integration for task generation
-        # - Project state analysis
-        # - Task prioritization algorithm
-        #
-        # Real implementation would:
-        # 1. Analyze project state (audio files, settings, history)
-        # 2. Use AI to suggest next steps based on context
-        # 3. Return prioritized task list with confidence scores
-        #
-        # This feature requires AI model integration.
+    if provider is None:
         raise HTTPException(
-            status_code=501,
+            status_code=503,
             detail=(
-                "AI task suggestion is not yet fully implemented. "
-                "Task suggestion requires an AI model integration "
-                "for analyzing project state and generating suggestions. "
-                "To enable: integrate with AI model API."
+                "No LLM provider available. Start Ollama (ollama serve) "
+                "or configure an API key."
             ),
         )
-    except Exception as e:
-        logger.error(f"Failed to suggest tasks: {e}")
+
+    try:
+        from app.core.engines.llm_interface import LLMConfig, Message, MessageRole
+
+        prompt = (
+            f"Based on a voice production project (ID: {project_id}), "
+            "suggest 3-5 specific production tasks. For each task, provide:\n"
+            "1. A short title\n2. A description\n"
+            "3. Category (mixing/mastering/editing/synthesis/cloning)\n"
+            "4. Priority (high/medium/low)\n"
+            "5. Estimated time in minutes\n\n"
+            "Format each as: TITLE | DESCRIPTION | CATEGORY | PRIORITY | MINUTES"
+        )
+
+        if context:
+            prompt += f"\n\nProject context: {context}"
+
+        config = LLMConfig(temperature=0.5, max_tokens=512)
+        response = await provider.generate(
+            messages=[Message(role=MessageRole.USER, content=prompt)],
+            config=config,
+        )
+
+        # Parse response into structured tasks
+        tasks = []
+        for line in response.content.strip().split("\n"):
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 4:
+                try:
+                    est_time = int(parts[4]) if len(parts) > 4 else None
+                except (ValueError, IndexError):
+                    est_time = None
+
+                tasks.append(TaskSuggestion(
+                    task_id=f"task-{uuid.uuid4().hex[:8]}",
+                    title=parts[0],
+                    description=parts[1],
+                    category=parts[2].lower(),
+                    priority=parts[3].lower(),
+                    estimated_time=est_time,
+                    confidence=0.75,
+                ))
+
+        if not tasks:
+            # Fallback: return the raw response as a single suggestion
+            tasks.append(TaskSuggestion(
+                task_id=f"task-{uuid.uuid4().hex[:8]}",
+                title="AI Suggestion",
+                description=response.content[:200],
+                category="general",
+                priority="medium",
+                confidence=0.5,
+            ))
+
+        return tasks
+
+    except Exception as exc:
+        logger.error(f"Failed to suggest tasks: {exc}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to suggest tasks: {str(e)}",
-        ) from e
+            detail=f"Failed to generate suggestions: {str(exc)}",
+        ) from exc
 
+
+@router.get("/providers")
+async def list_providers():
+    """List available LLM providers and their status."""
+    from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
+    from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
+    providers = []
+
+    ollama = OllamaLLMProvider()
+    providers.append({
+        "name": "ollama",
+        "type": "local",
+        "available": ollama.is_available,
+        "url": "http://localhost:11434",
+    })
+
+    localai = LocalAILLMProvider()
+    providers.append({
+        "name": "localai",
+        "type": "local",
+        "available": localai.is_available,
+        "url": "http://localhost:8080",
+    })
+
+    openai = OpenAILLMProvider()
+    providers.append({
+        "name": "openai",
+        "type": "cloud",
+        "available": openai.is_available,
+        "note": "Requires OPENAI_API_KEY environment variable",
+    })
+
+    return {"providers": providers}

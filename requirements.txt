@@ -1,6 +1,15 @@
 # VoiceStudio Quantum+ - Development & Testing Dependencies
 # Core dependencies for development, testing, and CI/CD
-# Last Updated: 2025-01-28
+# Last Updated: 2026-02-08
+#
+# Gap Analysis Fix: pyproject.toml is the source of truth for dependencies.
+# This file is maintained for compatibility with tools that don't support pyproject.toml.
+#
+# To install all dev dependencies:
+#   pip install -e ".[dev,extras]"
+#
+# To sync this file from pyproject.toml:
+#   pip-compile pyproject.toml -o requirements.txt
 
 # ============================================================================
 # Testing Framework (FREE_LIBRARIES_INTEGRATION - Worker 3)
@@ -75,7 +84,7 @@ PyPDF2>=3.0.1  # PDF processing for MCP unlock-pdf integration
 # Security Constraints (TD-003)
 # ============================================================================
 # Constrain protobuf version to address CVE-2024-7254 when installed as transitive dep
-protobuf>=5.28.3; extra == "proto"
+protobuf>=5.28.3
 
 # ============================================================================
 # Note: Engine-specific dependencies are in requirements_engines.txt

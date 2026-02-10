@@ -17,14 +17,42 @@ import importlib.util
 import json
 import logging
 import os
+import re
+import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+    WATCHDOG_AVAILABLE = True
+except ImportError:
+    WATCHDOG_AVAILABLE = False
+    Observer = None
+    FileSystemEventHandler = object
+    FileModifiedEvent = None
 
 logger = logging.getLogger(__name__)
+
+# Application version for compatibility checking
+APP_VERSION = "1.0.0"
+
+
+def parse_version(version_str: str) -> Tuple[int, ...]:
+    """Parse a version string into a tuple of integers for comparison."""
+    match = re.match(r"^(\d+)\.(\d+)\.(\d+)", version_str)
+    if match:
+        return tuple(int(x) for x in match.groups())
+    return (0, 0, 0)
+
+
+def is_version_compatible(app_version: str, min_required: str) -> bool:
+    """Check if app version meets minimum required version."""
+    return parse_version(app_version) >= parse_version(min_required)
 
 
 class PluginType(Enum):
@@ -234,6 +262,123 @@ EXTENSION_POINTS: Dict[str, List[ExtensionPoint]] = {
 }
 
 
+class PluginFileWatcher(FileSystemEventHandler if WATCHDOG_AVAILABLE else object):
+    """
+    File system watcher for hot-reloading plugins.
+    
+    Monitors the plugins directory for changes and triggers
+    plugin reload when plugin files are modified.
+    """
+    
+    def __init__(self, plugin_service: "PluginService"):
+        if WATCHDOG_AVAILABLE:
+            super().__init__()
+        self._plugin_service = plugin_service
+        self._observer: Optional["Observer"] = None
+        self._debounce_timers: Dict[str, threading.Timer] = {}
+        self._debounce_delay = 1.0  # seconds
+        self._running = False
+    
+    def start(self, plugins_dir: Path) -> bool:
+        """Start watching the plugins directory."""
+        if not WATCHDOG_AVAILABLE:
+            logger.warning("watchdog not installed - plugin hot-reload disabled")
+            return False
+        
+        if self._running:
+            return True
+        
+        try:
+            self._observer = Observer()
+            self._observer.schedule(self, str(plugins_dir), recursive=True)
+            self._observer.start()
+            self._running = True
+            logger.info(f"Plugin watcher started for: {plugins_dir}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to start plugin watcher: {e}")
+            return False
+    
+    def stop(self):
+        """Stop watching."""
+        if self._observer and self._running:
+            self._observer.stop()
+            self._observer.join(timeout=5.0)
+            self._running = False
+            logger.info("Plugin watcher stopped")
+        
+        # Cancel pending debounce timers
+        for timer in self._debounce_timers.values():
+            timer.cancel()
+        self._debounce_timers.clear()
+    
+    def on_modified(self, event):
+        """Handle file modification events."""
+        if event.is_directory:
+            return
+        
+        file_path = Path(event.src_path)
+        
+        # Only watch for plugin.json or .py files
+        if file_path.suffix not in (".json", ".py"):
+            return
+        
+        # Find which plugin was modified
+        plugin_id = self._find_plugin_id(file_path)
+        if not plugin_id:
+            return
+        
+        # Debounce rapid changes
+        if plugin_id in self._debounce_timers:
+            self._debounce_timers[plugin_id].cancel()
+        
+        timer = threading.Timer(
+            self._debounce_delay,
+            self._trigger_reload,
+            args=[plugin_id]
+        )
+        self._debounce_timers[plugin_id] = timer
+        timer.start()
+    
+    def _find_plugin_id(self, file_path: Path) -> Optional[str]:
+        """Find the plugin ID from a file path."""
+        plugins_dir = self._plugin_service._plugins_dir
+        
+        try:
+            rel_path = file_path.relative_to(plugins_dir)
+            plugin_folder = rel_path.parts[0] if rel_path.parts else None
+            
+            if plugin_folder:
+                # Check if this folder is a known plugin
+                for plugin_id, info in self._plugin_service._plugins.items():
+                    if info.path.name == plugin_folder:
+                        return plugin_id
+        except ValueError:
+            pass  # ALLOWED: bare except - path parsing may fail for non-standard paths
+        
+        return None
+    
+    def _trigger_reload(self, plugin_id: str):
+        """Trigger plugin reload (runs in timer thread)."""
+        if plugin_id in self._debounce_timers:
+            del self._debounce_timers[plugin_id]
+        
+        logger.info(f"Hot-reloading plugin: {plugin_id}")
+        
+        # Schedule reload in the asyncio event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.run_coroutine_threadsafe(
+                    self._plugin_service.reload_plugin(plugin_id),
+                    loop
+                )
+            else:
+                asyncio.run(self._plugin_service.reload_plugin(plugin_id))
+        except Exception as e:
+            logger.error(f"Failed to reload plugin {plugin_id}: {e}")
+
+
 def register_extension(point_name: str) -> Callable:
     """Decorator to register an extension point handler."""
     def decorator(func: ExtensionPoint) -> ExtensionPoint:
@@ -256,11 +401,19 @@ class PluginService:
     - Extension point system
     """
     
-    def __init__(self, plugins_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        plugins_dir: Optional[Path] = None,
+        app_version: Optional[str] = None,
+        enable_watcher: bool = True,
+    ):
         self._plugins_dir = plugins_dir or Path("plugins")
         self._plugins: Dict[str, PluginInfo] = {}
         self._settings: Dict[str, Dict[str, Any]] = {}
         self._initialized = False
+        self._app_version = app_version or APP_VERSION
+        self._enable_watcher = enable_watcher
+        self._watcher: Optional[PluginFileWatcher] = None
         
         logger.info(f"PluginService created with plugins dir: {self._plugins_dir}")
     
@@ -279,13 +432,33 @@ class PluginService:
             # Discover plugins
             await self.discover_plugins()
             
+            # Start file watcher for hot-reload
+            if self._enable_watcher:
+                self._watcher = PluginFileWatcher(self)
+                self._watcher.start(self._plugins_dir)
+            
             self._initialized = True
-            logger.info("PluginService initialized")
+            logger.info(f"PluginService initialized (app version: {self._app_version})")
             return True
         
         except Exception as e:
             logger.error(f"Failed to initialize PluginService: {e}")
             return False
+    
+    async def shutdown(self) -> None:
+        """Shutdown the plugin service."""
+        # Stop file watcher
+        if self._watcher:
+            self._watcher.stop()
+            self._watcher = None
+        
+        # Deactivate all active plugins
+        for plugin_id in list(self._plugins.keys()):
+            if self._plugins[plugin_id].state == PluginState.ACTIVATED:
+                await self.deactivate_plugin(plugin_id)
+        
+        self._initialized = False
+        logger.info("PluginService shutdown complete")
     
     async def discover_plugins(self) -> List[PluginInfo]:
         """Discover available plugins."""
@@ -308,6 +481,14 @@ class PluginService:
                 
                 manifest = PluginManifest.from_dict(manifest_data)
                 
+                # Check version compatibility
+                if not self.check_version_compatibility(manifest):
+                    logger.warning(
+                        f"Plugin {manifest.name} requires app version {manifest.min_app_version}, "
+                        f"current version is {self._app_version} - skipping"
+                    )
+                    continue
+                
                 plugin_info = PluginInfo(
                     manifest=manifest,
                     state=PluginState.DISCOVERED,
@@ -324,6 +505,68 @@ class PluginService:
                 logger.warning(f"Failed to load plugin from {plugin_path}: {e}")
         
         return discovered
+    
+    def check_version_compatibility(self, manifest: PluginManifest) -> bool:
+        """Check if a plugin is compatible with the current app version."""
+        return is_version_compatible(self._app_version, manifest.min_app_version)
+    
+    async def reload_plugin(self, plugin_id: str) -> bool:
+        """
+        Reload a plugin (hot-reload support).
+        
+        This unloads the plugin (if loaded), re-reads the manifest,
+        and reloads the plugin code.
+        """
+        if plugin_id not in self._plugins:
+            logger.warning(f"Cannot reload unknown plugin: {plugin_id}")
+            return False
+        
+        plugin_info = self._plugins[plugin_id]
+        was_activated = plugin_info.state == PluginState.ACTIVATED
+        
+        try:
+            # Unload existing plugin
+            await self.unload_plugin(plugin_id)
+            
+            # Re-read manifest
+            manifest_path = plugin_info.path / "plugin.json"
+            if manifest_path.exists():
+                with open(manifest_path, "r") as f:
+                    manifest_data = json.load(f)
+                
+                new_manifest = PluginManifest.from_dict(manifest_data)
+                
+                # Check version compatibility
+                if not self.check_version_compatibility(new_manifest):
+                    logger.error(
+                        f"Reloaded plugin {new_manifest.name} requires app version "
+                        f"{new_manifest.min_app_version}, current is {self._app_version}"
+                    )
+                    plugin_info.state = PluginState.ERROR
+                    plugin_info.error_message = "Incompatible version"
+                    return False
+                
+                plugin_info.manifest = new_manifest
+            
+            # Reload plugin module
+            if was_activated:
+                # Re-activate if it was active before
+                success = await self.activate_plugin(plugin_id)
+                if success:
+                    logger.info(f"Hot-reloaded and reactivated plugin: {plugin_id}")
+                return success
+            else:
+                # Just load without activating
+                success = await self.load_plugin(plugin_id)
+                if success:
+                    logger.info(f"Hot-reloaded plugin: {plugin_id}")
+                return success
+        
+        except Exception as e:
+            logger.error(f"Failed to reload plugin {plugin_id}: {e}")
+            plugin_info.state = PluginState.ERROR
+            plugin_info.error_message = str(e)
+            return False
     
     async def load_plugin(self, plugin_id: str) -> bool:
         """Load a plugin."""

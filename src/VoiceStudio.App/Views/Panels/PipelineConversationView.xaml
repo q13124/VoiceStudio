@@ -1,0 +1,201 @@
+<UserControl x:Class="VoiceStudio.App.Views.Panels.PipelineConversationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:local="using:VoiceStudio.App.Views.Panels"
+    x:DataType="local:PipelineConversationView">
+    <Grid x:Name="PipelineConversationView_Root" 
+          AutomationProperties.AutomationId="PipelineConversationView_Root"
+          Background="{StaticResource VSQ.Panel.Background}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" 
+                Padding="{StaticResource VSQ.Spacing.Medium}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="AI Conversation" 
+                           FontSize="{StaticResource VSQ.FontSize.Title}" 
+                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}" 
+                           VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="8" Height="8" 
+                             Fill="{x:Bind GetConnectionColor(ViewModel.IsConnected), Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind GetConnectionStatus(ViewModel.IsConnected), Mode=OneWay}"
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                               FontSize="{StaticResource VSQ.FontSize.Caption}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Settings Bar -->
+        <Border Grid.Row="1" 
+                Background="{StaticResource VSQ.Panel.Background}" 
+                Padding="{StaticResource VSQ.Spacing.Small}"
+                BorderBrush="{StaticResource VSQ.Border.DefaultBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Provider:" 
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                    <ComboBox x:Name="LlmProviderCombo"
+                              ItemsSource="{x:Bind ViewModel.AvailableLlmProviders, Mode=OneWay}"
+                              SelectedValue="{x:Bind ViewModel.SelectedLlmProvider, Mode=TwoWay}"
+                              SelectedValuePath="Id"
+                              DisplayMemberPath="Name"
+                              MinWidth="120" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="TTS:" 
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                    <ComboBox x:Name="TtsEngineCombo"
+                              ItemsSource="{x:Bind ViewModel.AvailableTtsProviders, Mode=OneWay}"
+                              SelectedValue="{x:Bind ViewModel.SelectedTtsEngine, Mode=TwoWay}"
+                              SelectedValuePath="Id"
+                              DisplayMemberPath="Name"
+                              MinWidth="120" />
+                </StackPanel>
+                <ToggleSwitch Header="TTS" 
+                              IsOn="{x:Bind ViewModel.EnableTts, Mode=TwoWay}"
+                              OnContent="On" 
+                              OffContent="Off" />
+                <ToggleSwitch Header="Stream" 
+                              IsOn="{x:Bind ViewModel.EnableStreaming, Mode=TwoWay}"
+                              OnContent="On" 
+                              OffContent="Off" />
+            </StackPanel>
+        </Border>
+
+        <!-- Messages Area -->
+        <ScrollViewer Grid.Row="2" 
+                      x:Name="MessagesScrollViewer"
+                      VerticalScrollBarVisibility="Auto"
+                      Padding="{StaticResource VSQ.Spacing.Medium}">
+            <StackPanel x:Name="MessagesPanel" Spacing="12">
+                <!-- Welcome Message (when empty) -->
+                <StackPanel Visibility="{x:Bind ViewModel.WelcomeVisibility, Mode=OneWay}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="16"
+                            Margin="0,48,0,0">
+                    <FontIcon Glyph="&#xE8BD;" 
+                              FontSize="48"
+                              Foreground="{StaticResource VSQ.Accent.PrimaryBrush}"
+                              HorizontalAlignment="Center" />
+                    <TextBlock Text="Start a conversation"
+                               FontSize="{StaticResource VSQ.FontSize.Subtitle}"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Type a message below to chat with the AI assistant. Enable TTS to hear responses."
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="400"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Messages List -->
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,4" 
+                                    Padding="12,8"
+                                    CornerRadius="8"
+                                    MaxWidth="600"
+                                    HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <SolidColorBrush Color="{StaticResource VSQ.Surface.Default}" />
+                                </Border.Background>
+                                <StackPanel Spacing="4">
+                                    <TextBlock FontWeight="SemiBold" 
+                                               FontSize="{StaticResource VSQ.FontSize.Caption}"
+                                               Foreground="{StaticResource VSQ.Accent.PrimaryBrush}" />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                                    <TextBlock FontSize="{StaticResource VSQ.FontSize.Caption}"
+                                               Foreground="{StaticResource VSQ.Text.TertiaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Streaming Indicator -->
+                <StackPanel Visibility="{x:Bind ViewModel.StreamingIndicatorVisibility, Mode=OneWay}"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Margin="0,8">
+                    <ProgressRing IsActive="True" Width="16" Height="16" />
+                    <TextBlock Text="AI is responding..."
+                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                               FontStyle="Italic" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Input Area -->
+        <Border Grid.Row="3" 
+                Background="{StaticResource VSQ.Panel.Background}"
+                Padding="{StaticResource VSQ.Spacing.Medium}"
+                BorderBrush="{StaticResource VSQ.Border.DefaultBrush}"
+                BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="InputTextBox"
+                         Grid.Column="0"
+                         PlaceholderText="Type your message..."
+                         Text="{x:Bind ViewModel.UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="False"
+                         IsEnabled="{x:Bind Not(ViewModel.IsProcessing), Mode=OneWay}" />
+
+                <Button Grid.Column="1"
+                        Margin="8,0,0,0"
+                        Command="{x:Bind ViewModel.StopStreamingCommand}"
+                        Visibility="{x:Bind ViewModel.StreamingIndicatorVisibility, Mode=OneWay}"
+                        ToolTipService.ToolTip="Stop">
+                    <FontIcon Glyph="&#xE71A;" FontSize="16" />
+                </Button>
+
+                <Button Grid.Column="2"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Margin="8,0,0,0"
+                        Command="{x:Bind ViewModel.SendMessageCommand}"
+                        ToolTipService.ToolTip="Send (Enter)">
+                    <FontIcon Glyph="&#xE724;" FontSize="16" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Error Message -->
+        <InfoBar Grid.Row="2"
+                 VerticalAlignment="Bottom"
+                 Margin="16"
+                 Severity="Error"
+                 Title="Error"
+                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                 IsOpen="{x:Bind ViewModel.ErrorMessageVisibility, Mode=OneWay, Converter={StaticResource VisibilityToBoolConverter}}"
+                 IsClosable="True" />
+
+        <controls:HelpOverlay x:Name="HelpOverlay" 
+                              Grid.RowSpan="4"
+                              IsVisible="False" 
+                              Visibility="Collapsed" />
+    </Grid>
+</UserControl>

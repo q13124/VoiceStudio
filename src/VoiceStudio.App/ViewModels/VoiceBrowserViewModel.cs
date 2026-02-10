@@ -289,8 +289,8 @@ namespace VoiceStudio.App.ViewModels
       _ = SearchVoicesAsync(CancellationToken.None);
     }
 
-    // Response models
-    private class VoiceSearchResponse
+    // Response models (public for testability)
+    public class VoiceSearchResponse
     {
       public VoiceProfileSummary[] Voices { get; set; } = Array.Empty<VoiceProfileSummary>();
       public int Total { get; set; }
@@ -298,12 +298,12 @@ namespace VoiceStudio.App.ViewModels
       public int Offset { get; set; }
     }
 
-    private class LanguagesResponse
+    public class LanguagesResponse
     {
       public string[] Languages { get; set; } = Array.Empty<string>();
     }
 
-    private class TagsResponse
+    public class TagsResponse
     {
       public string[] Tags { get; set; } = Array.Empty<string>();
     }

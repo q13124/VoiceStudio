@@ -550,6 +550,27 @@ namespace VoiceStudio.App.ViewModels
       _ = LoadJobsAsync(CancellationToken.None);
     }
 
+    /// <summary>
+    /// Notify commands when IsLoading changes to update their CanExecute state.
+    /// </summary>
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+      base.OnPropertyChanged(e);
+      
+      if (e.PropertyName == nameof(IsLoading))
+      {
+        // Notify all commands that depend on IsLoading
+        LoadJobsCommand.NotifyCanExecuteChanged();
+        RefreshCommand.NotifyCanExecuteChanged();
+        CancelJobCommand.NotifyCanExecuteChanged();
+        PauseJobCommand.NotifyCanExecuteChanged();
+        ResumeJobCommand.NotifyCanExecuteChanged();
+        DeleteJobCommand.NotifyCanExecuteChanged();
+        ClearCompletedCommand.NotifyCanExecuteChanged();
+        LoadSummaryCommand.NotifyCanExecuteChanged();
+      }
+    }
+
     protected override void Dispose(bool disposing)
     {
       if (IsDisposed)
@@ -560,7 +581,16 @@ namespace VoiceStudio.App.ViewModels
       if (disposing)
       {
         StopPolling();
-        _webSocketClient?.Dispose();
+        
+        // Unsubscribe from WebSocket events before disposing to prevent callbacks on disposed object
+        if (_webSocketClient != null)
+        {
+          _webSocketClient.ProgressUpdated -= OnJobProgressUpdated;
+          _webSocketClient.StatusChanged -= OnJobStatusChanged;
+          _webSocketClient.JobCompleted -= OnJobCompleted;
+          _webSocketClient.JobFailed -= OnJobFailed;
+          _webSocketClient.Dispose();
+        }
       }
 
       base.Dispose(disposing);

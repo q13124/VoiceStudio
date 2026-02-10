@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -403,106 +403,37 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task<DeepfakeJobResponse?> UploadFilesAndCreateDeepfakeAsync(string sourceFacePath, string targetMediaPath, DeepfakeRequest requestData, CancellationToken cancellationToken = default)
     {
-      const string baseUrl = "http://localhost:8001";
-      using var httpClient = new HttpClient();
-      httpClient.BaseAddress = new Uri(baseUrl);
-      httpClient.Timeout = TimeSpan.FromMinutes(30); // Allow longer timeout for large files
-
       IsUploading = true;
       UploadProgress = 0.0;
 
       try
       {
-        await using var sourceStream = File.OpenRead(sourceFacePath);
-        await using var targetStream = File.OpenRead(targetMediaPath);
-        var sourceFileName = Path.GetFileName(sourceFacePath);
-        var targetFileName = Path.GetFileName(targetMediaPath);
-
-        var totalSize = sourceStream.Length + targetStream.Length;
-        var uploadedBytes = 0L;
-
-        // Create progress tracking streams
-        var sourceProgressStream = new ProgressStream(sourceStream, (bytesRead, _) =>
-        {
-          uploadedBytes += bytesRead;
-          UploadProgress = uploadedBytes / (double)totalSize * 100.0;
-        });
-
-        var targetProgressStream = new ProgressStream(targetStream, (bytesRead, _) =>
-        {
-          uploadedBytes += bytesRead;
-          UploadProgress = uploadedBytes / (double)totalSize * 100.0;
-        });
-
-        using var content = new MultipartFormDataContent();
-        var sourceContent = new StreamContent(sourceProgressStream);
-        sourceContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-        content.Add(sourceContent, "source_face", sourceFileName);
-
-        var targetContentType = SelectedMediaType == "image" ? "image/jpeg" : "video/mp4";
-        var targetContent = new StreamContent(targetProgressStream);
-        targetContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(targetContentType);
-        content.Add(targetContent, "target_media", targetFileName);
-
         var requestJson = System.Text.Json.JsonSerializer.Serialize(requestData);
-        content.Add(new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json"), "request");
+        var additionalData = new Dictionary<string, string>
+        {
+          { "request", requestJson }
+        };
 
-        var response = await httpClient.PostAsync("/api/deepfake-creator/create", content, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        var files = new Dictionary<string, string>
+        {
+          { "source_face", sourceFacePath },
+          { "target_media", targetMediaPath }
+        };
 
-        var responseJson = await response.Content.ReadAsStringAsync();
-        return System.Text.Json.JsonSerializer.Deserialize<DeepfakeJobResponse>(responseJson);
+        var progress = new Progress<double>(p => UploadProgress = p);
+
+        return await _backendClient.UploadFilesWithProgressAsync<DeepfakeJobResponse>(
+            "/api/deepfake-creator/create",
+            files,
+            additionalData,
+            progress,
+            TimeSpan.FromMinutes(30),
+            cancellationToken);
       }
       finally
       {
         IsUploading = false;
         UploadProgress = 0.0;
-      }
-    }
-
-    // Progress tracking stream wrapper
-    private class ProgressStream : Stream
-    {
-      private readonly Stream _baseStream;
-      private readonly Action<long, long> _progressCallback;
-      private long _bytesRead;
-
-      public ProgressStream(Stream baseStream, Action<long, long> progressCallback)
-      {
-        _baseStream = baseStream;
-        _progressCallback = progressCallback;
-      }
-
-      public override bool CanRead => _baseStream.CanRead;
-      public override bool CanSeek => _baseStream.CanSeek;
-      public override bool CanWrite => _baseStream.CanWrite;
-      public override long Length => _baseStream.Length;
-      public override long Position
-      {
-        get => _baseStream.Position;
-        set => _baseStream.Position = value;
-      }
-
-      public override void Flush() => _baseStream.Flush();
-      public override long Seek(long offset, SeekOrigin origin) => _baseStream.Seek(offset, origin);
-      public override void SetLength(long value) => _baseStream.SetLength(value);
-      public override void Write(byte[] buffer, int offset, int count) => _baseStream.Write(buffer, offset, count);
-
-      public override int Read(byte[] buffer, int offset, int count)
-      {
-        var bytesRead = _baseStream.Read(buffer, offset, count);
-        _bytesRead += bytesRead;
-        _progressCallback(_bytesRead, Length);
-        return bytesRead;
-      }
-
-      protected override void Dispose(bool disposing)
-      {
-        if (disposing)
-        {
-          _baseStream.Dispose();
-        }
-        base.Dispose(disposing);
       }
     }
 

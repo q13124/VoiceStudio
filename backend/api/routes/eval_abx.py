@@ -37,7 +37,7 @@ def _is_test_mode() -> bool:
         if getattr(app.state, "test_mode", False):
             return True
     except Exception:
-        pass
+        pass  # ALLOWED: bare except - checking test mode should not raise in production
     
     return False
 

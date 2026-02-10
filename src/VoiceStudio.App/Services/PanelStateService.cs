@@ -14,9 +14,55 @@ namespace VoiceStudio.App.Services
   /// <summary>
   /// Service for managing panel state persistence and workspace profiles.
   /// Implements IDEA 3: Panel State Persistence with Workspace Profiles.
+  /// Phase 5.0: Now implements IUnifiedWorkspaceService for service unification.
   /// </summary>
-  public class PanelStateService : IDisposable
+  public class PanelStateService : IUnifiedWorkspaceService
   {
+    // Built-in workspace templates
+    private static readonly List<WorkspaceTemplate> _builtInTemplates = new()
+    {
+      new WorkspaceTemplate
+      {
+        Id = "recording",
+        Name = "Recording Studio",
+        Description = "Optimized for voice recording with waveform and input monitoring",
+        Category = "Production",
+        Layout = new WorkspaceLayout { ProfileName = "Recording", Version = "1.0" }
+      },
+      new WorkspaceTemplate
+      {
+        Id = "mixing",
+        Name = "Mixing Console",
+        Description = "Audio mixing with effects chain and analyzer panels",
+        Category = "Production",
+        Layout = new WorkspaceLayout { ProfileName = "Mixing", Version = "1.0" }
+      },
+      new WorkspaceTemplate
+      {
+        Id = "synthesis",
+        Name = "Voice Synthesis",
+        Description = "Text-to-speech synthesis with profile management",
+        Category = "Synthesis",
+        Layout = new WorkspaceLayout { ProfileName = "Synthesis", Version = "1.0" }
+      },
+      new WorkspaceTemplate
+      {
+        Id = "analysis",
+        Name = "Audio Analysis",
+        Description = "Detailed audio analysis with spectrogram and quality metrics",
+        Category = "Analysis",
+        Layout = new WorkspaceLayout { ProfileName = "Analysis", Version = "1.0" }
+      },
+      new WorkspaceTemplate
+      {
+        Id = "training",
+        Name = "Model Training",
+        Description = "Voice model training with dataset and progress panels",
+        Category = "Training",
+        Layout = new WorkspaceLayout { ProfileName = "Training", Version = "1.0" }
+      }
+    };
+
     private readonly ISettingsService _settingsService;
     private readonly string _workspaceProfilesDirectory;
     private readonly string _projectStatesDirectory;
@@ -42,8 +88,8 @@ namespace VoiceStudio.App.Services
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
       };
 
-      // Load current workspace layout from settings
-      LoadCurrentWorkspace();
+      // Load current workspace layout from settings (fire-and-forget with error handling)
+      _ = LoadCurrentWorkspaceAsync();
     }
 
     /// <summary>
@@ -386,7 +432,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Loads current workspace layout from settings.
     /// </summary>
-    private async void LoadCurrentWorkspace()
+    private async Task LoadCurrentWorkspaceAsync()
     {
       try
       {
@@ -397,9 +443,10 @@ namespace VoiceStudio.App.Services
           _currentWorkspaceProfile = _currentLayout.ProfileName;
         }
       }
-      catch
+      catch (Exception ex)
       {
-        // Use default if loading fails
+        // Use default if loading fails, but log the error
+        System.Diagnostics.Debug.WriteLine($"[PanelStateService] Failed to load workspace: {ex.Message}");
         _currentLayout = new WorkspaceLayout
         {
           ProfileName = "Default",
@@ -413,6 +460,119 @@ namespace VoiceStudio.App.Services
     /// Event raised when workspace profile changes.
     /// </summary>
     public event EventHandler<WorkspaceProfileChangedEventArgs>? WorkspaceProfileChanged;
+
+    #region IUnifiedWorkspaceService Implementation
+
+    /// <summary>
+    /// Creates a new workspace profile from the current layout.
+    /// </summary>
+    public async Task<WorkspaceProfile> CreateWorkspaceProfileAsync(string name, string? description = null)
+    {
+      var profile = new WorkspaceProfile
+      {
+        Name = name,
+        Description = description ?? $"Custom workspace: {name}",
+        Layout = GetCurrentLayout(),
+        CreatedAt = DateTime.UtcNow,
+        ModifiedAt = DateTime.UtcNow
+      };
+      
+      await SaveWorkspaceProfileAsync(profile);
+      return profile;
+    }
+
+    /// <summary>
+    /// Duplicates an existing workspace profile.
+    /// </summary>
+    public async Task<WorkspaceProfile?> DuplicateWorkspaceProfileAsync(string sourceName, string newName)
+    {
+      var source = await LoadWorkspaceProfileAsync(sourceName);
+      if (source == null) return null;
+
+      var duplicate = new WorkspaceProfile
+      {
+        Name = newName,
+        Description = $"Copy of {sourceName}",
+        Layout = source.Layout,
+        CreatedAt = DateTime.UtcNow,
+        ModifiedAt = DateTime.UtcNow
+      };
+
+      await SaveWorkspaceProfileAsync(duplicate);
+      return duplicate;
+    }
+
+    /// <summary>
+    /// Gets built-in workspace templates.
+    /// </summary>
+    public IReadOnlyList<WorkspaceTemplate> GetBuiltInTemplates() => _builtInTemplates;
+
+    /// <summary>
+    /// Applies a workspace template.
+    /// </summary>
+    public async Task ApplyTemplateAsync(string templateId)
+    {
+      var template = _builtInTemplates.FirstOrDefault(t => t.Id == templateId);
+      if (template == null) return;
+
+      // Create a profile from the template if it doesn't exist
+      var existingProfile = await LoadWorkspaceProfileAsync(template.Name);
+      if (existingProfile == null)
+      {
+        var profile = new WorkspaceProfile
+        {
+          Name = template.Name,
+          Description = template.Description,
+          Layout = template.Layout,
+          CreatedAt = DateTime.UtcNow,
+          ModifiedAt = DateTime.UtcNow
+        };
+        await SaveWorkspaceProfileAsync(profile);
+      }
+
+      await SwitchWorkspaceProfileAsync(template.Name);
+    }
+
+    /// <summary>
+    /// Exports a workspace profile to JSON.
+    /// </summary>
+    public async Task<string> ExportWorkspaceAsync(string profileName)
+    {
+      var profile = await LoadWorkspaceProfileAsync(profileName);
+      if (profile == null) return "{}";
+
+      return JsonSerializer.Serialize(profile, _jsonOptions);
+    }
+
+    /// <summary>
+    /// Imports a workspace profile from JSON.
+    /// </summary>
+    public async Task<WorkspaceProfile?> ImportWorkspaceAsync(string json)
+    {
+      try
+      {
+        var profile = JsonSerializer.Deserialize<WorkspaceProfile>(json, _jsonOptions);
+        if (profile == null) return null;
+
+        // Ensure unique name
+        var existing = await LoadWorkspaceProfileAsync(profile.Name);
+        if (existing != null)
+        {
+          profile.Name = $"{profile.Name} (Imported)";
+        }
+
+        profile.ModifiedAt = DateTime.UtcNow;
+        await SaveWorkspaceProfileAsync(profile);
+        return profile;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Failed to import workspace: {ex.Message}");
+        return null;
+      }
+    }
+
+    #endregion
 
     public void Dispose()
     {

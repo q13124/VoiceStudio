@@ -37,10 +37,15 @@
   <SolidColorBrush x:Key="VSQ.Accent.YellowBrush" Color="#FFFFCC40" />
   <SolidColorBrush x:Key="VSQ.Accent.PurpleBrush" Color="#FF8B5CF6" />
   <SolidColorBrush x:Key="VSQ.Panel.BorderBrush" Color="#26FFFFFF" />
+  <!-- Border and surface defaults for various UI components -->
+  <SolidColorBrush x:Key="VSQ.Border.DefaultBrush" Color="#26FFFFFF" />
+  <SolidColorBrush x:Key="VSQ.Surface.Default" Color="#FF1A1F28" />
   <!-- Panel background alias used by some UI surfaces (keep in sync with DarkBrush). -->
   <SolidColorBrush x:Key="VSQ.Panel.Background" Color="#FF151921" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.DarkBrush" Color="#FF151921" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.DarkerBrush" Color="#FF1E2329" />
+  <SolidColorBrush x:Key="VSQ.Panel.Background.CardBrush" Color="#FF1E2329" />
+  <SolidColorBrush x:Key="VSQ.Panel.Background.SecondaryBrush" Color="#FF202633" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.HeaderBrush" Color="#FF20252E" />
   <SolidColorBrush x:Key="VSQ.Panel.Background.MasterBrush" Color="#FF252A34" />
   <!-- Alias for header background (consistency with older references) -->

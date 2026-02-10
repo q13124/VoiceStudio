@@ -243,3 +243,21 @@ class ConfigurationException(VoiceStudioException):
             recovery_suggestion="Please check your configuration or contact support.",
             context={"config_key": config_key},
         )
+
+
+# Operation Cancellation Exception
+
+
+class OperationCancelledException(VoiceStudioException):
+    """Raised when an operation is cancelled by the user."""
+
+    def __init__(self, operation: str):
+        # Using 499 (Client Closed Request) - commonly used for cancelled requests
+        # Not a standard HTTP status but widely recognized (Nginx convention)
+        super().__init__(
+            status_code=499,
+            detail=f"Operation '{operation}' was cancelled.",
+            error_code="OPERATION_CANCELLED",
+            recovery_suggestion="You can restart the operation if needed.",
+            context={"operation": operation},
+        )

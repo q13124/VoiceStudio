@@ -11,6 +11,9 @@ using VoiceStudio.Core.Models;
 using System;
 using System.Linq;
 
+// Type alias to resolve ambiguity with VoiceStudio.App.Services.BatchJob
+using BatchJob = VoiceStudio.Core.Models.BatchJob;
+
 namespace VoiceStudio.App.Views.Panels
 {
   public sealed partial class BatchProcessingView : UserControl

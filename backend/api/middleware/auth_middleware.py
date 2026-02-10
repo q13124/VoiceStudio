@@ -201,3 +201,52 @@ def get_optional_user(request: Request) -> Optional[User]:
     except Exception:
         return None
 
+
+# Environment-aware authentication toggle for local-first design
+import os
+
+# Default to no auth required for local desktop usage
+AUTH_REQUIRED = os.getenv("VOICESTUDIO_REQUIRE_AUTH", "false").lower() == "true"
+
+
+async def require_auth_if_enabled(request: Request) -> Optional[User]:
+    """
+    Require authentication only when VOICESTUDIO_REQUIRE_AUTH=true.
+    
+    For local desktop usage, authentication is optional by default.
+    Enable for network/multi-user deployments by setting the env var.
+    
+    Returns:
+        User if authenticated, None if auth disabled, raises if auth required but missing.
+    """
+    if not AUTH_REQUIRED:
+        # Local mode: authentication optional, try to get user but don't require
+        return await get_current_user(request)
+    
+    # Auth required mode: enforce authentication
+    return await require_authentication(request)
+
+
+def create_permission_dependency(permission: Permission):
+    """
+    Factory for creating permission-checking dependencies.
+    
+    Usage:
+        @router.post("/admin-only", dependencies=[Depends(create_permission_dependency(Permission.ADMIN))])
+    """
+    async def check_permission(request: Request) -> User:
+        if not AUTH_REQUIRED:
+            # Local mode: skip permission check
+            user = await get_current_user(request)
+            if user:
+                return user
+            # Create anonymous local user
+            return User(
+                user_id="local",
+                username="local_user",
+                role=UserRole.ADMIN,  # Local user has full access
+                permissions=[p for p in Permission],
+            )
+        return await require_permission_middleware(request, permission)
+    return check_permission
+

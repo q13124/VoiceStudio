@@ -85,15 +85,33 @@ def find_engine_manifests(engines_root: str = "engines") -> Dict[str, str]:
 
 def get_engine_entry_point(manifest: Dict[str, Any]) -> Optional[str]:
     """
-    Get the entry point class path from manifest.
+    Get the entry point class path from manifest, normalized to module:class format.
     
     Args:
         manifest: Engine manifest dictionary
     
     Returns:
-        Entry point string (e.g., "app.core.engines.xtts_engine.XTTSEngine")
+        Entry point string in "module:class" format for lazy loading.
+        Supports both formats:
+        - "app.core.engines.xtts_engine:XTTSEngine" (already normalized)
+        - "app.core.engines.xtts_engine.XTTSEngine" (dot-separated, will be converted)
     """
-    return manifest.get("entry_point")
+    entry_point = manifest.get("entry_point")
+    if not entry_point:
+        return None
+    
+    # Already in module:class format
+    if ":" in entry_point:
+        return entry_point
+    
+    # Convert dot-separated format to module:class format
+    # e.g., "app.core.engines.xtts_engine.XTTSEngine" -> "app.core.engines.xtts_engine:XTTSEngine"
+    parts = entry_point.rsplit(".", 1)
+    if len(parts) == 2:
+        return f"{parts[0]}:{parts[1]}"
+    
+    # Fallback: return as-is if we can't parse it
+    return entry_point
 
 
 def get_engine_config_schema(manifest: Dict[str, Any]) -> Dict[str, Any]:

@@ -235,4 +235,4 @@ pre-commit run contract-validation --all-files
 - [API Migration Guide](./API_MIGRATION_GUIDE.md) - Migrating to generated client
 - [Serialization Guide](./SERIALIZATION_GUIDE.md) - JSON naming conventions
 - [NSwag README](../../tools/nswag/README.md) - Tooling details
-- [ADR-007: IPC Architecture](../architecture/decisions/ADR-007-ipc-architecture.md)
+- [ADR-007: IPC Boundary](../architecture/decisions/ADR-007-ipc-boundary.md)

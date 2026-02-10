@@ -1,0 +1,34 @@
+{
+  "id": "synthesis",
+  "name": "Voice Synthesis",
+  "description": "Text-to-speech synthesis with profile management",
+  "category": "Synthesis",
+  "version": "1.0",
+  "layout": {
+    "profileName": "Synthesis",
+    "version": "1.0",
+    "isDefault": true,
+    "regions": [
+      {
+        "region": "Left",
+        "activePanelId": "synthesis",
+        "openedPanels": ["synthesis", "script-editor"]
+      },
+      {
+        "region": "Center",
+        "activePanelId": "preview",
+        "openedPanels": ["preview", "waveform"]
+      },
+      {
+        "region": "Right",
+        "activePanelId": "profiles",
+        "openedPanels": ["profiles", "presets"]
+      },
+      {
+        "region": "Bottom",
+        "activePanelId": "queue",
+        "openedPanels": ["queue", "history"]
+      }
+    ]
+  }
+}

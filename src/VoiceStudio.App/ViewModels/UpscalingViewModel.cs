@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -304,88 +304,32 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task<UpscalingJobResponse?> UploadFileAndUpscaleAsync(string filePath, object requestData, CancellationToken cancellationToken = default)
     {
-      const string baseUrl = "http://localhost:8001";
-      using var httpClient = new HttpClient();
-      httpClient.BaseAddress = new Uri(baseUrl);
-      httpClient.Timeout = TimeSpan.FromMinutes(30); // Allow longer timeout for large files
-
       IsUploading = true;
       UploadProgress = 0.0;
 
       try
       {
-        await using var fileStream = File.OpenRead(filePath);
-        var fileName = Path.GetFileName(filePath);
-        var contentType = SelectedMediaType == "image" ? "image/jpeg" : "video/mp4";
-        var fileSize = fileStream.Length;
-
-        // Create progress tracking stream
-        var progressStream = new ProgressStream(fileStream, (bytesRead, totalBytes) => UploadProgress = bytesRead / (double)totalBytes * 100.0);
-
-        using var content = new MultipartFormDataContent();
-        var streamContent = new StreamContent(progressStream);
-        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
-        content.Add(streamContent, "file", fileName);
-
         var requestJson = System.Text.Json.JsonSerializer.Serialize(requestData);
-        content.Add(new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json"), "request");
+        var additionalData = new Dictionary<string, string>
+        {
+          { "request", requestJson }
+        };
 
-        var response = await httpClient.PostAsync("/api/upscaling/upscale", content, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        var progress = new Progress<double>(p => UploadProgress = p);
 
-        var responseJson = await response.Content.ReadAsStringAsync();
-        return System.Text.Json.JsonSerializer.Deserialize<UpscalingJobResponse>(responseJson);
+        return await _backendClient.UploadFileWithProgressAsync<UpscalingJobResponse>(
+            "/api/upscaling/upscale",
+            filePath,
+            "file",
+            additionalData,
+            progress,
+            TimeSpan.FromMinutes(30),
+            cancellationToken);
       }
       finally
       {
         IsUploading = false;
         UploadProgress = 0.0;
-      }
-    }
-
-    // Progress tracking stream wrapper
-    private class ProgressStream : Stream
-    {
-      private readonly Stream _baseStream;
-      private readonly Action<long, long> _progressCallback;
-      private long _bytesRead;
-
-      public ProgressStream(Stream baseStream, Action<long, long> progressCallback)
-      {
-        _baseStream = baseStream;
-        _progressCallback = progressCallback;
-      }
-
-      public override bool CanRead => _baseStream.CanRead;
-      public override bool CanSeek => _baseStream.CanSeek;
-      public override bool CanWrite => _baseStream.CanWrite;
-      public override long Length => _baseStream.Length;
-      public override long Position
-      {
-        get => _baseStream.Position;
-        set => _baseStream.Position = value;
-      }
-
-      public override void Flush() => _baseStream.Flush();
-      public override long Seek(long offset, SeekOrigin origin) => _baseStream.Seek(offset, origin);
-      public override void SetLength(long value) => _baseStream.SetLength(value);
-      public override void Write(byte[] buffer, int offset, int count) => _baseStream.Write(buffer, offset, count);
-
-      public override int Read(byte[] buffer, int offset, int count)
-      {
-        var bytesRead = _baseStream.Read(buffer, offset, count);
-        _bytesRead += bytesRead;
-        _progressCallback(_bytesRead, Length);
-        return bytesRead;
-      }
-
-      protected override void Dispose(bool disposing)
-      {
-        if (disposing)
-        {
-          _baseStream.Dispose();
-        }
-        base.Dispose(disposing);
       }
     }
 

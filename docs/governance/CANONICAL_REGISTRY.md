@@ -70,6 +70,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Infrastructure Remediation ADR** | `docs/architecture/decisions/ADR-026-infrastructure-remediation.md` | 2026-02-02 | Activation of dormant development infrastructure (telemetry, issues, context) |
 | **Unified Verification Harness ADR** | `docs/architecture/decisions/ADR-027-unified-verification-harness.md` | 2026-02-09 | Single command verification, 8 stages, fail-fast, "no green = no merge" rule |
 | **Unified Command Architecture ADR** | `docs/architecture/decisions/ADR-028-unified-command-architecture.md` | 2026-02-08 | Hybrid command system: Registry for global/routed, ViewModel for panel-local |
+| Hybrid Supervisor ADR | `docs/architecture/decisions/ADR-029-hybrid-supervisor.md` | 2026-02-09 | Hybrid supervisor architecture |
+| **ViewModel DI Migration ADR** | `docs/architecture/decisions/ADR-030-viewmodel-di-migration.md` | 2026-02-09 | ViewModel constructor DI migration from service locator |
 
 ## Planning and Roadmaps
 

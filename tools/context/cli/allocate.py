@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import sys
 from pathlib import Path
 
 from tools.context.core.manager import ContextManager
 from tools.context.core.models import AllocationContext, ContextLevel
+
+# Force UTF-8 output on Windows to handle Unicode characters
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 
 def main(argv=None) -> int:

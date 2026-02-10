@@ -273,8 +273,8 @@ async def converter_stream(websocket: WebSocket, session_id: str):
                             try:
                                 os.unlink(tmp_input.name)
                                 os.unlink(tmp_output.name)
-                            except:
-                                ...
+                            except OSError as cleanup_err:
+                                logger.debug(f"Failed to cleanup temp files: {cleanup_err}")
                 except Exception as e:
                     logger.error(f"Failed to convert audio chunk: {e}", exc_info=True)
                     # Fallback: echo back original audio

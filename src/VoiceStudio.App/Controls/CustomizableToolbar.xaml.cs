@@ -143,11 +143,12 @@ namespace VoiceStudio.App.Controls
     private StackPanel CreateEngineControl(ToolbarItem _)
     {
       var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(16, 0, 0, 0) };
-      panel.Children.Add(new TextBlock { Text = "Engine:", Margin = new Thickness(0, 0, 4, 0) });
+      panel.Children.Add(new TextBlock { Text = "Engine:", Margin = new Thickness(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center });
       var comboBox = new ComboBox { Width = 140 };
       comboBox.Items.Add("XTTS v2");
       comboBox.Items.Add("OpenVoice");
       comboBox.Items.Add("RVC");
+      comboBox.SelectedIndex = 0; // Default to first engine
       panel.Children.Add(comboBox);
       return panel;
     }
@@ -155,12 +156,13 @@ namespace VoiceStudio.App.Controls
     private StackPanel CreateWorkspaceControl(ToolbarItem _)
     {
       var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 12, 0) };
-      panel.Children.Add(new TextBlock { Text = "Workspace:", Margin = new Thickness(0, 0, 4, 0) });
+      panel.Children.Add(new TextBlock { Text = "Workspace:", Margin = new Thickness(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center });
       var comboBox = new ComboBox { Width = 150 };
       comboBox.Items.Add("Studio");
       comboBox.Items.Add("Batch Lab");
       comboBox.Items.Add("Training");
       comboBox.Items.Add("Pro Mix");
+      comboBox.SelectedIndex = 0; // Default to Studio workspace
       panel.Children.Add(comboBox);
       return panel;
     }

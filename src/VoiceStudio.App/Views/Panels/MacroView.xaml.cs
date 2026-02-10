@@ -7,6 +7,10 @@ using VoiceStudio.Core.Models;
 using System;
 using System.Linq;
 
+// Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
+using Macro = VoiceStudio.Core.Models.Macro;
+using AutomationCurve = VoiceStudio.Core.Models.AutomationCurve;
+
 namespace VoiceStudio.App.Views.Panels
 {
   public sealed partial class MacroView : UserControl

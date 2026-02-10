@@ -14,13 +14,14 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using VoiceStudio.App.Services;
 
 namespace VoiceStudio.App.ViewModels;
 
 /// <summary>
 /// ViewModel for the NPS (Net Promoter Score) survey dialog.
 /// </summary>
-public partial class NPSSurveyViewModel : ObservableObject
+public partial class NPSSurveyViewModel : BaseViewModel
 {
     private readonly ILogger<NPSSurveyViewModel>? _logger;
     private static readonly string SurveyDataPath = Path.Combine(
@@ -96,6 +97,7 @@ public partial class NPSSurveyViewModel : ObservableObject
     };
 
     public NPSSurveyViewModel(ILogger<NPSSurveyViewModel>? logger = null)
+        : base(AppServices.GetViewModelContext())
     {
         _logger = logger;
         Directory.CreateDirectory(SurveyDataPath);

@@ -125,18 +125,18 @@ namespace VoiceStudio.App.Tests.UseCases
     {
       // Arrange
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object>(
+          .Setup(x => x.PostAsync<object, TimelineUseCase.DeleteResponse>(
               "/api/timeline/tracks/delete",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))
-          .ReturnsAsync(new { Success = true });
+          .ReturnsAsync(new TimelineUseCase.DeleteResponse { Success = true });
 
       // Act
       var result = await _useCase.RemoveTrackAsync("track-123");
 
       // Assert
-      // Note: Result will be false because the response object doesn't match DeleteResponse
-      _mockBackendClient.Verify(x => x.PostAsync<object, object>(
+      Assert.IsTrue(result);
+      _mockBackendClient.Verify(x => x.PostAsync<object, TimelineUseCase.DeleteResponse>(
           "/api/timeline/tracks/delete",
           It.IsAny<object>(),
           It.IsAny<CancellationToken>()), Times.Once);
@@ -147,17 +147,18 @@ namespace VoiceStudio.App.Tests.UseCases
     {
       // Arrange
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object>(
+          .Setup(x => x.PostAsync<object, TimelineUseCase.DeleteResponse>(
               "/api/timeline/clips/delete",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))
-          .ReturnsAsync(new { Success = true });
+          .ReturnsAsync(new TimelineUseCase.DeleteResponse { Success = true });
 
       // Act
       var result = await _useCase.RemoveClipAsync("clip-456");
 
       // Assert
-      _mockBackendClient.Verify(x => x.PostAsync<object, object>(
+      Assert.IsTrue(result);
+      _mockBackendClient.Verify(x => x.PostAsync<object, TimelineUseCase.DeleteResponse>(
           "/api/timeline/clips/delete",
           It.IsAny<object>(),
           It.IsAny<CancellationToken>()), Times.Once);
@@ -168,11 +169,11 @@ namespace VoiceStudio.App.Tests.UseCases
     {
       // Arrange
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object?>(
+          .Setup(x => x.PostAsync<object, TimelineUseCase.UndoResponse?>(
               "/api/timeline/undo",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))
-          .ReturnsAsync((object?)null);
+          .ReturnsAsync((TimelineUseCase.UndoResponse?)null);
 
       // Act
       var result = await _useCase.UndoAsync();
@@ -227,11 +228,11 @@ namespace VoiceStudio.App.Tests.UseCases
       var options = new ExportOptions { Format = "wav", SampleRate = 44100 };
 
       _mockBackendClient
-          .Setup(x => x.PostAsync<object, object?>(
+          .Setup(x => x.PostAsync<object, TimelineUseCase.ExportResponse?>(
               "/api/timeline/export",
               It.IsAny<object>(),
               It.IsAny<CancellationToken>()))
-          .ReturnsAsync((object?)null);
+          .ReturnsAsync(new TimelineUseCase.ExportResponse { OutputPath = outputPath });
 
       // Act
       var result = await _useCase.ExportAsync(outputPath, options);

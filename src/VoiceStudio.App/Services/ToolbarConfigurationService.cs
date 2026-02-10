@@ -35,7 +35,8 @@ namespace VoiceStudio.App.Services
     {
       if (_currentConfiguration == null)
       {
-        _currentConfiguration = LoadConfiguration().Result ?? CreateDefaultConfiguration();
+        // Use synchronous load to avoid deadlock when called from UI thread
+        _currentConfiguration = LoadConfigurationSync() ?? CreateDefaultConfiguration();
       }
       return _currentConfiguration;
     }
@@ -197,9 +198,26 @@ namespace VoiceStudio.App.Services
       return null;
     }
 
-    private Task<ToolbarConfiguration?> LoadConfiguration()
+    /// <summary>
+    /// Synchronously loads toolbar configuration to avoid UI thread deadlock.
+    /// </summary>
+    private ToolbarConfiguration? LoadConfigurationSync()
     {
-      return LoadConfigurationAsync();
+      try
+      {
+        var configFilePath = Path.Combine(GetLocalFolderPath(), ConfigFileName);
+        if (File.Exists(configFilePath))
+        {
+          var json = File.ReadAllText(configFilePath);
+          return JsonSerializer.Deserialize<ToolbarConfiguration>(json);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Failed to load toolbar configuration: {ex.Message}");
+      }
+
+      return null;
     }
 
     private async Task SaveConfigurationAsync(ToolbarConfiguration configuration)

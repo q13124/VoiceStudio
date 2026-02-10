@@ -88,6 +88,7 @@ namespace VoiceStudio.App.ViewModels
     // Monitoring
     private DispatcherQueueTimer? _monitoringTimer;
     private readonly List<double> _latencyHistory = new();
+    private readonly object _latencyHistoryLock = new();
     private const int MAX_LATENCY_HISTORY = 100;
     private const int MONITORING_INTERVAL_MS = 2000; // Update every 2 seconds
 
@@ -236,20 +237,29 @@ namespace VoiceStudio.App.ViewModels
 
     private void RecordLatency(double latencyMs)
     {
-      _latencyHistory.Add(latencyMs);
-      if (_latencyHistory.Count > MAX_LATENCY_HISTORY)
+      double avg = 0, min = 0, max = 0;
+      
+      lock (_latencyHistoryLock)
       {
-        _latencyHistory.RemoveAt(0);
+        _latencyHistory.Add(latencyMs);
+        if (_latencyHistory.Count > MAX_LATENCY_HISTORY)
+        {
+          _latencyHistory.RemoveAt(0);
+        }
+
+        if (_latencyHistory.Count > 0)
+        {
+          avg = _latencyHistory.Average();
+          min = _latencyHistory.Min();
+          max = _latencyHistory.Max();
+        }
       }
 
+      // Update properties outside the lock to avoid potential deadlocks with UI thread
       CurrentLatencyMs = latencyMs;
-
-      if (_latencyHistory.Count > 0)
-      {
-        AverageLatencyMs = _latencyHistory.Average();
-        MinLatencyMs = _latencyHistory.Min();
-        MaxLatencyMs = _latencyHistory.Max();
-      }
+      AverageLatencyMs = avg;
+      MinLatencyMs = min;
+      MaxLatencyMs = max;
     }
 
     private async Task LoadQualityMetricsAsync(CancellationToken cancellationToken)
@@ -395,6 +405,29 @@ namespace VoiceStudio.App.ViewModels
     {
       // Update latency information on UI thread
       _dispatcherQueue?.TryEnqueue(() => RecordLatency(latency.TotalLatency));
+    }
+
+    /// <summary>
+    /// Notify commands when relevant properties change to update their CanExecute state.
+    /// </summary>
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+      base.OnPropertyChanged(e);
+      
+      if (e.PropertyName == nameof(IsLoading) ||
+          e.PropertyName == nameof(SourceProfileId) ||
+          e.PropertyName == nameof(TargetProfileId) ||
+          e.PropertyName == nameof(SelectedSession))
+      {
+        // Notify all commands that depend on these properties
+        StartSessionCommand.NotifyCanExecuteChanged();
+        StopSessionCommand.NotifyCanExecuteChanged();
+        PauseSessionCommand.NotifyCanExecuteChanged();
+        ResumeSessionCommand.NotifyCanExecuteChanged();
+        LoadSessionsCommand.NotifyCanExecuteChanged();
+        DeleteSessionCommand.NotifyCanExecuteChanged();
+        RefreshCommand.NotifyCanExecuteChanged();
+      }
     }
 
     protected override void Dispose(bool disposing)
@@ -845,7 +878,11 @@ namespace VoiceStudio.App.ViewModels
       NaturalnessScore = 0.0;
       SnrDb = 0.0;
       QualityMetricsDisplay = "No metrics available";
-      _latencyHistory.Clear();
+      
+      lock (_latencyHistoryLock)
+      {
+        _latencyHistory.Clear();
+      }
     }
 
     // Response models

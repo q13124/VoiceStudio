@@ -700,8 +700,24 @@ class EngineRouter:
             # Check task type match
             manifest_type = manifest.get("type")
             manifest_subtype = manifest.get("subtype")
-            if manifest_type != "audio" or manifest_subtype != task_type:
-                continue
+
+            # Handle different engine types
+            if task_type in ("tts", "stt", "rvc"):
+                # Audio engines require type="audio" and matching subtype
+                if manifest_type != "audio" or manifest_subtype != task_type:
+                    continue
+            elif task_type == "llm":
+                # LLM engines require type="llm"
+                if manifest_type != "llm":
+                    continue
+            elif task_type == "s2s":
+                # S2S engines require type="llm" with subtype="s2s"
+                if manifest_type != "llm" or manifest_subtype != "s2s":
+                    continue
+            else:
+                # Default: require exact type and subtype match
+                if manifest_type != task_type and manifest_subtype != task_type:
+                    continue
 
             # Get quality features from manifest
             quality_features = manifest.get("quality_features", {})

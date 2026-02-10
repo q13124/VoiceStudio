@@ -1,6 +1,6 @@
 # VoiceStudio Architecture Documentation
 
-> **Last Updated**: 2026-02-02  
+> **Last Updated**: 2026-02-10  
 > **Owner**: System Architect (Role 1)  
 > **Purpose**: Entry point to VoiceStudio architecture documentation  
 > **Contract source of truth**: `config/compatibility_matrix.yml`
@@ -33,8 +33,13 @@ All architecture decisions are documented in `docs/architecture/decisions/`. See
 | [ADR-010](decisions/ADR-010-native-windows-platform.md) | Native Windows Platform | PENDING | 2026-01-29 |
 | [ADR-018](decisions/ADR-018-named-pipes-http.md) | Named Pipes Replaced with HTTP | ACCEPTED | 2026-01-30 |
 | [ADR-019](decisions/ADR-019-orchestration-in-python.md) | Orchestration in Python | ACCEPTED | 2026-01-30 |
+| [ADR-020](decisions/ADR-020-debug-role-architecture.md) | Debug Role Architecture | ACCEPTED | 2026-02-10 |
+| [ADR-021](decisions/ADR-021-voice-ai-pipeline.md) | Voice AI Pipeline | ACCEPTED | 2026-02-10 |
+| [ADR-022](decisions/ADR-022-ddd-bounded-contexts.md) | DDD Bounded Contexts | ACCEPTED | 2026-02-10 |
+| [ADR-028](decisions/ADR-028-unified-command-architecture.md) | Unified Command Architecture | ACCEPTED | 2026-02-08 |
+| [ADR-029](decisions/ADR-029-hybrid-supervisor.md) | Hybrid Supervisor Architecture | ACCEPTED | 2026-02-09 |
 
-**Full List**: See [decisions/README.md](decisions/README.md) for all 23 ADRs.
+**Full List**: See [decisions/README.md](decisions/README.md) for all 30 ADRs.
 
 ---
 
@@ -177,7 +182,7 @@ flowchart LR
 | Clean Architecture | 78% | C+ |
 | MVVM Pattern | 80% | B- |
 | IPC Boundaries | 85% | B |
-| ADR Coverage | 32% (6/19 complete) | F |
+| ADR Coverage | 100% (30/30 indexed) | A |
 
 **Source**: [ARCHITECTURE_COMPLIANCE_AUDIT_2026-01-30.md](../reports/audit/ARCHITECTURE_COMPLIANCE_AUDIT_2026-01-30.md)
 

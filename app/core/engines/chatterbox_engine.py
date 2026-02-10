@@ -168,35 +168,8 @@ def _cache_embedding(speaker_wav: Union[str, Path], embedding: np.ndarray):
     logger.debug(f"Cached embedding: {cache_key[:8]} (cache size: {len(_EMBEDDING_CACHE)})")
 
 
-# Import base protocol
-try:
-    from .protocols import EngineProtocol
-except ImportError:
-    # Fallback if protocols not available
-    try:
-        from .base import EngineProtocol
-    except ImportError:
-        # Final fallback
-        from abc import ABC, abstractmethod
-
-        class EngineProtocol(ABC):
-            def __init__(self, device=None, gpu=True):
-                self.device = device or ("cuda" if gpu else "cpu")
-                self._initialized = False
-
-            @abstractmethod
-            def initialize(self) -> bool:
-                return False
-
-            @abstractmethod
-            def cleanup(self) -> None:
-                return None
-
-            def is_initialized(self) -> bool:
-                return self._initialized
-
-            def get_device(self) -> str:
-                return self.device
+# Import base protocol from canonical source
+from .base import EngineProtocol
 
 
 class ChatterboxEngine(EngineProtocol):

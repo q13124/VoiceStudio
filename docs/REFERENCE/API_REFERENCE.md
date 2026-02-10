@@ -2,10 +2,10 @@
 
 ## Comprehensive Backend API Documentation
 
-**Version:** 1.0 - Consolidated Reference
-**Date:** 2025-12-26
-**Total Endpoints:** 507+ across 87 route files
-**Status:** COMPLETE - All endpoints documented
+**Version:** 1.0.1 - Gap Remediation Update
+**Date:** 2026-02-10
+**Total Endpoints:** 520+ across 119 route files
+**Status:** COMPLETE - All endpoints documented (including feedback, instant_cloning, lip_sync, multi_speaker_dubbing, translation, ai_enhancement, voice_effects, pipeline, integrations routes)
 
 ---
 

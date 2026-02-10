@@ -265,6 +265,12 @@ namespace VoiceStudio.App.Services
       // Stop and dispose audio components
       try
       {
+        // Unsubscribe from event before disposing to prevent callbacks on disposed object
+        if (_waveOut != null)
+        {
+          _waveOut.PlaybackStopped -= WaveOut_PlaybackStopped;
+        }
+        
         _waveOut?.Stop();
         _waveOut?.Dispose();
         _audioFileReader?.Dispose();

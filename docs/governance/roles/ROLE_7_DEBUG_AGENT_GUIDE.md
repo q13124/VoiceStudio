@@ -4,7 +4,7 @@
 **Last Updated:** 2026-02-04  
 **Owner:** Overseer (Role 0)  
 **Primary Gates:** All gates (cross-cutting role)  
-**Related:** [ROLE_7_DEBUG_AGENT_PROMPT.md](../../.cursor/prompts/ROLE_7_DEBUG_AGENT_PROMPT.md), [ADR-017](../../architecture/decisions/ADR-017-debug-role-architecture.md)
+**Related:** [ROLE_7_DEBUG_AGENT_PROMPT.md](../../.cursor/prompts/ROLE_7_DEBUG_AGENT_PROMPT.md), [ADR-020](../../architecture/decisions/ADR-020-debug-role-architecture.md)
 
 ---
 
@@ -1076,7 +1076,7 @@ python -m tools.overseer.cli.main ledger gaps
 - **External**: IssueStore (JSONL), LedgerParser (markdown), Git (subprocess)
 - **Frameworks**: Click/argparse (CLI), logging, json
 
-**See**: [ADR-017](../../architecture/decisions/ADR-017-debug-role-architecture.md) for full architecture decision.
+**See**: [ADR-020](../../architecture/decisions/ADR-020-debug-role-architecture.md) for full architecture decision.
 
 ---
 

@@ -1,9 +1,13 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Dispatching;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.App.Services;
+using VoiceStudio.App.Tests.Fixtures;
+using VoiceStudio.App.ViewModels;
 using VoiceStudio.App.Views.Panels;
 using VoiceStudio.Core.Services;
 
@@ -16,23 +20,28 @@ namespace VoiceStudio.App.Tests.ViewModels
   [TestClass]
   public class DiagnosticsViewModelTests
   {
-    private Mock<IViewModelContext> _mockContext = null!;
+    private IViewModelContext _context = null!;
     private Mock<IBackendClient> _mockBackendClient = null!;
+    private DispatcherQueueController? _dispatcherController;
     private DiagnosticsViewModel _sut = null!;
 
     [TestInitialize]
     public void Setup()
     {
-      _mockContext = new Mock<IViewModelContext>();
+      TestAppServicesHelper.EnsureInitialized();
+      _dispatcherController = DispatcherQueueController.CreateOnDedicatedThread();
+      var dispatcher = _dispatcherController.DispatcherQueue;
+      _context = new ViewModelContext(NullLogger.Instance, dispatcher);
       _mockBackendClient = new Mock<IBackendClient>();
 
-      _sut = new DiagnosticsViewModel(_mockContext.Object, _mockBackendClient.Object);
+      _sut = new DiagnosticsViewModel(_context, _mockBackendClient.Object);
     }
 
     [TestCleanup]
     public void Cleanup()
     {
       _sut?.Dispose();
+      _dispatcherController?.ShutdownQueueAsync().AsTask().GetAwaiter().GetResult();
     }
 
     #region Panel Properties Tests
@@ -64,7 +73,7 @@ namespace VoiceStudio.App.Tests.ViewModels
     [ExpectedException(typeof(ArgumentNullException))]
     public void Constructor_WithNullBackendClient_ThrowsArgumentNullException()
     {
-      _ = new DiagnosticsViewModel(_mockContext.Object, null!);
+      _ = new DiagnosticsViewModel(_context, null!);
     }
 
     #endregion

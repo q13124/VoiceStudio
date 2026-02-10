@@ -28,6 +28,7 @@ except ImportError:
     httpx = None
 from fastapi import (
     APIRouter,
+    Depends,
     File,
     Form,
     HTTPException,
@@ -38,15 +39,33 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
+from ..middleware.auth_middleware import require_auth_if_enabled
+
 from backend.services.model_preflight import ensure_piper, ensure_sovits, ensure_xtts
 from backend.services.circuit_breaker import (
     get_engine_breaker,
     CircuitBreakerOpenError,
 )
-from backend.services.engine_service import get_engine_service
+from backend.services.engine_service import get_engine_service, IEngineService
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_audio_file,
+)
+
+from ..deps import (
+    EngineServiceDep,
+    EngineConfigServiceDep,
+    AudioRegistryDep,
+    AudioCacheDep,
+)
+
+from ..exceptions import (
+    ProfileNotFoundException,
+    InvalidEngineException,
+    EngineUnavailableException,
+    EngineProcessingException,
+    AudioProcessingException,
+    InvalidInputException,
 )
 
 from ...services.AudioArtifactRegistry import get_audio_registry
@@ -151,7 +170,11 @@ async def _download_url_to_file(url: str, timeout: float = 30.0) -> Optional[str
         return None
 
 
-router = APIRouter(prefix="/api/voice", tags=["voice"])
+router = APIRouter(
+    prefix="/api/voice",
+    tags=["voice"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # Backward-compatible engine aliases used by the UI and some clients.
 _ENGINE_ID_ALIASES: dict[str, str] = {
@@ -177,8 +200,8 @@ def _normalize_candidate_metrics(candidate_metrics: Any) -> list[dict[str, Any]]
             return _normalize_metrics_payload(payload) or []
         if isinstance(candidate_metrics, (list, tuple)):
             return _normalize_metrics_payload(candidate_metrics) or []
-    except Exception:
-        ...
+    except (ValueError, TypeError, KeyError) as e:
+        logger.debug(f"Failed to extract candidate metrics: {e}")
     return []
 
 
@@ -369,8 +392,8 @@ def _register_audio_file(
                 src_dir = os.path.abspath(os.path.dirname(file_path))
                 if src_dir.startswith(tmp_root) and os.path.exists(file_path):
                     os.remove(file_path)
-        except Exception:
-            ...
+        except OSError as cleanup_err:
+            logger.debug(f"Failed to clean up temp file {file_path}: {cleanup_err}")
     except Exception as e:
         # Fallback: keep original path in memory (still better than failing)
         logger.warning(f"Failed to persist audio artifact {audio_id}: {e}")
@@ -439,7 +462,9 @@ def _get_quality_metrics():
 
 @router.post("/synthesize", response_model=VoiceSynthesizeResponse)
 async def synthesize(
-    req: VoiceSynthesizeRequest, request: Request
+    req: VoiceSynthesizeRequest,
+    request: Request,
+    config_service: EngineConfigServiceDep = None,
 ) -> VoiceSynthesizeResponse:
     """
     Synthesize audio from text using a voice profile.
@@ -453,16 +478,16 @@ async def synthesize(
 
     # Select default engine if not specified (XTTS -> Piper -> eSpeak fallback)
     if not req.engine or not req.engine.strip():
-        # Try to get default from config service
+        # Try to get default from injected config service
         try:
-            from backend.services.EngineConfigService import get_engine_config_service
-
-            config_service = get_engine_config_service()
-            default_engine = config_service.get_default_engine("tts")
-            if default_engine:
-                requested_engine = default_engine
+            if config_service:
+                default_engine = config_service.get_default_engine("tts")
+                if default_engine:
+                    requested_engine = default_engine
+                else:
+                    # Hardcoded fallback chain: XTTS -> Piper -> eSpeak
+                    requested_engine = "xtts_v2"
             else:
-                # Hardcoded fallback chain: XTTS -> Piper -> eSpeak
                 requested_engine = "xtts_v2"
         except Exception:
             # Fallback to XTTS if config service unavailable
@@ -523,9 +548,9 @@ async def synthesize(
                         if valid_engines
                         else "none (engines not loaded)"
                     )
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Invalid engine '{requested_engine}'. Available engines: {engines_str}",
+                    raise InvalidEngineException(
+                        engine=requested_engine,
+                        available_engines=engines_str.split(", ") if engines_str != "none (engines not loaded)" else [],
                     )
             elif not valid_engines:
                 # No engines available - this is a configuration issue
@@ -539,18 +564,16 @@ async def synthesize(
                     # Get engine instance (creates if not exists)
                     engine = engine_router.get_engine(engine_id)
                     if engine is None:
-                        raise HTTPException(
-                            status_code=503,
-                            detail=f"Engine '{requested_engine}' is not available or failed to initialize",
+                        raise EngineUnavailableException(
+                            engine=requested_engine,
+                            reason="Engine failed to initialize",
                         )
 
                     # Get profile audio path from profile storage
                     from .profiles import _profiles
 
                     if req.profile_id not in _profiles:
-                        raise HTTPException(
-                            status_code=404,
-                            detail=f"Profile not found: {req.profile_id}",
+                        raise ProfileNotFoundException(profile_id=req.profile_id
                         )
 
                     profile = _profiles[req.profile_id]
@@ -968,7 +991,8 @@ async def synthesize(
                                 frames = wav_file.getnframes()
                                 sample_rate = wav_file.getframerate()
                                 duration = frames / float(sample_rate)
-                        except:
+                        except (wave.Error, OSError) as wav_err:
+                            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
                             duration = 2.5  # Fallback
 
                     # Extract quality metrics from engine output
@@ -1055,9 +1079,11 @@ async def synthesize(
                     raise
                 except Exception as e:
                     logger.error(f"Engine synthesis error: {e}", exc_info=True)
-                    raise HTTPException(
-                        status_code=500, detail=f"Synthesis failed: {str(e)}"
-                    )
+                    raise EngineProcessingException(
+                        engine=engine_id,
+                        operation="synthesis",
+                        error_message=str(e),
+                    ) from e
 
             # No engines available - return proper error
             raise HTTPException(
@@ -1251,8 +1277,8 @@ async def synthesize_multipass(
                     frames = wav_file.getnframes()
                     sample_rate = wav_file.getframerate()
                     duration = frames / float(sample_rate)
-            except:
-                ...
+            except (wave.Error, OSError) as wav_err:
+                logger.debug(f"Could not read duration from {best_audio_path}: {wav_err}")
 
         return MultiPassSynthesisResponse(
             audio_id=best_pass_result.audio_id,
@@ -1560,7 +1586,10 @@ async def analyze(
 
 
 @router.post("/remove-artifacts", response_model=ArtifactRemovalResponse)
-async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalResponse:
+async def remove_artifacts(
+    req: ArtifactRemovalRequest,
+    engine_service: EngineServiceDep = None,
+) -> ArtifactRemovalResponse:
     """
     Advanced artifact removal and audio repair (IDEA 63).
 
@@ -1630,10 +1659,11 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
 
             from core.audio.audio_utils import remove_artifacts as remove_artifacts_func
 
-            engine_service = get_engine_service()
+            # Use injected engine_service or fallback to singleton
+            _engine_svc = engine_service or get_engine_service()
 
             # Detect artifacts using quality metrics via EngineService
-            artifact_results = engine_service.detect_artifacts(audio_mono, sample_rate)
+            artifact_results = _engine_svc.detect_artifacts(audio_mono, sample_rate)
 
             # Check for clicks
             if "clicks" in artifact_types_to_check and artifact_results.get(
@@ -1707,8 +1737,8 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
                                 confidence=0.8,
                             )
                         )
-                except:
-                    ...
+                except (ValueError, RuntimeError, TypeError) as pop_err:
+                    logger.debug(f"Pop/click detection failed: {pop_err}")
 
             # Check for glitches (unusual discontinuities)
             if "glitches" in artifact_types_to_check:
@@ -1727,8 +1757,8 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
                                 confidence=0.75,
                             )
                         )
-                except:
-                    ...
+                except (ValueError, RuntimeError, TypeError) as glitch_err:
+                    logger.debug(f"Glitch detection failed: {glitch_err}")
 
             # Check for phase issues (stereo phase problems)
             if "phase_issues" in artifact_types_to_check and len(audio.shape) > 1:
@@ -1745,8 +1775,8 @@ async def remove_artifacts(req: ArtifactRemovalRequest) -> ArtifactRemovalRespon
                                     confidence=0.7,
                                 )
                             )
-                except:
-                    ...
+                except (ValueError, RuntimeError, TypeError) as phase_err:
+                    logger.debug(f"Phase issue detection failed: {phase_err}")
 
             # Apply repair if not preview mode
             repaired_audio_id = None
@@ -3239,7 +3269,8 @@ async def synthesize_with_style(
                 frames = wav_file.getnframes()
                 sample_rate = wav_file.getframerate()
                 duration = frames / float(sample_rate)
-        except:
+        except (wave.Error, OSError) as wav_err:
+            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
             duration = 2.5
 
         return VoiceSynthesizeResponse(
@@ -3474,7 +3505,8 @@ async def synthesize_cross_lingual(
                 frames = wav_file.getnframes()
                 sample_rate = wav_file.getframerate()
                 duration = frames / float(sample_rate)
-        except:
+        except (wave.Error, OSError) as wav_err:
+            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
             duration = 2.5
 
         return VoiceSynthesizeResponse(
@@ -3636,13 +3668,13 @@ async def synthesize_stream(websocket: WebSocket):
             await websocket.send_json(
                 {"type": "error", "message": f"WebSocket error: {str(e)}"}
             )
-        except:
-            ...
+        except Exception as send_err:
+            logger.debug(f"Could not send error to WebSocket client: {send_err}")
     finally:
         try:
             await websocket.close()
-        except:
-            ...
+        except Exception as close_err:
+            logger.debug(f"WebSocket close error (client may have disconnected): {close_err}")
 
 
 # --- Test pronunciation (called by PronunciationLexiconViewModel) ---

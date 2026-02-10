@@ -91,6 +91,7 @@ Use exactly one:
 | VS-0035 | DONE  | S0 Blocker  | B    | Build & Tooling Engineer | BUILD           | XAML compiler exits code 1 with no output (WinAppSDK 1.8)                     |
 | VS-0040 | DONE | S0 Blocker | B | Build & Tooling Engineer | BUILD | XAML compiler silent crash on TextElement.Foreground attached property |
 | VS-0041 | DONE | S4 Chore | B | Build & Tooling Engineer | RULES,BUILD | Empty catch blocks (85 occurrences) — all allowlisted with explicit rationale (2026-02-06) |
+| VS-0042 | DONE | S2 Major | B | Overseer | BUILD,RULES | Unified verification harness (scripts/verify.ps1) with 8 stages + change control rules |
 
 ---
 

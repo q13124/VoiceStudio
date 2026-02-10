@@ -79,19 +79,19 @@ namespace VoiceStudio.App.Commands
                 _ => _navigationService.CanNavigateBack()
             );
 
-            // nav.forward (if we implement forward navigation)
+            // nav.forward - Phase 5.2.6: Forward navigation implemented
             _registry.Register(
                 new CommandDescriptor
                 {
                     Id = "nav.forward",
                     Title = "Go Forward",
-                    Description = "Navigate forward",
+                    Description = "Navigate forward to the next panel",
                     Category = "Navigation",
                     Icon = "➡️",
                     KeyboardShortcut = "Alt+Right"
                 },
-                async (param, ct) => await Task.CompletedTask, // Placeholder for forward navigation
-                _ => false // Forward navigation not yet implemented
+                async (param, ct) => await NavigateForwardAsync(ct),
+                _ => _navigationService.CanNavigateForward()
             );
 
             // nav.home
@@ -175,6 +175,34 @@ namespace VoiceStudio.App.Commands
         public bool CanNavigateBack()
         {
             return _navigationService.CanNavigateBack();
+        }
+
+        public bool CanNavigateForward()
+        {
+            return _navigationService.CanNavigateForward();
+        }
+
+        public async Task NavigateForwardAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                if (_navigationService.CanNavigateForward())
+                {
+                    await _navigationService.NavigateForwardAsync(ct);
+                    var currentPanel = _navigationService.GetCurrentPanelId();
+                    NavigationRequested?.Invoke(this, currentPanel ?? "home");
+                    Debug.WriteLine($"[NavigationHandler] Navigated forward to: {currentPanel}");
+                }
+                else
+                {
+                    Debug.WriteLine("[NavigationHandler] Cannot navigate forward - empty forward stack");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[NavigationHandler] Navigate forward failed: {ex.Message}");
+                throw;
+            }
         }
     }
 }

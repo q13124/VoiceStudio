@@ -13,13 +13,16 @@ namespace VoiceStudio.App.Services;
 /// Keyboard shortcut management service.
 /// 
 /// Phase 15.1: Keyboard-First Workflow
+/// Phase 5.0: Service Unification - Now implements IUnifiedKeyboardService.
 /// Provides comprehensive keyboard shortcut handling for power users.
 /// </summary>
-public class KeyboardShortcutService
+public class KeyboardShortcutService : IUnifiedKeyboardService
 {
     private readonly Dictionary<string, ShortcutBinding> _shortcuts;
     private readonly Dictionary<string, List<Action>> _handlers;
+    private readonly Dictionary<string, List<Func<Task>>> _asyncHandlers;
     private readonly HashSet<string> _customizedShortcuts;
+    private readonly Dictionary<string, (VirtualKey Key, VirtualKeyModifiers Modifiers)> _defaultBindings;
     private bool _isEnabled = true;
 
     public event EventHandler<ShortcutExecutedEventArgs>? ShortcutExecuted;
@@ -28,10 +31,17 @@ public class KeyboardShortcutService
     {
         _shortcuts = new Dictionary<string, ShortcutBinding>();
         _handlers = new Dictionary<string, List<Action>>();
+        _asyncHandlers = new Dictionary<string, List<Func<Task>>>();
         _customizedShortcuts = new HashSet<string>();
+        _defaultBindings = new Dictionary<string, (VirtualKey, VirtualKeyModifiers)>();
 
         RegisterDefaultShortcuts();
     }
+
+    /// <summary>
+    /// Gets all registered shortcuts.
+    /// </summary>
+    public IReadOnlyDictionary<string, ShortcutBinding> Shortcuts => _shortcuts;
 
     /// <summary>
     /// Register default keyboard shortcuts.
@@ -316,6 +326,217 @@ public class KeyboardShortcutService
         public int Key { get; set; }
         public int Modifiers { get; set; }
     }
+
+    #region IUnifiedKeyboardService Implementation
+
+    /// <summary>
+    /// Registers an async handler for a shortcut.
+    /// </summary>
+    public void RegisterHandler(string commandId, Func<Task> handler)
+    {
+        if (!_asyncHandlers.ContainsKey(commandId))
+        {
+            _asyncHandlers[commandId] = new List<Func<Task>>();
+        }
+        _asyncHandlers[commandId].Add(handler);
+    }
+
+    /// <summary>
+    /// Unregisters a shortcut.
+    /// </summary>
+    public void UnregisterShortcut(string commandId)
+    {
+        _shortcuts.Remove(commandId);
+        _handlers.Remove(commandId);
+        _asyncHandlers.Remove(commandId);
+        _customizedShortcuts.Remove(commandId);
+    }
+
+    /// <summary>
+    /// Updates a shortcut binding.
+    /// </summary>
+    public void UpdateShortcut(string commandId, VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        CustomizeShortcut(commandId, key, modifiers);
+    }
+
+    /// <summary>
+    /// Resets a shortcut to its default binding.
+    /// </summary>
+    public void ResetShortcut(string commandId)
+    {
+        ResetToDefault(commandId);
+    }
+
+    /// <summary>
+    /// Resets all shortcuts to defaults.
+    /// </summary>
+    public void ResetAllShortcuts()
+    {
+        ResetAllToDefaults();
+    }
+
+    /// <summary>
+    /// Checks for conflicts with a proposed binding.
+    /// </summary>
+    public ShortcutConflict? CheckForConflict(string commandId, VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        var conflicting = _shortcuts.Values.FirstOrDefault(s =>
+            s.Key == key &&
+            s.Modifiers == modifiers &&
+            s.CommandId != commandId);
+
+        if (conflicting != null)
+        {
+            return new ShortcutConflict
+            {
+                ConflictingCommandId = conflicting.CommandId,
+                ExistingBinding = conflicting
+            };
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets shortcuts that have been customized.
+    /// </summary>
+    public IEnumerable<string> GetCustomizedShortcuts() => _customizedShortcuts;
+
+    /// <summary>
+    /// Handles a key press event.
+    /// </summary>
+    public bool HandleKeyPress(VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        return HandleKeyDown(key, modifiers);
+    }
+
+    /// <summary>
+    /// Handles a key press event asynchronously.
+    /// </summary>
+    public async Task<bool> HandleKeyPressAsync(VirtualKey key, VirtualKeyModifiers modifiers)
+    {
+        if (!_isEnabled)
+            return false;
+
+        var binding = _shortcuts.Values.FirstOrDefault(s =>
+            s.Key == key && s.Modifiers == modifiers);
+
+        if (binding != null)
+        {
+            await ExecuteShortcutAsync(binding.CommandId);
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task ExecuteShortcutAsync(string commandId)
+    {
+        // Execute sync handlers
+        if (_handlers.TryGetValue(commandId, out var handlers))
+        {
+            foreach (var handler in handlers)
+            {
+                try { handler(); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Shortcut handler error: {ex.Message}");
+                }
+            }
+        }
+
+        // Execute async handlers
+        if (_asyncHandlers.TryGetValue(commandId, out var asyncHandlers))
+        {
+            foreach (var handler in asyncHandlers)
+            {
+                try { await handler(); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Async shortcut handler error: {ex.Message}");
+                }
+            }
+        }
+
+        ShortcutExecuted?.Invoke(this, new ShortcutExecutedEventArgs(commandId));
+    }
+
+    /// <summary>
+    /// Gets a shortcut by command ID.
+    /// </summary>
+    public ShortcutBinding? GetShortcut(string commandId)
+    {
+        return _shortcuts.TryGetValue(commandId, out var binding) ? binding : null;
+    }
+
+    /// <summary>
+    /// Gets all shortcut categories.
+    /// </summary>
+    public IEnumerable<string> GetCategories()
+    {
+        return _shortcuts.Values
+            .Select(s => s.CommandId.Split('.').FirstOrDefault() ?? "General")
+            .Distinct()
+            .OrderBy(c => c);
+    }
+
+    /// <summary>
+    /// Searches shortcuts by description.
+    /// </summary>
+    public IEnumerable<ShortcutBinding> SearchShortcuts(string query)
+    {
+        var lowerQuery = query.ToLowerInvariant();
+        return _shortcuts.Values.Where(s =>
+            s.Description.ToLowerInvariant().Contains(lowerQuery) ||
+            s.CommandId.ToLowerInvariant().Contains(lowerQuery));
+    }
+
+    /// <summary>
+    /// Saves custom shortcuts to persistent storage.
+    /// </summary>
+    public async Task SaveCustomShortcutsAsync()
+    {
+        try
+        {
+            var settingsDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "VoiceStudio");
+            System.IO.Directory.CreateDirectory(settingsDir);
+            var path = System.IO.Path.Combine(settingsDir, "shortcuts.json");
+            await System.IO.File.WriteAllTextAsync(path, ExportToJson());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save shortcuts: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Loads custom shortcuts from persistent storage.
+    /// </summary>
+    public async Task LoadCustomShortcutsAsync()
+    {
+        try
+        {
+            var settingsDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "VoiceStudio");
+            var path = System.IO.Path.Combine(settingsDir, "shortcuts.json");
+            
+            if (System.IO.File.Exists(path))
+            {
+                var json = await System.IO.File.ReadAllTextAsync(path);
+                ImportFromJson(json);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load shortcuts: {ex.Message}");
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>

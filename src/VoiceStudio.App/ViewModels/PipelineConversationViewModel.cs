@@ -1,0 +1,431 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml;
+using VoiceStudio.App.Core.Models;
+using VoiceStudio.App.Services;
+using VoiceStudio.App.Utilities;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
+
+namespace VoiceStudio.App.ViewModels
+{
+  /// <summary>
+  /// ViewModel for the voice AI pipeline conversation interface.
+  /// Supports LLM chat with TTS output for conversational AI.
+  /// </summary>
+  public partial class PipelineConversationViewModel : BaseViewModel, IPanelView
+  {
+    private readonly IBackendClient _backendClient;
+    private readonly PipelineStreamingWebSocketClient? _streamingClient;
+    private ObservableCollection<ConversationMessageItem>? _messagesHooked;
+
+    public string PanelId => "pipeline-conversation";
+    public string DisplayName => ResourceHelper.GetString("Panel.PipelineConversation.DisplayName", "AI Conversation");
+    public PanelRegion Region => PanelRegion.Center;
+
+    [ObservableProperty]
+    private ObservableCollection<ConversationMessageItem> messages = new();
+
+    [ObservableProperty]
+    private string? userInput;
+
+    [ObservableProperty]
+    private string? currentSessionId;
+
+    [ObservableProperty]
+    private bool isProcessing;
+
+    [ObservableProperty]
+    private bool isStreaming;
+
+    [ObservableProperty]
+    private bool isConnected;
+
+    [ObservableProperty]
+    private string? currentStreamingText;
+
+    [ObservableProperty]
+    private string? selectedLlmProvider;
+
+    [ObservableProperty]
+    private string? selectedLlmModel;
+
+    [ObservableProperty]
+    private string? selectedTtsEngine;
+
+    [ObservableProperty]
+    private string? selectedVoiceProfileId;
+
+    [ObservableProperty]
+    private string selectedLanguage = "en";
+
+    [ObservableProperty]
+    private bool enableTts = true;
+
+    [ObservableProperty]
+    private bool enableStreaming = true;
+
+    [ObservableProperty]
+    private ObservableCollection<PipelineProvider> availableLlmProviders = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PipelineProvider> availableTtsProviders = new();
+
+    public Visibility ErrorMessageVisibility =>
+        string.IsNullOrWhiteSpace(ErrorMessage) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility WelcomeVisibility =>
+        Messages.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility StreamingIndicatorVisibility =>
+        IsStreaming ? Visibility.Visible : Visibility.Collapsed;
+
+    public PipelineConversationViewModel(IViewModelContext context, IBackendClient backendClient)
+        : base(context)
+    {
+      _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+
+      // Initialize streaming client if WebSocket service is available
+      if (backendClient.WebSocketService != null)
+      {
+        _streamingClient = new PipelineStreamingWebSocketClient(backendClient.WebSocketService);
+        _streamingClient.TokenReceived += OnTokenReceived;
+        _streamingClient.AudioReceived += OnAudioReceived;
+        _streamingClient.StreamComplete += OnStreamComplete;
+        _streamingClient.ErrorOccurred += OnStreamError;
+        _streamingClient.SessionStateChanged += OnSessionStateChanged;
+      }
+
+      SendMessageCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("SendMessage");
+        await SendMessageAsync(ct);
+      }, () => !string.IsNullOrWhiteSpace(UserInput) && !IsProcessing && !IsLoading);
+
+      StopStreamingCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("StopStreaming");
+        await StopStreamingAsync(ct);
+      }, () => IsStreaming);
+
+      ClearConversationCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("ClearConversation");
+        await ClearConversationAsync(ct);
+      }, () => Messages.Count > 0 && !IsLoading);
+
+      RefreshProvidersCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("RefreshProviders");
+        await RefreshProvidersAsync(ct);
+      }, () => !IsLoading);
+
+      RefreshCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("Refresh");
+        await RefreshAsync(ct);
+      }, () => !IsLoading);
+
+      HookMessagesCollection(Messages);
+
+      PropertyChanged += (_, e) =>
+      {
+        if (string.Equals(e.PropertyName, nameof(ErrorMessage), StringComparison.Ordinal))
+        {
+          OnPropertyChanged(nameof(ErrorMessageVisibility));
+        }
+        if (string.Equals(e.PropertyName, nameof(IsStreaming), StringComparison.Ordinal))
+        {
+          OnPropertyChanged(nameof(StreamingIndicatorVisibility));
+          ((EnhancedAsyncRelayCommand)StopStreamingCommand).NotifyCanExecuteChanged();
+        }
+      };
+    }
+
+    public IAsyncRelayCommand SendMessageCommand { get; }
+    public IAsyncRelayCommand StopStreamingCommand { get; }
+    public IAsyncRelayCommand ClearConversationCommand { get; }
+    public IAsyncRelayCommand RefreshProvidersCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
+
+    private async Task RefreshAsync(CancellationToken cancellationToken)
+    {
+      await RefreshProvidersAsync(cancellationToken);
+    }
+
+    private async Task RefreshProvidersAsync(CancellationToken cancellationToken)
+    {
+      try
+      {
+        var providers = await _backendClient.GetPipelineProvidersAsync(cancellationToken);
+
+        AvailableLlmProviders.Clear();
+        foreach (var p in providers.LlmProviders)
+        {
+          AvailableLlmProviders.Add(p);
+        }
+
+        AvailableTtsProviders.Clear();
+        foreach (var p in providers.TtsProviders)
+        {
+          AvailableTtsProviders.Add(p);
+        }
+
+        // Set defaults if available
+        if (string.IsNullOrEmpty(SelectedLlmProvider) && AvailableLlmProviders.Count > 0)
+        {
+          SelectedLlmProvider = AvailableLlmProviders[0].Id;
+        }
+        if (string.IsNullOrEmpty(SelectedTtsEngine) && AvailableTtsProviders.Count > 0)
+        {
+          SelectedTtsEngine = AvailableTtsProviders[0].Id;
+        }
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to load providers: {ex.Message}";
+      }
+    }
+
+    private async Task SendMessageAsync(CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrWhiteSpace(UserInput))
+        return;
+
+      var userMessage = UserInput;
+      UserInput = string.Empty;
+
+      // Add user message to conversation
+      Messages.Add(new ConversationMessageItem
+      {
+        Role = "user",
+        Content = userMessage,
+        Timestamp = DateTime.Now
+      });
+      OnPropertyChanged(nameof(WelcomeVisibility));
+
+      IsProcessing = true;
+      ((EnhancedAsyncRelayCommand)SendMessageCommand).NotifyCanExecuteChanged();
+
+      try
+      {
+        if (EnableStreaming && _streamingClient != null)
+        {
+          await SendStreamingMessageAsync(userMessage, cancellationToken);
+        }
+        else
+        {
+          await SendBatchMessageAsync(userMessage, cancellationToken);
+        }
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = $"Failed to process message: {ex.Message}";
+        Messages.Add(new ConversationMessageItem
+        {
+          Role = "error",
+          Content = $"Error: {ex.Message}",
+          Timestamp = DateTime.Now
+        });
+      }
+      finally
+      {
+        IsProcessing = false;
+        IsStreaming = false;
+        ((EnhancedAsyncRelayCommand)SendMessageCommand).NotifyCanExecuteChanged();
+      }
+    }
+
+    private async Task SendStreamingMessageAsync(string text, CancellationToken cancellationToken)
+    {
+      if (_streamingClient == null)
+      {
+        await SendBatchMessageAsync(text, cancellationToken);
+        return;
+      }
+
+      IsStreaming = true;
+      CurrentStreamingText = string.Empty;
+
+      // Add placeholder for assistant response
+      var assistantMessage = new ConversationMessageItem
+      {
+        Role = "assistant",
+        Content = "",
+        Timestamp = DateTime.Now,
+        IsStreaming = true
+      };
+      Messages.Add(assistantMessage);
+
+      if (!_streamingClient.IsConnected)
+      {
+        await _streamingClient.ConnectAsync(CurrentSessionId, cancellationToken);
+        CurrentSessionId = _streamingClient.SessionId;
+      }
+
+      await _streamingClient.SendTextAsync(text, new PipelineStreamConfig
+      {
+        Mode = "streaming",
+        LlmProvider = SelectedLlmProvider,
+        LlmModel = SelectedLlmModel,
+        TtsEngine = SelectedTtsEngine,
+        VoiceProfileId = SelectedVoiceProfileId,
+        Language = SelectedLanguage,
+        EnableTts = EnableTts
+      }, cancellationToken);
+    }
+
+    private async Task SendBatchMessageAsync(string text, CancellationToken cancellationToken)
+    {
+      var request = new PipelineRequest
+      {
+        Text = text,
+        Mode = "batch",
+        LlmProvider = SelectedLlmProvider,
+        LlmModel = SelectedLlmModel,
+        TtsEngine = SelectedTtsEngine,
+        VoiceProfileId = SelectedVoiceProfileId,
+        Language = SelectedLanguage,
+        EnableFunctionCalling = true
+      };
+
+      var response = await _backendClient.ProcessPipelineAsync(request, cancellationToken);
+
+      Messages.Add(new ConversationMessageItem
+      {
+        Role = "assistant",
+        Content = response.Response,
+        AudioData = response.Audio,
+        Timestamp = DateTime.Now
+      });
+    }
+
+    private async Task StopStreamingAsync(CancellationToken cancellationToken)
+    {
+      if (_streamingClient != null && IsStreaming)
+      {
+        await _streamingClient.StopStreamingAsync(cancellationToken);
+        IsStreaming = false;
+      }
+    }
+
+    private async Task ClearConversationAsync(CancellationToken cancellationToken)
+    {
+      Messages.Clear();
+      CurrentSessionId = null;
+      CurrentStreamingText = null;
+      OnPropertyChanged(nameof(WelcomeVisibility));
+
+      if (_streamingClient != null)
+      {
+        await _streamingClient.DisconnectAsync();
+      }
+
+      await Task.CompletedTask;
+    }
+
+    private void OnTokenReceived(object? sender, PipelineTokenEvent e)
+    {
+      if (Messages.Count > 0 && Messages[^1].IsStreaming)
+      {
+        CurrentStreamingText += e.Token;
+        Messages[^1].Content = CurrentStreamingText ?? "";
+        OnPropertyChanged(nameof(Messages));
+      }
+    }
+
+    private void OnAudioReceived(object? sender, PipelineAudioEvent e)
+    {
+      if (Messages.Count > 0)
+      {
+        // Accumulate audio chunks
+        var lastMessage = Messages[^1];
+        var existingAudio = lastMessage.AudioData ?? "";
+        lastMessage.AudioData = existingAudio + e.AudioData;
+      }
+    }
+
+    private void OnStreamComplete(object? sender, PipelineCompleteEvent e)
+    {
+      if (Messages.Count > 0 && Messages[^1].IsStreaming)
+      {
+        Messages[^1].Content = e.FullResponse;
+        Messages[^1].IsStreaming = false;
+      }
+      IsStreaming = false;
+      CurrentStreamingText = null;
+    }
+
+    private void OnStreamError(object? sender, PipelineErrorEvent e)
+    {
+      ErrorMessage = $"Streaming error: {e.Error}";
+      IsStreaming = false;
+      if (Messages.Count > 0 && Messages[^1].IsStreaming)
+      {
+        Messages[^1].IsStreaming = false;
+        Messages[^1].Content = $"[Error: {e.Error}]";
+      }
+    }
+
+    private void OnSessionStateChanged(object? sender, PipelineSessionState e)
+    {
+      IsConnected = e.State == "connected" || e.State == "streaming";
+    }
+
+    private void HookMessagesCollection(ObservableCollection<ConversationMessageItem> collection)
+    {
+      if (_messagesHooked != null)
+      {
+        _messagesHooked.CollectionChanged -= OnMessagesCollectionChanged;
+      }
+      _messagesHooked = collection;
+      if (_messagesHooked != null)
+      {
+        _messagesHooked.CollectionChanged += OnMessagesCollectionChanged;
+      }
+    }
+
+    private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+      OnPropertyChanged(nameof(WelcomeVisibility));
+      ((EnhancedAsyncRelayCommand)ClearConversationCommand).NotifyCanExecuteChanged();
+    }
+
+    partial void OnMessagesChanged(ObservableCollection<ConversationMessageItem> value)
+    {
+      HookMessagesCollection(value);
+      OnPropertyChanged(nameof(WelcomeVisibility));
+    }
+
+    public void Dispose()
+    {
+      if (_streamingClient != null)
+      {
+        _streamingClient.TokenReceived -= OnTokenReceived;
+        _streamingClient.AudioReceived -= OnAudioReceived;
+        _streamingClient.StreamComplete -= OnStreamComplete;
+        _streamingClient.ErrorOccurred -= OnStreamError;
+        _streamingClient.SessionStateChanged -= OnSessionStateChanged;
+        _streamingClient.Dispose();
+      }
+    }
+  }
+
+  /// <summary>
+  /// A message item in the conversation.
+  /// </summary>
+  public class ConversationMessageItem
+  {
+    public string Role { get; set; } = string.Empty; // "user", "assistant", "error"
+    public string Content { get; set; } = string.Empty;
+    public string? AudioData { get; set; } // Base64 encoded audio
+    public DateTime Timestamp { get; set; }
+    public bool IsStreaming { get; set; }
+    public bool HasAudio => !string.IsNullOrEmpty(AudioData);
+  }
+}

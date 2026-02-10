@@ -1,0 +1,34 @@
+{
+  "id": "training",
+  "name": "Model Training",
+  "description": "Voice model training with dataset and progress panels",
+  "category": "Training",
+  "version": "1.0",
+  "layout": {
+    "profileName": "Training",
+    "version": "1.0",
+    "isDefault": false,
+    "regions": [
+      {
+        "region": "Left",
+        "activePanelId": "dataset",
+        "openedPanels": ["dataset", "training-config"]
+      },
+      {
+        "region": "Center",
+        "activePanelId": "training-progress",
+        "openedPanels": ["training-progress", "loss-chart"]
+      },
+      {
+        "region": "Right",
+        "activePanelId": "model-details",
+        "openedPanels": ["model-details", "checkpoints"]
+      },
+      {
+        "region": "Bottom",
+        "activePanelId": "console",
+        "openedPanels": ["console", "gpu-status"]
+      }
+    ]
+  }
+}

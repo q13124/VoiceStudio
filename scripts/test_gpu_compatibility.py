@@ -137,7 +137,7 @@ def get_gpu_info() -> GPUInfo:
         if result.returncode == 0:
             info.driver_version = result.stdout.strip()
     except Exception:
-        pass
+        pass  # ALLOWED: bare except - nvidia-smi may not be available
     
     return info
 
@@ -160,13 +160,13 @@ def get_pytorch_info() -> dict[str, str]:
         if torch.backends.cudnn.is_available():
             info["cudnn_version"] = str(torch.backends.cudnn.version())
     except ImportError:
-        pass
+        pass  # ALLOWED: bare except - torch optional for compatibility check
     
     try:
         import torchaudio
         info["torchaudio_version"] = torchaudio.__version__
     except ImportError:
-        pass
+        pass  # ALLOWED: bare except - torchaudio optional for compatibility check
     
     return info
 

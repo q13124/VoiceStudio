@@ -55,7 +55,8 @@ namespace VoiceStudio.App.ViewModels
       set
       {
         SetProperty(ref _isCheckingForUpdates, value);
-        ((AsyncRelayCommand)CheckForUpdatesCommand).NotifyCanExecuteChanged();
+        if (CheckForUpdatesCommand is UpdateRelayCommand urc)
+          urc.RaiseCanExecuteChanged();
       }
     }
 
@@ -65,7 +66,8 @@ namespace VoiceStudio.App.ViewModels
       set
       {
         SetProperty(ref _isDownloadingUpdate, value);
-        ((AsyncRelayCommand)DownloadUpdateCommand).NotifyCanExecuteChanged();
+        if (DownloadUpdateCommand is UpdateRelayCommand urc)
+          urc.RaiseCanExecuteChanged();
       }
     }
 
@@ -121,7 +123,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("Update.CheckForUpdatesFailed", ex.Message);
+        var formatString = ResourceHelper.GetString("Update.CheckForUpdatesFailed", "Failed to check for updates: {0}");
+        ErrorMessage = string.Format(formatString, ex.Message);
       }
       finally
       {
@@ -153,13 +156,15 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("Update.DownloadUpdateFailed", ex.Message);
+        var formatString = ResourceHelper.GetString("Update.DownloadUpdateFailed", "Failed to download update: {0}");
+        ErrorMessage = string.Format(formatString, ex.Message);
         DownloadStatusText = ResourceHelper.GetString("Update.DownloadFailed", "Download failed");
       }
       finally
       {
         IsDownloadingUpdate = false;
-        ((AsyncRelayCommand)InstallUpdateCommand).NotifyCanExecuteChanged();
+        if (InstallUpdateCommand is UpdateRelayCommand urc)
+          urc.RaiseCanExecuteChanged();
       }
     }
 
@@ -181,7 +186,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("Update.InstallUpdateFailed", ex.Message);
+        var formatString = ResourceHelper.GetString("Update.InstallUpdateFailed", "Failed to install update: {0}");
+        ErrorMessage = string.Format(formatString, ex.Message);
       }
     }
 
@@ -225,13 +231,29 @@ namespace VoiceStudio.App.ViewModels
       if (e.Success)
       {
         DownloadStatusText = ResourceHelper.GetString("Update.DownloadComplete", "Download complete!");
-        ((AsyncRelayCommand)InstallUpdateCommand).NotifyCanExecuteChanged();
+        if (InstallUpdateCommand is UpdateRelayCommand urc)
+          urc.RaiseCanExecuteChanged();
       }
       else
       {
         ErrorMessage = e.ErrorMessage ?? ResourceHelper.GetString("Update.DownloadFailed", "Download failed");
         DownloadStatusText = ResourceHelper.GetString("Update.DownloadFailed", "Download failed");
       }
+    }
+
+    /// <summary>
+    /// Unsubscribe from update service events to prevent memory leaks.
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        // Unsubscribe from update service events
+        _updateService.UpdateCheckCompleted -= OnUpdateCheckCompleted;
+        _updateService.DownloadProgressChanged -= OnDownloadProgressChanged;
+        _updateService.DownloadCompleted -= OnDownloadCompleted;
+      }
+      base.Dispose(disposing);
     }
   }
 

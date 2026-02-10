@@ -73,6 +73,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
+# Import centralized configuration
+try:
+    from backend.settings import config as app_config
+except ImportError:
+    app_config = None
+
 # Try importing Prometheus for metrics
 try:
     from prometheus_client import Counter, Gauge, Histogram, generate_latest
@@ -318,6 +324,27 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Failed to initialize temp file manager: {e}")
 
+    # Initialize security services (Gap Analysis Fix - Phase 2)
+    try:
+        from backend.security.session import get_session_manager
+        from backend.security.rbac import get_rbac_service
+        from backend.security.key_rotation import get_key_rotation_service
+
+        session_mgr = get_session_manager()
+        await session_mgr.start()
+        logger.info("Session manager started")
+
+        rbac_service = get_rbac_service()
+        logger.info("RBAC service initialized")
+
+        key_rotation = get_key_rotation_service()
+        await key_rotation.start()
+        logger.info("Key rotation service started")
+
+        logger.info("Security services initialized successfully")
+    except Exception as e:
+        logger.warning(f"Failed to initialize security services: {e}")
+
     try:
         # Initialize background task scheduler
         try:
@@ -389,7 +416,8 @@ async def shutdown_event():
     """Graceful shutdown with engine cleanup and 30-second timeout."""
     import asyncio
     
-    shutdown_timeout = 30  # seconds
+    # Get shutdown timeout from configuration
+    shutdown_timeout = app_config.timeouts.shutdown if app_config else 30.0
     logger.info("Initiating graceful shutdown (timeout: %ds)", shutdown_timeout)
     
     async def _shutdown_engines():
@@ -404,7 +432,8 @@ async def shutdown_event():
                     logger.info("Shutting down %d running engine(s)...", len(running_engines))
                     for engine_id in running_engines:
                         try:
-                            await manager.stop_engine(engine_id, timeout=10)
+                            engine_stop_timeout = app_config.timeouts.engine_stop if app_config else 10.0
+                            await manager.stop_engine(engine_id, timeout=engine_stop_timeout)
                             logger.info("Engine '%s' stopped", engine_id)
                         except Exception as e:
                             logger.warning("Failed to stop engine '%s': %s", engine_id, e)
@@ -471,6 +500,37 @@ async def shutdown_event():
         except Exception as e:
             logger.warning("Failed to close database connections: %s", e)
     
+    async def _shutdown_security_services():
+        """Stop security services (Gap Analysis Fix - Phase 2)."""
+        try:
+            from backend.security.session import get_session_manager
+            from backend.security.key_rotation import get_key_rotation_service
+
+            session_mgr = get_session_manager()
+            await session_mgr.stop()
+            logger.info("Session manager stopped")
+
+            key_rotation = get_key_rotation_service()
+            await key_rotation.stop()
+            logger.info("Key rotation service stopped")
+        except ImportError:
+            logger.debug("Security services module not available")
+        except Exception as e:
+            logger.warning("Failed to stop security services: %s", e)
+    
+    async def _shutdown_lifecycle_orchestrator():
+        """Run graceful shutdown orchestrator (Gap Analysis Fix - Phase 2)."""
+        try:
+            from backend.lifecycle.shutdown import GracefulShutdownOrchestrator
+
+            orchestrator = GracefulShutdownOrchestrator()
+            await orchestrator.shutdown()
+            logger.info("Lifecycle orchestrator shutdown completed")
+        except ImportError:
+            logger.debug("Lifecycle orchestrator module not available")
+        except Exception as e:
+            logger.warning("Lifecycle orchestrator shutdown error: %s", e)
+    
     # Run shutdown sequence with timeout
     try:
         # Phase 1: Wait for in-flight jobs
@@ -485,10 +545,14 @@ async def shutdown_event():
                 _shutdown_temp_files(),
                 _shutdown_scheduler(),
                 _shutdown_database(),
+                _shutdown_security_services(),
                 return_exceptions=True
             ),
             timeout=shutdown_timeout * 0.3
         )
+        
+        # Phase 4: Lifecycle orchestrator (final cleanup)
+        await asyncio.wait_for(_shutdown_lifecycle_orchestrator(), timeout=5)
         
         logger.info("Graceful shutdown completed successfully")
     except asyncio.TimeoutError:
@@ -533,8 +597,14 @@ app = FastAPI(
         "name": "MIT",
     },
     servers=[
-        {"url": "http://localhost:8000/api/v1", "description": "Development server (v1)"},
-        {"url": "http://localhost:8000", "description": "Development server (legacy)"},
+        {
+            "url": f"{app_config.server.base_url}/api/v1" if app_config else "http://localhost:8000/api/v1",
+            "description": "Development server (v1)",
+        },
+        {
+            "url": app_config.server.base_url if app_config else "http://localhost:8000",
+            "description": "Development server (legacy)",
+        },
         {"url": "https://api.voicestudio.com/api/v1", "description": "Production server (v1)"},
         {"url": "https://api.voicestudio.com", "description": "Production server (legacy)"},
     ],
@@ -1126,6 +1196,19 @@ def _register_all_routes():
         "slo",
         "spectrogram",
         "tracing",
+        # Phase 7-9 routes (Gap Analysis Fix)
+        "feedback",
+        "instant_cloning",
+        "voice_effects",
+        "translation",
+        "multi_speaker_dubbing",
+        "lip_sync",
+        "ai_enhancement",
+        "integrations",
+        # Phase 15-25 routes (Architecture Gap Remediation)
+        "pipeline",
+        # Comprehensive Gap Remediation (2026-02-10)
+        "realtime_settings",
     ]
 
     route_modules = {}
@@ -1272,6 +1355,18 @@ def _register_all_routes():
     _include_route("huggingface_fix")
     _include_route("advanced_spectrogram")
     _include_route("metrics")
+
+    # Gap Remediation Phase 7-9 routes (previously imported but not registered)
+    _include_route("feedback")
+    _include_route("instant_cloning")
+    _include_route("voice_effects")
+    _include_route("translation")
+    _include_route("multi_speaker_dubbing")
+    _include_route("lip_sync")
+    _include_route("ai_enhancement")
+    _include_route("integrations")
+    _include_route("pipeline")
+    _include_route("realtime_settings")
 
     # Register additional sub-routers for UI compatibility
     try:

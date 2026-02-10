@@ -19,6 +19,7 @@
 - `.cursor/rules/workflows/state-gate.mdc`
 - `.cursor/rules/workflows/closure-protocol.mdc`
 - `.cursor/rules/workflows/verifier-subagent.mdc`
+- `.cursor/rules/workflows/verification-harness.mdc` — No changes unless scripts/verify.ps1 stays GREEN
 - Extra subproject rules: `runtime/external/invokeai/invokeai/frontend/web/CLAUDE.md` and `runtime/external/localai/AGENTS.md`
 
 ## Professional Standard
@@ -30,6 +31,8 @@
 
 ## Build and test commands
 
+- **Full Verification**: `.\scripts\verify.ps1` — Single source of truth; must be GREEN before any merge
+- **Quick Verification**: `.\scripts\verify.ps1 -Quick` — Pre-commit check (~30 seconds)
 - Build (WinUI/C#): `dotnet build VoiceStudio.sln -c Debug -p:Platform=x64`
 - Test (C#): `dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c Debug -p:Platform=x64`
 - Test (Python): `python -m pytest tests`

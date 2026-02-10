@@ -1,0 +1,286 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://voicestudio.app/schemas/engine_manifest_v3.schema.json",
+  "title": "VoiceStudio Engine Manifest v3",
+  "description": "Extended engine metadata schema for plugin architecture (Task 3.3.1)",
+  "type": "object",
+  "required": ["manifest_version", "id", "name", "version", "type", "capabilities"],
+  "properties": {
+    "manifest_version": {
+      "type": "integer",
+      "const": 3,
+      "description": "Schema version - must be 3 for v3 manifests"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{2,63}$",
+      "description": "Unique engine identifier (lowercase, alphanumeric with hyphens/underscores)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Human-readable engine name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$",
+      "description": "Semantic version (e.g., 1.0.0, 2.1.0-beta.1)"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["synthesis", "transcription", "voice_conversion", "audio_processing", "speaker_embedding", "vad"],
+      "description": "Primary engine type"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Detailed engine description"
+    },
+    "author": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "email": {"type": "string", "format": "email"},
+        "url": {"type": "string", "format": "uri"}
+      },
+      "description": "Engine author information"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., MIT, Apache-2.0, GPL-3.0)"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source code repository URL"
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["features"],
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "text_to_speech",
+              "speech_to_text",
+              "voice_cloning",
+              "voice_conversion",
+              "audio_enhancement",
+              "noise_reduction",
+              "speaker_diarization",
+              "emotion_detection",
+              "prosody_control",
+              "streaming",
+              "realtime",
+              "batch_processing",
+              "multi_speaker",
+              "multi_language"
+            ]
+          },
+          "description": "Supported features"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+          },
+          "description": "Supported language codes (ISO 639-1, optionally with region)"
+        },
+        "audio_formats": {
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Supported input audio formats"
+            },
+            "output": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Supported output audio formats"
+            }
+          }
+        },
+        "sample_rates": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "description": "Supported sample rates in Hz"
+        },
+        "max_audio_length_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum input audio length in seconds"
+        },
+        "max_text_length": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum input text length in characters"
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "python_version": {
+          "type": "string",
+          "pattern": "^>=?\\d+\\.\\d+(\\.\\d+)?$",
+          "description": "Required Python version (e.g., >=3.9)"
+        },
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "required": {"type": "boolean", "default": false},
+            "cuda_version": {"type": "string"},
+            "min_vram_gb": {"type": "number"},
+            "recommended_vram_gb": {"type": "number"}
+          }
+        },
+        "memory_gb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum RAM required in GB"
+        },
+        "disk_space_gb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Disk space required for models in GB"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["package"],
+            "properties": {
+              "package": {"type": "string"},
+              "version": {"type": "string"},
+              "optional": {"type": "boolean", "default": false}
+            }
+          }
+        },
+        "external_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string", "enum": ["binary", "library", "service"]},
+              "install_instructions": {"type": "string"}
+            }
+          },
+          "description": "Non-Python dependencies (ffmpeg, etc.)"
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "size_bytes": {"type": "integer"},
+          "download_url": {"type": "string", "format": "uri"},
+          "checksum": {
+            "type": "object",
+            "properties": {
+              "algorithm": {"type": "string", "enum": ["sha256", "md5"]},
+              "value": {"type": "string"}
+            }
+          },
+          "default": {"type": "boolean", "default": false}
+        }
+      },
+      "description": "Available model variants"
+    },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "JSON Schema for engine-specific configuration"
+        },
+        "defaults": {
+          "type": "object",
+          "description": "Default configuration values"
+        }
+      }
+    },
+    "endpoints": {
+      "type": "object",
+      "properties": {
+        "synthesize": {
+          "type": "object",
+          "properties": {
+            "method": {"type": "string", "default": "POST"},
+            "path": {"type": "string"},
+            "request_schema": {"type": "object"},
+            "response_schema": {"type": "object"}
+          }
+        },
+        "transcribe": {
+          "type": "object",
+          "properties": {
+            "method": {"type": "string", "default": "POST"},
+            "path": {"type": "string"},
+            "request_schema": {"type": "object"},
+            "response_schema": {"type": "object"}
+          }
+        },
+        "health": {
+          "type": "object",
+          "properties": {
+            "path": {"type": "string", "default": "/health"}
+          }
+        }
+      },
+      "description": "API endpoint definitions (for remote engines)"
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "quality_benchmarks": {
+          "type": "object",
+          "properties": {
+            "mos_score": {"type": "number", "minimum": 1, "maximum": 5},
+            "wer": {"type": "number", "minimum": 0, "maximum": 1},
+            "rtf": {"type": "number", "minimum": 0, "description": "Real-time factor"}
+          }
+        },
+        "performance": {
+          "type": "object",
+          "properties": {
+            "avg_latency_ms": {"type": "number"},
+            "throughput_samples_per_sec": {"type": "number"}
+          }
+        }
+      },
+      "description": "Engine quality and performance metrics"
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "icon": {"type": "string", "description": "Icon path or data URI"},
+        "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+        "category": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}}
+      },
+      "description": "UI display configuration"
+    },
+    "deprecated": {
+      "type": "object",
+      "properties": {
+        "is_deprecated": {"type": "boolean", "default": false},
+        "message": {"type": "string"},
+        "replacement": {"type": "string"},
+        "sunset_date": {"type": "string", "format": "date"}
+      }
+    }
+  },
+  "additionalProperties": false
+}

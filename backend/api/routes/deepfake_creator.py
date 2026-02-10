@@ -388,7 +388,8 @@ async def _process_deepfake_job(job_id: str):
                         watermark_text = "DEEPFAKE"
                         try:
                             font = ImageFont.truetype("arial.ttf", 24)
-                        except:
+                        except OSError:
+                            # Arial not available, use default font
                             font = ImageFont.load_default()
                         draw.text((10, 10), watermark_text, fill=(255, 0, 0, 128), font=font)
                         img.save(output_path)

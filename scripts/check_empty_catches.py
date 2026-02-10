@@ -28,6 +28,22 @@ CSHARP_EMPTY_CATCH_PATTERNS = [
     (r'catch\s*(?:\([^)]*\))?\s*\{\s*/\*[^*]*\*/\s*\}', "Catch block with only block comment"),
 ]
 
+# Patterns for minimal catch blocks (warning level - check in ViewModels)
+CSHARP_MINIMAL_CATCH_PATTERNS = [
+    # Catch with only Debug.WriteLine or Console.WriteLine
+    (r'catch\s*\([^)]*\)\s*\{\s*(?:Debug|Console)\.Write(?:Line)?\([^)]+\);\s*\}', 
+     "Minimal catch - only logs to console/debug"),
+    # Catch with only a simple log statement and no re-throw
+    (r'catch\s*\(\s*\w+\s+(\w+)\s*\)\s*\{\s*_?[lL]ogger\.Log(?:Error|Warning)?\([^)]+\);\s*\}',
+     "Minimal catch - only logs without handling"),
+    # Catch that swallows exception with just return
+    (r'catch\s*(?:\([^)]*\))?\s*\{\s*return(?:\s+\w+)?;\s*\}',
+     "Minimal catch - silently returns"),
+    # Catch that swallows with just a boolean
+    (r'catch\s*(?:\([^)]*\))?\s*\{\s*\w+\s*=\s*(?:true|false);\s*\}',
+     "Minimal catch - only sets boolean"),
+]
+
 PYTHON_BARE_EXCEPT_PATTERNS = [
     # Bare except with pass
     (r'except\s*:\s*\n\s*pass\s*$', "Bare except with pass"),
@@ -88,8 +104,16 @@ def is_allowlisted(content: str, match_start: int, match_end: int) -> bool:
     return False
 
 
-def check_csharp_file(path: Path) -> List[Tuple[int, str, str]]:
-    """Check a C# file for empty catch blocks."""
+def check_csharp_file(path: Path, check_minimal: bool = False) -> List[Tuple[int, str, str, str]]:
+    """Check a C# file for empty catch blocks.
+    
+    Args:
+        path: Path to the C# file
+        check_minimal: If True, also check for minimal catch blocks
+        
+    Returns:
+        List of (line_num, description, snippet, severity) tuples
+    """
     issues = []
     try:
         content = path.read_text(encoding='utf-8')
@@ -97,17 +121,30 @@ def check_csharp_file(path: Path) -> List[Tuple[int, str, str]]:
         print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
         return issues
     
+    # Always check for empty catch blocks (error level)
     for pattern, description in CSHARP_EMPTY_CATCH_PATTERNS:
         for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
             if not is_allowlisted(content, match.start(), match.end()):
                 line_num = content.count('\n', 0, match.start()) + 1
-                issues.append((line_num, description, match.group(0)[:50]))
+                issues.append((line_num, description, match.group(0)[:50], "error"))
+    
+    # Check for minimal catch blocks if enabled (warning level)
+    if check_minimal:
+        for pattern, description in CSHARP_MINIMAL_CATCH_PATTERNS:
+            for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
+                if not is_allowlisted(content, match.start(), match.end()):
+                    line_num = content.count('\n', 0, match.start()) + 1
+                    issues.append((line_num, description, match.group(0)[:50], "warning"))
     
     return issues
 
 
-def check_python_file(path: Path) -> List[Tuple[int, str, str]]:
-    """Check a Python file for bare except blocks."""
+def check_python_file(path: Path) -> List[Tuple[int, str, str, str]]:
+    """Check a Python file for bare except blocks.
+    
+    Returns:
+        List of (line_num, description, snippet, severity) tuples
+    """
     issues = []
     try:
         content = path.read_text(encoding='utf-8')
@@ -119,9 +156,14 @@ def check_python_file(path: Path) -> List[Tuple[int, str, str]]:
         for match in re.finditer(pattern, content, re.MULTILINE):
             if not is_allowlisted(content, match.start(), match.end()):
                 line_num = content.count('\n', 0, match.start()) + 1
-                issues.append((line_num, description, match.group(0).strip()[:50]))
+                issues.append((line_num, description, match.group(0).strip()[:50], "error"))
     
     return issues
+
+
+def is_viewmodel_file(path: Path) -> bool:
+    """Check if a file is a ViewModel file."""
+    return 'ViewModel' in path.name and path.suffix.lower() == '.cs'
 
 
 def get_all_files(root: Path, extensions: Set[str]) -> List[Path]:
@@ -136,12 +178,40 @@ def get_all_files(root: Path, extensions: Set[str]) -> List[Path]:
 
 def main(args: List[str]) -> int:
     """Main entry point."""
-    exit_code = 0
-    issues_found: List[Tuple[Path, int, str, str]] = []
+    import argparse
     
-    if args:
+    parser = argparse.ArgumentParser(
+        description="Check for empty and minimal catch blocks in C# and Python files."
+    )
+    parser.add_argument(
+        'files',
+        nargs='*',
+        help='Files to check (default: all C# and Python files)'
+    )
+    parser.add_argument(
+        '--check-minimal',
+        action='store_true',
+        help='Also check for minimal catch blocks (warning level)'
+    )
+    parser.add_argument(
+        '--viewmodels',
+        action='store_true',
+        help='Enable minimal catch checking for ViewModel files'
+    )
+    parser.add_argument(
+        '--json',
+        action='store_true',
+        help='Output results as JSON'
+    )
+    
+    parsed_args = parser.parse_args(args)
+    
+    exit_code = 0
+    issues_found: List[Tuple[Path, int, str, str, str]] = []
+    
+    if parsed_args.files:
         # Check specific files
-        files = [Path(f) for f in args if Path(f).exists()]
+        files = [Path(f) for f in parsed_args.files if Path(f).exists()]
     else:
         # Check all relevant files in the repo
         root = Path(__file__).parent.parent
@@ -152,44 +222,84 @@ def main(args: List[str]) -> int:
             continue
             
         if path.suffix.lower() == '.cs':
-            for line_num, desc, snippet in check_csharp_file(path):
-                issues_found.append((path, line_num, desc, snippet))
+            # Check minimal catches for ViewModels if flag is set
+            check_minimal = parsed_args.check_minimal or (
+                parsed_args.viewmodels and is_viewmodel_file(path)
+            )
+            for line_num, desc, snippet, severity in check_csharp_file(path, check_minimal):
+                issues_found.append((path, line_num, desc, snippet, severity))
         elif path.suffix.lower() == '.py':
             # Skip this script itself
             if path.name == 'check_empty_catches.py':
                 continue
-            for line_num, desc, snippet in check_python_file(path):
-                issues_found.append((path, line_num, desc, snippet))
+            for line_num, desc, snippet, severity in check_python_file(path):
+                issues_found.append((path, line_num, desc, snippet, severity))
     
-    if issues_found:
-        print("\n" + "=" * 70)
-        print("EMPTY CATCH BLOCK CHECK FAILED")
-        print("=" * 70)
-        print("\nThe following empty catch blocks were found:\n")
-        
-        for path, line_num, desc, snippet in issues_found:
-            print(f"  {path}:{line_num}")
-            print(f"    Issue: {desc}")
-            print(f"    Code:  {snippet}...")
-            print()
-        
-        print("=" * 70)
-        print("FIX: Use ErrorBoundary patterns instead of empty catches.")
-        print()
-        print("C# Example:")
-        print("  var result = ErrorBoundary.Execute(() => SomeOperation(), fallback);")
-        print()
-        print("Python Example:")
-        print("  result = try_execute(lambda: some_operation(), fallback, context='...')")
-        print()
-        print("To allow an empty catch (rare), add comment on preceding line:")
-        print("  C#:     // ALLOWED: empty catch - [reason]")
-        print("  Python: # ALLOWED: bare except - [reason]")
-        print("=" * 70 + "\n")
-        
-        exit_code = 1
+    # Separate errors from warnings
+    errors = [i for i in issues_found if i[4] == 'error']
+    warnings = [i for i in issues_found if i[4] == 'warning']
+    
+    if parsed_args.json:
+        import json
+        result = {
+            'errors': len(errors),
+            'warnings': len(warnings),
+            'issues': [
+                {
+                    'file': str(path),
+                    'line': line_num,
+                    'description': desc,
+                    'snippet': snippet,
+                    'severity': severity
+                }
+                for path, line_num, desc, snippet, severity in issues_found
+            ]
+        }
+        print(json.dumps(result, indent=2))
+        if errors:
+            exit_code = 1
     else:
-        print("Empty catch block check: PASS")
+        if issues_found:
+            print("\n" + "=" * 70)
+            print("CATCH BLOCK ANALYSIS RESULTS")
+            print("=" * 70)
+            
+            if errors:
+                print("\nERRORS (must fix):\n")
+                for path, line_num, desc, snippet, severity in errors:
+                    print(f"  {path}:{line_num}")
+                    print(f"    Issue: {desc}")
+                    print(f"    Code:  {snippet}...")
+                    print()
+            
+            if warnings:
+                print("\nWARNINGS (consider improving):\n")
+                for path, line_num, desc, snippet, severity in warnings:
+                    print(f"  {path}:{line_num}")
+                    print(f"    Issue: {desc}")
+                    print(f"    Code:  {snippet}...")
+                    print()
+            
+            print("=" * 70)
+            print("FIX: Use ErrorBoundary patterns instead of empty catches.")
+            print()
+            print("C# Example:")
+            print("  var result = ErrorBoundary.Execute(() => SomeOperation(), fallback);")
+            print()
+            print("Python Example:")
+            print("  result = try_execute(lambda: some_operation(), fallback, context='...')")
+            print()
+            print("To allow an empty catch (rare), add comment on preceding line:")
+            print("  C#:     // ALLOWED: empty catch - [reason]")
+            print("  Python: # ALLOWED: bare except - [reason]")
+            print("=" * 70 + "\n")
+            
+            print(f"Summary: {len(errors)} errors, {len(warnings)} warnings")
+            
+            if errors:
+                exit_code = 1
+        else:
+            print("Empty catch block check: PASS")
     
     return exit_code
 

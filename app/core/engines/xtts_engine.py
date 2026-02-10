@@ -216,7 +216,7 @@ def _cache_model(model_name: str, device: str, model):
 
 
 # Import base protocol from canonical protocols module
-from .protocols import EngineProtocol
+from .protocols import CancellationToken, EngineProtocol, OperationCancelledError
 
 
 class XTTSEngine(EngineProtocol):
@@ -418,6 +418,7 @@ class XTTSEngine(EngineProtocol):
         output_path: Optional[Union[str, Path]] = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
+        cancellation_token: Optional[CancellationToken] = None,
         **kwargs,
     ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
         """
@@ -430,18 +431,29 @@ class XTTSEngine(EngineProtocol):
             output_path: Optional path to save output audio
             enhance_quality: If True, apply quality enhancement pipeline
             calculate_quality: If True, return quality metrics along with audio
+            cancellation_token: Optional token for cooperative cancellation
             **kwargs: Additional synthesis parameters
 
         Returns:
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
+            
+        Raises:
+            OperationCancelledError: If cancellation is requested via token
         """
-        # Handle lazy loading
-        if self._lazy_load or not self._initialized:
-            if not self._load_model():
-                return None
-
+        # Set cancellation token for cooperative cancellation
+        self.set_cancellation_token(cancellation_token)
+        
         try:
+            # Handle lazy loading
+            if self._lazy_load or not self._initialized:
+                self.check_cancellation()  # Check before model load
+                if not self._load_model():
+                    return None
+
+            # Check cancellation before synthesis
+            self.check_cancellation()
+            
             # Convert speaker_wav to list if single path
             if isinstance(speaker_wav, (str, Path)):
                 speaker_wav = [speaker_wav]
@@ -451,6 +463,9 @@ class XTTSEngine(EngineProtocol):
 
             # Get sample rate from TTS model (typically 22050 for XTTS)
             sample_rate = getattr(self.tts, "output_sample_rate", 22050)
+
+            # Check cancellation before synthesis
+            self.check_cancellation()
 
             # Synthesize
             if output_path:
@@ -497,6 +512,9 @@ class XTTSEngine(EngineProtocol):
                     )
                 audio = np.array(wav)
 
+                # Check cancellation after synthesis, before quality processing
+                self.check_cancellation()
+
                 # Apply quality processing if requested
                 if enhance_quality or calculate_quality:
                     audio = self._process_audio_quality(
@@ -511,9 +529,15 @@ class XTTSEngine(EngineProtocol):
 
                 return audio
 
+        except OperationCancelledError:
+            logger.info("Synthesis cancelled by user request")
+            raise
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
             return None
+        finally:
+            # Clear cancellation token after operation completes
+            self.set_cancellation_token(None)
 
     def _compute_voice_profile_match(
         self,
@@ -1134,13 +1158,13 @@ class XTTSEngine(EngineProtocol):
             self.tts = None
             self._initialized = False
 
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        # Use standardized GPU memory cleanup
+        self.cleanup_gpu_memory(force_gc=True)
 
         if clear_cache:
             _MODEL_CACHE.clear()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            # Cleanup again after clearing cache
+            self.cleanup_gpu_memory(force_gc=True)
             logger.info("XTTS model cache cleared")
 
         logger.info("XTTS Engine cleaned up")
@@ -1172,12 +1196,14 @@ class XTTSEngine(EngineProtocol):
         Returns:
             Dictionary with memory usage stats in MB
         """
-        if not torch.cuda.is_available() or self.device != "cuda":
+        # Use standardized GPU memory info method
+        gpu_info = self.get_gpu_memory_info()
+        if not gpu_info["cuda_available"] or self.device != "cuda":
             return {"gpu_available": False}
 
         try:
-            allocated = torch.cuda.memory_allocated() / 1024**2  # MB
-            reserved = torch.cuda.memory_reserved() / 1024**2  # MB
+            allocated = gpu_info["allocated_mb"]
+            reserved = gpu_info["reserved_mb"]
             max_allocated = torch.cuda.max_memory_allocated() / 1024**2  # MB
 
             return {

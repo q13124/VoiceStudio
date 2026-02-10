@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Dispatching;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
@@ -18,13 +20,16 @@ namespace VoiceStudio.App.Tests.ViewModels
   public class TrainingViewModelTests
   {
     private Mock<IBackendClient> _mockBackendClient = null!;
-    private Mock<IViewModelContext> _mockContext = null!;
+    private IViewModelContext _context = null!;
+    private DispatcherQueueController? _dispatcherController;
 
     [TestInitialize]
     public void Setup()
     {
       _mockBackendClient = new Mock<IBackendClient>();
-      _mockContext = new Mock<IViewModelContext>();
+      _dispatcherController = DispatcherQueueController.CreateOnDedicatedThread();
+      var dispatcher = _dispatcherController.DispatcherQueue;
+      _context = new ViewModelContext(NullLogger.Instance, dispatcher);
 
       // Setup default mock behavior
       _mockBackendClient
@@ -34,6 +39,12 @@ namespace VoiceStudio.App.Tests.ViewModels
       _mockBackendClient
           .Setup(x => x.GetModelsAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
           .ReturnsAsync(new List<ModelInfo>());
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+      _dispatcherController?.ShutdownQueueAsync().AsTask().GetAwaiter().GetResult();
     }
 
     #region Training Request Tests

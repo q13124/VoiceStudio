@@ -1,0 +1,67 @@
+{
+  "engine_id": "fish_speech",
+  "name": "Fish Speech",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0",
+  "venv_family": "venv_core_tts",
+  "description": "Fish Speech - Zero-shot voice cloning and multi-lingual TTS",
+  "author": "Fish Audio",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "torch": ">=2.0.0",
+    "torchaudio": ">=2.0.0",
+    "transformers": ">=4.30.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\fish_speech",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\fish_speech\\cache"
+  },
+  "supported_languages": ["en", "zh", "ja", "ko"],
+  "capabilities": [
+    "voice_cloning",
+    "multi_language_tts",
+    "zero_shot_cloning"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac"],
+      "sample_rates": [16000, 22050, 24000, 44100],
+      "max_duration_seconds": 30,
+      "min_duration_seconds": 1,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 44100,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "cpu_threads": 4,
+      "timeout_seconds": 120
+    }
+  },
+  "entry_point": "app.core.engines.fish_speech:FishSpeechEngine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    }
+  }
+}

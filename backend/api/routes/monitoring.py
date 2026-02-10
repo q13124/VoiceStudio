@@ -1,170 +1,273 @@
 """
-Monitoring and Metrics Routes
-
-Provides API endpoints for metrics, error tracking, and monitoring data.
+Phase 9: Monitoring API Routes
+Task 9.9: API routes for monitoring endpoints.
 """
 
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Any, Optional
 import logging
-from typing import Any, Dict
-
-from fastapi import APIRouter
-
-from app.core.monitoring.error_tracking import get_error_tracker
-from app.core.monitoring.metrics import get_metrics_collector
-
-from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/monitoring", tags=["monitoring"])
+router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
 
-@router.get("/metrics")
-@cache_response(ttl=5)  # Cache for 5 seconds (metrics change frequently)
-def get_metrics() -> Dict[str, Any]:
-    """
-    Get all metrics.
-
-    Returns:
-        All collected metrics
-    """
-    collector = get_metrics_collector()
-    return collector.get_all_metrics()
+class HealthResponse(BaseModel):
+    """Health check response."""
+    status: str
+    timestamp: datetime
+    uptime_seconds: float
+    version: str
+    checks: list[dict[str, Any]] = []
 
 
-@router.get("/metrics/counters")
-@cache_response(ttl=5)  # Cache for 5 seconds (counters change frequently)
-def get_counters() -> Dict[str, float]:
-    """
-    Get all counter metrics.
-
-    Returns:
-        Counter metrics
-    """
-    collector = get_metrics_collector()
-    return {name: collector.get_counter(name) for name in collector.counters.keys()}
+class MetricsResponse(BaseModel):
+    """Metrics response."""
+    timestamp: datetime
+    metrics: dict[str, Any]
 
 
-@router.get("/metrics/gauges")
-@cache_response(ttl=5)  # Cache for 5 seconds (gauges change frequently)
-def get_gauges() -> Dict[str, float]:
-    """
-    Get all gauge metrics.
-
-    Returns:
-        Gauge metrics
-    """
-    collector = get_metrics_collector()
-    return {
-        name: collector.get_gauge(name)
-        for name in collector.gauges.keys()
-        if collector.get_gauge(name) is not None
-    }
+class AlertResponse(BaseModel):
+    """Alert response."""
+    alert_id: str
+    severity: str
+    status: str
+    title: str
+    message: str
+    triggered_at: datetime
 
 
-@router.get("/metrics/timers/{name}")
-@cache_response(ttl=5)  # Cache for 5 seconds (timer stats change frequently)
-def get_timer_stats(name: str) -> Dict[str, float]:
-    """
-    Get timer statistics.
-
-    Args:
-        name: Timer name
-
-    Returns:
-        Timer statistics
-    """
-    collector = get_metrics_collector()
-    stats = collector.get_timer_stats(name)
-    if stats is None:
-        return {"error": f"Timer '{name}' not found"}
-    return stats
+class DiagnosticsResponse(BaseModel):
+    """Diagnostics response."""
+    timestamp: datetime
+    overall_status: str
+    system_info: dict[str, Any]
+    checks: list[dict[str, Any]]
 
 
-@router.get("/metrics/histograms/{name}")
-@cache_response(ttl=5)  # Cache for 5 seconds (histogram stats change frequently)
-def get_histogram_stats(name: str) -> Dict[str, float]:
-    """
-    Get histogram statistics.
+@router.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Get application health status."""
+    try:
+        from backend.monitoring import HealthCheckService
+        
+        service = HealthCheckService()
+        report = await service.run_all()
+        
+        return HealthResponse(
+            status=report.overall_status.value,
+            timestamp=report.timestamp,
+            uptime_seconds=report.uptime_seconds,
+            version=report.version,
+            checks=[
+                {
+                    "component": c.component,
+                    "status": c.status.value,
+                    "message": c.message,
+                    "latency_ms": c.latency_ms,
+                }
+                for c in report.checks
+            ],
+        )
+    except ImportError:
+        # Fallback if monitoring module not available
+        return HealthResponse(
+            status="healthy",
+            timestamp=datetime.now(),
+            uptime_seconds=0,
+            version="1.0.0",
+            checks=[],
+        )
 
-    Args:
-        name: Histogram name
 
-    Returns:
-        Histogram statistics
-    """
-    collector = get_metrics_collector()
-    stats = collector.get_histogram_stats(name)
-    if stats is None:
-        return {"error": f"Histogram '{name}' not found"}
-    return stats
+@router.get("/metrics", response_model=MetricsResponse)
+async def get_metrics():
+    """Get application metrics."""
+    try:
+        from backend.monitoring import get_collector
+        
+        collector = get_collector()
+        
+        return MetricsResponse(
+            timestamp=datetime.now(),
+            metrics=collector.get_all_metrics(),
+        )
+    except ImportError:
+        return MetricsResponse(
+            timestamp=datetime.now(),
+            metrics={},
+        )
 
 
-@router.post("/metrics/clear")
-def clear_metrics() -> Dict[str, str]:
-    """
-    Clear all metrics.
+@router.get("/metrics/prometheus")
+async def get_prometheus_metrics():
+    """Get metrics in Prometheus format."""
+    try:
+        from backend.monitoring import get_collector
+        from fastapi.responses import PlainTextResponse
+        
+        collector = get_collector()
+        
+        return PlainTextResponse(
+            content=collector.export_prometheus(),
+            media_type="text/plain; charset=utf-8",
+        )
+    except ImportError:
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(
+            content="# No metrics available\n",
+            media_type="text/plain; charset=utf-8",
+        )
 
-    Returns:
-        Success message
-    """
-    collector = get_metrics_collector()
-    collector.clear()
-    return {"message": "Metrics cleared"}
+
+@router.get("/alerts", response_model=list[AlertResponse])
+async def get_active_alerts():
+    """Get active alerts."""
+    try:
+        from backend.monitoring import AlertManager
+        
+        manager = AlertManager()
+        alerts = manager.get_active_alerts()
+        
+        return [
+            AlertResponse(
+                alert_id=a.alert_id,
+                severity=a.severity.value,
+                status=a.status.value,
+                title=a.title,
+                message=a.message,
+                triggered_at=a.triggered_at,
+            )
+            for a in alerts
+        ]
+    except ImportError:
+        return []
+
+
+@router.post("/alerts/{alert_id}/acknowledge")
+async def acknowledge_alert(alert_id: str, user: str = "system"):
+    """Acknowledge an alert."""
+    try:
+        from backend.monitoring import AlertManager
+        
+        manager = AlertManager()
+        if manager.acknowledge(alert_id, user):
+            return {"status": "acknowledged"}
+        
+        raise HTTPException(status_code=404, detail="Alert not found")
+        
+    except ImportError:
+        raise HTTPException(status_code=501, detail="Alerting not available")
+
+
+@router.post("/alerts/{alert_id}/resolve")
+async def resolve_alert(alert_id: str):
+    """Resolve an alert."""
+    try:
+        from backend.monitoring import AlertManager
+        
+        manager = AlertManager()
+        if manager.resolve(alert_id):
+            return {"status": "resolved"}
+        
+        raise HTTPException(status_code=404, detail="Alert not found")
+        
+    except ImportError:
+        raise HTTPException(status_code=501, detail="Alerting not available")
+
+
+@router.get("/diagnostics", response_model=DiagnosticsResponse)
+async def run_diagnostics():
+    """Run system diagnostics."""
+    try:
+        from backend.diagnostics.system_diagnostics import SystemDiagnostics
+        
+        diagnostics = SystemDiagnostics()
+        report = await diagnostics.run_diagnostics()
+        
+        return DiagnosticsResponse(
+            timestamp=report.timestamp,
+            overall_status=report.overall_status.value,
+            system_info={
+                "os": report.system_info.os_name,
+                "version": report.system_info.os_version,
+                "cpu": report.system_info.cpu_model,
+                "ram_gb": report.system_info.ram_total_gb,
+                "gpu": report.system_info.gpu_name,
+            },
+            checks=[
+                {
+                    "name": r.name,
+                    "category": r.category.value,
+                    "status": r.status.value,
+                    "message": r.message,
+                    "details": r.details,
+                }
+                for r in report.results
+            ],
+        )
+    except ImportError:
+        return DiagnosticsResponse(
+            timestamp=datetime.now(),
+            overall_status="unknown",
+            system_info={},
+            checks=[],
+        )
+
+
+@router.get("/performance")
+async def get_performance_stats():
+    """Get performance statistics."""
+    try:
+        from backend.monitoring import get_monitor
+        
+        monitor = get_monitor()
+        stats = monitor.get_stats()
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "stats": [
+                {
+                    "operation": s.operation_type,
+                    "count": s.count,
+                    "avg_ms": s.avg_duration_ms,
+                    "p95_ms": s.p95_ms,
+                    "p99_ms": s.p99_ms,
+                    "error_rate": s.error_rate,
+                }
+                for s in stats
+            ],
+        }
+    except ImportError:
+        return {"timestamp": datetime.now().isoformat(), "stats": []}
 
 
 @router.get("/errors")
-@cache_response(ttl=10)  # Cache for 10 seconds (errors may accumulate)
-def get_errors() -> Dict[str, Any]:
-    """
-    Get error summary.
-
-    Returns:
-        Error summary
-    """
-    tracker = get_error_tracker()
-    return tracker.get_error_summary()
-
-
-@router.get("/errors/{error_type}")
-@cache_response(ttl=10)  # Cache for 10 seconds (errors may accumulate)
-def get_errors_by_type(error_type: str) -> Dict[str, Any]:
-    """
-    Get errors by type.
-
-    Args:
-        error_type: Error type name
-
-    Returns:
-        Errors of specified type
-    """
-    tracker = get_error_tracker()
-    errors = tracker.get_errors_by_type(error_type)
-
-    return {
-        "error_type": error_type,
-        "count": len(errors),
-        "errors": [
-            {
-                "message": err.message,
-                "severity": err.severity.value,
-                "count": err.count,
-                "first_occurrence": err.first_occurrence.isoformat(),
-                "last_occurrence": err.last_occurrence.isoformat(),
-            }
-            for err in errors
-        ],
-    }
-
-
-@router.post("/errors/clear")
-def clear_errors() -> Dict[str, str]:
-    """
-    Clear all error records.
-
-    Returns:
-        Success message
-    """
-    tracker = get_error_tracker()
-    tracker.clear()
-    return {"message": "Errors cleared"}
+async def get_recent_errors(limit: int = 20):
+    """Get recent errors."""
+    try:
+        from backend.monitoring import get_tracker
+        
+        tracker = get_tracker()
+        errors = tracker.get_errors(limit=limit)
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "errors": [
+                {
+                    "error_id": e.error_id,
+                    "type": e.exception_type,
+                    "message": e.message,
+                    "severity": e.severity.value,
+                    "category": e.category.value,
+                    "count": e.occurrence_count,
+                    "first_seen": e.first_seen.isoformat(),
+                    "last_seen": e.last_seen.isoformat(),
+                }
+                for e in errors
+            ],
+        }
+    except ImportError:
+        return {"timestamp": datetime.now().isoformat(), "errors": []}

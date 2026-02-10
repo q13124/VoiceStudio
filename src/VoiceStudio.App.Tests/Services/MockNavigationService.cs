@@ -16,6 +16,7 @@ namespace VoiceStudio.App.Tests.Services
   public class MockNavigationService : INavigationService
   {
     private readonly List<NavigationEntry> _backStack = new();
+    private readonly List<NavigationEntry> _forwardStack = new();
     private string? _currentPanelId;
     private readonly object _lock = new();
 
@@ -44,6 +45,11 @@ namespace VoiceStudio.App.Tests.Services
     public int BackNavigationCallCount { get; private set; }
 
     /// <summary>
+    /// Gets the count of forward navigation calls.
+    /// </summary>
+    public int ForwardNavigationCallCount { get; private set; }
+
+    /// <summary>
     /// Gets the last navigated panel ID.
     /// </summary>
     public string? LastNavigatedPanelId { get; private set; }
@@ -61,9 +67,11 @@ namespace VoiceStudio.App.Tests.Services
       lock (_lock)
       {
         _backStack.Clear();
+        _forwardStack.Clear();
         _currentPanelId = null;
         NavigationCallCount = 0;
         BackNavigationCallCount = 0;
+        ForwardNavigationCallCount = 0;
         LastNavigatedPanelId = null;
         LastNavigationParameters = null;
       }
@@ -82,6 +90,9 @@ namespace VoiceStudio.App.Tests.Services
             Parameters = parameters ?? new Dictionary<string, object>()
           });
         }
+
+        // Clear forward stack on new navigation (standard navigation behavior)
+        _forwardStack.Clear();
 
         _currentPanelId = panelId;
         LastNavigatedPanelId = panelId;
@@ -113,6 +124,17 @@ namespace VoiceStudio.App.Tests.Services
           _backStack.RemoveAt(_backStack.Count - 1);
           newPanelId = previous.PanelId;
           var oldPanelId = _currentPanelId;
+          
+          // Push current to forward stack before navigating back
+          if (oldPanelId != null)
+          {
+            _forwardStack.Add(new NavigationEntry
+            {
+              PanelId = oldPanelId,
+              Parameters = new Dictionary<string, object>()
+            });
+          }
+          
           _currentPanelId = newPanelId;
           BackNavigationCallCount++;
         }
@@ -138,6 +160,56 @@ namespace VoiceStudio.App.Tests.Services
       lock (_lock)
       {
         return _backStack.Count > 0;
+      }
+    }
+
+    public Task NavigateForwardAsync(CancellationToken cancellationToken = default)
+    {
+      NavigationEntry? next = null;
+      string? newPanelId = null;
+      lock (_lock)
+      {
+        if (_forwardStack.Count > 0)
+        {
+          next = _forwardStack[_forwardStack.Count - 1];
+          _forwardStack.RemoveAt(_forwardStack.Count - 1);
+          newPanelId = next.PanelId;
+          
+          // Push current to back stack
+          if (_currentPanelId != null)
+          {
+            _backStack.Add(new NavigationEntry
+            {
+              PanelId = _currentPanelId,
+              Parameters = new Dictionary<string, object>()
+            });
+          }
+          
+          _currentPanelId = newPanelId;
+          ForwardNavigationCallCount++;
+        }
+      }
+
+      if (next != null && newPanelId != null)
+      {
+        var args = new NavigationEventArgs
+        {
+          PreviousPanelId = _currentPanelId,
+          NewPanelId = newPanelId,
+          Parameters = next.Parameters,
+          IsBackNavigation = false
+        };
+        NavigationChanged?.Invoke(this, args);
+      }
+
+      return Task.CompletedTask;
+    }
+
+    public bool CanNavigateForward()
+    {
+      lock (_lock)
+      {
+        return _forwardStack.Count > 0;
       }
     }
 

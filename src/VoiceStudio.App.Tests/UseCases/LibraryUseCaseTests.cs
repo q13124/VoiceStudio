@@ -26,8 +26,8 @@ namespace VoiceStudio.App.Tests.UseCases
     {
       // Arrange
       _mockBackendClient
-          .Setup(x => x.GetAsync<object>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-          .ReturnsAsync((object?)null);
+          .Setup(x => x.GetAsync<LibraryUseCase.LibraryFoldersResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync((LibraryUseCase.LibraryFoldersResponse?)null);
 
       // Act
       var result = await _useCase.ListFoldersAsync();
@@ -103,9 +103,9 @@ namespace VoiceStudio.App.Tests.UseCases
       var query = "test query";
       string? capturedEndpoint = null;
       _mockBackendClient
-          .Setup(x => x.GetAsync<object>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+          .Setup(x => x.GetAsync<LibraryUseCase.LibrarySearchResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
           .Callback<string, CancellationToken>((endpoint, ct) => capturedEndpoint = endpoint)
-          .ReturnsAsync((object?)null);
+          .ReturnsAsync((LibraryUseCase.LibrarySearchResponse?)null);
 
       // Act
       await _useCase.SearchAsync(query);
@@ -129,9 +129,9 @@ namespace VoiceStudio.App.Tests.UseCases
       };
       string? capturedEndpoint = null;
       _mockBackendClient
-          .Setup(x => x.GetAsync<object>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+          .Setup(x => x.GetAsync<LibraryUseCase.LibrarySearchResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
           .Callback<string, CancellationToken>((endpoint, ct) => capturedEndpoint = endpoint)
-          .ReturnsAsync((object?)null);
+          .ReturnsAsync((LibraryUseCase.LibrarySearchResponse?)null);
 
       // Act
       await _useCase.SearchAsync(query, options);

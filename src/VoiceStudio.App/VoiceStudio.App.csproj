@@ -26,7 +26,10 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <!-- Use system-installed Windows App SDK runtime (unpackaged app via Bootstrap.Initialize). -->
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
-    <SelfContained>true</SelfContained>
+    <!-- SelfContained only for Release to avoid needing runtime packages during development.
+         For production, set RuntimeFrameworkVersion to an available NuGet version if 8.0.24 is unavailable. -->
+    <SelfContained Condition="'$(Configuration)' == 'Release'">true</SelfContained>
+    <SelfContained Condition="'$(Configuration)' != 'Release'">false</SelfContained>
     <UseAppHost>true</UseAppHost>
     <!-- Don't set RuntimeIdentifier explicitly - let the EnsureRuntimeIdentifierForWin2D target
     handle it -->
@@ -83,8 +86,9 @@
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
 
-  <!-- Ensure RuntimeIdentifier is preserved for Win2D before any targets that might clear it -->
-  <Target Name="EnsureRuntimeIdentifierForWin2D" BeforeTargets="ProcessFrameworkReferences;ResolvePackageAssets" Condition="'$(RuntimeIdentifier)' == ''">
+  <!-- Ensure RuntimeIdentifier is preserved for Win2D before any targets that might clear it.
+       Skip for Debug builds to avoid needing runtime packages that may not be on NuGet yet. -->
+  <Target Name="EnsureRuntimeIdentifierForWin2D" BeforeTargets="ProcessFrameworkReferences;ResolvePackageAssets" Condition="'$(RuntimeIdentifier)' == '' And '$(Configuration)' == 'Release'">
     <PropertyGroup>
       <RuntimeIdentifier>win-x64</RuntimeIdentifier>
       <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -137,6 +141,7 @@
   </Target>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="VoiceStudio.App.Tests" />
     <ProjectReference Include="..\VoiceStudio.Core\VoiceStudio.Core.csproj" />
   </ItemGroup>
 

@@ -1,0 +1,34 @@
+{
+  "id": "mixing",
+  "name": "Mixing Console",
+  "description": "Audio mixing with effects chain and analyzer panels",
+  "category": "Production",
+  "version": "1.0",
+  "layout": {
+    "profileName": "Mixing",
+    "version": "1.0",
+    "isDefault": false,
+    "regions": [
+      {
+        "region": "Left",
+        "activePanelId": "effects",
+        "openedPanels": ["effects", "effects-chain"]
+      },
+      {
+        "region": "Center",
+        "activePanelId": "waveform",
+        "openedPanels": ["waveform", "spectrogram"]
+      },
+      {
+        "region": "Right",
+        "activePanelId": "analyzer",
+        "openedPanels": ["analyzer", "loudness"]
+      },
+      {
+        "region": "Bottom",
+        "activePanelId": "mixer",
+        "openedPanels": ["mixer", "master"]
+      }
+    ]
+  }
+}

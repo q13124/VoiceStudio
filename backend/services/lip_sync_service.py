@@ -4,10 +4,28 @@ Lip Sync Service
 Phase 10.1: Lip Sync Integration
 Frame-accurate lip sync for dubbing workflows.
 
+Phase 9 Gap Resolution (2026-02-10):
+This service implements production-ready lip sync with graceful degradation.
+
+Processing Priority:
+1. Wav2Lip (highest quality) - requires VOICESTUDIO_WAV2LIP_PATH
+2. ffmpeg audio overlay (functional fallback) - requires ffmpeg in PATH
+3. Placeholder with metadata JSON (status indicator)
+
 Features:
-- Wav2Lip integration
-- SadTalker support
+- Wav2Lip integration with checkpoint loading
+- SadTalker and FOMM support
 - Timeline preview with scrubbing
+- Phoneme extraction for timing visualization
+
+Dependencies (install for full functionality):
+- Wav2Lip models: Set VOICESTUDIO_WAV2LIP_PATH to model directory
+- ffmpeg: For audio overlay fallback
+- torch: For model inference
+
+When models are not available, creates placeholder output with:
+- .meta.json file explaining setup requirements
+- Clear logging of what's needed for full functionality
 """
 
 import logging
@@ -589,23 +607,97 @@ class LipSyncService:
         output_path: str,
         preview_only: bool,
     ):
-        """Run Wav2Lip lip sync."""
-        import time
+        """
+        Run Wav2Lip lip sync.
         
-        # Simulate Wav2Lip processing
-        # In production, call the actual Wav2Lip model
+        Task 4.5.3: Real lip sync output generation.
+        """
+        import subprocess
+        import tempfile
         
         logger.info(f"Running Wav2Lip for project {project.project_id}")
+        project.progress = 0.4
         
-        steps = 10 if preview_only else 100
-        for i in range(steps):
-            project.progress = 0.4 + (i / steps) * 0.5
-            await self._async_sleep(0.05)
+        # Try using actual Wav2Lip
+        try:
+            import torch
+            
+            # Check for Wav2Lip installation
+            wav2lip_path = os.environ.get("VOICESTUDIO_WAV2LIP_PATH", "runtime/external/wav2lip")
+            
+            if Path(wav2lip_path).exists():
+                # Use Wav2Lip CLI
+                cmd = [
+                    "python", f"{wav2lip_path}/inference.py",
+                    "--checkpoint_path", f"{wav2lip_path}/checkpoints/wav2lip_gan.pth",
+                    "--face", project.video_path,
+                    "--audio", project.audio_path,
+                    "--outfile", output_path,
+                    "--resize_factor", "1" if not preview_only else "2",
+                ]
+                
+                if preview_only:
+                    cmd.extend(["--static", "True"])
+                
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                
+                # Monitor progress
+                while True:
+                    if process.returncode is not None:
+                        break
+                    project.progress = min(0.9, project.progress + 0.05)
+                    await self._async_sleep(0.5)
+                
+                stdout, stderr = await process.communicate()
+                
+                if process.returncode == 0 and Path(output_path).exists():
+                    project.progress = 0.95
+                    logger.info(f"Wav2Lip completed: {output_path}")
+                    return
+                else:
+                    logger.warning(f"Wav2Lip failed: {stderr.decode()}")
+            
+        except ImportError:
+            logger.debug("PyTorch not available for Wav2Lip")
+        except Exception as e:
+            logger.warning(f"Wav2Lip processing error: {e}")
         
-        # Create placeholder output
-        # In production, this would be the actual processed video
+        # Try using ffmpeg for basic audio overlay (fallback)
+        try:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", project.video_path,
+                "-i", project.audio_path,
+                "-c:v", "copy" if not preview_only else "libx264",
+                "-c:a", "aac",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-shortest",
+                output_path,
+            ]
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            
+            await process.communicate()
+            
+            if process.returncode == 0 and Path(output_path).exists():
+                project.progress = 0.95
+                logger.info(f"Audio overlay completed (ffmpeg fallback): {output_path}")
+                return
+                
+        except Exception as e:
+            logger.debug(f"ffmpeg fallback failed: {e}")
+        
+        # Final fallback: placeholder
         self._create_placeholder_output(output_path)
-        
         project.progress = 0.95
     
     async def _run_sadtalker(
@@ -614,16 +706,140 @@ class LipSyncService:
         output_path: str,
         preview_only: bool,
     ):
-        """Run SadTalker lip sync."""
-        import time
+        """
+        Run SadTalker lip sync.
+        
+        Task 4.5.4: Actual SadTalker integration for realistic lip sync.
+        
+        SadTalker generates talking head videos from audio and a single image.
+        It uses 3D motion coefficients to animate the face realistically.
+        """
+        import subprocess
         
         logger.info(f"Running SadTalker for project {project.project_id}")
+        project.progress = 0.4
         
-        steps = 10 if preview_only else 100
-        for i in range(steps):
-            project.progress = 0.4 + (i / steps) * 0.5
-            await self._async_sleep(0.05)
+        # Try using actual SadTalker
+        try:
+            sadtalker_path = os.environ.get(
+                "VOICESTUDIO_SADTALKER_PATH", 
+                "runtime/external/sadtalker"
+            )
+            
+            if Path(sadtalker_path).exists() and Path(f"{sadtalker_path}/inference.py").exists():
+                # Get source image from video (first frame) or use existing image
+                source_image = project.video_path
+                
+                # If video, extract first frame
+                if project.video_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                    import tempfile
+                    source_image = tempfile.mktemp(suffix=".png")
+                    
+                    extract_cmd = [
+                        "ffmpeg", "-y",
+                        "-i", project.video_path,
+                        "-vframes", "1",
+                        "-q:v", "2",
+                        source_image,
+                    ]
+                    
+                    process = await asyncio.create_subprocess_exec(
+                        *extract_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                    await process.communicate()
+                    
+                    if not Path(source_image).exists():
+                        raise RuntimeError("Failed to extract source frame")
+                
+                project.progress = 0.5
+                
+                # Build SadTalker command
+                cmd = [
+                    "python", f"{sadtalker_path}/inference.py",
+                    "--driven_audio", project.audio_path,
+                    "--source_image", source_image,
+                    "--result_dir", str(Path(output_path).parent),
+                    "--enhancer", "gfpgan",  # Face enhancement
+                ]
+                
+                if preview_only:
+                    cmd.extend(["--preprocess", "crop", "--size", "256"])
+                else:
+                    cmd.extend(["--preprocess", "full", "--size", "512"])
+                
+                # Add still mode for static background
+                cmd.append("--still")
+                
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                
+                # Monitor progress
+                while True:
+                    if process.returncode is not None:
+                        break
+                    project.progress = min(0.9, project.progress + 0.03)
+                    await self._async_sleep(0.5)
+                
+                stdout, stderr = await process.communicate()
+                
+                if process.returncode == 0:
+                    # Find the generated video in result directory
+                    result_dir = Path(output_path).parent
+                    generated_files = list(result_dir.glob("*.mp4"))
+                    
+                    if generated_files:
+                        # Move the most recent file to output path
+                        latest = max(generated_files, key=lambda p: p.stat().st_mtime)
+                        import shutil
+                        shutil.move(str(latest), output_path)
+                        
+                        project.progress = 0.95
+                        logger.info(f"SadTalker completed: {output_path}")
+                        return
+                else:
+                    logger.warning(f"SadTalker failed: {stderr.decode()}")
+                    
+        except ImportError:
+            logger.debug("Required dependencies not available for SadTalker")
+        except Exception as e:
+            logger.warning(f"SadTalker processing error: {e}")
         
+        # Fallback to ffmpeg audio overlay
+        try:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", project.video_path,
+                "-i", project.audio_path,
+                "-c:v", "libx264" if not preview_only else "copy",
+                "-c:a", "aac",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-shortest",
+                output_path,
+            ]
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            
+            await process.communicate()
+            
+            if process.returncode == 0 and Path(output_path).exists():
+                project.progress = 0.95
+                logger.info(f"Audio overlay completed (ffmpeg fallback): {output_path}")
+                return
+                
+        except Exception as e:
+            logger.debug(f"ffmpeg fallback failed: {e}")
+        
+        # Final fallback: placeholder
         self._create_placeholder_output(output_path)
         project.progress = 0.95
     
@@ -633,24 +849,194 @@ class LipSyncService:
         output_path: str,
         preview_only: bool,
     ):
-        """Run First Order Motion Model."""
-        import time
+        """
+        Run First Order Motion Model for face animation.
+        
+        Task 4.5.5: FOMM integration for motion transfer.
+        
+        FOMM transfers motion from a driving video to a source image,
+        creating realistic face animations. For lip sync, we need to
+        extract motion from audio or use a pre-generated driving video.
+        """
+        import subprocess
         
         logger.info(f"Running FOMM for project {project.project_id}")
+        project.progress = 0.4
         
-        steps = 10 if preview_only else 100
-        for i in range(steps):
-            project.progress = 0.4 + (i / steps) * 0.5
-            await self._async_sleep(0.05)
+        try:
+            fomm_path = os.environ.get(
+                "VOICESTUDIO_FOMM_PATH",
+                "runtime/external/fomm"
+            )
+            
+            if Path(fomm_path).exists() and Path(f"{fomm_path}/demo.py").exists():
+                # FOMM requires a driving video (with motion to transfer)
+                # For audio-only input, we need to generate a driving video first
+                # or use a pre-recorded template
+                
+                driving_video = project.video_path  # Use input as driving
+                source_image = project.video_path
+                
+                # Extract first frame as source if input is video
+                if project.video_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                    import tempfile
+                    source_image = tempfile.mktemp(suffix=".png")
+                    
+                    extract_cmd = [
+                        "ffmpeg", "-y",
+                        "-i", project.video_path,
+                        "-vframes", "1",
+                        "-q:v", "2",
+                        source_image,
+                    ]
+                    
+                    process = await asyncio.create_subprocess_exec(
+                        *extract_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                    await process.communicate()
+                    
+                    if not Path(source_image).exists():
+                        raise RuntimeError("Failed to extract source frame")
+                
+                project.progress = 0.5
+                
+                # Build FOMM command
+                cmd = [
+                    "python", f"{fomm_path}/demo.py",
+                    "--config", f"{fomm_path}/config/vox-256.yaml",
+                    "--checkpoint", f"{fomm_path}/checkpoints/vox-cpk.pth.tar",
+                    "--source_image", source_image,
+                    "--driving_video", driving_video,
+                    "--result_video", output_path,
+                ]
+                
+                if preview_only:
+                    cmd.append("--relative")  # Relative motion for smoother results
+                
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                
+                # Monitor progress
+                while True:
+                    if process.returncode is not None:
+                        break
+                    project.progress = min(0.9, project.progress + 0.03)
+                    await self._async_sleep(0.5)
+                
+                stdout, stderr = await process.communicate()
+                
+                if process.returncode == 0 and Path(output_path).exists():
+                    # Add audio to the generated video
+                    temp_output = output_path + ".temp.mp4"
+                    import shutil
+                    shutil.move(output_path, temp_output)
+                    
+                    audio_cmd = [
+                        "ffmpeg", "-y",
+                        "-i", temp_output,
+                        "-i", project.audio_path,
+                        "-c:v", "copy",
+                        "-c:a", "aac",
+                        "-map", "0:v:0",
+                        "-map", "1:a:0",
+                        "-shortest",
+                        output_path,
+                    ]
+                    
+                    audio_process = await asyncio.create_subprocess_exec(
+                        *audio_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                    await audio_process.communicate()
+                    
+                    # Clean up temp file
+                    Path(temp_output).unlink(missing_ok=True)
+                    
+                    project.progress = 0.95
+                    logger.info(f"FOMM completed: {output_path}")
+                    return
+                else:
+                    logger.warning(f"FOMM failed: {stderr.decode()}")
+                    
+        except ImportError:
+            logger.debug("Required dependencies not available for FOMM")
+        except Exception as e:
+            logger.warning(f"FOMM processing error: {e}")
         
+        # Fallback to ffmpeg audio overlay
+        try:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", project.video_path,
+                "-i", project.audio_path,
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-shortest",
+                output_path,
+            ]
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            
+            await process.communicate()
+            
+            if process.returncode == 0 and Path(output_path).exists():
+                project.progress = 0.95
+                logger.info(f"Audio overlay completed (ffmpeg fallback): {output_path}")
+                return
+                
+        except Exception as e:
+            logger.debug(f"ffmpeg fallback failed: {e}")
+        
+        # Final fallback: placeholder
         self._create_placeholder_output(output_path)
         project.progress = 0.95
     
     def _create_placeholder_output(self, output_path: str):
-        """Create placeholder output file."""
+        """Create placeholder output file with status indicator.
+        
+        Gap Analysis Fix: Instead of empty files, create a placeholder
+        with proper metadata indicating the feature status.
+        """
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        # Create empty file as placeholder
+        
+        # Create a placeholder file with metadata
+        placeholder_meta = output_path + ".meta.json"
+        import json
+        
+        meta = {
+            "status": "placeholder",
+            "message": "Lip sync processing requires model installation. "
+                       "The actual Wav2Lip/SadTalker/FOMM models are not loaded.",
+            "instructions": [
+                "1. Install the required models following docs/engines/lip_sync.md",
+                "2. Set VOICESTUDIO_LIPSYNC_MODELS_PATH environment variable",
+                "3. Restart VoiceStudio to enable lip sync processing"
+            ],
+            "output_path": output_path,
+            "timestamp": datetime.now().isoformat(),
+        }
+        
+        Path(placeholder_meta).write_text(json.dumps(meta, indent=2))
+        
+        # Create empty placeholder video file
         Path(output_path).touch()
+        
+        logger.warning(
+            f"Created placeholder output at {output_path}. "
+            "Lip sync models not loaded - see {placeholder_meta} for details."
+        )
     
     async def _async_sleep(self, seconds: float):
         """Async sleep helper."""

@@ -580,8 +580,8 @@ class InstantCloningService:
                 stat = path.stat()
                 key_string = f"{path.absolute()}_{stat.st_mtime}"
                 return hashlib.md5(key_string.encode()).hexdigest()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Cache key generation using path stats failed: %s", e)
         return hashlib.md5(file_path.encode()).hexdigest()
 
     def clear_cache(self):

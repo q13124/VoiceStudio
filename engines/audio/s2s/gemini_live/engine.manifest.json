@@ -1,0 +1,33 @@
+{
+  "engine_id": "gemini_live",
+  "name": "Gemini Live",
+  "type": "audio",
+  "subtype": "s2s",
+  "version": "1.0.0",
+  "description": "End-to-end speech-to-speech via Google Gemini Live API. Real-time bidirectional audio streaming.",
+  "entry_point": "app.core.engines.gemini_live_engine:GeminiLiveProvider",
+  "dependencies": {
+    "python": ["websockets>=12.0"]
+  },
+  "capabilities": [
+    "speech_to_speech",
+    "streaming",
+    "barge_in",
+    "emotion_preservation"
+  ],
+  "device_requirements": {
+    "gpu": "none",
+    "vram_min_gb": 0,
+    "ram_min_gb": 1
+  },
+  "config_schema": {
+    "model": {"type": "string", "default": "gemini-2.0-flash-exp"},
+    "voice": {"type": "string", "default": "Puck"},
+    "api_key": {"type": "string", "description": "From GOOGLE_API_KEY env var"}
+  },
+  "contract": {
+    "input": {"audio_data": "bytes", "context": "Optional[str]"},
+    "output": {"audio_data": "bytes", "response_text": "Optional[str]"}
+  },
+  "notes": "Cloud-only. Requires GOOGLE_API_KEY."
+}

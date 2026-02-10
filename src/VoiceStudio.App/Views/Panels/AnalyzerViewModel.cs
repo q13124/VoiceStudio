@@ -237,9 +237,9 @@ namespace VoiceStudio.App.Views.Panels
             ResourceHelper.GetString("Analyzer.UploadSuccess", "Audio Uploaded"),
             $"File '{response.Filename}' uploaded successfully.");
       }
+      // ALLOWED: empty catch - cancellation is expected user action
       catch (OperationCanceledException)
       {
-        // Cancelled - do nothing
       }
       catch (Exception ex)
       {

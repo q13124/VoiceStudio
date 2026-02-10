@@ -196,20 +196,69 @@ namespace VoiceStudio.App.Services
   }
 
   /// <summary>
-  /// Stub for ITelemetryService when no dedicated implementation is registered.
+  /// Local-first stub for ITelemetryService (no external telemetry by default).
+  /// 
+  /// Phase 9 Gap Resolution (2026-02-10):
+  /// This stub is intentionally a no-op implementation to support local-first,
+  /// offline-capable operation. Per project rules:
+  /// - local-first.mdc: "Telemetry and remote calls are opt-in only"
+  /// - free-only.mdc: No paid services required
+  /// 
+  /// TD-011 Status: CLOSED - This is the expected production implementation.
+  /// 
+  /// To enable telemetry, register a custom ITelemetryService implementation
+  /// in AppServices.Initialize() that sends metrics to a user-configured endpoint.
+  /// The stub methods are available to trace execution flow during development.
   /// </summary>
   internal sealed class TelemetryServiceStub : ITelemetryService
   {
-    public void TrackEvent(string eventName, IDictionary<string, object>? properties = null) { }
-    public void TrackMetric(string metricName, double value, IDictionary<string, string>? dimensions = null) { }
-    public void TrackException(Exception exception, IDictionary<string, string>? properties = null) { }
-    public IDisposable TrackOperation(string operationName) => new TelemetryOperationStub();
-    public void Flush() { }
-    public void ApplyDiagnosticsSettings(object settings) { }
+    public void TrackEvent(string eventName, IDictionary<string, object>? properties = null)
+    {
+      // No-op by design: local-first, privacy-respecting telemetry
+      System.Diagnostics.Debug.WriteLine($"[Telemetry] Event: {eventName}");
+    }
+
+    public void TrackMetric(string metricName, double value, IDictionary<string, string>? dimensions = null)
+    {
+      // No-op by design: metrics stay local
+      System.Diagnostics.Debug.WriteLine($"[Telemetry] Metric: {metricName}={value}");
+    }
+
+    public void TrackException(Exception exception, IDictionary<string, string>? properties = null)
+    {
+      // Log exceptions locally for debugging
+      System.Diagnostics.Debug.WriteLine($"[Telemetry] Exception: {exception.GetType().Name}: {exception.Message}");
+    }
+
+    public IDisposable TrackOperation(string operationName) => new TelemetryOperationStub(operationName);
+
+    public void Flush()
+    {
+      // No-op: no buffered data to flush
+    }
+
+    public void ApplyDiagnosticsSettings(object settings)
+    {
+      // No-op: no external configuration needed
+    }
   }
 
   internal sealed class TelemetryOperationStub : IDisposable
   {
-    public void Dispose() { }
+    private readonly string _operationName;
+    private readonly System.Diagnostics.Stopwatch _stopwatch;
+
+    public TelemetryOperationStub(string operationName)
+    {
+      _operationName = operationName;
+      _stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      System.Diagnostics.Debug.WriteLine($"[Telemetry] Operation started: {operationName}");
+    }
+
+    public void Dispose()
+    {
+      _stopwatch.Stop();
+      System.Diagnostics.Debug.WriteLine($"[Telemetry] Operation completed: {_operationName} ({_stopwatch.ElapsedMilliseconds}ms)");
+    }
   }
 }

@@ -136,10 +136,10 @@ namespace VoiceStudio.App.UseCases
       }
     }
 
-    // Response DTOs
-    private class SplitClipResponse { public Clip LeftClip { get; set; } = default!; public Clip RightClip { get; set; } = default!; }
-    private class ExportResponse { public string? OutputPath { get; set; } }
-    private class UndoResponse { public bool Success { get; set; } }
-    private class DeleteResponse { public bool Success { get; set; } }
+    // Response DTOs (public for testability)
+    public class SplitClipResponse { public Clip LeftClip { get; set; } = default!; public Clip RightClip { get; set; } = default!; }
+    public class ExportResponse { public string? OutputPath { get; set; } }
+    public class UndoResponse { public bool Success { get; set; } }
+    public class DeleteResponse { public bool Success { get; set; } }
   }
 }

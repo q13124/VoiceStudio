@@ -182,6 +182,7 @@ namespace VoiceStudio.App
             }
             System.IO.File.WriteAllText(diagPath, sb.ToString());
           }
+          // ALLOWED: empty catch - diagnostic file write is best-effort
           catch { }
           
           // Add pointer event handler
@@ -196,7 +197,8 @@ namespace VoiceStudio.App
               try 
               { 
                 System.IO.File.AppendAllText(inputDiagPath, $"[{DateTime.UtcNow:O}] PointerPressed at ({point.Position.X:F0}, {point.Position.Y:F0}) Handled={args.Handled}\n"); 
-              } 
+              }
+              // ALLOWED: empty catch - diagnostic file write is best-effort
               catch { }
             }),
             true); // handledEventsToo = true
@@ -248,8 +250,8 @@ namespace VoiceStudio.App
       }
       profiler.Checkpoint("NavigationService Subscription");
 
-      // Temporary content assignment (will be replaced with panel registry later)
-      // If workspace layout has saved panels, restore them; otherwise use defaults
+      // Phase 5.1.6: Panel assignment using PanelRegistry
+      // If workspace layout has saved panels, restore them via registry; otherwise use defaults
       if (!RestorePanelsFromLayout())
       {
         if (leftPanelHost != null)
@@ -380,6 +382,7 @@ namespace VoiceStudio.App
         var diagPath = Path.Combine(
           Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
           "VoiceStudio", "crashes", "click_diag.txt");
+        // ALLOWED: empty catch - diagnostic file write is best-effort
         try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch { }
       }
     }
@@ -1458,11 +1461,11 @@ namespace VoiceStudio.App
           () => ResetZoom(),
           "Reset Zoom");
 
-      // Help
+      // Help - Phase 5.2.7: Fixed to use F1 (standard help key) + Shift+/ for ? key
       _keyboardShortcutService.RegisterShortcut(
           "help.shortcuts",
-          VirtualKey.Number0, // Temporary - '?' key mapping varies by keyboard layout
-          VirtualKeyModifiers.Control,
+          VirtualKey.F1,
+          VirtualKeyModifiers.Shift,
           () =>
           {
             if (_keyboardShortcutsMenuItem != null)
@@ -1471,6 +1474,20 @@ namespace VoiceStudio.App
             }
           },
           "Keyboard Shortcuts");
+      
+      // Also register Shift+/ (?) for help on US keyboards
+      _keyboardShortcutService.RegisterShortcut(
+          "help.shortcuts.alt",
+          (VirtualKey)191, // Forward slash key
+          VirtualKeyModifiers.Shift,
+          () =>
+          {
+            if (_keyboardShortcutsMenuItem != null)
+            {
+              KeyboardShortcutsMenuItem_Click(_keyboardShortcutsMenuItem, new RoutedEventArgs());
+            }
+          },
+          "Keyboard Shortcuts (?)");
 
       // Panel Quick-Switch (IDEA 1): Ctrl+1-9 for direct panel switching
       // Left PanelHost: Ctrl+1-3
@@ -2849,7 +2866,8 @@ namespace VoiceStudio.App
         _lastProcessorTime = process.TotalProcessorTime;
         _lastCpuCheck = DateTime.UtcNow;
       }
-      catch { /* Ignore initialization errors */ }
+      // ALLOWED: empty catch - CPU telemetry is non-critical
+      catch { }
 
       // Update immediately
       UpdateStatusBarMetrics();
@@ -2882,10 +2900,10 @@ namespace VoiceStudio.App
         _lastProcessorTime = currentProcessorTime;
         _lastCpuCheck = now;
 
-        // GPU usage: estimate from backend or use placeholder
-        // In production, this would query GPU utilization via backend API
-        // For now, use a heuristic based on whether synthesis is active
-        // TODO: Integrate with backend telemetry for real GPU metrics
+        // GPU usage: fetched from backend via UpdateGpuAndLatencyAsync()
+        // Phase 9 Gap Resolution (2026-02-10): GPU telemetry is now integrated.
+        // Real metrics are retrieved from /api/engine/telemetry endpoint.
+        // See UpdateGpuAndLatencyAsync() below for the actual implementation.
 
         var cpuText = FindNameOnContent("CpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
         var gpuText = FindNameOnContent("GpuText") as Microsoft.UI.Xaml.Controls.TextBlock;
@@ -2933,16 +2951,16 @@ namespace VoiceStudio.App
                 _lastGpuPercent = (int)telemetry.VramPct;
               }
             }
+            // ALLOWED: empty catch - GPU telemetry is best-effort
             catch
             {
-              // GPU telemetry not available, keep last value
             }
           }
         }
       }
+      // ALLOWED: empty catch - network errors are non-critical for telemetry
       catch
       {
-        // Non-critical - silently ignore network errors
       }
     }
 

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using VoiceStudio.App.Services;
 
 namespace VoiceStudio.App.ViewModels;
 
@@ -33,7 +34,7 @@ public enum FeedbackCategory
 /// <summary>
 /// ViewModel for the feedback dialog.
 /// </summary>
-public partial class FeedbackViewModel : ObservableObject
+public partial class FeedbackViewModel : BaseViewModel
 {
     private readonly ILogger<FeedbackViewModel>? _logger;
 
@@ -92,6 +93,7 @@ public partial class FeedbackViewModel : ObservableObject
     public event Action? SubmitSuccess;
 
     public FeedbackViewModel(ILogger<FeedbackViewModel>? logger = null)
+        : base(AppServices.GetViewModelContext())
     {
         _logger = logger;
     }

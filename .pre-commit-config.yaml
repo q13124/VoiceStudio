@@ -1,7 +1,61 @@
+# VoiceStudio Unified Pre-Commit Configuration
+# ==============================================
+# This file consolidates all pre-commit hooks from:
+# - Previous .pre-commit-config.yaml
+# - scripts/hooks/pre-commit (bash script)
+# - tools/git-hooks/pre-commit (shell script)
+#
+# Install: pre-commit install
+# Run all: pre-commit run --all-files
+# Run one: pre-commit run <hook-id>
+
 repos:
-  # Python import validation (local hooks)
+  # ===========================================================================
+  # Security Checks (from tools/git-hooks/pre-commit)
+  # ===========================================================================
   - repo: local
     hooks:
+      - id: check-secrets
+        name: Check for Secrets/Credentials
+        entry: python scripts/hooks/check_secrets.py
+        language: system
+        pass_filenames: true
+        stages: [pre-commit]
+        
+      - id: check-env-files
+        name: Block .env Files
+        entry: python scripts/hooks/check_env_files.py
+        language: system
+        pass_filenames: true
+        stages: [pre-commit]
+        
+      - id: check-large-files
+        name: Check Large Files (>10MB)
+        entry: python scripts/hooks/check_large_files.py
+        language: system
+        pass_filenames: true
+        stages: [pre-commit]
+        
+      - id: check-conflict-markers
+        name: Check Merge Conflict Markers
+        entry: python scripts/hooks/check_conflict_markers.py
+        language: system
+        pass_filenames: true
+        stages: [pre-commit]
+
+  # ===========================================================================
+  # Python Quality Checks
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: python-syntax-check
+        name: Python Syntax Check
+        entry: python -m py_compile
+        language: system
+        types: [python]
+        pass_filenames: true
+        stages: [pre-commit]
+
       - id: python-import-check
         name: Validate Python Imports
         entry: python scripts/validate_imports.py
@@ -23,26 +77,17 @@ repos:
         types: [python]
         pass_filenames: false
 
-      - id: completion-guard
-        name: Completion Evidence Guard
-        entry: python tools/overseer/verification/completion_guard.py
+  # ===========================================================================
+  # XAML Quality Checks (from scripts/hooks/pre-commit + existing)
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: xaml-nested-views-check
+        name: XAML Nested Views Check (GitHub #10947)
+        entry: python scripts/hooks/check_xaml_nesting.py
         language: system
-        pass_filenames: false
-        stages: [pre-commit]
-
-      - id: compatibility-matrix-check
-        name: Compatibility Matrix Validation
-        entry: python scripts/check_compatibility_matrix.py --local
-        language: system
-        pass_filenames: false
-        stages: [pre-commit]
-        files: ^(global\.json|requirements.*\.txt|version_lock\.json|Directory\.Build\.props|config/compatibility_matrix\.yml)$
-
-      - id: no-empty-catch
-        name: No Empty Catch Blocks
-        entry: python scripts/check_empty_catches.py
-        language: system
-        types_or: [csharp, python]
+        types: [file]
+        files: \.xaml$
         pass_filenames: true
         stages: [pre-commit]
 
@@ -62,6 +107,47 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         files: (\.xaml$|Resources/.*\.xaml$)
+        
+      - id: xaml-quality
+        name: XAML Quality Validation
+        entry: python scripts/validate_xaml_quality.py --check resources
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: \.xaml$
+
+  # ===========================================================================
+  # C# Quality Checks
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: no-empty-catch
+        name: No Empty Catch Blocks
+        entry: python scripts/check_empty_catches.py
+        language: system
+        types_or: [csharp, python]
+        pass_filenames: true
+        stages: [pre-commit]
+
+  # ===========================================================================
+  # Project Governance Checks
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: completion-guard
+        name: Completion Evidence Guard
+        entry: python tools/overseer/verification/completion_guard.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: compatibility-matrix-check
+        name: Compatibility Matrix Validation
+        entry: python scripts/check_compatibility_matrix.py --local
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^(global\.json|requirements.*\.txt|version_lock\.json|Directory\.Build\.props|config/compatibility_matrix\.yml)$
 
       - id: contract-validation
         name: API Contract Validation

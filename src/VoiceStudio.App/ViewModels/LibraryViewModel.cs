@@ -497,12 +497,9 @@ namespace VoiceStudio.App.ViewModels
 
     private Microsoft.UI.Xaml.XamlRoot? GetXamlRoot()
     {
-      // Try to get the XamlRoot from the main window
-      if (App.MainWindowInstance?.Content is FrameworkElement root)
-      {
-        return root.XamlRoot;
-      }
-      return null;
+      // Use the XamlRoot set by the View (MVVM-compliant)
+      // Falls back to null if not set
+      return XamlRoot;
     }
 
     // Multi-select methods

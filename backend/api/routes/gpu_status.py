@@ -195,8 +195,9 @@ async def get_gpu_status():
                                         devices.append(device)
                                         gpu_idx += 1
                             logger.debug(f"Detected {gpu_idx} AMD GPU(s) via rocm-smi")
-                except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-                    pass
+                except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+                    # Gap Analysis Fix: Log AMD GPU detection fallback
+                    logger.debug(f"AMD GPU detection via rocm-smi failed (will try WMI): {e}")
                 
                 # Method 3: Try WMI for Windows AMD GPUs
                 try:
@@ -243,8 +244,9 @@ async def get_gpu_status():
                                             gpu_idx += 1
                             if gpu_idx > 0:
                                 logger.debug(f"Detected AMD GPU(s) via WMI")
-                except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-                    pass
+                except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+                    # Gap Analysis Fix: Log WMI fallback failure
+                    logger.debug(f"AMD GPU detection via WMI failed: {e}")
         except Exception as e:
             logger.debug(f"AMD GPU detection failed: {e}")
 

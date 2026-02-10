@@ -16,6 +16,10 @@ using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.ViewModels;
 
+// Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
+using Macro = VoiceStudio.Core.Models.Macro;
+using AutomationCurve = VoiceStudio.Core.Models.AutomationCurve;
+
 namespace VoiceStudio.App.Views.Panels
 {
   public partial class MacroViewModel : BaseViewModel, IPanelView

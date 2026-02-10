@@ -273,7 +273,19 @@ namespace VoiceStudio.App.Utilities
 
     public CancellationToken? CancellationToken => _cancellationTokenSource?.Token;
 
-    public bool CanExecute(object? parameter) => !_isExecuting && _innerCommand.CanExecute(parameter);
+    public bool CanExecute(object? parameter)
+    {
+      if (_isExecuting) return false;
+      if (_canExecute != null)
+      {
+        // Handle null parameter for reference types
+        if (parameter is T typedParam)
+          return _canExecute(typedParam);
+        if (parameter == null)
+          return _canExecute(default);
+      }
+      return _innerCommand.CanExecute(parameter);
+    }
 
     public void Execute(object? parameter) => _innerCommand.Execute(parameter);
 
@@ -288,7 +300,7 @@ namespace VoiceStudio.App.Utilities
     public bool IsRunning => _innerCommand.IsRunning;
 
     // IRelayCommand<T> members
-    public bool CanExecute(T? parameter) => !_isExecuting && _innerCommand.CanExecute(parameter);
+    public bool CanExecute(T? parameter) => !_isExecuting && (_canExecute?.Invoke(parameter) ?? true);
     public void Execute(T? parameter) => _innerCommand.Execute(parameter);
     public Task ExecuteAsync(T? parameter) => _innerCommand.ExecuteAsync(parameter);
 

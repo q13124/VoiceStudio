@@ -565,8 +565,8 @@ async def synthesize_script(script_id: str):
                 # Clean up segment file
                 try:
                     os.unlink(segment_file)
-                except:
-                    ...
+                except OSError as cleanup_err:
+                    logger.debug(f"Failed to cleanup segment file {segment_file}: {cleanup_err}")
 
             # Save combined audio
             audio_id = f"script-{uuid.uuid4().hex[:8]}"

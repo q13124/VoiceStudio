@@ -239,10 +239,12 @@ class GPUOrchestrator:
                     try:
                         free_memory = torch.cuda.mem_get_info(gpu.device_id)[0] // (1024 * 1024)
                         gpu.available_memory_mb = free_memory
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        # Gap Analysis Fix: Add debug logging for GPU memory query failures
+                        logger.debug(f"Could not query GPU {gpu.device_id} memory: {e}")
         except ImportError:
-            pass
+            # Gap Analysis Fix: Log when torch is not available
+            logger.debug("PyTorch not available for GPU memory refresh")
     
     async def acquire_gpu(
         self,

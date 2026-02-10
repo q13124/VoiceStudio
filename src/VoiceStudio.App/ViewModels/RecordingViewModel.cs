@@ -4,11 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Dispatching;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
-using Microsoft.UI.Xaml;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -21,7 +21,7 @@ namespace VoiceStudio.App.ViewModels
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly IErrorPresentationService? _errorService;
     private readonly IErrorLoggingService? _logService;
-    private readonly DispatcherTimer _statusTimer;
+    private readonly DispatcherQueueTimer _statusTimer;
 
     public string PanelId => "recording";
     public string DisplayName => ResourceHelper.GetString("Panel.Recording.DisplayName", "Recording");
@@ -106,10 +106,9 @@ namespace VoiceStudio.App.ViewModels
       _errorService = ServiceProvider.TryGetErrorPresentationService();
       _logService = ServiceProvider.TryGetErrorLoggingService();
 
-      _statusTimer = new DispatcherTimer
-      {
-        Interval = TimeSpan.FromMilliseconds(100)
-      };
+      _statusTimer = Dispatcher.CreateTimer();
+      _statusTimer.Interval = TimeSpan.FromMilliseconds(100);
+      _statusTimer.IsRepeating = true;
       _statusTimer.Tick += StatusTimer_Tick;
 
       StartRecordingCommand = new EnhancedAsyncRelayCommand(async (ct) =>
@@ -359,7 +358,7 @@ namespace VoiceStudio.App.ViewModels
       }
     }
 
-    private async void StatusTimer_Tick(object? sender, object e)
+    private async void StatusTimer_Tick(DispatcherQueueTimer sender, object args)
     {
       if (string.IsNullOrEmpty(RecordingId) || !IsRecording)
         return;
@@ -433,6 +432,16 @@ namespace VoiceStudio.App.ViewModels
     {
       public string Id { get; set; } = string.Empty;
       public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Notify commands when IsRecording changes to update their CanExecute state.
+    /// </summary>
+    partial void OnIsRecordingChanged(bool value)
+    {
+      StartRecordingCommand.NotifyCanExecuteChanged();
+      StopRecordingCommand.NotifyCanExecuteChanged();
+      CancelRecordingCommand.NotifyCanExecuteChanged();
     }
 
     protected override void Dispose(bool disposing)

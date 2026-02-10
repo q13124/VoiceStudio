@@ -277,7 +277,7 @@ except ImportError:
         )
 
 # Import base protocol from canonical protocols module
-from .protocols import EngineProtocol
+from .protocols import CancellationToken, EngineProtocol, OperationCancelledError
 
 
 class RVCEngine(EngineProtocol):
@@ -459,6 +459,7 @@ class RVCEngine(EngineProtocol):
         pitch_shift: int = 0,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
+        cancellation_token: Optional[CancellationToken] = None,
         **kwargs,
     ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
         """
@@ -472,6 +473,7 @@ class RVCEngine(EngineProtocol):
             pitch_shift: Pitch shift in semitones (-12 to 12)
             enhance_quality: If True, apply quality enhancement
             calculate_quality: If True, return quality metrics
+            cancellation_token: Optional token for cooperative cancellation
             **kwargs: Additional parameters
                 - protect: Protect voiceless sounds (0.0-0.5, default 0.33)
                 - index_rate: Index rate for retrieval (0.0-1.0, default 0.75)
@@ -479,13 +481,23 @@ class RVCEngine(EngineProtocol):
         Returns:
             Converted audio array or None if conversion failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
+            
+        Raises:
+            OperationCancelledError: If cancellation is requested via token
         """
-        # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return None
-
+        # Set cancellation token for cooperative cancellation
+        self.set_cancellation_token(cancellation_token)
+        
         try:
+            # Lazy load models if needed
+            if not self._initialized:
+                self.check_cancellation()  # Check before model load
+                if not self._load_models():
+                    return None
+
+            # Check cancellation before audio processing
+            self.check_cancellation()
+            
             # Load source audio
             if isinstance(source_audio, (str, Path)):
                 if HAS_LIBROSA:
@@ -540,6 +552,9 @@ class RVCEngine(EngineProtocol):
             else:
                 audio_16k = audio
 
+            # Check cancellation before feature extraction
+            self.check_cancellation()
+            
             # Extract HuBERT features (matching RVC implementation)
             if self.hubert_model is not None:
                 # Use proper HuBERT extraction
@@ -547,6 +562,9 @@ class RVCEngine(EngineProtocol):
             else:
                 # Fallback to general feature extraction
                 features = self._extract_features(audio_16k)
+
+            # Check cancellation before conversion
+            self.check_cancellation()
 
             # Convert voice using RVC model (includes F0 extraction internally)
             # First try actual RVC model inference if available
@@ -560,6 +578,8 @@ class RVCEngine(EngineProtocol):
 
             # If conversion failed or model not available, use enhanced feature-based conversion
             if converted_audio is None or len(converted_audio) == 0:
+                # Check cancellation before fallback conversion
+                self.check_cancellation()
                 logger.debug(
                     "RVC model conversion failed, using enhanced feature-based conversion"
                 )
@@ -575,6 +595,9 @@ class RVCEngine(EngineProtocol):
             if converted_audio is None or len(converted_audio) == 0:
                 logger.error("Voice conversion produced empty audio")
                 return None
+
+            # Check cancellation before quality processing
+            self.check_cancellation()
 
             # Apply quality processing if requested
             if enhance_quality or calculate_quality:
@@ -610,9 +633,15 @@ class RVCEngine(EngineProtocol):
 
             return converted_audio
 
+        except OperationCancelledError:
+            logger.info("Voice conversion cancelled by user request")
+            raise
         except Exception as e:
             logger.error(f"RVC voice conversion failed: {e}", exc_info=True)
             return None
+        finally:
+            # Clear cancellation token after operation completes
+            self.set_cancellation_token(None)
 
     def convert_realtime(
         self,
@@ -2177,8 +2206,8 @@ class RVCEngine(EngineProtocol):
             # Clear legacy caches
             self._model_cache.clear()
             self._feature_cache.clear()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            # Use standardized GPU memory cleanup
+            self.cleanup_gpu_memory(force_gc=True)
             self._initialized = False
             logger.info("RVC engine cleaned up")
         except Exception as e:

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
@@ -50,6 +51,12 @@ namespace VoiceStudio.App.ViewModels
       set => SetProperty(ref _errorMessage, value);
     }
 
+    /// <summary>
+    /// XamlRoot for dialog display. Set by the View when it loads.
+    /// Use this instead of accessing App.MainWindowInstance directly.
+    /// </summary>
+    public XamlRoot? XamlRoot { get; set; }
+
     protected BaseViewModel(
         IViewModelContext context,
         IErrorLoggingService? errorLoggingService = null,
@@ -74,7 +81,7 @@ namespace VoiceStudio.App.ViewModels
 
     // NOTE: Legacy parameterless constructor was removed 2026-02-06.
     // All ViewModels have been migrated to use the DI-enabled constructor.
-    // See ADR-XXX for migration details.
+    // See ADR-030 (ViewModel Dependency Injection Migration) for migration details.
 
     /// <summary>
     /// Executes an operation with state persistence before critical operations.

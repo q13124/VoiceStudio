@@ -2,6 +2,18 @@
 VoiceStudio Backend Plugin System
 
 Plugin loader and management for backend plugins.
+
+Gap Analysis Fix: This is the API/FastAPI layer of the plugin system.
+For the core plugin base classes, see: backend.plugins.core
+
+Architecture:
+    backend/plugins/core/ - Core plugin classes (Plugin, PluginMetadata)
+    backend/api/plugins/ - FastAPI integration (THIS MODULE)
+    
+When creating a plugin:
+1. Define plugin.py with a class extending backend.plugins.Plugin
+2. Create manifest.json with entry_points.backend
+3. Plugin loader discovers and registers with FastAPI
 """
 
 from .integration import (

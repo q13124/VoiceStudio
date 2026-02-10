@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml;
+using VoiceStudio.App.Services;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 
@@ -15,7 +16,7 @@ namespace VoiceStudio.App.ViewModels
   /// <summary>
   /// ViewModel for Global Search (IDEA 5).
   /// </summary>
-  public sealed partial class GlobalSearchViewModel : ObservableObject
+  public sealed partial class GlobalSearchViewModel : BaseViewModel
   {
     private readonly IBackendClient _backendClient;
     private readonly SemaphoreSlim _searchSemaphore = new(1, 1);
@@ -50,6 +51,7 @@ namespace VoiceStudio.App.ViewModels
     public Visibility ErrorVisibility => string.IsNullOrEmpty(ErrorMessage) ? Visibility.Collapsed : Visibility.Visible;
 
     public GlobalSearchViewModel(IBackendClient backendClient)
+        : base(AppServices.GetViewModelContext())
     {
       _backendClient = backendClient;
     }

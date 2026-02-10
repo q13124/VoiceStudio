@@ -356,6 +356,7 @@ namespace VoiceStudio.App.Tests.Commands
             _registry.Register(descriptor, _ => throw new Exception("Test"), null);
 
             // Act
+            // ALLOWED: empty catch - testing status after expected failure
             try { await _registry.ExecuteAsync("status.fail"); } catch { }
 
             // Assert
@@ -405,7 +406,9 @@ namespace VoiceStudio.App.Tests.Commands
             _registry.Register(descriptor, _ => throw new Exception("Test"), null);
 
             // Act
+            // ALLOWED: empty catch - testing failure count after expected failures
             try { await _registry.ExecuteAsync("count.fail"); } catch { }
+            // ALLOWED: empty catch - testing failure count after expected failures
             try { await _registry.ExecuteAsync("count.fail"); } catch { }
 
             // Assert
@@ -484,6 +487,7 @@ namespace VoiceStudio.App.Tests.Commands
             };
 
             // Act
+            // ALLOWED: empty catch - testing event raised after expected failure
             try { await _registry.ExecuteAsync("event.fail"); } catch { }
 
             // Assert

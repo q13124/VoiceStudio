@@ -346,7 +346,8 @@ class EngineService(IEngineService):
         
         try:
             return self._engine_router.list_engines()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to list engines: {e}")
             return []
 
     def get_engine(self, engine_id: EngineId) -> Optional[Any]:
@@ -357,7 +358,8 @@ class EngineService(IEngineService):
         
         try:
             return self._engine_router.get_engine(engine_id)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to get engine {engine_id}: {e}")
             return None
 
     def is_engine_available(self, engine_id: EngineId) -> bool:
@@ -576,7 +578,8 @@ class EngineService(IEngineService):
                 str(audio1_path),
                 str(audio2_path),
             )
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to calculate similarity: {e}")
             return 0.0
 
     def calculate_mos_score(self, audio: Union[AudioPath, Any]) -> float:
@@ -591,7 +594,8 @@ class EngineService(IEngineService):
                 return self._quality_metrics.calculate_mos_score(audio)
             # Otherwise treat as path
             return self._quality_metrics.calculate_mos_score(str(audio))
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to calculate MOS score: {e}")
             return 0.0
 
     def calculate_snr(
@@ -608,7 +612,8 @@ class EngineService(IEngineService):
                 return self._quality_metrics.calculate_snr(audio)
             # Otherwise treat as path
             return self._quality_metrics.calculate_snr(str(audio))
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to calculate SNR: {e}")
             return 0.0
 
     def detect_artifacts(
@@ -656,7 +661,8 @@ class EngineService(IEngineService):
         
         try:
             return self._quality_presets.list_quality_presets()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to get quality presets: {e}")
             return []
 
     def get_synthesis_params_from_preset(
@@ -843,6 +849,39 @@ def get_engine_service() -> IEngineService:
     if _engine_service_instance is None:
         _engine_service_instance = EngineService()
     return _engine_service_instance
+
+
+def get_engine_by_id(engine_id: str) -> Optional[Any]:
+    """Get an engine instance by ID.
+    
+    This is a convenience function for use by adapters.
+    
+    Args:
+        engine_id: The engine identifier (e.g., "xtts", "whisper", "rvc")
+        
+    Returns:
+        The engine instance or None if not available
+    """
+    service = get_engine_service()
+    return service.get_engine(engine_id)
+
+
+def get_engine_port():
+    """Get the engine port interface for Clean Architecture patterns.
+    
+    This provides access to the IEnginePort interface defined in
+    backend.interfaces.engine_port, which offers a more granular
+    interface for specific engine types.
+    
+    Usage in routes:
+        from backend.services.engine_service import get_engine_port
+        
+        engine_port = get_engine_port()
+        tts_engine = engine_port.get_synthesis_engine()
+        result = await tts_engine.synthesize(request)
+    """
+    from backend.adapters.engine_adapter import get_engine_service as get_adapter
+    return get_adapter()
 
 
 # Type alias for FastAPI dependency

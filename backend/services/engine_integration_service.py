@@ -300,7 +300,7 @@ class EngineIntegrationService:
             try:
                 capabilities.add(EngineCapability(cap))
             except ValueError:
-                pass
+                logger.debug("Unknown capability '%s' in engine manifest", cap)
         
         engine = EngineInfo(
             engine_id=engine_id,

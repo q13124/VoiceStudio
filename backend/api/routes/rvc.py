@@ -14,6 +14,7 @@ from typing import Optional
 import numpy as np
 from fastapi import (
     APIRouter,
+    Depends,
     File,
     HTTPException,
     UploadFile,
@@ -21,6 +22,8 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
+
+from ..middleware.auth_middleware import require_auth_if_enabled
 
 from backend.services.model_preflight import ensure_sovits
 from backend.services.circuit_breaker import (
@@ -42,7 +45,11 @@ class RvcStartResponse(BaseModel):
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/rvc", tags=["rvc"])
+router = APIRouter(
+    prefix="/api/rvc",
+    tags=["rvc"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # Backward-compatible engine aliases used by the UI and some clients.
 _ENGINE_ID_ALIASES: dict[str, str] = {
@@ -203,7 +210,8 @@ async def convert_voice(
                 frames = wav_file.getnframes()
                 sample_rate = wav_file.getframerate()
                 duration = frames / float(sample_rate)
-        except Exception:
+        except (wave.Error, OSError) as wav_err:
+            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
             duration = 2.5
 
         # Build response
@@ -356,13 +364,13 @@ async def convert_realtime(websocket: WebSocket):
         logger.error(f"RVC WebSocket error: {e}", exc_info=True)
         try:
             await websocket.send_json({"type": "error", "message": f"WebSocket error: {str(e)}"})
-        except:
-            ...
+        except Exception as send_err:
+            logger.debug(f"Could not send error to RVC WebSocket client: {send_err}")
     finally:
         try:
             await websocket.close()
-        except:
-            ...
+        except Exception as close_err:
+            logger.debug(f"RVC WebSocket close error: {close_err}")
 
 
 @router.get("/models")

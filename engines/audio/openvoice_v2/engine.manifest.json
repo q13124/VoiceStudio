@@ -1,0 +1,68 @@
+{
+  "engine_id": "openvoice_v2",
+  "name": "OpenVoice V2",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "2.0",
+  "venv_family": "venv_core_tts",
+  "description": "OpenVoice V2 - Instant voice cloning with fine-grained control",
+  "author": "MyShell AI",
+  "license": "MIT",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "torch": ">=2.0.0",
+    "torchaudio": ">=2.0.0",
+    "openvoice": ">=0.2.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\openvoice_v2",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\openvoice_v2\\cache"
+  },
+  "supported_languages": ["en", "es", "fr", "zh", "ja", "ko"],
+  "capabilities": [
+    "voice_cloning",
+    "instant_cloning",
+    "emotion_control",
+    "style_transfer"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "contract": {
+    "input": {
+      "audio_formats": ["wav", "mp3", "flac"],
+      "sample_rates": [16000, 22050, 24000, 44100],
+      "max_duration_seconds": 30,
+      "min_duration_seconds": 1,
+      "text_max_chars": 5000
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 24000,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "cpu_threads": 4,
+      "timeout_seconds": 120
+    }
+  },
+  "entry_point": "app.core.engines.openvoice_v2:OpenVoiceV2Engine",
+  "config_schema": {
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "gpu": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to use GPU if available"
+    }
+  }
+}

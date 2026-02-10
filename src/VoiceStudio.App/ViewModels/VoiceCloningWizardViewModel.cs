@@ -352,35 +352,17 @@ namespace VoiceStudio.App.ViewModels
     {
       try
       {
-        // Use IBackendClient's configured base address
-        var baseAddress = _backendClient.BaseAddress ?? new Uri("http://localhost:8001");
-        using var httpClient = new System.Net.Http.HttpClient();
-        httpClient.BaseAddress = baseAddress;
-
-        await using var fileStream = await file.OpenStreamForReadAsync();
         cancellationToken.ThrowIfCancellationRequested();
 
-        var fileName = file.Name;
-        var contentType = "audio/wav";
-
-        if (fileName.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
-          contentType = "audio/mpeg";
-        else if (fileName.EndsWith(".flac", StringComparison.OrdinalIgnoreCase))
-          contentType = "audio/flac";
-        else if (fileName.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase))
-          contentType = "audio/mp4";
-
-        using var content = new MultipartFormDataContent();
-        var streamContent = new StreamContent(fileStream);
-        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
-        content.Add(streamContent, "file", fileName);
-
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var response = await httpClient.PostAsync("/api/audio/upload", content, cts.Token);
-        response.EnsureSuccessStatusCode();
-
-        var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
-        var uploadResponse = System.Text.Json.JsonSerializer.Deserialize<AudioUploadResponse>(responseJson);
+        // Use the centralized IBackendClient for file upload
+        var uploadResponse = await _backendClient.UploadFileWithProgressAsync<AudioUploadResponse>(
+            "/api/audio/upload",
+            file.Path,
+            "file",
+            additionalData: null,
+            progress: null,
+            timeout: null,
+            cancellationToken);
 
         return uploadResponse?.AudioId;
       }
@@ -590,8 +572,7 @@ namespace VoiceStudio.App.ViewModels
               CurrentStep = 4;
               StatusMessage = ResourceHelper.GetString("VoiceCloningWizard.CloningCompleted", "Voice cloning completed successfully");
 
-              var dispatcherQueue = App.MainWindowInstance?.DispatcherQueue;
-              dispatcherQueue?.TryEnqueue(() =>
+              Dispatcher.TryEnqueue(() =>
               {
                 var profileName = ProfileName ?? "Unknown Profile";
                 _toastNotificationService?.ShowSuccess(
@@ -604,8 +585,7 @@ namespace VoiceStudio.App.ViewModels
             {
               ErrorMessage = status.ErrorMessage ?? ResourceHelper.GetString("VoiceCloningWizard.ProcessingFailedStatus", "Processing failed");
 
-              var dispatcherQueue = App.MainWindowInstance?.DispatcherQueue;
-              dispatcherQueue?.TryEnqueue(() =>
+              Dispatcher.TryEnqueue(() =>
               {
                 _toastNotificationService?.ShowError(
                                   ResourceHelper.GetString("VoiceCloningWizard.ProcessingFailed", "Processing Failed"),

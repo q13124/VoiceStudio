@@ -36,7 +36,7 @@ def set_test_mode():
         from backend.api.main import app
         app.state.test_mode = True
     except Exception:
-        pass
+        pass  # ALLOWED: bare except - app may not be available in all test contexts
     
     yield
     
@@ -45,7 +45,7 @@ def set_test_mode():
         from backend.api.main import app
         app.state.test_mode = False
     except Exception:
-        pass
+        pass  # ALLOWED: bare except - app may not be available in all test contexts
     os.environ.pop("VOICESTUDIO_TEST_MODE", None)
 
 # Add project root to path

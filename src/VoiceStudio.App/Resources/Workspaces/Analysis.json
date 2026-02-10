@@ -1,0 +1,34 @@
+{
+  "id": "analysis",
+  "name": "Audio Analysis",
+  "description": "Detailed audio analysis with spectrogram and quality metrics",
+  "category": "Analysis",
+  "version": "1.0",
+  "layout": {
+    "profileName": "Analysis",
+    "version": "1.0",
+    "isDefault": false,
+    "regions": [
+      {
+        "region": "Left",
+        "activePanelId": "file-browser",
+        "openedPanels": ["file-browser", "library"]
+      },
+      {
+        "region": "Center",
+        "activePanelId": "spectrogram",
+        "openedPanels": ["spectrogram", "waveform", "quality-metrics"]
+      },
+      {
+        "region": "Right",
+        "activePanelId": "analysis-details",
+        "openedPanels": ["analysis-details", "frequency-analysis"]
+      },
+      {
+        "region": "Bottom",
+        "activePanelId": "loudness",
+        "openedPanels": ["loudness", "dynamics"]
+      }
+    ]
+  }
+}

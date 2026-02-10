@@ -148,9 +148,9 @@ public static class UnpackagedSettingsHelper
             File.WriteAllText(_settingsFilePath, json);
             _cachedSettings = settings;
         }
+        // ALLOWED: empty catch - settings save is non-critical
         catch
         {
-            // Silently fail - settings are non-critical
         }
     }
 }
