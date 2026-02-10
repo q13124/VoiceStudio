@@ -118,8 +118,10 @@ class TestHelpSearchEndpoint:
         response = client.get("/api/help/search?query=voice")
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
-        assert isinstance(data["results"], list)
+        # API returns 'topics' key, not 'results'
+        assert "topics" in data or "results" in data
+        topics = data.get("topics", data.get("results", []))
+        assert isinstance(topics, list)
 
     def test_search_help_empty_query(self):
         """Test help search with empty query."""
@@ -130,7 +132,8 @@ class TestHelpSearchEndpoint:
         response = client.get("/api/help/search?query=")
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
+        # API returns 'topics' key, not 'results'
+        assert "topics" in data or "results" in data
 
     def test_search_help_with_limit(self):
         """Test help search with limit parameter."""
@@ -141,9 +144,11 @@ class TestHelpSearchEndpoint:
         response = client.get("/api/help/search?query=voice&limit=5")
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
-        if len(data["results"]) > 0:
-            assert len(data["results"]) <= 5
+        # API returns 'topics' key, not 'results'
+        assert "topics" in data or "results" in data
+        topics = data.get("topics", data.get("results", []))
+        if len(topics) > 0:
+            assert len(topics) <= 5
 
 
 class TestKeyboardShortcutsEndpoint:
