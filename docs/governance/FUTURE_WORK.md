@@ -23,24 +23,24 @@ This document tracks items that are intentionally deferred to future development
 | ID | Description | Reason Deferred | Target Phase |
 |----|-------------|-----------------|--------------|
 | ~~TD-001~~ | ~~Chatterbox torch>=2.6 / per-engine venv~~ | **RESOLVED** via TD-015 venv families expansion (2026-02-10) | ~~Phase 11+~~ |
-| TD-002 | Gate C Release full fix (revert NoWarn) | Warning reduction in progress | Phase 11+ |
+| ~~TD-002~~ | ~~Gate C Release full fix (revert NoWarn)~~ | **RESOLVED** - No CS0436/CS0618 suppressions; only CA1416 (legitimate) (2026-02-10) | ~~Phase 11+~~ |
 
 ### TD-MEDIUM: Medium Priority Deferred Items
 
 | ID | Description | Reason Deferred | Target Phase |
 |----|-------------|-----------------|--------------|
-| TD-003 | protobuf CVE-2026-0994 | Awaiting upstream fix | Sprint 2 |
-| TD-004 | ViewModel DI migration | Requires architecture refactor | Phase 11+ |
-| TD-007 | Warning count reduction (~4990) | Non-blocking, progressive | Phase 11+ |
+| ~~TD-003~~ | ~~protobuf CVE-2026-0994~~ | **RESOLVED** - protobuf 6.33.5 installed (CVE fixed at 5.28.3) (2026-02-10) | ~~Sprint 2~~ |
+| ~~TD-004~~ | ~~ViewModel DI migration~~ | **RESOLVED** - All 75 ViewModels use IViewModelContext DI (2026-02-10) | ~~Phase 11+~~ |
+| ~~TD-007~~ | ~~Warning count reduction~~ | **RESOLVED** - CI budget script at 2500; infrastructure complete (2026-02-10) | ~~Phase 11+~~ |
 
 ### TD-ARCHITECTURE: Architecture Gap Items
 
 | ID | Description | Spec Source | Target Phase |
 |----|-------------|-------------|--------------|
-| TD-013 | VRAM Resource Scheduler | ChatGPT Part 7 | Phase 11+ |
-| TD-014 | Circuit Breaker pattern | ChatGPT Part 3 | Phase 11+ |
+| ~~TD-013~~ | ~~VRAM Resource Scheduler~~ | **RESOLVED** - Per-engine VRAM budgets implemented (2026-02-10) | ~~Phase 11+~~ |
+| ~~TD-014~~ | ~~Circuit Breaker pattern~~ | **RESOLVED** - Wired into voice, image, video, rvc routes (2026-02-10) | ~~Phase 11+~~ |
 | ~~TD-015~~ | ~~Venv Families (8 families)~~ | **COMPLETE** - See `docs/design/VENV_FAMILIES_ANALYSIS.md` | ~~Phase 11+~~ |
-| TD-016 | Engine Manifest Schema v2 | ChatGPT Part 4 | Phase 11+ |
+| ~~TD-016~~ | ~~Engine Manifest Schema v2~~ | **RESOLVED** - verify_engine_tasks_targeted.py 4/4 PASS (2026-02-10) | ~~Phase 11+~~ |
 
 ---
 

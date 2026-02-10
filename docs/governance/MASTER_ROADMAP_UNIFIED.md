@@ -168,25 +168,25 @@ This is the **single source of truth** for VoiceStudio's development roadmap. Al
 
 Per [TECH_DEBT_REGISTER.md](TECH_DEBT_REGISTER.md):
 
-| TD ID | Description | Priority | Owner | Target |
+| TD ID | Description | Priority | Owner | Status |
 |-------|-------------|----------|-------|--------|
-| TD-001 | Chatterbox torch>=2.6 / per-engine venv | HIGH | Role 5 | Phase 6+ |
-| TD-002 | Gate C Release full fix (revert NoWarn) | HIGH | Role 2 | Phase 6+ |
-| TD-003 | protobuf CVE-2026-0994 | MEDIUM | Role 4/5 | Sprint 2 |
-| TD-004 | ViewModel DI migration | MEDIUM | Role 3/4 | Phase 6+ |
-| TD-005 | Wizard flow e2e automation | MEDIUM | Role 3/5 | Sprint 2 (TASK-0020) |
-| TD-007 | Warning count reduction (~4990) | LOW | Role 2/3 | Phase 6+ (optional) |
+| ~~TD-001~~ | ~~Chatterbox torch>=2.6 / per-engine venv~~ | HIGH | Role 5 | **RESOLVED** (2026-02-10) |
+| ~~TD-002~~ | ~~Gate C Release full fix (revert NoWarn)~~ | HIGH | Role 2 | **RESOLVED** (2026-02-10) |
+| ~~TD-003~~ | ~~protobuf CVE-2026-0994~~ | MEDIUM | Role 4/5 | **RESOLVED** (2026-02-10) |
+| ~~TD-004~~ | ~~ViewModel DI migration~~ | MEDIUM | Role 3/4 | **RESOLVED** (2026-02-10) |
+| ~~TD-005~~ | ~~Wizard flow e2e automation~~ | MEDIUM | Role 3/5 | **RESOLVED** (2026-02-02) |
+| ~~TD-007~~ | ~~Warning count reduction~~ | LOW | Role 2/3 | **RESOLVED** (2026-02-10) |
 
 ### Phase 9: Architecture Gap Remediation (formerly Phase 8)
 
 Per [ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md](../reports/verification/ARCHITECTURE_CROSS_REFERENCE_2026-01-30.md):
 
-| TD ID | Description | Spec Source | Priority | Owner |
-|-------|-------------|-------------|----------|-------|
-| TD-013 | VRAM Resource Scheduler | ChatGPT Part 7 | HIGH | Role 4/5 |
-| TD-014 | Circuit Breaker pattern | ChatGPT Part 3 | MEDIUM | Role 4 |
-| TD-015 | Venv Families (12 families) | ChatGPT Part 4 | MEDIUM | Role 5 |
-| TD-016 | Engine Manifest Schema v2 | ChatGPT Part 4 | LOW | Role 5 |
+| TD ID | Description | Spec Source | Priority | Status |
+|-------|-------------|-------------|----------|--------|
+| ~~TD-013~~ | ~~VRAM Resource Scheduler~~ | ChatGPT Part 7 | HIGH | **RESOLVED** (2026-02-10) |
+| ~~TD-014~~ | ~~Circuit Breaker pattern~~ | ChatGPT Part 3 | MEDIUM | **RESOLVED** (2026-02-10) |
+| ~~TD-015~~ | ~~Venv Families (8 families)~~ | ChatGPT Part 4 | MEDIUM | **RESOLVED** (2026-02-10) |
+| ~~TD-016~~ | ~~Engine Manifest Schema v2~~ | ChatGPT Part 4 | LOW | **RESOLVED** (2026-02-10) |
 
 ### Phase 10: Documentation Completeness (formerly Phase 9)
 
