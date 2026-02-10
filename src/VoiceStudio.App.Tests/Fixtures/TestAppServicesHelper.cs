@@ -45,6 +45,7 @@ namespace VoiceStudio.App.Tests.Fixtures
                         return;
                     }
                 }
+                // ALLOWED: empty catch - Swallowing exception intentionally; AppServices not yet initialized
                 catch
                 {
                     // Not initialized at all, continue with initialization
