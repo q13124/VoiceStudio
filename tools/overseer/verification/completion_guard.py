@@ -59,13 +59,15 @@ def _run_git(args: list[str], root: Path) -> Optional[str]:
             cwd=root,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
         )
     except Exception:
         return None
     if result.returncode != 0:
         return None
-    return result.stdout.strip()
+    return result.stdout.strip() if result.stdout else ""
 
 
 def _matches_completion(line: str) -> bool:
