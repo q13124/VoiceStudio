@@ -210,7 +210,8 @@ def pytest_collection_modifyitems(config, items):
     try:
         import torch
         has_gpu = torch.cuda.is_available()
-    except ImportError:
+    except (ImportError, AttributeError):
+        # AttributeError can occur with partial torch initialization (circular import)
         has_gpu = False
     
     for item in items:
