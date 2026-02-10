@@ -22,6 +22,7 @@ try:
     HAS_ENGINE_ROUTER = True
 except ImportError:
     HAS_ENGINE_ROUTER = False
+    EngineRouter = None  # type: ignore[misc,assignment]
     logger.warning("Engine router not available")
 
 

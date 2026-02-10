@@ -124,7 +124,7 @@ class ProfileUpdateRequest(BaseModel):
 @cache_response(ttl=60)  # Cache for 60 seconds
 def list_profiles(
     request: Request,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> dict:
     """
     List all voice profiles with pagination.
@@ -179,7 +179,7 @@ def list_profiles(
 @cache_response(ttl=300)  # Cache for 5 minutes
 def get_profile(
     profile_id: str,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> VoiceProfile:
     """Get a specific voice profile."""
     try:
@@ -214,7 +214,7 @@ def get_profile(
 @router.post("", response_model=VoiceProfile)
 def create_profile(
     req: ProfileCreateRequest,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> VoiceProfile:
     """Create a new voice profile."""
     try:
@@ -275,7 +275,7 @@ def create_profile(
 def update_profile(
     profile_id: str,
     req: ProfileUpdateRequest,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> VoiceProfile:
     """Update an existing voice profile."""
     try:
@@ -332,7 +332,7 @@ def update_profile(
 @router.delete("/{profile_id}", response_model=ApiOk)
 def delete_profile(
     profile_id: str,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> ApiOk:
     """Delete a voice profile."""
     try:
@@ -364,7 +364,7 @@ def delete_profile(
 async def preprocess_reference_audio(
     profile_id: str,
     req: ReferenceAudioPreprocessRequest,
-    profile_store: ProfileStoreDep = Depends(get_profile_store_dep),
+    profile_store: ProfileStoreDep,
 ) -> ReferenceAudioPreprocessResponse:
     """
     Advanced reference audio pre-processing and optimization (IDEA 62).

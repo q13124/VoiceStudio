@@ -18,10 +18,10 @@ from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
 
-backend_path = Path(__file__).parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from api.main import app
+from backend.api.main import app
 
 
 class TestABTestingPerformance:

@@ -75,7 +75,7 @@ class TestGenerateAdvancedSpectrogram:
             audio_id = Path(tmp.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
                 mock_storage.__getitem__ = lambda x, y: (
@@ -156,7 +156,7 @@ class TestGenerateAdvancedSpectrogram:
             audio_id = Path(tmp.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
                 mock_storage.__getitem__ = lambda x, y: (
@@ -210,7 +210,7 @@ class TestGenerateAdvancedSpectrogram:
             audio_id = Path(tmp.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
                 mock_storage.__getitem__ = lambda x, y: (
@@ -264,7 +264,7 @@ class TestGenerateAdvancedSpectrogram:
             audio_id = Path(tmp.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
                 mock_storage.__getitem__ = lambda x, y: (
@@ -369,7 +369,7 @@ class TestCompareSpectrograms:
             audio_id2 = Path(tmp2.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
 
                 def contains(key):
@@ -474,7 +474,7 @@ class TestCompareSpectrograms:
             audio_id2 = Path(tmp2.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
 
                 def contains(key):
@@ -542,7 +542,7 @@ class TestCompareSpectrograms:
             audio_id2 = Path(tmp2.name).stem
 
             with patch(
-                "backend.api.routes.advanced_spectrogram._audio_storage"
+                "backend.api.routes.voice._audio_storage"
             ) as mock_storage:
 
                 def contains(key):

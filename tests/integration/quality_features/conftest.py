@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from api.main import app
+from backend.api.main import app
 
 @pytest.fixture
 def client():
