@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_comfy",
   "description": "Stable Diffusion XL via ComfyUI workflow engine",
   "author": "ComfyUI Community",
   "license": "AGPL-3.0",

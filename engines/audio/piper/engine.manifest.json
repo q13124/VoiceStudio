@@ -4,7 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
-  "venv_family": "venv_core_tts",
+  "venv_family": "venv_fast_tts",
   "description": "Fast, local neural text-to-speech engine",
   "author": "rhasspy",
   "license": "MIT",

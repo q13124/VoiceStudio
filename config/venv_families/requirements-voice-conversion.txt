@@ -1,0 +1,34 @@
+# VoiceStudio Voice Conversion Family (venv_voice_conversion)
+# Engines: RVC, So-VITS-SVC, Mockingbird, Speaker Encoder
+# Estimated size: ~6GB
+
+# Core framework
+torch>=2.2.2,<2.6.0
+torchaudio>=2.2.2,<2.6.0
+numpy>=1.24.0,<2.0.0
+
+# RVC / Voice conversion
+fairseq>=0.12.0
+pyworld>=0.3.4
+praat-parselmouth>=0.4.3
+faiss-cpu>=1.7.4
+
+# Audio analysis
+librosa>=0.10.0
+soundfile>=0.12.0
+scipy>=1.10.0
+
+# Speaker encoder
+resemblyzer>=0.1.1
+
+# ML utilities
+transformers>=4.35.0
+safetensors>=0.4.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
+ffmpeg-python>=0.2.0
+
+# GPU support
+--extra-index-url https://download.pytorch.org/whl/cu121

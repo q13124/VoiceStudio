@@ -2,12 +2,17 @@
 Venv Family Manager
 
 Manages multiple Python virtual environments for different engine families.
-Implements TD-015 Option 2: 3 critical families (core_tts, advanced_tts, stt).
+Implements TD-015: 8 engine families for complete dependency isolation.
 
 Families:
-- venv_core_tts: XTTS, Silero, eSpeak-NG, Festival, MaryTTS, RHVoice, Piper
-- venv_advanced_tts: Chatterbox, F5-TTS, OpenVoice, GPT-SoVITS
+- venv_core_tts: XTTS, Silero, Tortoise, OpenAI TTS, Fish Speech, Mars5, Parler TTS
+- venv_advanced_tts: Chatterbox, F5-TTS, OpenVoice, GPT-SoVITS, Bark
+- venv_fast_tts: Piper, Parakeet, eSpeak-NG, Festival, MaryTTS, RHVoice (CPU-friendly)
 - venv_stt: Whisper, Whisper.cpp, Vosk, Aeneas
+- venv_voice_conversion: RVC, So-VITS-SVC, Mockingbird, Speaker Encoder
+- venv_image: SDXL, Fooocus, RealESRGAN, SD-CPU, LocalAI
+- venv_comfy: ComfyUI, InvokeAI, Automatic1111
+- venv_video: SadTalker, FOMM, Deforum, SVD, DeepFaceLab
 """
 
 import json
@@ -26,13 +31,23 @@ logger = logging.getLogger(__name__)
 class VenvFamily(Enum):
     """Virtual environment family identifiers."""
 
+    # Audio TTS families
     CORE_TTS = "venv_core_tts"
     ADVANCED_TTS = "venv_advanced_tts"
+    FAST_TTS = "venv_fast_tts"
+
+    # Speech-to-text
     STT = "venv_stt"
-    # Future families:
-    # VOICE_CONVERSION = "venv_voice_conversion"
-    # IMAGE = "venv_image"
-    # VIDEO = "venv_video"
+
+    # Voice processing
+    VOICE_CONVERSION = "venv_voice_conversion"
+
+    # Image generation
+    IMAGE = "venv_image"
+    COMFY = "venv_comfy"
+
+    # Video synthesis
+    VIDEO = "venv_video"
 
 
 @dataclass
@@ -54,29 +69,37 @@ FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
         family=VenvFamily.CORE_TTS,
         requirements_file="requirements-core-tts.txt",
         python_version="3.11",
-        description="Core TTS engines with stable torch",
+        description="Core TTS engines with stable torch 2.2.x",
         engines=[
             "xtts_v2",
             "silero",
-            "espeak_ng",
-            "festival",
-            "marytts",
-            "rhvoice",
-            "piper",
-            "bark",
             "tortoise",
+            "openai_tts",
+            "fish_speech",
+            "mars5",
+            "parler_tts",
+            "openvoice_v2",
         ],
-        gpu_required=False,
+        gpu_required=True,
         estimated_size_gb=8.0,
     ),
     VenvFamily.ADVANCED_TTS: FamilyConfig(
         family=VenvFamily.ADVANCED_TTS,
         requirements_file="requirements-advanced-tts.txt",
         python_version="3.11",
-        description="Advanced TTS with latest models (may need nightly torch for SM 120)",
-        engines=["chatterbox", "f5_tts", "openvoice", "gpt_sovits"],
+        description="Advanced TTS with latest models (torch 2.6+, SM 120 compatible)",
+        engines=["chatterbox", "f5_tts", "openvoice", "gpt_sovits", "bark"],
         gpu_required=True,
         estimated_size_gb=10.0,
+    ),
+    VenvFamily.FAST_TTS: FamilyConfig(
+        family=VenvFamily.FAST_TTS,
+        requirements_file="requirements-fast-tts.txt",
+        python_version="3.11",
+        description="Lightweight CPU-friendly TTS engines",
+        engines=["piper", "parakeet", "espeak_ng", "festival", "marytts", "rhvoice"],
+        gpu_required=False,
+        estimated_size_gb=2.0,
     ),
     VenvFamily.STT: FamilyConfig(
         family=VenvFamily.STT,
@@ -86,6 +109,61 @@ FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
         engines=["whisper", "whisper_cpp", "whisper_ui", "vosk", "aeneas"],
         gpu_required=False,
         estimated_size_gb=4.0,
+    ),
+    VenvFamily.VOICE_CONVERSION: FamilyConfig(
+        family=VenvFamily.VOICE_CONVERSION,
+        requirements_file="requirements-voice-conversion.txt",
+        python_version="3.11",
+        description="Voice conversion and cloning engines",
+        engines=["rvc", "so_vits_svc", "sovits_svc", "mockingbird", "speaker_encoder"],
+        gpu_required=True,
+        estimated_size_gb=6.0,
+    ),
+    VenvFamily.IMAGE: FamilyConfig(
+        family=VenvFamily.IMAGE,
+        requirements_file="requirements-image.txt",
+        python_version="3.11",
+        description="Image generation with diffusers",
+        engines=[
+            "sdxl",
+            "sd_cpu",
+            "fastsd_cpu",
+            "fooocus",
+            "openjourney",
+            "realistic_vision",
+            "realesrgan",
+            "sdnext",
+            "localai",
+        ],
+        gpu_required=True,
+        estimated_size_gb=12.0,
+    ),
+    VenvFamily.COMFY: FamilyConfig(
+        family=VenvFamily.COMFY,
+        requirements_file="requirements-comfy.txt",
+        python_version="3.11",
+        description="Node-based image workflow engines",
+        engines=["comfyui", "sdxl_comfy", "invokeai", "automatic1111"],
+        gpu_required=True,
+        estimated_size_gb=8.0,
+    ),
+    VenvFamily.VIDEO: FamilyConfig(
+        family=VenvFamily.VIDEO,
+        requirements_file="requirements-video.txt",
+        python_version="3.11",
+        description="Video synthesis and lip-sync engines",
+        engines=[
+            "sadtalker",
+            "fomm",
+            "deforum",
+            "svd",
+            "deepfacelab",
+            "moviepy",
+            "ffmpeg_ai",
+            "video_creator",
+        ],
+        gpu_required=True,
+        estimated_size_gb=10.0,
     ),
 }
 

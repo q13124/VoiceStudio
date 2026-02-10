@@ -3,7 +3,7 @@
 > **TD-015**: Venv Families Strategy  
 > **Author**: Engine Engineer (Role 5)  
 > **Date**: 2026-02-02  
-> **Status**: Analysis Complete - Ready for Implementation
+> **Status**: Implementation Complete (2026-02-10) - 8 Families Deployed
 
 ---
 
@@ -150,17 +150,23 @@ VoiceStudio has 44 engines with varying dependency requirements. This analysis p
 
 ---
 
-## Decision Required
+## Decision Outcome
 
-**Options**:
-1. **Full Implementation** (40-60 hours): All 8 families
-2. **Minimal Implementation** (16-20 hours): 3 critical families only
-   - venv_core_tts (XTTS, standard TTS)
-   - venv_advanced_tts (Chatterbox, SM 120 support)
-   - venv_stt (Whisper)
-3. **Defer**: Continue with single venv, document conflicts
+**Implemented**: Option 1 - Full Implementation with all 8 families.
 
-**Recommendation**: Option 2 - Start with 3 critical families, expand as needed.
+**Implementation Date**: 2026-02-10
+
+**Changes Made**:
+1. Added 5 new venv families to `app/core/runtime/venv_family_manager.py`:
+   - `venv_fast_tts` (Piper, eSpeak-NG, Festival, MaryTTS, RHVoice, Parakeet)
+   - `venv_voice_conversion` (RVC, So-VITS-SVC, Mockingbird, Speaker Encoder)
+   - `venv_image` (SDXL, SD-CPU, FastSD-CPU, Fooocus, RealESRGAN, LocalAI, etc.)
+   - `venv_comfy` (ComfyUI, InvokeAI, Automatic1111)
+   - `venv_video` (SadTalker, FOMM, Deforum, SVD, DeepFaceLab, MoviePy, etc.)
+2. Created 5 new requirements files in `config/venv_families/`
+3. Updated 54 engine manifests with `venv_family` assignments
+
+**TD-001 Resolution**: Chatterbox torch>=2.6 isolation is now fully supported via `venv_advanced_tts` family.
 
 ---
 

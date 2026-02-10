@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "FastSD CPU - Fast Stable Diffusion inference optimized for CPU",
   "author": "Various",
   "license": "Apache-2.0",

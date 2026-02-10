@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_fast_tts",
   "description": "Parakeet - Fast and efficient TTS with multiple model options",
   "author": "PaddlePaddle",
   "license": "Apache-2.0",

@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "voice_conversion",
   "version": "1.0.0",
+  "venv_family": "venv_voice_conversion",
   "description": "Real-time voice conversion with low latency and high quality",
   "author": "RVC Project",
   "license": "MIT",

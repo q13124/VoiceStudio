@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_fast_tts",
   "description": "MaryTTS - Classic open-source multilingual TTS system",
   "author": "MaryTTS Team",
   "license": "LGPL-3.0",

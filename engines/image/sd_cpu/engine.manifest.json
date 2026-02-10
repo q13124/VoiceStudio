@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "Stable Diffusion CPU-only forks - Runs on CPU without GPU requirements",
   "author": "Various",
   "license": "Apache-2.0",

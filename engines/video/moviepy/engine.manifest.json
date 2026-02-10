@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "editing",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Programmable video editing - cutting, concatenating, effects, compositing",
   "author": "Zulko",
   "license": "MIT",

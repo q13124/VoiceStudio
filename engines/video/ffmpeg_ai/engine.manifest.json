@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "utility",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Video transcoding, muxing, filters with AI enhancements (upscaling, denoising, enhancement)",
   "author": "FFmpeg Community",
   "license": "LGPL-2.1",

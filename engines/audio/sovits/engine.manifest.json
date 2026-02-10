@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "voice_conversion",
   "version": "4.0",
+  "venv_family": "venv_voice_conversion",
   "description": "So-VITS-SVC 4.0 - High-quality voice conversion using checkpoint-based models",
   "author": "So-VITS-SVC Team",
   "license": "MIT",

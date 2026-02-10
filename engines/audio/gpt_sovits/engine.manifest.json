@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "vc",
   "version": "1.0",
+  "venv_family": "venv_advanced_tts",
   "description": "GPT-SoVITS - Voice conversion and fine-tuning with GPT and SoVITS",
   "author": "GPT-SoVITS Team",
   "license": "MIT",

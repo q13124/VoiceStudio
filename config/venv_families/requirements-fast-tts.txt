@@ -1,0 +1,24 @@
+# VoiceStudio Fast TTS Family (venv_fast_tts)
+# Engines: Piper, Parakeet, eSpeak-NG, Festival, MaryTTS, RHVoice
+# Estimated size: ~2GB
+# Note: CPU-friendly, minimal dependencies
+
+# Minimal torch (CPU-only by default)
+torch>=2.0.0
+torchaudio>=2.0.0
+numpy>=1.24.0,<2.0.0
+
+# Piper TTS (ONNX-based, fast)
+piper-tts>=1.0.0
+onnxruntime>=1.15.0
+
+# eSpeak-NG (system dependency, Python bindings)
+py-espeak-ng>=0.1.8
+
+# Audio processing (minimal)
+soundfile>=0.12.0
+scipy>=1.10.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0

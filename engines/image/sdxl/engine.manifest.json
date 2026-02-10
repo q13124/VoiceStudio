@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "Stable Diffusion XL - High-resolution image generation (1024x1024+)",
   "author": "Stability AI",
   "license": "CreativeML Open RAIL++-M",

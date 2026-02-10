@@ -22,7 +22,7 @@ This document tracks items that are intentionally deferred to future development
 
 | ID | Description | Reason Deferred | Target Phase |
 |----|-------------|-----------------|--------------|
-| TD-001 | Chatterbox torch>=2.6 / per-engine venv | Waiting for stable torch release | Phase 11+ |
+| ~~TD-001~~ | ~~Chatterbox torch>=2.6 / per-engine venv~~ | **RESOLVED** via TD-015 venv families expansion (2026-02-10) | ~~Phase 11+~~ |
 | TD-002 | Gate C Release full fix (revert NoWarn) | Warning reduction in progress | Phase 11+ |
 
 ### TD-MEDIUM: Medium Priority Deferred Items
@@ -39,7 +39,7 @@ This document tracks items that are intentionally deferred to future development
 |----|-------------|-------------|--------------|
 | TD-013 | VRAM Resource Scheduler | ChatGPT Part 7 | Phase 11+ |
 | TD-014 | Circuit Breaker pattern | ChatGPT Part 3 | Phase 11+ |
-| TD-015 | Venv Families (12 families) | ChatGPT Part 4 | Phase 11+ |
+| ~~TD-015~~ | ~~Venv Families (8 families)~~ | **COMPLETE** - See `docs/design/VENV_FAMILIES_ANALYSIS.md` | ~~Phase 11+~~ |
 | TD-016 | Engine Manifest Schema v2 | ChatGPT Part 4 | Phase 11+ |
 
 ---

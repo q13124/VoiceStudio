@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "stt",
   "version": "1.0",
+  "venv_family": "venv_stt",
   "description": "Whisper UI - User interface wrapper for Whisper STT with enhanced features",
   "author": "Whisper UI Community",
   "license": "MIT",

@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "upscaling",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "Practical image restoration and upscaling",
   "author": "xinntao",
   "license": "BSD-3-Clause",

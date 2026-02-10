@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "vc",
   "version": "1.0",
+  "venv_family": "venv_voice_conversion",
   "description": "MockingBird - Real-time voice cloning and conversion",
   "author": "MockingBird Team",
   "license": "MIT",

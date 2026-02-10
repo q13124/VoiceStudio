@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "Fooocus - Simplified Stable Diffusion interface focused on quality and ease of use",
   "author": "lllyasviel",
   "license": "Apache-2.0",

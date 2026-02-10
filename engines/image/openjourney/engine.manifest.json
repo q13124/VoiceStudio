@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "OpenJourney - Midjourney-style image generation using Stable Diffusion",
   "author": "PromptHero",
   "license": "CreativeML Open RAIL-M",

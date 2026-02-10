@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_fast_tts",
   "description": "eSpeak NG - Compact open-source TTS for many languages, optimized for accessibility",
   "author": "eSpeak NG Team",
   "license": "GPL-3.0",

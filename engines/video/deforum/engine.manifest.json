@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Keyframed Stable Diffusion animations for video generation",
   "author": "Deforum Community",
   "license": "MIT",

@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_fast_tts",
   "description": "Festival/Flite - Legacy open-source TTS system (Festival framework with Flite runtime)",
   "author": "Festival/Flite Team",
   "license": "BSD",

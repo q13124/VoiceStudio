@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "SD.Next - Advanced fork of AUTOMATIC1111 with enhanced features and performance",
   "author": "vladmandic",
   "license": "AGPL-3.0",

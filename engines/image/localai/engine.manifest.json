@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "LocalAI - Local inference server for AI models (Stable Diffusion, LLMs, etc.)",
   "author": "LocalAI Community",
   "license": "MIT",

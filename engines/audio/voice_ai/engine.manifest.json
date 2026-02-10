@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "vc",
   "version": "1.0",
+  "venv_family": "venv_voice_conversion",
   "description": "Voice.ai - Real-time voice conversion and cloning (local inference if available)",
   "author": "Voice.ai Team",
   "license": "Proprietary",

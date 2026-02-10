@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_fast_tts",
   "description": "RHVoice - Multilingual TTS with high-quality voices, optimized for Russian and other languages",
   "author": "RHVoice Team",
   "license": "GPL-3.0",

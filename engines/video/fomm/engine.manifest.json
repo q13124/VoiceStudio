@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "avatar",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Motion transfer for avatars - animates static images based on driving video",
   "author": "Aliaksandr Siarohin",
   "license": "MIT",

@@ -1,0 +1,42 @@
+# VoiceStudio ComfyUI Family (venv_comfy)
+# Engines: ComfyUI, SDXL-Comfy, InvokeAI, Automatic1111
+# Estimated size: ~8GB
+# Note: These are node-based image generation UIs
+
+# Core framework
+torch>=2.2.2
+torchvision>=0.17.0
+numpy>=1.24.0,<2.0.0
+
+# ComfyUI core dependencies
+aiohttp>=3.9.0
+einops>=0.7.0
+kornia>=0.7.0
+
+# Diffusers (for model loading)
+diffusers>=0.27.0
+transformers>=4.35.0
+accelerate>=0.27.0
+safetensors>=0.4.0
+
+# Image processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+imageio>=2.31.0
+
+# Model optimization
+xformers>=0.0.24
+
+# Web/API
+gradio>=4.0.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
+requests>=2.28.0
+huggingface-hub>=0.20.0
+
+# GPU support
+--extra-index-url https://download.pytorch.org/whl/cu121

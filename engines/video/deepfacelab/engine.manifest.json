@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "face_swap",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Face replacement/swap in videos (gated with consent/watermark)",
   "author": "iperov",
   "license": "MIT",

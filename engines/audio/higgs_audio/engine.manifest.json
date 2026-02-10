@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_core_tts",
   "description": "Higgs Audio - High-fidelity, zero-shot TTS (Open Source)",
   "author": "Higgs Audio Team",
   "license": "MIT",

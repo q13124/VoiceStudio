@@ -4,7 +4,7 @@
   "type": "audio",
   "subtype": "embedding",
   "version": "1.0",
-  "venv_family": "venv_core_tts",
+  "venv_family": "venv_voice_conversion",
   "description": "Extract speaker embeddings for voice cloning, similarity comparison, and speaker verification",
   "author": "VoiceStudio",
   "license": "MIT",

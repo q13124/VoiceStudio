@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Video creation from images and audio - automates multimedia content creation",
   "author": "prakashdk",
   "license": "MIT",

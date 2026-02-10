@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_comfy",
   "description": "ComfyUI - Powerful node-based Stable Diffusion workflow engine",
   "author": "ComfyUI Community",
   "license": "Apache-2.0",

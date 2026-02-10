@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_comfy",
   "description": "Stable Diffusion WebUI - Popular web interface for Stable Diffusion with extensive features",
   "author": "AUTOMATIC1111",
   "license": "AGPL-3.0",

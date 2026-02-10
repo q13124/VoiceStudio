@@ -4,6 +4,7 @@
   "type": "video",
   "subtype": "avatar",
   "version": "1.0",
+  "venv_family": "venv_video",
   "description": "Talking head generation with realistic lip-sync from single image and audio",
   "author": "SadTalker Team",
   "license": "Apache-2.0",

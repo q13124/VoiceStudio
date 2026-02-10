@@ -4,6 +4,7 @@
   "type": "audio",
   "subtype": "tts",
   "version": "1.0",
+  "venv_family": "venv_core_tts",
   "description": "Lyrebird/Descript - High-quality voice cloning (local inference if available)",
   "author": "Descript/Lyrebird",
   "license": "Proprietary",

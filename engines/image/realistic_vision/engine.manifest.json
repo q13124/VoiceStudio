@@ -4,6 +4,7 @@
   "type": "image",
   "subtype": "generation",
   "version": "1.0",
+  "venv_family": "venv_image",
   "description": "Realistic Vision - High-quality Stable Diffusion model optimized for photorealistic images",
   "author": "SG161222",
   "license": "CreativeML Open RAIL-M",
