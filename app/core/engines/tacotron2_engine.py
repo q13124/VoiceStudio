@@ -233,6 +233,57 @@ class Tacotron2Engine(EngineProtocol):
         """Get output sample rate in Hz."""
         return self._sample_rate
 
+    def synthesize_stream(
+        self,
+        text: str,
+        language: str = "en",
+        chunk_size: int = 4800,
+        **kwargs: Any,
+    ):
+        """
+        Stream synthesized audio in chunks.
+        
+        D.3 Enhancement: Streaming synthesis support for Tacotron 2.
+        
+        Args:
+            text: Input text to synthesize.
+            language: Language code.
+            chunk_size: Size of each audio chunk in samples.
+            **kwargs: Additional parameters.
+            
+        Yields:
+            Audio chunks as numpy arrays.
+        """
+        if not self._initialized or self._tts is None:
+            raise RuntimeError("Tacotron2Engine not initialized. Call initialize() first.")
+
+        # Switch model if language changed
+        if language != self._current_language:
+            if language not in AVAILABLE_MODELS:
+                raise ValueError(
+                    f"Language '{language}' not supported. "
+                    f"Available: {', '.join(SUPPORTED_LANGUAGES)}"
+                )
+            self._switch_language(language)
+
+        logger.debug("Starting streaming synthesis (length=%d)", len(text))
+
+        try:
+            # Synthesize full audio first, then stream in chunks
+            # (Tacotron 2 doesn't support true streaming, so we simulate it)
+            audio = self._tts.tts(text=text)
+            
+            if not isinstance(audio, np.ndarray):
+                audio = np.array(audio, dtype=np.float32)
+
+            # Yield audio in chunks
+            for i in range(0, len(audio), chunk_size):
+                yield audio[i:i + chunk_size]
+
+        except Exception as e:
+            logger.error("Streaming synthesis failed: %s", e)
+            raise
+
     def get_info(self) -> Dict[str, Any]:
         """Get engine information."""
         base_info = super().get_info()

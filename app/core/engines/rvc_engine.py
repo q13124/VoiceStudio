@@ -687,6 +687,56 @@ class RVCEngine(EngineProtocol):
             logger.error(f"Real-time RVC conversion failed: {e}")
             return audio_chunk  # Return original on error
 
+    def synthesize_stream(
+        self,
+        audio_input: np.ndarray,
+        target_speaker_model: Optional[str] = None,
+        chunk_size: int = 4800,
+        pitch_shift: int = 0,
+        **kwargs,
+    ):
+        """
+        Stream voice-converted audio in chunks.
+        
+        D.3 Enhancement: Streaming interface for RVC engine.
+        This method provides a consistent streaming interface similar to TTS engines.
+        
+        Args:
+            audio_input: Full audio input to convert.
+            target_speaker_model: Path to target speaker model.
+            chunk_size: Size of each output chunk in samples.
+            pitch_shift: Pitch shift in semitones.
+            **kwargs: Additional parameters.
+            
+        Yields:
+            Converted audio chunks as numpy arrays.
+        """
+        if not self._initialized:
+            if not self.initialize():
+                # If initialization fails, yield original audio in chunks
+                for i in range(0, len(audio_input), chunk_size):
+                    yield audio_input[i:i + chunk_size]
+                return
+
+        try:
+            # Convert entire audio first
+            converted = self.convert_voice(
+                audio_input=audio_input,
+                target_speaker_model=target_speaker_model,
+                pitch_shift=pitch_shift,
+                **kwargs,
+            )
+
+            # Yield in chunks
+            for i in range(0, len(converted), chunk_size):
+                yield converted[i:i + chunk_size]
+
+        except Exception as e:
+            logger.error(f"Streaming RVC conversion failed: {e}")
+            # Fallback: yield original in chunks
+            for i in range(0, len(audio_input), chunk_size):
+                yield audio_input[i:i + chunk_size]
+
     def _extract_pyworld_features(
         self, audio: np.ndarray, sample_rate: int
     ) -> Dict[str, np.ndarray]:

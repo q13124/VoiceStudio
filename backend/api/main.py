@@ -1393,6 +1393,24 @@ def _register_all_routes():
     except Exception as e:
         logger.warning(f"Failed to register mcp_router: {e}")
 
+    # Register Plugin Gallery routes (D.1 Enhancement)
+    try:
+        from .routes.plugin_gallery import router as plugin_gallery_router
+
+        app.include_router(plugin_gallery_router, prefix="/api")
+        logger.debug("Registered plugin_gallery_router")
+    except Exception as e:
+        logger.warning(f"Failed to register plugin_gallery_router: {e}")
+
+    # Register Video Enhancement routes (D.2 Enhancement)
+    try:
+        from .routes.video_enhance import router as video_enhance_router
+
+        app.include_router(video_enhance_router)
+        logger.debug("Registered video_enhance_router")
+    except Exception as e:
+        logger.warning(f"Failed to register video_enhance_router: {e}")
+
     # Register API v2 routes
     try:
         from .routes.v2 import health_router as v2_health_router
