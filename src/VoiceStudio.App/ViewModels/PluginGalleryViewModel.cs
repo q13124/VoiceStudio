@@ -20,6 +20,7 @@ namespace VoiceStudio.App.ViewModels
     {
         private readonly IPluginGateway _gateway;
         private CancellationTokenSource? _searchCts;
+        private CancellationTokenSource? _installCts;
 
         public PluginGalleryViewModel(IViewModelContext context, IPluginGateway gateway)
             : base(context)
@@ -289,6 +290,9 @@ namespace VoiceStudio.App.ViewModels
 
             try
             {
+                _installCts?.Cancel();
+                _installCts = new CancellationTokenSource();
+                
                 IsInstalling = true;
                 InstallProgress = 0;
                 InstallStatusText = $"Installing {plugin.Name}...";
@@ -299,7 +303,7 @@ namespace VoiceStudio.App.ViewModels
                     InstallStatusText = p.StatusMessage;
                 });
 
-                var result = await _gateway.InstallPluginAsync(plugin.Id, progress: progress);
+                var result = await _gateway.InstallPluginAsync(plugin.Id, progress: progress, cancellationToken: _installCts.Token);
 
                 if (result.Success)
                 {
@@ -318,6 +322,10 @@ namespace VoiceStudio.App.ViewModels
                     ErrorMessage = $"Installation failed: {result.ErrorMessage}";
                 }
             }
+            catch (OperationCanceledException)
+            {
+                StatusMessage = "Installation cancelled";
+            }
             catch (Exception ex)
             {
                 ErrorMessage = $"Installation failed: {ex.Message}";
@@ -326,6 +334,14 @@ namespace VoiceStudio.App.ViewModels
             {
                 IsInstalling = false;
             }
+        }
+
+        [RelayCommand]
+        private void CancelInstall()
+        {
+            _installCts?.Cancel();
+            IsInstalling = false;
+            InstallStatusText = "Cancelling...";
         }
 
         [RelayCommand]
@@ -454,6 +470,8 @@ namespace VoiceStudio.App.ViewModels
             {
                 _searchCts?.Cancel();
                 _searchCts?.Dispose();
+                _installCts?.Cancel();
+                _installCts?.Dispose();
                 
                 _gateway.InstallStarted -= OnInstallStarted;
                 _gateway.InstallCompleted -= OnInstallCompleted;

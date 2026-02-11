@@ -7,8 +7,11 @@ namespace VoiceStudio.App.Controls
   /// <summary>
   /// Automation curves editor control.
   ///
-  /// NOTE: Win2D/CanvasControl rendering is temporarily disabled to restore XAML compiler stability
-  /// during Phase 0 (build reliability). This stub preserves basic selection/binding surface.
+  /// DEFERRED FEATURE: Multi-track curve editing for audio automation.
+  /// Win2D/CanvasControl rendering disabled during Phase 0 for XAML compiler stability.
+  /// This stub maintains binding surface compatibility.
+  /// Full implementation planned for v1.1+ release.
+  /// See: docs/governance/FUTURE_WORK.md
   /// </summary>
   public sealed partial class AutomationCurvesEditorControl : UserControl
   {

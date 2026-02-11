@@ -93,5 +93,9 @@ namespace VoiceStudio.App.Tests.ViewModels
     }
 
     #endregion
+
+    // Note: GPU, Job Queue, and Feature Status data loading is implemented
+    // in DiagnosticsView.xaml.cs code-behind, not the ViewModel.
+    // View-level tests would require UI testing frameworks.
   }
 }

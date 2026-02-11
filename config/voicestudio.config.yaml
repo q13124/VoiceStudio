@@ -1,0 +1,87 @@
+# VoiceStudio Global Configuration
+# Schema: shared/schemas/unified_config.schema.json#/definitions/voicestudio_config
+# This file consolidates application-wide settings formerly in data/settings.json
+
+version: "1.0.0"
+
+# ==============================================================================
+# Path Configuration
+# Override via environment variables: VOICESTUDIO_DATA_PATH, VOICESTUDIO_MODELS_PATH, etc.
+# ==============================================================================
+paths:
+  data_root: "${VOICESTUDIO_DATA_PATH:data}"
+  models_root: "${VOICESTUDIO_MODELS_PATH:models}"
+  cache_root: "${VOICESTUDIO_CACHE_PATH:cache}"
+  logs_root: "${VOICESTUDIO_LOGS_PATH:logs}"
+  plugins_root: "${VOICESTUDIO_PLUGINS_PATH:plugins}"
+
+# ==============================================================================
+# General Application Settings
+# ==============================================================================
+general:
+  theme: Dark                    # Dark | Light | System | HighContrast
+  language: en-US
+  auto_save: true
+  auto_save_interval: 300        # Seconds between auto-saves
+
+# ==============================================================================
+# Audio Device Settings
+# ==============================================================================
+audio:
+  output_device: Default
+  input_device: Default
+  sample_rate: 44100             # 22050 | 44100 | 48000 | 96000
+  buffer_size: 1024
+
+# ==============================================================================
+# Timeline Editor Settings
+# ==============================================================================
+timeline:
+  time_format: Timecode          # Timecode | Frames | Samples
+  snap_enabled: true
+  snap_interval: 0.1
+  grid_enabled: true
+  grid_interval: 1.0
+
+# ==============================================================================
+# Performance Tuning
+# ==============================================================================
+performance:
+  caching_enabled: true
+  cache_size_mb: 512
+  max_threads: 4
+  memory_limit_mb: 4096
+
+# ==============================================================================
+# Quality Settings
+# Affects default quality targets for synthesis operations
+# ==============================================================================
+quality:
+  default_preset: standard       # fast | standard | high | ultra
+  auto_enhance: true
+  auto_optimize: false
+  min_mos_score: 3.5            # Mean Opinion Score threshold (1.0-5.0)
+  min_similarity: 0.75          # Voice similarity threshold (0.0-1.0)
+  min_naturalness: 0.7          # Naturalness threshold (0.0-1.0)
+  min_snr_db: 25.0              # Signal-to-noise ratio threshold
+  show_metrics: true
+  auto_compare: false
+
+# ==============================================================================
+# Plugin System
+# ==============================================================================
+plugins:
+  enabled: []                    # List of enabled plugin IDs
+  auto_update: true
+
+# ==============================================================================
+# Feature Flags
+# Toggle experimental or optional features
+# ==============================================================================
+feature_flags:
+  telemetry_enabled: false       # Respect privacy by default
+  experimental_ui: false
+  advanced_routing: true
+  ab_testing: false
+  live_preview: true
+  gpu_monitoring: true

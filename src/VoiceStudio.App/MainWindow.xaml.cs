@@ -199,7 +199,7 @@ namespace VoiceStudio.App
             System.IO.File.WriteAllText(diagPath, sb.ToString());
           }
           // ALLOWED: empty catch - diagnostic file write is best-effort
-          catch { }
+          catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Diagnostic write failed: {ex.Message}"); }
           
           // Add pointer event handler
           contentFE.AddHandler(
@@ -215,7 +215,7 @@ namespace VoiceStudio.App
                 System.IO.File.AppendAllText(inputDiagPath, $"[{DateTime.UtcNow:O}] PointerPressed at ({point.Position.X:F0}, {point.Position.Y:F0}) Handled={args.Handled}\n"); 
               }
               // ALLOWED: empty catch - diagnostic file write is best-effort
-              catch { }
+              catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Input diagnostic write failed: {ex.Message}"); }
             }),
             true); // handledEventsToo = true
         };
@@ -399,7 +399,7 @@ namespace VoiceStudio.App
           Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
           "VoiceStudio", "crashes", "click_diag.txt");
         // ALLOWED: empty catch - diagnostic file write is best-effort
-        try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch { }
+        try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch (Exception diagEx) { System.Diagnostics.Debug.WriteLine($"Click diagnostic write failed: {diagEx.Message}"); }
       }
     }
 
@@ -2883,7 +2883,7 @@ namespace VoiceStudio.App
         _lastCpuCheck = DateTime.UtcNow;
       }
       // ALLOWED: empty catch - CPU telemetry is non-critical
-      catch { }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"CPU telemetry init failed: {ex.Message}"); }
 
       // Update immediately
       UpdateStatusBarMetrics();

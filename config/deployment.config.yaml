@@ -1,0 +1,175 @@
+# VoiceStudio Deployment Configuration
+# Schema: shared/schemas/unified_config.schema.json#/definitions/deployment_config
+# This file configures deployment mode, backend, and logging
+
+version: "1.0.0"
+
+# ==============================================================================
+# Environment Mode
+# Controls overall behavior and defaults
+# ==============================================================================
+environment: development         # development | staging | production
+
+# ==============================================================================
+# Backend Service Configuration
+# ==============================================================================
+backend:
+  host: "127.0.0.1"              # Bind address (use 0.0.0.0 for external access)
+  port: 8000                     # API port
+  workers: 4                     # Uvicorn worker processes (production only)
+  timeout: 30                    # Request timeout in seconds
+  retry_count: 3                 # Auto-retry failed requests
+  
+  # Development mode settings
+  dev:
+    reload: true                 # Hot-reload on code changes
+    debug: true
+    workers: 1
+
+  # Production mode settings
+  prod:
+    reload: false
+    debug: false
+    workers: 4
+    ssl_keyfile: null            # Path to SSL key (optional)
+    ssl_certfile: null           # Path to SSL cert (optional)
+
+# ==============================================================================
+# CORS Configuration
+# ==============================================================================
+cors:
+  allowed_origins:
+    - "http://localhost:*"
+    - "https://localhost:*"
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed_headers:
+    - "*"
+  allow_credentials: true
+
+# ==============================================================================
+# Logging Configuration
+# ==============================================================================
+logging:
+  level: INFO                    # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  format: text                   # json | text
+  
+  # Console logging
+  console:
+    enabled: true
+    colorized: true
+
+  # File logging
+  file:
+    enabled: true
+    path: "${VOICESTUDIO_LOGS_PATH:logs}/voicestudio.log"
+    max_size_mb: 50
+    backup_count: 5
+    rotation: daily              # daily | size | none
+
+  # Structured logging fields
+  include_fields:
+    - timestamp
+    - level
+    - logger
+    - message
+    - request_id
+    - duration_ms
+
+  # Per-module log levels (optional overrides)
+  module_levels:
+    uvicorn: WARNING
+    httpcore: WARNING
+    httpx: WARNING
+    app.core.engines: DEBUG
+
+# ==============================================================================
+# Telemetry and Metrics
+# All telemetry is opt-in and respects privacy
+# ==============================================================================
+telemetry:
+  enabled: false                 # Master switch for all telemetry
+  
+  # Prometheus metrics export
+  prometheus:
+    enabled: false
+    port: 9090
+    path: /metrics
+
+  # Performance tracking
+  performance:
+    enabled: true                # Local performance metrics (no external calls)
+    sample_rate: 1.0             # 1.0 = 100% of requests
+
+  # Error tracking (local only)
+  error_tracking:
+    enabled: true
+    stack_traces: true
+    max_errors: 1000             # Keep last N errors in memory
+
+# ==============================================================================
+# Service Management
+# ==============================================================================
+services:
+  health_check_interval: 30      # Seconds between health checks
+  startup_timeout: 60            # Max seconds to wait for services to start
+  graceful_shutdown_timeout: 30  # Seconds to wait for graceful shutdown
+  
+  # Engine subprocess management
+  engine_pool:
+    min_workers: 1
+    max_workers: 4
+    idle_timeout: 300            # Shutdown idle workers after N seconds
+    respawn_on_crash: true
+
+# ==============================================================================
+# Security Settings
+# ==============================================================================
+security:
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+    burst_size: 10
+
+  # API authentication (optional)
+  auth:
+    enabled: false
+    type: bearer                 # bearer | api_key
+    # Keys managed via environment variables, not config files
+
+  # Input validation
+  validation:
+    max_request_size_mb: 100
+    max_text_length: 10000
+    allowed_audio_formats:
+      - wav
+      - mp3
+      - flac
+      - ogg
+      - m4a
+
+# ==============================================================================
+# Database Configuration
+# ==============================================================================
+database:
+  type: sqlite                   # sqlite | postgresql (future)
+  path: "${VOICESTUDIO_DATA_PATH:data}/voicestudio.db"
+  
+  # Connection pool (for PostgreSQL)
+  pool:
+    min_size: 2
+    max_size: 10
+    timeout: 30
+
+# ==============================================================================
+# MCP Integration (Optional)
+# ==============================================================================
+mcp:
+  enabled: false
+  server_url: "http://localhost:8080"
+  timeout: 30

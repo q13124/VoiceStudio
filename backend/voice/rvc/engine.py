@@ -135,6 +135,17 @@ class RVCEngine:
         """Check if model is loaded."""
         return self._loaded
     
+    def rvc_available(self) -> bool:
+        """
+        Check if real RVC voice conversion capability is available (not placeholder).
+        
+        Returns:
+            True if a functional RVC model is loaded
+        """
+        if not self._loaded or self._model is None:
+            return False
+        return not self._model.get("placeholder", False)
+    
     async def load_model(
         self,
         model_path: str,

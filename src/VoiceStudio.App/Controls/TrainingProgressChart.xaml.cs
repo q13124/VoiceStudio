@@ -10,6 +10,11 @@ namespace VoiceStudio.App.Controls
   /// <summary>
   /// Training progress chart control for visualizing training metrics over time.
   /// Implements IDEA 28: Voice Training Progress Visualization.
+  ///
+  /// DEFERRED FEATURE: Visual charts for training loss, quality metrics.
+  /// Win2D/CanvasControl rendering disabled during Phase 0 for XAML compiler stability.
+  /// Full implementation planned for v1.1+ release.
+  /// See: docs/governance/FUTURE_WORK.md
   /// </summary>
   public sealed class TrainingProgressChart : UserControl
   {

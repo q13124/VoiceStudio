@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 
 from ..optimization import cache_response
 
@@ -74,6 +74,30 @@ class JobSummary(BaseModel):
     failed: int
     cancelled: int
     by_type: Dict[str, int] = {}
+
+
+class JobInfo(BaseModel):
+    """Individual job info for queue display."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    job_id: str = Field(serialization_alias="JobId")
+    job_type: str = Field(serialization_alias="JobType")
+    status: str = Field(serialization_alias="Status")
+    progress: float = Field(serialization_alias="Progress")
+    start_time: str = Field(serialization_alias="StartTime")
+
+
+class JobQueueResponse(BaseModel):
+    """Job queue status response matching frontend expectations."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    queued: int = Field(serialization_alias="Queued")
+    running: int = Field(serialization_alias="Running")
+    completed: int = Field(serialization_alias="Completed")
+    failed: int = Field(serialization_alias="Failed")
+    active_jobs: List[JobInfo] = Field(default=[], serialization_alias="ActiveJobs")
 
 
 @router.get("", response_model=List[JobProgress])
@@ -173,6 +197,45 @@ async def get_job_summary():
         failed=failed,
         cancelled=cancelled,
         by_type=by_type,
+    )
+
+
+@router.get("/status", response_model=JobQueueResponse, response_model_by_alias=True)
+@cache_response(ttl=5)  # Cache for 5 seconds
+async def get_job_queue_status():
+    """
+    Get job queue status for DiagnosticsView dashboard.
+    
+    Returns counts and active job list matching frontend JobQueueResponse format.
+    """
+    jobs = list(_jobs.values())
+    
+    queued_count = len([j for j in jobs if j.get("status") == "pending"])
+    running_count = len([j for j in jobs if j.get("status") == "running"])
+    completed_count = len([j for j in jobs if j.get("status") == "completed"])
+    failed_count = len([j for j in jobs if j.get("status") == "failed"])
+    
+    # Get active jobs (pending or running)
+    active_jobs = []
+    for job in jobs:
+        if job.get("status") in ("pending", "running"):
+            active_jobs.append(JobInfo(
+                job_id=job.get("id", ""),
+                job_type=job.get("type", "other"),
+                status=job.get("status", "pending"),
+                progress=job.get("progress", 0.0),
+                start_time=job.get("started") or job.get("created", datetime.utcnow().isoformat()),
+            ))
+    
+    # Sort by start time (most recent first)
+    active_jobs.sort(key=lambda j: j.start_time, reverse=True)
+    
+    return JobQueueResponse(
+        queued=queued_count,
+        running=running_count,
+        completed=completed_count,
+        failed=failed_count,
+        active_jobs=active_jobs[:20],  # Limit to 20 active jobs
     )
 
 

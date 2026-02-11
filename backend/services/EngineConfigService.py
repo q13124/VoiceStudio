@@ -7,6 +7,10 @@ Provides comprehensive engine configuration management including:
 - Default parameters
 - Configuration validation
 - Engine-specific settings
+
+Supports both:
+- UnifiedConfigService (preferred, YAML-based)
+- Legacy JSON config (fallback for migration)
 """
 
 import json
@@ -16,6 +20,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from backend.config.path_config import get_models_path
+
+# Try importing UnifiedConfigService
+try:
+    from backend.services.unified_config import get_config, UnifiedConfigService
+    HAS_UNIFIED_CONFIG = True
+except ImportError:
+    HAS_UNIFIED_CONFIG = False
+    get_config = None
+    UnifiedConfigService = None
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +57,19 @@ class EngineConfigService:
         self.load()
 
     def load(self):
-        """Load configuration from file."""
+        """Load configuration from UnifiedConfigService or legacy JSON file."""
+        # Try UnifiedConfigService first (new YAML-based config)
+        if HAS_UNIFIED_CONFIG:
+            try:
+                unified = get_config()
+                if unified and unified.engines:
+                    self.config = self._load_from_unified_config(unified)
+                    logger.info("Loaded engine configuration from UnifiedConfigService")
+                    return
+            except Exception as e:
+                logger.debug(f"UnifiedConfigService not available, falling back to JSON: {e}")
+        
+        # Fallback to legacy JSON file
         if self.config_path.exists():
             try:
                 with open(self.config_path, "r", encoding="utf-8") as f:
@@ -60,6 +85,32 @@ class EngineConfigService:
             )
             self.config = self._get_default_config()
             self.save()
+    
+    def _load_from_unified_config(self, unified) -> Dict[str, Any]:
+        """Transform UnifiedConfigService.engines to legacy config format."""
+        engines_config = unified.engines
+        
+        return {
+            "defaults": engines_config.defaults if hasattr(engines_config, 'defaults') else {},
+            "overrides": {},
+            "installed": engines_config.installed if hasattr(engines_config, 'installed') else [],
+            "model_paths": {
+                "base": engines_config.model_paths.base if hasattr(engines_config, 'model_paths') else "models",
+                "engines": engines_config.model_paths.engines if hasattr(engines_config, 'model_paths') else {},
+            },
+            "gpu_settings": {
+                "enabled": engines_config.gpu_settings.enabled if hasattr(engines_config, 'gpu_settings') else True,
+                "device": engines_config.gpu_settings.device if hasattr(engines_config, 'gpu_settings') else "cuda",
+                "fallback_to_cpu": engines_config.gpu_settings.fallback_to_cpu if hasattr(engines_config, 'gpu_settings') else True,
+                "memory_fraction": engines_config.gpu_settings.memory_fraction if hasattr(engines_config, 'gpu_settings') else 0.9,
+            },
+            "engine_configs": engines_config.engine_configs if hasattr(engines_config, 'engine_configs') else {},
+            "global_settings": {
+                "auto_download_models": True,
+                "model_cache_enabled": True,
+                "parallel_engine_limit": 2,
+            },
+        }
 
     def save(self):
         """Save configuration to file atomically (tmp + replace)."""
@@ -76,8 +127,8 @@ class EngineConfigService:
                 if tmp_path.exists():
                     tmp_path.unlink()
             # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-            except Exception:
-                pass
+            except Exception as cleanup_e:
+                logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration structure."""

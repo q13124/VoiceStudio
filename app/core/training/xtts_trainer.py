@@ -332,8 +332,8 @@ class XTTSTrainer:
                 try:
                     tmp_path.unlink()
                 # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
             raise
 
         logger.info(
@@ -680,8 +680,8 @@ class XTTSTrainer:
                         try:
                             tmp_path.unlink()
                         # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                        except Exception:
-                            pass
+                        except Exception as cleanup_e:
+                            logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
                     raise
 
             logger.debug(f"Saved checkpoint: {checkpoint_path}")

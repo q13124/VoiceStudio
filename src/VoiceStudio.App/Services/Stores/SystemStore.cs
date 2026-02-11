@@ -39,6 +39,18 @@ namespace VoiceStudio.App.Services.Stores
     [ObservableProperty]
     private DateTime? lastUpdated;
 
+    /// <summary>
+    /// Last recorded backend latency in milliseconds.
+    /// </summary>
+    [ObservableProperty]
+    private double? latencyMs;
+
+    /// <summary>
+    /// Number of consecutive backend failures.
+    /// </summary>
+    [ObservableProperty]
+    private int consecutiveFailures;
+
     public SystemStore(IBackendClient backendClient, StateCacheService? stateCacheService = null)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
@@ -134,6 +146,37 @@ namespace VoiceStudio.App.Services.Stores
       IsBackendConnected = isConnected;
       LastBackendCheck = DateTime.UtcNow;
       LastUpdated = DateTime.UtcNow;
+      
+      if (isConnected)
+      {
+        ConsecutiveFailures = 0;
+      }
+    }
+
+    /// <summary>
+    /// Records a successful backend operation with latency measurement.
+    /// </summary>
+    /// <param name="latencyMilliseconds">The measured latency in milliseconds.</param>
+    public void RecordSuccess(double latencyMilliseconds)
+    {
+      LatencyMs = latencyMilliseconds;
+      ConsecutiveFailures = 0;
+      IsBackendConnected = true;
+      LastBackendCheck = DateTime.UtcNow;
+      LastUpdated = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Records a backend failure.
+    /// </summary>
+    public void RecordFailure(string? error = null)
+    {
+      ConsecutiveFailures++;
+      if (!string.IsNullOrEmpty(error))
+      {
+        AddError(error);
+      }
+      LastUpdated = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -145,6 +188,8 @@ namespace VoiceStudio.App.Services.Stores
       ErrorCount = 0;
       ErrorMessage = null;
       LastUpdated = null;
+      LatencyMs = null;
+      ConsecutiveFailures = 0;
     }
   }
 }

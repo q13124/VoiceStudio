@@ -84,6 +84,7 @@ extras = [
     # NLP
     "nltk>=3.8.1",
     "textblob>=0.17.1",
+    "langdetect>=1.0.9",
     # TTS utilities
     "gtts>=2.5.0",
     "pyttsx3>=2.90",

@@ -437,13 +437,39 @@ class VideoFaceEnhancer:
                     frame = await self.enhance_lip_region(frame, face)
                     
             elif mode == EnhancementMode.RESTORATION:
-                # Apply restoration filter
-                # In full implementation, use GFPGAN or similar
-                pass
+                # Apply restoration filter using OpenCV-based enhancement
+                # For full implementation, use GFPGAN or CodeFormer
+                try:
+                    # Apply denoising for restoration effect
+                    frame = cv2.fastNlMeansDenoisingColored(frame, None, 10, 10, 7, 21)
+                    # Apply slight sharpening
+                    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+                    frame = cv2.filter2D(frame, -1, kernel)
+                    logger.debug(
+                        "Restoration mode: Applied OpenCV-based enhancement. "
+                        "For neural restoration, install GFPGAN or CodeFormer."
+                    )
+                except Exception as e:
+                    logger.warning(f"Restoration enhancement failed: {e}")
                 
             elif mode == EnhancementMode.EXPRESSION:
-                # Enhance facial expressions
-                pass
+                # Enhance facial expressions using contrast and clarity
+                # For full implementation, use expression synthesis models
+                try:
+                    # Convert to LAB color space for better enhancement
+                    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+                    l, a, b = cv2.split(lab)
+                    # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+                    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                    l = clahe.apply(l)
+                    lab = cv2.merge((l, a, b))
+                    frame = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+                    logger.debug(
+                        "Expression mode: Applied contrast enhancement. "
+                        "For neural expression synthesis, install expression models."
+                    )
+                except Exception as e:
+                    logger.warning(f"Expression enhancement failed: {e}")
             
             return frame
             

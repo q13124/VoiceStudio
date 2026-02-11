@@ -106,11 +106,11 @@ namespace VoiceStudio.App.Services.State
         {
           CurrentProjectId = _projectStore.CurrentProject?.Id,
           CurrentProjectName = _projectStore.CurrentProject?.Name,
-          IsDirty = false, // TODO: Add IsDirty tracking to ProjectStore
+          IsDirty = _projectStore.IsDirty,
           RecentProjectIds = _projectStore.Projects != null
               ? _projectStore.Projects.Take(10).Select(p => p.Id ?? string.Empty).ToList()
               : Array.Empty<string>(),
-          LastSaved = null // TODO: Track last saved time in ProjectStore
+          LastSaved = _projectStore.LastSaved
         }
       };
     }
@@ -166,10 +166,10 @@ namespace VoiceStudio.App.Services.State
         Connection = new ConnectionState
         {
           IsConnected = _systemStore.IsBackendConnected,
-          LastHealthCheck = DateTime.UtcNow,
-          LatencyMs = null, // TODO: Track latency in SystemStore
-          ConsecutiveFailures = 0, // TODO: Track failures
-          LastError = null
+          LastHealthCheck = _systemStore.LastBackendCheck ?? DateTime.UtcNow,
+          LatencyMs = (int?)_systemStore.LatencyMs,
+          ConsecutiveFailures = _systemStore.ConsecutiveFailures,
+          LastError = _systemStore.ErrorMessage
         }
       };
     }

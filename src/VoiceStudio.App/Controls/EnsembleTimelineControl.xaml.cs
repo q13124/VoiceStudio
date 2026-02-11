@@ -5,8 +5,11 @@ namespace VoiceStudio.App.Controls
   /// <summary>
   /// Ensemble timeline control.
   ///
-  /// NOTE: Rendering/interaction is temporarily disabled to restore XAML compiler stability
-  /// during Phase 0 (build reliability). This stub preserves the MixMode binding surface.
+  /// DEFERRED FEATURE: Multi-voice ensemble timeline editing.
+  /// Rendering/interaction disabled during Phase 0 for XAML compiler stability.
+  /// This stub maintains binding surface compatibility.
+  /// Full implementation planned for v1.1+ release.
+  /// See: docs/governance/FUTURE_WORK.md
   /// </summary>
   public sealed partial class EnsembleTimelineControl : UserControl
   {

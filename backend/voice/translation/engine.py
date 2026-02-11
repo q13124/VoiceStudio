@@ -120,6 +120,17 @@ class TranslationEngine:
         """Check if model is loaded."""
         return self._loaded
     
+    def translation_available(self) -> bool:
+        """
+        Check if real translation capability is available (not placeholder).
+        
+        Returns:
+            True if a functional translation model is loaded
+        """
+        if not self._loaded or self._model is None:
+            return False
+        return not self._model.get("placeholder", False)
+    
     async def load(self) -> bool:
         """
         Load translation models.

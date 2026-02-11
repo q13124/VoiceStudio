@@ -1,6 +1,10 @@
 """
 Settings API Routes
 Handles application settings and preferences
+
+Supports both:
+- UnifiedConfigService (preferred, YAML-based)
+- Legacy JSON config (fallback for migration)
 """
 
 import json
@@ -22,6 +26,15 @@ except ImportError:
 
         return decorator
 
+
+# Try importing UnifiedConfigService
+try:
+    from backend.services.unified_config import get_config, UnifiedConfigService
+    HAS_UNIFIED_CONFIG = True
+except ImportError:
+    HAS_UNIFIED_CONFIG = False
+    get_config = None
+    UnifiedConfigService = None
 
 logger = logging.getLogger(__name__)
 
@@ -195,8 +208,64 @@ class SettingsData(BaseModel):
     quality: Optional[QualitySettings] = None
 
 
+def _load_from_unified_config(unified) -> SettingsData:
+    """Transform UnifiedConfigService.voicestudio to SettingsData."""
+    vs = unified.voicestudio
+    
+    return SettingsData(
+        general=GeneralSettings(
+            theme=vs.general.get("theme", "Dark") if hasattr(vs, "general") else "Dark",
+            language=vs.general.get("language", "en-US") if hasattr(vs, "general") else "en-US",
+            auto_save=vs.general.get("auto_save", True) if hasattr(vs, "general") else True,
+            auto_save_interval=vs.general.get("auto_save_interval", 300) if hasattr(vs, "general") else 300,
+        ),
+        engine=EngineSettings(
+            default_audio_engine=vs.engine.get("default_audio_engine", "xtts") if hasattr(vs, "engine") else "xtts",
+            default_image_engine=vs.engine.get("default_image_engine", "sdxl") if hasattr(vs, "engine") else "sdxl",
+            default_video_engine=vs.engine.get("default_video_engine", "svd") if hasattr(vs, "engine") else "svd",
+            quality_level=vs.engine.get("quality_level", 5) if hasattr(vs, "engine") else 5,
+        ),
+        audio=AudioSettings(
+            output_device=vs.audio.get("output_device", "Default") if hasattr(vs, "audio") else "Default",
+            input_device=vs.audio.get("input_device", "Default") if hasattr(vs, "audio") else "Default",
+            sample_rate=vs.audio.get("sample_rate", 44100) if hasattr(vs, "audio") else 44100,
+            buffer_size=vs.audio.get("buffer_size", 1024) if hasattr(vs, "audio") else 1024,
+        ),
+        timeline=TimelineSettings(
+            time_format=vs.timeline.get("time_format", "Timecode") if hasattr(vs, "timeline") else "Timecode",
+            snap_enabled=vs.timeline.get("snap_enabled", True) if hasattr(vs, "timeline") else True,
+            snap_interval=vs.timeline.get("snap_interval", 0.1) if hasattr(vs, "timeline") else 0.1,
+            grid_enabled=vs.timeline.get("grid_enabled", True) if hasattr(vs, "timeline") else True,
+            grid_interval=vs.timeline.get("grid_interval", 1.0) if hasattr(vs, "timeline") else 1.0,
+        ),
+        backend=BackendSettings(
+            api_url=vs.backend.get("api_url", "http://localhost:8000") if hasattr(vs, "backend") else "http://localhost:8000",
+            timeout=vs.backend.get("timeout", 30) if hasattr(vs, "backend") else 30,
+            retry_count=vs.backend.get("retry_count", 3) if hasattr(vs, "backend") else 3,
+        ),
+        performance=PerformanceSettings(
+            caching_enabled=vs.performance.get("caching_enabled", True) if hasattr(vs, "performance") else True,
+            cache_size=vs.performance.get("cache_size", 512) if hasattr(vs, "performance") else 512,
+            max_threads=vs.performance.get("max_threads", 4) if hasattr(vs, "performance") else 4,
+            memory_limit=vs.performance.get("memory_limit", 4096) if hasattr(vs, "performance") else 4096,
+        ),
+        plugins=PluginSettings(
+            enabled_plugins=vs.plugins.get("enabled_plugins", []) if hasattr(vs, "plugins") else [],
+        ),
+        mcp=McpSettings(
+            enabled=vs.mcp.get("enabled", False) if hasattr(vs, "mcp") else False,
+            server_url=vs.mcp.get("server_url", "http://localhost:8080") if hasattr(vs, "mcp") else "http://localhost:8080",
+        ),
+        quality=QualitySettings(
+            default_preset=vs.quality.get("default_preset", "standard") if hasattr(vs, "quality") else "standard",
+            auto_enhance=vs.quality.get("auto_enhance", True) if hasattr(vs, "quality") else True,
+            auto_optimize=vs.quality.get("auto_optimize", False) if hasattr(vs, "quality") else False,
+        ),
+    )
+
+
 def load_settings(force_reload: bool = False) -> SettingsData:
-    """Load settings from file with caching."""
+    """Load settings from UnifiedConfigService or legacy file with caching."""
     global _settings_cache, _cache_timestamp
 
     current_time = time.time()
@@ -209,6 +278,20 @@ def load_settings(force_reload: bool = False) -> SettingsData:
     ):
         return _settings_cache
 
+    # Try UnifiedConfigService first (new YAML-based config)
+    if HAS_UNIFIED_CONFIG:
+        try:
+            unified = get_config()
+            if unified and unified.voicestudio:
+                settings = _load_from_unified_config(unified)
+                _settings_cache = settings
+                _cache_timestamp = current_time
+                logger.debug("Loaded settings from UnifiedConfigService")
+                return settings
+        except Exception as e:
+            logger.debug(f"UnifiedConfigService not available, falling back to JSON: {e}")
+
+    # Fallback to legacy JSON file
     try:
         if SETTINGS_FILE.exists():
             # Check file size to prevent DoS

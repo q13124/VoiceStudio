@@ -27,9 +27,8 @@ namespace VoiceStudio.App.Tests.ViewModels
 
         private UpscalingViewModel CreateViewModel()
         {
-            // TODO: Implement ViewModel creation with required dependencies
-            // Note: May require WinUI DispatcherQueue mocking for some ViewModels
-            throw new NotImplementedException("Implement UpscalingViewModel creation");
+            // Uses MockContext from ViewModelTestBase and mock backend client
+            return new UpscalingViewModel(MockContext!, _mockBackendClient!.Object);
         }
 
         #region Construction and Initialization Tests

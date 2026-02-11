@@ -207,6 +207,26 @@ class LipSyncService:
             logger.error(f"Failed to initialize LipSyncService: {e}")
             return False
     
+    def lip_sync_available(self) -> bool:
+        """
+        Check if any lip sync capability is available.
+        
+        Returns:
+            True if at least one lip sync engine is available
+        """
+        if not self._initialized:
+            return False
+        return any(self._engines_available.values())
+    
+    def get_available_engines(self) -> List[LipSyncEngine]:
+        """
+        Get list of available lip sync engines.
+        
+        Returns:
+            List of available LipSyncEngine enums
+        """
+        return [engine for engine, available in self._engines_available.items() if available]
+    
     async def _check_engines(self) -> Dict[LipSyncEngine, bool]:
         """Check which lip sync engines are available."""
         available = {}

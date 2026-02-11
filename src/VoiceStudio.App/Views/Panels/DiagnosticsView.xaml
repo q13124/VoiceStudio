@@ -48,6 +48,151 @@
             <Grid x:Name="SystemInfoGrid" Visibility="Visible" Margin="0,48,0,0">
                 <ScrollViewer Padding="16">
                     <StackPanel Spacing="16">
+                        <!-- Resource Gauges Section -->
+                        <Border Background="{StaticResource VSQ.Panel.Background}" 
+                                CornerRadius="8" Padding="16">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="Resource Monitor" 
+                                           FontWeight="SemiBold"
+                                           FontSize="{StaticResource VSQ.FontSize.Subtitle}"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                
+                                <Grid ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- CPU Gauge -->
+                                    <Border Grid.Column="0" 
+                                            Background="{StaticResource VSQ.Window.Background}"
+                                            CornerRadius="8" 
+                                            Padding="16">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE950;" FontSize="24" 
+                                                      Foreground="{StaticResource VSQ.Accent.Brush}"/>
+                                            <TextBlock Text="CPU" 
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            <TextBlock x:Name="CpuUsageText" 
+                                                       Text="--%" 
+                                                       FontSize="28"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                            <ProgressBar x:Name="CpuProgressBar"
+                                                         Minimum="0" 
+                                                         Maximum="100" 
+                                                         Value="0"
+                                                         Height="8"
+                                                         CornerRadius="4"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Memory Gauge -->
+                                    <Border Grid.Column="1" 
+                                            Background="{StaticResource VSQ.Window.Background}"
+                                            CornerRadius="8" 
+                                            Padding="16">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE964;" FontSize="24" 
+                                                      Foreground="{StaticResource VSQ.Accent.Brush}"/>
+                                            <TextBlock Text="Memory" 
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            <TextBlock x:Name="MemoryUsageText" 
+                                                       Text="-- GB" 
+                                                       FontSize="28"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                            <ProgressBar x:Name="MemoryProgressBar"
+                                                         Minimum="0" 
+                                                         Maximum="100" 
+                                                         Value="0"
+                                                         Height="8"
+                                                         CornerRadius="4"/>
+                                            <TextBlock x:Name="MemoryDetailsText" 
+                                                       Text="-- / -- GB"
+                                                       FontSize="11"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- GPU Memory Gauge -->
+                                    <Border Grid.Column="2" 
+                                            Background="{StaticResource VSQ.Window.Background}"
+                                            CornerRadius="8" 
+                                            Padding="16">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE7F4;" FontSize="24" 
+                                                      Foreground="{StaticResource VSQ.Accent.Brush}"/>
+                                            <TextBlock Text="GPU Memory" 
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            <TextBlock x:Name="GpuMemoryUsageText" 
+                                                       Text="-- GB" 
+                                                       FontSize="28"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                            <ProgressBar x:Name="GpuMemoryProgressBar"
+                                                         Minimum="0" 
+                                                         Maximum="100" 
+                                                         Value="0"
+                                                         Height="8"
+                                                         CornerRadius="4"/>
+                                            <TextBlock x:Name="GpuMemoryDetailsText" 
+                                                       Text="-- / -- GB"
+                                                       FontSize="11"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- GPU Utilization Gauge -->
+                                    <Border Grid.Column="3" 
+                                            Background="{StaticResource VSQ.Window.Background}"
+                                            CornerRadius="8" 
+                                            Padding="16">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE9F5;" FontSize="24" 
+                                                      Foreground="{StaticResource VSQ.Accent.Brush}"/>
+                                            <TextBlock Text="GPU Load" 
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            <TextBlock x:Name="GpuLoadText" 
+                                                       Text="--%" 
+                                                       FontSize="28"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                            <ProgressBar x:Name="GpuLoadProgressBar"
+                                                         Minimum="0" 
+                                                         Maximum="100" 
+                                                         Value="0"
+                                                         Height="8"
+                                                         CornerRadius="4"/>
+                                            <TextBlock x:Name="GpuNameText" 
+                                                       Text="--"
+                                                       FontSize="11"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- System Overview Section -->
                         <Border Background="{StaticResource VSQ.Panel.Background}" 
                                 CornerRadius="8" Padding="16">
                             <StackPanel Spacing="12">
@@ -77,6 +222,144 @@
                                     <TextBlock Grid.Row="4" Text="GPU:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
                                     <TextBlock Grid.Row="4" Grid.Column="1" x:Name="GpuText" Text="Checking..." Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                 </Grid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Active Jobs Section (Job Queue Visualization) -->
+                        <Border Background="{StaticResource VSQ.Panel.Background}" 
+                                CornerRadius="8" Padding="16">
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Active Jobs" 
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <Button Grid.Column="1" 
+                                            x:Name="RefreshJobsButton"
+                                            Content="Refresh"
+                                            Click="RefreshJobs_Click"
+                                            Padding="8,4"/>
+                                </Grid>
+                                
+                                <!-- Job Queue Summary -->
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Queued" 
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock x:Name="QueuedJobsCount" 
+                                                   Text="0" 
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="Running" 
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock x:Name="RunningJobsCount" 
+                                                   Text="0" 
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="Orange"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="Completed" 
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock x:Name="CompletedJobsCount" 
+                                                   Text="0" 
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="Green"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="3" Spacing="4">
+                                        <TextBlock Text="Failed" 
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        <TextBlock x:Name="FailedJobsCount" 
+                                                   Text="0" 
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="Red"/>
+                                    </StackPanel>
+                                </Grid>
+                                
+                                <!-- Active Jobs List -->
+                                <ListView x:Name="ActiveJobsListView" 
+                                          MaxHeight="200"
+                                          SelectionMode="None">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="8,4" MinHeight="40">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <!-- Status Icon -->
+                                                <FontIcon Grid.Column="0" 
+                                                          Glyph="{Binding StatusIcon}"
+                                                          Foreground="{Binding StatusColor}"
+                                                          FontSize="16"
+                                                          Margin="0,0,12,0"/>
+                                                
+                                                <!-- Job Name -->
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding JobType}" 
+                                                               FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding JobId}" 
+                                                               FontSize="11"
+                                                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Progress Bar -->
+                                                <StackPanel Grid.Column="2" 
+                                                            VerticalAlignment="Center">
+                                                    <ProgressBar Value="{Binding Progress}"
+                                                                 Minimum="0"
+                                                                 Maximum="100"
+                                                                 Height="6"/>
+                                                    <TextBlock Text="{Binding ProgressText}"
+                                                               FontSize="10"
+                                                               HorizontalAlignment="Center"
+                                                               Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Duration -->
+                                                <TextBlock Grid.Column="3" 
+                                                           Text="{Binding Duration}"
+                                                           HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                                
+                                <!-- Empty State -->
+                                <TextBlock x:Name="NoActiveJobsText"
+                                           Text="No active jobs"
+                                           FontSize="12"
+                                           Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           Visibility="Collapsed"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

@@ -888,3 +888,136 @@ def endpoint_performance_metrics(endpoint: str) -> Dict[str, Any]:
             status_code=500,
             detail=f"Failed to get endpoint metrics: {str(e)}",
         )
+
+
+@router.get("/features")
+@cache_response(ttl=30)
+async def get_feature_status() -> Dict[str, Any]:
+    """
+    Get feature availability status for frontend display.
+    
+    Reports which features are fully functional vs running in placeholder mode.
+    This enables graceful UI degradation when models are not loaded.
+    
+    Returns:
+        Feature status dictionary with:
+        - feature name
+        - availability (fully_functional, placeholder, unavailable)
+        - message explaining status
+    """
+    features = {}
+    
+    # Voice conversion (RVC)
+    try:
+        from backend.voice.rvc.engine import RVCEngine
+        engine = RVCEngine()
+        await engine.load()
+        features["voice_conversion"] = {
+            "status": "fully_functional" if engine.rvc_available() else "placeholder",
+            "message": "Voice conversion ready" if engine.rvc_available() 
+                       else "RVC model not loaded - using basic processing",
+            "requires_model": True,
+        }
+    except Exception as e:
+        features["voice_conversion"] = {
+            "status": "unavailable",
+            "message": f"RVC engine unavailable: {str(e)}",
+            "requires_model": True,
+        }
+    
+    # Emotion detection/synthesis
+    try:
+        from backend.voice.emotion.engine import EmotionEngine
+        engine = EmotionEngine()
+        await engine.load()
+        features["emotion_detection"] = {
+            "status": "fully_functional" if engine.emotion_detection_available() else "placeholder",
+            "message": "Emotion detection ready" if engine.emotion_detection_available()
+                       else "Using rule-based emotion detection",
+            "requires_model": True,
+        }
+        features["emotion_synthesis"] = {
+            "status": "fully_functional" if engine.emotion_synthesis_available() else "placeholder",
+            "message": "Emotion synthesis ready" if engine.emotion_synthesis_available()
+                       else "Using basic DSP for emotion effects",
+            "requires_model": True,
+        }
+    except Exception as e:
+        features["emotion_detection"] = {
+            "status": "unavailable",
+            "message": f"Emotion engine unavailable: {str(e)}",
+            "requires_model": True,
+        }
+        features["emotion_synthesis"] = {
+            "status": "unavailable",
+            "message": f"Emotion engine unavailable: {str(e)}",
+            "requires_model": True,
+        }
+    
+    # Translation
+    try:
+        from backend.voice.translation.engine import TranslationEngine
+        engine = TranslationEngine()
+        await engine.load()
+        features["translation"] = {
+            "status": "fully_functional" if engine.translation_available() else "placeholder",
+            "message": "Translation ready" if engine.translation_available()
+                       else "SeamlessM4T not loaded - limited translation",
+            "requires_model": True,
+        }
+    except Exception as e:
+        features["translation"] = {
+            "status": "unavailable",
+            "message": f"Translation engine unavailable: {str(e)}",
+            "requires_model": True,
+        }
+    
+    # Lip sync
+    try:
+        from backend.services.lip_sync_service import LipSyncService
+        service = LipSyncService()
+        # LipSyncService uses multiple backends; check if any are available
+        features["lip_sync"] = {
+            "status": "placeholder",  # Most installations won't have these models
+            "message": "Lip sync uses fallback mode - Wav2Lip/SadTalker not loaded",
+            "requires_model": True,
+        }
+    except Exception as e:
+        features["lip_sync"] = {
+            "status": "unavailable",
+            "message": f"Lip sync service unavailable: {str(e)}",
+            "requires_model": True,
+        }
+    
+    # TTS (core functionality - should always be available)
+    try:
+        engine_service = get_engine_service()
+        engines = engine_service.list_engines()
+        tts_engines = [e for e in engines if e.get("type") == "tts"]
+        features["text_to_speech"] = {
+            "status": "fully_functional" if tts_engines else "unavailable",
+            "message": f"{len(tts_engines)} TTS engines available" if tts_engines
+                       else "No TTS engines loaded",
+            "requires_model": True,
+            "available_engines": [e.get("id") for e in tts_engines[:5]],
+        }
+    except Exception as e:
+        features["text_to_speech"] = {
+            "status": "unavailable",
+            "message": f"TTS engine unavailable: {str(e)}",
+            "requires_model": True,
+        }
+    
+    # Count status summary
+    summary = {
+        "fully_functional": sum(1 for f in features.values() if f.get("status") == "fully_functional"),
+        "placeholder": sum(1 for f in features.values() if f.get("status") == "placeholder"),
+        "unavailable": sum(1 for f in features.values() if f.get("status") == "unavailable"),
+        "total": len(features),
+    }
+    
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "features": features,
+        "summary": summary,
+    }

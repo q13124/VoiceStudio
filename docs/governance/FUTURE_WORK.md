@@ -41,6 +41,22 @@ This document tracks items that are intentionally deferred to future development
 | ~~TD-014~~ | ~~Circuit Breaker pattern~~ | **RESOLVED** - Wired into voice, image, video, rvc routes (2026-02-10) | ~~Phase 11+~~ |
 | ~~TD-015~~ | ~~Venv Families (8 families)~~ | **COMPLETE** - See `docs/design/VENV_FAMILIES_ANALYSIS.md` | ~~Phase 11+~~ |
 | ~~TD-016~~ | ~~Engine Manifest Schema v2~~ | **RESOLVED** - verify_engine_tasks_targeted.py 4/4 PASS (2026-02-10) | ~~Phase 11+~~ |
+| TD-017 | BaseEngine to EngineProtocol Migration | Incomplete Items Report | v1.1+ |
+
+#### TD-017: BaseEngine to EngineProtocol Migration
+
+**Description**: Migrate legacy engines from `BaseEngine` abstract class to the modern `EngineProtocol` interface pattern. The current inheritance hierarchy creates tight coupling and makes testing difficult.
+
+**Current State**: Some engines still inherit from `BaseEngine` instead of implementing `EngineProtocol`.
+
+**Migration Steps**:
+1. Audit all engine implementations for `BaseEngine` usage
+2. Create adapter pattern to bridge `BaseEngine` to `EngineProtocol`
+3. Migrate engines incrementally with backward compatibility
+4. Update engine registry to prefer protocol-based engines
+5. Deprecate and remove `BaseEngine` when migration complete
+
+**Target**: v1.1+ release
 
 ---
 
@@ -64,6 +80,22 @@ This document tracks items that are intentionally deferred to future development
 | ~~Plugin Gallery~~ | ~~In-app engine/plugin browser~~ | ~~High~~ | **COMPLETE** (2026-02-11) - IPluginGateway, PluginGateway, PluginGalleryViewModel, PluginCard, PluginGalleryView, PluginDetailView panels registered |
 | ~~Touch Optimization~~ | ~~Tablet-friendly UI adjustments~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - 44px targets, Density.Touch.xaml, Touch density mode |
 
+### Phase 0 Control Stubs (Deferred to v1.1+)
+
+These controls were stubbed during Phase 0 for XAML compiler stability. They maintain binding surface compatibility but lack full rendering/interaction.
+
+| Control | File | Purpose | Target |
+|---------|------|---------|--------|
+| MacroNodeEditorControl | `Controls/MacroNodeEditorControl.xaml.cs` | Node-based visual macro programming | v1.1+ |
+| LoudnessChartControl | `Controls/LoudnessChartControl.xaml.cs` | Real-time loudness metering | v1.1+ |
+| TrainingProgressChart | `Controls/TrainingProgressChart.xaml.cs` | Training loss/quality visualization | v1.1+ |
+| RadarChartControl | `Controls/RadarChartControl.xaml.cs` | Multi-axis quality comparison | v1.1+ |
+| AutomationCurveEditorControl | `Controls/AutomationCurveEditorControl.xaml.cs` | Single automation curve editing | v1.1+ |
+| AutomationCurvesEditorControl | `Controls/AutomationCurvesEditorControl.xaml.cs` | Multi-curve editing | v1.1+ |
+| EnsembleTimelineControl | `Controls/EnsembleTimelineControl.xaml.cs` | Ensemble timeline visualization | v1.1+ |
+
+**Implementation approach**: Win2D or Community Toolkit controls for canvas-based rendering.
+
 ### Infrastructure
 
 | Feature | Description | Complexity | Notes |
@@ -72,6 +104,28 @@ This document tracks items that are intentionally deferred to future development
 | Cloud Sync | Optional cloud backup for profiles | Medium | Requires server infrastructure |
 | CI/CD Pipeline | Automated build and deployment | Medium | DevOps enhancement |
 | ~~Telemetry (Opt-in)~~ | ~~Usage analytics for improvement~~ | ~~Low~~ | **COMPLETE** (2026-02-09) - AnalyticsService consent, TelemetryConsentDialog, SettingsView privacy section, PRIVACY_POLICY.md |
+
+### MCP Integration Roadmap (Future)
+
+**Current State**: `backend/mcp_bridge/` contains only `pdf_unlocker_client.py` for PDF unlock functionality.
+
+**Target State**: Full MCP integration for design tokens, AI model calls, and engine orchestration.
+
+| Phase | Feature | Description | Complexity | Target |
+|-------|---------|-------------|------------|--------|
+| MCP-1 | Unified MCP Client | Create `backend/mcp_bridge/mcp_client.py` with operation routing | Medium | v1.2 |
+| MCP-2 | Design Token Sync | MCP client for Figma/design token servers | Medium | v1.2 |
+| MCP-3 | AI Model Calls | Route synthesis operations through MCP | High | v1.3 |
+| MCP-4 | Engine Discovery | MCP-based engine capability discovery | Medium | v1.3 |
+
+**Prerequisites**:
+- Define MCP operation contracts in `shared/contracts/`
+- Create MCP server adapter pattern
+- Document MCP security considerations (see `mcp-security.mdc`)
+
+**Related Files**:
+- `backend/mcp_bridge/README.md` — MCP bridge documentation
+- `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` — Target architecture (§MCP Integration Hooks)
 
 ---
 

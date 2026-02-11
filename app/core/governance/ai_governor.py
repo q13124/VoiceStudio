@@ -373,8 +373,8 @@ class AIGovernor:
                 try:
                     tmp_path.unlink()
                 # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
             logger.error(f"Failed to save reward model: {e}")
 
     def _load_ab_test_data(self):
@@ -407,8 +407,8 @@ class AIGovernor:
                 try:
                     tmp_path.unlink()
                 # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
             logger.error(f"Failed to save A/B test data: {e}")
 
     def get_governance_stats(self) -> Dict[str, Any]:

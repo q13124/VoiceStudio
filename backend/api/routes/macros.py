@@ -766,8 +766,8 @@ def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
                 try:
                     tmp_path.unlink()
                 # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
             logger.error(f"Failed to save output: {e}")
             return {"output": None, "saved": False}
     else:

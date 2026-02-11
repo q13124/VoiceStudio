@@ -1,8 +1,23 @@
 # VoiceStudio Incomplete Items Report
 
 **Generated**: 2026-02-08
+**Last Updated**: 2026-02-11
 
 This report lists all TODOs, stubs, placeholders, abstract methods, and incomplete items found in the codebase.
+
+---
+
+## Recent Resolutions (2026-02-11)
+
+| Item | Resolution |
+|------|------------|
+| NavigationHandler forward navigation | Already implemented in `NavigationService.NavigateForwardAsync()` |
+| AdvancedSearchView help overlay | Fully implemented with comprehensive content and keyboard shortcuts |
+| PluginGalleryView cancellation | Added `CancelInstallCommand` and proper cancellation token handling |
+| StoreIntegration TODOs (IsDirty, LastSaved, LatencyMs, ConsecutiveFailures) | Added properties to ProjectStore and SystemStore |
+| 18 ViewModel test NotImplementedExceptions | Fixed all `CreateViewModel()` methods in test files |
+| Translation/Emotion/RVC engine availability checks | Added `translation_available()`, `emotion_synthesis_available()`, `rvc_available()` methods |
+| Phase 0 control stubs | Properly documented as DEFERRED FEATURE with FUTURE_WORK.md references |
 
 ---
 
@@ -36,6 +51,7 @@ This report lists all TODOs, stubs, placeholders, abstract methods, and incomple
 ```python
 quality_score=0.8,  # TODO: Calculate actual quality
 ```
+**Status**: RESOLVED in Phase 10 - `calculate_embedding_quality()` implemented
 
 ---
 
@@ -127,10 +143,10 @@ internal sealed class TelemetryServiceStub : ITelemetryService
 - **EnsembleTimelineControl.xaml.cs:9**: Stub during Phase 0
 
 ### src/VoiceStudio.App/Commands/NavigationHandler.cs
-- Line 93: `async (param, ct) => await Task.CompletedTask, // Placeholder for forward navigation`
+- ~~Line 93: `async (param, ct) => await Task.CompletedTask, // Placeholder for forward navigation`~~ **RESOLVED** - NavigateForwardAsync fully implemented (2026-02-11)
 
 ### src/VoiceStudio.App/Views/Panels/AdvancedSearchView.xaml.cs
-- Line 138: `// Phase 0: placeholder help overlay.`
+- ~~Line 138: `// Phase 0: placeholder help overlay.`~~ **RESOLVED** - Help overlay implemented with comprehensive content (2026-02-11)
 
 ### src/VoiceStudio.App/Services/ErrorReportingService.cs
 - Line 224: `// NOTE: This is a placeholder for future remote submission.`

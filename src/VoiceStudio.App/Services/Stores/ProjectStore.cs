@@ -38,6 +38,18 @@ namespace VoiceStudio.App.Services.Stores
     [ObservableProperty]
     private DateTime? lastUpdated;
 
+    /// <summary>
+    /// Indicates whether the current project has unsaved changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool isDirty;
+
+    /// <summary>
+    /// Timestamp of the last successful save operation.
+    /// </summary>
+    [ObservableProperty]
+    private DateTime? lastSaved;
+
     public ProjectStore(
         IBackendClient backendClient,
         StateCacheService? stateCacheService = null,
@@ -264,6 +276,25 @@ namespace VoiceStudio.App.Services.Stores
       CurrentProject = null;
       SelectedProject = null;
       LastUpdated = null;
+      IsDirty = false;
+      LastSaved = null;
+    }
+
+    /// <summary>
+    /// Marks the current project as having unsaved changes.
+    /// </summary>
+    public void MarkDirty()
+    {
+      IsDirty = true;
+    }
+
+    /// <summary>
+    /// Records a successful save operation, resetting dirty state.
+    /// </summary>
+    public void RecordSave()
+    {
+      IsDirty = false;
+      LastSaved = DateTime.UtcNow;
     }
 
     private static Project MapMetadataToProject(ProjectMetadata metadata)

@@ -245,7 +245,8 @@ def generate_test_file(vm_info: ViewModelInfo) -> str:
         "    {",
     ]
     
-    # Add mock fields
+    # Add mock fields - IBackendClient is always included since it's common
+    has_backend_client = 'IBackendClient' in required_mocks
     for mock_type in required_mocks:
         if mock_type != 'IViewModelContext':
             mock_name = f"_mock{mock_type[1:]}"  # Remove 'I' prefix
@@ -271,13 +272,37 @@ def generate_test_file(vm_info: ViewModelInfo) -> str:
         "",
     ])
     
-    # Add helper to create ViewModel
+    # Add helper to create ViewModel - generate proper instantiation
     lines.extend([
         f"        private {vm_info.name} CreateViewModel()",
         "        {",
-        "            // TODO: Implement ViewModel creation with required dependencies",
-        "            // Note: May require WinUI DispatcherQueue mocking for some ViewModels",
-        f"            throw new NotImplementedException(\"Implement {vm_info.name} creation\");",
+        "            // Uses MockContext from ViewModelTestBase and mock services",
+    ])
+    
+    # Build constructor arguments
+    ctor_args = []
+    for param in vm_info.constructor_params:
+        parts = param.split()
+        if len(parts) >= 2:
+            type_name = parts[0]
+            if type_name == 'IViewModelContext':
+                ctor_args.append("MockContext!")
+            elif type_name == 'IBackendClient':
+                ctor_args.append("_mockBackendClient!.Object")
+            elif type_name.startswith('I'):
+                mock_name = f"_mock{type_name[1:]}"
+                ctor_args.append(f"{mock_name}!.Object")
+            else:
+                # Non-interface type - use default or null
+                ctor_args.append("null!")
+    
+    if ctor_args:
+        args_str = ", ".join(ctor_args)
+        lines.append(f"            return new {vm_info.name}({args_str});")
+    else:
+        lines.append(f"            return new {vm_info.name}(MockContext!);")
+    
+    lines.extend([
         "        }",
         "",
     ])

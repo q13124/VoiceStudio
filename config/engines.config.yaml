@@ -1,0 +1,175 @@
+# VoiceStudio Engine Configuration
+# Schema: shared/schemas/unified_config.schema.json#/definitions/engines_config
+# This file consolidates engine settings formerly in engines/config.json and backend/config/engine_config.json
+
+version: "1.0.0"
+
+# ==============================================================================
+# Default Engine Selection
+# These are the default engines used when no specific engine is requested
+# ==============================================================================
+defaults:
+  tts: xtts_v2                   # Text-to-speech
+  stt: whisper_cpp               # Speech-to-text
+  rvc: rvc_v2                    # Real-time Voice Conversion
+  image_gen: sdxl_comfy          # Image generation
+  video_gen: svd                 # Video generation
+
+# ==============================================================================
+# Routing Policy
+# Controls how engines are selected based on context
+# ==============================================================================
+routing_policy:
+  # Language-specific engine mappings
+  # When a specific language is detected or requested, use these engines
+  language_mapping:
+    en: xtts_v2                  # English - best quality with XTTS
+    zh: gpt_sovits               # Chinese - GPT-SoVITS has better Mandarin
+    ja: gpt_sovits               # Japanese - GPT-SoVITS
+    ko: gpt_sovits               # Korean - GPT-SoVITS
+    de: xtts_v2                  # German
+    fr: xtts_v2                  # French
+    es: xtts_v2                  # Spanish
+    it: xtts_v2                  # Italian
+    pt: xtts_v2                  # Portuguese
+    ru: xtts_v2                  # Russian
+    ar: xtts_v2                  # Arabic
+    hi: xtts_v2                  # Hindi
+    # Fallback to default for unlisted languages
+
+  # Fallback chains: if primary engine fails, try these in order
+  fallback_chains:
+    tts:
+      - xtts_v2                  # Primary: best quality
+      - openvoice                # Secondary: good zero-shot
+      - piper                    # Tertiary: fast, CPU-friendly
+      - espeak                   # Last resort: always available
+    stt:
+      - whisper_cpp              # Primary: fast and accurate
+      - faster_whisper           # Secondary: GPU optimized
+      - vosk                     # Tertiary: offline-only
+    rvc:
+      - rvc_v2                   # Primary: latest RVC
+      - sovits_svc               # Secondary: SoVITS
+      - ddsp                     # Tertiary: lightweight
+
+  # Quality tier definitions
+  # Used by EngineRouter.select_engine_by_quality()
+  quality_tiers:
+    ultra:
+      tts: tortoise              # Highest quality, slow
+      priority: 1
+    high:
+      tts: xtts_v2               # Great quality, moderate speed
+      priority: 2
+    standard:
+      tts: openvoice             # Good quality, faster
+      priority: 3
+    fast:
+      tts: piper                 # Fast, acceptable quality
+      priority: 4
+    realtime:
+      tts: piper                 # Lowest latency
+      priority: 5
+
+# ==============================================================================
+# A/B Testing Configuration
+# For comparing engine performance in production
+# ==============================================================================
+ab_testing:
+  enabled: false                 # Set to true to enable A/B testing
+  experiments:
+    - id: tts_quality_compare
+      description: "Compare XTTS v2 vs OpenVoice for English TTS"
+      engines:
+        - xtts_v2
+        - openvoice
+      weights:                   # Traffic distribution
+        - 0.5
+        - 0.5
+      active: false
+      metrics:
+        - mos_score
+        - latency_ms
+        - user_rating
+
+# ==============================================================================
+# GPU and Hardware Settings
+# ==============================================================================
+gpu_settings:
+  enabled: true
+  device: cuda                   # cuda | cpu | mps (Apple Silicon)
+  fallback_to_cpu: true          # If GPU fails, fallback to CPU
+  memory_fraction: 0.9           # Max GPU memory usage (0.0-1.0)
+  parallel_engine_limit: 2       # Max concurrent GPU engines
+
+# ==============================================================================
+# Global Engine Settings
+# ==============================================================================
+global_settings:
+  auto_download_models: true     # Download missing models automatically
+  model_cache_enabled: true
+  model_preload:                 # Preload these engines on startup
+    - xtts_v2
+  health_check_interval: 30      # Seconds between engine health checks
+  max_inference_time: 300        # Max seconds for a single inference
+
+# ==============================================================================
+# Per-Engine Overrides
+# Specific configuration for individual engines
+# ==============================================================================
+engine_overrides:
+  xtts_v2:
+    enabled: true
+    model_name: "tts_models/multilingual/multi-dataset/xtts_v2"
+    parameters:
+      temperature: 0.7
+      top_p: 0.85
+      repetition_penalty: 2.0
+      length_penalty: 1.0
+
+  piper:
+    enabled: true
+    default_voice: "en_US-amy-medium"
+    parameters:
+      speaker_id: 0
+
+  whisper_cpp:
+    enabled: true
+    model_size: medium           # tiny | base | small | medium | large
+    parameters:
+      language: en
+      beam_size: 5
+      word_timestamps: true
+
+  gpt_sovits:
+    enabled: true
+    parameters:
+      emotion_weight: 1.0
+      speed_factor: 1.0
+
+  openvoice:
+    enabled: true
+    parameters:
+      se_mode: "auto"            # auto | custom
+      noise_reduce: true
+
+  tortoise:
+    enabled: true
+    parameters:
+      high_quality: true
+      preset: "standard"         # ultra_fast | fast | standard | high_quality
+      candidates: 3
+
+  rvc_v2:
+    enabled: true
+    parameters:
+      f0_method: "rmvpe"         # rmvpe | crepe | harvest | dio
+      index_rate: 0.75
+      filter_radius: 3
+      protect: 0.33
+
+  chatterbox:
+    enabled: true
+    parameters:
+      emotion_strength: 0.5

@@ -96,8 +96,8 @@ class ModelStorage:
                 try:
                     tmp_path.unlink()
                 # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
 
     def get_engine_dir(self, engine: str) -> Path:
         """Get the storage directory for an engine."""

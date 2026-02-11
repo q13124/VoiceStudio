@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from backend.services.track_store import TrackStore
     from backend.services.artifact_ref_counter import ArtifactRefCounter
     from backend.services.edit_history import EditHistory
+    from backend.services.unified_config import UnifiedConfigService
 
 
 # EngineConfigService dependency
@@ -210,6 +211,22 @@ except ImportError:
     EditHistoryDep = None
 
 
+# UnifiedConfigService dependency
+def get_unified_config_dep():
+    """Get the UnifiedConfigService singleton."""
+    from backend.services.unified_config import get_config
+    return get_config()
+
+
+try:
+    from backend.services.unified_config import UnifiedConfigService as _UnifiedConfigService
+    UnifiedConfigDep: Optional[type] = Annotated[
+        _UnifiedConfigService, Depends(get_unified_config_dep)
+    ]
+except ImportError:
+    UnifiedConfigDep = None
+
+
 # Export all dependencies
 __all__ = [
     "EngineServiceDep",
@@ -222,6 +239,7 @@ __all__ = [
     "TrackStoreDep",
     "ArtifactRefCounterDep",
     "EditHistoryDep",
+    "UnifiedConfigDep",
     "get_engine_service_dep",
     "get_engine_config_service_dep",
     "get_audio_registry_dep",
@@ -232,5 +250,6 @@ __all__ = [
     "get_track_store_dep",
     "get_ref_counter_dep",
     "get_edit_history_dep",
+    "get_unified_config_dep",
     "get_circuit_breaker_dep",
 ]

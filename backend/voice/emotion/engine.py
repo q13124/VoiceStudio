@@ -89,6 +89,32 @@ class EmotionEngine:
         """Check if models are loaded."""
         return self._loaded
     
+    def emotion_synthesis_available(self) -> bool:
+        """
+        Check if real emotion synthesis capability is available (not placeholder).
+        
+        Returns:
+            True if a functional emotion synthesis model is loaded
+        """
+        if not self._loaded:
+            return False
+        if self._synthesis_model is None:
+            return False
+        return not self._synthesis_model.get("placeholder", False)
+    
+    def emotion_detection_available(self) -> bool:
+        """
+        Check if real emotion detection capability is available (not placeholder).
+        
+        Returns:
+            True if a functional emotion detection model is loaded
+        """
+        if not self._loaded:
+            return False
+        if self._detection_model is None:
+            return False
+        return not self._detection_model.get("placeholder", False)
+    
     async def load(self) -> bool:
         """
         Load emotion models.

@@ -27,9 +27,8 @@ namespace VoiceStudio.App.Tests.ViewModels
 
         private PronunciationLexiconViewModel CreateViewModel()
         {
-            // TODO: Implement ViewModel creation with required dependencies
-            // Note: May require WinUI DispatcherQueue mocking for some ViewModels
-            throw new NotImplementedException("Implement PronunciationLexiconViewModel creation");
+            // Uses MockContext from ViewModelTestBase and mock backend client
+            return new PronunciationLexiconViewModel(MockContext!, _mockBackendClient!.Object);
         }
 
         #region Construction and Initialization Tests

@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://voicestudio.app/schemas/unified_config.schema.json",
+  "title": "VoiceStudio Unified Configuration Schema",
+  "description": "Schema for VoiceStudio's consolidated configuration files",
+  "definitions": {
+    "voicestudio_config": {
+      "type": "object",
+      "description": "Global application configuration",
+      "properties": {
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "paths": {
+          "type": "object",
+          "properties": {
+            "data_root": { "type": "string" },
+            "models_root": { "type": "string" },
+            "cache_root": { "type": "string" },
+            "logs_root": { "type": "string" },
+            "plugins_root": { "type": "string" }
+          }
+        },
+        "general": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string", "enum": ["Dark", "Light", "System", "HighContrast"] },
+            "language": { "type": "string" },
+            "auto_save": { "type": "boolean" },
+            "auto_save_interval": { "type": "integer", "minimum": 30 }
+          }
+        },
+        "audio": {
+          "type": "object",
+          "properties": {
+            "output_device": { "type": "string" },
+            "input_device": { "type": "string" },
+            "sample_rate": { "type": "integer", "enum": [22050, 44100, 48000, 96000] },
+            "buffer_size": { "type": "integer", "minimum": 128 }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "properties": {
+            "caching_enabled": { "type": "boolean" },
+            "cache_size_mb": { "type": "integer", "minimum": 64 },
+            "max_threads": { "type": "integer", "minimum": 1 },
+            "memory_limit_mb": { "type": "integer", "minimum": 512 }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "properties": {
+            "default_preset": { "type": "string", "enum": ["fast", "standard", "high", "ultra"] },
+            "min_mos_score": { "type": "number", "minimum": 1.0, "maximum": 5.0 },
+            "min_similarity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "show_metrics": { "type": "boolean" }
+          }
+        },
+        "plugins": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "array", "items": { "type": "string" } },
+            "auto_update": { "type": "boolean" }
+          }
+        },
+        "feature_flags": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        }
+      },
+      "required": ["version", "paths"]
+    },
+    "engines_config": {
+      "type": "object",
+      "description": "Engine routing and configuration",
+      "properties": {
+        "version": { "type": "string" },
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "tts": { "type": "string" },
+            "stt": { "type": "string" },
+            "image_gen": { "type": "string" },
+            "video_gen": { "type": "string" },
+            "rvc": { "type": "string" }
+          }
+        },
+        "routing_policy": {
+          "type": "object",
+          "properties": {
+            "language_mapping": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "fallback_chains": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "quality_tiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "engine": { "type": "string" },
+                  "priority": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "ab_testing": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "experiments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "engines": { "type": "array", "items": { "type": "string" } },
+                  "weights": { "type": "array", "items": { "type": "number" } },
+                  "active": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "gpu_settings": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "device": { "type": "string" },
+            "fallback_to_cpu": { "type": "boolean" },
+            "memory_fraction": { "type": "number", "minimum": 0.1, "maximum": 1.0 },
+            "parallel_engine_limit": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "engine_overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "model_path": { "type": "string" },
+              "parameters": { "type": "object" }
+            }
+          }
+        }
+      },
+      "required": ["version", "defaults"]
+    },
+    "deployment_config": {
+      "type": "object",
+      "description": "Deployment and environment configuration",
+      "properties": {
+        "version": { "type": "string" },
+        "environment": { "type": "string", "enum": ["development", "staging", "production"] },
+        "backend": {
+          "type": "object",
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+            "workers": { "type": "integer", "minimum": 1 },
+            "timeout": { "type": "integer", "minimum": 5 },
+            "reload": { "type": "boolean" }
+          }
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] },
+            "format": { "type": "string", "enum": ["json", "text"] },
+            "file_enabled": { "type": "boolean" },
+            "file_path": { "type": "string" },
+            "max_size_mb": { "type": "integer" },
+            "backup_count": { "type": "integer" }
+          }
+        },
+        "telemetry": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "prometheus_enabled": { "type": "boolean" },
+            "metrics_port": { "type": "integer" }
+          }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "health_check_interval": { "type": "integer" },
+            "startup_timeout": { "type": "integer" },
+            "graceful_shutdown_timeout": { "type": "integer" }
+          }
+        }
+      },
+      "required": ["version", "environment"]
+    }
+  }
+}

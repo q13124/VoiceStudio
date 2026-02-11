@@ -807,10 +807,10 @@ async def synthesize(
                                                 logger.info(
                                                     "Fallback to pyttsx3 successful"
                                                 )
-                                            except Exception:
-                                                pass  # Both fallbacks failed
-                                    except ImportError:
-                                        pass  # TTS utilities not available
+                                            except Exception as fallback_e:
+                                                logger.warning(f"All TTS fallbacks failed: {fallback_e}")
+                                    except ImportError as import_e:
+                                        logger.debug(f"TTS utilities not available: {import_e}")
                                 if (
                                     "cuda" in error_msg
                                     or "gpu" in error_msg

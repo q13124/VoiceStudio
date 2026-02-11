@@ -253,7 +253,10 @@ namespace VoiceStudio.App.Views.Panels
 
         private void CancelInstall_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implement cancellation through ViewModel
+            if (DataContext is PluginGalleryViewModel viewModel)
+            {
+                viewModel.CancelInstallCommand.Execute(null);
+            }
             InstallProgressOverlay.Visibility = Visibility.Collapsed;
         }
 

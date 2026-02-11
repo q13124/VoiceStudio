@@ -1342,6 +1342,7 @@ def _register_all_routes():
     _include_route("api_key_manager")
     _include_route("plugins")
     _include_route("analytics")
+    _include_route("experiments")
 
     # Previously missing route inclusions
     _include_route("search")
