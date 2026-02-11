@@ -1,0 +1,79 @@
+{
+  "engine_id": "tacotron2",
+  "name": "Tacotron 2",
+  "type": "audio",
+  "subtype": "tts",
+  "version": "1.0.0",
+  "venv_family": "venv_core_tts",
+  "description": "Tacotron 2 - Neural network architecture for speech synthesis via Coqui TTS",
+  "author": "Google / Coqui Community",
+  "license": "Apache-2.0",
+  "python_version": ">=3.10",
+  "dependencies": {
+    "TTS": ">=0.22.0",
+    "torch": ">=2.0.0",
+    "numpy": ">=1.24.0",
+    "scipy": ">=1.10.0"
+  },
+  "model_paths": {
+    "base": "%PROGRAMDATA%\\VoiceStudio\\models\\tacotron2",
+    "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\tacotron2\\cache"
+  },
+  "supported_languages": [
+    "en", "de", "fr", "es", "it", "pt", "pl", "tr", "ru"
+  ],
+  "capabilities": [
+    "tts",
+    "multi_language",
+    "high_quality_synthesis",
+    "fast_inference"
+  ],
+  "device_requirements": {
+    "gpu": "recommended",
+    "vram_min_gb": 4,
+    "ram_min_gb": 8
+  },
+  "entry_point": "app.core.engines.tacotron2_engine:Tacotron2Engine",
+  "config_schema": {
+    "model_name": {
+      "type": "string",
+      "default": "tts_models/en/ljspeech/tacotron2-DDC",
+      "description": "Coqui TTS model identifier"
+    },
+    "device": {
+      "type": "string",
+      "default": "cuda",
+      "enum": ["cuda", "cpu"],
+      "description": "Device to use for inference"
+    },
+    "speaker_idx": {
+      "type": "integer",
+      "default": 0,
+      "description": "Speaker index for multi-speaker models"
+    }
+  },
+  "quality_features": {
+    "mos_estimate": "3.5-4.0",
+    "naturalness": "high",
+    "expressiveness": "medium",
+    "quality_tier": "medium",
+    "latency_tier": "fast"
+  },
+  "contract": {
+    "input": {
+      "text_max_chars": 1000,
+      "supports_ssml_tags": false
+    },
+    "output": {
+      "audio_format": "wav",
+      "sample_rate": 22050,
+      "bit_depth": 16,
+      "channels": 1
+    },
+    "resources": {
+      "vram_mb": 4096,
+      "ram_mb": 8192,
+      "timeout_seconds": 120
+    }
+  }
+}

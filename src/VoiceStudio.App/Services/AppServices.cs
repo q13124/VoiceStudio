@@ -90,6 +90,9 @@ namespace VoiceStudio.App.Services
       services.AddSingleton<IAnalyticsService, AnalyticsService>();
       services.AddSingleton<EngineManager>();
 
+      // Theme service: unified theme management with persistence
+      services.AddSingleton<IUnifiedThemeService, ThemeManager>();
+
       // ITelemetryService: stub when no dedicated implementation (GAP-003 follow-up can add real impl)
       services.AddSingleton<ITelemetryService, TelemetryServiceStub>();
 
@@ -101,6 +104,9 @@ namespace VoiceStudio.App.Services
 
       // Module loader for UI modules
       services.AddSingleton<ModuleLoader>();
+
+      // Panel lazy loading
+      services.AddSingleton<PanelLoader>();
 
       // Error coordination service
       services.AddSingleton<IErrorCoordinator, ErrorCoordinator>();
@@ -181,6 +187,8 @@ namespace VoiceStudio.App.Services
     public static IProjectRepository? TryGetProjectRepository() => GetService<IProjectRepository>();
     public static ModuleLoader GetModuleLoader() => GetRequiredService<ModuleLoader>();
     public static ModuleLoader? TryGetModuleLoader() => GetService<ModuleLoader>();
+    public static PanelLoader GetPanelLoader() => GetRequiredService<PanelLoader>();
+    public static PanelLoader? TryGetPanelLoader() => GetService<PanelLoader>();
     public static IErrorCoordinator GetErrorCoordinator() => GetRequiredService<IErrorCoordinator>();
     public static IErrorCoordinator? TryGetErrorCoordinator() => GetService<IErrorCoordinator>();
     public static IViewModelFactory GetViewModelFactory() => GetRequiredService<IViewModelFactory>();
@@ -193,6 +201,8 @@ namespace VoiceStudio.App.Services
     public static IDialogService? TryGetDialogService() => GetService<IDialogService>();
     public static BackendProcessManager GetBackendProcessManager() => GetRequiredService<BackendProcessManager>();
     public static BackendProcessManager? TryGetBackendProcessManager() => GetService<BackendProcessManager>();
+    public static IUnifiedThemeService GetThemeService() => GetRequiredService<IUnifiedThemeService>();
+    public static IUnifiedThemeService? TryGetThemeService() => GetService<IUnifiedThemeService>();
   }
 
   /// <summary>

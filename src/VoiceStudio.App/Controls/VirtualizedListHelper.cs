@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Markup;
 using System;
 using System.Collections.Generic;
 
@@ -26,33 +27,79 @@ namespace VoiceStudio.App.Controls
         public const int DefaultRecycleBuffer = 10;
 
         /// <summary>
+        /// XAML template for ItemsStackPanel with optimal virtualization settings.
+        /// CacheLength of 4.0 provides smooth scrolling with reasonable memory usage.
+        /// </summary>
+        private const string ItemsStackPanelTemplate = @"
+            <ItemsPanelTemplate xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"">
+                <ItemsStackPanel Orientation=""Vertical"" CacheLength=""4"" />
+            </ItemsPanelTemplate>";
+
+        /// <summary>
+        /// XAML template for horizontal ItemsStackPanel.
+        /// </summary>
+        private const string HorizontalItemsStackPanelTemplate = @"
+            <ItemsPanelTemplate xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"">
+                <ItemsStackPanel Orientation=""Horizontal"" CacheLength=""4"" />
+            </ItemsPanelTemplate>";
+
+        /// <summary>
         /// Configures a ListView for optimal virtualization performance.
         /// </summary>
-        public static void ConfigureListView(ListView listView)
+        /// <param name="listView">The ListView to configure.</param>
+        /// <param name="horizontal">If true, uses horizontal orientation.</param>
+        public static void ConfigureListView(ListView listView, bool horizontal = false)
         {
             if (listView == null)
                 return;
 
-            // Enable virtualization (on by default, but ensure it's set)
+            // Enable item click for selection
             listView.IsItemClickEnabled = true;
 
-            // Use ItemsStackPanel for virtualization (default for ListView)
-            var panel = new ItemsStackPanel
+            // Create ItemsPanelTemplate with virtualized ItemsStackPanel using XamlReader
+            // This ensures proper virtualization with optimal cache settings
+            try
             {
-                // Orientation for vertical lists
-                Orientation = Orientation.Vertical,
+                var template = horizontal ? HorizontalItemsStackPanelTemplate : ItemsStackPanelTemplate;
+                listView.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load(template);
+            }
+            catch (Exception ex)
+            {
+                // Log and fall back to default template (still virtualized, just with default cache)
+                System.Diagnostics.Debug.WriteLine($"[VirtualizedListHelper] Failed to configure ListView ItemsPanel: {ex.Message}");
+            }
 
-                // Cache length determines how many pages of items to keep cached
-                // Higher values use more memory but smoother scrolling
-                CacheLength = 4.0,
-            };
+            // Performance notes for large lists:
+            // - Use x:Load for conditional loading in item templates
+            // - Use x:Phase for phased loading of complex items
+            // - Keep item templates simple and avoid deep nesting
+            // - Consider IncrementalLoadingCollection for very large datasets
+        }
 
-            listView.ItemsPanel = new ItemsPanelTemplate();
+        /// <summary>
+        /// Configures a GridView for optimal virtualization performance.
+        /// </summary>
+        /// <param name="gridView">The GridView to configure.</param>
+        public static void ConfigureGridView(GridView gridView)
+        {
+            if (gridView == null)
+                return;
 
-            // For best performance with large lists:
-            // - Use x:Load for conditional loading
-            // - Use x:Phase for phased loading
-            // - Keep item templates simple
+            // GridView uses ItemsWrapGrid by default which supports virtualization
+            // We configure it for optimal performance
+            try
+            {
+                const string gridTemplate = @"
+                    <ItemsPanelTemplate xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"">
+                        <ItemsWrapGrid Orientation=""Horizontal"" CacheLength=""4"" />
+                    </ItemsPanelTemplate>";
+                gridView.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load(gridTemplate);
+            }
+            catch (Exception ex)
+            {
+                // Log but continue - GridView will use its default ItemsPanel
+                System.Diagnostics.Debug.WriteLine($"[VirtualizedListHelper] Failed to configure GridView ItemsPanel: {ex.Message}");
+            }
         }
 
         /// <summary>

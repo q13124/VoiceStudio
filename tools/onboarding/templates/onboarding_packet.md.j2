@@ -1,0 +1,149 @@
+{#
+    VoiceStudio Onboarding Packet Template (Jinja2)
+    
+    This template generates a markdown onboarding packet for role-based agents.
+    
+    Variables:
+    - role: RoleConfig (id, name, short_name, prompt_path, guide_path, primary_gates)
+    - prompt: PromptContent (identity_section, next_actions, full_text)
+    - guide: GuideContent (summary, full_text)
+    - project_state: ProjectState (phase, active_gate, active_task_id, active_task_title)
+    - role_context: RoleContext (blockers)
+    - context_bundle: Optional context allocation data
+    - issues: List of issues assigned to this role
+    - generated_at: ISO timestamp
+    - include_full_guide: Boolean flag
+#}
+# {{ role.name }} Onboarding Packet
+
+**Generated:** {{ generated_at }}
+**Role ID:** {{ role.id }}
+**Short Name:** {{ role.short_name }}
+
+---
+
+## Role Identity
+
+{{ prompt.identity_section }}
+
+---
+
+## Project State
+
+| Field | Value |
+|-------|-------|
+| **Phase** | {{ project_state.phase or "Not set" }} |
+| **Active Gate** | {{ project_state.active_gate or "None" }} |
+| **Active Task** | {% if project_state.active_task_id %}[{{ project_state.active_task_id }}] {{ project_state.active_task_title or "Untitled" }}{% else %}None{% endif %} |
+
+{% if role.primary_gates %}
+### Primary Gates
+
+This role is responsible for the following quality gates:
+
+{% for gate in role.primary_gates %}
+- **{{ gate }}**
+{% endfor %}
+{% endif %}
+
+---
+
+## Next Actions
+
+{{ prompt.next_actions }}
+
+---
+
+## Role Guide Summary
+
+{{ guide.summary }}
+
+{% if include_full_guide and guide.full_text %}
+---
+
+## Full Role Guide
+
+{{ guide.full_text }}
+{% endif %}
+
+{% if role_context.blockers %}
+---
+
+## Active Blockers
+
+The following blockers are relevant to your role:
+
+| ID | Severity | Gate | Title | Owner |
+|----|----------|------|-------|-------|
+{% for blocker in role_context.blockers %}
+| {{ blocker.id }} | {{ blocker.severity }} | {{ blocker.gate }} | {{ blocker.title }} | {{ blocker.owner_role }} |
+{% endfor %}
+
+{% endif %}
+
+{% if issues %}
+---
+
+## Assigned Issues
+
+The following issues have been routed to this role:
+
+{% for issue in issues %}
+### {{ issue.id }}: {{ issue.message or issue.title or "Untitled" }}
+
+- **Severity:** {{ issue.severity or "Unknown" }}
+- **Category:** {{ issue.category or "Uncategorized" }}
+- **Status:** {{ issue.status or "New" }}
+{% if issue.context %}
+- **Context:** {{ issue.context | tojson }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if context_bundle %}
+---
+
+## Context Bundle (P.A.R.T.)
+
+{% if context_bundle.prompt %}
+### Prompt Context
+{{ context_bundle.prompt }}
+{% endif %}
+
+{% if context_bundle.artifacts %}
+### Artifacts
+{% for artifact in context_bundle.artifacts %}
+- {{ artifact }}
+{% endfor %}
+{% endif %}
+
+{% if context_bundle.references %}
+### References
+{% for ref in context_bundle.references %}
+- {{ ref }}
+{% endfor %}
+{% endif %}
+
+{% if context_bundle.tasks %}
+### Related Tasks
+{% for task in context_bundle.tasks %}
+- {{ task }}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+---
+
+## Quick Reference
+
+- **Prompt File:** `{{ role.prompt_path }}`
+{% if role.guide_path %}
+- **Guide File:** `{{ role.guide_path }}`
+{% endif %}
+- **State File:** `.cursor/STATE.md`
+
+---
+
+*This onboarding packet was automatically generated. Review and update STATE.md before starting work.*

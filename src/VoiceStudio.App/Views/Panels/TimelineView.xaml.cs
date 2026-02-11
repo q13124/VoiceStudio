@@ -116,6 +116,9 @@ namespace VoiceStudio.App.Views.Panels
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
+
+      // Configure virtualization for tracks list to optimize large projects
+      Controls.VirtualizedListHelper.ConfigureListView(TracksListView);
     }
 
     private void RegisterKeyboardShortcuts()

@@ -37,33 +37,33 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                    <Button Command="{x:Bind ViewModel.PlayAudioCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Play">
-                        <FontIcon Glyph="&#xE768;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                    <Button Command="{x:Bind ViewModel.PlayAudioCommand}" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Play">
+                        <FontIcon Glyph="&#xE768;" FontSize="16" FontFamily="Segoe Fluent Icons" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.StopAudioCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Stop">
-                        <FontIcon Glyph="&#xE71A;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                    <Button Command="{x:Bind ViewModel.StopAudioCommand}" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Stop">
+                        <FontIcon Glyph="&#xE71A;" FontSize="16" FontFamily="Segoe Fluent Icons" />
                     </Button>
-                    <Button MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Record">
-                        <FontIcon Glyph="&#xE7C8;" FontSize="14" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
+                    <Button MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Record">
+                        <FontIcon Glyph="&#xE7C8;" FontSize="16" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
                     </Button>
-                    <Rectangle Width="1" Height="20" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="4,0" />
-                    <ToggleButton MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Loop">
-                        <FontIcon Glyph="&#xE8EE;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    <Rectangle Width="1" Height="24" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="4,0" />
+                    <ToggleButton MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Loop">
+                        <FontIcon Glyph="&#xE8EE;" FontSize="14" FontFamily="Segoe Fluent Icons" />
                     </ToggleButton>
                 </StackPanel>
                 <TextBlock Grid.Column="1" x:Name="TimePositionDisplay" Text="00:00.000" FontSize="16" FontWeight="SemiBold"
                            Foreground="{StaticResource VSQ.Accent.CyanBrush}" FontFamily="Consolas"
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
-                    <Button Command="{x:Bind ViewModel.AddTrackCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Add Track">
-                        <FontIcon Glyph="&#xE710;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <Button Command="{x:Bind ViewModel.AddTrackCommand}" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Add Track">
+                        <FontIcon Glyph="&#xE710;" FontSize="16" FontFamily="Segoe Fluent Icons" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.ZoomInCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom In">
-                        <FontIcon Glyph="&#xE8A3;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    <Button Command="{x:Bind ViewModel.ZoomInCommand}" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom In">
+                        <FontIcon Glyph="&#xE8A3;" FontSize="14" FontFamily="Segoe Fluent Icons" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.ZoomOutCommand}" MinWidth="28" Height="28" Padding="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom Out">
-                        <FontIcon Glyph="&#xE71F;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                    <Button Command="{x:Bind ViewModel.ZoomOutCommand}" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Zoom Out">
+                        <FontIcon Glyph="&#xE71F;" FontSize="14" FontFamily="Segoe Fluent Icons" />
                     </Button>
                 </StackPanel>
             </Grid>

@@ -31,6 +31,7 @@ namespace VoiceStudio.App.Views.Panels
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly IErrorPresentationService? _errorService;
     private readonly string _backendBaseUrl;
+    private StreamingAudioPlayer? _streamingPlayer;
     private bool _disposed;
     private string? _currentSynthesisId;
 
@@ -60,6 +61,21 @@ namespace VoiceStudio.App.Views.Panels
 
     [ObservableProperty]
     private bool enhanceQuality;
+
+    [ObservableProperty]
+    private bool streamingMode;
+
+    [ObservableProperty]
+    private bool isStreaming;
+
+    [ObservableProperty]
+    private int streamingBufferedChunks;
+
+    [ObservableProperty]
+    private int streamingReceivedChunks;
+
+    [ObservableProperty]
+    private string streamingStatus = string.Empty;
 
     [ObservableProperty]
     private bool isLoading;
@@ -250,6 +266,15 @@ namespace VoiceStudio.App.Views.Panels
 
       StopAudioCommand = new RelayCommand(StopAudio, () => _audioPlayer.IsPlaying);
 
+      // Streaming synthesis commands
+      StartStreamingCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.Start("Command: StartStreaming", PerformanceBudgets.CommandExecutionMs);
+        await StartStreamingAsync(ct);
+      }, () => CanSynthesize && !IsStreaming && StreamingMode);
+
+      StopStreamingCommand = new RelayCommand(StopStreaming, () => IsStreaming);
+
       // Adaptive Quality Optimization commands (IDEA 53)
       AnalyzeTextCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -340,6 +365,8 @@ namespace VoiceStudio.App.Views.Panels
     public EnhancedAsyncRelayCommand LoadProfilesCommand { get; }
     public EnhancedAsyncRelayCommand PlayAudioCommand { get; }
     public IRelayCommand StopAudioCommand { get; }
+    public EnhancedAsyncRelayCommand StartStreamingCommand { get; }
+    public IRelayCommand StopStreamingCommand { get; }
 
     // Adaptive Quality Optimization commands (IDEA 53)
     public EnhancedAsyncRelayCommand AnalyzeTextCommand { get; }
@@ -757,6 +784,127 @@ namespace VoiceStudio.App.Views.Panels
         if (t.IsFaulted)
           _errorLoggingService?.LogError(t.Exception?.InnerException ?? new Exception("LoadPipelines failed"), "LoadPipelines");
       }, TaskScheduler.Default);
+    }
+
+    private async Task StartStreamingAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedProfile == null || string.IsNullOrWhiteSpace(Text))
+        return;
+
+      try
+      {
+        IsStreaming = true;
+        StreamingStatus = "Connecting...";
+        StreamingReceivedChunks = 0;
+        StreamingBufferedChunks = 0;
+
+        // Initialize streaming player if needed
+        if (_streamingPlayer == null)
+        {
+          _streamingPlayer = new StreamingAudioPlayer();
+          _streamingPlayer.ChunkReceived += OnStreamingChunkReceived;
+          _streamingPlayer.StreamingStarted += OnStreamingStarted;
+          _streamingPlayer.StreamingStopped += OnStreamingStopped;
+          _streamingPlayer.ErrorOccurred += OnStreamingError;
+          _streamingPlayer.SynthesisComplete += OnStreamingSynthesisComplete;
+        }
+
+        // Build WebSocket URL
+        var wsUrl = _backendBaseUrl.Replace("http://", "ws://").Replace("https://", "wss://");
+        var streamUrl = $"{wsUrl}/api/voice/synthesize/stream";
+
+        // Build synthesis request
+        var request = new
+        {
+          type = "synthesize",
+          engine = SelectedEngine,
+          profile_id = SelectedProfile.Id,
+          text = Text,
+          language = Language,
+          chunk_size = 100,
+          overlap = 20,
+        };
+
+        StreamingStatus = "Starting synthesis...";
+        await _streamingPlayer.StartStreamingAsync(streamUrl, request, cancellationToken);
+      }
+      catch (OperationCanceledException)
+      {
+        StreamingStatus = "Streaming cancelled";
+      }
+      catch (Exception ex)
+      {
+        ErrorMessage = ex.Message;
+        HasError = true;
+        StreamingStatus = $"Error: {ex.Message}";
+        _errorLoggingService?.LogError(ex, "StartStreaming", new Dictionary<string, object>
+        {
+          { "engine", SelectedEngine },
+          { "profile", SelectedProfile?.Id ?? "null" },
+        });
+      }
+      finally
+      {
+        StartStreamingCommand.NotifyCanExecuteChanged();
+        StopStreamingCommand.NotifyCanExecuteChanged();
+      }
+    }
+
+    private void StopStreaming()
+    {
+      try
+      {
+        _ = Task.Run(async () =>
+        {
+          if (_streamingPlayer != null)
+          {
+            await _streamingPlayer.StopStreamingAsync();
+          }
+        });
+      }
+      catch (Exception ex)
+      {
+        ErrorLogger.LogWarning($"Error stopping streaming: {ex.Message}", "VoiceSynthesisViewModel");
+      }
+    }
+
+    private void OnStreamingChunkReceived(object? sender, AudioChunkReceivedEventArgs e)
+    {
+      StreamingReceivedChunks = e.ChunkIndex + 1;
+      StreamingBufferedChunks = _streamingPlayer?.BufferedChunks ?? 0;
+      StreamingStatus = $"Receiving: {StreamingReceivedChunks} chunks";
+    }
+
+    private void OnStreamingStarted(object? sender, EventArgs e)
+    {
+      StreamingStatus = "Streaming audio...";
+      StartStreamingCommand.NotifyCanExecuteChanged();
+      StopStreamingCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnStreamingStopped(object? sender, EventArgs e)
+    {
+      IsStreaming = false;
+      StreamingStatus = "Stopped";
+      StartStreamingCommand.NotifyCanExecuteChanged();
+      StopStreamingCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnStreamingError(object? sender, StreamingErrorEventArgs e)
+    {
+      ErrorMessage = e.Message;
+      HasError = true;
+      StreamingStatus = $"Error: {e.Message}";
+      _errorLoggingService?.LogError(e.Exception ?? new Exception(e.Message), "Streaming");
+    }
+
+    private void OnStreamingSynthesisComplete(object? sender, SynthesisCompleteEventArgs e)
+    {
+      StreamingStatus = $"Complete: {e.TotalChunks} chunks, {e.DurationSeconds:F1}s";
+      _toastNotificationService?.ShowSuccess(
+        $"Synthesis complete ({e.DurationSeconds:F1}s)",
+        $"Engine: {e.Engine}"
+      );
     }
 
     private async Task PlayAudioAsync(CancellationToken cancellationToken)

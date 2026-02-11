@@ -128,6 +128,8 @@ namespace VoiceStudio.App.Services
     }
     public static ModuleLoader GetModuleLoader() => AppServices.GetModuleLoader();
     public static ModuleLoader? TryGetModuleLoader() => AppServices.TryGetModuleLoader();
+    public static PanelLoader GetPanelLoader() => AppServices.GetPanelLoader();
+    public static PanelLoader? TryGetPanelLoader() => AppServices.TryGetPanelLoader();
     public static IErrorCoordinator GetErrorCoordinator() => AppServices.GetErrorCoordinator();
     public static IErrorCoordinator? TryGetErrorCoordinator() => AppServices.TryGetErrorCoordinator();
     public static IViewModelFactory GetViewModelFactory() => AppServices.GetViewModelFactory();

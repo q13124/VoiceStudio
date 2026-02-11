@@ -179,6 +179,33 @@ class BarkEngine(EngineProtocol):
 
     DEFAULT_SAMPLE_RATE = 24000
 
+    # Supported emotions for structured emotion control API
+    # Bark uses text prompts for emotion (e.g., [laughing], [sad], etc.)
+    SUPPORTED_EMOTIONS = [
+        "neutral",
+        "happy",
+        "sad",
+        "angry",
+        "excited",
+        "fearful",
+        "surprised",
+        "laughing",
+        "whispering",
+    ]
+
+    # Emotion prompt mappings for Bark's text-based emotion control
+    EMOTION_PROMPTS = {
+        "neutral": "",
+        "happy": "[happy]",
+        "sad": "[sad]",
+        "angry": "[angry]",
+        "excited": "[excited]",
+        "fearful": "[fearful]",
+        "surprised": "[surprised]",
+        "laughing": "[laughing]",
+        "whispering": "[whispering]",
+    }
+
     def __init__(
         self,
         device: Optional[str] = None,
@@ -417,6 +444,7 @@ class BarkEngine(EngineProtocol):
         reference_audio: Optional[Union[str, Path, np.ndarray]] = None,
         language: str = "en",
         speaker: Optional[str] = None,
+        emotion: Optional[str] = None,
         output_path: Optional[Union[str, Path]] = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
@@ -430,6 +458,9 @@ class BarkEngine(EngineProtocol):
             reference_audio: Reference audio for voice cloning (optional)
             language: Language code (default: 'en')
             speaker: Speaker preset (optional)
+            emotion: Emotion for synthesis (optional). One of: neutral, happy,
+                sad, angry, excited, fearful, surprised, laughing, whispering.
+                Also available via kwargs['emotion'].
             output_path: Path to save output audio
             enhance_quality: If True, apply quality enhancement
             calculate_quality: If True, return quality metrics
@@ -438,6 +469,7 @@ class BarkEngine(EngineProtocol):
                 - semantic_temperature: Semantic temperature (default: 0.7)
                 - coarse_temperature: Coarse temperature (default: 0.7)
                 - fine_temperature: Fine temperature (default: 0.7)
+                - emotion: Emotion for synthesis (alternative to emotion param)
 
         Returns:
             Audio array or None if synthesis failed,
@@ -460,8 +492,14 @@ class BarkEngine(EngineProtocol):
                 else hashlib.md5(np.array(reference_audio).tobytes()).hexdigest()
                 if reference_audio is not None else "none"
             )
+            # Get emotion from parameter or kwargs, validate against supported emotions
+            effective_emotion = emotion or kwargs.get("emotion", "neutral")
+            if effective_emotion not in self.SUPPORTED_EMOTIONS:
+                logger.warning(f"Emotion '{effective_emotion}' not supported, using 'neutral'")
+                effective_emotion = "neutral"
+            
             cache_key = hashlib.md5(
-                f"{text}_{speaker}_{language}_{ref_key}_{kwargs.get('temperature', 0.7)}_{kwargs.get('fine_temperature', 0.7)}_{enhance_quality}_{calculate_quality}".encode()
+                f"{text}_{speaker}_{effective_emotion}_{language}_{ref_key}_{kwargs.get('temperature', 0.7)}_{kwargs.get('fine_temperature', 0.7)}_{enhance_quality}_{calculate_quality}".encode()
             ).hexdigest()
 
             if cache_key in self._synthesis_cache:
@@ -504,9 +542,13 @@ class BarkEngine(EngineProtocol):
                 else:
                     history_prompt = reference_audio
 
-            # Prepare text with speaker prompt if provided
+            # Prepare text with emotion and speaker prompts
+            # Emotion prompt is prepended, speaker prompt wraps the text
+            emotion_prompt = self.EMOTION_PROMPTS.get(effective_emotion, "")
             if speaker:
-                text_with_speaker = f"[{speaker}] {text}"
+                text_with_speaker = f"[{speaker}] {emotion_prompt} {text}".strip()
+            elif emotion_prompt:
+                text_with_speaker = f"{emotion_prompt} {text}"
             else:
                 text_with_speaker = text
 
@@ -636,6 +678,15 @@ class BarkEngine(EngineProtocol):
             return list(SUPPORTED_LANGS) if SUPPORTED_LANGS else ["en"]
         return ["en"]
 
+    def get_supported_emotions(self) -> List[str]:
+        """
+        Get list of supported emotions.
+
+        Returns:
+            List of emotion names that can be used with the emotion parameter.
+        """
+        return self.SUPPORTED_EMOTIONS.copy()
+
     def get_info(self) -> Dict:
         """Get engine information."""
         info = super().get_info()
@@ -646,6 +697,7 @@ class BarkEngine(EngineProtocol):
                 "models_loaded": self._models_loaded,
                 "has_bark": HAS_BARK,
                 "supported_languages": self.get_supported_languages(),
+                "supported_emotions": self.get_supported_emotions(),
             }
         )
         return info

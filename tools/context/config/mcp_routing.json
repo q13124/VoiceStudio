@@ -1,0 +1,67 @@
+{
+  "role_to_mcps": {
+    "overseer": ["GitKraken", "taskflow", "openmemory", "git"],
+    "system-architect": ["openapi-explorer", "context7", "tree-sitter", "git"],
+    "build-tooling": ["docker-mcp", "semgrep", "ast-grep", "git", "GitKraken"],
+    "ui-engineer": ["playwright", "cursor-browser-extension", "tree-sitter"],
+    "core-platform": ["docker-mcp", "sqlite", "fastapi-mcp", "semgrep"],
+    "engine-engineer": ["chroma", "ollama", "context7", "pypi-query"],
+    "release-engineer": ["github", "GitKraken", "docker-mcp"],
+    "debug-agent": ["git", "GitKraken", "semgrep", "ast-grep", "sequential-thinking"]
+  },
+  "keyword_to_mcps": {
+    "api": ["openapi-explorer", "context7", "fastapi-mcp"],
+    "docs": ["context7"],
+    "security": ["semgrep", "sonarqube"],
+    "database": ["sqlite"],
+    "test": ["playwright"],
+    "docker": ["docker-mcp"],
+    "python": ["pypi-query", "semgrep"],
+    "git": ["git", "GitKraken", "github"],
+    "search": ["brave-search", "openai-websearch"],
+    "memory": ["openmemory", "mem0"],
+    "browser": ["playwright", "cursor-browser-extension"],
+    "analysis": ["sequential-thinking", "thought-chain"],
+    "refactor": ["ast-grep", "tree-sitter", "python-refactoring"],
+    "lint": ["semgrep", "ast-grep"],
+    "code": ["tree-sitter", "codepathfinder", "lsp"]
+  },
+  "always_available": [
+    "git",
+    "openmemory"
+  ],
+  "priority_order": {
+    "description": "When multiple MCPs match, prefer earlier in this list",
+    "order": [
+      "git",
+      "GitKraken",
+      "openmemory",
+      "context7",
+      "semgrep",
+      "ast-grep",
+      "tree-sitter",
+      "playwright",
+      "docker-mcp",
+      "openapi-explorer",
+      "sqlite",
+      "sequential-thinking",
+      "brave-search"
+    ]
+  },
+  "max_mcps_per_request": 5,
+  "mcp_descriptions": {
+    "git": "Git repository operations",
+    "GitKraken": "Advanced Git workflows and PR management",
+    "openmemory": "Persistent context memory",
+    "context7": "Up-to-date library documentation",
+    "semgrep": "Static analysis and security scanning",
+    "ast-grep": "AST-based code search and refactoring",
+    "tree-sitter": "Code structure analysis",
+    "playwright": "Browser automation and testing",
+    "docker-mcp": "Docker container management",
+    "openapi-explorer": "API schema inspection",
+    "sqlite": "SQLite database operations",
+    "sequential-thinking": "Complex multi-step reasoning",
+    "brave-search": "Web search for current information"
+  }
+}

@@ -823,6 +823,9 @@ namespace VoiceStudio.App.Views.Panels
 
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
+
+      // Configure virtualization for ListViews to optimize large libraries
+      Controls.VirtualizedListHelper.ConfigureListView(FoldersListView);
     }
 
     private void LibraryView_KeyDown(object sender, KeyRoutedEventArgs e)

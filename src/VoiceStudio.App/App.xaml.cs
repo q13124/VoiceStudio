@@ -346,6 +346,29 @@ namespace VoiceStudio.App
         WriteUiSmokeDebugSnapshot(phase: "mainwindow_activated", args: args, smokeExit: smokeExit, uiSmoke: uiSmoke);
       }
 
+      // Start deferred initialization in background after window is visible
+      // This improves perceived startup time by delaying non-critical services
+      if (!isSmokeMode)
+      {
+        _ = Task.Run(async () =>
+        {
+          try
+          {
+            // Small delay to let the window fully render
+            await Task.Delay(500);
+
+            var initializer = DeferredServiceInitializer.CreateDefault(new ServiceProviderAdapter());
+            await initializer.InitializeAllAsync();
+            Debug.WriteLine("[App] Deferred service initialization completed");
+          }
+          catch (Exception ex)
+          {
+            Debug.WriteLine($"[App] Deferred initialization error: {ex.Message}");
+            ErrorLogger.LogWarning($"Deferred initialization failed: {ex.Message}", "App.DeferredInit");
+          }
+        });
+      }
+
       if (smokeExit)
       {
         _startupProfiler?.Checkpoint("SmokeExit Requested");
@@ -748,5 +771,31 @@ namespace VoiceStudio.App
     // ServiceProvider cleanup should be handled elsewhere if needed
 
     private Window? m_window;
+  }
+
+  /// <summary>
+  /// Adapter to expose the static ServiceProvider as an IServiceProvider.
+  /// Used by DeferredServiceInitializer to resolve services.
+  /// </summary>
+  internal class ServiceProviderAdapter : IServiceProvider
+  {
+    public object? GetService(Type serviceType)
+    {
+      // Map service types to static ServiceProvider methods
+      if (serviceType == typeof(PluginManager))
+        return ServiceProvider.GetPluginManager();
+
+      if (serviceType == typeof(RecentProjectsService))
+        return ServiceProvider.TryGetRecentProjectsService();
+
+      if (serviceType == typeof(CrashRecoveryService))
+        return null; // CrashRecoveryService not exposed via ServiceProvider; init handled elsewhere
+
+      if (serviceType == typeof(VoiceStudio.Core.Services.IBackendClient))
+        return ServiceProvider.GetBackendClient();
+
+      // Default: return null (service not available)
+      return null;
+    }
   }
 }

@@ -27,6 +27,16 @@ DEFAULT_DURATION_BUCKETS = [
     0.5, 1, 2, 5, 10, 30, 60, 120, 300, float("inf")
 ]
 
+# Default histogram buckets for throughput (characters per second)
+DEFAULT_THROUGHPUT_BUCKETS = [
+    5, 10, 25, 50, 100, 200, 500, 1000, 2000, float("inf")
+]
+
+# Default histogram buckets for audio throughput (samples per second for real-time factor)
+DEFAULT_RTF_BUCKETS = [
+    0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, float("inf")
+]
+
 # Metrics storage directory
 METRICS_DIR = Path(".voicestudio/metrics")
 
@@ -161,12 +171,16 @@ class EngineMetricsCollector:
     _synthesis_latency: Dict[str, Histogram]
     _transcription_latency: Dict[str, Histogram]
     _audio_duration: Dict[str, Histogram]
+    _synthesis_throughput: Dict[str, Histogram]  # chars/sec
+    _transcription_rtf: Dict[str, Histogram]  # real-time factor
 
     # Counters
     _synthesis_count: Dict[str, Counter]
     _synthesis_errors: Dict[str, Counter]
     _transcription_count: Dict[str, Counter]
     _transcription_errors: Dict[str, Counter]
+    _total_chars_synthesized: Dict[str, Counter]
+    _total_audio_generated_seconds: Dict[str, Counter]
 
     def __new__(cls) -> "EngineMetricsCollector":
         if cls._instance is None:
@@ -182,10 +196,14 @@ class EngineMetricsCollector:
         self._synthesis_latency = {}
         self._transcription_latency = {}
         self._audio_duration = {}
+        self._synthesis_throughput = {}
+        self._transcription_rtf = {}
         self._synthesis_count = {}
         self._synthesis_errors = {}
         self._transcription_count = {}
         self._transcription_errors = {}
+        self._total_chars_synthesized = {}
+        self._total_audio_generated_seconds = {}
 
         # Ensure metrics directory exists
         METRICS_DIR.mkdir(parents=True, exist_ok=True)
@@ -216,6 +234,40 @@ class EngineMetricsCollector:
         """Create a new audio duration histogram."""
         buckets = [
             HistogramBucket(le=le) for le in DEFAULT_DURATION_BUCKETS
+        ]
+        return Histogram(
+            name=name,
+            help_text=help_text,
+            labels=labels or {},
+            buckets=buckets,
+        )
+
+    def _create_throughput_histogram(
+        self,
+        name: str,
+        help_text: str,
+        labels: Optional[Dict[str, str]] = None,
+    ) -> Histogram:
+        """Create a new throughput histogram (chars/sec)."""
+        buckets = [
+            HistogramBucket(le=le) for le in DEFAULT_THROUGHPUT_BUCKETS
+        ]
+        return Histogram(
+            name=name,
+            help_text=help_text,
+            labels=labels or {},
+            buckets=buckets,
+        )
+
+    def _create_rtf_histogram(
+        self,
+        name: str,
+        help_text: str,
+        labels: Optional[Dict[str, str]] = None,
+    ) -> Histogram:
+        """Create a new real-time factor histogram."""
+        buckets = [
+            HistogramBucket(le=le) for le in DEFAULT_RTF_BUCKETS
         ]
         return Histogram(
             name=name,
@@ -310,6 +362,71 @@ class EngineMetricsCollector:
                     self._audio_duration[engine] = hist
                 self._audio_duration[engine].observe(audio_duration_seconds)
 
+                # Track total audio generated
+                if engine not in self._total_audio_generated_seconds:
+                    self._total_audio_generated_seconds[engine] = Counter(
+                        name="voicestudio_total_audio_generated_seconds",
+                        help_text="Total audio duration generated in seconds",
+                        labels={"engine": engine},
+                    )
+                self._total_audio_generated_seconds[engine].inc(audio_duration_seconds)
+
+    def record_synthesis_throughput(
+        self,
+        engine: str,
+        chars_processed: int,
+        latency_ms: float,
+        audio_duration_seconds: float = 0,
+        quality_preset: str = "standard",
+    ) -> None:
+        """
+        Record synthesis throughput metrics.
+
+        Args:
+            engine: Engine name
+            chars_processed: Number of characters synthesized
+            latency_ms: Latency in milliseconds
+            audio_duration_seconds: Duration of generated audio
+            quality_preset: Quality preset used
+        """
+        if latency_ms <= 0:
+            return
+
+        # Calculate throughput in chars/sec
+        chars_per_second = chars_processed / (latency_ms / 1000.0)
+
+        key = self._get_key(engine, quality_preset)
+
+        with self._lock:
+            # Record chars/sec throughput
+            if key not in self._synthesis_throughput:
+                self._synthesis_throughput[key] = self._create_throughput_histogram(
+                    name="voicestudio_synthesis_throughput_chars_per_sec",
+                    help_text="Synthesis throughput in characters per second",
+                    labels={"engine": engine, "quality": quality_preset},
+                )
+            self._synthesis_throughput[key].observe(chars_per_second)
+
+            # Track total chars synthesized
+            if engine not in self._total_chars_synthesized:
+                self._total_chars_synthesized[engine] = Counter(
+                    name="voicestudio_total_chars_synthesized",
+                    help_text="Total characters synthesized",
+                    labels={"engine": engine},
+                )
+            self._total_chars_synthesized[engine].inc(chars_processed)
+
+        # Calculate real-time factor if audio duration provided
+        rtf_info = ""
+        if audio_duration_seconds > 0:
+            rtf = (latency_ms / 1000.0) / audio_duration_seconds
+            rtf_info = f" RTF={rtf:.2f}"
+
+        logger.debug(
+            "Synthesis throughput: engine=%s chars=%d rate=%.1f chars/sec%s",
+            engine, chars_processed, chars_per_second, rtf_info
+        )
+
     # =========================================================================
     # Transcription Metrics
     # =========================================================================
@@ -341,13 +458,22 @@ class EngineMetricsCollector:
 
             self._transcription_latency[key].observe(latency_ms)
 
-        # Calculate real-time factor if audio length provided
-        if audio_length_seconds > 0:
-            rtf = (latency_ms / 1000) / audio_length_seconds
-            logger.debug(
-                "Transcription: engine=%s latency=%.2fms RTF=%.2f",
-                engine, latency_ms, rtf
-            )
+            # Track real-time factor if audio length provided
+            if audio_length_seconds > 0:
+                rtf = (latency_ms / 1000) / audio_length_seconds
+
+                if key not in self._transcription_rtf:
+                    self._transcription_rtf[key] = self._create_rtf_histogram(
+                        name="voicestudio_transcription_rtf",
+                        help_text="Transcription real-time factor (processing time / audio length)",
+                        labels={"engine": engine},
+                    )
+                self._transcription_rtf[key].observe(rtf)
+
+                logger.debug(
+                    "Transcription: engine=%s latency=%.2fms RTF=%.2f",
+                    engine, latency_ms, rtf
+                )
 
     def record_transcription_complete(
         self,
@@ -420,6 +546,24 @@ class EngineMetricsCollector:
                     stats["latency_mean_ms"] = hist.mean
                     break
 
+            # Get throughput percentiles
+            for key, hist in self._synthesis_throughput.items():
+                if key.startswith(engine):
+                    stats["throughput_p50_chars_per_sec"] = hist.get_percentile(50)
+                    stats["throughput_p95_chars_per_sec"] = hist.get_percentile(95)
+                    stats["throughput_mean_chars_per_sec"] = hist.mean
+                    break
+
+            # Total chars synthesized
+            chars_counter = self._total_chars_synthesized.get(engine)
+            if chars_counter:
+                stats["total_chars_synthesized"] = chars_counter.value
+
+            # Total audio generated
+            audio_counter = self._total_audio_generated_seconds.get(engine)
+            if audio_counter:
+                stats["total_audio_generated_seconds"] = audio_counter.value
+
         elif op_type == "transcription":
             count = self._transcription_count.get(engine)
             errors = self._transcription_errors.get(engine)
@@ -432,6 +576,13 @@ class EngineMetricsCollector:
                 stats["latency_p95_ms"] = hist.get_percentile(95)
                 stats["latency_p99_ms"] = hist.get_percentile(99)
                 stats["latency_mean_ms"] = hist.mean
+
+            # Get RTF percentiles
+            rtf_hist = self._transcription_rtf.get(engine)
+            if rtf_hist:
+                stats["rtf_p50"] = rtf_hist.get_percentile(50)
+                stats["rtf_p95"] = rtf_hist.get_percentile(95)
+                stats["rtf_mean"] = rtf_hist.mean
 
         return stats
 
@@ -450,6 +601,14 @@ class EngineMetricsCollector:
                 k: v.to_dict()
                 for k, v in self._audio_duration.items()
             }
+            synth_throughput = {
+                k: v.to_dict()
+                for k, v in self._synthesis_throughput.items()
+            }
+            trans_rtf = {
+                k: v.to_dict()
+                for k, v in self._transcription_rtf.items()
+            }
             synth_cnt = {
                 k: v.to_dict()
                 for k, v in self._synthesis_count.items()
@@ -466,14 +625,26 @@ class EngineMetricsCollector:
                 k: v.to_dict()
                 for k, v in self._transcription_errors.items()
             }
+            chars_synth = {
+                k: v.to_dict()
+                for k, v in self._total_chars_synthesized.items()
+            }
+            audio_gen = {
+                k: v.to_dict()
+                for k, v in self._total_audio_generated_seconds.items()
+            }
             return {
                 "synthesis_latency": synth_lat,
+                "synthesis_throughput": synth_throughput,
                 "transcription_latency": trans_lat,
+                "transcription_rtf": trans_rtf,
                 "audio_duration": audio_dur,
                 "synthesis_count": synth_cnt,
                 "synthesis_errors": synth_err,
                 "transcription_count": trans_cnt,
                 "transcription_errors": trans_err,
+                "total_chars_synthesized": chars_synth,
+                "total_audio_generated_seconds": audio_gen,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -517,6 +688,7 @@ def record_synthesis(
     audio_duration_seconds: float = 0,
     quality_preset: str = "standard",
     success: bool = True,
+    chars_processed: int = 0,
 ) -> None:
     """
     Convenience function to record a complete synthesis operation.
@@ -527,6 +699,7 @@ def record_synthesis(
         audio_duration_seconds: Duration of generated audio
         quality_preset: Quality preset used
         success: Whether operation succeeded
+        chars_processed: Number of characters synthesized (for throughput metrics)
     """
     collector = get_engine_metrics()
     collector.record_synthesis_latency(
@@ -535,6 +708,10 @@ def record_synthesis(
     collector.record_synthesis_complete(
         engine, audio_duration_seconds, success
     )
+    if chars_processed > 0:
+        collector.record_synthesis_throughput(
+            engine, chars_processed, latency_ms, audio_duration_seconds, quality_preset
+        )
 
 
 def record_transcription(

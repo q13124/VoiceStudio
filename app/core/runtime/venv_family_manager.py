@@ -79,6 +79,7 @@ FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
             "mars5",
             "parler_tts",
             "openvoice_v2",
+            "tacotron2",  # Tacotron 2 via Coqui TTS
         ],
         gpu_required=True,
         estimated_size_gb=8.0,
@@ -115,7 +116,7 @@ FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
         requirements_file="requirements-voice-conversion.txt",
         python_version="3.11",
         description="Voice conversion and cloning engines",
-        engines=["rvc", "so_vits_svc", "sovits_svc", "mockingbird", "speaker_encoder"],
+        engines=["rvc", "rvc_v2", "so_vits_svc", "sovits_svc", "mockingbird", "speaker_encoder"],
         gpu_required=True,
         estimated_size_gb=6.0,
     ),

@@ -19,11 +19,13 @@ namespace VoiceStudio.App.Controls
   public sealed partial class PanelHost : UserControl
   {
     private PanelStateService? _panelStateService;
+    private PanelLoader? _panelLoader;
     private string? _previousPanelId;
     private PanelRegion _region = PanelRegion.Center;
     private DragDropVisualFeedbackService? _dragDropService;
     private PanelRegion? _currentDropZone;
     private bool _isDragging;
+    private System.Threading.CancellationTokenSource? _loadingCts;
 
     public static new readonly DependencyProperty ContentProperty =
         DependencyProperty.Register(nameof(Content), typeof(UIElement), typeof(PanelHost),
@@ -147,6 +149,14 @@ namespace VoiceStudio.App.Controls
       this.InitializeComponent();
       _panelStateService = ServiceProvider.GetPanelStateService();
       _dragDropService = ServiceProvider.TryGetDragDropVisualFeedbackService();
+      _panelLoader = ServiceProvider.TryGetPanelLoader();
+
+      // Subscribe to PanelLoader events for loading indicator
+      if (_panelLoader != null)
+      {
+        _panelLoader.PanelLoading += OnPanelLoading;
+        _panelLoader.PanelLoaded += OnPanelLoaded;
+      }
 
       // Wire up resize handles to resize this PanelHost (defensive null checks)
       var rightHandle = this.FindName("RightResizeHandle") as PanelResizeHandle;
@@ -162,6 +172,18 @@ namespace VoiceStudio.App.Controls
 
       // Enable drop on the entire PanelHost for docking
       this.AllowDrop = true;
+
+      // Unsubscribe from events when unloaded
+      this.Unloaded += (_, _) =>
+      {
+        if (_panelLoader != null)
+        {
+          _panelLoader.PanelLoading -= OnPanelLoading;
+          _panelLoader.PanelLoaded -= OnPanelLoaded;
+        }
+        _loadingCts?.Cancel();
+        _loadingCts?.Dispose();
+      };
     }
 
     private static void OnContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -396,6 +418,130 @@ namespace VoiceStudio.App.Controls
         System.Diagnostics.Debug.WriteLine($"Failed to save region state: {ex.Message}");
       }
     }
+
+    /// <summary>
+    /// Loads a panel lazily using PanelLoader.
+    /// Shows loading indicator while panel is being loaded.
+    /// </summary>
+    /// <param name="panelId">The panel ID to load</param>
+    /// <returns>The loaded panel, or null if loading failed</returns>
+    public async System.Threading.Tasks.Task<UserControl?> LoadPanelAsync(string panelId)
+    {
+      if (_panelLoader == null)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelHost] PanelLoader not available, cannot lazy load {panelId}");
+        return null;
+      }
+
+      // Cancel any previous loading operation
+      _loadingCts?.Cancel();
+      _loadingCts?.Dispose();
+      _loadingCts = new System.Threading.CancellationTokenSource();
+
+      try
+      {
+        IsLoading = true;
+        LoadingMessage = $"Loading {panelId}...";
+
+        var panel = await _panelLoader.GetPanelAsync(panelId, _loadingCts.Token);
+
+        if (panel != null && !_loadingCts.IsCancellationRequested)
+        {
+          Content = panel;
+        }
+
+        return panel;
+      }
+      catch (OperationCanceledException)
+      {
+        // Loading was cancelled, this is expected
+        return null;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error loading panel {panelId}: {ex.Message}");
+        return null;
+      }
+      finally
+      {
+        IsLoading = false;
+      }
+    }
+
+    /// <summary>
+    /// Loads a panel synchronously (falls back to lazy if not already loaded).
+    /// Prefer LoadPanelAsync for better UI responsiveness.
+    /// </summary>
+    /// <param name="panelId">The panel ID to load</param>
+    /// <returns>The loaded panel, or null if loading failed</returns>
+    public UserControl? LoadPanel(string panelId)
+    {
+      if (_panelLoader == null)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelHost] PanelLoader not available, cannot load {panelId}");
+        return null;
+      }
+
+      try
+      {
+        var panel = _panelLoader.GetPanel(panelId);
+        if (panel != null)
+        {
+          Content = panel;
+        }
+        return panel;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error loading panel {panelId}: {ex.Message}");
+        return null;
+      }
+    }
+
+    /// <summary>
+    /// Checks if a panel is loaded in the PanelLoader cache.
+    /// </summary>
+    public bool IsPanelLoaded(string panelId)
+    {
+      return _panelLoader?.IsPanelLoaded(panelId) ?? false;
+    }
+
+    /// <summary>
+    /// Unloads a panel from memory.
+    /// </summary>
+    public void UnloadPanel(string panelId)
+    {
+      _panelLoader?.UnloadPanel(panelId);
+    }
+
+    /// <summary>
+    /// Handler for PanelLoader.PanelLoading event.
+    /// </summary>
+    private void OnPanelLoading(object? sender, PanelLoadingEventArgs e)
+    {
+      // Only update if this is the currently active panel being loaded
+      if (Content == null || _previousPanelId == null)
+        return;
+
+      // Show loading state if we're waiting for a panel
+      if (IsLoading)
+      {
+        LoadingMessage = $"Loading {e.PanelId}...";
+      }
+    }
+
+    /// <summary>
+    /// Handler for PanelLoader.PanelLoaded event.
+    /// </summary>
+    private void OnPanelLoaded(object? sender, PanelLoadedEventArgs e)
+    {
+      System.Diagnostics.Debug.WriteLine($"[PanelHost] Panel {e.PanelId} loaded in {e.LoadTime.TotalMilliseconds:F1}ms");
+    }
+
+    /// <summary>
+    /// Gets the PanelLoader instance for external access.
+    /// </summary>
+    public PanelLoader? PanelLoaderInstance => _panelLoader;
 
     /// <summary>
     /// Updates the context-sensitive action bar based on the current panel content.

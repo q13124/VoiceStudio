@@ -1,0 +1,153 @@
+{
+  "roles": {
+    "overseer": {
+      "id": 0,
+      "display_name": "Overseer",
+      "keywords": [
+        "gate", "verification", "governance", "state", "closure",
+        "audit", "compliance", "review", "coordinate", "task",
+        "milestone", "priority", "ledger", "proof", "evidence"
+      ],
+      "file_patterns": [
+        ".cursor/STATE.md",
+        "docs/governance/*",
+        ".cursor/rules/*",
+        "TASK-*.md"
+      ],
+      "weight": 1.0
+    },
+    "system-architect": {
+      "id": 1,
+      "display_name": "System Architect",
+      "keywords": [
+        "architecture", "adr", "decision", "boundary", "contract",
+        "interface", "protocol", "schema", "design", "pattern",
+        "module", "dependency", "layer", "abstraction", "seam"
+      ],
+      "file_patterns": [
+        "docs/architecture/*",
+        "ADR-*.md",
+        "*.proto",
+        "shared/*.json"
+      ],
+      "weight": 1.0
+    },
+    "build-tooling": {
+      "id": 2,
+      "display_name": "Build & Tooling",
+      "keywords": [
+        "build", "compile", "ci", "cd", "pipeline", "msbuild",
+        "dotnet", "nuget", "package", "release", "artifact",
+        "github actions", "workflow", "yml", "yaml", "cmake",
+        "error cs", "warning cs", "csproj", "sln", "restore"
+      ],
+      "file_patterns": [
+        "*.csproj",
+        "*.sln",
+        ".github/workflows/*.yml",
+        "scripts/*.ps1",
+        "Directory.Build.props"
+      ],
+      "weight": 1.0
+    },
+    "ui-engineer": {
+      "id": 3,
+      "display_name": "UI Engineer",
+      "keywords": [
+        "xaml", "ui", "panel", "view", "viewmodel", "mvvm",
+        "button", "binding", "winui", "control", "style",
+        "template", "resource", "animation", "layout", "grid",
+        "stackpanel", "listview", "textblock", "textbox", "combobox",
+        "fluent", "theme", "density", "accessibility"
+      ],
+      "file_patterns": [
+        "*.xaml",
+        "*.xaml.cs",
+        "*ViewModel.cs",
+        "*View.cs",
+        "src/VoiceStudio.App/Views/*",
+        "src/VoiceStudio.App/Controls/*"
+      ],
+      "weight": 1.0
+    },
+    "core-platform": {
+      "id": 4,
+      "display_name": "Core Platform",
+      "keywords": [
+        "backend", "api", "route", "service", "runtime",
+        "fastapi", "endpoint", "middleware", "storage", "database",
+        "job", "queue", "lifecycle", "ipc", "http", "websocket",
+        "json", "serialization", "settings", "config", "preflight"
+      ],
+      "file_patterns": [
+        "backend/api/*",
+        "backend/services/*",
+        "backend/*.py",
+        "*_service.py",
+        "*_store.py"
+      ],
+      "weight": 1.0
+    },
+    "engine-engineer": {
+      "id": 5,
+      "display_name": "Engine Engineer",
+      "keywords": [
+        "engine", "tts", "stt", "synthesis", "transcription",
+        "model", "inference", "cuda", "gpu", "vram", "torch",
+        "xtts", "bark", "whisper", "rvc", "voice", "audio",
+        "quality", "mos", "latency", "sample rate", "mel",
+        "vocoder", "tacotron", "coqui", "huggingface"
+      ],
+      "file_patterns": [
+        "app/core/engines/*",
+        "engines/*/*.json",
+        "*.pth",
+        "*.onnx",
+        "*_engine.py"
+      ],
+      "weight": 1.0
+    },
+    "release-engineer": {
+      "id": 6,
+      "display_name": "Release Engineer",
+      "keywords": [
+        "installer", "package", "msix", "inno", "deploy",
+        "release", "version", "changelog", "update", "upgrade",
+        "publish", "sign", "certificate", "distribution", "bundle"
+      ],
+      "file_patterns": [
+        "installer/*",
+        "*.iss",
+        "Package.appxmanifest",
+        "docs/release/*"
+      ],
+      "weight": 1.0
+    },
+    "debug-agent": {
+      "id": 7,
+      "display_name": "Debug Agent",
+      "keywords": [
+        "debug", "error", "exception", "crash", "bug", "fix",
+        "investigate", "diagnose", "traceback", "stack trace",
+        "null", "undefined", "assertion", "fail", "test fail",
+        "breakpoint", "log", "diagnostic", "root cause"
+      ],
+      "file_patterns": [
+        "*.log",
+        ".buildlogs/*",
+        ".voicestudio/traces/*"
+      ],
+      "weight": 1.0
+    }
+  },
+  "confidence_thresholds": {
+    "auto_select": 0.6,
+    "suggest": 0.4,
+    "min_match": 0.2
+  },
+  "boosters": {
+    "file_pattern_match": 0.2,
+    "multiple_keywords": 0.1,
+    "exact_match": 0.15
+  }
+}

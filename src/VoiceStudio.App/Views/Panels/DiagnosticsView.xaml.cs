@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.App.Controls;
 using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.Services;
 using Microsoft.UI.Xaml;
@@ -62,6 +63,13 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize System Info tab as visible (default selected)
       SystemInfoGrid.Visibility = Visibility.Visible;
+
+      // Configure virtualization for all ListViews to optimize large lists
+      VirtualizedListHelper.ConfigureListView(LogsListView);
+      VirtualizedListHelper.ConfigureListView(TracesListView);
+      VirtualizedListHelper.ConfigureListView(EnginesListView);
+      VirtualizedListHelper.ConfigureListView(CommandsListView);
+      VirtualizedListHelper.ConfigureListView(EnvVarsListView);
     }
 
     private void TabView_SelectionChanged(object? sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)

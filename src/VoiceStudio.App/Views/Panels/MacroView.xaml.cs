@@ -52,6 +52,10 @@ namespace VoiceStudio.App.Views.Panels
     {
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
+
+      // Configure virtualization for ListViews to optimize large macro lists
+      Controls.VirtualizedListHelper.ConfigureListView(MacrosListView);
+      Controls.VirtualizedListHelper.ConfigureListView(AutomationCurvesListView);
     }
 
     private async void NewMacroButton_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)

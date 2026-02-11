@@ -269,13 +269,20 @@ class OnboardingAssembler:
         if packet.context_bundle is not None and hasattr(packet.context_bundle, "to_preamble_markdown"):
             context_bundle_preamble = packet.context_bundle.to_preamble_markdown()
         return template.render(
+            # Primary packet fields (match template variable names)
             role=packet.role,
             prompt=packet.prompt,
             guide=packet.guide,
+            project_state=packet.project_state,
+            role_context=packet.role_context,
+            context_bundle=packet.context_bundle,
+            issues=packet.issues,
+            generated_at=packet.generated_at,
+            include_full_guide=bool(packet.guide.full_text),
+            # Legacy aliases for backward compatibility
             state=packet.project_state,
             context=packet.role_context,
             timestamp=packet.generated_at,
-            context_bundle=packet.context_bundle,
             context_bundle_preamble=context_bundle_preamble,
         )
 

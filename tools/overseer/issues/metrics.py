@@ -14,15 +14,116 @@ from tools.overseer.issues.store import IssueStore, get_feedback_file_path, iter
 
 # Map issue category/context to affected SLO IDs (from SERVICE_LEVEL_OBJECTIVES.md)
 # Used for SLO-aware prioritization and metrics.
+# Extended with comprehensive keyword mappings for issue classification.
 ISSUE_CATEGORY_TO_SLO: Dict[str, list] = {
+    # SLO-1: Synthesis latency and reliability
     "synthesis": ["SLO-1"],
+    "tts": ["SLO-1"],
+    "voice": ["SLO-1"],
+    "audio": ["SLO-1"],
+    "xtts": ["SLO-1"],
+    "tacotron": ["SLO-1"],
+
+    # SLO-2: Transcription latency and reliability
     "transcription": ["SLO-2"],
+    "stt": ["SLO-2"],
+    "whisper": ["SLO-2"],
+
+    # SLO-3: API response time and availability
     "api": ["SLO-3"],
+    "backend": ["SLO-3"],
+    "service": ["SLO-3"],
+    "ipc": ["SLO-3"],
+    "rest": ["SLO-3"],
+    "websocket": ["SLO-3"],
+
+    # SLO-4: UI responsiveness
     "ui": ["SLO-4"],
+    "xaml": ["SLO-4"],
+    "panel": ["SLO-4"],
+    "view": ["SLO-4"],
+    "winui": ["SLO-4"],
+    "layout": ["SLO-4"],
+    "animation": ["SLO-4"],
+    "control": ["SLO-4"],
+
+    # SLO-5: Engine availability and performance
     "engine": ["SLO-5"],
+    "rvc": ["SLO-5"],
+    "model": ["SLO-5"],
+    "inference": ["SLO-5"],
+    "gpu": ["SLO-5"],
+    "cuda": ["SLO-5"],
+    "tensor": ["SLO-5"],
+    "torch": ["SLO-5"],
+
+    # SLO-6: Quality metrics
     "quality": ["SLO-6"],
+
+    # No direct SLO impact (infra/tooling)
     "build": [],
+    "ci": [],
+    "cd": [],
+    "pipeline": [],
+    "compile": [],
+    "msbuild": [],
+    "dotnet": [],
+    "nuget": [],
+    "pip": [],
+    "dependency": [],
+    "toolchain": [],
+    "test": [],
+    "pytest": [],
+    "mstest": [],
+    "lint": [],
     "agent": [],
+    "packaging": [],
+    "installer": [],
+    "msix": [],
+    "release": [],
+    "deploy": [],
+    "version": [],
+    "update": [],
+    "distribution": [],
+    "governance": [],
+    "coordination": [],
+    "priority": [],
+    "escalation": [],
+    "task": [],
+    "workflow": [],
+    "architecture": [],
+    "adr": [],
+    "contract": [],
+    "boundary": [],
+    "interface": [],
+    "protocol": [],
+    "schema": [],
+
+    # Debug/error categories typically affect multiple SLOs
+    "debug": ["SLO-3", "SLO-4", "SLO-5"],
+    "error": ["SLO-3", "SLO-4", "SLO-5"],
+    "exception": ["SLO-3", "SLO-4", "SLO-5"],
+    "crash": ["SLO-3", "SLO-4", "SLO-5"],
+    "diagnostic": [],
+    "traceback": ["SLO-3"],
+    "stacktrace": ["SLO-3"],
+    "memory": ["SLO-5"],
+    "leak": ["SLO-5"],
+    "hang": ["SLO-4", "SLO-5"],
+    "deadlock": ["SLO-4", "SLO-5"],
+    "timeout": ["SLO-3", "SLO-5"],
+    "regression": ["SLO-1", "SLO-2", "SLO-6"],
+
+    # Core platform
+    "runtime": ["SLO-5"],
+    "storage": ["SLO-3"],
+    "boot": ["SLO-4"],
+    "job": ["SLO-3"],
+    "queue": ["SLO-3"],
+    "preflight": ["SLO-5"],
+    "config": [],
+    "settings": [],
+    "database": ["SLO-3"],
 }
 DEFAULT_SLO = ["SLO-3"]
 
