@@ -28,7 +28,8 @@ public enum LayoutDensity
 {
     Compact,
     Normal,
-    Comfortable
+    Comfortable,
+    Touch
 }
 
 /// <summary>

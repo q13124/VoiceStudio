@@ -3,11 +3,16 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Automation;
 using System.Windows.Input;
+using Windows.UI.ViewManagement;
 
 namespace VoiceStudio.App.Controls
 {
   public sealed partial class VSQButton : UserControl
   {
+    private static readonly UISettings UiSettings = new();
+    private bool _isPointerOver;
+    private bool _isPressed;
+
     public static new readonly DependencyProperty ContentProperty =
         DependencyProperty.Register(nameof(Content), typeof(object), typeof(VSQButton), new PropertyMetadata(null));
 
@@ -48,6 +53,50 @@ namespace VoiceStudio.App.Controls
     {
       InitializeComponent();
       Loaded += VSQButton_Loaded;
+    }
+
+    private void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+      _isPointerOver = true;
+      UpdateVisualState();
+    }
+
+    private void OnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+      _isPointerOver = false;
+      _isPressed = false;
+      UpdateVisualState();
+    }
+
+    private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+      _isPressed = true;
+      UpdateVisualState();
+    }
+
+    private void OnPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+      _isPressed = false;
+      UpdateVisualState();
+    }
+
+    private void UpdateVisualState()
+    {
+      // Check system animation preference - skip animation if user prefers reduced motion
+      bool useAnimations = UiSettings.AnimationsEnabled;
+
+      if (_isPressed)
+      {
+        VisualStateManager.GoToState(this, "Pressed", useAnimations);
+      }
+      else if (_isPointerOver)
+      {
+        VisualStateManager.GoToState(this, "PointerOver", useAnimations);
+      }
+      else
+      {
+        VisualStateManager.GoToState(this, "Normal", useAnimations);
+      }
     }
 
     private void VSQButton_Loaded(object _, RoutedEventArgs e)

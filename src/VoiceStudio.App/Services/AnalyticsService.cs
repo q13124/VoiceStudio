@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using VoiceStudio.App.Services;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Services
 {
@@ -121,6 +122,7 @@ namespace VoiceStudio.App.Services
     private readonly object _lock = new();
     private const int MaxEvents = 1000;
     private readonly IErrorLoggingService? _errorLoggingService;
+    private readonly IFeatureFlagsService? _featureFlagsService;
     private readonly string _consentFilePath;
     private readonly string _analyticsDataPath;
     private AnalyticsConsentStatus _consentStatus = AnalyticsConsentStatus.NotAsked;
@@ -130,8 +132,23 @@ namespace VoiceStudio.App.Services
 
     /// <summary>
     /// Gets whether analytics collection is currently enabled.
+    /// Requires both user consent (OptedIn) AND the AnalyticsEnabled feature flag.
     /// </summary>
-    public bool IsEnabled => _consentStatus == AnalyticsConsentStatus.OptedIn;
+    public bool IsEnabled
+    {
+      get
+      {
+        // Must have explicit opt-in consent
+        if (_consentStatus != AnalyticsConsentStatus.OptedIn)
+          return false;
+
+        // Must also have feature flag enabled (if service is available)
+        if (_featureFlagsService != null)
+          return _featureFlagsService.IsEnabled("AnalyticsEnabled");
+
+        return true;
+      }
+    }
 
     /// <summary>
     /// Gets the current consent status.
@@ -141,6 +158,7 @@ namespace VoiceStudio.App.Services
     public AnalyticsService()
     {
       _errorLoggingService = ServiceProvider.GetErrorLoggingService();
+      _featureFlagsService = AppServices.TryGetFeatureFlagsService();
 
       // Setup local storage paths
       var appDataPath = Path.Combine(

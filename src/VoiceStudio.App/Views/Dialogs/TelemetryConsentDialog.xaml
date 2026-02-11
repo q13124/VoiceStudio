@@ -1,0 +1,79 @@
+<ContentDialog x:Class="VoiceStudio.App.Views.Dialogs.TelemetryConsentDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Help Improve VoiceStudio"
+    PrimaryButtonText="Enable Analytics"
+    SecondaryButtonText="No Thanks"
+    CloseButtonText="Decide Later"
+    DefaultButton="Secondary">
+    <Grid Width="400" Margin="0,0,0,16">
+        <StackPanel Spacing="16">
+            <!-- Icon and intro -->
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE9D9;" FontSize="32" FontFamily="Segoe Fluent Icons" Foreground="{StaticResource VSQ.Accent.CyanBrush}" />
+                <TextBlock Text="Privacy-First Analytics" 
+                    Style="{StaticResource VSQ.Text.Title}" 
+                    VerticalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock TextWrapping="Wrap" Style="{StaticResource VSQ.Text.Body}">
+                VoiceStudio can collect anonymous usage data to help us improve the app. 
+                Your privacy is important to us.
+            </TextBlock>
+
+            <!-- What we collect -->
+            <Border Background="{StaticResource VSQ.Panel.Background.DarkBrush}" 
+                CornerRadius="4" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="What we collect:" FontWeight="SemiBold" 
+                        Style="{StaticResource VSQ.Text.Body}" />
+                    <StackPanel Spacing="4" Margin="12,0,0,0">
+                        <TextBlock Text="• Feature usage (which panels/tools you use)" 
+                            Style="{StaticResource VSQ.Text.Caption}" 
+                            Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                        <TextBlock Text="• Performance metrics (synthesis times, app startup)" 
+                            Style="{StaticResource VSQ.Text.Caption}" 
+                            Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                        <TextBlock Text="• Error reports (crash information)" 
+                            Style="{StaticResource VSQ.Text.Caption}" 
+                            Foreground="{StaticResource VSQ.Text.SecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- What we DON'T collect -->
+            <Border Background="{StaticResource VSQ.Success.Brush}" Opacity="0.1" 
+                CornerRadius="4" Padding="12">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8FB;" FontSize="14" FontFamily="Segoe Fluent Icons" 
+                            Foreground="{StaticResource VSQ.Success.Brush}" />
+                        <TextBlock Text="What we NEVER collect:" FontWeight="SemiBold" 
+                            Style="{StaticResource VSQ.Text.Body}" 
+                            Foreground="{StaticResource VSQ.Success.Brush}" />
+                    </StackPanel>
+                    <StackPanel Spacing="4" Margin="12,0,0,0">
+                        <TextBlock Text="• Your audio files or voice recordings" 
+                            Style="{StaticResource VSQ.Text.Caption}" />
+                        <TextBlock Text="• Your project content or text" 
+                            Style="{StaticResource VSQ.Text.Caption}" />
+                        <TextBlock Text="• Personal information or identifiers" 
+                            Style="{StaticResource VSQ.Text.Caption}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Settings note -->
+            <TextBlock TextWrapping="Wrap" 
+                Style="{StaticResource VSQ.Text.Caption}" 
+                Foreground="{StaticResource VSQ.Text.TertiaryBrush}">
+                You can change this setting anytime in Settings → Privacy.
+            </TextBlock>
+
+            <!-- Don't show again -->
+            <CheckBox x:Name="DontShowAgainCheckBox" 
+                Content="Don't ask me again" 
+                IsChecked="False" />
+        </StackPanel>
+    </Grid>
+</ContentDialog>

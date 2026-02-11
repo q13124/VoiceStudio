@@ -6,34 +6,89 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="using:VoiceStudio.App.Controls"
     mc:Ignorable="d"
-    x:DataType="local:VSQButton">
-    <Button
-        x:Name="ButtonControl"
-        Style="{StaticResource VSQ.Button.HoverStyle}"
-        MinWidth="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
-        MinHeight="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
-        Padding="{StaticResource VSQ.Spacing.Medium}"
-        CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
-        FocusVisualPrimaryBrush="{StaticResource VSQ.Focus.BorderBrush}"
-        FocusVisualPrimaryThickness="{StaticResource VSQ.Focus.BorderThickness}"
-        Click="ButtonControl_Click">
-        <Button.Content>
-            <Grid>
-                <StackPanel x:Name="ContentStack" Orientation="Horizontal"
-                    Spacing="{StaticResource VSQ.Spacing.Value.Small}">
-                    <ContentPresenter x:Name="ButtonContent"
-                        Content="{x:Bind Content, Mode=OneWay}" />
-                </StackPanel>
-                <ProgressRing
-                    x:Name="LoadingSpinner"
-                    Width="16"
-                    Height="16"
-                    Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
-                    IsActive="False"
-                    Visibility="Collapsed"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center" />
-            </Grid>
-        </Button.Content>
-    </Button>
+    x:DataType="local:VSQButton"
+    PointerEntered="OnPointerEntered"
+    PointerExited="OnPointerExited"
+    PointerPressed="OnPointerPressed"
+    PointerReleased="OnPointerReleased">
+    <Grid x:Name="RootGrid">
+        <Grid.RenderTransform>
+            <CompositeTransform x:Name="ButtonTransform" ScaleX="1" ScaleY="1" />
+        </Grid.RenderTransform>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="CommonStates">
+                <VisualState x:Name="Normal">
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.1">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.1">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </VisualState>
+                <VisualState x:Name="PointerOver">
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleX" To="1.02" Duration="0:0:0.15">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleY" To="1.02" Duration="0:0:0.15">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </VisualState>
+                <VisualState x:Name="Pressed">
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleX" To="0.95" Duration="0:0:0.1">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="ButtonTransform" Storyboard.TargetProperty="ScaleY" To="0.95" Duration="0:0:0.1">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <Button
+            x:Name="ButtonControl"
+            Style="{StaticResource VSQ.Button.HoverStyle}"
+            MinWidth="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
+            MinHeight="{StaticResource VSQ.Accessibility.HitTarget.MinSize}"
+            Padding="{StaticResource VSQ.Spacing.Medium}"
+            CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
+            FocusVisualPrimaryBrush="{StaticResource VSQ.Focus.BorderBrush}"
+            FocusVisualPrimaryThickness="{StaticResource VSQ.Focus.BorderThickness}"
+            Click="ButtonControl_Click">
+            <Button.Content>
+                <Grid>
+                    <StackPanel x:Name="ContentStack" Orientation="Horizontal"
+                        Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                        <ContentPresenter x:Name="ButtonContent"
+                            Content="{x:Bind Content, Mode=OneWay}" />
+                    </StackPanel>
+                    <ProgressRing
+                        x:Name="LoadingSpinner"
+                        Width="16"
+                        Height="16"
+                        Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
+                        IsActive="False"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Grid>
+            </Button.Content>
+        </Button>
+    </Grid>
 </UserControl>

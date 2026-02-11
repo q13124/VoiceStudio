@@ -149,6 +149,12 @@
             Click="CategoryButton_Click"
             RightTapped="CategoryButton_RightTapped"
             Style="{StaticResource CategoryButtonStyle}" />
+          <Button x:Name="PrivacyCategory"
+            Content="Privacy"
+            Tag="Privacy"
+            Click="CategoryButton_Click"
+            RightTapped="CategoryButton_RightTapped"
+            Style="{StaticResource CategoryButtonStyle}" />
           <Button x:Name="SystemCategory"
             Content="System"
             Tag="System"
@@ -518,6 +524,51 @@
                   Width="300"
                   PlaceholderText="http://localhost:8080" />
               </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Privacy Settings Panel -->
+          <Border x:Name="PrivacyPanel" Style="{StaticResource SettingGroupStyle}"
+            Visibility="Collapsed">
+            <StackPanel Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+              <TextBlock Text="Privacy Settings" Style="{StaticResource VSQ.Text.Heading}"
+                Margin="0,0,0,8" />
+
+              <TextBlock Text="VoiceStudio respects your privacy. All data stays local by default."
+                Style="{StaticResource VSQ.Text.Body}"
+                Foreground="{StaticResource VSQ.Text.SecondaryBrush}"
+                TextWrapping="Wrap"
+                Margin="0,0,0,16" />
+
+              <StackPanel Orientation="Horizontal"
+                Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                <TextBlock Text="Usage Analytics:" Width="150"
+                  Style="{StaticResource VSQ.Text.Body}" VerticalAlignment="Center" />
+                <ToggleSwitch IsOn="{x:Bind ViewModel.TelemetryEnabled, Mode=TwoWay}" />
+              </StackPanel>
+
+              <TextBlock Text="Help improve VoiceStudio by sharing anonymous usage data. No personal information, audio files, or project content is ever collected."
+                Style="{StaticResource VSQ.Text.Caption}"
+                Foreground="{StaticResource VSQ.Text.TertiaryBrush}"
+                TextWrapping="Wrap"
+                Margin="150,0,0,16" />
+
+              <StackPanel Orientation="Horizontal"
+                Spacing="{StaticResource VSQ.Spacing.Value.Small}">
+                <TextBlock Text="Error Reporting:" Width="150"
+                  Style="{StaticResource VSQ.Text.Body}" VerticalAlignment="Center" />
+                <ToggleSwitch IsOn="{x:Bind ViewModel.CrashReportingEnabled, Mode=TwoWay}" />
+              </StackPanel>
+
+              <TextBlock Text="Automatically send crash reports to help diagnose issues. Reports contain only technical error information."
+                Style="{StaticResource VSQ.Text.Caption}"
+                Foreground="{StaticResource VSQ.Text.TertiaryBrush}"
+                TextWrapping="Wrap"
+                Margin="150,0,0,16" />
+
+              <HyperlinkButton Content="View Privacy Policy"
+                NavigateUri="https://voicestudio.dev/privacy"
+                Margin="0,8,0,0" />
             </StackPanel>
           </Border>
 

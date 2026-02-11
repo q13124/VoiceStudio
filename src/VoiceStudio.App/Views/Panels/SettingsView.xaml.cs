@@ -78,6 +78,7 @@ namespace VoiceStudio.App.Views.Panels
         PerformancePanel.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
         PluginsPanel.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
         McpPanel.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        PrivacyPanel.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
         SystemPanel.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
 
         // Show selected panel
@@ -107,6 +108,9 @@ namespace VoiceStudio.App.Views.Panels
           case "MCP":
             McpPanel.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             break;
+          case "Privacy":
+            PrivacyPanel.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            break;
           case "System":
             SystemPanel.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             break;
@@ -121,6 +125,7 @@ namespace VoiceStudio.App.Views.Panels
         PerformanceCategory.IsEnabled = category != "Performance";
         PluginsCategory.IsEnabled = category != "Plugins";
         McpCategory.IsEnabled = category != "MCP";
+        PrivacyCategory.IsEnabled = category != "Privacy";
         SystemCategory.IsEnabled = category != "System";
       }
     }

@@ -148,5 +148,13 @@
   <!-- Card sizing -->
   <x:Double x:Key="VSQ.Card.MinWidth">200</x:Double>
   <x:Double x:Key="VSQ.Card.MinHeight">100</x:Double>
+  <!-- Animation durations (in milliseconds) -->
+  <x:Double x:Key="VSQ.Animation.Duration.Fast">100</x:Double>
+  <x:Double x:Key="VSQ.Animation.Duration.Normal">200</x:Double>
+  <x:Double x:Key="VSQ.Animation.Duration.Slow">300</x:Double>
+  <x:Double x:Key="VSQ.Animation.Duration.VeryFast">50</x:Double>
+  <!-- Touch optimization tokens -->
+  <x:Double x:Key="VSQ.Touch.MinSize">44</x:Double>
+  <x:Double x:Key="VSQ.Touch.MinSpacing">8</x:Double>
   <!-- Text + control styles moved to Resources/Styles/Text.xaml and Resources/Styles/Controls.xaml -->
 </ResourceDictionary>

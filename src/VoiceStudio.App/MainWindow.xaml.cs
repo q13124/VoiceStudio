@@ -90,6 +90,8 @@ namespace VoiceStudio.App
       ["Help"] = (PanelRegion.Right, "Help", () => new HelpView()),
       // Advanced panels
       ["SSMLControl"] = (PanelRegion.Right, "SSML Control", () => new SSMLControlView()),
+      // Appearance panels
+      ["ThemeEditor"] = (PanelRegion.Right, "Theme Editor", () => new ThemeEditorView()),
     };
 
     private T? FindInContent<T>(string name) where T : class
@@ -160,8 +162,22 @@ namespace VoiceStudio.App
       // DEBUG: Add AddHandler with handledEventsToo to capture ALL pointer events (after Loaded)
       if (this.Content is FrameworkElement contentFE)
       {
-        contentFE.Loaded += (s, e) =>
+        contentFE.Loaded += async (s, e) =>
         {
+          // Initialize theme service with root element
+          try
+          {
+            var themeService = AppServices.TryGetThemeService();
+            if (themeService != null)
+            {
+              await themeService.InitializeAsync(contentFE);
+            }
+          }
+          catch (Exception ex)
+          {
+            System.Diagnostics.Debug.WriteLine($"[Theme] Failed to initialize: {ex.Message}");
+          }
+
           // Log visual tree info after loaded
           var diagPath = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

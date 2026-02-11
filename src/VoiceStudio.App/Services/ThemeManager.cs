@@ -213,6 +213,7 @@ namespace VoiceStudio.App.Services
         LayoutDensity.Compact => "Compact",
         LayoutDensity.Normal => "Normal",
         LayoutDensity.Comfortable => "Comfortable",
+        LayoutDensity.Touch => "Touch",
         _ => "Compact"
       };
       ApplyLayoutDensity(densityName);

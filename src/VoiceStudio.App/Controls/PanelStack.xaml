@@ -20,6 +20,12 @@
             </ScrollViewer>
         </Border>
         <!-- Content Area -->
-        <ContentPresenter Grid.Row="1" x:Name="ContentPresenter"/>
+        <ContentPresenter Grid.Row="1" x:Name="ContentPresenter">
+            <ContentPresenter.ContentTransitions>
+                <TransitionCollection>
+                    <ContentThemeTransition />
+                </TransitionCollection>
+            </ContentPresenter.ContentTransitions>
+        </ContentPresenter>
     </Grid>
 </UserControl>

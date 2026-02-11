@@ -1,0 +1,160 @@
+<!--
+  ThemeEditorView.xaml - Theme customization panel
+  
+  AI GUIDELINES:
+  - Use {x:Bind ViewModel.Property, Mode=OneWay/TwoWay} for all bindings
+  - Always specify Mode explicitly (OneWay for display, TwoWay for input controls)
+  - Use StaticResource for theme resources (VSQ.* prefix)
+  - Commands should use IRelayCommand/IAsyncRelayCommand patterns
+-->
+<UserControl x:Class="VoiceStudio.App.Views.Panels.ThemeEditorView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:vm="using:VoiceStudio.App.ViewModels"
+  mc:Ignorable="d"
+  d:DataContext="{d:DesignInstance Type=vm:ThemeEditorViewModel, IsDesignTimeCreatable=False}">
+
+  <Grid Padding="16" Background="{StaticResource VSQ.Panel}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Header -->
+    <TextBlock Grid.Row="0" 
+      Text="Theme Editor" 
+      FontSize="24" 
+      FontWeight="SemiBold"
+      Foreground="{StaticResource VSQ.Text}"
+      Margin="0,0,0,24" />
+
+    <!-- Settings Content -->
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="24">
+
+        <!-- Theme Selection -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Theme" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <TextBlock Text="Choose your preferred color scheme" 
+                       Foreground="{StaticResource VSQ.SubtleText}"
+                       FontSize="12" />
+            <ComboBox x:Name="ThemeComboBox"
+                      HorizontalAlignment="Stretch"
+                      SelectionChanged="ThemeComboBox_SelectionChanged">
+              <ComboBoxItem Content="SciFi (Default)" Tag="SciFi" />
+              <ComboBoxItem Content="Dark" Tag="Dark" />
+              <ComboBoxItem Content="Light" Tag="Light" />
+            </ComboBox>
+          </StackPanel>
+        </Border>
+
+        <!-- Accent Color -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Accent Color" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <TextBlock Text="Highlight color for buttons, links, and selections" 
+                       Foreground="{StaticResource VSQ.SubtleText}"
+                       FontSize="12" />
+            <GridView x:Name="AccentColorGrid"
+                      SelectionMode="Single"
+                      SelectionChanged="AccentColorGrid_SelectionChanged">
+              <GridView.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="8" />
+                </ItemsPanelTemplate>
+              </GridView.ItemsPanel>
+              <GridView.ItemTemplate>
+                <DataTemplate>
+                  <Border Width="40" Height="40" 
+                          CornerRadius="20"
+                          BorderThickness="2"
+                          BorderBrush="Transparent"
+                          Margin="4">
+                    <Border.Background>
+                      <SolidColorBrush Color="{Binding Primary}" />
+                    </Border.Background>
+                    <ToolTipService.ToolTip>
+                      <ToolTip Content="{Binding Name}" />
+                    </ToolTipService.ToolTip>
+                  </Border>
+                </DataTemplate>
+              </GridView.ItemTemplate>
+            </GridView>
+          </StackPanel>
+        </Border>
+
+        <!-- Layout Density -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Layout Density" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <TextBlock Text="Adjust spacing and padding throughout the interface" 
+                       Foreground="{StaticResource VSQ.SubtleText}"
+                       FontSize="12" />
+            <ComboBox x:Name="DensityComboBox"
+                      HorizontalAlignment="Stretch"
+                      SelectionChanged="DensityComboBox_SelectionChanged">
+              <ComboBoxItem Content="Compact" Tag="Compact" />
+              <ComboBoxItem Content="Normal" Tag="Normal" />
+              <ComboBoxItem Content="Comfortable" Tag="Comfortable" />
+              <ComboBoxItem Content="Touch" Tag="Touch" ToolTipService.ToolTip="Optimized for touch screens with 44px minimum targets" />
+            </ComboBox>
+          </StackPanel>
+        </Border>
+
+        <!-- Preview Section -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Preview" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <Border Background="{StaticResource VSQ.Background}" 
+                    CornerRadius="4" 
+                    Padding="16"
+                    BorderBrush="{StaticResource VSQ.Border}"
+                    BorderThickness="1">
+              <StackPanel Spacing="8">
+                <TextBlock Text="Sample Text" 
+                           Foreground="{StaticResource VSQ.Text}" />
+                <TextBlock Text="Subtle text for descriptions" 
+                           Foreground="{StaticResource VSQ.SubtleText}"
+                           FontSize="12" />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                  <Button Content="Primary" />
+                  <Button Content="Secondary" Style="{StaticResource DefaultButtonStyle}" />
+                  <HyperlinkButton Content="Link" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <!-- Reset Button -->
+        <Button Content="Reset to Defaults" 
+                HorizontalAlignment="Left"
+                Click="ResetButton_Click" />
+
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

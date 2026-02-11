@@ -50,7 +50,7 @@ This document tracks items that are intentionally deferred to future development
 
 | Feature | Description | Complexity | Notes |
 |---------|-------------|------------|-------|
-| Bark Integration | Add Bark TTS engine with emotion control | Medium | Requires VRAM scheduler first |
+| ~~Bark Integration~~ | ~~Add Bark TTS engine with emotion control~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - Added SUPPORTED_EMOTIONS, EMOTION_PROMPTS, emotion parameter, get_supported_emotions() |
 | Tacotron 2 | Classic TTS model integration | Low | Legacy, lower priority |
 | RVC v2 | Voice conversion model upgrade | Medium | Awaiting stable release |
 | Streaming Synthesis | Real-time audio streaming | High | Requires architecture changes |
@@ -59,10 +59,10 @@ This document tracks items that are intentionally deferred to future development
 
 | Feature | Description | Complexity | Notes |
 |---------|-------------|------------|-------|
-| Advanced Animations | Fluent Design micro-interactions | Medium | UX polish phase |
+| ~~Advanced Animations~~ | ~~Fluent Design micro-interactions~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - LoadingOverlay fade, PanelHost/PanelStack transitions, VSQButton hover/press |
 | Theme Editor | User-customizable themes | Low | Phase 11+ |
 | Plugin Gallery | In-app engine/plugin browser | High | Requires plugin infrastructure |
-| Touch Optimization | Tablet-friendly UI adjustments | Medium | Windows tablet support |
+| ~~Touch Optimization~~ | ~~Tablet-friendly UI adjustments~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - 44px targets, Density.Touch.xaml, Touch density mode |
 
 ### Infrastructure
 
@@ -71,7 +71,7 @@ This document tracks items that are intentionally deferred to future development
 | Cross-Platform | macOS/Linux via Avalonia/MAUI | Very High | Major architecture change |
 | Cloud Sync | Optional cloud backup for profiles | Medium | Requires server infrastructure |
 | CI/CD Pipeline | Automated build and deployment | Medium | DevOps enhancement |
-| Telemetry (Opt-in) | Usage analytics for improvement | Low | Privacy-first design required |
+| ~~Telemetry (Opt-in)~~ | ~~Usage analytics for improvement~~ | ~~Low~~ | **COMPLETE** (2026-02-09) - AnalyticsService consent, TelemetryConsentDialog, SettingsView privacy section, PRIVACY_POLICY.md |
 
 ---
 

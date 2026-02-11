@@ -12,22 +12,22 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <!-- Transport Section -->
-        <StackPanel x:Name="TransportSection" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="2">
-            <Button ToolTipService.ToolTip="Rewind (Home)" MinWidth="32" Height="32" Padding="6"
+        <StackPanel x:Name="TransportSection" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
+            <Button ToolTipService.ToolTip="Rewind (Home)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
                 Background="Transparent" BorderThickness="0">
-                <FontIcon Glyph="&#xEB9E;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xEB9E;" FontSize="16" FontFamily="Segoe Fluent Icons" />
             </Button>
-            <Button x:Name="ToolbarPlayButton" ToolTipService.ToolTip="Play (Space)" MinWidth="36" Height="36" Padding="6"
-                Background="{StaticResource VSQ.Accent.CyanBrush}" CornerRadius="18">
-                <FontIcon Glyph="&#xE768;" FontSize="16" FontFamily="Segoe Fluent Icons" />
+            <Button x:Name="ToolbarPlayButton" ToolTipService.ToolTip="Play (Space)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
+                Background="{StaticResource VSQ.Accent.CyanBrush}" CornerRadius="22">
+                <FontIcon Glyph="&#xE768;" FontSize="18" FontFamily="Segoe Fluent Icons" />
             </Button>
-            <Button ToolTipService.ToolTip="Stop (S)" MinWidth="32" Height="32" Padding="6"
+            <Button ToolTipService.ToolTip="Stop (S)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
                 Background="Transparent" BorderThickness="0">
-                <FontIcon Glyph="&#xE71A;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE71A;" FontSize="16" FontFamily="Segoe Fluent Icons" />
             </Button>
-            <Button ToolTipService.ToolTip="Record (R)" MinWidth="32" Height="32" Padding="6"
+            <Button ToolTipService.ToolTip="Record (R)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
                 Background="Transparent" BorderThickness="0">
-                <FontIcon Glyph="&#xE7C8;" FontSize="14" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE7C8;" FontSize="16" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
             </Button>
         </StackPanel>
         <!-- Project Section -->
@@ -39,14 +39,14 @@
             <ComboBox x:Name="EngineSelector" Width="120" Height="28" FontSize="11" VerticalAlignment="Center" />
         </StackPanel>
         <!-- History/Workspace Section -->
-        <StackPanel x:Name="HistorySection" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="32,0,0,0" Spacing="2">
-            <Button ToolTipService.ToolTip="Undo (Ctrl+Z)" MinWidth="32" Height="32" Padding="6"
+        <StackPanel x:Name="HistorySection" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="32,0,0,0" Spacing="4">
+            <Button ToolTipService.ToolTip="Undo (Ctrl+Z)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
                 Background="Transparent" BorderThickness="0">
-                <FontIcon Glyph="&#xE7A7;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE7A7;" FontSize="16" FontFamily="Segoe Fluent Icons" />
             </Button>
-            <Button ToolTipService.ToolTip="Redo (Ctrl+Y)" MinWidth="32" Height="32" Padding="6"
+            <Button ToolTipService.ToolTip="Redo (Ctrl+Y)" MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8"
                 Background="Transparent" BorderThickness="0">
-                <FontIcon Glyph="&#xE7A6;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE7A6;" FontSize="16" FontFamily="Segoe Fluent Icons" />
             </Button>
         </StackPanel>
         <!-- Performance Section -->

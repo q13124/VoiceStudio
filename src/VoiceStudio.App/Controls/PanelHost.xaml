@@ -76,7 +76,13 @@
                 <!-- Panel Content -->
                 <ContentPresenter x:Name="PanelContent"
                     Content="{x:Bind Content, Mode=OneWay}"
-                    Opacity="1" />
+                    Opacity="1">
+                    <ContentPresenter.ContentTransitions>
+                        <TransitionCollection>
+                            <ContentThemeTransition />
+                        </TransitionCollection>
+                    </ContentPresenter.ContentTransitions>
+                </ContentPresenter>
                 <!-- Loading Overlay -->
                 <controls:LoadingOverlay x:Name="LoadingOverlay"
                     IsLoading="{x:Bind IsLoading, Mode=TwoWay}"
