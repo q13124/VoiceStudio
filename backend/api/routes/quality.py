@@ -138,6 +138,7 @@ class QualityHistoryEntry(BaseModel):
 
     id: str
     profile_id: str
+    project_id: Optional[str] = None  # Project ID for filtering (B.1 enhancement)
     timestamp: str  # ISO format datetime string
     engine: str
     metrics: Dict[str, Any]
@@ -152,6 +153,7 @@ class QualityHistoryRequest(BaseModel):
     """Request to store a quality history entry."""
 
     profile_id: str
+    project_id: Optional[str] = None  # Project ID for filtering (B.1 enhancement)
     engine: str
     metrics: Dict[str, Any]
     quality_score: float
@@ -723,23 +725,20 @@ async def get_quality_dashboard(
             if datetime.fromisoformat(e.timestamp.replace("Z", "+00:00")) >= cutoff_date
         ]
 
-        # Filter by project if specified
-        # Note: project_id filtering would require project_id in quality history entries
-        # Currently, all entries are included regardless of project_id
-        # Future enhancement: Add project_id to quality history entries for filtering
+        # Filter by project if specified (B.1 enhancement - project_id now a first-class field)
         if project_id:
-            # Filter entries by project_id if available in metadata
             filtered_entries = []
             for entry in recent_entries:
-                # Check if entry has project_id in metadata
-                if hasattr(entry, "metadata") and isinstance(entry.metadata, dict):
+                # Check direct project_id field first (new entries)
+                if hasattr(entry, "project_id") and entry.project_id == project_id:
+                    filtered_entries.append(entry)
+                # Fallback: check metadata for backward compatibility (legacy entries)
+                elif hasattr(entry, "metadata") and isinstance(entry.metadata, dict):
                     if entry.metadata.get("project_id") == project_id:
                         filtered_entries.append(entry)
-                # If no metadata or project_id not in metadata, include all entries
-                # (backward compatibility)
-                else:
-                    filtered_entries.append(entry)
-            recent_entries = filtered_entries if filtered_entries else recent_entries
+            # Only use filtered entries if we found matches, otherwise return empty
+            # (this is stricter than before - if project_id is specified, we respect it)
+            recent_entries = filtered_entries
 
         if not recent_entries:
             return {
@@ -946,10 +945,11 @@ async def store_quality_history(request: QualityHistoryRequest):
         Stored quality history entry
     """
     try:
-        # Create entry
+        # Create entry with project_id if provided (B.1 enhancement)
         entry = QualityHistoryEntry(
             id=str(uuid.uuid4()),
             profile_id=request.profile_id,
+            project_id=request.project_id,
             timestamp=datetime.utcnow().isoformat() + "Z",
             engine=request.engine,
             metrics=request.metrics,
@@ -987,6 +987,7 @@ async def store_quality_history(request: QualityHistoryRequest):
 @cache_response(ttl=60)  # Cache for 60 seconds (history may update)
 async def get_quality_history(
     profile_id: str,
+    project_id: Optional[str] = None,  # B.1 enhancement: filter by project
     limit: Optional[int] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -998,6 +999,7 @@ async def get_quality_history(
 
     Args:
         profile_id: Voice profile ID
+        project_id: Optional project ID to filter by (B.1 enhancement)
         limit: Maximum number of entries to return (default: all)
         start_date: Start date filter (ISO format, optional)
         end_date: End date filter (ISO format, optional)
@@ -1007,6 +1009,15 @@ async def get_quality_history(
     """
     try:
         entries = _quality_history.get(profile_id, [])
+
+        # Apply project_id filter if provided (B.1 enhancement)
+        if project_id:
+            entries = [
+                e for e in entries
+                if (hasattr(e, "project_id") and e.project_id == project_id) or
+                   (hasattr(e, "metadata") and isinstance(e.metadata, dict) and
+                    e.metadata.get("project_id") == project_id)
+            ]
 
         # Apply date filters if provided
         if start_date or end_date:

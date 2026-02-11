@@ -149,6 +149,41 @@
           </StackPanel>
         </Border>
 
+        <!-- Custom Theme Actions -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Custom Theme" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <TextBlock Text="Save your current settings as a custom theme" 
+                       Foreground="{StaticResource VSQ.SubtleText}"
+                       FontSize="12" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBox x:Name="CustomThemeNameBox" 
+                       PlaceholderText="Custom theme name"
+                       Width="200" />
+              <Button Content="Save Theme" 
+                      Click="SaveThemeButton_Click"
+                      ToolTipService.ToolTip="Save current settings as a custom theme" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <ComboBox x:Name="SavedThemesComboBox"
+                        PlaceholderText="Saved themes"
+                        Width="200"
+                        SelectionChanged="SavedThemesComboBox_SelectionChanged" />
+              <Button Content="Load" 
+                      Click="LoadThemeButton_Click"
+                      ToolTipService.ToolTip="Load selected custom theme" />
+              <Button Content="Delete"
+                      Click="DeleteThemeButton_Click"
+                      ToolTipService.ToolTip="Delete selected custom theme" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
         <!-- Reset Button -->
         <Button Content="Reset to Defaults" 
                 HorizontalAlignment="Left"

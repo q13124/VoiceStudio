@@ -143,10 +143,10 @@ namespace VoiceStudio.App.Services
         {
           module.OnShutdown();
         }
-        catch
+        catch (Exception ex)
         {
-          // Log but don't throw during shutdown
-          // TODO: Add logging when ILogger is available
+          // Log shutdown errors but don't throw - allow other modules to shutdown
+          System.Diagnostics.Debug.WriteLine($"[ModuleLoader] Error during module shutdown '{module.ModuleId}': {ex.Message}");
         }
       }
     }

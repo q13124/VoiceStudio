@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -516,6 +517,140 @@ namespace VoiceStudio.App.Services
             _ = Task.Run(async () => await CleanupAsync());
             _bufferSemaphore.Dispose();
         }
+
+        /// <summary>
+        /// Checks if streaming synthesis is available for a specific engine.
+        /// C.2 Enhancement: Capability check before streaming.
+        /// </summary>
+        /// <param name="baseUrl">Backend API base URL.</param>
+        /// <param name="engineId">Engine ID to check.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Streaming capability information.</returns>
+        public static async Task<StreamingCapability> CheckStreamingCapabilityAsync(
+            string baseUrl,
+            string engineId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var httpClient = new System.Net.Http.HttpClient();
+                var response = await httpClient.GetAsync(
+                    $"{baseUrl}/api/voice/streaming/capabilities/{engineId}",
+                    cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new StreamingCapability
+                    {
+                        EngineId = engineId,
+                        SupportsStreaming = false,
+                        SupportsBatch = false,
+                        RecommendedMode = "batch",
+                        Error = $"HTTP {(int)response.StatusCode}"
+                    };
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                return new StreamingCapability
+                {
+                    EngineId = engineId,
+                    SupportsStreaming = root.TryGetProperty("supports_streaming", out var ss) && ss.GetBoolean(),
+                    SupportsBatch = root.TryGetProperty("supports_batch", out var sb) && sb.GetBoolean(),
+                    RecommendedMode = root.TryGetProperty("recommended_mode", out var rm) ? rm.GetString() ?? "batch" : "batch",
+                    FallbackMode = root.TryGetProperty("fallback_mode", out var fm) ? fm.GetString() : null
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Capability check failed: {ex.Message}");
+                return new StreamingCapability
+                {
+                    EngineId = engineId,
+                    SupportsStreaming = false,
+                    SupportsBatch = true, // Assume batch works
+                    RecommendedMode = "batch",
+                    Error = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets all streaming capabilities from the backend.
+        /// C.2 Enhancement: Full capability discovery.
+        /// </summary>
+        public static async Task<StreamingCapabilities> GetStreamingCapabilitiesAsync(
+            string baseUrl,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var httpClient = new System.Net.Http.HttpClient();
+                var response = await httpClient.GetAsync(
+                    $"{baseUrl}/api/voice/streaming/capabilities",
+                    cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new StreamingCapabilities { WebSocketEndpoint = null };
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var capabilities = new StreamingCapabilities
+                {
+                    WebSocketEndpoint = root.TryGetProperty("websocket_endpoint", out var ep) ? ep.GetString() : null,
+                    TargetLatencyMs = root.TryGetProperty("target_latency_ms", out var lat) ? lat.GetInt32() : 200,
+                    ChunkSizeSamples = root.TryGetProperty("chunk_size_samples", out var cs) ? cs.GetInt32() : 4800,
+                };
+
+                if (root.TryGetProperty("streaming_engines", out var engines) && engines.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var engine in engines.EnumerateArray())
+                    {
+                        if (engine.GetString() is string engineId)
+                        {
+                            capabilities.StreamingEngines.Add(engineId);
+                        }
+                    }
+                }
+
+                return capabilities;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Get capabilities failed: {ex.Message}");
+                return new StreamingCapabilities { WebSocketEndpoint = null };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Streaming capability information for a specific engine.
+    /// </summary>
+    public class StreamingCapability
+    {
+        public string EngineId { get; set; } = string.Empty;
+        public bool SupportsStreaming { get; set; }
+        public bool SupportsBatch { get; set; }
+        public string RecommendedMode { get; set; } = "batch";
+        public string? FallbackMode { get; set; }
+        public string? Error { get; set; }
+    }
+
+    /// <summary>
+    /// Full streaming capabilities from the backend.
+    /// </summary>
+    public class StreamingCapabilities
+    {
+        public string? WebSocketEndpoint { get; set; }
+        public List<string> StreamingEngines { get; set; } = new();
+        public int TargetLatencyMs { get; set; } = 200;
+        public int ChunkSizeSamples { get; set; } = 4800;
     }
 
     /// <summary>

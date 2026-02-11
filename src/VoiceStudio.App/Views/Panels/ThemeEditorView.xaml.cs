@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VoiceStudio.App.Services;
@@ -11,17 +15,24 @@ public sealed partial class ThemeEditorView : UserControl
 {
     private IUnifiedThemeService? _themeService;
     private bool _isInitializing = true;
+    private readonly string _customThemesPath;
 
     public ThemeEditorView()
     {
         this.InitializeComponent();
         this.Loaded += OnLoaded;
+        
+        // Setup custom themes storage path
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        _customThemesPath = Path.Combine(appData, "VoiceStudio", "themes");
+        Directory.CreateDirectory(_customThemesPath);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _themeService = AppServices.TryGetThemeService();
         InitializeControls();
+        LoadSavedThemesList();
         _isInitializing = false;
     }
 
@@ -123,5 +134,129 @@ public sealed partial class ThemeEditorView : UserControl
         InitializeControls();
         
         _isInitializing = false;
+    }
+
+    private void LoadSavedThemesList()
+    {
+        try
+        {
+            SavedThemesComboBox.Items.Clear();
+            var themeFiles = Directory.GetFiles(_customThemesPath, "*.json");
+            foreach (var file in themeFiles)
+            {
+                var name = Path.GetFileNameWithoutExtension(file);
+                SavedThemesComboBox.Items.Add(new ComboBoxItem { Content = name, Tag = file });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Failed to load saved themes: {ex.Message}");
+        }
+    }
+
+    private void SaveThemeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_themeService == null) return;
+
+        var themeName = CustomThemeNameBox.Text?.Trim();
+        if (string.IsNullOrEmpty(themeName))
+        {
+            // Show error or use default name
+            themeName = $"Custom_{DateTime.Now:yyyyMMdd_HHmmss}";
+        }
+
+        try
+        {
+            var themeData = new Dictionary<string, string>
+            {
+                ["theme"] = _themeService.CurrentThemeName,
+                ["density"] = _themeService.CurrentDensity.ToString(),
+                ["accentName"] = _themeService.CurrentAccent.Name
+            };
+
+            var json = JsonSerializer.Serialize(themeData, new JsonSerializerOptions { WriteIndented = true });
+            var filePath = Path.Combine(_customThemesPath, $"{themeName}.json");
+            File.WriteAllText(filePath, json);
+
+            CustomThemeNameBox.Text = string.Empty;
+            LoadSavedThemesList();
+
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Saved custom theme: {themeName}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Failed to save theme: {ex.Message}");
+        }
+    }
+
+    private void LoadThemeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_themeService == null || SavedThemesComboBox.SelectedItem is not ComboBoxItem selectedItem)
+            return;
+
+        var filePath = selectedItem.Tag?.ToString();
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            return;
+
+        try
+        {
+            var json = File.ReadAllText(filePath);
+            var themeData = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+            if (themeData != null)
+            {
+                _isInitializing = true;
+
+                if (themeData.TryGetValue("theme", out var themeName))
+                    _themeService.ApplyTheme(themeName);
+
+                if (themeData.TryGetValue("density", out var densityStr) &&
+                    Enum.TryParse<LayoutDensity>(densityStr, out var density))
+                    _themeService.SetDensity(density);
+
+                if (themeData.TryGetValue("accentName", out var accentName))
+                {
+                    var accents = _themeService.GetPredefinedAccents();
+                    var accent = accents.Find(a => a.Name == accentName);
+                    if (accent != null)
+                        _themeService.SetAccent(accent);
+                }
+
+                InitializeControls();
+                _isInitializing = false;
+
+                System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Loaded custom theme from: {filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Failed to load theme: {ex.Message}");
+        }
+    }
+
+    private void SavedThemesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Could add preview on hover in future
+    }
+
+    private void DeleteThemeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (SavedThemesComboBox.SelectedItem is not ComboBoxItem selectedItem)
+            return;
+
+        var filePath = selectedItem.Tag?.ToString();
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            return;
+
+        try
+        {
+            File.Delete(filePath);
+            LoadSavedThemesList();
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Deleted custom theme: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Failed to delete theme: {ex.Message}");
+        }
     }
 }

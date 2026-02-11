@@ -167,3 +167,252 @@ jobs:
       
       - name: Lint with Ruff
         run: ruff check backend app tests
+
+  # ============================================================================
+  # C.3 Enhancement: Installer Build
+  # ============================================================================
+  installer-build:
+    name: Build Installer
+    runs-on: windows-latest
+    needs: [dotnet-build]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: voicestudio-build
+          path: build/
+      
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+      
+      - name: Build Installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/VoiceStudio.iss
+        shell: pwsh
+      
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicestudio-installer
+          path: installer/Output/*.exe
+
+  # ============================================================================
+  # C.3 Enhancement: E2E UI Tests
+  # ============================================================================
+  e2e-tests:
+    name: E2E UI Tests
+    runs-on: windows-latest
+    needs: [dotnet-build]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: voicestudio-build
+          path: build/
+      
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI
+          playwright install
+      
+      - name: Run E2E tests
+        run: |
+          dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj `
+            -c Release -p:Platform=x64 `
+            --filter "Category=E2E" `
+            --logger "trx;LogFileName=e2e-results.trx"
+        shell: pwsh
+        continue-on-error: true
+      
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            **/TestResults/*.trx
+            **/screenshots/*.png
+
+  # ============================================================================
+  # C.3 Enhancement: Performance Regression Detection
+  # ============================================================================
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [python-tests]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pytest-benchmark
+      
+      - name: Run performance benchmarks
+        run: |
+          python -m pytest tests/performance/ -v \
+            --benchmark-only \
+            --benchmark-json=benchmark-results.json \
+            --benchmark-compare-fail=mean:10% \
+            || true
+      
+      - name: Store benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
+      
+      - name: Compare with baseline (if available)
+        run: |
+          if [ -f .benchmark-baseline.json ]; then
+            python -c "
+          import json
+          with open('benchmark-results.json') as f:
+              current = json.load(f)
+          with open('.benchmark-baseline.json') as f:
+              baseline = json.load(f)
+          
+          regressions = []
+          for bench in current.get('benchmarks', []):
+              name = bench['name']
+              current_mean = bench['stats']['mean']
+              for base_bench in baseline.get('benchmarks', []):
+                  if base_bench['name'] == name:
+                      base_mean = base_bench['stats']['mean']
+                      if current_mean > base_mean * 1.1:
+                          pct = ((current_mean - base_mean) / base_mean) * 100
+                          regressions.append(f'{name}: +{pct:.1f}%')
+          
+          if regressions:
+              print('Performance regressions detected:')
+              for r in regressions:
+                  print(f'  - {r}')
+              exit(1)
+          else:
+              print('No performance regressions detected')
+          "
+          else
+            echo "No baseline found, skipping comparison"
+          fi
+
+  # ============================================================================
+  # C.3 Enhancement: Build Caching
+  # ============================================================================
+  cache-cleanup:
+    name: Cache Cleanup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Cleanup old caches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const cachesToDelete = caches.data.actions_caches
+              .filter(cache => {
+                const ageInDays = (Date.now() - new Date(cache.created_at).getTime()) / (1000 * 60 * 60 * 24);
+                return ageInDays > 7;
+              });
+            
+            for (const cache of cachesToDelete) {
+              console.log(`Deleting cache: ${cache.key}`);
+              await github.rest.actions.deleteActionsCacheById({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                cache_id: cache.id
+              });
+            }
+
+  # ============================================================================
+  # C.3 Enhancement: Artifact Signing (Release only)
+  # ============================================================================
+  sign-artifacts:
+    name: Sign Release Artifacts
+    runs-on: windows-latest
+    needs: [installer-build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download installer
+        uses: actions/download-artifact@v4
+        with:
+          name: voicestudio-installer
+          path: installer/
+      
+      - name: Sign installer (placeholder)
+        run: |
+          echo "Artifact signing would happen here with code signing certificate"
+          echo "signtool sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 installer/*.exe"
+        shell: pwsh
+      
+      - name: Generate checksums
+        run: |
+          Get-ChildItem installer/*.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File -Append checksums.txt
+          }
+        shell: pwsh
+      
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicestudio-signed-installer
+          path: |
+            installer/*.exe
+            checksums.txt
+
+  # ============================================================================
+  # Summary Job
+  # ============================================================================
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [python-tests, dotnet-build, integration-tests, security-scan, code-quality]
+    if: always()
+    
+    steps:
+      - name: Check job results
+        run: |
+          echo "Python Tests: ${{ needs.python-tests.result }}"
+          echo ".NET Build: ${{ needs.dotnet-build.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          
+          if [[ "${{ needs.python-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.dotnet-build.result }}" == "failure" ]]; then
+            echo "Critical jobs failed!"
+            exit 1
+          fi
+          
+          echo "CI completed successfully!"

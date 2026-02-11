@@ -250,6 +250,89 @@ async def get_gpu_status():
         except Exception as e:
             logger.debug(f"AMD GPU detection failed: {e}")
 
+        # Try to detect Intel GPUs (C.1 enhancement)
+        try:
+            import platform
+            import subprocess
+            
+            if platform.system() == "Windows":
+                # Use WMIC to query Intel GPUs
+                result = subprocess.run(
+                    ["wmic", "path", "win32_VideoController", "get", "Name,AdapterRAM,DriverVersion", "/format:csv"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split("\n")
+                    gpu_idx = len([d for d in devices if d.vendor == "Intel"])
+                    for line in lines:
+                        if line.strip() and ("INTEL" in line.upper() or "UHD" in line.upper() or "IRIS" in line.upper()) and "Node" not in line:
+                            parts = [p.strip() for p in line.split(",")]
+                            if len(parts) >= 3:
+                                name = parts[-1] if parts[-1] else f"Intel GPU {gpu_idx}"
+                                adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                                driver_version = parts[2] if len(parts) > 2 else None
+                                
+                                # Skip if already detected
+                                if not any(d.name == name and d.vendor == "Intel" for d in devices):
+                                    device = GPUDevice(
+                                        device_id=f"intel-{gpu_idx}",
+                                        name=name,
+                                        vendor="Intel",
+                                        memory_total_mb=adapter_ram,
+                                        memory_used_mb=0,
+                                        memory_free_mb=adapter_ram,
+                                        utilization_percent=0.0,
+                                        temperature_celsius=None,
+                                        power_usage_watts=None,
+                                        driver_version=driver_version,
+                                        is_available=True,
+                                    )
+                                    devices.append(device)
+                                    gpu_idx += 1
+                    if gpu_idx > 0:
+                        logger.debug(f"Detected {gpu_idx} Intel GPU(s) via WMI")
+            
+            elif platform.system() == "Linux":
+                # Try to detect Intel GPUs via sysfs or intel_gpu_top
+                try:
+                    # Check /sys/class/drm for Intel GPUs
+                    import os
+                    drm_path = "/sys/class/drm"
+                    if os.path.exists(drm_path):
+                        gpu_idx = len([d for d in devices if d.vendor == "Intel"])
+                        for card in os.listdir(drm_path):
+                            if card.startswith("card") and not "-" in card:
+                                device_path = os.path.join(drm_path, card, "device")
+                                vendor_path = os.path.join(device_path, "vendor")
+                                if os.path.exists(vendor_path):
+                                    with open(vendor_path, "r") as f:
+                                        vendor_id = f.read().strip()
+                                    # Intel vendor ID is 0x8086
+                                    if vendor_id == "0x8086":
+                                        device = GPUDevice(
+                                            device_id=f"intel-{gpu_idx}",
+                                            name=f"Intel Integrated Graphics ({card})",
+                                            vendor="Intel",
+                                            memory_total_mb=0,  # Shared memory, hard to determine
+                                            memory_used_mb=0,
+                                            memory_free_mb=0,
+                                            utilization_percent=0.0,
+                                            temperature_celsius=None,
+                                            power_usage_watts=None,
+                                            driver_version=None,
+                                            is_available=True,
+                                        )
+                                        devices.append(device)
+                                        gpu_idx += 1
+                        if gpu_idx > 0:
+                            logger.debug(f"Detected {gpu_idx} Intel GPU(s) via sysfs")
+                except Exception as e:
+                    logger.debug(f"Intel GPU detection via sysfs failed: {e}")
+        except Exception as e:
+            logger.debug(f"Intel GPU detection failed: {e}")
+
         # If no real GPUs detected, return empty device list
         # Client should handle empty device list as "no GPU available" state
         # Note: This is acceptable - not all systems have GPUs

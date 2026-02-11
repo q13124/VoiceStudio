@@ -3543,6 +3543,77 @@ def _engine_supports_streaming(engine_instance: Any) -> bool:
     )
 
 
+@router.get("/streaming/capabilities")
+async def get_streaming_capabilities() -> Dict[str, Any]:
+    """
+    Get streaming synthesis capabilities.
+    
+    Returns information about which engines support streaming synthesis,
+    WebSocket endpoint URL, and streaming parameters.
+    
+    C.2 Enhancement: Streaming capability discovery endpoint.
+    """
+    available_streaming_engines = []
+    
+    if ENGINE_AVAILABLE and engine_router:
+        for engine_id in STREAMING_ENGINES:
+            try:
+                engine_instance = engine_router.get_engine(engine_id)
+                if engine_instance is not None and _engine_supports_streaming(engine_instance):
+                    available_streaming_engines.append({
+                        "engine_id": engine_id,
+                        "supports_streaming": True,
+                        "fallback_available": True,
+                    })
+                elif engine_instance is not None:
+                    # Engine exists but doesn't have streaming method
+                    available_streaming_engines.append({
+                        "engine_id": engine_id,
+                        "supports_streaming": False,
+                        "fallback_available": hasattr(engine_instance, "synthesize"),
+                    })
+            except Exception as e:
+                # Engine check failed - skip this engine silently as this is a capability probe
+                logger.debug(f"Failed to check streaming capability for {engine_id}: {e}")
+    
+    return {
+        "websocket_endpoint": "/api/voice/synthesize/stream",
+        "streaming_engines": list(STREAMING_ENGINES),
+        "available_engines": available_streaming_engines,
+        "target_latency_ms": 200,
+        "supported_formats": ["raw", "wav", "mp3"],
+        "chunk_size_samples": 4800,  # 200ms at 24kHz
+    }
+
+
+@router.get("/streaming/capabilities/{engine_id}")
+async def get_engine_streaming_capability(engine_id: str) -> Dict[str, Any]:
+    """
+    Check if a specific engine supports streaming.
+    
+    C.2 Enhancement: Per-engine streaming capability check.
+    """
+    if not ENGINE_AVAILABLE or not engine_router:
+        raise HTTPException(status_code=503, detail="Engine system not available")
+    
+    engine_instance = engine_router.get_engine(engine_id)
+    if engine_instance is None:
+        raise HTTPException(status_code=404, detail=f"Engine '{engine_id}' not found")
+    
+    supports_streaming = _engine_supports_streaming(engine_instance)
+    supports_batch = hasattr(engine_instance, "synthesize") and callable(
+        getattr(engine_instance, "synthesize", None)
+    )
+    
+    return {
+        "engine_id": engine_id,
+        "supports_streaming": supports_streaming,
+        "supports_batch": supports_batch,
+        "fallback_mode": "batch" if not supports_streaming and supports_batch else None,
+        "recommended_mode": "streaming" if supports_streaming else "batch",
+    }
+
+
 def _get_engine_sample_rate(engine_instance: Any, engine_id: str) -> int:
     """Get the sample rate for an engine."""
     # Engine-specific sample rates
