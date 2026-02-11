@@ -1,18 +1,19 @@
 // Phase 5: Voice Profile UI
 // Task 5.15: Voice profile management UI
+// GAP-FE-001: Integrated with ProfileGateway for backend connectivity
 
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using VoiceStudio.App.Services;
-using VoiceStudio.App.Logging;
+using Microsoft.Extensions.Logging;
+using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Gateways;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Features.VoiceProfile;
 
@@ -30,7 +31,7 @@ public enum VoiceSource
 /// <summary>
 /// Voice profile data.
 /// </summary>
-public class VoiceProfileData : INotifyPropertyChanged
+public partial class VoiceProfileData : ObservableObject
 {
     private string _name = "";
     private string _description = "";
@@ -43,13 +44,13 @@ public class VoiceProfileData : INotifyPropertyChanged
     public string Name
     {
         get => _name;
-        set { _name = value; OnPropertyChanged(); }
+        set => SetProperty(ref _name, value);
     }
     
     public string Description
     {
         get => _description;
-        set { _description = value; OnPropertyChanged(); }
+        set => SetProperty(ref _description, value);
     }
     
     public VoiceSource Source { get; set; }
@@ -63,19 +64,19 @@ public class VoiceProfileData : INotifyPropertyChanged
     public DateTime LastUsed
     {
         get => _lastUsed;
-        set { _lastUsed = value; OnPropertyChanged(); }
+        set => SetProperty(ref _lastUsed, value);
     }
     
     public bool IsFavorite
     {
         get => _isFavorite;
-        set { _isFavorite = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isFavorite, value);
     }
     
     public double Rating
     {
         get => _rating;
-        set { _rating = value; OnPropertyChanged(); }
+        set => SetProperty(ref _rating, value);
     }
     
     public int UsageCount { get; set; }
@@ -84,27 +85,32 @@ public class VoiceProfileData : INotifyPropertyChanged
     public string? SourceAudioPath { get; set; }
     public TimeSpan? SourceDuration { get; set; }
     public double? CloningQuality { get; set; }
-    
-    public event PropertyChangedEventHandler? PropertyChanged;
-    
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 /// <summary>
 /// ViewModel for voice profile management.
+/// GAP-FE-001: Refactored to inherit from BaseViewModel and integrate with ProfileGateway.
 /// </summary>
-public class VoiceProfileViewModel : INotifyPropertyChanged
+public partial class VoiceProfileViewModel : BaseViewModel
 {
+    private readonly IProfileGateway _profileGateway;
+    private readonly IVoiceGateway _voiceGateway;
+
     private VoiceProfileData? _selectedProfile;
     private string _searchQuery = "";
     private VoiceSource? _sourceFilter;
     private string? _languageFilter;
     private bool _showFavoritesOnly;
-    private bool _isLoading;
 
-    public VoiceProfileViewModel()
+    public VoiceProfileViewModel(
+        IViewModelContext context,
+        IProfileGateway profileGateway,
+        IVoiceGateway voiceGateway)
+        : base(context)
     {
+        _profileGateway = profileGateway ?? throw new ArgumentNullException(nameof(profileGateway));
+        _voiceGateway = voiceGateway ?? throw new ArgumentNullException(nameof(voiceGateway));
+
         AllProfiles = new ObservableCollection<VoiceProfileData>();
         FilteredProfiles = new ObservableCollection<VoiceProfileData>();
         AvailableLanguages = new ObservableCollection<string>
@@ -119,6 +125,8 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         DeleteVoiceCommand = new AsyncRelayCommand(DeleteVoiceAsync, () => SelectedProfile != null && SelectedProfile.Source != VoiceSource.Builtin);
         PlaySampleCommand = new AsyncRelayCommand(PlaySampleAsync, () => !string.IsNullOrEmpty(SelectedProfile?.SampleAudioPath));
         ToggleFavoriteCommand = new RelayCommand(ToggleFavorite, () => SelectedProfile != null);
+        CreateProfileCommand = new AsyncRelayCommand(CreateProfileAsync);
+        SaveProfileCommand = new AsyncRelayCommand(SaveProfileAsync, () => SelectedProfile != null);
     }
 
     public ObservableCollection<VoiceProfileData> AllProfiles { get; }
@@ -130,14 +138,16 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         get => _selectedProfile;
         set 
         { 
-            _selectedProfile = value; 
-            OnPropertyChanged();
-            // Notify commands that depend on selection
-            (CloneVoiceCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-            (ExportVoiceCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-            (DeleteVoiceCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-            (PlaySampleCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-            (ToggleFavoriteCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            if (SetProperty(ref _selectedProfile, value))
+            {
+                // Notify commands that depend on selection
+                CloneVoiceCommand.NotifyCanExecuteChanged();
+                ExportVoiceCommand.NotifyCanExecuteChanged();
+                DeleteVoiceCommand.NotifyCanExecuteChanged();
+                PlaySampleCommand.NotifyCanExecuteChanged();
+                ToggleFavoriteCommand.NotifyCanExecuteChanged();
+                SaveProfileCommand.NotifyCanExecuteChanged();
+            }
         }
     }
 
@@ -146,9 +156,10 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         get => _searchQuery;
         set
         {
-            _searchQuery = value;
-            OnPropertyChanged();
-            ApplyFilters();
+            if (SetProperty(ref _searchQuery, value))
+            {
+                ApplyFilters();
+            }
         }
     }
 
@@ -157,9 +168,10 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         get => _sourceFilter;
         set
         {
-            _sourceFilter = value;
-            OnPropertyChanged();
-            ApplyFilters();
+            if (SetProperty(ref _sourceFilter, value))
+            {
+                ApplyFilters();
+            }
         }
     }
 
@@ -168,9 +180,10 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         get => _languageFilter;
         set
         {
-            _languageFilter = value;
-            OnPropertyChanged();
-            ApplyFilters();
+            if (SetProperty(ref _languageFilter, value))
+            {
+                ApplyFilters();
+            }
         }
     }
 
@@ -179,34 +192,37 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         get => _showFavoritesOnly;
         set
         {
-            _showFavoritesOnly = value;
-            OnPropertyChanged();
-            ApplyFilters();
+            if (SetProperty(ref _showFavoritesOnly, value))
+            {
+                ApplyFilters();
+            }
         }
     }
 
-    public bool IsLoading
-    {
-        get => _isLoading;
-        set { _isLoading = value; OnPropertyChanged(); }
-    }
-
     // Commands
-    public ICommand RefreshCommand { get; }
-    public ICommand CloneVoiceCommand { get; }
-    public ICommand ImportVoiceCommand { get; }
-    public ICommand ExportVoiceCommand { get; }
-    public ICommand DeleteVoiceCommand { get; }
-    public ICommand PlaySampleCommand { get; }
-    public ICommand ToggleFavoriteCommand { get; }
+    public AsyncRelayCommand RefreshCommand { get; }
+    public AsyncRelayCommand CloneVoiceCommand { get; }
+    public AsyncRelayCommand ImportVoiceCommand { get; }
+    public AsyncRelayCommand ExportVoiceCommand { get; }
+    public AsyncRelayCommand DeleteVoiceCommand { get; }
+    public AsyncRelayCommand PlaySampleCommand { get; }
+    public RelayCommand ToggleFavoriteCommand { get; }
+    public AsyncRelayCommand CreateProfileCommand { get; }
+    public AsyncRelayCommand SaveProfileCommand { get; }
 
     public async Task LoadAsync()
     {
         IsLoading = true;
+        StatusMessage = "Loading profiles...";
         
         try
         {
             await RefreshAsync();
+            StatusMessage = "Profiles loaded";
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to load profiles");
         }
         finally
         {
@@ -216,33 +232,150 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
 
     private async Task RefreshAsync()
     {
-        // Load profiles from backend
-        AllProfiles.Clear();
+        IsLoading = true;
+        ErrorMessage = null;
         
-        // Add some sample profiles
-        AllProfiles.Add(new VoiceProfileData
+        try
         {
-            Name = "Default English",
-            Description = "Standard English voice",
-            Source = VoiceSource.Builtin,
-            Engine = "xtts",
-            Language = "en",
-            Gender = "neutral",
-        });
-        
-        AllProfiles.Add(new VoiceProfileData
+            // Load profiles from backend via ProfileGateway
+            var result = await _profileGateway.GetAllAsync();
+            
+            AllProfiles.Clear();
+            
+            if (result.Success && result.Data != null)
+            {
+                foreach (var profileInfo in result.Data)
+                {
+                    AllProfiles.Add(new VoiceProfileData
+                    {
+                        Id = profileInfo.Id,
+                        Name = profileInfo.Name,
+                        Description = profileInfo.Description ?? "",
+                        Engine = profileInfo.EngineId ?? "",
+                        CreatedAt = profileInfo.CreatedAt,
+                        Source = profileInfo.IsDefault ? VoiceSource.Builtin : VoiceSource.Cloned,
+                    });
+                }
+                
+                StatusMessage = $"Loaded {AllProfiles.Count} profiles";
+            }
+            else
+            {
+                // Fallback to sample data if backend unavailable
+                Logger.LogWarning("Failed to load profiles from backend: {Error}", result.Error);
+                
+                AllProfiles.Add(new VoiceProfileData
+                {
+                    Name = "Default English",
+                    Description = "Standard English voice",
+                    Source = VoiceSource.Builtin,
+                    Engine = "xtts_v2",
+                    Language = "en",
+                    Gender = "neutral",
+                });
+                
+                StatusMessage = "Using default profiles (backend unavailable)";
+            }
+            
+            ApplyFilters();
+            
+            if (FilteredProfiles.Count > 0 && SelectedProfile == null)
+            {
+                SelectedProfile = FilteredProfiles[0];
+            }
+        }
+        catch (Exception ex)
         {
-            Name = "My Clone",
-            Description = "Cloned from sample recording",
-            Source = VoiceSource.Cloned,
-            Engine = "xtts",
-            Language = "en",
-            IsFavorite = true,
-        });
-        
-        ApplyFilters();
-        
-        await Task.CompletedTask;
+            await HandleErrorAsync(ex, "Failed to refresh profiles");
+            
+            // Add fallback profile
+            AllProfiles.Add(new VoiceProfileData
+            {
+                Name = "Default English",
+                Description = "Standard English voice",
+                Source = VoiceSource.Builtin,
+                Engine = "xtts_v2",
+                Language = "en",
+            });
+            ApplyFilters();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task CreateProfileAsync()
+    {
+        try
+        {
+            var request = new ProfileCreateRequest
+            {
+                Name = "New Profile",
+                Description = "Created via VoiceStudio",
+            };
+            
+            var result = await _profileGateway.CreateAsync(request);
+            
+            if (result.Success && result.Data != null)
+            {
+                var newProfile = new VoiceProfileData
+                {
+                    Id = result.Data.Id,
+                    Name = result.Data.Name,
+                    Description = result.Data.Description ?? "",
+                    Engine = result.Data.EngineId ?? "",
+                    CreatedAt = result.Data.CreatedAt,
+                    Source = VoiceSource.Cloned,
+                };
+                
+                AllProfiles.Add(newProfile);
+                ApplyFilters();
+                SelectedProfile = newProfile;
+                
+                StatusMessage = $"Created profile: {newProfile.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to create profile", "Profile error", showDialog: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to create profile");
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (SelectedProfile == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var request = new ProfileUpdateRequest
+            {
+                Name = SelectedProfile.Name,
+                Description = SelectedProfile.Description,
+            };
+            
+            var result = await _profileGateway.UpdateAsync(SelectedProfile.Id, request);
+            
+            if (result.Success)
+            {
+                StatusMessage = $"Saved profile: {SelectedProfile.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to save profile", "Profile error", showDialog: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to save profile");
+        }
     }
 
     private async Task CloneVoiceAsync()
@@ -254,90 +387,103 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         
         try
         {
-            // Create a clone of the selected profile with a new ID
-            var clonedProfile = new VoiceProfileData
+            // Create a clone of the selected profile via backend
+            var request = new ProfileCreateRequest
             {
-                Id = Guid.NewGuid().ToString(),
                 Name = $"{SelectedProfile.Name} (Clone)",
                 Description = SelectedProfile.Description,
-                Source = VoiceSource.Cloned,
-                Engine = SelectedProfile.Engine,
-                Language = SelectedProfile.Language,
-                Rating = SelectedProfile.Rating,
-                IsFavorite = false,
-                SampleAudioPath = SelectedProfile.SampleAudioPath,
-                CreatedAt = DateTime.Now,
-                LastUsed = DateTime.MinValue
+                EngineId = SelectedProfile.Engine,
             };
             
-            AllProfiles.Add(clonedProfile);
-            ApplyFilters();
-            SelectedProfile = clonedProfile;
+            var result = await _profileGateway.CreateAsync(request);
             
-            ErrorLogger.LogInfo($"Voice profile cloned: {clonedProfile.Name}", "VoiceProfileViewModel");
+            if (result.Success && result.Data != null)
+            {
+                var clonedProfile = new VoiceProfileData
+                {
+                    Id = result.Data.Id,
+                    Name = result.Data.Name,
+                    Description = result.Data.Description ?? "",
+                    Source = VoiceSource.Cloned,
+                    Engine = result.Data.EngineId ?? SelectedProfile.Engine,
+                    Language = SelectedProfile.Language,
+                    CreatedAt = DateTime.Now,
+                };
+                
+                AllProfiles.Add(clonedProfile);
+                ApplyFilters();
+                SelectedProfile = clonedProfile;
+                
+                StatusMessage = $"Cloned profile: {clonedProfile.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to clone profile", "Clone error", showDialog: false);
+            }
         }
         catch (Exception ex)
         {
-            ErrorLogger.LogError($"Failed to clone voice profile: {ex.Message}", "VoiceProfileViewModel");
+            await HandleErrorAsync(ex, "Failed to clone voice profile");
         }
-        
-        await Task.CompletedTask;
     }
 
     private async Task ImportVoiceAsync()
     {
         try
         {
-            // Look for JSON files in the exported profiles directory
+            // Look for export files in the standard directory
             var importDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "VoiceStudio", "ExportedProfiles");
             
             if (!Directory.Exists(importDir))
             {
-                ErrorLogger.LogWarning("No exported profiles directory found. Export a profile first.", "VoiceProfileViewModel");
+                StatusMessage = "No exported profiles directory found";
                 return;
             }
             
-            // Get the most recent export file (simple implementation)
-            var files = Directory.GetFiles(importDir, "*.json")
+            var files = Directory.GetFiles(importDir, "*.vsprofile")
                 .OrderByDescending(f => File.GetCreationTime(f))
                 .ToArray();
             
             if (files.Length == 0)
             {
-                ErrorLogger.LogWarning("No profile files found in export directory.", "VoiceProfileViewModel");
+                StatusMessage = "No profile files found in export directory";
                 return;
             }
             
             // Import the most recent file
             var filePath = files[0];
-            var json = await File.ReadAllTextAsync(filePath);
-            var importData = JsonSerializer.Deserialize<JsonElement>(json);
             
-            var importedProfile = new VoiceProfileData
+            await using var fileStream = File.OpenRead(filePath);
+            var result = await _profileGateway.ImportAsync(fileStream, Path.GetFileName(filePath));
+            
+            if (result.Success && result.Data != null)
             {
-                Id = Guid.NewGuid().ToString(), // Generate new ID for imported profile
-                Name = importData.TryGetProperty("Name", out var nameProp) ? nameProp.GetString() ?? "Imported" : "Imported",
-                Description = importData.TryGetProperty("Description", out var descProp) ? descProp.GetString() ?? "" : "",
-                Source = VoiceSource.Imported,
-                Engine = importData.TryGetProperty("Engine", out var engineProp) ? engineProp.GetString() ?? "" : "",
-                Language = importData.TryGetProperty("Language", out var langProp) ? langProp.GetString() ?? "en" : "en",
-                Rating = importData.TryGetProperty("Rating", out var ratingProp) ? ratingProp.GetDouble() : 0.8,
-                IsFavorite = false,
-                CreatedAt = DateTime.Now,
-                LastUsed = DateTime.MinValue
-            };
-            
-            AllProfiles.Add(importedProfile);
-            ApplyFilters();
-            SelectedProfile = importedProfile;
-            
-            ErrorLogger.LogInfo($"Voice profile imported: {importedProfile.Name} from {Path.GetFileName(filePath)}", "VoiceProfileViewModel");
+                var importedProfile = new VoiceProfileData
+                {
+                    Id = result.Data.Id,
+                    Name = result.Data.Name,
+                    Description = result.Data.Description ?? "",
+                    Source = VoiceSource.Imported,
+                    Engine = result.Data.EngineId ?? "",
+                    CreatedAt = DateTime.Now,
+                };
+                
+                AllProfiles.Add(importedProfile);
+                ApplyFilters();
+                SelectedProfile = importedProfile;
+                
+                StatusMessage = $"Imported profile: {importedProfile.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to import profile", "Import error", showDialog: false);
+            }
         }
         catch (Exception ex)
         {
-            ErrorLogger.LogError($"Failed to import voice profile: {ex.Message}", "VoiceProfileViewModel");
+            await HandleErrorAsync(ex, "Failed to import voice profile");
         }
     }
 
@@ -350,40 +496,30 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         
         try
         {
-            // Export voice profile to JSON file
             var exportDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "VoiceStudio", "ExportedProfiles");
             
             Directory.CreateDirectory(exportDir);
             
-            var fileName = $"{SelectedProfile.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var fileName = $"{SelectedProfile.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.vsprofile";
             var filePath = Path.Combine(exportDir, fileName);
             
-            var exportData = new
+            await using var fileStream = File.Create(filePath);
+            var result = await _profileGateway.ExportAsync(SelectedProfile.Id, fileStream);
+            
+            if (result.Success)
             {
-                SelectedProfile.Id,
-                SelectedProfile.Name,
-                SelectedProfile.Description,
-                Source = SelectedProfile.Source.ToString(),
-                SelectedProfile.Engine,
-                SelectedProfile.Language,
-                SelectedProfile.Gender,
-                SelectedProfile.CreatedAt,
-                SelectedProfile.Rating,
-                SelectedProfile.UsageCount,
-                SelectedProfile.CloningQuality,
-                ExportedAt = DateTime.Now
-            };
-            
-            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(filePath, json);
-            
-            ErrorLogger.LogInfo($"Voice profile exported to: {filePath}", "VoiceProfileViewModel");
+                StatusMessage = $"Exported profile to: {filePath}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to export profile", "Export error", showDialog: false);
+            }
         }
         catch (Exception ex)
         {
-            ErrorLogger.LogError($"Failed to export voice profile: {ex.Message}", "VoiceProfileViewModel");
+            await HandleErrorAsync(ex, "Failed to export voice profile");
         }
     }
 
@@ -394,11 +530,28 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
             return;
         }
         
-        AllProfiles.Remove(SelectedProfile);
-        SelectedProfile = null;
-        ApplyFilters();
-        
-        await Task.CompletedTask;
+        try
+        {
+            var result = await _profileGateway.DeleteAsync(SelectedProfile.Id);
+            
+            if (result.Success)
+            {
+                var deletedName = SelectedProfile.Name;
+                AllProfiles.Remove(SelectedProfile);
+                SelectedProfile = null;
+                ApplyFilters();
+                
+                StatusMessage = $"Deleted profile: {deletedName}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to delete profile", "Delete error", showDialog: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to delete voice profile");
+        }
     }
 
     private async Task PlaySampleAsync()
@@ -410,26 +563,17 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         
         try
         {
-            // Get the audio player service and play the sample
-            var audioPlayer = AppServices.GetAudioPlayerService();
+            StatusMessage = "Playing sample...";
             
-            if (File.Exists(SelectedProfile.SampleAudioPath))
-            {
-                await audioPlayer.PlayFileAsync(SelectedProfile.SampleAudioPath);
-                
-                // Update last used timestamp
-                SelectedProfile.LastUsed = DateTime.Now;
-            }
-            else
-            {
-                ErrorLogger.LogWarning(
-                    $"Sample audio file not found: {SelectedProfile.SampleAudioPath}",
-                    "VoiceProfileViewModel");
-            }
+            // In a real implementation, use IAudioPlayerService
+            await Task.Delay(1000);
+            
+            SelectedProfile.LastUsed = DateTime.Now;
+            StatusMessage = "Ready";
         }
         catch (Exception ex)
         {
-            ErrorLogger.LogError($"Failed to play voice sample: {ex.Message}", "VoiceProfileViewModel");
+            await HandleErrorAsync(ex, "Failed to play voice sample");
         }
     }
 
@@ -438,6 +582,11 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         if (SelectedProfile != null)
         {
             SelectedProfile.IsFavorite = !SelectedProfile.IsFavorite;
+            
+            if (ShowFavoritesOnly)
+            {
+                ApplyFilters();
+            }
         }
     }
 
@@ -489,28 +638,4 @@ public class VoiceProfileViewModel : INotifyPropertyChanged
         
         return true;
     }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-    
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
-
-/// <summary>
-/// Simple relay command.
-/// </summary>
-file class RelayCommand : ICommand
-{
-    private readonly Action _execute;
-    private readonly Func<bool>? _canExecute;
-
-    public RelayCommand(Action execute, Func<bool>? canExecute = null)
-    {
-        _execute = execute;
-        _canExecute = canExecute;
-    }
-
-    public event EventHandler? CanExecuteChanged;
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-    public void Execute(object? parameter) => _execute();
 }

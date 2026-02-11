@@ -1,6 +1,13 @@
 """
 RVC (Retrieval-based Voice Conversion) Routes
 Real-time voice conversion endpoints
+
+WebSocket Protocol Migration (GAP-INT-002):
+    New WebSocket messages should use the standardized protocol:
+    
+        from backend.api.ws import create_message, create_error, MessageType
+        
+    See backend/api/ws/protocol.py for the full specification.
 """
 
 import base64

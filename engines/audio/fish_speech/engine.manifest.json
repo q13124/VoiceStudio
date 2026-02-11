@@ -18,7 +18,12 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\fish_speech",
     "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\fish_speech\\cache"
   },
-  "supported_languages": ["en", "zh", "ja", "ko"],
+  "supported_languages": [
+    "en",
+    "zh",
+    "ja",
+    "ko"
+  ],
   "capabilities": [
     "voice_cloning",
     "multi_language_tts",
@@ -31,8 +36,17 @@
   },
   "contract": {
     "input": {
-      "audio_formats": ["wav", "mp3", "flac"],
-      "sample_rates": [16000, 22050, 24000, 44100],
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        24000,
+        44100
+      ],
       "max_duration_seconds": 30,
       "min_duration_seconds": 1,
       "text_max_chars": 5000
@@ -55,7 +69,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -63,5 +80,7 @@
       "default": true,
       "description": "Whether to use GPU if available"
     }
-  }
+  },
+  "implementation_status": "placeholder",
+  "implementation_notes": "Returns default/silence when dependencies unavailable. Requires package installation."
 }

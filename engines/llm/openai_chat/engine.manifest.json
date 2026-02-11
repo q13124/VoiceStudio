@@ -7,7 +7,9 @@
   "description": "Cloud LLM via OpenAI chat completions API. Optional -- requires API key. Local providers preferred.",
   "entry_point": "app.core.engines.llm_openai_adapter:OpenAILLMProvider",
   "dependencies": {
-    "python": ["httpx>=0.25.0"]
+    "python": [
+      "httpx>=0.25.0"
+    ]
   },
   "capabilities": [
     "text_generation",
@@ -22,14 +24,43 @@
     "ram_min_gb": 1
   },
   "config_schema": {
-    "model": {"type": "string", "default": "gpt-4o-mini", "description": "OpenAI model name"},
-    "api_key": {"type": "string", "default": "", "description": "OpenAI API key (from OPENAI_API_KEY env var)"},
-    "temperature": {"type": "number", "default": 0.7, "min": 0.0, "max": 2.0},
-    "max_tokens": {"type": "integer", "default": 1024, "min": 1, "max": 128000}
+    "model": {
+      "type": "string",
+      "default": "gpt-4o-mini",
+      "description": "OpenAI model name"
+    },
+    "api_key": {
+      "type": "string",
+      "default": "",
+      "description": "OpenAI API key (from OPENAI_API_KEY env var)"
+    },
+    "temperature": {
+      "type": "number",
+      "default": 0.7,
+      "min": 0.0,
+      "max": 2.0
+    },
+    "max_tokens": {
+      "type": "integer",
+      "default": 1024,
+      "min": 1,
+      "max": 128000
+    }
   },
   "contract": {
-    "input": {"messages": "List[Message]", "config": "Optional[LLMConfig]", "functions": "Optional[List[FunctionSpec]]"},
-    "output": {"content": "str", "finish_reason": "str", "tool_calls": "Optional[List]", "usage": "Dict[str, int]"}
+    "input": {
+      "messages": "List[Message]",
+      "config": "Optional[LLMConfig]",
+      "functions": "Optional[List[FunctionSpec]]"
+    },
+    "output": {
+      "content": "str",
+      "finish_reason": "str",
+      "tool_calls": "Optional[List]",
+      "usage": "Dict[str, int]"
+    }
   },
-  "notes": "Per local-first policy, prefer Ollama. This adapter is for cases where cloud quality is explicitly needed."
+  "notes": "Per local-first policy, prefer Ollama. This adapter is for cases where cloud quality is explicitly needed.",
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented llm engine."
 }

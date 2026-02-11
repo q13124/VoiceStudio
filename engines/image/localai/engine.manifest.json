@@ -72,5 +72,7 @@
       "ram_mb": 4096,
       "timeout_seconds": 300
     }
-  }
+  },
+  "implementation_status": "external",
+  "implementation_notes": "Delegates to external tool. Requires localai to be installed and running."
 }

@@ -56,7 +56,10 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -77,13 +80,22 @@
     "pitch_extraction_method": {
       "type": "string",
       "default": "rmvpe",
-      "enum": ["rmvpe", "pm", "harvest", "dio", "crepe"],
+      "enum": [
+        "rmvpe",
+        "pm",
+        "harvest",
+        "dio",
+        "crepe"
+      ],
       "description": "Pitch extraction method (rmvpe recommended for v2)"
     },
     "model_version": {
       "type": "string",
       "default": "v2",
-      "enum": ["v1", "v2"],
+      "enum": [
+        "v1",
+        "v2"
+      ],
       "description": "RVC model architecture version"
     },
     "protect": {
@@ -108,8 +120,18 @@
   },
   "contract": {
     "input": {
-      "audio_formats": ["wav", "mp3", "flac", "ogg"],
-      "sample_rates": [16000, 22050, 44100, 48000],
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        44100,
+        48000
+      ],
       "max_duration_seconds": 120
     },
     "output": {
@@ -123,5 +145,7 @@
       "ram_mb": 6144,
       "timeout_seconds": 240
     }
-  }
+  },
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented audio engine."
 }

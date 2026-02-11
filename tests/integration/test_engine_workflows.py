@@ -68,7 +68,11 @@ class TestEngineWorkflows:
         """Test engine lifecycle workflow."""
         try:
             from app.core.runtime.engine_lifecycle import get_lifecycle_manager
-            from app.core.runtime.runtime_engine import RuntimeEngine
+            # Prefer EnhancedRuntimeEngine, fallback to RuntimeEngine
+            try:
+                from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngine as RuntimeEngine
+            except ImportError:
+                from app.core.runtime.runtime_engine import RuntimeEngine
 
             lifecycle_manager = get_lifecycle_manager()
 

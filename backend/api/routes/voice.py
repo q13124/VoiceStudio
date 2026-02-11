@@ -2,6 +2,17 @@
 Voice Cloning and Synthesis Routes
 
 High-quality voice cloning endpoints with support for multiple engines.
+
+WebSocket Protocol Migration (GAP-INT-002):
+    This file contains WebSocket endpoints that should use the standardized
+    protocol from backend.api.ws.protocol. New WebSocket messages should use:
+    
+        from backend.api.ws import create_message, create_error, MessageType
+        
+        await ws.send_json(create_message(MessageType.AUDIO_CHUNK, {...}))
+        await ws.send_json(create_error("Failed", code=ErrorCode.ENGINE_ERROR))
+    
+    See backend/api/ws/protocol.py for the full protocol specification.
 """
 
 import asyncio

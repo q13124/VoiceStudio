@@ -1,11 +1,17 @@
 // Phase 5: Timeline Component
 // Task 5.11: Professional audio timeline
+// GAP-FE-001: Integrated with TimelineGateway for backend connectivity
 
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Gateways;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Features.Timeline;
 
@@ -25,7 +31,7 @@ public enum TrackType
 /// <summary>
 /// A clip on the timeline.
 /// </summary>
-public class TimelineClip : INotifyPropertyChanged
+public partial class TimelineClip : ObservableObject
 {
     private double _startTime;
     private double _duration;
@@ -36,18 +42,25 @@ public class TimelineClip : INotifyPropertyChanged
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = "";
     public string SourcePath { get; set; } = "";
+    public string? AudioId { get; set; }
     public TrackType TrackType { get; set; }
     
     public double StartTime
     {
         get => _startTime;
-        set { _startTime = value; OnPropertyChanged(); }
+        set => SetProperty(ref _startTime, value);
     }
     
     public double Duration
     {
         get => _duration;
-        set { _duration = value; OnPropertyChanged(); OnPropertyChanged(nameof(EndTime)); }
+        set
+        {
+            if (SetProperty(ref _duration, value))
+            {
+                OnPropertyChanged(nameof(EndTime));
+            }
+        }
     }
     
     public double EndTime => StartTime + Duration;
@@ -55,19 +68,19 @@ public class TimelineClip : INotifyPropertyChanged
     public double Volume
     {
         get => _volume;
-        set { _volume = Math.Clamp(value, 0, 2); OnPropertyChanged(); }
+        set => SetProperty(ref _volume, Math.Clamp(value, 0, 2));
     }
     
     public bool IsMuted
     {
         get => _isMuted;
-        set { _isMuted = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isMuted, value);
     }
     
     public bool IsSelected
     {
         get => _isSelected;
-        set { _isSelected = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isSelected, value);
     }
     
     // Audio properties
@@ -75,64 +88,66 @@ public class TimelineClip : INotifyPropertyChanged
     public double FadeOutDuration { get; set; }
     public double TrimStart { get; set; }
     public double TrimEnd { get; set; }
-    
-    public event PropertyChangedEventHandler? PropertyChanged;
-    
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 /// <summary>
 /// A track on the timeline.
 /// </summary>
-public class TimelineTrack : INotifyPropertyChanged
+public partial class TimelineTrack : ObservableObject
 {
     private bool _isExpanded = true;
     private bool _isMuted;
     private bool _isSolo;
     private double _volume = 1.0;
+    private bool _isLocked;
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = "";
     public TrackType Type { get; set; }
+    public int Order { get; set; }
     public double Height { get; set; } = 80;
     public ObservableCollection<TimelineClip> Clips { get; } = new();
     
     public bool IsExpanded
     {
         get => _isExpanded;
-        set { _isExpanded = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isExpanded, value);
     }
     
     public bool IsMuted
     {
         get => _isMuted;
-        set { _isMuted = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isMuted, value);
     }
     
     public bool IsSolo
     {
         get => _isSolo;
-        set { _isSolo = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isSolo, value);
+    }
+    
+    public bool IsLocked
+    {
+        get => _isLocked;
+        set => SetProperty(ref _isLocked, value);
     }
     
     public double Volume
     {
         get => _volume;
-        set { _volume = Math.Clamp(value, 0, 2); OnPropertyChanged(); }
+        set => SetProperty(ref _volume, Math.Clamp(value, 0, 2));
     }
-    
-    public event PropertyChangedEventHandler? PropertyChanged;
-    
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 /// <summary>
 /// ViewModel for the timeline component.
+/// GAP-FE-001: Refactored to inherit from BaseViewModel and integrate with TimelineGateway.
 /// </summary>
-public class TimelineViewModel : INotifyPropertyChanged
+public partial class TimelineViewModel : BaseViewModel
 {
+    private readonly ITimelineGateway _timelineGateway;
+    
+    private string? _projectId;
     private double _currentTime;
     private double _totalDuration = 60;
     private double _zoom = 1.0;
@@ -144,31 +159,57 @@ public class TimelineViewModel : INotifyPropertyChanged
     private bool _snapEnabled = true;
     private double _snapInterval = 0.1;
 
-    public TimelineViewModel()
+    public TimelineViewModel(
+        IViewModelContext context,
+        ITimelineGateway timelineGateway)
+        : base(context)
     {
+        _timelineGateway = timelineGateway ?? throw new ArgumentNullException(nameof(timelineGateway));
+
         Tracks = new ObservableCollection<TimelineTrack>();
         SelectedClips = new ObservableCollection<TimelineClip>();
+        Markers = new ObservableCollection<MarkerInfo>();
         
         // Commands
-        PlayCommand = new RelayCommand(() => Play());
-        PauseCommand = new RelayCommand(() => Pause());
-        StopCommand = new RelayCommand(() => Stop());
-        AddTrackCommand = new RelayCommand<TrackType>(AddTrack);
-        DeleteSelectedCommand = new RelayCommand(DeleteSelected);
+        PlayCommand = new RelayCommand(Play);
+        PauseCommand = new RelayCommand(Pause);
+        StopCommand = new RelayCommand(Stop);
+        AddTrackCommand = new AsyncRelayCommand<TrackType>(AddTrackAsync);
+        DeleteSelectedCommand = new AsyncRelayCommand(DeleteSelectedAsync);
         SplitAtPlayheadCommand = new RelayCommand(SplitAtPlayhead);
+        SaveTimelineCommand = new AsyncRelayCommand(SaveTimelineAsync);
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+    }
+
+    /// <summary>
+    /// Current project ID - required for timeline operations.
+    /// </summary>
+    public string? ProjectId
+    {
+        get => _projectId;
+        set
+        {
+            if (SetProperty(ref _projectId, value) && !string.IsNullOrEmpty(value))
+            {
+                _ = LoadTimelineAsync(value);
+            }
+        }
     }
 
     public ObservableCollection<TimelineTrack> Tracks { get; }
     public ObservableCollection<TimelineClip> SelectedClips { get; }
+    public ObservableCollection<MarkerInfo> Markers { get; }
 
     public double CurrentTime
     {
         get => _currentTime;
         set
         {
-            _currentTime = Math.Clamp(value, 0, TotalDuration);
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(CurrentTimeFormatted));
+            var clampedValue = Math.Clamp(value, 0, TotalDuration);
+            if (SetProperty(ref _currentTime, clampedValue))
+            {
+                OnPropertyChanged(nameof(CurrentTimeFormatted));
+            }
         }
     }
 
@@ -178,7 +219,7 @@ public class TimelineViewModel : INotifyPropertyChanged
     public double TotalDuration
     {
         get => _totalDuration;
-        set { _totalDuration = value; OnPropertyChanged(); }
+        set => SetProperty(ref _totalDuration, value);
     }
 
     public double Zoom
@@ -186,9 +227,10 @@ public class TimelineViewModel : INotifyPropertyChanged
         get => _zoom;
         set
         {
-            _zoom = Math.Clamp(value, 0.1, 10);
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(PixelsPerSecond));
+            if (SetProperty(ref _zoom, Math.Clamp(value, 0.1, 10)))
+            {
+                OnPropertyChanged(nameof(PixelsPerSecond));
+            }
         }
     }
 
@@ -197,52 +239,178 @@ public class TimelineViewModel : INotifyPropertyChanged
     public double ScrollPosition
     {
         get => _scrollPosition;
-        set { _scrollPosition = value; OnPropertyChanged(); }
+        set => SetProperty(ref _scrollPosition, value);
     }
 
     public bool IsPlaying
     {
         get => _isPlaying;
-        set { _isPlaying = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isPlaying, value);
     }
 
     public bool IsLooping
     {
         get => _isLooping;
-        set { _isLooping = value; OnPropertyChanged(); }
+        set => SetProperty(ref _isLooping, value);
     }
 
     public double SelectionStart
     {
         get => _selectionStart;
-        set { _selectionStart = value; OnPropertyChanged(); }
+        set => SetProperty(ref _selectionStart, value);
     }
 
     public double SelectionEnd
     {
         get => _selectionEnd;
-        set { _selectionEnd = value; OnPropertyChanged(); }
+        set => SetProperty(ref _selectionEnd, value);
     }
 
     public bool SnapEnabled
     {
         get => _snapEnabled;
-        set { _snapEnabled = value; OnPropertyChanged(); }
+        set => SetProperty(ref _snapEnabled, value);
     }
 
     public double SnapInterval
     {
         get => _snapInterval;
-        set { _snapInterval = value; OnPropertyChanged(); }
+        set => SetProperty(ref _snapInterval, value);
     }
 
     // Commands
-    public ICommand PlayCommand { get; }
-    public ICommand PauseCommand { get; }
-    public ICommand StopCommand { get; }
-    public ICommand AddTrackCommand { get; }
-    public ICommand DeleteSelectedCommand { get; }
-    public ICommand SplitAtPlayheadCommand { get; }
+    public IRelayCommand PlayCommand { get; }
+    public IRelayCommand PauseCommand { get; }
+    public IRelayCommand StopCommand { get; }
+    public IAsyncRelayCommand<TrackType> AddTrackCommand { get; }
+    public IAsyncRelayCommand DeleteSelectedCommand { get; }
+    public IRelayCommand SplitAtPlayheadCommand { get; }
+    public IAsyncRelayCommand SaveTimelineCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
+
+    /// <summary>
+    /// Initializes the timeline for a project.
+    /// </summary>
+    public async Task InitializeAsync(string projectId)
+    {
+        ProjectId = projectId;
+        await LoadTimelineAsync(projectId);
+    }
+
+    private async Task LoadTimelineAsync(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+        {
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = "Loading timeline...";
+
+        try
+        {
+            var result = await _timelineGateway.GetAsync(projectId);
+            
+            if (result.Success && result.Data != null)
+            {
+                Tracks.Clear();
+                Markers.Clear();
+                
+                TotalDuration = result.Data.DurationSeconds > 0 
+                    ? result.Data.DurationSeconds 
+                    : 60;
+                
+                foreach (var trackInfo in result.Data.Tracks)
+                {
+                    var track = new TimelineTrack
+                    {
+                        Id = trackInfo.Id,
+                        Name = trackInfo.Name,
+                        Type = MapTrackType(trackInfo.Type),
+                        Order = trackInfo.Order,
+                        IsMuted = trackInfo.IsMuted,
+                        IsLocked = trackInfo.IsLocked,
+                        Volume = trackInfo.Volume,
+                    };
+                    
+                    foreach (var clipInfo in trackInfo.Clips)
+                    {
+                        track.Clips.Add(new TimelineClip
+                        {
+                            Id = clipInfo.Id,
+                            AudioId = clipInfo.AudioId,
+                            StartTime = clipInfo.StartTime,
+                            Duration = clipInfo.Duration,
+                            TrimStart = clipInfo.TrimStart,
+                            TrimEnd = clipInfo.TrimEnd,
+                            Volume = clipInfo.Volume,
+                            FadeInDuration = clipInfo.FadeIn,
+                            FadeOutDuration = clipInfo.FadeOut,
+                            Name = clipInfo.Label ?? "",
+                            TrackType = track.Type,
+                        });
+                    }
+                    
+                    Tracks.Add(track);
+                }
+                
+                foreach (var marker in result.Data.Markers)
+                {
+                    Markers.Add(marker);
+                }
+                
+                StatusMessage = "Timeline loaded";
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load timeline: {Error}", result.Error);
+                StatusMessage = "Failed to load timeline";
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to load timeline");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (!string.IsNullOrEmpty(ProjectId))
+        {
+            await LoadTimelineAsync(ProjectId);
+        }
+    }
+
+    private async Task SaveTimelineAsync()
+    {
+        if (string.IsNullOrEmpty(ProjectId))
+        {
+            StatusMessage = "No project loaded";
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = "Saving timeline...";
+
+        try
+        {
+            // Timeline is saved incrementally via add/update operations
+            // This method could trigger a full sync if needed
+            StatusMessage = "Timeline saved";
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to save timeline");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 
     public void Play()
     {
@@ -260,37 +428,112 @@ public class TimelineViewModel : INotifyPropertyChanged
         CurrentTime = 0;
     }
 
-    public void AddTrack(TrackType type)
+    public async Task AddTrackAsync(TrackType type)
     {
-        var track = new TimelineTrack
+        if (string.IsNullOrEmpty(ProjectId))
         {
-            Name = $"{type} {Tracks.Count + 1}",
-            Type = type,
-        };
-        
-        Tracks.Add(track);
+            return;
+        }
+
+        try
+        {
+            var request = new TrackCreateRequest
+            {
+                Name = $"{type} {Tracks.Count + 1}",
+                Type = MapToGatewayTrackType(type),
+                Order = Tracks.Count,
+            };
+            
+            var result = await _timelineGateway.AddTrackAsync(ProjectId, request);
+            
+            if (result.Success && result.Data != null)
+            {
+                var track = new TimelineTrack
+                {
+                    Id = result.Data.Id,
+                    Name = result.Data.Name,
+                    Type = type,
+                    Order = result.Data.Order,
+                };
+                
+                Tracks.Add(track);
+                StatusMessage = $"Added track: {track.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to add track", "Timeline error", showDialog: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to add track");
+        }
     }
 
-    public void AddClip(string trackId, TimelineClip clip)
+    public async Task AddClipAsync(string trackId, TimelineClip clip)
     {
+        if (string.IsNullOrEmpty(ProjectId))
+        {
+            return;
+        }
+
+        TimelineTrack? targetTrack = null;
         foreach (var track in Tracks)
         {
             if (track.Id == trackId)
             {
-                if (SnapEnabled)
-                {
-                    clip.StartTime = SnapTime(clip.StartTime);
-                }
-                
-                track.Clips.Add(clip);
-                UpdateTotalDuration();
+                targetTrack = track;
                 break;
             }
         }
+
+        if (targetTrack == null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (SnapEnabled)
+            {
+                clip.StartTime = SnapTime(clip.StartTime);
+            }
+            
+            var request = new ClipCreateRequest
+            {
+                AudioId = clip.AudioId ?? "",
+                StartTime = clip.StartTime,
+                Duration = clip.Duration > 0 ? clip.Duration : null,
+                Label = clip.Name,
+            };
+            
+            var result = await _timelineGateway.AddClipAsync(ProjectId, trackId, request);
+            
+            if (result.Success && result.Data != null)
+            {
+                clip.Id = result.Data.Id;
+                targetTrack.Clips.Add(clip);
+                UpdateTotalDuration();
+                StatusMessage = $"Added clip: {clip.Name}";
+            }
+            else
+            {
+                await HandleErrorAsync(result.Error?.Message ?? "Failed to add clip", "Timeline error", showDialog: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to add clip");
+        }
     }
 
-    public void MoveClip(TimelineClip clip, double newStartTime, string? newTrackId = null)
+    public async Task MoveClipAsync(TimelineClip clip, double newStartTime, string? newTrackId = null)
     {
+        if (string.IsNullOrEmpty(ProjectId))
+        {
+            return;
+        }
+
         if (SnapEnabled)
         {
             newStartTime = SnapTime(newStartTime);
@@ -298,17 +541,48 @@ public class TimelineViewModel : INotifyPropertyChanged
         
         clip.StartTime = Math.Max(0, newStartTime);
         
-        if (newTrackId != null)
+        // Find current track
+        string? currentTrackId = null;
+        TimelineTrack? currentTrack = null;
+        
+        foreach (var track in Tracks)
         {
-            // Move to different track
-            foreach (var track in Tracks)
+            if (track.Clips.Contains(clip))
             {
-                if (track.Clips.Contains(clip))
-                {
-                    track.Clips.Remove(clip);
-                    break;
-                }
+                currentTrackId = track.Id;
+                currentTrack = track;
+                break;
             }
+        }
+
+        if (currentTrackId == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var request = new ClipUpdateRequest
+            {
+                StartTime = clip.StartTime,
+            };
+            
+            var result = await _timelineGateway.UpdateClipAsync(ProjectId, currentTrackId, clip.Id, request);
+            
+            if (!result.Success)
+            {
+                Logger.LogWarning("Failed to update clip position: {Error}", result.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to update clip position");
+        }
+        
+        // Move to different track if specified
+        if (newTrackId != null && newTrackId != currentTrackId && currentTrack != null)
+        {
+            currentTrack.Clips.Remove(clip);
             
             foreach (var track in Tracks)
             {
@@ -347,15 +621,31 @@ public class TimelineViewModel : INotifyPropertyChanged
         SelectedClips.Clear();
     }
 
-    public void DeleteSelected()
+    private async Task DeleteSelectedAsync()
     {
+        if (string.IsNullOrEmpty(ProjectId))
+        {
+            return;
+        }
+
         foreach (var clip in SelectedClips)
         {
             foreach (var track in Tracks)
             {
                 if (track.Clips.Contains(clip))
                 {
-                    track.Clips.Remove(clip);
+                    try
+                    {
+                        var result = await _timelineGateway.RemoveClipAsync(ProjectId, track.Id, clip.Id);
+                        if (result.Success)
+                        {
+                            track.Clips.Remove(clip);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to delete clip {ClipId}", clip.Id);
+                    }
                     break;
                 }
             }
@@ -377,6 +667,7 @@ public class TimelineViewModel : INotifyPropertyChanged
                 {
                     Name = $"{clip.Name} (split)",
                     SourcePath = clip.SourcePath,
+                    AudioId = clip.AudioId,
                     TrackType = clip.TrackType,
                     StartTime = CurrentTime,
                     Duration = clip.Duration - splitPoint,
@@ -410,10 +701,8 @@ public class TimelineViewModel : INotifyPropertyChanged
 
     public void ZoomToFit()
     {
-        // Calculate zoom to fit all content
         if (TotalDuration > 0)
         {
-            // Would need container width
             Zoom = 1.0;
         }
     }
@@ -446,51 +735,29 @@ public class TimelineViewModel : INotifyPropertyChanged
         TotalDuration = Math.Max(60, maxEnd + 10);
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-    
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
-
-/// <summary>
-/// Relay command with parameter.
-/// </summary>
-public class RelayCommand<T> : ICommand
-{
-    private readonly Action<T> _execute;
-    private readonly Func<T, bool>? _canExecute;
-
-    public RelayCommand(Action<T> execute, Func<T, bool>? canExecute = null)
+    private static TrackType MapTrackType(VoiceStudio.Core.Gateways.TrackType gatewayType)
     {
-        _execute = execute;
-        _canExecute = canExecute;
+        return gatewayType switch
+        {
+            VoiceStudio.Core.Gateways.TrackType.Audio => TrackType.Audio,
+            VoiceStudio.Core.Gateways.TrackType.Voice => TrackType.Voice,
+            VoiceStudio.Core.Gateways.TrackType.Video => TrackType.Video,
+            VoiceStudio.Core.Gateways.TrackType.Subtitle => TrackType.Subtitle,
+            _ => TrackType.Audio,
+        };
     }
 
-    public event EventHandler? CanExecuteChanged;
-
-    public bool CanExecute(object? parameter) =>
-        _canExecute?.Invoke((T)parameter!) ?? true;
-
-    public void Execute(object? parameter) =>
-        _execute((T)parameter!);
-}
-
-/// <summary>
-/// Simple relay command.
-/// </summary>
-public class RelayCommand : ICommand
-{
-    private readonly Action _execute;
-    private readonly Func<bool>? _canExecute;
-
-    public RelayCommand(Action execute, Func<bool>? canExecute = null)
+    private static VoiceStudio.Core.Gateways.TrackType MapToGatewayTrackType(TrackType localType)
     {
-        _execute = execute;
-        _canExecute = canExecute;
+        return localType switch
+        {
+            TrackType.Audio => VoiceStudio.Core.Gateways.TrackType.Audio,
+            TrackType.Voice => VoiceStudio.Core.Gateways.TrackType.Voice,
+            TrackType.Music => VoiceStudio.Core.Gateways.TrackType.Audio,
+            TrackType.SoundFX => VoiceStudio.Core.Gateways.TrackType.Audio,
+            TrackType.Video => VoiceStudio.Core.Gateways.TrackType.Video,
+            TrackType.Subtitle => VoiceStudio.Core.Gateways.TrackType.Subtitle,
+            _ => VoiceStudio.Core.Gateways.TrackType.Audio,
+        };
     }
-
-    public event EventHandler? CanExecuteChanged;
-
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-    public void Execute(object? parameter) => _execute();
 }

@@ -125,5 +125,7 @@
       "ram_mb": 4096,
       "timeout_seconds": 180
     }
-  }
+  },
+  "implementation_status": "basic",
+  "implementation_notes": "Basic implementation. Some advanced features may be missing."
 }

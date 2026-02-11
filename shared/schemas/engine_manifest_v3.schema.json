@@ -2,18 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://voicestudio.app/schemas/engine_manifest_v3.schema.json",
   "title": "VoiceStudio Engine Manifest v3",
-  "description": "Extended engine metadata schema for plugin architecture (Task 3.3.1)",
+  "description": "Engine metadata schema for VoiceStudio engine manifests. Updated 2026-02 to match actual usage.",
   "type": "object",
-  "required": ["manifest_version", "id", "name", "version", "type", "capabilities"],
+  "required": ["engine_id", "name", "type", "version"],
   "properties": {
-    "manifest_version": {
-      "type": "integer",
-      "const": 3,
-      "description": "Schema version - must be 3 for v3 manifests"
-    },
-    "id": {
+    "engine_id": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9_-]{2,63}$",
+      "pattern": "^[a-z][a-z0-9_-]{1,63}$",
       "description": "Unique engine identifier (lowercase, alphanumeric with hyphens/underscores)"
     },
     "name": {
@@ -22,15 +17,32 @@
       "maxLength": 100,
       "description": "Human-readable engine name"
     },
-    "version": {
-      "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$",
-      "description": "Semantic version (e.g., 1.0.0, 2.1.0-beta.1)"
-    },
     "type": {
       "type": "string",
-      "enum": ["synthesis", "transcription", "voice_conversion", "audio_processing", "speaker_embedding", "vad"],
-      "description": "Primary engine type"
+      "enum": ["audio", "video", "image", "llm"],
+      "description": "Primary engine category"
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Engine subtype (e.g., tts, stt, avatar, upscaler, chat)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?(\\.\\d+)?(-[a-zA-Z0-9.]+)?$",
+      "description": "Engine version (e.g., 1.0, 2.0.1, 1.0.0-beta)"
+    },
+    "implementation_status": {
+      "type": "string",
+      "enum": ["full", "basic", "placeholder", "external"],
+      "description": "Implementation status: full (complete), basic (partial), placeholder (stub), external (external tool)"
+    },
+    "implementation_notes": {
+      "type": "string",
+      "description": "Notes about implementation status or requirements"
+    },
+    "venv_family": {
+      "type": "string",
+      "description": "Virtual environment family for dependency isolation (e.g., venv_core_tts, venv_video)"
     },
     "description": {
       "type": "string",
@@ -38,142 +50,172 @@
       "description": "Detailed engine description"
     },
     "author": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string"},
-        "email": {"type": "string", "format": "email"},
-        "url": {"type": "string", "format": "uri"}
-      },
-      "description": "Engine author information"
+      "type": "string",
+      "description": "Engine author or team name"
     },
     "license": {
       "type": "string",
-      "description": "SPDX license identifier (e.g., MIT, Apache-2.0, GPL-3.0)"
+      "description": "SPDX license identifier (e.g., MIT, Apache-2.0, MPL-2.0)"
     },
-    "repository": {
+    "python_version": {
       "type": "string",
-      "format": "uri",
-      "description": "Source code repository URL"
+      "pattern": "^>=?\\d+\\.\\d+(\\.\\d+)?$",
+      "description": "Required Python version (e.g., >=3.8, >=3.10)"
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Python package dependencies as name:version pairs"
+    },
+    "model_paths": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "type": "string",
+          "description": "Base path for model storage"
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Paths for model storage (supports environment variables like %PROGRAMDATA%)"
+    },
+    "supported_formats": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Supported file formats for output"
+    },
+    "supported_languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Supported language codes (ISO 639-1, optionally with region like zh-cn)"
     },
     "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Engine capabilities as string identifiers (e.g., voice_cloning, text_to_speech, lip_sync)"
+    },
+    "device_requirements": {
       "type": "object",
-      "required": ["features"],
       "properties": {
-        "features": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "text_to_speech",
-              "speech_to_text",
-              "voice_cloning",
-              "voice_conversion",
-              "audio_enhancement",
-              "noise_reduction",
-              "speaker_diarization",
-              "emotion_detection",
-              "prosody_control",
-              "streaming",
-              "realtime",
-              "batch_processing",
-              "multi_speaker",
-              "multi_language"
-            ]
-          },
-          "description": "Supported features"
+        "gpu": {
+          "type": "string",
+          "enum": ["required", "recommended", "optional"],
+          "description": "GPU requirement level"
         },
-        "languages": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
-          },
-          "description": "Supported language codes (ISO 639-1, optionally with region)"
+        "vram_min_gb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum GPU VRAM in GB"
         },
-        "audio_formats": {
+        "ram_min_gb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum system RAM in GB"
+        }
+      },
+      "description": "Hardware requirements for the engine"
+    },
+    "entry_point": {
+      "type": "string",
+      "description": "Python module path to engine class (e.g., app.core.engines.xtts_engine.XTTSEngine)"
+    },
+    "config_schema": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {"type": "string"},
+          "default": {},
+          "enum": {"type": "array"},
+          "minimum": {"type": "number"},
+          "maximum": {"type": "number"},
+          "description": {"type": "string"}
+        }
+      },
+      "description": "Engine-specific configuration options schema"
+    },
+    "contract": {
+      "type": "object",
+      "properties": {
+        "input": {
           "type": "object",
           "properties": {
-            "input": {
+            "audio_formats": {
               "type": "array",
               "items": {"type": "string"},
               "description": "Supported input audio formats"
             },
-            "output": {
+            "video_formats": {
               "type": "array",
               "items": {"type": "string"},
-              "description": "Supported output audio formats"
-            }
-          }
-        },
-        "sample_rates": {
-          "type": "array",
-          "items": {"type": "integer"},
-          "description": "Supported sample rates in Hz"
-        },
-        "max_audio_length_seconds": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Maximum input audio length in seconds"
-        },
-        "max_text_length": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum input text length in characters"
-        }
-      }
-    },
-    "requirements": {
-      "type": "object",
-      "properties": {
-        "python_version": {
-          "type": "string",
-          "pattern": "^>=?\\d+\\.\\d+(\\.\\d+)?$",
-          "description": "Required Python version (e.g., >=3.9)"
-        },
-        "gpu": {
-          "type": "object",
-          "properties": {
-            "required": {"type": "boolean", "default": false},
-            "cuda_version": {"type": "string"},
-            "min_vram_gb": {"type": "number"},
-            "recommended_vram_gb": {"type": "number"}
-          }
-        },
-        "memory_gb": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Minimum RAM required in GB"
-        },
-        "disk_space_gb": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Disk space required for models in GB"
-        },
-        "dependencies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["package"],
-            "properties": {
-              "package": {"type": "string"},
-              "version": {"type": "string"},
-              "optional": {"type": "boolean", "default": false}
-            }
-          }
-        },
-        "external_dependencies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {"type": "string"},
-              "type": {"type": "string", "enum": ["binary", "library", "service"]},
-              "install_instructions": {"type": "string"}
+              "description": "Supported input video formats"
+            },
+            "sample_rates": {
+              "type": "array",
+              "items": {"type": "integer"},
+              "description": "Supported sample rates in Hz"
+            },
+            "max_duration_seconds": {
+              "type": "number",
+              "description": "Maximum input duration in seconds"
+            },
+            "min_duration_seconds": {
+              "type": "number",
+              "description": "Minimum input duration in seconds"
+            },
+            "text_max_chars": {
+              "type": "integer",
+              "description": "Maximum text input length"
             }
           },
-          "description": "Non-Python dependencies (ffmpeg, etc.)"
+          "additionalProperties": true,
+          "description": "Input specifications"
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "audio_format": {"type": "string"},
+            "video_format": {"type": "string"},
+            "sample_rate": {"type": "integer"},
+            "bit_depth": {"type": "integer"},
+            "channels": {"type": "integer"},
+            "codec": {"type": "string"},
+            "default_fps": {"type": "integer"}
+          },
+          "additionalProperties": true,
+          "description": "Output specifications"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "vram_mb": {
+              "type": "integer",
+              "description": "VRAM usage in MB"
+            },
+            "ram_mb": {
+              "type": "integer",
+              "description": "RAM usage in MB"
+            },
+            "cpu_threads": {
+              "type": "integer",
+              "description": "CPU threads used"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "description": "Operation timeout in seconds"
+            }
+          },
+          "description": "Resource requirements"
         }
-      }
+      },
+      "description": "Engine input/output contract specifications"
     },
     "models": {
       "type": "array",
@@ -197,49 +239,6 @@
         }
       },
       "description": "Available model variants"
-    },
-    "configuration": {
-      "type": "object",
-      "properties": {
-        "schema": {
-          "type": "object",
-          "description": "JSON Schema for engine-specific configuration"
-        },
-        "defaults": {
-          "type": "object",
-          "description": "Default configuration values"
-        }
-      }
-    },
-    "endpoints": {
-      "type": "object",
-      "properties": {
-        "synthesize": {
-          "type": "object",
-          "properties": {
-            "method": {"type": "string", "default": "POST"},
-            "path": {"type": "string"},
-            "request_schema": {"type": "object"},
-            "response_schema": {"type": "object"}
-          }
-        },
-        "transcribe": {
-          "type": "object",
-          "properties": {
-            "method": {"type": "string", "default": "POST"},
-            "path": {"type": "string"},
-            "request_schema": {"type": "object"},
-            "response_schema": {"type": "object"}
-          }
-        },
-        "health": {
-          "type": "object",
-          "properties": {
-            "path": {"type": "string", "default": "/health"}
-          }
-        }
-      },
-      "description": "API endpoint definitions (for remote engines)"
     },
     "metrics": {
       "type": "object",
@@ -282,5 +281,5 @@
       }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

@@ -34,15 +34,22 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Try importing RuntimeEngine for actual process management
+# Try importing EnhancedRuntimeEngine for actual process management (preferred)
+# Falls back to RuntimeEngine if enhanced version is unavailable
 try:
-    from .runtime_engine import RuntimeEngine
+    from .runtime_engine_enhanced import EnhancedRuntimeEngine
 
     HAS_RUNTIME_ENGINE = True
+    RuntimeEngine = EnhancedRuntimeEngine  # Alias for compatibility
 except ImportError:
-    HAS_RUNTIME_ENGINE = False
-    RuntimeEngine = None
-    logger.debug("RuntimeEngine not available. Process management will be limited.")
+    try:
+        from .runtime_engine import RuntimeEngine
+
+        HAS_RUNTIME_ENGINE = True
+    except ImportError:
+        HAS_RUNTIME_ENGINE = False
+        RuntimeEngine = None
+        logger.debug("RuntimeEngine not available. Process management will be limited.")
 
 
 class EngineState(Enum):

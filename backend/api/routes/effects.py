@@ -102,11 +102,74 @@ class EffectProcessResponse(BaseModel):
     message: str
 
 
-# In-memory storage (replace with database in production)
-_effect_chains: Dict[str, EffectChain] = {}  # chain_id -> EffectChain
-_effect_presets: Dict[str, EffectPreset] = {}  # preset_id -> EffectPreset
+# GAP-BE-001: Persistent storage (migrated from in-memory Dict to JsonFileStore)
+from backend.services.effect_chain_store import (
+    get_effect_chain_store,
+    get_effect_preset_store,
+)
+
 _MAX_CHAINS = 1000
 _MAX_PRESETS = 500
+
+
+def _get_effect_chains() -> Dict[str, EffectChain]:
+    """Get all effect chains as a dict (compatibility wrapper)."""
+    store = get_effect_chain_store()
+    return {chain["id"]: EffectChain(**chain) for chain in store.list_all()}
+
+
+def _get_chain(chain_id: str) -> Optional[EffectChain]:
+    """Get an effect chain by ID."""
+    store = get_effect_chain_store()
+    chain_data = store.get(chain_id)
+    if chain_data:
+        return EffectChain(**chain_data)
+    return None
+
+
+def _save_chain(chain: EffectChain) -> None:
+    """Save an effect chain."""
+    store = get_effect_chain_store()
+    store.save(chain.model_dump())
+
+
+def _delete_chain(chain_id: str) -> bool:
+    """Delete an effect chain."""
+    store = get_effect_chain_store()
+    return store.delete(chain_id)
+
+
+def _get_chains_for_project(project_id: str) -> List[EffectChain]:
+    """Get all effect chains for a project."""
+    store = get_effect_chain_store()
+    return [EffectChain(**chain) for chain in store.list_by_project(project_id)]
+
+
+def _get_effect_presets() -> Dict[str, EffectPreset]:
+    """Get all effect presets as a dict (compatibility wrapper)."""
+    store = get_effect_preset_store()
+    return {preset["id"]: EffectPreset(**preset) for preset in store.list_all()}
+
+
+def _get_preset(preset_id: str) -> Optional[EffectPreset]:
+    """Get an effect preset by ID."""
+    store = get_effect_preset_store()
+    preset_data = store.get(preset_id)
+    if preset_data:
+        return EffectPreset(**preset_data)
+    return None
+
+
+def _save_preset(preset: EffectPreset) -> None:
+    """Save an effect preset."""
+    store = get_effect_preset_store()
+    store.save(preset.model_dump())
+
+
+def _delete_preset(preset_id: str) -> bool:
+    """Delete an effect preset."""
+    store = get_effect_preset_store()
+    return store.delete(preset_id)
 
 
 def _validate_project_id(project_id: str) -> None:
@@ -136,8 +199,8 @@ def list_effect_chains(project_id: str = Query(..., description="Project ID")) -
     try:
         _validate_project_id(project_id)
 
-        # Filter chains by project_id
-        chains = [chain for chain in _effect_chains.values() if chain.project_id == project_id]
+        # Filter chains by project_id - using persistent store
+        chains = _get_chains_for_project(project_id)
 
         logger.info(f"Listed {len(chains)} effect chains for project {project_id}")
         return chains
@@ -163,11 +226,10 @@ def get_effect_chain(
         _validate_chain_id(chain_id)
         _validate_project_id(project_id)
 
-        if chain_id not in _effect_chains:
+        chain = _get_chain(chain_id)
+        if chain is None:
             logger.warning(f"Effect chain not found: {chain_id}")
             raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
-
-        chain = _effect_chains[chain_id]
 
         # Verify project_id matches
         if chain.project_id != project_id:
@@ -198,9 +260,9 @@ def create_effect_chain(
         if not request.name or not request.name.strip():
             raise HTTPException(status_code=400, detail="Chain name is required")
 
-        # Check limit
-        project_chains = [c for c in _effect_chains.values() if c.project_id == project_id]
-        if len(project_chains) >= _MAX_CHAINS:
+        # Check limit using persistent store
+        store = get_effect_chain_store()
+        if store.count_by_project(project_id) >= _MAX_CHAINS:
             raise HTTPException(
                 status_code=429,
                 detail=f"Maximum number of effect chains ({_MAX_CHAINS}) reached for this project",
@@ -221,7 +283,7 @@ def create_effect_chain(
             modified=now,
         )
 
-        _effect_chains[chain_id] = chain
+        _save_chain(chain)
 
         logger.info(f"Created effect chain {chain_id} for project {project_id}")
         return chain
@@ -245,11 +307,10 @@ def update_effect_chain(
         _validate_chain_id(chain_id)
         _validate_project_id(project_id)
 
-        if chain_id not in _effect_chains:
+        chain = _get_chain(chain_id)
+        if chain is None:
             logger.warning(f"Effect chain not found: {chain_id}")
             raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
-
-        chain = _effect_chains[chain_id]
 
         # Verify project_id matches
         if chain.project_id != project_id:
@@ -269,6 +330,7 @@ def update_effect_chain(
             chain.effects = request.effects
 
         chain.modified = datetime.utcnow().isoformat()
+        _save_chain(chain)
 
         logger.info(f"Updated effect chain {chain_id} for project {project_id}")
         return chain
@@ -290,18 +352,17 @@ def delete_effect_chain(
         _validate_chain_id(chain_id)
         _validate_project_id(project_id)
 
-        if chain_id not in _effect_chains:
+        chain = _get_chain(chain_id)
+        if chain is None:
             logger.warning(f"Effect chain not found: {chain_id}")
             raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
-
-        chain = _effect_chains[chain_id]
 
         # Verify project_id matches
         if chain.project_id != project_id:
             logger.warning(f"Effect chain {chain_id} does not belong to project {project_id}")
             raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
 
-        del _effect_chains[chain_id]
+        _delete_chain(chain_id)
 
         logger.info(f"Deleted effect chain {chain_id} for project {project_id}")
         return {"success": True}
@@ -330,11 +391,10 @@ def process_audio_with_chain(
         if not request.audio_id or not request.audio_id.strip():
             raise HTTPException(status_code=400, detail="Audio ID is required")
 
-        if chain_id not in _effect_chains:
+        chain = _get_chain(chain_id)
+        if chain is None:
             logger.warning(f"Effect chain not found: {chain_id}")
             raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
-
-        chain = _effect_chains[chain_id]
 
         # Verify project_id matches
         if chain.project_id != project_id:
@@ -457,12 +517,14 @@ def list_effect_presets(
     List all effect presets, optionally filtered by effect type.
     """
     try:
-        presets = list(_effect_presets.values())
-
+        store = get_effect_preset_store()
+        
         # Filter by effect type if provided
         if effect_type:
             effect_type = effect_type.strip().lower()
-            presets = [p for p in presets if p.effect_type.lower() == effect_type]
+            presets = [EffectPreset(**p) for p in store.list_by_type(effect_type)]
+        else:
+            presets = [EffectPreset(**p) for p in store.list_all()]
 
         logger.info(
             f"Listed {len(presets)} effect presets"
@@ -487,8 +549,9 @@ def create_effect_preset(request: EffectPresetCreateRequest) -> EffectPreset:
         if not request.name or not request.name.strip():
             raise HTTPException(status_code=400, detail="Preset name is required")
 
-        # Check limit
-        if len(_effect_presets) >= _MAX_PRESETS:
+        # Check limit using persistent store
+        store = get_effect_preset_store()
+        if store.count() >= _MAX_PRESETS:
             raise HTTPException(
                 status_code=429,
                 detail=f"Maximum number of effect presets ({_MAX_PRESETS}) reached",
@@ -509,7 +572,7 @@ def create_effect_preset(request: EffectPresetCreateRequest) -> EffectPreset:
             modified=now,
         )
 
-        _effect_presets[preset_id] = preset
+        _save_preset(preset)
 
         logger.info(f"Created effect preset {preset_id} (type: {request.effect_type})")
         return preset
@@ -528,11 +591,9 @@ def delete_effect_preset(preset_id: str) -> Dict[str, bool]:
     try:
         _validate_preset_id(preset_id)
 
-        if preset_id not in _effect_presets:
+        if not _delete_preset(preset_id):
             logger.warning(f"Effect preset not found: {preset_id}")
             raise HTTPException(status_code=404, detail=f"Effect preset not found: {preset_id}")
-
-        del _effect_presets[preset_id]
 
         logger.info(f"Deleted effect preset {preset_id}")
         return {"success": True}
@@ -759,62 +820,275 @@ def _apply_filter(audio: np.ndarray, sample_rate: int, params: Dict[str, float])
 
 
 # =============================================================================
-# Project-scoped effect chain routes (for UI compatibility)
+# Project-scoped effect chain routes (path-based for frontend compatibility)
+# Frontend expects: /api/effects/chains/{projectId}/{chainId}
 # =============================================================================
 
 project_effects_router = APIRouter(prefix="/api/effects/chains", tags=["project-effects"])
 
 
-@project_effects_router.get("/{project_id}/{chain_id}")
-@cache_response(ttl=60)
-async def get_project_effect_chain(project_id: str, chain_id: str):
-    """Get an effect chain for a specific project."""
+@project_effects_router.get("/{project_id}", response_model=List[EffectChain])
+@cache_response(ttl=30)
+async def list_project_effect_chains(project_id: str) -> List[EffectChain]:
+    """
+    List all effect chains for a project.
+    Path-based route for frontend compatibility.
+    """
     try:
-        if chain_id not in _effect_chains:
-            raise HTTPException(status_code=404, detail="Effect chain not found")
+        _validate_project_id(project_id)
+        chains = _get_chains_for_project(project_id)
+        logger.info(f"Listed {len(chains)} effect chains for project {project_id}")
+        return chains
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing effect chains for project {project_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list effect chains: {str(e)}")
 
-        chain = _effect_chains[chain_id]
-        if chain.get("project_id") != project_id:
-            raise HTTPException(
-                status_code=404, detail="Effect chain not found in this project"
-            )
 
+@project_effects_router.get("/{project_id}/{chain_id}", response_model=EffectChain)
+@cache_response(ttl=60)
+async def get_project_effect_chain(project_id: str, chain_id: str) -> EffectChain:
+    """
+    Get a specific effect chain for a project.
+    Path-based route for frontend compatibility.
+    """
+    try:
+        _validate_project_id(project_id)
+        _validate_chain_id(chain_id)
+
+        chain = _get_chain(chain_id)
+        if chain is None:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        if chain.project_id != project_id:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        logger.info(f"Retrieved effect chain {chain_id} for project {project_id}")
         return chain
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get effect chain: {str(e)}",
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get effect chain: {str(e)}")
 
 
-@project_effects_router.post("/{project_id}/{chain_id}/process")
-async def process_project_effect_chain(project_id: str, chain_id: str):
-    """Process audio through a project's effect chain."""
+@project_effects_router.post("/{project_id}", response_model=EffectChain)
+async def create_project_effect_chain(
+    project_id: str,
+    request: EffectChainCreateRequest,
+) -> EffectChain:
+    """
+    Create a new effect chain for a project.
+    Path-based route for frontend compatibility.
+    """
     try:
-        if chain_id not in _effect_chains:
-            raise HTTPException(status_code=404, detail="Effect chain not found")
+        _validate_project_id(project_id)
 
-        chain = _effect_chains[chain_id]
-        if chain.get("project_id") != project_id:
+        if not request.name or not request.name.strip():
+            raise HTTPException(status_code=400, detail="Chain name is required")
+
+        store = get_effect_chain_store()
+        if store.count_by_project(project_id) >= _MAX_CHAINS:
             raise HTTPException(
-                status_code=404, detail="Effect chain not found in this project"
+                status_code=429,
+                detail=f"Maximum number of effect chains ({_MAX_CHAINS}) reached for this project",
             )
 
-        # Return success - actual processing would require audio input
-        return {
-            "success": True,
-            "chain_id": chain_id,
-            "project_id": project_id,
-            "message": "Effect chain ready for processing",
-        }
+        chain_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat()
+
+        chain = EffectChain(
+            id=chain_id,
+            name=request.name.strip(),
+            description=request.description.strip() if request.description else None,
+            project_id=project_id,
+            effects=request.effects or [],
+            created=now,
+            modified=now,
+        )
+
+        _save_chain(chain)
+        logger.info(f"Created effect chain {chain_id} for project {project_id}")
+        return chain
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating effect chain: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create effect chain: {str(e)}")
+
+
+@project_effects_router.put("/{project_id}/{chain_id}", response_model=EffectChain)
+async def update_project_effect_chain(
+    project_id: str,
+    chain_id: str,
+    request: EffectChainUpdateRequest,
+) -> EffectChain:
+    """
+    Update an existing effect chain.
+    Path-based route for frontend compatibility.
+    """
+    try:
+        _validate_project_id(project_id)
+        _validate_chain_id(chain_id)
+
+        chain = _get_chain(chain_id)
+        if chain is None:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        if chain.project_id != project_id:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        if request.name is not None:
+            if not request.name.strip():
+                raise HTTPException(status_code=400, detail="Chain name cannot be empty")
+            chain.name = request.name.strip()
+
+        if request.description is not None:
+            chain.description = request.description.strip() if request.description else None
+
+        if request.effects is not None:
+            chain.effects = request.effects
+
+        chain.modified = datetime.utcnow().isoformat()
+        _save_chain(chain)
+
+        logger.info(f"Updated effect chain {chain_id} for project {project_id}")
+        return chain
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating effect chain {chain_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update effect chain: {str(e)}")
+
+
+@project_effects_router.delete("/{project_id}/{chain_id}")
+async def delete_project_effect_chain(project_id: str, chain_id: str) -> Dict[str, bool]:
+    """
+    Delete an effect chain.
+    Path-based route for frontend compatibility.
+    """
+    try:
+        _validate_project_id(project_id)
+        _validate_chain_id(chain_id)
+
+        chain = _get_chain(chain_id)
+        if chain is None:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        if chain.project_id != project_id:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        _delete_chain(chain_id)
+        logger.info(f"Deleted effect chain {chain_id} for project {project_id}")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting effect chain {chain_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {str(e)}")
+
+
+@project_effects_router.post("/{project_id}/{chain_id}/process", response_model=EffectProcessResponse)
+async def process_project_effect_chain(
+    project_id: str,
+    chain_id: str,
+    audio_id: str = Query(..., description="Audio file ID to process"),
+    output_filename: Optional[str] = Query(None, description="Output filename"),
+) -> EffectProcessResponse:
+    """
+    Process audio through a project's effect chain.
+    Path-based route for frontend compatibility.
+    """
+    try:
+        _validate_project_id(project_id)
+        _validate_chain_id(chain_id)
+
+        if not audio_id or not audio_id.strip():
+            raise HTTPException(status_code=400, detail="Audio ID is required")
+
+        chain = _get_chain(chain_id)
+        if chain is None:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        if chain.project_id != project_id:
+            raise HTTPException(status_code=404, detail=f"Effect chain not found: {chain_id}")
+
+        # Get enabled effects
+        enabled_effects = [e for e in chain.effects if e.enabled]
+        if not enabled_effects:
+            return EffectProcessResponse(
+                success=True,
+                output_id=audio_id,
+                output_path="",
+                effects_applied=[],
+                processing_time=0.0,
+                message="No enabled effects in chain, audio unchanged",
+            )
+
+        # Attempt to load and process audio
+        try:
+            from .voice import _audio_storage, _register_audio_file
+
+            if audio_id not in _audio_storage:
+                raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
+
+            audio_path = _audio_storage[audio_id]
+            if not os.path.exists(audio_path):
+                raise HTTPException(status_code=404, detail=f"Audio file at '{audio_path}' does not exist")
+
+            from app.core.audio.audio_utils import load_audio, save_audio
+            audio, sample_rate = load_audio(audio_path)
+
+            import time
+            start_time = time.time()
+
+            processed_audio = audio.copy()
+            sorted_effects = sorted(enabled_effects, key=lambda e: e.order)
+
+            for effect in sorted_effects:
+                params = {p.name: p.value for p in effect.parameters}
+                if effect.type == "reverb":
+                    processed_audio = _apply_reverb(processed_audio, sample_rate, params)
+                elif effect.type == "eq":
+                    processed_audio = _apply_eq(processed_audio, sample_rate, params)
+                elif effect.type == "compressor":
+                    processed_audio = _apply_compressor(processed_audio, sample_rate, params)
+                elif effect.type == "delay":
+                    processed_audio = _apply_delay(processed_audio, sample_rate, params)
+                elif effect.type == "filter":
+                    processed_audio = _apply_filter(processed_audio, sample_rate, params)
+
+            # Save processed audio
+            output_dir = tempfile.mkdtemp(prefix="effects_")
+            out_name = output_filename or f"processed_{audio_id}.wav"
+            output_path = os.path.join(output_dir, out_name)
+            save_audio(processed_audio, output_path, sample_rate)
+
+            output_id = _register_audio_file(output_path)
+            processing_time = time.time() - start_time
+
+            logger.info(f"Processed audio with {len(sorted_effects)} effects in {processing_time:.2f}s")
+            return EffectProcessResponse(
+                success=True,
+                output_id=output_id,
+                output_path=output_path,
+                effects_applied=[e.type for e in sorted_effects],
+                processing_time=processing_time,
+                message=f"Applied {len(sorted_effects)} effects successfully",
+            )
+
+        except ImportError as ie:
+            logger.warning(f"Audio processing not available: {ie}")
+            raise HTTPException(status_code=503, detail="Audio processing libraries not available")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Audio processing failed: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error processing effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process effect chain: {str(e)}",
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to process effect chain: {str(e)}")

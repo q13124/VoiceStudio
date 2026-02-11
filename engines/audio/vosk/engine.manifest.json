@@ -19,9 +19,36 @@
     "download": "%PROGRAMDATA%\\VoiceStudio\\models\\vosk\\downloads"
   },
   "supported_languages": [
-    "en", "en-us", "en-in", "cn", "ru", "fr", "de", "es", "pt", "it",
-    "nl", "ca", "fa", "uk", "kz", "ja", "eo", "hi", "cs", "pl", "uz",
-    "ko", "ar", "tl", "vi", "tr", "br", "sv", "el", "la"
+    "en",
+    "en-us",
+    "en-in",
+    "cn",
+    "ru",
+    "fr",
+    "de",
+    "es",
+    "pt",
+    "it",
+    "nl",
+    "ca",
+    "fa",
+    "uk",
+    "kz",
+    "ja",
+    "eo",
+    "hi",
+    "cs",
+    "pl",
+    "uz",
+    "ko",
+    "ar",
+    "tl",
+    "vi",
+    "tr",
+    "br",
+    "sv",
+    "el",
+    "la"
   ],
   "capabilities": [
     "speech_to_text",
@@ -37,8 +64,20 @@
   },
   "contract": {
     "input": {
-      "audio_formats": ["wav", "mp3", "flac", "ogg", "m4a"],
-      "sample_rates": [8000, 16000, 22050, 44100, 48000],
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg",
+        "m4a"
+      ],
+      "sample_rates": [
+        8000,
+        16000,
+        22050,
+        44100,
+        48000
+      ],
       "max_duration_seconds": 3600,
       "min_duration_seconds": 0.1
     },
@@ -120,6 +159,11 @@
     "allowed_hosts": [
       "alphacephei.com"
     ],
-    "allowed_ports": [443, 80]
-  }
+    "allowed_ports": [
+      443,
+      80
+    ]
+  },
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented audio engine."
 }

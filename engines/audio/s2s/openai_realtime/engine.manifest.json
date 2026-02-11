@@ -7,7 +7,9 @@
   "description": "End-to-end speech-to-speech via OpenAI Realtime API. Sub-500ms latency, preserves tone and emotion.",
   "entry_point": "app.core.engines.openai_realtime_engine:OpenAIRealtimeProvider",
   "dependencies": {
-    "python": ["websockets>=12.0"]
+    "python": [
+      "websockets>=12.0"
+    ]
   },
   "capabilities": [
     "speech_to_speech",
@@ -22,13 +24,39 @@
     "ram_min_gb": 1
   },
   "config_schema": {
-    "model": {"type": "string", "default": "gpt-4o-realtime-preview"},
-    "voice": {"type": "string", "default": "alloy", "enum": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]},
-    "api_key": {"type": "string", "description": "From OPENAI_API_KEY env var"}
+    "model": {
+      "type": "string",
+      "default": "gpt-4o-realtime-preview"
+    },
+    "voice": {
+      "type": "string",
+      "default": "alloy",
+      "enum": [
+        "alloy",
+        "echo",
+        "fable",
+        "onyx",
+        "nova",
+        "shimmer"
+      ]
+    },
+    "api_key": {
+      "type": "string",
+      "description": "From OPENAI_API_KEY env var"
+    }
   },
   "contract": {
-    "input": {"audio_data": "bytes", "context": "Optional[str]"},
-    "output": {"audio_data": "bytes", "transcript": "Optional[str]", "usage": "Dict[str, int]"}
+    "input": {
+      "audio_data": "bytes",
+      "context": "Optional[str]"
+    },
+    "output": {
+      "audio_data": "bytes",
+      "transcript": "Optional[str]",
+      "usage": "Dict[str, int]"
+    }
   },
-  "notes": "Cloud-only. Requires OPENAI_API_KEY. Per local-first policy, prefer local alternatives."
+  "notes": "Cloud-only. Requires OPENAI_API_KEY. Per local-first policy, prefer local alternatives.",
+  "implementation_status": "basic",
+  "implementation_notes": "Basic implementation. Some advanced features may be missing."
 }

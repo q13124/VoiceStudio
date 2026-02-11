@@ -1,18 +1,32 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "layout_state.schema.json",
   "title": "LayoutState",
+  "description": "UI layout state contract for persisting window/panel arrangements",
   "type": "object",
   "properties": {
-    "version": { "type": "string" },
+    "version": { 
+      "type": "string",
+      "description": "Layout state schema version"
+    },
     "regions": {
       "type": "array",
+      "description": "Window regions with their panel states",
       "items": {
         "type": "object",
         "properties": {
-          "region": { "type": "string" },
-          "activePanelId": { "type": "string" },
+          "region": { 
+            "type": "string",
+            "description": "Region identifier (e.g., left, center, right)"
+          },
+          "activePanelId": { 
+            "type": "string",
+            "description": "Currently active panel in this region"
+          },
           "openedPanels": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "type": "string" },
+            "description": "List of opened panel IDs in this region"
           }
         },
         "required": ["region", "activePanelId"]

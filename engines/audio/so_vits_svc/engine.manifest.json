@@ -53,13 +53,22 @@
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "f0_predictor": {
       "type": "string",
       "default": "crepe",
-      "enum": ["crepe", "dio", "harvest", "parselmouth", "rmvpe"],
+      "enum": [
+        "crepe",
+        "dio",
+        "harvest",
+        "parselmouth",
+        "rmvpe"
+      ],
       "description": "F0 pitch extraction method"
     },
     "pitch_shift": {
@@ -85,8 +94,18 @@
   },
   "contract": {
     "input": {
-      "audio_formats": ["wav", "mp3", "flac", "ogg"],
-      "sample_rates": [16000, 22050, 44100, 48000],
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg"
+      ],
+      "sample_rates": [
+        16000,
+        22050,
+        44100,
+        48000
+      ],
       "max_duration_seconds": 300
     },
     "output": {
@@ -100,5 +119,7 @@
       "ram_mb": 8192,
       "timeout_seconds": 300
     }
-  }
+  },
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented audio engine."
 }

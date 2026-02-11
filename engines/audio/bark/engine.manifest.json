@@ -21,7 +21,19 @@
     "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\bark\\cache"
   },
   "supported_languages": [
-    "en", "es", "fr", "de", "it", "pt", "pl", "ru", "zh-cn", "ja", "ko", "hi", "tr"
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "pl",
+    "ru",
+    "zh-cn",
+    "ja",
+    "ko",
+    "hi",
+    "tr"
   ],
   "capabilities": [
     "multi_language_tts",
@@ -42,13 +54,19 @@
     "model_size": {
       "type": "string",
       "default": "suno/bark",
-      "enum": ["suno/bark", "suno/bark-small"],
+      "enum": [
+        "suno/bark",
+        "suno/bark-small"
+      ],
       "description": "Bark model size"
     },
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "speaker_history_prompt": {
@@ -89,5 +107,7 @@
       "ram_mb": 8192,
       "timeout_seconds": 180
     }
-  }
+  },
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented audio engine."
 }

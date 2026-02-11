@@ -1,5 +1,11 @@
 // Phase 5.2: Power User Features
 // Task 5.2.2: Command Palette (VS Code style)
+//
+// DEPRECATED: This ViewModel is deprecated.
+// Use VoiceStudio.App.ViewModels.CommandPaletteViewModel instead.
+// That version follows project patterns (BaseViewModel, CommunityToolkit.Mvvm)
+// and integrates with IPanelRegistry and IUnifiedCommandRegistry.
+// See GAP-FE-002 for consolidation details.
 
 using System;
 using System.Collections.ObjectModel;
@@ -13,7 +19,9 @@ namespace VoiceStudio.App.Features.PowerUser;
 
 /// <summary>
 /// ViewModel for the command palette.
+/// DEPRECATED: Use <see cref="VoiceStudio.App.ViewModels.CommandPaletteViewModel"/> instead.
 /// </summary>
+[Obsolete("Use VoiceStudio.App.ViewModels.CommandPaletteViewModel instead. This version is deprecated.")]
 public class CommandPaletteViewModel : INotifyPropertyChanged
 {
     private readonly ShortcutManager _shortcutManager;

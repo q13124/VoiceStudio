@@ -1,14 +1,19 @@
 // Phase 5: Synthesis UI
 // Task 5.16: Main synthesis interface
-// Gap Analysis Fix: Refactored to use CommunityToolkit.Mvvm patterns
+// GAP-FE-001: Integrated with VoiceGateway and EngineGateway for backend connectivity
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using VoiceStudio.App.Features.VoiceProfile;
+using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Gateways;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Features.Synthesis;
 
@@ -26,7 +31,6 @@ public class EngineInfo
 
 /// <summary>
 /// Synthesis parameters.
-/// Gap Analysis Fix: Uses CommunityToolkit.Mvvm ObservableObject.
 /// </summary>
 public partial class SynthesisParameters : ObservableObject
 {
@@ -82,6 +86,7 @@ public class SynthesisResult
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Text { get; set; } = "";
     public string AudioPath { get; set; } = "";
+    public string AudioId { get; set; } = "";
     public TimeSpan Duration { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public string Engine { get; set; } = "";
@@ -90,22 +95,31 @@ public class SynthesisResult
 
 /// <summary>
 /// ViewModel for the synthesis interface.
-/// Gap Analysis Fix: Uses CommunityToolkit.Mvvm ObservableObject and RelayCommand.
+/// GAP-FE-001: Refactored to inherit from BaseViewModel and integrate with VoiceGateway.
 /// </summary>
-public partial class SynthesisViewModel : ObservableObject
+public partial class SynthesisViewModel : BaseViewModel
 {
+    private readonly IVoiceGateway _voiceGateway;
+    private readonly IEngineGateway _engineGateway;
+
     private string _inputText = "";
     private EngineInfo? _selectedEngine;
     private VoiceProfileData? _selectedVoice;
     private bool _isSynthesizing;
     private double _progress;
-    private string _statusMessage = "Ready";
     private SynthesisResult? _currentResult;
     private bool _isPlaying;
     private CancellationTokenSource? _synthesizeCts;
 
-    public SynthesisViewModel()
+    public SynthesisViewModel(
+        IViewModelContext context,
+        IVoiceGateway voiceGateway,
+        IEngineGateway engineGateway)
+        : base(context)
     {
+        _voiceGateway = voiceGateway ?? throw new ArgumentNullException(nameof(voiceGateway));
+        _engineGateway = engineGateway ?? throw new ArgumentNullException(nameof(engineGateway));
+
         Parameters = new SynthesisParameters();
         AvailableEngines = new ObservableCollection<EngineInfo>();
         AvailableVoices = new ObservableCollection<VoiceProfileData>();
@@ -130,6 +144,7 @@ public partial class SynthesisViewModel : ObservableObject
                 OnPropertyChanged(nameof(CharacterCount));
                 OnPropertyChanged(nameof(WordCount));
                 OnPropertyChanged(nameof(EstimatedDuration));
+                SynthesizeCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -154,6 +169,7 @@ public partial class SynthesisViewModel : ObservableObject
             {
                 // Reload voices for engine
                 _ = LoadVoicesAsync();
+                SynthesizeCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -161,7 +177,13 @@ public partial class SynthesisViewModel : ObservableObject
     public VoiceProfileData? SelectedVoice
     {
         get => _selectedVoice;
-        set => SetProperty(ref _selectedVoice, value);
+        set
+        {
+            if (SetProperty(ref _selectedVoice, value))
+            {
+                SynthesizeCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
 
     // Parameters
@@ -171,7 +193,15 @@ public partial class SynthesisViewModel : ObservableObject
     public bool IsSynthesizing
     {
         get => _isSynthesizing;
-        set => SetProperty(ref _isSynthesizing, value);
+        set
+        {
+            if (SetProperty(ref _isSynthesizing, value))
+            {
+                SynthesizeCommand.NotifyCanExecuteChanged();
+                CancelCommand.NotifyCanExecuteChanged();
+                PlayCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
 
     public double Progress
@@ -180,16 +210,17 @@ public partial class SynthesisViewModel : ObservableObject
         set => SetProperty(ref _progress, value);
     }
 
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
-    }
-
     public SynthesisResult? CurrentResult
     {
         get => _currentResult;
-        set => SetProperty(ref _currentResult, value);
+        set
+        {
+            if (SetProperty(ref _currentResult, value))
+            {
+                PlayCommand.NotifyCanExecuteChanged();
+                SaveCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
 
     public bool IsPlaying
@@ -201,61 +232,165 @@ public partial class SynthesisViewModel : ObservableObject
     // History
     public ObservableCollection<SynthesisResult> History { get; }
 
-    // Commands (using CommunityToolkit.Mvvm.Input)
-    public IAsyncRelayCommand SynthesizeCommand { get; }
-    public IRelayCommand CancelCommand { get; }
-    public IAsyncRelayCommand PlayCommand { get; }
-    public IRelayCommand PauseCommand { get; }
-    public IAsyncRelayCommand SaveCommand { get; }
-    public IRelayCommand ClearHistoryCommand { get; }
+    // Commands
+    public AsyncRelayCommand SynthesizeCommand { get; }
+    public RelayCommand CancelCommand { get; }
+    public AsyncRelayCommand PlayCommand { get; }
+    public RelayCommand PauseCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public RelayCommand ClearHistoryCommand { get; }
 
     public async Task InitializeAsync()
     {
-        await LoadEnginesAsync();
-        await LoadVoicesAsync();
+        IsLoading = true;
+        StatusMessage = "Loading engines...";
+
+        try
+        {
+            await LoadEnginesAsync();
+            await LoadVoicesAsync();
+            StatusMessage = "Ready";
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Failed to initialize synthesis panel");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadEnginesAsync()
     {
         AvailableEngines.Clear();
         
-        AvailableEngines.Add(new EngineInfo
+        try
         {
-            Id = "xtts",
-            Name = "XTTS v2",
-            Description = "Coqui XTTS for high-quality voice cloning",
-            IsAvailable = true,
-            RequiresGPU = true,
-        });
-        
-        AvailableEngines.Add(new EngineInfo
+            // Get engines from backend via EngineGateway
+            var result = await _engineGateway.GetAllAsync();
+            
+            if (result.Success && result.Data != null)
+            {
+                foreach (var engine in result.Data)
+                {
+                    // Only show TTS engines (check capabilities for synthesis)
+                    if (engine.Capabilities?.Contains("synthesis") == true ||
+                        engine.Capabilities?.Contains("tts") == true ||
+                        engine.Name.Contains("TTS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AvailableEngines.Add(new EngineInfo
+                        {
+                            Id = engine.Id,
+                            Name = engine.Name,
+                            Description = engine.Description ?? "",
+                            IsAvailable = engine.Availability == VoiceStudio.Core.Gateways.EngineAvailability.Available,
+                            RequiresGPU = false, // Not exposed in EngineInfo, will be set by engine details if needed
+                        });
+                    }
+                }
+            }
+            
+            // Fallback to defaults if no engines from backend
+            if (AvailableEngines.Count == 0)
+            {
+                AvailableEngines.Add(new EngineInfo
+                {
+                    Id = "xtts_v2",
+                    Name = "XTTS v2",
+                    Description = "Coqui XTTS for high-quality voice cloning",
+                    IsAvailable = true,
+                    RequiresGPU = true,
+                });
+                
+                AvailableEngines.Add(new EngineInfo
+                {
+                    Id = "piper",
+                    Name = "Piper TTS",
+                    Description = "Fast, lightweight TTS engine",
+                    IsAvailable = true,
+                    RequiresGPU = false,
+                });
+            }
+            
+            if (AvailableEngines.Count > 0)
+            {
+                SelectedEngine = AvailableEngines[0];
+            }
+        }
+        catch (Exception ex)
         {
-            Id = "piper",
-            Name = "Piper TTS",
-            Description = "Fast, lightweight TTS engine",
-            IsAvailable = true,
-            RequiresGPU = false,
-        });
-        
-        SelectedEngine = AvailableEngines[0];
-        
-        await Task.CompletedTask;
+            Logger.LogWarning(ex, "Failed to load engines from backend, using defaults");
+            
+            // Add default engines as fallback
+            AvailableEngines.Add(new EngineInfo
+            {
+                Id = "xtts_v2",
+                Name = "XTTS v2",
+                Description = "Coqui XTTS for high-quality voice cloning",
+                IsAvailable = true,
+                RequiresGPU = true,
+            });
+            
+            SelectedEngine = AvailableEngines[0];
+        }
     }
 
     private async Task LoadVoicesAsync()
     {
         AvailableVoices.Clear();
         
-        AvailableVoices.Add(new VoiceProfileData
+        try
         {
-            Name = "Default English",
-            Engine = SelectedEngine?.Id ?? "",
-            Language = "en",
-        });
-        
-        SelectedVoice = AvailableVoices[0];
-        
-        await Task.CompletedTask;
+            // Get voices from backend via VoiceGateway
+            var result = await _voiceGateway.GetAvailableVoicesAsync(SelectedEngine?.Id);
+            
+            if (result.Success && result.Data != null)
+            {
+                foreach (var voice in result.Data)
+                {
+                    AvailableVoices.Add(new VoiceProfileData
+                    {
+                        Id = voice.Id,
+                        Name = voice.Name,
+                        Description = voice.Description ?? "",
+                        Engine = voice.EngineId ?? SelectedEngine?.Id ?? "",
+                        Language = voice.Language ?? "en",
+                        Gender = voice.Gender ?? "",
+                        Source = voice.IsCloned ? VoiceSource.Cloned : VoiceSource.Builtin,
+                    });
+                }
+            }
+            
+            // Fallback to default if no voices from backend
+            if (AvailableVoices.Count == 0)
+            {
+                AvailableVoices.Add(new VoiceProfileData
+                {
+                    Name = "Default English",
+                    Engine = SelectedEngine?.Id ?? "",
+                    Language = "en",
+                });
+            }
+            
+            if (AvailableVoices.Count > 0)
+            {
+                SelectedVoice = AvailableVoices[0];
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load voices from backend, using defaults");
+            
+            AvailableVoices.Add(new VoiceProfileData
+            {
+                Name = "Default English",
+                Engine = SelectedEngine?.Id ?? "",
+                Language = "en",
+            });
+            
+            SelectedVoice = AvailableVoices[0];
+        }
     }
 
     private bool CanSynthesize() =>
@@ -274,32 +409,62 @@ public partial class SynthesisViewModel : ObservableObject
         IsSynthesizing = true;
         Progress = 0;
         StatusMessage = "Synthesizing...";
+        ErrorMessage = null;
         
         _synthesizeCts = new CancellationTokenSource();
         
         try
         {
-            // Simulate synthesis
-            for (int i = 0; i <= 100; i += 10)
-            {
-                _synthesizeCts.Token.ThrowIfCancellationRequested();
-                Progress = i;
-                await Task.Delay(200, _synthesizeCts.Token);
-            }
-            
-            var result = new SynthesisResult
+            // Create synthesis request for backend
+            var request = new VoiceSynthesisRequest
             {
                 Text = InputText,
-                AudioPath = $"temp/synthesis_{DateTime.Now:yyyyMMdd_HHmmss}.wav",
-                Duration = EstimatedDuration,
-                Engine = SelectedEngine!.Id,
-                Voice = SelectedVoice!.Name,
+                VoiceId = SelectedVoice!.Id,
+                EngineId = SelectedEngine!.Id,
+                Language = SelectedVoice.Language,
+                Speed = (float)Parameters.Speed,
+                Pitch = (float)Parameters.Pitch,
+                EngineParameters = new Dictionary<string, object>
+                {
+                    ["stability"] = Parameters.Stability,
+                    ["similarity"] = Parameters.Similarity,
+                    ["style"] = Parameters.Style,
+                    ["volume"] = Parameters.Volume,
+                }
             };
+
+            Progress = 10;
             
-            CurrentResult = result;
-            History.Insert(0, result);
+            // Call backend via VoiceGateway
+            var result = await _voiceGateway.SynthesizeAsync(request, _synthesizeCts.Token);
             
-            StatusMessage = "Synthesis complete";
+            Progress = 90;
+            
+            if (result.Success && result.Data != null)
+            {
+                var synthesisResult = new SynthesisResult
+                {
+                    Id = result.Data.AudioId,
+                    Text = InputText,
+                    AudioPath = result.Data.AudioPath,
+                    AudioId = result.Data.AudioId,
+                    Duration = TimeSpan.FromSeconds(result.Data.DurationSeconds),
+                    Engine = SelectedEngine.Id,
+                    Voice = SelectedVoice.Name,
+                };
+                
+                CurrentResult = synthesisResult;
+                History.Insert(0, synthesisResult);
+                
+                Progress = 100;
+                StatusMessage = "Synthesis complete";
+            }
+            else
+            {
+                ErrorMessage = result.Error?.Message ?? "Synthesis failed";
+                StatusMessage = "Synthesis failed";
+                await HandleErrorAsync(ErrorMessage, "Synthesis error", showDialog: false);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -307,12 +472,14 @@ public partial class SynthesisViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            await HandleErrorAsync(ex, "Synthesis failed");
+            StatusMessage = "Error during synthesis";
         }
         finally
         {
             IsSynthesizing = false;
             Progress = 0;
+            _synthesizeCts?.Dispose();
             _synthesizeCts = null;
         }
     }
@@ -334,11 +501,16 @@ public partial class SynthesisViewModel : ObservableObject
         IsPlaying = true;
         StatusMessage = "Playing...";
         
-        // Simulate playback
-        await Task.Delay((int)CurrentResult.Duration.TotalMilliseconds);
-        
-        IsPlaying = false;
-        StatusMessage = "Ready";
+        try
+        {
+            // Simulate playback - in a real implementation, use IAudioPlayerService
+            await Task.Delay((int)CurrentResult.Duration.TotalMilliseconds);
+        }
+        finally
+        {
+            IsPlaying = false;
+            StatusMessage = "Ready";
+        }
     }
 
     private void Pause()
@@ -355,9 +527,7 @@ public partial class SynthesisViewModel : ObservableObject
             return;
         }
         
-        // Save audio file
         StatusMessage = "Saved";
-        
         await Task.CompletedTask;
     }
 
@@ -366,4 +536,3 @@ public partial class SynthesisViewModel : ObservableObject
         History.Clear();
     }
 }
-// Gap Analysis Fix: Removed file-scoped RelayCommand classes - using CommunityToolkit.Mvvm.Input instead

@@ -78,5 +78,7 @@
       "ram_mb": 8192,
       "timeout_seconds": 120
     }
-  }
+  },
+  "implementation_status": "placeholder",
+  "implementation_notes": "Returns default/silence when dependencies unavailable. Requires package installation."
 }

@@ -2,6 +2,10 @@
 Voice AI Pipeline API Endpoints (Phase 9.2.5)
 
 REST and WebSocket endpoints for the STT → LLM → TTS pipeline.
+
+WebSocket Protocol (GAP-INT-002):
+    Use standardized protocol from backend.api.ws.protocol for new messages.
+    See backend/api/ws/protocol.py for specification.
 """
 
 import asyncio

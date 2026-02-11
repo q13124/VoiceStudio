@@ -1,12 +1,22 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "analyze_voice_request.schema.json",
   "title": "AnalyzeVoiceRequest",
+  "description": "Voice analysis request contract",
   "type": "object",
   "properties": {
-    "profileId": { "type": "string" },
-    "clipId": { "type": "string" },
+    "profileId": { 
+      "type": "string",
+      "description": "Voice profile identifier"
+    },
+    "clipId": { 
+      "type": "string",
+      "description": "Audio clip identifier to analyze"
+    },
     "analysisModes": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string" },
+      "description": "Analysis modes to apply (e.g., pitch, tone, rhythm)"
     }
   },
   "required": ["profileId", "clipId"]

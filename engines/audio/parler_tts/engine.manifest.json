@@ -18,7 +18,9 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\parler_tts",
     "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\parler_tts\\cache"
   },
-  "supported_languages": ["en"],
+  "supported_languages": [
+    "en"
+  ],
   "capabilities": [
     "text_to_speech",
     "voice_description",
@@ -57,13 +59,19 @@
     "model_size": {
       "type": "string",
       "default": "mini",
-      "enum": ["mini", "large"],
+      "enum": [
+        "mini",
+        "large"
+      ],
       "description": "Model size (mini = faster, large = better quality)"
     },
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -71,5 +79,7 @@
       "default": true,
       "description": "Whether to use GPU if available"
     }
-  }
+  },
+  "implementation_status": "placeholder",
+  "implementation_notes": "Returns default/silence when dependencies unavailable. Requires package installation."
 }

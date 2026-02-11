@@ -1,11 +1,27 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mcp_operation_response.schema.json",
   "title": "McpOperationResponse",
+  "description": "MCP operation response contract for IPC communication",
   "type": "object",
   "properties": {
-    "requestId": { "type": "string" },
-    "status": { "type": "string", "enum": ["ok", "error"] },
-    "data": { "type": "object" },
-    "error": { "type": "string" }
+    "requestId": { 
+      "type": "string",
+      "description": "Request identifier for correlation"
+    },
+    "status": { 
+      "type": "string", 
+      "enum": ["ok", "error"],
+      "description": "Response status"
+    },
+    "data": { 
+      "type": "object",
+      "description": "Response data on success"
+    },
+    "error": { 
+      "type": "string",
+      "description": "Error message on failure"
+    }
   },
   "required": ["requestId", "status"]
 }

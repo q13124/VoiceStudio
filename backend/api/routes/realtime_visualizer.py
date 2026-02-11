@@ -2,6 +2,10 @@
 Real-Time Audio Visualizer Routes
 
 Endpoints for real-time audio visualization and streaming.
+
+WebSocket Protocol (GAP-INT-002):
+    Use standardized protocol from backend.api.ws.protocol for new messages.
+    See backend/api/ws/protocol.py for specification.
 """
 
 import logging

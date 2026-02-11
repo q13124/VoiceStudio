@@ -82,5 +82,7 @@
       "ram_mb": 8192,
       "timeout_seconds": 300
     }
-  }
+  },
+  "implementation_status": "external",
+  "implementation_notes": "Delegates to external tool. Requires fooocus to be installed and running."
 }

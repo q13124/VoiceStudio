@@ -18,9 +18,34 @@
     "cache": "%APPDATA%\\VoiceStudio\\cache\\openai_tts"
   },
   "supported_languages": [
-    "en", "es", "fr", "de", "it", "pt", "pl", "ja", "ko", "zh",
-    "ar", "cs", "da", "fi", "el", "he", "hi", "hu", "id", "nl",
-    "no", "ro", "ru", "sv", "th", "tr", "uk", "vi"
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "pl",
+    "ja",
+    "ko",
+    "zh",
+    "ar",
+    "cs",
+    "da",
+    "fi",
+    "el",
+    "he",
+    "hi",
+    "hu",
+    "id",
+    "nl",
+    "no",
+    "ro",
+    "ru",
+    "sv",
+    "th",
+    "tr",
+    "uk",
+    "vi"
   ],
   "capabilities": [
     "text_to_speech",
@@ -61,13 +86,23 @@
     "model": {
       "type": "string",
       "default": "tts-1",
-      "enum": ["tts-1", "tts-1-hd"],
+      "enum": [
+        "tts-1",
+        "tts-1-hd"
+      ],
       "description": "TTS model (tts-1=faster, tts-1-hd=higher quality)"
     },
     "voice": {
       "type": "string",
       "default": "alloy",
-      "enum": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+      "enum": [
+        "alloy",
+        "echo",
+        "fable",
+        "onyx",
+        "nova",
+        "shimmer"
+      ],
       "description": "Voice to use for synthesis"
     },
     "speed": {
@@ -80,7 +115,14 @@
     "response_format": {
       "type": "string",
       "default": "mp3",
-      "enum": ["mp3", "opus", "aac", "flac", "wav", "pcm"],
+      "enum": [
+        "mp3",
+        "opus",
+        "aac",
+        "flac",
+        "wav",
+        "pcm"
+      ],
       "description": "Output audio format"
     }
   },
@@ -117,6 +159,10 @@
     "allowed_hosts": [
       "api.openai.com"
     ],
-    "allowed_ports": [443]
-  }
+    "allowed_ports": [
+      443
+    ]
+  },
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented audio engine."
 }

@@ -1,12 +1,20 @@
 """
 Engine Router Hook for Governor
 Connects Governor + learners orchestration to engine router and runtime engines
+
+Note: Migrated to use EnhancedRuntimeEngine (GAP-ENG-003)
 """
 
 from typing import Optional, Union
 from app.core.engines.router import router
 from app.core.engines.protocols import EngineProtocol
-from app.core.runtime.runtime_engine import RuntimeEngine, RuntimeEngineManager
+
+# Prefer EnhancedRuntimeEngine, fallback to RuntimeEngine
+try:
+    from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngine as RuntimeEngine
+    from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngineManager as RuntimeEngineManager
+except ImportError:
+    from app.core.runtime.runtime_engine import RuntimeEngine, RuntimeEngineManager
 
 
 class EngineHook:

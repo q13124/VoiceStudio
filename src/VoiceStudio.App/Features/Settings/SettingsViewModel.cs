@@ -1,5 +1,11 @@
 // Phase 5: Settings UI
 // Task 5.2: Comprehensive settings management
+//
+// DEPRECATED: This ViewModel is deprecated.
+// Use VoiceStudio.App.ViewModels.SettingsViewModel instead.
+// That version follows project patterns (BaseViewModel, CommunityToolkit.Mvvm)
+// and implements IPanelView for panel integration.
+// See GAP-FE-002 for consolidation details.
 
 using System;
 using System.Collections.ObjectModel;
@@ -29,7 +35,9 @@ public enum SettingsCategory
 
 /// <summary>
 /// ViewModel for application settings.
+/// DEPRECATED: Use <see cref="VoiceStudio.App.ViewModels.SettingsViewModel"/> instead.
 /// </summary>
+[Obsolete("Use VoiceStudio.App.ViewModels.SettingsViewModel instead. This version is deprecated.")]
 public class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly ThemeService _themeService;
@@ -220,7 +228,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     public string LogLevel { get; set; } = "Information";
     public int MaxLogFiles { get; set; } = 10;
     public bool EnableTelemetry { get; set; } = false;
-    public string BackendUrl { get; set; } = "http://localhost:8000";
+    public string BackendUrl { get; set; } = "http://localhost:8001";
     public int BackendTimeout { get; set; } = 30;
     public bool EnableExperimentalFeatures { get; set; } = false;
 

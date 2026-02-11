@@ -4,6 +4,8 @@
   "type": "audio",
   "subtype": "tts",
   "version": "2.0",
+  "implementation_status": "full",
+  "implementation_notes": "Fully implemented with voice cloning and multi-language TTS.",
   "venv_family": "venv_core_tts",
   "description": "Coqui TTS XTTS v2 for voice cloning and text-to-speech synthesis",
   "author": "Coqui",

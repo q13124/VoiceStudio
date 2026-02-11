@@ -1,11 +1,26 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mcp_operation.schema.json",
   "title": "McpOperationRequest",
+  "description": "MCP operation request contract for IPC communication",
   "type": "object",
   "properties": {
-    "requestId": { "type": "string" },
-    "operation": { "type": "string" },
-    "source": { "type": "string" },
-    "payload": { "type": "object" }
+    "requestId": { 
+      "type": "string",
+      "description": "Unique request identifier for correlation"
+    },
+    "operation": { 
+      "type": "string",
+      "description": "Operation name to execute"
+    },
+    "source": { 
+      "type": "string",
+      "description": "Source component identifier"
+    },
+    "payload": { 
+      "type": "object",
+      "description": "Operation-specific payload data"
+    }
   },
   "required": ["requestId", "operation", "payload"]
 }

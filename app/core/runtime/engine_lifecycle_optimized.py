@@ -30,13 +30,18 @@ from .engine_lifecycle import (
 
 logger = logging.getLogger(__name__)
 
-# Import RuntimeEngine
+# Import EnhancedRuntimeEngine (preferred) or RuntimeEngine as fallback
 try:
-    from .runtime_engine import RuntimeEngine
+    from .runtime_engine_enhanced import EnhancedRuntimeEngine
     HAS_RUNTIME_ENGINE = True
+    RuntimeEngine = EnhancedRuntimeEngine  # Alias for compatibility
 except ImportError:
-    HAS_RUNTIME_ENGINE = False
-    RuntimeEngine = None
+    try:
+        from .runtime_engine import RuntimeEngine
+        HAS_RUNTIME_ENGINE = True
+    except ImportError:
+        HAS_RUNTIME_ENGINE = False
+        RuntimeEngine = None
 
 
 class OptimizedEngineLifecycleManager(EngineLifecycleManager):

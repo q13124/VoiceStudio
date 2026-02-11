@@ -20,7 +20,9 @@
     "base": "%PROGRAMDATA%\\VoiceStudio\\models\\speaker_encoder",
     "cache": "%PROGRAMDATA%\\VoiceStudio\\models\\speaker_encoder\\cache"
   },
-  "supported_languages": ["universal"],
+  "supported_languages": [
+    "universal"
+  ],
   "capabilities": [
     "speaker_embedding",
     "speaker_verification",
@@ -34,8 +36,19 @@
   },
   "contract": {
     "input": {
-      "audio_formats": ["wav", "mp3", "flac", "ogg"],
-      "sample_rates": [8000, 16000, 22050, 44100, 48000],
+      "audio_formats": [
+        "wav",
+        "mp3",
+        "flac",
+        "ogg"
+      ],
+      "sample_rates": [
+        8000,
+        16000,
+        22050,
+        44100,
+        48000
+      ],
       "max_duration_seconds": 60,
       "min_duration_seconds": 1
     },
@@ -58,13 +71,19 @@
     "backend": {
       "type": "string",
       "default": "resemblyzer",
-      "enum": ["resemblyzer", "speechbrain"],
+      "enum": [
+        "resemblyzer",
+        "speechbrain"
+      ],
       "description": "Speaker encoder backend to use"
     },
     "device": {
       "type": "string",
       "default": "cuda",
-      "enum": ["cuda", "cpu"],
+      "enum": [
+        "cuda",
+        "cpu"
+      ],
       "description": "Device to use for inference"
     },
     "gpu": {
@@ -114,5 +133,7 @@
     ],
     "allowed_hosts": [],
     "allowed_ports": []
-  }
+  },
+  "implementation_status": "basic",
+  "implementation_notes": "Basic implementation. Some advanced features may be missing."
 }
