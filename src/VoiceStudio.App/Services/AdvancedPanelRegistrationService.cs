@@ -108,6 +108,26 @@ namespace VoiceStudio.App.Services
         ViewType = typeof(VoiceMorphingBlendingView),
         ViewModelType = typeof(VoiceMorphingBlendingViewModel)
       });
+
+      // Panel 10: Plugin Gallery
+      registry.Register(new PanelDescriptor
+      {
+        PanelId = "plugin-gallery",
+        DisplayName = "Plugin Gallery",
+        Region = PanelRegion.Center,
+        ViewType = typeof(PluginGalleryView),
+        ViewModelType = typeof(PluginGalleryViewModel)
+      });
+
+      // Panel 11: Theme Editor
+      registry.Register(new PanelDescriptor
+      {
+        PanelId = "theme-editor",
+        DisplayName = "Theme Editor",
+        Region = PanelRegion.Right,
+        ViewType = typeof(ThemeEditorView),
+        ViewModelType = typeof(ThemeEditorViewModel)
+      });
     }
   }
 }

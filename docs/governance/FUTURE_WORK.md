@@ -60,8 +60,8 @@ This document tracks items that are intentionally deferred to future development
 | Feature | Description | Complexity | Notes |
 |---------|-------------|------------|-------|
 | ~~Advanced Animations~~ | ~~Fluent Design micro-interactions~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - LoadingOverlay fade, PanelHost/PanelStack transitions, VSQButton hover/press |
-| Theme Editor | User-customizable themes | Low | Phase 11+ |
-| Plugin Gallery | In-app engine/plugin browser | High | Requires plugin infrastructure |
+| ~~Theme Editor~~ | ~~User-customizable themes~~ | ~~Low~~ | **COMPLETE** (2026-02-11) - ThemeEditorViewModel, ColorPicker for custom accents, Theme.HighContrast.xaml, Theme.Default.xaml, accent persistence in ThemeManager |
+| ~~Plugin Gallery~~ | ~~In-app engine/plugin browser~~ | ~~High~~ | **COMPLETE** (2026-02-11) - IPluginGateway, PluginGateway, PluginGalleryViewModel, PluginCard, PluginGalleryView, PluginDetailView panels registered |
 | ~~Touch Optimization~~ | ~~Tablet-friendly UI adjustments~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - 44px targets, Density.Touch.xaml, Touch density mode |
 
 ### Infrastructure
@@ -97,7 +97,7 @@ This document tracks items that are intentionally deferred to future development
 - [x] TASK-0019 — Phase 2+ Next-Work Selection
 - [x] TASK-0023 — Interface Implementations + Pre-commit Hooks
 - [x] TASK-0026 — Introduce Engine Interface Layer
-- TASK-0021
+- [x] TASK-0021 — OpenMemory MCP Wiring (**COMPLETE** 2026-02-11)
 
 ---
 

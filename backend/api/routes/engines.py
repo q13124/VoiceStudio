@@ -857,3 +857,141 @@ async def get_engine_voices(engine_id: str):
     except Exception as e:
         logger.error(f"Error getting voices for {engine_id}: {e}")
         return []
+
+
+class ParameterDefinitionModel(BaseModel):
+    """Definition of a single engine parameter."""
+    name: str
+    display_name: str = ""
+    description: str = ""
+    type: str  # string, integer, number, boolean, enum, array, object, filepath
+    default_value: Optional[Any] = None
+    min_value: Optional[Any] = None
+    max_value: Optional[Any] = None
+    step: Optional[float] = None
+    enum_options: Optional[List[Dict[str, str]]] = None
+    group_id: Optional[str] = None
+    order: int = 0
+    is_advanced: bool = False
+    is_required: bool = False
+
+
+class ParameterGroupModel(BaseModel):
+    """Group for organizing parameters in UI."""
+    id: str
+    display_name: str
+    description: str = ""
+    order: int = 0
+    is_collapsed: bool = False
+
+
+class EngineParameterSchemaResponse(BaseModel):
+    """Response model for engine parameter schema."""
+    engine_id: str
+    schema_version: str = "1.0"
+    parameters: List[ParameterDefinitionModel]
+    groups: List[ParameterGroupModel] = []
+
+
+@router.get("/{engine_id}/schema", response_model=EngineParameterSchemaResponse)
+async def get_engine_schema(engine_id: str):
+    """
+    Get the configuration schema for an engine.
+    Used for capability-driven dynamic UI generation.
+    """
+    import json
+    from pathlib import Path
+
+    # Search for engine manifest in known locations
+    engine_dirs = [
+        Path("engines/audio"),
+        Path("engines/video"),
+        Path("engines"),
+    ]
+
+    manifest = None
+    for engine_dir in engine_dirs:
+        manifest_path = engine_dir / engine_id / "engine.manifest.json"
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    manifest = json.load(f)
+                break
+            except Exception as e:
+                logger.warning(f"Error reading manifest {manifest_path}: {e}")
+
+    if manifest is None:
+        # Try to find by searching all subdirectories
+        for engine_dir in engine_dirs:
+            if not engine_dir.exists():
+                continue
+            for subdir in engine_dir.iterdir():
+                if subdir.is_dir():
+                    manifest_path = subdir / "engine.manifest.json"
+                    if manifest_path.exists():
+                        try:
+                            with open(manifest_path, "r", encoding="utf-8") as f:
+                                data = json.load(f)
+                                if data.get("engine_id") == engine_id:
+                                    manifest = data
+                                    break
+                        # ALLOWED: bare except - skip invalid manifests gracefully
+                        except Exception:
+                            pass
+            if manifest:
+                break
+
+    if manifest is None:
+        raise HTTPException(status_code=404, detail=f"Engine '{engine_id}' not found")
+
+    config_schema = manifest.get("config_schema", {})
+
+    # Convert manifest config_schema to ParameterDefinitionModel list
+    parameters = []
+    for idx, (param_name, param_def) in enumerate(config_schema.items()):
+        if not isinstance(param_def, dict):
+            continue
+
+        param_type = param_def.get("type", "string")
+        enum_options = None
+
+        if "enum" in param_def:
+            enum_options = [
+                {"value": str(v), "display_name": str(v)}
+                for v in param_def.get("enum", [])
+            ]
+            param_type = "enum"
+
+        parameters.append(ParameterDefinitionModel(
+            name=param_name,
+            display_name=param_def.get("display_name", param_name.replace("_", " ").title()),
+            description=param_def.get("description", ""),
+            type=param_type,
+            default_value=param_def.get("default"),
+            min_value=param_def.get("minimum"),
+            max_value=param_def.get("maximum"),
+            step=param_def.get("step"),
+            enum_options=enum_options,
+            group_id=param_def.get("ui_group"),
+            order=param_def.get("ui_order", idx),
+            is_advanced=param_def.get("advanced", False),
+            is_required=param_def.get("required", False),
+        ))
+
+    # Extract groups from parameters
+    groups_seen = set()
+    groups = []
+    for param in parameters:
+        if param.group_id and param.group_id not in groups_seen:
+            groups_seen.add(param.group_id)
+            groups.append(ParameterGroupModel(
+                id=param.group_id,
+                display_name=param.group_id.replace("_", " ").title(),
+                order=len(groups),
+            ))
+
+    return EngineParameterSchemaResponse(
+        engine_id=engine_id,
+        parameters=parameters,
+        groups=groups,
+    )

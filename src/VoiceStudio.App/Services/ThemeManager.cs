@@ -61,6 +61,31 @@ namespace VoiceStudio.App.Services
       _rootElement = rootElement;
       await LoadPersistedSettings();
       ApplyTheme(CurrentThemeName);
+      
+      // Apply persisted accent color
+      if (_currentAccent != null)
+      {
+        ApplyAccentToResources(_currentAccent);
+      }
+    }
+    
+    /// <summary>
+    /// Applies accent color to application resources.
+    /// </summary>
+    private void ApplyAccentToResources(ThemeAccent accent)
+    {
+      if (Application.Current.Resources.ContainsKey("SystemAccentColor"))
+      {
+        Application.Current.Resources["SystemAccentColor"] = accent.Primary;
+      }
+      
+      // Also set the accent brushes if they exist
+      if (Application.Current.Resources.ContainsKey("VSQ.Accent.PrimaryBrush"))
+      {
+        Application.Current.Resources["VSQ.Accent.PrimaryBrush"] = 
+            new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                Microsoft.UI.ColorHelper.FromArgb(accent.Primary.A, accent.Primary.R, accent.Primary.G, accent.Primary.B));
+      }
     }
 
     private async Task LoadPersistedSettings()
@@ -83,6 +108,20 @@ namespace VoiceStudio.App.Services
           
           if (doc.RootElement.TryGetProperty("density", out var densityProp))
             Density = densityProp.GetString() ?? "Compact";
+          
+          // Load accent color by name
+          if (doc.RootElement.TryGetProperty("accent", out var accentProp))
+          {
+            var accentName = accentProp.GetString();
+            if (!string.IsNullOrEmpty(accentName))
+            {
+              var accent = _predefinedAccents.Find(a => a.Name == accentName);
+              if (accent != null)
+              {
+                _currentAccent = accent;
+              }
+            }
+          }
         }
       }
       // ALLOWED: empty catch - using defaults is acceptable fallback
@@ -168,7 +207,8 @@ namespace VoiceStudio.App.Services
       File.WriteAllText(path, JsonSerializer.Serialize(new
       {
         theme = CurrentThemeName,
-        density = Density
+        density = Density,
+        accent = _currentAccent?.Name ?? "Blue"
       }));
     }
 
@@ -225,14 +265,9 @@ namespace VoiceStudio.App.Services
     public void SetAccent(ThemeAccent accent)
     {
       _currentAccent = accent;
-      
-      // Apply accent color to application resources
-      if (Application.Current.Resources.ContainsKey("SystemAccentColor"))
-      {
-        Application.Current.Resources["SystemAccentColor"] = accent.Primary;
-      }
-      
+      ApplyAccentToResources(accent);
       Persist();
+      RaiseThemeChanged();
     }
 
     /// <summary>

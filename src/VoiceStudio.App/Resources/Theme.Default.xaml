@@ -1,0 +1,48 @@
+<!--
+  ============================================================================
+  Theme.Default.xaml - Default dark theme for VoiceStudio
+  
+  This theme serves as the standard dark theme that follows system conventions.
+  It uses a balanced dark palette that's easy on the eyes during extended use.
+  
+  AI GUIDELINES:
+  - DO NOT DELETE theme color keys - used by theme system
+  - DO NOT RENAME keys - must match base theme structure
+  - Color values can be modified but verify contrast accessibility
+  ============================================================================
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Deep charcoal background -->
+  <SolidColorBrush x:Key="VSQ.Background" Color="#1E1E1E"/>
+  
+  <!-- Slightly lighter panel background -->
+  <SolidColorBrush x:Key="VSQ.Panel"      Color="#252526"/>
+  
+  <!-- Surface for cards and elevated elements -->
+  <SolidColorBrush x:Key="VSQ.Surface"    Color="#2D2D30"/>
+  
+  <!-- Subtle border -->
+  <SolidColorBrush x:Key="VSQ.Border"     Color="#3E3E42"/>
+  
+  <!-- Primary text - light gray for comfortable reading -->
+  <SolidColorBrush x:Key="VSQ.Text"       Color="#CCCCCC"/>
+  
+  <!-- Secondary/muted text -->
+  <SolidColorBrush x:Key="VSQ.SubtleText" Color="#808080"/>
+  
+  <!-- System blue accent -->
+  <SolidColorBrush x:Key="VSQ.Accent"     Color="#0078D4"/>
+  
+  <!-- Purple alternate accent -->
+  <SolidColorBrush x:Key="VSQ.AccentAlt"  Color="#7B68EE"/>
+  
+  <!-- Green for success/info states -->
+  <SolidColorBrush x:Key="VSQ.Warn"       Color="#3CB371"/>
+  
+  <!-- Red for errors/danger states -->
+  <SolidColorBrush x:Key="VSQ.Danger"     Color="#DC3545"/>
+  
+  <!-- Standard corner radius -->
+  <x:Double x:Key="VSQ.CornerRadius">8</x:Double>
+</ResourceDictionary>

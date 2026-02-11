@@ -3,9 +3,12 @@ using Microsoft.UI.Xaml;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.App.Services;
+using VoiceStudio.App.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using VoiceStudio.App.Views.Panels;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Windows.Input;
@@ -190,18 +193,123 @@ namespace VoiceStudio.App.Controls
     {
       if (d is PanelHost host)
       {
-        // Dispose previous ViewModel if it implements IDisposable
-        host.DisposePreviousViewModel(e.OldValue as UIElement);
-
-        // Save previous panel state before changing content
-        host.SaveCurrentPanelState();
-
-        // Restore new panel state
-        host.RestorePanelState(e.NewValue as UIElement);
-
-        // Update context-sensitive action bar (IDEA 2)
-        host.UpdateActionBar(e.NewValue as UIElement);
+        // Fire-and-forget async lifecycle handling
+        _ = host.HandleContentChangeAsync(e.OldValue as UIElement, e.NewValue as UIElement);
       }
+    }
+
+    /// <summary>
+    /// Handles content change with proper lifecycle management.
+    /// </summary>
+    private async Task HandleContentChangeAsync(UIElement? oldContent, UIElement? newContent)
+    {
+      var ct = _loadingCts?.Token ?? CancellationToken.None;
+
+      try
+      {
+        // 1. Deactivate old content's ViewModel
+        await DeactivateViewModelAsync(oldContent, ct);
+
+        // 2. Dispose previous ViewModel if it implements IDisposable
+        DisposePreviousViewModel(oldContent);
+
+        // 3. Save previous panel state before changing content
+        SaveCurrentPanelState();
+
+        // 4. Restore new panel state
+        RestorePanelState(newContent);
+
+        // 5. Activate new content's ViewModel
+        await ActivateViewModelAsync(newContent, ct);
+
+        // 6. Update context-sensitive action bar (IDEA 2)
+        UpdateActionBar(newContent);
+      }
+      // ALLOWED: empty catch - cancellation is intentional, not an error
+      catch (OperationCanceledException)
+      {
+        // Content change was cancelled, expected
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error during content change: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// Activates the ViewModel if it implements IPanelLifecycle.
+    /// </summary>
+    private async Task ActivateViewModelAsync(UIElement? content, CancellationToken ct)
+    {
+      if (content == null) return;
+
+      var viewModel = GetViewModelFromContent(content);
+      if (viewModel == null) return;
+
+      // Try typed interface first
+      if (viewModel is IPanelLifecycle lifecycle)
+      {
+        try
+        {
+          await lifecycle.OnActivatedAsync(ct);
+        }
+        catch (Exception ex)
+        {
+          System.Diagnostics.Debug.WriteLine($"[PanelHost] Error activating panel: {ex.Message}");
+        }
+      }
+      else
+      {
+        // Fall back to reflection-based activation
+        await PanelLifecycleHelper.InvokeActivateAsync(viewModel, ct);
+      }
+    }
+
+    /// <summary>
+    /// Deactivates the ViewModel if it implements IPanelLifecycle.
+    /// </summary>
+    private async Task DeactivateViewModelAsync(UIElement? content, CancellationToken ct)
+    {
+      if (content == null) return;
+
+      var viewModel = GetViewModelFromContent(content);
+      if (viewModel == null) return;
+
+      // Try typed interface first
+      if (viewModel is IPanelLifecycle lifecycle)
+      {
+        try
+        {
+          await lifecycle.OnDeactivatedAsync(ct);
+        }
+        catch (Exception ex)
+        {
+          System.Diagnostics.Debug.WriteLine($"[PanelHost] Error deactivating panel: {ex.Message}");
+        }
+      }
+      else
+      {
+        // Fall back to reflection-based deactivation
+        await PanelLifecycleHelper.InvokeDeactivateAsync(viewModel, ct);
+      }
+    }
+
+    /// <summary>
+    /// Gets the ViewModel from a content element.
+    /// </summary>
+    private static object? GetViewModelFromContent(UIElement content)
+    {
+      if (content is UserControl userControl)
+      {
+        return userControl.DataContext;
+      }
+
+      if (content is FrameworkElement frameworkElement)
+      {
+        return frameworkElement.DataContext;
+      }
+
+      return null;
     }
 
     private static void OnPanelRegionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

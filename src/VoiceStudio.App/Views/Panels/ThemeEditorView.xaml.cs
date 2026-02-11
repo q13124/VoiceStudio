@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -217,7 +218,7 @@ public sealed partial class ThemeEditorView : UserControl
                 if (themeData.TryGetValue("accentName", out var accentName))
                 {
                     var accents = _themeService.GetPredefinedAccents();
-                    var accent = accents.Find(a => a.Name == accentName);
+                    var accent = accents.FirstOrDefault(a => a.Name == accentName);
                     if (accent != null)
                         _themeService.SetAccent(accent);
                 }
@@ -234,9 +235,33 @@ public sealed partial class ThemeEditorView : UserControl
         }
     }
 
-    private void SavedThemesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void SavedThemesComboBox_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
     {
         // Could add preview on hover in future
+    }
+
+    private void CustomColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+    {
+        // Update the preview border with the selected color
+        if (CustomColorPreview != null)
+        {
+            CustomColorPreview.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(args.NewColor);
+        }
+    }
+
+    private void ApplyCustomColorButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_themeService == null || CustomColorPicker == null) return;
+
+        var color = CustomColorPicker.Color;
+        var customAccent = new ThemeAccent
+        {
+            Name = "Custom",
+            Primary = Windows.UI.Color.FromArgb(color.A, color.R, color.G, color.B)
+        };
+
+        _themeService.SetAccent(customAccent);
+        System.Diagnostics.Debug.WriteLine($"[ThemeEditor] Applied custom accent color: #{color.R:X2}{color.G:X2}{color.B:X2}");
     }
 
     private void DeleteThemeButton_Click(object sender, RoutedEventArgs e)

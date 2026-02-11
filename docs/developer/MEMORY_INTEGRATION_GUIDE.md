@@ -428,6 +428,57 @@ print(f'File path: {adapter._openmemory_path}')
 "
 ```
 
+## Setup
+
+### Quick Setup
+
+Run the setup script to validate and install dependencies:
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\setup_openmemory.ps1
+```
+
+**Linux/macOS (Bash):**
+```bash
+./scripts/setup_openmemory.sh
+```
+
+### Manual Setup
+
+1. **Install Python mcp package:**
+   ```bash
+   pip install mcp
+   ```
+
+2. **Ensure Node.js is available (for npx):**
+   ```bash
+   node --version
+   npx --version
+   ```
+
+3. **Verify MCP is enabled in config:**
+   
+   Check `tools/context/config/context-sources.json`:
+   ```json
+   {
+     "memory": {
+       "mcp_enabled": true,
+       ...
+     }
+   }
+   ```
+
+### Running Tests
+
+```bash
+# Unit tests for memory adapter
+pytest tests/unit/tools_tests/context/test_memory_adapter.py -v
+
+# Integration tests for MCP
+pytest tests/integration/tools/test_mcp_integration.py -v
+```
+
 ## Troubleshooting
 
 ### MCP Not Available
@@ -435,9 +486,10 @@ print(f'File path: {adapter._openmemory_path}')
 **Symptom**: Warning "OpenMemory MCP unavailable"
 
 **Resolution**:
-1. Check if MCP server is running
-2. Verify `cursor.mcp.json` configuration
-3. Set `MEMORY_MCP_ENABLED=false` to disable MCP queries
+1. Run `scripts/setup_openmemory.ps1` to verify dependencies
+2. Check if MCP server is running
+3. Verify `cursor.mcp.json` configuration
+4. Set `memory.mcp_enabled: false` in `context-sources.json` to disable MCP queries
 
 ### Empty Results
 

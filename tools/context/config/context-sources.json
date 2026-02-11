@@ -47,7 +47,7 @@
     "offline": true,
     "max_results": 5,
     "query_type": "contextual",
-    "mcp_enabled": false,
+    "mcp_enabled": true,
     "vector_enabled": false,
     "vector_persist_directory": ".cursor/chroma",
     "vector_top_k": 5

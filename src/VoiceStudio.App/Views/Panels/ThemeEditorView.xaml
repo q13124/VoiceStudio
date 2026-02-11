@@ -149,6 +149,57 @@
           </StackPanel>
         </Border>
 
+        <!-- Custom Accent Color -->
+        <Border Background="{StaticResource VSQ.Surface}" 
+                CornerRadius="8" 
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Custom Accent Color" 
+                       FontWeight="SemiBold" 
+                       FontSize="16"
+                       Foreground="{StaticResource VSQ.Text}" />
+            <TextBlock Text="Choose a custom accent color using the color picker" 
+                       Foreground="{StaticResource VSQ.SubtleText}"
+                       FontSize="12" />
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <ColorPicker x:Name="CustomColorPicker"
+                           ColorSpectrumShape="Ring"
+                           IsMoreButtonVisible="True"
+                           IsColorSliderVisible="True"
+                           IsColorChannelTextInputVisible="True"
+                           IsHexInputVisible="True"
+                           IsAlphaEnabled="False"
+                           ColorChanged="CustomColorPicker_ColorChanged" />
+              <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="Preview" 
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource VSQ.Text}" />
+                <Border x:Name="CustomColorPreview"
+                        Width="80" 
+                        Height="80" 
+                        CornerRadius="8"
+                        BorderBrush="{StaticResource VSQ.Border}"
+                        BorderThickness="2">
+                  <TextBlock Text="Aa" 
+                             FontSize="24"
+                             FontWeight="Bold"
+                             Foreground="White"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center" />
+                </Border>
+                <Button x:Name="ApplyCustomColorButton"
+                        Content="Apply Custom Color"
+                        Click="ApplyCustomColorButton_Click"
+                        Margin="0,8,0,0" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+
         <!-- Custom Theme Actions -->
         <Border Background="{StaticResource VSQ.Surface}" 
                 CornerRadius="8" 
