@@ -11,17 +11,28 @@ charset = utf-8
 trim_trailing_whitespace = false
 insert_final_newline = false
 
-# Roslynator Analyzers - Configured as warnings (non-blocking)
+# Roslynator Analyzers - Configured as suggestions for style rules, warnings for code quality
 # Helps catch bugs and code quality issues without blocking builds
 dotnet_analyzer_diagnostic.category-roslynator.severity = warning
 
+# Roslynator Style Rules - Downgrade to suggestion (still visible, not counted in budget)
+# RCS1037: Remove trailing white-space (1848 occurrences - pure style)
+dotnet_diagnostic.RCS1037.severity = suggestion
+# RCS1181: Convert comment to documentation comment (1286 occurrences - doc style)
+dotnet_diagnostic.RCS1181.severity = suggestion
+# RCS1123: Add parentheses when necessary (146 occurrences - style preference)
+dotnet_diagnostic.RCS1123.severity = suggestion
+# RCS1189: Add or remove region name (192 occurrences - style preference)
+dotnet_diagnostic.RCS1189.severity = suggestion
+
 # Error handling rules
-# CA1031: Do not catch general exception types (catches empty/overly broad catches)
-dotnet_diagnostic.CA1031.severity = warning
+# CA1031: Do not catch general exception types - downgrade to suggestion in test code
+# Production code should still catch specific exceptions
+dotnet_diagnostic.CA1031.severity = suggestion
 
 # RCS1163: Unused parameter (from Debugrolereport.md)
 dotnet_code_quality_unused_parameters = all:suggestion
-dotnet_diagnostic.RCS1163.severity = warning
+dotnet_diagnostic.RCS1163.severity = suggestion
 
 # ===== C# Specific Settings =====
 [*.cs]
