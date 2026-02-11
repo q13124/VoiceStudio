@@ -20,13 +20,14 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional, Tuple
 
 # Default budget: current count + 20% headroom
 # Based on BUILD_WARNING_ANALYSIS.md (2026-02-02): 2046 warnings after reduction
 DEFAULT_BUDGET = 2500
 
 
-def run_build() -> tuple[int, str, str]:
+def run_build() -> Tuple[int, str, str]:
     """Run dotnet build and capture output."""
     cmd = [
         "dotnet", "build", "VoiceStudio.sln",
@@ -45,7 +46,7 @@ def run_build() -> tuple[int, str, str]:
     return result.returncode, result.stdout, result.stderr
 
 
-def parse_warning_count(stdout: str, stderr: str) -> int | None:
+def parse_warning_count(stdout: str, stderr: str) -> Optional[int]:
     """Extract warning count from build output."""
     combined = stdout + stderr
     
