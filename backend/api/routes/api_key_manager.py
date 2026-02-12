@@ -2,15 +2,18 @@
 API Key Manager Routes
 
 Endpoints for managing API keys for external services.
+
+Security: All endpoints require authentication when auth is enabled.
 """
 
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
@@ -81,7 +84,7 @@ def _generate_key_id() -> str:
     return f"key-{uuid.uuid4().hex[:8]}"
 
 
-@router.get("", response_model=List[APIKeyResponse])
+@router.get("", response_model=List[APIKeyResponse], dependencies=[Depends(require_auth_if_enabled)])
 @cache_response(ttl=60)  # Cache for 60 seconds (API key list may change)
 async def list_api_keys():
     """List all API keys."""
@@ -118,7 +121,7 @@ async def list_api_keys():
         ) from e
 
 
-@router.get("/{key_id}", response_model=APIKeyResponse)
+@router.get("/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)])
 @cache_response(ttl=60)  # Cache for 60 seconds (API key info may change)
 async def get_api_key(key_id: str):
     """Get a specific API key."""
@@ -303,7 +306,7 @@ def _validate_key_format(
     return True, None
 
 
-@router.post("", response_model=APIKeyResponse)
+@router.post("", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)])
 async def create_api_key(request: APIKeyCreateRequest):
     """Create a new API key."""
     try:
@@ -365,7 +368,7 @@ async def create_api_key(request: APIKeyCreateRequest):
         ) from e
 
 
-@router.put("/{key_id}", response_model=APIKeyResponse)
+@router.put("/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)])
 async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
     """Update an API key."""
     try:
@@ -418,7 +421,7 @@ async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
         ) from e
 
 
-@router.delete("/{key_id}")
+@router.delete("/{key_id}", dependencies=[Depends(require_auth_if_enabled)])
 async def delete_api_key(key_id: str):
     """Delete an API key."""
     try:
@@ -439,7 +442,7 @@ async def delete_api_key(key_id: str):
         ) from e
 
 
-@router.post("/{key_id}/validate")
+@router.post("/{key_id}/validate", dependencies=[Depends(require_auth_if_enabled)])
 async def validate_api_key(key_id: str):
     """Validate an API key by making a test API call."""
     try:
@@ -577,7 +580,7 @@ async def validate_api_key(key_id: str):
         ) from e
 
 
-@router.get("/services/list", response_model=List[str])
+@router.get("/services/list", response_model=List[str], dependencies=[Depends(require_auth_if_enabled)])
 @cache_response(ttl=600)  # Cache for 10 minutes (supported services are static)
 async def list_supported_services():
     """List all supported service names."""

@@ -1,0 +1,58 @@
+{
+  "general": {
+    "theme": "Dark",
+    "language": "en-US",
+    "auto_save": true,
+    "auto_save_interval": 300
+  },
+  "engine": {
+    "default_audio_engine": "xtts",
+    "default_image_engine": "sdxl",
+    "default_video_engine": "svd",
+    "quality_level": 5
+  },
+  "audio": {
+    "output_device": "Default",
+    "input_device": "Default",
+    "sample_rate": 44100,
+    "buffer_size": 1024
+  },
+  "timeline": {
+    "time_format": "Timecode",
+    "snap_enabled": true,
+    "snap_interval": 0.1,
+    "grid_enabled": true,
+    "grid_interval": 1.0
+  },
+  "backend": {
+    "api_url": "http://localhost:8000",
+    "timeout": 30,
+    "retry_count": 3
+  },
+  "performance": {
+    "caching_enabled": true,
+    "cache_size": 512,
+    "max_threads": 4,
+    "memory_limit": 4096
+  },
+  "plugins": {
+    "enabled_plugins": []
+  },
+  "mcp": {
+    "enabled": false,
+    "server_url": "http://localhost:8080"
+  },
+  "quality": {
+    "default_preset": "standard",
+    "auto_enhance": true,
+    "auto_optimize": false,
+    "min_mos_score": 3.5,
+    "min_similarity": 0.75,
+    "min_naturalness": 0.7,
+    "min_snr_db": 25.0,
+    "prefer_speed": false,
+    "quality_tier": "standard",
+    "show_quality_metrics": true,
+    "auto_compare": false
+  }
+}

@@ -13,12 +13,21 @@ Professional voice cloning and audio production software built with WinUI 3, Pyt
       |
       |  JSON over HTTP/WebSocket
       v
-[Backend API (Python/Node)]
+[Backend API (Python FastAPI)]
       |
       |  internal calls
       v
-[MCP Bridge Layer] ---> [MCP Servers (Figma/Magic/Flux/Shadcn/etc.)]
+[Engine Layer (EngineProtocol)]
+      |
+      +---> [XTTS] [Chatterbox] [Tortoise] [Piper] [etc.]
+      |
+      v
+[MCP Bridge Layer] ---> [PDF Unlock (implemented)]
+                   ---> [Design Tokens, AI Engines (future)]
 ```
+
+> **Note**: Full MCP integration for design tokens and AI engines is planned for future releases.
+> Currently, the MCP bridge supports PDF unlocking only. See [FUTURE_WORK.md](docs/governance/FUTURE_WORK.md).
 
 ## Project Structure
 
@@ -105,7 +114,7 @@ Complete documentation is available in the `docs/` directory:
 - **Modular Panel System**: Extensible panel architecture supporting 100+ panels
 - **MVVM Pattern**: Clean separation of concerns
 - **Design System**: Comprehensive design tokens and styles
-- **MCP Integration**: Design tokens, AI engines, and model calls via MCP
+- **MCP Integration**: PDF unlock support implemented; design tokens and AI engines planned for future
 - **Backend API**: REST/WebSocket communication
 
 ## Documentation

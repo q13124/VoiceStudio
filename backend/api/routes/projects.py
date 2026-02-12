@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -19,12 +19,17 @@ from backend.services.ProjectStoreService import (
     get_project_store_service,
 )
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..models import ApiOk
 from ..optimization import cache_response, get_pagination_params
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/projects", tags=["projects"])
+router = APIRouter(
+    prefix="/api/projects",
+    tags=["projects"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 
 class Project(BaseModel):

@@ -61,6 +61,7 @@ CSHARP_FORBIDDEN_PATTERNS = [
 ]
 
 # Python routes should use EngineService, not direct imports
+# GAP-ARCH-002: Expanded patterns per Comprehensive Gap Remediation Plan Phase 5
 PYTHON_ROUTE_FORBIDDEN_PATTERNS = [
     (
         r"from\s+app\.core\.engines\.\w+_engine\s+import",
@@ -68,9 +69,24 @@ PYTHON_ROUTE_FORBIDDEN_PATTERNS = [
         "Use EngineService from backend/services/engine_service.py"
     ),
     (
-        r"from\s+app\.core\.engines\s+import\s+(?!EngineProtocol|BaseEngine)",
+        r"from\s+app\.core\.engines\s+import\s+(?!EngineProtocol)",
         "Route importing from engines package",
         "Use EngineService for engine access"
+    ),
+    (
+        r"from\s+app\.core\.engines\.router\s+import",
+        "Route importing engine router directly",
+        "Use EngineService.select_engine() instead"
+    ),
+    (
+        r"from\s+app\.core\.engines\.metrics\s+import",
+        "Route importing engine metrics directly",
+        "Access metrics via EngineService or PerformanceMiddleware"
+    ),
+    (
+        r"from\s+backend\.voice\.\w+\.engine\s+import",
+        "Route importing voice engine directly",
+        "Use feature_status_service or EngineService for engine access"
     ),
 ]
 
@@ -156,7 +172,7 @@ def check_python_route_boundaries(repo_root: Path) -> List[Violation]:
                 for pattern, violation_type, suggestion in PYTHON_ROUTE_FORBIDDEN_PATTERNS:
                     if re.search(pattern, line, re.IGNORECASE):
                         # Additional check: allow EngineProtocol imports
-                        if "EngineProtocol" in line or "BaseEngine" in line:
+                        if "EngineProtocol" in line:
                             continue
                         violations.append(Violation(
                             file=py_file,

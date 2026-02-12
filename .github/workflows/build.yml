@@ -312,13 +312,13 @@ jobs:
       - name: Run Unified XAML Quality Validation
         run: |
           python scripts/validate_xaml_quality.py --verbose
-        continue-on-error: true
+        # GAP-CI-001: Removed continue-on-error to enforce quality gates
         id: xaml-quality
         
       - name: Run XAML Binding Validation
         run: |
           python scripts/validate_xaml_bindings.py --verbose
-        continue-on-error: true
+        # GAP-CI-001: Removed continue-on-error to enforce quality gates
         id: xaml-bindings
         
       - name: XAML Quality Summary
@@ -417,12 +417,12 @@ jobs:
       - name: Validate OpenAPI contract
         run: |
           python scripts/validate_openapi_contract.py
-        continue-on-error: true
+        # GAP-CI-001: Contract validation must pass (removed continue-on-error)
 
       - name: Export OpenAPI schema
         run: |
           python scripts/export_openapi_schema.py --output docs/api/openapi.json
-        continue-on-error: true
+        # GAP-CI-001: Schema export is critical for contract tests (removed continue-on-error)
 
       - name: Upload OpenAPI schema
         uses: actions/upload-artifact@v4
@@ -597,27 +597,27 @@ jobs:
 
       - name: Validate contract compatibility
         run: python tools/nswag/validate-contract.py
-        continue-on-error: true
+        # GAP-CI-001: Contract compatibility is critical (removed continue-on-error)
         id: contract-check
 
       - name: Detect breaking changes
         run: |
           python tools/nswag/detect-breaking-changes.py --json > .buildlogs/breaking-changes.json 2>&1 || true
           python tools/nswag/detect-breaking-changes.py
-        continue-on-error: true
+        # GAP-CI-001: Breaking change detection is important (removed continue-on-error)
         id: breaking-changes
 
       - name: Run Python contract tests
         run: |
           python -m pip install pytest --quiet
           python -m pytest tests/contract/test_openapi_contract.py -v --tb=short
-        continue-on-error: true
+        # GAP-CI-001: Contract tests should fail CI if they fail
         id: python-contract-tests
 
       - name: Run C# contract tests
         run: |
           dotnet test tests/contract/VoiceStudio.ContractTests.csproj --logger "console;verbosity=normal" --no-restore
-        continue-on-error: true
+        # GAP-CI-001: Contract tests should fail CI if they fail
         id: csharp-contract-tests
 
       - name: Report contract validation status

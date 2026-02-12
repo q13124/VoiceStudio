@@ -126,7 +126,12 @@ class ConversationSourceAdapter(BaseSourceAdapter):
 
 def append_turn(project_root: Path, role: str, content: str) -> None:
     """Append one turn to conversation history (e.g. from inject_context hook)."""
-    path = project_root / DEFAULT_HISTORY_PATH.lstrip("./")
+    # Use removeprefix instead of lstrip to avoid stripping too many characters
+    # lstrip("./") on ".cursor" incorrectly becomes "cursor"
+    history_path = DEFAULT_HISTORY_PATH
+    if history_path.startswith("./"):
+        history_path = history_path[2:]
+    path = project_root / history_path
     path.parent.mkdir(parents=True, exist_ok=True)
     from datetime import datetime
     line = json.dumps({"role": role, "content": content, "timestamp": datetime.utcnow().isoformat()}, ensure_ascii=False) + "\n"

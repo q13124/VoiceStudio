@@ -14,6 +14,7 @@ Features:
 """
 
 import json
+import logging
 import os
 import subprocess
 from datetime import datetime, timezone
@@ -21,6 +22,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 import threading
 import uuid
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .issue_bridge import AuditIssueBridge
@@ -151,9 +154,9 @@ class AuditLogger:
         if self._issue_bridge:
             try:
                 self._issue_bridge.on_audit_entry(entry)
-            except Exception:
+            except Exception as e:
                 # Don't let issue bridge failures break audit logging
-                pass
+                logger.debug(f"Issue bridge notification failed: {e}")
     
     def _append_markdown(self, md_path: Path, entry: AuditEntry):
         """Append entry to Markdown summary."""

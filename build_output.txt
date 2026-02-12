@@ -3,18 +3,40 @@
   VoiceStudio.Core -> E:\VoiceStudio\src\VoiceStudio.Core\bin\Debug\net8.0\VoiceStudio.Core.dll
   Running XAML compiler...
   Compiler: "C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk.winui\1.8.251105000\tools\net472\XamlCompiler.exe"
-  Arguments: "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\output.json"
+  Arguments: "obj\x64\Debug\net8.0-windows10.0.19041.0\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\output.json"
   
   
-  XAML compiler exit code: 1
-  Checking if output.json was generated despite exit code 1...
+  XAML compiler exit code: 0
   XAML compilation failed. Re-run with VSQ_XAML_RAW_LOG=1 to capture a raw log.
-C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk.winui\1.8.251105000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(594,9): error MSB3073: The command ""E:\VoiceStudio\tools\xaml-compiler-wrapper.cmd" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\ViewModels\PipelineConversationViewModel.cs(405,17): warning CS0108: 'PipelineConversationViewModel.Dispose()' hides inherited member 'BaseViewModel.Dispose()'. Use the new keyword if hiding was intended. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\DragDrop\DragDropService.cs(284,31): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\MainWindow.xaml.cs(1269,7): warning CS0162: Unreachable code detected [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Services\Generated\BackendClient.g.cs(526,16): warning CS8618: Non-nullable field '_baseUrl' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Services\NavigationService.cs(94,23): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\VoiceProfile\VoiceProfileViewModel.cs(513,32): warning CS0067: The event 'RelayCommand.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\Timeline\TimelineViewModel.cs(469,32): warning CS0067: The event 'RelayCommand<T>.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\Timeline\TimelineViewModel.cs(492,32): warning CS0067: The event 'RelayCommand.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+  Running XAML compiler...
+  Compiler: "C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk.winui\1.8.251105000\tools\net472\XamlCompiler.exe"
+  Arguments: "obj\x64\Debug\net8.0-windows10.0.19041.0\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\output.json"
+  
+  
+  XAML compiler exit code: 0
+  XAML compilation failed. Re-run with VSQ_XAML_RAW_LOG=1 to capture a raw log.
+  VoiceStudio.App -> E:\VoiceStudio\.buildlogs\x64\Debug\net8.0-windows10.0.19041.0\VoiceStudio.App.dll
+  VoiceStudio.App.Tests -> E:\VoiceStudio\src\VoiceStudio.App.Tests\bin\x64\Debug\net8.0-windows10.0.19041.0\VoiceStudio.App.Tests.dll
 
-Build FAILED.
+Build succeeded.
 
-C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk.winui\1.8.251105000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(594,9): error MSB3073: The command ""E:\VoiceStudio\tools\xaml-compiler-wrapper.cmd" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
-    0 Warning(s)
-    1 Error(s)
+E:\VoiceStudio\src\VoiceStudio.App\ViewModels\PipelineConversationViewModel.cs(405,17): warning CS0108: 'PipelineConversationViewModel.Dispose()' hides inherited member 'BaseViewModel.Dispose()'. Use the new keyword if hiding was intended. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\DragDrop\DragDropService.cs(284,31): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\MainWindow.xaml.cs(1269,7): warning CS0162: Unreachable code detected [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Services\Generated\BackendClient.g.cs(526,16): warning CS8618: Non-nullable field '_baseUrl' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Services\NavigationService.cs(94,23): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\VoiceProfile\VoiceProfileViewModel.cs(513,32): warning CS0067: The event 'RelayCommand.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\Timeline\TimelineViewModel.cs(469,32): warning CS0067: The event 'RelayCommand<T>.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+E:\VoiceStudio\src\VoiceStudio.App\Features\Timeline\TimelineViewModel.cs(492,32): warning CS0067: The event 'RelayCommand.CanExecuteChanged' is never used [E:\VoiceStudio\src\VoiceStudio.App\VoiceStudio.App.csproj]
+    8 Warning(s)
+    0 Error(s)
 
-Time Elapsed 00:00:07.64
+Time Elapsed 00:00:28.33

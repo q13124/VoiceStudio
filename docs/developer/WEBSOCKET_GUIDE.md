@@ -258,6 +258,59 @@ private async Task ReconnectLoopAsync()
 }
 ```
 
+## Standardized Protocol (GAP-INT-002)
+
+All WebSocket messages use the standardized protocol from `backend/api/ws/protocol.py`:
+
+### Message Types
+
+| Type | Description |
+|------|-------------|
+| `data` | General data payload |
+| `error` | Error notification |
+| `ack` | Acknowledgment |
+| `ping` / `pong` | Keep-alive |
+| `subscribe` / `unsubscribe` | Topic management |
+| `start` / `stop` | Operation control |
+| `complete` | Operation complete |
+| `progress` | Progress update |
+| `audio_chunk` | Audio data chunk |
+| `audio_complete` | Audio stream complete |
+| `training_update` | Training progress |
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `VALIDATION_ERROR` | Invalid parameters |
+| `ENGINE_ERROR` | Engine failure |
+| `NOT_FOUND` | Resource not found |
+| `UNAVAILABLE` | Service unavailable |
+| `RATE_LIMITED` | Rate limit exceeded |
+| `UNAUTHORIZED` | Auth required |
+| `INTERNAL_ERROR` | Server error |
+| `TIMEOUT` | Operation timeout |
+
+### Implemented Topics
+
+| Topic | Purpose | Update Rate |
+|-------|---------|-------------|
+| `general` | Default broadcast channel | As needed |
+| `meters` | Audio level metering | 30-60 Hz (batched) |
+| `training` | Training progress | Per-epoch |
+| `batch` | Batch job status | Per-item |
+| `heartbeat` | Keep-alive | Every 30s |
+
+### WebSocket Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/api/pipeline/stream` | STT→LLM→TTS pipeline |
+| `/api/voice/synthesize/stream` | TTS streaming |
+| `/api/rvc/convert/realtime` | Voice conversion |
+| `/api/realtime-converter/{id}/stream` | Format conversion |
+| `/api/realtime-visualizer/{id}/stream` | Audio visualization |
+
 ## Best Practices
 
 1. **Use topic namespacing** - Organize topics by feature (e.g., `synthesis/`, `job/`)

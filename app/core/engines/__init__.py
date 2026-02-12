@@ -32,7 +32,6 @@ __all__ = [
     "CancellationToken",
     "OperationCancelledError",
     "EngineProtocol",
-    "BaseEngine",  # Backward-compatible alias for EngineProtocol
 ]
 
 
@@ -102,7 +101,6 @@ def _discover_engines_from_manifests():
 _EXPLICIT_MODULES = {
     # Base protocol and cancellation
     "EngineProtocol": "app.core.engines.base",
-    "BaseEngine": "app.core.engines.base",  # Backward-compatible alias
     "CancellationToken": "app.core.engines.base",
     "OperationCancelledError": "app.core.engines.base",
     # Router and config

@@ -964,12 +964,23 @@ def _initialize_rate_limiting():
 
 # Add CORS middleware (essential, load immediately)
 # Configure CORS with security best practices
-# For production, replace ["*"] with specific allowed origins
-allowed_origins = (
-    os.getenv("CORS_ALLOWED_ORIGINS", "*").split(",")  # Default to all for local development
-    if os.getenv("CORS_ALLOWED_ORIGINS")
-    else ["*"]
-)
+# CORS Configuration
+# Security: Restrict origins. In production, set CORS_ALLOWED_ORIGINS explicitly.
+_cors_env = os.getenv("CORS_ALLOWED_ORIGINS")
+if _cors_env:
+    allowed_origins = [origin.strip() for origin in _cors_env.split(",")]
+elif os.getenv("VOICESTUDIO_ENV") == "production":
+    # Production without explicit origins: restrictive default
+    allowed_origins = ["http://localhost:8001"]
+    logger.warning("CORS_ALLOWED_ORIGINS not set in production; using restrictive default")
+else:
+    # Development: allow common local origins
+    allowed_origins = [
+        "http://localhost:8000",
+        "http://localhost:8001",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8001",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -1398,7 +1409,7 @@ def _register_all_routes():
     try:
         from .routes.plugin_gallery import router as plugin_gallery_router
 
-        app.include_router(plugin_gallery_router, prefix="/api")
+        app.include_router(plugin_gallery_router)
         logger.debug("Registered plugin_gallery_router")
     except Exception as e:
         logger.warning(f"Failed to register plugin_gallery_router: {e}")
@@ -1420,6 +1431,25 @@ def _register_all_routes():
         logger.debug("Registered v2 health router")
     except Exception as e:
         logger.warning(f"Failed to register v2 routes: {e}")
+
+    # Timeline routes (GAP-API-001)
+    try:
+        from .routes.timeline import router as timeline_router
+
+        app.include_router(timeline_router)
+        logger.debug("Registered timeline router")
+    except Exception as e:
+        logger.warning(f"Failed to register timeline routes: {e}")
+
+    # Gateway alias routes (GAP-CRIT-001: Endpoint alignment for frontend gateways)
+    try:
+        from .routes.gateway_aliases import voice_alias_router, timeline_alias_router
+
+        app.include_router(voice_alias_router)
+        app.include_router(timeline_alias_router)
+        logger.debug("Registered gateway alias routers (VoiceGateway, TimelineGateway)")
+    except Exception as e:
+        logger.warning(f"Failed to register gateway alias routes: {e}")
 
     load_time = (time.time() - start_time) * 1000
     logger.info(f"Routes loaded in {load_time:.2f}ms")

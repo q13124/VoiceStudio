@@ -1,12 +1,23 @@
 """
 Runtime Engine Manager
 Manages engines that run as separate processes/servers
+
+DEPRECATION NOTICE (GAP-ENG-003):
+    This module is maintained for backward compatibility.
+    New code should use EnhancedRuntimeEngine from runtime_engine_enhanced.py
+    which provides:
+    - Lifecycle management
+    - Port allocation
+    - Resource management
+    - Security policies
+    - Hook registry support
 """
 
 import subprocess
 import time
 import requests
 import logging
+import warnings
 from typing import Dict, Optional, List, Any
 from pathlib import Path
 import json
@@ -17,6 +28,10 @@ logger = logging.getLogger(__name__)
 class RuntimeEngine:
     """
     Manages a runtime engine that runs as a separate process/server.
+    
+    .. deprecated::
+        Use EnhancedRuntimeEngine from runtime_engine_enhanced.py instead.
+        RuntimeEngine is maintained for backward compatibility only.
     """
     
     def __init__(self, manifest: Dict[str, Any], workspace_root: str = "."):
@@ -165,6 +180,10 @@ class RuntimeEngine:
 class RuntimeEngineManager:
     """
     Manages multiple runtime engines.
+    
+    .. deprecated::
+        Use EnhancedRuntimeEngineManager from runtime_engine_enhanced.py instead.
+        RuntimeEngineManager is maintained for backward compatibility only.
     """
     
     def __init__(self, workspace_root: str = "."):

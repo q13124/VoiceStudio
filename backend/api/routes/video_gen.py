@@ -488,6 +488,42 @@ async def enhance_temporal_consistency(
         ) from e
 
 
+@router.get("/engines/list")
+async def list_engines() -> dict:
+    """List all available video generation engines."""
+    if not ENGINE_AVAILABLE or not _video_engine_service:
+        return {"engines": [], "available": False}
+
+    try:
+        engines = _video_engine_service.list_engines()
+        # Filter for video engines
+        video_engines = [
+            e
+            for e in engines
+            if e
+            in [
+                "svd",
+                "deforum",
+                "fomm",
+                "sadtalker",
+                "deepfacelab",
+                "moviepy",
+                "ffmpeg_ai",
+                "video_creator",
+                "voice_ai",
+                "lyrebird",
+            ]
+        ]
+        return {
+            "engines": video_engines,
+            "available": True,
+            "count": len(video_engines),
+        }
+    except Exception as e:
+        logger.error(f"Error listing engines: {e}")
+        return {"engines": [], "available": False, "error": str(e)}
+
+
 @router.get("/{video_id}")
 async def get_video(video_id: str):
     """Retrieve generated video by ID."""
@@ -604,42 +640,6 @@ async def convert_voice(
     except Exception as e:
         logger.error(f"Voice conversion error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Voice conversion failed: {str(e)}")
-
-
-@router.get("/engines/list")
-async def list_engines() -> dict:
-    """List all available video generation engines."""
-    if not ENGINE_AVAILABLE or not _video_engine_service:
-        return {"engines": [], "available": False}
-
-    try:
-        engines = _video_engine_service.list_engines()
-        # Filter for video engines
-        video_engines = [
-            e
-            for e in engines
-            if e
-            in [
-                "svd",
-                "deforum",
-                "fomm",
-                "sadtalker",
-                "deepfacelab",
-                "moviepy",
-                "ffmpeg_ai",
-                "video_creator",
-                "voice_ai",
-                "lyrebird",
-            ]
-        ]
-        return {
-            "engines": video_engines,
-            "available": True,
-            "count": len(video_engines),
-        }
-    except Exception as e:
-        logger.error(f"Error listing engines: {e}")
-        return {"engines": [], "available": False, "error": str(e)}
 
 
 # --- Video quality metrics (called by VideoGenViewModel) ---

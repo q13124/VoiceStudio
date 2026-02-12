@@ -2,6 +2,7 @@
 Plugin Loader.
 
 Task 3.3.2: Plugin discovery and loading from directories.
+Phase 23.2: Integrated version check to block incompatible plugins.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Type
 
 from backend.plugins.core.base import Plugin, PluginMetadata, PluginState
+from backend.plugins.core.version_check import check_plugin_compatibility, APP_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,7 @@ class PluginLoader:
         self,
         plugin_id: str,
         config: Optional[Dict] = None,
+        skip_version_check: bool = False,
     ) -> Optional[Plugin]:
         """
         Load a plugin by ID.
@@ -89,6 +92,7 @@ class PluginLoader:
         Args:
             plugin_id: Plugin identifier
             config: Optional configuration
+            skip_version_check: Skip version compatibility check (not recommended)
             
         Returns:
             Loaded plugin instance or None
@@ -103,6 +107,24 @@ class PluginLoader:
             # Load manifest
             manifest_path = plugin_dir / self.MANIFEST_FILE
             metadata = self._load_manifest(manifest_path)
+            
+            # Phase 23.2: Version compatibility check
+            if not skip_version_check:
+                manifest_dict = metadata.to_dict()
+                compat_result = check_plugin_compatibility(manifest_dict)
+                
+                if not compat_result["compatible"]:
+                    for error in compat_result["errors"]:
+                        logger.error(f"Plugin {plugin_id} incompatible: {error}")
+                    logger.error(
+                        f"Plugin {plugin_id} blocked due to version incompatibility. "
+                        f"Required: {manifest_dict.get('min_app_version', 'N/A')}, "
+                        f"Current app: {APP_VERSION}"
+                    )
+                    return None
+                
+                for warning in compat_result.get("warnings", []):
+                    logger.warning(f"Plugin {plugin_id}: {warning}")
             
             # Load the plugin module
             module = self._load_module(plugin_dir, plugin_id)
@@ -208,6 +230,7 @@ class PluginLoader:
         self,
         plugin_id: str,
         config: Optional[Dict] = None,
+        skip_version_check: bool = False,
     ) -> Optional[Plugin]:
         """
         Reload a plugin (hot reload).
@@ -215,12 +238,13 @@ class PluginLoader:
         Args:
             plugin_id: Plugin identifier
             config: Optional new configuration
+            skip_version_check: Skip version compatibility check
             
         Returns:
             Reloaded plugin instance
         """
         await self.unload_plugin(plugin_id)
-        return await self.load_plugin(plugin_id, config)
+        return await self.load_plugin(plugin_id, config, skip_version_check)
     
     def get_loaded_modules(self) -> List[str]:
         """Get list of loaded plugin module names."""

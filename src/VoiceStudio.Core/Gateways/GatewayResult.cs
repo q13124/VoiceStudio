@@ -78,16 +78,19 @@ namespace VoiceStudio.Core.Gateways
 
   /// <summary>
   /// Error details for failed gateway operations.
+  /// Aligns with backend StandardErrorResponse for unified error handling.
   /// </summary>
   public sealed class GatewayError
   {
     /// <summary>
     /// Gets the error code for programmatic handling.
+    /// Maps to backend error_code field.
     /// </summary>
     public string Code { get; }
 
     /// <summary>
     /// Gets the human-readable error message.
+    /// Maps to backend message field.
     /// </summary>
     public string Message { get; }
 
@@ -103,13 +106,33 @@ namespace VoiceStudio.Core.Gateways
 
     /// <summary>
     /// Gets a suggestion for recovering from the error.
+    /// Maps to backend recovery_suggestion field.
     /// </summary>
     public string? RecoverySuggestion { get; }
 
     /// <summary>
     /// Gets additional error details as JSON.
+    /// Maps to backend details field.
     /// </summary>
     public JsonElement? Details { get; }
+
+    /// <summary>
+    /// Gets the request ID for correlation/tracing.
+    /// Maps to backend request_id field.
+    /// </summary>
+    public string? RequestId { get; }
+
+    /// <summary>
+    /// Gets the timestamp when the error occurred.
+    /// Maps to backend timestamp field (ISO 8601 format).
+    /// </summary>
+    public string? Timestamp { get; }
+
+    /// <summary>
+    /// Gets the API path where the error occurred.
+    /// Maps to backend path field.
+    /// </summary>
+    public string? Path { get; }
 
     public GatewayError(
         string code,
@@ -117,7 +140,10 @@ namespace VoiceStudio.Core.Gateways
         int? statusCode = null,
         bool isRetryable = false,
         string? recoverySuggestion = null,
-        JsonElement? details = null)
+        JsonElement? details = null,
+        string? requestId = null,
+        string? timestamp = null,
+        string? path = null)
     {
       Code = code;
       Message = message;
@@ -125,6 +151,9 @@ namespace VoiceStudio.Core.Gateways
       IsRetryable = isRetryable;
       RecoverySuggestion = recoverySuggestion;
       Details = details;
+      RequestId = requestId;
+      Timestamp = timestamp;
+      Path = path;
     }
 
     /// <summary>

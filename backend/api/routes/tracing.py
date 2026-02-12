@@ -24,7 +24,7 @@ from backend.services.trace_export import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/tracing", tags=["tracing"])
+router = APIRouter(prefix="/api/tracing", tags=["tracing"])
 
 
 # =============================================================================

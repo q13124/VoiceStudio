@@ -7,15 +7,20 @@ Endpoints for real-time voice conversion and streaming.
 import logging
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from backend.services.engine_service import get_engine_service
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/realtime-converter", tags=["realtime-converter"])
+router = APIRouter(
+    prefix="/api/realtime-converter",
+    tags=["realtime-converter"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # In-memory converter sessions (replace with database in production)
 _converter_sessions: Dict[str, Dict] = {}

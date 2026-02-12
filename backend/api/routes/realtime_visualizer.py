@@ -12,13 +12,25 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+
+from ..middleware.auth_middleware import require_auth_if_enabled
+
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    create_message,
+    create_error,
+    MessageType,
+    ErrorCode,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/api/realtime-visualizer", tags=["realtime-visualizer"]
+    prefix="/api/realtime-visualizer",
+    tags=["realtime-visualizer"],
+    dependencies=[Depends(require_auth_if_enabled)],
 )
 
 # In-memory visualizer sessions (replace with database in production)
@@ -180,11 +192,14 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
             import librosa
         except ImportError:
             await websocket.send_json(
-                {
-                    "error": "Audio processing libraries not available",
-                    "message": "Install librosa and numpy for real-time visualization. "
-                    "Install with: pip install librosa==0.11.0 numpy",
-                }
+                create_error(
+                    "Audio processing libraries not available",
+                    code=ErrorCode.UNAVAILABLE,
+                    details={
+                        "message": "Install librosa and numpy for real-time visualization. "
+                        "Install with: pip install librosa==0.11.0 numpy"
+                    }
+                )
             )
             await websocket.close(
                 code=1011, reason="Missing audio processing libraries"
@@ -234,22 +249,24 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
                         frame["frequencies"] = freqs.tolist()
                         frame["magnitudes"] = magnitude.tolist()
 
-                    # Send visualization frame back
-                    await websocket.send_json(frame)
+                    # Send visualization frame back (using standardized protocol)
+                    await websocket.send_json(
+                        create_message(MessageType.VISUALIZATION_FRAME, frame)
+                    )
                 else:
                     # Echo back acknowledgment for non-audio messages
                     await websocket.send_json(
-                        {
+                        create_message(MessageType.ACK, {
                             "status": "received",
                             "message": "Send audio data as {'audio': [...], 'sample_rate': 44100}",
-                        }
+                        })
                     )
             except Exception as msg_error:
                 logger.error(
                     f"Error processing audio data in session {session_id}: {msg_error}"
                 )
                 await websocket.send_json(
-                    {"error": "Failed to process audio data", "detail": str(msg_error)}
+                    create_error("Failed to process audio data", code=ErrorCode.INTERNAL_ERROR, details={"detail": str(msg_error)})
                 )
     except WebSocketDisconnect:
         logger.info(

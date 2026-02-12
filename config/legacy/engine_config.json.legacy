@@ -1,0 +1,98 @@
+{
+  "defaults": {
+    "tts": "xtts_v2",
+    "image_gen": "sdxl_comfy",
+    "video_gen": "svd",
+    "stt": "whisper_cpp"
+  },
+  "overrides": {},
+  "installed": ["xtts_v2", "piper", "openvoice", "sdxl_comfy", "realesrgan", "svd"],
+  "model_paths": {
+    "base": "E:\\\\VoiceStudio\\\\models",
+    "engines": {}
+  },
+  "gpu_settings": {
+    "enabled": true,
+    "device": "cuda",
+    "fallback_to_cpu": true,
+    "memory_fraction": 0.9
+  },
+  "engine_configs": {
+    "xtts_v2": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\xtts",
+        "cache": "E:\\\\VoiceStudio\\\\models\\\\xtts\\\\cache"
+      },
+      "parameters": {
+        "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "piper": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\piper"
+      },
+      "parameters": {
+        "voice": "en_US-amy-medium",
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\piper\\\\en_US-amy-medium.onnx",
+        "gpu": false
+      }
+    },
+    "whisper_cpp": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\whisper"
+      },
+      "parameters": {
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\whisper\\\\whisper-medium.en.gguf",
+        "language": "en"
+      }
+    },
+    "gpt_sovits": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\checkpoints"
+      },
+      "parameters": {
+        "model_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\model.pth",
+        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\config.json",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "sovits_svc": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\checkpoints"
+      },
+      "parameters": {
+        "checkpoint_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\model.pth",
+        "config_path": "E:\\\\VoiceStudio\\\\models\\\\checkpoints\\\\Lain_SVC4\\\\config.json",
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "chatterbox": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\chatterbox"
+      },
+      "parameters": {
+        "device": "cuda",
+        "gpu": true
+      }
+    },
+    "tortoise": {
+      "model_paths": {
+        "base": "E:\\\\VoiceStudio\\\\models\\\\tortoise"
+      },
+      "parameters": {
+        "device": "cuda",
+        "gpu": true,
+        "high_quality": true
+      }
+    }
+  },
+  "global_settings": {
+    "auto_download_models": true,
+    "model_cache_enabled": true,
+    "parallel_engine_limit": 2
+  }
+}

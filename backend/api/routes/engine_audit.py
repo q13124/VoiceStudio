@@ -2,15 +2,18 @@
 Engine Audit API Routes
 
 Provides endpoints for engine auditing and enhancement tracking.
+
+Architecture Note:
+    This route uses EngineService for engine access, following Clean Architecture
+    patterns. Direct imports from app.core.engines are avoided.
 """
 
 import logging
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.engines.engine_audit import EngineAuditor
-from app.core.engines.engine_registry import get_engine_registry
+from backend.services.engine_service import IEngineService, get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +21,9 @@ router = APIRouter(prefix="/api/engines/audit", tags=["engines"])
 
 
 @router.get("/all", summary="Audit all engines")
-def audit_all_engines() -> Dict[str, Any]:
+def audit_all_engines(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> Dict[str, Any]:
     """
     Audit all registered engines for completeness and enhancements.
 
@@ -26,40 +31,12 @@ def audit_all_engines() -> Dict[str, Any]:
         Dictionary with audit results for all engines
     """
     try:
-        registry = get_engine_registry()
-        auditor = EngineAuditor()
-
-        # Get all engines
-        engines = registry.get_all_engines()
-
-        # Audit all engines
-        results = auditor.audit_all_engines(engines)
-
-        # Convert results to dictionaries
-        results_dict = {}
-        for name, result in results.items():
-            results_dict[name] = {
-                "engine_name": result.engine_name,
-                "is_complete": result.is_complete,
-                "score": result.score,
-                "missing_methods": result.missing_methods,
-                "missing_features": result.missing_features,
-                "optimization_opportunities": result.optimization_opportunities,
-                "quality_enhancements": result.quality_enhancements,
-                "documentation_issues": result.documentation_issues,
-                "features": {
-                    "batch_processing": result.has_batch_processing,
-                    "streaming": result.has_streaming,
-                    "quality_metrics": result.has_quality_metrics,
-                    "caching": result.has_caching,
-                    "lazy_loading": result.has_lazy_loading,
-                },
-            }
-
-        return {
-            "engines": results_dict,
-            "summary": auditor.get_audit_summary(),
-        }
+        result = engine_service.audit_all_engines()
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to audit engines: {e}", exc_info=True)
         raise HTTPException(
@@ -68,7 +45,9 @@ def audit_all_engines() -> Dict[str, Any]:
 
 
 @router.get("/summary", summary="Get audit summary")
-def get_audit_summary() -> Dict[str, Any]:
+def get_audit_summary(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> Dict[str, Any]:
     """
     Get summary of engine audits.
 
@@ -76,17 +55,12 @@ def get_audit_summary() -> Dict[str, Any]:
         Summary statistics
     """
     try:
-        registry = get_engine_registry()
-        auditor = EngineAuditor()
-
-        # Get all engines
-        engines = registry.get_all_engines()
-
-        # Audit all engines
-        auditor.audit_all_engines(engines)
-
-        # Get summary
-        return auditor.get_audit_summary()
+        result = engine_service.get_audit_summary()
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
         raise HTTPException(
@@ -95,7 +69,10 @@ def get_audit_summary() -> Dict[str, Any]:
 
 
 @router.get("/needing-attention", summary="Get engines needing attention")
-def get_engines_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
+def get_engines_needing_attention(
+    min_score: float = 70.0,
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> Dict[str, Any]:
     """
     Get engines that need attention (score below threshold).
 
@@ -106,8 +83,11 @@ def get_engines_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
         List of engines needing attention
     """
     try:
-        registry = get_engine_registry()
-        auditor = EngineAuditor()
+        registry = engine_service.get_engine_registry()
+        auditor = engine_service.get_engine_auditor()
+        
+        if registry is None or auditor is None:
+            raise HTTPException(status_code=500, detail="Engine audit not available")
 
         # Get all engines
         engines = registry.get_all_engines()
@@ -137,6 +117,8 @@ def get_engines_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
             "count": len(results),
             "min_score": min_score,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get engines needing attention: {e}", exc_info=True)
         raise HTTPException(
@@ -146,7 +128,9 @@ def get_engines_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
 
 
 @router.get("/report", summary="Generate enhancement report")
-def generate_enhancement_report() -> Dict[str, str]:
+def generate_enhancement_report(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> Dict[str, str]:
     """
     Generate a markdown report of enhancement opportunities.
 
@@ -154,8 +138,11 @@ def generate_enhancement_report() -> Dict[str, str]:
         Markdown report
     """
     try:
-        registry = get_engine_registry()
-        auditor = EngineAuditor()
+        registry = engine_service.get_engine_registry()
+        auditor = engine_service.get_engine_auditor()
+        
+        if registry is None or auditor is None:
+            raise HTTPException(status_code=500, detail="Engine audit not available")
 
         # Get all engines
         engines = registry.get_all_engines()
@@ -167,6 +154,8 @@ def generate_enhancement_report() -> Dict[str, str]:
         report = auditor.generate_enhancement_report()
 
         return {"report": report}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
         raise HTTPException(

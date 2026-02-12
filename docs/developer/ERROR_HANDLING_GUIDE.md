@@ -95,6 +95,49 @@ class EngineService:
 
 ## Frontend Error Handling
 
+### Unified Error Models
+
+The frontend uses two primary models for standardized error handling that align with the backend's `StandardErrorResponse`:
+
+**GatewayError** (`VoiceStudio.Core.Gateways.GatewayResult.cs`):
+
+Used by the Gateway pattern for structured error responses:
+
+```csharp
+public sealed class GatewayError
+{
+    public string Code { get; }              // Maps to backend error_code
+    public string Message { get; }           // Maps to backend message
+    public int? StatusCode { get; }          // HTTP status code
+    public bool IsRetryable { get; }         // Whether retry is possible
+    public string? RecoverySuggestion { get; } // Maps to backend recovery_suggestion
+    public JsonElement? Details { get; }     // Maps to backend details
+    public string? RequestId { get; }        // Maps to backend request_id
+    public string? Timestamp { get; }        // Maps to backend timestamp
+    public string? Path { get; }             // Maps to backend path
+}
+```
+
+**BackendException** (`VoiceStudio.Core.Exceptions.BackendException.cs`):
+
+Exception hierarchy for backend errors:
+
+```csharp
+public class BackendException : Exception
+{
+    public int? StatusCode { get; set; }
+    public string? ErrorCode { get; set; }
+    public bool IsRetryable { get; set; }
+    public string? RecoverySuggestion { get; set; }
+    public string? RequestId { get; set; }
+    public JsonElement? Details { get; set; }
+    public string? Timestamp { get; set; }   // ISO 8601 format
+    public string? Path { get; set; }        // API endpoint path
+}
+```
+
+Subclasses: `BackendValidationException`, `BackendAuthenticationException`, `BackendNotFoundException`, `BackendServerException`, `BackendUnavailableException`, `BackendTimeoutException`.
+
 ### IErrorCoordinator
 
 The `IErrorCoordinator` service provides centralized error handling:
@@ -102,8 +145,12 @@ The `IErrorCoordinator` service provides centralized error handling:
 ```csharp
 public interface IErrorCoordinator
 {
-    Task HandleErrorAsync(Exception exception, string context, bool showDialog = false);
-    void RegisterHandler(string errorType, IErrorHandler handler);
+    Task HandleErrorAsync(Exception ex, string context, ErrorSeverity severity, bool showDialog);
+    void ClearError();
+    string? CurrentError { get; }
+    bool HasError { get; }
+    event Action<ErrorInfo>? ErrorOccurred;
+    event Action? ErrorCleared;
 }
 ```
 

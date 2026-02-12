@@ -25,8 +25,19 @@ public class EngineInfo
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
-    public bool IsAvailable { get; set; }
+    public bool IsAvailable { get; set; } = true;
     public bool RequiresGPU { get; set; }
+    
+    /// <summary>
+    /// Reason the engine is unavailable (GAP-CRIT-005).
+    /// </summary>
+    public string? UnavailableReason { get; set; }
+    
+    /// <summary>
+    /// Display name with availability indicator (GAP-CRIT-005).
+    /// Shows "(Unavailable)" suffix for placeholder or unavailable engines.
+    /// </summary>
+    public string DisplayName => IsAvailable ? Name : $"{Name} (Unavailable)";
 }
 
 /// <summary>
@@ -291,7 +302,7 @@ public partial class SynthesisViewModel : BaseViewModel
                 }
             }
             
-            // Fallback to defaults if no engines from backend
+            // Fallback to defaults if no engines from backend (GAP-CRIT-005: mark as unavailable placeholders)
             if (AvailableEngines.Count == 0)
             {
                 AvailableEngines.Add(new EngineInfo
@@ -299,7 +310,8 @@ public partial class SynthesisViewModel : BaseViewModel
                     Id = "xtts_v2",
                     Name = "XTTS v2",
                     Description = "Coqui XTTS for high-quality voice cloning",
-                    IsAvailable = true,
+                    IsAvailable = false,
+                    UnavailableReason = "Backend not connected - placeholder engine",
                     RequiresGPU = true,
                 });
                 
@@ -308,7 +320,8 @@ public partial class SynthesisViewModel : BaseViewModel
                     Id = "piper",
                     Name = "Piper TTS",
                     Description = "Fast, lightweight TTS engine",
-                    IsAvailable = true,
+                    IsAvailable = false,
+                    UnavailableReason = "Backend not connected - placeholder engine",
                     RequiresGPU = false,
                 });
             }
@@ -322,13 +335,14 @@ public partial class SynthesisViewModel : BaseViewModel
         {
             Logger.LogWarning(ex, "Failed to load engines from backend, using defaults");
             
-            // Add default engines as fallback
+            // Add default engines as fallback (GAP-CRIT-005: mark as unavailable)
             AvailableEngines.Add(new EngineInfo
             {
                 Id = "xtts_v2",
                 Name = "XTTS v2",
                 Description = "Coqui XTTS for high-quality voice cloning",
-                IsAvailable = true,
+                IsAvailable = false,
+                UnavailableReason = "Failed to connect to backend",
                 RequiresGPU = true,
             });
             
@@ -396,6 +410,7 @@ public partial class SynthesisViewModel : BaseViewModel
     private bool CanSynthesize() =>
         !string.IsNullOrWhiteSpace(InputText) &&
         SelectedEngine != null &&
+        SelectedEngine.IsAvailable && // GAP-CRIT-005: Prevent synthesis with unavailable engines
         SelectedVoice != null &&
         !IsSynthesizing;
 

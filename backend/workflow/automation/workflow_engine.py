@@ -14,6 +14,8 @@ import json
 import logging
 import uuid
 
+from backend.core.security.expression_evaluator import evaluate_condition
+
 logger = logging.getLogger(__name__)
 
 
@@ -423,12 +425,8 @@ class WorkflowEngine:
         return await executor.execute(step_with_resolved, context)
     
     def _evaluate_condition(self, condition: str, variables: dict[str, Any]) -> bool:
-        """Evaluate a condition expression."""
-        # Simple evaluation - in production use a safe expression evaluator
-        try:
-            return bool(eval(condition, {"__builtins__": {}}, variables))
-        except Exception:
-            return False
+        """Evaluate a condition expression using safe evaluator."""
+        return evaluate_condition(condition, variables, default=False)
     
     def save_workflow(self, workflow: WorkflowDefinition, path: Path) -> None:
         """Save a workflow to file."""

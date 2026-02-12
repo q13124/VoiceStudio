@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/realtime-settings", tags=["Real-Time Settings"])
+router = APIRouter(prefix="/api/realtime-settings", tags=["Real-Time Settings"])
 
 
 # ============================================================================

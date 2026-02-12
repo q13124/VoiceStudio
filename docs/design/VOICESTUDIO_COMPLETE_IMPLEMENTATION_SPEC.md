@@ -99,10 +99,13 @@ VoiceStudio/
 │   │   ├── requirements.txt
 │   │   ├── core/
 │   │   │   ├── config.py
-│   │   │   ├── mcp_client.py
 │   │   │   ├── plugin_manager.py
 │   │   │   ├── schemas.py
 │   │   │   └── audio_engine.py
+│   ├── mcp_bridge/                      # MCP Integration (partial)
+│   │   ├── pdf_unlocker_client.py       # Implemented
+│   │   ├── mcp_client.py                # Future: unified MCP client
+│   │   └── README.md
 │   │   ├── api/
 │   │   │   ├── profiles_api.py
 │   │   │   ├── synthesis_api.py
@@ -951,16 +954,26 @@ namespace VoiceStudio.Core.Panels
 
 ## 🔗 MCP Integration Hooks
 
-### Backend MCP Client Structure
+> **Note:** MCP integration is currently limited to PDF unlock functionality. Full MCP integration
+> for design tokens, AI model calls, and voice engines is planned for future releases. The
+> structure below represents the target architecture.
 
-**backend/api/core/mcp_client.py:**
+### Current MCP Structure (Implemented)
+
+**backend/mcp_bridge/** (actual location):
+- `pdf_unlocker_client.py` - PDF unlock MCP client (implemented)
+- `README.md` - MCP bridge documentation
+
+### Target MCP Client Structure (Future)
+
+**backend/mcp_bridge/mcp_client.py** (target path for future implementation):
 ```python
 from typing import Dict, Any, Optional
 import httpx
 import asyncio
 
 class MCPClient:
-    """Unified MCP server client for VoiceStudio"""
+    """Unified MCP server client for VoiceStudio (Future Implementation)"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -975,7 +988,7 @@ class MCPClient:
         """
         Route MCP operation to appropriate server
         
-        Operations:
+        Target Operations:
         - analyze_voice -> TTS/analysis MCP
         - synthesize -> Voice cloning MCP (carbon-voice, daisys-tts)
         - transcribe -> Whisper MCP
@@ -1061,20 +1074,22 @@ class MCPClient:
 }
 ```
 
-### Backend API Endpoints (MCP Integration)
+### Backend API Endpoints (MCP Integration - Target)
 
-**backend/api/api/analysis_api.py:**
+> **Note:** The following shows the target API structure for full MCP integration (future work).
+
+**backend/api/routes/analysis.py** (target structure):
 ```python
 from fastapi import APIRouter, HTTPException
-from core.mcp_client import MCPClient
-from core.schemas import AnalyzeVoiceRequest, AnalyzeVoiceResponse
+from backend.mcp_bridge.mcp_client import MCPClient  # Target import path
+from backend.api.models import AnalyzeVoiceRequest, AnalyzeVoiceResponse
 
 router = APIRouter()
 
 @router.post("/api/voices/analyze")
 async def analyze_voice(request: AnalyzeVoiceRequest):
     """
-    Analyze voice using MCP analysis server
+    Analyze voice using MCP analysis server (future implementation)
     """
     mcp_client = MCPClient(config)
     result = await mcp_client.call_mcp_operation(

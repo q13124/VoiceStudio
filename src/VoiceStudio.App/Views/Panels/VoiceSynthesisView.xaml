@@ -70,10 +70,12 @@
       
       <StackPanel Spacing="4" MinWidth="150">
         <TextBlock Text="Engine" FontSize="12" Opacity="0.7"/>
+        <!-- GAP-CRIT-005: Engine selection with availability indication via DisplayName property -->
         <ComboBox x:Name="EngineComboBox"
                   AutomationProperties.AutomationId="VoiceSynthesisView_EngineComboBox"
                   ItemsSource="{x:Bind ViewModel.AvailableEngines, Mode=OneWay}"
                   SelectedItem="{x:Bind ViewModel.SelectedEngine, Mode=TwoWay}"
+                  DisplayMemberPath="DisplayName"
                   HorizontalAlignment="Stretch"/>
       </StackPanel>
       

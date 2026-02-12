@@ -281,8 +281,9 @@ public class DragDropService
             var package = CreateDataPackage(data);
             args.Data.SetDataProvider(
                 StandardDataFormats.Text,
-                async request =>
+                request =>
                 {
+                    // CS1998 fix: No async operations needed, using sync callback
                     var deferral = request.GetDeferral();
                     request.SetData(data.SourceId ?? "");
                     deferral.Complete();

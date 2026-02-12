@@ -72,8 +72,9 @@ def build_default_registry(config: dict) -> SourceRegistry:
         )
     )
     # Conversation (short-term): sliding window + summarization when enabled
+    # Enabled by default to support short-term memory from pipeline orchestrator
     conversation_cfg = config.get("conversation", {})
-    if conversation_cfg.get("enabled", False):
+    if conversation_cfg.get("enabled", True):
         from tools.context.sources.conversation_adapter import ConversationSourceAdapter
         registry.register(
             ConversationSourceAdapter(

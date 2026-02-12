@@ -132,11 +132,26 @@ class DatabaseAdapter(Adapter):
     
     async def health_check(self) -> Dict[str, Any]:
         """Check database health."""
+        # Check if running in placeholder mode
+        is_placeholder = (
+            isinstance(self._pool, dict) and 
+            self._pool.get("placeholder", False)
+        )
+        
         status = {
             "connected": self._connected,
             "type": self._db_type,
             "pool_size": self._pool_size,
+            "placeholder_mode": is_placeholder,
         }
+        
+        if is_placeholder:
+            status["warning"] = (
+                f"Database adapter running in placeholder mode. "
+                f"Install {'aiosqlite' if self._db_type == 'sqlite' else 'asyncpg'} "
+                f"for full database support."
+            )
+            return status
         
         # Try a simple query to verify connection
         if self._connected:

@@ -14,12 +14,27 @@ import logging
 import uuid
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+
+from ..middleware.auth_middleware import require_auth_if_enabled
+
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    create_message,
+    create_error,
+    create_pong,
+    MessageType,
+    ErrorCode,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
+router = APIRouter(
+    prefix="/api/pipeline",
+    tags=["pipeline"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # Active pipeline sessions
 _sessions: Dict[str, "PipelineSession"] = {}
@@ -155,21 +170,22 @@ async def pipeline_stream(websocket: WebSocket):
                 text = msg.get("content", "")
                 if text.strip():
                     async for chunk in orchestrator.stream_text(text):
-                        await websocket.send_json(chunk)
+                        # Wrap orchestrator chunks in standardized protocol
+                        await websocket.send_json(create_message(MessageType.DATA, chunk))
 
             elif msg.get("type") == "reset":
                 orchestrator.reset()
-                await websocket.send_json({"type": "reset_ack"})
+                await websocket.send_json(create_message(MessageType.ACK, {"action": "reset"}))
 
             elif msg.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
+                await websocket.send_json(create_pong())
 
     except WebSocketDisconnect:
         logger.info(f"Pipeline WebSocket disconnected: {session_id}")
     except Exception as exc:
         logger.error(f"Pipeline WebSocket error: {exc}")
         try:
-            await websocket.send_json({"type": "error", "error": str(exc)})
+            await websocket.send_json(create_error(str(exc), code=ErrorCode.INTERNAL_ERROR))
         except Exception as send_err:
             logger.debug(f"Failed to send error response to WebSocket client: {send_err}")
     finally:

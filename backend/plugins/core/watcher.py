@@ -4,6 +4,8 @@ Plugin File Watcher for VoiceStudio (Phase 12.1.1)
 Monitors the plugins/ directory for file changes and triggers
 automatic plugin reload when modifications are detected.
 Uses watchdog for cross-platform file system monitoring.
+
+Integrates with SafePluginReloader (Phase 23.1) for safe reload handling.
 """
 
 import asyncio
@@ -11,7 +13,10 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.plugins.core.safe_reload import SafePluginReloader
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +40,8 @@ class PluginFileWatcher:
 
     When a plugin file changes, it notifies registered handlers
     after a debounce period to avoid rapid-fire reloads.
+
+    Optionally integrates with SafePluginReloader for automatic safe reload.
     """
 
     WATCH_EXTENSIONS = {".py", ".json", ".yaml", ".yml", ".toml"}
@@ -44,6 +51,8 @@ class PluginFileWatcher:
         self,
         plugins_dir: str = "plugins",
         debounce_ms: int = DEFAULT_DEBOUNCE_MS,
+        safe_reloader: Optional["SafePluginReloader"] = None,
+        auto_reload: bool = True,
     ):
         self._plugins_dir = Path(plugins_dir).resolve()
         self._debounce_ms = debounce_ms
@@ -52,10 +61,39 @@ class PluginFileWatcher:
         self._pending_changes: Dict[str, float] = {}
         self._debounce_task: Optional[asyncio.Task] = None
         self._running = False
+        self._safe_reloader = safe_reloader
+        self._auto_reload = auto_reload
 
     def on_change(self, handler: Callable) -> None:
         """Register a handler for plugin file changes."""
         self._handlers.append(handler)
+
+    def set_safe_reloader(self, reloader: "SafePluginReloader") -> None:
+        """Set the SafePluginReloader for automatic reload on changes."""
+        self._safe_reloader = reloader
+
+    @classmethod
+    def create_with_reloader(
+        cls,
+        plugins_dir: str = "plugins",
+        debounce_ms: int = DEFAULT_DEBOUNCE_MS,
+    ) -> "PluginFileWatcher":
+        """
+        Factory method to create a watcher with SafePluginReloader integration.
+
+        Example:
+            watcher = PluginFileWatcher.create_with_reloader("plugins")
+            watcher.start()
+        """
+        from backend.plugins.core.safe_reload import SafePluginReloader
+
+        reloader = SafePluginReloader()
+        return cls(
+            plugins_dir=plugins_dir,
+            debounce_ms=debounce_ms,
+            safe_reloader=reloader,
+            auto_reload=True,
+        )
 
     def start(self) -> bool:
         """Start watching the plugins directory."""
@@ -140,6 +178,27 @@ class PluginFileWatcher:
         # Collect all plugin IDs that changed
         changed_plugins = set(self._pending_changes.keys())
         self._pending_changes.clear()
+
+        # Auto-reload plugins using SafePluginReloader if configured (Phase 23.1)
+        if self._auto_reload and self._safe_reloader is not None:
+            for plugin_id in changed_plugins:
+                try:
+                    logger.info(f"Auto-reloading plugin: {plugin_id}")
+                    result = await self._safe_reloader.reload_plugin(
+                        plugin_id, str(self._plugins_dir)
+                    )
+                    if result.success:
+                        logger.info(
+                            f"Plugin reloaded successfully: {plugin_id} "
+                            f"({result.duration_ms:.0f}ms)"
+                        )
+                    else:
+                        logger.error(
+                            f"Plugin reload failed: {plugin_id} - {result.error}"
+                            + (f" (rolled back)" if result.rolled_back else "")
+                        )
+                except Exception as exc:
+                    logger.error(f"Safe reload failed for {plugin_id}: {exc}")
 
         # Notify handlers
         for handler in self._handlers:

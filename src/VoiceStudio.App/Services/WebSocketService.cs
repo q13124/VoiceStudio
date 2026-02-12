@@ -257,7 +257,8 @@ namespace VoiceStudio.App.Services
           Payload = root.TryGetProperty("payload", out var payloadProp) ? JsonSerializer.Deserialize<object>(payloadProp.GetRawText(), _jsonOptions) : null,
           Timestamp = root.TryGetProperty("timestamp", out var timestampProp) && timestampProp.TryGetDateTime(out var timestamp)
                 ? timestamp
-                : DateTime.UtcNow
+                : DateTime.UtcNow,
+          RequestId = root.TryGetProperty("request_id", out var requestIdProp) ? requestIdProp.GetString() : null
         };
 
         // Handle pong responses

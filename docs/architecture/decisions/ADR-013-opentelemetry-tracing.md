@@ -92,6 +92,24 @@ Consistent with project principles:
 - `app/core/monitoring/metrics.py` - Engine metrics
 - `app/core/monitoring/profiler.py` - Profiling support
 - `backend/api/middleware/` - Request tracing
+- `app/core/engines/base.py` - `@traced` decorator for engine operations
+
+## Implementation Status
+
+**Last Updated**: 2026-02-11
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Prometheus Metrics | Implemented | Request latency, counters |
+| Engine Tracing | Implemented | `@traced` decorator writes local files |
+| Request Middleware | Implemented | Request/response logging |
+| OTLP Export | Not Implemented | Local-first; OTLP export deferred |
+| Jaeger Integration | Not Implemented | Optional; can be enabled |
+| SLO Dashboard | Implemented | `backend/api/routes/telemetry.py` |
+
+**Current Approach**: Local-first tracing with file-based export. The `@traced` decorator in engine base captures spans and writes to local trace files. No cloud/OTLP export is required for v1.0.x, consistent with local-first principles.
+
+**Future Enhancement**: OTLP export to Jaeger or cloud backend can be enabled when needed.
 
 ## Consequences
 

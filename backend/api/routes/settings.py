@@ -13,8 +13,10 @@ import time
 from pathlib import Path
 from typing import Dict, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
+
+from ..auth import require_auth_if_enabled
 
 try:
     from ..optimization import cache_response
@@ -485,7 +487,10 @@ async def get_settings_category(category: str):
 
 
 @router.post("", response_model=SettingsData)
-async def save_settings_endpoint(settings: SettingsData):
+async def save_settings_endpoint(
+    settings: SettingsData,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Save all settings."""
     try:
         save_settings(settings)
@@ -500,7 +505,11 @@ async def save_settings_endpoint(settings: SettingsData):
 
 
 @router.put("/{category}")
-async def update_settings_category(category: str, data: Dict):
+async def update_settings_category(
+    category: str,
+    data: Dict,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Update settings for a specific category."""
     try:
         settings = load_settings()
@@ -567,7 +576,9 @@ async def update_settings_category(category: str, data: Dict):
 
 
 @router.post("/reset")
-async def reset_settings():
+async def reset_settings(
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Reset all settings to defaults."""
     try:
         default_settings = SettingsData(

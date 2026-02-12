@@ -223,8 +223,9 @@ class AuditIssueBridge:
         except ImportError:
             # Issue system not available
             return None
-        except Exception:
+        except Exception as e:
             # Log but don't crash on issue creation failure
+            logger.debug(f"Failed to create issue from audit entry: {e}")
             return None
     
     def _map_instance_type(self, entry: AuditEntry):
@@ -304,9 +305,9 @@ class AuditIssueBridge:
                 subsystem=entry.subsystem,
                 correlation_id=entry.correlation_id,
             )
-        except Exception:
+        except Exception as e:
             # Don't let notification failures break the audit flow
-            pass
+            logger.debug(f"Debug role notification failed (non-critical): {e}")
     
     def get_issue_for_entry(self, entry_id: str) -> Optional[str]:
         """Get the issue ID associated with an audit entry ID."""

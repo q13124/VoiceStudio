@@ -28,6 +28,7 @@ public sealed class ApprovalService : IApprovalService, IDisposable
   private CancellationTokenSource? _listenerCts;
   private Task? _listenerTask;
   private bool _disposed;
+  private Func<ApprovalRequest, Task<(bool Approved, string Reason)>>? _dialogHandler;
 
   /// <inheritdoc/>
   public event EventHandler<ApprovalRequest>? ApprovalRequested;
@@ -182,16 +183,55 @@ public sealed class ApprovalService : IApprovalService, IDisposable
       ApprovalRequest request,
       CancellationToken cancellationToken = default)
   {
-    // This will be implemented by the View layer
-    // For now, auto-deny for safety
-    _logger?.LogWarning(
-        "ShowApprovalDialogAsync not implemented, auto-denying request {RequestId}",
-        request.RequestId);
+    if (_dialogHandler == null)
+    {
+      // No dialog handler set - auto-deny for safety
+      _logger?.LogWarning(
+          "No dialog handler configured, auto-denying request {RequestId}",
+          request.RequestId);
 
-    return await DenyAsync(
-        request.RequestId,
-        "Approval dialog not available",
-        cancellationToken).ConfigureAwait(false);
+      return await DenyAsync(
+          request.RequestId,
+          "Approval dialog not available",
+          cancellationToken).ConfigureAwait(false);
+    }
+
+    try
+    {
+      _logger?.LogInformation(
+          "Showing approval dialog for request {RequestId}: {Action}",
+          request.RequestId,
+          request.ActionSummary);
+
+      var (approved, reason) = await _dialogHandler(request).ConfigureAwait(false);
+
+      if (approved)
+      {
+        return await ApproveAsync(request.RequestId, reason, cancellationToken)
+            .ConfigureAwait(false);
+      }
+
+      return await DenyAsync(request.RequestId, reason, cancellationToken)
+          .ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      _logger?.LogError(ex, "Error showing approval dialog for request {RequestId}", request.RequestId);
+
+      return await DenyAsync(
+          request.RequestId,
+          $"Dialog error: {ex.Message}",
+          cancellationToken).ConfigureAwait(false);
+    }
+  }
+
+  /// <inheritdoc/>
+  public void SetDialogHandler(Func<ApprovalRequest, Task<(bool Approved, string Reason)>>? dialogHandler)
+  {
+    _dialogHandler = dialogHandler;
+    _logger?.LogInformation(
+        "Dialog handler {Status}",
+        dialogHandler != null ? "configured" : "cleared");
   }
 
   /// <inheritdoc/>

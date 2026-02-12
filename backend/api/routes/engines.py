@@ -1,15 +1,17 @@
 """
 Engine management and recommendation routes.
 Implements IDEA 47: Quality-Based Engine Recommendation System.
+
+Architecture: Routes -> EngineService -> Engine Layer (app.core.engines)
 """
 
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.core.engines.router import router as engine_router_instance
+from backend.services.engine_service import IEngineService, get_engine_service
 from backend.services.model_preflight import run_preflight
 
 from ..optimization import cache_response
@@ -17,15 +19,6 @@ from ..optimization import cache_response
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/engines", tags=["engines"])
-
-# Get engine router instance
-try:
-    engine_router = engine_router_instance
-    ENGINE_AVAILABLE = True
-except Exception as e:
-    logger.warning(f"Engine router not available: {e}")
-    engine_router = None
-    ENGINE_AVAILABLE = False
 
 
 class PreflightResult(BaseModel):
@@ -124,13 +117,12 @@ class EngineRecommendationResponse(BaseModel):
 
 @router.get("/list")
 @cache_response(ttl=60)  # Cache for 60 seconds (engine list may change)
-async def list_engines() -> dict:
+async def list_engines(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> dict:
     """List all available engines (detailed endpoint)."""
-    if not ENGINE_AVAILABLE or not engine_router:
-        return {"engines": [], "available": False}
-
     try:
-        engines = engine_router.list_engines()
+        engines = engine_service.list_engines()
         return {"engines": engines, "available": True, "count": len(engines)}
     except Exception as e:
         logger.error(f"Error listing engines: {e}")
@@ -139,7 +131,9 @@ async def list_engines() -> dict:
 
 @router.get("")
 @cache_response(ttl=60)  # Root listing for host EngineManager compatibility
-async def get_engines() -> dict:
+async def get_engines(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> dict:
     """
     Root engine listing endpoint.
 
@@ -148,7 +142,7 @@ async def get_engines() -> dict:
     `GET /api/engines` and receive:
       { "engines": [...], "available": bool, "count": int }.
     """
-    return await list_engines()
+    return await list_engines(engine_service)
 
 
 @router.get("/preflight", response_model=PreflightResponse)
@@ -189,6 +183,7 @@ async def preflight(auto_download: bool = True) -> PreflightResponse:
 @router.post("/recommend", response_model=EngineRecommendationResponse)
 async def recommend_engine(
     request: EngineRecommendationRequest,
+    engine_service: IEngineService = Depends(get_engine_service),
 ) -> EngineRecommendationResponse:
     """
     Get engine recommendations based on quality requirements.
@@ -198,16 +193,19 @@ async def recommend_engine(
     Returns a list of engines sorted by recommendation score, with quality
     estimates and reasoning for each recommendation.
     """
-    if not ENGINE_AVAILABLE or not engine_router:
-        raise HTTPException(status_code=503, detail="Engine router not available")
-
     try:
-        # Get all available engines for the task type
-        available_engines = engine_router.list_engines()
+        # Get all available engines for the task type via service layer
+        engines_list = engine_service.list_engines()
+        available_engines = [
+            e.get("id") if isinstance(e, dict) else e 
+            for e in engines_list
+        ]
         recommendations = []
 
         for engine_id in available_engines:
-            manifest = engine_router.get_manifest(engine_id)
+            if not engine_id:
+                continue
+            manifest = engine_service.get_engine_manifest(engine_id)
             if not manifest:
                 continue
 
@@ -399,21 +397,19 @@ async def recommend_engine(
 async def compare_engines(
     engines: str = Query(..., description="Comma-separated list of engine IDs"),
     task_type: str = Query(default="tts", description="Task type"),
+    engine_service: IEngineService = Depends(get_engine_service),
 ) -> dict:
     """
     Compare multiple engines side-by-side.
 
     Returns quality estimates and capabilities for each engine.
     """
-    if not ENGINE_AVAILABLE or not engine_router:
-        raise HTTPException(status_code=503, detail="Engine router not available")
-
     try:
         engine_ids = [e.strip() for e in engines.split(",")]
         comparison = []
 
         for engine_id in engine_ids:
-            manifest = engine_router.get_manifest(engine_id)
+            manifest = engine_service.get_engine_manifest(engine_id)
             if not manifest:
                 continue
 
@@ -721,32 +717,31 @@ async def validate_configuration() -> dict:
 
 
 @router.post("/{engine_id}/start")
-async def start_engine(engine_id: str, job_id: Optional[str] = None):
+async def start_engine(
+    engine_id: str, 
+    job_id: Optional[str] = None,
+    engine_service: IEngineService = Depends(get_engine_service),
+):
     """
     Start an engine instance.
     """
-    if not ENGINE_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Engine system not available")
-
     try:
         from app.core.runtime.engine_lifecycle import get_lifecycle_manager
 
         lifecycle = get_lifecycle_manager()
 
-        # Check if engine is registered (or try to register from manifest via router)
+        # Check if engine is registered (or try to register from manifest via service)
         # Note: Ideally engine should be registered. If not, we might need to load it.
-        # For now, assume it's registered or we can't start it.
 
         engine = lifecycle.acquire_engine(engine_id, job_id=job_id, auto_start=True)
         if not engine:
-            # Try to register via engine router if not found
-            if engine_router:
-                manifest = engine_router.get_manifest(engine_id)
-                if manifest:
-                    lifecycle.register_engine(engine_id, manifest)
-                    engine = lifecycle.acquire_engine(
-                        engine_id, job_id=job_id, auto_start=True
-                    )
+            # Try to register via engine service if not found
+            manifest = engine_service.get_engine_manifest(engine_id)
+            if manifest:
+                lifecycle.register_engine(engine_id, manifest)
+                engine = lifecycle.acquire_engine(
+                    engine_id, job_id=job_id, auto_start=True
+                )
 
         if not engine:
             raise HTTPException(
@@ -754,18 +749,23 @@ async def start_engine(engine_id: str, job_id: Optional[str] = None):
             )
 
         return {"status": "started", "engine_id": engine_id, "port": engine.port}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting engine {engine_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to start engine: {str(e)}")
 
 
 @router.post("/{engine_id}/stop")
-async def stop_engine(engine_id: str, job_id: Optional[str] = None):
+async def stop_engine(
+    engine_id: str, 
+    job_id: Optional[str] = None,
+    engine_service: IEngineService = Depends(get_engine_service),
+):
     """
     Stop an engine instance.
     """
-    if not ENGINE_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Engine system not available")
+    # engine_service is injected but not directly used here; validates service is available
 
     try:
         from app.core.runtime.engine_lifecycle import get_lifecycle_manager
@@ -789,14 +789,20 @@ async def stop_engine(engine_id: str, job_id: Optional[str] = None):
 
 
 @router.get("/{engine_id}/status")
-async def get_engine_status(engine_id: str):
+async def get_engine_status(
+    engine_id: str,
+    engine_service: IEngineService = Depends(get_engine_service),
+):
     """
     Get engine status.
     """
-    if not ENGINE_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Engine system not available")
-
     try:
+        # Use engine service status if available
+        service_status = engine_service.get_engine_status(engine_id)
+        if service_status and not service_status.get("error"):
+            return service_status
+        
+        # Fallback to lifecycle manager
         from app.core.runtime.engine_lifecycle import EngineState, get_lifecycle_manager
 
         lifecycle = get_lifecycle_manager()
@@ -821,35 +827,21 @@ async def get_engine_status(engine_id: str):
 
 
 @router.get("/{engine_id}/voices")
-async def get_engine_voices(engine_id: str):
+async def get_engine_voices(
+    engine_id: str,
+    engine_service: IEngineService = Depends(get_engine_service),
+):
     """
     Get voices available for an engine.
     """
-    if not ENGINE_AVAILABLE or not engine_router:
-        return []
-
     try:
-        # Get engine instance
-        # Note: We need to use get_engine_stats or similar, or just list voices if engine supports it.
-        # engine_router.get_engine returns the engine instance/adapter.
-
-        # Since get_engine might fail if engine is not running/loaded, we might need to load it first.
-        # But listing voices shouldn't require starting the engine process if possible (metadata).
-        # However, many engines need to be loaded to list voices.
-
-        # We can try to check if engine is running via lifecycle.
-        from app.core.runtime.engine_lifecycle import get_lifecycle_manager
-
-        lifecycle = get_lifecycle_manager()
-
-        # If engine is not running, we might check if we can get voices from manifest or cache?
-        # Typically engines expose get_voices.
-
-        # Let's try to get it. If it fails, return empty.
-        engine = engine_router.get_engine(
-            engine_id
-        )  # This might start it? No, router usually manages instances.
-
+        # Use engine service to get available voices (clean architecture)
+        voices = engine_service.get_available_voices(engine_id)
+        if voices:
+            return voices
+        
+        # Fallback: try to get engine instance directly via service
+        engine = engine_service.get_engine(engine_id)
         if engine and hasattr(engine, "get_voices"):
             return engine.get_voices()
 

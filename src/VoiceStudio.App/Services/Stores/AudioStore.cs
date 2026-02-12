@@ -118,10 +118,17 @@ namespace VoiceStudio.App.Services.Stores
     }
 
     /// <summary>
-    /// Loads audio files from library.
+    /// Loads audio files for a specific project.
     /// </summary>
-    public async Task LoadAudioFilesAsync()
+    /// <param name="projectId">The project ID to load audio files for.</param>
+    public async Task LoadAudioFilesAsync(string projectId)
     {
+      if (string.IsNullOrEmpty(projectId))
+      {
+        ErrorMessage = "Project ID is required to load audio files";
+        return;
+      }
+
       try
       {
         IsLoading = true;
@@ -130,18 +137,18 @@ namespace VoiceStudio.App.Services.Stores
         // Try to load from cache first
         if (_stateCacheService != null)
         {
-          var cached = await _stateCacheService.GetCachedStateAsync<ObservableCollection<ProjectAudioFile>>("audio_files");
+          var cached = await _stateCacheService.GetCachedStateAsync<ObservableCollection<ProjectAudioFile>>($"audio_files_{projectId}");
           if (cached != null)
           {
             AudioFiles = cached;
             IsLoading = false;
             // Still fetch from backend in background to update
-            _ = RefreshAudioFilesAsync();
+            _ = RefreshAudioFilesAsync(projectId);
             return;
           }
         }
 
-        await RefreshAudioFilesAsync();
+        await RefreshAudioFilesAsync(projectId);
       }
       catch (Exception ex)
       {
@@ -154,37 +161,49 @@ namespace VoiceStudio.App.Services.Stores
     }
 
     /// <summary>
-    /// Refreshes audio files from backend.
+    /// Refreshes audio files from backend for a specific project.
     /// </summary>
-    public async Task RefreshAudioFilesAsync()
+    /// <param name="projectId">The project ID to fetch audio files for.</param>
+    public async Task RefreshAudioFilesAsync(string projectId)
     {
+      if (string.IsNullOrEmpty(projectId))
+      {
+        ErrorMessage = "Project ID is required to refresh audio files";
+        return;
+      }
+
       try
       {
-        // Use ListProjectAudioAsync or a similar method
-        // For now, we'll use a generic approach - this may need to be adjusted based on actual API
-        // Audio files might be retrieved from project audio persistence
-        // This is a placeholder that can be updated when the actual library API is available
+        IsLoading = true;
+        ErrorMessage = null;
+
+        // Fetch audio files from backend using ListProjectAudioAsync
+        var files = await _backendClient.ListProjectAudioAsync(projectId);
 
         AudioFiles.Clear();
-        // Note: Library API not yet available.
-        // Audio files are currently retrieved from project audio persistence (ListProjectAudioAsync).
-        // This will be updated when the general library API is implemented.
-        // For now, use ListProjectAudioAsync with a specific project ID to retrieve audio files.
-        // See: IBackendClient.ListProjectAudioAsync() for current implementation.
+        foreach (var file in files)
+        {
+          AudioFiles.Add(file);
+        }
 
         LastUpdated = DateTime.UtcNow;
 
         // Cache the result
         if (_stateCacheService != null)
         {
-          await _stateCacheService.CacheStateAsync("audio_files", AudioFiles);
+          await _stateCacheService.CacheStateAsync($"audio_files_{projectId}", AudioFiles);
         }
       }
       catch (Exception ex)
       {
         ErrorMessage = $"Failed to refresh audio files: {ex.Message}";
       }
+      finally
+      {
+        IsLoading = false;
+      }
     }
+
 
     /// <summary>
     /// Adds an audio clip to the store.

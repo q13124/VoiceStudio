@@ -99,4 +99,13 @@ public interface IApprovalService
   /// Stop listening for approval requests.
   /// </summary>
   Task StopListeningAsync();
+
+  /// <summary>
+  /// Set the dialog handler for showing approval dialogs.
+  /// This should be called by the UI layer to provide dialog functionality.
+  /// </summary>
+  /// <param name="dialogHandler">
+  /// A function that takes an ApprovalRequest and returns a tuple of (approved, reason).
+  /// </param>
+  void SetDialogHandler(Func<ApprovalRequest, Task<(bool Approved, string Reason)>>? dialogHandler);
 }

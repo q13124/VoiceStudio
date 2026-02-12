@@ -458,6 +458,21 @@ namespace VoiceStudio.App.Views.Panels
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Whether the engine is actually available for use (GAP-CRIT-005).
+    /// </summary>
+    public bool IsAvailable { get; set; } = true;
+    
+    /// <summary>
+    /// Reason the engine is unavailable (for UI display).
+    /// </summary>
+    public string? UnavailableReason { get; set; }
+    
+    /// <summary>
+    /// Display name with availability indicator.
+    /// </summary>
+    public string DisplayName => IsAvailable ? Name : $"{Name} (Unavailable)";
   }
 
   public class EngineParameter : ObservableObject

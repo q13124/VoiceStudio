@@ -8,8 +8,9 @@ import logging
 import time
 from typing import Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend.services.engine_service import IEngineService, get_engine_service
 from ..models_additional import Telemetry
 from ..optimization import cache_response
 
@@ -24,7 +25,8 @@ _telemetry_history: Dict[str, list] = {}
 @router.get("/telemetry")
 @cache_response(ttl=5)  # Cache for 5 seconds (telemetry updates frequently)
 async def telemetry(
-    engine_id: Optional[str] = Query(None, description="Specific engine ID")
+    engine_id: Optional[str] = Query(None, description="Specific engine ID"),
+    engine_service: IEngineService = Depends(get_engine_service),
 ) -> Telemetry:
     """
     Get engine telemetry data.
@@ -36,30 +38,19 @@ async def telemetry(
 
     Args:
         engine_id: Optional specific engine ID to get telemetry for
+        engine_service: Injected engine service (clean architecture boundary)
 
     Returns:
         Telemetry data with engine metrics
     """
     try:
-        # Try to get real telemetry from engine router
+        # Use EngineService to get stats (respects architecture boundaries)
         try:
-            import os
-            import sys
-
-            # Add app directory to path if needed
-            app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
-            if os.path.exists(app_path) and app_path not in sys.path:
-                sys.path.insert(0, app_path)
-
-            from app.core.engines.router import router as engine_router_instance
-
-            router_instance = engine_router_instance
-
-            # Get engine statistics
+            # Get engine statistics via service layer
             if engine_id:
                 # Get specific engine stats
-                stats = router_instance.get_engine_stats(engine_id)
-                if stats:
+                stats = engine_service.get_engine_stats(engine_id)
+                if stats and not stats.get("error"):
                     engine_ms = stats.get("avg_synthesis_time_ms", 0.0)
                     underruns = stats.get("underruns", 0)
                     vram_pct = stats.get("vram_usage_percent", 0.0)
@@ -70,19 +61,25 @@ async def telemetry(
                     vram_pct = 0.0
             else:
                 # Get aggregate stats from all engines
-                all_stats = router_instance.get_all_stats()
-                if all_stats:
+                all_stats = engine_service.get_engine_stats()
+                if all_stats and not all_stats.get("error"):
                     # Calculate averages
                     total_ms = sum(
-                        s.get("avg_synthesis_time_ms", 0.0) for s in all_stats.values()
+                        s.get("avg_synthesis_time_ms", 0.0) 
+                        for s in all_stats.values() 
+                        if isinstance(s, dict)
                     )
                     total_underruns = sum(
-                        s.get("underruns", 0) for s in all_stats.values()
+                        s.get("underruns", 0) 
+                        for s in all_stats.values()
+                        if isinstance(s, dict)
                     )
                     total_vram = sum(
-                        s.get("vram_usage_percent", 0.0) for s in all_stats.values()
+                        s.get("vram_usage_percent", 0.0) 
+                        for s in all_stats.values()
+                        if isinstance(s, dict)
                     )
-                    count = len(all_stats)
+                    count = len([s for s in all_stats.values() if isinstance(s, dict)])
 
                     engine_ms = total_ms / count if count > 0 else 0.0
                     underruns = total_underruns
@@ -104,7 +101,8 @@ async def telemetry(
                 vram_pct=float(vram_pct),
             )
 
-        except ImportError:
+        except Exception as service_err:
+            logger.debug(f"Engine service error: {service_err}")
             # Engine router not available, try resource manager
             try:
                 from core.runtime.resource_manager import get_resource_manager

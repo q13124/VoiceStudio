@@ -92,6 +92,32 @@ namespace VoiceStudio.App
       ["SSMLControl"] = (PanelRegion.Right, "SSML Control", () => new SSMLControlView()),
       // Appearance panels
       ["ThemeEditor"] = (PanelRegion.Right, "Theme Editor", () => new ThemeEditorView()),
+      // Voice cloning panels
+      ["VoiceQuickClone"] = (PanelRegion.Center, "Quick Clone", () => new VoiceQuickCloneView()),
+      ["VoiceMorphingBlending"] = (PanelRegion.Center, "Voice Morphing & Blending", () => new VoiceMorphingBlendingView()),
+      // Audio processing panels
+      ["SpatialAudio"] = (PanelRegion.Center, "Spatial Audio", () => new SpatialAudioView()),
+      ["AIMixingMastering"] = (PanelRegion.Center, "AI Mixing & Mastering", () => new AIMixingMasteringView()),
+      // Quality panels
+      ["QualityDashboard"] = (PanelRegion.Center, "Quality Dashboard", () => new QualityDashboardView()),
+      ["QualityBenchmark"] = (PanelRegion.Center, "Quality Benchmark", () => new QualityBenchmarkView()),
+      // Image/Video panels
+      ["ImageGen"] = (PanelRegion.Center, "Image Generation", () => new ImageGenView()),
+      ["VideoGen"] = (PanelRegion.Center, "Video Generation", () => new VideoGenView()),
+      ["DeepfakeCreator"] = (PanelRegion.Center, "Deepfake Creator", () => new DeepfakeCreatorView()),
+      // Script/Scene panels
+      ["DatasetQA"] = (PanelRegion.Center, "Dataset QA", () => new DatasetQAView()),
+      ["ScriptEditor"] = (PanelRegion.Center, "Script Editor", () => new ScriptEditorView()),
+      ["SceneBuilder"] = (PanelRegion.Center, "Scene Builder", () => new SceneBuilderView()),
+      // Automation panels
+      ["Macro"] = (PanelRegion.Center, "Macro", () => new MacroView()),
+      ["WorkflowAutomation"] = (PanelRegion.Center, "Workflow Automation", () => new WorkflowAutomationView()),
+      // Settings panels
+      ["AdvancedSettings"] = (PanelRegion.Right, "Advanced Settings", () => new AdvancedSettingsView()),
+      ["APIKeyManager"] = (PanelRegion.Right, "API Key Manager", () => new APIKeyManagerView()),
+      ["GPUStatus"] = (PanelRegion.Right, "GPU Status", () => new GPUStatusView()),
+      // Todo panel
+      ["TodoPanel"] = (PanelRegion.Right, "Todo Panel", () => new TodoPanelView()),
     };
 
     private T? FindInContent<T>(string name) where T : class
@@ -1277,10 +1303,6 @@ namespace VoiceStudio.App
       // so we use UnpackagedSettingsHelper for file-based settings storage.
       if (_welcomeDialogShown)
         return;
-      
-      // DEBUG: Skip welcome dialog temporarily to test input
-      _welcomeDialogShown = true;
-      return;
 
       var showWelcome = Helpers.UnpackagedSettingsHelper.GetValue<bool>(ShowWelcomeKey, true);
 

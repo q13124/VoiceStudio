@@ -10,13 +10,15 @@ import os
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from backend.security.path_validator import get_path_validator, PathValidationError
 from backend.services.circuit_breaker import get_engine_breaker
-from backend.services.model_preflight import ensure_whisper_cpp
+from backend.services.model_preflight import ensure_whisper_cpp, PreflightError
 from backend.services.engine_service import get_engine_service
 
 from ..models import ApiOk
@@ -304,19 +306,37 @@ async def transcribe_audio(
 
                 # Check if audio_id matches a filename in project audio directory
                 if os.path.exists(audio_dir):
-                    potential_path = os.path.join(audio_dir, request.audio_id)
-                    if os.path.exists(potential_path):
-                        audio_path = potential_path
-                    else:
-                        # Try matching by filename (without extension)
-                        for filename in os.listdir(audio_dir):
-                            base_name = os.path.splitext(filename)[0]
-                            if (
-                                base_name == request.audio_id
-                                or filename == request.audio_id
-                            ):
-                                audio_path = os.path.join(audio_dir, filename)
-                                break
+                    # Validate audio_id to prevent path traversal
+                    path_validator = get_path_validator()
+                    try:
+                        # Sanitize and validate the user-provided audio_id
+                        safe_audio_id = path_validator.sanitize(request.audio_id)
+                        potential_path = os.path.join(audio_dir, safe_audio_id)
+                        
+                        # Verify the resolved path stays within audio_dir
+                        resolved = Path(potential_path).resolve()
+                        audio_dir_resolved = Path(audio_dir).resolve()
+                        if not str(resolved).startswith(str(audio_dir_resolved)):
+                            logger.warning(f"Path traversal attempt blocked: {request.audio_id}")
+                            raise PathValidationError("Invalid audio path", request.audio_id, "traversal")
+                        
+                        if os.path.exists(potential_path):
+                            audio_path = potential_path
+                        else:
+                            # Try matching by filename (without extension)
+                            for filename in os.listdir(audio_dir):
+                                base_name = os.path.splitext(filename)[0]
+                                if (
+                                    base_name == safe_audio_id
+                                    or filename == safe_audio_id
+                                ):
+                                    audio_path = os.path.join(audio_dir, filename)
+                                    break
+                    except PathValidationError as e:
+                        logger.warning(f"Path validation failed for audio_id '{request.audio_id}': {e}")
+                        raise HTTPException(status_code=400, detail="Invalid audio identifier")
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.debug(f"Could not load from project audio: {e}")
 
@@ -463,6 +483,9 @@ async def transcribe_audio(
 
     except HTTPException:
         raise
+    except PreflightError as e:
+        # Convert service-layer preflight error to HTTP exception
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
         logger.error(f"Transcription error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")

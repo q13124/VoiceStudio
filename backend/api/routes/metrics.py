@@ -4,6 +4,8 @@ Prometheus Metrics Export API — Phase 5.2.3
 Provides a /metrics endpoint exposing VoiceStudio metrics in Prometheus format.
 Supports both text (Prometheus exposition) and JSON formats.
 All operations are local-first with no external dependencies.
+
+Architecture: Routes -> EngineService -> Engine Layer (app.core.engines)
 """
 
 import logging
@@ -11,13 +13,15 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
+from backend.services.engine_service import IEngineService, get_engine_service
+
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/metrics", tags=["metrics"])
+router = APIRouter(prefix="/api/metrics", tags=["metrics"])
 
 
 # =============================================================================
@@ -238,18 +242,131 @@ def collect_slo_metrics(registry: MetricsRegistry) -> None:
         logger.warning("Invalid SLO data: %s", exc)
 
 
-def collect_engine_metrics(registry: MetricsRegistry) -> None:
-    """Collect engine-related metrics."""
+def collect_engine_metrics(
+    registry: MetricsRegistry, 
+    engine_service: Optional[IEngineService] = None,
+) -> None:
+    """Collect engine-related metrics from the engine service.
+    
+    Args:
+        registry: Metrics registry to populate.
+        engine_service: Optional engine service. If not provided, gets global instance.
+    """
     try:
-        # Placeholder for engine metrics
-        # Will be populated when app/core/engines/metrics.py is implemented
+        # Use injected service or get global instance
+        service = engine_service or get_engine_service()
+        engine_metrics = service.get_metrics()
+        
+        if engine_metrics.get("error") or not engine_metrics.get("available", True):
+            logger.debug("Engine metrics not available via service")
+            return
+        
+        # If get_metrics returns raw metrics dict, use it directly
+        # Otherwise try to get collector-style interface
+        if hasattr(engine_metrics, "get_all_metrics"):
+            all_metrics = engine_metrics.get_all_metrics()
+        else:
+            # Assume engine_metrics is already the metrics dict
+            all_metrics = engine_metrics
+
+        # Synthesis latency histograms
+        synth_latency = all_metrics.get("synthesis_latency", {})
+        for engine, data in synth_latency.items():
+            registry.set_gauge(
+                "voicestudio_synthesis_latency_ms_p50",
+                data.get("p50", 0),
+                labels={"engine": engine},
+                help_text="Synthesis latency 50th percentile (ms)",
+            )
+            registry.set_gauge(
+                "voicestudio_synthesis_latency_ms_p99",
+                data.get("p99", 0),
+                labels={"engine": engine},
+                help_text="Synthesis latency 99th percentile (ms)",
+            )
+            registry.set_counter(
+                "voicestudio_synthesis_total",
+                data.get("count", 0),
+                labels={"engine": engine},
+                help_text="Total synthesis operations",
+            )
+
+        # Synthesis counters
+        synth_counter = all_metrics.get("synthesis_counter", {})
+        for engine, data in synth_counter.items():
+            registry.set_counter(
+                "voicestudio_synthesis_success_total",
+                data.get("success", 0),
+                labels={"engine": engine},
+                help_text="Successful synthesis operations",
+            )
+            registry.set_counter(
+                "voicestudio_synthesis_failure_total",
+                data.get("failure", 0),
+                labels={"engine": engine},
+                help_text="Failed synthesis operations",
+            )
+
+        # Transcription latency histograms
+        trans_latency = all_metrics.get("transcription_latency", {})
+        for engine, data in trans_latency.items():
+            registry.set_gauge(
+                "voicestudio_transcription_latency_ms_p50",
+                data.get("p50", 0),
+                labels={"engine": engine},
+                help_text="Transcription latency 50th percentile (ms)",
+            )
+            registry.set_gauge(
+                "voicestudio_transcription_latency_ms_p99",
+                data.get("p99", 0),
+                labels={"engine": engine},
+                help_text="Transcription latency 99th percentile (ms)",
+            )
+            registry.set_counter(
+                "voicestudio_transcription_total",
+                data.get("count", 0),
+                labels={"engine": engine},
+                help_text="Total transcription operations",
+            )
+
+        # Transcription counters
+        trans_counter = all_metrics.get("transcription_counter", {})
+        for engine, data in trans_counter.items():
+            registry.set_counter(
+                "voicestudio_transcription_success_total",
+                data.get("success", 0),
+                labels={"engine": engine},
+                help_text="Successful transcription operations",
+            )
+            registry.set_counter(
+                "voicestudio_transcription_failure_total",
+                data.get("failure", 0),
+                labels={"engine": engine},
+                help_text="Failed transcription operations",
+            )
+
+        # Audio duration metrics
+        audio_dur = all_metrics.get("audio_duration", {})
+        for engine, data in audio_dur.items():
+            registry.set_gauge(
+                "voicestudio_audio_duration_seconds_total",
+                data.get("sum", 0),
+                labels={"engine": engine},
+                help_text="Total audio duration generated (seconds)",
+            )
+
+        # Engine availability (count of engines with any recorded metrics)
+        engines_with_metrics = set(synth_latency.keys()) | set(trans_latency.keys())
         registry.set_gauge(
             "voicestudio_engines_available",
-            1,
-            help_text="Number of available synthesis engines",
+            len(engines_with_metrics) if engines_with_metrics else 1,
+            help_text="Number of available synthesis/transcription engines",
         )
-    except (AttributeError, ValueError) as exc:
-        logger.debug("Engine metrics collection skipped: %s", exc)
+
+    except (AttributeError, ValueError, TypeError) as exc:
+        logger.debug("Engine metrics collection error: %s", exc)
+    except Exception as exc:
+        logger.warning("Unexpected error collecting engine metrics: %s", exc)
 
 
 # =============================================================================
@@ -303,7 +420,9 @@ def format_prometheus_text(metrics: List[MetricValue]) -> str:
     description="Returns all VoiceStudio metrics in Prometheus text format.",
     response_class=PlainTextResponse,
 )
-async def get_metrics_prometheus() -> Response:
+async def get_metrics_prometheus(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> Response:
     """
     Get metrics in Prometheus text exposition format.
 
@@ -315,7 +434,7 @@ async def get_metrics_prometheus() -> Response:
     # Collect all metric sources
     collect_system_metrics(registry)
     collect_slo_metrics(registry)
-    collect_engine_metrics(registry)
+    collect_engine_metrics(registry, engine_service)
 
     metrics = registry.get_all_metrics()
     text_output = format_prometheus_text(metrics)
@@ -332,7 +451,9 @@ async def get_metrics_prometheus() -> Response:
     summary="Get metrics in JSON format",
     description="Returns all VoiceStudio metrics in JSON format.",
 )
-async def get_metrics_json() -> MetricsResponse:
+async def get_metrics_json(
+    engine_service: IEngineService = Depends(get_engine_service),
+) -> MetricsResponse:
     """
     Get metrics in JSON format.
 
@@ -343,7 +464,7 @@ async def get_metrics_json() -> MetricsResponse:
     # Collect all metric sources
     collect_system_metrics(registry)
     collect_slo_metrics(registry)
-    collect_engine_metrics(registry)
+    collect_engine_metrics(registry, engine_service)
 
     metrics = registry.get_all_metrics()
 

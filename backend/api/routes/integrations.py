@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/integrations", tags=["integrations"])
+router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
 
 # Request/Response Models
@@ -61,6 +61,7 @@ class SyncResponse(BaseModel):
     items_uploaded: int = 0
     items_downloaded: int = 0
     errors: list[str] = Field(default_factory=list)
+    implementation_status: str = "stub"  # "stub", "basic", "full"
 
 
 class WorkflowRequest(BaseModel):
@@ -73,6 +74,8 @@ class WorkflowResponse(BaseModel):
     """Response from workflow operation."""
     execution_id: str
     status: str
+    implementation_status: str = "stub"  # "stub", "basic", "full"
+    message: Optional[str] = None
 
 
 class BatchRequest(BaseModel):
@@ -87,13 +90,48 @@ class BatchResponse(BaseModel):
     job_id: str
     total_items: int
     status: str
+    implementation_status: str = "stub"  # "stub", "basic", "full"
+    message: Optional[str] = None
 
 
 # DAW Integration Endpoints
 
 @router.get("/daw/available")
-async def get_available_daws() -> dict[str, list[str]]:
-    """Get list of available DAW integrations."""
+async def get_available_daws() -> dict[str, Any]:
+    """
+    Get list of available DAW integrations.
+    
+    Attempts to detect installed DAWs on the system.
+    """
+    import os
+    import platform
+    
+    detected = []
+    
+    # Basic detection for common DAWs on Windows
+    if platform.system() == "Windows":
+        daw_paths = {
+            "reaper": [
+                os.path.expandvars(r"%PROGRAMFILES%\REAPER (x64)\reaper.exe"),
+                os.path.expandvars(r"%PROGRAMFILES(X86)%\REAPER\reaper.exe"),
+            ],
+            "audacity": [
+                os.path.expandvars(r"%PROGRAMFILES%\Audacity\audacity.exe"),
+            ],
+            "ableton": [
+                os.path.expandvars(r"%PROGRAMFILES%\Ableton\Live 11 Suite\Program\Ableton Live 11 Suite.exe"),
+            ],
+            "fl_studio": [
+                os.path.expandvars(r"%PROGRAMFILES%\Image-Line\FL Studio 21\FL64.exe"),
+            ],
+        }
+        
+        for daw_name, paths in daw_paths.items():
+            for path in paths:
+                if os.path.exists(path):
+                    detected.append(daw_name)
+                    break
+    
     return {
         "available": [
             "reaper",
@@ -102,7 +140,8 @@ async def get_available_daws() -> dict[str, list[str]]:
             "fl_studio",
             "cubase",
         ],
-        "detected": [],  # Would be populated by detection
+        "detected": detected,
+        "implementation_status": "basic",
     }
 
 
@@ -204,12 +243,19 @@ async def start_sync(
     request: SyncRequest,
     background_tasks: BackgroundTasks
 ) -> SyncResponse:
-    """Start a cloud sync operation."""
-    # Would integrate with CloudSyncService
+    """
+    Start a cloud sync operation.
+    
+    Note: This endpoint is currently a stub. Full implementation requires
+    CloudSyncService integration with a cloud storage backend.
+    """
+    logger.info(f"Sync requested: direction={request.direction}, project={request.project_path}")
+    
     return SyncResponse(
         success=True,
         items_uploaded=0,
         items_downloaded=0,
+        implementation_status="stub",
     )
 
 
@@ -245,14 +291,22 @@ async def list_workflows() -> list[dict[str, Any]]:
 
 @router.post("/workflows/start", response_model=WorkflowResponse)
 async def start_workflow(request: WorkflowRequest) -> WorkflowResponse:
-    """Start a workflow execution."""
+    """
+    Start a workflow execution.
+    
+    Note: This endpoint is currently a stub. Full implementation requires
+    the workflow engine service to be configured and running.
+    """
     import uuid
     
     execution_id = str(uuid.uuid4())
+    logger.info(f"Workflow started: id={request.workflow_id}, execution={execution_id}")
     
     return WorkflowResponse(
         execution_id=execution_id,
-        status="running"
+        status="pending",
+        implementation_status="stub",
+        message="Workflow engine not yet implemented. Execution ID is a placeholder."
     )
 
 
@@ -278,15 +332,23 @@ async def cancel_workflow(execution_id: str) -> dict[str, bool]:
 
 @router.post("/batch/start", response_model=BatchResponse)
 async def start_batch(request: BatchRequest) -> BatchResponse:
-    """Start a batch processing job."""
+    """
+    Start a batch processing job.
+    
+    Note: This endpoint is currently a stub. Full implementation requires
+    the batch processing service with job queue support.
+    """
     import uuid
     
     job_id = str(uuid.uuid4())
+    logger.info(f"Batch job started: id={job_id}, items={len(request.items)}, operation={request.operation}")
     
     return BatchResponse(
         job_id=job_id,
         total_items=len(request.items),
-        status="processing"
+        status="pending",
+        implementation_status="stub",
+        message="Batch processing service not yet implemented. Job ID is a placeholder."
     )
 
 

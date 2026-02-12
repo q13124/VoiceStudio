@@ -16,10 +16,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from ..auth import require_auth_if_enabled
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
@@ -137,7 +138,10 @@ async def get_model(engine: str, model_name: str):
 
 
 @router.post("", response_model=ModelInfoResponse)
-async def register_model(request: ModelRegisterRequest):
+async def register_model(
+    request: ModelRegisterRequest,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Register a model in the storage system."""
     try:
         model = _model_storage.register_model(
@@ -179,7 +183,11 @@ async def verify_model(engine: str, model_name: str):
 
 
 @router.put("/{engine}/{model_name}/update-checksum", response_model=ModelInfoResponse)
-async def update_model_checksum(engine: str, model_name: str):
+async def update_model_checksum(
+    engine: str,
+    model_name: str,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Update a model's checksum (e.g., after model update)."""
     try:
         model = _model_storage.update_model_checksum(engine, model_name)
@@ -194,7 +202,11 @@ async def update_model_checksum(engine: str, model_name: str):
 
 
 @router.delete("/{engine}/{model_name}", response_model=ApiOk)
-async def delete_model(engine: str, model_name: str):
+async def delete_model(
+    engine: str,
+    model_name: str,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Delete a model from the registry (does not delete files)."""
     try:
         deleted = _model_storage.delete_model(engine, model_name)
@@ -312,7 +324,10 @@ async def export_model(engine: str, model_name: str, request: Request):
 
 @router.post("/import")
 async def import_model(
-    request: Request, file: UploadFile = File(...), engine: Optional[str] = None
+    request: Request,
+    file: UploadFile = File(...),
+    engine: Optional[str] = None,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
 ):
     """Import a model from a ZIP archive."""
     # Get request ID from middleware

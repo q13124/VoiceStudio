@@ -21,10 +21,11 @@ except ImportError:
     PSUTIL_AVAILABLE = False
     # Logger not yet defined, will log later if needed
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from ..auth import require_auth_if_enabled
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
@@ -194,7 +195,10 @@ async def get_backup_info(backup_id: str):
 
 
 @router.post("", response_model=BackupInfo)
-async def create_backup(request: BackupCreateRequest):
+async def create_backup(
+    request: BackupCreateRequest,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Create a new backup."""
     import uuid
 
@@ -415,7 +419,11 @@ async def download_backup(backup_id: str):
 
 
 @router.post("/{backup_id}/restore")
-async def restore_backup(backup_id: str, request: RestoreRequest):
+async def restore_backup(
+    backup_id: str,
+    request: RestoreRequest,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Restore from a backup."""
     if backup_id not in _backups:
         raise HTTPException(status_code=404, detail="Backup not found")
@@ -510,6 +518,7 @@ async def restore_backup(backup_id: str, request: RestoreRequest):
 async def upload_backup(
     file: UploadFile = File(...),
     name: Optional[str] = Query(None),
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
 ):
     """Upload a backup file."""
     import uuid
@@ -633,7 +642,10 @@ async def upload_backup(
 
 
 @router.delete("/{backup_id}")
-async def delete_backup(backup_id: str):
+async def delete_backup(
+    backup_id: str,
+    _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
+):
     """Delete a backup."""
     if backup_id not in _backups:
         raise HTTPException(status_code=404, detail="Backup not found")

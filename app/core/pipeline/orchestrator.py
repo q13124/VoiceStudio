@@ -12,9 +12,13 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Project root for conversation history persistence
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 class PipelineMode(str, Enum):
@@ -75,6 +79,7 @@ class PipelineConfig:
     enable_function_calling: bool = True
     buffer_ahead: bool = True
     max_conversation_turns: int = 50
+    persist_conversation_to_disk: bool = True  # Enable sliding window short-term memory
 
 
 class PipelineOrchestrator:
@@ -92,9 +97,8 @@ class PipelineOrchestrator:
         self._conversation_history: List[Dict[str, str]] = []
         self._metrics_history: List[PipelineMetrics] = []
         self._on_state_change: Optional[Callable] = None
-        self._stt_provider = None
         self._llm_provider = None
-        self._tts_provider = None
+        # Note: STT/TTS use get_engine_service() directly
         logger.info(f"Pipeline orchestrator created: {self._pipeline_id}")
 
     @property
@@ -112,6 +116,21 @@ class PipelineOrchestrator:
     def on_state_change(self, callback: Callable) -> None:
         """Register a callback for state changes."""
         self._on_state_change = callback
+
+    def _persist_turn(self, role: str, content: str) -> None:
+        """Persist a conversation turn to disk for short-term memory sliding window.
+        
+        This enables the ConversationSourceAdapter to read recent conversation
+        context and inject it into future AI interactions.
+        """
+        if not self._config.persist_conversation_to_disk:
+            return
+        try:
+            from tools.context.sources.conversation_adapter import append_turn
+            append_turn(_PROJECT_ROOT, role, content)
+        except Exception as e:
+            # Non-critical: log but don't fail pipeline
+            logger.debug(f"Conversation persistence failed: {e}")
 
     def _set_state(self, new_state: PipelineState) -> None:
         """Transition to a new state."""
@@ -131,19 +150,17 @@ class PipelineOrchestrator:
         Lazily loads STT, LLM, and TTS providers based on config.
         """
         try:
-            # Initialize STT provider
-            self._stt_provider = self._create_stt_provider()
-            if self._stt_provider is None:
+            # Check STT engine availability (actual transcription uses engine service)
+            if not self._check_engine_available(self._config.stt_engine, "stt"):
                 logger.warning("No STT provider available, using engine service")
 
-            # Initialize LLM provider
+            # Initialize LLM provider (required for generation)
             self._llm_provider = self._create_llm_provider()
             if self._llm_provider is None:
                 logger.warning("No LLM provider available")
 
-            # Initialize TTS provider
-            self._tts_provider = self._create_tts_provider()
-            if self._tts_provider is None:
+            # Check TTS engine availability (actual synthesis uses engine service)
+            if not self._check_engine_available(self._config.tts_engine, "tts"):
                 logger.warning("No TTS provider available, using engine service")
 
             logger.info(f"Pipeline initialized: mode={self._config.mode.value}")
@@ -153,29 +170,17 @@ class PipelineOrchestrator:
             self._set_state(PipelineState.ERROR)
             return False
 
-    def _create_stt_provider(self):
-        """Create the appropriate STT provider based on config."""
-        engine_name = self._config.stt_engine.lower()
+    def _check_engine_available(self, engine_name: str, engine_type: str) -> bool:
+        """Check if an engine is available without creating an instance."""
+        if not engine_name:
+            return False
         try:
             from app.core.engines import get_engine_class
-            engine_cls = get_engine_class(engine_name)
-            if engine_cls:
-                return engine_cls()
+            engine_cls = get_engine_class(engine_name.lower())
+            return engine_cls is not None
         except Exception as exc:
-            logger.debug(f"Could not load STT engine '{engine_name}': {exc}")
-        return None
-
-    def _create_tts_provider(self):
-        """Create the appropriate TTS provider based on config."""
-        engine_name = self._config.tts_engine.lower()
-        try:
-            from app.core.engines import get_engine_class
-            engine_cls = get_engine_class(engine_name)
-            if engine_cls:
-                return engine_cls()
-        except Exception as exc:
-            logger.debug(f"Could not load TTS engine '{engine_name}': {exc}")
-        return None
+            logger.debug(f"Could not check {engine_type} engine '{engine_name}': {exc}")
+            return False
 
     def _create_llm_provider(self):
         """Create the appropriate LLM provider."""
@@ -375,9 +380,11 @@ class PipelineOrchestrator:
                     "accumulated": accumulated_text,
                 }
 
-            # Update conversation history
+            # Update conversation history (in-memory and disk persistence)
             self._conversation_history.append({"role": "user", "content": text})
             self._conversation_history.append({"role": "assistant", "content": accumulated_text})
+            self._persist_turn("user", text)
+            self._persist_turn("assistant", accumulated_text)
 
             # Final response
             yield {
@@ -476,9 +483,11 @@ class PipelineOrchestrator:
             except Exception as exc:
                 logger.warning(f"Function call processing failed: {exc}")
 
-        # Update history
+        # Update history (in-memory and disk persistence)
         self._conversation_history.append({"role": "user", "content": text})
         self._conversation_history.append({"role": "assistant", "content": response.content})
+        self._persist_turn("user", text)
+        self._persist_turn("assistant", response.content)
 
         return response.content
 

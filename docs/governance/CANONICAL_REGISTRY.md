@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-09 (Added verification harness, change control rules, AutomationId registry)
+> **Last Updated**: 2026-02-11 (Clarified docs/design/ superseded files, updated VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC MCP paths)
 
 ---
 
@@ -172,6 +172,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **WebSocket Guide** | `docs/developer/WEBSOCKET_GUIDE.md` | 2026-02-04 | WebSocket architecture, topics, message format, connection management (GAP-013) |
 | **UI Virtualization Guide** | `docs/developer/UI_VIRTUALIZATION_GUIDE.md` | 2026-02-04 | List virtualization patterns, incremental loading, performance guidelines (GAP-014) |
 | **Command Palette Guide** | `docs/developer/COMMAND_PALETTE_GUIDE.md` | 2026-02-04 | Command registry, keyboard shortcuts, search algorithm (GAP-015) |
+| **Schema Sync Workflow** | `docs/developer/SCHEMA_SYNC.md` | 2026-02-11 | Schema ownership, validation, and synchronization workflow; shared/schemas/ governance |
 
 ## Build and Diagnostic Tools
 
@@ -190,16 +191,26 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 ## Design and Specifications
 
+> **Note on docs/design/**: This folder contains 60+ files from iterative development. The canonical sources are listed below. Files not listed are either:
+> - **Superseded** by `docs/developer/ARCHITECTURE.md` (canonical architecture reference)
+> - **Supplementary** reference material that may be archived in future
+>
+> When in doubt, prefer: `docs/developer/ARCHITECTURE.md` for architecture, ADRs for decisions, and this registry for all other canonicals.
+
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | UI Implementation | `docs/design/UI_IMPLEMENTATION_SPEC.md` | 2026-01-25 | UI design specification |
-| Implementation Spec | `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` | 2026-01-25 | Full implementation spec |
+| Implementation Spec | `docs/design/VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC.md` | 2026-02-11 | Full implementation spec; MCP sections updated to reflect current state |
 | Execution Plan (Legacy) | `docs/archive/legacy_worker_system/design/EXECUTION_PLAN.md` | 2026-01-30 | **ARCHIVED** — Legacy Overseer+8-Worker plan; use MASTER_ROADMAP_UNIFIED and PROJECT_HANDOFF_GUIDE |
 | File Structure | `docs/design/file-structure.md` | 2026-01-25 | Project file organization |
 | Project Structure | `docs/design/project-structure.md` | 2026-01-25 | High-level project layout |
 | **ViewModel DI Refactor** | `docs/design/viewmodel_di_refactor.md` | 2026-01-30 | TD-004; migration from AppServices/parameterless BaseViewModel to constructor injection; 4-phase rollout plan |
 | **Engine Venv Isolation** | `docs/design/ENGINE_VENV_ISOLATION_SPEC.md` | 2026-01-30 | TD-001; per-engine/dual-venv strategy (Chatterbox vs XTTS torch); Option C (dual venv) recommended |
 | **UI Automation** | `docs/design/UI_AUTOMATION_SPEC.md` | 2026-01-30 | Hybrid Gate C + WinAppDriver; Phase 2 Master Plan mini-spec; Option D (Hybrid) decision |
+| Architecture Data Flow | `docs/design/ARCHITECTURE_DATA_FLOW.md` | — | **SUPERSEDED** by `docs/developer/ARCHITECTURE.md` |
+| Architecture Diagrams | `docs/design/ARCHITECTURE_DIAGRAMS.md` | — | **SUPERSEDED** by `docs/developer/ARCHITECTURE.md` |
+| Implementation Status | `docs/design/IMPLEMENTATION_COMPLETE.md`, `IMPLEMENTATION_STATUS.md`, etc. | — | **SUPERSEDED** — Historical snapshots; use STATE.md and MASTER_ROADMAP_UNIFIED for current status |
+| Roadmaps (design/) | `docs/design/roadmap.md`, `PHASE_2_ROADMAP.md`, etc. | — | **SUPERSEDED** by `docs/governance/ULTIMATE_MASTER_PLAN_2026_OPTIMIZED.md` |
 
 ## Project Organization
 

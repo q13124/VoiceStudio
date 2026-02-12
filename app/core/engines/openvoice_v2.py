@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from app.core.engines.base import BaseEngine
+from app.core.engines.base import EngineProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class OpenVoiceV2Config:
     tau: float = 0.3  # Timbre conversion strength
 
 
-class OpenVoiceV2Engine(BaseEngine):
+class OpenVoiceV2Engine(EngineProtocol):
     """
     OpenVoice v2 cross-lingual voice cloning.
     

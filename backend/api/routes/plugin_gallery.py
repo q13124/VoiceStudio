@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/plugins", tags=["Plugin Gallery"])
+router = APIRouter(prefix="/api/plugins", tags=["Plugin Gallery"])
 
 
 # ============================================================================

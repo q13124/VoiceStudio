@@ -42,7 +42,35 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="session")
 def openapi_schema() -> Optional[Dict]:
-    """Load OpenAPI schema."""
+    """Load OpenAPI schema from live FastAPI app or static file.
+    
+    Routes are registered lazily on startup, so we must trigger
+    _register_all_routes() before generating the schema.
+    """
+    import logging
+    
+    # Suppress logging errors during route registration (correlation_id formatter issue)
+    logging.disable(logging.CRITICAL)
+    
+    try:
+        from backend.api.main import app, _register_all_routes
+        
+        # Routes are loaded lazily - trigger registration now
+        _register_all_routes()
+        
+        # Clear any cached schema to regenerate with all routes
+        app.openapi_schema = None
+        
+        schema = app.openapi()
+        if schema and schema.get("paths"):
+            return schema
+    except Exception as e:
+        print(f"Failed to load live schema: {e}")
+    finally:
+        # Re-enable logging
+        logging.disable(logging.NOTSET)
+    
+    # Fall back to static file
     if not SCHEMA_FILE.exists():
         pytest.skip(f"OpenAPI schema not found: {SCHEMA_FILE}")
     
@@ -254,10 +282,18 @@ def compare_endpoints():
 
 @pytest.fixture(scope="session")
 def contract_client():
-    """Create test client for contract testing."""
+    """Create test client for contract testing.
+    
+    Routes are registered lazily on startup, so we trigger
+    _register_all_routes() before creating the client.
+    """
     try:
         from fastapi.testclient import TestClient
-        from backend.api.main import app
+        from backend.api.main import app, _register_all_routes
+        
+        # Ensure routes are loaded (lazy initialization)
+        _register_all_routes()
+        
         return TestClient(app)
     except ImportError:
         pytest.skip("FastAPI or backend not available")

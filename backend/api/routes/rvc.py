@@ -32,7 +32,16 @@ from fastapi.responses import FileResponse
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 
-from backend.services.model_preflight import ensure_sovits
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    create_message,
+    create_error,
+    create_pong,
+    MessageType,
+    ErrorCode,
+)
+
+from backend.services.model_preflight import ensure_sovits, PreflightError
 from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
@@ -242,6 +251,9 @@ async def convert_voice(
 
     except HTTPException:
         raise
+    except PreflightError as e:
+        # Convert service-layer preflight error to HTTP exception
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
         logger.error(f"RVC conversion error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
@@ -258,7 +270,7 @@ async def convert_realtime(websocket: WebSocket):
 
     try:
         if not ENGINE_AVAILABLE or not engine_router:
-            await websocket.send_json({"type": "error", "message": "Engine router not available"})
+            await websocket.send_json(create_error("Engine router not available", code=ErrorCode.UNAVAILABLE))
             await websocket.close()
             return
 
@@ -283,7 +295,7 @@ async def convert_realtime(websocket: WebSocket):
                 engine = _rvc_engine_service.get_rvc_engine() if _rvc_engine_service else None
                 if engine is None:
                     await websocket.send_json(
-                        {"type": "error", "message": "RVC engine is not available"}
+                        create_error("RVC engine is not available", code=ErrorCode.ENGINE_ERROR)
                     )
                     continue
 
@@ -295,14 +307,14 @@ async def convert_realtime(websocket: WebSocket):
                 }
 
                 await websocket.send_json(
-                    {"type": "started", "message": "Real-time conversion started"}
+                    create_message(MessageType.START, {"message": "Real-time conversion started"})
                 )
 
             elif request_type == "audio_chunk":
                 # Convert audio chunk
                 if engine is None:
                     await websocket.send_json(
-                        {"type": "error", "message": "Conversion not started"}
+                        create_error("Conversion not started", code=ErrorCode.VALIDATION_ERROR)
                     )
                     continue
 
@@ -325,10 +337,10 @@ async def convert_realtime(websocket: WebSocket):
                             )
                     except CircuitBreakerOpenError as e:
                         await websocket.send_json(
-                            {
-                                "type": "error",
-                                "message": f"RVC engine temporarily unavailable: {e}",
-                            }
+                            create_error(
+                                f"RVC engine temporarily unavailable: {e}",
+                                code=ErrorCode.UNAVAILABLE
+                            )
                         )
                         continue
 
@@ -338,30 +350,26 @@ async def convert_realtime(websocket: WebSocket):
                     converted_bytes = converted_chunk.tobytes()
                     converted_b64 = base64.b64encode(converted_bytes).decode("utf-8")
 
-                    # Send converted chunk
+                    # Send converted chunk (using standardized protocol)
                     await websocket.send_json(
-                        {
-                            "type": "converted_chunk",
+                        create_message(MessageType.CONVERTED_CHUNK, {
                             "data": converted_b64,
                             "sample_rate": 40000,
                             "format": "float32",
                             "latency_ms": latency_ms,
-                        }
+                        })
                     )
 
                 except Exception as e:
                     logger.error(f"Chunk conversion failed: {e}")
                     await websocket.send_json(
-                        {
-                            "type": "error",
-                            "message": f"Chunk conversion failed: {str(e)}",
-                        }
+                        create_error(f"Chunk conversion failed: {str(e)}", code=ErrorCode.ENGINE_ERROR)
                     )
 
             elif request_type == "stop":
                 # Stop conversion
                 await websocket.send_json(
-                    {"type": "stopped", "message": "Real-time conversion stopped"}
+                    create_message(MessageType.STOP, {"message": "Real-time conversion stopped"})
                 )
                 break
 
@@ -370,7 +378,7 @@ async def convert_realtime(websocket: WebSocket):
     except Exception as e:
         logger.error(f"RVC WebSocket error: {e}", exc_info=True)
         try:
-            await websocket.send_json({"type": "error", "message": f"WebSocket error: {str(e)}"})
+            await websocket.send_json(create_error(f"WebSocket error: {str(e)}", code=ErrorCode.INTERNAL_ERROR))
         except Exception as send_err:
             logger.debug(f"Could not send error to RVC WebSocket client: {send_err}")
     finally:

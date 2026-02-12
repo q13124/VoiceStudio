@@ -7,6 +7,7 @@
 ## Context
 
 VoiceStudio exposes a REST API with 520+ endpoints across 119 route files. As the API evolves, we need a clear versioning strategy to:
+
 - Maintain backward compatibility
 - Allow deprecation of old endpoints
 - Support parallel API versions during migration
@@ -22,6 +23,7 @@ We adopt URL-based versioning with the following conventions:
 ```
 
 Examples:
+
 - `/api/v1/voice/synthesize` - Current stable API
 - `/api/v2/voice/synthesize` - Next major version
 - `/api/v3/voice/synthesize` - Future API (experimental)
@@ -52,20 +54,24 @@ Examples:
 ## Consequences
 
 ### Positive
+
 - Clear versioning expectations for API consumers
 - Structured deprecation process
 - Support for experimental features
 
 ### Negative
+
 - Multiple versions to maintain
 - Documentation complexity
 
 ### Neutral
+
 - Requires version routing middleware
 
 ## Implementation
 
 Located in `backend/api/versioning/`:
+
 - `version_router.py` - Version routing logic
 - `deprecation.py` - Deprecation middleware
 

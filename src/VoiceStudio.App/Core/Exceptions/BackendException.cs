@@ -4,7 +4,7 @@ namespace VoiceStudio.Core.Exceptions
 {
   /// <summary>
   /// Base exception for backend-related errors.
-  /// Supports standardized error response format from backend API.
+  /// Supports standardized error response format from backend API (StandardErrorResponse).
   /// </summary>
   public class BackendException : Exception
   {
@@ -14,6 +14,18 @@ namespace VoiceStudio.Core.Exceptions
     public string? RecoverySuggestion { get; set; }
     public string? RequestId { get; set; }
     public System.Text.Json.JsonElement? Details { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the timestamp when the error occurred (ISO 8601 format).
+    /// Maps to backend timestamp field.
+    /// </summary>
+    public string? Timestamp { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the API path where the error occurred.
+    /// Maps to backend path field.
+    /// </summary>
+    public string? Path { get; set; }
 
     public BackendException(string message) : base(message)
     {
@@ -49,7 +61,9 @@ namespace VoiceStudio.Core.Exceptions
         bool isRetryable = false,
         string? recoverySuggestion = null,
         string? requestId = null,
-        System.Text.Json.JsonElement? details = null)
+        System.Text.Json.JsonElement? details = null,
+        string? timestamp = null,
+        string? path = null)
         : base(message)
     {
       StatusCode = statusCode;
@@ -58,6 +72,8 @@ namespace VoiceStudio.Core.Exceptions
       RecoverySuggestion = recoverySuggestion;
       RequestId = requestId;
       Details = details;
+      Timestamp = timestamp;
+      Path = path;
     }
 
     public BackendException() : base()

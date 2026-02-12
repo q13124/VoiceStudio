@@ -60,6 +60,54 @@ def sample_audio_path(test_assets_dir: Path) -> Path:
 
 
 # ============================================================================
+# Engine Mock Fixtures (CI-friendly)
+# ============================================================================
+
+@pytest.fixture
+def mock_tts_engine():
+    """Create a mock TTS engine for CI testing."""
+    try:
+        from tests.fixtures.engines import MockEngineFactory
+        return MockEngineFactory.create_xtts()
+    except ImportError:
+        pytest.skip("Engine fixtures not available")
+
+
+@pytest.fixture
+def mock_stt_engine():
+    """Create a mock STT engine for CI testing."""
+    try:
+        from tests.fixtures.engines import MockEngineFactory
+        return MockEngineFactory.create_whisper()
+    except ImportError:
+        pytest.skip("Engine fixtures not available")
+
+
+@pytest.fixture
+def mock_engine_service():
+    """Create a mock engine service with all common engines for CI testing."""
+    try:
+        from tests.fixtures.engines import MockEngineService
+        return MockEngineService.create_with_engines()
+    except ImportError:
+        pytest.skip("Engine fixtures not available")
+
+
+@pytest.fixture
+def mock_all_engines():
+    """Create all mock engines for comprehensive CI testing."""
+    try:
+        from tests.fixtures.engines import MockEngineFactory
+        return {
+            "tts": MockEngineFactory.create_all_tts(),
+            "stt": {"whisper": MockEngineFactory.create_whisper()},
+            "quality": {"analyzer": MockEngineFactory.create_quality_analyzer()},
+        }
+    except ImportError:
+        pytest.skip("Engine fixtures not available")
+
+
+# ============================================================================
 # Mock Fixtures
 # ============================================================================
 

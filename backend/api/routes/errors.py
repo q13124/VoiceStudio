@@ -22,7 +22,7 @@ from backend.services.error_tracker import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/errors", tags=["errors"])
+router = APIRouter(prefix="/api/errors", tags=["errors"])
 
 
 # =============================================================================

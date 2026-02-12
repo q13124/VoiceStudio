@@ -637,10 +637,10 @@ def preflight_check() -> Dict[str, Any]:
 
     # XTTS preflight (deps + assets)
     try:
-        from backend.services.model_preflight import ensure_xtts
+        from backend.services.model_preflight import ensure_xtts, PreflightError
 
         checks["xtts_v2"] = ensure_xtts(auto_download=False)
-    except HTTPException as exc:
+    except PreflightError as exc:
         detail = exc.detail
         message = None
         if isinstance(detail, dict):
@@ -667,10 +667,10 @@ def preflight_check() -> Dict[str, Any]:
 
     # So-VITS-SVC preflight (checkpoint + config)
     try:
-        from backend.services.model_preflight import ensure_sovits
+        from backend.services.model_preflight import ensure_sovits, PreflightError as PreflightErr
 
         checks["sovits_svc"] = ensure_sovits(auto_download=False)
-    except HTTPException as exc:
+    except PreflightErr as exc:
         detail = exc.detail
         message = None
         if isinstance(detail, dict):
@@ -899,78 +899,18 @@ async def get_feature_status() -> Dict[str, Any]:
     Reports which features are fully functional vs running in placeholder mode.
     This enables graceful UI degradation when models are not loaded.
     
+    Architecture note (GAP-ARCH-001): This endpoint uses a service layer abstraction
+    rather than direct engine imports to maintain API-Engine boundary separation.
+    
     Returns:
         Feature status dictionary with:
         - feature name
         - availability (fully_functional, placeholder, unavailable)
         - message explaining status
     """
-    features = {}
+    from backend.services.feature_status_service import get_all_feature_statuses
     
-    # Voice conversion (RVC)
-    try:
-        from backend.voice.rvc.engine import RVCEngine
-        engine = RVCEngine()
-        await engine.load()
-        features["voice_conversion"] = {
-            "status": "fully_functional" if engine.rvc_available() else "placeholder",
-            "message": "Voice conversion ready" if engine.rvc_available() 
-                       else "RVC model not loaded - using basic processing",
-            "requires_model": True,
-        }
-    except Exception as e:
-        features["voice_conversion"] = {
-            "status": "unavailable",
-            "message": f"RVC engine unavailable: {str(e)}",
-            "requires_model": True,
-        }
-    
-    # Emotion detection/synthesis
-    try:
-        from backend.voice.emotion.engine import EmotionEngine
-        engine = EmotionEngine()
-        await engine.load()
-        features["emotion_detection"] = {
-            "status": "fully_functional" if engine.emotion_detection_available() else "placeholder",
-            "message": "Emotion detection ready" if engine.emotion_detection_available()
-                       else "Using rule-based emotion detection",
-            "requires_model": True,
-        }
-        features["emotion_synthesis"] = {
-            "status": "fully_functional" if engine.emotion_synthesis_available() else "placeholder",
-            "message": "Emotion synthesis ready" if engine.emotion_synthesis_available()
-                       else "Using basic DSP for emotion effects",
-            "requires_model": True,
-        }
-    except Exception as e:
-        features["emotion_detection"] = {
-            "status": "unavailable",
-            "message": f"Emotion engine unavailable: {str(e)}",
-            "requires_model": True,
-        }
-        features["emotion_synthesis"] = {
-            "status": "unavailable",
-            "message": f"Emotion engine unavailable: {str(e)}",
-            "requires_model": True,
-        }
-    
-    # Translation
-    try:
-        from backend.voice.translation.engine import TranslationEngine
-        engine = TranslationEngine()
-        await engine.load()
-        features["translation"] = {
-            "status": "fully_functional" if engine.translation_available() else "placeholder",
-            "message": "Translation ready" if engine.translation_available()
-                       else "SeamlessM4T not loaded - limited translation",
-            "requires_model": True,
-        }
-    except Exception as e:
-        features["translation"] = {
-            "status": "unavailable",
-            "message": f"Translation engine unavailable: {str(e)}",
-            "requires_model": True,
-        }
+    features = await get_all_feature_statuses()
     
     # Lip sync
     try:

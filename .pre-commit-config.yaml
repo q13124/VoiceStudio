@@ -130,6 +130,19 @@ repos:
         stages: [pre-commit]
 
   # ===========================================================================
+  # Architecture Boundary Enforcement (ADR-008 Layer 3)
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: architecture-boundary-check
+        name: Architecture Boundary Check (ADR-008)
+        entry: python scripts/check_architecture_boundaries.py --ci
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: \.(cs|py)$
+
+  # ===========================================================================
   # Project Governance Checks
   # ===========================================================================
   - repo: local

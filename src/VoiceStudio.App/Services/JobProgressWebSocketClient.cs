@@ -220,11 +220,73 @@ namespace VoiceStudio.App.Services
 
   /// <summary>
   /// Job progress update message.
+  /// Handles both camelCase (JobId) and snake_case (job_id, batch_id) from backend.
   /// </summary>
   public class JobProgressUpdate
   {
-    public string JobId { get; set; } = string.Empty;
-    public string JobType { get; set; } = string.Empty;
+    private string _jobId = string.Empty;
+    private string _jobType = string.Empty;
+
+    /// <summary>
+    /// Job identifier. Accepts job_id, batch_id, or JobId from backend.
+    /// </summary>
+    public string JobId
+    {
+      get => _jobId;
+      set => _jobId = value;
+    }
+
+    /// <summary>
+    /// Alternative property for batch_id from backend.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("batch_id")]
+    public string? BatchId
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobId))
+          _jobId = value;
+      }
+    }
+
+    /// <summary>
+    /// Alternative property for snake_case job_id from backend.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("job_id")]
+    public string? JobIdSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobId))
+          _jobId = value;
+      }
+    }
+
+    /// <summary>
+    /// Job type (batch, training, synthesis, etc.).
+    /// </summary>
+    public string JobType
+    {
+      get => _jobType;
+      set => _jobType = value ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Alternative property for snake_case job_type from backend.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("job_type")]
+    public string? JobTypeSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobType))
+          _jobType = value;
+      }
+    }
+
     public double Progress { get; set; } // 0.0 to 1.0
     public string? Status { get; set; }
     public string? Message { get; set; }
@@ -233,11 +295,47 @@ namespace VoiceStudio.App.Services
 
   /// <summary>
   /// Job status update message.
+  /// Handles both camelCase and snake_case from backend.
   /// </summary>
   public class JobStatusUpdate
   {
-    public string JobId { get; set; } = string.Empty;
-    public string JobType { get; set; } = string.Empty;
+    private string _jobId = string.Empty;
+    private string _jobType = string.Empty;
+
+    public string JobId
+    {
+      get => _jobId;
+      set => _jobId = value;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_id")]
+    public string? JobIdSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobId))
+          _jobId = value;
+      }
+    }
+
+    public string JobType
+    {
+      get => _jobType;
+      set => _jobType = value ?? string.Empty;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_type")]
+    public string? JobTypeSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobType))
+          _jobType = value;
+      }
+    }
+
     public string Status { get; set; } = string.Empty; // "pending", "running", "paused", "cancelled"
     public string? Message { get; set; }
     public DateTime Timestamp { get; set; }
@@ -245,23 +343,107 @@ namespace VoiceStudio.App.Services
 
   /// <summary>
   /// Job completed update message.
+  /// Handles both camelCase and snake_case from backend.
   /// </summary>
   public class JobCompletedUpdate
   {
-    public string JobId { get; set; } = string.Empty;
-    public string JobType { get; set; } = string.Empty;
+    private string _jobId = string.Empty;
+    private string _jobType = string.Empty;
+
+    public string JobId
+    {
+      get => _jobId;
+      set => _jobId = value;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_id")]
+    public string? JobIdSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobId))
+          _jobId = value;
+      }
+    }
+
+    public string JobType
+    {
+      get => _jobType;
+      set => _jobType = value ?? string.Empty;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_type")]
+    public string? JobTypeSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobType))
+          _jobType = value;
+      }
+    }
+
     public string? ResultId { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("result_id")]
+    public string? ResultIdSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(ResultId))
+          ResultId = value;
+      }
+    }
+
     public string? Message { get; set; }
     public DateTime Timestamp { get; set; }
   }
 
   /// <summary>
   /// Job failed update message.
+  /// Handles both camelCase and snake_case from backend.
   /// </summary>
   public class JobFailedUpdate
   {
-    public string JobId { get; set; } = string.Empty;
-    public string JobType { get; set; } = string.Empty;
+    private string _jobId = string.Empty;
+    private string _jobType = string.Empty;
+
+    public string JobId
+    {
+      get => _jobId;
+      set => _jobId = value;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_id")]
+    public string? JobIdSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobId))
+          _jobId = value;
+      }
+    }
+
+    public string JobType
+    {
+      get => _jobType;
+      set => _jobType = value ?? string.Empty;
+    }
+
+    [System.Text.Json.Serialization.JsonPropertyName("job_type")]
+    public string? JobTypeSnakeCase
+    {
+      get => null;
+      set
+      {
+        if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_jobType))
+          _jobType = value;
+      }
+    }
+
     public string Error { get; set; } = string.Empty;
     public string? Details { get; set; }
     public DateTime Timestamp { get; set; }

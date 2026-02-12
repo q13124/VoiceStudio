@@ -464,8 +464,3 @@ class EngineProtocol(ABC):
         
         # Clear GPU memory
         self.cleanup_gpu_memory(force_gc=True)
-
-
-# Backward-compatible alias for engines that reference BaseEngine
-# TODO: Migrate engines to use EngineProtocol directly, then remove this alias
-BaseEngine = EngineProtocol

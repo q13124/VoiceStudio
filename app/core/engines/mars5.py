@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from app.core.engines.base import BaseEngine
+from app.core.engines.base import EngineProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class MARS5Config:
     rep_penalty: float = 1.1
 
 
-class MARS5Engine(BaseEngine):
+class MARS5Engine(EngineProtocol):
     """
     MARS5 state-of-the-art TTS engine.
     

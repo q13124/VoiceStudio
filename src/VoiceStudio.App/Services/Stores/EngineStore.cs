@@ -98,13 +98,32 @@ namespace VoiceStudio.App.Services.Stores
             if (engine.Capabilities.HasFlag(VoiceStudio.Core.Engines.EngineCapabilities.TextToSpeech)) typeStr = "tts";
             else if (engine.Capabilities.HasFlag(VoiceStudio.Core.Engines.EngineCapabilities.Transcription)) typeStr = "asr";
 
+            // GAP-CRIT-005: Check actual availability using IEngine.IsAvailableAsync
+            bool isAvailable = false;
+            string? unavailableReason = null;
+            try
+            {
+              isAvailable = await engine.IsAvailableAsync();
+              if (!isAvailable)
+              {
+                unavailableReason = "Engine is not currently available";
+              }
+            }
+            catch (Exception availEx)
+            {
+              isAvailable = false;
+              unavailableReason = $"Availability check failed: {availEx.Message}";
+            }
+
             AvailableEngines.Add(new EngineStoreItem
             {
               Id = engine.Id,
               Name = engine.Name,
               Type = typeStr,
               Version = engine.Version,
-              Status = "ready" // Assuming ready if discovered
+              Status = isAvailable ? "ready" : "unavailable",
+              IsAvailable = isAvailable,
+              UnavailableReason = unavailableReason
             });
           }
         }
@@ -212,8 +231,24 @@ namespace VoiceStudio.App.Services.Stores
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty; // "tts", "vc", "asr"
-    public string Status { get; set; } = string.Empty; // "idle", "ready", "running", "error"
+    public string Status { get; set; } = string.Empty; // "idle", "ready", "running", "error", "unavailable"
     public string? Version { get; set; }
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    /// <summary>
+    /// Whether the engine is actually available for use (GAP-CRIT-005).
+    /// Placeholder engines with no real implementation return false.
+    /// </summary>
+    public bool IsAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Reason the engine is unavailable (for UI display).
+    /// </summary>
+    public string? UnavailableReason { get; set; }
+
+    /// <summary>
+    /// Display name with availability indicator.
+    /// </summary>
+    public string DisplayName => IsAvailable ? Name : $"{Name} (Unavailable)";
   }
 }

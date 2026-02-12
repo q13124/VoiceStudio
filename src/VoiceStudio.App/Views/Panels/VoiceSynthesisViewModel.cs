@@ -176,6 +176,22 @@ namespace VoiceStudio.App.Views.Panels
     [ObservableProperty]
     private bool hasPipelineComparison;
 
+    // Synthesis parameters (Phase 1.5 - wire sliders to API)
+    [ObservableProperty]
+    private double speed = 1.0;
+
+    [ObservableProperty]
+    private double pitch = 0.0;
+
+    [ObservableProperty]
+    private double stability = 0.72;
+
+    [ObservableProperty]
+    private double clarity = 0.58;
+
+    [ObservableProperty]
+    private double temperature = 0.35;
+
     public VoiceSynthesisViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
@@ -183,7 +199,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Get backend base URL - try to get from local settings, otherwise use default
       // This matches the default in ServiceProvider and BackendClientConfig
-      _backendBaseUrl = "http://localhost:8000";
+      _backendBaseUrl = "http://localhost:8001";
       try
       {
         // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)

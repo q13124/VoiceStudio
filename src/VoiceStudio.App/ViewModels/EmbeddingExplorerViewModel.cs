@@ -83,7 +83,8 @@ namespace VoiceStudio.App.ViewModels
     [ObservableProperty]
     private string? statusMessage;
 
-    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+    // CS0108 fix: Intentionally hiding base HasError with local ErrorMessage binding
+    public new bool HasError => !string.IsNullOrEmpty(ErrorMessage);
     public IRelayCommand DeleteSelectedEmbeddingsCommand { get; }
 
     partial void OnEmbeddingsChanged(ObservableCollection<EmbeddingItem> value)

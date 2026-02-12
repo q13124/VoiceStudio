@@ -89,12 +89,78 @@ namespace VoiceStudio.Core.Services
 
   /// <summary>
   /// WebSocket message wrapper.
+  /// Follows the standardized protocol from backend/api/ws/protocol.py:
+  /// - type: Message type (e.g., "data", "error", "ack", "progress", "complete")
+  /// - topic: Optional topic for pub/sub patterns
+  /// - payload: Message payload data
+  /// - timestamp: ISO8601 timestamp
+  /// - request_id: Optional correlation ID for request/response patterns
   /// </summary>
   public class WebSocketMessage
   {
+    /// <summary>Topic for pub/sub patterns (e.g., "synthesis", "training").</summary>
     public string Topic { get; set; } = string.Empty;
+
+    /// <summary>Message type (e.g., "data", "error", "ack", "progress", "complete", "audio_chunk").</summary>
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>Message payload data.</summary>
     public object? Payload { get; set; }
+
+    /// <summary>Message timestamp.</summary>
     public DateTime Timestamp { get; set; }
+
+    /// <summary>Optional correlation ID for request/response patterns.</summary>
+    public string? RequestId { get; set; }
+  }
+
+  /// <summary>
+  /// Standard WebSocket message type constants matching backend protocol.
+  /// Named WsMessageTypes to avoid conflict with System.Net.WebSockets.WebSocketMessageType.
+  /// </summary>
+  public static class WsMessageTypes
+  {
+    public const string Data = "data";
+    public const string Error = "error";
+    public const string Ack = "ack";
+    public const string Ping = "ping";
+    public const string Pong = "pong";
+    public const string Subscribe = "subscribe";
+    public const string Unsubscribe = "unsubscribe";
+    public const string Start = "start";
+    public const string Stop = "stop";
+    public const string Complete = "complete";
+    public const string Progress = "progress";
+
+    // Audio-specific
+    public const string AudioChunk = "audio_chunk";
+    public const string AudioComplete = "audio_complete";
+
+    // Conversion-specific
+    public const string ConvertedChunk = "converted_chunk";
+
+    // Training-specific
+    public const string TrainingUpdate = "training_update";
+    public const string TrainingComplete = "training_complete";
+
+    // Visualization
+    public const string VisualizationFrame = "visualization_frame";
+    public const string MetersUpdate = "meters_update";
+  }
+
+  /// <summary>
+  /// Standard WebSocket error codes matching backend protocol.
+  /// </summary>
+  public static class WebSocketErrorCode
+  {
+    public const string ValidationError = "VALIDATION_ERROR";
+    public const string EngineError = "ENGINE_ERROR";
+    public const string NotFound = "NOT_FOUND";
+    public const string Unavailable = "UNAVAILABLE";
+    public const string RateLimited = "RATE_LIMITED";
+    public const string Unauthorized = "UNAUTHORIZED";
+    public const string InternalError = "INTERNAL_ERROR";
+    public const string ConnectionError = "CONNECTION_ERROR";
+    public const string Timeout = "TIMEOUT";
   }
 }

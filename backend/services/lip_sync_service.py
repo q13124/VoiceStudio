@@ -40,6 +40,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from backend.core.security.expression_evaluator import parse_frame_rate
+
 logger = logging.getLogger(__name__)
 
 
@@ -537,7 +539,7 @@ class LipSyncService:
                     return {
                         "width": video_stream.get("width", 0),
                         "height": video_stream.get("height", 0),
-                        "fps": eval(video_stream.get("r_frame_rate", "30/1")),
+                        "fps": parse_frame_rate(video_stream.get("r_frame_rate", "30/1")),
                         "frame_count": int(video_stream.get("nb_frames", 0)),
                         "duration": float(data.get("format", {}).get("duration", 0)),
                         "codec": video_stream.get("codec_name", "unknown"),

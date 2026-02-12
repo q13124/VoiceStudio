@@ -37,7 +37,7 @@ namespace VoiceStudio.App.Services
       var services = new ServiceCollection();
 
       // Config and backend
-      services.AddSingleton(new BackendClientConfig { BaseUrl = "http://localhost:8001", WebSocketUrl = "ws://localhost:8001/ws" });
+      services.AddSingleton(new BackendClientConfig { BaseUrl = "http://localhost:8001", WebSocketUrl = "ws://localhost:8001/ws/realtime" });
       services.AddSingleton<IBackendClient, BackendClient>();
 
       // Use cases

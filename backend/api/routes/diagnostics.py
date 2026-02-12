@@ -20,7 +20,7 @@ from backend.services.diagnostics import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])
+router = APIRouter(prefix="/api/diagnostics", tags=["diagnostics"])
 
 
 # =============================================================================

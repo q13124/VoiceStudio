@@ -9,14 +9,19 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, ConfigDict
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/jobs", tags=["jobs"])
+router = APIRouter(
+    prefix="/api/jobs",
+    tags=["jobs"],
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 
 # In-memory job storage (replace with database in production)
 _jobs: Dict[str, Dict] = {}
@@ -237,6 +242,54 @@ async def get_job_queue_status():
         failed=failed_count,
         active_jobs=active_jobs[:20],  # Limit to 20 active jobs
     )
+
+
+# GAP-API-001: Alias for frontend compatibility with JobGateway
+@router.get("/queue/status", response_model=JobQueueResponse, response_model_by_alias=True)
+@cache_response(ttl=5)
+async def get_job_queue_status_alias():
+    """Alias for /status to match frontend JobGateway expectations."""
+    return await get_job_queue_status()
+
+
+@router.post("/{job_id}/retry")
+async def retry_job(job_id: str):
+    """Retry a failed job."""
+    if job_id not in _jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job = _jobs[job_id]
+    current_status = job.get("status", "pending")
+
+    if current_status != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot retry job with status: {current_status}. Only failed jobs can be retried."
+        )
+
+    job["status"] = "pending"
+    job["error_message"] = None
+    job["progress"] = 0.0
+    job["started"] = None
+    job["completed"] = None
+    logger.info(f"Job {job_id} queued for retry")
+    return {"success": True, "message": f"Job {job_id} queued for retry"}
+
+
+@router.post("/history/clear")
+async def clear_job_history():
+    """Clear completed and failed jobs from history."""
+    global _jobs
+    cleared_count = 0
+    jobs_to_remove = [
+        job_id for job_id, job in _jobs.items()
+        if job.get("status") in ("completed", "failed", "cancelled")
+    ]
+    for job_id in jobs_to_remove:
+        del _jobs[job_id]
+        cleared_count += 1
+    logger.info(f"Cleared {cleared_count} jobs from history")
+    return {"success": True, "cleared_count": cleared_count}
 
 
 @router.post("/{job_id}/cancel")

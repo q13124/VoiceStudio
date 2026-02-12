@@ -47,7 +47,22 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # JWT Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
+# Security: In production, JWT_SECRET_KEY MUST be set to a stable secret.
+# In development, use a stable dev secret to avoid session invalidation on restart.
+_jwt_secret_env = os.getenv("JWT_SECRET_KEY")
+if _jwt_secret_env:
+    JWT_SECRET_KEY = _jwt_secret_env
+elif os.getenv("VOICESTUDIO_ENV") == "production":
+    raise ValueError(
+        "JWT_SECRET_KEY environment variable must be set in production. "
+        "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+    )
+else:
+    # Development mode: use stable secret to preserve sessions across restarts
+    JWT_SECRET_KEY = "voicestudio-dev-secret-do-not-use-in-production"
+    logger.warning(
+        "Using development JWT secret. Set JWT_SECRET_KEY env var for production."
+    )
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = 30  # 30 days
@@ -488,3 +503,13 @@ def require_role(role: UserRole):
         return func
 
     return decorator
+
+
+# Re-export require_auth_if_enabled from middleware for backward compatibility
+try:
+    from .middleware.auth_middleware import require_auth_if_enabled
+except ImportError:
+    # Fallback if middleware not available
+    async def require_auth_if_enabled(request):
+        """Stub when middleware not available."""
+        return None

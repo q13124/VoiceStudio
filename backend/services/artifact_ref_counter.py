@@ -92,6 +92,17 @@ class ArtifactRefCounter:
             # Return artifacts that were tracked but now have empty referrer sets
             return [k for k, v in self._refs.items() if len(v) == 0]
 
+    def get_references(self, artifact_id: str) -> List[str]:
+        """Alias for get_referrers for compatibility."""
+        return self.get_referrers(artifact_id)
+
+    def clear_artifact(self, artifact_id: str) -> None:
+        """Clear all references for an artifact."""
+        with self._lock:
+            if artifact_id in self._refs:
+                del self._refs[artifact_id]
+                self._save()
+
     def get_all_tracked(self) -> Dict[str, int]:
         """Get all tracked artifacts and their counts."""
         with self._lock:

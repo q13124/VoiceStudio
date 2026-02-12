@@ -4,7 +4,7 @@
   "documentGenerator": {
     "fromDocument": {
       "json": "$(OpenApiPath)",
-      "url": "http://localhost:8000/openapi.json",
+      "url": "http://localhost:8001/openapi.json",
       "output": null,
       "newLineBehavior": "Auto"
     }

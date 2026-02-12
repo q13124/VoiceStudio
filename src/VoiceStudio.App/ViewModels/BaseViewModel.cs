@@ -48,8 +48,20 @@ namespace VoiceStudio.App.ViewModels
     public string? ErrorMessage
     {
       get => _errorMessage;
-      set => SetProperty(ref _errorMessage, value);
+      set
+      {
+        if (SetProperty(ref _errorMessage, value))
+        {
+          OnPropertyChanged(nameof(HasError));
+        }
+      }
     }
+
+    /// <summary>
+    /// Gets whether the ViewModel currently has an error.
+    /// Useful for UI binding to show/hide error indicators.
+    /// </summary>
+    public bool HasError => !string.IsNullOrEmpty(_errorMessage);
 
     /// <summary>
     /// XamlRoot for dialog display. Set by the View when it loads.

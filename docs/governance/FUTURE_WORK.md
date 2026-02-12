@@ -41,22 +41,20 @@ This document tracks items that are intentionally deferred to future development
 | ~~TD-014~~ | ~~Circuit Breaker pattern~~ | **RESOLVED** - Wired into voice, image, video, rvc routes (2026-02-10) | ~~Phase 11+~~ |
 | ~~TD-015~~ | ~~Venv Families (8 families)~~ | **COMPLETE** - See `docs/design/VENV_FAMILIES_ANALYSIS.md` | ~~Phase 11+~~ |
 | ~~TD-016~~ | ~~Engine Manifest Schema v2~~ | **RESOLVED** - verify_engine_tasks_targeted.py 4/4 PASS (2026-02-10) | ~~Phase 11+~~ |
-| TD-017 | BaseEngine to EngineProtocol Migration | Incomplete Items Report | v1.1+ |
+| ~~TD-017~~ | ~~BaseEngine to EngineProtocol Migration~~ | **RESOLVED** - BaseEngine is alias for EngineProtocol (2026-02-11) | ~~v1.1+~~ |
 
-#### TD-017: BaseEngine to EngineProtocol Migration
+#### TD-017: BaseEngine to EngineProtocol Migration — **COMPLETE**
 
-**Description**: Migrate legacy engines from `BaseEngine` abstract class to the modern `EngineProtocol` interface pattern. The current inheritance hierarchy creates tight coupling and makes testing difficult.
+**Resolution Date**: 2026-02-11
 
-**Current State**: Some engines still inherit from `BaseEngine` instead of implementing `EngineProtocol`.
+**Initial Finding**: Audit revealed that `BaseEngine` was a backward-compatible alias for `EngineProtocol`.
 
-**Migration Steps**:
-1. Audit all engine implementations for `BaseEngine` usage
-2. Create adapter pattern to bridge `BaseEngine` to `EngineProtocol`
-3. Migrate engines incrementally with backward compatibility
-4. Update engine registry to prefer protocol-based engines
-5. Deprecate and remove `BaseEngine` when migration complete
-
-**Target**: v1.1+ release
+**Final Action (TASK-0050)**: 
+- All 4 engine files now import `EngineProtocol` directly (already migrated)
+- `BaseEngine` alias removed from `base.py`
+- `BaseEngine` export removed from `__init__.py`
+- Build verified: 0 errors
+- Python imports validated: All 4 engines import successfully
 
 ---
 

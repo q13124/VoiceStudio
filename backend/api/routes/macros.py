@@ -1260,3 +1260,172 @@ def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
         raise HTTPException(
             status_code=500, detail=f"Failed to delete automation curve: {str(e)}"
         )
+
+
+# =============================================================================
+# Frontend-compatible automation routes (path-based without /curves segment)
+# Frontend expects: /api/macros/automation/{trackId} and /api/macros/automation/{curveId}
+# =============================================================================
+
+
+@router.get("/automation/{track_id}", response_model=List[AutomationCurve])
+@cache_response(ttl=30)
+def list_track_automation(track_id: str) -> List[AutomationCurve]:
+    """
+    List all automation curves for a track.
+    Frontend-compatible path-based route.
+    """
+    try:
+        _validate_track_id(track_id)
+        curves = [c for c in _automation_curves.values() if c.track_id == track_id]
+        logger.info(f"Listed {len(curves)} automation curves for track {track_id}")
+        return curves
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error listing automation curves for track {track_id}: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to list automation curves: {str(e)}"
+        )
+
+
+@router.post("/automation", response_model=AutomationCurve)
+def create_track_automation(request: AutomationCurveCreateRequest) -> AutomationCurve:
+    """
+    Create a new automation curve.
+    Frontend-compatible path-based route.
+    """
+    try:
+        if not request.name or not request.name.strip():
+            raise HTTPException(status_code=400, detail="Curve name is required")
+
+        if not request.parameter_id or not request.parameter_id.strip():
+            raise HTTPException(status_code=400, detail="Parameter ID is required")
+
+        _validate_track_id(request.track_id)
+
+        valid_interpolations = ["linear", "bezier", "step"]
+        if request.interpolation not in valid_interpolations:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid interpolation type. Must be one of: {', '.join(valid_interpolations)}",
+            )
+
+        track_curves = [
+            c for c in _automation_curves.values() if c.track_id == request.track_id
+        ]
+        if len(track_curves) >= _MAX_AUTOMATION_CURVES:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Maximum number of automation curves ({_MAX_AUTOMATION_CURVES}) reached for this track",
+            )
+
+        curve_id = str(uuid.uuid4())
+
+        curve = AutomationCurve(
+            id=curve_id,
+            name=request.name.strip(),
+            parameter_id=request.parameter_id.strip(),
+            track_id=request.track_id,
+            points=request.points or [],
+            interpolation=request.interpolation,
+        )
+
+        _automation_curves[curve_id] = curve
+        logger.info(f"Created automation curve {curve_id} for track {request.track_id}")
+        return curve
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating automation curve: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create automation curve: {str(e)}"
+        )
+
+
+@router.put("/automation/{curve_id}", response_model=AutomationCurve)
+def update_track_automation(
+    curve_id: str, request: AutomationCurveUpdateRequest
+) -> AutomationCurve:
+    """
+    Update an existing automation curve.
+    Frontend-compatible path-based route.
+    """
+    try:
+        _validate_curve_id(curve_id)
+
+        if curve_id not in _automation_curves:
+            raise HTTPException(
+                status_code=404, detail=f"Automation curve not found: {curve_id}"
+            )
+
+        curve = _automation_curves[curve_id]
+
+        if request.name is not None:
+            if not request.name.strip():
+                raise HTTPException(
+                    status_code=400, detail="Curve name cannot be empty"
+                )
+            curve.name = request.name.strip()
+
+        if request.parameter_id is not None:
+            if not request.parameter_id.strip():
+                raise HTTPException(
+                    status_code=400, detail="Parameter ID cannot be empty"
+                )
+            curve.parameter_id = request.parameter_id.strip()
+
+        if request.points is not None:
+            curve.points = request.points
+
+        if request.interpolation is not None:
+            valid_interpolations = ["linear", "bezier", "step"]
+            if request.interpolation not in valid_interpolations:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid interpolation type. Must be one of: {', '.join(valid_interpolations)}",
+                )
+            curve.interpolation = request.interpolation
+
+        logger.info(f"Updated automation curve {curve_id}")
+        return curve
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error updating automation curve {curve_id}: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update automation curve: {str(e)}"
+        )
+
+
+@router.delete("/automation/{curve_id}")
+def delete_track_automation(curve_id: str) -> Dict[str, bool]:
+    """
+    Delete an automation curve.
+    Frontend-compatible path-based route.
+    """
+    try:
+        _validate_curve_id(curve_id)
+
+        if curve_id not in _automation_curves:
+            raise HTTPException(
+                status_code=404, detail=f"Automation curve not found: {curve_id}"
+            )
+
+        del _automation_curves[curve_id]
+        logger.info(f"Deleted automation curve {curve_id}")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error deleting automation curve {curve_id}: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete automation curve: {str(e)}"
+        )

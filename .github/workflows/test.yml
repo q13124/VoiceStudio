@@ -588,7 +588,7 @@ jobs:
       - name: Run contract tests
         run: |
           pytest tests/contract/ -v -m "contract or schema or drift" --timeout=60
-        continue-on-error: true
+        # GAP-CI-001: Contract tests should fail CI (removed continue-on-error)
         
       - name: Upload contract test results
         uses: actions/upload-artifact@v4
@@ -735,7 +735,7 @@ jobs:
       - name: Run custom dependency audit
         run: |
           python scripts/audit_dependencies.py
-        continue-on-error: true
+        # GAP-CI-001: Custom audit should fail on critical vulnerabilities (removed continue-on-error)
         
       - name: Verify secrets baseline
         run: |

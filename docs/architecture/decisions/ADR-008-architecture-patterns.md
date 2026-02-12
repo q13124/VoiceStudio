@@ -138,7 +138,7 @@ public class BoundaryAnalyzer : DiagnosticAnalyzer
 |-------|--------|----------|
 | Core Contracts | ✅ Complete | `src/VoiceStudio.Core/` interfaces |
 | Rule Files | ✅ Complete | `.cursor/rules/core/architecture.mdc` |
-| Pre-Commit Hooks | ⚠️ Partial | Basic hooks exist; boundary check TODO |
+| Pre-Commit Hooks | ✅ Complete | `scripts/check_architecture_boundaries.py` enforces boundaries |
 | Roslyn Analyzers | ❌ Planned | Phase 9 |
 
 ## Consequences

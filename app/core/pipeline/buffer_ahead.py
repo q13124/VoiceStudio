@@ -9,6 +9,7 @@ TTS for synthesis while the LLM continues generating.
 
 import asyncio
 import logging
+import time
 from collections import deque
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Callable, Deque, Dict, Optional
@@ -108,8 +109,6 @@ class BufferAheadSynthesizer:
         Yields:
             AudioSegment objects as sentences are synthesized.
         """
-        import time
-
         try:
             async for token in token_stream:
                 sentence = self._sentence_detector.add_token(token)
@@ -131,7 +130,6 @@ class BufferAheadSynthesizer:
             # Flush remaining text
             remaining = self._sentence_detector.flush()
             if remaining:
-                import time
                 start = time.perf_counter()
                 audio_data = await self._synthesize_fn(remaining)
                 latency = (time.perf_counter() - start) * 1000

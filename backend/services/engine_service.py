@@ -230,6 +230,87 @@ class IEngineService(ABC):
         """Get speaker encoder engine."""
         ...
 
+    # -------------------------------------------------------------------------
+    # LLM Provider Access
+    # -------------------------------------------------------------------------
+
+    @abstractmethod
+    def get_best_llm_provider(self) -> Optional[Any]:
+        """Get the best available LLM provider."""
+        ...
+
+    @abstractmethod
+    def get_llm_config_class(self) -> Optional[type]:
+        """Get the LLMConfig class for building LLM configurations."""
+        ...
+
+    @abstractmethod
+    def get_llm_message_classes(self) -> Optional[tuple]:
+        """Get the Message and MessageRole classes for LLM messaging."""
+        ...
+
+    # -------------------------------------------------------------------------
+    # Engine Audit Access
+    # -------------------------------------------------------------------------
+
+    @abstractmethod
+    def get_engine_auditor(self) -> Optional[Any]:
+        """Get an EngineAuditor instance for auditing engines."""
+        ...
+
+    @abstractmethod
+    def get_engine_registry(self) -> Optional[Any]:
+        """Get the engine registry for accessing registered engines."""
+        ...
+
+    @abstractmethod
+    def audit_all_engines(self) -> Dict[str, Any]:
+        """Audit all registered engines for completeness and enhancements."""
+        ...
+
+    @abstractmethod
+    def get_audit_summary(self) -> Dict[str, Any]:
+        """Get summary of engine audits."""
+        ...
+
+    @abstractmethod
+    def get_engine_router(self) -> Optional[Any]:
+        """Get the engine router for direct access."""
+        ...
+
+    @abstractmethod
+    def get_engine_stats(self, engine_id: Optional[EngineId] = None) -> Dict[str, Any]:
+        """Get statistics for an engine or all engines.
+        
+        Args:
+            engine_id: Optional engine ID. If None, returns stats for all engines.
+            
+        Returns:
+            Dictionary containing engine statistics.
+        """
+        ...
+
+    @abstractmethod
+    def get_engine_manifest(self, engine_id: EngineId) -> Optional[Dict[str, Any]]:
+        """Get the manifest (metadata) for an engine.
+        
+        Args:
+            engine_id: Engine identifier.
+            
+        Returns:
+            Engine manifest dictionary or None if not found.
+        """
+        ...
+
+    @abstractmethod
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics for the engine system.
+        
+        Returns:
+            Dictionary containing system metrics in Prometheus-compatible format.
+        """
+        ...
+
 
 class EngineService(IEngineService):
     """Concrete implementation of the engine service.
@@ -828,6 +909,240 @@ class EngineService(IEngineService):
         except ImportError:
             return None
         except Exception:
+            return None
+
+    # -------------------------------------------------------------------------
+    # LLM Provider Access (Clean Architecture wrapper)
+    # -------------------------------------------------------------------------
+
+    def get_best_llm_provider(self) -> Optional[Any]:
+        """Get the best available LLM provider.
+        
+        Priority: Ollama (local) > LocalAI > OpenAI (cloud)
+        
+        This provides a clean interface for LLM access without requiring
+        routes to import directly from app.core.engines.
+        """
+        try:
+            from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
+            from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
+            # Try local first (Ollama)
+            ollama = OllamaLLMProvider()
+            if ollama.is_available:
+                logger.info("Using Ollama LLM provider (local)")
+                return ollama
+
+            # Try LocalAI
+            localai = LocalAILLMProvider()
+            if localai.is_available:
+                logger.info("Using LocalAI LLM provider (local)")
+                return localai
+
+            # Fallback to OpenAI (cloud, requires API key)
+            openai = OpenAILLMProvider()
+            if openai.is_available:
+                logger.info("Using OpenAI LLM provider (cloud)")
+                return openai
+
+            return None
+        except ImportError:
+            logger.debug("LLM adapters not available")
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to get LLM provider: {e}")
+            return None
+
+    def get_llm_config_class(self) -> Optional[type]:
+        """Get the LLMConfig class for building LLM configurations."""
+        try:
+            from app.core.engines.llm_interface import LLMConfig
+            return LLMConfig
+        except ImportError:
+            return None
+
+    def get_llm_message_classes(self) -> Optional[tuple]:
+        """Get the Message and MessageRole classes for LLM messaging."""
+        try:
+            from app.core.engines.llm_interface import Message, MessageRole
+            return (Message, MessageRole)
+        except ImportError:
+            return None
+
+    # -------------------------------------------------------------------------
+    # Engine Audit Access (Clean Architecture wrapper)
+    # -------------------------------------------------------------------------
+
+    def get_engine_auditor(self) -> Optional[Any]:
+        """Get an EngineAuditor instance for auditing engines."""
+        try:
+            from app.core.engines.engine_audit import EngineAuditor
+            return EngineAuditor()
+        except ImportError:
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to create EngineAuditor: {e}")
+            return None
+
+    def get_engine_registry(self) -> Optional[Any]:
+        """Get the engine registry for accessing registered engines."""
+        try:
+            from app.core.engines.engine_registry import get_engine_registry
+            return get_engine_registry()
+        except ImportError:
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to get engine registry: {e}")
+            return None
+
+    def audit_all_engines(self) -> Dict[str, Any]:
+        """Audit all registered engines for completeness and enhancements.
+        
+        Returns:
+            Dictionary with audit results for all engines
+        """
+        registry = self.get_engine_registry()
+        auditor = self.get_engine_auditor()
+        
+        if registry is None or auditor is None:
+            return {"error": "Engine audit not available"}
+        
+        try:
+            engines = registry.get_all_engines()
+            results = auditor.audit_all_engines(engines)
+            
+            # Convert results to dictionaries
+            results_dict = {}
+            for name, result in results.items():
+                results_dict[name] = {
+                    "engine_name": result.engine_name,
+                    "is_complete": result.is_complete,
+                    "score": result.score,
+                    "missing_methods": result.missing_methods,
+                    "missing_features": result.missing_features,
+                    "optimization_opportunities": result.optimization_opportunities,
+                    "quality_enhancements": result.quality_enhancements,
+                    "documentation_issues": result.documentation_issues,
+                    "features": {
+                        "batch_processing": result.has_batch_processing,
+                        "streaming": result.has_streaming,
+                        "quality_metrics": result.has_quality_metrics,
+                        "caching": result.has_caching,
+                        "lazy_loading": result.has_lazy_loading,
+                    },
+                }
+            
+            return {
+                "engines": results_dict,
+                "summary": auditor.get_audit_summary(),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_audit_summary(self) -> Dict[str, Any]:
+        """Get summary of engine audits."""
+        registry = self.get_engine_registry()
+        auditor = self.get_engine_auditor()
+        
+        if registry is None or auditor is None:
+            return {"error": "Engine audit not available"}
+        
+        try:
+            engines = registry.get_all_engines()
+            auditor.audit_all_engines(engines)
+            return auditor.get_audit_summary()
+        except Exception as e:
+            return {"error": str(e)}
+
+    # -------------------------------------------------------------------------
+    # Engine Router Access (Clean Architecture wrapper)
+    # -------------------------------------------------------------------------
+
+    def get_engine_router(self) -> Optional[Any]:
+        """Get the engine router for direct access.
+        
+        Note: Prefer using service methods instead of direct router access.
+        This is provided for backwards compatibility.
+        """
+        self._ensure_engines_loaded()
+        return self._engine_router
+
+    def get_engine_stats(self, engine_id: Optional[EngineId] = None) -> Dict[str, Any]:
+        """Get statistics for an engine or all engines.
+        
+        This provides a clean architecture wrapper around the engine router's
+        get_engine_stats method.
+        
+        Args:
+            engine_id: Optional engine ID. If None, returns stats for all engines.
+            
+        Returns:
+            Dictionary containing engine statistics.
+        """
+        self._ensure_engines_loaded()
+        if self._engine_router is None:
+            return {"error": "Engine router not available", "available": False}
+        
+        try:
+            if hasattr(self._engine_router, "get_engine_stats"):
+                if engine_id:
+                    return self._engine_router.get_engine_stats(engine_id)
+                # Get stats for all engines
+                stats = {}
+                for eng_id in self.list_engines():
+                    eng_name = eng_id.get("id") if isinstance(eng_id, dict) else eng_id
+                    if eng_name:
+                        stats[eng_name] = self._engine_router.get_engine_stats(eng_name)
+                return stats
+            return {"available": False, "error": "Engine router does not support stats"}
+        except Exception as e:
+            logger.debug(f"Failed to get engine stats: {e}")
+            return {"error": str(e), "available": False}
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics for the engine system.
+        
+        This provides a clean architecture wrapper around the engine metrics
+        collection functionality.
+        
+        Returns:
+            Dictionary containing system metrics in Prometheus-compatible format.
+        """
+        self._ensure_engines_loaded()
+        
+        try:
+            # Try to import metrics from the engine layer
+            from app.core.engines.metrics import get_engine_metrics
+            return get_engine_metrics()
+        except ImportError:
+            logger.debug("Engine metrics module not available")
+            return {"available": False, "error": "Engine metrics not available"}
+        except Exception as e:
+            logger.debug(f"Failed to get engine metrics: {e}")
+            return {"error": str(e), "available": False}
+
+    def get_engine_manifest(self, engine_id: EngineId) -> Optional[Dict[str, Any]]:
+        """Get the manifest (metadata) for an engine.
+        
+        This provides a clean architecture wrapper around the engine router's
+        get_manifest method.
+        
+        Args:
+            engine_id: Engine identifier.
+            
+        Returns:
+            Engine manifest dictionary or None if not found.
+        """
+        self._ensure_engines_loaded()
+        if self._engine_router is None:
+            return None
+        
+        try:
+            if hasattr(self._engine_router, "get_manifest"):
+                return self._engine_router.get_manifest(engine_id)
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to get engine manifest for {engine_id}: {e}")
             return None
 
 

@@ -235,7 +235,7 @@ jobs:
             --filter "Category=E2E" `
             --logger "trx;LogFileName=e2e-results.trx"
         shell: pwsh
-        continue-on-error: true
+        # GAP-CI-001: E2E tests should fail CI (removed continue-on-error)
       
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4

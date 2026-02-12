@@ -20,7 +20,7 @@ namespace VoiceStudio.App.Services
         private DateTime _lastCatalogRefresh = DateTime.MinValue;
         private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
 
-        public PluginGateway(HttpClient httpClient, string baseUrl = "http://localhost:8000")
+        public PluginGateway(HttpClient httpClient, string baseUrl = "http://localhost:8001")
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _baseUrl = baseUrl.TrimEnd('/');

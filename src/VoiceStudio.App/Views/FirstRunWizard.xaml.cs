@@ -277,7 +277,7 @@ public sealed partial class FirstRunWizard : Window
 
       try
       {
-        var response = await httpClient.GetAsync("http://localhost:8000/health", _cts.Token);
+        var response = await httpClient.GetAsync("http://localhost:8001/health", _cts.Token);
         _backendRunning = response.IsSuccessStatusCode;
 
         SetCheckStatus(BackendIcon, BackendStatus, _backendRunning,
@@ -291,7 +291,7 @@ public sealed partial class FirstRunWizard : Window
 
           try
           {
-            var enginesResponse = await httpClient.GetAsync("http://localhost:8000/api/engines", _cts.Token);
+            var enginesResponse = await httpClient.GetAsync("http://localhost:8001/api/engines", _cts.Token);
             var enginesOk = enginesResponse.IsSuccessStatusCode;
             SetCheckStatus(EnginesIcon, EnginesStatus, enginesOk,
                 enginesOk ? "Available" : "Error loading");

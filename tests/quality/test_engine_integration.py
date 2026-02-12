@@ -158,8 +158,7 @@ class EngineIntegrationTester:
                 attr = getattr(module, attr_name)
                 if (isinstance(attr, type) and 
                     attr_name.endswith("Engine") and 
-                    attr_name != "EngineProtocol" and
-                    attr_name != "BaseEngine"):
+                    attr_name != "EngineProtocol"):
                     engine_class = attr
                     break
             

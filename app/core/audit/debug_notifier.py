@@ -110,9 +110,9 @@ class DebugRoleNotifier:
                     correlation_id=correlation_id,
                     extra_context=extra_context,
                 )
-            except Exception:
+            except Exception as e:
                 # Don't let callback failures break notification flow
-                pass
+                logger.debug(f"Callback failed during notification (non-critical): {e}")
         
         return handoff_created
     
@@ -178,7 +178,8 @@ class DebugRoleNotifier:
             
             return True
             
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to create handoff entry: {e}")
             return False
     
     def get_pending_count(self) -> int:

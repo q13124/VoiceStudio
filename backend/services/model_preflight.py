@@ -30,8 +30,6 @@ from importlib import metadata
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import HTTPException
-
 try:
     from huggingface_hub import hf_hub_download, snapshot_download
 
@@ -45,12 +43,26 @@ from backend.services.EngineConfigService import get_engine_config_service
 logger = logging.getLogger(__name__)
 
 
+class PreflightError(Exception):
+    """
+    Service-layer exception for preflight check failures.
+    
+    Routes should catch this and convert to HTTPException.
+    This keeps the service layer independent of FastAPI.
+    """
+    def __init__(self, detail: object, status_code: int = 503):
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(str(detail))
+
+
 def _ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def _fail(detail: object, status_code: int = 503) -> HTTPException:
-    return HTTPException(status_code=status_code, detail=detail)
+def _fail(detail: object, status_code: int = 503) -> PreflightError:
+    """Create a PreflightError (service-layer exception)."""
+    return PreflightError(detail=detail, status_code=status_code)
 
 
 def _get_pkg_version(package_name: str) -> Optional[str]:
@@ -344,7 +356,7 @@ def run_preflight(auto_download: bool = True) -> Dict[str, object]:
     for name, fn in checks.items():
         try:
             results[name] = fn(auto_download=auto_download)
-        except HTTPException as exc:  # pass through as structured failure
+        except PreflightError as exc:  # Handle service-layer preflight errors
             detail = exc.detail
             message = detail.get("message") if isinstance(detail, dict) else None
             results[name] = {

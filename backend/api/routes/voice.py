@@ -52,7 +52,22 @@ from fastapi.responses import FileResponse
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 
-from backend.services.model_preflight import ensure_piper, ensure_sovits, ensure_xtts
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    create_message,
+    create_error,
+    create_progress,
+    create_complete,
+    MessageType,
+    ErrorCode,
+)
+
+from backend.services.model_preflight import (
+    ensure_piper, 
+    ensure_sovits, 
+    ensure_xtts,
+    PreflightError,
+)
 from backend.services.circuit_breaker import (
     get_engine_breaker,
     CircuitBreakerOpenError,
@@ -248,17 +263,29 @@ def _build_clone_response(
 def _ensure_tts_assets(engine_id: str):
     """
     Ensure required TTS assets exist (auto-download when allowed).
+    
+    Catches PreflightError from service layer and converts to HTTPException.
     """
-    if engine_id in ("xtts", "xtts_v2"):
-        ensure_xtts(auto_download=True)
-    elif engine_id == "piper":
-        ensure_piper(auto_download=True)
+    try:
+        if engine_id in ("xtts", "xtts_v2"):
+            ensure_xtts(auto_download=True)
+        elif engine_id == "piper":
+            ensure_piper(auto_download=True)
+    except PreflightError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
 
 
 def _ensure_vc_assets(engine_id: str):
-    """Ensure VC assets (So-VITS) exist."""
-    if engine_id in ("gpt_sovits", "sovits", "sovits_v4"):
-        ensure_sovits(auto_download=False)
+    """
+    Ensure VC assets (So-VITS) exist.
+    
+    Catches PreflightError from service layer and converts to HTTPException.
+    """
+    try:
+        if engine_id in ("gpt_sovits", "sovits", "sovits_v4"):
+            ensure_sovits(auto_download=False)
+    except PreflightError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
 
 
 def _dedupe_and_get_path(output_path: str) -> str:
@@ -3779,18 +3806,17 @@ async def synthesize_stream(websocket: WebSocket):
     try:
         if not ENGINE_AVAILABLE or not engine_router:
             await websocket.send_json(
-                {"type": "error", "message": "Engine router not available"}
+                create_error("Engine router not available", code=ErrorCode.UNAVAILABLE)
             )
             await websocket.close()
             return
 
-        # Send capabilities on connect
+        # Send capabilities on connect (using standardized protocol)
         await websocket.send_json(
-            {
-                "type": "capabilities",
+            create_message("capabilities", {
                 "streaming_engines": list(STREAMING_ENGINES),
                 "message": "Ready for streaming synthesis",
-            }
+            })
         )
 
         engine_instance = None
@@ -3817,7 +3843,7 @@ async def synthesize_stream(websocket: WebSocket):
                 # Validate text
                 if not text or not text.strip():
                     await websocket.send_json(
-                        {"type": "error", "message": "Text is required"}
+                        create_error("Text is required", code=ErrorCode.VALIDATION_ERROR)
                     )
                     continue
 
@@ -3825,10 +3851,10 @@ async def synthesize_stream(websocket: WebSocket):
                 engine_instance = engine_router.get_engine(engine_id)
                 if engine_instance is None:
                     await websocket.send_json(
-                        {
-                            "type": "error",
-                            "message": f"Engine '{engine_id}' is not available",
-                        }
+                        create_error(
+                            f"Engine '{engine_id}' is not available",
+                            code=ErrorCode.ENGINE_ERROR
+                        )
                     )
                     continue
 
@@ -3839,10 +3865,9 @@ async def synthesize_stream(websocket: WebSocket):
                     # Fall back to chunked non-streaming synthesis
                     if hasattr(engine_instance, "synthesize"):
                         await websocket.send_json(
-                            {
-                                "type": "warning",
+                            create_message("warning", {
                                 "message": f"Engine '{engine_id}' does not support streaming. Using chunked synthesis.",
-                            }
+                            })
                         )
                         # Perform regular synthesis and send as single chunk
                         try:
@@ -3855,30 +3880,27 @@ async def synthesize_stream(websocket: WebSocket):
                             if isinstance(result, np.ndarray):
                                 sample_rate = _get_engine_sample_rate(engine_instance, engine_id)
                                 await websocket.send_json(
-                                    {"type": "start", "message": "Synthesis started (non-streaming)"}
+                                    create_message(MessageType.START, {"message": "Synthesis started (non-streaming)"})
                                 )
                                 await _send_audio_chunk(websocket, result, 0, sample_rate)
                                 duration = len(result) / sample_rate
                                 await websocket.send_json(
-                                    {
-                                        "type": "complete",
-                                        "total_chunks": 1,
-                                        "duration": duration,
-                                        "engine": engine_id,
-                                    }
+                                    create_complete(
+                                        result={"total_chunks": 1, "duration": duration, "engine": engine_id}
+                                    )
                                 )
                         except Exception as e:
                             logger.error(f"Synthesis error: {e}", exc_info=True)
                             await websocket.send_json(
-                                {"type": "error", "message": f"Synthesis failed: {str(e)}"}
+                                create_error(f"Synthesis failed: {str(e)}", code=ErrorCode.ENGINE_ERROR)
                             )
                         continue
                     else:
                         await websocket.send_json(
-                            {
-                                "type": "error",
-                                "message": f"Engine '{engine_id}' does not support streaming or synthesis",
-                            }
+                            create_error(
+                                f"Engine '{engine_id}' does not support streaming or synthesis",
+                                code=ErrorCode.ENGINE_ERROR
+                            )
                         )
                         continue
 
@@ -3888,20 +3910,19 @@ async def synthesize_stream(websocket: WebSocket):
                     profile_audio_path = f"profiles/{profile_id}/reference.wav"
                     if not os.path.exists(profile_audio_path):
                         await websocket.send_json(
-                            {
-                                "type": "error",
-                                "message": f"Profile audio not found: {profile_id}",
-                            }
+                            create_error(
+                                f"Profile audio not found: {profile_id}",
+                                code=ErrorCode.NOT_FOUND
+                            )
                         )
                         continue
 
                 # Start streaming
                 await websocket.send_json(
-                    {
-                        "type": "start",
+                    create_message(MessageType.START, {
                         "message": f"Streaming started with {engine_id}",
                         "engine": engine_id,
-                    }
+                    })
                 )
 
                 # Stream synthesis chunks
@@ -3920,13 +3941,14 @@ async def synthesize_stream(websocket: WebSocket):
             elif request_type == "stop":
                 # Stop streaming
                 await websocket.send_json(
-                    {"type": "stopped", "message": "Streaming stopped"}
+                    create_message(MessageType.STOP, {"message": "Streaming stopped"})
                 )
                 break
 
             elif request_type == "ping":
-                # Keepalive ping
-                await websocket.send_json({"type": "pong"})
+                # Keepalive ping (using standardized protocol)
+                from ..ws.protocol import create_pong
+                await websocket.send_json(create_pong())
 
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
@@ -3934,7 +3956,7 @@ async def synthesize_stream(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}", exc_info=True)
         try:
             await websocket.send_json(
-                {"type": "error", "message": f"WebSocket error: {str(e)}"}
+                create_error(f"WebSocket error: {str(e)}", code=ErrorCode.INTERNAL_ERROR)
             )
         except Exception as send_err:
             logger.debug(f"Could not send error to WebSocket client: {send_err}")

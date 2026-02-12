@@ -19,7 +19,7 @@ from backend.services.slo_monitor import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/slo", tags=["slo"])
+router = APIRouter(prefix="/api/slo", tags=["slo"])
 
 
 # =============================================================================

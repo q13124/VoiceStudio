@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from app.core.engines.base import BaseEngine
+from app.core.engines.base import EngineProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class FishSpeechConfig:
     max_length: int = 2048
 
 
-class FishSpeechEngine(BaseEngine):
+class FishSpeechEngine(EngineProtocol):
     """
     Fish Speech voice cloning engine.
     

@@ -194,13 +194,52 @@ class EngineHealthCheck(HealthCheck):
     
     async def _do_check(self) -> HealthCheckResult:
         """Check if engines are loaded and responsive."""
-        # Placeholder - would check actual engine status
-        return HealthCheckResult(
-            component=self.name,
-            status=HealthStatus.HEALTHY,
-            message="Engines are available",
-            details={"loaded_engines": ["xtts", "piper"]},
-        )
+        try:
+            # Try to get actual engine status from registry
+            from backend.services.engine_service import get_engine_service
+            engine_service = get_engine_service()
+            
+            if engine_service is None:
+                return HealthCheckResult(
+                    component=self.name,
+                    status=HealthStatus.DEGRADED,
+                    message="Engine service not initialized",
+                    details={"loaded_engines": []},
+                )
+            
+            available_engines = engine_service.list_engines()
+            engine_count = len(available_engines)
+            
+            if engine_count == 0:
+                return HealthCheckResult(
+                    component=self.name,
+                    status=HealthStatus.DEGRADED,
+                    message="No engines available",
+                    details={"loaded_engines": []},
+                )
+            
+            return HealthCheckResult(
+                component=self.name,
+                status=HealthStatus.HEALTHY,
+                message=f"{engine_count} engine(s) available",
+                details={"loaded_engines": available_engines},
+            )
+        except ImportError:
+            # Engine service not available, return placeholder
+            return HealthCheckResult(
+                component=self.name,
+                status=HealthStatus.UNKNOWN,
+                message="Engine service module not available",
+                details={"loaded_engines": []},
+            )
+        except Exception as e:
+            logger.warning(f"Engine health check failed: {e}")
+            return HealthCheckResult(
+                component=self.name,
+                status=HealthStatus.DEGRADED,
+                message=f"Engine check error: {str(e)}",
+                details={"loaded_engines": [], "error": str(e)},
+            )
 
 
 class DiskHealthCheck(HealthCheck):

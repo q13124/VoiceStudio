@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from backend.core.security.expression_evaluator import evaluate_condition
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
@@ -831,16 +832,11 @@ async def _execute_control_step(
 
         result = False
         if condition:
-            # Evaluate Python expression condition
-            try:
-                # Safe evaluation of condition using context variables
-                safe_context = {
-                    k: v for k, v in context.items() if not k.startswith("step_")
-                }
-                result = bool(eval(condition, {"__builtins__": {}}, safe_context))
-            except Exception as e:
-                logger.warning(f"Failed to evaluate condition '{condition}': {e}")
-                result = False
+            # Use safe expression evaluator (replaces dangerous eval)
+            safe_context = {
+                k: v for k, v in context.items() if not k.startswith("step_")
+            }
+            result = evaluate_condition(condition, safe_context, default=False)
         elif variable_name:
             # Compare variable value
             actual_value = context.get(variable_name, "")
