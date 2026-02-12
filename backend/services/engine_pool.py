@@ -388,12 +388,61 @@ async def get_engine_pool() -> EnginePool:
     """Get or create the global engine pool."""
     global _engine_pool
     if _engine_pool is None:
-        # Default loader/unloader - should be replaced with actual implementation
+        # Default loader/unloader - returns stub when not properly configured
         async def default_loader(engine_type: str, config: Dict[str, Any]) -> Any:
-            raise NotImplementedError("Engine loader not configured")
+            """Default fallback loader that returns a stub engine.
+            
+            This should be replaced with the actual engine loader via
+            configure_engine_pool() during application startup.
+            """
+            logger.warning(
+                f"Engine pool not configured - returning stub for {engine_type}. "
+                "Call configure_engine_pool() during startup to enable real engines."
+            )
+            
+            class FallbackStubEngine:
+                """Fallback stub when engine pool is not configured."""
+                def __init__(self, name: str):
+                    self.name = name
+                    self.is_stub = True
+                    self.available = False
+                
+                def synthesize(self, *args, **kwargs):
+                    return {
+                        "success": False,
+                        "error": "Engine pool not configured",
+                        "error_code": "POOL_NOT_CONFIGURED",
+                        "engine": self.name,
+                    }
+                
+                def transcribe(self, *args, **kwargs):
+                    return {
+                        "success": False,
+                        "error": "Engine pool not configured", 
+                        "error_code": "POOL_NOT_CONFIGURED",
+                        "engine": self.name,
+                    }
+                
+                def process(self, *args, **kwargs):
+                    return {
+                        "success": False,
+                        "error": "Engine pool not configured",
+                        "error_code": "POOL_NOT_CONFIGURED",
+                        "engine": self.name,
+                    }
+                
+                def is_available(self) -> bool:
+                    return False
+                
+                def cleanup(self):
+                    pass
+            
+            return FallbackStubEngine(engine_type)
         
         async def default_unloader(instance: Any) -> None:
-            pass
+            """Default unloader that handles cleanup gracefully."""
+            if hasattr(instance, 'cleanup'):
+                instance.cleanup()
         
         _engine_pool = EnginePool(
             loader=default_loader,

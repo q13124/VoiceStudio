@@ -21,6 +21,7 @@ namespace VoiceStudio.App.ViewModels
   public partial class RealTimeVoiceConverterViewModel : BaseViewModel, IPanelView
   {
     private readonly IBackendClient _backendClient;
+    private readonly IWebSocketClientFactory? _webSocketClientFactory;
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly RealtimeVoiceWebSocketClient? _webSocketClient;
     private DispatcherQueue? _dispatcherQueue;
@@ -92,10 +93,15 @@ namespace VoiceStudio.App.ViewModels
     private const int MAX_LATENCY_HISTORY = 100;
     private const int MONITORING_INTERVAL_MS = 2000; // Update every 2 seconds
 
-    public RealTimeVoiceConverterViewModel(IViewModelContext context, IBackendClient backendClient)
+    // GAP-009: Updated to use IWebSocketClientFactory for DI
+    public RealTimeVoiceConverterViewModel(
+        IViewModelContext context,
+        IBackendClient backendClient,
+        IWebSocketClientFactory? webSocketClientFactory = null)
         : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _webSocketClientFactory = webSocketClientFactory;
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
       // Get services (may be null if not initialized)
@@ -105,13 +111,22 @@ namespace VoiceStudio.App.ViewModels
       }
       catch
       {
-        // Services may not be initialized yet - that's okay
+        // ALLOWED: bare except - Services may not be initialized yet, that's okay
         _toastNotificationService = null;
       }
 
-      // Initialize WebSocket client if available
-      if (_backendClient.WebSocketService != null)
+      // Initialize WebSocket client via factory (GAP-009 remediation)
+      if (_webSocketClientFactory != null)
       {
+        _webSocketClient = _webSocketClientFactory.CreateRealtimeVoiceClient();
+        _webSocketClient.AudioDataReceived += OnAudioDataReceived;
+        _webSocketClient.StatusChanged += OnConversionStatusChanged;
+        _webSocketClient.QualityMetricsUpdated += OnQualityMetricsUpdated;
+        _webSocketClient.LatencyInfoReceived += OnLatencyInfoReceived;
+      }
+      else if (_backendClient.WebSocketService != null)
+      {
+        // Fallback for backward compatibility
         _webSocketClient = new RealtimeVoiceWebSocketClient(_backendClient.WebSocketService);
         _webSocketClient.AudioDataReceived += OnAudioDataReceived;
         _webSocketClient.StatusChanged += OnConversionStatusChanged;

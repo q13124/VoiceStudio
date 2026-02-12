@@ -66,6 +66,7 @@ class JobStateStore:
                 tmp.write_text(data, encoding="utf-8")
                 os.replace(tmp, path)
             except Exception as e:
+                # ALLOWED: Log and continue - job state persistence is best-effort
                 logger.warning(f"Failed to persist job state {job_id}: {e}")
                 try:
                     if tmp.exists():
@@ -74,13 +75,16 @@ class JobStateStore:
                     logger.debug(f"Failed to cleanup temp file {tmp}: {cleanup_err}")
 
     def get(self, job_id: str) -> Optional[Dict[str, Any]]:
+        """Get job state by ID. Returns None if not found or corrupted."""
         path = self._job_path(job_id)
         with self._lock:
             if not path.exists():
                 return None
             try:
                 return json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
+            except (json.JSONDecodeError, IOError, OSError) as e:
+                # Job file is corrupted or unreadable - treat as missing
+                logger.debug(f"Failed to read job state {job_id}: {e}")
                 return None
 
     def delete(self, job_id: str) -> None:
@@ -103,7 +107,8 @@ class JobStateStore:
                     payload = json.loads(p.read_text(encoding="utf-8"))
                     job_id = p.stem
                     results[job_id] = payload
-                except Exception:
+                except (json.JSONDecodeError, IOError, OSError):
+                    # Skip corrupted or unreadable job files - continue loading others
                     continue
 
             return results

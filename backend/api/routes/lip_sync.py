@@ -91,7 +91,10 @@ async def generate_lip_sync(request: LipSyncRequest):
         Output video ID with sync metadata
     """
     try:
-        from backend.services.lip_sync_service import get_lip_sync_service
+        from backend.services.lip_sync_service import (
+            get_lip_sync_service,
+            LipSyncServiceUnavailable,
+        )
         
         service = get_lip_sync_service()
         result = await service.generate(
@@ -116,6 +119,12 @@ async def generate_lip_sync(request: LipSyncRequest):
     
     except HTTPException:
         raise
+    except LipSyncServiceUnavailable as e:
+        logger.warning(f"Lip sync service unavailable: {e.message}")
+        raise HTTPException(
+            status_code=503,
+            detail=e.to_dict(),
+        ) from e
     except Exception as e:
         logger.error(f"Lip sync generation failed: {e}", exc_info=True)
         raise HTTPException(

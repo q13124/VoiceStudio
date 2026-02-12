@@ -636,6 +636,7 @@ namespace VoiceStudio.App.Views.Panels
         return DropPosition.On;
     }
 
+    // GAP-004: Serialization logic moved to ViewModel, View handles only file picker/write
     private async System.Threading.Tasks.Task ExportDatasetAsync(TrainingDataset dataset)
     {
       try
@@ -650,27 +651,10 @@ namespace VoiceStudio.App.Views.Panels
         if (file != null)
         {
           var extension = file.FileType.ToLower();
-          string content;
+          var format = extension == ".json" ? "json" : "csv";
 
-          if (extension == ".json")
-          {
-            var jsonData = new
-            {
-              Name = dataset.Name,
-              Description = dataset.Description,
-              CreatedAt = dataset.Created,
-              UpdatedAt = dataset.Modified,
-              AudioCount = dataset.AudioFiles?.Count ?? 0,
-              Duration = 0,
-              Status = string.Empty
-            };
-            content = System.Text.Json.JsonSerializer.Serialize(jsonData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-          }
-          else
-          {
-            content = "Name,Description,CreatedAt,UpdatedAt,AudioCount,Duration,Status\n";
-            content += $"\"{dataset.Name}\",\"{dataset.Description ?? ""}\",\"{dataset.Created}\",\"{dataset.Modified}\",{dataset.AudioFiles?.Count ?? 0},0,\"\"";
-          }
+          // Delegate serialization to ViewModel (GAP-004 remediation)
+          var content = ViewModel.GetExportDatasetContent(dataset, format);
 
           await Windows.Storage.FileIO.WriteTextAsync(file, content);
           _toastService?.ShowToast(ToastType.Success, "Export", $"Dataset '{dataset.Name}' exported successfully");
@@ -682,7 +666,8 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private async System.Threading.Tasks.Task ExportTrainingJobAsync(object job)
+    // GAP-004: Serialization logic moved to ViewModel, View handles only file picker/write
+    private async System.Threading.Tasks.Task ExportTrainingJobAsync(TrainingStatus job)
     {
       try
       {
@@ -694,15 +679,9 @@ namespace VoiceStudio.App.Views.Panels
         var file = await picker.PickSaveFileAsync();
         if (file != null)
         {
-          var jobType = job.GetType();
-          var jobData = new
-          {
-            JobId = jobType.GetProperty("JobId")?.GetValue(job)?.ToString() ?? "unknown",
-            Status = jobType.GetProperty("Status")?.GetValue(job)?.ToString() ?? "unknown",
-            CreatedAt = jobType.GetProperty("CreatedAt")?.GetValue(job)?.ToString() ?? DateTime.UtcNow.ToString(),
-            Progress = jobType.GetProperty("Progress")?.GetValue(job)?.ToString() ?? "0"
-          };
-          var content = System.Text.Json.JsonSerializer.Serialize(jobData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+          // Delegate serialization to ViewModel (GAP-004 remediation)
+          var content = ViewModel.GetExportTrainingJobContent(job);
+
           await Windows.Storage.FileIO.WriteTextAsync(file, content);
           _toastService?.ShowToast(ToastType.Success, "Export", "Training job exported successfully");
         }

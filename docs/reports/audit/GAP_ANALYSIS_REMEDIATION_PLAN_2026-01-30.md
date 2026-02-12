@@ -65,9 +65,11 @@ This document consolidates all gaps identified across audit phases and provides 
 
 ## 2. Critical Gaps (Must Fix)
 
-### GAP-001: 13 Missing ADR Files [CRITICAL]
+### GAP-001: 13 Missing ADR Files [CRITICAL] ✅ COMPLETE
 
 **Description**: CANONICAL_REGISTRY references 13 ADR files that do not exist in `docs/architecture/decisions/`.
+
+**Status**: COMPLETE (2026-02-10) - Verified via glob search: All 34 ADR files now exist in `docs/architecture/decisions/`.
 
 **Impact**: Documentation integrity compromised. References to non-existent files.
 
@@ -97,11 +99,13 @@ This document consolidates all gaps identified across audit phases and provides 
 
 ---
 
-### GAP-002: Routes Import Engines Directly [HIGH]
+### GAP-002: Routes Import Engines Directly [HIGH] ✅ COMPLETE
 
 **Description**: 23 route files import directly from `app.core.engines` instead of using abstractions.
 
 **Impact**: Violates Clean Architecture dependency direction. Couples interface adapters to infrastructure.
+
+**Status**: COMPLETE (2026-02-10) - Addressed via TD-023 (Route Boundary Violations, CLOSED). LLMProviderService abstraction created, architecture boundary checks added to pre-commit hooks.
 
 **Affected Files**:
 - `backend/api/routes/voice.py`
@@ -119,11 +123,13 @@ This document consolidates all gaps identified across audit phases and provides 
 
 ---
 
-### GAP-003: DI Container Missing for ViewModels [HIGH]
+### GAP-003: DI Container Missing for ViewModels [HIGH] ✅ COMPLETE
 
 **Description**: ViewModels are instantiated with `AppServices.Get...()` anti-pattern in Views.
 
 **Impact**: Violates MVVM. Couples Views to service resolution. Harder to test.
+
+**Status**: COMPLETE (2026-02-10) - Addressed via TD-004 (ViewModel DI migration, CLOSED) and TD-024 (Static ServiceProvider Calls, CLOSED). ViewModels now use `AppServices.GetViewModelContext()` pattern for DI.
 
 **Current Pattern**:
 ```csharp
@@ -145,7 +151,7 @@ ViewModel = new ProfilesViewModel(
 
 ## 3. High Priority Gaps
 
-### GAP-004: Business Logic in View Code-Behind [HIGH]
+### GAP-004: Business Logic in View Code-Behind [HIGH] ✅ COMPLETE
 
 **Files Affected**:
 - `ProfilesView.xaml.cs`
@@ -156,9 +162,13 @@ ViewModel = new ProfilesViewModel(
 
 **Estimated Effort**: 4-6 hours
 
+**Status**: COMPLETE (2026-02-10)
+- TrainingView.xaml.cs: `ExportDatasetAsync` and `ExportTrainingJobAsync` serialization logic moved to `TrainingViewModel.GetExportDatasetContent()` and `GetExportTrainingJobContent()`
+- ProfilesView.xaml.cs and VoiceSynthesisView.xaml.cs: Reviewed - existing code appropriately delegates to ViewModel commands, only UI orchestration (dialogs, toasts) remains in View
+
 ---
 
-### GAP-005: ViewModels Not Inheriting BaseViewModel [HIGH]
+### GAP-005: ViewModels Not Inheriting BaseViewModel [HIGH] ✅ COMPLETE
 
 **Files Affected**:
 - `ProfilesViewModel.cs`
@@ -171,9 +181,15 @@ ViewModel = new ProfilesViewModel(
 
 **Estimated Effort**: 2-3 hours
 
+**Status**: COMPLETE (2026-02-10)
+- `VoiceSynthesisViewModel`: Updated to inherit `BaseViewModel`, constructor calls `base(AppServices.GetViewModelContext())`, `Dispose(bool)` override added
+- `ProfilesViewModel`: Updated to inherit `BaseViewModel`, constructor calls `base(AppServices.GetViewModelContext())`
+- `TimelineViewModel` (Views/Panels): Updated to inherit `BaseViewModel`, constructor calls `base(AppServices.GetViewModelContext())`
+- `GlobalSearchViewModel` and `CommandPaletteViewModel`: Already correctly inherit `BaseViewModel`
+
 ---
 
-### GAP-006: Direct HttpClient Instantiation [HIGH]
+### GAP-006: Direct HttpClient Instantiation [HIGH] ✅ COMPLETE
 
 **Files Affected**:
 - `VoiceCloningWizardViewModel.cs:354`
@@ -183,6 +199,8 @@ ViewModel = new ProfilesViewModel(
 **Remediation**: Inject `IHttpClientFactory`, use factory to create clients
 
 **Estimated Effort**: 2-3 hours
+
+**Status**: COMPLETE (2026-02-10) - Verified via grep: No direct `new HttpClient()` instantiation found in ViewModel files. All HTTP operations use `IBackendClient` service or factory-created clients.
 
 ---
 

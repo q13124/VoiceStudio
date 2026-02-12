@@ -1052,5 +1052,73 @@ namespace VoiceStudio.App.Views.Panels
       OnPropertyChanged(nameof(SelectedTrainingJobCount));
       OnPropertyChanged(nameof(HasMultipleTrainingJobSelection));
     }
+
+    #region Export Methods (GAP-004: Business logic moved from View code-behind)
+
+    /// <summary>
+    /// Serializes a dataset for export. The View handles file picker and file write.
+    /// </summary>
+    /// <param name="dataset">Dataset to export</param>
+    /// <param name="format">Export format: "json" or "csv"</param>
+    /// <returns>Serialized content string</returns>
+    public string GetExportDatasetContent(TrainingDataset dataset, string format)
+    {
+      if (dataset == null)
+        throw new ArgumentNullException(nameof(dataset));
+
+      if (format.Equals("json", StringComparison.OrdinalIgnoreCase))
+      {
+        var jsonData = new
+        {
+          Name = dataset.Name,
+          Description = dataset.Description,
+          CreatedAt = dataset.Created,
+          UpdatedAt = dataset.Modified,
+          AudioCount = dataset.AudioFiles?.Count ?? 0,
+          Duration = 0,
+          Status = string.Empty
+        };
+        return System.Text.Json.JsonSerializer.Serialize(jsonData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+      }
+      else
+      {
+        // CSV format
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Name,Description,CreatedAt,UpdatedAt,AudioCount,Duration,Status");
+        sb.Append($"\"{dataset.Name}\",\"{dataset.Description ?? ""}\",\"{dataset.Created}\",\"{dataset.Modified}\",{dataset.AudioFiles?.Count ?? 0},0,\"\"");
+        return sb.ToString();
+      }
+    }
+
+    /// <summary>
+    /// Serializes a training job for export. The View handles file picker and file write.
+    /// </summary>
+    /// <param name="job">Training job to export</param>
+    /// <returns>Serialized JSON content string</returns>
+    public string GetExportTrainingJobContent(TrainingStatus job)
+    {
+      if (job == null)
+        throw new ArgumentNullException(nameof(job));
+
+      var jobData = new
+      {
+        JobId = job.Id ?? "unknown",
+        DatasetId = job.DatasetId ?? "unknown",
+        ProfileId = job.ProfileId ?? "unknown",
+        Engine = job.Engine ?? "unknown",
+        Status = job.Status ?? "unknown",
+        Progress = job.Progress,
+        CurrentEpoch = job.CurrentEpoch,
+        TotalEpochs = job.TotalEpochs,
+        Started = job.Started?.ToString("o") ?? "not started",
+        Completed = job.Completed?.ToString("o"),
+        Loss = job.Loss,
+        QualityScore = job.QualityScore,
+        ErrorMessage = job.ErrorMessage
+      };
+      return System.Text.Json.JsonSerializer.Serialize(jobData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+    }
+
+    #endregion
   }
 }

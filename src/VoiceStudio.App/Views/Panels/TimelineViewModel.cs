@@ -15,10 +15,12 @@ using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.Logging;
+using VoiceStudio.App.ViewModels;
 
 namespace VoiceStudio.App.Views.Panels
 {
-  public partial class TimelineViewModel : ObservableObject, IPanelView
+  // GAP-005: Updated to inherit from BaseViewModel for standardized error handling
+  public partial class TimelineViewModel : BaseViewModel, IPanelView
   {
     private readonly IBackendClient _backendClient;
     private readonly IAudioPlayerService _audioPlayer;
@@ -202,6 +204,7 @@ namespace VoiceStudio.App.Views.Panels
       IErrorLoggingService? logService = null,
       ISettingsService? settingsService = null,
       RecentProjectsService? recentProjectsService = null)
+        : base(AppServices.GetViewModelContext())
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));

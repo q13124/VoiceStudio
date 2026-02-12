@@ -77,8 +77,6 @@
   // Logging settings (addresses rpcFileLoggerFolder warning)
   "log.output.level": "info",
   "log.extensionHost.level": "info",
-  // Suppress extension API warnings in console (these are informational)
-  "extensions.ignoreRecommendations": false,
   // Workspace-specific settings
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
