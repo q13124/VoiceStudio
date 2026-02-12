@@ -88,6 +88,17 @@ PYTHON_ROUTE_FORBIDDEN_PATTERNS = [
         "Route importing voice engine directly",
         "Use feature_status_service or EngineService for engine access"
     ),
+    # GAP-008: LLM provider patterns
+    (
+        r"from\s+app\.core\.engines\.llm_\w+_adapter\s+import\s+\w+Provider",
+        "Route importing LLM provider directly",
+        "Use LLMProviderService from backend/services/llm_provider_service.py"
+    ),
+    (
+        r"from\s+app\.core\.engines\.llm_interface\s+import",
+        "Route importing LLM interface directly",
+        "Move LLM logic to service layer or use existing LLM service"
+    ),
 ]
 
 # Allowed patterns (exceptions)
@@ -98,6 +109,16 @@ ALLOWED_PATTERNS = [
     r"from\s+\.base\s+import\s+EngineProtocol",  # Protocol import
     r"from\s+app\.core\.engines\.protocols\s+import",  # Protocol import
     r"from\s+app\.core\.engines\.base\s+import\s+EngineProtocol",  # Protocol import
+    # Interface types (DTOs/contracts) are allowed everywhere
+    r"from\s+app\.core\.engines\.llm_interface\s+import\s+(LLMConfig|Message|MessageRole)",
+]
+
+# Files exempt from certain checks (service layer files that legitimately need engine access)
+EXEMPT_FILES = [
+    "backend/services/llm_provider_service.py",  # GAP-008: Service layer wraps LLM providers
+    "backend/services/engine_service.py",  # Engine service wraps engines
+    "backend/services/llm_function_calling.py",  # LLM function calling service
+    "backend/services/model_preflight.py",  # Preflight service uses engine paths
 ]
 
 
@@ -174,6 +195,66 @@ def check_python_route_boundaries(repo_root: Path) -> List[Violation]:
                         # Additional check: allow EngineProtocol imports
                         if "EngineProtocol" in line:
                             continue
+                        violations.append(Violation(
+                            file=py_file,
+                            line_number=line_num,
+                            line_content=line.strip(),
+                            violation_type=violation_type,
+                            suggestion=suggestion
+                        ))
+        except Exception as e:
+            print(f"Warning: Could not read {py_file}: {e}", file=sys.stderr)
+    
+    return violations
+
+
+# Patterns for service layer violations (GAP-007)
+PYTHON_SERVICE_FORBIDDEN_PATTERNS = [
+    (
+        r"raise\s+HTTPException",
+        "Service layer raising HTTPException",
+        "Raise service-layer exception; route handler converts to HTTPException"
+    ),
+]
+
+
+def is_file_exempt(file_path: Path, repo_root: Path) -> bool:
+    """Check if a file is exempt from certain checks."""
+    try:
+        rel_path = file_path.relative_to(repo_root).as_posix()
+    except ValueError:
+        rel_path = str(file_path)
+    
+    for exempt in EXEMPT_FILES:
+        if rel_path.endswith(exempt) or exempt in rel_path:
+            return True
+    return False
+
+
+def check_python_service_boundaries(repo_root: Path) -> List[Violation]:
+    """Check Python service files for boundary violations (e.g., HTTPException in services)."""
+    violations = []
+    
+    # Services are in backend/services/
+    services_path = repo_root / "backend" / "services"
+    if not services_path.exists():
+        return violations
+    
+    for py_file in services_path.rglob("*.py"):
+        # Skip exempt files
+        if is_file_exempt(py_file, repo_root):
+            continue
+            
+        try:
+            content = py_file.read_text(encoding="utf-8")
+            lines = content.split("\n")
+            
+            for line_num, line in enumerate(lines, 1):
+                if is_allowed(line):
+                    continue
+                    
+                for pattern, violation_type, suggestion in PYTHON_SERVICE_FORBIDDEN_PATTERNS:
+                    if re.search(pattern, line, re.IGNORECASE):
                         violations.append(Violation(
                             file=py_file,
                             line_number=line_num,
@@ -268,6 +349,11 @@ def main() -> int:
         print("Checking Python routes for direct engine imports...")
     python_violations = check_python_route_boundaries(repo_root)
     all_violations.extend(python_violations)
+    
+    if not args.quiet:
+        print("Checking Python services for HTTPException usage...")
+    service_violations = check_python_service_boundaries(repo_root)
+    all_violations.extend(service_violations)
     
     # Report results
     if all_violations:

@@ -11,7 +11,10 @@ namespace VoiceStudio.App.Services
   /// Specialized WebSocket client for streaming voice AI pipeline responses.
   /// Supports LLM streaming, TTS audio streaming, and S2S real-time communication.
   /// </summary>
-  public class PipelineStreamingWebSocketClient : IDisposable
+  /// <remarks>
+  /// GAP-009: Implements IPipelineStreamingClient for DI compatibility.
+  /// </remarks>
+  public class PipelineStreamingWebSocketClient : IPipelineStreamingClient
   {
     private readonly IWebSocketService _webSocketService;
     private readonly JsonSerializerOptions _jsonOptions;

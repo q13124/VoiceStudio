@@ -161,9 +161,12 @@
               <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" Style="{StaticResource VSQ.Button.Secondary}" HorizontalAlignment="Stretch" ToolTipService.ToolTip="Refresh sessions list (F5)" AutomationProperties.Name="Refresh sessions" AutomationProperties.HelpText="Refresh sessions list" TabIndex="1"/>
             </StackPanel>
           </Border>
-          <!-- Sessions ListView -->
-          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <ListView ItemsSource="{x:Bind ViewModel.Sessions, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}" SelectionMode="Single" RightTapped="Session_RightTapped">
+          <!-- Sessions ListView (GAP-014: Removed ScrollViewer wrapper to enable virtualization) -->
+          <ListView Grid.Row="1" 
+                    ItemsSource="{x:Bind ViewModel.Sessions, Mode=OneWay}" 
+                    SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}" 
+                    SelectionMode="Single" 
+                    RightTapped="Session_RightTapped">
               <ListView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ConverterSessionItem">
                   <Border BorderBrush="{StaticResource VSQ.Panel.BorderBrush}" BorderThickness="0,0,0,1" Padding="12">
@@ -177,7 +180,6 @@
                 </DataTemplate>
               </ListView.ItemTemplate>
             </ListView>
-          </ScrollViewer>
         </Grid>
       </Border>
     </Grid>

@@ -12,7 +12,10 @@ namespace VoiceStudio.App.Services
   /// Specialized WebSocket client for job progress updates.
   /// Implements React/TypeScript jobProgressClient pattern in C#.
   /// </summary>
-  public class JobProgressWebSocketClient : IDisposable
+  /// <remarks>
+  /// GAP-009: Implements IJobProgressClient for DI compatibility.
+  /// </remarks>
+  public class JobProgressWebSocketClient : IJobProgressClient
   {
     private readonly IWebSocketService _webSocketService;
     private readonly JsonSerializerOptions _jsonOptions;

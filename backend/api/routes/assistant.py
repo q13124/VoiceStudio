@@ -81,29 +81,13 @@ def _get_llm_provider():
     Get the best available LLM provider.
 
     Priority: Ollama (local) > LocalAI > OpenAI (cloud)
+    
+    Uses LLMProviderService for clean architecture compliance.
     """
-    from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
-    from app.core.engines.llm_openai_adapter import OpenAILLMProvider
-
-    # Try local first (Ollama)
-    ollama = OllamaLLMProvider()
-    if ollama.is_available:
-        logger.info("Using Ollama LLM provider (local)")
-        return ollama
-
-    # Try LocalAI
-    localai = LocalAILLMProvider()
-    if localai.is_available:
-        logger.info("Using LocalAI LLM provider (local)")
-        return localai
-
-    # Fallback to OpenAI (cloud, requires API key)
-    openai = OpenAILLMProvider()
-    if openai.is_available:
-        logger.info("Using OpenAI LLM provider (cloud)")
-        return openai
-
-    return None
+    from backend.services.llm_provider_service import get_llm_provider_service
+    
+    provider_service = get_llm_provider_service()
+    return provider_service.get_best_provider_instance()
 
 
 def _build_system_prompt(context: Optional[Dict] = None) -> str:
@@ -397,33 +381,23 @@ async def suggest_tasks(
 @router.get("/providers")
 async def list_providers():
     """List available LLM providers and their status."""
-    from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
-    from app.core.engines.llm_openai_adapter import OpenAILLMProvider
-
+    from backend.services.llm_provider_service import get_llm_provider_service
+    
+    provider_service = get_llm_provider_service()
     providers = []
-
-    ollama = OllamaLLMProvider()
-    providers.append({
-        "name": "ollama",
-        "type": "local",
-        "available": ollama.is_available,
-        "url": "http://localhost:11434",
-    })
-
-    localai = LocalAILLMProvider()
-    providers.append({
-        "name": "localai",
-        "type": "local",
-        "available": localai.is_available,
-        "url": "http://localhost:8080",
-    })
-
-    openai = OpenAILLMProvider()
-    providers.append({
-        "name": "openai",
-        "type": "cloud",
-        "available": openai.is_available,
-        "note": "Requires OPENAI_API_KEY environment variable",
-    })
+    
+    for p in provider_service.get_available_providers():
+        provider_entry = {
+            "name": p.name,
+            "type": "local" if p.local else "cloud",
+            "available": p.available,
+        }
+        # Add endpoint URL for local providers
+        if p.endpoint:
+            provider_entry["url"] = p.endpoint
+        # Add note for OpenAI
+        if p.name == "openai":
+            provider_entry["note"] = "Requires OPENAI_API_KEY environment variable"
+        providers.append(provider_entry)
 
     return {"providers": providers}

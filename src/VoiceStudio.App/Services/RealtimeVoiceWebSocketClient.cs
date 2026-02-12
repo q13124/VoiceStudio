@@ -13,7 +13,10 @@ namespace VoiceStudio.App.Services
   /// Specialized WebSocket client for real-time voice conversion.
   /// Can connect directly to /api/rvc/convert/realtime or use topic-based ws/realtime.
   /// </summary>
-  public class RealtimeVoiceWebSocketClient : IDisposable
+  /// <remarks>
+  /// GAP-009: Implements IRealtimeVoiceClient for DI compatibility.
+  /// </remarks>
+  public class RealtimeVoiceWebSocketClient : IRealtimeVoiceClient
   {
     private readonly IWebSocketService? _webSocketService;
     private readonly string? _directEndpoint;

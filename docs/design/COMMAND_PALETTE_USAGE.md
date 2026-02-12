@@ -128,3 +128,81 @@ public class CommandItem
 - Partial matches supported
 - Results sorted by relevance (exact matches first)
 
+## Built-in Commands Reference
+
+### File Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `file.new` | New Project | Ctrl+N | Create a new voice project |
+| `file.open` | Open Project | Ctrl+O | Open an existing project |
+| `file.save` | Save Project | Ctrl+S | Save the current project |
+| `file.saveAs` | Save As... | Ctrl+Shift+S | Save project with a new name |
+| `file.export` | Export Audio | Ctrl+E | Export project to audio file |
+| `file.import` | Import Audio | Ctrl+I | Import audio files into project |
+
+### Edit Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `edit.undo` | Undo | Ctrl+Z | Undo last action |
+| `edit.redo` | Redo | Ctrl+Y | Redo undone action |
+| `edit.cut` | Cut | Ctrl+X | Cut selected content |
+| `edit.copy` | Copy | Ctrl+C | Copy selected content |
+| `edit.paste` | Paste | Ctrl+V | Paste from clipboard |
+| `edit.delete` | Delete | Delete | Delete selected content |
+| `edit.selectAll` | Select All | Ctrl+A | Select all content |
+
+### View Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `view.commandPalette` | Command Palette | Ctrl+P | Open command palette |
+| `view.togglePanel` | Toggle Panel | Ctrl+B | Toggle sidebar panel visibility |
+| `view.zoomIn` | Zoom In | Ctrl++ | Increase timeline zoom |
+| `view.zoomOut` | Zoom Out | Ctrl+- | Decrease timeline zoom |
+| `view.zoomFit` | Zoom to Fit | Ctrl+0 | Fit timeline to view |
+| `view.fullscreen` | Toggle Fullscreen | F11 | Toggle fullscreen mode |
+
+### Audio Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `audio.play` | Play | Space | Start playback |
+| `audio.pause` | Pause | Space | Pause playback |
+| `audio.stop` | Stop | Escape | Stop playback |
+| `audio.normalize` | Normalize | Ctrl+Shift+N | Normalize audio levels |
+| `audio.analyze` | Analyze Clip | Ctrl+Shift+A | Run audio analysis |
+| `audio.preview` | Preview Voice | Ctrl+Enter | Preview voice synthesis |
+
+### Voice Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `voice.synthesize` | Synthesize Voice | F5 | Generate voice synthesis |
+| `voice.clone` | Clone Voice | - | Start voice cloning wizard |
+| `voice.convert` | Convert Voice | F6 | Apply voice conversion |
+| `voice.selectEngine` | Select Engine | - | Choose synthesis engine |
+
+### Navigation Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `nav.timeline` | Go to Timeline | Ctrl+1 | Focus timeline panel |
+| `nav.voices` | Go to Voices | Ctrl+2 | Focus voices panel |
+| `nav.effects` | Go to Effects | Ctrl+3 | Focus effects panel |
+| `nav.jobs` | Go to Jobs | Ctrl+4 | Focus jobs panel |
+| `nav.settings` | Go to Settings | Ctrl+, | Open settings |
+
+### Help Commands
+
+| Command ID | Name | Shortcut | Description |
+|---|---|---|---|
+| `help.documentation` | Documentation | F1 | Open documentation |
+| `help.shortcuts` | Keyboard Shortcuts | Ctrl+K Ctrl+S | Show keyboard shortcuts |
+| `help.about` | About VoiceStudio | - | Show about dialog |
+
+## Adding Custom Commands
+
+See [Command Palette Developer Guide](../developer/COMMAND_PALETTE_GUIDE.md) for information on registering custom commands.
+

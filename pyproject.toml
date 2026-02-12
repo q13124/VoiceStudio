@@ -211,11 +211,22 @@ select = [
     "UP",     # pyupgrade
     "SIM",    # flake8-simplify
     "RUF",    # Ruff-specific rules
+    "TID",    # flake8-tidy-imports (GAP-017: import discipline)
 ]
 ignore = [
     "E501",   # line too long (handled by black)
     "B008",   # do not perform function calls in argument defaults
 ]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# GAP-017: Enforce relative imports within packages
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# GAP-017: Architecture boundary enforcement via import banning
+# Routes should not import directly from engine layer
+"app.core.engines.llm_local_adapter".msg = "Use backend.services.llm_provider_service instead of direct engine imports"
+"app.core.engines.llm_openai_adapter".msg = "Use backend.services.llm_provider_service instead of direct engine imports"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # Allow assert in tests

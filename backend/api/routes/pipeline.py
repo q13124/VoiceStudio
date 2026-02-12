@@ -195,8 +195,13 @@ async def pipeline_stream(websocket: WebSocket):
 @router.get("/providers")
 async def list_pipeline_providers():
     """List available providers for each pipeline stage."""
-    from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
-    from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+    from backend.services.llm_provider_service import get_llm_provider_service
+    
+    provider_service = get_llm_provider_service()
+    llm_providers = [
+        {"name": p.name, "local": p.local, "available": p.available}
+        for p in provider_service.get_available_providers()
+    ]
 
     return {
         "stt": {
@@ -204,11 +209,7 @@ async def list_pipeline_providers():
             "default": "whisper",
         },
         "llm": {
-            "available": [
-                {"name": "ollama", "local": True, "available": OllamaLLMProvider().is_available},
-                {"name": "localai", "local": True, "available": LocalAILLMProvider().is_available},
-                {"name": "openai", "local": False, "available": OpenAILLMProvider().is_available},
-            ],
+            "available": llm_providers,
             "default": "ollama",
         },
         "tts": {
