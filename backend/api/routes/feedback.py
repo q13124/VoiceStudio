@@ -9,6 +9,15 @@ from datetime import datetime
 from typing import Any, Optional
 import logging
 
+# Import feedback service at module level - fail fast at startup if not available
+from backend.feedback import (
+    FeedbackService,
+    Feedback,
+    FeedbackType,
+    FeedbackPriority,
+    FeedbackStatus,
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
@@ -50,8 +59,6 @@ class FeedbackStatsResponse(BaseModel):
 async def submit_feedback(submission: FeedbackSubmission):
     """Submit user feedback."""
     try:
-        from backend.feedback import FeedbackService, FeedbackType, FeedbackPriority
-        
         service = FeedbackService()
         
         # Map string to enum
@@ -81,8 +88,6 @@ async def submit_feedback(submission: FeedbackSubmission):
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
 
 
 @router.get("/", response_model=list[FeedbackResponse])
@@ -95,13 +100,6 @@ async def list_feedback(
 ):
     """List feedback with optional filters."""
     try:
-        from backend.feedback import (
-            FeedbackService,
-            FeedbackType,
-            FeedbackStatus,
-            FeedbackPriority,
-        )
-        
         service = FeedbackService()
         
         # Convert string filters to enums
@@ -133,35 +131,27 @@ async def list_feedback(
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except ImportError:
-        return []
 
 
 @router.get("/{feedback_id}", response_model=FeedbackResponse)
 async def get_feedback(feedback_id: str):
     """Get feedback by ID."""
-    try:
-        from backend.feedback import FeedbackService
-        
-        service = FeedbackService()
-        feedback = service.get(feedback_id)
-        
-        if not feedback:
-            raise HTTPException(status_code=404, detail="Feedback not found")
-        
-        return FeedbackResponse(
-            feedback_id=feedback.feedback_id,
-            type=feedback.type.value,
-            priority=feedback.priority.value,
-            status=feedback.status.value,
-            title=feedback.title,
-            description=feedback.description,
-            created_at=feedback.created_at,
-            updated_at=feedback.updated_at,
-        )
-        
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
+    service = FeedbackService()
+    feedback = service.get(feedback_id)
+    
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    
+    return FeedbackResponse(
+        feedback_id=feedback.feedback_id,
+        type=feedback.type.value,
+        priority=feedback.priority.value,
+        status=feedback.status.value,
+        title=feedback.title,
+        description=feedback.description,
+        created_at=feedback.created_at,
+        updated_at=feedback.updated_at,
+    )
 
 
 @router.patch("/{feedback_id}/status")
@@ -172,8 +162,6 @@ async def update_feedback_status(
 ):
     """Update feedback status."""
     try:
-        from backend.feedback import FeedbackService, FeedbackStatus
-        
         service = FeedbackService()
         
         new_status = FeedbackStatus(status)
@@ -186,8 +174,6 @@ async def update_feedback_status(
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
 
 
 @router.post("/{feedback_id}/respond")
@@ -197,19 +183,13 @@ async def add_response(
     responder: str = Form(default="support")
 ):
     """Add a response to feedback."""
-    try:
-        from backend.feedback import FeedbackService
-        
-        service = FeedbackService()
-        feedback = service.add_response(feedback_id, message, responder)
-        
-        if not feedback:
-            raise HTTPException(status_code=404, detail="Feedback not found")
-        
-        return {"status": "response_added"}
-        
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
+    service = FeedbackService()
+    feedback = service.add_response(feedback_id, message, responder)
+    
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    
+    return {"status": "response_added"}
 
 
 @router.post("/{feedback_id}/attachments")
@@ -218,71 +198,47 @@ async def add_attachment(
     file: UploadFile = File(...)
 ):
     """Add an attachment to feedback."""
-    try:
-        from backend.feedback import FeedbackService
-        
-        service = FeedbackService()
-        
-        content = await file.read()
-        attachment = service.add_attachment(
-            feedback_id,
-            file.filename or "attachment",
-            content,
-            file.content_type or "application/octet-stream",
-        )
-        
-        if not attachment:
-            raise HTTPException(status_code=404, detail="Feedback not found")
-        
-        return {
-            "attachment_id": attachment.attachment_id,
-            "filename": attachment.filename,
-            "size_bytes": attachment.size_bytes,
-        }
-        
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
+    service = FeedbackService()
+    
+    content = await file.read()
+    attachment = service.add_attachment(
+        feedback_id,
+        file.filename or "attachment",
+        content,
+        file.content_type or "application/octet-stream",
+    )
+    
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    
+    return {
+        "attachment_id": attachment.attachment_id,
+        "filename": attachment.filename,
+        "size_bytes": attachment.size_bytes,
+    }
 
 
 @router.get("/stats/summary", response_model=FeedbackStatsResponse)
 async def get_feedback_stats():
     """Get feedback statistics."""
-    try:
-        from backend.feedback import FeedbackService
-        
-        service = FeedbackService()
-        stats = service.get_stats()
-        
-        return FeedbackStatsResponse(
-            total=stats.total,
-            by_type=stats.by_type,
-            by_status=stats.by_status,
-            by_priority=stats.by_priority,
-            average_resolution_hours=stats.average_resolution_hours,
-        )
-        
-    except ImportError:
-        return FeedbackStatsResponse(
-            total=0,
-            by_type={},
-            by_status={},
-            by_priority={},
-            average_resolution_hours=0.0,
-        )
+    service = FeedbackService()
+    stats = service.get_stats()
+    
+    return FeedbackStatsResponse(
+        total=stats.total,
+        by_type=stats.by_type,
+        by_status=stats.by_status,
+        by_priority=stats.by_priority,
+        average_resolution_hours=stats.average_resolution_hours,
+    )
 
 
 @router.delete("/{feedback_id}")
 async def delete_feedback(feedback_id: str):
     """Delete feedback."""
-    try:
-        from backend.feedback import FeedbackService
-        
-        service = FeedbackService()
-        
-        if service.delete(feedback_id):
-            return {"status": "deleted"}
-        
-        raise HTTPException(status_code=404, detail="Feedback not found")
-        
-    except ImportError:
-        raise HTTPException(status_code=501, detail="Feedback service not available")
+    service = FeedbackService()
+    
+    if service.delete(feedback_id):
+        return {"status": "deleted"}
+    
+    raise HTTPException(status_code=404, detail="Feedback not found")

@@ -169,10 +169,23 @@ def _init_todo_database_simple(conn):
 
 
 def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
-    """Load a todo from database."""
+    """Load a todo from database.
+    
+    Args:
+        todo_id: The todo ID to load
+        
+    Returns:
+        Todo object if found, None if not found
+        
+    Raises:
+        HTTPException: If database is unavailable (503) or query fails (500)
+    """
     db = _get_todo_database()
     if not db or not _use_database:
-        return None
+        raise HTTPException(
+            status_code=503,
+            detail="Todo service unavailable. Database not initialized."
+        )
 
     try:
         if isinstance(db, sqlite3.Connection):
@@ -181,7 +194,7 @@ def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
             cursor.execute("SELECT * FROM todos WHERE todo_id = ?", (todo_id,))
             row = cursor.fetchone()
             if not row:
-                return None
+                return None  # Not found - valid return
             return _row_to_todo(dict(row))
         else:
             # DatabaseQueryOptimizer
@@ -192,17 +205,29 @@ def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
             )
             if results:
                 return _row_to_todo(results[0])
-            return None
+            return None  # Not found - valid return
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(f"Failed to load todo from database: {e}")
-        return None
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database query failed: {str(e)}"
+        )
 
 
 def _save_todo_to_db(todo: "Todo"):
-    """Save a todo to database."""
+    """Save a todo to database.
+    
+    Raises:
+        HTTPException: If database is unavailable (503) or save fails (500)
+    """
     db = _get_todo_database()
     if not db or not _use_database:
-        return False
+        raise HTTPException(
+            status_code=503,
+            detail="Todo service unavailable. Database not initialized."
+        )
 
     try:
         tags_json = json.dumps(todo.tags) if todo.tags else "[]"
@@ -263,16 +288,28 @@ def _save_todo_to_db(todo: "Todo"):
             if hasattr(db, "cache"):
                 db.cache.invalidate(f"todo_{todo.todo_id}")
         return True
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to save todo to database: {e}")
-        return False
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save todo: {str(e)}"
+        )
 
 
 def _delete_todo_from_db(todo_id: str) -> bool:
-    """Delete a todo from database."""
+    """Delete a todo from database.
+    
+    Raises:
+        HTTPException: If database is unavailable (503) or delete fails (500)
+    """
     db = _get_todo_database()
     if not db or not _use_database:
-        return False
+        raise HTTPException(
+            status_code=503,
+            detail="Todo service unavailable. Database not initialized."
+        )
 
     try:
         if isinstance(db, sqlite3.Connection):
@@ -291,9 +328,14 @@ def _delete_todo_from_db(todo_id: str) -> bool:
             if hasattr(db, "cache"):
                 db.cache.invalidate(f"todo_{todo_id}")
         return True
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to delete todo from database: {e}")
-        return False
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete todo: {str(e)}"
+        )
 
 
 def _list_todos_from_db(

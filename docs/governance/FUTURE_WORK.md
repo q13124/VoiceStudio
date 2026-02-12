@@ -1,6 +1,6 @@
 # VoiceStudio Future Work Registry
 
-> **Last Updated**: 2026-02-10  
+> **Last Updated**: 2026-02-12  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Document deferred items, enhancement proposals, and future work for VoiceStudio
 

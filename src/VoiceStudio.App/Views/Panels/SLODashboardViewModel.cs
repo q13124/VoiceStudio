@@ -154,76 +154,19 @@ namespace VoiceStudio.App.Views.Panels
             CriticalSloCount = SloMetrics.Count(s => s.Status == "Critical");
         }
 
+        /// <summary>
+        /// Clears SLO data and sets error state when backend is unavailable.
+        /// No fake sample data is returned - the UI should display "No SLO data available".
+        /// </summary>
         private void LoadSampleData()
         {
+            // Do NOT add fake sample data - show empty state with error
             SloMetrics.Clear();
-
-            // Synthesis latency SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "Synthesis Latency P95",
-                CurrentValue = 1850,
-                Target = 2000,
-                WarningThreshold = 1800,
-                Unit = "ms",
-                MetricType = "latency"
-            });
-
-            // Transcription latency SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "Transcription Latency P95",
-                CurrentValue = 450,
-                Target = 500,
-                WarningThreshold = 450,
-                Unit = "ms",
-                MetricType = "latency"
-            });
-
-            // API availability SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "API Availability",
-                CurrentValue = 99.85,
-                Target = 99.9,
-                WarningThreshold = 99.5,
-                Unit = "%",
-                MetricType = "availability"
-            });
-
-            // Synthesis success rate SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "Synthesis Success Rate",
-                CurrentValue = 98.5,
-                Target = 99.0,
-                WarningThreshold = 98.0,
-                Unit = "%",
-                MetricType = "success_rate"
-            });
-
-            // Engine startup SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "Engine Startup Time",
-                CurrentValue = 4.2,
-                Target = 5.0,
-                WarningThreshold = 4.5,
-                Unit = "s",
-                MetricType = "latency"
-            });
-
-            // Quality score SLO
-            SloMetrics.Add(new SloMetric
-            {
-                Name = "Audio Quality MOS",
-                CurrentValue = 4.1,
-                Target = 4.0,
-                WarningThreshold = 3.8,
-                Unit = "score",
-                MetricType = "quality"
-            });
-
+            
+            // UI should display "SLO data unavailable. Check backend connection."
+            // instead of fake metrics that could mislead users
+            ErrorMessage = "SLO data unavailable. Backend connection required.";
+            
             UpdateSummaryStats();
         }
     }

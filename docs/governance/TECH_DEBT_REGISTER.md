@@ -53,6 +53,16 @@
 | **TD-027** | Build Warning Remediation | **CLOSED.** Fixed CS0108 (member hiding with `new` keyword), CS1998 (async without await converted to sync), CS0168 (unused variable discarded). BackendClient.cs syntax error fixed. | Build quality | Role 2 | 2026-02-09 | CLOSED |
 | **TD-028** | Test Fixture Improvements | **CLOSED.** Updated mixer test to properly initialize project state before simulate endpoint. Removed stale skip decorators from shortcut tests. | Test coverage | Role 4 | 2026-02-09 | CLOSED |
 
+### Phase 10 Stub/Placeholder Remediation (2026-02-12)
+
+| ID | Title | Description | Impact | Owner | Created | Target |
+|----|-------|-------------|--------|-------|---------|--------|
+| **TD-029** | Mock Translation Removal | **CLOSED.** Removed `_mock_translate()` from voice/translation/engine.py. Translation now returns original text with warning when models unavailable. | User clarity | Role 5 | 2026-02-12 | CLOSED |
+| **TD-030** | Sample Data Removal | **CLOSED.** Removed hardcoded sample plugins from PluginGateway.cs, hardcoded profiles from VoiceProfileViewModel.cs, sample SLO data from SLODashboardViewModel.cs. UI now shows empty state with error messages when backend unavailable. | Data integrity | Role 3 | 2026-02-12 | CLOSED |
+| **TD-031** | 501 Endpoint Fixes | **CLOSED.** Fixed feedback.py to use module-level imports (fail-fast). Fixed search.py to return 503 when storage unavailable. Fixed todo_panel.py to raise HTTPException on DB failure instead of returning None. | API reliability | Role 4 | 2026-02-12 | CLOSED |
+| **TD-032** | Engine Placeholder Updates | **CLOSED.** Updated s2s_translator.py to return original text instead of fake `[Translated to X]` prefix. Updated rvc_realtime.py to pass through audio unchanged when model unavailable (with logged warning). | User clarity | Role 5 | 2026-02-12 | CLOSED |
+| **TD-033** | Centralized Config Verification | **CLOSED.** Verified app_config.py and AppConfig.cs contain comprehensive timeout, port, URL, and buffer configurations with environment variable overrides. | Configuration | Role 4 | 2026-02-12 | CLOSED |
+
 ### LOW Priority
 
 | ID | Title | Description | Impact | Owner | Created | Target |

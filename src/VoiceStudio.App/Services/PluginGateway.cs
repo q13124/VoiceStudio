@@ -453,14 +453,17 @@ namespace VoiceStudio.App.Services
 
         private PluginSearchResult FilterLocalCatalog(PluginSearchCriteria criteria)
         {
-            // Return sample data when API is unavailable
-            var plugins = GetSamplePlugins();
+            // Return empty result when API is unavailable
+            // Do NOT return fake sample data to users
+            System.Diagnostics.Debug.WriteLine("Plugin catalog unavailable - returning empty results");
             return new PluginSearchResult
             {
-                Plugins = plugins,
-                TotalCount = plugins.Count,
+                Plugins = new List<PluginInfo>(),
+                TotalCount = 0,
                 Page = criteria.Page,
-                PageSize = criteria.PageSize
+                PageSize = criteria.PageSize,
+                ServiceUnavailable = true,
+                ErrorMessage = "Plugin catalog service is currently unavailable"
             };
         }
 
@@ -476,65 +479,28 @@ namespace VoiceStudio.App.Services
             };
         }
 
-        private static List<PluginInfo> GetSamplePlugins()
+        /// <summary>
+        /// Returns an empty plugin list when backend is unavailable.
+        /// No fake/sample data is returned - the UI should show "No plugins available"
+        /// or prompt the user to check their connection.
+        /// </summary>
+        private static List<PluginInfo> GetEmptyPluginList()
         {
-            return new List<PluginInfo>
-            {
-                new()
-                {
-                    Id = "voice-fx-reverb",
-                    Name = "Reverb Pro",
-                    Description = "Professional reverb effects for voice processing",
-                    Author = "VoiceStudio Team",
-                    Category = "Voice Effects",
-                    Version = "1.2.0",
-                    Rating = 4.5,
-                    RatingCount = 128,
-                    DownloadCount = 1500,
-                    IsVerified = true,
-                    Tags = new List<string> { "reverb", "effects", "audio" }
-                },
-                new()
-                {
-                    Id = "whisper-engine",
-                    Name = "Whisper Integration",
-                    Description = "OpenAI Whisper for high-quality transcription",
-                    Author = "VoiceStudio Team",
-                    Category = "Engines",
-                    Version = "2.0.0",
-                    Rating = 4.8,
-                    RatingCount = 256,
-                    DownloadCount = 3200,
-                    IsVerified = true,
-                    Tags = new List<string> { "transcription", "whisper", "openai" }
-                },
-                new()
-                {
-                    Id = "batch-processor",
-                    Name = "Batch Processor",
-                    Description = "Process multiple audio files at once",
-                    Author = "Community",
-                    Category = "Utilities",
-                    Version = "1.0.5",
-                    Rating = 4.2,
-                    RatingCount = 64,
-                    DownloadCount = 800,
-                    IsVerified = false,
-                    Tags = new List<string> { "batch", "automation", "utility" }
-                }
-            };
+            // Do NOT return fake sample data - return empty list
+            // The UI layer should handle this gracefully with appropriate messaging
+            return new List<PluginInfo>();
         }
 
         private static List<PluginInfo> GetSampleFeaturedPlugins()
         {
-            var plugins = GetSamplePlugins();
-            return plugins.FindAll(p => p.IsVerified);
+            // Return empty list - no fake featured plugins
+            return GetEmptyPluginList();
         }
 
         private static PluginInfo? GetSamplePluginById(string pluginId)
         {
-            var plugins = GetSamplePlugins();
-            return plugins.Find(p => p.Id == pluginId);
+            // Return null - plugin not found when backend unavailable
+            return null;
         }
 
         #endregion

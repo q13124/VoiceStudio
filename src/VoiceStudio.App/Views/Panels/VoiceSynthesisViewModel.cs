@@ -15,10 +15,14 @@ using VoiceStudio.App.Helpers;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
+using VoiceStudio.App.ViewModels;
+// Resolve ambiguity with VoiceStudio.App.ViewModels.QualityRecommendation
+using QualityRecommendation = VoiceStudio.Core.Models.QualityRecommendation;
 
 namespace VoiceStudio.App.Views.Panels
 {
-  public partial class VoiceSynthesisViewModel : ObservableObject, IPanelView, IDisposable
+  // GAP-005: Updated to inherit from BaseViewModel for standardized error handling
+  public partial class VoiceSynthesisViewModel : BaseViewModel, IPanelView
   {
     public string PanelId => "voice_synthesis";
     public string DisplayName => ResourceHelper.GetString("Panel.VoiceSynthesis.DisplayName", "Voice Synthesis");
@@ -32,7 +36,6 @@ namespace VoiceStudio.App.Views.Panels
     private readonly IErrorPresentationService? _errorService;
     private readonly string _backendBaseUrl;
     private StreamingAudioPlayer? _streamingPlayer;
-    private bool _disposed;
     private string? _currentSynthesisId;
 
     // Store event handlers for proper unsubscription
@@ -193,6 +196,7 @@ namespace VoiceStudio.App.Views.Panels
     private double temperature = 0.35;
 
     public VoiceSynthesisViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
+        : base(AppServices.GetViewModelContext())
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
       _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
@@ -1599,33 +1603,36 @@ namespace VoiceStudio.App.Views.Panels
       return tempPath;
     }
 
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-      if (_disposed)
+      if (IsDisposed)
         return;
 
-      // Unsubscribe from quality service events
-      if (_qualityService != null)
+      if (disposing)
       {
-        if (_qualityMetricsUpdatedHandler != null)
-          _qualityService.QualityMetricsUpdated -= _qualityMetricsUpdatedHandler;
-        if (_synthesisCompletedHandler != null)
-          _qualityService.SynthesisCompleted -= _synthesisCompletedHandler;
+        // Unsubscribe from quality service events
+        if (_qualityService != null)
+        {
+          if (_qualityMetricsUpdatedHandler != null)
+            _qualityService.QualityMetricsUpdated -= _qualityMetricsUpdatedHandler;
+          if (_synthesisCompletedHandler != null)
+            _qualityService.SynthesisCompleted -= _synthesisCompletedHandler;
+        }
+
+        // Unsubscribe from audio player events
+        if (_audioPlayer != null)
+        {
+          if (_isPlayingChangedHandler != null)
+            _audioPlayer.IsPlayingChanged -= _isPlayingChangedHandler;
+          if (_playbackCompletedHandler != null)
+            _audioPlayer.PlaybackCompleted -= _playbackCompletedHandler;
+        }
+
+        // Clear collections
+        Profiles.Clear();
       }
 
-      // Unsubscribe from audio player events
-      if (_audioPlayer != null)
-      {
-        if (_isPlayingChangedHandler != null)
-          _audioPlayer.IsPlayingChanged -= _isPlayingChangedHandler;
-        if (_playbackCompletedHandler != null)
-          _audioPlayer.PlaybackCompleted -= _playbackCompletedHandler;
-      }
-
-      // Clear collections
-      Profiles.Clear();
-
-      _disposed = true;
+      base.Dispose(disposing);
     }
   }
 }

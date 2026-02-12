@@ -428,6 +428,7 @@ class EngineService(IEngineService):
         try:
             return self._engine_router.list_engines()
         except Exception as e:
+            # ALLOWED: Return empty list - engine router may fail for many reasons
             logger.debug(f"Failed to list engines: {e}")
             return []
 
@@ -440,6 +441,7 @@ class EngineService(IEngineService):
         try:
             return self._engine_router.get_engine(engine_id)
         except Exception as e:
+            # ALLOWED: Return None - engine may not be installed or may fail to load
             logger.debug(f"Failed to get engine {engine_id}: {e}")
             return None
 
@@ -762,6 +764,7 @@ class EngineService(IEngineService):
                 engine_id=engine_id,
             )
         except Exception:
+            # ALLOWED: Return empty dict when preset lookup fails - graceful degradation
             return {}
 
     # -------------------------------------------------------------------------
@@ -804,6 +807,7 @@ class EngineService(IEngineService):
                 return []
             return self._engine_router.list_voices()
         except Exception:
+            # ALLOWED: Return empty list when voice listing fails - graceful degradation
             return []
 
     def calculate_all_metrics(
@@ -839,10 +843,14 @@ class EngineService(IEngineService):
                 return self._quality_metrics.calculate_naturalness(audio)
             return self._quality_metrics.calculate_naturalness(str(audio))
         except Exception:
+            # ALLOWED: Return 0.0 when naturalness calculation fails - graceful degradation
             return 0.0
 
     # -------------------------------------------------------------------------
     # Specific Engine Accessors
+    # Note: All get_*_engine methods use except Exception to return None when
+    # engines are not installed or fail to initialize. This is intentional
+    # graceful degradation - engines are optional and may not be available.
     # -------------------------------------------------------------------------
 
     def get_whisper_engine(self) -> Optional[Any]:

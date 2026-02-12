@@ -419,6 +419,13 @@ async def search(
             status_code=400, detail="Search query must be at least 2 characters"
         )
 
+    # Check storage availability - return proper error instead of empty results
+    if not STORAGE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Search service unavailable. Storage modules not loaded. Check backend configuration."
+        )
+
     try:
         # Parse natural language query
         parsed_query = _parse_natural_language_query(q)

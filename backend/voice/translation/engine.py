@@ -90,6 +90,13 @@ class TranslationResult:
     target_language: str
     processing_time: float
     confidence: float = 0.0
+    error: Optional[str] = None  # Error message if translation failed
+    error_code: Optional[str] = None  # Error code for programmatic handling
+    
+    @property
+    def success(self) -> bool:
+        """Check if translation was successful."""
+        return self.error is None and len(self.translated_text) > 0
 
 
 class TranslationEngine:
@@ -245,32 +252,21 @@ class TranslationEngine:
             )
             
         except Exception as e:
-            logger.error(f"Translation failed: {e}")
-            # Fallback to mock
-            source_text = "Hello, how are you?"
-            translated_text = self._mock_translate(source_text, target)
-            
+            logger.error(f"Translation failed: {e}", exc_info=True)
+            # Return error result with original audio and error information
+            # Do NOT return fake/mock data to users
             return TranslationResult(
-                audio_data=audio_data,
+                audio_data=audio_data,  # Return original audio unchanged
                 sample_rate=sample_rate,
-                source_text=source_text,
-                translated_text=translated_text,
-                source_language="en" if source == "auto" else source,
+                source_text="",  # Empty - transcription failed
+                translated_text="",  # Empty - translation failed
+                source_language=source if source != "auto" else "unknown",
                 target_language=target,
                 processing_time=time.time() - start_time,
                 confidence=0.0,
+                error=f"Translation service unavailable: {str(e)}",
+                error_code="TRANSLATION_FAILED",
             )
-    
-    def _mock_translate(self, text: str, target: str) -> str:
-        """Mock translation for testing."""
-        translations = {
-            "es": "Hola, ¿cómo estás?",
-            "fr": "Bonjour, comment allez-vous?",
-            "de": "Hallo, wie geht es dir?",
-            "ja": "こんにちは、お元気ですか？",
-            "zh": "你好，你好吗？",
-        }
-        return translations.get(target, text)
     
     async def translate_file(
         self,
@@ -587,7 +583,16 @@ class TranslationEngine:
         return (result["text"], result.get("language", "en"), 0.85)
     
     async def _translate_text(self, text: str, source: str, target: str) -> str:
-        """Translate text from source to target language."""
+        """Translate text from source to target language.
+        
+        Args:
+            text: Text to translate
+            source: Source language code
+            target: Target language code
+            
+        Returns:
+            Translated text, or original text with error prefix if translation unavailable
+        """
         if self._model and self._model.get("provider") == "seamless":
             # SeamlessM4T handles this in one step
             return text  # Will be handled in synthesis
@@ -595,8 +600,13 @@ class TranslationEngine:
         if self._model and self._model.get("provider") == "local":
             return await self._translate_local(text, source, target)
         
-        # Fallback mock translation
-        return self._mock_translate(text, target)
+        # No translation available - return original text with indicator
+        # This is NOT mock data - it clearly indicates translation was not performed
+        logger.warning(
+            f"Translation unavailable: no model loaded for {source} -> {target}. "
+            "Install transformers and torch for translation support."
+        )
+        return text  # Return original text unchanged - do not fabricate translations
     
     async def _translate_local(self, text: str, source: str, target: str) -> str:
         """Translate using local MarianMT model."""

@@ -321,8 +321,8 @@ class RealtimeRVCEngine:
     def _convert_with_f0(self, audio: np.ndarray, f0: np.ndarray) -> np.ndarray:
         """Apply voice conversion with extracted F0."""
         if self._model is None or self._model.get("placeholder"):
-            # Placeholder: apply basic processing
-            return self._placeholder_conversion(audio, f0)
+            # Model not available - passthrough audio unchanged
+            return self._passthrough_audio(audio, f0)
         
         try:
             import torch
@@ -345,19 +345,31 @@ class RealtimeRVCEngine:
             logger.debug(f"Conversion error: {e}")
             return audio
     
-    def _placeholder_conversion(self, audio: np.ndarray, f0: np.ndarray) -> np.ndarray:
-        """Placeholder conversion for when model isn't fully loaded."""
-        # Apply simple processing for audible feedback
-        converted = audio.copy()
+    def _passthrough_audio(self, audio: np.ndarray, f0: np.ndarray) -> np.ndarray:
+        """Passthrough audio when RVC model isn't available.
         
-        # Slight formant shift simulation
-        if len(converted) > 10:
-            # Simple moving average for smoothing
-            kernel_size = 3
-            kernel = np.ones(kernel_size) / kernel_size
-            converted = np.convolve(converted, kernel, mode="same")
+        In realtime audio processing, we cannot block or throw exceptions.
+        Instead, we pass through the original audio unchanged and log a warning.
+        The caller should check conversion_available() before enabling RVC.
         
-        return converted
+        Args:
+            audio: Input audio samples
+            f0: Fundamental frequency (unused in passthrough)
+            
+        Returns:
+            Original audio unchanged - no voice conversion applied
+        """
+        # Log warning (rate limited to avoid spam)
+        if not hasattr(self, "_passthrough_warning_logged"):
+            logger.warning(
+                "RVC voice conversion unavailable: model not loaded. "
+                "Audio is being passed through unchanged. "
+                "Install RVC model to enable voice conversion."
+            )
+            self._passthrough_warning_logged = True
+        
+        # Return original audio unchanged - do NOT apply fake processing
+        return audio
     
     @property
     def is_loaded(self) -> bool:

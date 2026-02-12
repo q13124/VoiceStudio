@@ -436,5 +436,16 @@ namespace VoiceStudio.Core.Plugins.Models
         /// Whether there are more pages.
         /// </summary>
         public bool HasMore => Page < TotalPages;
+
+        /// <summary>
+        /// Indicates if the plugin service is unavailable.
+        /// When true, the results are empty due to service unavailability, not lack of matches.
+        /// </summary>
+        public bool ServiceUnavailable { get; set; }
+
+        /// <summary>
+        /// Error message when service is unavailable.
+        /// </summary>
+        public string? ErrorMessage { get; set; }
     }
 }

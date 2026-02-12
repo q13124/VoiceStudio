@@ -411,8 +411,8 @@
                             <ComboBoxItem Content="Last 24 hours"/>
                             <ComboBoxItem Content="Custom"/>
                         </ComboBox>
-                        <Button x:Name="RefreshTracesButton" Content="Refresh"/>
-                        <Button x:Name="ExportTracesButton" Content="Export"/>
+                        <Button x:Name="RefreshTracesButton" Content="Refresh" Click="RefreshTraces_Click"/>
+                        <Button x:Name="ExportTracesButton" Content="Export" Click="ExportTraces_Click"/>
                     </StackPanel>
                     
                     <!-- Trace Summary -->
@@ -647,8 +647,8 @@
                             </StackPanel>
                         </Border>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="Test Connection" x:Name="TestConnectionButton"/>
-                            <Button Content="Reconnect" x:Name="ReconnectButton"/>
+                            <Button Content="Test Connection" x:Name="TestConnectionButton" Click="TestConnection_Click"/>
+                            <Button Content="Reconnect" x:Name="ReconnectButton" Click="Reconnect_Click"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -662,8 +662,8 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
-                        <Button Content="Refresh Engines" x:Name="RefreshEnginesButton"/>
-                        <Button Content="Stop All" x:Name="StopAllEnginesButton"/>
+                        <Button Content="Refresh Engines" x:Name="RefreshEnginesButton" Click="RefreshEngines_Click"/>
+                        <Button Content="Stop All" x:Name="StopAllEnginesButton" Click="StopAllEngines_Click"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
                         <ListView x:Name="EnginesListView" Padding="8"/>

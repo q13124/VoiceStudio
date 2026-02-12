@@ -21,6 +21,7 @@ namespace VoiceStudio.App.ViewModels
   public partial class PipelineConversationViewModel : BaseViewModel, IPanelView
   {
     private readonly IBackendClient _backendClient;
+    private readonly IWebSocketClientFactory? _webSocketClientFactory;
     private readonly PipelineStreamingWebSocketClient? _streamingClient;
     private ObservableCollection<ConversationMessageItem>? _messagesHooked;
 
@@ -85,14 +86,29 @@ namespace VoiceStudio.App.ViewModels
     public Visibility StreamingIndicatorVisibility =>
         IsStreaming ? Visibility.Visible : Visibility.Collapsed;
 
-    public PipelineConversationViewModel(IViewModelContext context, IBackendClient backendClient)
+    // GAP-009: Updated to use IWebSocketClientFactory for DI
+    public PipelineConversationViewModel(
+        IViewModelContext context,
+        IBackendClient backendClient,
+        IWebSocketClientFactory? webSocketClientFactory = null)
         : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      _webSocketClientFactory = webSocketClientFactory;
 
-      // Initialize streaming client if WebSocket service is available
-      if (backendClient.WebSocketService != null)
+      // Initialize streaming client via factory (GAP-009 remediation)
+      if (_webSocketClientFactory != null)
       {
+        _streamingClient = _webSocketClientFactory.CreatePipelineStreamingClient();
+        _streamingClient.TokenReceived += OnTokenReceived;
+        _streamingClient.AudioReceived += OnAudioReceived;
+        _streamingClient.StreamComplete += OnStreamComplete;
+        _streamingClient.ErrorOccurred += OnStreamError;
+        _streamingClient.SessionStateChanged += OnSessionStateChanged;
+      }
+      else if (backendClient.WebSocketService != null)
+      {
+        // Fallback for backward compatibility
         _streamingClient = new PipelineStreamingWebSocketClient(backendClient.WebSocketService);
         _streamingClient.TokenReceived += OnTokenReceived;
         _streamingClient.AudioReceived += OnAudioReceived;

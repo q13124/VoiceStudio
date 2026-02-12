@@ -7,6 +7,11 @@ namespace VoiceStudio.App.Services
 {
   /// <summary>
   /// Compatibility shim that forwards to the DI-backed AppServices.
+  /// 
+  /// The TryGet* methods intentionally use empty catch blocks to return null
+  /// when services are not yet registered or initialization fails. This is
+  /// a documented graceful degradation pattern - services may not be available
+  /// during early app startup or in test scenarios.
   /// </summary>
   public static class ServiceProvider
   {
@@ -24,7 +29,7 @@ namespace VoiceStudio.App.Services
     public static IAuditLoggingService? TryGetAuditLoggingService()
     {
       try { return AppServices.TryGetAuditLoggingService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static OperationQueueService GetOperationQueueService() => AppServices.GetOperationQueueService();
     public static StatePersistenceService GetStatePersistenceService() => AppServices.GetStatePersistenceService();
@@ -41,7 +46,7 @@ namespace VoiceStudio.App.Services
     public static ToastNotificationService? TryGetToastNotificationService()
     {
       try { return AppServices.TryGetToastNotificationService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static void RegisterToastNotificationService(ToastNotificationService service) =>
       AppServices.RegisterToastNotificationService(service);
@@ -49,32 +54,32 @@ namespace VoiceStudio.App.Services
     public static MultiSelectService? TryGetMultiSelectService()
     {
       try { return AppServices.TryGetMultiSelectService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static DragDropVisualFeedbackService GetDragDropVisualFeedbackService() =>
       AppServices.GetDragDropVisualFeedbackService();
     public static DragDropVisualFeedbackService? TryGetDragDropVisualFeedbackService()
     {
       try { return AppServices.TryGetDragDropVisualFeedbackService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static ContextMenuService GetContextMenuService() => AppServices.GetContextMenuService();
     public static ContextMenuService? TryGetContextMenuService()
     {
       try { return AppServices.TryGetContextMenuService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static UndoRedoService GetUndoRedoService() => AppServices.GetUndoRedoService();
     public static UndoRedoService? TryGetUndoRedoService()
     {
       try { return AppServices.TryGetUndoRedoService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static RecentProjectsService GetRecentProjectsService() => AppServices.GetRecentProjectsService();
     public static RecentProjectsService? TryGetRecentProjectsService()
     {
       try { return AppServices.TryGetRecentProjectsService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static ToolbarConfigurationService GetToolbarConfigurationService() =>
       AppServices.GetToolbarConfigurationService();
@@ -91,25 +96,25 @@ namespace VoiceStudio.App.Services
     public static IFeatureFlagsService? TryGetFeatureFlagsService()
     {
       try { return AppServices.TryGetFeatureFlagsService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static IErrorPresentationService GetErrorPresentationService() => AppServices.GetErrorPresentationService();
     public static IErrorPresentationService? TryGetErrorPresentationService()
     {
       try { return AppServices.TryGetErrorPresentationService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static IAnalyticsService GetAnalyticsService() => AppServices.GetAnalyticsService();
     public static IAnalyticsService? TryGetAnalyticsService()
     {
       try { return AppServices.TryGetAnalyticsService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static ITelemetryService GetTelemetryService() => AppServices.GetTelemetryService();
     public static ITelemetryService? TryGetTelemetryService()
     {
       try { return AppServices.TryGetTelemetryService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static EngineManager GetEngineManager() => AppServices.GetEngineManager();
     public static INavigationService GetNavigationService() => AppServices.GetNavigationService();
@@ -118,13 +123,13 @@ namespace VoiceStudio.App.Services
     public static ISecretsService? TryGetSecretsService()
     {
       try { return AppServices.TryGetSecretsService(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static IProfilesUseCase GetProfilesUseCase() => AppServices.GetProfilesUseCase();
     public static IProfilesUseCase? TryGetProfilesUseCase()
     {
       try { return AppServices.TryGetProfilesUseCase(); }
-      catch { return null; }
+      catch { return null; } // ALLOWED: empty catch - graceful fallback for unavailable service
     }
     public static ModuleLoader GetModuleLoader() => AppServices.GetModuleLoader();
     public static ModuleLoader? TryGetModuleLoader() => AppServices.TryGetModuleLoader();

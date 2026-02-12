@@ -328,8 +328,14 @@ class SpeechToSpeechTranslator:
             
             return tokenizer.decode(translated[0], skip_special_tokens=True)
         
-        # Placeholder
-        return f"[Translated to {target_lang}] {text}"
+        # No translation model available - return original text unchanged
+        # This is NOT a translation - the text is returned as-is because
+        # no translation capability is installed
+        logger.warning(
+            f"Translation unavailable: no model loaded for {source_lang} -> {target_lang}. "
+            "Install transformers and torch for translation support."
+        )
+        return text  # Return original, do NOT fabricate fake translations
     
     async def _synthesize(
         self,
@@ -350,9 +356,16 @@ class SpeechToSpeechTranslator:
             )
             return np.array(audio)
         
-        # Placeholder: generate silence
-        duration_s = len(text) * 0.05  # Rough estimate
-        return np.zeros(int(sample_rate * duration_s))
+        # No TTS model available - raise proper error instead of generating silence
+        # Callers should check is_loaded or capabilities before calling
+        logger.error(
+            "Speech synthesis unavailable: no TTS model loaded. "
+            "Install TTS (coqui-ai) for synthesis support."
+        )
+        raise RuntimeError(
+            "Speech synthesis unavailable: TTS model not installed. "
+            "See docs/engines/tts.md for installation instructions."
+        )
     
     @property
     def is_loaded(self) -> bool:

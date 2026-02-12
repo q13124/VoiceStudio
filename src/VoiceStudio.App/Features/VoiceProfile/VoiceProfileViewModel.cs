@@ -261,20 +261,12 @@ public partial class VoiceProfileViewModel : BaseViewModel
             }
             else
             {
-                // Fallback to sample data if backend unavailable
+                // Backend unavailable - do NOT return fake sample data
                 Logger.LogWarning("Failed to load profiles from backend: {Error}", result.Error);
                 
-                AllProfiles.Add(new VoiceProfileData
-                {
-                    Name = "Default English",
-                    Description = "Standard English voice",
-                    Source = VoiceSource.Builtin,
-                    Engine = "xtts_v2",
-                    Language = "en",
-                    Gender = "neutral",
-                });
-                
-                StatusMessage = "Using default profiles (backend unavailable)";
+                // Return empty list - UI should show "No profiles available. Check backend connection."
+                // Do not add hardcoded sample profiles
+                ErrorMessage = "No profiles available. Backend connection failed.";
             }
             
             ApplyFilters();
@@ -288,15 +280,9 @@ public partial class VoiceProfileViewModel : BaseViewModel
         {
             await HandleErrorAsync(ex, "Failed to refresh profiles");
             
-            // Add fallback profile
-            AllProfiles.Add(new VoiceProfileData
-            {
-                Name = "Default English",
-                Description = "Standard English voice",
-                Source = VoiceSource.Builtin,
-                Engine = "xtts_v2",
-                Language = "en",
-            });
+            // Do NOT add fake fallback profile - show empty list with error state
+            // The UI should display "No profiles available" and prompt for backend connection
+            ErrorMessage = "Failed to load profiles. Check backend connection.";
             ApplyFilters();
         }
         finally

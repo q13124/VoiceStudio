@@ -260,20 +260,55 @@ class EngineLoader:
         logger.warning(f"Creating stub engine for: {engine_type}")
         
         class StubEngine:
+            """Stub engine returned when the real engine is unavailable.
+            
+            Returns graceful error responses instead of raising exceptions,
+            allowing callers to handle engine unavailability gracefully.
+            """
             def __init__(self, name: str):
                 self.name = name
                 self.is_stub = True
+                self.available = False
             
-            def synthesize(self, *args, **kwargs):
-                raise NotImplementedError(f"Engine {self.name} is not available")
+            def synthesize(self, *args, **kwargs) -> Dict[str, Any]:
+                """Return error response indicating engine is unavailable."""
+                logger.warning(f"Stub engine {self.name}: synthesize called but engine unavailable")
+                return {
+                    "success": False,
+                    "error": f"Engine '{self.name}' is not available",
+                    "error_code": "ENGINE_UNAVAILABLE",
+                    "engine": self.name,
+                    "is_stub": True,
+                }
             
-            def transcribe(self, *args, **kwargs):
-                raise NotImplementedError(f"Engine {self.name} is not available")
+            def transcribe(self, *args, **kwargs) -> Dict[str, Any]:
+                """Return error response indicating engine is unavailable."""
+                logger.warning(f"Stub engine {self.name}: transcribe called but engine unavailable")
+                return {
+                    "success": False,
+                    "error": f"Engine '{self.name}' is not available",
+                    "error_code": "ENGINE_UNAVAILABLE",
+                    "engine": self.name,
+                    "is_stub": True,
+                }
             
-            def process(self, *args, **kwargs):
-                raise NotImplementedError(f"Engine {self.name} is not available")
+            def process(self, *args, **kwargs) -> Dict[str, Any]:
+                """Return error response indicating engine is unavailable."""
+                logger.warning(f"Stub engine {self.name}: process called but engine unavailable")
+                return {
+                    "success": False,
+                    "error": f"Engine '{self.name}' is not available",
+                    "error_code": "ENGINE_UNAVAILABLE",
+                    "engine": self.name,
+                    "is_stub": True,
+                }
+            
+            def is_available(self) -> bool:
+                """Check if engine is available (always False for stub)."""
+                return False
             
             def cleanup(self):
+                """No-op cleanup for stub engine."""
                 pass
         
         return StubEngine(engine_type)

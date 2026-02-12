@@ -45,6 +45,37 @@ from backend.core.security.expression_evaluator import parse_frame_rate
 logger = logging.getLogger(__name__)
 
 
+class LipSyncServiceUnavailable(Exception):
+    """Exception raised when lip sync service models are not available.
+    
+    This exception should be caught by the API layer and converted to
+    an HTTP 503 Service Unavailable response.
+    """
+    def __init__(
+        self,
+        message: str = "Lip sync service unavailable",
+        engine: Optional[str] = None,
+        setup_instructions: Optional[List[str]] = None,
+    ):
+        self.message = message
+        self.engine = engine
+        self.setup_instructions = setup_instructions or [
+            "1. Install the required models following docs/engines/lip_sync.md",
+            "2. Set VOICESTUDIO_LIPSYNC_MODELS_PATH environment variable",
+            "3. Restart VoiceStudio to enable lip sync processing",
+        ]
+        super().__init__(self.message)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API response."""
+        return {
+            "error": self.message,
+            "error_code": "LIP_SYNC_UNAVAILABLE",
+            "engine": self.engine,
+            "setup_instructions": self.setup_instructions,
+        }
+
+
 class LipSyncEngine(Enum):
     """Available lip sync engines."""
     WAV2LIP = "wav2lip"
@@ -718,9 +749,8 @@ class LipSyncService:
         except Exception as e:
             logger.debug(f"ffmpeg fallback failed: {e}")
         
-        # Final fallback: placeholder
-        self._create_placeholder_output(output_path)
-        project.progress = 0.95
+        # No more fallbacks - raise service unavailable error
+        self._raise_service_unavailable(engine="wav2lip")
     
     async def _run_sadtalker(
         self,
@@ -861,9 +891,8 @@ class LipSyncService:
         except Exception as e:
             logger.debug(f"ffmpeg fallback failed: {e}")
         
-        # Final fallback: placeholder
-        self._create_placeholder_output(output_path)
-        project.progress = 0.95
+        # No more fallbacks - raise service unavailable error
+        self._raise_service_unavailable(engine="sadtalker")
     
     async def _run_fomm(
         self,
@@ -1021,43 +1050,41 @@ class LipSyncService:
         except Exception as e:
             logger.debug(f"ffmpeg fallback failed: {e}")
         
-        # Final fallback: placeholder
-        self._create_placeholder_output(output_path)
-        project.progress = 0.95
+        # No more fallbacks - raise service unavailable error
+        self._raise_service_unavailable(engine="fomm")
     
-    def _create_placeholder_output(self, output_path: str):
-        """Create placeholder output file with status indicator.
+    def _raise_service_unavailable(self, engine: str = None):
+        """Raise LipSyncServiceUnavailable exception.
         
-        Gap Analysis Fix: Instead of empty files, create a placeholder
-        with proper metadata indicating the feature status.
+        This is called when all lip sync methods have failed and no
+        real output can be produced. Instead of creating fake placeholder
+        files, we raise an exception that the API layer can convert to
+        an HTTP 503 Service Unavailable response.
+        
+        Args:
+            engine: The engine that was attempted
+            
+        Raises:
+            LipSyncServiceUnavailable: Always raised
         """
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        logger.error(
+            f"Lip sync service unavailable for engine '{engine}'. "
+            "All processing methods failed - no models loaded."
+        )
         
-        # Create a placeholder file with metadata
-        placeholder_meta = output_path + ".meta.json"
-        import json
-        
-        meta = {
-            "status": "placeholder",
-            "message": "Lip sync processing requires model installation. "
-                       "The actual Wav2Lip/SadTalker/FOMM models are not loaded.",
-            "instructions": [
+        raise LipSyncServiceUnavailable(
+            message=f"Lip sync processing failed: '{engine or 'unknown'}' engine "
+                    "models are not installed or configured",
+            engine=engine,
+            setup_instructions=[
                 "1. Install the required models following docs/engines/lip_sync.md",
-                "2. Set VOICESTUDIO_LIPSYNC_MODELS_PATH environment variable",
-                "3. Restart VoiceStudio to enable lip sync processing"
+                "2. Set the appropriate environment variable:",
+                f"   - VOICESTUDIO_WAV2LIP_PATH for Wav2Lip",
+                f"   - VOICESTUDIO_SADTALKER_PATH for SadTalker",
+                f"   - VOICESTUDIO_FOMM_PATH for FOMM",
+                "3. Ensure ffmpeg is in PATH for fallback processing",
+                "4. Restart VoiceStudio to enable lip sync processing",
             ],
-            "output_path": output_path,
-            "timestamp": datetime.now().isoformat(),
-        }
-        
-        Path(placeholder_meta).write_text(json.dumps(meta, indent=2))
-        
-        # Create empty placeholder video file
-        Path(output_path).touch()
-        
-        logger.warning(
-            f"Created placeholder output at {output_path}. "
-            "Lip sync models not loaded - see {placeholder_meta} for details."
         )
     
     async def _async_sleep(self, seconds: float):
