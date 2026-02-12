@@ -244,6 +244,10 @@ namespace VoiceStudio.App.Services.Gateways
       string? message = null;
       string? errorCode = null;
       JsonElement? details = null;
+      string? requestId = null;
+      string? timestamp = null;
+      string? path = null;
+      string? recoverySuggestion = null;
 
       try
       {
@@ -253,14 +257,23 @@ namespace VoiceStudio.App.Services.Gateways
           try
           {
             var errorJson = JsonSerializer.Deserialize<JsonElement>(content, _jsonOptions);
+            // Parse backend StandardErrorResponse fields
             if (errorJson.TryGetProperty("message", out var msgProp))
               message = msgProp.GetString();
-            if (errorJson.TryGetProperty("error", out var errProp))
+            if (errorJson.TryGetProperty("error", out var errProp) && errProp.ValueKind == JsonValueKind.String)
               message = errProp.GetString() ?? message;
             if (errorJson.TryGetProperty("error_code", out var codeProp))
               errorCode = codeProp.GetString();
             if (errorJson.TryGetProperty("details", out var detailsProp))
               details = detailsProp;
+            if (errorJson.TryGetProperty("request_id", out var requestIdProp))
+              requestId = requestIdProp.GetString();
+            if (errorJson.TryGetProperty("timestamp", out var timestampProp))
+              timestamp = timestampProp.GetString();
+            if (errorJson.TryGetProperty("path", out var pathProp))
+              path = pathProp.GetString();
+            if (errorJson.TryGetProperty("recovery_suggestion", out var recoverySuggestionProp))
+              recoverySuggestion = recoverySuggestionProp.GetString();
           }
           catch
           {
@@ -303,7 +316,16 @@ namespace VoiceStudio.App.Services.Gateways
 
       var isRetryable = statusCode >= 500 || statusCode == 429;
 
-      return new GatewayError(errorCode, message, statusCode, isRetryable, null, details);
+      return new GatewayError(
+          errorCode, 
+          message, 
+          statusCode, 
+          isRetryable, 
+          recoverySuggestion, 
+          details, 
+          requestId, 
+          timestamp, 
+          path);
     }
 
     private async Task<GatewayResult<T>> ExecuteAsync<T>(
@@ -329,7 +351,7 @@ namespace VoiceStudio.App.Services.Gateways
         await UpdateConnectionStatusAsync(cancellationToken);
         return GatewayResult<T>.Fail(ex);
       }
-      catch (HttpRequestException ex)
+      catch (HttpRequestException)
       {
         SetConnected(false);
         return GatewayResult<T>.Fail(new GatewayError(

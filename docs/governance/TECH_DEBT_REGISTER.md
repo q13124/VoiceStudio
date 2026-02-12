@@ -1,6 +1,6 @@
 # VoiceStudio Technical Debt Register
 
-> **Last Updated**: 2026-02-04  
+> **Last Updated**: 2026-02-09  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Canonical registry of all known technical debt, limitations, and future enhancements
 
@@ -44,6 +44,14 @@
 | **TD-023** | Route Boundary Violations | **CLOSED.** All 37 violations in 20 files fixed. EngineService extended with quality metrics, engine accessors. All routes now use EngineService instead of direct app.core.engines imports. | Architecture | Role 4 | 2026-02-04 | CLOSED |
 | **TD-024** | Static ServiceProvider Calls | **CLOSED.** All 47 static calls in 43 ViewModels migrated to AppServices.TryGetXxx() pattern. fix_static_service_calls.py script created. migrate_di.py shows 0 remaining issues. | DI consistency | Role 3 | 2026-02-04 | CLOSED |
 | **TD-025** | ADR Formalization | ADR-017, ADR-008, ADR-011 formalized with decisions. All 22 ADRs now have formal decisions. | Documentation | Role 1 | 2026-02-04 | CLOSED |
+
+### Phase 9 Audit Remediation (2026-02-09)
+
+| ID | Title | Description | Impact | Owner | Created | Target |
+|----|-------|-------------|--------|-------|---------|--------|
+| **TD-026** | Route Ordering Fixes | **CLOSED.** Fixed FastAPI route ordering in shortcuts.py: /check-conflict, /categories, /reset-all moved before parameterized routes to prevent path conflicts. | Test reliability | Role 4 | 2026-02-09 | CLOSED |
+| **TD-027** | Build Warning Remediation | **CLOSED.** Fixed CS0108 (member hiding with `new` keyword), CS1998 (async without await converted to sync), CS0168 (unused variable discarded). BackendClient.cs syntax error fixed. | Build quality | Role 2 | 2026-02-09 | CLOSED |
+| **TD-028** | Test Fixture Improvements | **CLOSED.** Updated mixer test to properly initialize project state before simulate endpoint. Removed stale skip decorators from shortcut tests. | Test coverage | Role 4 | 2026-02-09 | CLOSED |
 
 ### LOW Priority
 

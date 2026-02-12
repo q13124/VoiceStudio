@@ -1413,6 +1413,10 @@ namespace VoiceStudio.App.Services
       var statusCode = (int)response.StatusCode;
       string? errorMessage = null;
       string? errorCode = null;
+      string? requestId = null;
+      string? timestamp = null;
+      string? path = null;
+      string? recoverySuggestion = null;
 
       try
       {
@@ -1422,12 +1426,21 @@ namespace VoiceStudio.App.Services
           try
           {
             var errorJson = JsonSerializer.Deserialize<JsonElement>(content, _jsonOptions);
+            // Parse backend StandardErrorResponse fields
             if (errorJson.TryGetProperty("message", out var messageProp))
               errorMessage = messageProp.GetString();
-            if (errorJson.TryGetProperty("error", out var errorProp))
+            if (errorJson.TryGetProperty("error", out var errorProp) && errorProp.ValueKind == JsonValueKind.String)
               errorMessage = errorProp.GetString() ?? errorMessage;
             if (errorJson.TryGetProperty("error_code", out var codeProp))
               errorCode = codeProp.GetString();
+            if (errorJson.TryGetProperty("request_id", out var requestIdProp))
+              requestId = requestIdProp.GetString();
+            if (errorJson.TryGetProperty("timestamp", out var timestampProp))
+              timestamp = timestampProp.GetString();
+            if (errorJson.TryGetProperty("path", out var pathProp))
+              path = pathProp.GetString();
+            if (errorJson.TryGetProperty("recovery_suggestion", out var recoverySuggestionProp))
+              recoverySuggestion = recoverySuggestionProp.GetString();
           }
           catch
           {
@@ -1458,7 +1471,10 @@ namespace VoiceStudio.App.Services
         _ => $"An error occurred (HTTP {statusCode}). Please try again."
       };
 
-      return statusCode switch
+      // Determine retryability
+      var isRetryable = statusCode >= 500 || statusCode == 429;
+      
+      BackendException exception = statusCode switch
       {
         400 => new BackendValidationException(errorMessage),
         401 => new BackendAuthenticationException(errorMessage),
@@ -1467,6 +1483,16 @@ namespace VoiceStudio.App.Services
         >= 500 => new BackendServerException(errorMessage, statusCode),
         _ => new BackendServerException(errorMessage, statusCode)
       };
+
+      // Populate additional fields from backend StandardErrorResponse
+      exception.ErrorCode = errorCode;
+      exception.RequestId = requestId;
+      exception.Timestamp = timestamp;
+      exception.Path = path;
+      exception.RecoverySuggestion = recoverySuggestion;
+      exception.IsRetryable = isRetryable;
+
+      return exception;
     }
 
     // Macro management
@@ -3205,8 +3231,12 @@ namespace VoiceStudio.App.Services
 
         try
         {
-          return await response.Content.ReadFromJsonAsync<TResponse>(_jsonOptions, cancellationToken)
-                    ?? throw new BackendDeserializationException("Failed to deserialize response");
+          var result = await response.Content.ReadFromJsonAsync<TResponse>(_jsonOptions, cancellationToken);
+          if (result == null)
+          {
+            throw new BackendDeserializationException("Failed to deserialize response: result was null");
+          }
+          return result;
         }
         catch (JsonException ex)
         {

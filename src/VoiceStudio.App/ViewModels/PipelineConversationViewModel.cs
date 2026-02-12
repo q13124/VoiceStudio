@@ -402,7 +402,8 @@ namespace VoiceStudio.App.ViewModels
       OnPropertyChanged(nameof(WelcomeVisibility));
     }
 
-    public void Dispose()
+    // CS0108 fix: Intentionally hiding base Dispose to include streaming client cleanup
+    public new void Dispose()
     {
       if (_streamingClient != null)
       {
@@ -413,6 +414,7 @@ namespace VoiceStudio.App.ViewModels
         _streamingClient.SessionStateChanged -= OnSessionStateChanged;
         _streamingClient.Dispose();
       }
+      base.Dispose();
     }
   }
 

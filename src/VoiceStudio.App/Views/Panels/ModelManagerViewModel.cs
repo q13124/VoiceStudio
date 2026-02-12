@@ -54,7 +54,8 @@ namespace VoiceStudio.App.Views.Panels
     [ObservableProperty]
     private string? verificationResult;
 
-    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+    // CS0108 fix: Intentionally hiding base HasError with local ErrorMessage binding
+    public new bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
     public ObservableCollection<string> Engines { get; } = new()
         {

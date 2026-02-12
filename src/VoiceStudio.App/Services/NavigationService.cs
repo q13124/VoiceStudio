@@ -91,10 +91,10 @@ namespace VoiceStudio.App.Services
       return Task.CompletedTask;
     }
 
-    public async Task NavigateBackAsync(CancellationToken cancellationToken = default)
+    public Task NavigateBackAsync(CancellationToken cancellationToken = default)
     {
       if (!CanNavigateBack())
-        return;
+        return Task.CompletedTask;
 
       cancellationToken.ThrowIfCancellationRequested();
 
@@ -130,12 +130,14 @@ namespace VoiceStudio.App.Services
         NavigationChanged?.Invoke(this, args);
         BackStackChanged?.Invoke(this, EventArgs.Empty);
       }
+
+      return Task.CompletedTask;
     }
 
-    public async Task NavigateForwardAsync(CancellationToken cancellationToken = default)
+    public Task NavigateForwardAsync(CancellationToken cancellationToken = default)
     {
       if (!CanNavigateForward())
-        return;
+        return Task.CompletedTask;
 
       cancellationToken.ThrowIfCancellationRequested();
 
@@ -172,7 +174,7 @@ namespace VoiceStudio.App.Services
         BackStackChanged?.Invoke(this, EventArgs.Empty);
       }
 
-      await Task.CompletedTask;
+      return Task.CompletedTask;
     }
 
     public bool CanNavigateBack()

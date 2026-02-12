@@ -225,6 +225,40 @@ async def get_shortcuts(
     return [KeyboardShortcut(**shortcut) for shortcut in shortcuts]
 
 
+# NOTE: Specific routes must be defined BEFORE parameterized routes to avoid
+# FastAPI matching "check-conflict" or "categories" as shortcut_id values.
+
+@router.get("/check-conflict")
+@cache_response(ttl=60)  # Cache for 60 seconds (conflicts may change)
+async def check_conflict(
+    key_code: str = Query(...),
+    modifiers: List[str] = Query(...),
+    exclude_id: Optional[str] = Query(None),
+):
+    """Check if a key combination conflicts with existing shortcuts."""
+    conflict_id = _check_conflict(key_code, modifiers, exclude_id)
+    if conflict_id:
+        return {
+            "has_conflict": True,
+            "conflicting_shortcut": KeyboardShortcut(**_shortcuts[conflict_id]),
+        }
+
+    return {"has_conflict": False}
+
+
+@router.get("/categories")
+@cache_response(ttl=600)  # Cache for 10 minutes (categories are static)
+async def get_shortcut_categories():
+    """Get list of shortcut categories."""
+    categories = set()
+    for shortcut in _shortcuts.values():
+        cat = shortcut.get("category")
+        if cat:
+            categories.add(cat)
+
+    return {"categories": sorted(list(categories))}
+
+
 @router.get("/{shortcut_id}", response_model=KeyboardShortcut)
 @cache_response(ttl=300)  # Cache for 5 minutes (shortcut info is static)
 async def get_shortcut(shortcut_id: str):
@@ -318,21 +352,7 @@ async def delete_shortcut(shortcut_id: str):
     return {"success": True}
 
 
-@router.post("/{shortcut_id}/reset")
-async def reset_shortcut(shortcut_id: str):
-    """Reset a shortcut to its default value."""
-    if shortcut_id not in _shortcuts:
-        raise HTTPException(status_code=404, detail="Shortcut not found")
-
-    # Reinitialize to get default
-    _initialize_default_shortcuts()
-
-    if shortcut_id not in _shortcuts:
-        raise HTTPException(status_code=404, detail="Default shortcut not found")
-
-    return KeyboardShortcut(**_shortcuts[shortcut_id])
-
-
+# NOTE: /reset-all must be defined BEFORE /{shortcut_id}/reset
 @router.post("/reset-all")
 async def reset_all_shortcuts():
     """Reset all shortcuts to defaults."""
@@ -347,32 +367,16 @@ async def reset_all_shortcuts():
     return {"success": True, "reset_count": len(custom_ids)}
 
 
-@router.get("/check-conflict")
-@cache_response(ttl=60)  # Cache for 60 seconds (conflicts may change)
-async def check_conflict(
-    key_code: str = Query(...),
-    modifiers: List[str] = Query(...),
-    exclude_id: Optional[str] = Query(None),
-):
-    """Check if a key combination conflicts with existing shortcuts."""
-    conflict_id = _check_conflict(key_code, modifiers, exclude_id)
-    if conflict_id:
-        return {
-            "has_conflict": True,
-            "conflicting_shortcut": KeyboardShortcut(**_shortcuts[conflict_id]),
-        }
+@router.post("/{shortcut_id}/reset")
+async def reset_shortcut(shortcut_id: str):
+    """Reset a shortcut to its default value."""
+    if shortcut_id not in _shortcuts:
+        raise HTTPException(status_code=404, detail="Shortcut not found")
 
-    return {"has_conflict": False}
+    # Reinitialize to get default
+    _initialize_default_shortcuts()
 
+    if shortcut_id not in _shortcuts:
+        raise HTTPException(status_code=404, detail="Default shortcut not found")
 
-@router.get("/categories")
-@cache_response(ttl=600)  # Cache for 10 minutes (categories are static)
-async def get_shortcut_categories():
-    """Get list of shortcut categories."""
-    categories = set()
-    for shortcut in _shortcuts.values():
-        cat = shortcut.get("category")
-        if cat:
-            categories.add(cat)
-
-    return {"categories": sorted(list(categories))}
+    return KeyboardShortcut(**_shortcuts[shortcut_id])
