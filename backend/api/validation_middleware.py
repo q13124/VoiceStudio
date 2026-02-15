@@ -5,12 +5,12 @@ Automatically optimizes Pydantic validation for all requests.
 """
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.validation.optimizer import get_cached_schema, get_validation_optimizer
+from app.core.validation.optimizer import get_cached_schema
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +44,8 @@ def setup_validation_optimization(app):
     # Pre-warm schema cache for common models
     try:
         from backend.api.models_additional import (
-            VoiceSynthesizeRequest,
             QualityMetrics,
+            VoiceSynthesizeRequest,
             VoiceSynthesizeResponse,
         )
 

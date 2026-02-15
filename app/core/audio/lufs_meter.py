@@ -8,8 +8,9 @@ Compatible with:
 - pyloudnorm>=0.1.1
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -56,7 +57,7 @@ class LUFSMeter:
                 logger.warning(f"Failed to initialize pyloudnorm meter: {e}")
 
     def measure_integrated_lufs(
-        self, audio: np.ndarray, sample_rate: Optional[int] = None
+        self, audio: np.ndarray, sample_rate: int | None = None
     ) -> float:
         """
         Measure integrated LUFS (overall loudness).
@@ -95,7 +96,7 @@ class LUFSMeter:
             return self._estimate_lufs_from_rms(audio)
 
     def measure_momentary_lufs(
-        self, audio: np.ndarray, sample_rate: Optional[int] = None
+        self, audio: np.ndarray, sample_rate: int | None = None
     ) -> float:
         """
         Measure momentary LUFS (400ms blocks).
@@ -140,7 +141,7 @@ class LUFSMeter:
             return self._estimate_lufs_from_rms(audio)
 
     def measure_short_term_lufs(
-        self, audio: np.ndarray, sample_rate: Optional[int] = None
+        self, audio: np.ndarray, sample_rate: int | None = None
     ) -> float:
         """
         Measure short-term LUFS (3s blocks).
@@ -183,7 +184,7 @@ class LUFSMeter:
             return self._estimate_lufs_from_rms(audio)
 
     def measure_peak_lufs(
-        self, audio: np.ndarray, sample_rate: Optional[int] = None
+        self, audio: np.ndarray, sample_rate: int | None = None
     ) -> float:
         """
         Measure peak LUFS (true peak).
@@ -234,10 +235,10 @@ class LUFSMeter:
     def measure_time_series(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
+        sample_rate: int | None = None,
         window_size: float = 0.400,
-        hop_size: Optional[float] = None,
-    ) -> Tuple[List[float], List[float]]:
+        hop_size: float | None = None,
+    ) -> tuple[list[float], list[float]]:
         """
         Measure LUFS over time (time-series data).
 
@@ -307,8 +308,8 @@ class LUFSMeter:
         return times, lufs_values
 
     def measure_all(
-        self, audio: np.ndarray, sample_rate: Optional[int] = None
-    ) -> Dict[str, float]:
+        self, audio: np.ndarray, sample_rate: int | None = None
+    ) -> dict[str, float]:
         """
         Measure all LUFS metrics at once.
 

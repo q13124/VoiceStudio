@@ -5,9 +5,8 @@ Tests OpenAI TTS engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +31,7 @@ class TestOpenAITTSEngineImports:
     def test_module_has_openai_tts_engine_class(self):
         """Test module has OpenAITTSEngine class."""
         if hasattr(openai_tts_engine, "OpenAITTSEngine"):
-            cls = getattr(openai_tts_engine, "OpenAITTSEngine")
+            cls = openai_tts_engine.OpenAITTSEngine
             assert isinstance(cls, type), "OpenAITTSEngine should be a class"
 
 
@@ -42,7 +41,7 @@ class TestOpenAITTSEngineClass:
     def test_openai_tts_engine_class_exists(self):
         """Test OpenAITTSEngine class exists."""
         if hasattr(openai_tts_engine, "OpenAITTSEngine"):
-            cls = getattr(openai_tts_engine, "OpenAITTSEngine")
+            cls = openai_tts_engine.OpenAITTSEngine
             assert isinstance(cls, type), "OpenAITTSEngine should be a class"
 
     def test_openai_tts_engine_initialization(self):
@@ -193,7 +192,7 @@ class TestOpenAITTSEngineConnectionPooling:
         """Test session is initialized for connection pooling."""
         if hasattr(openai_tts_engine, "OpenAITTSEngine"):
             try:
-                with patch("openai_tts_engine.OpenAI") as mock_openai:
+                with patch("openai_tts_engine.OpenAI"):
                     with patch("openai_tts_engine.requests") as mock_requests:
                         mock_session = MagicMock()
                         mock_requests.Session.return_value = mock_session

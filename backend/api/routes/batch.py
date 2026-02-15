@@ -4,23 +4,25 @@ Batch Processing Routes
 Queue-based batch processing for voice synthesis operations.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
-import sys
 import tempfile
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from backend.services.engine_service import get_engine_service
+
+from ...services.JobStateStore import get_job_state_store
 from ..models import ApiOk
 from ..optimization import cache_response
-from ...services.JobStateStore import get_job_state_store
-from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -65,15 +67,13 @@ def _load_persisted_batch_jobs() -> None:
         logger.warning(f"Failed to load persisted batch jobs: {e}")
 
 
-def _websocket_notifier(event_type: str, data: Dict[str, Any]):
+def _websocket_notifier(event_type: str, data: dict[str, Any]):
     """WebSocket notification callback for job events."""
     if HAS_WEBSOCKET:
         try:
             # Determine topic based on event type
             topic = "batch"
-            if event_type.startswith("job."):
-                topic = "batch"
-            elif event_type.startswith("batch."):
+            if event_type.startswith("job.") or event_type.startswith("batch."):
                 topic = "batch"
 
             # Broadcast to WebSocket clients
@@ -180,19 +180,19 @@ class BatchJob(BaseModel):
     engine_id: str
     text: str
     language: str = "en"
-    output_path: Optional[str] = None
+    output_path: str | None = None
     status: JobStatus = JobStatus.PENDING
     progress: float = 0.0  # 0.0 to 1.0
-    error_message: Optional[str] = None
-    result_audio_id: Optional[str] = None
+    error_message: str | None = None
+    result_audio_id: str | None = None
     created: datetime
-    started: Optional[datetime] = None
-    completed: Optional[datetime] = None
+    started: datetime | None = None
+    completed: datetime | None = None
     # Quality-based batch processing (IDEA 57)
-    quality_metrics: Optional[dict] = None  # Quality metrics dict
-    quality_score: Optional[float] = None  # Overall quality score (0.0-1.0)
-    quality_threshold: Optional[float] = None  # Minimum quality threshold
-    quality_status: Optional[str] = None  # "pass", "fail", "warning"
+    quality_metrics: dict | None = None  # Quality metrics dict
+    quality_score: float | None = None  # Overall quality score (0.0-1.0)
+    quality_threshold: float | None = None  # Minimum quality threshold
+    quality_status: str | None = None  # "pass", "fail", "warning"
 
 
 class BatchJobRequest(BaseModel):
@@ -204,9 +204,9 @@ class BatchJobRequest(BaseModel):
     engine_id: str
     text: str
     language: str = "en"
-    output_path: Optional[str] = None
+    output_path: str | None = None
     # Quality-based batch processing (IDEA 57)
-    quality_threshold: Optional[float] = None  # Minimum quality threshold (0.0-1.0)
+    quality_threshold: float | None = None  # Minimum quality threshold (0.0-1.0)
     enhance_quality: bool = False  # Enable quality enhancement
 
 
@@ -258,16 +258,16 @@ async def create_batch_job(job_request: BatchJobRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating batch job: {str(e)}", exc_info=True)
+        logger.error(f"Error creating batch job: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create batch job: {str(e)}"
+            status_code=500, detail=f"Failed to create batch job: {e!s}"
         )
 
 
-@router.get("/jobs", response_model=List[BatchJob])
+@router.get("/jobs", response_model=list[BatchJob])
 @cache_response(ttl=10)  # Cache for 10 seconds (job list may change frequently)
 async def list_batch_jobs(
-    project_id: Optional[str] = None, status: Optional[JobStatus] = None
+    project_id: str | None = None, status: JobStatus | None = None
 ):
     """List all batch jobs, optionally filtered by project or status."""
     try:
@@ -287,9 +287,9 @@ async def list_batch_jobs(
         )
         return jobs
     except Exception as e:
-        logger.error(f"Error listing batch jobs: {str(e)}", exc_info=True)
+        logger.error(f"Error listing batch jobs: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list batch jobs: {str(e)}"
+            status_code=500, detail=f"Failed to list batch jobs: {e!s}"
         )
 
 
@@ -313,9 +313,9 @@ async def get_batch_job(job_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting batch job {job_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error getting batch job {job_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get batch job: {str(e)}"
+            status_code=500, detail=f"Failed to get batch job: {e!s}"
         )
 
 
@@ -346,9 +346,9 @@ async def delete_batch_job(job_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting batch job {job_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error deleting batch job {job_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete batch job: {str(e)}"
+            status_code=500, detail=f"Failed to delete batch job: {e!s}"
         )
 
 
@@ -399,9 +399,9 @@ async def start_batch_job(job_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error starting batch job {job_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error starting batch job {job_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to start batch job: {str(e)}"
+            status_code=500, detail=f"Failed to start batch job: {e!s}"
         )
 
 
@@ -445,9 +445,9 @@ async def cancel_batch_job(job_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error cancelling batch job {job_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error cancelling batch job {job_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to cancel batch job: {str(e)}"
+            status_code=500, detail=f"Failed to cancel batch job: {e!s}"
         )
 
 
@@ -497,9 +497,9 @@ async def get_queue_status():
         logger.debug(f"Retrieved batch queue status: {status}")
         return status
     except Exception as e:
-        logger.error(f"Error getting batch queue status: {str(e)}", exc_info=True)
+        logger.error(f"Error getting batch queue status: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get queue status: {str(e)}"
+            status_code=500, detail=f"Failed to get queue status: {e!s}"
         )
 
 
@@ -578,7 +578,7 @@ async def _process_batch_job(job_id: str):
                     f"Please check that the engine is installed and configured correctly."
                 )
         except AttributeError as e:
-            error_msg = f"EngineService error: {str(e)}. Engine system may not be properly initialized."
+            error_msg = f"EngineService error: {e!s}. Engine system may not be properly initialized."
             logger.error(f"Batch job {job_id} failed: {error_msg}", exc_info=True)
             job_data["status"] = JobStatus.FAILED.value
             job_data["error_message"] = error_msg
@@ -595,7 +595,7 @@ async def _process_batch_job(job_id: str):
                 )
             return
         except Exception as e:
-            error_msg = f"Failed to initialize engine '{job.engine_id}': {str(e)}. Please check engine configuration and dependencies."
+            error_msg = f"Failed to initialize engine '{job.engine_id}': {e!s}. Please check engine configuration and dependencies."
             logger.error(f"Batch job {job_id} failed: {error_msg}", exc_info=True)
 
             job_data["status"] = JobStatus.FAILED.value
@@ -712,7 +712,7 @@ async def _process_batch_job(job_id: str):
                     try:
                         os.makedirs(project_audio_dir, exist_ok=True)
                     except (PermissionError, OSError) as e:
-                        error_msg = f"Failed to create project audio directory '{project_audio_dir}': {str(e)}"
+                        error_msg = f"Failed to create project audio directory '{project_audio_dir}': {e!s}"
                         logger.error(f"Batch job {job_id} failed: {error_msg}")
                         job_data["status"] = JobStatus.FAILED.value
                         job_data["error_message"] = error_msg
@@ -734,7 +734,7 @@ async def _process_batch_job(job_id: str):
                     try:
                         output_path = tempfile.mktemp(suffix=".wav")
                     except OSError as e:
-                        error_msg = f"Failed to create temporary file: {str(e)}"
+                        error_msg = f"Failed to create temporary file: {e!s}"
                         logger.error(f"Batch job {job_id} failed: {error_msg}")
                         job_data["status"] = JobStatus.FAILED.value
                         job_data["error_message"] = error_msg
@@ -751,7 +751,7 @@ async def _process_batch_job(job_id: str):
                             )
                         return
         except (ValueError, PermissionError, OSError) as e:
-            error_msg = f"Output path preparation failed: {str(e)}"
+            error_msg = f"Output path preparation failed: {e!s}"
             logger.error(f"Batch job {job_id} failed: {error_msg}", exc_info=True)
             job_data["status"] = JobStatus.FAILED.value
             job_data["error_message"] = error_msg
@@ -768,7 +768,7 @@ async def _process_batch_job(job_id: str):
                 )
             return
         except Exception as e:
-            error_msg = f"Unexpected error preparing output path: {str(e)}"
+            error_msg = f"Unexpected error preparing output path: {e!s}"
             logger.error(f"Batch job {job_id} failed: {error_msg}", exc_info=True)
             job_data["status"] = JobStatus.FAILED.value
             job_data["error_message"] = error_msg
@@ -952,7 +952,7 @@ async def _process_batch_job(job_id: str):
                 )
 
         except Exception as synthesis_error:
-            error_msg = f"Synthesis failed: {str(synthesis_error)}"
+            error_msg = f"Synthesis failed: {synthesis_error!s}"
             logger.error(
                 f"Batch job {job_id} synthesis error: {error_msg}", exc_info=True
             )
@@ -974,7 +974,7 @@ async def _process_batch_job(job_id: str):
                 )
 
     except Exception as e:
-        error_msg = f"Batch job processing failed: {str(e)}"
+        error_msg = f"Batch job processing failed: {e!s}"
         logger.error(f"Batch job {job_id} processing error: {error_msg}", exc_info=True)
 
         job_data = _batch_jobs.get(job_id, {})
@@ -1007,12 +1007,12 @@ class BatchQualityReport(BaseModel):
 
     job_id: str
     job_name: str
-    quality_score: Optional[float] = None
-    quality_status: Optional[str] = None
-    quality_threshold: Optional[float] = None
-    metrics: Dict[str, Any] = {}
-    summary: Dict[str, Any] = {}
-    comparison: Optional[Dict[str, Any]] = None
+    quality_score: float | None = None
+    quality_status: str | None = None
+    quality_threshold: float | None = None
+    metrics: dict[str, Any] = {}
+    summary: dict[str, Any] = {}
+    comparison: dict[str, Any] | None = None
 
 
 class BatchQualityStatistics(BaseModel):
@@ -1021,19 +1021,19 @@ class BatchQualityStatistics(BaseModel):
     total_jobs: int
     completed_jobs: int
     jobs_with_quality: int
-    average_quality: Optional[float] = None
-    min_quality: Optional[float] = None
-    max_quality: Optional[float] = None
-    quality_distribution: Dict[str, int] = {}
-    status_distribution: Dict[str, int] = {}
+    average_quality: float | None = None
+    min_quality: float | None = None
+    max_quality: float | None = None
+    quality_distribution: dict[str, int] = {}
+    status_distribution: dict[str, int] = {}
 
 
 class BatchRetryWithQualityRequest(BaseModel):
     """Request to retry a batch job with quality settings (IDEA 57)."""
 
-    quality_threshold: Optional[float] = None
+    quality_threshold: float | None = None
     enhance_quality: bool = False
-    quality_mode: Optional[str] = None
+    quality_mode: str | None = None
 
 
 @router.get("/jobs/{job_id}/quality", response_model=BatchQualityReport)
@@ -1060,10 +1060,10 @@ async def get_batch_job_quality(job_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error getting batch job quality {job_id}: {str(e)}", exc_info=True
+            f"Error getting batch job quality {job_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to get batch job quality: {str(e)}"
+            status_code=500, detail=f"Failed to get batch job quality: {e!s}"
         )
 
 
@@ -1095,24 +1095,24 @@ async def get_batch_quality_report(job_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error getting batch quality report {job_id}: {str(e)}", exc_info=True
+            f"Error getting batch quality report {job_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to get batch quality report: {str(e)}"
+            status_code=500, detail=f"Failed to get batch quality report: {e!s}"
         )
 
 
 @router.get("/quality/statistics", response_model=BatchQualityStatistics)
 @cache_response(ttl=30)  # Cache for 30 seconds (statistics aggregate data)
 async def get_batch_quality_statistics(
-    project_id: Optional[str] = None, status: Optional[JobStatus] = None
+    project_id: str | None = None, status: JobStatus | None = None
 ):
     """
     Get quality statistics for batch jobs (IDEA 57).
     Optionally filtered by project or status.
     """
     try:
-        jobs = [job_data for job_data in _batch_jobs.values()]
+        jobs = list(_batch_jobs.values())
 
         # Filter by project
         if project_id:
@@ -1127,9 +1127,9 @@ async def get_batch_quality_statistics(
 
         return BatchQualityStatistics(**stats)
     except Exception as e:
-        logger.error(f"Error getting batch quality statistics: {str(e)}", exc_info=True)
+        logger.error(f"Error getting batch quality statistics: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get batch quality statistics: {str(e)}"
+            status_code=500, detail=f"Failed to get batch quality statistics: {e!s}"
         )
 
 
@@ -1171,16 +1171,16 @@ async def retry_batch_job_with_quality(
         raise
     except Exception as e:
         logger.error(
-            f"Error retrying batch job with quality {job_id}: {str(e)}", exc_info=True
+            f"Error retrying batch job with quality {job_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to retry batch job: {str(e)}"
+            status_code=500, detail=f"Failed to retry batch job: {e!s}"
         )
 
 
 def process_batch_jobs_parallel(
-    job_ids: List[str], max_workers: Optional[int] = None, use_dask: bool = False
-) -> Dict[str, Any]:
+    job_ids: list[str], max_workers: int | None = None, use_dask: bool = False
+) -> dict[str, Any]:
     """
     Process multiple batch jobs in parallel using joblib or dask.
 
@@ -1207,7 +1207,7 @@ def process_batch_jobs_parallel(
                 results = dask.compute(*[task for _, task in tasks])
 
                 # Map results back to job IDs
-                return {job_id: result for (job_id, _), result in zip(tasks, results)}
+                return {job_id: result for (job_id, _), result in zip(tasks, results, strict=False)}
         except Exception as e:
             logger.warning(
                 f"Dask parallel processing failed: {e}. Falling back to joblib."
@@ -1220,7 +1220,7 @@ def process_batch_jobs_parallel(
             results = Parallel(n_jobs=max_workers, backend="threading")(
                 delayed(_process_batch_job_sync)(job_id) for job_id in job_ids
             )
-            return {job_id: result for job_id, result in zip(job_ids, results)}
+            return dict(zip(job_ids, results, strict=False))
         except Exception as e:
             logger.warning(
                 f"Joblib parallel processing failed: {e}. Falling back to sequential."
@@ -1238,7 +1238,7 @@ def process_batch_jobs_parallel(
     return results
 
 
-def _process_batch_job_sync(job_id: str) -> Dict[str, Any]:
+def _process_batch_job_sync(job_id: str) -> dict[str, Any]:
     """
     Synchronous wrapper for batch job processing (for parallel execution).
 
@@ -1271,7 +1271,7 @@ def _process_batch_job_sync(job_id: str) -> Dict[str, Any]:
 
 
 def generate_batch_quality_report(
-    job_data: dict, all_jobs: Optional[List[dict]] = None
+    job_data: dict, all_jobs: list[dict] | None = None
 ) -> dict:
     """
     Generate quality report for a batch job.
@@ -1331,7 +1331,7 @@ def generate_batch_quality_report(
     return report
 
 
-def calculate_batch_statistics(jobs: List[dict]) -> dict:
+def calculate_batch_statistics(jobs: list[dict]) -> dict:
     """
     Calculate quality statistics for a batch of jobs.
 

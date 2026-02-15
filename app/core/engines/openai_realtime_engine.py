@@ -9,13 +9,13 @@ Note: Requires OPENAI_API_KEY. Per local-first policy, this is
 optional -- local S2S alternatives are preferred when available.
 """
 
-import asyncio
+from __future__ import annotations
+
 import base64
-import json
 import logging
 import os
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
     DEFAULT_MODEL = "gpt-4o-realtime-preview"
     WS_URL = "wss://api.openai.com/v1/realtime"
 
-    def __init__(self, config: Optional[S2SConfig] = None):
+    def __init__(self, config: S2SConfig | None = None):
         super().__init__(config)
         if not self._config.model:
             self._config.model = self.DEFAULT_MODEL
@@ -56,7 +56,7 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
     def is_available(self) -> bool:
         return bool(self._config.api_key)
 
-    async def connect(self, config: Optional[S2SConfig] = None) -> bool:
+    async def connect(self, config: S2SConfig | None = None) -> bool:
         """Connect to OpenAI Realtime API via WebSocket."""
         if config:
             self._config = config
@@ -178,7 +178,7 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
             self._state = S2SConnectionState.ERROR
 
     async def respond(
-        self, audio_data: bytes, context: Optional[str] = None
+        self, audio_data: bytes, context: str | None = None
     ) -> S2SResponse:
         """
         Send audio and get a complete response.

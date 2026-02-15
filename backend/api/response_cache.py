@@ -8,12 +8,15 @@ Compatible with:
 - All GET endpoints
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Callable, Dict, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.responses import JSONResponse
@@ -37,7 +40,7 @@ class ResponseCache:
         max_size: int = 1000,
         default_ttl: int = 300,  # 5 minutes default
         cleanup_interval: int = 60,  # Cleanup every 60 seconds
-        max_memory_mb: Optional[float] = None,  # Optional memory limit
+        max_memory_mb: float | None = None,  # Optional memory limit
     ):
         """
         Initialize response cache.
@@ -55,10 +58,10 @@ class ResponseCache:
 
         # Cache storage: {cache_key: (response_data, timestamp, ttl, size_bytes, tags)}
         # tags: list of strings for invalidation (e.g., ["profiles", "user:123"])
-        self._cache: OrderedDict[str, Tuple[Any, float, int, int, list]] = OrderedDict()
-        
+        self._cache: OrderedDict[str, tuple[Any, float, int, int, list]] = OrderedDict()
+
         # Index for fast invalidation by tag
-        self._tag_index: Dict[str, set] = {}  # tag -> set of cache_keys
+        self._tag_index: dict[str, set] = {}  # tag -> set of cache_keys
 
         # Statistics
         self._hits = 0
@@ -99,7 +102,7 @@ class ResponseCache:
 
         key_string = "|".join(key_parts)
         return hashlib.md5(key_string.encode()).hexdigest()
-    
+
     def _estimate_size_bytes(self, response_data: Any) -> int:
         """
         Estimate size of response data in bytes.
@@ -118,7 +121,7 @@ class ResponseCache:
             # Fallback: rough estimate
             return 1024  # 1KB default estimate
 
-    def get(self, cache_key: str) -> Optional[Any]:
+    def get(self, cache_key: str) -> Any | None:
         """
         Get cached response.
 
@@ -133,7 +136,7 @@ class ResponseCache:
             return None
 
         # Check TTL
-        response_data, timestamp, ttl, size_bytes, tags = self._cache[cache_key]
+        response_data, timestamp, ttl, _size_bytes, _tags = self._cache[cache_key]
         current_time = time.time()
         age = current_time - timestamp
 
@@ -147,24 +150,24 @@ class ResponseCache:
         self._cache.move_to_end(cache_key)
         self._hits += 1
         return response_data
-    
+
     def _remove_from_cache(self, cache_key: str) -> None:
         """Remove entry from cache and update indices."""
         if cache_key not in self._cache:
             return
-        
+
         _, _, _, size_bytes, tags = self._cache[cache_key]
-        
+
         # Remove from tag index
         for tag in tags:
             if tag in self._tag_index:
                 self._tag_index[tag].discard(cache_key)
                 if not self._tag_index[tag]:
                     del self._tag_index[tag]
-        
+
         # Update memory stats
         self._current_memory_bytes -= size_bytes
-        
+
         # Remove from cache
         del self._cache[cache_key]
 
@@ -172,8 +175,8 @@ class ResponseCache:
         self,
         cache_key: str,
         response_data: Any,
-        ttl: Optional[int] = None,
-        tags: Optional[list] = None,
+        ttl: int | None = None,
+        tags: list | None = None,
     ) -> None:
         """
         Cache response.
@@ -189,10 +192,10 @@ class ResponseCache:
 
         # Estimate size
         size_bytes = self._estimate_size_bytes(response_data)
-        
+
         # Check memory limit
         if self.max_memory_mb is not None:
-            size_mb = size_bytes / (1024 * 1024)
+            size_bytes / (1024 * 1024)
             # Evict until we have enough space
             while (
                 self._current_memory_bytes + size_bytes > self.max_memory_mb * 1024 * 1024
@@ -223,10 +226,10 @@ class ResponseCache:
             actual_tags,
         )
         self._cache.move_to_end(cache_key)  # LRU update
-        
+
         # Update memory stats
         self._current_memory_bytes += size_bytes
-        
+
         # Update tag index
         for tag in actual_tags:
             if tag not in self._tag_index:
@@ -235,9 +238,9 @@ class ResponseCache:
 
     def invalidate(
         self,
-        pattern: Optional[str] = None,
-        tags: Optional[list] = None,
-        path_prefix: Optional[str] = None,
+        pattern: str | None = None,
+        tags: list | None = None,
+        path_prefix: str | None = None,
     ) -> int:
         """
         Invalidate cache entries.
@@ -271,14 +274,14 @@ class ResponseCache:
             # We need to check stored paths, but we only have cache keys
             # For now, we'll use pattern matching on keys
             # In a real implementation, we'd store path separately
-            for key in self._cache.keys():
+            for key in self._cache:
                 # Cache keys are MD5 hashes, so we can't match paths directly
                 # This is a limitation - we'd need to store path metadata
                 ...
 
         # Invalidate by pattern
         if pattern:
-            for key in self._cache.keys():
+            for key in self._cache:
                 if pattern in key:
                     to_remove.add(key)
 
@@ -288,7 +291,7 @@ class ResponseCache:
             self._remove_from_cache(key)
 
         return count
-    
+
     def invalidate_by_tag(self, tag: str) -> int:
         """
         Invalidate all cache entries with a specific tag.
@@ -300,7 +303,7 @@ class ResponseCache:
             Number of entries invalidated
         """
         return self.invalidate(tags=[tag])
-    
+
     def invalidate_by_tags(self, tags: list) -> int:
         """
         Invalidate all cache entries with any of the specified tags.
@@ -333,14 +336,11 @@ class ResponseCache:
         if expired_keys:
             logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         self._cleanup_if_needed()
         total_requests = self._hits + self._misses
-        if total_requests > 0:
-            hit_rate = self._hits / total_requests * 100
-        else:
-            hit_rate = 0
+        hit_rate = self._hits / total_requests * 100 if total_requests > 0 else 0
 
         memory_mb = self._current_memory_bytes / (1024 * 1024)
 
@@ -369,7 +369,7 @@ class ResponseCache:
 
 
 # Global cache instance
-_response_cache: Optional[ResponseCache] = None
+_response_cache: ResponseCache | None = None
 
 
 def get_response_cache() -> ResponseCache:
@@ -474,7 +474,7 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
             parts = path.split("/")
             if len(parts) >= 3:
                 tags.append(parts[2])  # e.g., "profiles", "voice", "projects"
-        
+
         # Cache response
         cache.set(
             cache_key,
@@ -501,7 +501,7 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
     return response
 
 
-def cache_response(ttl: Optional[int] = None):
+def cache_response(ttl: int | None = None):
     """
     Decorator for caching specific endpoint responses.
 

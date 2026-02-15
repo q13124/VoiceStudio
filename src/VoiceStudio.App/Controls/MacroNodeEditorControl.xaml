@@ -4,11 +4,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VoiceStudio.App.Controls"
     x:DataType="local:MacroNodeEditorControl">
-    <Grid>
-        <TextBlock Text="Macro node editor temporarily disabled (XAML compiler stability)"
-            TextWrapping="Wrap"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Opacity="0.7" />
+    <Grid x:Name="Root">
+        <Canvas x:Name="NodeCanvas">
+            <Canvas x:Name="ConnectionsLayer" />
+            <Canvas x:Name="NodesLayer" />
+        </Canvas>
+        <TextBlock x:Name="EmptyText" Text="No macro graph" HorizontalAlignment="Center" VerticalAlignment="Center"
+            Opacity="0.6" Visibility="Collapsed" />
     </Grid>
 </UserControl>

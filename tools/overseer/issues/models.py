@@ -4,10 +4,12 @@ Overseer Issue Logging - Data Models.
 Issue, Recommendation, and related enums for unified issue tracking.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class InstanceType(Enum):
@@ -54,9 +56,9 @@ class StateTransition:
 
     status: str
     at: datetime
-    by: Optional[str] = None
+    by: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "status": self.status,
             "at": self.at.isoformat(),
@@ -64,7 +66,7 @@ class StateTransition:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "StateTransition":
+    def from_dict(cls, data: dict[str, Any]) -> "StateTransition":
         return cls(
             status=data["status"],
             at=datetime.fromisoformat(data["at"]),
@@ -79,10 +81,10 @@ class Recommendation:
     action: str
     confidence: float
     rationale: str
-    similar_issues: List[str]
-    risk_assessment: Dict[str, Any]
+    similar_issues: list[str]
+    risk_assessment: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "action": self.action,
@@ -93,7 +95,7 @@ class Recommendation:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Recommendation":
+    def from_dict(cls, data: dict[str, Any]) -> "Recommendation":
         """Create from dictionary."""
         return cls(
             action=data["action"],
@@ -117,19 +119,19 @@ class Issue:
     category: str
     error_type: str
     message: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
     pattern_hash: str
     status: IssueStatus
-    recommendations: List[Recommendation] = field(default_factory=list)
-    resolved_at: Optional[datetime] = None
-    resolved_by: Optional[str] = None
-    state_history: List[StateTransition] = field(default_factory=list)
-    parent_id: Optional[str] = None
-    related_ids: List[str] = field(default_factory=list)
-    labels: List[str] = field(default_factory=list)
-    priority: Optional[IssuePriority] = None
+    recommendations: list[Recommendation] = field(default_factory=list)
+    resolved_at: datetime | None = None
+    resolved_by: str | None = None
+    state_history: list[StateTransition] = field(default_factory=list)
+    parent_id: str | None = None
+    related_ids: list[str] = field(default_factory=list)
+    labels: list[str] = field(default_factory=list)
+    priority: IssuePriority | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         out = {
             "id": self.id,
@@ -161,7 +163,7 @@ class Issue:
         return out
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Issue":
+    def from_dict(cls, data: dict[str, Any]) -> "Issue":
         """Create from dictionary."""
         state_history = [
             StateTransition.from_dict(s)

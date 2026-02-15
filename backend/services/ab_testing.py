@@ -19,11 +19,11 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class Variant:
     name: str
     description: str = ""
     weight: int = 50  # Percentage weight (0-100)
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -63,17 +63,17 @@ class Experiment:
     name: str
     description: str
     status: ExperimentStatus = ExperimentStatus.DRAFT
-    variants: List[Variant] = field(default_factory=list)
+    variants: list[Variant] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     target_sample_size: int = 0
     current_sample_size: int = 0
-    metrics: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
+    metrics: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "id": self.id,
@@ -92,7 +92,7 @@ class Experiment:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Experiment":
+    def from_dict(cls, data: dict[str, Any]) -> Experiment:
         """Create from dictionary."""
         variants = [
             Variant(
@@ -128,7 +128,7 @@ class VariantAssignment:
     experiment_id: str
     variant_id: str
     assigned_at: datetime = field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -138,14 +138,14 @@ class ExperimentEvent:
     experiment_id: str
     variant_id: str
     event_type: str  # "exposure", "conversion", custom events
-    event_data: Dict[str, Any] = field(default_factory=dict)
+    event_data: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
 class ABTestingService:
     """
     Service for managing A/B tests and experiments.
-    
+
     Provides:
     - Experiment CRUD operations
     - Deterministic user bucketing
@@ -154,25 +154,25 @@ class ABTestingService:
     - Basic analytics
     """
 
-    def __init__(self, config_dir: Optional[Path] = None, data_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Path | None = None, data_dir: Path | None = None):
         """
         Initialize the A/B testing service.
-        
+
         Args:
             config_dir: Directory for experiment configurations
             data_dir: Directory for experiment data/events
         """
         self.config_dir = config_dir or DEFAULT_EXPERIMENTS_DIR
         self.data_dir = data_dir or Path(".buildlogs/experiments")
-        
-        self._experiments: Dict[str, Experiment] = {}
-        self._assignments: Dict[str, Dict[str, VariantAssignment]] = {}  # user_hash -> exp_id -> assignment
-        self._events: List[ExperimentEvent] = []
-        
+
+        self._experiments: dict[str, Experiment] = {}
+        self._assignments: dict[str, dict[str, VariantAssignment]] = {}  # user_hash -> exp_id -> assignment
+        self._events: list[ExperimentEvent] = []
+
         # Ensure directories exist
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Load experiments from config
         self._load_experiments()
 
@@ -181,7 +181,7 @@ class ABTestingService:
         config_file = self.config_dir / "experiments.json"
         if config_file.exists():
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     data = json.load(f)
                 for exp_data in data.get("experiments", []):
                     exp = Experiment.from_dict(exp_data)
@@ -212,7 +212,7 @@ class ABTestingService:
     def _get_bucket(user_id: str, experiment_id: str, num_buckets: int = 100) -> int:
         """
         Get a stable bucket (0 to num_buckets-1) for a user in an experiment.
-        
+
         Uses consistent hashing for deterministic assignment.
         """
         key = f"{user_id}:{experiment_id}"
@@ -236,7 +236,7 @@ class ABTestingService:
     ) -> Experiment:
         """
         Create a new A/B experiment with control and treatment variants.
-        
+
         Args:
             id: Unique experiment identifier
             name: Human-readable name
@@ -244,15 +244,15 @@ class ABTestingService:
             control_name: Name for control variant
             treatment_name: Name for treatment variant
             treatment_weight: Percentage of users in treatment (0-100)
-        
+
         Returns:
             The created experiment
         """
         if id in self._experiments:
             raise ValueError(f"Experiment '{id}' already exists")
-        
+
         control_weight = 100 - treatment_weight
-        
+
         experiment = Experiment(
             id=id,
             name=name,
@@ -262,55 +262,55 @@ class ABTestingService:
                 Variant(id="treatment", name=treatment_name, weight=treatment_weight),
             ],
         )
-        
+
         self._experiments[id] = experiment
         self._save_experiments()
         logger.info(f"Created experiment: {id}")
-        
+
         return experiment
 
-    def get_experiment(self, experiment_id: str) -> Optional[Experiment]:
+    def get_experiment(self, experiment_id: str) -> Experiment | None:
         """Get an experiment by ID."""
         return self._experiments.get(experiment_id)
 
     def list_experiments(
         self,
-        status: Optional[ExperimentStatus] = None,
-        tags: Optional[List[str]] = None,
-    ) -> List[Experiment]:
+        status: ExperimentStatus | None = None,
+        tags: list[str] | None = None,
+    ) -> list[Experiment]:
         """List experiments, optionally filtered by status or tags."""
         experiments = list(self._experiments.values())
-        
+
         if status:
             experiments = [e for e in experiments if e.status == status]
-        
+
         if tags:
             experiments = [e for e in experiments if any(t in e.tags for t in tags)]
-        
+
         return experiments
 
     def update_experiment_status(
         self,
         experiment_id: str,
         status: ExperimentStatus,
-    ) -> Optional[Experiment]:
+    ) -> Experiment | None:
         """Update experiment status."""
         exp = self._experiments.get(experiment_id)
         if not exp:
             return None
-        
+
         old_status = exp.status
         exp.status = status
         exp.updated_at = datetime.utcnow()
-        
+
         if status == ExperimentStatus.RUNNING and not exp.start_date:
             exp.start_date = datetime.utcnow()
         elif status == ExperimentStatus.COMPLETED and not exp.end_date:
             exp.end_date = datetime.utcnow()
-        
+
         self._save_experiments()
         logger.info(f"Experiment {experiment_id} status: {old_status} -> {status}")
-        
+
         return exp
 
     def delete_experiment(self, experiment_id: str) -> bool:
@@ -318,63 +318,62 @@ class ABTestingService:
         exp = self._experiments.get(experiment_id)
         if not exp:
             return False
-        
+
         if exp.status not in (ExperimentStatus.DRAFT, ExperimentStatus.ARCHIVED):
             raise ValueError(f"Cannot delete experiment in status: {exp.status}")
-        
+
         del self._experiments[experiment_id]
         self._save_experiments()
         logger.info(f"Deleted experiment: {experiment_id}")
-        
+
         return True
 
     # =========================================================================
     # Variant Assignment
     # =========================================================================
 
-    def get_variant(self, user_id: str, experiment_id: str) -> Optional[str]:
+    def get_variant(self, user_id: str, experiment_id: str) -> str | None:
         """
         Get the variant ID for a user in an experiment.
-        
+
         Returns None if experiment doesn't exist or isn't running.
         Uses consistent hashing for deterministic assignment.
         """
         exp = self._experiments.get(experiment_id)
         if not exp or exp.status != ExperimentStatus.RUNNING:
             return None
-        
+
         user_hash = self._hash_user_id(user_id)
-        
+
         # Check for existing assignment
-        if user_hash in self._assignments:
-            if experiment_id in self._assignments[user_hash]:
-                return self._assignments[user_hash][experiment_id].variant_id
-        
+        if user_hash in self._assignments and experiment_id in self._assignments[user_hash]:
+            return self._assignments[user_hash][experiment_id].variant_id
+
         # Calculate variant based on bucket
         bucket = self._get_bucket(user_id, experiment_id)
-        
+
         cumulative = 0
         variant_id = exp.variants[-1].id  # Default to last variant
-        
+
         for variant in exp.variants:
             cumulative += variant.weight
             if bucket < cumulative:
                 variant_id = variant.id
                 break
-        
+
         # Record assignment
         if user_hash not in self._assignments:
             self._assignments[user_hash] = {}
-        
+
         self._assignments[user_hash][experiment_id] = VariantAssignment(
             user_id_hash=user_hash,
             experiment_id=experiment_id,
             variant_id=variant_id,
         )
-        
+
         # Update sample size
         exp.current_sample_size += 1
-        
+
         return variant_id
 
     def is_in_treatment(self, user_id: str, experiment_id: str) -> bool:
@@ -382,20 +381,20 @@ class ABTestingService:
         variant = self.get_variant(user_id, experiment_id)
         return variant == "treatment"
 
-    def get_variant_config(self, user_id: str, experiment_id: str) -> Dict[str, Any]:
+    def get_variant_config(self, user_id: str, experiment_id: str) -> dict[str, Any]:
         """Get the configuration for the user's assigned variant."""
         exp = self._experiments.get(experiment_id)
         if not exp:
             return {}
-        
+
         variant_id = self.get_variant(user_id, experiment_id)
         if not variant_id:
             return {}
-        
+
         for variant in exp.variants:
             if variant.id == variant_id:
                 return variant.config
-        
+
         return {}
 
     # =========================================================================
@@ -406,45 +405,45 @@ class ABTestingService:
         self,
         user_id: str,
         experiment_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[ExperimentEvent]:
+        metadata: dict[str, Any] | None = None,
+    ) -> ExperimentEvent | None:
         """
         Track that a user was exposed to an experiment.
-        
+
         Call this when the user sees the variant.
         """
         variant_id = self.get_variant(user_id, experiment_id)
         if not variant_id:
             return None
-        
+
         return self._track_event(user_id, experiment_id, variant_id, "exposure", metadata)
 
     def track_conversion(
         self,
         user_id: str,
         experiment_id: str,
-        conversion_value: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[ExperimentEvent]:
+        conversion_value: float | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> ExperimentEvent | None:
         """
         Track a conversion event for an experiment.
-        
+
         Call this when the user completes the target action.
         """
         user_hash = self._hash_user_id(user_id)
-        
+
         # Get variant from assignment
         if user_hash not in self._assignments:
             return None
         if experiment_id not in self._assignments[user_hash]:
             return None
-        
+
         variant_id = self._assignments[user_hash][experiment_id].variant_id
-        
+
         event_data = metadata or {}
         if conversion_value is not None:
             event_data["conversion_value"] = conversion_value
-        
+
         return self._track_event(user_id, experiment_id, variant_id, "conversion", event_data)
 
     def track_custom_event(
@@ -452,18 +451,18 @@ class ABTestingService:
         user_id: str,
         experiment_id: str,
         event_type: str,
-        event_data: Optional[Dict[str, Any]] = None,
-    ) -> Optional[ExperimentEvent]:
+        event_data: dict[str, Any] | None = None,
+    ) -> ExperimentEvent | None:
         """Track a custom event for an experiment."""
         user_hash = self._hash_user_id(user_id)
-        
+
         if user_hash not in self._assignments:
             return None
         if experiment_id not in self._assignments[user_hash]:
             return None
-        
+
         variant_id = self._assignments[user_hash][experiment_id].variant_id
-        
+
         return self._track_event(user_id, experiment_id, variant_id, event_type, event_data)
 
     def _track_event(
@@ -472,7 +471,7 @@ class ABTestingService:
         experiment_id: str,
         variant_id: str,
         event_type: str,
-        event_data: Optional[Dict[str, Any]] = None,
+        event_data: dict[str, Any] | None = None,
     ) -> ExperimentEvent:
         """Internal method to record an event."""
         event = ExperimentEvent(
@@ -482,13 +481,13 @@ class ABTestingService:
             event_type=event_type,
             event_data=event_data or {},
         )
-        
+
         self._events.append(event)
-        
+
         # Persist events periodically (simple implementation)
         if len(self._events) % 100 == 0:
             self._persist_events()
-        
+
         return event
 
     def _persist_events(self) -> None:
@@ -505,25 +504,25 @@ class ABTestingService:
     # Analytics
     # =========================================================================
 
-    def get_experiment_stats(self, experiment_id: str) -> Dict[str, Any]:
+    def get_experiment_stats(self, experiment_id: str) -> dict[str, Any]:
         """
         Get basic statistics for an experiment.
-        
+
         Returns counts and conversion rates by variant.
         """
         exp = self._experiments.get(experiment_id)
         if not exp:
             return {}
-        
+
         # Count assignments by variant
-        variant_counts: Dict[str, int] = {v.id: 0 for v in exp.variants}
+        variant_counts: dict[str, int] = {v.id: 0 for v in exp.variants}
         for user_assignments in self._assignments.values():
             if experiment_id in user_assignments:
                 variant_id = user_assignments[experiment_id].variant_id
                 variant_counts[variant_id] = variant_counts.get(variant_id, 0) + 1
-        
+
         # Count events by variant and type
-        event_counts: Dict[str, Dict[str, int]] = {v.id: {} for v in exp.variants}
+        event_counts: dict[str, dict[str, int]] = {v.id: {} for v in exp.variants}
         for event in self._events:
             if event.experiment_id == experiment_id:
                 if event.variant_id not in event_counts:
@@ -532,7 +531,7 @@ class ABTestingService:
                 event_counts[event.variant_id][event_type] = (
                     event_counts[event.variant_id].get(event_type, 0) + 1
                 )
-        
+
         # Calculate conversion rates
         stats = {
             "experiment_id": experiment_id,
@@ -541,14 +540,14 @@ class ABTestingService:
             "total_users": sum(variant_counts.values()),
             "variants": [],
         }
-        
+
         for variant in exp.variants:
             users = variant_counts.get(variant.id, 0)
             exposures = event_counts.get(variant.id, {}).get("exposure", 0)
             conversions = event_counts.get(variant.id, {}).get("conversion", 0)
-            
+
             conversion_rate = (conversions / exposures * 100) if exposures > 0 else 0
-            
+
             stats["variants"].append({
                 "id": variant.id,
                 "name": variant.name,
@@ -558,23 +557,23 @@ class ABTestingService:
                 "conversions": conversions,
                 "conversion_rate": round(conversion_rate, 2),
             })
-        
+
         return stats
 
-    def export_flags_config(self) -> Dict[str, bool]:
+    def export_flags_config(self) -> dict[str, bool]:
         """
         Export experiment flags in a format compatible with FeatureFlagsService.
-        
+
         Returns dict of flag_name -> enabled_for_treatment.
         """
-        flags: Dict[str, bool] = {}
-        
+        flags: dict[str, bool] = {}
+
         for exp in self._experiments.values():
             if exp.status == ExperimentStatus.RUNNING:
                 # Export as feature flag (treatment = enabled)
                 flag_name = f"ABTest_{exp.id}"
                 flags[flag_name] = True
-        
+
         return flags
 
 
@@ -582,7 +581,7 @@ class ABTestingService:
 # Default instance
 # =============================================================================
 
-_default_service: Optional[ABTestingService] = None
+_default_service: ABTestingService | None = None
 
 
 def get_ab_testing_service() -> ABTestingService:

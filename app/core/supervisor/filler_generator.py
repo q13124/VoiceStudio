@@ -5,9 +5,10 @@ Generates contextual filler phrases during handoffs between S2S
 and Cascade pipelines to maintain conversational fluidity.
 """
 
+from __future__ import annotations
+
 import logging
 import random
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +55,13 @@ class FillerPhraseGenerator:
     ]
 
     def __init__(self):
-        self._used_recently: List[str] = []
+        self._used_recently: list[str] = []
         self._max_recent = 5
 
     def get_filler(
         self,
         category: str = "thinking",
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> str:
         """
         Get a contextual filler phrase.

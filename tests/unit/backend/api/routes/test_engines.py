@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock app.core.runtime which does not exist",
     allow_module_level=True,
@@ -144,23 +145,22 @@ class TestEnginesEndpoints:
 
     def test_get_engine_status(self):
         """Test getting engine status."""
-        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True):
-            with patch(
-                "app.core.runtime.engine_lifecycle.get_lifecycle_manager"
-            ) as mock_get_manager:
-                mock_manager = MagicMock()
-                mock_get_manager.return_value = mock_manager
+        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True), patch(
+            "app.core.runtime.engine_lifecycle.get_lifecycle_manager"
+        ) as mock_get_manager:
+            mock_manager = MagicMock()
+            mock_get_manager.return_value = mock_manager
 
-                # Mock state return
-                mock_state = MagicMock()
-                mock_state.name = "HEALTHY"
-                mock_manager.get_engine_state.return_value = mock_state
+            # Mock state return
+            mock_state = MagicMock()
+            mock_state.name = "HEALTHY"
+            mock_manager.get_engine_state.return_value = mock_state
 
-                response = self.client.get("/api/engines/test_engine/status")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["state"] == "healthy"
-                assert data["available"] is True
+            response = self.client.get("/api/engines/test_engine/status")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["state"] == "healthy"
+            assert data["available"] is True
 
     def test_get_engine_voices(self):
         """Test getting engine voices."""

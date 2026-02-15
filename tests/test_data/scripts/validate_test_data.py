@@ -12,7 +12,6 @@ Checks:
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
 
 # Get script directory
 SCRIPT_DIR = Path(__file__).parent
@@ -22,7 +21,7 @@ PROJECTS_DIR = TEST_DATA_DIR / "projects"
 METADATA_DIR = TEST_DATA_DIR / "metadata"
 
 
-def validate_json_file(file_path: Path) -> tuple[bool, List[str]]:
+def validate_json_file(file_path: Path) -> tuple[bool, list[str]]:
     """Validate JSON file structure."""
     errors = []
 
@@ -31,7 +30,7 @@ def validate_json_file(file_path: Path) -> tuple[bool, List[str]]:
         return False, errors
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
         if not isinstance(data, (dict, list)):
@@ -50,7 +49,7 @@ def validate_json_file(file_path: Path) -> tuple[bool, List[str]]:
     return True, errors
 
 
-def validate_profiles() -> tuple[bool, List[str]]:
+def validate_profiles() -> tuple[bool, list[str]]:
     """Validate test profiles."""
     errors = []
     profiles_path = PROFILES_DIR / "sample_profiles.json"
@@ -60,7 +59,7 @@ def validate_profiles() -> tuple[bool, List[str]]:
         return False, file_errors
 
     try:
-        with open(profiles_path, "r", encoding="utf-8") as f:
+        with open(profiles_path, encoding="utf-8") as f:
             profiles = json.load(f)
 
         if not isinstance(profiles, list):
@@ -92,7 +91,7 @@ def validate_profiles() -> tuple[bool, List[str]]:
     return len(errors) == 0, errors
 
 
-def validate_projects() -> tuple[bool, List[str]]:
+def validate_projects() -> tuple[bool, list[str]]:
     """Validate test projects."""
     errors = []
     projects_path = PROJECTS_DIR / "sample_projects.json"
@@ -102,7 +101,7 @@ def validate_projects() -> tuple[bool, List[str]]:
         return False, file_errors
 
     try:
-        with open(projects_path, "r", encoding="utf-8") as f:
+        with open(projects_path, encoding="utf-8") as f:
             projects = json.load(f)
 
         if not isinstance(projects, list):
@@ -145,7 +144,7 @@ def validate_projects() -> tuple[bool, List[str]]:
     return len(errors) == 0, errors
 
 
-def validate_metadata() -> tuple[bool, List[str]]:
+def validate_metadata() -> tuple[bool, list[str]]:
     """Validate metadata files."""
     errors = []
 

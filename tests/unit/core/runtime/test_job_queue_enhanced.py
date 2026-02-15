@@ -5,7 +5,6 @@ Tests enhanced job queue functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -52,19 +51,19 @@ class TestJobQueueEnhancedClasses:
     def test_enhanced_job_queue_class_exists(self):
         """Test EnhancedJobQueue class exists."""
         if hasattr(job_queue_enhanced, "EnhancedJobQueue"):
-            cls = getattr(job_queue_enhanced, "EnhancedJobQueue")
+            cls = job_queue_enhanced.EnhancedJobQueue
             assert isinstance(cls, type), "EnhancedJobQueue should be a class"
 
     def test_job_batch_class_exists(self):
         """Test JobBatch class exists."""
         if hasattr(job_queue_enhanced, "JobBatch"):
-            cls = getattr(job_queue_enhanced, "JobBatch")
+            cls = job_queue_enhanced.JobBatch
             assert isinstance(cls, type), "JobBatch should be a class"
 
     def test_retry_policy_enum_exists(self):
         """Test RetryPolicy enum exists."""
         if hasattr(job_queue_enhanced, "RetryPolicy"):
-            cls = getattr(job_queue_enhanced, "RetryPolicy")
+            cls = job_queue_enhanced.RetryPolicy
             assert isinstance(cls, type), "RetryPolicy should be an enum"
 
 
@@ -249,7 +248,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test submitting a job with dependencies."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit first job - use different priority to avoid comparison issues
         queue.submit_job(
             job_id="job_1",
@@ -259,7 +258,7 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         # Submit second job with dependency - use different priority
         result = queue.submit_job(
             job_id="job_2",
@@ -311,7 +310,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test that realtime jobs are retrieved before others."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit jobs in different priorities
         queue.submit_job(
             job_id="batch_job",
@@ -329,7 +328,7 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         # Get next job - should be realtime
         next_job = queue.get_next_job()
         assert next_job is not None
@@ -340,7 +339,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test that jobs with unmet dependencies are not retrieved."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit job with dependency
         queue.submit_job(
             job_id="dependent_job",
@@ -351,7 +350,7 @@ class TestJobQueueEnhancedFunctionality:
             payload={"test": "data"},
             dependencies=["nonexistent_job"],
         )
-        
+
         # Should not get the job (dependency not met)
         next_job = queue.get_next_job(check_dependencies=True)
         assert next_job is None
@@ -368,10 +367,10 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         job = queue.jobs["test_job_6"]
         queue.start_job(job)
-        
+
         assert job.status == JobStatus.RUNNING
         assert "test_job_6" in queue.active_jobs
         assert job.started_at is not None
@@ -388,11 +387,11 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         job = queue.jobs["test_job_7"]
         queue.start_job(job)
         queue.update_job_progress("test_job_7", 0.5, {"step": "processing"})
-        
+
         assert queue.job_progress["test_job_7"] == 0.5
         assert queue.job_metadata["test_job_7"]["step"] == "processing"
 
@@ -408,11 +407,11 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         job = queue.jobs["test_job_8"]
         queue.start_job(job)
         queue.complete_job("test_job_8", success=True, result={"output": "data"})
-        
+
         assert job.status == JobStatus.COMPLETED
         assert "test_job_8" not in queue.active_jobs
         assert queue.stats["total_completed"] == 1
@@ -431,11 +430,11 @@ class TestJobQueueEnhancedFunctionality:
             payload={"test": "data"},
             retry_policy=job_queue_enhanced.RetryPolicy.NONE,
         )
-        
+
         job = queue.jobs["test_job_9"]
         queue.start_job(job)
         queue.complete_job("test_job_9", success=False, error="Test error")
-        
+
         assert job.status == JobStatus.FAILED
         assert job.error == "Test error"
         assert "test_job_9" not in queue.active_jobs
@@ -454,11 +453,11 @@ class TestJobQueueEnhancedFunctionality:
             payload={"test": "data"},
             retry_policy=job_queue_enhanced.RetryPolicy.IMMEDIATE,
         )
-        
+
         job = queue.jobs["test_job_10"]
         queue.start_job(job)
         queue.complete_job("test_job_10", success=False, error="Test error")
-        
+
         # Job should be requeued for retry
         assert job.status == JobStatus.QUEUED
         assert queue.job_retries["test_job_10"] == 1
@@ -476,11 +475,11 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         job = queue.jobs["test_job_11"]
         queue.start_job(job)
         result = queue.cancel_job("test_job_11")
-        
+
         assert result is True
         assert job.status == JobStatus.CANCELLED
         assert "test_job_11" not in queue.active_jobs
@@ -498,9 +497,9 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         result = queue.cancel_job("test_job_12")
-        
+
         assert result is True
         assert queue.jobs["test_job_12"].status == JobStatus.CANCELLED
         assert queue.stats["total_cancelled"] == 1
@@ -509,7 +508,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test cancelling a non-existent job."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         result = queue.cancel_job("nonexistent_job")
-        
+
         assert result is False
 
     def test_get_job_status(self):
@@ -524,9 +523,9 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         status = queue.get_job_status("test_job_13")
-        
+
         assert status is not None
         assert status["job_id"] == "test_job_13"
         assert status["status"] == JobStatus.QUEUED.value
@@ -537,14 +536,14 @@ class TestJobQueueEnhancedFunctionality:
         """Test getting status for non-existent job."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         status = queue.get_job_status("nonexistent_job")
-        
+
         assert status is None
 
     def test_get_queue_stats(self):
         """Test getting queue statistics."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit jobs
         queue.submit_job(
             job_id="realtime_job_1",
@@ -562,9 +561,9 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         stats = queue.get_queue_stats()
-        
+
         assert "queued_jobs" in stats
         assert stats["queued_jobs"]["realtime"] == 1
         assert stats["queued_jobs"]["batch"] == 1
@@ -577,7 +576,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test creating a job batch."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit jobs with different priorities to avoid comparison issues
         queue.submit_job(
             job_id="job_1",
@@ -595,9 +594,9 @@ class TestJobQueueEnhancedFunctionality:
             requirements=requirements,
             payload={"test": "data"},
         )
-        
+
         batch = queue.create_batch("batch_1", ["job_1", "job_2"])
-        
+
         assert batch is not None
         assert batch.batch_id == "batch_1"
         assert len(batch.jobs) == 2
@@ -608,7 +607,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test creating an empty batch."""
         queue = job_queue_enhanced.EnhancedJobQueue()
         batch = queue.create_batch("batch_2")
-        
+
         assert batch is not None
         assert batch.batch_id == "batch_2"
         assert len(batch.jobs) == 0
@@ -617,7 +616,7 @@ class TestJobQueueEnhancedFunctionality:
         """Test that batch status updates when jobs complete."""
         queue = job_queue_enhanced.EnhancedJobQueue(enable_batching=True)
         requirements = ResourceRequirement(vram_gb=1.0, ram_gb=2.0)
-        
+
         # Submit jobs in batch
         queue.submit_job(
             job_id="batch_job_1",
@@ -628,11 +627,11 @@ class TestJobQueueEnhancedFunctionality:
             payload={"test": "data"},
             batch_id="test_batch",
         )
-        
+
         job = queue.jobs["batch_job_1"]
         queue.start_job(job)
         queue.complete_job("batch_job_1", success=True)
-        
+
         batch = queue.job_batches["test_batch"]
         assert batch.completed_jobs == 1
         assert batch.total_jobs == 1

@@ -12,14 +12,17 @@ Improved job queue with:
 - Progress tracking
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import PriorityQueue
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Optional
 
 from .resource_manager import (
     Job,
@@ -32,7 +35,7 @@ from .resource_manager import (
 logger = logging.getLogger(__name__)
 
 # WebSocket notification callback type
-WebSocketNotifier = Optional[Callable[[str, Dict[str, Any]], None]]
+WebSocketNotifier = Optional[Callable[[str, dict[str, Any]], None]]
 
 
 class RetryPolicy(Enum):
@@ -49,10 +52,10 @@ class JobBatch:
     """Batch of jobs to process together."""
 
     batch_id: str
-    jobs: List[Job]
+    jobs: list[Job]
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     status: str = "pending"  # pending, running, completed, failed
     progress: float = 0.0  # 0.0 to 1.0
     total_jobs: int = 0
@@ -76,7 +79,7 @@ class EnhancedJobQueue:
 
     def __init__(
         self,
-        resource_manager: Optional[ResourceManager] = None,
+        resource_manager: ResourceManager | None = None,
         max_retries: int = 3,
         default_retry_policy: RetryPolicy = RetryPolicy.EXPONENTIAL,
         batch_size: int = 10,
@@ -112,22 +115,22 @@ class EnhancedJobQueue:
             self.batch_queue = PriorityQueue()
 
         # Job batches
-        self.job_batches: Dict[str, JobBatch] = {}
-        self.pending_batches: List[JobBatch] = []
+        self.job_batches: dict[str, JobBatch] = {}
+        self.pending_batches: list[JobBatch] = []
 
         # Job tracking
-        self.jobs: Dict[str, Job] = {}
-        self.active_jobs: Dict[str, Job] = {}
-        self.job_dependencies: Dict[str, Set[str]] = (
+        self.jobs: dict[str, Job] = {}
+        self.active_jobs: dict[str, Job] = {}
+        self.job_dependencies: dict[str, set[str]] = (
             {}
         )  # job_id -> set of dependency job_ids
-        self.job_retries: Dict[str, int] = {}  # job_id -> retry count
+        self.job_retries: dict[str, int] = {}  # job_id -> retry count
         # job_id -> next retry timestamp
-        self.job_retry_times: Dict[str, float] = {}
+        self.job_retry_times: dict[str, float] = {}
         # job_id -> progress (0.0 to 1.0)
-        self.job_progress: Dict[str, float] = {}
+        self.job_progress: dict[str, float] = {}
         # job_id -> metadata
-        self.job_metadata: Dict[str, Dict[str, Any]] = {}
+        self.job_metadata: dict[str, dict[str, Any]] = {}
 
         # Threading
         self.lock = threading.Lock()
@@ -151,11 +154,11 @@ class EnhancedJobQueue:
         task: str,
         priority: JobPriority,
         requirements: ResourceRequirement,
-        payload: Dict[str, Any],
-        callback: Optional[Callable] = None,
-        dependencies: Optional[List[str]] = None,
-        retry_policy: Optional[RetryPolicy] = None,
-        batch_id: Optional[str] = None,
+        payload: dict[str, Any],
+        callback: Callable | None = None,
+        dependencies: list[str] | None = None,
+        retry_policy: RetryPolicy | None = None,
+        batch_id: str | None = None,
     ) -> bool:
         """
         Submit a job to the queue.
@@ -243,7 +246,7 @@ class EnhancedJobQueue:
         else:  # BATCH
             self.batch_queue.put((priority.value, time.time(), job))
 
-    def get_next_job(self, check_dependencies: bool = True) -> Optional[Job]:
+    def get_next_job(self, check_dependencies: bool = True) -> Job | None:
         """
         Get next job to execute.
 
@@ -376,7 +379,7 @@ class EnhancedJobQueue:
         self,
         job_id: str,
         progress: float,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         Update job progress.
@@ -411,8 +414,8 @@ class EnhancedJobQueue:
         self,
         job_id: str,
         success: bool = True,
-        error: Optional[str] = None,
-        result: Optional[Dict[str, Any]] = None,
+        error: str | None = None,
+        result: dict[str, Any] | None = None,
     ):
         """
         Mark job as completed.
@@ -658,7 +661,7 @@ class EnhancedJobQueue:
             logger.warning(f"Job {job_id} not found for cancellation")
             return False
 
-    def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+    def get_job_status(self, job_id: str) -> dict[str, Any] | None:
         """
         Get job status information.
 
@@ -709,7 +712,7 @@ class EnhancedJobQueue:
 
             return status
 
-    def _notify_websocket(self, event_type: str, data: Dict[str, Any]):
+    def _notify_websocket(self, event_type: str, data: dict[str, Any]):
         """
         Send WebSocket notification if notifier is available.
 
@@ -723,7 +726,7 @@ class EnhancedJobQueue:
             except Exception as e:
                 logger.warning(f"WebSocket notification failed: {e}")
 
-    def get_queue_stats(self) -> Dict[str, Any]:
+    def get_queue_stats(self) -> dict[str, Any]:
         """
         Get queue statistics.
 
@@ -757,7 +760,7 @@ class EnhancedJobQueue:
             }
 
     def create_batch(
-        self, batch_id: str, job_ids: Optional[List[str]] = None
+        self, batch_id: str, job_ids: list[str] | None = None
     ) -> JobBatch:
         """
         Create a new job batch.
@@ -798,7 +801,7 @@ class EnhancedJobQueue:
 
 # Factory function
 def create_enhanced_job_queue(
-    resource_manager: Optional[ResourceManager] = None,
+    resource_manager: ResourceManager | None = None,
     max_retries: int = 3,
     enable_batching: bool = True,
     websocket_notifier: WebSocketNotifier = None,

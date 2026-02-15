@@ -5,10 +5,7 @@ Tests for SLO monitoring, alerting, and status tracking.
 """
 
 import sys
-import tempfile
-import time
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -24,8 +21,6 @@ from backend.services.slo_monitor import (
     SLOType,
     get_slo_monitor,
     reset_slo_monitor,
-    record_latency,
-    record_success,
 )
 
 
@@ -182,26 +177,26 @@ class TestSLOMonitor:
         """Test recording a metric."""
         monitor.register_slo(custom_slo)
         monitor.record_metric("test_latency_seconds", 0.5)
-        
+
         # Metric should be recorded
         assert len(monitor._metric_samples["test_latency_seconds"]) == 1
 
     def test_record_multiple_metrics(self, monitor, custom_slo):
         """Test recording multiple metrics."""
         monitor.register_slo(custom_slo)
-        
+
         for i in range(10):
             monitor.record_metric("test_latency_seconds", 0.1 * i)
-        
+
         assert len(monitor._metric_samples["test_latency_seconds"]) == 10
 
     def test_get_slo_status(self, monitor, custom_slo):
         """Test getting SLO status."""
         monitor.register_slo(custom_slo)
         monitor.record_metric("test_latency_seconds", 0.5)
-        
+
         status = monitor.get_slo_status("test_latency")
-        
+
         assert status is not None
         assert status.slo_id == "test_latency"
         assert status.is_met is True
@@ -221,12 +216,12 @@ class TestSLOMonitor:
         """Test that alerts are generated when SLO is breached."""
         # Create monitor with callback
         alerts_received = []
-        
+
         def callback(alert):
             alerts_received.append(alert)
-        
+
         monitor = SLOMonitor(data_dir=tmp_data_dir, alert_callback=callback)
-        
+
         # Create SLO that will be breached
         slo = SLODefinition(
             id="test_breach",
@@ -239,10 +234,10 @@ class TestSLOMonitor:
             metric_name="breach_metric",
         )
         monitor.register_slo(slo)
-        
+
         # Record a value that breaches the SLO
         monitor.record_metric("breach_metric", 2.0)
-        
+
         # Alert should be generated
         assert len(alerts_received) == 1
         assert alerts_received[0].severity == AlertSeverity.CRITICAL
@@ -250,13 +245,13 @@ class TestSLOMonitor:
     def test_get_active_alerts(self, monitor, custom_slo):
         """Test getting active alerts."""
         monitor.register_slo(custom_slo)
-        
+
         # Initially no alerts
         assert len(monitor.get_active_alerts()) == 0
-        
+
         # Breach the SLO
         monitor.record_metric("test_latency_seconds", 2.0)
-        
+
         alerts = monitor.get_active_alerts()
         assert len(alerts) >= 1
 
@@ -264,13 +259,13 @@ class TestSLOMonitor:
         """Test acknowledging an alert."""
         monitor.register_slo(custom_slo)
         monitor.record_metric("test_latency_seconds", 2.0)
-        
+
         alerts = monitor.get_active_alerts()
         if alerts:
             alert_id = alerts[0].alert_id
             success = monitor.acknowledge_alert(alert_id, "test_user")
             assert success is True
-            
+
             # Alert should now be acknowledged
             alert = next(a for a in monitor.get_active_alerts() if a.alert_id == alert_id)
             assert alert.acknowledged is True
@@ -279,15 +274,15 @@ class TestSLOMonitor:
     def test_alert_resolution(self, monitor, custom_slo):
         """Test that alerts are resolved when SLO is met again."""
         monitor.register_slo(custom_slo)
-        
+
         # Breach the SLO
         monitor.record_metric("test_latency_seconds", 2.0)
         assert len(monitor.get_active_alerts()) >= 1
-        
+
         # Record good values to resolve
         for _ in range(10):
             monitor.record_metric("test_latency_seconds", 0.5)
-        
+
         # After enough good values, alert should resolve
         # (This depends on window size and calculation method)
 
@@ -306,7 +301,7 @@ class TestSLOMonitor:
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
         monitor.record_metric("test_metric", 0.5)
-        
+
         assert monitor.get_overall_health() == "healthy"
 
     def test_get_overall_health_unhealthy(self, tmp_data_dir):
@@ -323,26 +318,26 @@ class TestSLOMonitor:
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
         monitor.record_metric("test_metric", 2.0)  # Critical breach
-        
+
         assert monitor.get_overall_health() == "unhealthy"
 
     def test_export_status(self, monitor, custom_slo):
         """Test exporting SLO status to file."""
         monitor.register_slo(custom_slo)
         monitor.record_metric("test_latency_seconds", 0.5)
-        
+
         filepath = monitor.export_status()
-        
+
         assert filepath.exists()
         assert filepath.suffix == ".json"
 
     def test_alert_history(self, monitor, custom_slo):
         """Test getting alert history."""
         monitor.register_slo(custom_slo)
-        
+
         # Generate some alerts
         monitor.record_metric("test_latency_seconds", 2.0)
-        
+
         history = monitor.get_alert_history(limit=10)
         assert isinstance(history, list)
 
@@ -382,11 +377,11 @@ class TestBurnRate:
             is_higher_better=True,
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
-        
+
         # Record good availability
         for _ in range(100):
             monitor.record_metric("availability", 1.0)  # 100% success
-        
+
         status = monitor.get_slo_status("test")
         assert status.burn_rate < 1.0  # Burning slower than budget
         assert status.error_budget_remaining > 50  # Still have budget
@@ -405,11 +400,11 @@ class TestBurnRate:
             is_higher_better=True,
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
-        
+
         # Record 50% availability (way below target)
         for i in range(100):
             monitor.record_metric("availability", 1.0 if i % 2 == 0 else 0.0)
-        
+
         status = monitor.get_slo_status("test")
         assert status.burn_rate > 1.0  # Burning faster than budget
 
@@ -431,10 +426,10 @@ class TestSLOTypes:
             is_higher_better=True,
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
-        
+
         # Record good throughput
         monitor.record_metric("requests_per_second", 15.0)
-        
+
         status = monitor.get_slo_status("throughput")
         assert status.is_met is True
 
@@ -452,9 +447,9 @@ class TestSLOTypes:
             is_higher_better=False,
         )
         monitor = SLOMonitor(slos=[slo], data_dir=tmp_data_dir)
-        
+
         # Record low error rate
         monitor.record_metric("error_rate", 0.005)
-        
+
         status = monitor.get_slo_status("errors")
         assert status.is_met is True

@@ -9,11 +9,11 @@ Unified endpoint for managing all types of presets:
 - Template presets
 """
 
+from __future__ import annotations
+
 import logging
-import os
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/presets", tags=["presets"])
 
 # In-memory storage (replace with database in production)
-_presets: Dict[str, Dict] = {}
+_presets: dict[str, dict] = {}
 _MAX_PRESETS = 1000  # Maximum number of presets
-_preset_timestamps: Dict[str, float] = {}  # preset_id -> creation_time
+_preset_timestamps: dict[str, float] = {}  # preset_id -> creation_time
 
 
 def _cleanup_old_presets():
@@ -43,10 +43,8 @@ def _cleanup_old_presets():
         )
         excess = len(_presets) - _MAX_PRESETS
         for preset_id, _ in sorted_presets[:excess]:
-            if preset_id in _presets:
-                del _presets[preset_id]
-            if preset_id in _preset_timestamps:
-                del _preset_timestamps[preset_id]
+            _presets.pop(preset_id, None)
+            _preset_timestamps.pop(preset_id, None)
         logger.info(f"Cleaned up {excess} old presets from storage")
 
 
@@ -67,13 +65,13 @@ class Preset(BaseModel):
     id: str
     name: str
     type: str  # PresetType
-    category: Optional[str] = None
-    description: Optional[str] = None
-    data: Dict = {}  # Preset-specific data
-    tags: List[str] = []
+    category: str | None = None
+    description: str | None = None
+    data: dict = {}  # Preset-specific data
+    tags: list[str] = []
     created: datetime
     modified: datetime
-    author: Optional[str] = None
+    author: str | None = None
     version: str = "1.0"
     is_public: bool = False
     usage_count: int = 0
@@ -82,10 +80,10 @@ class Preset(BaseModel):
 class PresetSearchRequest(BaseModel):
     """Request to search presets."""
 
-    query: Optional[str] = None
-    preset_type: Optional[str] = None
-    category: Optional[str] = None
-    tags: Optional[List[str]] = None
+    query: str | None = None
+    preset_type: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
     limit: int = 100
     offset: int = 0
 
@@ -95,18 +93,18 @@ class PresetCreateRequest(BaseModel):
 
     name: str
     preset_type: str
-    category: Optional[str] = None
-    description: Optional[str] = None
-    data: Optional[Dict] = None
-    tags: Optional[List[str]] = None
-    author: Optional[str] = None
+    category: str | None = None
+    description: str | None = None
+    data: dict | None = None
+    tags: list[str] | None = None
+    author: str | None = None
     is_public: bool = False
 
 
 class PresetSearchResponse(BaseModel):
     """Response from preset search."""
 
-    presets: List[Preset]
+    presets: list[Preset]
     total: int
     limit: int
     offset: int
@@ -115,10 +113,10 @@ class PresetSearchResponse(BaseModel):
 @router.get("", response_model=PresetSearchResponse)
 @cache_response(ttl=30)  # Cache for 30 seconds (preset search results may change)
 async def search_presets(
-    query: Optional[str] = Query(None),
-    preset_type: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    tags: Optional[str] = Query(None),  # Comma-separated
+    query: str | None = Query(None),
+    preset_type: str | None = Query(None),
+    category: str | None = Query(None),
+    tags: str | None = Query(None),  # Comma-separated
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
 ):
@@ -251,12 +249,12 @@ async def create_preset(request: PresetCreateRequest):
 class PresetUpdateRequest(BaseModel):
     """Request to update a preset."""
 
-    name: Optional[str] = None
-    category: Optional[str] = None
-    description: Optional[str] = None
-    data: Optional[Dict] = None
-    tags: Optional[List[str]] = None
-    is_public: Optional[bool] = None
+    name: str | None = None
+    category: str | None = None
+    description: str | None = None
+    data: dict | None = None
+    tags: list[str] | None = None
+    is_public: bool | None = None
 
 
 @router.put("/{preset_id}", response_model=Preset)
@@ -311,7 +309,7 @@ async def delete_preset(preset_id: str):
 class PresetApplyRequest(BaseModel):
     """Request to apply a preset."""
 
-    target_id: Optional[str] = None  # Project ID, track ID, etc.
+    target_id: str | None = None  # Project ID, track ID, etc.
 
 
 @router.post("/{preset_id}/apply")
@@ -346,7 +344,7 @@ class PresetTypeInfo(BaseModel):
 class PresetTypesResponse(BaseModel):
     """Response with preset types."""
 
-    types: List[PresetTypeInfo]
+    types: list[PresetTypeInfo]
 
 
 @router.get("/types", response_model=PresetTypesResponse)
@@ -365,7 +363,7 @@ async def get_preset_types():
     )
 
 
-@router.get("/categories/{preset_type}", response_model=List[str])
+@router.get("/categories/{preset_type}", response_model=list[str])
 @cache_response(ttl=600)  # Cache for 10 minutes (categories are static)
 async def get_categories(preset_type: str):
     """Get categories for a specific preset type."""

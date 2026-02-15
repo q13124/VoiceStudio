@@ -10,7 +10,7 @@ Two plugin subsystems exist and are now integrated:
    - Plugin base class with lifecycle management
    - PluginMetadata for configuration
    - PluginRegistry for registration
-   
+
 2. API Plugin Loader (backend/api/plugins/):
    - FastAPI route integration
    - Manifest-based loading
@@ -19,7 +19,7 @@ Two plugin subsystems exist and are now integrated:
 Usage:
     # For creating new plugins, extend the core Plugin class:
     from backend.plugins import Plugin, PluginMetadata, PluginState
-    
+
     # For loading plugins at runtime:
     from backend.api.plugins import load_all_plugins
 """
@@ -38,13 +38,13 @@ from backend.plugins.registry.registry import (
 )
 
 __all__ = [
+    # Loaders
+    "CorePluginLoader",
     # Core plugin classes
     "Plugin",
     "PluginMetadata",
-    "PluginState",
-    # Loaders
-    "CorePluginLoader",
     # Registry
     "PluginRegistry",
+    "PluginState",
     "get_plugin_registry",
 ]

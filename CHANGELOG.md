@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### UI Testing Infrastructure Improvements (2026-02-13)
+- Custom `WinAppDriverSession` class for Selenium 4.x/WinAppDriver compatibility
+  - Direct HTTP requests to WinAppDriver (bypasses W3C capabilities format)
+  - Unified driver fixture across all UI and E2E test files
+- Enhanced application path discovery for UI tests
+  - Multiple build output location search
+  - `VS_APP_PATH` environment variable support
+- UTF-8 encoding for test report generation
+- Improved E2E test fixtures
+  - `app_session` alias for `driver` fixture
+  - Proper yield handling in `winappdriver_process` fixture
+
+### Fixed
+
+#### UI Testing Infrastructure (2026-02-13)
+- Selenium 4.x incompatibility with WinAppDriver JSON Wire Protocol
+- Missing `app_session` fixture in E2E tests
+- API endpoint path (`/api/engines/list` vs `/api/engine/list`)
+- JSON compliance in error scenario tests (`float('inf')` → valid float)
+- Test file encoding issues causing `UnicodeEncodeError`
+
 #### Verification Infrastructure (2026-02-09)
 - Unified verification harness (`scripts/verify.ps1`) with 8 stages
   - Clean Build (C#)

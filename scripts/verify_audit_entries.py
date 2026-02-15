@@ -11,40 +11,38 @@ Usage:
 
 import json
 import sys
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from typing import List, Set
+from datetime import datetime, timedelta, timezone
 
 from _env_setup import PROJECT_ROOT
 
 
-def get_recent_logged_files(hours: int = 1) -> Set[str]:
+def get_recent_logged_files(hours: int = 1) -> set[str]:
     """
     Get files that have been logged in the audit system recently.
-    
+
     Args:
         hours: How many hours back to look
-        
+
     Returns:
         Set of file paths that have audit entries
     """
     logged_files = set()
     audit_dir = PROJECT_ROOT / ".audit"
-    
+
     if not audit_dir.exists():
         return logged_files
-    
+
     # Get today's log
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     log_path = audit_dir / f"log-{today}.jsonl"
-    
+
     if not log_path.exists():
         return logged_files
-    
+
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-    
+
     try:
-        with open(log_path, "r", encoding="utf-8") as f:
+        with open(log_path, encoding="utf-8") as f:
             for line in f:
                 try:
                     entry = json.loads(line.strip())
@@ -62,9 +60,9 @@ def get_recent_logged_files(hours: int = 1) -> Set[str]:
                 except (json.JSONDecodeError, ValueError):
                     continue
     # ALLOWED: bare except - Best effort file parsing, failure is acceptable
-    except IOError:
+    except OSError:
         pass
-    
+
     return logged_files
 
 
@@ -73,13 +71,13 @@ def normalize_path(file_path: str) -> str:
     return file_path.replace("\\", "/").strip()
 
 
-def check_files(files: List[str]) -> bool:
+def check_files(files: list[str]) -> bool:
     """
     Check if files have audit log entries.
-    
+
     Args:
         files: List of file paths to check
-        
+
     Returns:
         True if all files have entries (or are exempt)
     """
@@ -96,13 +94,13 @@ def check_files(files: List[str]) -> bool:
         ".audit/",
         "*.md",
     ]
-    
+
     logged_files = get_recent_logged_files(hours=2)
     missing = []
-    
+
     for file_path in files:
         normalized = normalize_path(file_path)
-        
+
         # Check exemptions
         is_exempt = False
         for pattern in exempt_patterns:
@@ -118,10 +116,10 @@ def check_files(files: List[str]) -> bool:
                 if normalized == pattern or normalized.endswith(f"/{pattern}"):
                     is_exempt = True
                     break
-        
+
         if is_exempt:
             continue
-        
+
         # Check if file is in logged files
         if normalized not in logged_files:
             # Also check with project root prefix removed
@@ -130,7 +128,7 @@ def check_files(files: List[str]) -> bool:
                     break
             else:
                 missing.append(file_path)
-    
+
     if missing:
         print(f"\nFiles missing audit log entries ({len(missing)}):")
         for f in missing[:10]:
@@ -138,7 +136,7 @@ def check_files(files: List[str]) -> bool:
         if len(missing) > 10:
             print(f"  ... and {len(missing) - 10} more")
         return False
-    
+
     return True
 
 
@@ -146,9 +144,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: verify_audit_entries.py <file1> [file2] ...")
         sys.exit(1)
-    
+
     files = sys.argv[1:]
-    
+
     if check_files(files):
         print(f"All {len(files)} file(s) have audit entries or are exempt")
         sys.exit(0)

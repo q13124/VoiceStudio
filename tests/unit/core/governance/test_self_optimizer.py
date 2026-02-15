@@ -5,7 +5,6 @@ Tests self-optimization functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestSelfOptimizerClasses:
     def test_self_optimizer_class_exists(self):
         """Test SelfOptimizer class exists."""
         if hasattr(self_optimizer, "SelfOptimizer"):
-            cls = getattr(self_optimizer, "SelfOptimizer")
+            cls = self_optimizer.SelfOptimizer
             assert isinstance(cls, type), "SelfOptimizer should be a class"
 
 

@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class EmotionType(Enum):
     """Types of emotions for voice synthesis."""
-    
+
     # Primary emotions
     NEUTRAL = "neutral"
     HAPPY = "happy"
@@ -22,7 +21,7 @@ class EmotionType(Enum):
     FEARFUL = "fearful"
     DISGUSTED = "disgusted"
     SURPRISED = "surprised"
-    
+
     # Secondary emotions
     EXCITED = "excited"
     CALM = "calm"
@@ -30,7 +29,7 @@ class EmotionType(Enum):
     SYMPATHETIC = "sympathetic"
     CONFIDENT = "confident"
     UNCERTAIN = "uncertain"
-    
+
     # Speaking styles
     WHISPER = "whisper"
     SHOUTING = "shouting"
@@ -40,7 +39,7 @@ class EmotionType(Enum):
 
 class EmotionIntensity(Enum):
     """Intensity levels for emotions."""
-    
+
     SUBTLE = 0.25
     MODERATE = 0.5
     STRONG = 0.75
@@ -50,19 +49,19 @@ class EmotionIntensity(Enum):
 @dataclass
 class EmotionProfile:
     """A complex emotion profile with multiple emotions."""
-    
+
     primary: EmotionType = EmotionType.NEUTRAL
     primary_intensity: float = 1.0
-    
-    secondary: Optional[EmotionType] = None
+
+    secondary: EmotionType | None = None
     secondary_intensity: float = 0.0
-    
+
     # Voice modifiers
     pitch_shift: float = 0.0  # Semitones
     speed_factor: float = 1.0
     energy_level: float = 1.0
-    
-    def to_dict(self) -> Dict:
+
+    def to_dict(self) -> dict:
         return {
             "primary": self.primary.value,
             "primary_intensity": self.primary_intensity,
@@ -77,20 +76,20 @@ class EmotionProfile:
 @dataclass
 class EmotionResult:
     """Result of emotion detection or application."""
-    
+
     detected_emotion: EmotionType
     confidence: float
-    
+
     # All detected emotions with scores
-    emotion_scores: Dict[str, float] = field(default_factory=dict)
-    
+    emotion_scores: dict[str, float] = field(default_factory=dict)
+
     # Voice analysis
     pitch_mean: float = 0.0
     pitch_std: float = 0.0
     energy_mean: float = 0.0
     speaking_rate: float = 0.0
-    
-    def get_top_emotions(self, n: int = 3) -> List[tuple]:
+
+    def get_top_emotions(self, n: int = 3) -> list[tuple]:
         """Get top N emotions by score."""
         sorted_emotions = sorted(
             self.emotion_scores.items(),
@@ -101,7 +100,7 @@ class EmotionResult:
 
 
 # Emotion presets for common use cases
-EMOTION_PRESETS: Dict[str, EmotionProfile] = {
+EMOTION_PRESETS: dict[str, EmotionProfile] = {
     "narrator_neutral": EmotionProfile(
         primary=EmotionType.NEUTRAL,
         primary_intensity=1.0,

@@ -46,7 +46,7 @@ class TestDatabaseContextUsage(IntegrationTestBase):
         )
         # seed_data takes (table_name, rows) - rows is list of dicts
         db_context.seed_data("test_items", [{"value": "item1"}, {"value": "item2"}])
-        
+
         # query returns list of dicts, not tuples
         results = db_context.query("SELECT value FROM test_items ORDER BY id")
         assert len(results) == 2
@@ -76,7 +76,7 @@ class TestServiceContextUsage(IntegrationTestBase):
         mock = svc_context.mock_engine_service()
         assert mock is not None
         assert "engine_service" in svc_context.mocks
-        
+
         # Mock should have proper return values
         engines = mock.get_engines()
         assert len(engines) == 2
@@ -174,7 +174,7 @@ class TestServiceContextManager(IntegrationTestBase):
             ctx.mock_engine_service()
             ctx.mock_storage_service()
             assert len(ctx.mocks) >= 2
-        
+
         # After context, patches should be cleaned up
 
 

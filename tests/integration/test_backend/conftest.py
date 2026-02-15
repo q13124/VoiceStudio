@@ -4,7 +4,6 @@ Backend Integration Test Configuration.
 Provides pytest fixtures and configuration for backend integration tests.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -66,7 +65,7 @@ __all__ = [
 def backend_app():
     """
     Provide FastAPI application for testing.
-    
+
     Uses session scope to reuse app across all tests.
     """
     try:
@@ -82,7 +81,7 @@ def backend_app():
 def test_client_with_app(backend_app):
     """
     Provide test client connected to actual backend app.
-    
+
     Use this when you need to test against real routes.
     """
     if backend_app is None:
@@ -94,14 +93,14 @@ def test_client_with_app(backend_app):
 def mock_backend_services():
     """
     Mock all backend services for isolated testing.
-    
+
     Returns dict of mock objects.
     """
     from unittest.mock import MagicMock, patch
-    
+
     mocks = {}
     patches = []
-    
+
     # Mock engine service
     engine_mock = MagicMock()
     engine_mock.get_engines.return_value = [
@@ -109,12 +108,12 @@ def mock_backend_services():
         {"id": "chatterbox", "name": "Chatterbox", "status": "ready"},
     ]
     mocks["engine_service"] = engine_mock
-    
+
     # Mock storage service
     storage_mock = MagicMock()
     storage_mock.list_projects.return_value = []
     mocks["storage_service"] = storage_mock
-    
+
     # Apply patches
     try:
         patches.append(patch("backend.services.engine_service.EngineService", return_value=engine_mock))
@@ -122,9 +121,9 @@ def mock_backend_services():
             p.start()
     except Exception:
         pass  # Module may not be available
-    
+
     yield mocks
-    
+
     # Cleanup
     for p in patches:
         try:
@@ -138,15 +137,15 @@ def mock_backend_services():
 def clean_test_state():
     """
     Ensure clean test state before and after each test.
-    
+
     Clears any cached state that might leak between tests.
     """
     # Pre-test cleanup
     import gc
     gc.collect()
-    
+
     yield
-    
+
     # Post-test cleanup
     gc.collect()
 

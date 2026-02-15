@@ -5,9 +5,7 @@ Tests Parakeet engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestParakeetEngineImports:
     def test_module_has_parakeet_engine_class(self):
         """Test module has ParakeetEngine class."""
         if hasattr(parakeet_engine, "ParakeetEngine"):
-            cls = getattr(parakeet_engine, "ParakeetEngine")
+            cls = parakeet_engine.ParakeetEngine
             assert isinstance(cls, type), "ParakeetEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestParakeetEngineClass:
     def test_parakeet_engine_class_exists(self):
         """Test ParakeetEngine class exists."""
         if hasattr(parakeet_engine, "ParakeetEngine"):
-            cls = getattr(parakeet_engine, "ParakeetEngine")
+            cls = parakeet_engine.ParakeetEngine
             assert isinstance(cls, type), "ParakeetEngine should be a class"
 
     def test_parakeet_engine_initialization(self):

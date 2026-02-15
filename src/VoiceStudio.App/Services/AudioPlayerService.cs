@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Logging;
 
@@ -23,10 +24,18 @@ namespace VoiceStudio.App.Services
     private NAudio.Wave.AudioFileReader? _previewAudioReader;
     private System.Threading.CancellationTokenSource? _previewCancellation;
 
+    // Inter-panel workflow
+    private readonly IEventAggregator? _eventAggregator;
+    private ISubscriptionToken? _playbackRequestedSubscription;
+
     public bool IsPlaying { get; private set; }
     public bool IsPaused { get; private set; }
+    public bool IsLooping { get; set; }
     public double Position => _audioFileReader?.CurrentTime.TotalSeconds ?? 0.0;
     public double Duration => _audioFileReader?.TotalTime.TotalSeconds ?? 0.0;
+
+    // Track the current file path for loop restart
+    private string? _currentFilePath;
 
     public double Volume
     {
@@ -48,6 +57,9 @@ namespace VoiceStudio.App.Services
     public AudioPlayerService()
     {
       // Initialize with default settings
+      // Subscribe to PlaybackRequestedEvent for inter-panel workflow
+      _eventAggregator = AppServices.TryGetEventAggregator();
+      _playbackRequestedSubscription = _eventAggregator?.Subscribe<PlaybackRequestedEvent>(OnPlaybackRequested);
     }
 
     public async Task PlayFileAsync(string filePath, Action? onPlaybackComplete = null)
@@ -67,12 +79,29 @@ namespace VoiceStudio.App.Services
           // Create audio file reader
           _audioFileReader = new NAudio.Wave.AudioFileReader(filePath);
           _audioFileReader.Volume = (float)_volume;
+          _currentFilePath = filePath;
 
           // Create wave out device
           _waveOut = new NAudio.Wave.WaveOutEvent();
           _waveOut.Init(_audioFileReader);
-          _waveOut.PlaybackStopped += (_, _) =>
+          _waveOut.PlaybackStopped += (_, args) =>
                 {
+                  // Loop: if IsLooping and playback ended naturally (no error, not user-stopped)
+                  if (IsLooping && args.Exception == null && _audioFileReader != null && !_disposed)
+                  {
+                    try
+                    {
+                      _audioFileReader.Position = 0;
+                      _waveOut?.Play();
+                      return; // Don't fire completion events
+                    }
+                    catch (Exception ex)
+                    {
+                      // Fall through to normal stop if loop restart fails
+                      System.Diagnostics.Debug.WriteLine("[AudioPlayer] Loop restart failed: " + ex.Message);
+                    }
+                  }
+
                   IsPlaying = false;
                   IsPaused = false;
                   IsPlayingChanged?.Invoke(this, false);
@@ -139,8 +168,24 @@ namespace VoiceStudio.App.Services
           // Create wave out device
           _waveOut = new NAudio.Wave.WaveOutEvent();
           _waveOut.Init(_rawStream);
-          _waveOut.PlaybackStopped += (_, _) =>
+          _waveOut.PlaybackStopped += (_, args) =>
                 {
+                  // Loop: restart from beginning if looping is enabled
+                  if (IsLooping && args.Exception == null && _rawStream != null && !_disposed)
+                  {
+                    try
+                    {
+                      _rawStream.Position = 0;
+                      _waveOut?.Play();
+                      return;
+                    }
+                    catch (Exception ex)
+                    {
+                      // Fall through to normal stop
+                      System.Diagnostics.Debug.WriteLine("[AudioPlayer] Loop restart failed: " + ex.Message);
+                    }
+                  }
+
                   IsPlaying = false;
                   IsPaused = false;
                   IsPlayingChanged?.Invoke(this, false);
@@ -326,10 +371,47 @@ namespace VoiceStudio.App.Services
     {
       if (!_disposed)
       {
+        _playbackRequestedSubscription?.Dispose();
+        _playbackRequestedSubscription = null;
         Stop();
         StopPreview();
         _disposed = true;
       }
     }
+
+    #region Inter-Panel Workflow
+
+    /// <summary>
+    /// Handles the PlaybackRequestedEvent from Library or other panels.
+    /// Plays the requested audio file.
+    /// </summary>
+    private async void OnPlaybackRequested(PlaybackRequestedEvent e)
+    {
+      try
+      {
+        if (string.IsNullOrEmpty(e.AssetPath))
+        {
+          System.Diagnostics.Debug.WriteLine("[AudioPlayer] PlaybackRequested: No asset path provided");
+          return;
+        }
+
+        if (!File.Exists(e.AssetPath))
+        {
+          System.Diagnostics.Debug.WriteLine($"[AudioPlayer] PlaybackRequested: File not found: {e.AssetPath}");
+          return;
+        }
+
+        // Play the requested audio file
+        await PlayFileAsync(e.AssetPath);
+        System.Diagnostics.Debug.WriteLine($"[AudioPlayer] Playing: {e.AssetName ?? e.AssetPath}");
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[AudioPlayer] PlaybackRequested error: {ex.Message}");
+        ErrorLogger.LogError($"Failed to play audio: {ex.Message}", "AudioPlayerService.OnPlaybackRequested");
+      }
+    }
+
+    #endregion
   }
 }

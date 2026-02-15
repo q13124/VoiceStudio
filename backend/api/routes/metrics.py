@@ -8,10 +8,12 @@ All operations are local-first with no external dependencies.
 Architecture: Routes -> EngineService -> Engine Layer (app.core.engines)
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import PlainTextResponse
@@ -34,16 +36,16 @@ class MetricValue(BaseModel):
 
     name: str
     value: float
-    labels: Dict[str, str] = {}
-    timestamp: Optional[float] = None
-    help_text: Optional[str] = None
+    labels: dict[str, str] = {}
+    timestamp: float | None = None
+    help_text: str | None = None
     metric_type: str = "gauge"  # gauge, counter, histogram, summary
 
 
 class MetricsResponse(BaseModel):
     """Response containing all metrics."""
 
-    metrics: List[MetricValue]
+    metrics: list[MetricValue]
     timestamp: str
     format: str = "json"
 
@@ -62,7 +64,7 @@ class MetricsRegistry:
     """
 
     _instance: Optional["MetricsRegistry"] = None
-    _metrics: Dict[str, MetricValue] = {}
+    _metrics: dict[str, MetricValue] = {}
     _start_time: float = time.time()
 
     def __new__(cls) -> "MetricsRegistry":
@@ -76,8 +78,8 @@ class MetricsRegistry:
         self,
         name: str,
         value: float,
-        labels: Optional[Dict[str, str]] = None,
-        help_text: Optional[str] = None,
+        labels: dict[str, str] | None = None,
+        help_text: str | None = None,
     ) -> None:
         """Set a gauge metric value."""
         key = self._make_key(name, labels or {})
@@ -94,8 +96,8 @@ class MetricsRegistry:
         self,
         name: str,
         value: float = 1.0,
-        labels: Optional[Dict[str, str]] = None,
-        help_text: Optional[str] = None,
+        labels: dict[str, str] | None = None,
+        help_text: str | None = None,
     ) -> None:
         """Increment a counter metric."""
         key = self._make_key(name, labels or {})
@@ -114,8 +116,8 @@ class MetricsRegistry:
         self,
         name: str,
         value: float,
-        labels: Optional[Dict[str, str]] = None,
-        help_text: Optional[str] = None,
+        labels: dict[str, str] | None = None,
+        help_text: str | None = None,
     ) -> None:
         """Record a histogram observation (simplified as gauge for now)."""
         # For full histogram support, use prometheus_client library
@@ -129,7 +131,7 @@ class MetricsRegistry:
             metric_type="gauge",
         )
 
-    def get_all_metrics(self) -> List[MetricValue]:
+    def get_all_metrics(self) -> list[MetricValue]:
         """Get all registered metrics."""
         return list(self._metrics.values())
 
@@ -138,7 +140,7 @@ class MetricsRegistry:
         return time.time() - self._start_time
 
     @staticmethod
-    def _make_key(name: str, labels: Dict[str, str]) -> str:
+    def _make_key(name: str, labels: dict[str, str]) -> str:
         """Create unique key for metric+labels combination."""
         if not labels:
             return name
@@ -243,11 +245,11 @@ def collect_slo_metrics(registry: MetricsRegistry) -> None:
 
 
 def collect_engine_metrics(
-    registry: MetricsRegistry, 
-    engine_service: Optional[IEngineService] = None,
+    registry: MetricsRegistry,
+    engine_service: IEngineService | None = None,
 ) -> None:
     """Collect engine-related metrics from the engine service.
-    
+
     Args:
         registry: Metrics registry to populate.
         engine_service: Optional engine service. If not provided, gets global instance.
@@ -256,11 +258,11 @@ def collect_engine_metrics(
         # Use injected service or get global instance
         service = engine_service or get_engine_service()
         engine_metrics = service.get_metrics()
-        
+
         if engine_metrics.get("error") or not engine_metrics.get("available", True):
             logger.debug("Engine metrics not available via service")
             return
-        
+
         # If get_metrics returns raw metrics dict, use it directly
         # Otherwise try to get collector-style interface
         if hasattr(engine_metrics, "get_all_metrics"):
@@ -374,13 +376,13 @@ def collect_engine_metrics(
 # =============================================================================
 
 
-def format_prometheus_text(metrics: List[MetricValue]) -> str:
+def format_prometheus_text(metrics: list[MetricValue]) -> str:
     """
     Format metrics in Prometheus text exposition format.
 
     See: https://prometheus.io/docs/instrumenting/exposition_formats/
     """
-    lines: List[str] = []
+    lines: list[str] = []
     seen_help: set = set()
 
     for metric in metrics:
@@ -480,7 +482,7 @@ async def get_metrics_json(
     summary="Metrics endpoint health check",
     description="Verify the metrics endpoint is operational.",
 )
-async def metrics_health() -> Dict[str, Any]:
+async def metrics_health() -> dict[str, Any]:
     """Health check for metrics endpoint."""
     registry = get_metrics_registry()
     return {
@@ -500,10 +502,10 @@ async def record_metric(
     name: str = Query(..., description="Metric name"),
     value: float = Query(..., description="Metric value"),
     metric_type: str = Query("gauge", description="Metric type"),
-    labels: Optional[str] = Query(
+    labels: str | None = Query(
         None, description="Labels as key=value pairs"
     ),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Record a custom metric.
 
@@ -513,7 +515,7 @@ async def record_metric(
     registry = get_metrics_registry()
 
     # Parse labels
-    label_dict: Dict[str, str] = {}
+    label_dict: dict[str, str] = {}
     if labels:
         for pair in labels.split(","):
             if "=" in pair:

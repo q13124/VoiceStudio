@@ -4,11 +4,13 @@ Voice Morphing/Blending Routes
 Endpoints for voice morphing and blending between multiple voices.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/voice-morph", tags=["voice-morph"])
 
 # In-memory morph configurations (replace with database in production)
-_morph_configs: Dict[str, Dict] = {}
+_morph_configs: dict[str, dict] = {}
 
 
 class VoiceBlend(BaseModel):
@@ -32,7 +34,7 @@ class MorphConfig(BaseModel):
     config_id: str
     name: str
     source_audio_id: str
-    target_voices: List[VoiceBlend]  # Multiple voices to blend
+    target_voices: list[VoiceBlend]  # Multiple voices to blend
     morph_strength: float = 0.5  # 0.0 to 1.0
     preserve_emotion: bool = True
     preserve_prosody: bool = True
@@ -44,7 +46,7 @@ class MorphConfigCreateRequest(BaseModel):
 
     name: str
     source_audio_id: str
-    target_voices: List[Dict]  # [{"voice_profile_id": "...", "weight": 0.5}]
+    target_voices: list[dict]  # [{"voice_profile_id": "...", "weight": 0.5}]
     morph_strength: float = 0.5
     preserve_emotion: bool = True
     preserve_prosody: bool = True
@@ -98,11 +100,11 @@ async def create_morph_config(request: MorphConfigCreateRequest):
         logger.error(f"Failed to create morph config: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create config: {str(e)}",
+            detail=f"Failed to create config: {e!s}",
         ) from e
 
 
-@router.get("/configs", response_model=List[MorphConfig])
+@router.get("/configs", response_model=list[MorphConfig])
 async def list_morph_configs():
     """List all morph configurations."""
     return [MorphConfig(**c) for c in _morph_configs.values()]
@@ -174,7 +176,7 @@ class MorphApplyResponse(BaseModel):
     audio_url: str
     status: str
     message: str
-    duration: Optional[float] = None
+    duration: float | None = None
 
 
 @router.post("/apply", response_model=MorphApplyResponse)
@@ -185,9 +187,9 @@ async def apply_morph(request: MorphApplyRequest):
     Applies the morph configuration to the source audio, blending it
     with the target voices according to their weights and morph strength.
     """
-    import uuid
     import os
     import tempfile
+    import uuid
 
     if request.config_id not in _morph_configs:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -240,7 +242,7 @@ async def apply_morph(request: MorphApplyRequest):
                 from .voice import synthesize
 
                 # Get approximate duration of source audio for synthesis
-                duration_s = len(source_audio) / sample_rate
+                len(source_audio) / sample_rate
 
                 # Synthesize with target voice (using placeholder text)
                 # In production, this would use voice conversion instead
@@ -295,7 +297,7 @@ async def apply_morph(request: MorphApplyRequest):
             max_len = max(len(a) for a in target_audios)
             blended_target = np.zeros(max_len)
 
-            for audio, weight in zip(target_audios, target_weights):
+            for audio, weight in zip(target_audios, target_weights, strict=False):
                 # Pad to max length
                 if len(audio) < max_len:
                     audio = np.pad(audio, (0, max_len - len(audio)), mode="constant")
@@ -374,7 +376,7 @@ async def apply_morph(request: MorphApplyRequest):
         logger.error(f"Failed to apply morph: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to apply morph: {str(e)}",
+            detail=f"Failed to apply morph: {e!s}",
         ) from e
 
 
@@ -385,16 +387,16 @@ class VoiceBlendRequest(BaseModel):
     voice_a_id: str
     voice_b_id: str
     blend_ratio: float = 0.5  # 0.0 = 100% A, 1.0 = 100% B
-    text: Optional[str] = None  # Optional text for preview
+    text: str | None = None  # Optional text for preview
     save_profile: bool = False  # Save as new voice profile
 
 
 class VoiceBlendResponse(BaseModel):
     """Voice blend response."""
 
-    blended_profile_id: Optional[str] = None
-    preview_audio_id: Optional[str] = None
-    preview_audio_url: Optional[str] = None
+    blended_profile_id: str | None = None
+    preview_audio_id: str | None = None
+    preview_audio_url: str | None = None
     blend_ratio: float
 
 
@@ -407,7 +409,7 @@ class VoiceMorphRequest(BaseModel):
     start_ratio: float = 0.0  # 0.0 = 100% A
     end_ratio: float = 1.0  # 1.0 = 100% B
     morph_speed: float = 1.0  # Morph speed/smoothness
-    keyframes: Optional[List[Dict]] = None  # Intermediate waypoints
+    keyframes: list[dict] | None = None  # Intermediate waypoints
 
 
 class VoiceMorphResponse(BaseModel):
@@ -428,17 +430,17 @@ class VoiceEmbeddingResponse(BaseModel):
     """Voice embedding response."""
 
     voice_profile_id: str
-    embedding: List[float]
+    embedding: list[float]
     embedding_dim: int
 
 
 class VoicePreviewRequest(BaseModel):
     """Request to preview blended/morphed voice."""
 
-    voice_profile_id: Optional[str] = None
-    voice_a_id: Optional[str] = None
-    voice_b_id: Optional[str] = None
-    blend_ratio: Optional[float] = None
+    voice_profile_id: str | None = None
+    voice_a_id: str | None = None
+    voice_b_id: str | None = None
+    blend_ratio: float | None = None
     text: str = "Hello, this is a preview of the blended voice."
 
 
@@ -459,9 +461,10 @@ async def blend_voices(request: VoiceBlendRequest):
     and mixing the results.
     """
     try:
-        import uuid
         import os
         import tempfile
+        import uuid
+
         import numpy as np
 
         if not request.voice_a_id or not request.voice_b_id:
@@ -484,7 +487,7 @@ async def blend_voices(request: VoiceBlendRequest):
         if request.text:
             try:
                 from ..models_additional import VoiceSynthesizeRequest
-                from .voice import synthesize, _register_audio_file
+                from .voice import _register_audio_file, synthesize
 
                 # Synthesize with voice A
                 synth_a = VoiceSynthesizeRequest(
@@ -509,11 +512,12 @@ async def blend_voices(request: VoiceBlendRequest):
                     and result_b.audio_id
                 ):
                     # Load both audio files
-                    from .audio import _get_audio_path
                     from app.core.audio.audio_utils import (
                         load_audio,
                         save_audio,
                     )
+
+                    from .audio import _get_audio_path
 
                     audio_path_a = _get_audio_path(result_a.audio_id)
                     audio_path_b = _get_audio_path(result_b.audio_id)
@@ -590,7 +594,7 @@ async def blend_voices(request: VoiceBlendRequest):
         # If save_profile requested, create blended profile
         if request.save_profile:
             try:
-                from .profiles import _profiles, VoiceProfile
+                from .profiles import VoiceProfile, _profiles
 
                 blended_profile_id = f"blend_{uuid.uuid4().hex[:8]}"
                 profile_name = (
@@ -628,7 +632,7 @@ async def blend_voices(request: VoiceBlendRequest):
         logger.error(f"Failed to blend voices: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to blend voices: {str(e)}",
+            detail=f"Failed to blend voices: {e!s}",
         ) from e
 
 
@@ -659,7 +663,7 @@ async def morph_voice(request: VoiceMorphRequest):
         logger.error(f"Failed to morph voice: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to morph voice: {str(e)}",
+            detail=f"Failed to morph voice: {e!s}",
         ) from e
 
 
@@ -672,6 +676,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
     """
     try:
         import os
+
         import numpy as np
 
         if not request.voice_profile_id:
@@ -722,8 +727,8 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                 # Extract voice characteristics as embedding
                 try:
                     from app.core.audio.audio_utils import (
-                        load_audio,
                         analyze_voice_characteristics,
+                        load_audio,
                     )
 
                     audio, sample_rate = load_audio(reference_audio_path)
@@ -790,41 +795,41 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                     try:
                         import librosa
                         import numpy as np
-                        
+
                         audio, sample_rate = load_audio(reference_audio_path)
-                        
+
                         # Extract basic audio features as embedding
                         embedding = []
-                        
+
                         # Spectral features
                         spectral_centroids = librosa.feature.spectral_centroid(
                             y=audio, sr=sample_rate
                         )[0]
                         embedding.append(float(np.mean(spectral_centroids)))
                         embedding.append(float(np.std(spectral_centroids)))
-                        
+
                         spectral_rolloff = librosa.feature.spectral_rolloff(
                             y=audio, sr=sample_rate
                         )[0]
                         embedding.append(float(np.mean(spectral_rolloff)))
-                        
+
                         zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)[0]
                         embedding.append(float(np.mean(zero_crossing_rate)))
-                        
+
                         # MFCC features (13 coefficients)
                         mfccs = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
                         embedding.extend([float(x) for x in np.mean(mfccs, axis=1)])
-                        
+
                         # Chroma features (12 pitch classes)
                         chroma = librosa.feature.chroma_stft(y=audio, sr=sample_rate)
                         embedding.extend([float(x) for x in np.mean(chroma, axis=1)])
-                        
+
                         # Tonnetz features (6 dimensions)
                         tonnetz = librosa.feature.tonnetz(
                             y=audio, sr=sample_rate
                         )
                         embedding.extend([float(x) for x in np.mean(tonnetz, axis=1)])
-                        
+
                         # Pad or truncate to standard size (256 dimensions)
                         embedding_dim = 256
                         if len(embedding) < embedding_dim:
@@ -844,19 +849,19 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                         elif len(embedding) > embedding_dim:
                             # Truncate
                             embedding = embedding[:embedding_dim]
-                        
+
                         # Normalize embedding
                         embedding_array = np.array(embedding)
                         norm = np.linalg.norm(embedding_array)
                         if norm > 0:
                             embedding_array = embedding_array / norm
                         embedding = embedding_array.tolist()
-                        
+
                         logger.info(
                             f"Extracted voice embedding using fallback method for profile "
                             f"{request.voice_profile_id}: {len(embedding)} dimensions"
                         )
-                        
+
                         return VoiceEmbeddingResponse(
                             voice_profile_id=request.voice_profile_id,
                             embedding=embedding,
@@ -873,14 +878,14 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                             if encoder and encoder.initialize():
                                 audio, sample_rate = load_audio(reference_audio_path)
                                 embedding = encoder.encode(audio, sample_rate)
-                                
+
                                 if embedding is not None:
                                     embedding_dim = len(embedding)
                                     logger.info(
                                         f"Extracted voice embedding using speaker encoder for profile "
                                         f"{request.voice_profile_id}: {embedding_dim} dimensions"
                                     )
-                                    
+
                                     return VoiceEmbeddingResponse(
                                         voice_profile_id=request.voice_profile_id,
                                         embedding=embedding.tolist() if hasattr(embedding, 'tolist') else embedding,
@@ -914,7 +919,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
         logger.error(f"Failed to get voice embedding: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get voice embedding: {str(e)}",
+            detail=f"Failed to get voice embedding: {e!s}",
         ) from e
 
 
@@ -926,9 +931,9 @@ async def preview_voice(request: VoicePreviewRequest):
     Synthesizes text with the specified voice profile or blended voices.
     """
     try:
-        import uuid
         import os
         import tempfile
+        import uuid
 
         if not request.text or not request.text.strip():
             raise HTTPException(
@@ -939,9 +944,10 @@ async def preview_voice(request: VoicePreviewRequest):
         preview_audio_id = None
 
         try:
-            from ..models_additional import VoiceSynthesizeRequest
-            from .voice import synthesize, _register_audio_file
             from app.core.audio.audio_utils import load_audio
+
+            from ..models_additional import VoiceSynthesizeRequest
+            from .voice import _register_audio_file, synthesize
 
             # If voice_profile_id provided, use that directly
             if request.voice_profile_id:
@@ -981,8 +987,10 @@ async def preview_voice(request: VoicePreviewRequest):
                 ):
                     # Blend the audio (same logic as blend_voices)
                     import numpy as np
-                    from .audio import _get_audio_path
+
                     from app.core.audio.audio_utils import save_audio
+
+                    from .audio import _get_audio_path
 
                     audio_path_a = _get_audio_path(result_a.audio_id)
                     audio_path_b = _get_audio_path(result_b.audio_id)
@@ -1089,5 +1097,5 @@ async def preview_voice(request: VoicePreviewRequest):
         logger.error(f"Failed to preview voice: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to preview voice: {str(e)}",
+            detail=f"Failed to preview voice: {e!s}",
         ) from e

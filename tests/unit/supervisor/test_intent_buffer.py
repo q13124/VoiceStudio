@@ -2,9 +2,8 @@
 Unit tests for IntentBuffer (Phase 11.2.4)
 """
 
-import pytest
 
-from app.core.supervisor.intent_buffer import IntentBuffer, BufferedUtterance
+from app.core.supervisor.intent_buffer import BufferedUtterance, IntentBuffer
 
 
 class TestIntentBuffer:

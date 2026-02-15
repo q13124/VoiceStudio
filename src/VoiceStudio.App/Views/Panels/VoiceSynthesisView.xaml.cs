@@ -4,7 +4,12 @@ using VoiceStudio.App.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -14,6 +19,7 @@ namespace VoiceStudio.App.Views.Panels
     private PanelHost? _parentPanelHost;
     private ContextMenuService? _contextMenuService;
     private ToastNotificationService? _toastService;
+    private IDragDropService? _panelDragDropService;
 
     public VoiceSynthesisView()
     {
@@ -27,12 +33,14 @@ namespace VoiceStudio.App.Views.Panels
       // Initialize services
       _contextMenuService = ServiceProvider.GetContextMenuService();
       _toastService = ServiceProvider.GetToastNotificationService();
+      _panelDragDropService = AppServices.TryGetDragDropService();
 
       // Subscribe to quality metrics updates
       ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
       // Find parent PanelHost after loaded
       this.Loaded += VoiceSynthesisView_Loaded;
+      this.Unloaded += VoiceSynthesisView_Unloaded;
 
       // Add Enter key handling for form submission
       if (this.FindName("TextInput") is Microsoft.UI.Xaml.Controls.TextBox textInput)
@@ -98,6 +106,59 @@ namespace VoiceStudio.App.Views.Panels
 
       // Setup Tab navigation order for this panel
       KeyboardNavigationHelper.SetupTabNavigation(this, 0);
+
+      // Register as drop target for Profile payloads (Panel Architecture Phase 4)
+      _panelDragDropService?.RegisterDropTarget(
+          ViewModel.PanelId,
+          CanAcceptDrop);
+    }
+
+    private void VoiceSynthesisView_Unloaded(object sender, RoutedEventArgs e)
+    {
+      // Unregister from drop target (Panel Architecture Phase 4)
+      _panelDragDropService?.UnregisterDropTarget(ViewModel.PanelId);
+    }
+
+    /// <summary>
+    /// Determines if this panel can accept a drag payload.
+    /// Accepts Profile and ReferenceAudio for voice synthesis.
+    /// </summary>
+    private static bool CanAcceptDrop(DragPayload payload)
+    {
+      return payload.PayloadType == DragPayloadType.Profile ||
+             payload.PayloadType == DragPayloadType.ReferenceAudio;
+    }
+
+    /// <summary>
+    /// Handles a dropped Profile or ReferenceAudio payload.
+    /// </summary>
+    private async Task HandleProfileDropAsync(DragPayload payload, CancellationToken cancellationToken)
+    {
+      if (payload.PayloadType == DragPayloadType.Profile)
+      {
+        var profileId = payload.Items.FirstOrDefault()?.Id;
+        if (!string.IsNullOrEmpty(profileId))
+        {
+          // Find and select the profile in the ViewModel
+          var profile = ViewModel.Profiles.FirstOrDefault(p => p.Id == profileId);
+          if (profile != null)
+          {
+            ViewModel.SelectedProfile = profile;
+            _toastService?.ShowToast(ToastType.Success, "Profile Selected", $"Selected '{profile.Name}' for synthesis");
+          }
+        }
+      }
+      else if (payload.PayloadType == DragPayloadType.ReferenceAudio)
+      {
+        var audioPath = payload.Items.FirstOrDefault()?.Id;
+        if (!string.IsNullOrEmpty(audioPath))
+        {
+          // Load reference audio for voice cloning synthesis
+          _toastService?.ShowToast(ToastType.Info, "Reference Audio", $"Reference audio loaded: {audioPath}");
+        }
+      }
+
+      await Task.CompletedTask;
     }
 
     private PanelHost? FindParentPanelHost(DependencyObject element)

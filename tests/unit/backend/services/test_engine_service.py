@@ -5,7 +5,6 @@ Tests engine initialization, selection, synthesis, and lifecycle behavior
 with mocked engine dependencies.
 """
 
-from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,10 +12,9 @@ import pytest
 from backend.services.engine_service import (
     EngineService,
     IEngineService,
-    get_engine_service,
     get_engine_by_id,
+    get_engine_service,
 )
-
 
 # -------------------------------------------------------------------------
 # Fixtures

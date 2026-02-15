@@ -4,9 +4,10 @@ Advanced Waveform Visualization Routes
 Endpoints for advanced waveform analysis and visualization.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/waveform", tags=["waveform"])
 
 # In-memory waveform data cache (replace with database in production)
-_waveform_cache: Dict[str, Dict] = {}
+_waveform_cache: dict[str, dict] = {}
 
 
 class WaveformConfig(BaseModel):
@@ -26,12 +27,12 @@ class WaveformConfig(BaseModel):
 
     audio_id: str
     zoom_level: float = 1.0  # 0.1 to 10.0
-    show_channels: List[int] = [0]  # Which channels to display
+    show_channels: list[int] = [0]  # Which channels to display
     show_rms: bool = True
     show_peak: bool = True
     show_zero_crossings: bool = False
     color_scheme: str = "default"  # default, heatmap, spectral
-    time_range: Optional[Dict[str, float]] = None  # {"start": 0.0, "end": 10.0}
+    time_range: dict[str, float] | None = None  # {"start": 0.0, "end": 10.0}
 
 
 class WaveformData(BaseModel):
@@ -41,11 +42,11 @@ class WaveformData(BaseModel):
     sample_rate: int
     channels: int
     duration: float
-    samples: List[List[float]]  # Per-channel sample data
-    rms_values: Optional[List[float]] = None
-    peak_values: Optional[List[float]] = None
-    zero_crossings: Optional[List[int]] = None
-    time_points: List[float]  # Time points for each sample
+    samples: list[list[float]]  # Per-channel sample data
+    rms_values: list[float] | None = None
+    peak_values: list[float] | None = None
+    zero_crossings: list[int] | None = None
+    time_points: list[float]  # Time points for each sample
 
 
 class WaveformAnalysis(BaseModel):
@@ -88,9 +89,9 @@ async def update_waveform_config(audio_id: str, config: WaveformConfig):
 )  # Cache for 5 minutes (waveform data is static for a given audio file)
 async def get_waveform_data(
     audio_id: str,
-    zoom_level: Optional[float] = None,
-    time_start: Optional[float] = None,
-    time_end: Optional[float] = None,
+    zoom_level: float | None = None,
+    time_start: float | None = None,
+    time_end: float | None = None,
 ):
     """Get waveform data for visualization."""
     import numpy as np
@@ -120,14 +121,14 @@ async def get_waveform_data(
         except ImportError as e:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio processing libraries not available: {str(e)}. "
+                detail=f"Audio processing libraries not available: {e!s}. "
                 "Install with: pip install librosa==0.11.0 soundfile==0.12.1",
             )
         except Exception as e:
             logger.error(f"Failed to load audio file {audio_path}: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to load audio file: {str(e)}",
+                detail=f"Failed to load audio file: {e!s}",
             )
 
         # Handle mono vs multi-channel
@@ -200,7 +201,7 @@ async def get_waveform_data(
         logger.error(f"Failed to get waveform data for {audio_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process waveform data: {str(e)}",
+            detail=f"Failed to process waveform data: {e!s}",
         )
 
 
@@ -233,18 +234,18 @@ async def analyze_waveform(audio_id: str):
 
             from core.audio.audio_utils import load_audio
 
-            audio, sample_rate = load_audio(audio_path)
+            audio, _sample_rate = load_audio(audio_path)
         except ImportError as e:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio processing libraries not available: {str(e)}. "
+                detail=f"Audio processing libraries not available: {e!s}. "
                 "Install with: pip install librosa==0.11.0 soundfile==0.12.1",
             )
         except Exception as e:
             logger.error(f"Failed to load audio file {audio_path}: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to load audio file: {str(e)}",
+                detail=f"Failed to load audio file: {e!s}",
             )
 
         # Convert to mono for analysis if needed
@@ -258,16 +259,10 @@ async def analyze_waveform(audio_id: str):
         rms_amplitude = float(np.sqrt(np.mean(audio**2)))
 
         # Calculate dynamic range (peak to RMS ratio in dB)
-        if rms_amplitude > 0:
-            dynamic_range = 20 * np.log10(peak_amplitude / rms_amplitude)
-        else:
-            dynamic_range = 0.0
+        dynamic_range = 20 * np.log10(peak_amplitude / rms_amplitude) if rms_amplitude > 0 else 0.0
 
         # Calculate crest factor (peak to RMS ratio)
-        if rms_amplitude > 0:
-            crest_factor = peak_amplitude / rms_amplitude
-        else:
-            crest_factor = 0.0
+        crest_factor = peak_amplitude / rms_amplitude if rms_amplitude > 0 else 0.0
 
         # Calculate zero crossing rate
         sign_changes = np.diff(np.signbit(audio))
@@ -292,7 +287,7 @@ async def analyze_waveform(audio_id: str):
         logger.error(f"Failed to analyze waveform for {audio_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze waveform: {str(e)}",
+            detail=f"Failed to analyze waveform: {e!s}",
         )
 
 
@@ -337,14 +332,14 @@ async def compare_waveforms(audio_id_1: str, audio_id_2: str):
         except ImportError as e:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio processing libraries not available: {str(e)}. "
+                detail=f"Audio processing libraries not available: {e!s}. "
                 "Install with: pip install librosa==0.11.0 soundfile==0.12.1",
             )
         except Exception as e:
             logger.error(f"Failed to load audio files: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to load audio files: {str(e)}",
+                detail=f"Failed to load audio files: {e!s}",
             )
 
         # Convert to mono for comparison
@@ -420,5 +415,5 @@ async def compare_waveforms(audio_id_1: str, audio_id_2: str):
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compare waveforms: {str(e)}",
+            detail=f"Failed to compare waveforms: {e!s}",
         )

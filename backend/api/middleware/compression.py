@@ -10,7 +10,7 @@ from __future__ import annotations
 import gzip
 import io
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -23,20 +23,20 @@ logger = logging.getLogger(__name__)
 class CompressionMiddleware(BaseHTTPMiddleware):
     """
     Middleware for response compression.
-    
+
     Features:
     - Automatic compression based on content type
     - Minimum size threshold
     - Multiple compression algorithms
     - Accept-Encoding negotiation
     """
-    
+
     def __init__(
         self,
         app: ASGIApp,
         minimum_size: int = 1024,  # Only compress if > 1KB
         compression_level: int = 6,
-        compressible_types: Optional[set] = None,
+        compressible_types: set | None = None,
     ):
         super().__init__(app)
         self.minimum_size = minimum_size
@@ -51,38 +51,38 @@ class CompressionMiddleware(BaseHTTPMiddleware):
             "application/xml",
             "text/xml",
         }
-    
+
     async def dispatch(
         self,
         request: Request,
         call_next: Callable,
     ) -> Response:
         """Process request and optionally compress response."""
-        
+
         # Check if client accepts compression
         accept_encoding = request.headers.get("accept-encoding", "")
-        
+
         # Get response
         response = await call_next(request)
-        
+
         # Skip if streaming response
         if isinstance(response, StreamingResponse):
             return response
-        
+
         # Skip if already encoded
         if response.headers.get("content-encoding"):
             return response
-        
+
         # Check content type
         content_type = response.headers.get("content-type", "").split(";")[0]
         if content_type not in self.compressible_types:
             return response
-        
+
         # Get body
         body = b""
         async for chunk in response.body_iterator:
             body += chunk
-        
+
         # Check minimum size
         if len(body) < self.minimum_size:
             return Response(
@@ -91,32 +91,32 @@ class CompressionMiddleware(BaseHTTPMiddleware):
                 headers=dict(response.headers),
                 media_type=response.media_type,
             )
-        
+
         # Compress with gzip (most compatible)
         if "gzip" in accept_encoding:
             compressed = self._gzip_compress(body)
-            
+
             headers = dict(response.headers)
             headers["content-encoding"] = "gzip"
             headers["content-length"] = str(len(compressed))
-            
+
             return Response(
                 content=compressed,
                 status_code=response.status_code,
                 headers=headers,
                 media_type=response.media_type,
             )
-        
+
         # Try LZ4 if available and client supports
         if "lz4" in accept_encoding:
             try:
                 import lz4.frame
                 compressed = lz4.frame.compress(body)
-                
+
                 headers = dict(response.headers)
                 headers["content-encoding"] = "lz4"
                 headers["content-length"] = str(len(compressed))
-                
+
                 return Response(
                     content=compressed,
                     status_code=response.status_code,
@@ -125,7 +125,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
                 )
             except ImportError:
                 logger.debug("Brotli compression not available")
-        
+
         # Return uncompressed
         return Response(
             content=body,
@@ -133,7 +133,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
             headers=dict(response.headers),
             media_type=response.media_type,
         )
-    
+
     def _gzip_compress(self, data: bytes) -> bytes:
         """Compress data with gzip."""
         buf = io.BytesIO()

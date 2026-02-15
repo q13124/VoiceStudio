@@ -5,14 +5,15 @@ Central entry point for all errors from any instance type.
 Enriches context, calculates pattern hash, persists to IssueStore.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
 import re
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tools.overseer.issues.config import (
     ISSUES_LOG_DIR,
@@ -31,7 +32,7 @@ from tools.overseer.issues.store import IssueStore
 logger = logging.getLogger(__name__)
 
 # Default store (lazy init to avoid import cycles)
-_store: Optional[IssueStore] = None
+_store: IssueStore | None = None
 
 
 def _get_store() -> IssueStore:
@@ -70,10 +71,10 @@ def calculate_pattern_hash(message: str, error_type: str = "") -> str:
 
 
 def enrich_context(
-    context: Dict[str, Any],
+    context: dict[str, Any],
     instance_type: InstanceType,
     instance_id: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Add environment and common context to the issue context."""
     enriched = dict(context)
     enriched["_enriched_at"] = datetime.now(timezone.utc).isoformat()
@@ -85,7 +86,7 @@ def enrich_context(
     return enriched
 
 
-def _severity_from_context(context: Dict[str, Any]) -> IssueSeverity:
+def _severity_from_context(context: dict[str, Any]) -> IssueSeverity:
     """Infer severity from context if present."""
     sev = context.get("severity")
     if sev is None:
@@ -107,7 +108,7 @@ _ERROR_CODE_PATTERNS = [
 ]
 
 
-def extract_error_codes(message: str, context: Optional[Dict[str, Any]] = None) -> list:
+def extract_error_codes(message: str, context: dict[str, Any] | None = None) -> list:
     """
     Extract error codes from message and context for indexing/querying.
     Returns list of normalized codes (e.g. CS0234, HTTP500, ENOENT).
@@ -133,9 +134,9 @@ def record_issue(
     correlation_id: str,
     error_type: str,
     message: str,
-    context: Optional[Dict[str, Any]] = None,
-    severity: Optional[IssueSeverity] = None,
-    category: Optional[str] = None,
+    context: dict[str, Any] | None = None,
+    severity: IssueSeverity | None = None,
+    category: str | None = None,
     auto_task: bool = True,
 ) -> Issue:
     """
@@ -229,10 +230,7 @@ def _should_auto_create_task(issue: Issue) -> bool:
         return False
 
     # Skip if disabled via env var
-    if os.environ.get("VOICESTUDIO_AUTO_TASK_DISABLED", "").strip().lower() in ("1", "true", "yes"):
-        return False
-
-    return True
+    return os.environ.get("VOICESTUDIO_AUTO_TASK_DISABLED", "").strip().lower() not in ("1", "true", "yes")
 
 
 def record_agent_error(
@@ -240,7 +238,7 @@ def record_agent_error(
     correlation_id: str,
     error_type: str,
     message: str,
-    context: Dict[str, Any],
+    context: dict[str, Any],
 ) -> Issue:
     """Record an issue from agent audit (tools/overseer/agent/audit_logger)."""
     return record_issue(
@@ -257,9 +255,9 @@ def record_backend_error(
     error_type: str,
     message: str,
     severity: str,
-    traceback: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None,
-    request_id: Optional[str] = None,
+    traceback: str | None = None,
+    context: dict[str, Any] | None = None,
+    request_id: str | None = None,
 ) -> Issue:
     """Record an issue from backend ErrorTracker (app/core/monitoring/error_tracking)."""
     ctx = dict(context or {})
@@ -286,8 +284,8 @@ def record_backend_error(
 def record_engine_error(
     engine_id: str,
     error: Exception,
-    correlation_id: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None,
+    correlation_id: str | None = None,
+    context: dict[str, Any] | None = None,
 ) -> Issue:
     """Record an issue from engine runtime (app/core/runtime)."""
     import traceback as tb
@@ -307,7 +305,7 @@ def record_build_error(
     instance_id: str,
     error_type: str,
     message: str,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> Issue:
     """Record an issue from build/verification (scripts/run_verification)."""
     return record_issue(

@@ -1,9 +1,12 @@
 """Voice emotion module."""
 
-from backend.voice.emotion.engine import EmotionEngine, EmotionConfig
-from backend.voice.emotion.types import EmotionType, EmotionIntensity, EmotionResult
+from backend.voice.emotion.engine import EmotionConfig, EmotionEngine
+from backend.voice.emotion.types import EmotionIntensity, EmotionResult, EmotionType
 
 __all__ = [
-    "EmotionEngine", "EmotionConfig",
-    "EmotionType", "EmotionIntensity", "EmotionResult",
+    "EmotionConfig",
+    "EmotionEngine",
+    "EmotionIntensity",
+    "EmotionResult",
+    "EmotionType",
 ]

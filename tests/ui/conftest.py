@@ -8,16 +8,15 @@ Enhanced with:
 - Structured output directories
 """
 
+import contextlib
 import os
 import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import pytest
-from appium import webdriver
-from appium.options.windows import WindowsOptions
+import requests
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -46,8 +45,11 @@ if APP_PATH_ENV:
 else:
     # Try multiple possible locations
     POSSIBLE_PATHS = [
+        PROJECT_ROOT / ".buildlogs" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
         PROJECT_ROOT / ".buildlogs" / "publish" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Debug" 
+        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug"
+        / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Debug"
         / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
         PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Release"
         / "net8.0-windows10.0.19041.0" / "win-x64" / "publish" / "VoiceStudio.App.exe",
@@ -67,7 +69,12 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "smoke: marks tests as smoke tests")
     config.addinivalue_line("markers", "navigation: marks tests as navigation tests")
     config.addinivalue_line("markers", "panel: marks tests as panel functionality tests")
-    
+    # Phase 4B: Additional markers for UI test organization
+    config.addinivalue_line("markers", "synthesis: marks tests as voice synthesis tests")
+    config.addinivalue_line("markers", "rendering: marks tests as UI rendering tests")
+    config.addinivalue_line("markers", "matrix: marks tests as panel matrix tests")
+    config.addinivalue_line("markers", "workflow: marks tests as workflow tests")
+
     # Ensure output directories exist
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
@@ -110,7 +117,7 @@ def start_winappdriver() -> bool:
         return False
 
 
-def capture_screenshot(driver, name: str) -> Optional[Path]:
+def capture_screenshot(driver, name: str) -> Path | None:
     """Capture a screenshot and save to the screenshots directory."""
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -124,7 +131,7 @@ def capture_screenshot(driver, name: str) -> Optional[Path]:
         return None
 
 
-def find_element_with_retry(driver, by: str, value: str, retries: int = 3, 
+def find_element_with_retry(driver, by: str, value: str, retries: int = 3,
                             delay: float = 1.0):
     """Find an element with retry logic for flaky lookups."""
     last_exception = None
@@ -165,47 +172,485 @@ def wait_for_panel_load(driver, panel_id: str, timeout: int = EXPLICIT_WAIT):
 @pytest.fixture(scope="session")
 def winappdriver_service():
     """Ensure WinAppDriver is running before tests."""
-    if not is_winappdriver_running():
-        if not start_winappdriver():
-            pytest.skip(
-                "WinAppDriver is not running and could not be started. "
-                "Please start WinAppDriver manually."
-            )
+    if not is_winappdriver_running() and not start_winappdriver():
+        pytest.skip(
+            "WinAppDriver is not running and could not be started. "
+            "Please start WinAppDriver manually."
+        )
     yield
     # Cleanup if needed
 
 
+class WinAppDriverSession:
+    """
+    Custom WinAppDriver session using JSON Wire Protocol.
+
+    WinAppDriver (1.2) doesn't support W3C capabilities format used by
+    Selenium 4.x, so we use raw HTTP requests for all operations.
+    """
+
+    def __init__(self, app_path: str, base_url: str = "http://127.0.0.1:4723"):
+        self.base_url = base_url
+        self.session_id = None
+        self._implicit_wait = 10
+
+        # Kill any existing VoiceStudio processes before starting
+        try:
+            import subprocess
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"],
+                capture_output=True,
+                timeout=5
+            )
+            time.sleep(1)
+        except Exception:
+            pass
+
+        # Create session with retry
+        payload = {
+            "desiredCapabilities": {
+                "app": app_path,
+                "platformName": "Windows",
+                "deviceName": "WindowsPC",
+            }
+        }
+
+        last_error = None
+        for _attempt in range(3):
+            try:
+                response = requests.post(
+                    f"{base_url}/session",
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=60
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    self.session_id = data.get("sessionId")
+                    if self.session_id:
+                        return  # Success
+
+                last_error = response.text
+            except Exception as e:
+                last_error = str(e)
+
+            # Wait before retry
+            time.sleep(2)
+
+        raise RuntimeError(f"Failed to create session after 3 attempts: {last_error}")
+
+    def _session_url(self, path: str = "") -> str:
+        return f"{self.base_url}/session/{self.session_id}{path}"
+
+    def _request(self, method: str, path: str, data: dict | None = None) -> dict:
+        url = self._session_url(path)
+        response = requests.request(
+            method, url, json=data,
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        if response.status_code >= 400:
+            raise RuntimeError(f"Request failed: {response.text}")
+        return response.json() if response.text else {}
+
+    def implicitly_wait(self, seconds: float):
+        """Set implicit wait timeout."""
+        self._implicit_wait = seconds
+        self._request("POST", "/timeouts", {"implicit": int(seconds * 1000)})
+
+    def find_element(self, by: str, value: str):
+        """Find element by locator strategy."""
+        # Map common strategies
+        strategy_map = {
+            "accessibility id": "accessibility id",
+            "name": "name",
+            "class name": "class name",
+            "xpath": "xpath",
+            "id": "id",
+        }
+        using = strategy_map.get(by, by)
+        result = self._request("POST", "/element", {"using": using, "value": value})
+        element_id = result.get("value", {}).get("ELEMENT") or next(iter(result.get("value", {}).values()))
+        return WinAppDriverElement(self, element_id)
+
+    def find_elements(self, by: str, value: str):
+        """Find elements by locator strategy."""
+        strategy_map = {
+            "accessibility id": "accessibility id",
+            "name": "name",
+            "class name": "class name",
+            "xpath": "xpath",
+        }
+        using = strategy_map.get(by, by)
+        result = self._request("POST", "/elements", {"using": using, "value": value})
+        elements = []
+        for elem in result.get("value", []):
+            element_id = elem.get("ELEMENT") or next(iter(elem.values()))
+            elements.append(WinAppDriverElement(self, element_id))
+        return elements
+
+    def save_screenshot(self, filepath: str) -> bool:
+        """Save screenshot to file."""
+        try:
+            result = self._request("GET", "/screenshot")
+            import base64
+            with open(filepath, "wb") as f:
+                f.write(base64.b64decode(result.get("value", "")))
+            return True
+        except Exception:
+            return False
+
+    @property
+    def title(self) -> str:
+        """Get window title."""
+        result = self._request("GET", "/title")
+        return result.get("value", "")
+
+    def quit(self):
+        """Close session and app."""
+        with contextlib.suppress(Exception):
+            self._request("DELETE", "")
+
+        # Give time for app to fully close
+        time.sleep(1.5)
+
+        # Force kill any remaining VoiceStudio processes
+        try:
+            import subprocess
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"],
+                capture_output=True,
+                timeout=5
+            )
+        except Exception:
+            pass
+
+        # Ensure process is fully terminated before next test
+        time.sleep(1.5)
+
+    # -------------------------------------------------------------------------
+    # Keyboard Action Chains
+    # -------------------------------------------------------------------------
+
+    # Special key codes for WinAppDriver (Unicode Private Use Area)
+    KEYS = {
+        "NULL": "\ue000",
+        "CANCEL": "\ue001",
+        "HELP": "\ue002",
+        "BACKSPACE": "\ue003",
+        "TAB": "\ue004",
+        "CLEAR": "\ue005",
+        "RETURN": "\ue006",
+        "ENTER": "\ue007",
+        "SHIFT": "\ue008",
+        "CONTROL": "\ue009",
+        "ALT": "\ue00a",
+        "PAUSE": "\ue00b",
+        "ESCAPE": "\ue00c",
+        "SPACE": "\ue00d",
+        "PAGE_UP": "\ue00e",
+        "PAGE_DOWN": "\ue00f",
+        "END": "\ue010",
+        "HOME": "\ue011",
+        "LEFT": "\ue012",
+        "UP": "\ue013",
+        "RIGHT": "\ue014",
+        "DOWN": "\ue015",
+        "INSERT": "\ue016",
+        "DELETE": "\ue017",
+        "SEMICOLON": "\ue018",
+        "EQUALS": "\ue019",
+        "NUMPAD0": "\ue01a",
+        "NUMPAD1": "\ue01b",
+        "NUMPAD2": "\ue01c",
+        "NUMPAD3": "\ue01d",
+        "NUMPAD4": "\ue01e",
+        "NUMPAD5": "\ue01f",
+        "NUMPAD6": "\ue020",
+        "NUMPAD7": "\ue021",
+        "NUMPAD8": "\ue022",
+        "NUMPAD9": "\ue023",
+        "MULTIPLY": "\ue024",
+        "ADD": "\ue025",
+        "SEPARATOR": "\ue026",
+        "SUBTRACT": "\ue027",
+        "DECIMAL": "\ue028",
+        "DIVIDE": "\ue029",
+        "F1": "\ue031",
+        "F2": "\ue032",
+        "F3": "\ue033",
+        "F4": "\ue034",
+        "F5": "\ue035",
+        "F6": "\ue036",
+        "F7": "\ue037",
+        "F8": "\ue038",
+        "F9": "\ue039",
+        "F10": "\ue03a",
+        "F11": "\ue03b",
+        "F12": "\ue03c",
+        "META": "\ue03d",
+        "COMMAND": "\ue03d",
+        "WIN": "\ue03d",
+    }
+
+    def send_keys(self, *keys: str):
+        """
+        Send key sequence to the active window.
+
+        Args:
+            *keys: Key strings or special key names (e.g., "CONTROL", "a").
+        """
+        key_sequence = []
+        for key in keys:
+            if key.upper() in self.KEYS:
+                key_sequence.append(self.KEYS[key.upper()])
+            else:
+                key_sequence.extend(list(key))
+
+        self._request("POST", "/keys", {"value": key_sequence})
+
+    def send_key_combination(self, *modifiers_and_key: str):
+        """
+        Send a key combination (e.g., Ctrl+S, Alt+F4).
+
+        Args:
+            *modifiers_and_key: Modifier keys followed by the final key.
+                               e.g., ("CONTROL", "s") for Ctrl+S
+
+        Example:
+            driver.send_key_combination("CONTROL", "SHIFT", "s")  # Ctrl+Shift+S
+            driver.send_key_combination("ALT", "F4")  # Alt+F4
+        """
+        if not modifiers_and_key:
+            return
+
+        key_sequence = []
+        # Press modifiers
+        modifiers = modifiers_and_key[:-1]
+        final_key = modifiers_and_key[-1]
+
+        for mod in modifiers:
+            mod_key = self.KEYS.get(mod.upper())
+            if mod_key:
+                key_sequence.append(mod_key)
+
+        # Press final key
+        if final_key.upper() in self.KEYS:
+            key_sequence.append(self.KEYS[final_key.upper()])
+        else:
+            key_sequence.extend(list(final_key))
+
+        # Release modifiers (by pressing them again - this releases them)
+        for mod in reversed(modifiers):
+            mod_key = self.KEYS.get(mod.upper())
+            if mod_key:
+                key_sequence.append(mod_key)
+
+        self._request("POST", "/keys", {"value": key_sequence})
+
+    def press_shortcut(self, shortcut: str):
+        """
+        Press a keyboard shortcut in string format.
+
+        Args:
+            shortcut: Shortcut string like "Ctrl+S", "Alt+F4", "Ctrl+Shift+N".
+
+        Example:
+            driver.press_shortcut("Ctrl+S")
+            driver.press_shortcut("Ctrl+Shift+P")
+            driver.press_shortcut("F5")
+        """
+        # Parse shortcut string
+        parts = [p.strip() for p in shortcut.split("+")]
+
+        # Map common shortcut names to key codes
+        shortcut_map = {
+            "ctrl": "CONTROL",
+            "alt": "ALT",
+            "shift": "SHIFT",
+            "win": "META",
+            "cmd": "META",
+            "meta": "META",
+            "esc": "ESCAPE",
+            "enter": "ENTER",
+            "return": "RETURN",
+            "tab": "TAB",
+            "space": "SPACE",
+            "backspace": "BACKSPACE",
+            "delete": "DELETE",
+            "del": "DELETE",
+            "home": "HOME",
+            "end": "END",
+            "pageup": "PAGE_UP",
+            "pagedown": "PAGE_DOWN",
+            "up": "UP",
+            "down": "DOWN",
+            "left": "LEFT",
+            "right": "RIGHT",
+        }
+
+        mapped_parts = []
+        for part in parts:
+            lower_part = part.lower()
+            if lower_part in shortcut_map:
+                mapped_parts.append(shortcut_map[lower_part])
+            elif part.upper() in self.KEYS:
+                mapped_parts.append(part.upper())
+            else:
+                mapped_parts.append(part.lower())
+
+        self.send_key_combination(*mapped_parts)
+
+    def press_escape(self):
+        """Press Escape key."""
+        self.send_keys("ESCAPE")
+
+    def press_enter(self):
+        """Press Enter key."""
+        self.send_keys("ENTER")
+
+    def press_tab(self, shift: bool = False):
+        """
+        Press Tab key, optionally with Shift.
+
+        Args:
+            shift: If True, press Shift+Tab (reverse tab).
+        """
+        if shift:
+            self.send_key_combination("SHIFT", "TAB")
+        else:
+            self.send_keys("TAB")
+
+
+class WinAppDriverElement:
+    """Element wrapper for WinAppDriver."""
+
+    def __init__(self, session: WinAppDriverSession, element_id: str):
+        self._session = session
+        self._element_id = element_id
+
+    def _request(self, method: str, path: str, data: dict | None = None) -> dict:
+        return self._session._request(method, f"/element/{self._element_id}{path}", data)
+
+    def click(self):
+        """Click the element."""
+        self._request("POST", "/click")
+
+    def double_click(self):
+        """Double-click the element by clicking twice quickly."""
+        import time
+        # Simple double-click: click twice with minimal delay
+        self._request("POST", "/click")
+        time.sleep(0.05)  # 50ms between clicks for double-click
+        self._request("POST", "/click")
+
+    def send_keys(self, text: str):
+        """Send keys to element."""
+        self._request("POST", "/value", {"value": list(text)})
+
+    def clear(self):
+        """Clear element text."""
+        self._request("POST", "/clear")
+
+    @property
+    def text(self) -> str:
+        """Get element text."""
+        result = self._request("GET", "/text")
+        return result.get("value", "")
+
+    def get_attribute(self, name: str) -> str:
+        """Get element attribute."""
+        result = self._request("GET", f"/attribute/{name}")
+        return result.get("value", "")
+
+    def is_displayed(self) -> bool:
+        """Check if element is displayed."""
+        result = self._request("GET", "/displayed")
+        return result.get("value", False)
+
+    def is_enabled(self) -> bool:
+        """Check if element is enabled."""
+        result = self._request("GET", "/enabled")
+        return result.get("value", False)
+
+    def find_element(self, by: str, value: str):
+        """Find child element."""
+        strategy_map = {"accessibility id": "accessibility id", "name": "name", "xpath": "xpath"}
+        using = strategy_map.get(by, by)
+        result = self._request("POST", "/element", {"using": using, "value": value})
+        element_id = result.get("value", {}).get("ELEMENT") or next(iter(result.get("value", {}).values()))
+        return WinAppDriverElement(self._session, element_id)
+
+    def find_elements(self, by: str, value: str):
+        """Find child elements."""
+        strategy_map = {"accessibility id": "accessibility id", "name": "name", "xpath": "xpath"}
+        using = strategy_map.get(by, by)
+        result = self._request("POST", "/elements", {"using": using, "value": value})
+        elements = []
+        for elem in result.get("value", []):
+            element_id = elem.get("ELEMENT") or next(iter(elem.values()))
+            elements.append(WinAppDriverElement(self._session, element_id))
+        return elements
+
+
 @pytest.fixture(scope="function")
 def driver(winappdriver_service, request):
-    """Create and configure Appium WebDriver for Windows application."""
+    """Create and configure WinAppDriver session for Windows application."""
     if not APP_PATH.exists():
         pytest.skip(
             f"Application not found at {APP_PATH}. Please build the application first. "
             f"Set VS_APP_PATH environment variable to override."
         )
 
-    options = WindowsOptions()
-    options.app = str(APP_PATH)
-    options.platform_name = "Windows"
-
-    # Create driver
-    driver = webdriver.Remote(command_executor=WINAPPDRIVER_URL, options=options)
+    # Create WinAppDriver session with custom JSON Wire Protocol client
+    session = WinAppDriverSession(str(APP_PATH), WINAPPDRIVER_URL)
 
     # Set implicit wait
-    driver.implicitly_wait(IMPLICIT_WAIT)
+    session.implicitly_wait(IMPLICIT_WAIT)
 
-    yield driver
+    yield session
 
-    # Capture screenshot on test failure
+    # Capture screenshot on test failure and attach to pytest-html report
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
         test_name = request.node.name.replace("::", "_").replace("[", "_").replace("]", "_")
-        capture_screenshot(driver, f"FAILED_{test_name}")
+        screenshot_path = capture_screenshot(session, f"FAILED_{test_name}")
+
+        # Attach screenshot to pytest-html report if available
+        if screenshot_path:
+            _attach_screenshot_to_html_report(request, screenshot_path)
 
     try:
-        driver.quit()
+        session.quit()
     # ALLOWED: bare except - Best effort cleanup, failure is acceptable
     except Exception:
         pass
+
+
+def _attach_screenshot_to_html_report(request, screenshot_path: Path):
+    """Attach screenshot to pytest-html report if the plugin is available."""
+    try:
+        # Check if pytest-html is available
+        if hasattr(request.config, "_html"):
+            import base64
+
+            # Read screenshot and encode as base64
+            with open(screenshot_path, "rb") as f:
+                screenshot_data = base64.b64encode(f.read()).decode("utf-8")
+
+            # Get or create extras list for this test
+            extra = getattr(request.node, "extra", [])
+
+            # Add screenshot as embedded image
+            from pytest_html import extras
+            extra.append(extras.image(f"data:image/png;base64,{screenshot_data}"))
+
+            request.node.extra = extra
+    except ImportError:
+        # pytest-html not installed, skip attachment
+        pass
+    except Exception as e:
+        print(f"Warning: Failed to attach screenshot to HTML report: {e}")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -219,18 +664,51 @@ def pytest_runtest_makereport(item, call):
 @pytest.fixture(scope="function")
 def app_launched(driver):
     """Ensure application is launched and ready."""
-    # Wait for main window to be available
+    # Wait for app to load by checking for navigation elements
+    # The navigation rail with elements like NavStudio, NavProfiles, etc.
+    max_wait = 30
+    start = time.time()
+
+    # First, check for and dismiss any welcome dialog
     try:
-        main_window = wait_for_element(driver, "MainWindow_Root", timeout=30)
-        return main_window
-    except TimeoutException:
-        # If main window not found, application may still be loading
-        time.sleep(2)
+        # Look for welcome dialog - try Skip button first (faster dismissal)
+        time.sleep(1.5)  # Wait for dialog to fully appear
+
+        # Try to find Skip button by name
         try:
-            main_window = driver.find_element("accessibility id", "MainWindow_Root")
-            return main_window
-        except NoSuchElementException:
-            pytest.fail("Application failed to launch - MainWindow_Root not found")
+            skip_btn = driver.find_element("name", "Skip")
+            skip_btn.click()
+            time.sleep(0.5)
+            print("Dismissed welcome dialog via Skip button")
+        except (RuntimeError, NoSuchElementException):
+            # Try CloseButton automation ID
+            try:
+                close_btn = driver.find_element("accessibility id", "CloseButton")
+                close_btn.click()
+                time.sleep(0.5)
+                print("Dismissed welcome dialog via CloseButton")
+            except (RuntimeError, NoSuchElementException):
+                # Try PrimaryButton as last resort
+                try:
+                    primary_btn = driver.find_element("accessibility id", "PrimaryButton")
+                    primary_btn.click()
+                    time.sleep(0.5)
+                    print("Dismissed welcome dialog via PrimaryButton")
+                except (RuntimeError, NoSuchElementException):
+                    pass  # No dialog to close
+    except Exception as e:
+        print(f"Dialog dismissal error (non-fatal): {e}")
+        pass  # Continue if any error during dialog dismissal
+
+    while time.time() - start < max_wait:
+        try:
+            # Try to find a navigation element that should always be visible
+            nav_element = driver.find_element("accessibility id", "NavStudio")
+            return nav_element  # App is ready
+        except (RuntimeError, NoSuchElementException):
+            time.sleep(0.5)
+
+    pytest.fail("Application failed to launch - NavStudio element not found after 30s")
 
 
 @pytest.fixture
@@ -285,7 +763,7 @@ def retry_action():
 def pytest_report_header(config):
     """Add custom header info to test report."""
     return [
-        f"VoiceStudio UI Tests",
+        "VoiceStudio UI Tests",
         f"  App Path: {APP_PATH}",
         f"  WinAppDriver: {WINAPPDRIVER_URL}",
         f"  Screenshots: {SCREENSHOT_DIR}",

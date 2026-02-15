@@ -10,6 +10,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests have complex mocking issues",
     allow_module_level=True,
@@ -24,6 +25,7 @@ import numpy as np
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from backend.services.ContentAddressedAudioCache import reset_audio_cache
 
 project_root = Path(__file__).parent.parent.parent.parent.parent

@@ -34,7 +34,8 @@
         <Grid Grid.Row="1">
             <TabView x:Name="DiagnosticsTabView" 
                      TabWidthMode="Equal"
-                     IsAddTabButtonVisible="False">
+                     IsAddTabButtonVisible="False"
+                     AutomationProperties.AutomationId="DiagnosticsView_TabView">
                 <TabViewItem Header="System Info"/>
                 <TabViewItem Header="Logs"/>
                 <TabViewItem Header="Traces"/>
@@ -301,7 +302,8 @@
                                 <!-- Active Jobs List -->
                                 <ListView x:Name="ActiveJobsListView" 
                                           MaxHeight="200"
-                                          SelectionMode="None">
+                                          SelectionMode="None"
+                                          AutomationProperties.AutomationId="DiagnosticsView_ActiveJobsListView">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Padding="8,4" MinHeight="40">
@@ -374,12 +376,15 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
-                        <ComboBox x:Name="LogLevelFilter" PlaceholderText="Log Level" Width="120"/>
-                        <TextBox x:Name="LogSearchBox" PlaceholderText="Search logs..." Width="200"/>
+                        <ComboBox x:Name="LogLevelFilter" PlaceholderText="Log Level" Width="120"
+                                 AutomationProperties.AutomationId="DiagnosticsView_LogLevelFilter"/>
+                        <TextBox x:Name="LogSearchBox" PlaceholderText="Search logs..." Width="200"
+                                AutomationProperties.AutomationId="DiagnosticsView_LogSearchBox"/>
                         <Button Content="Export"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
-                        <ListView x:Name="LogsListView" Padding="8"/>
+                        <ListView x:Name="LogsListView" Padding="8"
+                                  AutomationProperties.AutomationId="DiagnosticsView_LogsListView"/>
                     </Border>
                 </Grid>
             </Grid>
@@ -647,7 +652,8 @@
                             </StackPanel>
                         </Border>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="Test Connection" x:Name="TestConnectionButton" Click="TestConnection_Click"/>
+                            <Button Content="Test Connection" x:Name="TestConnectionButton" Click="TestConnection_Click"
+                                    AutomationProperties.AutomationId="DiagnosticsView_TestConnectionButton"/>
                             <Button Content="Reconnect" x:Name="ReconnectButton" Click="Reconnect_Click"/>
                         </StackPanel>
                     </StackPanel>
@@ -662,7 +668,8 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
-                        <Button Content="Refresh Engines" x:Name="RefreshEnginesButton" Click="RefreshEngines_Click"/>
+                        <Button Content="Refresh Engines" x:Name="RefreshEnginesButton" Click="RefreshEngines_Click"
+                                    AutomationProperties.AutomationId="DiagnosticsView_RefreshEnginesButton"/>
                         <Button Content="Stop All" x:Name="StopAllEnginesButton" Click="StopAllEngines_Click"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">

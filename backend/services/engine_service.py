@@ -10,15 +10,16 @@ Architecture:
 This follows the Clean Architecture principle of dependency inversion.
 """
 
+from __future__ import annotations
+
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-import logging
+from typing import Any, Union
 
 from backend.services.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
-    CircuitBreakerOpenError,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,13 +27,13 @@ logger = logging.getLogger(__name__)
 # Type definitions for engine operations
 EngineId = str
 AudioPath = Union[str, Path]
-MetricsResult = Dict[str, Any]
-SynthesisResult = Dict[str, Any]
+MetricsResult = dict[str, Any]
+SynthesisResult = dict[str, Any]
 
 
 class IEngineService(ABC):
     """Abstract interface for engine operations.
-    
+
     This interface defines the contract that all engine service implementations
     must follow. Routes should depend on this interface, not concrete implementations.
     """
@@ -42,12 +43,12 @@ class IEngineService(ABC):
     # -------------------------------------------------------------------------
 
     @abstractmethod
-    def list_engines(self) -> List[Dict[str, Any]]:
+    def list_engines(self) -> list[dict[str, Any]]:
         """List all available engines with their metadata."""
         ...
 
     @abstractmethod
-    def get_engine(self, engine_id: EngineId) -> Optional[Any]:
+    def get_engine(self, engine_id: EngineId) -> Any | None:
         """Get an engine instance by ID."""
         ...
 
@@ -57,7 +58,7 @@ class IEngineService(ABC):
         ...
 
     @abstractmethod
-    def get_engine_status(self, engine_id: EngineId) -> Dict[str, Any]:
+    def get_engine_status(self, engine_id: EngineId) -> dict[str, Any]:
         """Get the current status of an engine."""
         ...
 
@@ -70,7 +71,7 @@ class IEngineService(ABC):
         self,
         engine_id: EngineId,
         text: str,
-        voice_id: Optional[str] = None,
+        voice_id: str | None = None,
         **kwargs: Any,
     ) -> SynthesisResult:
         """Synthesize speech from text using the specified engine."""
@@ -96,9 +97,9 @@ class IEngineService(ABC):
         self,
         engine_id: EngineId,
         audio_path: AudioPath,
-        language: Optional[str] = None,
+        language: str | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Transcribe audio to text using the specified engine."""
         ...
 
@@ -110,7 +111,7 @@ class IEngineService(ABC):
     def calculate_metrics(
         self,
         audio_path: AudioPath,
-        reference_path: Optional[AudioPath] = None,
+        reference_path: AudioPath | None = None,
     ) -> MetricsResult:
         """Calculate quality metrics for an audio file."""
         ...
@@ -125,13 +126,13 @@ class IEngineService(ABC):
         ...
 
     @abstractmethod
-    def calculate_mos_score(self, audio: Union[AudioPath, Any]) -> float:
+    def calculate_mos_score(self, audio: AudioPath | Any) -> float:
         """Calculate Mean Opinion Score for audio (path or numpy array)."""
         ...
 
     @abstractmethod
     def calculate_snr(
-        self, audio: Union[AudioPath, "np.ndarray"], sample_rate: Optional[int] = None
+        self, audio: Union[AudioPath, "np.ndarray"], sample_rate: int | None = None
     ) -> float:
         """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
         ...
@@ -139,12 +140,12 @@ class IEngineService(ABC):
     @abstractmethod
     def detect_artifacts(
         self, audio_path: AudioPath, sample_rate: int = 22050
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect audio artifacts (clipping, distortion, noise)."""
         ...
 
     @abstractmethod
-    def get_engine_performance_metrics(self) -> Dict[str, Any]:
+    def get_engine_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics for all engines."""
         ...
 
@@ -153,7 +154,7 @@ class IEngineService(ABC):
     # -------------------------------------------------------------------------
 
     @abstractmethod
-    def get_quality_presets(self) -> List[Dict[str, Any]]:
+    def get_quality_presets(self) -> list[dict[str, Any]]:
         """Get available quality presets."""
         ...
 
@@ -161,8 +162,8 @@ class IEngineService(ABC):
     def get_synthesis_params_from_preset(
         self,
         preset_name: str,
-        engine_id: Optional[EngineId] = None,
-    ) -> Dict[str, Any]:
+        engine_id: EngineId | None = None,
+    ) -> dict[str, Any]:
         """Get synthesis parameters for a quality preset."""
         ...
 
@@ -174,59 +175,59 @@ class IEngineService(ABC):
     def route_synthesis(
         self,
         text: str,
-        voice_id: Optional[str] = None,
-        engine_preference: Optional[str] = None,
+        voice_id: str | None = None,
+        engine_preference: str | None = None,
         **kwargs: Any,
     ) -> SynthesisResult:
         """Route synthesis to the best available engine."""
         ...
 
     @abstractmethod
-    def get_available_voices(self, engine_id: Optional[EngineId] = None) -> List[Dict[str, Any]]:
+    def get_available_voices(self, engine_id: EngineId | None = None) -> list[dict[str, Any]]:
         """Get list of available voices, optionally filtered by engine."""
         ...
 
     @abstractmethod
     def calculate_all_metrics(
         self,
-        audio: Union[AudioPath, Any],
-        reference: Optional[Union[AudioPath, Any]] = None,
-    ) -> Dict[str, Any]:
+        audio: AudioPath | Any,
+        reference: AudioPath | Any | None = None,
+    ) -> dict[str, Any]:
         """Calculate all quality metrics for audio."""
         ...
 
     @abstractmethod
-    def calculate_naturalness(self, audio: Union[AudioPath, Any]) -> float:
+    def calculate_naturalness(self, audio: AudioPath | Any) -> float:
         """Calculate naturalness score for audio."""
         ...
 
     @abstractmethod
-    def get_whisper_engine(self) -> Optional[Any]:
+    def get_whisper_engine(self) -> Any | None:
         """Get Whisper transcription engine."""
         ...
 
     @abstractmethod
-    def get_aeneas_engine(self) -> Optional[Any]:
+    def get_aeneas_engine(self) -> Any | None:
         """Get Aeneas forced alignment engine."""
         ...
 
     @abstractmethod
-    def get_rvc_engine(self) -> Optional[Any]:
+    def get_rvc_engine(self) -> Any | None:
         """Get RVC voice conversion engine."""
         ...
 
     @abstractmethod
-    def get_realesrgan_engine(self) -> Optional[Any]:
+    def get_realesrgan_engine(self) -> Any | None:
         """Get Real-ESRGAN upscaling engine."""
         ...
 
     @abstractmethod
-    def get_deepfacelab_engine(self) -> Optional[Any]:
+    def get_deepfacelab_engine(self) -> Any | None:
         """Get DeepFaceLab engine."""
         ...
 
     @abstractmethod
-    def get_speaker_encoder_engine(self) -> Optional[Any]:
+    def get_speaker_encoder_engine(self) -> Any | None:
         """Get speaker encoder engine."""
         ...
 
@@ -235,17 +236,17 @@ class IEngineService(ABC):
     # -------------------------------------------------------------------------
 
     @abstractmethod
-    def get_best_llm_provider(self) -> Optional[Any]:
+    def get_best_llm_provider(self) -> Any | None:
         """Get the best available LLM provider."""
         ...
 
     @abstractmethod
-    def get_llm_config_class(self) -> Optional[type]:
+    def get_llm_config_class(self) -> type | None:
         """Get the LLMConfig class for building LLM configurations."""
         ...
 
     @abstractmethod
-    def get_llm_message_classes(self) -> Optional[tuple]:
+    def get_llm_message_classes(self) -> tuple | None:
         """Get the Message and MessageRole classes for LLM messaging."""
         ...
 
@@ -254,58 +255,58 @@ class IEngineService(ABC):
     # -------------------------------------------------------------------------
 
     @abstractmethod
-    def get_engine_auditor(self) -> Optional[Any]:
+    def get_engine_auditor(self) -> Any | None:
         """Get an EngineAuditor instance for auditing engines."""
         ...
 
     @abstractmethod
-    def get_engine_registry(self) -> Optional[Any]:
+    def get_engine_registry(self) -> Any | None:
         """Get the engine registry for accessing registered engines."""
         ...
 
     @abstractmethod
-    def audit_all_engines(self) -> Dict[str, Any]:
+    def audit_all_engines(self) -> dict[str, Any]:
         """Audit all registered engines for completeness and enhancements."""
         ...
 
     @abstractmethod
-    def get_audit_summary(self) -> Dict[str, Any]:
+    def get_audit_summary(self) -> dict[str, Any]:
         """Get summary of engine audits."""
         ...
 
     @abstractmethod
-    def get_engine_router(self) -> Optional[Any]:
+    def get_engine_router(self) -> Any | None:
         """Get the engine router for direct access."""
         ...
 
     @abstractmethod
-    def get_engine_stats(self, engine_id: Optional[EngineId] = None) -> Dict[str, Any]:
+    def get_engine_stats(self, engine_id: EngineId | None = None) -> dict[str, Any]:
         """Get statistics for an engine or all engines.
-        
+
         Args:
             engine_id: Optional engine ID. If None, returns stats for all engines.
-            
+
         Returns:
             Dictionary containing engine statistics.
         """
         ...
 
     @abstractmethod
-    def get_engine_manifest(self, engine_id: EngineId) -> Optional[Dict[str, Any]]:
+    def get_engine_manifest(self, engine_id: EngineId) -> dict[str, Any] | None:
         """Get the manifest (metadata) for an engine.
-        
+
         Args:
             engine_id: Engine identifier.
-            
+
         Returns:
             Engine manifest dictionary or None if not found.
         """
         ...
 
     @abstractmethod
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics for the engine system.
-        
+
         Returns:
             Dictionary containing system metrics in Prometheus-compatible format.
         """
@@ -314,14 +315,14 @@ class IEngineService(ABC):
 
 class EngineService(IEngineService):
     """Concrete implementation of the engine service.
-    
+
     This implementation delegates to the existing engine layer (app.core.engines).
     It provides a stable interface while allowing the underlying implementation
     to evolve.
     """
 
     # Engine fallback priority for graceful degradation
-    ENGINE_FALLBACK_CHAIN: Dict[str, List[str]] = {
+    ENGINE_FALLBACK_CHAIN: dict[str, list[str]] = {
         "xtts_v2": ["chatterbox", "bark", "piper"],
         "chatterbox": ["xtts_v2", "bark", "piper"],
         "bark": ["xtts_v2", "chatterbox", "piper"],
@@ -338,15 +339,15 @@ class EngineService(IEngineService):
         self._quality_presets = None
         self._performance_metrics = None
         self._engines_loaded = False
-        
+
         # Circuit breakers for graceful degradation
-        self._circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self._circuit_breakers: dict[str, CircuitBreaker] = {}
         self._circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=3,
             success_threshold=2,
             recovery_timeout=60.0,
         )
-    
+
     def _get_circuit_breaker(self, engine_id: EngineId) -> CircuitBreaker:
         """Get or create a circuit breaker for an engine."""
         if engine_id not in self._circuit_breakers:
@@ -357,12 +358,12 @@ class EngineService(IEngineService):
                 recovery_timeout=self._circuit_breaker_config.recovery_timeout,
             )
         return self._circuit_breakers[engine_id]
-    
-    def _get_fallback_engines(self, engine_id: EngineId) -> List[EngineId]:
+
+    def _get_fallback_engines(self, engine_id: EngineId) -> list[EngineId]:
         """Get fallback engine chain for graceful degradation."""
         return self.ENGINE_FALLBACK_CHAIN.get(engine_id, [])
-    
-    def get_engine_health(self, engine_id: EngineId) -> Dict[str, Any]:
+
+    def get_engine_health(self, engine_id: EngineId) -> dict[str, Any]:
         """Get the health status of an engine including circuit breaker state."""
         breaker = self._get_circuit_breaker(engine_id)
         stats = breaker.get_stats()
@@ -376,8 +377,8 @@ class EngineService(IEngineService):
             "total_blocked": stats.total_blocked,
             "is_healthy": breaker.allow_request(),
         }
-    
-    def get_all_engine_health(self) -> Dict[str, Dict[str, Any]]:
+
+    def get_all_engine_health(self) -> dict[str, dict[str, Any]]:
         """Get health status for all engines with circuit breakers."""
         return {
             engine_id: self.get_engine_health(engine_id)
@@ -419,12 +420,12 @@ class EngineService(IEngineService):
     # Engine Discovery and Management
     # -------------------------------------------------------------------------
 
-    def list_engines(self) -> List[Dict[str, Any]]:
+    def list_engines(self) -> list[dict[str, Any]]:
         """List all available engines with their metadata."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return []
-        
+
         try:
             return self._engine_router.list_engines()
         except Exception as e:
@@ -432,12 +433,12 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to list engines: {e}")
             return []
 
-    def get_engine(self, engine_id: EngineId) -> Optional[Any]:
+    def get_engine(self, engine_id: EngineId) -> Any | None:
         """Get an engine instance by ID."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return None
-        
+
         try:
             return self._engine_router.get_engine(engine_id)
         except Exception as e:
@@ -450,17 +451,17 @@ class EngineService(IEngineService):
         engine = self.get_engine(engine_id)
         return engine is not None
 
-    def get_engine_status(self, engine_id: EngineId) -> Dict[str, Any]:
+    def get_engine_status(self, engine_id: EngineId) -> dict[str, Any]:
         """Get the current status of an engine."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"status": "unavailable", "error": "Engine router not loaded"}
-        
+
         try:
             engine = self._engine_router.get_engine(engine_id)
             if engine is None:
                 return {"status": "not_found", "engine_id": engine_id}
-            
+
             return {
                 "status": "available",
                 "engine_id": engine_id,
@@ -477,11 +478,11 @@ class EngineService(IEngineService):
         self,
         engine_id: EngineId,
         text: str,
-        voice_id: Optional[str] = None,
+        voice_id: str | None = None,
         **kwargs: Any,
     ) -> SynthesisResult:
         """Synthesize speech from text using the specified engine.
-        
+
         Implements graceful degradation:
         - Uses circuit breaker to prevent cascading failures
         - Falls back to alternative engines if primary fails
@@ -490,28 +491,27 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"error": "Engine router not available", "degraded": True}
-        
+
         # Build engine chain: primary + fallbacks
-        engines_to_try = [engine_id] + self._get_fallback_engines(engine_id)
+        engines_to_try = [engine_id, *self._get_fallback_engines(engine_id)]
         last_error = None
-        used_fallback = False
-        
+
         for idx, current_engine_id in enumerate(engines_to_try):
             breaker = self._get_circuit_breaker(current_engine_id)
-            
+
             # Skip if circuit is open
             if not breaker.allow_request():
                 logger.debug(f"Circuit breaker OPEN for {current_engine_id}, skipping")
                 continue
-            
+
             try:
                 engine = self._engine_router.get_engine(current_engine_id)
                 if engine is None:
                     continue
-                
+
                 result = engine.synthesize(text, voice_id=voice_id, **kwargs)
                 breaker.record_success()
-                
+
                 output = result if isinstance(result, dict) else {"audio_path": str(result)}
                 if idx > 0:
                     output["degraded"] = True
@@ -519,13 +519,13 @@ class EngineService(IEngineService):
                     output["primary_engine"] = engine_id
                     logger.warning(f"Synthesize fell back from {engine_id} to {current_engine_id}")
                 return output
-                
+
             except Exception as e:
                 breaker.record_failure()
                 last_error = e
                 logger.warning(f"Engine {current_engine_id} failed: {e}")
                 continue
-        
+
         # All engines failed
         return {
             "error": f"All engines failed. Last error: {last_error}",
@@ -541,39 +541,39 @@ class EngineService(IEngineService):
         **kwargs: Any,
     ) -> SynthesisResult:
         """Clone a voice using reference audio.
-        
+
         Implements graceful degradation with circuit breaker and fallback.
         """
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"error": "Engine router not available", "degraded": True}
-        
+
         # Build engine chain: primary + fallbacks (only voice cloning capable)
-        engines_to_try = [engine_id] + self._get_fallback_engines(engine_id)
+        engines_to_try = [engine_id, *self._get_fallback_engines(engine_id)]
         last_error = None
-        
+
         for idx, current_engine_id in enumerate(engines_to_try):
             breaker = self._get_circuit_breaker(current_engine_id)
-            
+
             if not breaker.allow_request():
                 continue
-            
+
             try:
                 engine = self._engine_router.get_engine(current_engine_id)
                 if engine is None:
                     continue
-                
+
                 # Check if engine supports voice cloning
                 if not hasattr(engine, 'clone_voice'):
                     continue
-                
+
                 result = engine.clone_voice(
                     reference_audio=str(reference_audio),
                     text=text,
                     **kwargs,
                 )
                 breaker.record_success()
-                
+
                 output = result if isinstance(result, dict) else {"audio_path": str(result)}
                 if idx > 0:
                     output["degraded"] = True
@@ -581,13 +581,13 @@ class EngineService(IEngineService):
                     output["primary_engine"] = engine_id
                     logger.warning(f"clone_voice fell back from {engine_id} to {current_engine_id}")
                 return output
-                
+
             except Exception as e:
                 breaker.record_failure()
                 last_error = e
                 logger.warning(f"Engine {current_engine_id} clone_voice failed: {e}")
                 continue
-        
+
         return {
             "error": f"All engines failed. Last error: {last_error}",
             "degraded": True,
@@ -602,19 +602,19 @@ class EngineService(IEngineService):
         self,
         engine_id: EngineId,
         audio_path: AudioPath,
-        language: Optional[str] = None,
+        language: str | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Transcribe audio to text using the specified engine."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"error": "Engine router not available"}
-        
+
         try:
             engine = self._engine_router.get_engine(engine_id)
             if engine is None:
                 return {"error": f"Engine {engine_id} not found"}
-            
+
             result = engine.transcribe(
                 audio_path=str(audio_path),
                 language=language,
@@ -631,13 +631,13 @@ class EngineService(IEngineService):
     def calculate_metrics(
         self,
         audio_path: AudioPath,
-        reference_path: Optional[AudioPath] = None,
+        reference_path: AudioPath | None = None,
     ) -> MetricsResult:
         """Calculate quality metrics for an audio file."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return {"error": "Quality metrics not available"}
-        
+
         try:
             return self._quality_metrics.calculate_all_metrics(
                 audio_path=str(audio_path),
@@ -655,7 +655,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return 0.0
-        
+
         try:
             return self._quality_metrics.calculate_similarity(
                 str(audio1_path),
@@ -665,12 +665,12 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to calculate similarity: {e}")
             return 0.0
 
-    def calculate_mos_score(self, audio: Union[AudioPath, Any]) -> float:
+    def calculate_mos_score(self, audio: AudioPath | Any) -> float:
         """Calculate Mean Opinion Score for audio (path or numpy array)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return 0.0
-        
+
         try:
             # Check if input is a numpy array (duck typing to avoid import)
             if hasattr(audio, "shape") and hasattr(audio, "dtype"):
@@ -682,13 +682,13 @@ class EngineService(IEngineService):
             return 0.0
 
     def calculate_snr(
-        self, audio: Union[AudioPath, Any], sample_rate: Optional[int] = None
+        self, audio: AudioPath | Any, sample_rate: int | None = None
     ) -> float:
         """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return 0.0
-        
+
         try:
             # Check if input is a numpy array (duck typing to avoid import)
             if hasattr(audio, "shape") and hasattr(audio, "dtype"):
@@ -700,13 +700,13 @@ class EngineService(IEngineService):
             return 0.0
 
     def detect_artifacts(
-        self, audio: Union[AudioPath, Any], sample_rate: int = 22050
-    ) -> Dict[str, Any]:
+        self, audio: AudioPath | Any, sample_rate: int = 22050
+    ) -> dict[str, Any]:
         """Detect audio artifacts (clipping, distortion, noise)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return {"error": "Quality metrics not available"}
-        
+
         try:
             # Check if input is a numpy array (duck typing to avoid import)
             if hasattr(audio, "shape") and hasattr(audio, "dtype"):
@@ -716,7 +716,7 @@ class EngineService(IEngineService):
         except Exception as e:
             return {"error": str(e)}
 
-    def get_engine_performance_metrics(self) -> Dict[str, Any]:
+    def get_engine_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics for all engines."""
         self._ensure_engines_loaded()
         try:
@@ -736,12 +736,12 @@ class EngineService(IEngineService):
     # Quality Optimization
     # -------------------------------------------------------------------------
 
-    def get_quality_presets(self) -> List[Dict[str, Any]]:
+    def get_quality_presets(self) -> list[dict[str, Any]]:
         """Get available quality presets."""
         self._ensure_engines_loaded()
         if self._quality_presets is None:
             return []
-        
+
         try:
             return self._quality_presets.list_quality_presets()
         except Exception as e:
@@ -751,13 +751,13 @@ class EngineService(IEngineService):
     def get_synthesis_params_from_preset(
         self,
         preset_name: str,
-        engine_id: Optional[EngineId] = None,
-    ) -> Dict[str, Any]:
+        engine_id: EngineId | None = None,
+    ) -> dict[str, Any]:
         """Get synthesis parameters for a quality preset."""
         self._ensure_engines_loaded()
         if self._quality_presets is None:
             return {}
-        
+
         try:
             return self._quality_presets.get_synthesis_params_from_preset(
                 preset_name,
@@ -774,15 +774,15 @@ class EngineService(IEngineService):
     def route_synthesis(
         self,
         text: str,
-        voice_id: Optional[str] = None,
-        engine_preference: Optional[str] = None,
+        voice_id: str | None = None,
+        engine_preference: str | None = None,
         **kwargs: Any,
     ) -> SynthesisResult:
         """Route synthesis to the best available engine."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"error": "Engine router not available"}
-        
+
         try:
             return self._engine_router.synthesize(
                 text=text,
@@ -793,12 +793,12 @@ class EngineService(IEngineService):
         except Exception as e:
             return {"error": str(e)}
 
-    def get_available_voices(self, engine_id: Optional[EngineId] = None) -> List[Dict[str, Any]]:
+    def get_available_voices(self, engine_id: EngineId | None = None) -> list[dict[str, Any]]:
         """Get list of available voices, optionally filtered by engine."""
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return []
-        
+
         try:
             if engine_id:
                 engine = self._engine_router.get_engine(engine_id)
@@ -812,14 +812,14 @@ class EngineService(IEngineService):
 
     def calculate_all_metrics(
         self,
-        audio: Union[AudioPath, Any],
-        reference: Optional[Union[AudioPath, Any]] = None,
-    ) -> Dict[str, Any]:
+        audio: AudioPath | Any,
+        reference: AudioPath | Any | None = None,
+    ) -> dict[str, Any]:
         """Calculate all quality metrics for audio."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return {"error": "Quality metrics not available"}
-        
+
         try:
             # Check if input is a numpy array
             if hasattr(audio, "shape") and hasattr(audio, "dtype"):
@@ -832,12 +832,12 @@ class EngineService(IEngineService):
         except Exception as e:
             return {"error": str(e)}
 
-    def calculate_naturalness(self, audio: Union[AudioPath, Any]) -> float:
+    def calculate_naturalness(self, audio: AudioPath | Any) -> float:
         """Calculate naturalness score for audio."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
             return 0.0
-        
+
         try:
             if hasattr(audio, "shape") and hasattr(audio, "dtype"):
                 return self._quality_metrics.calculate_naturalness(audio)
@@ -853,7 +853,7 @@ class EngineService(IEngineService):
     # graceful degradation - engines are optional and may not be available.
     # -------------------------------------------------------------------------
 
-    def get_whisper_engine(self) -> Optional[Any]:
+    def get_whisper_engine(self) -> Any | None:
         """Get Whisper transcription engine."""
         self._ensure_engines_loaded()
         try:
@@ -864,7 +864,7 @@ class EngineService(IEngineService):
         except Exception:
             return None
 
-    def get_aeneas_engine(self) -> Optional[Any]:
+    def get_aeneas_engine(self) -> Any | None:
         """Get Aeneas forced alignment engine."""
         self._ensure_engines_loaded()
         try:
@@ -875,7 +875,7 @@ class EngineService(IEngineService):
         except Exception:
             return None
 
-    def get_rvc_engine(self) -> Optional[Any]:
+    def get_rvc_engine(self) -> Any | None:
         """Get RVC voice conversion engine."""
         self._ensure_engines_loaded()
         try:
@@ -886,7 +886,7 @@ class EngineService(IEngineService):
         except Exception:
             return None
 
-    def get_realesrgan_engine(self) -> Optional[Any]:
+    def get_realesrgan_engine(self) -> Any | None:
         """Get Real-ESRGAN upscaling engine."""
         self._ensure_engines_loaded()
         try:
@@ -897,7 +897,7 @@ class EngineService(IEngineService):
         except Exception:
             return None
 
-    def get_deepfacelab_engine(self) -> Optional[Any]:
+    def get_deepfacelab_engine(self) -> Any | None:
         """Get DeepFaceLab engine."""
         self._ensure_engines_loaded()
         try:
@@ -908,7 +908,7 @@ class EngineService(IEngineService):
         except Exception:
             return None
 
-    def get_speaker_encoder_engine(self) -> Optional[Any]:
+    def get_speaker_encoder_engine(self) -> Any | None:
         """Get speaker encoder engine."""
         self._ensure_engines_loaded()
         try:
@@ -923,16 +923,16 @@ class EngineService(IEngineService):
     # LLM Provider Access (Clean Architecture wrapper)
     # -------------------------------------------------------------------------
 
-    def get_best_llm_provider(self) -> Optional[Any]:
+    def get_best_llm_provider(self) -> Any | None:
         """Get the best available LLM provider.
-        
+
         Priority: Ollama (local) > LocalAI > OpenAI (cloud)
-        
+
         This provides a clean interface for LLM access without requiring
         routes to import directly from app.core.engines.
         """
         try:
-            from app.core.engines.llm_local_adapter import OllamaLLMProvider, LocalAILLMProvider
+            from app.core.engines.llm_local_adapter import LocalAILLMProvider, OllamaLLMProvider
             from app.core.engines.llm_openai_adapter import OpenAILLMProvider
 
             # Try local first (Ollama)
@@ -961,7 +961,7 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to get LLM provider: {e}")
             return None
 
-    def get_llm_config_class(self) -> Optional[type]:
+    def get_llm_config_class(self) -> type | None:
         """Get the LLMConfig class for building LLM configurations."""
         try:
             from app.core.engines.llm_interface import LLMConfig
@@ -969,7 +969,7 @@ class EngineService(IEngineService):
         except ImportError:
             return None
 
-    def get_llm_message_classes(self) -> Optional[tuple]:
+    def get_llm_message_classes(self) -> tuple | None:
         """Get the Message and MessageRole classes for LLM messaging."""
         try:
             from app.core.engines.llm_interface import Message, MessageRole
@@ -981,7 +981,7 @@ class EngineService(IEngineService):
     # Engine Audit Access (Clean Architecture wrapper)
     # -------------------------------------------------------------------------
 
-    def get_engine_auditor(self) -> Optional[Any]:
+    def get_engine_auditor(self) -> Any | None:
         """Get an EngineAuditor instance for auditing engines."""
         try:
             from app.core.engines.engine_audit import EngineAuditor
@@ -992,7 +992,7 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to create EngineAuditor: {e}")
             return None
 
-    def get_engine_registry(self) -> Optional[Any]:
+    def get_engine_registry(self) -> Any | None:
         """Get the engine registry for accessing registered engines."""
         try:
             from app.core.engines.engine_registry import get_engine_registry
@@ -1003,22 +1003,22 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to get engine registry: {e}")
             return None
 
-    def audit_all_engines(self) -> Dict[str, Any]:
+    def audit_all_engines(self) -> dict[str, Any]:
         """Audit all registered engines for completeness and enhancements.
-        
+
         Returns:
             Dictionary with audit results for all engines
         """
         registry = self.get_engine_registry()
         auditor = self.get_engine_auditor()
-        
+
         if registry is None or auditor is None:
             return {"error": "Engine audit not available"}
-        
+
         try:
             engines = registry.get_all_engines()
             results = auditor.audit_all_engines(engines)
-            
+
             # Convert results to dictionaries
             results_dict = {}
             for name, result in results.items():
@@ -1039,7 +1039,7 @@ class EngineService(IEngineService):
                         "lazy_loading": result.has_lazy_loading,
                     },
                 }
-            
+
             return {
                 "engines": results_dict,
                 "summary": auditor.get_audit_summary(),
@@ -1047,14 +1047,14 @@ class EngineService(IEngineService):
         except Exception as e:
             return {"error": str(e)}
 
-    def get_audit_summary(self) -> Dict[str, Any]:
+    def get_audit_summary(self) -> dict[str, Any]:
         """Get summary of engine audits."""
         registry = self.get_engine_registry()
         auditor = self.get_engine_auditor()
-        
+
         if registry is None or auditor is None:
             return {"error": "Engine audit not available"}
-        
+
         try:
             engines = registry.get_all_engines()
             auditor.audit_all_engines(engines)
@@ -1066,31 +1066,31 @@ class EngineService(IEngineService):
     # Engine Router Access (Clean Architecture wrapper)
     # -------------------------------------------------------------------------
 
-    def get_engine_router(self) -> Optional[Any]:
+    def get_engine_router(self) -> Any | None:
         """Get the engine router for direct access.
-        
+
         Note: Prefer using service methods instead of direct router access.
         This is provided for backwards compatibility.
         """
         self._ensure_engines_loaded()
         return self._engine_router
 
-    def get_engine_stats(self, engine_id: Optional[EngineId] = None) -> Dict[str, Any]:
+    def get_engine_stats(self, engine_id: EngineId | None = None) -> dict[str, Any]:
         """Get statistics for an engine or all engines.
-        
+
         This provides a clean architecture wrapper around the engine router's
         get_engine_stats method.
-        
+
         Args:
             engine_id: Optional engine ID. If None, returns stats for all engines.
-            
+
         Returns:
             Dictionary containing engine statistics.
         """
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return {"error": "Engine router not available", "available": False}
-        
+
         try:
             if hasattr(self._engine_router, "get_engine_stats"):
                 if engine_id:
@@ -1107,17 +1107,17 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to get engine stats: {e}")
             return {"error": str(e), "available": False}
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics for the engine system.
-        
+
         This provides a clean architecture wrapper around the engine metrics
         collection functionality.
-        
+
         Returns:
             Dictionary containing system metrics in Prometheus-compatible format.
         """
         self._ensure_engines_loaded()
-        
+
         try:
             # Try to import metrics from the engine layer
             from app.core.engines.metrics import get_engine_metrics
@@ -1129,22 +1129,22 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to get engine metrics: {e}")
             return {"error": str(e), "available": False}
 
-    def get_engine_manifest(self, engine_id: EngineId) -> Optional[Dict[str, Any]]:
+    def get_engine_manifest(self, engine_id: EngineId) -> dict[str, Any] | None:
         """Get the manifest (metadata) for an engine.
-        
+
         This provides a clean architecture wrapper around the engine router's
         get_manifest method.
-        
+
         Args:
             engine_id: Engine identifier.
-            
+
         Returns:
             Engine manifest dictionary or None if not found.
         """
         self._ensure_engines_loaded()
         if self._engine_router is None:
             return None
-        
+
         try:
             if hasattr(self._engine_router, "get_manifest"):
                 return self._engine_router.get_manifest(engine_id)
@@ -1155,15 +1155,15 @@ class EngineService(IEngineService):
 
 
 # Singleton instance for dependency injection
-_engine_service_instance: Optional[EngineService] = None
+_engine_service_instance: EngineService | None = None
 
 
 def get_engine_service() -> IEngineService:
     """FastAPI dependency for engine service injection.
-    
+
     Usage in routes:
         from backend.services.engine_service import get_engine_service, IEngineService
-        
+
         @router.get("/engines")
         async def list_engines(engine_service: IEngineService = Depends(get_engine_service)):
             return engine_service.list_engines()
@@ -1174,14 +1174,14 @@ def get_engine_service() -> IEngineService:
     return _engine_service_instance
 
 
-def get_engine_by_id(engine_id: str) -> Optional[Any]:
+def get_engine_by_id(engine_id: str) -> Any | None:
     """Get an engine instance by ID.
-    
+
     This is a convenience function for use by adapters.
-    
+
     Args:
         engine_id: The engine identifier (e.g., "xtts", "whisper", "rvc")
-        
+
     Returns:
         The engine instance or None if not available
     """
@@ -1191,14 +1191,14 @@ def get_engine_by_id(engine_id: str) -> Optional[Any]:
 
 def get_engine_port():
     """Get the engine port interface for Clean Architecture patterns.
-    
+
     This provides access to the IEnginePort interface defined in
     backend.interfaces.engine_port, which offers a more granular
     interface for specific engine types.
-    
+
     Usage in routes:
         from backend.services.engine_service import get_engine_port
-        
+
         engine_port = get_engine_port()
         tts_engine = engine_port.get_synthesis_engine()
         result = await tts_engine.synthesize(request)

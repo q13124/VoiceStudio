@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, MemoryItem, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -21,7 +21,7 @@ DEFAULT_NOTES_DIR = ".cursor/agent_notes"
 NOTES_SUFFIX = "_notes.md"
 
 
-def _role_to_filename(role: Optional[str]) -> Optional[str]:
+def _role_to_filename(role: str | None) -> str | None:
     """Map role short_name to notes filename stem (e.g. overseer -> overseer_notes.md)."""
     if not role or not role.strip():
         return None
@@ -51,7 +51,7 @@ class NotesSourceAdapter(BaseSourceAdapter):
             p = root / p
         return p
 
-    def _load_notes_for_role(self, root: Path, role: str) -> Optional[str]:
+    def _load_notes_for_role(self, root: Path, role: str) -> str | None:
         """Load notes file content for role; returns None if missing or error."""
         dir_path = self._resolve_dir(root)
         name = _role_to_filename(role)
@@ -69,7 +69,7 @@ class NotesSourceAdapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """Load notes for context.role and return as memory item."""
 
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             if not context.role:
                 return {"memory": []}

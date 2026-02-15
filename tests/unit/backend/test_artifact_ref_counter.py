@@ -2,9 +2,8 @@
 Unit tests for ArtifactRefCounter (Phase 21.3)
 """
 
-import tempfile
 import shutil
-import pytest
+import tempfile
 
 from backend.services.artifact_ref_counter import ArtifactRefCounter
 
@@ -76,7 +75,7 @@ class TestArtifactRefCounter:
 
     def test_get_zero_ref_artifacts(self):
         """Test getting artifacts with zero references.
-        
+
         Note: In current implementation, artifacts are deleted when count
         reaches zero, so get_zero_ref_artifacts returns empty unless there's
         a race condition or the artifact was added with zero refs initially.

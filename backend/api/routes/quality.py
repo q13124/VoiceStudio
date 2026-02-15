@@ -3,22 +3,24 @@ Quality Management API Routes
 Quality optimization, presets, and comparison endpoints
 """
 
+from __future__ import annotations
+
 import logging
 import tempfile
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-import numpy as np
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
-from ..optimization import cache_response
-from backend.services.engine_service import get_engine_service
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_audio_file,
 )
+from backend.services.engine_service import get_engine_service
+
+from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +48,10 @@ except Exception as e:
 class QualityAnalysisRequest(BaseModel):
     """Request for quality analysis."""
 
-    mos_score: Optional[float] = None
-    similarity: Optional[float] = None
-    naturalness: Optional[float] = None
-    snr_db: Optional[float] = None
+    mos_score: float | None = None
+    similarity: float | None = None
+    naturalness: float | None = None
+    snr_db: float | None = None
     target_tier: str = "standard"
 
 
@@ -58,23 +60,23 @@ class QualityAnalysisResponse(BaseModel):
 
     meets_target: bool
     quality_score: float
-    deficiencies: List[Dict[str, Any]]
-    recommendations: List[Dict[str, Any]]
+    deficiencies: list[dict[str, Any]]
+    recommendations: list[dict[str, Any]]
 
 
 class QualityOptimizationRequest(BaseModel):
     """Request for quality optimization."""
 
-    metrics: Dict[str, Any]
-    current_params: Dict[str, Any]
+    metrics: dict[str, Any]
+    current_params: dict[str, Any]
     target_tier: str = "standard"
 
 
 class QualityOptimizationResponse(BaseModel):
     """Response from quality optimization."""
 
-    optimized_params: Dict[str, Any]
-    analysis: Dict[str, Any]
+    optimized_params: dict[str, Any]
+    analysis: dict[str, Any]
 
 
 class QualityPresetResponse(BaseModel):
@@ -82,34 +84,34 @@ class QualityPresetResponse(BaseModel):
 
     name: str
     description: str
-    target_metrics: Dict[str, float]
-    parameters: Dict[str, Any]
+    target_metrics: dict[str, float]
+    parameters: dict[str, Any]
 
 
 class QualityComparisonRequest(BaseModel):
     """Request for quality comparison."""
 
-    samples: List[Dict[str, Any]]  # List of {name, audio_path, metadata}
+    samples: list[dict[str, Any]]  # List of {name, audio_path, metadata}
 
 
 class QualityComparisonResponse(BaseModel):
     """Response from quality comparison."""
 
     total_samples: int
-    rankings: Dict[int, Dict[str, Any]]
-    statistics: Dict[str, Dict[str, float]]
-    best_samples: Dict[str, Dict[str, Any]]
-    comparison_table: List[Dict[str, Any]]
+    rankings: dict[int, dict[str, Any]]
+    statistics: dict[str, dict[str, float]]
+    best_samples: dict[str, dict[str, Any]]
+    comparison_table: list[dict[str, Any]]
 
 
 class BenchmarkRequest(BaseModel):
     """Request for quality benchmarking."""
 
-    profile_id: Optional[str] = None
-    reference_audio_id: Optional[str] = None
+    profile_id: str | None = None
+    reference_audio_id: str | None = None
     test_text: str
     language: str = "en"
-    engines: Optional[List[str]] = None  # If None, benchmark all engines
+    engines: list[str] | None = None  # If None, benchmark all engines
     enhance_quality: bool = True
 
 
@@ -118,18 +120,18 @@ class BenchmarkResult(BaseModel):
 
     engine: str
     success: bool
-    error: Optional[str] = None
-    quality_metrics: Dict[str, Any] = {}
-    performance: Dict[str, Any] = {}
+    error: str | None = None
+    quality_metrics: dict[str, Any] = {}
+    performance: dict[str, Any] = {}
 
 
 class BenchmarkResponse(BaseModel):
     """Response from quality benchmarking."""
 
-    results: List[BenchmarkResult]
+    results: list[BenchmarkResult]
     total_engines: int
     successful_engines: int
-    benchmark_id: Optional[str] = None  # For tracking historical benchmarks
+    benchmark_id: str | None = None  # For tracking historical benchmarks
 
 
 # Quality History Models
@@ -138,35 +140,35 @@ class QualityHistoryEntry(BaseModel):
 
     id: str
     profile_id: str
-    project_id: Optional[str] = None  # Project ID for filtering (B.1 enhancement)
+    project_id: str | None = None  # Project ID for filtering (B.1 enhancement)
     timestamp: str  # ISO format datetime string
     engine: str
-    metrics: Dict[str, Any]
+    metrics: dict[str, Any]
     quality_score: float
-    synthesis_text: Optional[str] = None
-    audio_url: Optional[str] = None
+    synthesis_text: str | None = None
+    audio_url: str | None = None
     enhanced_quality: bool = False
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class QualityHistoryRequest(BaseModel):
     """Request to store a quality history entry."""
 
     profile_id: str
-    project_id: Optional[str] = None  # Project ID for filtering (B.1 enhancement)
+    project_id: str | None = None  # Project ID for filtering (B.1 enhancement)
     engine: str
-    metrics: Dict[str, Any]
+    metrics: dict[str, Any]
     quality_score: float
-    synthesis_text: Optional[str] = None
-    audio_url: Optional[str] = None
+    synthesis_text: str | None = None
+    audio_url: str | None = None
     enhanced_quality: bool = False
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class QualityHistoryResponse(BaseModel):
     """Response containing quality history entries."""
 
-    entries: List[QualityHistoryEntry]
+    entries: list[QualityHistoryEntry]
     total: int
 
 
@@ -175,14 +177,14 @@ class QualityTrendsResponse(BaseModel):
 
     profile_id: str
     time_range: str
-    trends: Dict[str, List[Dict[str, Any]]]  # metric_name -> [{timestamp, value}]
-    statistics: Dict[str, Dict[str, float]]  # metric_name -> {avg, min, max, trend}
-    best_entry: Optional[QualityHistoryEntry] = None
-    worst_entry: Optional[QualityHistoryEntry] = None
+    trends: dict[str, list[dict[str, Any]]]  # metric_name -> [{timestamp, value}]
+    statistics: dict[str, dict[str, float]]  # metric_name -> {avg, min, max, trend}
+    best_entry: QualityHistoryEntry | None = None
+    worst_entry: QualityHistoryEntry | None = None
 
 
 # In-memory storage for quality history (replace with database in production)
-_quality_history: dict[str, List[QualityHistoryEntry]] = (
+_quality_history: dict[str, list[QualityHistoryEntry]] = (
     {}
 )  # profile_id -> list of entries
 _MAX_HISTORY_ENTRIES_PER_PROFILE = 1000  # Maximum entries per profile
@@ -239,7 +241,7 @@ def _cleanup_old_history():
         logger.debug(f"Cleaned up {removed} old quality history entries globally")
 
 
-@router.get("/presets", response_model=Dict[str, QualityPresetResponse])
+@router.get("/presets", response_model=dict[str, QualityPresetResponse])
 @cache_response(ttl=300)  # Cache for 5 minutes (presets are relatively static)
 async def list_presets():
     """
@@ -387,8 +389,8 @@ async def optimize_quality(req: QualityOptimizationRequest):
 
 @router.post("/compare", response_model=QualityComparisonResponse)
 async def compare_quality(
-    audio_files: List[UploadFile] = File(...),
-    reference_audio: Optional[UploadFile] = File(None),
+    audio_files: list[UploadFile] = File(...),
+    reference_audio: UploadFile | None = File(None),
 ):
     """
     Compare quality metrics across multiple audio samples.
@@ -469,9 +471,9 @@ async def compare_quality(
 @cache_response(ttl=60)  # Cache for 60 seconds (recommendations may change)
 async def get_engine_recommendation(
     target_tier: str = "standard",
-    min_mos_score: Optional[float] = None,
-    min_similarity: Optional[float] = None,
-    min_naturalness: Optional[float] = None,
+    min_mos_score: float | None = None,
+    min_similarity: float | None = None,
+    min_naturalness: float | None = None,
 ):
     """
     Get recommended engine based on quality requirements.
@@ -535,7 +537,6 @@ async def run_benchmark(request: BenchmarkRequest):
     try:
         # Get engine service (ADR-008 compliant)
         import os
-        from pathlib import Path
 
         engine_service = get_engine_service()
 
@@ -689,14 +690,14 @@ async def run_benchmark(request: BenchmarkRequest):
         raise
     except Exception as e:
         logger.error(f"Benchmark execution failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Benchmark failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Benchmark failed: {e!s}")
 
 
 @router.get("/dashboard")
 @cache_response(ttl=30)  # Cache for 30 seconds (dashboard aggregates data)
 async def get_quality_dashboard(
-    project_id: Optional[str] = None, days: int = 30
-) -> Dict[str, Any]:
+    project_id: str | None = None, days: int = 30
+) -> dict[str, Any]:
     """
     Get quality metrics dashboard data.
 
@@ -714,7 +715,7 @@ async def get_quality_dashboard(
 
         # Get all quality history entries
         all_entries = []
-        for profile_id, entries in _quality_history.items():
+        for _profile_id, entries in _quality_history.items():
             all_entries.extend(entries)
 
         # Filter by date range
@@ -924,7 +925,7 @@ async def get_quality_dashboard(
     except Exception as e:
         logger.error(f"Failed to generate quality dashboard: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate dashboard: {str(e)}"
+            status_code=500, detail=f"Failed to generate dashboard: {e!s}"
         )
 
 
@@ -979,7 +980,7 @@ async def store_quality_history(request: QualityHistoryRequest):
     except Exception as e:
         logger.error(f"Failed to store quality history: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to store quality history: {str(e)}"
+            status_code=500, detail=f"Failed to store quality history: {e!s}"
         )
 
 
@@ -987,10 +988,10 @@ async def store_quality_history(request: QualityHistoryRequest):
 @cache_response(ttl=60)  # Cache for 60 seconds (history may update)
 async def get_quality_history(
     profile_id: str,
-    project_id: Optional[str] = None,  # B.1 enhancement: filter by project
-    limit: Optional[int] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    project_id: str | None = None,  # B.1 enhancement: filter by project
+    limit: int | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ):
     """
     Get quality history for a voice profile.
@@ -1043,7 +1044,7 @@ async def get_quality_history(
     except Exception as e:
         logger.error(f"Failed to get quality history: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get quality history: {str(e)}"
+            status_code=500, detail=f"Failed to get quality history: {e!s}"
         )
 
 
@@ -1101,8 +1102,8 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
 
         # Build trends for each metric
         metrics_to_track = ["mos_score", "similarity", "naturalness", "quality_score"]
-        trends: Dict[str, List[Dict[str, Any]]] = {}
-        statistics: Dict[str, Dict[str, float]] = {}
+        trends: dict[str, list[dict[str, Any]]] = {}
+        statistics: dict[str, dict[str, float]] = {}
 
         for metric in metrics_to_track:
             metric_values = []
@@ -1166,7 +1167,7 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
     except Exception as e:
         logger.error(f"Failed to get quality trends: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get quality trends: {str(e)}"
+            status_code=500, detail=f"Failed to get quality trends: {e!s}"
         )
 
 
@@ -1175,7 +1176,7 @@ class TextAnalysisRequest(BaseModel):
     """Request for text analysis."""
 
     text: str
-    language: Optional[str] = "en"
+    language: str | None = "en"
 
 
 class TextAnalysisResponse(BaseModel):
@@ -1189,7 +1190,7 @@ class TextAnalysisResponse(BaseModel):
     avg_words_per_sentence: float
     has_dialogue: bool
     has_technical_terms: bool
-    detected_emotions: List[str]
+    detected_emotions: list[str]
     language: str
 
 
@@ -1197,9 +1198,9 @@ class QualityRecommendationRequest(BaseModel):
     """Request for quality recommendations."""
 
     text: str
-    language: Optional[str] = "en"
-    available_engines: Optional[List[str]] = None
-    target_quality: Optional[float] = None
+    language: str | None = "en"
+    available_engines: list[str] | None = None
+    target_quality: float | None = None
 
 
 class QualityRecommendationResponse(BaseModel):
@@ -1237,7 +1238,7 @@ async def analyze_text_endpoint(request: TextAnalysisRequest):
 
     except Exception as e:
         logger.error(f"Failed to analyze text: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to analyze text: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze text: {e!s}")
 
 
 @router.post("/recommend-quality", response_model=QualityRecommendationResponse)
@@ -1279,7 +1280,7 @@ async def recommend_quality_endpoint(request: QualityRecommendationRequest):
     except Exception as e:
         logger.error(f"Failed to get quality recommendations: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get quality recommendations: {str(e)}"
+            status_code=500, detail=f"Failed to get quality recommendations: {e!s}"
         )
 
 
@@ -1291,18 +1292,18 @@ class QualityBaselineResponse(BaseModel):
     baseline_quality: float
     baseline_date: str
     sample_count: int
-    metrics: Dict[str, Any]
+    metrics: dict[str, Any]
 
 
 class QualityTrendResponse(BaseModel):
     """Response for quality trend analysis."""
 
     trend: str
-    average_quality: Optional[float]
-    trend_direction: Optional[str]
+    average_quality: float | None
+    trend_direction: str | None
     data_points: int
-    first_half_avg: Optional[float] = None
-    second_half_avg: Optional[float] = None
+    first_half_avg: float | None = None
+    second_half_avg: float | None = None
 
 
 # Quality Degradation Detection Models (IDEA 56)
@@ -1324,7 +1325,7 @@ class QualityDegradationResponse(BaseModel):
 
     profile_id: str
     has_degradation: bool
-    alerts: List[QualityDegradationAlertResponse]
+    alerts: list[QualityDegradationAlertResponse]
     time_window_days: int
 
 
@@ -1351,7 +1352,6 @@ async def check_quality_degradation(
     """
     try:
         from api.utils.quality_degradation import (
-            calculate_quality_baseline,
             detect_quality_degradation,
         )
 
@@ -1400,7 +1400,7 @@ async def check_quality_degradation(
     except Exception as e:
         logger.error(f"Failed to check quality degradation: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to check quality degradation: {str(e)}"
+            status_code=500, detail=f"Failed to check quality degradation: {e!s}"
         )
 
 
@@ -1462,7 +1462,7 @@ async def get_quality_baseline(profile_id: str, time_period_days: int = 30):
     except Exception as e:
         logger.error(f"Failed to get quality baseline: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get quality baseline: {str(e)}"
+            status_code=500, detail=f"Failed to get quality baseline: {e!s}"
         )
 
 
@@ -1480,14 +1480,14 @@ class QualityConsistencyReport(BaseModel):
     project_id: str
     has_data: bool
     time_period_days: int
-    total_samples: Optional[int] = None
-    consistency_score: Optional[float] = None
-    is_consistent: Optional[bool] = None
-    statistics: Optional[Dict[str, Any]] = None
-    violations: Optional[List[Dict[str, Any]]] = None
-    trends: Optional[Dict[str, str]] = None
-    recommendations: Optional[List[Dict[str, Any]]] = None
-    message: Optional[str] = None
+    total_samples: int | None = None
+    consistency_score: float | None = None
+    is_consistent: bool | None = None
+    statistics: dict[str, Any] | None = None
+    violations: list[dict[str, Any]] | None = None
+    trends: dict[str, str] | None = None
+    recommendations: list[dict[str, Any]] | None = None
+    message: str | None = None
 
 
 class QualityTrendsResponse(BaseModel):
@@ -1496,9 +1496,9 @@ class QualityTrendsResponse(BaseModel):
     project_id: str
     has_data: bool
     time_period_days: int
-    daily_averages: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None
-    overall_trend: Optional[str] = None
-    message: Optional[str] = None
+    daily_averages: dict[str, dict[str, dict[str, float]]] | None = None
+    overall_trend: str | None = None
+    message: str | None = None
 
 
 class AllProjectsConsistencyResponse(BaseModel):
@@ -1510,7 +1510,7 @@ class AllProjectsConsistencyResponse(BaseModel):
     overall_consistency: float
     total_samples: int
     total_violations: int
-    projects: Dict[str, QualityConsistencyReport]
+    projects: dict[str, QualityConsistencyReport]
 
 
 @router.post("/consistency/standard")
@@ -1544,16 +1544,16 @@ async def set_quality_standard(request: QualityStandardRequest):
     except Exception as e:
         logger.error(f"Failed to set quality standard: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to set quality standard: {str(e)}"
+            status_code=500, detail=f"Failed to set quality standard: {e!s}"
         )
 
 
 @router.post("/consistency/record")
 async def record_quality_metrics(
     project_id: str,
-    profile_id: Optional[str] = None,
-    audio_id: Optional[str] = None,
-    metrics: Dict[str, Any] = None,
+    profile_id: str | None = None,
+    audio_id: str | None = None,
+    metrics: dict[str, Any] | None = None,
 ):
     """
     Record quality metrics for consistency tracking (IDEA 59).
@@ -1591,7 +1591,7 @@ async def record_quality_metrics(
     except Exception as e:
         logger.error(f"Failed to record quality metrics: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to record quality metrics: {str(e)}"
+            status_code=500, detail=f"Failed to record quality metrics: {e!s}"
         )
 
 
@@ -1618,7 +1618,7 @@ async def check_project_consistency(project_id: str, time_period_days: int = 30)
     except Exception as e:
         logger.error(f"Failed to check project consistency: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to check project consistency: {str(e)}"
+            status_code=500, detail=f"Failed to check project consistency: {e!s}"
         )
 
 
@@ -1659,7 +1659,7 @@ async def check_all_projects_consistency(time_period_days: int = 30):
         logger.error(f"Failed to check all projects consistency: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to check all projects consistency: {str(e)}",
+            detail=f"Failed to check all projects consistency: {e!s}",
         )
 
 
@@ -1686,7 +1686,7 @@ async def get_project_quality_trends(project_id: str, time_period_days: int = 30
     except Exception as e:
         logger.error(f"Failed to get project quality trends: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get project quality trends: {str(e)}"
+            status_code=500, detail=f"Failed to get project quality trends: {e!s}"
         )
 
 
@@ -1694,7 +1694,7 @@ async def get_project_quality_trends(project_id: str, time_period_days: int = 30
 class QualityHeatmapRequest(BaseModel):
     """Request for quality heatmap."""
 
-    quality_data: List[Dict[str, Any]]
+    quality_data: list[dict[str, Any]]
     x_dimension: str = "engine"
     y_dimension: str = "profile"
     metric: str = "mos_score"
@@ -1706,9 +1706,9 @@ class QualityHeatmapResponse(BaseModel):
     x_dimension: str
     y_dimension: str
     metric: str
-    x_values: List[str]
-    y_values: List[str]
-    matrix: Dict[str, Dict[str, Any]]
+    x_values: list[str]
+    y_values: list[str]
+    matrix: dict[str, dict[str, Any]]
     min_value: float
     max_value: float
 
@@ -1716,8 +1716,8 @@ class QualityHeatmapResponse(BaseModel):
 class QualityCorrelationResponse(BaseModel):
     """Response for quality correlations."""
 
-    metrics: List[str]
-    correlations: Dict[str, Dict[str, float]]
+    metrics: list[str]
+    correlations: dict[str, dict[str, float]]
 
 
 class QualityAnomalyResponse(BaseModel):
@@ -1725,7 +1725,7 @@ class QualityAnomalyResponse(BaseModel):
 
     metric: str
     threshold_std: float
-    anomalies: List[Dict[str, Any]]
+    anomalies: list[dict[str, Any]]
     total_samples: int
     anomaly_count: int
 
@@ -1733,15 +1733,15 @@ class QualityAnomalyResponse(BaseModel):
 class QualityPredictionRequest(BaseModel):
     """Request for quality prediction."""
 
-    input_factors: Dict[str, Any]
-    quality_data: Optional[List[Dict[str, Any]]] = None
+    input_factors: dict[str, Any]
+    quality_data: list[dict[str, Any]] | None = None
 
 
 class QualityPredictionResponse(BaseModel):
     """Response for quality prediction."""
 
-    input_factors: Dict[str, Any]
-    predicted_metrics: Dict[str, Optional[float]]
+    input_factors: dict[str, Any]
+    predicted_metrics: dict[str, float | None]
     confidence: float
     sample_count: int
 
@@ -1753,13 +1753,13 @@ class QualityInsight(BaseModel):
     title: str
     message: str
     priority: str  # high, medium, low
-    action: Optional[str] = None
+    action: str | None = None
 
 
 class QualityInsightsResponse(BaseModel):
     """Response for quality insights."""
 
-    insights: List[QualityInsight]
+    insights: list[QualityInsight]
     time_period_days: int
     total_samples: int
 
@@ -1790,12 +1790,12 @@ async def get_quality_heatmap(request: QualityHeatmapRequest):
     except Exception as e:
         logger.error(f"Failed to calculate quality heatmap: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to calculate quality heatmap: {str(e)}"
+            status_code=500, detail=f"Failed to calculate quality heatmap: {e!s}"
         )
 
 
 @router.post("/visualization/correlations", response_model=QualityCorrelationResponse)
-async def get_quality_correlations(quality_data: List[Dict[str, Any]]):
+async def get_quality_correlations(quality_data: list[dict[str, Any]]):
     """
     Get quality metric correlations (IDEA 60).
 
@@ -1816,13 +1816,13 @@ async def get_quality_correlations(quality_data: List[Dict[str, Any]]):
         logger.error(f"Failed to calculate quality correlations: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to calculate quality correlations: {str(e)}",
+            detail=f"Failed to calculate quality correlations: {e!s}",
         )
 
 
 @router.post("/visualization/anomalies", response_model=QualityAnomalyResponse)
 async def detect_quality_anomalies_endpoint(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     metric: str = "mos_score",
     threshold_std: float = 2.0,
 ):
@@ -1855,7 +1855,7 @@ async def detect_quality_anomalies_endpoint(
     except Exception as e:
         logger.error(f"Failed to detect quality anomalies: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to detect quality anomalies: {str(e)}"
+            status_code=500, detail=f"Failed to detect quality anomalies: {e!s}"
         )
 
 
@@ -1899,13 +1899,13 @@ async def predict_quality_endpoint(request: QualityPredictionRequest):
     except Exception as e:
         logger.error(f"Failed to predict quality: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to predict quality: {str(e)}"
+            status_code=500, detail=f"Failed to predict quality: {e!s}"
         )
 
 
 @router.post("/visualization/insights", response_model=QualityInsightsResponse)
 async def get_quality_insights(
-    quality_data: List[Dict[str, Any]], time_period_days: int = 30
+    quality_data: list[dict[str, Any]], time_period_days: int = 30
 ):
     """
     Get quality insights and recommendations (IDEA 60).
@@ -1933,7 +1933,7 @@ async def get_quality_insights(
     except Exception as e:
         logger.error(f"Failed to generate quality insights: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate quality insights: {str(e)}"
+            status_code=500, detail=f"Failed to generate quality insights: {e!s}"
         )
 
 
@@ -1977,7 +1977,7 @@ async def export_quality_heatmap(
             writer.writerow([x_dimension, y_dimension, metric, "count"])
 
             # Data rows
-            for cell_key, cell_data in heatmap["matrix"].items():
+            for _cell_key, cell_data in heatmap["matrix"].items():
                 writer.writerow(
                     [
                         cell_data["x"],
@@ -2005,13 +2005,13 @@ async def export_quality_heatmap(
     except Exception as e:
         logger.error(f"Failed to export quality heatmap: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to export quality heatmap: {str(e)}"
+            status_code=500, detail=f"Failed to export quality heatmap: {e!s}"
         )
 
 
 @router.post("/visualization/export/correlations")
 async def export_quality_correlations(
-    quality_data: List[Dict[str, Any]], format: str = Query("json")
+    quality_data: list[dict[str, Any]], format: str = Query("json")
 ):
     """
     Export quality correlation matrix.
@@ -2070,13 +2070,13 @@ async def export_quality_correlations(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export quality correlations: {str(e)}",
+            detail=f"Failed to export quality correlations: {e!s}",
         )
 
 
 @router.post("/visualization/export/anomalies")
 async def export_quality_anomalies(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     metric: str = Query("mos_score"),
     threshold_std: float = Query(2.0),
     format: str = Query("json"),
@@ -2159,13 +2159,13 @@ async def export_quality_anomalies(
     except Exception as e:
         logger.error(f"Failed to export quality anomalies: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to export quality anomalies: {str(e)}"
+            status_code=500, detail=f"Failed to export quality anomalies: {e!s}"
         )
 
 
 @router.post("/visualization/export/insights")
 async def export_quality_insights(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     time_period_days: int = Query(30),
     format: str = Query("json"),
 ):
@@ -2232,5 +2232,5 @@ async def export_quality_insights(
     except Exception as e:
         logger.error(f"Failed to export quality insights: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to export quality insights: {str(e)}"
+            status_code=500, detail=f"Failed to export quality insights: {e!s}"
         )

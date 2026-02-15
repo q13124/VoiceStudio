@@ -6,11 +6,13 @@ for incoming user input. Must operate under 50ms to maintain
 conversation fluidity.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class ClassificationResult:
     requires_reasoning: bool
     suggested_route: str        # "s2s", "cascade", "half_cascade"
     latency_ms: float
-    features: Dict[str, Any]
+    features: dict[str, Any]
 
 
 class IntentClassifier:
@@ -72,7 +74,7 @@ class IntentClassifier:
     def classify(
         self,
         text: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> ClassificationResult:
         """
         Classify user input for routing.
@@ -92,7 +94,7 @@ class IntentClassifier:
         words = set(text_lower.split())
         word_count = len(text_lower.split())
 
-        features: Dict[str, Any] = {
+        features: dict[str, Any] = {
             "word_count": word_count,
             "has_question": "?" in text,
             "has_command": any(text_lower.startswith(w) for w in ("please", "can you", "could you")),
@@ -166,7 +168,7 @@ class IntentClassifier:
 
         return result
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get classifier performance statistics."""
         avg_latency = (
             self._total_latency_ms / self._classification_count

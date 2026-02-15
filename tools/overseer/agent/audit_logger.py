@@ -4,13 +4,15 @@ Audit Logger
 High-level interface for logging agent actions with automatic context capture.
 """
 
+from __future__ import annotations
+
 import hashlib
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from .audit_store import AuditEntry, AuditStore
 from .identity import AgentIdentity
@@ -19,7 +21,7 @@ from .identity import AgentIdentity
 @dataclass
 class LogContext:
     """Context for a logged operation."""
-    
+
     start_time: datetime
     agent: AgentIdentity
     tool_name: str
@@ -31,26 +33,26 @@ class LogContext:
 class AuditLogger:
     """
     High-level audit logging interface.
-    
+
     Provides context managers and decorators for automatic logging
     of agent actions with timing and error capture.
     """
-    
+
     def __init__(
         self,
-        store: Optional[AuditStore] = None,
-        on_entry: Optional[Callable[[AuditEntry], None]] = None,
+        store: AuditStore | None = None,
+        on_entry: Callable[[AuditEntry], None] | None = None,
     ):
         """
         Initialize the audit logger.
-        
+
         Args:
             store: Audit store instance. Creates default if not provided.
             on_entry: Optional callback invoked for each logged entry.
         """
         self._store = store or AuditStore()
         self._on_entry = on_entry
-    
+
     @staticmethod
     def _hash_data(data: Any) -> str:
         """Compute hash of data for large payloads."""
@@ -62,23 +64,23 @@ class AuditLogger:
             return hashlib.sha256(data_str.encode()).hexdigest()[:16]
         except (TypeError, ValueError):
             return hashlib.sha256(str(data).encode()).hexdigest()[:16]
-    
+
     def log(
         self,
         agent: AgentIdentity,
         tool_name: str,
         parameters: dict,
         result: str = "success",
-        error_stack: Optional[str] = None,
+        error_stack: str | None = None,
         input_data: Any = None,
         output_data: Any = None,
-        approval_id: Optional[str] = None,
+        approval_id: str | None = None,
         duration_ms: int = 0,
         risk_tier: str = "low",
     ) -> AuditEntry:
         """
         Log an agent action.
-        
+
         Args:
             agent: The agent performing the action
             tool_name: Name of the tool invoked
@@ -90,7 +92,7 @@ class AuditLogger:
             approval_id: Approval record ID if applicable
             duration_ms: Execution duration
             risk_tier: Risk tier of the action
-            
+
         Returns:
             The created audit entry
         """
@@ -110,14 +112,14 @@ class AuditLogger:
             risk_tier=risk_tier,
             session_id=agent.session_id,
         )
-        
+
         self._store.append(entry)
-        
+
         if self._on_entry:
             self._on_entry(entry)
-        
+
         return entry
-    
+
     def log_success(
         self,
         agent: AgentIdentity,
@@ -137,7 +139,7 @@ class AuditLogger:
             duration_ms=duration_ms,
             risk_tier=risk_tier,
         )
-    
+
     def log_failure(
         self,
         agent: AgentIdentity,
@@ -158,7 +160,7 @@ class AuditLogger:
             duration_ms=duration_ms,
             risk_tier=risk_tier,
         )
-    
+
     def log_denied(
         self,
         agent: AgentIdentity,
@@ -176,7 +178,7 @@ class AuditLogger:
             error_stack=f"Action denied: {reason}",
             risk_tier=risk_tier,
         )
-    
+
     @contextmanager
     def track(
         self,
@@ -187,15 +189,15 @@ class AuditLogger:
     ):
         """
         Context manager for tracking an operation.
-        
+
         Automatically logs success or failure with timing.
-        
+
         Usage:
             with logger.track(agent, "WriteFile", {"path": "foo.txt"}) as ctx:
                 # Do the operation
                 result = write_file("foo.txt", content)
                 ctx.set_output(result)
-        
+
         Args:
             agent: The agent performing the action
             tool_name: Name of the tool
@@ -209,10 +211,10 @@ class AuditLogger:
             parameters=parameters,
             risk_tier=risk_tier,
         )
-        
+
         try:
             yield ctx
-            
+
             # Log success if not already logged
             if not ctx._logged:
                 duration_ms = int((time.time() - ctx._start_time) * 1000)
@@ -225,7 +227,7 @@ class AuditLogger:
                     risk_tier=risk_tier,
                 )
                 ctx._logged = True
-                
+
         except Exception as e:
             # Log failure
             if not ctx._logged:
@@ -240,7 +242,7 @@ class AuditLogger:
                 )
                 ctx._logged = True
             raise
-    
+
     def get_store(self) -> AuditStore:
         """Get the underlying audit store."""
         return self._store
@@ -248,7 +250,7 @@ class AuditLogger:
 
 class _TrackingContext:
     """Context object for tracked operations."""
-    
+
     def __init__(
         self,
         logger: AuditLogger,
@@ -265,11 +267,11 @@ class _TrackingContext:
         self._start_time = time.time()
         self._output_data = None
         self._logged = False
-    
+
     def set_output(self, data: Any) -> None:
         """Set the output data for hashing."""
         self._output_data = data
-    
+
     def mark_denied(self, reason: str) -> None:
         """Mark the operation as denied."""
         if not self._logged:

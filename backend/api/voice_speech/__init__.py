@@ -9,6 +9,6 @@ from .voice_activity_detection import VoiceActivityDetector
 
 __all__ = [
     "Phonemizer",
-    "VoiceActivityDetector",
     "SpeechRecognizer",
+    "VoiceActivityDetector",
 ]

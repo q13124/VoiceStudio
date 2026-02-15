@@ -8,11 +8,13 @@ Compatible with:
 - GPT-SoVITS package
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional, Tuple, Union
 
 # Import base protocol
 try:
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -59,7 +61,7 @@ def _get_cached_gpt_sovits_model(model_path: str, device: str):
     return None
 
 
-def _cache_gpt_sovits_model(model_path: str, device: str, model_data: Dict):
+def _cache_gpt_sovits_model(model_path: str, device: str, model_data: dict):
     """Cache GPT-SoVITS model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -129,9 +131,12 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (enhance_voice_cloning_quality,
-                                     enhance_voice_quality, normalize_lufs,
-                                     remove_artifacts)
+    from app.core.audio.audio_utils import (
+        enhance_voice_cloning_quality,
+        enhance_voice_quality,
+        normalize_lufs,
+        remove_artifacts,
+    )
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -152,9 +157,9 @@ class GPTSovitsEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
-        config_path: Optional[str] = None,
-        device: Optional[str] = None,
+        model_path: str | None = None,
+        config_path: str | None = None,
+        device: str | None = None,
         **kwargs,
     ):
         """
@@ -225,7 +230,7 @@ class GPTSovitsEngine(EngineProtocol):
                 try:
                     import json
 
-                    with open(self.config_path, "r", encoding="utf-8") as f:
+                    with open(self.config_path, encoding="utf-8") as f:
                         self._config = json.load(f)
                     logger.info(f"Loaded configuration from {self.config_path}")
                 except Exception as e:
@@ -278,7 +283,7 @@ class GPTSovitsEngine(EngineProtocol):
         """Get the device being used."""
         return self.device
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         return {
             "engine": "gpt_sovits",
@@ -295,12 +300,12 @@ class GPTSovitsEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        reference_audio: Optional[Union[str, bytes]] = None,
+        reference_audio: str | bytes | None = None,
         language: str = "zh",
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[bytes], Tuple[Optional[bytes], Dict]]:
+    ) -> bytes | None | tuple[bytes | None, dict]:
         """
         Synthesize speech from text using GPT-SoVITS.
 
@@ -333,9 +338,8 @@ class GPTSovitsEngine(EngineProtocol):
                 return self._response_cache[cache_key]
 
             # Lazy load model if needed
-            if self._model is None:
-                if not self._load_model():
-                    return None
+            if self._model is None and not self._load_model():
+                return None
 
             # Process reference audio if provided
             ref_audio_data = None
@@ -351,7 +355,7 @@ class GPTSovitsEngine(EngineProtocol):
                 elif isinstance(reference_audio, bytes):
                     import io
 
-                    ref_audio_data, sr = sf.read(io.BytesIO(reference_audio))
+                    ref_audio_data, _sr = sf.read(io.BytesIO(reference_audio))
                 else:
                     logger.error("Invalid reference_audio type")
                     return None
@@ -541,8 +545,8 @@ class GPTSovitsEngine(EngineProtocol):
             return False
 
     def _perform_synthesis(
-        self, text: str, ref_audio: Optional[np.ndarray], language: str, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, language: str, **kwargs
+    ) -> np.ndarray | None:
         """Perform actual synthesis using GPT-SoVITS."""
         try:
             if not HAS_NUMPY:
@@ -569,11 +573,11 @@ class GPTSovitsEngine(EngineProtocol):
     def _synthesize_via_api(
         self,
         text: str,
-        ref_audio: Optional[np.ndarray],
+        ref_audio: np.ndarray | None,
         language: str,
         api_url: str,
         **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Synthesize using GPT-SoVITS API server.
         Matches the old project's API implementation.
@@ -667,7 +671,7 @@ class GPTSovitsEngine(EngineProtocol):
                         # Response contains audio data directly
                         audio_bytes = response.content
                         # Read audio from bytes
-                        audio, sr = sf.read(io.BytesIO(audio_bytes))
+                        audio, _sr = sf.read(io.BytesIO(audio_bytes))
 
                         # Clean up temporary file if we created it
                         if (
@@ -676,10 +680,8 @@ class GPTSovitsEngine(EngineProtocol):
                             and ref_audio_path
                             and os.path.exists(ref_audio_path)
                         ):
-                            try:
+                            with contextlib.suppress(Exception):
                                 os.remove(ref_audio_path)
-                            except Exception:
-                                ...
 
                         return audio.astype(np.float32)
                     else:
@@ -705,18 +707,16 @@ class GPTSovitsEngine(EngineProtocol):
                     and ref_audio_path
                     and os.path.exists(ref_audio_path)
                 ):
-                    try:
+                    with contextlib.suppress(Exception):
                         os.remove(ref_audio_path)
-                    except Exception:
-                        ...
 
         except Exception as e:
             logger.warning(f"API synthesis failed: {e}, trying fallback")
             return None
 
     def _synthesize_with_model(
-        self, text: str, ref_audio: Optional[np.ndarray], language: str, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, language: str, **kwargs
+    ) -> np.ndarray | None:
         """Synthesize using loaded GPT-SoVITS model."""
         try:
             if not HAS_TORCH or torch is None:
@@ -733,7 +733,7 @@ class GPTSovitsEngine(EngineProtocol):
 
             # Clean and tokenize text
             cleaned_text = clean_text(text, language)
-            phonemes = cleaned_text_to_sequence(cleaned_text, language)
+            cleaned_text_to_sequence(cleaned_text, language)
 
             # Prepare reference audio
             ref_audio_path = None
@@ -770,10 +770,8 @@ class GPTSovitsEngine(EngineProtocol):
 
             # Clean up temporary file
             if ref_audio is not None and isinstance(ref_audio, np.ndarray):
-                try:
+                with contextlib.suppress(BaseException):
                     os.remove(ref_audio_path)
-                except:
-                    ...
 
             return audio.astype(np.float32) if audio is not None else None
 
@@ -782,8 +780,8 @@ class GPTSovitsEngine(EngineProtocol):
             return None
 
     def _synthesize_fallback(
-        self, text: str, ref_audio: Optional[np.ndarray], language: str, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, language: str, **kwargs
+    ) -> np.ndarray | None:
         """Fallback synthesis using basic TTS or other engines."""
         try:
             # Try to use other available TTS engines as fallback
@@ -823,10 +821,8 @@ class GPTSovitsEngine(EngineProtocol):
 
                     # Clean up
                     if ref_audio is not None and isinstance(ref_audio, np.ndarray):
-                        try:
+                        with contextlib.suppress(BaseException):
                             os.remove(ref_path)
-                        except:
-                            ...
 
                     if result is not None:
                         return result
@@ -872,13 +868,13 @@ class GPTSovitsEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        reference_audio: Optional[Union[str, bytes]] = None,
+        texts: list[str],
+        reference_audio: str | bytes | None = None,
         language: str = "zh",
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         batch_size: int = 2,
         **kwargs,
-    ) -> List[Optional[bytes]]:
+    ) -> list[bytes | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -958,7 +954,7 @@ class GPTSovitsEngine(EngineProtocol):
         sample_rate: int,
         enhance: bool,
         calculate: bool,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -1003,7 +999,7 @@ class GPTSovitsEngine(EngineProtocol):
     def synthesize_streaming(
         self,
         text: str,
-        reference_audio: Optional[Union[str, bytes]] = None,
+        reference_audio: str | bytes | None = None,
         language: str = "zh",
         chunk_size: int = 4096,
         **kwargs,
@@ -1027,9 +1023,8 @@ class GPTSovitsEngine(EngineProtocol):
 
         try:
             # Lazy load model if needed
-            if self._model is None:
-                if not self._load_model():
-                    return
+            if self._model is None and not self._load_model():
+                return
 
             # For streaming, we need to synthesize in chunks
             # GPT-SoVITS API may support streaming, otherwise we chunk the result
@@ -1088,7 +1083,7 @@ class GPTSovitsEngine(EngineProtocol):
                             ):
                                 if chunk:
                                     # Decode audio chunk
-                                    audio_chunk, sr = sf.read(io.BytesIO(chunk))
+                                    audio_chunk, _sr = sf.read(io.BytesIO(chunk))
                                     yield audio_chunk.astype(np.float32)
                             return
                 except Exception as e:
@@ -1110,7 +1105,7 @@ class GPTSovitsEngine(EngineProtocol):
         except Exception as e:
             logger.error(f"Streaming synthesis failed: {e}", exc_info=True)
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not HAS_TORCH or not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}

@@ -6,10 +6,11 @@ Prioritizes quality over latency -- full transcription, complete
 LLM response, then full synthesis.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +19,12 @@ logger = logging.getLogger(__name__)
 class BatchResult:
     """Result from batch pipeline processing."""
     input_text: str
-    transcription: Optional[str] = None
+    transcription: str | None = None
     llm_response: str = ""
-    audio_data: Optional[bytes] = None
-    audio_path: Optional[str] = None
-    metrics: Optional[Dict[str, float]] = None
-    error: Optional[str] = None
+    audio_data: bytes | None = None
+    audio_path: str | None = None
+    metrics: dict[str, float] | None = None
+    error: str | None = None
 
 
 class BatchPipeline:
@@ -51,7 +52,7 @@ class BatchPipeline:
         self,
         audio_data: bytes,
         sample_rate: int = 16000,
-        context: Optional[List[Dict[str, str]]] = None,
+        context: list[dict[str, str]] | None = None,
     ) -> BatchResult:
         """
         Process audio through the complete batch pipeline.
@@ -65,7 +66,7 @@ class BatchPipeline:
             BatchResult with all pipeline outputs.
         """
         total_start = time.perf_counter()
-        metrics: Dict[str, float] = {}
+        metrics: dict[str, float] = {}
 
         # Stage 1: Full STT
         stt_start = time.perf_counter()
@@ -122,7 +123,7 @@ class BatchPipeline:
     async def process_text(
         self,
         text: str,
-        context: Optional[List[Dict[str, str]]] = None,
+        context: list[dict[str, str]] | None = None,
         synthesize: bool = True,
     ) -> BatchResult:
         """
@@ -137,7 +138,7 @@ class BatchPipeline:
             BatchResult with response and optional audio.
         """
         total_start = time.perf_counter()
-        metrics: Dict[str, float] = {}
+        metrics: dict[str, float] = {}
 
         # LLM
         llm_start = time.perf_counter()
@@ -168,9 +169,9 @@ class BatchPipeline:
 
     async def process_batch(
         self,
-        items: List[str],
+        items: list[str],
         synthesize: bool = True,
-    ) -> List[BatchResult]:
+    ) -> list[BatchResult]:
         """Process multiple text items through the pipeline."""
         results = []
         for item in items:
@@ -194,7 +195,7 @@ class BatchPipeline:
             raise RuntimeError(f"Transcription failed: {exc}") from exc
 
     async def _generate(
-        self, text: str, context: Optional[List[Dict[str, str]]] = None
+        self, text: str, context: list[dict[str, str]] | None = None
     ) -> str:
         """Generate full LLM response."""
         if self._llm_provider is None:
@@ -212,7 +213,7 @@ class BatchPipeline:
         response = await self._llm_provider.generate(messages)
         return response.content
 
-    async def _synthesize(self, text: str) -> Optional[bytes]:
+    async def _synthesize(self, text: str) -> bytes | None:
         """Full TTS synthesis."""
         if not text.strip():
             return None

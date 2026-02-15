@@ -1,8 +1,9 @@
 """Tests for API versioning module."""
 
-import pytest
 from datetime import date
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
+
+import pytest
 
 # Skip entire module - some versioning features not yet implemented
 pytest.skip(

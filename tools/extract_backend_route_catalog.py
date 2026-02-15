@@ -17,7 +17,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def _now_utc_iso() -> str:
@@ -39,9 +39,9 @@ _WS_DECORATOR_RE = re.compile(
 )
 
 
-def _extract_router_prefix_and_tags(text: str) -> Dict[str, Any]:
-    prefix: Optional[str] = None
-    tags: List[str] = []
+def _extract_router_prefix_and_tags(text: str) -> dict[str, Any]:
+    prefix: str | None = None
+    tags: list[str] = []
 
     m_prefix = re.search(r"""APIRouter\([^)]*prefix\s*=\s*["']([^"']+)["']""", text, re.DOTALL)
     if m_prefix:
@@ -55,14 +55,14 @@ def _extract_router_prefix_and_tags(text: str) -> Dict[str, Any]:
     return {"prefix": prefix, "tags": tags}
 
 
-def extract_routes_catalog(routes_root: Path) -> Dict[str, Any]:
+def extract_routes_catalog(routes_root: Path) -> dict[str, Any]:
     if not routes_root.exists():
         raise FileNotFoundError(f"Routes root not found: {routes_root}")
     if not routes_root.is_dir():
         raise NotADirectoryError(f"Routes root is not a directory: {routes_root}")
 
-    modules: List[Dict[str, Any]] = []
-    errors: List[Dict[str, str]] = []
+    modules: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
 
     for route_file in sorted(routes_root.glob("*.py")):
         if route_file.name == "__init__.py":
@@ -72,8 +72,8 @@ def extract_routes_catalog(routes_root: Path) -> Dict[str, Any]:
             text = _read_text(route_file)
             router_meta = _extract_router_prefix_and_tags(text)
 
-            endpoints: List[Dict[str, Any]] = []
-            method_counts: Dict[str, int] = {m.upper(): 0 for m in _METHODS}
+            endpoints: list[dict[str, Any]] = []
+            method_counts: dict[str, int] = {m.upper(): 0 for m in _METHODS}
             ws_count = 0
 
             for idx, line in enumerate(text.splitlines(), start=1):
@@ -124,7 +124,7 @@ def extract_routes_catalog(routes_root: Path) -> Dict[str, Any]:
     }
 
 
-def _parse_args(argv: List[str]) -> argparse.Namespace:
+def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Extract backend route catalog to JSON.")
     parser.add_argument(
         "--routes-root",
@@ -141,7 +141,7 @@ def _parse_args(argv: List[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: List[str]) -> int:
+def main(argv: list[str]) -> int:
     args = _parse_args(argv)
     routes_root = Path(args.routes_root).resolve()
     output = Path(args.output).resolve()

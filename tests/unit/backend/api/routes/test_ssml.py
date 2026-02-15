@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock non-existent module attributes",
     allow_module_level=True,

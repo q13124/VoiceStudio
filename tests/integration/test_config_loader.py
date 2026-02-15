@@ -13,7 +13,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.core.config.config_loader import ConfigLoader, load_config, save_config
+from app.core.config.config_loader import ConfigLoader, save_config
 
 
 class TestConfigLoader:

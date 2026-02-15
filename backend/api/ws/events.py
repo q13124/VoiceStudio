@@ -1,5 +1,8 @@
 import asyncio
+import contextlib
+
 from fastapi import WebSocket
+
 
 async def stream(ws: WebSocket):
     await ws.accept()
@@ -11,8 +14,6 @@ async def stream(ws: WebSocket):
             i += 1
             await asyncio.sleep(2.0)
     except Exception:
-        try:
+        with contextlib.suppress(Exception):
             await ws.close()
-        except Exception:
-            ...
 

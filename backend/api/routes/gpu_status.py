@@ -4,8 +4,9 @@ GPU Status Routes
 Endpoints for GPU monitoring and status information.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -36,20 +37,20 @@ class GPUDevice(BaseModel):
     memory_used_mb: int
     memory_free_mb: int
     utilization_percent: float  # 0.0 to 100.0
-    temperature_celsius: Optional[float] = None
-    power_usage_watts: Optional[float] = None
-    driver_version: Optional[str] = None
-    compute_capability: Optional[str] = None
+    temperature_celsius: float | None = None
+    power_usage_watts: float | None = None
+    driver_version: str | None = None
+    compute_capability: str | None = None
     is_available: bool = True
 
 
 class GPUStatus(BaseModel):
     """Overall GPU status."""
 
-    devices: List[GPUDevice]
+    devices: list[GPUDevice]
     total_devices: int
     available_devices: int
-    primary_device: Optional[str] = None
+    primary_device: str | None = None
 
 
 @router.get("", response_model=GPUStatus)
@@ -136,7 +137,7 @@ async def get_gpu_status():
             # Method 1: Try pyamdgpuinfo library (preferred)
             try:
                 import pyamdgpuinfo
-                
+
                 amd_count = pyamdgpuinfo.detect_gpus()
                 for i in range(amd_count):
                     gpu = pyamdgpuinfo.get_gpu(i)
@@ -158,12 +159,12 @@ async def get_gpu_status():
                 logger.debug(f"Detected {amd_count} AMD GPU(s) via pyamdgpuinfo")
             except ImportError:
                 # pyamdgpuinfo not installed, try fallback methods
-                
+
                 # Method 2: Try rocm-smi for AMD ROCm GPUs (Linux)
                 try:
-                    import subprocess
                     import platform
-                    
+                    import subprocess
+
                     if platform.system() == "Linux":
                         result = subprocess.run(
                             ["rocm-smi", "--showid", "--showname", "--showmeminfo", "vram"],
@@ -198,14 +199,14 @@ async def get_gpu_status():
                 except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
                     # Gap Analysis Fix: Log AMD GPU detection fallback
                     logger.debug(f"AMD GPU detection via rocm-smi failed (will try WMI): {e}")
-                
+
                 # Method 3: Try WMI for Windows AMD GPUs
                 try:
                     import platform
-                    
+
                     if platform.system() == "Windows":
                         import subprocess
-                        
+
                         # Use WMIC to query AMD GPUs
                         result = subprocess.run(
                             ["wmic", "path", "win32_VideoController", "get", "Name,AdapterRAM,DriverVersion", "/format:csv"],
@@ -224,7 +225,7 @@ async def get_gpu_status():
                                         name = parts[-1] if parts[-1] else f"AMD GPU {gpu_idx}"
                                         adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
                                         driver_version = parts[2] if len(parts) > 2 else None
-                                        
+
                                         # Skip if already detected
                                         if not any(d.name == name and d.vendor == "AMD" for d in devices):
                                             device = GPUDevice(
@@ -243,7 +244,7 @@ async def get_gpu_status():
                                             devices.append(device)
                                             gpu_idx += 1
                             if gpu_idx > 0:
-                                logger.debug(f"Detected AMD GPU(s) via WMI")
+                                logger.debug("Detected AMD GPU(s) via WMI")
                 except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
                     # Gap Analysis Fix: Log WMI fallback failure
                     logger.debug(f"AMD GPU detection via WMI failed: {e}")
@@ -254,7 +255,7 @@ async def get_gpu_status():
         try:
             import platform
             import subprocess
-            
+
             if platform.system() == "Windows":
                 # Use WMIC to query Intel GPUs
                 result = subprocess.run(
@@ -273,7 +274,7 @@ async def get_gpu_status():
                                 name = parts[-1] if parts[-1] else f"Intel GPU {gpu_idx}"
                                 adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
                                 driver_version = parts[2] if len(parts) > 2 else None
-                                
+
                                 # Skip if already detected
                                 if not any(d.name == name and d.vendor == "Intel" for d in devices):
                                     device = GPUDevice(
@@ -293,7 +294,7 @@ async def get_gpu_status():
                                     gpu_idx += 1
                     if gpu_idx > 0:
                         logger.debug(f"Detected {gpu_idx} Intel GPU(s) via WMI")
-            
+
             elif platform.system() == "Linux":
                 # Try to detect Intel GPUs via sysfs or intel_gpu_top
                 try:
@@ -303,11 +304,11 @@ async def get_gpu_status():
                     if os.path.exists(drm_path):
                         gpu_idx = len([d for d in devices if d.vendor == "Intel"])
                         for card in os.listdir(drm_path):
-                            if card.startswith("card") and not "-" in card:
+                            if card.startswith("card") and "-" not in card:
                                 device_path = os.path.join(drm_path, card, "device")
                                 vendor_path = os.path.join(device_path, "vendor")
                                 if os.path.exists(vendor_path):
-                                    with open(vendor_path, "r") as f:
+                                    with open(vendor_path) as f:
                                         vendor_id = f.read().strip()
                                     # Intel vendor ID is 0x8086
                                     if vendor_id == "0x8086":
@@ -354,7 +355,7 @@ async def get_gpu_status():
         )
 
 
-@router.get("/devices", response_model=List[GPUDevice])
+@router.get("/devices", response_model=list[GPUDevice])
 @cache_response(ttl=5)  # Cache for 5 seconds (device list updates frequently)
 async def list_gpu_devices():
     """List all GPU devices."""

@@ -3,8 +3,9 @@ Pitch Tracking Integration
 Integrates crepe and pyin libraries for pitch estimation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class PitchTracker:
         sample_rate: int,
         model_capacity: str = "full",
         viterbi: bool = True,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Track pitch using crepe library.
 
@@ -62,7 +63,7 @@ class PitchTracker:
             raise ImportError("crepe library not available")
 
         try:
-            time, frequency, confidence, activation = crepe.predict(
+            time, frequency, _confidence, _activation = crepe.predict(
                 audio,
                 sample_rate,
                 model_capacity=model_capacity,
@@ -81,8 +82,8 @@ class PitchTracker:
         fmin: float = 80.0,
         fmax: float = 400.0,
         frame_length: int = 2048,
-        hop_length: Optional[int] = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        hop_length: int | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Track pitch using librosa's PYIN algorithm.
 
@@ -120,7 +121,7 @@ class PitchTracker:
     def get_pitch_statistics(
         self,
         frequencies: np.ndarray,
-        times: Optional[np.ndarray] = None,
+        times: np.ndarray | None = None,
     ) -> dict:
         """
         Calculate pitch statistics from frequency array.

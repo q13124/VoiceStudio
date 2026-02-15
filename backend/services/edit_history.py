@@ -5,12 +5,14 @@ Command pattern implementation for timeline edit operations.
 Supports undo/redo with configurable history depth.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +58,8 @@ class EditHistory:
     """
 
     def __init__(self, max_history: int = 100):
-        self._undo_stack: Deque[EditRecord] = deque(maxlen=max_history)
-        self._redo_stack: Deque[EditRecord] = deque(maxlen=max_history)
+        self._undo_stack: deque[EditRecord] = deque(maxlen=max_history)
+        self._redo_stack: deque[EditRecord] = deque(maxlen=max_history)
         self._max_history = max_history
 
     def execute(self, command: EditCommand) -> Any:
@@ -73,7 +75,7 @@ class EditHistory:
         logger.debug(f"Edit executed: {command.description}")
         return result
 
-    def undo(self) -> Optional[str]:
+    def undo(self) -> str | None:
         """Undo the most recent edit."""
         if not self._undo_stack:
             return None
@@ -84,7 +86,7 @@ class EditHistory:
         logger.debug(f"Undo: {record.command.description}")
         return record.command.description
 
-    def redo(self) -> Optional[str]:
+    def redo(self) -> str | None:
         """Redo the most recently undone edit."""
         if not self._redo_stack:
             return None
@@ -101,11 +103,11 @@ class EditHistory:
     def can_redo(self) -> bool:
         return len(self._redo_stack) > 0
 
-    def get_undo_history(self, count: int = 10) -> List[str]:
+    def get_undo_history(self, count: int = 10) -> list[str]:
         """Get descriptions of undoable edits."""
         return [r.command.description for r in list(self._undo_stack)[-count:]]
 
-    def get_redo_history(self, count: int = 10) -> List[str]:
+    def get_redo_history(self, count: int = 10) -> list[str]:
         """Get descriptions of redoable edits."""
         return [r.command.description for r in list(self._redo_stack)[-count:]]
 
@@ -120,7 +122,7 @@ class EditHistory:
 class AddClipCommand(EditCommand):
     """Add a clip to a track."""
 
-    def __init__(self, track_store, project_id: str, track_id: str, clip_data: Dict[str, Any]):
+    def __init__(self, track_store, project_id: str, track_id: str, clip_data: dict[str, Any]):
         self._store = track_store
         self._project_id = project_id
         self._track_id = track_id
@@ -154,7 +156,7 @@ class RemoveClipCommand(EditCommand):
         self._project_id = project_id
         self._track_id = track_id
         self._clip_id = clip_id
-        self._removed_clip: Optional[Dict[str, Any]] = None
+        self._removed_clip: dict[str, Any] | None = None
 
     def execute(self) -> Any:
         track = self._store.get_track(self._project_id, self._track_id)
@@ -187,7 +189,7 @@ class MoveClipCommand(EditCommand):
         self._track_id = track_id
         self._clip_id = clip_id
         self._new_start = new_start
-        self._old_start: Optional[float] = None
+        self._old_start: float | None = None
 
     def execute(self) -> Any:
         track = self._store.get_track(self._project_id, self._track_id)

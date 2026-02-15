@@ -5,12 +5,13 @@ Endpoints for generating multiple voice synthesis jobs simultaneously.
 Essential for batch processing and A/B testing.
 """
 
+from __future__ import annotations
+
 import csv
 import io
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/voice/multi", tags=["multi-voice-generator"])
 
 # In-memory storage for multi-voice jobs (replace with database in production)
-_multi_voice_jobs: Dict[str, "MultiVoiceJob"] = {}
+_multi_voice_jobs: dict[str, "MultiVoiceJob"] = {}
 
 
 class VoiceGenerationItem(BaseModel):
@@ -32,14 +33,14 @@ class VoiceGenerationItem(BaseModel):
     engine: str = "xtts"
     quality_mode: str = "standard"
     language: str = "en"
-    emotion: Optional[str] = None
+    emotion: str | None = None
     status: str = "pending"  # pending, processing, completed, failed
     progress: float = 0.0
-    audio_id: Optional[str] = None
-    audio_url: Optional[str] = None
-    quality_score: Optional[float] = None
-    quality_metrics: Optional[Dict] = None
-    error_message: Optional[str] = None
+    audio_id: str | None = None
+    audio_url: str | None = None
+    quality_score: float | None = None
+    quality_metrics: dict | None = None
+    error_message: str | None = None
 
 
 class MultiVoiceJob(BaseModel):
@@ -47,7 +48,7 @@ class MultiVoiceJob(BaseModel):
 
     job_id: str
     name: str
-    items: List[VoiceGenerationItem]
+    items: list[VoiceGenerationItem]
     status: str = "pending"  # pending, processing, completed, failed
     progress: float = 0.0
     created_at: str
@@ -60,7 +61,7 @@ class MultiVoiceGenerateRequest(BaseModel):
     """Request to start multi-voice generation."""
 
     name: str
-    items: List[Dict]  # List of voice generation items
+    items: list[dict]  # List of voice generation items
 
 
 class MultiVoiceGenerateResponse(BaseModel):
@@ -82,29 +83,29 @@ class MultiVoiceJobStatusResponse(BaseModel):
     total_items: int
     completed_count: int
     failed_count: int
-    items: List[Dict]
+    items: list[dict]
 
 
 class MultiVoiceResultsResponse(BaseModel):
     """Multi-voice results response."""
 
     job_id: str
-    items: List[Dict]  # Completed items with results
+    items: list[dict]  # Completed items with results
 
 
 class MultiVoiceCompareRequest(BaseModel):
     """Request to compare voice generation results."""
 
-    audio_ids: List[str]
+    audio_ids: list[str]
     comparison_type: str = "quality"  # quality, similarity, naturalness
 
 
 class MultiVoiceCompareResponse(BaseModel):
     """Voice comparison response."""
 
-    comparisons: List[Dict]
-    best_audio_id: Optional[str] = None
-    best_score: Optional[float] = None
+    comparisons: list[dict]
+    best_audio_id: str | None = None
+    best_score: float | None = None
 
 
 @router.post(
@@ -171,7 +172,7 @@ async def generate_multi_voice(request: MultiVoiceGenerateRequest):
         logger.error(f"Failed to start multi-voice generation: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start multi-voice generation: {str(e)}",
+            detail=f"Failed to start multi-voice generation: {e!s}",
         ) from e
 
 
@@ -279,7 +280,7 @@ async def get_multi_voice_status(job_id: str):
         logger.error(f"Failed to get multi-voice status: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get multi-voice status: {str(e)}",
+            detail=f"Failed to get multi-voice status: {e!s}",
         ) from e
 
 
@@ -324,7 +325,7 @@ async def get_multi_voice_results(job_id: str):
         logger.error(f"Failed to get multi-voice results: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get multi-voice results: {str(e)}",
+            detail=f"Failed to get multi-voice results: {e!s}",
         ) from e
 
 
@@ -392,7 +393,7 @@ async def export_multi_voice(job_id: str = ""):
         logger.error(f"Failed to export multi-voice results: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export multi-voice results: {str(e)}",
+            detail=f"Failed to export multi-voice results: {e!s}",
         ) from e
 
 
@@ -446,7 +447,7 @@ async def compare_voices(request: MultiVoiceCompareRequest):
         logger.error(f"Failed to compare voices: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compare voices: {str(e)}",
+            detail=f"Failed to compare voices: {e!s}",
         ) from e
 
 
@@ -495,5 +496,5 @@ async def import_multi_voice(request: CSVImportRequest):
         logger.error(f"Failed to import multi-voice CSV: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to import CSV: {str(e)}",
+            detail=f"Failed to import CSV: {e!s}",
         ) from e

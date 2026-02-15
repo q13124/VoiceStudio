@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, GitContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -22,7 +22,7 @@ class GitSourceAdapter(BaseSourceAdapter):
         self._include_status = include_status
         self._include_shortlog = include_shortlog
         self._shortlog_limit = max(1, int(shortlog_limit))
-        self._git_available: Optional[bool] = None
+        self._git_available: bool | None = None
 
     def health_check(self) -> bool:
         """
@@ -45,7 +45,7 @@ class GitSourceAdapter(BaseSourceAdapter):
             self._git_available = False
             return False
 
-    def _run_git(self, args: list[str], root: Path) -> Optional[str]:
+    def _run_git(self, args: list[str], root: Path) -> str | None:
         try:
             result = subprocess.run(
                 ["git", *args],
@@ -61,7 +61,7 @@ class GitSourceAdapter(BaseSourceAdapter):
             return None
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             status = None
             shortlog = None

@@ -11,14 +11,15 @@ Features:
 - Speaker embedding extraction for rapid cloning
 """
 
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import logging
-import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -44,7 +45,7 @@ class CloneQualityEstimate:
         embedding_confidence: float,
         noise_level: float,
         duration_score: float,
-        recommendations: List[str],
+        recommendations: list[str],
         estimated_clone_fidelity: str,
     ):
         self.overall_score = overall_score
@@ -57,7 +58,7 @@ class CloneQualityEstimate:
         self.estimated_clone_fidelity = estimated_clone_fidelity
         self.timestamp = datetime.utcnow().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "overall_score": self.overall_score,
             "audio_quality": self.audio_quality,
@@ -77,12 +78,12 @@ class InstantCloningResult:
     def __init__(
         self,
         success: bool,
-        profile_id: Optional[str],
-        embedding_vector: Optional[np.ndarray],
-        quality_estimate: Optional[CloneQualityEstimate],
-        preview_audio_path: Optional[str],
+        profile_id: str | None,
+        embedding_vector: np.ndarray | None,
+        quality_estimate: CloneQualityEstimate | None,
+        preview_audio_path: str | None,
         processing_time_ms: float,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ):
         self.success = success
         self.profile_id = profile_id
@@ -93,7 +94,7 @@ class InstantCloningResult:
         self.error_message = error_message
         self.timestamp = datetime.utcnow().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "success": self.success,
             "profile_id": self.profile_id,
@@ -121,8 +122,8 @@ class InstantCloningService:
         self._initialized = False
         self._speaker_encoder = None
         self._synthesis_engine = None
-        self._embedding_cache: Dict[str, np.ndarray] = {}
-        self._quality_cache: Dict[str, CloneQualityEstimate] = {}
+        self._embedding_cache: dict[str, np.ndarray] = {}
+        self._quality_cache: dict[str, CloneQualityEstimate] = {}
         logger.info("InstantCloningService created")
 
     async def initialize(self) -> bool:
@@ -157,8 +158,8 @@ class InstantCloningService:
     async def estimate_clone_quality(
         self,
         audio_path: str,
-        audio_array: Optional[np.ndarray] = None,
-        sample_rate: Optional[int] = None,
+        audio_array: np.ndarray | None = None,
+        sample_rate: int | None = None,
     ) -> CloneQualityEstimate:
         """
         Estimate voice cloning quality before processing.
@@ -174,7 +175,7 @@ class InstantCloningService:
             CloneQualityEstimate with quality metrics and recommendations
         """
         recommendations = []
-        
+
         try:
             # Load audio if not provided
             if audio_array is None:
@@ -203,13 +204,10 @@ class InstantCloningService:
                 )
 
             # Convert to mono if needed
-            if len(audio_array.shape) > 1:
-                audio_mono = np.mean(audio_array, axis=1)
-            else:
-                audio_mono = audio_array
+            audio_mono = np.mean(audio_array, axis=1) if len(audio_array.shape) > 1 else audio_array
 
             # Calculate audio quality metrics
-            rms = np.sqrt(np.mean(audio_mono ** 2))
+            np.sqrt(np.mean(audio_mono ** 2))
             max_amplitude = np.max(np.abs(audio_mono))
 
             # Check for clipping
@@ -228,13 +226,13 @@ class InstantCloningService:
                 freqs, psd = signal.welch(audio_mono, sample_rate, nperseg=1024)
                 high_freq_mask = freqs > 4000
                 low_freq_mask = (freqs >= 80) & (freqs <= 4000)
-                
+
                 high_freq_energy = np.sum(psd[high_freq_mask]) if np.any(high_freq_mask) else 0
                 low_freq_energy = np.sum(psd[low_freq_mask]) if np.any(low_freq_mask) else 1
-                
+
                 noise_ratio = high_freq_energy / (low_freq_energy + 1e-10)
                 noise_level = min(1.0, noise_ratio * 2)
-                
+
                 if noise_level > 0.5:
                     recommendations.append("High background noise detected. Record in quieter environment.")
             except Exception:
@@ -244,13 +242,13 @@ class InstantCloningService:
             try:
                 frame_length = int(0.025 * sample_rate)  # 25ms frames
                 hop_length = int(0.010 * sample_rate)  # 10ms hop
-                
+
                 zcr_values = []
                 for i in range(0, len(audio_mono) - frame_length, hop_length):
                     frame = audio_mono[i:i + frame_length]
                     zcr = np.sum(np.abs(np.diff(np.sign(frame)))) / (2 * frame_length)
                     zcr_values.append(zcr)
-                
+
                 zcr_std = np.std(zcr_values) if zcr_values else 0
                 voice_clarity = max(0.3, 1.0 - min(1.0, zcr_std * 10))
             except Exception:
@@ -277,7 +275,7 @@ class InstantCloningService:
                 "embedding": 0.20,
                 "noise": 0.15,
             }
-            
+
             overall_score = (
                 weights["duration"] * duration_score +
                 weights["audio_quality"] * audio_quality +
@@ -319,7 +317,7 @@ class InstantCloningService:
                 embedding_confidence=0.0,
                 noise_level=1.0,
                 duration_score=0.0,
-                recommendations=[f"Quality estimation failed: {str(e)}"],
+                recommendations=[f"Quality estimation failed: {e!s}"],
                 estimated_clone_fidelity="unknown",
             )
 
@@ -327,7 +325,7 @@ class InstantCloningService:
         self,
         audio_path: str,
         use_cache: bool = True,
-    ) -> Tuple[Optional[np.ndarray], Dict[str, Any]]:
+    ) -> tuple[np.ndarray | None, dict[str, Any]]:
         """
         Extract speaker embedding for rapid voice cloning.
 
@@ -355,7 +353,7 @@ class InstantCloningService:
 
         try:
             start_time = time.perf_counter()
-            
+
             # Extract embedding
             embedding = self._speaker_encoder.extract_embedding(
                 audio_path,
@@ -369,7 +367,7 @@ class InstantCloningService:
             if embedding is not None:
                 # Cache the embedding
                 self._embedding_cache[cache_key] = embedding
-                
+
                 return embedding, {
                     "cached": False,
                     "processing_time_ms": processing_time,
@@ -388,7 +386,7 @@ class InstantCloningService:
         audio_path: str,
         preview_text: str = "Hello, this is a preview of the cloned voice.",
         engine: str = "xtts",
-    ) -> Tuple[Optional[str], Dict[str, Any]]:
+    ) -> tuple[str | None, dict[str, Any]]:
         """
         Generate instant preview synthesis from reference audio.
 
@@ -409,7 +407,6 @@ class InstantCloningService:
             start_time = time.perf_counter()
 
             # Import synthesis engine
-            from app.core.engines import xtts_engine
 
             # Generate preview using zero-shot cloning
             preview_audio = await asyncio.get_event_loop().run_in_executor(
@@ -437,12 +434,12 @@ class InstantCloningService:
         reference_audio: str,
         text: str,
         engine: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Synchronous preview synthesis helper."""
         try:
-            import uuid
             import tempfile
-            
+            import uuid
+
             # Create preview output path
             preview_id = str(uuid.uuid4())[:8]
             output_dir = Path(tempfile.gettempdir()) / "voicestudio" / "previews"
@@ -483,7 +480,7 @@ class InstantCloningService:
         self,
         audio_path: str,
         profile_name: str,
-        profile_description: Optional[str] = None,
+        profile_description: str | None = None,
         generate_preview: bool = True,
         engine: str = "xtts",
     ) -> InstantCloningResult:
@@ -592,7 +589,7 @@ class InstantCloningService:
 
 
 # Singleton instance
-_instant_cloning_service: Optional[InstantCloningService] = None
+_instant_cloning_service: InstantCloningService | None = None
 
 
 def get_instant_cloning_service() -> InstantCloningService:

@@ -5,9 +5,7 @@ Tests optimized audio pipeline functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -47,7 +45,7 @@ class TestPipelineOptimizedClasses:
     def test_optimized_pipeline_class_exists(self):
         """Test OptimizedPipeline class exists."""
         if hasattr(pipeline_optimized, "OptimizedPipeline"):
-            cls = getattr(pipeline_optimized, "OptimizedPipeline")
+            cls = pipeline_optimized.OptimizedPipeline
             assert isinstance(
                 cls, type
             ), "OptimizedPipeline should be a class"

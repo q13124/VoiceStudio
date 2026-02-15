@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from tools.onboarding.core.models import Blocker, RoleConfig, RoleContext
 from tools.overseer.ledger_parser import LedgerParser
 
@@ -17,7 +15,7 @@ class RoleContextSource:
             return RoleContext(blockers=[])
         parser = LedgerParser()
         entries = parser.parse()
-        blockers: List[Blocker] = []
+        blockers: list[Blocker] = []
         for entry in entries:
             if entry.state.value != "BLOCKED":
                 continue

@@ -65,6 +65,12 @@ namespace VoiceStudio.App.Tests.Fixtures
                 // MultiSelectService - required by many ViewModels
                 services.AddSingleton<MultiSelectService>();
 
+                // EventAggregator - required for inter-panel communication testing
+                services.AddSingleton<IEventAggregator, EventAggregator>();
+
+                // WorkflowCoordinatorService - required for workflow orchestration testing
+                services.AddSingleton<IWorkflowCoordinatorService, WorkflowCoordinatorService>();
+
                 // Add other commonly needed services for tests
                 // Note: Add more services here as needed based on test failures
 

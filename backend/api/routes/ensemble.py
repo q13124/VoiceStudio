@@ -5,10 +5,11 @@ Endpoints for multi-voice synthesis (synthesizing multiple voices simultaneously
 and multi-engine ensemble synthesis (IDEA 55).
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -20,10 +21,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ensemble", tags=["ensemble"])
 
 # In-memory ensemble jobs storage (replace with database in production)
-_ensemble_jobs: Dict[str, Dict] = {}
+_ensemble_jobs: dict[str, dict] = {}
 
 # In-memory multi-engine ensemble jobs storage (IDEA 55)
-_multi_engine_ensemble_jobs: Dict[str, Dict] = {}
+_multi_engine_ensemble_jobs: dict[str, dict] = {}
 
 
 class EnsembleVoice(BaseModel):
@@ -31,16 +32,16 @@ class EnsembleVoice(BaseModel):
 
     profile_id: str
     text: str
-    engine: Optional[str] = None
-    language: Optional[str] = None
-    emotion: Optional[str] = None
+    engine: str | None = None
+    language: str | None = None
+    emotion: str | None = None
 
 
 class EnsembleSynthesisRequest(BaseModel):
     """Request for ensemble synthesis."""
 
-    voices: List[EnsembleVoice]
-    project_id: Optional[str] = None
+    voices: list[EnsembleVoice]
+    project_id: str | None = None
     mix_mode: str = "sequential"  # sequential, parallel, layered
     output_format: str = "wav"  # wav, mp3, flac
 
@@ -50,7 +51,7 @@ class EnsembleSynthesisResponse(BaseModel):
 
     job_id: str
     status: str  # queued, processing, completed, failed
-    audio_ids: List[str] = []
+    audio_ids: list[str] = []
     message: str
 
 
@@ -62,8 +63,8 @@ class EnsembleJobStatus(BaseModel):
     progress: float  # 0.0 to 1.0
     completed_voices: int
     total_voices: int
-    audio_ids: List[str] = []
-    error: Optional[str] = None
+    audio_ids: list[str] = []
+    error: str | None = None
     created: str
     updated: str
 
@@ -74,11 +75,11 @@ class MultiEngineEnsembleRequest(BaseModel):
 
     text: str
     profile_id: str
-    engines: List[str]  # ["xtts_v2", "chatterbox", "tortoise"]
-    language: Optional[str] = "en"
-    emotion: Optional[str] = None
+    engines: list[str]  # ["xtts_v2", "chatterbox", "tortoise"]
+    language: str | None = "en"
+    emotion: str | None = None
     selection_mode: str = "voting"  # "voting", "hybrid", "fusion"
-    fusion_strategy: Optional[str] = None  # "quality_weighted", "equal", "best_segment"
+    fusion_strategy: str | None = None  # "quality_weighted", "equal", "best_segment"
     segment_size: float = 0.5  # seconds
     quality_threshold: float = 0.85  # Minimum quality for selection
 
@@ -88,11 +89,11 @@ class EngineQualityResult(BaseModel):
 
     engine: str
     audio_id: str
-    quality_score: Optional[float] = None
-    mos_score: Optional[float] = None
-    similarity: Optional[float] = None
-    naturalness: Optional[float] = None
-    error: Optional[str] = None
+    quality_score: float | None = None
+    mos_score: float | None = None
+    similarity: float | None = None
+    naturalness: float | None = None
+    error: str | None = None
 
 
 class MultiEngineEnsembleResponse(BaseModel):
@@ -100,7 +101,7 @@ class MultiEngineEnsembleResponse(BaseModel):
 
     job_id: str
     status: str  # queued, processing, completed, failed
-    engines: List[str]
+    engines: list[str]
     message: str
 
 
@@ -110,12 +111,12 @@ class MultiEngineEnsembleStatus(BaseModel):
     job_id: str
     status: str
     progress: float  # 0.0 to 1.0
-    engines: List[str]
-    engine_outputs: Dict[str, str] = {}  # engine -> audio_id
-    engine_qualities: Dict[str, Dict] = {}  # engine -> quality metrics
-    ensemble_audio_id: Optional[str] = None
-    ensemble_quality: Optional[Dict] = None
-    error: Optional[str] = None
+    engines: list[str]
+    engine_outputs: dict[str, str] = {}  # engine -> audio_id
+    engine_qualities: dict[str, dict] = {}  # engine -> quality metrics
+    ensemble_audio_id: str | None = None
+    ensemble_quality: dict | None = None
+    error: str | None = None
     created: str
     updated: str
 
@@ -171,7 +172,7 @@ async def create_ensemble_synthesis(
     except Exception as e:
         logger.error(f"Failed to create ensemble synthesis: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to create ensemble: {str(e)}"
+            status_code=500, detail=f"Failed to create ensemble: {e!s}"
         ) from e
 
 
@@ -198,10 +199,10 @@ async def get_ensemble_status(job_id: str):
     )
 
 
-@router.get("", response_model=List[EnsembleJobStatus])
+@router.get("", response_model=list[EnsembleJobStatus])
 async def list_ensemble_jobs(
-    project_id: Optional[str] = None,
-    status: Optional[str] = None,
+    project_id: str | None = None,
+    status: str | None = None,
 ):
     """List ensemble synthesis jobs."""
     jobs = list(_ensemble_jobs.values())
@@ -318,7 +319,7 @@ async def _process_ensemble_job(job_id: str, request: EnsembleSynthesisRequest):
                             f"Voice synthesis failed for {voice.profile_id}: {e}"
                         )
                         job["error"] = (
-                            f"Failed to synthesize voice {voice.profile_id}: {str(e)}"
+                            f"Failed to synthesize voice {voice.profile_id}: {e!s}"
                         )
                         break
 
@@ -357,7 +358,7 @@ async def _process_ensemble_job(job_id: str, request: EnsembleSynthesisRequest):
             job["updated"] = datetime.utcnow().isoformat()
 
 
-async def _synthesize_voice(synth_req, job_id: str) -> Optional[str]:
+async def _synthesize_voice(synth_req, job_id: str) -> str | None:
     """
     Synthesize a single voice for ensemble.
 
@@ -454,7 +455,7 @@ async def create_multi_engine_ensemble(
     except Exception as e:
         logger.error(f"Failed to create multi-engine ensemble: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to create ensemble: {str(e)}"
+            status_code=500, detail=f"Failed to create ensemble: {e!s}"
         ) from e
 
 
@@ -620,7 +621,7 @@ async def _process_multi_engine_ensemble_job(
 
                 # Segment-based selection: choose best quality segment from each engine
                 segment_size_samples = int(
-                    request.segment_size * sample_rates[list(sample_rates.keys())[0]]
+                    request.segment_size * sample_rates[next(iter(sample_rates.keys()))]
                 )
                 segments = []
                 max_samples = max(len(audio) for audio in engine_audios.values())
@@ -630,7 +631,7 @@ async def _process_multi_engine_ensemble_job(
                     best_engine_segment = None
                     best_quality_segment = -1.0
 
-                    for engine in engine_audios.keys():
+                    for engine in engine_audios:
                         audio = engine_audios[engine]
                         if i < len(audio):
                             segment = audio[i:segment_end]
@@ -657,7 +658,7 @@ async def _process_multi_engine_ensemble_job(
                     sf.write(
                         output_path,
                         combined_audio,
-                        sample_rates[list(sample_rates.keys())[0]],
+                        sample_rates[next(iter(sample_rates.keys()))],
                     )
 
                     # Register audio
@@ -677,7 +678,7 @@ async def _process_multi_engine_ensemble_job(
             except Exception as e:
                 logger.error(f"Hybrid mode failed: {e}", exc_info=True)
                 job["status"] = "failed"
-                job["error"] = f"Hybrid mode failed: {str(e)}"
+                job["error"] = f"Hybrid mode failed: {e!s}"
 
         elif request.selection_mode == "fusion":
             # Fusion mode: Weighted combination of all engines
@@ -733,11 +734,11 @@ async def _process_multi_engine_ensemble_job(
                 else:
                     # Equal weights if no quality scores
                     engine_weights = {
-                        k: 1.0 / len(engine_audios) for k in engine_audios.keys()
+                        k: 1.0 / len(engine_audios) for k in engine_audios
                     }
 
                 # Resample all to same rate and length
-                target_sr = sample_rates[list(sample_rates.keys())[0]]
+                target_sr = sample_rates[next(iter(sample_rates.keys()))]
                 max_length = max(len(audio) for audio in engine_audios.values())
 
                 fused_audio = np.zeros(max_length)
@@ -780,7 +781,7 @@ async def _process_multi_engine_ensemble_job(
                         job["engine_qualities"].get(engine, {}).get("quality_score")
                         or 0.5
                     )
-                    for engine in engine_audios.keys()
+                    for engine in engine_audios
                 )
 
                 job["ensemble_audio_id"] = ensemble_audio_id
@@ -793,7 +794,7 @@ async def _process_multi_engine_ensemble_job(
             except Exception as e:
                 logger.error(f"Fusion mode failed: {e}", exc_info=True)
                 job["status"] = "failed"
-                job["error"] = f"Fusion mode failed: {str(e)}"
+                job["error"] = f"Fusion mode failed: {e!s}"
         else:
             # Fallback to voting for unknown modes
             logger.warning(
@@ -819,7 +820,7 @@ async def _process_multi_engine_ensemble_job(
 
 async def _synthesize_with_engine(
     engine: str, request: MultiEngineEnsembleRequest, job_id: str
-) -> Dict:
+) -> dict:
     """
     Synthesize with a specific engine for multi-engine ensemble.
 

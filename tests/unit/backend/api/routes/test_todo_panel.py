@@ -6,7 +6,7 @@ Tests todo panel endpoints comprehensively.
 import sys
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI
@@ -348,15 +348,14 @@ class TestTodoEndpoints:
             updated_at=now,
         )
 
-        with patch("backend.api.routes.todo_panel._load_todo_from_db") as mock_load:
-            with patch(
-                "backend.api.routes.todo_panel._delete_todo_from_db"
-            ) as mock_delete:
-                mock_load.return_value = mock_todo
-                mock_delete.return_value = True
+        with patch("backend.api.routes.todo_panel._load_todo_from_db") as mock_load, patch(
+            "backend.api.routes.todo_panel._delete_todo_from_db"
+        ) as mock_delete:
+            mock_load.return_value = mock_todo
+            mock_delete.return_value = True
 
-                response = client.delete("/api/todo-panel/todo1")
-                assert response.status_code == 200
+            response = client.delete("/api/todo-panel/todo1")
+            assert response.status_code == 200
 
     def test_delete_todo_not_found(self):
         """Test deleting non-existent todo."""

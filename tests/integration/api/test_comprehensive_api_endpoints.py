@@ -7,14 +7,12 @@ Date: 2025-01-28
 """
 
 import ast
-import importlib.util
-import inspect
 import logging
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pytest
 
@@ -27,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Test results storage
-test_results: Dict[str, Dict[str, Any]] = {}
+test_results: dict[str, dict[str, Any]] = {}
 
 # Forbidden terms
 FORBIDDEN_TERMS = [
@@ -49,7 +47,7 @@ FORBIDDEN_TERMS = [
 ]
 
 
-def get_all_route_files() -> List[Path]:
+def get_all_route_files() -> list[Path]:
     """Get all route files from backend/api/routes."""
     routes_dir = project_root / "backend" / "api" / "routes"
 
@@ -62,12 +60,12 @@ def get_all_route_files() -> List[Path]:
     return sorted(route_files)
 
 
-def extract_endpoints_from_file(file_path: Path) -> List[Dict[str, Any]]:
+def extract_endpoints_from_file(file_path: Path) -> list[dict[str, Any]]:
     """Extract endpoint definitions from route file."""
     endpoints = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Pattern to match FastAPI route decorators
@@ -107,12 +105,12 @@ def extract_endpoints_from_file(file_path: Path) -> List[Dict[str, Any]]:
     return endpoints
 
 
-def check_for_forbidden_terms(file_path: Path) -> List[str]:
+def check_for_forbidden_terms(file_path: Path) -> list[str]:
     """Check file for forbidden placeholder terms."""
     violations = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
             lines = content.split("\n")
 
@@ -154,10 +152,10 @@ def check_for_forbidden_terms(file_path: Path) -> List[str]:
     return violations
 
 
-def check_endpoint_function_implementation(file_path: Path, func_name: str) -> Tuple[bool, str]:
+def check_endpoint_function_implementation(file_path: Path, func_name: str) -> tuple[bool, str]:
     """Check if endpoint function has real implementation (not just pass)."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Parse AST to find function
@@ -190,12 +188,12 @@ def check_endpoint_function_implementation(file_path: Path, func_name: str) -> T
         return False, f"Error checking function: {e}"
 
 
-def check_route_file_structure(file_path: Path) -> Dict[str, Any]:
+def check_route_file_structure(file_path: Path) -> dict[str, Any]:
     """Check route file for proper structure."""
     issues = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Check for router definition
@@ -218,7 +216,7 @@ def check_route_file_structure(file_path: Path) -> Dict[str, Any]:
 
 
 # Collect all endpoints
-ALL_ENDPOINTS: List[Dict[str, Any]] = []
+ALL_ENDPOINTS: list[dict[str, Any]] = []
 ALL_ROUTE_FILES = get_all_route_files()
 
 for route_file in ALL_ROUTE_FILES:
@@ -273,7 +271,7 @@ class TestEndpointImplementation:
     def test_endpoint_has_implementation(self, endpoint):
         """Verify endpoint function has real implementation."""
         if not endpoint.get("function"):
-            pytest.skip(f"No function name found for endpoint")
+            pytest.skip("No function name found for endpoint")
 
         route_file = project_root / "backend" / "api" / "routes" / endpoint["file"]
         if not route_file.exists():
@@ -321,7 +319,7 @@ def generate_test_report():
     endpoints_with_issues = sum(
         1
         for r in test_results.values()
-        if r.get("implementation", {}).get("has_implementation", True) == False
+        if not r.get("implementation", {}).get("has_implementation", True)
     )
 
     # Group by HTTP method
@@ -335,17 +333,17 @@ def generate_test_report():
     report = f"""# Backend API Endpoint Test Report
 ## Comprehensive Testing of All {total_endpoints} API Endpoints
 
-**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Worker:** Worker 3 (Testing/Quality/Documentation Specialist)  
+**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Worker:** Worker 3 (Testing/Quality/Documentation Specialist)
 **Test Suite:** Comprehensive API Endpoint Tests
 
 ---
 
 ## 📊 Executive Summary
 
-**Total Route Files:** {total_files}  
-**Total Endpoints:** {total_endpoints}  
-**Files with Code Quality Violations:** {files_with_violations} ({files_with_violations/total_files*100:.1f}%)  
+**Total Route Files:** {total_files}
+**Total Endpoints:** {total_endpoints}
+**Files with Code Quality Violations:** {files_with_violations} ({files_with_violations/total_files*100:.1f}%)
 **Endpoints with Implementation Issues:** {endpoints_with_issues} ({endpoints_with_issues/total_endpoints*100:.1f}%)
 
 ---
@@ -404,7 +402,7 @@ def generate_test_report():
         if "structure" in result:
             structure = result["structure"]
             if structure.get("has_issues", False):
-                report += f"- **Structure:** ⚠️ Issues found\n"
+                report += "- **Structure:** ⚠️ Issues found\n"
                 for issue in structure.get("issues", [])[:5]:
                     report += f"  - {issue}\n"
             else:

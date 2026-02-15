@@ -6,13 +6,16 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +100,7 @@ class AudioQualityBenchmark:
 
     def __init__(
         self,
-        engine_router: Optional[EngineRouter] = None,
+        engine_router: EngineRouter | None = None,
         sample_rate: int = 24000,
     ):
         """
@@ -122,12 +125,12 @@ class AudioQualityBenchmark:
     def benchmark_engine(
         self,
         engine_name: str,
-        reference_audio: Union[str, Path],
+        reference_audio: str | Path,
         test_text: str,
         language: str = "en",
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Benchmark a single engine.
 
@@ -221,13 +224,13 @@ class AudioQualityBenchmark:
 
     def benchmark_multiple_engines(
         self,
-        engines: List[str],
-        reference_audio: Union[str, Path],
+        engines: list[str],
+        reference_audio: str | Path,
         test_text: str,
         language: str = "en",
-        speaker_wav: Optional[Union[str, Path]] = None,
-        progress_callback: Optional[Callable[[Dict], None]] = None,
-    ) -> Dict[str, Dict[str, Any]]:
+        speaker_wav: str | Path | None = None,
+        progress_callback: Callable[[dict], None] | None = None,
+    ) -> dict[str, dict[str, Any]]:
         """
         Benchmark multiple engines.
 
@@ -277,8 +280,8 @@ class AudioQualityBenchmark:
         return all_results
 
     def compare_engines(
-        self, benchmark_results: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, benchmark_results: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Compare benchmark results across engines.
 
@@ -382,9 +385,9 @@ class AudioQualityBenchmark:
 
     def generate_report(
         self,
-        benchmark_results: Dict[str, Dict[str, Any]],
-        comparison: Optional[Dict[str, Any]] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        benchmark_results: dict[str, dict[str, Any]],
+        comparison: dict[str, Any] | None = None,
+        output_path: str | Path | None = None,
     ) -> str:
         """
         Generate benchmark report.
@@ -461,9 +464,9 @@ class AudioQualityBenchmark:
 
     def save_results_json(
         self,
-        benchmark_results: Dict[str, Dict[str, Any]],
-        output_path: Union[str, Path],
-        comparison: Optional[Dict[str, Any]] = None,
+        benchmark_results: dict[str, dict[str, Any]],
+        output_path: str | Path,
+        comparison: dict[str, Any] | None = None,
     ):
         """
         Save benchmark results as JSON.
@@ -496,7 +499,7 @@ class AudioQualityBenchmark:
 
 
 def create_audio_quality_benchmark(
-    engine_router: Optional[EngineRouter] = None,
+    engine_router: EngineRouter | None = None,
     sample_rate: int = 24000,
 ) -> AudioQualityBenchmark:
     """

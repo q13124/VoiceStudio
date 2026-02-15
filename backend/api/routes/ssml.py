@@ -4,11 +4,12 @@ SSML Control Routes
 Endpoints for SSML (Speech Synthesis Markup Language) editing and processing.
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ssml", tags=["ssml"])
 
 # In-memory SSML documents storage (replace with database in production)
-_ssml_documents: Dict[str, Dict] = {}
+_ssml_documents: dict[str, dict] = {}
 
 
 class SSMLDocument(BaseModel):
@@ -41,8 +42,8 @@ class SSMLDocument(BaseModel):
     id: str
     name: str
     content: str  # SSML markup
-    profile_id: Optional[str] = None
-    project_id: Optional[str] = None
+    profile_id: str | None = None
+    project_id: str | None = None
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
 
@@ -52,32 +53,32 @@ class SSMLCreateRequest(BaseModel):
 
     name: str
     content: str
-    profile_id: Optional[str] = None
-    project_id: Optional[str] = None
+    profile_id: str | None = None
+    project_id: str | None = None
 
 
 class SSMLUpdateRequest(BaseModel):
     """Request to update an SSML document."""
 
-    name: Optional[str] = None
-    content: Optional[str] = None
-    profile_id: Optional[str] = None
+    name: str | None = None
+    content: str | None = None
+    profile_id: str | None = None
 
 
 class SSMLValidateResponse(BaseModel):
     """Response from SSML validation."""
 
     valid: bool
-    errors: List[str] = []
-    warnings: List[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
 
 
 class SSMLPreviewRequest(BaseModel):
     """Request for SSML preview."""
 
     content: str
-    profile_id: Optional[str] = None
-    engine: Optional[str] = None
+    profile_id: str | None = None
+    engine: str | None = None
 
 
 class SSMLPreviewResponse(BaseModel):
@@ -88,11 +89,11 @@ class SSMLPreviewResponse(BaseModel):
     message: str
 
 
-@router.get("", response_model=List[SSMLDocument])
+@router.get("", response_model=list[SSMLDocument])
 @cache_response(ttl=60)  # Cache 60s (document list may change frequently)
 async def get_ssml_documents(
-    project_id: Optional[str] = None,
-    profile_id: Optional[str] = None,
+    project_id: str | None = None,
+    profile_id: str | None = None,
 ):
     """Get all SSML documents, optionally filtered."""
     documents = list(_ssml_documents.values())
@@ -173,7 +174,7 @@ async def create_ssml_document(request: SSMLCreateRequest):
     except Exception as e:
         logger.error(f"Failed to create SSML document: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to create document: {str(e)}"
+            status_code=500, detail=f"Failed to create document: {e!s}"
         ) from e
 
 
@@ -212,7 +213,7 @@ async def update_ssml_document(document_id: str, request: SSMLUpdateRequest):
     except Exception as e:
         logger.error(f"Failed to update SSML document {document_id}: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to update document: {str(e)}"
+            status_code=500, detail=f"Failed to update document: {e!s}"
         ) from e
 
 
@@ -229,7 +230,7 @@ async def delete_ssml_document(document_id: str):
     except Exception as e:
         logger.error(f"Failed to delete SSML document {document_id}: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete document: {str(e)}"
+            status_code=500, detail=f"Failed to delete document: {e!s}"
         ) from e
 
 
@@ -306,12 +307,11 @@ async def validate_ssml(request: SSMLCreateRequest):
                         f"attribute at {current_path}"
                     )
 
-            if elem.tag == "say-as":
-                if "interpret-as" not in elem.attrib:
-                    warnings.append(
-                        f"<say-as> should have 'interpret-as' "
-                        f"attribute at {current_path}"
-                    )
+            if elem.tag == "say-as" and "interpret-as" not in elem.attrib:
+                warnings.append(
+                    f"<say-as> should have 'interpret-as' "
+                    f"attribute at {current_path}"
+                )
 
             # Recursively validate children
             for child in elem:
@@ -320,9 +320,9 @@ async def validate_ssml(request: SSMLCreateRequest):
         validate_element(root)
 
     except ET.ParseError as e:
-        errors.append(f"Invalid XML structure: {str(e)}")
+        errors.append(f"Invalid XML structure: {e!s}")
     except Exception as e:
-        warnings.append(f"XML parsing warning: {str(e)}")
+        warnings.append(f"XML parsing warning: {e!s}")
 
     # Check for common SSML issues
     # Unclosed tags
@@ -365,7 +365,7 @@ async def preview_ssml(request: SSMLPreviewRequest):
         except ET.ParseError as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid SSML XML structure: {str(e)}",
+                detail=f"Invalid SSML XML structure: {e!s}",
             )
 
         # Extract text content and process SSML tags
@@ -472,5 +472,5 @@ async def preview_ssml(request: SSMLPreviewRequest):
         logger.error(f"Failed to preview SSML: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to synthesize SSML preview: {str(e)}",
+            detail=f"Failed to synthesize SSML preview: {e!s}",
         ) from e

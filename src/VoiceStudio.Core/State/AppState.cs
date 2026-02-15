@@ -40,6 +40,16 @@ namespace VoiceStudio.Core.State
     public UIState UI { get; init; } = UIState.Empty;
 
     /// <summary>
+    /// Gets the current asset state.
+    /// </summary>
+    public AssetState Assets { get; init; } = AssetState.Empty;
+
+    /// <summary>
+    /// Gets the current workspace state.
+    /// </summary>
+    public WorkspaceState Workspace { get; init; } = WorkspaceState.Empty;
+
+    /// <summary>
     /// Gets the empty/initial state.
     /// </summary>
     public static AppState Empty { get; } = new();
@@ -143,5 +153,33 @@ namespace VoiceStudio.Core.State
     public IReadOnlyList<string> ExpandedPanelIds { get; init; } = Array.Empty<string>();
 
     public static UIState Empty { get; } = new();
+  }
+
+  /// <summary>
+  /// Asset-related state for library selection.
+  /// </summary>
+  public sealed record AssetState
+  {
+    public string? SelectedAssetId { get; init; }
+    public string? SelectedAssetName { get; init; }
+    public string? SelectedAssetType { get; init; }
+    public IReadOnlyList<string> RecentAssetIds { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> SelectedAssetIds { get; init; } = Array.Empty<string>();
+
+    public static AssetState Empty { get; } = new();
+  }
+
+  /// <summary>
+  /// Workspace-related state.
+  /// </summary>
+  public sealed record WorkspaceState
+  {
+    public string? ActiveWorkspaceId { get; init; }
+    public string? ActiveWorkspaceName { get; init; }
+    public string? PreviousWorkspaceId { get; init; }
+    public IReadOnlyList<string> AvailableWorkspaceIds { get; init; } = Array.Empty<string>();
+    public bool IsCustomized { get; init; }
+
+    public static WorkspaceState Empty { get; } = new();
   }
 }

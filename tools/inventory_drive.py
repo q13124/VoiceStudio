@@ -21,7 +21,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 def _utc_iso_from_ts(ts: float) -> str:
@@ -32,17 +31,17 @@ def _now_utc_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-def _safe_rel_parts(root: Path, path: Path) -> Tuple[str, ...]:
+def _safe_rel_parts(root: Path, path: Path) -> tuple[str, ...]:
     try:
         rel = path.relative_to(root)
     except ValueError:
         # Different drive letter or non-ancestor; treat as opaque.
-        return tuple()
+        return ()
     parts = tuple(p for p in rel.parts if p not in (".",))
     return parts
 
 
-def _bucket_key_for_dir(root: Path, rel_dir_parts: Tuple[str, ...], depth: int) -> str:
+def _bucket_key_for_dir(root: Path, rel_dir_parts: tuple[str, ...], depth: int) -> str:
     if depth == 0:
         return str(root)
     return str(root.joinpath(*rel_dir_parts[:depth]))
@@ -53,8 +52,8 @@ class AggStats:
     file_count: int = 0
     dir_count: int = 0
     total_bytes: int = 0
-    ext_counts: Dict[str, int] = None
-    latest_mtime_ts: Optional[float] = None
+    ext_counts: dict[str, int] = None
+    latest_mtime_ts: float | None = None
 
     def __post_init__(self) -> None:
         if self.ext_counts is None:
@@ -78,7 +77,7 @@ class AggStats:
         self.dir_count += 1
         self.update_latest_mtime(mtime_ts)
 
-    def merge(self, other: "AggStats") -> None:
+    def merge(self, other: AggStats) -> None:
         self.file_count += other.file_count
         self.dir_count += other.dir_count
         self.total_bytes += other.total_bytes
@@ -87,7 +86,7 @@ class AggStats:
         if other.latest_mtime_ts is not None:
             self.update_latest_mtime(other.latest_mtime_ts)
 
-    def to_json_obj(self) -> Dict[str, object]:
+    def to_json_obj(self) -> dict[str, object]:
         latest_mtime_utc = None
         if self.latest_mtime_ts is not None:
             latest_mtime_utc = _utc_iso_from_ts(self.latest_mtime_ts)
@@ -113,15 +112,15 @@ def _classify_top_level_name(name: str) -> str:
     return "unclassified"
 
 
-def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> Dict[str, object]:
+def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> dict[str, object]:
     root = root.resolve()
     if not root.exists():
         raise FileNotFoundError(f"Root path does not exist: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Root path is not a directory: {root}")
 
-    stats_by_bucket: Dict[str, AggStats] = {}
-    errors: List[Dict[str, str]] = []
+    stats_by_bucket: dict[str, AggStats] = {}
+    errors: list[dict[str, str]] = []
 
     def get_bucket(key: str) -> AggStats:
         bucket = stats_by_bucket.get(key)
@@ -142,7 +141,7 @@ def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> Dict[str, o
 
     def update_file_buckets(file_path: Path, size_bytes: int, mtime_ts: float) -> None:
         rel_dir_parts = _safe_rel_parts(root, file_path.parent)
-        if rel_dir_parts == tuple():
+        if rel_dir_parts == ():
             # File directly under root
             get_bucket(root_key).add_file(file_path, size_bytes, mtime_ts)
             get_bucket(root_files_key).add_file(file_path, size_bytes, mtime_ts)
@@ -160,7 +159,7 @@ def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> Dict[str, o
     except Exception as e:
         errors.append({"path": str(root), "error": type(e).__name__, "detail": str(e)})
 
-    stack: List[Path] = [root]
+    stack: list[Path] = [root]
     while stack:
         current_dir = stack.pop()
         try:
@@ -184,7 +183,7 @@ def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> Dict[str, o
             errors.append({"path": str(current_dir), "error": type(e).__name__, "detail": str(e)})
 
     # Build entries list (root + depth-1 buckets for readability)
-    entries: List[Dict[str, object]] = []
+    entries: list[dict[str, object]] = []
     for bucket_path, agg in stats_by_bucket.items():
         if bucket_path == root_files_key:
             entries.append(
@@ -232,7 +231,7 @@ def scan_drive(root: Path, max_depth: int, follow_symlinks: bool) -> Dict[str, o
     }
 
 
-def _parse_args(argv: List[str]) -> argparse.Namespace:
+def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a drive inventory JSON report.")
     parser.add_argument(
         "--root",
@@ -260,7 +259,7 @@ def _parse_args(argv: List[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: List[str]) -> int:
+def main(argv: list[str]) -> int:
     args = _parse_args(argv)
     root = Path(args.root)
     output = Path(args.output)

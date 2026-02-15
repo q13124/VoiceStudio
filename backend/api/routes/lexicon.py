@@ -4,11 +4,13 @@ Pronunciation Lexicon Routes
 Endpoints for managing pronunciation lexicons and custom word pronunciations.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 from ..optimization import cache_response
@@ -19,8 +21,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/lexicon", tags=["lexicon"])
 
 # In-memory lexicons (replace with database in production)
-_lexicons: Dict[str, Dict] = {}
-_lexicon_entries: Dict[str, List[Dict]] = {}  # lexicon_id -> entries
+_lexicons: dict[str, dict] = {}
+_lexicon_entries: dict[str, list[dict]] = {}  # lexicon_id -> entries
 
 
 class LexiconEntry(BaseModel):
@@ -28,9 +30,9 @@ class LexiconEntry(BaseModel):
 
     word: str
     pronunciation: str  # IPA or phoneme string
-    part_of_speech: Optional[str] = None
+    part_of_speech: str | None = None
     language: str = "en"
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class Lexicon(BaseModel):
@@ -39,7 +41,7 @@ class Lexicon(BaseModel):
     lexicon_id: str
     name: str
     language: str = "en"
-    description: Optional[str] = None
+    description: str | None = None
     entry_count: int = 0
     created: str
     modified: str
@@ -50,7 +52,7 @@ class LexiconCreateRequest(BaseModel):
 
     name: str
     language: str = "en"
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class LexiconEntryCreateRequest(BaseModel):
@@ -58,16 +60,16 @@ class LexiconEntryCreateRequest(BaseModel):
 
     word: str
     pronunciation: str
-    part_of_speech: Optional[str] = None
-    notes: Optional[str] = None
+    part_of_speech: str | None = None
+    notes: str | None = None
 
 
 class LexiconSearchRequest(BaseModel):
     """Request to search lexicon entries."""
 
     query: str
-    language: Optional[str] = None
-    part_of_speech: Optional[str] = None
+    language: str | None = None
+    part_of_speech: str | None = None
 
 
 @router.post("/lexicons", response_model=Lexicon)
@@ -99,13 +101,13 @@ async def create_lexicon(request: LexiconCreateRequest):
         logger.error(f"Failed to create lexicon: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create lexicon: {str(e)}",
+            detail=f"Failed to create lexicon: {e!s}",
         ) from e
 
 
-@router.get("/lexicons", response_model=List[Lexicon])
+@router.get("/lexicons", response_model=list[Lexicon])
 @cache_response(ttl=60)  # Cache for 60 seconds (lexicon list doesn't change frequently)
-async def list_lexicons(language: Optional[str] = None):
+async def list_lexicons(language: str | None = None):
     """List all lexicons, optionally filtered by language."""
     lexicons = list(_lexicons.values())
     if language:
@@ -160,8 +162,7 @@ async def delete_lexicon(lexicon_id: str):
         raise HTTPException(status_code=404, detail="Lexicon not found")
 
     del _lexicons[lexicon_id]
-    if lexicon_id in _lexicon_entries:
-        del _lexicon_entries[lexicon_id]
+    _lexicon_entries.pop(lexicon_id, None)
     logger.info(f"Deleted lexicon: {lexicon_id}")
     return {"success": True}
 
@@ -205,12 +206,12 @@ async def create_lexicon_entry(lexicon_id: str, request: LexiconEntryCreateReque
     return entry
 
 
-@router.get("/lexicons/{lexicon_id}/entries", response_model=List[LexiconEntry])
+@router.get("/lexicons/{lexicon_id}/entries", response_model=list[LexiconEntry])
 @cache_response(ttl=60)  # Cache for 60 seconds (entries may change but not frequently)
 async def list_lexicon_entries(
     lexicon_id: str,
-    word: Optional[str] = None,
-    part_of_speech: Optional[str] = None,
+    word: str | None = None,
+    part_of_speech: str | None = None,
 ):
     """List entries in a lexicon."""
     if lexicon_id not in _lexicons:
@@ -340,7 +341,6 @@ async def search_lexicon_entries(request: LexiconSearchRequest):
 @router.post("/add")
 async def add_lexicon_entry(request: LexiconEntryCreateRequest):
     """Add a lexicon entry (simplified endpoint for panel)."""
-    import uuid
     from datetime import datetime
 
     try:
@@ -396,7 +396,7 @@ async def add_lexicon_entry(request: LexiconEntryCreateRequest):
         logger.error(f"Failed to add lexicon entry: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to add lexicon entry: {str(e)}",
+            detail=f"Failed to add lexicon entry: {e!s}",
         ) from e
 
 
@@ -462,7 +462,7 @@ async def update_lexicon_entry(request: LexiconEntryCreateRequest):
         logger.error(f"Failed to update lexicon entry: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update lexicon entry: {str(e)}",
+            detail=f"Failed to update lexicon entry: {e!s}",
         ) from e
 
 
@@ -508,12 +508,12 @@ async def remove_lexicon_entry(word: str):
         logger.error(f"Failed to remove lexicon entry: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to remove lexicon entry: {str(e)}",
+            detail=f"Failed to remove lexicon entry: {e!s}",
         ) from e
 
 
 @router.get("/list")
-async def list_lexicon_entries(language: Optional[str] = None):
+async def list_lexicon_entries(language: str | None = None):
     """List all lexicon entries (simplified endpoint for panel)."""
     try:
         default_lexicon_id = "default-lexicon"
@@ -531,15 +531,15 @@ async def list_lexicon_entries(language: Optional[str] = None):
         logger.error(f"Failed to list lexicon entries: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list lexicon entries: {str(e)}",
+            detail=f"Failed to list lexicon entries: {e!s}",
         ) from e
 
 
 class PhonemeEstimateRequest(BaseModel):
     """Request to estimate phonemes."""
 
-    word: Optional[str] = None
-    audio_id: Optional[str] = None
+    word: str | None = None
+    audio_id: str | None = None
     language: str = "en"
 
 
@@ -691,7 +691,7 @@ async def estimate_phonemes(request: PhonemeEstimateRequest):
                 logger.error(f"Failed to process audio for phoneme estimation: {e}")
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to estimate phonemes from audio: {str(e)}",
+                    detail=f"Failed to estimate phonemes from audio: {e!s}",
                 )
 
         else:
@@ -705,7 +705,7 @@ async def estimate_phonemes(request: PhonemeEstimateRequest):
         logger.error(f"Failed to estimate phonemes: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to estimate phonemes: {str(e)}",
+            detail=f"Failed to estimate phonemes: {e!s}",
         ) from e
 
 

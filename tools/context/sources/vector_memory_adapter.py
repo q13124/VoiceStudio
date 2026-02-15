@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, MemoryItem, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -32,7 +32,7 @@ DEFAULT_TOP_K = 5
 EMBEDDING_DIM = 384
 
 
-def _dummy_embedding(text: str, dimension: int = EMBEDDING_DIM) -> List[float]:
+def _dummy_embedding(text: str, dimension: int = EMBEDDING_DIM) -> list[float]:
     """Deterministic pseudo-embedding when no embedding model is available."""
     h = hashlib.sha256(text.encode("utf-8")).hexdigest()
     return [((int(h[i : i + 2], 16) / 255.0) - 0.5) for i in range(0, min(dimension * 2, len(h) - 1), 2)][:dimension]
@@ -52,7 +52,7 @@ def _get_embedding_function():
 class _DummyEmbeddingFunction:
     """Minimal embedding function for Chroma when no model is available."""
 
-    def __call__(self, input_texts: List[str]) -> List[List[float]]:
+    def __call__(self, input_texts: list[str]) -> list[list[float]]:
         return [_dummy_embedding(t) for t in input_texts]
 
 
@@ -62,7 +62,7 @@ class VectorMemoryAdapter(BaseSourceAdapter):
 
     Uses persist_directory for local storage. When chromadb or embedding is
     unavailable, returns empty list so MemorySourceAdapter (file) remains the fallback.
-    
+
     Features:
     - Semantic similarity search for memory retrieval
     - Persistent vector storage for long-term memory
@@ -81,12 +81,12 @@ class VectorMemoryAdapter(BaseSourceAdapter):
         self._client = None
         self._collection = None
         self._ef = _get_embedding_function()
-    
+
     def health_check(self) -> bool:
         """Check if vector memory is available."""
         if not _CHROMA_AVAILABLE:
             return False
-        
+
         try:
             root = Path(__file__).resolve().parents[4]
             client = self._get_client(root)
@@ -94,7 +94,7 @@ class VectorMemoryAdapter(BaseSourceAdapter):
         except Exception:
             return False
 
-    def _get_client(self, root: Path) -> Optional[Any]:
+    def _get_client(self, root: Path) -> Any | None:
         """Lazy-init Chroma client; returns None if chromadb unavailable or error."""
         if not _CHROMA_AVAILABLE:
             return None
@@ -143,7 +143,7 @@ class VectorMemoryAdapter(BaseSourceAdapter):
             return "VoiceStudio project context"
         return " ".join(parts)
 
-    def _query_collection(self, query: str, root: Path) -> List[Dict[str, Any]]:
+    def _query_collection(self, query: str, root: Path) -> list[dict[str, Any]]:
         """Query Chroma collection; returns list of {content, source} dicts."""
         coll = self._get_collection(root)
         if coll is None:
@@ -169,7 +169,7 @@ class VectorMemoryAdapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """Fetch relevant memories from vector store; empty on unavailability."""
 
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             query = self._build_query(context)
             raw = self._query_collection(query, root)
@@ -181,86 +181,86 @@ class VectorMemoryAdapter(BaseSourceAdapter):
     def estimate_size(self, context: AllocationContext) -> int:
         """Estimate size of vector fetch (typical top_k snippets)."""
         return self._top_k * 256
-    
+
     def store_memory(
         self,
         content: str,
         memory_id: str,
         source: str = "context",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """
         Store a memory in the vector store.
-        
+
         Args:
             content: Memory content
             memory_id: Unique ID for the memory
             source: Source identifier
             metadata: Additional metadata
-        
+
         Returns:
             True if stored successfully
         """
         if not _CHROMA_AVAILABLE:
             return False
-        
+
         try:
             root = Path(__file__).resolve().parents[4]
             coll = self._get_collection(root)
             if coll is None:
                 return False
-            
+
             meta = metadata or {}
             meta["source"] = source
             meta["stored_at"] = __import__("datetime").datetime.now().isoformat()
-            
+
             coll.add(
                 documents=[content],
                 ids=[memory_id],
                 metadatas=[meta],
             )
-            
+
             logger.info("Stored vector memory: %s", memory_id)
             return True
-            
+
         except Exception as e:
             logger.error("Failed to store vector memory: %s", e)
             return False
-    
+
     def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory by ID."""
         if not _CHROMA_AVAILABLE:
             return False
-        
+
         try:
             root = Path(__file__).resolve().parents[4]
             coll = self._get_collection(root)
             if coll is None:
                 return False
-            
+
             coll.delete(ids=[memory_id])
             return True
-            
+
         except Exception:
             return False
-    
-    def get_stats(self) -> Dict[str, Any]:
+
+    def get_stats(self) -> dict[str, Any]:
         """Get vector store statistics."""
         if not _CHROMA_AVAILABLE:
             return {"available": False}
-        
+
         try:
             root = Path(__file__).resolve().parents[4]
             coll = self._get_collection(root)
             if coll is None:
                 return {"available": False}
-            
+
             return {
                 "available": True,
                 "collection": COLLECTION_NAME,
                 "count": coll.count(),
                 "persist_directory": self._persist_directory,
             }
-            
+
         except Exception as e:
             return {"available": False, "error": str(e)}

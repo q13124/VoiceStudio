@@ -8,10 +8,12 @@ Optimizes Pydantic model validation for better performance:
 - Reduced validation overhead
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 from collections import OrderedDict
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -20,11 +22,11 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 # Schema cache for Pydantic models
-_schema_cache: Dict[Type[BaseModel], Dict[str, Any]] = OrderedDict()
+_schema_cache: dict[type[BaseModel], dict[str, Any]] = OrderedDict()
 _max_cache_size: int = 100
 
 
-def get_cached_schema(model: Type[BaseModel]) -> Dict[str, Any]:
+def get_cached_schema(model: type[BaseModel]) -> dict[str, Any]:
     """
     Get cached JSON schema for a Pydantic model.
 
@@ -74,17 +76,17 @@ def clear_schema_cache():
     _schema_cache.clear()
 
 
-def get_schema_cache_stats() -> Dict[str, Any]:
+def get_schema_cache_stats() -> dict[str, Any]:
     """Get schema cache statistics."""
     return {
         "cache_size": len(_schema_cache),
         "max_cache_size": _max_cache_size,
-        "cached_models": [model.__name__ for model in _schema_cache.keys()],
+        "cached_models": [model.__name__ for model in _schema_cache],
     }
 
 
 def validate_early(
-    model: Type[T], data: Dict[str, Any], required_fields: Optional[list[str]] = None
+    model: type[T], data: dict[str, Any], required_fields: list[str] | None = None
 ) -> T:
     """
     Validate a model with early failure for required fields.
@@ -123,7 +125,7 @@ def validate_early(
 
 
 def optimized_validate(
-    model: Type[T], data: Dict[str, Any], use_cache: bool = True
+    model: type[T], data: dict[str, Any], use_cache: bool = True
 ) -> T:
     """
     Optimized validation with schema caching.
@@ -144,7 +146,7 @@ def optimized_validate(
 
 
 def validate_batch(
-    model: Type[T], items: list[Dict[str, Any]], stop_on_first_error: bool = False
+    model: type[T], items: list[dict[str, Any]], stop_on_first_error: bool = False
 ) -> tuple[list[T], list[ValidationError]]:
     """
     Validate a batch of items with optimized performance.
@@ -163,7 +165,7 @@ def validate_batch(
     validated = []
     errors = []
 
-    for i, item in enumerate(items):
+    for _i, item in enumerate(items):
         try:
             validated_item = model(**item)
             validated.append(validated_item)
@@ -213,7 +215,7 @@ class ValidationOptimizer:
         self._cache_misses = 0
 
     def validate(
-        self, model: Type[T], data: Dict[str, Any], early_validation: bool = True
+        self, model: type[T], data: dict[str, Any], early_validation: bool = True
     ) -> T:
         """
         Validate data against a model with optimizations.
@@ -242,8 +244,8 @@ class ValidationOptimizer:
 
     def validate_batch(
         self,
-        model: Type[T],
-        items: list[Dict[str, Any]],
+        model: type[T],
+        items: list[dict[str, Any]],
         stop_on_first_error: bool = False,
     ) -> tuple[list[T], list[ValidationError]]:
         """
@@ -260,7 +262,7 @@ class ValidationOptimizer:
         self._validation_count += len(items)
         return validate_batch(model, items, stop_on_first_error)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get validation statistics."""
         cache_hit_rate = (
             self._cache_hits / (self._cache_hits + self._cache_misses)

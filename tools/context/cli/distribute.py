@@ -22,7 +22,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.context.core.distributor import ContextDistributor, get_distributor
+from tools.context.core.distributor import get_distributor
 
 
 def setup_logging(verbose: bool = False) -> None:

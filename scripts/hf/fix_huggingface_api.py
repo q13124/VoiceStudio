@@ -119,7 +119,7 @@ def test_huggingface_hub():
         if constants is not None:
             current = getattr(constants, "HF_INFERENCE_API_BASE", None)
         if current == LEGACY_ENDPOINT and constants is not None:
-            setattr(constants, "HF_INFERENCE_API_BASE", ROUTER_ENDPOINT)
+            constants.HF_INFERENCE_API_BASE = ROUTER_ENDPOINT
             print("Fixed huggingface_hub.constants.HF_INFERENCE_API_BASE")
         elif current == ROUTER_ENDPOINT:
             print("huggingface_hub.constants.HF_INFERENCE_API_BASE is correct")

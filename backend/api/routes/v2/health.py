@@ -6,7 +6,7 @@ Provides enhanced health checking with versioning support.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Response
 
@@ -18,14 +18,14 @@ router = APIRouter(prefix="/api/v2/health", tags=["health", "v2"])
 
 
 @router.get("/")
-async def health_v2(response: Response) -> Dict[str, Any]:
+async def health_v2(response: Response) -> dict[str, Any]:
     """
     Health check endpoint (v2).
-    
+
     Returns extended health information including version details.
     """
     response.headers[VERSION_HEADER] = APIVersion.V2.value
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -37,14 +37,14 @@ async def health_v2(response: Response) -> Dict[str, Any]:
 
 
 @router.get("/detailed")
-async def health_detailed_v2(response: Response) -> Dict[str, Any]:
+async def health_detailed_v2(response: Response) -> dict[str, Any]:
     """
     Detailed health check (v2).
-    
+
     Returns comprehensive system health information.
     """
     response.headers[VERSION_HEADER] = APIVersion.V2.value
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",

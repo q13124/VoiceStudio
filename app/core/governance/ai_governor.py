@@ -6,19 +6,21 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import engine hook
 try:
-    from ..runtime.engine_hook import EngineHook
+    from app.core.runtime.engine_hook import EngineHook
 
     HAS_ENGINE_HOOK = True
 except ImportError:
@@ -41,9 +43,9 @@ class AIGovernor:
 
     def __init__(
         self,
-        engine_hook: Optional[EngineHook] = None,
-        reward_model_path: Optional[Path] = None,
-        ab_test_data_path: Optional[Path] = None,
+        engine_hook: EngineHook | None = None,
+        reward_model_path: Path | None = None,
+        ab_test_data_path: Path | None = None,
     ):
         """
         Initialize AI Governor.
@@ -58,25 +60,25 @@ class AIGovernor:
         self.ab_test_data_path = ab_test_data_path or Path(".ab_test_data.json")
 
         # Performance tracking
-        self._engine_performance: Dict[str, Dict[str, Any]] = defaultdict(dict)
-        self._decision_history: List[Dict[str, Any]] = []
-        self._ab_test_results: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self._engine_performance: dict[str, dict[str, Any]] = defaultdict(dict)
+        self._decision_history: list[dict[str, Any]] = []
+        self._ab_test_results: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         # Reward model data
-        self._reward_model: Dict[str, Any] = {}
+        self._reward_model: dict[str, Any] = {}
         self._load_reward_model()
 
         # A/B test data
-        self._ab_test_data: Dict[str, Any] = {}
+        self._ab_test_data: dict[str, Any] = {}
         self._load_ab_test_data()
 
     def select_engine(
         self,
         task_type: str,
-        requirements: Optional[Dict[str, Any]] = None,
+        requirements: dict[str, Any] | None = None,
         quality_priority: float = 0.5,
         speed_priority: float = 0.5,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Select the best engine for a task.
 
@@ -135,9 +137,9 @@ class AIGovernor:
     def run_ab_test(
         self,
         task_type: str,
-        engines: List[str],
-        test_config: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        engines: list[str],
+        test_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Run an A/B test comparing multiple engines.
 
@@ -198,7 +200,7 @@ class AIGovernor:
         self,
         engine_name: str,
         task_type: str,
-        metrics: Dict[str, Any],
+        metrics: dict[str, Any],
     ):
         """
         Record performance metrics for an engine.
@@ -230,7 +232,7 @@ class AIGovernor:
         history = self._engine_performance[key]["metrics_history"]
         if history:
             avg_metrics = {}
-            for metric_name in metrics.keys():
+            for metric_name in metrics:
                 values = [
                     entry["metrics"].get(metric_name)
                     for entry in history
@@ -283,7 +285,7 @@ class AIGovernor:
         self,
         engine_name: str,
         task_type: str,
-        requirements: Optional[Dict[str, Any]],
+        requirements: dict[str, Any] | None,
         quality_priority: float,
         speed_priority: float,
     ) -> float:
@@ -326,9 +328,9 @@ class AIGovernor:
         self,
         task_type: str,
         selected_engine: str,
-        candidates: List[str],
-        scores: Dict[str, float],
-        requirements: Optional[Dict[str, Any]],
+        candidates: list[str],
+        scores: dict[str, float],
+        requirements: dict[str, Any] | None,
     ):
         """Record a decision for analysis."""
         decision = {
@@ -349,7 +351,7 @@ class AIGovernor:
         """Load reward model from file."""
         if self.reward_model_path.exists():
             try:
-                with open(self.reward_model_path, "r", encoding="utf-8") as f:
+                with open(self.reward_model_path, encoding="utf-8") as f:
                     self._reward_model = json.load(f)
                 logger.info("Loaded reward model")
             except Exception as e:
@@ -381,7 +383,7 @@ class AIGovernor:
         """Load A/B test data from file."""
         if self.ab_test_data_path.exists():
             try:
-                with open(self.ab_test_data_path, "r", encoding="utf-8") as f:
+                with open(self.ab_test_data_path, encoding="utf-8") as f:
                     self._ab_test_data = json.load(f)
                     self._ab_test_results = self._ab_test_data.get("results", {})
                 logger.info("Loaded A/B test data")
@@ -411,7 +413,7 @@ class AIGovernor:
                     logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
             logger.error(f"Failed to save A/B test data: {e}")
 
-    def get_governance_stats(self) -> Dict[str, Any]:
+    def get_governance_stats(self) -> dict[str, Any]:
         """
         Get governance statistics.
 
@@ -427,9 +429,9 @@ class AIGovernor:
 
 
 def create_ai_governor(
-    engine_hook: Optional[EngineHook] = None,
-    reward_model_path: Optional[Path] = None,
-    ab_test_data_path: Optional[Path] = None,
+    engine_hook: EngineHook | None = None,
+    reward_model_path: Path | None = None,
+    ab_test_data_path: Path | None = None,
 ) -> AIGovernor:
     """
     Factory function to create an AI Governor instance.

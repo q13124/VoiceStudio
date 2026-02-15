@@ -5,7 +5,6 @@ Tests API optimization middleware and utilities.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestOptimizationClasses:
     def test_compression_middleware_class_exists(self):
         """Test CompressionMiddleware class exists."""
         if hasattr(optimization, "CompressionMiddleware"):
-            cls = getattr(optimization, "CompressionMiddleware")
+            cls = optimization.CompressionMiddleware
             assert isinstance(
                 cls, type
             ), "CompressionMiddleware should be a class"

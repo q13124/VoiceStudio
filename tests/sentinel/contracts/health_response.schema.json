@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "health_response.schema.json",
+  "title": "HealthResponse",
+  "description": "Response schema for /api/monitoring/health endpoint",
+  "type": "object",
+  "required": ["status", "timestamp", "uptime_seconds", "version"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["healthy", "degraded", "unhealthy"],
+      "description": "Overall health status"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the health check"
+    },
+    "uptime_seconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Server uptime in seconds"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+.*$",
+      "description": "Application version"
+    },
+    "checks": {
+      "type": "array",
+      "description": "Individual component health checks",
+      "items": {
+        "type": "object",
+        "required": ["component", "status"],
+        "properties": {
+          "component": {
+            "type": "string",
+            "description": "Component name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded", "unhealthy"]
+          },
+          "message": {
+            "type": ["string", "null"],
+            "description": "Status message"
+          },
+          "latency_ms": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "description": "Check latency in milliseconds"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

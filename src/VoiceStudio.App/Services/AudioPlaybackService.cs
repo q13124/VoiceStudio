@@ -12,6 +12,13 @@ namespace VoiceStudio.App.Services
   /// Audio playback service using NAudio/WASAPI for high-quality audio output.
   /// Supports WAV, MP3, FLAC formats and real-time streaming.
   /// </summary>
+  /// <remarks>
+  /// DEPRECATED (Audit M-4): Use <see cref="AudioPlayerService"/> (IAudioPlayerService) instead.
+  /// AudioPlayerService is the canonical playback service with preview support, seek, and
+  /// position tracking. This class has zero consumers and is retained only for backward
+  /// compatibility during the transition period. Will be removed in v1.2.
+  /// </remarks>
+  [System.Obsolete("Use AudioPlayerService (IAudioPlayerService) instead. See Audit M-4.")]
   public class AudioPlaybackService : IAudioPlaybackService, IDisposable
   {
     private NAudio.Wave.WaveOutEvent? _waveOut;

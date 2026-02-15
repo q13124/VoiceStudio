@@ -3,14 +3,14 @@ Issues CLI - query and manage overseer issues for AI Overseer review.
 Supports bulk operations, watch mode, CSV export, and paging.
 """
 
+from __future__ import annotations
+
 import argparse
 import csv
 import io
 import json
 import sys
 import time
-from datetime import datetime
-from typing import List, Optional
 
 from tools.overseer.issues.models import (
     InstanceType,
@@ -63,7 +63,7 @@ def _query(args: argparse.Namespace) -> int:
     return 0
 
 
-def _print_issues_table(issues: List[Issue]) -> None:
+def _print_issues_table(issues: list[Issue]) -> None:
     """Print issues as a simple table."""
     print(f"{'ID':<38} {'Time':<22} {'Type':<8} {'Sev':<8} {'Status':<12} Message")
     print("-" * 120)
@@ -73,7 +73,7 @@ def _print_issues_table(issues: List[Issue]) -> None:
         print(f"{i.id:<38} {ts:<22} {i.instance_type.value:<8} {i.severity.value:<8} {i.status.value:<12} {msg}")
 
 
-def _print_issues_summary(issues: List[Issue]) -> None:
+def _print_issues_summary(issues: list[Issue]) -> None:
     """Print a short summary of issues."""
     print(f"Issues: {len(issues)}")
     for i in issues:
@@ -81,7 +81,7 @@ def _print_issues_summary(issues: List[Issue]) -> None:
         print(f"- {i.id} | {i.timestamp.isoformat()} | {i.instance_type.value} | {i.severity.value} | {i.status.value} | {msg}")
 
 
-def _print_issues_csv(issues: List[Issue]) -> None:
+def _print_issues_csv(issues: list[Issue]) -> None:
     """Print issues as CSV to stdout."""
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -290,27 +290,27 @@ def _bulk_resolve(args: argparse.Namespace) -> int:
 def _create_task(args: argparse.Namespace) -> int:
     """Create a task brief from a single issue."""
     from tools.overseer.issues.task_generator import IssueToTaskGenerator
-    
+
     store = IssueStore()
     issue = store.get_by_id(args.issue_id)
-    
+
     if not issue:
         print(f"Issue not found: {args.issue_id}")
         return 1
-    
+
     generator = IssueToTaskGenerator()
-    
+
     if getattr(args, "dry_run", False):
         content = generator.generate_task_brief(issue)
         print(content)
         return 0
-    
+
     task_path = generator.create_task_file(issue)
-    
+
     # Link issue to task
     task_id = task_path.stem  # e.g., "TASK-0014"
     generator.link_issue_to_task(args.issue_id, task_id)
-    
+
     print(f"Created: {task_path}")
     print(f"Linked issue {args.issue_id} to {task_id}")
     return 0
@@ -319,17 +319,17 @@ def _create_task(args: argparse.Namespace) -> int:
 def _auto_task(args: argparse.Namespace) -> int:
     """Auto-create tasks for qualifying issues (critical/high, recurring)."""
     from tools.overseer.issues.task_generator import IssueToTaskGenerator
-    
+
     store = IssueStore()
     generator = IssueToTaskGenerator(issue_store=store)
-    
+
     # Query unlinked critical/high issues
     issues = store.query(
         severity=[IssueSeverity.CRITICAL, IssueSeverity.HIGH],
         status=[IssueStatus.NEW, IssueStatus.ACKNOWLEDGED],
         limit=getattr(args, "limit", 10) * 3,  # Get extra for filtering
     )
-    
+
     # Filter to those without linked tasks and check if should create
     to_create = []
     for issue in issues:
@@ -337,17 +337,17 @@ def _auto_task(args: argparse.Namespace) -> int:
             continue
         if generator.should_create_task(issue):
             to_create.append(issue)
-    
+
     # Limit
     to_create = to_create[:getattr(args, "limit", 10)]
-    
+
     if getattr(args, "dry_run", False):
         print(f"Would create {len(to_create)} tasks:")
         for issue in to_create:
             sev = issue.severity.value if hasattr(issue.severity, 'value') else str(issue.severity)
             print(f"  - {issue.id}: [{sev.upper()}] {issue.message[:50]}...")
         return 0
-    
+
     created = 0
     for issue in to_create:
         try:
@@ -358,7 +358,7 @@ def _auto_task(args: argparse.Namespace) -> int:
             created += 1
         except Exception as e:
             print(f"Failed to create task for {issue.id}: {e}")
-    
+
     print(f"Created {created}/{len(to_create)} tasks")
     return 0
 
@@ -366,9 +366,9 @@ def _auto_task(args: argparse.Namespace) -> int:
 def _link_task(args: argparse.Namespace) -> int:
     """Link an existing issue to an existing task."""
     from tools.overseer.issues.task_generator import IssueToTaskGenerator
-    
+
     generator = IssueToTaskGenerator()
-    
+
     if generator.link_issue_to_task(args.issue_id, args.task_id):
         print(f"Linked {args.issue_id} to {args.task_id}")
         return 0
@@ -398,7 +398,7 @@ def _watch(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="overseer issues",
         description="Issue logging and recommendation system for Overseer review",

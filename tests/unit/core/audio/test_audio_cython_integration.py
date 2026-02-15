@@ -4,9 +4,10 @@ Unit tests for Cython-optimized audio processing integration.
 Tests integration with Cython functions and fallback behavior.
 """
 
-import pytest
-import numpy as np
 from unittest.mock import patch
+
+import numpy as np
+import pytest
 
 from app.core.audio import audio_utils
 
@@ -24,7 +25,7 @@ class TestCythonAudioIntegration:
     def test_functions_work_without_cython(self):
         """Test that audio functions work without Cython."""
         audio = np.random.randn(1000).astype(np.float32)
-        
+
         # Functions should work with Python fallback
         # Note: Some functions require librosa, so we test basic functionality
         assert audio is not None

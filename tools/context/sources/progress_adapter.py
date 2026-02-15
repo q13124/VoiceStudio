@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -29,12 +29,12 @@ class ProgressSummary:
     completed_gates: int = 0
     blockers_count: int = 0
     in_progress_count: int = 0
-    next_actions: List[str] = field(default_factory=list)
-    gate_details: List[Dict[str, Any]] = field(default_factory=list)
-    milestones: List[Dict[str, Any]] = field(default_factory=list)
+    next_actions: list[str] = field(default_factory=list)
+    gate_details: list[dict[str, Any]] = field(default_factory=list)
+    milestones: list[dict[str, Any]] = field(default_factory=list)
     updated_at: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "current_gate": self.current_gate,
             "current_phase": self.current_phase,
@@ -82,7 +82,7 @@ class ProgressSourceAdapter(BaseSourceAdapter):
             return False
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             summary = self._build_progress_summary()
             return {"progress": summary.to_dict()}
 
@@ -145,7 +145,7 @@ class ProgressSourceAdapter(BaseSourceAdapter):
 
         return summary
 
-    def _parse_milestones(self, text: str) -> List[Dict[str, Any]]:
+    def _parse_milestones(self, text: str) -> list[dict[str, Any]]:
         """Parse milestones/proof index from STATE.md."""
         milestones = []
 

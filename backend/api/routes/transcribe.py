@@ -5,76 +5,29 @@ Endpoints for audio transcription using Whisper or other ASR engines.
 Supports multiple languages, word timestamps, and diarization.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.security.path_validator import get_path_validator, PathValidationError
+from backend.data.repositories.transcription_repository import get_transcription_repository
+from backend.security.path_validator import PathValidationError, get_path_validator
 from backend.services.circuit_breaker import get_engine_breaker
-from backend.services.model_preflight import ensure_whisper_cpp, PreflightError
 from backend.services.engine_service import get_engine_service
+from backend.services.model_preflight import PreflightError, ensure_whisper_cpp
 
 from ..models import ApiOk
 from ..optimization import cache_response
-from ..voice_speech import VoiceActivityDetector
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/transcribe", tags=["transcribe"])
-
-# In-memory storage (replace with database in production)
-_transcriptions: dict[str, dict] = {}
-_MAX_TRANSCRIPTIONS = 1000  # Maximum number of transcriptions
-_TRANSCRIPTION_CACHE_TTL = 86400  # Cache TTL in seconds (24 hours)
-_transcription_timestamps: dict[str, float] = {}  # transcription_id -> creation_time
-
-
-def _cleanup_old_transcriptions():
-    """
-    Clean up old transcriptions from storage to prevent memory accumulation.
-
-    Removes:
-    - Transcriptions older than TRANSCRIPTION_CACHE_TTL
-    - Transcriptions beyond MAX_TRANSCRIPTIONS (oldest first)
-    """
-    current_time = time.time()
-    to_remove = []
-
-    # Find transcriptions that are too old
-    for transcription_id, timestamp in _transcription_timestamps.items():
-        age = current_time - timestamp
-        if age > _TRANSCRIPTION_CACHE_TTL:
-            to_remove.append(transcription_id)
-
-    # If storage is too large, remove oldest transcriptions
-    if len(_transcriptions) > _MAX_TRANSCRIPTIONS:
-        # Sort by timestamp (oldest first)
-        sorted_items = sorted(
-            _transcription_timestamps.items(),
-            key=lambda x: x[1],
-        )
-        # Remove oldest transcriptions until we're under the limit
-        excess = len(_transcriptions) - _MAX_TRANSCRIPTIONS
-        for transcription_id, _ in sorted_items[:excess]:
-            if transcription_id not in to_remove:
-                to_remove.append(transcription_id)
-
-    # Remove transcriptions
-    for transcription_id in to_remove:
-        if transcription_id in _transcriptions:
-            del _transcriptions[transcription_id]
-        if transcription_id in _transcription_timestamps:
-            del _transcription_timestamps[transcription_id]
-
-    if to_remove:
-        logger.info(f"Cleaned up {len(to_remove)} old transcriptions from cache")
 
 
 # STT engine via EngineService (ADR-008 compliant)
@@ -99,16 +52,17 @@ class WordTimestamp(BaseModel):
     word: str
     start: float
     end: float
-    confidence: Optional[float] = None
+    confidence: float | None = None
 
 
 class TranscriptionSegment(BaseModel):
-    """Segment of transcription with timestamps."""
+    """Segment of transcription with timestamps and optional speaker (diarization)."""
 
     text: str
     start: float
     end: float
-    words: Optional[List[WordTimestamp]] = None
+    words: list[WordTimestamp] | None = None
+    speaker: str | None = None  # Set when engine supports diarization (e.g. WhisperX)
 
 
 class TranscriptionRequest(BaseModel):
@@ -116,11 +70,11 @@ class TranscriptionRequest(BaseModel):
 
     audio_id: str
     engine: str = "whisper_cpp"  # whisper_cpp, whisper, whisperx, vosk
-    language: Optional[str] = None  # Auto-detect if None
+    language: str | None = None  # Auto-detect if None
     word_timestamps: bool = False
     diarization: bool = False  # Speaker diarization (WhisperX only)
     use_vad: bool = False  # Use voice activity detection
-    model_path: Optional[str] = None  # override for whisper_cpp gguf
+    model_path: str | None = None  # override for whisper_cpp gguf
 
 
 class TranscriptionResponse(BaseModel):
@@ -131,8 +85,8 @@ class TranscriptionResponse(BaseModel):
     text: str
     language: str
     duration: float
-    segments: List[TranscriptionSegment]
-    word_timestamps: List[WordTimestamp]
+    segments: list[TranscriptionSegment]
+    word_timestamps: list[WordTimestamp]
     created: datetime
     engine: str
 
@@ -144,7 +98,7 @@ class SupportedLanguage(BaseModel):
     name: str
 
 
-@router.get("/languages", response_model=List[SupportedLanguage])
+@router.get("/languages", response_model=list[SupportedLanguage])
 @cache_response(ttl=600)  # Cache for 10 minutes (supported languages are static)
 async def get_supported_languages():
     """Get list of supported languages for transcription."""
@@ -225,7 +179,7 @@ async def get_supported_languages():
 @router.post("/", response_model=TranscriptionResponse)
 async def transcribe_audio(
     request: TranscriptionRequest,
-    project_id: Optional[str] = Query(
+    project_id: str | None = Query(
         None, description="Project ID to associate transcription with"
     ),
 ):
@@ -312,14 +266,14 @@ async def transcribe_audio(
                         # Sanitize and validate the user-provided audio_id
                         safe_audio_id = path_validator.sanitize(request.audio_id)
                         potential_path = os.path.join(audio_dir, safe_audio_id)
-                        
+
                         # Verify the resolved path stays within audio_dir
                         resolved = Path(potential_path).resolve()
                         audio_dir_resolved = Path(audio_dir).resolve()
                         if not str(resolved).startswith(str(audio_dir_resolved)):
                             logger.warning(f"Path traversal attempt blocked: {request.audio_id}")
                             raise PathValidationError("Invalid audio path", request.audio_id, "traversal")
-                        
+
                         if os.path.exists(potential_path):
                             audio_path = potential_path
                         else:
@@ -388,13 +342,20 @@ async def transcribe_audio(
                     word_timestamps=request.word_timestamps,
                     output_format="json",
                 )
+            elif request.engine == "whisperx" and hasattr(stt_engine, "transcribe"):
+                result = stt_engine.transcribe(
+                    audio=audio_path,
+                    language=language,
+                    word_timestamps=request.word_timestamps,
+                    diarization=request.diarization,
+                )
             else:
                 result = stt_engine.transcribe(
                     audio=audio_path,
                     language=language,
                     word_timestamps=request.word_timestamps,
                 )
-        except Exception as e:
+        except Exception:
             engine_breaker.record_failure()
             raise
         engine_breaker.record_success()
@@ -414,7 +375,7 @@ async def transcribe_audio(
                 "word_timestamps": [],
             }
 
-        # Convert result to response format
+        # Convert result to response format (include speaker when present, e.g. WhisperX diarization)
         segments = [
             TranscriptionSegment(
                 text=seg["text"],
@@ -434,6 +395,7 @@ async def transcribe_audio(
                     if request.word_timestamps
                     else None
                 ),
+                speaker=seg.get("speaker"),
             )
             for seg in result["segments"]
         ]
@@ -463,16 +425,13 @@ async def transcribe_audio(
             engine=request.engine,
         )
 
-        # Store transcription (with project_id if provided)
+        # Persist transcription to database
         transcription_data = transcription.model_dump()
         if project_id:
             transcription_data["project_id"] = project_id
-        _transcriptions[transcription_id] = transcription_data
-        _transcription_timestamps[transcription_id] = time.time()
 
-        # Clean up old transcriptions if needed
-        if len(_transcriptions) > _MAX_TRANSCRIPTIONS:
-            _cleanup_old_transcriptions()
+        repo = get_transcription_repository()
+        await repo.store_transcription(transcription_data)
 
         logger.info(
             f"Transcription complete: {transcription_id}, "
@@ -488,53 +447,73 @@ async def transcribe_audio(
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
         logger.error(f"Transcription error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {e!s}")
 
 
 @router.get("/{transcription_id}", response_model=TranscriptionResponse)
 @cache_response(ttl=300)  # Cache for 5 minutes (transcription results are static)
 async def get_transcription(transcription_id: str):
     """Get transcription by ID."""
-    if transcription_id not in _transcriptions:
+    repo = get_transcription_repository()
+    data = await repo.get_transcription(transcription_id)
+    if data is None:
         raise HTTPException(status_code=404, detail="Transcription not found")
 
-    return TranscriptionResponse(**_transcriptions[transcription_id])
+    return TranscriptionResponse(**data)
 
 
-@router.get("/", response_model=List[TranscriptionResponse])
+@router.get("/", response_model=list[TranscriptionResponse])
 @cache_response(
     ttl=30
 )  # Cache for 30 seconds (transcription list may change frequently)
 async def list_transcriptions(
-    audio_id: Optional[str] = Query(None, description="Filter by audio ID"),
-    project_id: Optional[str] = Query(None, description="Filter by project ID"),
+    audio_id: str | None = Query(None, description="Filter by audio ID"),
+    project_id: str | None = Query(None, description="Filter by project ID"),
 ):
     """List transcriptions, optionally filtered by audio ID or project ID."""
-    transcriptions = list(_transcriptions.values())
-
-    # Filter by audio_id
-    if audio_id:
-        transcriptions = [t for t in transcriptions if t.get("audio_id") == audio_id]
-
-    # Filter by project_id (if stored in transcription)
-    if project_id:
-        transcriptions = [
-            t for t in transcriptions if t.get("project_id") == project_id
-        ]
-
-    # Sort by created time (most recent first)
-    transcriptions.sort(key=lambda x: x.get("created", datetime.min), reverse=True)
+    repo = get_transcription_repository()
+    transcriptions = await repo.list_transcriptions(
+        audio_id=audio_id,
+        project_id=project_id,
+    )
 
     return [TranscriptionResponse(**t) for t in transcriptions]
+
+
+class TranscriptionUpdateRequest(BaseModel):
+    """Request to update a transcription's text or segments."""
+
+    text: str | None = None
+    segments: list[dict] | None = None
+    word_timestamps: list[dict] | None = None
+
+
+@router.put("/{transcription_id}", response_model=TranscriptionResponse)
+async def update_transcription(transcription_id: str, request: TranscriptionUpdateRequest):
+    """
+    Update a transcription's text and/or segments.
+
+    Allows editing transcript text after initial transcription,
+    modifying segment boundaries, or correcting word timestamps.
+    """
+    repo = get_transcription_repository()
+    updated = await repo.update_transcription(
+        transcription_id=transcription_id,
+        text=request.text,
+        segments=request.segments,
+        word_timestamps=request.word_timestamps,
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Transcription not found")
+
+    return TranscriptionResponse(**updated)
 
 
 @router.delete("/{transcription_id}", response_model=ApiOk)
 async def delete_transcription(transcription_id: str):
     """Delete transcription."""
-    if transcription_id not in _transcriptions:
+    repo = get_transcription_repository()
+    deleted = await repo.delete_transcription(transcription_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Transcription not found")
-
-    del _transcriptions[transcription_id]
-    if transcription_id in _transcription_timestamps:
-        del _transcription_timestamps[transcription_id]
     return ApiOk(message="Transcription deleted")

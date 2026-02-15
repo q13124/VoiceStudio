@@ -6,16 +6,19 @@ Uses process-local threading.Lock and cross-process file locking for
 concurrent write safety.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import os
 import threading
 import time
 from collections import Counter
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any
 
 from tools.overseer.issues.config import (
     COMPRESS_AFTER_DAYS,
@@ -25,10 +28,10 @@ from tools.overseer.issues.config import (
     RETENTION_DAYS,
 )
 from tools.overseer.issues.models import (
+    InstanceType,
     Issue,
     IssueSeverity,
     IssueStatus,
-    InstanceType,
 )
 
 # Cross-process file lock: max wait (seconds) and retry interval
@@ -43,7 +46,7 @@ def _file_lock(log_file: Path):
     Uses a companion .lock file; safe for concurrent appends from multiple processes.
     """
     lock_file = log_file.with_suffix(log_file.suffix + ".lock")
-    fd: Optional[int] = None
+    fd: int | None = None
     deadline = time.monotonic() + _FILE_LOCK_WAIT_SEC
     while True:
         try:
@@ -88,16 +91,15 @@ def append_feedback_line(line: str) -> None:
     Uses cross-process file locking for concurrent safety.
     """
     path = get_feedback_file_path()
-    with _file_lock(path):
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(line.rstrip() + "\n")
+    with _file_lock(path), open(path, "a", encoding="utf-8") as f:
+        f.write(line.rstrip() + "\n")
 
 
 def iter_feedback_lines(
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
-    days: Optional[int] = None,
-) -> Iterator[Dict[str, Any]]:
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+    days: int | None = None,
+) -> Iterator[dict[str, Any]]:
     """
     Iterate over feedback records (for calibration).
     If days is set, only records within the last N days are yielded.
@@ -109,7 +111,7 @@ def iter_feedback_lines(
     if days is not None and start_time is None and end_time is None:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=days)
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -144,9 +146,9 @@ class IssueStore:
 
     def __init__(
         self,
-        storage_dir: Optional[Path] = None,
-        max_file_size_mb: Optional[int] = None,
-        retention_days: Optional[int] = None,
+        storage_dir: Path | None = None,
+        max_file_size_mb: int | None = None,
+        retention_days: int | None = None,
     ):
         """
         Initialize the issue store.
@@ -166,7 +168,7 @@ class IssueStore:
         self._retention_days = retention_days if retention_days is not None else RETENTION_DAYS
         self._compress_after_days = COMPRESS_AFTER_DAYS
         self._lock = threading.Lock()
-        self._current_file: Optional[Path] = None
+        self._current_file: Path | None = None
 
     def _get_current_log_file(self) -> Path:
         """Get or create the current log file."""
@@ -199,22 +201,21 @@ class IssueStore:
         """
         with self._lock:
             log_file = self._get_current_log_file()
-            with _file_lock(log_file):
-                with open(log_file, "a", encoding="utf-8") as f:
-                    f.write(issue.to_json_line() + "\n")
+            with _file_lock(log_file), open(log_file, "a", encoding="utf-8") as f:
+                f.write(issue.to_json_line() + "\n")
 
     def query(
         self,
-        severity: Optional[List[IssueSeverity]] = None,
-        status: Optional[List[IssueStatus]] = None,
-        instance_type: Optional[List[InstanceType]] = None,
-        pattern_hash: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        error_codes: Optional[List[str]] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        severity: list[IssueSeverity] | None = None,
+        status: list[IssueStatus] | None = None,
+        instance_type: list[InstanceType] | None = None,
+        pattern_hash: str | None = None,
+        correlation_id: str | None = None,
+        error_codes: list[str] | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         limit: int = 1000,
-    ) -> List[Issue]:
+    ) -> list[Issue]:
         """
         Query issues with filters.
 
@@ -260,16 +261,13 @@ class IssueStore:
 
     def _iter_issues(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> Iterator[Issue]:
         """Iterate over issues in time range. Reads both .jsonl and .jsonl.gz."""
-        candidates: Dict[str, Path] = {}
+        candidates: dict[str, Path] = {}
         for p in self._storage_dir.glob("issues_*.jsonl*"):
-            if p.suffix == ".gz":
-                base = p.stem.replace(".jsonl", "")
-            else:
-                base = p.stem
+            base = p.stem.replace(".jsonl", "") if p.suffix == ".gz" else p.stem
             if base not in candidates or p.suffix == ".gz":
                 candidates[base] = p
         log_files = sorted(candidates.values(), key=lambda p: p.name, reverse=True)
@@ -294,7 +292,7 @@ class IssueStore:
                 if log_file.suffix == ".gz":
                     f = gzip.open(log_file, "rt", encoding="utf-8")
                 else:
-                    f = open(log_file, "r", encoding="utf-8")
+                    f = open(log_file, encoding="utf-8")
                 with f:
                     for line in f:
                         line = line.strip()
@@ -316,16 +314,16 @@ class IssueStore:
             except OSError:
                 continue
 
-    def get_by_id(self, issue_id: str) -> Optional[Issue]:
+    def get_by_id(self, issue_id: str) -> Issue | None:
         """Get a single issue by ID (latest occurrence when append-only updates)."""
-        latest: Optional[Issue] = None
+        latest: Issue | None = None
         for issue in self._iter_issues():
             if issue.id == issue_id:
                 if latest is None or (issue.timestamp and latest.timestamp and issue.timestamp >= latest.timestamp):
                     latest = issue
         return latest
 
-    def get_by_correlation(self, correlation_id: str) -> List[Issue]:
+    def get_by_correlation(self, correlation_id: str) -> list[Issue]:
         """Get all issues for a correlation ID (full trace)."""
         return self.query(correlation_id=correlation_id, limit=10000)
 
@@ -344,7 +342,7 @@ class IssueStore:
         self,
         limit: int = 10,
         time_window_hours: int = 24,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get top issue patterns by frequency.
 
@@ -353,7 +351,7 @@ class IssueStore:
         """
         since = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
         counter: Counter[str] = Counter()
-        samples: Dict[str, str] = {}
+        samples: dict[str, str] = {}
 
         for issue in self._iter_issues(start_time=since):
             counter[issue.pattern_hash] += 1
@@ -375,7 +373,7 @@ class IssueStore:
         self,
         issue_id: str,
         status: IssueStatus,
-        resolved_by: Optional[str] = None,
+        resolved_by: str | None = None,
     ) -> bool:
         """
         Update issue status (acknowledge, resolve, escalate).
@@ -461,11 +459,11 @@ class IssueStore:
 
     def get_stats(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+    ) -> dict[str, Any]:
         """Get statistics for the time range."""
-        stats: Dict[str, Any] = {
+        stats: dict[str, Any] = {
             "total": 0,
             "by_severity": {},
             "by_status": {},

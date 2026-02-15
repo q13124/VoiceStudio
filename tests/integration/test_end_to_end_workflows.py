@@ -9,7 +9,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -28,9 +28,9 @@ class EndToEndWorkflowTester:
     """Test complete end-to-end workflows."""
 
     def __init__(self):
-        self.results: List[Dict[str, Any]] = []
+        self.results: list[dict[str, Any]] = []
 
-    async def test_voice_cloning_workflow(self) -> Dict[str, Any]:
+    async def test_voice_cloning_workflow(self) -> dict[str, Any]:
         """Test complete voice cloning workflow."""
         workflow_name = "Voice Cloning Workflow"
         logger.info(f"Testing workflow: {workflow_name}")
@@ -53,7 +53,7 @@ class EndToEndWorkflowTester:
                 audio_id = "test-audio-001"
 
                 # Step 3: Validate audio
-                validation_response = await client.post(
+                await client.post(
                     f"{API_BASE_URL}/voice/clone/wizard/validate-audio",
                     json={"audio_id": audio_id},
                 )
@@ -137,7 +137,7 @@ class EndToEndWorkflowTester:
             logger.error(f"Workflow test failed: {e}", exc_info=True)
             return {"workflow": workflow_name, "status": "FAIL", "error": str(e)}
 
-    async def test_timeline_workflow(self) -> Dict[str, Any]:
+    async def test_timeline_workflow(self) -> dict[str, Any]:
         """Test complete timeline editing workflow."""
         workflow_name = "Timeline Editing Workflow"
         logger.info(f"Testing workflow: {workflow_name}")
@@ -224,7 +224,7 @@ class EndToEndWorkflowTester:
             logger.error(f"Workflow test failed: {e}", exc_info=True)
             return {"workflow": workflow_name, "status": "FAIL", "error": str(e)}
 
-    async def test_effects_workflow(self) -> Dict[str, Any]:
+    async def test_effects_workflow(self) -> dict[str, Any]:
         """Test complete effects processing workflow."""
         workflow_name = "Effects Processing Workflow"
         logger.info(f"Testing workflow: {workflow_name}")
@@ -285,7 +285,7 @@ class EndToEndWorkflowTester:
             logger.error(f"Workflow test failed: {e}", exc_info=True)
             return {"workflow": workflow_name, "status": "FAIL", "error": str(e)}
 
-    async def test_error_scenarios(self) -> Dict[str, Any]:
+    async def test_error_scenarios(self) -> dict[str, Any]:
         """Test error handling scenarios."""
         workflow_name = "Error Handling Scenarios"
         logger.info(f"Testing workflow: {workflow_name}")
@@ -342,7 +342,7 @@ class EndToEndWorkflowTester:
             logger.error(f"Error scenario test failed: {e}", exc_info=True)
             return {"workflow": workflow_name, "status": "FAIL", "error": str(e)}
 
-    async def run_all_tests(self) -> List[Dict[str, Any]]:
+    async def run_all_tests(self) -> list[dict[str, Any]]:
         """Run all end-to-end workflow tests."""
         logger.info("Starting End-to-End Integration Tests...")
 

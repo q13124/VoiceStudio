@@ -35,7 +35,7 @@ class TestAudioStorageWorkflow:
         GET /api/voice/audio/{id} returns 404 for non-existent audio.
         """
         print("\n[E2E] Testing audio retrieval for non-existent ID...")
-        
+
         response = client.get("/api/voice/audio/non-existent-audio-id")
         assert response.status_code == 404
         print("[E2E] Correctly returned 404 for non-existent audio")
@@ -45,12 +45,12 @@ class TestAudioStorageWorkflow:
         GET /api/audio returns list of stored audio files.
         """
         print("\n[E2E] Testing audio list endpoint...")
-        
+
         response = client.get("/api/audio")
-        
+
         # Accept 200 (list returned) or 404 (endpoint may not exist)
         assert response.status_code in [200, 404]
-        
+
         if response.status_code == 200:
             data = response.json()
             print(f"[E2E] Found {len(data) if isinstance(data, list) else 'N/A'} audio files")
@@ -72,7 +72,7 @@ class TestSynthesisStorageWorkflow:
         POST /api/voice/synthesize stores audio and returns retrievable ID.
         """
         print("\n[E2E] Testing synthesis -> storage workflow...")
-        
+
         # Synthesize audio
         synth_response = client.post(
             "/api/voice/synthesize",
@@ -82,23 +82,23 @@ class TestSynthesisStorageWorkflow:
                 "engine": "piper",
             },
         )
-        
+
         # Accept 200 (synthesis succeeded) or 500 (engine not available)
         if synth_response.status_code != 200:
             print(f"[E2E] Synthesis not available: {synth_response.status_code}")
             return
-        
+
         data = synth_response.json()
         assert "audio_id" in data
         audio_id = data["audio_id"]
         print(f"[E2E] Synthesized audio: {audio_id}")
-        
+
         # Retrieve the audio
         retrieve_response = client.get(f"/api/voice/audio/{audio_id}")
-        
+
         # Accept 200 (audio retrieved) or 404 (not stored yet)
         assert retrieve_response.status_code in [200, 404]
-        
+
         if retrieve_response.status_code == 200:
             assert retrieve_response.headers.get("content-type", "").startswith("audio/")
             print(f"[E2E] Retrieved audio: {len(retrieve_response.content)} bytes")
@@ -110,7 +110,7 @@ class TestSynthesisStorageWorkflow:
         Audio remains available after initial synthesis.
         """
         print("\n[E2E] Testing audio persistence...")
-        
+
         # Synthesize first
         synth_response = client.post(
             "/api/voice/synthesize",
@@ -119,16 +119,16 @@ class TestSynthesisStorageWorkflow:
                 "profile_id": "default",
             },
         )
-        
+
         if synth_response.status_code != 200:
             print(f"[E2E] Synthesis skipped: {synth_response.status_code}")
             return
-        
+
         audio_id = synth_response.json().get("audio_id")
         if not audio_id:
             print("[E2E] No audio_id returned")
             return
-        
+
         # Retrieve multiple times
         for i in range(3):
             response = client.get(f"/api/voice/audio/{audio_id}")
@@ -153,7 +153,7 @@ class TestAudioFormatHandling:
         Synthesize audio in WAV format.
         """
         print("\n[E2E] Testing WAV format synthesis...")
-        
+
         response = client.post(
             "/api/voice/synthesize",
             json={
@@ -162,7 +162,7 @@ class TestAudioFormatHandling:
                 "format": "wav",
             },
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             print(f"[E2E] WAV synthesis: {data.get('audio_id', 'no id')}")
@@ -174,7 +174,7 @@ class TestAudioFormatHandling:
         Synthesize audio in MP3 format.
         """
         print("\n[E2E] Testing MP3 format synthesis...")
-        
+
         response = client.post(
             "/api/voice/synthesize",
             json={
@@ -183,7 +183,7 @@ class TestAudioFormatHandling:
                 "format": "mp3",
             },
         )
-        
+
         # MP3 encoding may not be available
         if response.status_code == 200:
             data = response.json()
@@ -206,7 +206,7 @@ class TestAudioMetadata:
         GET /api/audio/{id}/info returns audio metadata.
         """
         print("\n[E2E] Testing audio info endpoint...")
-        
+
         # First synthesize audio
         synth_response = client.post(
             "/api/voice/synthesize",
@@ -215,22 +215,22 @@ class TestAudioMetadata:
                 "profile_id": "default",
             },
         )
-        
+
         if synth_response.status_code != 200:
             print(f"[E2E] Synthesis skipped: {synth_response.status_code}")
             return
-        
+
         audio_id = synth_response.json().get("audio_id")
         if not audio_id:
             print("[E2E] No audio_id returned")
             return
-        
+
         # Get audio info
         info_response = client.get(f"/api/audio/{audio_id}/info")
-        
+
         # Accept 200 (info returned) or 404 (endpoint not available)
         assert info_response.status_code in [200, 404]
-        
+
         if info_response.status_code == 200:
             data = info_response.json()
             print(f"[E2E] Audio info: {data}")
@@ -252,7 +252,7 @@ class TestAudioAnalysis:
         GET /api/audio/{id}/waveform returns waveform data.
         """
         print("\n[E2E] Testing audio waveform endpoint...")
-        
+
         # Synthesize audio first
         synth_response = client.post(
             "/api/voice/synthesize",
@@ -261,18 +261,18 @@ class TestAudioAnalysis:
                 "profile_id": "default",
             },
         )
-        
+
         if synth_response.status_code != 200:
             print(f"[E2E] Synthesis skipped: {synth_response.status_code}")
             return
-        
+
         audio_id = synth_response.json().get("audio_id")
         if not audio_id:
             return
-        
+
         # Get waveform
         response = client.get(f"/api/audio/{audio_id}/waveform")
-        
+
         # Accept 200 (waveform returned) or 404 (endpoint not available)
         assert response.status_code in [200, 404]
         print(f"[E2E] Waveform endpoint: {response.status_code}")
@@ -282,7 +282,7 @@ class TestAudioAnalysis:
         GET /api/audio/{id}/spectrogram returns spectrogram data.
         """
         print("\n[E2E] Testing audio spectrogram endpoint...")
-        
+
         # Synthesize audio first
         synth_response = client.post(
             "/api/voice/synthesize",
@@ -291,18 +291,18 @@ class TestAudioAnalysis:
                 "profile_id": "default",
             },
         )
-        
+
         if synth_response.status_code != 200:
             print(f"[E2E] Synthesis skipped: {synth_response.status_code}")
             return
-        
+
         audio_id = synth_response.json().get("audio_id")
         if not audio_id:
             return
-        
+
         # Get spectrogram
         response = client.get(f"/api/audio/{audio_id}/spectrogram")
-        
+
         # Accept 200 (spectrogram returned) or 404 (endpoint not available)
         assert response.status_code in [200, 404]
         print(f"[E2E] Spectrogram endpoint: {response.status_code}")
@@ -322,10 +322,10 @@ class TestHealthChecks:
         GET /health returns service health status.
         """
         print("\n[E2E] Testing health endpoint...")
-        
+
         response = client.get("/health")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "status" in data
         print(f"[E2E] Health status: {data['status']}")
@@ -335,7 +335,7 @@ class TestHealthChecks:
         GET / returns API info.
         """
         print("\n[E2E] Testing API root...")
-        
+
         response = client.get("/")
         assert response.status_code == 200
         print("[E2E] API root accessible")

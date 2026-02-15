@@ -5,8 +5,9 @@ Endpoints for managing keyboard shortcuts.
 Supports CRUD operations and conflict detection.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -18,14 +19,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/shortcuts", tags=["shortcuts"])
 
 # In-memory shortcuts storage (replace with database in production)
-_shortcuts: Dict[str, Dict] = {}
+_shortcuts: dict[str, dict] = {}
 
 
 class ShortcutKey(BaseModel):
     """Keyboard shortcut key combination."""
 
     key: str  # e.g., "N", "Space", "Enter"
-    modifiers: List[str] = []  # e.g., ["Ctrl", "Shift"]
+    modifiers: list[str] = []  # e.g., ["Ctrl", "Shift"]
 
 
 class KeyboardShortcut(BaseModel):
@@ -34,11 +35,11 @@ class KeyboardShortcut(BaseModel):
     id: str
     key: str  # Display string like "Ctrl+N"
     key_code: str  # Internal key code
-    modifiers: List[str] = []
+    modifiers: list[str] = []
     description: str
     category: str
-    panel_id: Optional[str] = None
-    action_id: Optional[str] = None  # Command/action to execute
+    panel_id: str | None = None
+    action_id: str | None = None  # Command/action to execute
     is_custom: bool = False  # User-defined vs system default
 
 
@@ -53,10 +54,10 @@ class ShortcutConflict(BaseModel):
 class ShortcutUpdateRequest(BaseModel):
     """Request to update a keyboard shortcut."""
 
-    key: Optional[str] = None
-    key_code: Optional[str] = None
-    modifiers: Optional[List[str]] = None
-    description: Optional[str] = None
+    key: str | None = None
+    key_code: str | None = None
+    modifiers: list[str] | None = None
+    description: str | None = None
 
 
 # Initialize default shortcuts
@@ -184,8 +185,8 @@ _initialize_default_shortcuts()
 
 
 def _check_conflict(
-    key_code: str, modifiers: List[str], exclude_id: Optional[str] = None
-) -> Optional[str]:
+    key_code: str, modifiers: list[str], exclude_id: str | None = None
+) -> str | None:
     """Check if a shortcut key combination conflicts with existing shortcuts."""
     for shortcut_id, shortcut in _shortcuts.items():
         if exclude_id and shortcut_id == exclude_id:
@@ -199,11 +200,11 @@ def _check_conflict(
     return None
 
 
-@router.get("", response_model=List[KeyboardShortcut])
+@router.get("", response_model=list[KeyboardShortcut])
 @cache_response(ttl=300)  # Cache for 5 minutes (shortcuts are relatively static)
 async def get_shortcuts(
-    category: Optional[str] = Query(None),
-    panel_id: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    panel_id: str | None = Query(None),
     include_custom: bool = Query(True),
 ):
     """Get all keyboard shortcuts, optionally filtered."""
@@ -232,8 +233,8 @@ async def get_shortcuts(
 @cache_response(ttl=60)  # Cache for 60 seconds (conflicts may change)
 async def check_conflict(
     key_code: str = Query(...),
-    modifiers: List[str] = Query(...),
-    exclude_id: Optional[str] = Query(None),
+    modifiers: list[str] = Query(...),
+    exclude_id: str | None = Query(None),
 ):
     """Check if a key combination conflicts with existing shortcuts."""
     conflict_id = _check_conflict(key_code, modifiers, exclude_id)
@@ -256,7 +257,7 @@ async def get_shortcut_categories():
         if cat:
             categories.add(cat)
 
-    return {"categories": sorted(list(categories))}
+    return {"categories": sorted(categories)}
 
 
 @router.get("/{shortcut_id}", response_model=KeyboardShortcut)

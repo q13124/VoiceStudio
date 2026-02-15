@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from tools.overseer.gate_tracker import GateTracker
 from tools.overseer.handoff_manager import HandoffManager
@@ -16,8 +15,8 @@ class ReportEngine:
         self,
         ledger_parser: LedgerParser,
         gate_tracker: GateTracker,
-        handoff_manager: Optional[HandoffManager] = None,
-        reports_dir: Optional[Path] = None,
+        handoff_manager: HandoffManager | None = None,
+        reports_dir: Path | None = None,
     ):
         self.ledger_parser = ledger_parser
         self.gate_tracker = gate_tracker
@@ -34,14 +33,14 @@ class ReportEngine:
         path.write_text("\n".join(summary), encoding="utf-8")
         return path
 
-    def generate_gate_report(self) -> List[str]:
+    def generate_gate_report(self) -> list[str]:
         statuses = self.gate_tracker.compute_statuses(force=True)
         lines = ["## Gate Status", ""]
         for status in statuses:
             lines.append(f"- {status.status_symbol} Gate {status.gate.value}: {status.done_entries}/{status.total_entries}")
         return lines
 
-    def _build_report_lines(self) -> List[str]:
+    def _build_report_lines(self) -> list[str]:
         summary = self.ledger_parser.get_summary()
         statuses = self.gate_tracker.compute_statuses(force=True)
         matched, missing, orphan = self.handoff_manager.reconcile_with_ledger()

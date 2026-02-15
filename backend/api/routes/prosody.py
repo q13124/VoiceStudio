@@ -5,9 +5,10 @@ Endpoints for prosody and phoneme-level control of speech synthesis.
 Enhanced with pyrubberband for high-quality pitch/rate modification and Phonemizer for phoneme analysis.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
-from typing import Dict, List, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
@@ -42,7 +43,7 @@ except ImportError:
 router = APIRouter(prefix="/api/prosody", tags=["prosody"])
 
 # In-memory prosody configurations (replace with database in production)
-_prosody_configs: Dict[str, Dict] = {}
+_prosody_configs: dict[str, dict] = {}
 
 
 class ProsodyConfig(BaseModel):
@@ -53,19 +54,19 @@ class ProsodyConfig(BaseModel):
     pitch: float = 1.0  # 0.5 to 2.0
     rate: float = 1.0  # 0.5 to 2.0
     volume: float = 1.0  # 0.0 to 1.0
-    emphasis: Optional[Dict[str, float]] = None  # Word-level emphasis
-    pauses: Optional[List[Dict]] = None  # Pause positions and durations
-    intonation: Optional[str] = None  # rising, falling, flat, etc.
+    emphasis: dict[str, float] | None = None  # Word-level emphasis
+    pauses: list[dict] | None = None  # Pause positions and durations
+    intonation: str | None = None  # rising, falling, flat, etc.
 
 
 class PhonemeMapping(BaseModel):
     """Phoneme-level mapping and control."""
 
     text: str
-    phonemes: List[str]
-    timings: List[float]  # Duration for each phoneme
-    stress: Optional[List[int]] = None  # Stress levels (0-2)
-    pitch_curve: Optional[List[float]] = None  # Pitch per phoneme
+    phonemes: list[str]
+    timings: list[float]  # Duration for each phoneme
+    stress: list[int] | None = None  # Stress levels (0-2)
+    pitch_curve: list[float] | None = None  # Pitch per phoneme
 
 
 class ProsodyApplyRequest(BaseModel):
@@ -74,8 +75,8 @@ class ProsodyApplyRequest(BaseModel):
     config_id: str
     text: str
     voice_profile_id: str
-    engine: Optional[str] = None
-    language: Optional[str] = None
+    engine: str | None = None
+    language: str | None = None
 
 
 class ProsodyCreateRequest(BaseModel):
@@ -85,9 +86,9 @@ class ProsodyCreateRequest(BaseModel):
     pitch: float = 1.0
     rate: float = 1.0
     volume: float = 1.0
-    emphasis: Optional[Dict[str, float]] = None
-    pauses: Optional[List[Dict]] = None
-    intonation: Optional[str] = None
+    emphasis: dict[str, float] | None = None
+    pauses: list[dict] | None = None
+    intonation: str | None = None
 
 
 @router.post("/configs", response_model=ProsodyConfig)
@@ -117,11 +118,11 @@ async def create_prosody_config(request: ProsodyCreateRequest):
         logger.error(f"Failed to create prosody config: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create config: {str(e)}",
+            detail=f"Failed to create config: {e!s}",
         ) from e
 
 
-@router.get("/configs", response_model=List[ProsodyConfig])
+@router.get("/configs", response_model=list[ProsodyConfig])
 @cache_response(ttl=60)  # Cache for 60 seconds (config list doesn't change frequently)
 async def list_prosody_configs():
     """List all prosody configurations."""
@@ -245,7 +246,7 @@ async def analyze_phonemes(text: str, language: str = "en"):
     except Exception as e:
         logger.warning(f"Phoneme estimation failed: {e}")
         raise HTTPException(
-            status_code=503, detail=f"Phoneme analysis unavailable: {str(e)}"
+            status_code=503, detail=f"Phoneme analysis unavailable: {e!s}"
         )
 
 
@@ -401,5 +402,5 @@ async def apply_prosody(request: ProsodyApplyRequest):
     except Exception as e:
         logger.error(f"Prosody application failed: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to apply prosody: {str(e)}"
+            status_code=500, detail=f"Failed to apply prosody: {e!s}"
         )

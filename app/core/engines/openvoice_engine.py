@@ -11,12 +11,15 @@ Compatible with:
 - PyTorch 2.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from collections import OrderedDict
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -26,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
     _model_cache = get_model_cache(max_models=3, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -36,7 +39,7 @@ except ImportError:
 
 # Fallback: OpenVoice-specific cache (for backward compatibility)
 _OPENVOICE_MODEL_CACHE: OrderedDict = OrderedDict()
-_SPEAKER_EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
+_SPEAKER_EMBEDDING_CACHE: dict[str, np.ndarray] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of model pairs to cache in memory
 _MAX_EMBEDDING_CACHE_SIZE = 100  # Maximum number of speaker embeddings to cache
 
@@ -54,7 +57,7 @@ def _get_cached_openvoice_models(base_model: str, converter_model: str, device: 
         cached = _model_cache.get("openvoice", cache_key, device=device)
         if cached is not None:
             return cached
-    
+
     # Fallback to OpenVoice-specific cache
     cache_key = _get_cache_key(base_model, converter_model, device)
     if cache_key in _OPENVOICE_MODEL_CACHE:
@@ -63,7 +66,7 @@ def _get_cached_openvoice_models(base_model: str, converter_model: str, device: 
     return None
 
 
-def _cache_openvoice_models(base_model: str, converter_model: str, device: str, models: Dict):
+def _cache_openvoice_models(base_model: str, converter_model: str, device: str, models: dict):
     """Cache OpenVoice models with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -73,16 +76,16 @@ def _cache_openvoice_models(base_model: str, converter_model: str, device: str, 
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to OpenVoice-specific cache
     cache_key = _get_cache_key(base_model, converter_model, device)
-    
+
     if cache_key in _OPENVOICE_MODEL_CACHE:
         _OPENVOICE_MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     _OPENVOICE_MODEL_CACHE[cache_key] = models
-    
+
     # Evict oldest if cache full
     if len(_OPENVOICE_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, oldest_models = _OPENVOICE_MODEL_CACHE.popitem(last=False)
@@ -93,14 +96,14 @@ def _cache_openvoice_models(base_model: str, converter_model: str, device: str, 
             logger.debug(f"Evicted OpenVoice models from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting OpenVoice models from cache: {e}")
-    
+
     logger.debug(f"Cached OpenVoice models: {cache_key} (cache size: {len(_OPENVOICE_MODEL_CACHE)})")
 
 
-def _get_speaker_embedding_cache_key(speaker_wav: Union[str, Path]) -> Optional[str]:
+def _get_speaker_embedding_cache_key(speaker_wav: str | Path) -> str | None:
     """Generate cache key for speaker embedding."""
     import hashlib
-    
+
     audio_path = Path(speaker_wav)
     if audio_path.exists():
         mtime = audio_path.stat().st_mtime
@@ -108,7 +111,7 @@ def _get_speaker_embedding_cache_key(speaker_wav: Union[str, Path]) -> Optional[
     return None
 
 
-def _get_cached_speaker_embedding(speaker_wav: Union[str, Path]) -> Optional[np.ndarray]:
+def _get_cached_speaker_embedding(speaker_wav: str | Path) -> np.ndarray | None:
     """Get cached speaker embedding if available."""
     cache_key = _get_speaker_embedding_cache_key(speaker_wav)
     if cache_key:
@@ -116,23 +119,23 @@ def _get_cached_speaker_embedding(speaker_wav: Union[str, Path]) -> Optional[np.
     return None
 
 
-def _cache_speaker_embedding(speaker_wav: Union[str, Path], embedding: np.ndarray):
+def _cache_speaker_embedding(speaker_wav: str | Path, embedding: np.ndarray):
     """Cache speaker embedding with LRU eviction."""
     cache_key = _get_speaker_embedding_cache_key(speaker_wav)
     if not cache_key:
         return
-    
+
     if cache_key in _SPEAKER_EMBEDDING_CACHE:
         return
-    
+
     _SPEAKER_EMBEDDING_CACHE[cache_key] = embedding
-    
+
     # Evict oldest if cache full
     if len(_SPEAKER_EMBEDDING_CACHE) > _MAX_EMBEDDING_CACHE_SIZE:
         oldest_key = next(iter(_SPEAKER_EMBEDDING_CACHE))
         del _SPEAKER_EMBEDDING_CACHE[oldest_key]
         logger.debug(f"Evicted speaker embedding from cache: {oldest_key[:8]}")
-    
+
     logger.debug(f"Cached speaker embedding: {cache_key[:8]} (cache size: {len(_SPEAKER_EMBEDDING_CACHE)})")
 
 # Try to import librosa for style control
@@ -162,7 +165,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         match_voice_profile,
@@ -239,7 +242,7 @@ class OpenVoiceEngine(EngineProtocol):
         self,
         base_speaker_model: str = "checkpoints/base_speakers/EN",
         tone_color_converter_model: str = "checkpoints/converter",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_style_control: bool = True,
     ):
@@ -291,7 +294,7 @@ class OpenVoiceEngine(EngineProtocol):
                 self.tone_color_converter = cached_models.get("tone_color_converter")
                 self._initialized = True
                 return True
-        
+
         # Use model cache directory if available
         model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
         if not model_cache_dir:
@@ -356,7 +359,7 @@ class OpenVoiceEngine(EngineProtocol):
         self._initialized = True
         logger.info("OpenVoice engine initialized successfully")
         return True
-    
+
     def initialize(self) -> bool:
         """
         Initialize the OpenVoice model.
@@ -367,11 +370,11 @@ class OpenVoiceEngine(EngineProtocol):
         try:
             if self._initialized:
                 return True
-            
+
             if not HAS_OPENVOICE:
                 logger.error("OpenVoice library not available")
                 return False
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
                 logger.debug("Lazy loading enabled, models will be loaded on first use")
@@ -388,13 +391,13 @@ class OpenVoiceEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Union[str, Path, List[Union[str, Path]]],
+        speaker_wav: str | Path | list[str | Path],
         language: str = "en",
-        output_path: Optional[Union[str, Path]] = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using OpenVoice voice cloning.
 
@@ -413,9 +416,8 @@ class OpenVoiceEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return None
+        if not self._initialized and not self._load_models():
+            return None
 
         try:
             # Convert speaker_wav to list if single path
@@ -431,7 +433,7 @@ class OpenVoiceEngine(EngineProtocol):
                 speaker_embedding = _get_cached_speaker_embedding(reference_audio_path)
                 if speaker_embedding is not None:
                     logger.debug("Using cached speaker embedding")
-            
+
             # Extract speaker embedding if not cached
             if speaker_embedding is None:
                 try:
@@ -550,10 +552,10 @@ class OpenVoiceEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -607,16 +609,16 @@ class OpenVoiceEngine(EngineProtocol):
     def synthesize_with_style(
         self,
         text: str,
-        speaker_wav: Union[str, Path],
+        speaker_wav: str | Path,
         language: str = "en",
-        emotion: Optional[str] = None,
-        accent: Optional[str] = None,
-        rhythm: Optional[float] = None,
-        pauses: Optional[List[float]] = None,
-        intonation: Optional[Dict[str, float]] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        emotion: str | None = None,
+        accent: str | None = None,
+        rhythm: float | None = None,
+        pauses: list[float] | None = None,
+        intonation: dict[str, float] | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Synthesize with granular style control.
 
@@ -640,9 +642,8 @@ class OpenVoiceEngine(EngineProtocol):
         Returns:
             Audio array (numpy) or None if synthesis failed
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # First, synthesize base audio
         base_audio = self.synthesize(
@@ -693,12 +694,12 @@ class OpenVoiceEngine(EngineProtocol):
     def synthesize_cross_lingual(
         self,
         text: str,
-        speaker_wav: Union[str, Path],
+        speaker_wav: str | Path,
         source_language: str = "en",
         target_language: str = "es",
-        output_path: Optional[Union[str, Path]] = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Zero-shot cross-lingual voice cloning.
 
@@ -715,9 +716,8 @@ class OpenVoiceEngine(EngineProtocol):
         Returns:
             Audio array (numpy) or None if synthesis failed
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Extract speaker embedding (language-agnostic)
@@ -788,7 +788,7 @@ class OpenVoiceEngine(EngineProtocol):
     def synthesize_stream(
         self,
         text: str,
-        speaker_wav: Union[str, Path],
+        speaker_wav: str | Path,
         language: str = "en",
         chunk_size: int = 100,
         overlap: int = 20,
@@ -810,9 +810,8 @@ class OpenVoiceEngine(EngineProtocol):
         Yields:
             Audio chunks (numpy arrays)
         """
-        if not self._initialized:
-            if not self.initialize():
-                return
+        if not self._initialized and not self.initialize():
+            return
 
         # Split text into chunks
         chunks = self._split_text_with_overlap(text, chunk_size, overlap)
@@ -914,7 +913,7 @@ class OpenVoiceEngine(EngineProtocol):
 
     def _split_text_with_overlap(
         self, text: str, chunk_size: int, overlap: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Split text into chunks with overlap."""
         chunks = []
         start = 0
@@ -1095,8 +1094,8 @@ class OpenVoiceEngine(EngineProtocol):
     def _insert_pauses(
         self,
         audio: np.ndarray,
-        pause_positions: List[float],
-        pause_durations: List[float],
+        pause_positions: list[float],
+        pause_durations: list[float],
     ) -> np.ndarray:
         """Insert pauses at specific positions."""
         if len(pause_positions) != len(pause_durations):
@@ -1105,7 +1104,7 @@ class OpenVoiceEngine(EngineProtocol):
 
         # Sort by position
         sorted_pauses = sorted(
-            zip(pause_positions, pause_durations), key=lambda x: x[0]
+            zip(pause_positions, pause_durations, strict=False), key=lambda x: x[0]
         )
 
         result = audio.copy()
@@ -1154,7 +1153,7 @@ class OpenVoiceEngine(EngineProtocol):
         return result
 
     def _apply_intonation(
-        self, audio: np.ndarray, intonation_params: Dict[str, float]
+        self, audio: np.ndarray, intonation_params: dict[str, float]
     ) -> np.ndarray:
         """Apply intonation adjustments."""
         if librosa is None:
@@ -1181,7 +1180,7 @@ class OpenVoiceEngine(EngineProtocol):
 
         return audio
 
-    def _get_base_model_for_language(self, language: str) -> Optional[Any]:
+    def _get_base_model_for_language(self, language: str) -> Any | None:
         """Get or load base speaker model for specific language."""
         if language in self._base_models_cache:
             return self._base_models_cache[language]
@@ -1213,24 +1212,24 @@ class OpenVoiceEngine(EngineProtocol):
         # Fallback to default model
         return None
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
         return self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        speaker_wav: Union[str, Path, List[Union[str, Path]]],
+        texts: list[str],
+        speaker_wav: str | Path | list[str | Path],
         language: str = "en",
-        output_dir: Optional[Union[str, Path]] = None,
+        output_dir: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
         **kwargs
-    ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
-        
+
         Args:
             texts: List of texts to synthesize
             speaker_wav: Path to reference speaker audio file(s)
@@ -1240,21 +1239,20 @@ class OpenVoiceEngine(EngineProtocol):
             calculate_quality: If True, return quality metrics
             batch_size: Number of texts to process in a single batch
             **kwargs: Additional synthesis parameters
-        
+
         Returns:
             List of audio arrays or tuples of (audio, quality_metrics)
         """
         # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return [None] * len(texts)
-        
+        if not self._initialized and not self._load_models():
+            return [None] * len(texts)
+
         results = []
-        
+
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
-        num_batches = (len(texts) + actual_batch_size - 1) // actual_batch_size
-        
+        (len(texts) + actual_batch_size - 1) // actual_batch_size
+
         def synthesize_single(text):
             try:
                 return self.synthesize(
@@ -1268,11 +1266,11 @@ class OpenVoiceEngine(EngineProtocol):
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
                 return None
-        
+
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             batch_results = list(executor.map(synthesize_single, texts))
-        
+
         # Handle output directory if provided
         if output_dir:
             output_dir = Path(output_dir)
@@ -1299,33 +1297,33 @@ class OpenVoiceEngine(EngineProtocol):
                     results.append(None)
         else:
             results = batch_results
-        
+
         # Clear GPU cache periodically
         if torch.cuda.is_available() and (len(texts) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
-    def _get_memory_usage(self) -> Dict[str, float]:
+
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
-        
+
         return {
             "gpu_memory_mb": torch.cuda.get_device_properties(0).total_memory / 1024**2,
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
-    
+
     def cleanup(self):
         """Clean up resources."""
         try:
@@ -1339,7 +1337,7 @@ class OpenVoiceEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during OpenVoice cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -1355,7 +1353,7 @@ class OpenVoiceEngine(EngineProtocol):
 def create_openvoice_engine(
     base_speaker_model: str = "checkpoints/base_speakers/EN",
     tone_color_converter_model: str = "checkpoints/converter",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> OpenVoiceEngine:
     """Factory function to create an OpenVoice engine instance."""

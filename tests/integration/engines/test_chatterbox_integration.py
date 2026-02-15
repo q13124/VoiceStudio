@@ -5,10 +5,8 @@ Tests TASK-0010: Piper/Chatterbox Integration
 Verifies Chatterbox can synthesize via venv_advanced_tts family.
 """
 
-import os
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -23,8 +21,8 @@ class TestChatterboxVenvFamily:
     def test_chatterbox_in_advanced_tts_family(self):
         """Test that Chatterbox is assigned to venv_advanced_tts family."""
         from app.core.runtime.venv_family_manager import (
-            VenvFamily,
             ENGINE_TO_FAMILY,
+            VenvFamily,
         )
 
         assert "chatterbox" in ENGINE_TO_FAMILY
@@ -49,7 +47,7 @@ class TestChatterboxVenvFamily:
         )
 
         manager = get_venv_manager()
-        
+
         if not manager.is_venv_created(VenvFamily.ADVANCED_TTS):
             pytest.skip("venv_advanced_tts not created")
 
@@ -76,7 +74,6 @@ class TestChatterboxEngineLifecycle:
     def test_engine_lifecycle_has_venv_support(self):
         """Test that engine lifecycle manager has venv family support."""
         from app.core.runtime.engine_lifecycle import (
-            EngineLifecycleManager,
             HAS_VENV_FAMILIES,
         )
 

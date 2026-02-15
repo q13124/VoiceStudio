@@ -3,14 +3,19 @@
 // GAP-FE-001: Integrated with TimelineGateway for backend connectivity
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.App.Services;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Gateways;
+using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 
 namespace VoiceStudio.App.Features.Timeline;
@@ -142,10 +147,18 @@ public partial class TimelineTrack : ObservableObject
 /// <summary>
 /// ViewModel for the timeline component.
 /// GAP-FE-001: Refactored to inherit from BaseViewModel and integrate with TimelineGateway.
+/// Backend-Frontend Integration Plan - Phase 2: Implements state persistence.
 /// </summary>
-public partial class TimelineViewModel : BaseViewModel
+public partial class TimelineViewModel : BaseViewModel, IPanelStatePersistable
 {
+    /// <summary>
+    /// Panel ID for state persistence.
+    /// </summary>
+    public const string PanelIdConst = "timeline";
     private readonly ITimelineGateway _timelineGateway;
+    private readonly IEventAggregator? _eventAggregator;
+    private ISubscriptionToken? _assetSelectedToken;
+    private ISubscriptionToken? _profileSelectedToken;
     
     private string? _projectId;
     private double _currentTime;
@@ -179,6 +192,36 @@ public partial class TimelineViewModel : BaseViewModel
         SplitAtPlayheadCommand = new RelayCommand(SplitAtPlayhead);
         SaveTimelineCommand = new AsyncRelayCommand(SaveTimelineAsync);
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+
+        // Initialize EventAggregator and subscribe to cross-panel events (Phase 4)
+        _eventAggregator = AppServices.TryGetEventAggregator();
+        if (_eventAggregator != null)
+        {
+            _assetSelectedToken = _eventAggregator.Subscribe<AssetSelectedEvent>(OnAssetSelected);
+            _profileSelectedToken = _eventAggregator.Subscribe<ProfileSelectedEvent>(OnProfileSelected);
+        }
+    }
+
+    /// <summary>
+    /// Handles asset selection events from the library panel.
+    /// Backend-Frontend Integration Plan - Phase 4: Cross-panel synchronization.
+    /// </summary>
+    private void OnAssetSelected(AssetSelectedEvent e)
+    {
+        // When an audio asset is selected in the Library, we could offer to add it to the timeline
+        System.Diagnostics.Debug.WriteLine($"TimelineViewModel: Asset selected - {e.AssetId} ({e.AssetType})");
+        // Future: could show "Add to Timeline" action or highlight compatible tracks
+    }
+
+    /// <summary>
+    /// Handles profile selection events from the profiles panel.
+    /// Backend-Frontend Integration Plan - Phase 4: Cross-panel synchronization.
+    /// </summary>
+    private void OnProfileSelected(ProfileSelectedEvent e)
+    {
+        // When a profile is selected, update the default voice profile for new voice clips
+        System.Diagnostics.Debug.WriteLine($"TimelineViewModel: Profile selected - {e.ProfileId} ({e.ProfileName})");
+        // Future: could set this as the active profile for synthesis operations
     }
 
     /// <summary>
@@ -415,17 +458,23 @@ public partial class TimelineViewModel : BaseViewModel
     public void Play()
     {
         IsPlaying = true;
+        // Publish playback state change for cross-panel synchronization (Phase 4)
+        _eventAggregator?.Publish(new PlaybackStateChangedEvent(PanelIdConst, true, CurrentTime));
     }
 
     public void Pause()
     {
         IsPlaying = false;
+        // Publish playback state change for cross-panel synchronization (Phase 4)
+        _eventAggregator?.Publish(new PlaybackStateChangedEvent(PanelIdConst, false, CurrentTime));
     }
 
     public void Stop()
     {
         IsPlaying = false;
         CurrentTime = 0;
+        // Publish playback state change for cross-panel synchronization (Phase 4)
+        _eventAggregator?.Publish(new PlaybackStateChangedEvent(PanelIdConst, false, 0));
     }
 
     public async Task AddTrackAsync(TrackType type)
@@ -610,6 +659,9 @@ public partial class TimelineViewModel : BaseViewModel
         
         clip.IsSelected = true;
         SelectedClips.Add(clip);
+
+        // Publish timeline selection change event (Phase 4)
+        PublishSelectionChangedEvent();
     }
 
     public void ClearSelection()
@@ -619,6 +671,23 @@ public partial class TimelineViewModel : BaseViewModel
             clip.IsSelected = false;
         }
         SelectedClips.Clear();
+
+        // Publish timeline selection change event (Phase 4)
+        PublishSelectionChangedEvent();
+    }
+
+    /// <summary>
+    /// Publishes a timeline selection changed event for cross-panel synchronization.
+    /// Backend-Frontend Integration Plan - Phase 4.
+    /// </summary>
+    private void PublishSelectionChangedEvent()
+    {
+        var selectedClipIds = SelectedClips.Select(c => c.Id).ToList();
+        _eventAggregator?.Publish(new TimelineSelectionChangedEvent(
+            PanelIdConst, 
+            SelectionStart, 
+            SelectionEnd, 
+            selectedClipIds));
     }
 
     private async Task DeleteSelectedAsync()
@@ -760,4 +829,135 @@ public partial class TimelineViewModel : BaseViewModel
             _ => VoiceStudio.Core.Gateways.TrackType.Audio,
         };
     }
+
+    #region IPanelStatePersistable Implementation
+
+    /// <summary>
+    /// Gets the current panel state for persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public PanelStateData? GetCurrentState()
+    {
+        try
+        {
+            var state = new PanelStateData
+            {
+                PanelId = PanelIdConst,
+                ScrollPosition = ScrollPosition,
+                ZoomLevel = Zoom,
+                CapturedAt = DateTime.UtcNow,
+                CustomData = new Dictionary<string, object>()
+            };
+
+            // Store playback state
+            state.CustomData["CurrentTime"] = CurrentTime;
+            state.CustomData["IsLooping"] = IsLooping;
+            state.CustomData["SnapEnabled"] = SnapEnabled;
+            state.CustomData["SnapInterval"] = SnapInterval;
+
+            // Store selection state
+            state.CustomData["SelectionStart"] = SelectionStart;
+            state.CustomData["SelectionEnd"] = SelectionEnd;
+
+            // Store selected clip IDs
+            if (SelectedClips.Count > 0)
+                state.SelectedItemIds = SelectedClips.Select(c => c.Id).ToArray();
+
+            // Store project ID
+            if (!string.IsNullOrEmpty(ProjectId))
+                state.CustomData["ProjectId"] = ProjectId;
+
+            // Store track expansion states
+            var trackExpansions = new Dictionary<string, bool>();
+            foreach (var track in Tracks)
+            {
+                trackExpansions[track.Id] = track.IsExpanded;
+            }
+            if (trackExpansions.Count > 0)
+                state.ExpandedSections = trackExpansions;
+
+            return state;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get TimelineViewModel state: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Restores panel state from persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public async Task RestoreStateAsync(PanelStateData state, CancellationToken cancellationToken = default)
+    {
+        if (state == null) return;
+
+        try
+        {
+            // Restore zoom and scroll
+            if (state.ZoomLevel.HasValue)
+                Zoom = state.ZoomLevel.Value;
+            if (state.ScrollPosition.HasValue)
+                ScrollPosition = state.ScrollPosition.Value;
+
+            // Restore playback state
+            if (state.CustomData?.TryGetValue("CurrentTime", out var currentTime) == true && currentTime is double currentTimeVal)
+                CurrentTime = currentTimeVal;
+            if (state.CustomData?.TryGetValue("IsLooping", out var isLooping) == true && isLooping is bool isLoopingVal)
+                IsLooping = isLoopingVal;
+            if (state.CustomData?.TryGetValue("SnapEnabled", out var snapEnabled) == true && snapEnabled is bool snapEnabledVal)
+                SnapEnabled = snapEnabledVal;
+            if (state.CustomData?.TryGetValue("SnapInterval", out var snapInterval) == true && snapInterval is double snapIntervalVal)
+                SnapInterval = snapIntervalVal;
+
+            // Restore selection state
+            if (state.CustomData?.TryGetValue("SelectionStart", out var selStart) == true && selStart is double selStartVal)
+                SelectionStart = selStartVal;
+            if (state.CustomData?.TryGetValue("SelectionEnd", out var selEnd) == true && selEnd is double selEndVal)
+                SelectionEnd = selEndVal;
+
+            // Restore project ID (this will trigger loading)
+            if (state.CustomData?.TryGetValue("ProjectId", out var projectId) == true && projectId is string projectIdStr)
+            {
+                if (ProjectId != projectIdStr)
+                    ProjectId = projectIdStr;
+            }
+
+            // Restore track expansion states (need tracks to be loaded first)
+            if (state.ExpandedSections != null)
+            {
+                foreach (var track in Tracks)
+                {
+                    if (state.ExpandedSections.TryGetValue(track.Id, out var isExpanded))
+                        track.IsExpanded = isExpanded;
+                }
+            }
+
+            // Restore selected clips (need clips to be loaded first)
+            if (state.SelectedItemIds?.Length > 0)
+            {
+                SelectedClips.Clear();
+                foreach (var track in Tracks)
+                {
+                    foreach (var clip in track.Clips)
+                    {
+                        if (state.SelectedItemIds.Contains(clip.Id))
+                        {
+                            clip.IsSelected = true;
+                            SelectedClips.Add(clip);
+                        }
+                    }
+                }
+            }
+
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to restore TimelineViewModel state: {ex.Message}");
+        }
+    }
+
+    #endregion
 }

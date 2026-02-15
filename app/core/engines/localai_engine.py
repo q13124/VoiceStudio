@@ -11,12 +11,12 @@ Compatible with:
 - HTTP API compatible with OpenAI format
 """
 
+from __future__ import annotations
+
 import base64
 import logging
-import os
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PIL import Image
@@ -45,7 +45,7 @@ class LocalAIEngine(EngineProtocol):
         self,
         server_url: str = "http://127.0.0.1:8080",
         model_name: str = "stable-diffusion",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """Initialize LocalAI engine."""
@@ -100,15 +100,14 @@ class LocalAIEngine(EngineProtocol):
         height: int = 512,
         steps: int = 20,
         cfg_scale: float = 7.0,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """Generate image using LocalAI (OpenAI-compatible API)."""
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # LocalAI uses OpenAI-compatible format
@@ -170,7 +169,7 @@ class LocalAIEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -186,7 +185,7 @@ class LocalAIEngine(EngineProtocol):
 def create_localai_engine(
     server_url: str = "http://127.0.0.1:8080",
     model_name: str = "stable-diffusion",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> LocalAIEngine:
     """Factory function to create a LocalAI engine instance."""

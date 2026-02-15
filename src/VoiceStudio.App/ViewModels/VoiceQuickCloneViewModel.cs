@@ -8,7 +8,9 @@ using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Events;
 using VoiceStudio.App.Utilities;
+using VoiceStudio.App.Services;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -21,6 +23,8 @@ namespace VoiceStudio.App.ViewModels
   public partial class VoiceQuickCloneViewModel : BaseViewModel, IPanelView
   {
     private readonly IBackendClient _backendClient;
+    private readonly IEventAggregator? _eventAggregator;
+    private ISubscriptionToken? _cloneReferenceSubscription;
 
     public string PanelId => "voice-quick-clone";
     public string DisplayName => ResourceHelper.GetString("Panel.VoiceQuickClone.DisplayName", "Quick Clone");
@@ -63,6 +67,10 @@ namespace VoiceStudio.App.ViewModels
         : base(context)
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
+      
+      // Subscribe to CloneReferenceSelectedEvent for inter-panel workflow
+      _eventAggregator = AppServices.TryGetEventAggregator();
+      _cloneReferenceSubscription = _eventAggregator?.Subscribe<CloneReferenceSelectedEvent>(OnCloneReferenceSelected);
 
       BrowseAudioCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -114,10 +122,20 @@ namespace VoiceStudio.App.ViewModels
         var picker = new FileOpenPicker();
         picker.ViewMode = PickerViewMode.List;
         picker.SuggestedStartLocation = PickerLocationId.MusicLibrary;
-        picker.FileTypeFilter.Add(".wav");
-        picker.FileTypeFilter.Add(".mp3");
-        picker.FileTypeFilter.Add(".m4a");
-        picker.FileTypeFilter.Add(".flac");
+        
+        // Add all supported media formats (audio + video for audio extraction)
+        foreach (var ext in Core.Audio.AudioFileFormats.GetMediaFileTypeChoices())
+        {
+          picker.FileTypeFilter.Add(ext);
+        }
+
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
 
         var file = await picker.PickSingleFileAsync();
         cancellationToken.ThrowIfCancellationRequested();
@@ -231,7 +249,8 @@ namespace VoiceStudio.App.ViewModels
         {
           Engine = engine,
           QualityMode = qualityMode,
-          Text = null // Quick clone doesn't synthesize text
+          Text = null, // Quick clone doesn't synthesize text
+          ProfileName = ProfileName // Pass user-provided profile name
         };
 
         // Call the clone endpoint
@@ -290,6 +309,69 @@ namespace VoiceStudio.App.ViewModels
       StatusMessage = null;
 
       await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles the CloneReferenceSelectedEvent from Library panel.
+    /// Loads the selected audio file for quick cloning.
+    /// </summary>
+    private async void OnCloneReferenceSelected(CloneReferenceSelectedEvent e)
+    {
+      try
+      {
+        if (string.IsNullOrEmpty(e.AssetPath))
+        {
+          return;
+        }
+
+        // Load the audio file from the asset path
+        await LoadAudioFromPathAsync(e.AssetPath, e.AssetName);
+        
+        StatusMessage = ResourceHelper.FormatString(
+          "VoiceQuickClone.LoadedFromLibrary",
+          $"Loaded '{e.AssetName ?? Path.GetFileName(e.AssetPath)}' for cloning"
+        );
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error loading clone reference: {ex.Message}");
+        ErrorMessage = $"Failed to load audio: {ex.Message}";
+      }
+    }
+
+    /// <summary>
+    /// Loads an audio file from a file path (used by inter-panel workflow).
+    /// </summary>
+    private async Task LoadAudioFromPathAsync(string path, string? displayName = null)
+    {
+      if (string.IsNullOrEmpty(path) || !File.Exists(path))
+      {
+        throw new FileNotFoundException($"Audio file not found: {path}");
+      }
+
+      // Get StorageFile from path
+      var file = await StorageFile.GetFileFromPathAsync(path);
+      SelectedAudioFile = file;
+      
+      // Set profile name from display name or filename
+      if (!string.IsNullOrWhiteSpace(displayName))
+      {
+        ProfileName = $"Quick Clone - {displayName}";
+      }
+    }
+
+    /// <summary>
+    /// Cleanup subscriptions when view model is disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected override void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        _cloneReferenceSubscription?.Dispose();
+        _cloneReferenceSubscription = null;
+      }
+      base.Dispose(disposing);
     }
   }
 }

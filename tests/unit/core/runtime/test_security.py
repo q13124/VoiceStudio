@@ -5,7 +5,6 @@ Tests runtime security policy functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestSecurityClasses:
     def test_security_policy_class_exists(self):
         """Test SecurityPolicy class exists."""
         if hasattr(security, "SecurityPolicy"):
-            cls = getattr(security, "SecurityPolicy")
+            cls = security.SecurityPolicy
             assert isinstance(cls, type), "SecurityPolicy should be a class"
 
 

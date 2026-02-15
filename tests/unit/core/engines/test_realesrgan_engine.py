@@ -5,9 +5,7 @@ Tests RealESRGAN image upscaling engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestRealESRGANEngineImports:
     def test_module_has_realesrgan_engine_class(self):
         """Test module has RealESRGANEngine class."""
         if hasattr(realesrgan_engine, "RealESRGANEngine"):
-            cls = getattr(realesrgan_engine, "RealESRGANEngine")
+            cls = realesrgan_engine.RealESRGANEngine
             assert isinstance(cls, type), "RealESRGANEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestRealESRGANEngineClass:
     def test_realesrgan_engine_class_exists(self):
         """Test RealESRGANEngine class exists."""
         if hasattr(realesrgan_engine, "RealESRGANEngine"):
-            cls = getattr(realesrgan_engine, "RealESRGANEngine")
+            cls = realesrgan_engine.RealESRGANEngine
             assert isinstance(cls, type), "RealESRGANEngine should be a class"
 
     def test_realesrgan_engine_initialization(self):
@@ -115,7 +113,7 @@ class TestRealESRGANEngineCaching:
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 # The method sets self.enable_caching, so after calling it becomes a property
                 # We test that the method exists and the property can be accessed
-                enable_caching_method = getattr(engine, "enable_caching")
+                enable_caching_method = engine.enable_caching
                 if callable(enable_caching_method):
                     # Call the method to disable caching
                     enable_caching_method(False)

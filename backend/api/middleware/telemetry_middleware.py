@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -45,9 +45,9 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        telemetry: Optional[TelemetryService] = None,
+        telemetry: TelemetryService | None = None,
         enabled: bool = True,
-        skip_paths: Optional[list] = None,
+        skip_paths: list | None = None,
     ):
         """
         Initialize telemetry middleware.
@@ -134,10 +134,10 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
 
 
 # Global middleware instance
-_telemetry_middleware: Optional[TelemetryMiddleware] = None
+_telemetry_middleware: TelemetryMiddleware | None = None
 
 
-def get_telemetry_middleware() -> Optional[TelemetryMiddleware]:
+def get_telemetry_middleware() -> TelemetryMiddleware | None:
     """Get the global telemetry middleware instance."""
     return _telemetry_middleware
 
@@ -145,7 +145,7 @@ def get_telemetry_middleware() -> Optional[TelemetryMiddleware]:
 def setup_telemetry_middleware(
     app: ASGIApp,
     enabled: bool = True,
-    telemetry: Optional[TelemetryService] = None,
+    telemetry: TelemetryService | None = None,
 ) -> TelemetryMiddleware:
     """
     Setup telemetry middleware on an ASGI app.

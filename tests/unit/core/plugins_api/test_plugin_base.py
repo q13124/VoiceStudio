@@ -5,7 +5,6 @@ Tests plugin API base functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestPluginsAPIBaseClasses:
     def test_plugin_base_class_exists(self):
         """Test PluginBase class exists."""
         if hasattr(base, "PluginBase"):
-            cls = getattr(base, "PluginBase")
+            cls = base.PluginBase
             assert isinstance(cls, type), "PluginBase should be a class"
 
 

@@ -8,15 +8,15 @@ This module provides:
 - Security database for watermark tracking
 """
 
-from .watermarking import AudioWatermarker, WatermarkMethod
-from .deepfake_detector import DeepfakeDetector
 from .database import WatermarkDatabase
+from .deepfake_detector import DeepfakeDetector
+from .watermarking import AudioWatermarker, WatermarkMethod
 
 __all__ = [
     "AudioWatermarker",
-    "WatermarkMethod",
     "DeepfakeDetector",
     "WatermarkDatabase",
+    "WatermarkMethod",
 ]
 
 __version__ = "1.0.0"

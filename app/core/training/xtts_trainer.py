@@ -9,14 +9,18 @@ Compatible with:
 - PyTorch 2.2.2+cu121
 """
 
+from __future__ import annotations
+
 import asyncio
+import contextlib
 import json
 import logging
 import os
 import shutil
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -137,9 +141,9 @@ class XTTSTrainer:
     def __init__(
         self,
         base_model: str = "tts_models/multilingual/multi-dataset/xtts_v2",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ):
         """
         Initialize XTTS trainer.
@@ -175,7 +179,7 @@ class XTTSTrainer:
         enable_time_stretch: bool = True,
         enable_pitch_shift: bool = True,
         enable_shift: bool = True,
-    ) -> Optional[any]:
+    ) -> any | None:
         """
         Create audio augmentation pipeline for training data augmentation.
 
@@ -223,9 +227,9 @@ class XTTSTrainer:
 
     def prepare_dataset(
         self,
-        audio_files: List[str],
-        transcripts: Optional[List[str]] = None,
-        output_metadata: Optional[str] = None,
+        audio_files: list[str],
+        transcripts: list[str] | None = None,
+        output_metadata: str | None = None,
         apply_augmentation: bool = False,
     ) -> str:
         """
@@ -286,10 +290,8 @@ class XTTSTrainer:
                 # Get sample rate from first file
                 sample_rate = 22050  # Default
                 if valid_files:
-                    try:
+                    with contextlib.suppress(Exception):
                         _, sample_rate = sf.read(valid_files[0], frames=1)
-                    except Exception:
-                        ...
 
                 augmentation_pipeline = self.create_augmentation_pipeline(
                     sample_rate=sample_rate
@@ -342,7 +344,7 @@ class XTTSTrainer:
         )
         return metadata_path
 
-    def initialize_model(self, config_path: Optional[str] = None) -> bool:
+    def initialize_model(self, config_path: str | None = None) -> bool:
         """
         Initialize XTTS model for training.
 
@@ -366,7 +368,7 @@ class XTTSTrainer:
                 # Load config from model directory
                 config_file = Path(model_path).parent / "config.json"
                 if config_file.exists():
-                    with open(config_file, "r") as f:
+                    with open(config_file) as f:
                         config_dict = json.load(f)
                     self.config = XttsConfig()
                     self.config.from_dict(config_dict)
@@ -403,9 +405,9 @@ class XTTSTrainer:
         epochs: int = 100,
         batch_size: int = 4,
         learning_rate: float = 0.0001,
-        progress_callback: Optional[Callable[[Dict], None]] = None,
-        checkpoint_dir: Optional[str] = None,
-    ) -> Dict:
+        progress_callback: Callable[[dict], None] | None = None,
+        checkpoint_dir: str | None = None,
+    ) -> dict:
         """
         Train XTTS model on dataset.
 
@@ -608,10 +610,10 @@ class XTTSTrainer:
             await asyncio.sleep(0.1)  # Simulate training time
             return max(0.1, 1.0 - (epoch / total_epochs) * 0.8)
 
-    def _load_dataset(self, metadata_path: str) -> Tuple[List, List]:
+    def _load_dataset(self, metadata_path: str) -> tuple[list, list]:
         """Load dataset from metadata file."""
         try:
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
             # Convert to TTS format
@@ -695,7 +697,7 @@ class XTTSTrainer:
         logger.info("Training cancellation requested")
 
     def export_model(
-        self, checkpoint_path: str, output_path: Optional[str] = None
+        self, checkpoint_path: str, output_path: str | None = None
     ) -> str:
         """
         Export trained model for inference.
@@ -737,9 +739,9 @@ class XTTSTrainer:
         self,
         method: str = "optuna",
         n_trials: int = 20,
-        search_space: Optional[Dict] = None,
-        metadata_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        search_space: dict | None = None,
+        metadata_path: str | None = None,
+    ) -> dict[str, Any]:
         """
         Optimize hyperparameters using optuna, ray[tune], or hyperopt.
 
@@ -767,9 +769,9 @@ class XTTSTrainer:
     def _optimize_with_optuna(
         self,
         n_trials: int,
-        search_space: Optional[Dict],
-        metadata_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        search_space: dict | None,
+        metadata_path: str | None = None,
+    ) -> dict[str, Any]:
         """Optimize hyperparameters using Optuna."""
         if not HAS_OPTUNA:
             raise ImportError(
@@ -816,9 +818,9 @@ class XTTSTrainer:
     def _optimize_with_ray(
         self,
         n_trials: int,
-        search_space: Optional[Dict],
-        metadata_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        search_space: dict | None,
+        metadata_path: str | None = None,
+    ) -> dict[str, Any]:
         """Optimize hyperparameters using Ray Tune."""
         if not HAS_RAY:
             raise ImportError(
@@ -861,9 +863,9 @@ class XTTSTrainer:
     def _optimize_with_hyperopt(
         self,
         n_trials: int,
-        search_space: Optional[Dict],
-        metadata_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        search_space: dict | None,
+        metadata_path: str | None = None,
+    ) -> dict[str, Any]:
         """Optimize hyperparameters using Hyperopt."""
         if not HAS_HYPEROPT:
             raise ImportError(
@@ -913,7 +915,7 @@ class XTTSTrainer:
         learning_rate: float,
         batch_size: int,
         weight_decay: float,
-        metadata_path: Optional[str] = None,
+        metadata_path: str | None = None,
     ) -> float:
         """
         Evaluate hyperparameters by running a short validation training epoch.

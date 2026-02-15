@@ -8,11 +8,13 @@ Monitors system memory and triggers eviction when pressure is high.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Callable, Awaitable, Optional, List, Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ class DetectorConfig:
 class MemoryPressureDetector:
     """
     Detects memory pressure and triggers callbacks.
-    
+
     Features:
     - System memory monitoring
     - GPU memory monitoring
@@ -70,29 +72,29 @@ class MemoryPressureDetector:
     - Memory history tracking
     - Automatic garbage collection
     """
-    
-    def __init__(self, config: Optional[DetectorConfig] = None):
+
+    def __init__(self, config: DetectorConfig | None = None):
         self.config = config or DetectorConfig()
-        
+
         self._current_level = PressureLevel.NORMAL
-        self._callbacks: Dict[PressureLevel, List[Callable[[PressureEvent], Awaitable[None]]]] = {
+        self._callbacks: dict[PressureLevel, list[Callable[[PressureEvent], Awaitable[None]]]] = {
             level: [] for level in PressureLevel
         }
-        self._history: List[Dict[str, Any]] = []
+        self._history: list[dict[str, Any]] = []
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
-    
+
     @property
     def current_level(self) -> PressureLevel:
         """Current pressure level."""
         return self._current_level
-    
+
     @property
     def is_under_pressure(self) -> bool:
         """Whether system is under memory pressure."""
         return self._current_level >= PressureLevel.HIGH
-    
+
     def register_callback(
         self,
         level: PressureLevel,
@@ -100,12 +102,12 @@ class MemoryPressureDetector:
     ) -> None:
         """
         Register a callback for a pressure level.
-        
+
         Callback is called when pressure transitions to or above this level.
         """
         self._callbacks[level].append(callback)
         logger.debug(f"Registered callback for pressure level {level.name}")
-    
+
     def on_pressure(
         self,
         level: PressureLevel,
@@ -115,24 +117,22 @@ class MemoryPressureDetector:
             self.register_callback(level, func)
             return func
         return decorator
-    
+
     async def start(self) -> None:
         """Start the pressure detector."""
         self._running = True
         self._task = asyncio.create_task(self._monitor_loop())
         logger.info("Memory pressure detector started")
-    
+
     async def stop(self) -> None:
         """Stop the pressure detector."""
         self._running = False
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         logger.info("Memory pressure detector stopped")
-    
+
     async def _monitor_loop(self) -> None:
         """Main monitoring loop."""
         while self._running:
@@ -144,25 +144,25 @@ class MemoryPressureDetector:
             except Exception as e:
                 logger.error(f"Pressure detection error: {e}")
                 await asyncio.sleep(1.0)
-    
+
     async def _check_pressure(self) -> None:
         """Check current memory pressure."""
         async with self._lock:
             # Get memory stats
             mem_stats = self._get_memory_stats()
             gpu_stats = self._get_gpu_stats() if self.config.enable_gpu_monitoring else {}
-            
+
             # Calculate pressure level
             new_level = self._calculate_level(mem_stats["percent"])
-            
+
             # Record history
             self._record_history(mem_stats, gpu_stats, new_level)
-            
+
             # Handle level transition
             if new_level != self._current_level:
                 await self._handle_transition(new_level, mem_stats, gpu_stats)
-    
-    def _get_memory_stats(self) -> Dict[str, Any]:
+
+    def _get_memory_stats(self) -> dict[str, Any]:
         """Get system memory statistics."""
         try:
             import psutil
@@ -181,8 +181,8 @@ class MemoryPressureDetector:
                 "percent": 0.5,
                 "available": 8 * 1024 * 1024 * 1024,
             }
-    
-    def _get_gpu_stats(self) -> Dict[str, Any]:
+
+    def _get_gpu_stats(self) -> dict[str, Any]:
         """Get GPU memory statistics."""
         try:
             import torch
@@ -201,13 +201,13 @@ class MemoryPressureDetector:
                 }
         except ImportError:
             logger.debug("PyTorch not available for GPU memory tracking")
-        
+
         return {"used": 0, "total": 0, "percent": 0}
-    
+
     def _calculate_level(self, memory_percent: float) -> PressureLevel:
         """Calculate pressure level from memory percentage."""
         thresholds = self.config.thresholds
-        
+
         if memory_percent >= thresholds.emergency:
             return PressureLevel.EMERGENCY
         elif memory_percent >= thresholds.critical:
@@ -218,11 +218,11 @@ class MemoryPressureDetector:
             return PressureLevel.MODERATE
         else:
             return PressureLevel.NORMAL
-    
+
     def _record_history(
         self,
-        mem_stats: Dict[str, Any],
-        gpu_stats: Dict[str, Any],
+        mem_stats: dict[str, Any],
+        gpu_stats: dict[str, Any],
         level: PressureLevel,
     ) -> None:
         """Record memory stats to history."""
@@ -234,21 +234,21 @@ class MemoryPressureDetector:
             "gpu_percent": round(gpu_stats.get("percent", 0) * 100, 1),
             "gpu_used_gb": round(gpu_stats.get("used", 0) / 1e9, 2),
         })
-        
+
         # Trim history
         if len(self._history) > self.config.history_size:
             self._history = self._history[-self.config.history_size:]
-    
+
     async def _handle_transition(
         self,
         new_level: PressureLevel,
-        mem_stats: Dict[str, Any],
-        gpu_stats: Dict[str, Any],
+        mem_stats: dict[str, Any],
+        gpu_stats: dict[str, Any],
     ) -> None:
         """Handle pressure level transition."""
         old_level = self._current_level
         self._current_level = new_level
-        
+
         event = PressureEvent(
             level=new_level,
             previous_level=old_level,
@@ -258,18 +258,18 @@ class MemoryPressureDetector:
             gpu_memory_used_bytes=gpu_stats.get("used", 0),
             gpu_memory_total_bytes=gpu_stats.get("total", 0),
         )
-        
+
         logger.info(
             f"Memory pressure: {old_level.name} -> {new_level.name} "
             f"({mem_stats['percent']*100:.1f}% used)"
         )
-        
+
         # Run garbage collection on high pressure
         if new_level >= PressureLevel.HIGH and self.config.auto_gc_on_high:
             import gc
             gc.collect()
             logger.debug("Triggered garbage collection")
-        
+
         # Fire callbacks for this level and all lower levels
         for level in PressureLevel:
             if level <= new_level and level > old_level:
@@ -278,17 +278,17 @@ class MemoryPressureDetector:
                         await callback(event)
                     except Exception as e:
                         logger.error(f"Pressure callback error: {e}")
-    
+
     async def force_check(self) -> PressureLevel:
         """Force an immediate pressure check."""
         await self._check_pressure()
         return self._current_level
-    
-    def get_current_stats(self) -> Dict[str, Any]:
+
+    def get_current_stats(self) -> dict[str, Any]:
         """Get current memory statistics."""
         mem_stats = self._get_memory_stats()
         gpu_stats = self._get_gpu_stats() if self.config.enable_gpu_monitoring else {}
-        
+
         return {
             "level": self._current_level.name,
             "is_under_pressure": self.is_under_pressure,
@@ -309,11 +309,11 @@ class MemoryPressureDetector:
                 "emergency": self.config.thresholds.emergency * 100,
             },
         }
-    
-    def get_history(self, limit: int = 60) -> List[Dict[str, Any]]:
+
+    def get_history(self, limit: int = 60) -> list[dict[str, Any]]:
         """Get recent memory history."""
         return self._history[-limit:]
-    
+
     def get_stats(self) -> dict:
         """Get detector statistics."""
         return {
@@ -327,7 +327,7 @@ class MemoryPressureDetector:
 
 
 # Global detector instance
-_detector: Optional[MemoryPressureDetector] = None
+_detector: MemoryPressureDetector | None = None
 
 
 def get_pressure_detector() -> MemoryPressureDetector:

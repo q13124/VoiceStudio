@@ -12,13 +12,15 @@ Usage:
     store.delete("asset-123")
 """
 
+from __future__ import annotations
+
+import builtins
 import json
 import logging
 import os
 import threading
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ _DATA_ROOT = os.environ.get(
 class JsonFileStore:
     """Thread-safe persistent JSON file store."""
 
-    def __init__(self, collection: str, data_root: Optional[str] = None, max_items: int = 10000):
+    def __init__(self, collection: str, data_root: str | None = None, max_items: int = 10000):
         """
         Initialize the store.
 
@@ -45,7 +47,7 @@ class JsonFileStore:
         self._collection = collection
         self._max_items = max_items
         self._lock = threading.RLock()
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._loaded = False
 
         # Ensure directory exists
@@ -63,7 +65,7 @@ class JsonFileStore:
                     if filename.endswith(".json"):
                         filepath = os.path.join(self._root, filename)
                         try:
-                            with open(filepath, "r", encoding="utf-8") as f:
+                            with open(filepath, encoding="utf-8") as f:
                                 data = json.load(f)
                                 item_id = filename[:-5]  # Remove .json
                                 self._cache[item_id] = data
@@ -77,7 +79,7 @@ class JsonFileStore:
                 logger.warning(f"Failed to list store directory {self._root}: {e}")
                 self._loaded = True
 
-    def _write_to_disk(self, item_id: str, data: Dict[str, Any]):
+    def _write_to_disk(self, item_id: str, data: dict[str, Any]):
         """Write a single item to disk atomically."""
         filepath = os.path.join(self._root, f"{item_id}.json")
         tmp_path = filepath + ".tmp"
@@ -121,7 +123,7 @@ class JsonFileStore:
             self._delete_from_disk(item_id)
         logger.info(f"JsonFileStore[{self._collection}]: Evicted {excess} old items")
 
-    def put(self, item_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def put(self, item_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Store or update an item."""
         self._ensure_loaded()
         with self._lock:
@@ -136,19 +138,19 @@ class JsonFileStore:
             self._evict_if_needed()
             return data
 
-    def get(self, item_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, item_id: str) -> dict[str, Any] | None:
         """Get an item by ID. Returns None if not found."""
         self._ensure_loaded()
         with self._lock:
             return self._cache.get(item_id)
 
-    def list(self) -> List[Dict[str, Any]]:
+    def list(self) -> list[dict[str, Any]]:
         """List all items."""
         self._ensure_loaded()
         with self._lock:
             return list(self._cache.values())
 
-    def list_ids(self) -> List[str]:
+    def list_ids(self) -> builtins.list[str]:
         """List all item IDs."""
         self._ensure_loaded()
         with self._lock:
@@ -176,7 +178,7 @@ class JsonFileStore:
         with self._lock:
             return item_id in self._cache
 
-    def search(self, predicate) -> List[Dict[str, Any]]:
+    def search(self, predicate) -> builtins.list[dict[str, Any]]:
         """Search items matching a predicate function."""
         self._ensure_loaded()
         with self._lock:

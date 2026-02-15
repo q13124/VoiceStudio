@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoiceStudio.Core.State;
+using VoiceStudio.Core.State.Commands;
 
 namespace VoiceStudio.App.Services.State
 {
@@ -90,6 +91,47 @@ namespace VoiceStudio.App.Services.State
     public T Select<T>(Func<AppState, T> selector)
     {
       return selector(State);
+    }
+
+    /// <summary>
+    /// Gets whether an undo operation is available.
+    /// This implementation does not support undo/redo - use the full AppStateStore in VoiceStudio.App.Services.
+    /// </summary>
+    public bool CanUndo => false;
+
+    /// <summary>
+    /// Gets whether a redo operation is available.
+    /// This implementation does not support undo/redo - use the full AppStateStore in VoiceStudio.App.Services.
+    /// </summary>
+    public bool CanRedo => false;
+
+    /// <summary>
+    /// Executes a command.
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    public void ExecuteCommand(IStateCommand command)
+    {
+      Dispatch(command.Execute);
+    }
+
+    /// <summary>
+    /// Undoes the last command.
+    /// This implementation does not support undo/redo - always returns false.
+    /// </summary>
+    public bool Undo()
+    {
+      // Not supported in this implementation
+      return false;
+    }
+
+    /// <summary>
+    /// Redoes the last undone command.
+    /// This implementation does not support undo/redo - always returns false.
+    /// </summary>
+    public bool Redo()
+    {
+      // Not supported in this implementation
+      return false;
     }
 
     private void NotifyStateChanged(AppState previousState, AppState newState)

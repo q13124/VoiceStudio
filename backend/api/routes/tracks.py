@@ -7,20 +7,18 @@ Integrates ArtifactRefCounter for audio artifact lifecycle management.
 Supports undo/redo via EditHistory.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..deps import (
-    TrackStoreDep,
     ArtifactRefCounterDep,
     EditHistoryDep,
-    get_track_store_dep,
-    get_ref_counter_dep,
-    get_edit_history_dep,
+    TrackStoreDep,
 )
 from ..models import ApiOk
 from ..optimization import cache_response
@@ -38,27 +36,27 @@ class AudioClip(BaseModel):
     audio_url: str
     duration_seconds: float
     start_time: float
-    engine: Optional[str] = None
-    quality_score: Optional[float] = None
+    engine: str | None = None
+    quality_score: float | None = None
 
 
 class AudioTrack(BaseModel):
     id: str
     name: str
     project_id: str
-    clips: List[AudioClip] = []
+    clips: list[AudioClip] = []
     track_number: int
-    engine: Optional[str] = None
+    engine: str | None = None
 
 
 class TrackCreateRequest(BaseModel):
     name: str
-    engine: Optional[str] = None
+    engine: str | None = None
 
 
 class TrackUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    engine: Optional[str] = None
+    name: str | None = None
+    engine: str | None = None
 
 
 class ClipCreateRequest(BaseModel):
@@ -68,13 +66,13 @@ class ClipCreateRequest(BaseModel):
     audio_url: str
     duration_seconds: float
     start_time: float
-    engine: Optional[str] = None
-    quality_score: Optional[float] = None
+    engine: str | None = None
+    quality_score: float | None = None
 
 
 class ClipUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    start_time: Optional[float] = None
+    name: str | None = None
+    start_time: float | None = None
 
 
 # TrackStore is now used for persistent storage
@@ -106,12 +104,12 @@ def _track_dict_to_model(track_data: dict) -> AudioTrack:
     )
 
 
-@router.get("", response_model=List[AudioTrack])
+@router.get("", response_model=list[AudioTrack])
 @cache_response(ttl=30)  # Cache for 30 seconds (tracks may change frequently)
 def list_tracks(
     project_id: str,
     track_store: TrackStoreDep,
-) -> List[AudioTrack]:
+) -> list[AudioTrack]:
     """List all tracks for a project."""
     try:
         if not project_id or not project_id.strip():
@@ -127,9 +125,9 @@ def list_tracks(
         raise
     except Exception as e:
         logger.error(
-            f"Error listing tracks for project {project_id}: {str(e)}", exc_info=True
+            f"Error listing tracks for project {project_id}: {e!s}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail=f"Failed to list tracks: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list tracks: {e!s}")
 
 
 @router.get("/{track_id}", response_model=AudioTrack)
@@ -157,10 +155,10 @@ def get_track(
         raise
     except Exception as e:
         logger.error(
-            f"Error getting track {track_id} from project {project_id}: {str(e)}",
+            f"Error getting track {track_id} from project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get track: {e!s}")
 
 
 @router.post("", response_model=AudioTrack)
@@ -206,9 +204,9 @@ def create_track(
         raise
     except Exception as e:
         logger.error(
-            f"Error creating track in project {project_id}: {str(e)}", exc_info=True
+            f"Error creating track in project {project_id}: {e!s}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail=f"Failed to create track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create track: {e!s}")
 
 
 @router.put("/{track_id}", response_model=AudioTrack)
@@ -249,10 +247,10 @@ def update_track(
         raise
     except Exception as e:
         logger.error(
-            f"Error updating track {track_id} in project {project_id}: {str(e)}",
+            f"Error updating track {track_id} in project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to update track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update track: {e!s}")
 
 
 @router.delete("/{track_id}", response_model=ApiOk)
@@ -296,10 +294,10 @@ def delete_track(
         raise
     except Exception as e:
         logger.error(
-            f"Error deleting track {track_id} from project {project_id}: {str(e)}",
+            f"Error deleting track {track_id} from project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to delete track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete track: {e!s}")
 
 
 # Clip endpoints
@@ -366,10 +364,10 @@ def create_clip(
         raise
     except Exception as e:
         logger.error(
-            f"Error creating clip in track {track_id} of project {project_id}: {str(e)}",
+            f"Error creating clip in track {track_id} of project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to create clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create clip: {e!s}")
 
 
 @router.put("/{track_id}/clips/{clip_id}", response_model=AudioClip)
@@ -424,10 +422,10 @@ def update_clip(
         raise
     except Exception as e:
         logger.error(
-            f"Error updating clip {clip_id} in track {track_id} of project {project_id}: {str(e)}",
+            f"Error updating clip {clip_id} in track {track_id} of project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to update clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update clip: {e!s}")
 
 
 @router.delete("/{track_id}/clips/{clip_id}", response_model=ApiOk)
@@ -480,17 +478,17 @@ def delete_clip(
         raise
     except Exception as e:
         logger.error(
-            f"Error deleting clip {clip_id} from track {track_id} of project {project_id}: {str(e)}",
+            f"Error deleting clip {clip_id} from track {track_id} of project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to delete clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete clip: {e!s}")
 
 
 # Undo/Redo endpoints
 class UndoRedoResponse(BaseModel):
     """Response model for undo/redo operations."""
     success: bool
-    description: Optional[str] = None
+    description: str | None = None
     can_undo: bool = False
     can_redo: bool = False
 
@@ -537,8 +535,8 @@ def undo_track_edit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error during undo in project {project_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to undo: {str(e)}")
+        logger.error(f"Error during undo in project {project_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to undo: {e!s}")
 
 
 @router.post("/redo", response_model=UndoRedoResponse)
@@ -571,5 +569,5 @@ def redo_track_edit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error during redo in project {project_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to redo: {str(e)}")
+        logger.error(f"Error during redo in project {project_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to redo: {e!s}")

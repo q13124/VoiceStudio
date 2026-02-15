@@ -1,0 +1,258 @@
+// VoiceStudio - Panel Architecture Phase 2: Context Manager
+// Centralized shared read model for active state across panels
+
+using System;
+using VoiceStudio.Core.Events;
+
+namespace VoiceStudio.Core.Services;
+
+/// <summary>
+/// Event raised when context changes.
+/// </summary>
+public class ContextChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// Which context property changed.
+    /// </summary>
+    public string PropertyName { get; }
+
+    /// <summary>
+    /// The intent associated with the change.
+    /// </summary>
+    public InteractionIntent Intent { get; }
+
+    /// <summary>
+    /// Previous value (may be null).
+    /// </summary>
+    public string? OldValue { get; }
+
+    /// <summary>
+    /// New value (may be null).
+    /// </summary>
+    public string? NewValue { get; }
+
+    public ContextChangedEventArgs(string propertyName, InteractionIntent intent, string? oldValue, string? newValue)
+    {
+        PropertyName = propertyName;
+        Intent = intent;
+        OldValue = oldValue;
+        NewValue = newValue;
+    }
+}
+
+/// <summary>
+/// Centralized manager for active/selected state across panels.
+/// Provides a single source of truth for cross-panel coordination.
+/// </summary>
+public interface IContextManager
+{
+    #region Active State Properties
+
+    /// <summary>
+    /// Currently active voice profile ID.
+    /// </summary>
+    string? ActiveProfileId { get; }
+
+    /// <summary>
+    /// Currently active voice profile name.
+    /// </summary>
+    string? ActiveProfileName { get; }
+
+    /// <summary>
+    /// Currently active project ID.
+    /// </summary>
+    string? ActiveProjectId { get; }
+
+    /// <summary>
+    /// Currently active project name.
+    /// </summary>
+    string? ActiveProjectName { get; }
+
+    /// <summary>
+    /// Currently active/selected asset ID.
+    /// </summary>
+    string? ActiveAssetId { get; }
+
+    /// <summary>
+    /// Currently active/selected asset type.
+    /// </summary>
+    string? ActiveAssetType { get; }
+
+    /// <summary>
+    /// Currently active engine ID.
+    /// </summary>
+    string? ActiveEngineId { get; }
+
+    /// <summary>
+    /// Currently active job ID (for tracking in-progress operations).
+    /// </summary>
+    string? ActiveJobId { get; }
+
+    #endregion
+
+    #region State Setters
+
+    /// <summary>
+    /// Sets the active profile and publishes ProfileSelectedEvent.
+    /// </summary>
+    void SetActiveProfile(string? profileId, string? profileName = null, InteractionIntent intent = InteractionIntent.Navigation);
+
+    /// <summary>
+    /// Sets the active project and publishes ProjectChangedEvent.
+    /// </summary>
+    void SetActiveProject(string? projectId, string? projectName = null, InteractionIntent intent = InteractionIntent.Navigation);
+
+    /// <summary>
+    /// Sets the active asset and publishes AssetSelectedEvent.
+    /// </summary>
+    void SetActiveAsset(string? assetId, string? assetType = null, string? assetName = null, InteractionIntent intent = InteractionIntent.Navigation);
+
+    /// <summary>
+    /// Sets the active engine and publishes EngineChangedEvent.
+    /// </summary>
+    void SetActiveEngine(string? engineId, string? engineName = null, InteractionIntent intent = InteractionIntent.Navigation);
+
+    /// <summary>
+    /// Sets the active job ID (for tracking in-progress operations).
+    /// </summary>
+    void SetActiveJob(string? jobId, InteractionIntent intent = InteractionIntent.BackgroundProcess);
+
+    #endregion
+
+    #region State Selectors
+
+    /// <summary>
+    /// Returns true if all requirements for voice cloning are met.
+    /// </summary>
+    bool IsVoiceCloningReady();
+
+    /// <summary>
+    /// Returns true if all requirements for synthesis are met.
+    /// </summary>
+    bool IsSynthesisReady();
+
+    /// <summary>
+    /// Returns true if there is an active job in progress.
+    /// </summary>
+    bool HasActiveJob();
+
+    #endregion
+
+    #region Events
+
+    /// <summary>
+    /// Raised when any context property changes.
+    /// </summary>
+    event EventHandler<ContextChangedEventArgs>? ContextChanged;
+
+    /// <summary>
+    /// Raised when view state changes in a linked panel.
+    /// </summary>
+    event EventHandler<PanelViewStateChangedEventArgs>? ViewStateChanged;
+
+    #endregion
+
+    #region Panel Linking (Phase 6)
+
+    /// <summary>
+    /// Links two panels to synchronize their view state.
+    /// </summary>
+    /// <param name="panelId1">First panel ID.</param>
+    /// <param name="panelId2">Second panel ID.</param>
+    void LinkPanels(string panelId1, string panelId2);
+
+    /// <summary>
+    /// Unlinks two panels.
+    /// </summary>
+    /// <param name="panelId1">First panel ID.</param>
+    /// <param name="panelId2">Second panel ID.</param>
+    void UnlinkPanels(string panelId1, string panelId2);
+
+    /// <summary>
+    /// Gets all panels linked to the specified panel.
+    /// </summary>
+    /// <param name="panelId">The panel ID to query.</param>
+    /// <returns>Collection of linked panel IDs.</returns>
+    IReadOnlyCollection<string> GetLinkedPanels(string panelId);
+
+    /// <summary>
+    /// Checks if two panels are linked.
+    /// </summary>
+    bool ArePanelsLinked(string panelId1, string panelId2);
+
+    /// <summary>
+    /// Publishes a view state change to all linked panels.
+    /// </summary>
+    /// <param name="sourcePanelId">The panel that originated the change.</param>
+    /// <param name="viewState">The view state to synchronize.</param>
+    void PublishViewState(string sourcePanelId, PanelViewState viewState);
+
+    #endregion
+}
+
+/// <summary>
+/// View state for panel synchronization.
+/// </summary>
+public sealed class PanelViewState
+{
+    /// <summary>
+    /// Horizontal scroll offset.
+    /// </summary>
+    public double ScrollX { get; init; }
+
+    /// <summary>
+    /// Vertical scroll offset.
+    /// </summary>
+    public double ScrollY { get; init; }
+
+    /// <summary>
+    /// Zoom level (1.0 = 100%).
+    /// </summary>
+    public double ZoomLevel { get; init; } = 1.0;
+
+    /// <summary>
+    /// Selected item IDs.
+    /// </summary>
+    public IReadOnlyList<string> SelectedIds { get; init; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Playhead/cursor position (for timeline panels).
+    /// </summary>
+    public double? CursorPosition { get; init; }
+
+    /// <summary>
+    /// Custom state data for panel-specific synchronization.
+    /// </summary>
+    public IReadOnlyDictionary<string, object>? CustomData { get; init; }
+}
+
+/// <summary>
+/// Event arguments for view state changes.
+/// </summary>
+public sealed class PanelViewStateChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// Panel that originated the change.
+    /// </summary>
+    public string SourcePanelId { get; }
+
+    /// <summary>
+    /// The new view state.
+    /// </summary>
+    public PanelViewState ViewState { get; }
+
+    /// <summary>
+    /// IDs of linked panels that should synchronize.
+    /// </summary>
+    public IReadOnlyCollection<string> LinkedPanelIds { get; }
+
+    public PanelViewStateChangedEventArgs(
+        string sourcePanelId,
+        PanelViewState viewState,
+        IReadOnlyCollection<string> linkedPanelIds)
+    {
+        SourcePanelId = sourcePanelId;
+        ViewState = viewState;
+        LinkedPanelIds = linkedPanelIds;
+    }
+}

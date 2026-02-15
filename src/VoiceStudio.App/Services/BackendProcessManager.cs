@@ -120,16 +120,23 @@ public sealed class BackendProcessManager : IDisposable
                 return false;
             }
 
-            var venvPython = Path.Combine(repoRoot, "venv", "Scripts", "python.exe");
-            if (!File.Exists(venvPython))
+            // Search for Python in priority order:
+            // 1. Bundled runtime (installed by installer/prepare-runtime.ps1)
+            // 2. Local venv
+            // 3. Alternate venv (.venv)
+            var pythonCandidates = new[]
             {
-                // Try alternate location
-                venvPython = Path.Combine(repoRoot, ".venv", "Scripts", "python.exe");
-            }
+                Path.Combine(repoRoot, "Runtime", "python", "python.exe"),
+                Path.Combine(repoRoot, "venv", "Scripts", "python.exe"),
+                Path.Combine(repoRoot, ".venv", "Scripts", "python.exe"),
+            };
 
-            if (!File.Exists(venvPython))
+            var venvPython = Array.Find(pythonCandidates, File.Exists);
+
+            if (venvPython == null)
             {
-                var error = $"Python venv not found at expected locations";
+                var error = "Python runtime not found. Checked: " +
+                    string.Join(", ", pythonCandidates.Select(p => Path.GetDirectoryName(p) ?? p));
                 Debug.WriteLine($"[BackendProcessManager] {error}");
                 BackendStartFailed?.Invoke(this, error);
                 return false;
@@ -150,6 +157,23 @@ public sealed class BackendProcessManager : IDisposable
             // Set environment
             psi.Environment["PYTHONPATH"] = repoRoot;
             psi.Environment["PYTHONUNBUFFERED"] = "1";
+
+            // Point to bundled FFmpeg if available
+            var bundledFfmpeg = Path.Combine(repoRoot, "Runtime", "ffmpeg", "ffmpeg.exe");
+            if (File.Exists(bundledFfmpeg))
+            {
+                psi.Environment["VOICESTUDIO_FFMPEG_PATH"] = bundledFfmpeg;
+            }
+
+            // Detect portable mode
+            var portableFlag = Path.Combine(repoRoot, "portable.flag");
+            if (File.Exists(portableFlag))
+            {
+                psi.Environment["VOICESTUDIO_DATA_DIR"] = Path.Combine(repoRoot, "data");
+                psi.Environment["VOICESTUDIO_MODELS_DIR"] = Path.Combine(repoRoot, "models");
+                psi.Environment["VOICESTUDIO_DB_PATH"] = Path.Combine(repoRoot, "data", "voicestudio.db");
+                Debug.WriteLine("[BackendProcessManager] Portable mode active - data stored relative to app root");
+            }
 
             Debug.WriteLine($"[BackendProcessManager] Starting backend: {psi.FileName} {psi.Arguments}");
             Debug.WriteLine($"[BackendProcessManager] Working directory: {repoRoot}");

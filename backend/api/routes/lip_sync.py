@@ -6,10 +6,12 @@ Provides endpoints for automatic lip sync generation with
 multiple engines (Wav2Lip, SadTalker, FOMM).
 """
 
-import logging
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+import logging
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -60,7 +62,7 @@ class PhonemeExtractionRequest(BaseModel):
 
 class PhonemeExtractionResponse(BaseModel):
     """Response for phoneme extraction."""
-    phonemes: List[Dict[str, Any]]
+    phonemes: list[dict[str, Any]]
     total_duration: float
 
 
@@ -81,21 +83,21 @@ class LipSyncEngine(BaseModel):
 async def generate_lip_sync(request: LipSyncRequest):
     """
     Generate lip-synced video from audio.
-    
+
     Phase 10.1.1: Automatic lip sync with selected engine.
-    
+
     Args:
         request: Lip sync parameters
-        
+
     Returns:
         Output video ID with sync metadata
     """
     try:
         from backend.services.lip_sync_service import (
-            get_lip_sync_service,
             LipSyncServiceUnavailable,
+            get_lip_sync_service,
         )
-        
+
         service = get_lip_sync_service()
         result = await service.generate(
             video_id=request.video_id,
@@ -103,20 +105,20 @@ async def generate_lip_sync(request: LipSyncRequest):
             engine=request.engine,
             quality=request.quality,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Lip sync generation failed")
             )
-        
+
         return LipSyncResponse(
             output_video_id=result["output_video_id"],
             engine=request.engine,
             processing_time_seconds=result.get("processing_time_seconds", 0.0),
             frame_count=result.get("frame_count", 0),
         )
-    
+
     except HTTPException:
         raise
     except LipSyncServiceUnavailable as e:
@@ -129,7 +131,7 @@ async def generate_lip_sync(request: LipSyncRequest):
         logger.error(f"Lip sync generation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Lip sync generation failed: {str(e)}"
+            detail=f"Lip sync generation failed: {e!s}"
         ) from e
 
 
@@ -137,18 +139,18 @@ async def generate_lip_sync(request: LipSyncRequest):
 async def preview_lip_sync(request: LipSyncPreviewRequest):
     """
     Generate lip sync preview for timeline.
-    
+
     Phase 10.1.2: Timeline preview.
-    
+
     Args:
         request: Preview parameters with time range
-        
+
     Returns:
         Preview video segment
     """
     try:
         from backend.services.lip_sync_service import get_lip_sync_service
-        
+
         service = get_lip_sync_service()
         result = await service.generate_preview(
             video_id=request.video_id,
@@ -157,27 +159,27 @@ async def preview_lip_sync(request: LipSyncPreviewRequest):
             duration=request.duration,
             engine=request.engine,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Lip sync preview failed")
             )
-        
+
         return LipSyncPreviewResponse(
             preview_video_id=result["preview_video_id"],
             start_time=request.start_time,
             end_time=request.start_time + request.duration,
             frames_processed=result.get("frames_processed", 0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Lip sync preview failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Lip sync preview failed: {str(e)}"
+            detail=f"Lip sync preview failed: {e!s}"
         ) from e
 
 
@@ -185,51 +187,51 @@ async def preview_lip_sync(request: LipSyncPreviewRequest):
 async def extract_phonemes(request: PhonemeExtractionRequest):
     """
     Extract phonemes from audio for manual adjustment.
-    
+
     Phase 10.1.3: Phoneme extraction for visualization.
-    
+
     Args:
         request: Audio ID to process
-        
+
     Returns:
         Phoneme sequence with timing
     """
     try:
         from backend.services.lip_sync_service import get_lip_sync_service
-        
+
         service = get_lip_sync_service()
         result = await service.extract_phonemes(request.audio_id)
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Phoneme extraction failed")
             )
-        
+
         return PhonemeExtractionResponse(
             phonemes=result.get("phonemes", []),
             total_duration=result.get("total_duration", 0.0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Phoneme extraction failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Phoneme extraction failed: {str(e)}"
+            detail=f"Phoneme extraction failed: {e!s}"
         ) from e
 
 
-@router.get("/engines", response_model=List[LipSyncEngine])
+@router.get("/engines", response_model=list[LipSyncEngine])
 async def list_engines():
     """List available lip sync engines."""
     try:
         from backend.services.lip_sync_service import get_lip_sync_service
-        
+
         service = get_lip_sync_service()
         engines = service.list_engines()
-        
+
         return [
             LipSyncEngine(
                 id=e["id"],
@@ -241,12 +243,12 @@ async def list_engines():
             )
             for e in engines
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list engines: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list engines: {str(e)}"
+            detail=f"Failed to list engines: {e!s}"
         ) from e
 
 
@@ -255,25 +257,25 @@ async def get_engine_status(engine_id: str):
     """Get status and capabilities of a specific engine."""
     try:
         from backend.services.lip_sync_service import get_lip_sync_service
-        
+
         service = get_lip_sync_service()
         status = service.get_engine_status(engine_id)
-        
+
         if not status:
             raise HTTPException(
                 status_code=404,
                 detail=f"Engine '{engine_id}' not found"
             )
-        
+
         return status
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get engine status: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get engine status: {str(e)}"
+            detail=f"Failed to get engine status: {e!s}"
         ) from e
 
 

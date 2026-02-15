@@ -3,14 +3,10 @@ Placeholder Verification Script (Improved)
 Comprehensive scan of all code files for forbidden placeholder terms with smart filtering.
 """
 
-import json
 import logging
-import os
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -106,11 +102,7 @@ def should_check_file(file_path: Path) -> bool:
             return False
 
     # Check if matches include pattern
-    for include_pattern in INCLUDE_PATTERNS:
-        if file_path.match(include_pattern):
-            return True
-
-    return False
+    return any(file_path.match(include_pattern) for include_pattern in INCLUDE_PATTERNS)
 
 
 def is_acceptable_context(line: str, term: str, file_path: Path) -> bool:
@@ -158,18 +150,15 @@ def is_acceptable_context(line: str, term: str, file_path: Path) -> bool:
         return True
 
     # Documentation files (acceptable to have certain terms)
-    if file_str.endswith(".md") and term_lower in ["note", "check", "verify", "test"]:
-        return True
-
-    return False
+    return bool(file_str.endswith(".md") and term_lower in ["note", "check", "verify", "test"])
 
 
-def check_file_for_violations(file_path: Path) -> List[Tuple[int, str, str]]:
+def check_file_for_violations(file_path: Path) -> list[tuple[int, str, str]]:
     """Check file for forbidden terms and return violations."""
     violations = []
 
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
             for line_num, line in enumerate(lines, 1):
@@ -227,7 +216,7 @@ def check_file_for_violations(file_path: Path) -> List[Tuple[int, str, str]]:
     return violations
 
 
-def scan_directory(directory: Path) -> Dict[str, List[Tuple[int, str, str]]]:
+def scan_directory(directory: Path) -> dict[str, list[tuple[int, str, str]]]:
     """Scan directory for placeholder violations."""
     violations_by_file = {}
 
@@ -242,7 +231,7 @@ def scan_directory(directory: Path) -> Dict[str, List[Tuple[int, str, str]]]:
     return violations_by_file
 
 
-def generate_report(violations_by_file: Dict[str, List[Tuple[int, str, str]]]) -> str:
+def generate_report(violations_by_file: dict[str, list[tuple[int, str, str]]]) -> str:
     """Generate violation report."""
     report_lines = []
     report_lines.append("=" * 80)

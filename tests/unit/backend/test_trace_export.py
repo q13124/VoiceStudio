@@ -5,12 +5,9 @@ Tests for trace export, analysis, and aggregation functionality.
 """
 
 import json
-import os
 import sys
-import tempfile
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -147,7 +144,7 @@ class TestSpan:
             error="Test error",
         )
         span.set_attribute("key", "value")
-        
+
         d = span.to_dict()
         assert d["trace_id"] == "t1"
         assert d["span_id"] == "s1"
@@ -214,11 +211,11 @@ class TestTraceExporter:
     def test_get_traces_with_data(self, telemetry, tmp_path):
         """Test getting traces after recording spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         # Record some spans
         with telemetry.trace("test_operation"):
             pass
-        
+
         spans = exporter.get_traces()
         assert len(spans) == 1
         assert spans[0].name == "test_operation"
@@ -227,7 +224,7 @@ class TestTraceExporter:
         """Test grouping spans by trace_id."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         grouped = exporter.group_by_trace(sample_spans)
-        
+
         assert len(grouped) == 2
         assert "trace1" in grouped
         assert "trace2" in grouped
@@ -237,11 +234,11 @@ class TestTraceExporter:
     def test_create_trace_export(self, telemetry, tmp_path, sample_spans):
         """Test creating a TraceExport from spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         # Use spans from trace1
         trace1_spans = [s for s in sample_spans if s.trace_id == "trace1"]
         export = exporter.create_trace_export("trace1", trace1_spans)
-        
+
         assert export.trace_id == "trace1"
         assert export.span_count == 2
         assert export.status == "ok"
@@ -250,11 +247,11 @@ class TestTraceExporter:
     def test_create_trace_export_with_errors(self, telemetry, tmp_path, sample_spans):
         """Test creating TraceExport with error spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         # Use span from trace2 (which has an error)
         trace2_spans = [s for s in sample_spans if s.trace_id == "trace2"]
         export = exporter.create_trace_export("trace2", trace2_spans)
-        
+
         assert export.trace_id == "trace2"
         assert export.status == "error"
         assert export.error_count == 1
@@ -262,20 +259,19 @@ class TestTraceExporter:
     def test_export_to_json(self, telemetry, tmp_path):
         """Test exporting traces to JSON file."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         # Record some spans
-        with telemetry.trace("test_op1"):
-            with telemetry.trace("test_op2"):
-                pass
-        
+        with telemetry.trace("test_op1"), telemetry.trace("test_op2"):
+            pass
+
         filepath = exporter.export_to_json("test_export.json")
-        
+
         assert filepath.exists()
         assert filepath.name == "test_export.json"
-        
+
         with open(filepath) as f:
             data = json.load(f)
-        
+
         assert "exported_at" in data
         assert "service_name" in data
         assert "traces" in data
@@ -285,7 +281,7 @@ class TestTraceExporter:
         """Test calculating summary statistics."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         summary = exporter.calculate_summary(sample_spans)
-        
+
         assert summary.total_traces == 2
         assert summary.total_spans == 3
         assert summary.avg_duration_ms > 0
@@ -295,7 +291,7 @@ class TestTraceExporter:
         """Test calculating summary with no spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         summary = exporter.calculate_summary([])
-        
+
         assert summary.total_traces == 0
         assert summary.total_spans == 0
         assert summary.avg_duration_ms == 0.0
@@ -314,14 +310,14 @@ class TestTraceAnalyzer:
         """Test finding slow spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         analyzer = TraceAnalyzer(exporter)
-        
+
         # Record spans with different durations
         with telemetry.trace("fast_op"):
             pass  # Very fast
-        
+
         with telemetry.trace("slow_op"):
             time.sleep(0.1)  # 100ms+
-        
+
         slow = analyzer.find_slow_spans(threshold_ms=50)
         assert len(slow) >= 1
         assert any(s.name == "slow_op" for s in slow)
@@ -330,11 +326,11 @@ class TestTraceAnalyzer:
         """Test finding error spans."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         analyzer = TraceAnalyzer(exporter)
-        
+
         # Record a successful span
         with telemetry.trace("success_op"):
             pass
-        
+
         # Record an error span
         try:
             with telemetry.trace("error_op"):
@@ -342,7 +338,7 @@ class TestTraceAnalyzer:
         # ALLOWED: bare except - Intentional error for test case
         except ValueError:
             pass
-        
+
         errors = analyzer.find_errors()
         assert len(errors) == 1
         assert errors[0].name == "error_op"
@@ -352,18 +348,18 @@ class TestTraceAnalyzer:
         """Test getting operation statistics."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         analyzer = TraceAnalyzer(exporter)
-        
+
         # Record multiple operations
         for _ in range(3):
             with telemetry.trace("op_a"):
                 pass
-        
+
         for _ in range(2):
             with telemetry.trace("op_b"):
                 pass
-        
+
         stats = analyzer.get_operation_stats()
-        
+
         assert "op_a" in stats
         assert "op_b" in stats
         assert stats["op_a"]["count"] == 3
@@ -373,7 +369,7 @@ class TestTraceAnalyzer:
         """Test building trace tree."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
         analyzer = TraceAnalyzer(exporter)
-        
+
         # Record nested spans
         with telemetry.trace("root") as root_span:
             trace_id = root_span.trace_id
@@ -381,9 +377,9 @@ class TestTraceAnalyzer:
                 pass
             with telemetry.trace("child2"):
                 pass
-        
+
         tree = analyzer.get_trace_tree(trace_id)
-        
+
         assert tree["name"] == "root"
         assert len(tree["children"]) == 2
 
@@ -410,38 +406,38 @@ class TestFilterFunctions:
     def test_filter_by_operation(self, telemetry, tmp_path):
         """Test filtering traces by operation."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         with telemetry.trace("http_request"):
             pass
         with telemetry.trace("db_query"):
             pass
         with telemetry.trace("http_request"):
             pass
-        
+
         # Filter for http_request only
         http_spans = exporter.get_traces(filter_fn=lambda s: s.name == "http_request")
-        
+
         assert len(http_spans) == 2
         assert all(s.name == "http_request" for s in http_spans)
 
     def test_filter_by_status(self, telemetry, tmp_path):
         """Test filtering traces by status."""
         exporter = TraceExporter(telemetry, export_dir=tmp_path)
-        
+
         with telemetry.trace("success"):
             pass
-        
+
         try:
             with telemetry.trace("failure"):
                 raise RuntimeError("Test")
         # ALLOWED: bare except - Intentional error for test case
         except RuntimeError:
             pass
-        
+
         # Filter for errors only
         error_spans = exporter.get_traces(
             filter_fn=lambda s: s.status == SpanStatus.ERROR
         )
-        
+
         assert len(error_spans) == 1
         assert error_spans[0].name == "failure"

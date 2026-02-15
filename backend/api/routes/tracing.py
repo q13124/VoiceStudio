@@ -5,21 +5,16 @@ Provides API endpoints for trace management, export, and analysis.
 All operations are local-first and require no external dependencies.
 """
 
+from __future__ import annotations
+
 import logging
-from datetime import datetime
-from pathlib import Path
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.telemetry import get_telemetry_service, SpanStatus
 from backend.services.trace_export import (
-    TraceExporter,
-    TraceAnalyzer,
-    TraceSummary,
-    get_trace_exporter,
     get_trace_analyzer,
+    get_trace_exporter,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,8 +33,8 @@ class SpanResponse(BaseModel):
     name: str
     duration_ms: float
     status: str
-    parent_span_id: Optional[str] = None
-    error: Optional[str] = None
+    parent_span_id: str | None = None
+    error: str | None = None
 
 
 class TraceSummaryResponse(BaseModel):
@@ -80,7 +75,7 @@ class TraceTreeNode(BaseModel):
     name: str
     duration_ms: float
     status: str
-    children: List["TraceTreeNode"] = []
+    children: list["TraceTreeNode"] = []
 
 
 TraceTreeNode.model_rebuild()
@@ -96,7 +91,7 @@ async def get_trace_summary(
 ):
     """
     Get summary statistics for recent traces.
-    
+
     Returns aggregated metrics including:
     - Total traces and spans
     - Duration statistics (avg, p50, p95, p99)
@@ -106,7 +101,7 @@ async def get_trace_summary(
         exporter = get_trace_exporter()
         spans = exporter.get_traces(limit)
         summary = exporter.calculate_summary(spans)
-        
+
         return TraceSummaryResponse(
             total_traces=summary.total_traces,
             total_spans=summary.total_spans,
@@ -123,29 +118,27 @@ async def get_trace_summary(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/recent", response_model=List[SpanResponse])
+@router.get("/recent", response_model=list[SpanResponse])
 async def get_recent_spans(
     limit: int = Query(100, ge=1, le=1000, description="Maximum spans to return"),
-    operation: Optional[str] = Query(None, description="Filter by operation name"),
-    status: Optional[str] = Query(None, description="Filter by status (ok, error)"),
+    operation: str | None = Query(None, description="Filter by operation name"),
+    status: str | None = Query(None, description="Filter by status (ok, error)"),
 ):
     """
     Get recent spans from the telemetry service.
-    
+
     Supports filtering by operation name and status.
     """
     try:
         exporter = get_trace_exporter()
-        
+
         def filter_fn(span):
             if operation and operation not in span.name:
                 return False
-            if status and span.status.value != status:
-                return False
-            return True
-        
+            return not (status and span.status.value != status)
+
         spans = exporter.get_traces(limit, filter_fn)
-        
+
         return [
             SpanResponse(
                 trace_id=s.trace_id,
@@ -163,19 +156,19 @@ async def get_recent_spans(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/operations", response_model=List[OperationStats])
+@router.get("/operations", response_model=list[OperationStats])
 async def get_operation_statistics(
     limit: int = Query(1000, ge=1, le=10000, description="Maximum spans to analyze"),
 ):
     """
     Get performance statistics per operation.
-    
+
     Returns count, average duration, percentiles, and error rate for each operation.
     """
     try:
         analyzer = get_trace_analyzer()
         stats = analyzer.get_operation_stats(limit)
-        
+
         return [
             OperationStats(
                 operation=name,
@@ -192,20 +185,20 @@ async def get_operation_statistics(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/slow-spans", response_model=List[SpanResponse])
+@router.get("/slow-spans", response_model=list[SpanResponse])
 async def get_slow_spans(
     threshold_ms: float = Query(1000, ge=0, description="Duration threshold in ms"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum spans to return"),
 ):
     """
     Get spans slower than the specified threshold.
-    
+
     Useful for identifying performance bottlenecks.
     """
     try:
         analyzer = get_trace_analyzer()
         slow_spans = analyzer.find_slow_spans(threshold_ms, limit)
-        
+
         return [
             SpanResponse(
                 trace_id=s.trace_id,
@@ -223,19 +216,19 @@ async def get_slow_spans(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/errors", response_model=List[SpanResponse])
+@router.get("/errors", response_model=list[SpanResponse])
 async def get_error_spans(
     limit: int = Query(100, ge=1, le=1000, description="Maximum spans to return"),
 ):
     """
     Get spans with errors.
-    
+
     Useful for debugging and error analysis.
     """
     try:
         analyzer = get_trace_analyzer()
         error_spans = analyzer.find_errors(limit)
-        
+
         return [
             SpanResponse(
                 trace_id=s.trace_id,
@@ -257,16 +250,16 @@ async def get_error_spans(
 async def get_trace_tree(trace_id: str):
     """
     Get a tree structure for a specific trace.
-    
+
     Useful for visualizing the call hierarchy of a trace.
     """
     try:
         analyzer = get_trace_analyzer()
         tree = analyzer.get_trace_tree(trace_id)
-        
+
         if not tree:
             raise HTTPException(status_code=404, detail=f"Trace {trace_id} not found")
-        
+
         return tree
     except HTTPException:
         raise
@@ -278,20 +271,20 @@ async def get_trace_tree(trace_id: str):
 @router.post("/export", response_model=ExportResponse)
 async def export_traces(
     limit: int = Query(1000, ge=1, le=10000, description="Maximum spans to export"),
-    filename: Optional[str] = Query(None, description="Output filename"),
+    filename: str | None = Query(None, description="Output filename"),
 ):
     """
     Export traces to a JSON file.
-    
+
     The file is saved to .buildlogs/traces/ directory.
     """
     try:
         exporter = get_trace_exporter()
         spans = exporter.get_traces(limit)
         grouped = exporter.group_by_trace(spans)
-        
+
         filepath = exporter.export_to_json(filename, limit, include_summary=True)
-        
+
         return ExportResponse(
             success=True,
             filepath=str(filepath),

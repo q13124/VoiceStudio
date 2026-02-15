@@ -7,12 +7,14 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -54,9 +56,9 @@ class VoiceProfileManager:
 
     def __init__(
         self,
-        profiles_directory: Optional[Path] = None,
+        profiles_directory: Path | None = None,
         embedding_dim: int = 256,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """
@@ -74,8 +76,8 @@ class VoiceProfileManager:
         self.device = device or (
             "cuda" if (gpu and HAS_TORCH and torch.cuda.is_available()) else "cpu"
         )
-        self.embedding_model: Optional[nn.Module] = None
-        self._profiles: Dict[str, Dict[str, Any]] = {}
+        self.embedding_model: nn.Module | None = None
+        self._profiles: dict[str, dict[str, Any]] = {}
 
         if HAS_TORCH:
             try:
@@ -102,7 +104,7 @@ class VoiceProfileManager:
         profile_files = list(self.profiles_directory.glob("*.json"))
         for profile_file in profile_files:
             try:
-                with open(profile_file, "r", encoding="utf-8") as f:
+                with open(profile_file, encoding="utf-8") as f:
                     profile_data = json.load(f)
                     profile_id = profile_data.get("id")
                     if profile_id:
@@ -116,8 +118,8 @@ class VoiceProfileManager:
         reference_audio: np.ndarray,
         sample_rate: int = 24000,
         language: str = "en",
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Create a new voice profile with advanced embeddings.
 
@@ -223,7 +225,7 @@ class VoiceProfileManager:
 
     def _analyze_voice_characteristics(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze voice characteristics.
 
@@ -236,7 +238,7 @@ class VoiceProfileManager:
         """
         if HAS_LIBROSA:
             # Calculate pitch
-            pitches, magnitudes = librosa.piptrack(y=audio, sr=sample_rate)
+            pitches, _magnitudes = librosa.piptrack(y=audio, sr=sample_rate)
             pitch_mean = np.mean(pitches[pitches > 0]) if np.any(pitches > 0) else 0.0
 
             # Calculate spectral centroid (brightness)
@@ -273,7 +275,7 @@ class VoiceProfileManager:
         self,
         audio: np.ndarray,
         sample_rate: int,
-        characteristics: Dict[str, Any],
+        characteristics: dict[str, Any],
     ) -> float:
         """
         Calculate comprehensive quality score.
@@ -303,7 +305,7 @@ class VoiceProfileManager:
 
         return float(quality_score)
 
-    def get_profile(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, profile_id: str) -> dict[str, Any] | None:
         """
         Get profile by ID.
 
@@ -317,10 +319,10 @@ class VoiceProfileManager:
 
     def list_profiles(
         self,
-        language: Optional[str] = None,
+        language: str | None = None,
         min_quality: float = 0.0,
         sort_by: str = "quality",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         List profiles with filtering and sorting.
 
@@ -353,7 +355,7 @@ class VoiceProfileManager:
 
     def find_similar_profiles(
         self, profile_id: str, top_k: int = 5
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """
         Find similar profiles based on embedding similarity.
 
@@ -389,8 +391,8 @@ class VoiceProfileManager:
         return similarities[:top_k]
 
     def update_profile(
-        self, profile_id: str, updates: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        self, profile_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         Update profile.
 
@@ -436,7 +438,7 @@ class VoiceProfileManager:
         del self._profiles[profile_id]
         return True
 
-    def _save_profile(self, profile: Dict[str, Any]):
+    def _save_profile(self, profile: dict[str, Any]):
         """Save profile to file."""
         profile_id = profile.get("id")
         if not profile_id:
@@ -460,9 +462,9 @@ class VoiceProfileManager:
 
 
 def create_voice_profile_manager(
-    profiles_directory: Optional[Path] = None,
+    profiles_directory: Path | None = None,
     embedding_dim: int = 256,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> VoiceProfileManager:
     """

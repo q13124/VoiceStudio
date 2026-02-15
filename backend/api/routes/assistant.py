@@ -6,10 +6,11 @@ Replaces the 501 stub with real LLM integration using local-first
 Ollama provider with fallback to cloud providers.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
 # In-memory conversation history (future: persist via JsonFileStore)
-_conversations: Dict[str, Dict] = {}
+_conversations: dict[str, dict] = {}
 
 
 class AssistantMessage(BaseModel):
@@ -30,7 +31,7 @@ class AssistantMessage(BaseModel):
     role: str  # user, assistant
     content: str
     timestamp: str
-    suggestions: Optional[List[str]] = None
+    suggestions: list[str] | None = None
 
 
 class Conversation(BaseModel):
@@ -38,7 +39,7 @@ class Conversation(BaseModel):
 
     conversation_id: str
     title: str
-    messages: List[AssistantMessage]
+    messages: list[AssistantMessage]
     created: str
     updated: str
 
@@ -46,9 +47,9 @@ class Conversation(BaseModel):
 class ChatRequest(BaseModel):
     """Request to chat with assistant."""
 
-    conversation_id: Optional[str] = None
+    conversation_id: str | None = None
     message: str
-    context: Optional[Dict] = None  # Project context, current state, etc.
+    context: dict | None = None  # Project context, current state, etc.
     stream: bool = False
 
 
@@ -58,10 +59,10 @@ class ChatResponse(BaseModel):
     conversation_id: str
     message_id: str
     content: str
-    suggestions: List[str]
+    suggestions: list[str]
     timestamp: str
-    tool_calls: Optional[List[Dict]] = None
-    usage: Optional[Dict] = None
+    tool_calls: list[dict] | None = None
+    usage: dict | None = None
 
 
 class TaskSuggestion(BaseModel):
@@ -72,7 +73,7 @@ class TaskSuggestion(BaseModel):
     description: str
     category: str  # mixing, mastering, editing, synthesis, etc.
     priority: str  # high, medium, low
-    estimated_time: Optional[int] = None  # minutes
+    estimated_time: int | None = None  # minutes
     confidence: float = 0.0  # 0.0 to 1.0
 
 
@@ -81,16 +82,16 @@ def _get_llm_provider():
     Get the best available LLM provider.
 
     Priority: Ollama (local) > LocalAI > OpenAI (cloud)
-    
+
     Uses LLMProviderService for clean architecture compliance.
     """
     from backend.services.llm_provider_service import get_llm_provider_service
-    
+
     provider_service = get_llm_provider_service()
     return provider_service.get_best_provider_instance()
 
 
-def _build_system_prompt(context: Optional[Dict] = None) -> str:
+def _build_system_prompt(context: dict | None = None) -> str:
     """Build a system prompt with optional project context."""
     base_prompt = (
         "You are VoiceStudio AI Assistant, an expert in audio production, "
@@ -115,7 +116,7 @@ def _build_system_prompt(context: Optional[Dict] = None) -> str:
     return base_prompt
 
 
-def _generate_suggestions(content: str) -> List[str]:
+def _generate_suggestions(content: str) -> list[str]:
     """Generate follow-up suggestions based on response content."""
     suggestions = []
     content_lower = content.lower()
@@ -239,7 +240,7 @@ async def chat_with_assistant(request: ChatRequest):
         except Exception as exc:
             logger.error(f"LLM generation failed: {exc}")
             assistant_content = (
-                f"I encountered an error processing your request: {str(exc)}. "
+                f"I encountered an error processing your request: {exc!s}. "
                 "Please check that your LLM provider is running correctly."
             )
             suggestions = ["Check Ollama status", "Try again"]
@@ -269,7 +270,7 @@ async def chat_with_assistant(request: ChatRequest):
     )
 
 
-@router.get("/conversations", response_model=List[Conversation])
+@router.get("/conversations", response_model=list[Conversation])
 async def list_conversations():
     """List all conversations."""
     conversations = list(_conversations.values())
@@ -298,10 +299,10 @@ async def delete_conversation(conversation_id: str):
     return {"success": True}
 
 
-@router.post("/suggest-tasks", response_model=List[TaskSuggestion])
+@router.post("/suggest-tasks", response_model=list[TaskSuggestion])
 async def suggest_tasks(
     project_id: str,
-    context: Optional[Dict] = None,
+    context: dict | None = None,
 ):
     """Get AI-suggested production tasks."""
     provider = _get_llm_provider()
@@ -374,7 +375,7 @@ async def suggest_tasks(
         logger.error(f"Failed to suggest tasks: {exc}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate suggestions: {str(exc)}",
+            detail=f"Failed to generate suggestions: {exc!s}",
         ) from exc
 
 
@@ -382,10 +383,10 @@ async def suggest_tasks(
 async def list_providers():
     """List available LLM providers and their status."""
     from backend.services.llm_provider_service import get_llm_provider_service
-    
+
     provider_service = get_llm_provider_service()
     providers = []
-    
+
     for p in provider_service.get_available_providers():
         provider_entry = {
             "name": p.name,

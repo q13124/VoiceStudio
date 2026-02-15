@@ -12,11 +12,12 @@ Features:
 - Progress tracking
 """
 
+from __future__ import annotations
+
 import logging
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-from functools import lru_cache
+from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -32,14 +33,14 @@ except ImportError:
 # Import audio utilities
 try:
     from .audio_utils import (
+        detect_silence,
         enhance_voice_quality,
         normalize_lufs,
         remove_artifacts,
         resample_audio,
-        detect_silence,
     )
-    from .enhanced_preprocessing import EnhancedPreprocessor
     from .enhanced_audio_enhancement import EnhancedAudioEnhancer
+    from .enhanced_preprocessing import EnhancedPreprocessor
     HAS_AUDIO_MODULES = True
 except ImportError:
     HAS_AUDIO_MODULES = False
@@ -49,7 +50,7 @@ except ImportError:
 class OptimizedAudioPipeline:
     """
     Optimized audio processing pipeline with parallel processing and memory optimization.
-    
+
     Features:
     - Parallel processing for multiple files
     - Memory-efficient operations
@@ -61,7 +62,7 @@ class OptimizedAudioPipeline:
     def __init__(
         self,
         sample_rate: int = 24000,
-        max_workers: Optional[int] = None,
+        max_workers: int | None = None,
         use_multiprocessing: bool = False,
         cache_size: int = 128,
     ):
@@ -86,13 +87,13 @@ class OptimizedAudioPipeline:
         self.enhancer = EnhancedAudioEnhancer(sample_rate=sample_rate) if HAS_AUDIO_MODULES else None
 
         # Cache for intermediate results
-        self._cache: Dict[str, np.ndarray] = {}
+        self._cache: dict[str, np.ndarray] = {}
 
     def process_single(
         self,
         audio: np.ndarray,
         sample_rate: int,
-        config: Optional[Dict] = None,
+        config: dict | None = None,
         enable_preprocessing: bool = True,
         enable_enhancement: bool = True,
         enable_postprocessing: bool = True,
@@ -141,7 +142,7 @@ class OptimizedAudioPipeline:
         if enable_postprocessing:
             try:
                 post_config = config.get("postprocessing", {})
-                
+
                 # Normalize if requested
                 if post_config.get("normalize", True):
                     target_lufs = post_config.get("target_lufs", -23.0)
@@ -158,10 +159,10 @@ class OptimizedAudioPipeline:
 
     def process_batch(
         self,
-        audio_files: List[Union[np.ndarray, Tuple[np.ndarray, int]]],
-        config: Optional[Dict] = None,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> List[np.ndarray]:
+        audio_files: list[np.ndarray | tuple[np.ndarray, int]],
+        config: dict | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> list[np.ndarray]:
         """
         Process multiple audio files in parallel.
 
@@ -222,9 +223,9 @@ class OptimizedAudioPipeline:
 
     def process_file(
         self,
-        file_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
-        config: Optional[Dict] = None,
+        file_path: str | Path,
+        output_path: str | Path | None = None,
+        config: dict | None = None,
     ) -> np.ndarray:
         """
         Process audio file from disk.
@@ -254,7 +255,7 @@ class OptimizedAudioPipeline:
         if output_path:
             output_path = Path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             try:
                 import soundfile as sf
                 sf.write(str(output_path), processed.T, self.sample_rate)
@@ -265,11 +266,11 @@ class OptimizedAudioPipeline:
 
     def process_files_parallel(
         self,
-        file_paths: List[Union[str, Path]],
-        output_dir: Optional[Union[str, Path]] = None,
-        config: Optional[Dict] = None,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> List[np.ndarray]:
+        file_paths: list[str | Path],
+        output_dir: str | Path | None = None,
+        config: dict | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> list[np.ndarray]:
         """
         Process multiple audio files in parallel from disk.
 
@@ -290,7 +291,7 @@ class OptimizedAudioPipeline:
             output_dir.mkdir(parents=True, exist_ok=True)
 
         # Load all files first (can be parallelized)
-        def load_file(file_path: Path) -> Tuple[np.ndarray, int]:
+        def load_file(file_path: Path) -> tuple[np.ndarray, int]:
             audio, sample_rate = librosa.load(str(file_path), sr=None, mono=False)
             return audio, sample_rate
 
@@ -304,7 +305,7 @@ class OptimizedAudioPipeline:
                 executor.submit(load_file, Path(fp)): idx
                 for idx, fp in enumerate(file_paths)
             }
-            
+
             loaded_audio = [None] * len(file_paths)
             for future in as_completed(futures):
                 idx = futures[future]
@@ -324,7 +325,7 @@ class OptimizedAudioPipeline:
         if output_dir:
             try:
                 import soundfile as sf
-                for idx, (file_path, processed_audio) in enumerate(zip(file_paths, processed)):
+                for idx, (file_path, processed_audio) in enumerate(zip(file_paths, processed, strict=False)):
                     if processed_audio is not None:
                         output_path = output_dir / Path(file_path).name
                         sf.write(str(output_path), processed_audio.T, self.sample_rate)
@@ -348,7 +349,7 @@ class OptimizedAudioPipeline:
 # Factory function
 def create_optimized_pipeline(
     sample_rate: int = 24000,
-    max_workers: Optional[int] = None,
+    max_workers: int | None = None,
     use_multiprocessing: bool = False,
 ) -> OptimizedAudioPipeline:
     """

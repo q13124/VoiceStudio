@@ -4,8 +4,9 @@ MCP Dashboard Routes
 Endpoints for MCP (Model Context Protocol) server dashboard and management.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/mcp-dashboard", tags=["mcp-dashboard"])
 
 # In-memory storage for MCP servers (replace with database in production)
-_mcp_servers: Dict[str, "MCPServer"] = {}
+_mcp_servers: dict[str, "MCPServer"] = {}
 
 
 class MCPServer(BaseModel):
@@ -37,12 +38,12 @@ class MCPServer(BaseModel):
     description: str
     server_type: str  # figma, tts, analysis, etc.
     status: str  # connected, disconnected, error
-    endpoint: Optional[str] = None
-    version: Optional[str] = None
-    capabilities: List[str] = []
-    last_connected: Optional[str] = None
-    error_message: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    endpoint: str | None = None
+    version: str | None = None
+    capabilities: list[str] = []
+    last_connected: str | None = None
+    error_message: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class MCPServerCreateRequest(BaseModel):
@@ -51,19 +52,19 @@ class MCPServerCreateRequest(BaseModel):
     name: str
     description: str
     server_type: str
-    endpoint: Optional[str] = None
-    version: Optional[str] = None
-    capabilities: List[str] = []
-    metadata: Dict[str, str] = {}
+    endpoint: str | None = None
+    version: str | None = None
+    capabilities: list[str] = []
+    metadata: dict[str, str] = {}
 
 
 class MCPServerUpdateRequest(BaseModel):
     """Request to update an MCP server."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    endpoint: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    name: str | None = None
+    description: str | None = None
+    endpoint: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class MCPServerResponse(BaseModel):
@@ -74,12 +75,12 @@ class MCPServerResponse(BaseModel):
     description: str
     server_type: str
     status: str
-    endpoint: Optional[str] = None
-    version: Optional[str] = None
-    capabilities: List[str] = []
-    last_connected: Optional[str] = None
-    error_message: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    endpoint: str | None = None
+    version: str | None = None
+    capabilities: list[str] = []
+    last_connected: str | None = None
+    error_message: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class MCPOperation(BaseModel):
@@ -89,7 +90,7 @@ class MCPOperation(BaseModel):
     server_id: str
     operation_name: str
     description: str
-    parameters: Dict[str, str] = {}
+    parameters: dict[str, str] = {}
     result_type: str  # json, text, binary
     is_available: bool = True
 
@@ -133,11 +134,11 @@ async def get_dashboard_summary():
         logger.error(f"Failed to get MCP dashboard summary: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get MCP dashboard summary: {str(e)}",
+            detail=f"Failed to get MCP dashboard summary: {e!s}",
         ) from e
 
 
-@router.get("/servers", response_model=List[MCPServerResponse])
+@router.get("/servers", response_model=list[MCPServerResponse])
 @cache_response(ttl=30)  # Cache for 30 seconds (server list changes moderately)
 async def list_mcp_servers():
     """List all MCP servers."""
@@ -164,7 +165,7 @@ async def list_mcp_servers():
         logger.error(f"Failed to list MCP servers: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list MCP servers: {str(e)}",
+            detail=f"Failed to list MCP servers: {e!s}",
         ) from e
 
 
@@ -197,7 +198,7 @@ async def get_mcp_server(server_id: str):
         logger.error(f"Failed to get MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get MCP server: {str(e)}",
+            detail=f"Failed to get MCP server: {e!s}",
         ) from e
 
 
@@ -242,7 +243,7 @@ async def create_mcp_server(request: MCPServerCreateRequest):
         logger.error(f"Failed to create MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create MCP server: {str(e)}",
+            detail=f"Failed to create MCP server: {e!s}",
         ) from e
 
 
@@ -287,7 +288,7 @@ async def update_mcp_server(server_id: str, request: MCPServerUpdateRequest):
         logger.error(f"Failed to update MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update MCP server: {str(e)}",
+            detail=f"Failed to update MCP server: {e!s}",
         ) from e
 
 
@@ -330,7 +331,7 @@ async def connect_mcp_server(server_id: str):
         logger.error(f"Failed to connect to MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to connect to MCP server: {str(e)}",
+            detail=f"Failed to connect to MCP server: {e!s}",
         ) from e
 
 
@@ -366,7 +367,7 @@ async def disconnect_mcp_server(server_id: str):
         logger.error(f"Failed to disconnect from MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to disconnect from MCP server: {str(e)}",
+            detail=f"Failed to disconnect from MCP server: {e!s}",
         ) from e
 
 
@@ -387,11 +388,11 @@ async def delete_mcp_server(server_id: str):
         logger.error(f"Failed to delete MCP server: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete MCP server: {str(e)}",
+            detail=f"Failed to delete MCP server: {e!s}",
         ) from e
 
 
-@router.get("/servers/{server_id}/operations", response_model=List[MCPOperation])
+@router.get("/servers/{server_id}/operations", response_model=list[MCPOperation])
 async def list_server_operations(server_id: str):
     """List operations available from an MCP server."""
     try:
@@ -422,11 +423,11 @@ async def list_server_operations(server_id: str):
         logger.error(f"Failed to list server operations: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list server operations: {str(e)}",
+            detail=f"Failed to list server operations: {e!s}",
         ) from e
 
 
-@router.get("/server-types", response_model=List[str])
+@router.get("/server-types", response_model=list[str])
 async def list_server_types():
     """List available MCP server types."""
     return [
@@ -477,5 +478,5 @@ async def mcp_operation(operation: str):
         logger.error(f"MCP operation failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"MCP operation failed: {str(e)}",
+            detail=f"MCP operation failed: {e!s}",
         ) from e

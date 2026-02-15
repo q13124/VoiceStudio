@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Core.Models;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 
@@ -14,6 +15,7 @@ namespace VoiceStudio.App.ViewModels
 {
   /// <summary>
   /// ViewModel for the RecordingView panel.
+  /// Supports both local microphone recording (via NAudio) and backend-based recording.
   /// </summary>
   public partial class RecordingViewModel : BaseViewModel, IPanelView
   {
@@ -22,6 +24,7 @@ namespace VoiceStudio.App.ViewModels
     private readonly IErrorPresentationService? _errorService;
     private readonly IErrorLoggingService? _logService;
     private readonly DispatcherQueueTimer _statusTimer;
+    private readonly MicrophoneRecordingService _microphoneService;
 
     public string PanelId => "recording";
     public string DisplayName => ResourceHelper.GetString("Panel.Recording.DisplayName", "Recording");
@@ -106,6 +109,13 @@ namespace VoiceStudio.App.ViewModels
       _errorService = ServiceProvider.TryGetErrorPresentationService();
       _logService = ServiceProvider.TryGetErrorLoggingService();
 
+      // Initialize local microphone recording service (NAudio)
+      _microphoneService = new MicrophoneRecordingService();
+      _microphoneService.RecordingStarted += MicrophoneService_RecordingStarted;
+      _microphoneService.RecordingStopped += MicrophoneService_RecordingStopped;
+      _microphoneService.LevelChanged += MicrophoneService_LevelChanged;
+      _microphoneService.RecordingError += MicrophoneService_RecordingError;
+
       _statusTimer = Dispatcher.CreateTimer();
       _statusTimer.Interval = TimeSpan.FromMilliseconds(100);
       _statusTimer.IsRepeating = true;
@@ -156,36 +166,26 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        var request = new
+        // Generate a unique recording ID
+        RecordingId = $"rec_{Guid.NewGuid():N}"[..16];
+        
+        // Build output path if filename specified
+        string? outputPath = null;
+        if (!string.IsNullOrWhiteSpace(Filename))
         {
-          sample_rate = SampleRate,
-          channels = Channels,
-          bit_depth = BitDepth,
-          format = SelectedFormat,
-          project_id = ProjectId,
-          filename = Filename,
-          device = SelectedDevice
-        };
-
-        var response = await _backendClient.SendRequestAsync<object, RecordingStartResponse>(
-            "/api/recording/start",
-            request,
-            System.Net.Http.HttpMethod.Post,
-            cancellationToken
-        );
-
-        if (response == null)
-        {
-          throw new InvalidOperationException("Backend returned no response when starting recording.");
+          var tempDir = System.IO.Path.GetTempPath();
+          outputPath = System.IO.Path.Combine(tempDir, $"{Filename}.wav");
         }
 
-        RecordingId = response.RecordingId;
+        // Use local NAudio-based microphone recording
+        await _microphoneService.StartRecordingAsync(outputPath, SampleRate, Channels);
+
         IsRecording = true;
         RecordingDuration = TimeSpan.Zero;
         RecordedAudioId = null;
         RecordedAudioUrl = null;
 
-        // Start status polling
+        // Start status polling for duration updates
         _statusTimer.Start();
 
         StatusMessage = ResourceHelper.GetString("Recording.RecordingStarted", "Recording started");
@@ -216,7 +216,7 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task StopRecordingAsync(CancellationToken cancellationToken)
     {
-      if (string.IsNullOrEmpty(RecordingId))
+      if (!_microphoneService.IsRecording)
         return;
 
       IsLoading = true;
@@ -226,25 +226,41 @@ namespace VoiceStudio.App.ViewModels
       {
         _statusTimer.Stop();
 
-        var response = await _backendClient.SendRequestAsync<object, RecordingStopResponse>(
-            $"/api/recording/{RecordingId}/stop",
-            null,
-            System.Net.Http.HttpMethod.Post,
-            cancellationToken
-        );
+        // Stop local microphone recording
+        var recordingPath = await _microphoneService.StopRecordingAsync();
 
-        if (response == null)
+        IsRecording = false;
+        RecordingDuration = _microphoneService.Duration;
+
+        // If there's a recording file, optionally upload to backend library
+        if (!string.IsNullOrEmpty(recordingPath) && System.IO.File.Exists(recordingPath))
         {
-          throw new InvalidOperationException("Backend returned no response when stopping recording.");
+          try
+          {
+            // Upload the recorded file to backend
+            var uploadResult = await _backendClient.UploadAudioFileAsync(recordingPath);
+            RecordedAudioId = uploadResult.Id;
+            RecordedAudioUrl = uploadResult.Path;
+
+            // Publish event to refresh Library
+            var eventAggregator = AppServices.TryGetEventAggregator();
+            eventAggregator?.Publish(new VoiceStudio.Core.Events.AssetAddedEvent(
+                "recording-panel",
+                uploadResult.Id,
+                "audio",
+                recordingPath));
+          }
+          catch (Exception uploadEx)
+          {
+            // Upload failure is non-critical; recording still succeeded locally
+            _logService?.LogError(uploadEx, "UploadRecording");
+            RecordedAudioUrl = recordingPath;  // Use local path as fallback
+          }
         }
 
-        RecordedAudioId = response.AudioId;
-        RecordedAudioUrl = response.AudioUrl;
-        IsRecording = false;
-
-        StatusMessage = ResourceHelper.FormatString("Recording.RecordingStopped", response.Duration);
+        StatusMessage = ResourceHelper.FormatString("Recording.RecordingStopped", RecordingDuration.TotalSeconds);
         _toastNotificationService?.ShowSuccess(
-            ResourceHelper.FormatString("Recording.RecordingStoppedDetail", response.Duration),
+            ResourceHelper.FormatString("Recording.RecordingStoppedDetail", RecordingDuration.TotalSeconds),
             ResourceHelper.GetString("Toast.Title.RecordingComplete", "Recording Complete"));
       }
       catch (OperationCanceledException)
@@ -270,7 +286,7 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task CancelRecordingAsync(CancellationToken cancellationToken)
     {
-      if (string.IsNullOrEmpty(RecordingId))
+      if (!_microphoneService.IsRecording)
         return;
 
       IsLoading = true;
@@ -280,12 +296,21 @@ namespace VoiceStudio.App.ViewModels
       {
         _statusTimer.Stop();
 
-        await _backendClient.SendRequestAsync<object, object>(
-            $"/api/recording/{RecordingId}",
-            null,
-            System.Net.Http.HttpMethod.Delete,
-            cancellationToken
-        );
+        // Stop local microphone recording and discard the file
+        var recordingPath = await _microphoneService.StopRecordingAsync();
+        
+        // Delete the temporary recording file since user cancelled
+        if (!string.IsNullOrEmpty(recordingPath) && System.IO.File.Exists(recordingPath))
+        {
+          try
+          {
+            System.IO.File.Delete(recordingPath);
+          }
+          catch (Exception deleteEx)
+          {
+            System.Diagnostics.Debug.WriteLine($"Failed to delete cancelled recording: {deleteEx.Message}");
+          }
+        }
 
         RecordingId = null;
         IsRecording = false;
@@ -358,43 +383,74 @@ namespace VoiceStudio.App.ViewModels
       }
     }
 
-    private async void StatusTimer_Tick(DispatcherQueueTimer sender, object args)
+    private void StatusTimer_Tick(DispatcherQueueTimer sender, object args)
     {
-      if (string.IsNullOrEmpty(RecordingId) || !IsRecording)
+      if (!_microphoneService.IsRecording)
         return;
 
-      try
-      {
-        var status = await _backendClient.SendRequestAsync<object, RecordingStatusResponse>(
-            $"/api/recording/{RecordingId}/status",
-            null,
-            System.Net.Http.HttpMethod.Get
-        );
-
-        if (status == null)
-        {
-          return;
-        }
-
-        RecordingDuration = TimeSpan.FromSeconds(status.Duration);
-        RecordingDurationDisplay = RecordingDuration.ToString(@"mm\:ss");
-
-        // Update waveform samples if available
-        if (status.WaveformSamples?.Length > 0)
-        {
-          WaveformSamples.Clear();
-          foreach (var sample in status.WaveformSamples)
-          {
-            WaveformSamples.Add(sample);
-          }
-        }
-      }
-      catch (Exception ex)
-      {
-        // Silently handle errors during status polling
-        System.Diagnostics.Debug.WriteLine($"Status polling error: {ex.Message}");
-      }
+      // Update duration from local microphone service
+      RecordingDuration = _microphoneService.Duration;
+      RecordingDurationDisplay = RecordingDuration.ToString(@"mm\:ss");
     }
+
+    #region Microphone Service Event Handlers
+
+    private void MicrophoneService_RecordingStarted(object? sender, EventArgs e)
+    {
+      // Ensure UI updates happen on dispatcher thread
+      Dispatcher.TryEnqueue(() =>
+      {
+        IsRecording = true;
+        StatusMessage = ResourceHelper.GetString("Recording.RecordingStarted", "Recording started");
+      });
+    }
+
+    private void MicrophoneService_RecordingStopped(object? sender, RecordingCompletedEventArgs e)
+    {
+      Dispatcher.TryEnqueue(() =>
+      {
+        IsRecording = false;
+        _statusTimer.Stop();
+        RecordingDuration = e.Duration;
+        RecordingDurationDisplay = e.Duration.ToString(@"mm\:ss");
+        
+        if (!string.IsNullOrEmpty(e.FilePath))
+        {
+          RecordedAudioUrl = e.FilePath;
+        }
+      });
+    }
+
+    private void MicrophoneService_LevelChanged(object? sender, float level)
+    {
+      // Update VU meter / waveform on the UI thread
+      Dispatcher.TryEnqueue(() =>
+      {
+        // Add the level to the waveform samples for visualization
+        // Keep only the last 100 samples for performance
+        if (WaveformSamples.Count >= 100)
+        {
+          WaveformSamples.RemoveAt(0);
+        }
+        WaveformSamples.Add(level);
+      });
+    }
+
+    private void MicrophoneService_RecordingError(object? sender, string errorMessage)
+    {
+      Dispatcher.TryEnqueue(() =>
+      {
+        IsRecording = false;
+        _statusTimer.Stop();
+        
+        ErrorMessage = ResourceHelper.FormatString("Recording.RecordingError", errorMessage);
+        _toastNotificationService?.ShowError(
+            errorMessage,
+            ResourceHelper.GetString("Toast.Title.RecordingError", "Recording Error"));
+      });
+    }
+
+    #endregion
 
     // Response models
     private class RecordingStartResponse
@@ -450,6 +506,13 @@ namespace VoiceStudio.App.ViewModels
       {
         _statusTimer.Stop();
         _statusTimer.Tick -= StatusTimer_Tick;
+
+        // Unsubscribe from microphone service events
+        _microphoneService.RecordingStarted -= MicrophoneService_RecordingStarted;
+        _microphoneService.RecordingStopped -= MicrophoneService_RecordingStopped;
+        _microphoneService.LevelChanged -= MicrophoneService_LevelChanged;
+        _microphoneService.RecordingError -= MicrophoneService_RecordingError;
+        _microphoneService.Dispose();
       }
       base.Dispose(disposing);
     }

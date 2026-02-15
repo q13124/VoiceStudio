@@ -5,9 +5,7 @@ Tests F5-TTS engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestF5TTSEngineImports:
     def test_module_has_f5tts_engine_class(self):
         """Test module has F5TTSEngine class."""
         if hasattr(f5_tts_engine, "F5TTSEngine"):
-            cls = getattr(f5_tts_engine, "F5TTSEngine")
+            cls = f5_tts_engine.F5TTSEngine
             assert isinstance(cls, type), "F5TTSEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestF5TTSEngineClass:
     def test_f5tts_engine_class_exists(self):
         """Test F5TTSEngine class exists."""
         if hasattr(f5_tts_engine, "F5TTSEngine"):
-            cls = getattr(f5_tts_engine, "F5TTSEngine")
+            cls = f5_tts_engine.F5TTSEngine
             assert isinstance(cls, type), "F5TTSEngine should be a class"
 
     def test_f5tts_engine_initialization(self):
@@ -99,7 +97,7 @@ class TestF5TTSEngineCaching:
             assert hasattr(engine, "enable_caching"), "enable_caching should exist"
             # The method sets self.enable_caching, so after calling it becomes a property
             # We test that the method exists and the property can be accessed
-            enable_caching_method = getattr(engine, "enable_caching")
+            enable_caching_method = engine.enable_caching
             if callable(enable_caching_method):
                 # Call the method to disable caching
                 enable_caching_method(False)

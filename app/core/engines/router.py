@@ -8,13 +8,15 @@ Enhanced with:
 - Integration with UnifiedConfigService
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import os
 import random
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any
 
 try:
     import psutil
@@ -24,8 +26,7 @@ except ImportError:
     HAS_PSUTIL = False
     psutil = None
 
-from .manifest_loader import (find_engine_manifests, get_engine_entry_point,
-                              load_engine_manifest)
+from .manifest_loader import find_engine_manifests, get_engine_entry_point, load_engine_manifest
 from .protocols import EngineProtocol
 
 # Try importing engine performance metrics
@@ -39,7 +40,7 @@ except ImportError:
 
 # Try importing UnifiedConfigService
 try:
-    from backend.services.unified_config import get_config, UnifiedConfigService
+    from backend.services.unified_config import UnifiedConfigService, get_config
 
     HAS_UNIFIED_CONFIG = True
 except ImportError:
@@ -121,22 +122,22 @@ class EngineRouter:
             low_memory_threshold: System memory usage threshold (0.0-1.0)
                                  for proactive cleanup (default: 0.70)
         """
-        self._engines: Dict[str, EngineProtocol] = {}
-        self._engine_types: Dict[str, Type[EngineProtocol]] = {}
-        self._manifests: Dict[str, Dict[str, Any]] = {}
+        self._engines: dict[str, EngineProtocol] = {}
+        self._engine_types: dict[str, type[EngineProtocol]] = {}
+        self._manifests: dict[str, dict[str, Any]] = {}
         # engine_name -> timestamp
-        self._engine_last_access: Dict[str, float] = {}
+        self._engine_last_access: dict[str, float] = {}
         # engine_name -> MB (RSS memory)
-        self._engine_memory_usage: Dict[str, float] = {}
+        self._engine_memory_usage: dict[str, float] = {}
         # engine_name -> MB (GPU memory if applicable)
-        self._engine_gpu_memory_usage: Dict[str, float] = {}
+        self._engine_gpu_memory_usage: dict[str, float] = {}
         self._idle_timeout_seconds = idle_timeout_seconds
         self._memory_threshold_mb = memory_threshold_mb
         self._auto_cleanup_enabled = auto_cleanup_enabled
         self._memory_pressure_threshold = memory_pressure_threshold
         self._low_memory_threshold = low_memory_threshold
         # engine_id -> error_message (for engines that failed to load)
-        self._failed_engines: Dict[str, str] = {}
+        self._failed_engines: dict[str, str] = {}
         self._process = None
         if HAS_PSUTIL:
             try:
@@ -144,7 +145,7 @@ class EngineRouter:
             except Exception as e:
                 logger.warning(f"Failed to get process: {e}")
 
-    def register_engine(self, name: str, engine_class: Type[EngineProtocol]):
+    def register_engine(self, name: str, engine_class: type[EngineProtocol]):
         """
         Register an engine class.
 
@@ -162,7 +163,7 @@ class EngineRouter:
             )
         self._engine_types[name] = engine_class
 
-    def get_engine(self, name: str, **kwargs) -> Optional[EngineProtocol]:
+    def get_engine(self, name: str, **kwargs) -> EngineProtocol | None:
         """
         Get or create an engine instance.
 
@@ -242,7 +243,7 @@ class EngineRouter:
         """
         return list(self._engine_types.keys())
 
-    def get_failed_engines(self) -> Dict[str, str]:
+    def get_failed_engines(self) -> dict[str, str]:
         """
         Get engines that failed to load during startup.
 
@@ -340,7 +341,7 @@ class EngineRouter:
             logger.warning(f"Failed to get memory usage: {e}")
             return 0.0
 
-    def _get_system_memory_usage(self) -> Optional[float]:
+    def _get_system_memory_usage(self) -> float | None:
         """
         Get current system memory usage percentage.
 
@@ -530,7 +531,7 @@ class EngineRouter:
             return True
         return False
 
-    def get_engine_performance_stats(self) -> Dict[str, Any]:
+    def get_engine_performance_stats(self) -> dict[str, Any]:
         """
         Get engine performance statistics from metrics collector.
 
@@ -547,7 +548,7 @@ class EngineRouter:
             logger.warning(f"Failed to get engine performance stats: {e}")
             return {"error": str(e)}
 
-    def get_engine_stats(self) -> Dict[str, Any]:
+    def get_engine_stats(self) -> dict[str, Any]:
         """
         Get statistics about loaded engines.
 
@@ -626,7 +627,11 @@ class EngineRouter:
             raise ValueError(f"Manifest missing entry_point: {manifest_path}")
 
         # Import and get class
-        module_path, class_name = entry_point.rsplit(".", 1)
+        # Handle both formats: "module:class" (colon) and "module.class" (dot)
+        if ":" in entry_point:
+            module_path, class_name = entry_point.split(":", 1)
+        else:
+            module_path, class_name = entry_point.rsplit(".", 1)
         try:
             module = importlib.import_module(module_path)
         except ImportError as e:
@@ -666,7 +671,7 @@ class EngineRouter:
             # Skip if already registered (idempotent - safe to call multiple times)
             if engine_id in self._engine_types:
                 continue
-            
+
             try:
                 self.load_engine_from_manifest(manifest_path)
             except Exception as e:
@@ -674,7 +679,7 @@ class EngineRouter:
                 self._failed_engines[engine_id] = str(e)
                 logger.error(f"Failed to load engine {engine_id}: {e}")
 
-    def get_manifest(self, engine_id: str) -> Optional[Dict[str, Any]]:
+    def get_manifest(self, engine_id: str) -> dict[str, Any] | None:
         """
         Get manifest for an engine.
 
@@ -688,7 +693,7 @@ class EngineRouter:
 
     def get_engine_for_task_type(
         self, task_type: str, prefer_default: bool = True
-    ) -> Optional[EngineProtocol]:
+    ) -> EngineProtocol | None:
         """
         Get engine for a task type (e.g., "tts", "image_gen").
 
@@ -724,12 +729,12 @@ class EngineRouter:
     def select_engine_by_quality(
         self,
         task_type: str = "tts",
-        min_mos_score: Optional[float] = None,
-        min_similarity: Optional[float] = None,
-        min_naturalness: Optional[float] = None,
+        min_mos_score: float | None = None,
+        min_similarity: float | None = None,
+        min_naturalness: float | None = None,
         prefer_speed: bool = False,
-        quality_tier: Optional[str] = None,
-    ) -> Optional[EngineProtocol]:
+        quality_tier: str | None = None,
+    ) -> EngineProtocol | None:
         """
         Select the best engine based on quality requirements.
 
@@ -854,11 +859,7 @@ class EngineRouter:
             # Quality tier matching
             tier_match = 1.0
             if quality_tier:
-                if quality_tier == "fast" and engine_id in ["xtts_v2", "xtts"]:
-                    tier_match = 1.2
-                elif quality_tier == "standard" and engine_id == "chatterbox":
-                    tier_match = 1.2
-                elif quality_tier in ["high", "ultra"] and engine_id == "tortoise":
+                if (quality_tier == "fast" and engine_id in ["xtts_v2", "xtts"]) or (quality_tier == "standard" and engine_id == "chatterbox") or (quality_tier in ["high", "ultra"] and engine_id == "tortoise"):
                     tier_match = 1.2
 
             # Final score
@@ -894,23 +895,23 @@ class EngineRouter:
     # Language Detection and Selection
     # ==========================================================================
 
-    def detect_language(self, text: str) -> Optional[str]:
+    def detect_language(self, text: str) -> str | None:
         """
         Detect language of input text.
-        
+
         Args:
             text: Input text to analyze
-            
+
         Returns:
             ISO language code (e.g., "en", "zh", "ja") or None if detection fails
         """
         if not HAS_LANGDETECT:
             logger.debug("langdetect not available, language detection skipped")
             return None
-        
+
         if not text or len(text.strip()) < 3:
             return None
-        
+
         try:
             detected = langdetect.detect(text)
             logger.debug(f"Detected language: {detected}")
@@ -924,17 +925,17 @@ class EngineRouter:
         language: str,
         task_type: str = "tts",
         fallback_to_default: bool = True
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get the recommended engine ID for a specific language.
-        
+
         Uses config/engines.config.yaml language mappings.
-        
+
         Args:
             language: ISO language code (e.g., "en", "zh", "ja")
             task_type: Task type (e.g., "tts", "stt")
             fallback_to_default: If True, return default engine when no mapping exists
-            
+
         Returns:
             Engine ID or None
         """
@@ -946,27 +947,27 @@ class EngineRouter:
                     return engine_id
             except Exception as e:
                 logger.debug(f"Failed to get engine from config: {e}")
-        
+
         # Fallback to default engine
         if fallback_to_default:
             return self._get_default_engine_id(task_type)
-        
+
         return None
 
     def select_engine(
         self,
         task_type: str = "tts",
-        text: Optional[str] = None,
-        language: Optional[str] = None,
+        text: str | None = None,
+        language: str | None = None,
         quality_mode: str = "balanced",
-        ab_test_group: Optional[str] = None,
+        ab_test_group: str | None = None,
         prefer_low_load: bool = False,
-    ) -> Optional[EngineProtocol]:
+    ) -> EngineProtocol | None:
         """
         Enhanced engine selection with language, quality, A/B testing, and load balancing.
-        
+
         This is the main entry point for intelligent engine selection.
-        
+
         Args:
             task_type: Type of task ("tts", "stt", "rvc", etc.)
             text: Optional input text (used for language detection)
@@ -974,33 +975,33 @@ class EngineRouter:
             quality_mode: Quality preference ("fast", "balanced", "high", "ultra")
             ab_test_group: Optional A/B test group to use
             prefer_low_load: If True, prefer engines with lower load
-            
+
         Returns:
             Engine instance or None
         """
         selected_engine_id = None
         selection_reason = []
-        
+
         # 1. Check A/B testing first
         if ab_test_group or self._is_ab_testing_enabled():
             ab_result = self._select_ab_test_engine(task_type, ab_test_group)
             if ab_result:
                 selected_engine_id = ab_result.selected_engine
                 selection_reason.append(f"A/B test: {ab_result.experiment_id}")
-        
+
         # 2. Language-based selection (if no A/B result)
         if not selected_engine_id:
             # Detect language if not provided
             detected_language = language
             if not detected_language and text:
                 detected_language = self.detect_language(text)
-            
+
             if detected_language:
                 lang_engine = self.get_engine_for_language(detected_language, task_type, fallback_to_default=False)
                 if lang_engine:
                     selected_engine_id = lang_engine
                     selection_reason.append(f"language: {detected_language}")
-        
+
         # 3. Quality-based selection (if still no selection)
         if not selected_engine_id:
             quality_tier = self._map_quality_mode_to_tier(quality_mode)
@@ -1008,23 +1009,23 @@ class EngineRouter:
                 selected_engine_id = self._get_engine_for_quality_tier(task_type, quality_tier)
                 if selected_engine_id:
                     selection_reason.append(f"quality: {quality_mode}")
-        
+
         # 4. Load-based adjustment (if enabled)
         if prefer_low_load and selected_engine_id:
             alternative = self._get_lower_load_alternative(selected_engine_id, task_type)
             if alternative:
                 selected_engine_id = alternative
                 selection_reason.append("load-balanced")
-        
+
         # 5. Fallback to default
         if not selected_engine_id:
             selected_engine_id = self._get_default_engine_id(task_type)
             selection_reason.append("default")
-        
+
         if selected_engine_id:
             logger.info(f"Engine selected: {selected_engine_id} ({', '.join(selection_reason)})")
             return self.get_engine(selected_engine_id)
-        
+
         logger.warning(f"No engine available for task type: {task_type}")
         return None
 
@@ -1045,31 +1046,31 @@ class EngineRouter:
     def _select_ab_test_engine(
         self,
         task_type: str,
-        forced_group: Optional[str] = None
-    ) -> Optional[ABTestResult]:
+        forced_group: str | None = None
+    ) -> ABTestResult | None:
         """
         Select an engine based on active A/B test experiments.
-        
+
         Args:
             task_type: Task type to find experiments for
             forced_group: Optional forced group selection
-            
+
         Returns:
             ABTestResult or None if no active experiment
         """
         if not HAS_UNIFIED_CONFIG:
             return None
-        
+
         try:
             config = get_config()
             experiments = config.get_active_ab_experiments()
-            
+
             for exp in experiments:
                 # Check if experiment applies to this task type
                 # (could be enhanced with experiment-specific task filtering)
                 if not exp.engines:
                     continue
-                
+
                 # Select engine based on weights
                 if forced_group and forced_group in exp.engines:
                     selected = forced_group
@@ -1077,16 +1078,16 @@ class EngineRouter:
                 else:
                     selected = self._weighted_random_choice(exp.engines, exp.weights)
                     group = "treatment" if selected != exp.engines[0] else "control"
-                
+
                 result = ABTestResult(
                     experiment_id=exp.id,
                     selected_engine=selected,
                     group=group,
                 )
-                
+
                 # Log A/B test selection
                 logger.debug(f"A/B test '{exp.id}': selected '{selected}' ({group})")
-                
+
                 # Track exposure in ABTestingService for analytics
                 if HAS_AB_SERVICE and ABTestingService:
                     try:
@@ -1104,72 +1105,72 @@ class EngineRouter:
                     except Exception as track_err:
                         # Non-critical: don't fail engine selection if tracking fails
                         logger.debug(f"Failed to track A/B exposure: {track_err}")
-                
+
                 return result
-                
+
         except Exception as e:
             logger.debug(f"A/B test selection failed: {e}")
-        
+
         return None
 
-    def _weighted_random_choice(self, items: List[str], weights: List[float]) -> str:
+    def _weighted_random_choice(self, items: list[str], weights: list[float]) -> str:
         """Select an item based on weights."""
         if not items:
             raise ValueError("No items to choose from")
-        
+
         if not weights or len(weights) != len(items):
             # Equal weights if not specified
             return random.choice(items)
-        
+
         total = sum(weights)
         if total <= 0:
             return random.choice(items)
-        
+
         # Normalize weights
         normalized = [w / total for w in weights]
-        
+
         r = random.random()
         cumulative = 0.0
-        for item, weight in zip(items, normalized):
+        for item, weight in zip(items, normalized, strict=False):
             cumulative += weight
             if r <= cumulative:
                 return item
-        
+
         return items[-1]
 
     # ==========================================================================
     # Load-Based Selection
     # ==========================================================================
 
-    def _get_engine_load_stats(self, engine_id: str) -> Optional[EngineLoadStats]:
+    def _get_engine_load_stats(self, engine_id: str) -> EngineLoadStats | None:
         """
         Get load statistics for an engine.
-        
+
         Returns:
             EngineLoadStats or None if unavailable
         """
         if not HAS_ENGINE_METRICS:
             return None
-        
+
         try:
             metrics = get_engine_metrics()
             summary = metrics.get_summary()
-            
+
             # Engine stats are nested under "engines" key in summary
             engine_stats = summary.get("engines", {}).get(engine_id, {})
             if engine_stats:
                 total_requests = engine_stats.get("total_requests", 0)
                 errors = engine_stats.get("errors", 0)
-                
+
                 # Calculate error_rate as float (it's stored as string like "0.00%")
                 error_rate = errors / max(total_requests, 1)
-                
+
                 # Get avg latency from synthesis_times.mean (in seconds, convert to ms)
                 synthesis_times = engine_stats.get("synthesis_times")
                 avg_latency_ms = 0.0
                 if synthesis_times and isinstance(synthesis_times, dict):
                     avg_latency_ms = synthesis_times.get("mean", 0.0) * 1000
-                
+
                 return EngineLoadStats(
                     engine_id=engine_id,
                     active_requests=0,  # Not tracked - could use queue depth in future
@@ -1179,56 +1180,56 @@ class EngineRouter:
                 )
         except Exception as e:
             logger.debug(f"Failed to get load stats for {engine_id}: {e}")
-        
+
         return None
 
     def _get_lower_load_alternative(
         self,
         current_engine_id: str,
         task_type: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Find an alternative engine with lower load.
-        
+
         Args:
             current_engine_id: Currently selected engine
             task_type: Task type for finding alternatives
-            
+
         Returns:
             Alternative engine ID or None if current is best
         """
         current_stats = self._get_engine_load_stats(current_engine_id)
         if not current_stats:
             return None
-        
+
         # Get fallback chain as alternatives
         alternatives = self._get_fallback_chain(task_type)
         if current_engine_id in alternatives:
             alternatives = [e for e in alternatives if e != current_engine_id]
-        
+
         best_alternative = None
         best_load_score = current_stats.active_requests + (current_stats.error_rate * 10)
-        
+
         for alt_id in alternatives:
             alt_stats = self._get_engine_load_stats(alt_id)
             if not alt_stats:
                 continue
-            
+
             # Simple load score: active requests + error rate penalty
             alt_load_score = alt_stats.active_requests + (alt_stats.error_rate * 10)
-            
+
             # Only switch if significantly lower load
             if alt_load_score < best_load_score * 0.7:  # 30% lower
                 best_alternative = alt_id
                 best_load_score = alt_load_score
-        
+
         return best_alternative
 
     # ==========================================================================
     # Helper Methods
     # ==========================================================================
 
-    def _get_default_engine_id(self, task_type: str) -> Optional[str]:
+    def _get_default_engine_id(self, task_type: str) -> str | None:
         """Get default engine ID for a task type from config."""
         if HAS_UNIFIED_CONFIG:
             try:
@@ -1236,7 +1237,7 @@ class EngineRouter:
                 return config.get_default_engine(task_type)
             except Exception as e:
                 logger.debug("Config lookup for default engine failed, using fallback: %s", e)
-        
+
         # Fallback defaults
         defaults = {
             "tts": "xtts_v2",
@@ -1245,7 +1246,7 @@ class EngineRouter:
         }
         return defaults.get(task_type)
 
-    def _get_fallback_chain(self, task_type: str) -> List[str]:
+    def _get_fallback_chain(self, task_type: str) -> list[str]:
         """Get fallback chain for a task type from config."""
         if HAS_UNIFIED_CONFIG:
             try:
@@ -1253,7 +1254,7 @@ class EngineRouter:
                 return config.get_fallback_chain(task_type)
             except Exception as e:
                 logger.debug("Config lookup for fallback chain failed, using fallback: %s", e)
-        
+
         # Fallback defaults
         defaults = {
             "tts": ["xtts_v2", "openvoice", "piper", "espeak"],
@@ -1262,7 +1263,7 @@ class EngineRouter:
         }
         return defaults.get(task_type, [])
 
-    def _map_quality_mode_to_tier(self, quality_mode: str) -> Optional[str]:
+    def _map_quality_mode_to_tier(self, quality_mode: str) -> str | None:
         """Map quality mode string to tier."""
         mapping = {
             "fast": "fast",
@@ -1274,7 +1275,7 @@ class EngineRouter:
         }
         return mapping.get(quality_mode.lower())
 
-    def _get_engine_for_quality_tier(self, task_type: str, tier: str) -> Optional[str]:
+    def _get_engine_for_quality_tier(self, task_type: str, tier: str) -> str | None:
         """Get engine ID for a quality tier."""
         if HAS_UNIFIED_CONFIG:
             try:
@@ -1282,7 +1283,7 @@ class EngineRouter:
                 return config.get_quality_tier_engine(tier, task_type)
             except Exception as e:
                 logger.debug("Config lookup for quality tier engine failed, using fallback: %s", e)
-        
+
         # Fallback tier mapping for TTS
         if task_type == "tts":
             tier_engines = {
@@ -1293,29 +1294,29 @@ class EngineRouter:
                 "ultra": "tortoise",
             }
             return tier_engines.get(tier)
-        
+
         return None
 
     def select_engine_with_fallback(
         self,
         task_type: str = "tts",
         **kwargs
-    ) -> Tuple[Optional[EngineProtocol], List[str]]:
+    ) -> tuple[EngineProtocol | None, list[str]]:
         """
         Select engine with automatic fallback chain.
-        
+
         Tries each engine in the fallback chain until one works.
-        
+
         Args:
             task_type: Task type
             **kwargs: Additional arguments for select_engine
-            
+
         Returns:
             Tuple of (engine instance, list of attempted engines)
         """
         fallback_chain = self._get_fallback_chain(task_type)
         attempted = []
-        
+
         for engine_id in fallback_chain:
             attempted.append(engine_id)
             try:
@@ -1326,7 +1327,7 @@ class EngineRouter:
             except Exception as e:
                 logger.debug(f"Fallback engine '{engine_id}' failed: {e}")
                 continue
-        
+
         logger.warning(f"All fallback engines failed for task type '{task_type}'")
         return None, attempted
 

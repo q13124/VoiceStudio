@@ -7,13 +7,13 @@ Supports real-time audio streaming with low latency.
 Note: Requires GOOGLE_API_KEY. Optional cloud adapter.
 """
 
-import asyncio
+from __future__ import annotations
+
 import base64
-import json
 import logging
 import os
 import time
-from typing import Any, AsyncIterator, Dict, Optional
+from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class GeminiLiveProvider(BaseS2SProvider):
     DEFAULT_MODEL = "gemini-2.0-flash-exp"
     WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
 
-    def __init__(self, config: Optional[S2SConfig] = None):
+    def __init__(self, config: S2SConfig | None = None):
         super().__init__(config)
         if not self._config.model:
             self._config.model = self.DEFAULT_MODEL
@@ -52,7 +52,7 @@ class GeminiLiveProvider(BaseS2SProvider):
     def is_available(self) -> bool:
         return bool(self._config.api_key)
 
-    async def connect(self, config: Optional[S2SConfig] = None) -> bool:
+    async def connect(self, config: S2SConfig | None = None) -> bool:
         """Connect to Gemini Live API."""
         if config:
             self._config = config
@@ -156,7 +156,7 @@ class GeminiLiveProvider(BaseS2SProvider):
             self._state = S2SConnectionState.ERROR
 
     async def respond(
-        self, audio_data: bytes, context: Optional[str] = None
+        self, audio_data: bytes, context: str | None = None
     ) -> S2SResponse:
         """Send audio and get a complete response."""
         start_time = time.perf_counter()

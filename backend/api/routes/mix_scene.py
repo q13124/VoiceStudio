@@ -4,9 +4,12 @@ Mix Scene Analysis Routes
 Provides audio scene analysis and mixing graph generation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException
+from typing import Any
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -19,8 +22,8 @@ class SceneAnalysisNode(BaseModel):
     id: str
     type: str  # "source", "processor", "output", "bus"
     name: str
-    position: Dict[str, float] = {"x": 0, "y": 0}
-    properties: Dict[str, Any] = {}
+    position: dict[str, float] = {"x": 0, "y": 0}
+    properties: dict[str, Any] = {}
 
 
 class SceneAnalysisConnection(BaseModel):
@@ -34,12 +37,12 @@ class SceneAnalysisConnection(BaseModel):
 class SceneAnalysisResponse(BaseModel):
     """Response from scene analysis."""
     success: bool
-    graph: Dict[str, Any]
-    nodes: List[SceneAnalysisNode]
-    connections: List[SceneAnalysisConnection]
-    analysis: Dict[str, Any]
+    graph: dict[str, Any]
+    nodes: list[SceneAnalysisNode]
+    connections: list[SceneAnalysisConnection]
+    analysis: dict[str, Any]
     implementation_status: str = "basic"  # "basic", "full", "experimental"
-    message: Optional[str] = None
+    message: str | None = None
 
 
 # Try to import audio analysis tools
@@ -54,7 +57,7 @@ except ImportError:
 def analyze(req: Any) -> SceneAnalysisResponse:
     """
     Analyze an audio scene and generate a mixing graph.
-    
+
     This endpoint analyzes audio files/tracks and produces a graph
     representation of the mixing structure with nodes and connections.
     """
@@ -71,7 +74,7 @@ def analyze(req: Any) -> SceneAnalysisResponse:
         # Build a basic mixing graph structure
         nodes = []
         connections = []
-        
+
         # Create source nodes for each audio input
         for i, path in enumerate(audio_paths):
             node = SceneAnalysisNode(
@@ -82,7 +85,7 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 properties={"path": str(path), "channel_count": 2}
             )
             nodes.append(node)
-        
+
         # Create a master bus node
         if nodes:
             master_bus = SceneAnalysisNode(
@@ -93,14 +96,14 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 properties={"gain": 1.0, "pan": 0.0}
             )
             nodes.append(master_bus)
-            
+
             # Connect all sources to master bus
             for source_node in nodes[:-1]:  # All except master
                 connections.append(SceneAnalysisConnection(
                     source_id=source_node.id,
                     target_id="master_bus"
                 ))
-            
+
             # Create output node
             output_node = SceneAnalysisNode(
                 id="output",
@@ -147,6 +150,6 @@ def analyze(req: Any) -> SceneAnalysisResponse:
             connections=[],
             analysis={},
             implementation_status="basic",
-            message=f"Analysis failed: {str(e)}"
+            message=f"Analysis failed: {e!s}"
         )
 

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from tools.context.core.models import AllocationContext, BudgetConstraints, ContextBundle, SourceResult
+from tools.context.core.models import (
+    AllocationContext,
+    BudgetConstraints,
+    ContextBundle,
+    SourceResult,
+)
 
 
 class ContextSourceProtocol(Protocol):

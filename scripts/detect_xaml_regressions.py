@@ -24,8 +24,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
 
 # Regression detection patterns
 REGRESSIONS = {
@@ -57,7 +55,7 @@ REGRESSIONS = {
     "missing_fallback_status": {
         "pattern": r'StatusMessage[^}]*Mode=OneWay[^}]*\}(?![^}]*FallbackValue)',
         "message": "StatusMessage binding missing FallbackValue",
-        "severity": "warning", 
+        "severity": "warning",
         "applies_to": ["Views/Panels/*.xaml"]
     },
     "loading_overlay_no_d_visibility": {
@@ -84,7 +82,7 @@ def find_project_root() -> Path:
     raise RuntimeError("Could not find project root")
 
 
-def matches_file_pattern(file_path: Path, patterns: List[str], base_path: Path) -> bool:
+def matches_file_pattern(file_path: Path, patterns: list[str], base_path: Path) -> bool:
     """Check if file matches any of the glob patterns."""
     relative = file_path.relative_to(base_path)
     for pattern in patterns:
@@ -95,28 +93,28 @@ def matches_file_pattern(file_path: Path, patterns: List[str], base_path: Path) 
     return False
 
 
-def check_file_for_regressions(file_path: Path, base_path: Path) -> List[Dict]:
+def check_file_for_regressions(file_path: Path, base_path: Path) -> list[dict]:
     """Check a single XAML file for regressions."""
     issues = []
-    
+
     try:
         content = file_path.read_text(encoding="utf-8")
     except Exception as e:
         return [{"file": str(file_path), "error": str(e)}]
-    
+
     lines = content.splitlines()
-    
+
     for reg_name, reg_config in REGRESSIONS.items():
         # Check if this regression applies to this file
         if not matches_file_pattern(file_path, reg_config.get("applies_to", ["*.xaml"]), base_path):
             continue
-        
+
         # Check for exclusion patterns
         exclude_patterns = reg_config.get("exclude_patterns", [])
-        
+
         # Simple pattern matching (not perfect, but catches most cases)
         pattern = reg_config["pattern"]
-        
+
         for i, line in enumerate(lines, 1):
             # Check for exclusions first
             skip = False
@@ -124,10 +122,10 @@ def check_file_for_regressions(file_path: Path, base_path: Path) -> List[Dict]:
                 if exclude in line:
                     skip = True
                     break
-            
+
             if skip:
                 continue
-            
+
             # Check for pattern
             if re.search(pattern, line, re.IGNORECASE):
                 issues.append({
@@ -138,55 +136,54 @@ def check_file_for_regressions(file_path: Path, base_path: Path) -> List[Dict]:
                     "severity": reg_config["severity"],
                     "content": line.strip()[:100]
                 })
-    
+
     # Check for missing namespace declarations in Views
-    if "Views" in str(file_path):
-        if "<UserControl" in content:
-            for ns_prefix, ns_uri in REQUIRED_NAMESPACES:
-                if f'xmlns:{ns_prefix}=' not in content:
-                    issues.append({
-                        "file": str(file_path.relative_to(base_path)),
-                        "line": 1,
-                        "type": f"missing_namespace_{ns_prefix}",
-                        "message": f"Missing namespace declaration: xmlns:{ns_prefix}",
-                        "severity": "warning"
-                    })
-    
+    if "Views" in str(file_path) and "<UserControl" in content:
+        for ns_prefix, _ns_uri in REQUIRED_NAMESPACES:
+            if f'xmlns:{ns_prefix}=' not in content:
+                issues.append({
+                    "file": str(file_path.relative_to(base_path)),
+                    "line": 1,
+                    "type": f"missing_namespace_{ns_prefix}",
+                    "message": f"Missing namespace declaration: xmlns:{ns_prefix}",
+                    "severity": "warning"
+                })
+
     return issues
 
 
-def scan_directory(base_path: Path, target_dirs: List[str]) -> List[Dict]:
+def scan_directory(base_path: Path, target_dirs: list[str]) -> list[dict]:
     """Scan directories for XAML regressions."""
     all_issues = []
-    
+
     for target_dir in target_dirs:
         dir_path = base_path / target_dir
         if not dir_path.exists():
             continue
-        
+
         for xaml_file in dir_path.rglob("*.xaml"):
             issues = check_file_for_regressions(xaml_file, base_path)
             all_issues.extend(issues)
-    
+
     return all_issues
 
 
-def summarize_issues(issues: List[Dict]) -> Dict:
+def summarize_issues(issues: list[dict]) -> dict:
     """Generate summary statistics for issues."""
     by_severity = {"error": 0, "warning": 0, "info": 0}
     by_type = {}
     by_file = {}
-    
+
     for issue in issues:
         severity = issue.get("severity", "warning")
         by_severity[severity] = by_severity.get(severity, 0) + 1
-        
+
         issue_type = issue.get("type", "unknown")
         by_type[issue_type] = by_type.get(issue_type, 0) + 1
-        
+
         file_name = issue.get("file", "unknown")
         by_file[file_name] = by_file.get(file_name, 0) + 1
-    
+
     return {
         "total": len(issues),
         "by_severity": by_severity,
@@ -195,41 +192,41 @@ def summarize_issues(issues: List[Dict]) -> Dict:
     }
 
 
-def print_report(issues: List[Dict], output_format: str = "text") -> None:
+def print_report(issues: list[dict], output_format: str = "text") -> None:
     """Print regression report."""
     summary = summarize_issues(issues)
-    
+
     if output_format == "json":
         print(json.dumps({
             "summary": summary,
             "issues": issues
         }, indent=2))
         return
-    
+
     # Text format
     print("\n" + "=" * 60)
     print("XAML Regression Detection Report")
     print("=" * 60)
-    
+
     if not issues:
         print("\n[OK] No regressions detected!")
         print("=" * 60)
         return
-    
+
     print(f"\nTotal issues: {summary['total']}")
     print(f"  Errors: {summary['by_severity']['error']}")
     print(f"  Warnings: {summary['by_severity']['warning']}")
     print(f"  Info: {summary['by_severity']['info']}")
     print(f"  Files affected: {summary['files_affected']}")
-    
+
     # Group by file
-    issues_by_file: Dict[str, List[Dict]] = {}
+    issues_by_file: dict[str, list[dict]] = {}
     for issue in issues:
         file_name = issue.get("file", "unknown")
         if file_name not in issues_by_file:
             issues_by_file[file_name] = []
         issues_by_file[file_name].append(issue)
-    
+
     print("\n--- Issues by File ---")
     for file_name, file_issues in sorted(issues_by_file.items()):
         print(f"\n{file_name}:")
@@ -237,12 +234,12 @@ def print_report(issues: List[Dict], output_format: str = "text") -> None:
             severity = issue.get("severity", "warning")
             line = issue.get("line", "?")
             message = issue.get("message", "Unknown issue")
-            
+
             severity_marker = {"error": "[E]", "warning": "[W]", "info": "[i]"}.get(severity, "[?]")
             print(f"  {severity_marker} Line {line}: {message}")
-    
+
     print("\n" + "=" * 60)
-    
+
     if summary["by_severity"]["error"] > 0:
         print("\n[FAIL] Errors detected - must fix before committing")
     elif summary["by_severity"]["warning"] > 0:
@@ -269,34 +266,34 @@ def main() -> int:
         help="Treat warnings as errors"
     )
     args = parser.parse_args()
-    
+
     try:
         project_root = find_project_root()
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
-    
+
     # Default scan directories
     target_dirs = ["src/VoiceStudio.App/Views", "src/VoiceStudio.App/Controls"]
-    
+
     if args.path:
         target_dirs = [str(args.path)]
-    
+
     print(f"Scanning for XAML regressions in: {project_root}")
     issues = scan_directory(project_root, target_dirs)
-    
+
     output_format = "json" if args.json else "text"
     print_report(issues, output_format)
-    
+
     # Determine exit code
     summary = summarize_issues(issues)
-    
+
     if summary["by_severity"]["error"] > 0:
         return 1
-    
+
     if args.strict and summary["by_severity"]["warning"] > 0:
         return 1
-    
+
     return 0
 
 

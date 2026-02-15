@@ -4,11 +4,11 @@ Emotion & Style Control Routes
 Endpoints for controlling emotion and style in voice synthesis.
 """
 
-import logging
-import time
-from typing import Dict, List, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+import logging
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/emotion-style", tags=["emotion-style"])
 
 # In-memory emotion/style presets (replace with database in production)
-_emotion_presets: Dict[str, Dict] = {}
-_style_presets: Dict[str, Dict] = {}
+_emotion_presets: dict[str, dict] = {}
+_style_presets: dict[str, dict] = {}
 _MAX_EMOTION_PRESETS = 200  # Maximum number of emotion presets
 _MAX_STYLE_PRESETS = 200  # Maximum number of style presets
-_emotion_preset_timestamps: Dict[str, float] = {}  # preset_id -> creation_time
-_style_preset_timestamps: Dict[str, float] = {}  # preset_id -> creation_time
+_emotion_preset_timestamps: dict[str, float] = {}  # preset_id -> creation_time
+_style_preset_timestamps: dict[str, float] = {}  # preset_id -> creation_time
 
 
 def _cleanup_old_presets():
@@ -38,10 +38,8 @@ def _cleanup_old_presets():
         )
         excess = len(_emotion_presets) - _MAX_EMOTION_PRESETS
         for preset_id, _ in sorted_presets[:excess]:
-            if preset_id in _emotion_presets:
-                del _emotion_presets[preset_id]
-            if preset_id in _emotion_preset_timestamps:
-                del _emotion_preset_timestamps[preset_id]
+            _emotion_presets.pop(preset_id, None)
+            _emotion_preset_timestamps.pop(preset_id, None)
         logger.info(f"Cleaned up {excess} old emotion presets from storage")
 
     # Clean up style presets
@@ -52,10 +50,8 @@ def _cleanup_old_presets():
         )
         excess = len(_style_presets) - _MAX_STYLE_PRESETS
         for preset_id, _ in sorted_presets[:excess]:
-            if preset_id in _style_presets:
-                del _style_presets[preset_id]
-            if preset_id in _style_preset_timestamps:
-                del _style_preset_timestamps[preset_id]
+            _style_presets.pop(preset_id, None)
+            _style_preset_timestamps.pop(preset_id, None)
         logger.info(f"Cleaned up {excess} old style presets from storage")
 
 
@@ -66,7 +62,7 @@ class EmotionPreset(BaseModel):
     name: str
     emotion: str  # happy, sad, angry, neutral, etc.
     intensity: float  # 0.0 to 1.0
-    parameters: Dict[str, float] = {}
+    parameters: dict[str, float] = {}
     created: str  # ISO datetime string
 
 
@@ -76,7 +72,7 @@ class StylePreset(BaseModel):
     id: str
     name: str
     style: str  # formal, casual, narrative, etc.
-    parameters: Dict[str, float] = {}
+    parameters: dict[str, float] = {}
     created: str  # ISO datetime string
 
 
@@ -85,11 +81,11 @@ class EmotionStyleApplyRequest(BaseModel):
 
     profile_id: str
     text: str
-    emotion_preset_id: Optional[str] = None
-    style_preset_id: Optional[str] = None
-    emotion: Optional[str] = None
-    style: Optional[str] = None
-    intensity: Optional[float] = None
+    emotion_preset_id: str | None = None
+    style_preset_id: str | None = None
+    emotion: str | None = None
+    style: str | None = None
+    intensity: float | None = None
 
 
 class EmotionStyleApplyResponse(BaseModel):
@@ -99,7 +95,7 @@ class EmotionStyleApplyResponse(BaseModel):
     message: str
 
 
-@router.get("/emotions", response_model=List[EmotionPreset])
+@router.get("/emotions", response_model=list[EmotionPreset])
 async def get_emotion_presets():
     """Get all emotion presets."""
     return [
@@ -115,7 +111,7 @@ async def get_emotion_presets():
     ]
 
 
-@router.get("/styles", response_model=List[StylePreset])
+@router.get("/styles", response_model=list[StylePreset])
 async def get_style_presets():
     """Get all style presets."""
     return [
@@ -134,7 +130,6 @@ async def get_style_presets():
 async def apply_emotion_style(request: EmotionStyleApplyRequest):
     """Apply emotion/style to voice synthesis."""
     import uuid
-    from datetime import datetime
 
     # In a real implementation, this would:
     # 1. Load emotion/style presets if provided

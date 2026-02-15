@@ -10,13 +10,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-import mimetypes
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +45,7 @@ class ScanResult:
     file_path: str
     file_hash: str
     status: ScanStatus
-    threats: List[ThreatType] = field(default_factory=list)
+    threats: list[ThreatType] = field(default_factory=list)
     details: str = ""
     scan_time_ms: float = 0
     scanned_at: datetime = field(default_factory=datetime.now)
@@ -58,12 +55,12 @@ class ScanResult:
 class ScannerConfig:
     """Configuration for file scanner."""
     max_file_size_mb: int = 100
-    allowed_extensions: Set[str] = field(default_factory=lambda: {
+    allowed_extensions: set[str] = field(default_factory=lambda: {
         ".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac",  # Audio
         ".txt", ".json", ".csv",  # Text
         ".vsproj",  # Project files
     })
-    blocked_extensions: Set[str] = field(default_factory=lambda: {
+    blocked_extensions: set[str] = field(default_factory=lambda: {
         ".exe", ".bat", ".cmd", ".ps1", ".sh", ".vbs", ".js",
         ".dll", ".so", ".dylib",
         ".msi", ".deb", ".rpm",
@@ -75,7 +72,7 @@ class ScannerConfig:
 class FileScanner:
     """
     File upload scanner.
-    
+
     Features:
     - Extension validation
     - Size limits
@@ -83,7 +80,7 @@ class FileScanner:
     - Suspicious content detection
     - Quarantine support
     """
-    
+
     # Magic bytes for common file types
     MAGIC_BYTES = {
         b"RIFF": [".wav"],
@@ -96,7 +93,7 @@ class FileScanner:
         b"\x1f\x8b": [".gz"],
         b"MZ": [".exe", ".dll"],  # Executables - dangerous
     }
-    
+
     # Suspicious patterns in text files
     SUSPICIOUS_PATTERNS = [
         b"<script",
@@ -108,29 +105,29 @@ class FileScanner:
         b"powershell",
         b"cmd.exe",
     ]
-    
-    def __init__(self, config: Optional[ScannerConfig] = None):
+
+    def __init__(self, config: ScannerConfig | None = None):
         self.config = config or ScannerConfig()
-        
+
         self._quarantine_path = Path(self.config.quarantine_path)
         self._quarantine_path.mkdir(parents=True, exist_ok=True)
-        
+
         self._scan_count = 0
         self._threat_count = 0
-    
+
     async def scan_file(self, file_path: str) -> ScanResult:
         """
         Scan a file for security threats.
-        
+
         Args:
             file_path: Path to file to scan
-            
+
         Returns:
             ScanResult with status and details
         """
         start_time = asyncio.get_event_loop().time()
         path = Path(file_path)
-        
+
         if not path.exists():
             return ScanResult(
                 file_path=file_path,
@@ -138,44 +135,44 @@ class FileScanner:
                 status=ScanStatus.ERROR,
                 details="File not found",
             )
-        
+
         # Calculate hash
         file_hash = await self._calculate_hash(path)
-        
-        threats: List[ThreatType] = []
+
+        threats: list[ThreatType] = []
         details = []
-        
+
         try:
             # Check extension
             ext = path.suffix.lower()
-            
+
             if ext in self.config.blocked_extensions:
                 threats.append(ThreatType.EXECUTABLE)
                 details.append(f"Blocked extension: {ext}")
-            
+
             if ext not in self.config.allowed_extensions:
                 threats.append(ThreatType.INVALID_TYPE)
                 details.append(f"Not in allowed extensions: {ext}")
-            
+
             # Check size
             size_mb = path.stat().st_size / (1024 * 1024)
             if size_mb > self.config.max_file_size_mb:
                 threats.append(ThreatType.OVERSIZED)
                 details.append(f"File size {size_mb:.1f}MB exceeds limit")
-            
+
             # Check magic bytes
             magic_threat = await self._check_magic_bytes(path)
             if magic_threat:
                 threats.append(magic_threat)
                 details.append("File type mismatch detected")
-            
+
             # Check for suspicious content in text files
             if ext in {".txt", ".json", ".csv"}:
                 suspicious = await self._check_suspicious_content(path)
                 if suspicious:
                     threats.append(ThreatType.SUSPICIOUS_CONTENT)
                     details.append("Suspicious content patterns detected")
-            
+
             # Determine status
             if threats:
                 if ThreatType.EXECUTABLE in threats or ThreatType.MALWARE in threats:
@@ -184,18 +181,18 @@ class FileScanner:
                     status = ScanStatus.SUSPICIOUS
             else:
                 status = ScanStatus.CLEAN
-            
+
         except Exception as e:
             logger.error(f"Scan error for {file_path}: {e}")
             status = ScanStatus.ERROR
             details.append(str(e))
-        
+
         scan_time = (asyncio.get_event_loop().time() - start_time) * 1000
-        
+
         self._scan_count += 1
         if status != ScanStatus.CLEAN:
             self._threat_count += 1
-        
+
         return ScanResult(
             file_path=file_path,
             file_hash=file_hash,
@@ -204,108 +201,101 @@ class FileScanner:
             details="; ".join(details),
             scan_time_ms=scan_time,
         )
-    
+
     async def _calculate_hash(self, path: Path) -> str:
         """Calculate SHA-256 hash of file."""
         sha256 = hashlib.sha256()
-        
+
         with open(path, "rb") as f:
             for chunk in iter(lambda: f.read(8192), b""):
                 sha256.update(chunk)
-        
+
         return sha256.hexdigest()
-    
-    async def _check_magic_bytes(self, path: Path) -> Optional[ThreatType]:
+
+    async def _check_magic_bytes(self, path: Path) -> ThreatType | None:
         """Check if magic bytes match extension."""
         with open(path, "rb") as f:
             header = f.read(8)
-        
+
         ext = path.suffix.lower()
-        
+
         for magic, extensions in self.MAGIC_BYTES.items():
             if header.startswith(magic):
                 # Check if MZ (executable)
                 if magic == b"MZ":
                     return ThreatType.EXECUTABLE
-                
+
                 # Check if extension matches
                 if ext not in extensions:
                     return ThreatType.INVALID_TYPE
-                
+
                 return None
-        
+
         return None
-    
+
     async def _check_suspicious_content(self, path: Path) -> bool:
         """Check for suspicious patterns in text files."""
         try:
             with open(path, "rb") as f:
                 content = f.read(10000)  # First 10KB
-            
-            for pattern in self.SUSPICIOUS_PATTERNS:
-                if pattern in content.lower():
-                    return True
-            
-            return False
-            
+
+            return any(pattern in content.lower() for pattern in self.SUSPICIOUS_PATTERNS)
+
         except Exception:
             return False
-    
-    async def quarantine(self, file_path: str, reason: str = "") -> Optional[str]:
+
+    async def quarantine(self, file_path: str, reason: str = "") -> str | None:
         """
         Move a file to quarantine.
-        
+
         Returns:
             Quarantine path if successful, None otherwise
         """
         source = Path(file_path)
         if not source.exists():
             return None
-        
+
         # Create unique quarantine name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         quarantine_name = f"{timestamp}_{source.name}"
         dest = self._quarantine_path / quarantine_name
-        
+
         try:
             source.rename(dest)
-            
+
             # Write metadata
             meta_path = dest.with_suffix(dest.suffix + ".meta")
             with open(meta_path, "w") as f:
                 f.write(f"Original path: {file_path}\n")
                 f.write(f"Quarantined at: {datetime.now().isoformat()}\n")
                 f.write(f"Reason: {reason}\n")
-            
+
             logger.info(f"Quarantined file: {file_path} -> {dest}")
             return str(dest)
-            
+
         except Exception as e:
             logger.error(f"Quarantine failed: {e}")
             return None
-    
+
     async def scan_directory(
         self,
         directory: str,
         recursive: bool = True,
-    ) -> List[ScanResult]:
+    ) -> list[ScanResult]:
         """Scan all files in a directory."""
         results = []
         path = Path(directory)
-        
-        if recursive:
-            files = path.rglob("*")
-        else:
-            files = path.glob("*")
-        
+
+        files = path.rglob("*") if recursive else path.glob("*")
+
         for file_path in files:
             if file_path.is_file():
                 result = await self.scan_file(str(file_path))
                 results.append(result)
-        
+
         return results
-    
-    def get_stats(self) -> Dict:
+
+    def get_stats(self) -> dict:
         """Get scanner statistics."""
         return {
             "total_scans": self._scan_count,
@@ -317,7 +307,7 @@ class FileScanner:
 
 
 # Global scanner
-_scanner: Optional[FileScanner] = None
+_scanner: FileScanner | None = None
 
 
 def get_file_scanner() -> FileScanner:

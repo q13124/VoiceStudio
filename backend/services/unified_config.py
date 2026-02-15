@@ -19,11 +19,11 @@ import json
 import logging
 import os
 import re
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Generic
-from functools import lru_cache
 import threading
+from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, TypeVar
 
 try:
     import yaml
@@ -96,15 +96,15 @@ class VoiceStudioConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     performance: PerformanceConfig = field(default_factory=PerformanceConfig)
     quality: QualityConfig = field(default_factory=QualityConfig)
-    feature_flags: Dict[str, bool] = field(default_factory=dict)
+    feature_flags: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
 class RoutingPolicy:
     """Engine routing policy."""
-    language_mapping: Dict[str, str] = field(default_factory=dict)
-    fallback_chains: Dict[str, List[str]] = field(default_factory=dict)
-    quality_tiers: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    language_mapping: dict[str, str] = field(default_factory=dict)
+    fallback_chains: dict[str, list[str]] = field(default_factory=dict)
+    quality_tiers: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -112,17 +112,17 @@ class ABExperiment:
     """A/B testing experiment."""
     id: str
     description: str = ""
-    engines: List[str] = field(default_factory=list)
-    weights: List[float] = field(default_factory=list)
+    engines: list[str] = field(default_factory=list)
+    weights: list[float] = field(default_factory=list)
     active: bool = False
-    metrics: List[str] = field(default_factory=list)
+    metrics: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ABTestingConfig:
     """A/B testing configuration."""
     enabled: bool = False
-    experiments: List[ABExperiment] = field(default_factory=list)
+    experiments: list[ABExperiment] = field(default_factory=list)
 
 
 @dataclass
@@ -139,12 +139,12 @@ class GPUSettings:
 class EnginesConfig:
     """Engine configuration."""
     version: str = "1.0.0"
-    defaults: Dict[str, str] = field(default_factory=dict)
+    defaults: dict[str, str] = field(default_factory=dict)
     routing_policy: RoutingPolicy = field(default_factory=RoutingPolicy)
     ab_testing: ABTestingConfig = field(default_factory=ABTestingConfig)
     gpu_settings: GPUSettings = field(default_factory=GPUSettings)
-    global_settings: Dict[str, Any] = field(default_factory=dict)
-    engine_overrides: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    global_settings: dict[str, Any] = field(default_factory=dict)
+    engine_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -192,25 +192,25 @@ class DeploymentConfig:
 def expand_env_vars(value: str) -> str:
     """
     Expand environment variables in a string.
-    
+
     Supports format: ${VAR_NAME:default_value}
-    
+
     Args:
         value: String potentially containing env var references
-        
+
     Returns:
         String with env vars expanded
     """
     if not isinstance(value, str):
         return value
-    
+
     pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
-    
+
     def replacer(match: re.Match) -> str:
         var_name = match.group(1)
         default = match.group(2) or ""
         return os.environ.get(var_name, default)
-    
+
     return re.sub(pattern, replacer, value)
 
 
@@ -232,11 +232,11 @@ def expand_env_vars_recursive(obj: Any) -> Any:
 
 class ConfigLoader:
     """Loads and parses configuration files."""
-    
-    def __init__(self, config_dir: Optional[Path] = None):
+
+    def __init__(self, config_dir: Path | None = None):
         """
         Initialize the config loader.
-        
+
         Args:
             config_dir: Path to config directory. Defaults to project's config/ folder.
         """
@@ -249,96 +249,96 @@ class ConfigLoader:
                     break
             else:
                 config_dir = Path("config")
-        
+
         self.config_dir = Path(config_dir)
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
         self._lock = threading.Lock()
-    
-    def _load_yaml(self, filename: str) -> Dict[str, Any]:
+
+    def _load_yaml(self, filename: str) -> dict[str, Any]:
         """Load a YAML file with environment variable expansion."""
         if yaml is None:
             raise ImportError("PyYAML is required for YAML configuration. Install with: pip install pyyaml")
-        
+
         filepath = self.config_dir / filename
         if not filepath.exists():
             logger.warning(f"Config file not found: {filepath}")
             return {}
-        
+
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 content = yaml.safe_load(f)
-            
+
             if content is None:
                 return {}
-            
+
             # Expand environment variables
             return expand_env_vars_recursive(content)
-        
+
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML file {filepath}: {e}")
             raise
-    
-    def _load_json(self, filepath: Path) -> Dict[str, Any]:
+
+    def _load_json(self, filepath: Path) -> dict[str, Any]:
         """Load a JSON file with environment variable expansion."""
         if not filepath.exists():
             logger.warning(f"Config file not found: {filepath}")
             return {}
-        
+
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 content = json.load(f)
-            
+
             return expand_env_vars_recursive(content)
-        
+
         except json.JSONDecodeError as e:
             logger.error(f"Error parsing JSON file {filepath}: {e}")
             raise
-    
-    def load_voicestudio_config(self, use_cache: bool = True) -> Dict[str, Any]:
+
+    def load_voicestudio_config(self, use_cache: bool = True) -> dict[str, Any]:
         """Load the main VoiceStudio configuration."""
         cache_key = "voicestudio"
-        
+
         with self._lock:
             if use_cache and cache_key in self._cache:
                 return self._cache[cache_key]
-            
+
             config = self._load_yaml("voicestudio.config.yaml")
             self._cache[cache_key] = config
             return config
-    
-    def load_engines_config(self, use_cache: bool = True) -> Dict[str, Any]:
+
+    def load_engines_config(self, use_cache: bool = True) -> dict[str, Any]:
         """Load the engines configuration."""
         cache_key = "engines"
-        
+
         with self._lock:
             if use_cache and cache_key in self._cache:
                 return self._cache[cache_key]
-            
+
             config = self._load_yaml("engines.config.yaml")
             self._cache[cache_key] = config
             return config
-    
-    def load_deployment_config(self, use_cache: bool = True) -> Dict[str, Any]:
+
+    def load_deployment_config(self, use_cache: bool = True) -> dict[str, Any]:
         """Load the deployment configuration."""
         cache_key = "deployment"
-        
+
         with self._lock:
             if use_cache and cache_key in self._cache:
                 return self._cache[cache_key]
-            
+
             config = self._load_yaml("deployment.config.yaml")
             self._cache[cache_key] = config
             return config
-    
+
     def reload_all(self) -> None:
         """Force reload all configuration files."""
         with self._lock:
             self._cache.clear()
-        
+
         self.load_voicestudio_config(use_cache=False)
         self.load_engines_config(use_cache=False)
         self.load_deployment_config(use_cache=False)
-        
+
         logger.info("All configuration files reloaded")
 
 
@@ -350,54 +350,54 @@ class ConfigLoader:
 class UnifiedConfigService:
     """
     Unified configuration service providing type-safe access to all settings.
-    
+
     Usage:
         config = UnifiedConfigService()
-        
+
         # Access main config
         theme = config.voicestudio.general.theme
-        
+
         # Access engine config
         default_tts = config.engines.defaults.get("tts")
-        
+
         # Access deployment config
         port = config.deployment.backend.port
-        
+
         # Get feature flag
         if config.is_feature_enabled("ab_testing"):
             ...
-        
+
         # Get engine for language
         engine = config.get_engine_for_language("zh", "tts")
-        
+
         # Get fallback chain
         chain = config.get_fallback_chain("tts")
     """
-    
-    _instance: Optional["UnifiedConfigService"] = None
+
+    _instance: UnifiedConfigService | None = None
     _lock = threading.Lock()
-    
-    def __new__(cls, config_dir: Optional[Path] = None) -> "UnifiedConfigService":
+
+    def __new__(cls, config_dir: Path | None = None) -> UnifiedConfigService:
         """Singleton pattern for the config service."""
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
                 cls._instance._initialized = False
             return cls._instance
-    
-    def __init__(self, config_dir: Optional[Path] = None):
+
+    def __init__(self, config_dir: Path | None = None):
         """Initialize the unified config service."""
         if getattr(self, "_initialized", False):
             return
-        
+
         self._loader = ConfigLoader(config_dir)
-        self._voicestudio: Optional[VoiceStudioConfig] = None
-        self._engines: Optional[EnginesConfig] = None
-        self._deployment: Optional[DeploymentConfig] = None
-        
+        self._voicestudio: VoiceStudioConfig | None = None
+        self._engines: EnginesConfig | None = None
+        self._deployment: DeploymentConfig | None = None
+
         self._load_configs()
         self._initialized = True
-    
+
     def _load_configs(self) -> None:
         """Load all configuration files into typed dataclasses."""
         self._voicestudio = self._parse_voicestudio_config(
@@ -409,12 +409,12 @@ class UnifiedConfigService:
         self._deployment = self._parse_deployment_config(
             self._loader.load_deployment_config()
         )
-    
-    def _parse_voicestudio_config(self, data: Dict[str, Any]) -> VoiceStudioConfig:
+
+    def _parse_voicestudio_config(self, data: dict[str, Any]) -> VoiceStudioConfig:
         """Parse raw dict into VoiceStudioConfig."""
         if not data:
             return VoiceStudioConfig()
-        
+
         return VoiceStudioConfig(
             version=data.get("version", "1.0.0"),
             paths=PathsConfig(**data.get("paths", {})),
@@ -430,19 +430,19 @@ class UnifiedConfigService:
             ),
             feature_flags=data.get("feature_flags", {}),
         )
-    
-    def _parse_engines_config(self, data: Dict[str, Any]) -> EnginesConfig:
+
+    def _parse_engines_config(self, data: dict[str, Any]) -> EnginesConfig:
         """Parse raw dict into EnginesConfig."""
         if not data:
             return EnginesConfig()
-        
+
         routing_data = data.get("routing_policy", {})
         routing = RoutingPolicy(
             language_mapping=routing_data.get("language_mapping", {}),
             fallback_chains=routing_data.get("fallback_chains", {}),
             quality_tiers=routing_data.get("quality_tiers", {}),
         )
-        
+
         ab_data = data.get("ab_testing", {})
         experiments = [
             ABExperiment(
@@ -459,7 +459,7 @@ class UnifiedConfigService:
             enabled=ab_data.get("enabled", False),
             experiments=experiments,
         )
-        
+
         gpu_data = data.get("gpu_settings", {})
         gpu_settings = GPUSettings(
             enabled=gpu_data.get("enabled", True),
@@ -468,7 +468,7 @@ class UnifiedConfigService:
             memory_fraction=gpu_data.get("memory_fraction", 0.9),
             parallel_engine_limit=gpu_data.get("parallel_engine_limit", 2),
         )
-        
+
         return EnginesConfig(
             version=data.get("version", "1.0.0"),
             defaults=data.get("defaults", {}),
@@ -478,12 +478,12 @@ class UnifiedConfigService:
             global_settings=data.get("global_settings", {}),
             engine_overrides=data.get("engine_overrides", {}),
         )
-    
-    def _parse_deployment_config(self, data: Dict[str, Any]) -> DeploymentConfig:
+
+    def _parse_deployment_config(self, data: dict[str, Any]) -> DeploymentConfig:
         """Parse raw dict into DeploymentConfig."""
         if not data:
             return DeploymentConfig()
-        
+
         backend_data = data.get("backend", {})
         backend = BackendConfig(
             host=backend_data.get("host", "127.0.0.1"),
@@ -492,7 +492,7 @@ class UnifiedConfigService:
             timeout=backend_data.get("timeout", 30),
             retry_count=backend_data.get("retry_count", 3),
         )
-        
+
         logging_data = data.get("logging", {})
         logging_config = LoggingConfig(
             level=logging_data.get("level", "INFO"),
@@ -500,14 +500,14 @@ class UnifiedConfigService:
             file_enabled=logging_data.get("file", {}).get("enabled", True),
             file_path=logging_data.get("file", {}).get("path", "logs/voicestudio.log"),
         )
-        
+
         telemetry_data = data.get("telemetry", {})
         telemetry = TelemetryConfig(
             enabled=telemetry_data.get("enabled", False),
             prometheus_enabled=telemetry_data.get("prometheus", {}).get("enabled", False),
             metrics_port=telemetry_data.get("prometheus", {}).get("port", 9090),
         )
-        
+
         return DeploymentConfig(
             version=data.get("version", "1.0.0"),
             environment=data.get("environment", "development"),
@@ -515,50 +515,50 @@ class UnifiedConfigService:
             logging=logging_config,
             telemetry=telemetry,
         )
-    
+
     @property
     def voicestudio(self) -> VoiceStudioConfig:
         """Get the main VoiceStudio configuration."""
         if self._voicestudio is None:
             self._load_configs()
         return self._voicestudio  # type: ignore
-    
+
     @property
     def engines(self) -> EnginesConfig:
         """Get the engines configuration."""
         if self._engines is None:
             self._load_configs()
         return self._engines  # type: ignore
-    
+
     @property
     def deployment(self) -> DeploymentConfig:
         """Get the deployment configuration."""
         if self._deployment is None:
             self._load_configs()
         return self._deployment  # type: ignore
-    
+
     def reload(self) -> None:
         """Reload all configuration files."""
         self._loader.reload_all()
         self._load_configs()
         logger.info("UnifiedConfigService: Configuration reloaded")
-    
+
     def is_feature_enabled(self, feature_name: str) -> bool:
         """Check if a feature flag is enabled."""
         return self.voicestudio.feature_flags.get(feature_name, False)
-    
-    def get_default_engine(self, task_type: str) -> Optional[str]:
+
+    def get_default_engine(self, task_type: str) -> str | None:
         """Get the default engine for a task type."""
         return self.engines.defaults.get(task_type)
-    
+
     def get_engine_for_language(self, language: str, task_type: str = "tts") -> str:
         """
         Get the recommended engine for a specific language.
-        
+
         Args:
             language: ISO language code (e.g., "en", "zh", "ja")
             task_type: Type of task (e.g., "tts", "stt")
-            
+
         Returns:
             Engine ID for the language, or default engine if not mapped
         """
@@ -566,38 +566,38 @@ class UnifiedConfigService:
         engine = self.engines.routing_policy.language_mapping.get(language)
         if engine:
             return engine
-        
+
         # Fall back to default for task type
         return self.engines.defaults.get(task_type, "xtts_v2")
-    
-    def get_fallback_chain(self, task_type: str) -> List[str]:
+
+    def get_fallback_chain(self, task_type: str) -> list[str]:
         """Get the fallback chain for a task type."""
         return self.engines.routing_policy.fallback_chains.get(task_type, [])
-    
-    def get_quality_tier_engine(self, tier: str, task_type: str = "tts") -> Optional[str]:
+
+    def get_quality_tier_engine(self, tier: str, task_type: str = "tts") -> str | None:
         """Get the engine for a specific quality tier."""
         tier_config = self.engines.routing_policy.quality_tiers.get(tier, {})
         return tier_config.get(task_type)
-    
-    def get_engine_override(self, engine_id: str) -> Dict[str, Any]:
+
+    def get_engine_override(self, engine_id: str) -> dict[str, Any]:
         """Get per-engine configuration overrides."""
         return self.engines.engine_overrides.get(engine_id, {})
-    
+
     def is_engine_enabled(self, engine_id: str) -> bool:
         """Check if an engine is enabled."""
         override = self.get_engine_override(engine_id)
         return override.get("enabled", True)
-    
-    def get_active_ab_experiments(self) -> List[ABExperiment]:
+
+    def get_active_ab_experiments(self) -> list[ABExperiment]:
         """Get all active A/B testing experiments."""
         if not self.engines.ab_testing.enabled:
             return []
         return [exp for exp in self.engines.ab_testing.experiments if exp.active]
-    
+
     def is_development(self) -> bool:
         """Check if running in development mode."""
         return self.deployment.environment == "development"
-    
+
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.deployment.environment == "production"
@@ -621,11 +621,11 @@ def reload_config() -> None:
 
 
 # For backwards compatibility with existing code
-def get_engine_config() -> Dict[str, Any]:
+def get_engine_config() -> dict[str, Any]:
     """Get engine configuration as a dict (legacy compatibility)."""
     return get_config()._loader.load_engines_config()
 
 
-def get_app_settings() -> Dict[str, Any]:
+def get_app_settings() -> dict[str, Any]:
     """Get app settings as a dict (legacy compatibility)."""
     return get_config()._loader.load_voicestudio_config()

@@ -6,9 +6,11 @@ Detects quality degradation in voice profiles by analyzing quality metrics over 
 comparing current quality vs. historical baseline, and identifying degradation trends.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ class QualityDegradationAlert:
         self.recommendation = recommendation
         self.confidence = confidence
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert alert to dictionary."""
         return {
             "severity": self.severity,
@@ -69,7 +71,7 @@ class QualityBaseline:
     def __init__(
         self,
         profile_id: str,
-        baseline_metrics: Dict[str, float],
+        baseline_metrics: dict[str, float],
         baseline_quality_score: float,
         sample_count: int,
         time_period_days: int,
@@ -93,7 +95,7 @@ class QualityBaseline:
         self.time_period_days = time_period_days
         self.calculated_at = calculated_at
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert baseline to dictionary."""
         return {
             "profile_id": self.profile_id,
@@ -106,10 +108,10 @@ class QualityBaseline:
 
 
 def calculate_quality_baseline(
-    quality_history: List[Dict],
+    quality_history: list[dict],
     time_period_days: int = 30,
     min_samples: int = 5,
-) -> Optional[QualityBaseline]:
+) -> QualityBaseline | None:
     """
     Calculate quality baseline from quality history.
 
@@ -141,7 +143,7 @@ def calculate_quality_baseline(
 
     # Calculate averages for each metric
     metrics_to_track = ["mos_score", "similarity", "naturalness", "snr_db"]
-    baseline_metrics: Dict[str, float] = {}
+    baseline_metrics: dict[str, float] = {}
     quality_scores = []
 
     for metric in metrics_to_track:
@@ -183,12 +185,12 @@ def calculate_quality_baseline(
 
 
 def detect_quality_degradation(
-    quality_history: List[Dict],
-    baseline: Optional[QualityBaseline] = None,
+    quality_history: list[dict],
+    baseline: QualityBaseline | None = None,
     time_window_days: int = 7,
     degradation_threshold_percent: float = 10.0,
     critical_threshold_percent: float = 25.0,
-) -> List[QualityDegradationAlert]:
+) -> list[QualityDegradationAlert]:
     """
     Detect quality degradation in voice profile.
 
@@ -225,7 +227,7 @@ def detect_quality_degradation(
 
     # Calculate current averages
     metrics_to_track = ["mos_score", "similarity", "naturalness", "snr_db"]
-    current_metrics: Dict[str, float] = {}
+    current_metrics: dict[str, float] = {}
     current_quality_scores = []
 
     for metric in metrics_to_track:
@@ -254,7 +256,7 @@ def detect_quality_degradation(
     )
 
     # Detect degradation for each metric
-    alerts: List[QualityDegradationAlert] = []
+    alerts: list[QualityDegradationAlert] = []
 
     # Check overall quality score
     if baseline.baseline_quality_score > 0:
@@ -371,9 +373,9 @@ def _get_metric_recommendation(metric_name: str, degradation: float) -> str:
 
 
 def compare_quality_trends(
-    current_metrics: Dict[str, float],
-    historical_metrics: List[Dict[str, float]],
-) -> Dict[str, Any]:
+    current_metrics: dict[str, float],
+    historical_metrics: list[dict[str, float]],
+) -> dict[str, Any]:
     """
     Compare current quality metrics with historical trends.
 
@@ -400,7 +402,7 @@ def compare_quality_trends(
         "snr_db",
         "quality_score",
     ]
-    historical_averages: Dict[str, float] = {}
+    historical_averages: dict[str, float] = {}
 
     for metric in metrics_to_track:
         values = []
@@ -414,7 +416,7 @@ def compare_quality_trends(
             historical_averages[metric] = sum(values) / len(values)
 
     # Compare current vs historical
-    changes: Dict[str, float] = {}
+    changes: dict[str, float] = {}
     for metric in metrics_to_track:
         if metric in current_metrics and metric in historical_averages:
             baseline = historical_averages[metric]

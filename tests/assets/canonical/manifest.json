@@ -1,0 +1,43 @@
+{
+  "canonical_audio": {
+    "name": "Allan Watts",
+    "description": "Standard test audio for VoiceStudio voice cloning and synthesis tests",
+    "created": "2026-02-13",
+    "source": {
+      "path": "originals/allan_watts.m4a",
+      "sha256": "C1792037F433320EF356C31F073675A134EBF98BC4B8FDA9653CD84863F898AE",
+      "size_bytes": 50637934
+    },
+    "formats": {
+      "wav_full": {
+        "path": "standard/allan_watts.wav",
+        "sha256": "B628E372E730FA681BED65D3FBF6E7BA410C2032C3C39D7A60AD081750A3B9CC",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bit_depth": 16,
+        "duration_seconds": 3128.87,
+        "size_bytes": 137983054
+      },
+      "wav_segment": {
+        "path": "standard/allan_watts_15s.wav",
+        "sha256": "B9A27AF1FEF327A8C43F684DA9ECB4C2B863FA065454B1258AF14E557B1384A1",
+        "sample_rate": 22050,
+        "channels": 1,
+        "bit_depth": 16,
+        "duration_seconds": 15.0,
+        "size_bytes": 663630
+      }
+    }
+  },
+  "usage": {
+    "voice_cloning": "standard/allan_watts.wav",
+    "voice_cloning_quick": "standard/allan_watts_15s.wav",
+    "transcription": "standard/allan_watts.wav",
+    "transcription_quick": "standard/allan_watts_15s.wav",
+    "synthesis_reference": "standard/allan_watts_15s.wav"
+  },
+  "ci": {
+    "artifact_key": "canonical-test-audio",
+    "restore_command": "Invoke-WebRequest -Uri $ARTIFACT_URL -OutFile tests/assets/canonical.zip; Expand-Archive -Path tests/assets/canonical.zip -DestinationPath tests/assets/"
+  }
+}

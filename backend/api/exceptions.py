@@ -4,7 +4,9 @@ Custom Exceptions for VoiceStudio Backend API
 Domain-specific exceptions that provide better error context and user-friendly messages.
 """
 
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from fastapi import HTTPException, status
 
@@ -16,9 +18,9 @@ class VoiceStudioException(HTTPException):
         self,
         status_code: int,
         detail: str,
-        error_code: Optional[str] = None,
-        recovery_suggestion: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        error_code: str | None = None,
+        recovery_suggestion: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(status_code=status_code, detail=detail)
         self.error_code = error_code
@@ -88,7 +90,7 @@ class InvalidInputException(VoiceStudioException):
     """Raised when input validation fails."""
 
     def __init__(
-        self, message: str, field: Optional[str] = None, value: Optional[Any] = None
+        self, message: str, field: str | None = None, value: Any | None = None
     ):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -102,7 +104,7 @@ class InvalidInputException(VoiceStudioException):
 class InvalidEngineException(VoiceStudioException):
     """Raised when an invalid or unavailable engine is specified."""
 
-    def __init__(self, engine: str, available_engines: Optional[list[str]] = None):
+    def __init__(self, engine: str, available_engines: list[str] | None = None):
         engines_str = ", ".join(available_engines) if available_engines else "none"
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -135,7 +137,7 @@ class ResourceAlreadyExistsException(VoiceStudioException):
 class EngineUnavailableException(VoiceStudioException):
     """Raised when an engine is unavailable or failed to initialize."""
 
-    def __init__(self, engine: str, reason: Optional[str] = None):
+    def __init__(self, engine: str, reason: str | None = None):
         detail = f"Engine '{engine}' is not available"
         if reason:
             detail += f": {reason}"
@@ -213,7 +215,7 @@ class StorageLimitExceededException(VoiceStudioException):
 class RateLimitExceededException(VoiceStudioException):
     """Raised when rate limit is exceeded."""
 
-    def __init__(self, operation: str, retry_after: Optional[int] = None):
+    def __init__(self, operation: str, retry_after: int | None = None):
         detail = f"Rate limit exceeded for {operation}"
         recovery = "Please wait a moment before trying again."
         if retry_after:
@@ -235,7 +237,7 @@ class RateLimitExceededException(VoiceStudioException):
 class ConfigurationException(VoiceStudioException):
     """Raised when there's a configuration error."""
 
-    def __init__(self, message: str, config_key: Optional[str] = None):
+    def __init__(self, message: str, config_key: str | None = None):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Configuration error: {message}",

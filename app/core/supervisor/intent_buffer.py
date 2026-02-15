@@ -10,7 +10,6 @@ import logging
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class IntentBuffer:
     MAX_BUFFER_AGE_SECONDS = 30.0
 
     def __init__(self):
-        self._buffer: Deque[BufferedUtterance] = deque(maxlen=self.MAX_BUFFER_SIZE)
+        self._buffer: deque[BufferedUtterance] = deque(maxlen=self.MAX_BUFFER_SIZE)
 
     def add(
         self,
@@ -68,7 +67,7 @@ class IntentBuffer:
 
         return " ".join(u.text for u in valid)
 
-    def peek(self) -> List[str]:
+    def peek(self) -> list[str]:
         """View buffered text without clearing."""
         return [u.text for u in self._buffer]
 

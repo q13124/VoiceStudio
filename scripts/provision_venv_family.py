@@ -11,14 +11,10 @@ Usage:
 import argparse
 import logging
 import sys
-from pathlib import Path
-
-from _env_setup import PROJECT_ROOT
 
 from app.core.runtime.venv_family_manager import (
-    VenvFamily,
-    VenvFamilyManager,
     FAMILY_CONFIGS,
+    VenvFamily,
     get_venv_manager,
 )
 
@@ -31,7 +27,7 @@ def list_families():
     print("\nAvailable venv families:")
     print("-" * 60)
     manager = get_venv_manager()
-    
+
     for family, config in FAMILY_CONFIGS.items():
         exists = manager.is_venv_created(family)
         status = "EXISTS" if exists else "NOT CREATED"
@@ -51,20 +47,20 @@ def provision_family(family_name: str, force: bool = False, install_deps: bool =
         "advanced_tts": VenvFamily.ADVANCED_TTS,
         "stt": VenvFamily.STT,
     }
-    
+
     if family_name not in family_map:
         logger.error(f"Unknown family: {family_name}")
         logger.info(f"Valid families: {', '.join(family_map.keys())}")
         return False
-    
+
     family = family_map[family_name]
     manager = get_venv_manager()
     config = FAMILY_CONFIGS[family]
-    
+
     logger.info(f"Provisioning venv family: {family.value}")
     logger.info(f"  Description: {config.description}")
     logger.info(f"  Requirements: {config.requirements_file}")
-    
+
     # Check if exists
     if manager.is_venv_created(family):
         if force:
@@ -72,15 +68,15 @@ def provision_family(family_name: str, force: bool = False, install_deps: bool =
         else:
             logger.info("Venv already exists. Use --force to recreate.")
             return True
-    
+
     # Create venv
     logger.info("Creating virtual environment...")
     if not manager.create_venv(family, force=force):
         logger.error("Failed to create venv")
         return False
-    
+
     logger.info("Venv created successfully")
-    
+
     # Install dependencies
     if install_deps:
         logger.info("Installing requirements...")
@@ -89,7 +85,7 @@ def provision_family(family_name: str, force: bool = False, install_deps: bool =
         else:
             logger.warning("Failed to install requirements (may need manual installation)")
             logger.info(f"  pip install -r config/venv_families/{config.requirements_file}")
-    
+
     # Verify
     python_exe = manager.get_python_executable(family)
     if python_exe.exists():
@@ -107,24 +103,24 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force recreate if exists")
     parser.add_argument("--no-deps", action="store_true", help="Skip dependency installation")
     parser.add_argument("--list", action="store_true", help="List available families")
-    
+
     args = parser.parse_args()
-    
+
     if args.list:
         list_families()
         return 0
-    
+
     if not args.family:
         parser.print_help()
         print("\nUse --list to see available families")
         return 1
-    
+
     success = provision_family(
         args.family,
         force=args.force,
         install_deps=not args.no_deps
     )
-    
+
     return 0 if success else 1
 
 

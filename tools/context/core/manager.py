@@ -4,10 +4,10 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from tools.context.core.allocator import ContextAllocator
-from tools.context.core.exceptions import ConfigValidationError, SourceFetchError
+from tools.context.core.exceptions import ConfigValidationError
 from tools.context.core.models import (
     AllocationContext,
     BudgetConstraints,
@@ -37,7 +37,7 @@ class ContextManager:
         registry: SourceRegistry,
         allocator: ContextAllocator | None = None,
         cache_ttl_seconds: int = 60,
-        agent_registry: Optional["AgentRegistry"] = None,
+        agent_registry: AgentRegistry | None = None,
     ):
         self.config = config
         self.registry = registry
@@ -47,7 +47,7 @@ class ContextManager:
         self._agent_registry = agent_registry
 
     @classmethod
-    def from_config(cls, config_path: Path = DEFAULT_CONFIG_PATH) -> "ContextManager":
+    def from_config(cls, config_path: Path = DEFAULT_CONFIG_PATH) -> ContextManager:
         config = _load_config(config_path)
         errors = validate_config(config)
         if errors:
@@ -69,6 +69,7 @@ class ContextManager:
         source_limits = {
             "state": int(base_budgets.get("state_chars", 2000)),
             "task": int(base_budgets.get("task_chars", 2000)),
+            "file_context": int(base_budgets.get("file_context_chars", 600)),
             "brief": int(base_budgets.get("brief_chars", 3000)),
             "ledger": int(base_budgets.get("ledger_chars", 2500)),
             "rules": int(base_budgets.get("rules_chars", 2000)),
@@ -86,7 +87,6 @@ class ContextManager:
             return
         try:
             from tools.overseer.agent.role_mapping import role_to_agent_role
-            from tools.overseer.agent.identity import AgentState
             ar = role_to_agent_role(ctx.role)
             agents = self._agent_registry.get_by_role(ar)
             if agents and not any(a.is_active() for a in agents):
@@ -97,10 +97,10 @@ class ContextManager:
     def allocate(self, context: AllocationContext | None = None) -> ContextBundle:
         """
         Allocate context bundle with progressive disclosure support.
-        
+
         Args:
             context: Allocation context (task, role, phase, max_level)
-        
+
         Returns:
             Context bundle with sources filtered by level and budget
         """
@@ -120,7 +120,7 @@ class ContextManager:
         if cached:
             return cached
 
-        results: List[SourceResult] = []
+        results: list[SourceResult] = []
         for source in self.registry.all():
             try:
                 results.append(source.fetch(ctx))
@@ -142,7 +142,7 @@ class ContextManager:
         self.cache.put(cache_key, bundle, ttl_seconds=self.cache_ttl_seconds)
         return bundle
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         Perform health checks on all registered sources.
 
@@ -191,7 +191,7 @@ class ContextManager:
             "sources": results,
         }
 
-    def get_telemetry_summary(self) -> Dict[str, Any]:
+    def get_telemetry_summary(self) -> dict[str, Any]:
         """
         Get telemetry summary for all sources.
 
@@ -205,7 +205,7 @@ class ContextManager:
         self.cache = InMemoryCache(max_entries=16)
 
 
-def _load_config(path: Path) -> Dict:
+def _load_config(path: Path) -> dict:
     if not path.exists():
         return {}
     with path.open("r", encoding="utf-8") as handle:

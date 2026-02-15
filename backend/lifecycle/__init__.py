@@ -2,8 +2,8 @@
 
 from backend.lifecycle.shutdown import (
     GracefulShutdownOrchestrator,
-    ShutdownPhase,
     ShutdownHandler,
+    ShutdownPhase,
 )
 
-__all__ = ["GracefulShutdownOrchestrator", "ShutdownPhase", "ShutdownHandler"]
+__all__ = ["GracefulShutdownOrchestrator", "ShutdownHandler", "ShutdownPhase"]

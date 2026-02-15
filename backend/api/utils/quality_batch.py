@@ -5,16 +5,18 @@ Provides utilities for quality-focused batch processing operations,
 including quality metrics calculation, prioritization, validation, and reporting.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 def calculate_batch_quality_score(
-    quality_metrics: Optional[Dict[str, Any]],
-) -> Optional[float]:
+    quality_metrics: dict[str, Any] | None,
+) -> float | None:
     """
     Calculate overall quality score from quality metrics dictionary.
 
@@ -61,10 +63,10 @@ def calculate_batch_quality_score(
 
 
 def validate_batch_quality(
-    quality_score: Optional[float],
-    quality_threshold: Optional[float],
+    quality_score: float | None,
+    quality_threshold: float | None,
     tolerance_percent: float = 10.0,
-) -> Optional[str]:
+) -> str | None:
     """
     Validate batch job quality against threshold.
 
@@ -91,10 +93,10 @@ def validate_batch_quality(
 
 
 def prioritize_batch_jobs(
-    jobs: List[Dict[str, Any]],
-    quality_threshold: Optional[float] = None,
+    jobs: list[dict[str, Any]],
+    quality_threshold: float | None = None,
     prioritize_high_quality: bool = True,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Prioritize batch jobs based on quality requirements.
 
@@ -107,16 +109,15 @@ def prioritize_batch_jobs(
         Sorted list of jobs by priority
     """
 
-    def get_priority(job: Dict[str, Any]) -> tuple:
+    def get_priority(job: dict[str, Any]) -> tuple:
         """Calculate priority score for a job."""
         priority_score = 0
 
         # Check if job has quality threshold requirement
         job_threshold = job.get("quality_threshold")
-        job_score = job.get("quality_score")
+        job.get("quality_score")
 
         if quality_threshold is not None or job_threshold is not None:
-            threshold = quality_threshold or job_threshold or 0.0
 
             if prioritize_high_quality:
                 # Prioritize jobs with higher quality requirements
@@ -143,8 +144,8 @@ def prioritize_batch_jobs(
                     created_dt = created
                 # Older jobs get higher priority (subtract timestamp)
                 priority_score -= created_dt.timestamp()
-            except:
-                ...
+            except (ValueError, TypeError, AttributeError):
+                pass  # Non-parseable timestamp; use default priority
 
         return (-priority_score,)  # Negative for descending sort
 
@@ -152,8 +153,8 @@ def prioritize_batch_jobs(
 
 
 def generate_batch_quality_report(
-    job: Dict[str, Any], all_jobs: Optional[List[Dict[str, Any]]] = None
-) -> Dict[str, Any]:
+    job: dict[str, Any], all_jobs: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     """
     Generate quality report for a batch job.
 
@@ -254,7 +255,7 @@ def generate_batch_quality_report(
     return report
 
 
-def calculate_batch_statistics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_batch_statistics(jobs: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate quality statistics for a batch of jobs.
 

@@ -9,14 +9,15 @@ Compatible with:
 - Fairseq (for HuBERT feature extraction)
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-import os
-import shutil
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -99,9 +100,9 @@ class RVCTrainer:
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         sample_rate: int = 40000,
         f0_method: str = "rmvpe",
     ):
@@ -125,7 +126,7 @@ class RVCTrainer:
 
         self._is_training = False
         self._training_cancelled = False
-        self._progress_callback: Optional[Callable] = None
+        self._progress_callback: Callable | None = None
         self._current_epoch = 0
         self._total_epochs = 0
 
@@ -136,9 +137,9 @@ class RVCTrainer:
 
     def prepare_dataset(
         self,
-        audio_files: List[str],
-        transcripts: Optional[List[str]] = None,
-        output_metadata: Optional[str] = None,
+        audio_files: list[str],
+        transcripts: list[str] | None = None,
+        output_metadata: str | None = None,
         speaker_name: str = "speaker",
         apply_augmentation: bool = False,
     ) -> str:
@@ -188,7 +189,7 @@ class RVCTrainer:
                     continue
 
                 # Load audio
-                audio, sr = librosa.load(str(audio_path), sr=self.sample_rate)
+                audio, _sr = librosa.load(str(audio_path), sr=self.sample_rate)
 
                 # Apply augmentation if enabled
                 if augmentation is not None:
@@ -254,8 +255,8 @@ class RVCTrainer:
         batch_size: int = 8,
         learning_rate: float = 1e-4,
         save_every: int = 25,
-        progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-    ) -> Dict[str, Any]:
+        progress_callback: Callable[[dict[str, Any]], None] | None = None,
+    ) -> dict[str, Any]:
         """
         Train RVC model on prepared dataset.
 
@@ -281,7 +282,7 @@ class RVCTrainer:
 
         try:
             # Load metadata
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
             speaker_name = metadata.get("speaker", "speaker")
@@ -386,7 +387,7 @@ class RVCTrainer:
 
     async def _train_epoch(
         self,
-        audio_files: List[str],
+        audio_files: list[str],
         batch_size: int,
         learning_rate: float,
     ) -> float:
@@ -465,8 +466,8 @@ class RVCTrainer:
     def export_model(
         self,
         checkpoint_path: str,
-        output_path: Optional[str] = None,
-        model_name: Optional[str] = None,
+        output_path: str | None = None,
+        model_name: str | None = None,
     ) -> str:
         """
         Export trained model for inference.
@@ -508,7 +509,7 @@ class RVCTrainer:
 
         return output_path
 
-    def _create_augmentation_pipeline(self) -> Optional[Any]:
+    def _create_augmentation_pipeline(self) -> Any | None:
         """
         Create audio augmentation pipeline for data augmentation.
 

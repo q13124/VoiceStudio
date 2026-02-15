@@ -8,23 +8,21 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock non-existent module attributes - needs test refactoring",
     allow_module_level=True,
 )
 
 
-import json
 import sys
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -727,9 +725,9 @@ class TestTrainingExportImportEndpoints:
         }
 
         with patch("backend.api.routes.training.Path") as mock_path, \
-             patch("backend.api.routes.training.zipfile") as mock_zipfile, \
-             patch("backend.api.routes.training.shutil") as mock_shutil:
-            
+             patch("backend.api.routes.training.zipfile"), \
+             patch("backend.api.routes.training.shutil"):
+
             mock_export_dir = MagicMock()
             mock_export_dir.exists.return_value = True
             mock_export_dir.__truediv__ = MagicMock(return_value=mock_export_dir)

@@ -5,9 +5,7 @@ Tests speaker encoder engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestSpeakerEncoderEngineImports:
     def test_module_has_speaker_encoder_engine_class(self):
         """Test module has SpeakerEncoderEngine class."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
-            cls = getattr(speaker_encoder_engine, "SpeakerEncoderEngine")
+            cls = speaker_encoder_engine.SpeakerEncoderEngine
             assert isinstance(cls, type), "SpeakerEncoderEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestSpeakerEncoderEngineClass:
     def test_speaker_encoder_engine_class_exists(self):
         """Test SpeakerEncoderEngine class exists."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
-            cls = getattr(speaker_encoder_engine, "SpeakerEncoderEngine")
+            cls = speaker_encoder_engine.SpeakerEncoderEngine
             assert isinstance(cls, type), "SpeakerEncoderEngine should be a class"
 
     def test_speaker_encoder_engine_initialization(self):
@@ -230,14 +228,13 @@ class TestSpeakerEncoderEngineOptimization:
                     device="cpu", gpu=False
                 )
                 # Check helper methods that use inference_mode
-                has_inference_mode = False
                 if hasattr(engine, "_extract_speechbrain_embedding"):
                     try:
                         source = inspect.getsource(
                             engine._extract_speechbrain_embedding
                         )
                         if "inference_mode" in source or "no_grad" in source:
-                            has_inference_mode = True
+                            pass
                     except (OSError, TypeError):
                         ...
 
@@ -293,7 +290,7 @@ class TestSpeakerEncoderEngineOptimization:
                 )
                 # Get batch processing method
                 if hasattr(engine, "extract_batch_embeddings"):
-                    batch_method = getattr(engine, "extract_batch_embeddings")
+                    batch_method = engine.extract_batch_embeddings
                     try:
                         source = inspect.getsource(batch_method)
                         # Check for GPU cache clearing (memory optimization)

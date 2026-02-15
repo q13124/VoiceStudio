@@ -4,9 +4,10 @@ Scene Composition Routes
 Endpoints for managing scenes - compositions of tracks, effects, and automation.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/scenes", tags=["scenes"])
 
 # In-memory scenes storage (replace with database in production)
-_scenes: Dict[str, Dict] = {}
+_scenes: dict[str, dict] = {}
 
 
 class SceneTrack(BaseModel):
@@ -27,9 +28,9 @@ class SceneTrack(BaseModel):
     id: str
     name: str
     track_number: int
-    clips: List[Dict] = []  # Audio clips on this track
-    effects: List[Dict] = []  # Effects applied to this track
-    automation: List[Dict] = []  # Automation curves for this track
+    clips: list[dict] = []  # Audio clips on this track
+    effects: list[dict] = []  # Effects applied to this track
+    automation: list[dict] = []  # Automation curves for this track
 
 
 class Scene(BaseModel):
@@ -37,41 +38,41 @@ class Scene(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    tracks: List[SceneTrack] = []
-    master_effects: List[Dict] = []  # Master effects
+    tracks: list[SceneTrack] = []
+    master_effects: list[dict] = []  # Master effects
     duration: float = 0.0  # Scene duration in seconds
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
-    tags: List[str] = []
+    tags: list[str] = []
 
 
 class SceneCreateRequest(BaseModel):
     """Request to create a scene."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    tags: List[str] = []
+    tags: list[str] = []
 
 
 class SceneUpdateRequest(BaseModel):
     """Request to update a scene."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    tracks: Optional[List[SceneTrack]] = None
-    master_effects: Optional[List[Dict]] = None
-    duration: Optional[float] = None
-    tags: Optional[List[str]] = None
+    name: str | None = None
+    description: str | None = None
+    tracks: list[SceneTrack] | None = None
+    master_effects: list[dict] | None = None
+    duration: float | None = None
+    tags: list[str] | None = None
 
 
-@router.get("", response_model=List[Scene])
+@router.get("", response_model=list[Scene])
 @cache_response(ttl=30)  # Cache for 30 seconds (scenes may change)
 async def get_scenes(
-    project_id: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    project_id: str | None = Query(None),
+    search: str | None = Query(None),
 ):
     """Get all scenes, optionally filtered."""
     scenes = list(_scenes.values())

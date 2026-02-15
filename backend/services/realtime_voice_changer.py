@@ -25,7 +25,8 @@ Features:
 - Hotkey voice switching
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import threading
 import time
@@ -33,7 +34,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -74,11 +75,11 @@ class VoiceEffect:
     name: str
     effect_type: VoiceEffectType
     description: str
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    icon: Optional[str] = None
+    parameters: dict[str, Any] = field(default_factory=dict)
+    icon: str | None = None
     category: str = "general"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "effect_id": self.effect_id,
             "name": self.name,
@@ -94,15 +95,15 @@ class VoiceEffect:
 class VoiceChangerSession:
     """Active voice changer session."""
     session_id: str
-    active_effect: Optional[VoiceEffect] = None
-    input_device: Optional[str] = None
-    output_device: Optional[str] = None
+    active_effect: VoiceEffect | None = None
+    input_device: str | None = None
+    output_device: str | None = None
     is_active: bool = False
     latency_ms: float = 0.0
     samples_processed: int = 0
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
             "active_effect": self.active_effect.to_dict() if self.active_effect else None,
@@ -124,8 +125,8 @@ class LatencyMetrics:
     max_ms: float
     jitter_ms: float
     samples_count: int
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "current_ms": self.current_ms,
             "average_ms": self.average_ms,
@@ -139,7 +140,7 @@ class LatencyMetrics:
 class RealtimeVoiceChangerService:
     """
     Service for real-time voice transformation.
-    
+
     Implements Phase 9.3 features:
     - 9.3.1: Virtual audio driver
     - 9.3.2: Low-latency RVC pipeline
@@ -147,30 +148,30 @@ class RealtimeVoiceChangerService:
     - 9.3.4: App integration
     - 9.3.5: Hotkey voice switching
     """
-    
+
     # Target latency in milliseconds
     TARGET_LATENCY_MS = 30.0
     MAX_ACCEPTABLE_LATENCY_MS = 50.0
-    
+
     # Audio parameters
     DEFAULT_SAMPLE_RATE = 48000
     DEFAULT_BUFFER_SIZE = 512  # ~10.7ms at 48kHz
     DEFAULT_CHANNELS = 1
-    
+
     def __init__(self):
         self._initialized = False
-        self._sessions: Dict[str, VoiceChangerSession] = {}
-        self._effects: Dict[str, VoiceEffect] = {}
-        self._hotkeys: Dict[str, str] = {}  # hotkey -> effect_id
-        self._processing_thread: Optional[threading.Thread] = None
+        self._sessions: dict[str, VoiceChangerSession] = {}
+        self._effects: dict[str, VoiceEffect] = {}
+        self._hotkeys: dict[str, str] = {}  # hotkey -> effect_id
+        self._processing_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._latency_samples: List[float] = []
+        self._latency_samples: list[float] = []
         self._rvc_engine = None
         self._virtual_driver_active = False
-        
+
         self._init_effect_library()
         logger.info("RealtimeVoiceChangerService created")
-    
+
     def _init_effect_library(self):
         """Initialize the voice effect library."""
         effects = [
@@ -332,17 +333,17 @@ class RealtimeVoiceChangerService:
                 category="artistic",
             ),
         ]
-        
+
         for effect in effects:
             self._effects[effect.effect_id] = effect
-        
+
         logger.info(f"Initialized {len(effects)} voice effects")
-    
+
     async def initialize(self) -> bool:
         """Initialize the voice changer service."""
         if self._initialized:
             return True
-        
+
         try:
             # Try to initialize RVC engine for AI voice conversion
             try:
@@ -353,51 +354,51 @@ class RealtimeVoiceChangerService:
             except ImportError as e:
                 logger.warning(f"RVC engine not available: {e}")
                 self._rvc_engine = None
-            
+
             self._initialized = True
             logger.info("RealtimeVoiceChangerService initialized")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize RealtimeVoiceChangerService: {e}")
             return False
-    
+
     def create_session(
         self,
-        input_device: Optional[str] = None,
-        output_device: Optional[str] = None,
+        input_device: str | None = None,
+        output_device: str | None = None,
     ) -> VoiceChangerSession:
         """
         Create a new voice changer session.
-        
+
         Args:
             input_device: Input audio device name
             output_device: Output audio device name
-            
+
         Returns:
             Created session
         """
         session_id = f"vcses_{uuid.uuid4().hex[:8]}"
-        
+
         session = VoiceChangerSession(
             session_id=session_id,
             input_device=input_device,
             output_device=output_device,
         )
-        
+
         self._sessions[session_id] = session
         logger.info(f"Created voice changer session: {session_id}")
-        
+
         return session
-    
-    def get_session(self, session_id: str) -> Optional[VoiceChangerSession]:
+
+    def get_session(self, session_id: str) -> VoiceChangerSession | None:
         """Get a session by ID."""
         return self._sessions.get(session_id)
-    
-    def list_sessions(self) -> List[VoiceChangerSession]:
+
+    def list_sessions(self) -> list[VoiceChangerSession]:
         """List all sessions."""
         return list(self._sessions.values())
-    
+
     def close_session(self, session_id: str) -> bool:
         """Close and remove a session."""
         if session_id in self._sessions:
@@ -408,7 +409,7 @@ class RealtimeVoiceChangerService:
             logger.info(f"Closed voice changer session: {session_id}")
             return True
         return False
-    
+
     def set_effect(
         self,
         session_id: str,
@@ -416,11 +417,11 @@ class RealtimeVoiceChangerService:
     ) -> bool:
         """
         Set the active effect for a session.
-        
+
         Args:
             session_id: Session ID
             effect_id: Effect ID to activate
-            
+
         Returns:
             True if successful
         """
@@ -428,33 +429,33 @@ class RealtimeVoiceChangerService:
         if not session:
             logger.error(f"Session not found: {session_id}")
             return False
-        
+
         effect = self._effects.get(effect_id)
         if not effect:
             logger.error(f"Effect not found: {effect_id}")
             return False
-        
+
         session.active_effect = effect
         logger.info(f"Set effect {effect.name} for session {session_id}")
         return True
-    
+
     def clear_effect(self, session_id: str) -> bool:
         """Clear the active effect for a session."""
         session = self.get_session(session_id)
         if not session:
             return False
-        
+
         session.active_effect = None
         logger.info(f"Cleared effect for session {session_id}")
         return True
-    
-    def list_effects(self, category: Optional[str] = None) -> List[VoiceEffect]:
+
+    def list_effects(self, category: str | None = None) -> list[VoiceEffect]:
         """
         List available voice effects.
-        
+
         Args:
             category: Optional category filter
-            
+
         Returns:
             List of effects
         """
@@ -462,90 +463,90 @@ class RealtimeVoiceChangerService:
         if category:
             effects = [e for e in effects if e.category == category]
         return effects
-    
-    def get_effect(self, effect_id: str) -> Optional[VoiceEffect]:
+
+    def get_effect(self, effect_id: str) -> VoiceEffect | None:
         """Get an effect by ID."""
         return self._effects.get(effect_id)
-    
-    def list_categories(self) -> List[str]:
+
+    def list_categories(self) -> list[str]:
         """List effect categories."""
-        return list(set(e.category for e in self._effects.values()))
-    
+        return list({e.category for e in self._effects.values()})
+
     async def start_processing(self, session_id: str) -> bool:
         """
         Start real-time audio processing for a session.
-        
+
         Args:
             session_id: Session ID
-            
+
         Returns:
             True if started successfully
         """
         session = self.get_session(session_id)
         if not session:
             return False
-        
+
         if session.is_active:
             logger.warning(f"Session {session_id} already active")
             return True
-        
+
         session.is_active = True
         logger.info(f"Started processing for session {session_id}")
-        
+
         return True
-    
+
     def stop_processing(self, session_id: str) -> bool:
         """Stop real-time audio processing for a session."""
         session = self.get_session(session_id)
         if not session:
             return False
-        
+
         session.is_active = False
         logger.info(f"Stopped processing for session {session_id}")
         return True
-    
+
     def process_audio_chunk(
         self,
         session_id: str,
         audio_data: np.ndarray,
         sample_rate: int = DEFAULT_SAMPLE_RATE,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Process a chunk of audio data with the active effect.
-        
+
         Phase 9.3.2: Low-latency processing pipeline
-        
+
         Args:
             session_id: Session ID
             audio_data: Input audio chunk
             sample_rate: Sample rate
-            
+
         Returns:
             Processed audio chunk
         """
         start_time = time.perf_counter()
-        
+
         session = self.get_session(session_id)
         if not session or not session.is_active:
             return audio_data
-        
+
         effect = session.active_effect
         if not effect:
             return audio_data
-        
+
         try:
             processed = self._apply_effect(audio_data, effect, sample_rate)
-            
+
             # Update latency metrics
             processing_time = (time.perf_counter() - start_time) * 1000
             self._update_latency(session, processing_time)
-            
+
             return processed
-        
+
         except Exception as e:
             logger.error(f"Audio processing error: {e}")
             return audio_data
-    
+
     def _apply_effect(
         self,
         audio: np.ndarray,
@@ -554,22 +555,22 @@ class RealtimeVoiceChangerService:
     ) -> np.ndarray:
         """Apply a voice effect to audio data."""
         params = effect.parameters
-        
+
         if effect.effect_type == VoiceEffectType.PITCH_SHIFT:
             return self._pitch_shift(audio, params.get("pitch_shift", 0), sample_rate)
-        
+
         elif effect.effect_type in (VoiceEffectType.CHIPMUNK, VoiceEffectType.HELIUM):
             return self._pitch_shift(audio, params.get("pitch_shift", 8), sample_rate)
-        
+
         elif effect.effect_type in (VoiceEffectType.DEEP, VoiceEffectType.GIANT):
             return self._pitch_shift(audio, params.get("pitch_shift", -8), sample_rate)
-        
+
         elif effect.effect_type == VoiceEffectType.ROBOT:
             return self._robotize(audio, sample_rate)
-        
+
         elif effect.effect_type == VoiceEffectType.REVERB:
             return self._add_reverb(audio, params.get("reverb", 0.5), sample_rate)
-        
+
         elif effect.effect_type == VoiceEffectType.ECHO:
             return self._add_echo(
                 audio,
@@ -577,7 +578,7 @@ class RealtimeVoiceChangerService:
                 params.get("feedback", 0.5),
                 sample_rate,
             )
-        
+
         elif effect.effect_type in (VoiceEffectType.RADIO, VoiceEffectType.PHONE):
             return self._bandpass_filter(
                 audio,
@@ -585,16 +586,16 @@ class RealtimeVoiceChangerService:
                 params.get("bandpass_high", 3400),
                 sample_rate,
             )
-        
+
         elif effect.effect_type == VoiceEffectType.WHISPER:
             return self._whisperize(audio, params.get("whisper_amount", 0.8))
-        
+
         elif effect.effect_type in (VoiceEffectType.MALE_TO_FEMALE, VoiceEffectType.FEMALE_TO_MALE):
             return self._pitch_shift(audio, params.get("pitch_shift", 5), sample_rate)
-        
+
         # Default: return unchanged
         return audio
-    
+
     def _pitch_shift(
         self,
         audio: np.ndarray,
@@ -615,7 +616,7 @@ class RealtimeVoiceChangerService:
             indices = np.arange(0, len(audio), ratio)
             indices = indices[indices < len(audio)].astype(int)
             return audio[indices]
-    
+
     def _robotize(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply robot voice effect."""
         try:
@@ -623,16 +624,16 @@ class RealtimeVoiceChangerService:
             carrier_freq = 100
             t = np.arange(len(audio)) / sample_rate
             carrier = np.sin(2 * np.pi * carrier_freq * t)
-            
+
             # Envelope follower
             from scipy.signal import hilbert
             envelope = np.abs(hilbert(audio))
-            
+
             # Modulate carrier with envelope
             return (carrier * envelope).astype(audio.dtype)
         except Exception:
             return audio
-    
+
     def _add_reverb(
         self,
         audio: np.ndarray,
@@ -645,13 +646,13 @@ class RealtimeVoiceChangerService:
             decay_time = int(sample_rate * 0.5)  # 500ms decay
             impulse = np.exp(-3 * np.arange(decay_time) / decay_time)
             impulse = impulse / np.sum(impulse)
-            
+
             reverb = np.convolve(audio, impulse, mode='same')
-            
+
             return (1 - amount) * audio + amount * reverb
         except Exception:
             return audio
-    
+
     def _add_echo(
         self,
         audio: np.ndarray,
@@ -663,22 +664,22 @@ class RealtimeVoiceChangerService:
         try:
             delay_samples = int(delay_ms * sample_rate / 1000)
             output = audio.copy()
-            
+
             for i in range(3):  # 3 echo repeats
                 decay = feedback ** (i + 1)
                 offset = delay_samples * (i + 1)
                 if offset < len(output):
                     output[offset:] += audio[:len(output) - offset] * decay
-            
+
             # Normalize
             max_val = np.max(np.abs(output))
             if max_val > 1.0:
                 output = output / max_val
-            
+
             return output
         except Exception:
             return audio
-    
+
     def _bandpass_filter(
         self,
         audio: np.ndarray,
@@ -689,47 +690,47 @@ class RealtimeVoiceChangerService:
         """Apply bandpass filter."""
         try:
             from scipy.signal import butter, filtfilt
-            
+
             nyquist = sample_rate / 2
             low = low_freq / nyquist
             high = high_freq / nyquist
-            
+
             b, a = butter(4, [low, high], btype='band')
             return filtfilt(b, a, audio)
         except Exception:
             return audio
-    
+
     def _whisperize(self, audio: np.ndarray, amount: float) -> np.ndarray:
         """Apply whisper effect."""
         try:
             # Add noise and reduce voiced components
             noise = np.random.randn(len(audio)) * 0.1
             whisper = audio * (1 - amount * 0.5) + noise * amount
-            
+
             # Reduce low frequencies
             from scipy.signal import butter, filtfilt
             b, a = butter(2, 200 / 24000, btype='high')
             whisper = filtfilt(b, a, whisper)
-            
+
             return whisper
         except Exception:
             return audio
-    
+
     def _update_latency(self, session: VoiceChangerSession, latency_ms: float):
         """Update latency metrics for a session."""
         session.latency_ms = latency_ms
         session.samples_processed += 1
-        
+
         self._latency_samples.append(latency_ms)
         if len(self._latency_samples) > 1000:
             self._latency_samples = self._latency_samples[-500:]
-    
-    def get_latency_metrics(self, session_id: str) -> Optional[LatencyMetrics]:
+
+    def get_latency_metrics(self, session_id: str) -> LatencyMetrics | None:
         """Get latency metrics for a session."""
         session = self.get_session(session_id)
         if not session:
             return None
-        
+
         if not self._latency_samples:
             return LatencyMetrics(
                 current_ms=0,
@@ -739,7 +740,7 @@ class RealtimeVoiceChangerService:
                 jitter_ms=0,
                 samples_count=0,
             )
-        
+
         samples = self._latency_samples
         return LatencyMetrics(
             current_ms=session.latency_ms,
@@ -749,132 +750,132 @@ class RealtimeVoiceChangerService:
             jitter_ms=np.std(samples),
             samples_count=len(samples),
         )
-    
+
     # Hotkey Management
     def register_hotkey(self, hotkey: str, effect_id: str) -> bool:
         """
         Register a hotkey for quick effect switching.
-        
+
         Phase 9.3.5: Hotkey voice switching
-        
+
         Args:
             hotkey: Hotkey combination (e.g., "Ctrl+Shift+1")
             effect_id: Effect to activate
-            
+
         Returns:
             True if registered
         """
         if effect_id not in self._effects:
             return False
-        
+
         self._hotkeys[hotkey] = effect_id
         logger.info(f"Registered hotkey {hotkey} for effect {effect_id}")
         return True
-    
+
     def unregister_hotkey(self, hotkey: str) -> bool:
         """Unregister a hotkey."""
         if hotkey in self._hotkeys:
             del self._hotkeys[hotkey]
             return True
         return False
-    
-    def list_hotkeys(self) -> Dict[str, str]:
+
+    def list_hotkeys(self) -> dict[str, str]:
         """List all registered hotkeys."""
         return self._hotkeys.copy()
-    
+
     def trigger_hotkey(self, session_id: str, hotkey: str) -> bool:
         """Trigger a hotkey to switch effect."""
         effect_id = self._hotkeys.get(hotkey)
         if not effect_id:
             return False
-        
+
         return self.set_effect(session_id, effect_id)
-    
+
     # Virtual Audio Driver
     # Phase 9 Gap Resolution (2026-02-10):
     # Virtual audio requires external driver installation.
     # Supported drivers: VB-Cable, VoiceMeeter, BlackHole (macOS)
-    
-    def _detect_virtual_audio_devices(self) -> List[str]:
+
+    def _detect_virtual_audio_devices(self) -> list[str]:
         """
         Detect installed virtual audio devices.
-        
+
         Returns:
             List of detected virtual audio device names
         """
         devices = []
-        
+
         try:
             import sounddevice as sd
-            
-            host_apis = sd.query_hostapis()
+
+            sd.query_hostapis()
             all_devices = sd.query_devices()
-            
+
             # Known virtual audio driver patterns
             virtual_patterns = [
-                "cable", "vb-", "voicemeeter", "virtual", 
+                "cable", "vb-", "voicemeeter", "virtual",
                 "blackhole", "loopback", "soundflower"
             ]
-            
+
             for device in all_devices:
                 name_lower = device["name"].lower()
                 if any(pattern in name_lower for pattern in virtual_patterns):
                     devices.append(device["name"])
-                    
+
         except ImportError:
             logger.debug("sounddevice not available for device detection")
         except Exception as e:
             logger.debug(f"Failed to detect audio devices: {e}")
-        
+
         return devices
-    
+
     async def enable_virtual_driver(self) -> bool:
         """
         Enable virtual audio driver for system-wide voice changing.
-        
+
         Phase 9.3.1: Virtual audio driver
-        
+
         Requires external virtual audio driver installation:
         - Windows: VB-Cable (https://vb-audio.com/Cable/)
         - Windows: VoiceMeeter (https://vb-audio.com/Voicemeeter/)
         - macOS: BlackHole (https://existential.audio/blackhole/)
         - Linux: PulseAudio null sink
-        
+
         Returns:
             True if a virtual driver was detected and enabled
         """
         detected = self._detect_virtual_audio_devices()
-        
+
         if detected:
             logger.info(f"Virtual audio driver enabled: {detected[0]}")
             self._virtual_driver_active = True
             self._virtual_device_name = detected[0]
             return True
-        
+
         # No virtual driver detected - provide guidance
         logger.warning(
             "No virtual audio driver detected. "
             "Install VB-Cable (Windows), BlackHole (macOS), or configure PulseAudio (Linux). "
             "See docs/user/REALTIME_VOICE_SETUP.md for setup instructions."
         )
-        
+
         # Still mark as "active" but in passthrough mode
         self._virtual_driver_active = True
         self._virtual_device_name = None
         return True
-    
+
     async def disable_virtual_driver(self) -> bool:
         """Disable virtual audio driver."""
         logger.info("Virtual audio driver disabled")
         self._virtual_driver_active = False
         self._virtual_device_name = None
         return True
-    
+
     def is_virtual_driver_active(self) -> bool:
         """Check if virtual audio driver is active."""
         return self._virtual_driver_active
-    
-    def get_virtual_driver_info(self) -> Dict[str, Any]:
+
+    def get_virtual_driver_info(self) -> dict[str, Any]:
         """Get information about the virtual audio driver status."""
         detected = self._detect_virtual_audio_devices()
         return {
@@ -887,7 +888,7 @@ class RealtimeVoiceChangerService:
 
 
 # Singleton instance
-_realtime_voice_changer: Optional[RealtimeVoiceChangerService] = None
+_realtime_voice_changer: RealtimeVoiceChangerService | None = None
 
 
 def get_realtime_voice_changer() -> RealtimeVoiceChangerService:

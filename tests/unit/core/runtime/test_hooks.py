@@ -5,7 +5,6 @@ Tests hook registry and execution functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestHooksClasses:
     def test_hook_registry_class_exists(self):
         """Test HookRegistry class exists."""
         if hasattr(hooks, "HookRegistry"):
-            cls = getattr(hooks, "HookRegistry")
+            cls = hooks.HookRegistry
             assert isinstance(cls, type), "HookRegistry should be a class"
 
 

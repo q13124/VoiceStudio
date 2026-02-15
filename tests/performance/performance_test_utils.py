@@ -3,11 +3,15 @@ Performance Test Utilities
 Provides utilities and helpers for performance testing.
 """
 
-import time
-import statistics
-from typing import Dict, List, Any, Callable, Optional
-from dataclasses import dataclass
+from __future__ import annotations
+
+import contextlib
 import logging
+import statistics
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 try:
     import psutil
@@ -32,8 +36,8 @@ class PerformanceMetrics:
     p99_time: float
     iterations: int
     total_time: float
-    memory_used_mb: Optional[float] = None
-    cpu_percent: Optional[float] = None
+    memory_used_mb: float | None = None
+    cpu_percent: float | None = None
 
 
 class PerformanceTimer:
@@ -47,9 +51,9 @@ class PerformanceTimer:
             name: Name of the operation being timed
         """
         self.name = name
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
-        self.elapsed_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+        self.elapsed_time: float | None = None
 
     def __enter__(self):
         """Start timing."""
@@ -79,8 +83,8 @@ class PerformanceBenchmark:
             name: Benchmark name
         """
         self.name = name
-        self.times: List[float] = []
-        self.memory_samples: List[float] = []
+        self.times: list[float] = []
+        self.memory_samples: list[float] = []
 
     def run(
         self,
@@ -107,10 +111,8 @@ class PerformanceBenchmark:
         """
         # Warmup
         for _ in range(warmup_iterations):
-            try:
+            with contextlib.suppress(Exception):
                 func(*args, **kwargs)
-            except Exception:
-                ...
 
         # Benchmark
         self.times.clear()
@@ -124,7 +126,7 @@ class PerformanceBenchmark:
 
             start_time = time.perf_counter()
             try:
-                result = func(*args, **kwargs)
+                func(*args, **kwargs)
             except Exception as e:
                 logger.warning(f"Benchmark iteration failed: {e}")
                 continue
@@ -165,9 +167,9 @@ class PerformanceBenchmark:
     def assert_performance(
         self,
         metrics: PerformanceMetrics,
-        max_avg_time: Optional[float] = None,
-        max_p95_time: Optional[float] = None,
-        max_p99_time: Optional[float] = None,
+        max_avg_time: float | None = None,
+        max_p95_time: float | None = None,
+        max_p99_time: float | None = None,
     ):
         """
         Assert performance meets requirements.
@@ -202,7 +204,7 @@ class LoadTester:
             name: Test name
         """
         self.name = name
-        self.results: List[Dict[str, Any]] = []
+        self.results: list[dict[str, Any]] = []
 
     def run_concurrent(
         self,
@@ -211,7 +213,7 @@ class LoadTester:
         num_threads: int = 10,
         requests_per_thread: int = 10,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run concurrent load test.
 
@@ -230,11 +232,10 @@ class LoadTester:
         def run_request():
             start = time.perf_counter()
             try:
-                result = func(*args, **kwargs)
+                func(*args, **kwargs)
                 success = True
                 error = None
             except Exception as e:
-                result = None
                 success = False
                 error = str(e)
             elapsed = time.perf_counter() - start

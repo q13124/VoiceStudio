@@ -4,11 +4,11 @@ Voice Browser Routes
 Endpoints for browsing and discovering voice profiles, samples, and models.
 """
 
+from __future__ import annotations
+
+import json
 import logging
 import os
-import json
-from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/voice-browser", tags=["voice-browser"])
 
 # Voice catalog with persistence
-_voice_catalog: Dict[str, Dict] = {}
-_catalog_file_path: Optional[str] = None
+_voice_catalog: dict[str, dict] = {}
+_catalog_file_path: str | None = None
 
 
 def _get_catalog_path() -> str:
@@ -50,7 +50,7 @@ def _load_catalog():
     catalog_path = _get_catalog_path()
     if os.path.exists(catalog_path):
         try:
-            with open(catalog_path, "r", encoding="utf-8") as f:
+            with open(catalog_path, encoding="utf-8") as f:
                 _voice_catalog = json.load(f)
             logger.info(f"Loaded {len(_voice_catalog)} voices from catalog")
         except Exception as e:
@@ -72,11 +72,12 @@ def _sync_catalog_from_profiles():
     """Sync catalog with profiles from profiles route."""
     global _voice_catalog
     updated = False
-    
+
     # Import profiles from profiles route
     try:
-        from .profiles import _profiles as profile_storage, _profile_timestamps
-        
+        from .profiles import _profile_timestamps
+        from .profiles import _profiles as profile_storage
+
         for profile_id, profile in profile_storage.items():
             # Handle both Pydantic model and dict
             if hasattr(profile, "name"):
@@ -95,7 +96,7 @@ def _sync_catalog_from_profiles():
                 quality_score = profile.get("quality_score", 0.0)
                 tags = profile.get("tags", [])
                 reference_audio_url = profile.get("reference_audio_url")
-            
+
             # Extract preview audio ID from reference_audio_url if available
             preview_audio_id = None
             if reference_audio_url:
@@ -105,12 +106,12 @@ def _sync_catalog_from_profiles():
                 elif "/profiles/" in reference_audio_url and "/reference" in reference_audio_url:
                     # Could extract from profile reference audio
                     pass
-            
+
             # Get creation time
             created_timestamp = _profile_timestamps.get(profile_id, 0.0)
             from datetime import datetime
             created_str = datetime.fromtimestamp(created_timestamp).isoformat() if created_timestamp > 0 else datetime.utcnow().isoformat()
-            
+
             # Convert profile to catalog entry
             catalog_entry = {
                 "id": profile_id,
@@ -125,19 +126,19 @@ def _sync_catalog_from_profiles():
                 "preview_audio_id": preview_audio_id,
                 "created": created_str
             }
-            
+
             # Update catalog if changed
             if profile_id not in _voice_catalog or _voice_catalog[profile_id] != catalog_entry:
                 _voice_catalog[profile_id] = catalog_entry
                 updated = True
-                
+
         # Remove profiles that no longer exist
         profile_ids = set(profile_storage.keys())
         catalog_ids = set(_voice_catalog.keys())
         for removed_id in catalog_ids - profile_ids:
             del _voice_catalog[removed_id]
             updated = True
-            
+
         if updated:
             _save_catalog()
             logger.info(f"Synced voice catalog: {len(_voice_catalog)} voices")
@@ -155,25 +156,25 @@ class VoiceProfileSummary(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     language: str
-    gender: Optional[str] = None
-    age_range: Optional[str] = None
+    gender: str | None = None
+    age_range: str | None = None
     quality_score: float
     sample_count: int
-    tags: List[str] = []
-    preview_audio_id: Optional[str] = None
+    tags: list[str] = []
+    preview_audio_id: str | None = None
     created: str  # ISO datetime string
 
 
 class VoiceSearchRequest(BaseModel):
     """Request for voice search."""
 
-    query: Optional[str] = None
-    language: Optional[str] = None
-    gender: Optional[str] = None
-    min_quality_score: Optional[float] = None
-    tags: List[str] = []
+    query: str | None = None
+    language: str | None = None
+    gender: str | None = None
+    min_quality_score: float | None = None
+    tags: list[str] = []
     limit: int = 50
     offset: int = 0
 
@@ -181,7 +182,7 @@ class VoiceSearchRequest(BaseModel):
 class VoiceSearchResponse(BaseModel):
     """Response from voice search."""
 
-    voices: List[VoiceProfileSummary]
+    voices: list[VoiceProfileSummary]
     total: int
     limit: int
     offset: int
@@ -190,18 +191,18 @@ class VoiceSearchResponse(BaseModel):
 @router.get("/voices", response_model=VoiceSearchResponse)
 @cache_response(ttl=60)  # Cache for 60 seconds (voice searches change moderately)
 async def search_voices(
-    query: Optional[str] = None,
-    language: Optional[str] = None,
-    gender: Optional[str] = None,
-    min_quality_score: Optional[float] = None,
-    tags: Optional[str] = None,  # Comma-separated
+    query: str | None = None,
+    language: str | None = None,
+    gender: str | None = None,
+    min_quality_score: float | None = None,
+    tags: str | None = None,  # Comma-separated
     limit: int = 50,
     offset: int = 0,
 ):
     """Search and browse voice profiles."""
     # Sync catalog before search to ensure it's up to date
     _sync_catalog_from_profiles()
-    
+
     voices = list(_voice_catalog.values())
 
     # Apply filters
@@ -267,7 +268,7 @@ async def get_voice_summary(voice_id: str):
     """Get detailed summary of a voice profile."""
     # Sync catalog before lookup
     _sync_catalog_from_profiles()
-    
+
     if voice_id not in _voice_catalog:
         raise HTTPException(status_code=404, detail="Voice not found")
 
@@ -292,27 +293,27 @@ async def get_voice_summary(voice_id: str):
 async def get_available_languages():
     """Get list of available languages in voice catalog."""
     _sync_catalog_from_profiles()
-    
+
     languages = set()
     for v in _voice_catalog.values():
         lang = v.get("language")
         if lang:
             languages.add(lang)
 
-    return {"languages": sorted(list(languages))}
+    return {"languages": sorted(languages)}
 
 
 @router.get("/tags")
 async def get_available_tags():
     """Get list of available tags in voice catalog."""
     _sync_catalog_from_profiles()
-    
+
     tags = set()
     for v in _voice_catalog.values():
         for tag in v.get("tags", []):
             tags.add(tag)
 
-    return {"tags": sorted(list(tags))}
+    return {"tags": sorted(tags)}
 
 
 @router.post("/refresh")

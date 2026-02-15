@@ -5,7 +5,6 @@ Tests health checking functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestHealthCheckClasses:
     def test_health_checker_class_exists(self):
         """Test HealthChecker class exists."""
         if hasattr(health_check, "HealthChecker"):
-            cls = getattr(health_check, "HealthChecker")
+            cls = health_check.HealthChecker
             assert isinstance(cls, type), "HealthChecker should be a class"
 
 

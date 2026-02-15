@@ -5,7 +5,6 @@ Tests Whisper STT engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -31,7 +30,7 @@ class TestWhisperEngineImports:
     def test_module_has_whisper_engine_class(self):
         """Test module has WhisperEngine class."""
         if hasattr(whisper_engine, "WhisperEngine"):
-            cls = getattr(whisper_engine, "WhisperEngine")
+            cls = whisper_engine.WhisperEngine
             assert isinstance(cls, type), "WhisperEngine should be a class"
 
 
@@ -41,7 +40,7 @@ class TestWhisperEngineClass:
     def test_whisper_engine_class_exists(self):
         """Test WhisperEngine class exists."""
         if hasattr(whisper_engine, "WhisperEngine"):
-            cls = getattr(whisper_engine, "WhisperEngine")
+            cls = whisper_engine.WhisperEngine
             assert isinstance(cls, type), "WhisperEngine should be a class"
 
 

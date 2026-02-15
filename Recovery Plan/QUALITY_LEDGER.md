@@ -1546,3 +1546,19 @@ Result: `empty_catch_check` exit 1, 65 issues found
 - Discovery session: Debug Agent system health check 2026-02-05
 
 ---
+
+## Expected Validation Warnings (TD-006)
+
+> **Added**: 2026-02-13 (TASK-0018 follow-up)
+
+The following warnings are **expected** during ledger validation and
+`run_verification.py`. They are not bugs:
+
+| Warning | Reason | Action |
+|---------|--------|--------|
+| "No OPEN S0/S1 blockers" | All blockers resolved | Informational — means gates are healthy |
+| "VS-0032 reserved" | VS-0032 was pre-allocated for a future issue that was never raised | Keep as reserved; do not reassign |
+| Ledger format drift warnings | Minor markdown formatting differences across sessions | Tolerable; auto-corrected on next edit |
+| "0 pending migrations" | Database up to date | Expected in steady state |
+
+These warnings should **not** block gate advancement or task closure.

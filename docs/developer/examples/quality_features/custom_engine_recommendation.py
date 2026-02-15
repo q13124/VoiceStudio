@@ -5,7 +5,7 @@ This example demonstrates how to create a custom engine recommendation
 algorithm with user preferences and advanced scoring.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Engine characteristics database
 ENGINE_CHARACTERISTICS = {
@@ -113,11 +113,11 @@ def calculate_speed_score(engine_speed: str, speed_priority: float) -> float:
 
 def recommend_engine_custom(
     target_tier: str = "standard",
-    min_mos_score: Optional[float] = None,
-    min_similarity: Optional[float] = None,
-    min_naturalness: Optional[float] = None,
-    user_preferences: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    min_mos_score: float | None = None,
+    min_similarity: float | None = None,
+    min_naturalness: float | None = None,
+    user_preferences: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Custom engine recommendation with advanced scoring.
 

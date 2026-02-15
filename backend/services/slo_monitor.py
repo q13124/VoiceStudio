@@ -20,11 +20,11 @@ import logging
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ DEFAULT_SLO_DATA_DIR = Path(".buildlogs/slo")
 
 class SLOType(str, Enum):
     """Types of SLOs."""
-    
+
     LATENCY = "latency"
     AVAILABILITY = "availability"
     ERROR_RATE = "error_rate"
@@ -49,7 +49,7 @@ class SLOType(str, Enum):
 
 class AlertSeverity(str, Enum):
     """Alert severity levels."""
-    
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -58,7 +58,7 @@ class AlertSeverity(str, Enum):
 @dataclass
 class SLODefinition:
     """Defines an SLO target."""
-    
+
     id: str
     name: str
     description: str
@@ -69,11 +69,11 @@ class SLODefinition:
     window_hours: int = 24  # Rolling window for measurement
     metric_name: str = ""  # Telemetry metric to track
     is_higher_better: bool = False  # True for availability, false for latency
-    
-    def check_status(self, current_value: float) -> Tuple[bool, Optional[AlertSeverity]]:
+
+    def check_status(self, current_value: float) -> tuple[bool, AlertSeverity | None]:
         """
         Check if SLO is met and return alert severity if applicable.
-        
+
         Returns:
             Tuple of (is_met, alert_severity)
         """
@@ -96,13 +96,13 @@ class SLODefinition:
 @dataclass
 class SLOStatus:
     """Current status of an SLO."""
-    
+
     slo_id: str
     slo_name: str
     target: float
     current_value: float
     is_met: bool
-    alert_severity: Optional[str] = None
+    alert_severity: str | None = None
     window_hours: int = 24
     sample_count: int = 0
     last_updated: str = ""
@@ -113,7 +113,7 @@ class SLOStatus:
 @dataclass
 class SLOAlert:
     """An SLO alert event."""
-    
+
     alert_id: str
     slo_id: str
     slo_name: str
@@ -123,19 +123,19 @@ class SLOAlert:
     target: float
     timestamp: str
     acknowledged: bool = False
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[str] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: str | None = None
     resolved: bool = False
-    resolved_at: Optional[str] = None
+    resolved_at: str | None = None
 
 
 @dataclass
 class MetricSample:
     """A single metric sample."""
-    
+
     timestamp: float
     value: float
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
 
 # =============================================================================
@@ -214,44 +214,44 @@ DEFAULT_SLOS = [
 class SLOMonitor:
     """
     Monitors Service Level Objectives and generates alerts.
-    
+
     Usage:
         monitor = SLOMonitor()
         monitor.record_metric("voice_synthesis_latency_seconds", 1.5)
         status = monitor.get_slo_status("synthesis_latency_p95")
         alerts = monitor.get_active_alerts()
     """
-    
+
     def __init__(
         self,
-        slos: Optional[List[SLODefinition]] = None,
-        data_dir: Optional[Path] = None,
-        alert_callback: Optional[Callable[[SLOAlert], None]] = None,
+        slos: list[SLODefinition] | None = None,
+        data_dir: Path | None = None,
+        alert_callback: Callable[[SLOAlert], None] | None = None,
     ):
         """
         Initialize SLO monitor.
-        
+
         Args:
             slos: List of SLO definitions (defaults to DEFAULT_SLOS)
             data_dir: Directory for persisting SLO data
             alert_callback: Callback function for new alerts
         """
-        self.slos: Dict[str, SLODefinition] = {}
-        self._metric_samples: Dict[str, deque] = {}
-        self._alerts: List[SLOAlert] = []
-        self._alert_history: List[SLOAlert] = []
+        self.slos: dict[str, SLODefinition] = {}
+        self._metric_samples: dict[str, deque] = {}
+        self._alerts: list[SLOAlert] = []
+        self._alert_history: list[SLOAlert] = []
         self._lock = threading.Lock()
         self._alert_callback = alert_callback
         self._data_dir = data_dir or DEFAULT_SLO_DATA_DIR
         self._data_dir.mkdir(parents=True, exist_ok=True)
         self._alert_counter = 0
-        
+
         # Register SLOs
         for slo in (slos or DEFAULT_SLOS):
             self.register_slo(slo)
-        
+
         logger.info(f"SLOMonitor initialized with {len(self.slos)} SLOs")
-    
+
     def register_slo(self, slo: SLODefinition) -> None:
         """Register an SLO definition."""
         self.slos[slo.id] = slo
@@ -259,17 +259,17 @@ class SLOMonitor:
         max_samples = slo.window_hours * 3600  # 1 sample per second max
         self._metric_samples[slo.metric_name] = deque(maxlen=min(max_samples, 100000))
         logger.debug(f"Registered SLO: {slo.id}")
-    
+
     def record_metric(
         self,
         metric_name: str,
         value: float,
-        labels: Optional[Dict[str, str]] = None,
-        timestamp: Optional[float] = None,
+        labels: dict[str, str] | None = None,
+        timestamp: float | None = None,
     ) -> None:
         """
         Record a metric sample.
-        
+
         Args:
             metric_name: Name of the metric
             value: Metric value
@@ -278,49 +278,49 @@ class SLOMonitor:
         """
         ts = timestamp or time.time()
         sample = MetricSample(timestamp=ts, value=value, labels=labels or {})
-        
+
         with self._lock:
             if metric_name in self._metric_samples:
                 self._metric_samples[metric_name].append(sample)
-            
+
             # Check SLOs that use this metric
             for slo in self.slos.values():
                 if slo.metric_name == metric_name:
                     self._check_slo(slo)
-    
+
     def _check_slo(self, slo: SLODefinition) -> None:
         """Check an SLO and generate alerts if needed."""
         samples = list(self._metric_samples.get(slo.metric_name, []))
         if not samples:
             return
-        
+
         # Calculate current value based on SLO type
         current_value = self._calculate_slo_value(slo, samples)
         is_met, severity = slo.check_status(current_value)
-        
+
         if severity and not self._has_active_alert(slo.id, severity):
             self._create_alert(slo, current_value, severity)
         elif is_met:
             self._resolve_alerts(slo.id)
-    
+
     def _calculate_slo_value(
         self,
         slo: SLODefinition,
-        samples: List[MetricSample],
+        samples: list[MetricSample],
     ) -> float:
         """Calculate the current SLO value from samples."""
         if not samples:
             return slo.target  # Assume target if no data
-        
+
         # Filter to window
         cutoff = time.time() - (slo.window_hours * 3600)
         window_samples = [s for s in samples if s.timestamp >= cutoff]
-        
+
         if not window_samples:
             return slo.target
-        
+
         values = [s.value for s in window_samples]
-        
+
         if slo.slo_type == SLOType.LATENCY:
             # Calculate P95
             sorted_vals = sorted(values)
@@ -332,16 +332,16 @@ class SLOMonitor:
         else:
             # Average for other types
             return sum(values) / len(values)
-    
+
     def _has_active_alert(self, slo_id: str, severity: AlertSeverity) -> bool:
         """Check if there's an active alert for this SLO."""
         return any(
-            a.slo_id == slo_id and 
-            a.severity == severity and 
-            not a.resolved 
+            a.slo_id == slo_id and
+            a.severity == severity and
+            not a.resolved
             for a in self._alerts
         )
-    
+
     def _create_alert(
         self,
         slo: SLODefinition,
@@ -360,18 +360,18 @@ class SLOMonitor:
             target=slo.target,
             timestamp=datetime.utcnow().isoformat() + "Z",
         )
-        
+
         self._alerts.append(alert)
         logger.warning(f"SLO Alert: {alert.message}")
-        
+
         if self._alert_callback:
             try:
                 self._alert_callback(alert)
             except Exception as e:
                 logger.error(f"Alert callback failed: {e}")
-        
+
         return alert
-    
+
     def _format_alert_message(
         self,
         slo: SLODefinition,
@@ -384,7 +384,7 @@ class SLOMonitor:
             f"[{severity.value.upper()}] {slo.name}: "
             f"Current value {current_value:.3f} is {direction} target {slo.target:.3f}"
         )
-    
+
     def _resolve_alerts(self, slo_id: str) -> None:
         """Resolve all active alerts for an SLO."""
         now = datetime.utcnow().isoformat() + "Z"
@@ -394,39 +394,39 @@ class SLOMonitor:
                 alert.resolved_at = now
                 self._alert_history.append(alert)
                 logger.info(f"SLO Alert resolved: {alert.slo_name}")
-        
+
         self._alerts = [a for a in self._alerts if not a.resolved]
-    
-    def get_slo_status(self, slo_id: str) -> Optional[SLOStatus]:
+
+    def get_slo_status(self, slo_id: str) -> SLOStatus | None:
         """Get the current status of an SLO."""
         slo = self.slos.get(slo_id)
         if not slo:
             return None
-        
+
         with self._lock:
             samples = list(self._metric_samples.get(slo.metric_name, []))
-        
+
         # Filter to window
         cutoff = time.time() - (slo.window_hours * 3600)
         window_samples = [s for s in samples if s.timestamp >= cutoff]
-        
+
         current_value = self._calculate_slo_value(slo, window_samples)
         is_met, severity = slo.check_status(current_value)
-        
+
         # Calculate burn rate (ratio of actual error rate to allowed error rate)
         error_budget = 1.0 - slo.target if slo.is_higher_better else slo.target
         actual_error = 1.0 - current_value if slo.is_higher_better else current_value
         burn_rate = actual_error / error_budget if error_budget > 0 else 0.0
-        
+
         # Calculate remaining budget
         window_fraction = min(
-            (time.time() - window_samples[0].timestamp if window_samples else 0) 
+            (time.time() - window_samples[0].timestamp if window_samples else 0)
             / (slo.window_hours * 3600),
             1.0
         )
         expected_burn = window_fraction
         budget_remaining = max(0, (1.0 - (burn_rate * expected_burn)) * 100)
-        
+
         return SLOStatus(
             slo_id=slo.id,
             slo_name=slo.name,
@@ -440,8 +440,8 @@ class SLOMonitor:
             burn_rate=burn_rate,
             error_budget_remaining=budget_remaining,
         )
-    
-    def get_all_slo_statuses(self) -> List[SLOStatus]:
+
+    def get_all_slo_statuses(self) -> list[SLOStatus]:
         """Get status of all SLOs."""
         statuses = []
         for slo_id in self.slos:
@@ -449,22 +449,22 @@ class SLOMonitor:
             if status:
                 statuses.append(status)
         return statuses
-    
-    def get_active_alerts(self) -> List[SLOAlert]:
+
+    def get_active_alerts(self) -> list[SLOAlert]:
         """Get all active (unresolved) alerts."""
         return [a for a in self._alerts if not a.resolved]
-    
+
     def get_alert_history(
         self,
         limit: int = 100,
-        slo_id: Optional[str] = None,
-    ) -> List[SLOAlert]:
+        slo_id: str | None = None,
+    ) -> list[SLOAlert]:
         """Get alert history."""
         history = self._alert_history + self._alerts
         if slo_id:
             history = [a for a in history if a.slo_id == slo_id]
         return sorted(history, key=lambda a: a.timestamp, reverse=True)[:limit]
-    
+
     def acknowledge_alert(
         self,
         alert_id: str,
@@ -479,26 +479,26 @@ class SLOMonitor:
                 logger.info(f"Alert {alert_id} acknowledged by {acknowledged_by}")
                 return True
         return False
-    
+
     def get_overall_health(self) -> str:
         """
         Get overall SLO health.
-        
+
         Returns:
             "healthy", "degraded", or "unhealthy"
         """
         statuses = self.get_all_slo_statuses()
         if not statuses:
             return "healthy"
-        
+
         met_count = sum(1 for s in statuses if s.is_met)
         total = len(statuses)
-        
+
         critical_alerts = [
-            a for a in self._alerts 
+            a for a in self._alerts
             if a.severity == AlertSeverity.CRITICAL and not a.resolved
         ]
-        
+
         if critical_alerts:
             return "unhealthy"
         elif met_count == total:
@@ -507,21 +507,21 @@ class SLOMonitor:
             return "degraded"
         else:
             return "unhealthy"
-    
-    def export_status(self, filepath: Optional[Path] = None) -> Path:
+
+    def export_status(self, filepath: Path | None = None) -> Path:
         """Export current SLO status to JSON file."""
         filepath = filepath or (self._data_dir / f"slo_status_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json")
-        
+
         data = {
             "exported_at": datetime.utcnow().isoformat() + "Z",
             "overall_health": self.get_overall_health(),
             "slos": [asdict(s) for s in self.get_all_slo_statuses()],
             "active_alerts": [asdict(a) for a in self.get_active_alerts()],
         }
-        
+
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2, default=str)
-        
+
         return filepath
 
 
@@ -529,7 +529,7 @@ class SLOMonitor:
 # Global Instance
 # =============================================================================
 
-_slo_monitor: Optional[SLOMonitor] = None
+_slo_monitor: SLOMonitor | None = None
 
 
 def get_slo_monitor() -> SLOMonitor:

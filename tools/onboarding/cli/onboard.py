@@ -4,7 +4,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 from tools.onboarding.core.assembler import OnboardingAssembler
 from tools.onboarding.core.role_registry import RoleRegistry
@@ -22,16 +21,16 @@ def _ensure_utf8_stdout() -> None:
 
 def _list_roles(registry: RoleRegistry, output_format: str = "text") -> str:
     """List all available roles.
-    
+
     Args:
         registry: Role registry instance
         output_format: "text", "json", or "table"
-    
+
     Returns:
         Formatted role list
     """
     roles = registry.list_roles()
-    
+
     if output_format == "json":
         role_data = []
         for role in roles:
@@ -43,7 +42,7 @@ def _list_roles(registry: RoleRegistry, output_format: str = "text") -> str:
                 "guide_path": role.guide_path or "",
             })
         return json.dumps(role_data, indent=2)
-    
+
     elif output_format == "table":
         lines = [
             "",
@@ -58,25 +57,25 @@ def _list_roles(registry: RoleRegistry, output_format: str = "text") -> str:
         lines.append(f"Total: {len(roles)} roles")
         lines.append("")
         return "\n".join(lines)
-    
+
     else:  # text (default)
         lines = ["Available roles:", ""]
         for role in sorted(roles, key=lambda r: r.id):
             short = f" ({role.short_name})" if role.short_name != role.name else ""
             lines.append(f"  [{role.id}] {role.name}{short}")
         lines.append("")
-        lines.append(f"Use --role <id|short_name> to generate an onboarding packet.")
+        lines.append("Use --role <id|short_name> to generate an onboarding packet.")
         return "\n".join(lines)
 
 
-def main(argv: Optional[list] = None) -> int:
+def main(argv: list | None = None) -> int:
     _ensure_utf8_stdout()
-    
+
     parser = argparse.ArgumentParser(
         prog="onboard",
         description="Generate onboarding packets or list available roles"
     )
-    
+
     # List mode
     parser.add_argument(
         "--list", "-l",
@@ -89,7 +88,7 @@ def main(argv: Optional[list] = None) -> int:
         default="text",
         help="Output format for --list (default: text)"
     )
-    
+
     # Generate mode
     parser.add_argument(
         "--role", "-r",
@@ -104,7 +103,7 @@ def main(argv: Optional[list] = None) -> int:
         action="store_true",
         help="Include full role guide in packet"
     )
-    
+
     # Cache options
     parser.add_argument(
         "--no-cache",
@@ -116,7 +115,7 @@ def main(argv: Optional[list] = None) -> int:
         action="store_true",
         help="Clear the onboarding cache"
     )
-    
+
     args = parser.parse_args(argv)
 
     # Handle cache clear
@@ -147,7 +146,7 @@ def main(argv: Optional[list] = None) -> int:
         parser.error("--role is required (or use --list to see available roles)")
 
     assembler = OnboardingAssembler()
-    
+
     # Check cache unless bypassed
     packet = None
     if not args.no_cache:
@@ -165,7 +164,7 @@ def main(argv: Optional[list] = None) -> int:
 
     # Assemble new packet
     packet = assembler.assemble(args.role, include_full_guide=bool(args.full_guide))
-    
+
     # Cache the result
     if not args.no_cache:
         try:
@@ -181,7 +180,7 @@ def main(argv: Optional[list] = None) -> int:
     return 0
 
 
-def _output_content(content: str, output_path: Optional[str]) -> None:
+def _output_content(content: str, output_path: str | None) -> None:
     """Output content to file or stdout."""
     if output_path:
         out_path = Path(output_path)

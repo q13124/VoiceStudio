@@ -7,7 +7,7 @@ Task 3.1.2: Value object for audio format specification.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from backend.domain.value_objects.base import ValueObject
 
@@ -16,73 +16,73 @@ from backend.domain.value_objects.base import ValueObject
 class AudioFormat(ValueObject):
     """
     Audio format specification.
-    
+
     Describes the technical format of an audio file.
     """
-    
+
     # File format
     container: str = "wav"  # wav, mp3, ogg, flac
-    
+
     # Audio codec
     codec: str = "pcm"  # pcm, mp3, vorbis, flac
-    
+
     # Sample rate in Hz
     sample_rate: int = 22050
-    
+
     # Bit depth (for PCM) or bitrate (for compressed)
     bit_depth: int = 16
     bitrate_kbps: int = 0  # 0 for uncompressed
-    
+
     # Channels
     channels: int = 1
-    
+
     # MIME type
     mime_type: str = "audio/wav"
-    
+
     def _validate(self) -> None:
         """Validate audio format."""
         valid_containers = {"wav", "mp3", "ogg", "flac", "m4a", "webm"}
         if self.container not in valid_containers:
             raise ValueError(f"Invalid container: {self.container}")
-        
+
         valid_codecs = {"pcm", "mp3", "vorbis", "flac", "aac", "opus"}
         if self.codec not in valid_codecs:
             raise ValueError(f"Invalid codec: {self.codec}")
-        
+
         if self.sample_rate <= 0:
             raise ValueError(f"Invalid sample rate: {self.sample_rate}")
-        
+
         if self.channels < 1 or self.channels > 8:
             raise ValueError(f"Invalid channels: {self.channels}")
-    
+
     @property
     def is_compressed(self) -> bool:
         """Check if format uses compression."""
         return self.codec not in ("pcm",)
-    
+
     @property
     def is_lossless(self) -> bool:
         """Check if format is lossless."""
         return self.codec in ("pcm", "flac")
-    
+
     @property
     def file_extension(self) -> str:
         """Get file extension."""
         return f".{self.container}"
-    
+
     def bytes_per_second(self) -> int:
         """Calculate bytes per second (for uncompressed)."""
         if self.is_compressed:
             return (self.bitrate_kbps * 1000) // 8
-        
+
         bytes_per_sample = self.bit_depth // 8
         return self.sample_rate * self.channels * bytes_per_sample
-    
+
     def estimate_file_size(self, duration_seconds: float) -> int:
         """Estimate file size in bytes."""
         return int(self.bytes_per_second() * duration_seconds)
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "container": self.container,
@@ -93,9 +93,9 @@ class AudioFormat(ValueObject):
             "channels": self.channels,
             "mime_type": self.mime_type,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AudioFormat":
+    def from_dict(cls, data: dict[str, Any]) -> AudioFormat:
         """Create from dictionary."""
         return cls(
             container=data.get("container", "wav"),
@@ -106,11 +106,11 @@ class AudioFormat(ValueObject):
             channels=data.get("channels", 1),
             mime_type=data.get("mime_type", "audio/wav"),
         )
-    
+
     # Common format presets
-    
+
     @classmethod
-    def wav_mono_22k(cls) -> "AudioFormat":
+    def wav_mono_22k(cls) -> AudioFormat:
         """Standard WAV format for TTS."""
         return cls(
             container="wav",
@@ -120,9 +120,9 @@ class AudioFormat(ValueObject):
             channels=1,
             mime_type="audio/wav",
         )
-    
+
     @classmethod
-    def wav_stereo_44k(cls) -> "AudioFormat":
+    def wav_stereo_44k(cls) -> AudioFormat:
         """CD quality WAV."""
         return cls(
             container="wav",
@@ -132,9 +132,9 @@ class AudioFormat(ValueObject):
             channels=2,
             mime_type="audio/wav",
         )
-    
+
     @classmethod
-    def mp3_128k(cls) -> "AudioFormat":
+    def mp3_128k(cls) -> AudioFormat:
         """Standard MP3."""
         return cls(
             container="mp3",
@@ -145,9 +145,9 @@ class AudioFormat(ValueObject):
             channels=2,
             mime_type="audio/mpeg",
         )
-    
+
     @classmethod
-    def mp3_320k(cls) -> "AudioFormat":
+    def mp3_320k(cls) -> AudioFormat:
         """High quality MP3."""
         return cls(
             container="mp3",
@@ -158,9 +158,9 @@ class AudioFormat(ValueObject):
             channels=2,
             mime_type="audio/mpeg",
         )
-    
+
     @classmethod
-    def flac_lossless(cls) -> "AudioFormat":
+    def flac_lossless(cls) -> AudioFormat:
         """Lossless FLAC."""
         return cls(
             container="flac",

@@ -1,0 +1,303 @@
+# Sentinel UI Smoke Test Workflow (Nightly)
+# Phase 3: UI Automation Framework
+# Based on: docs/design/DETERMINISTIC_SENTINEL_IMPLEMENTATION_PLAN.md
+#
+# This workflow runs UI smoke tests nightly to validate the WinUI 3 frontend
+# using WinAppDriver-based Page Object automation.
+
+name: Sentinel UI Smoke (Nightly)
+
+on:
+  schedule:
+    # Run at 3:00 AM UTC every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      run_slow_tests:
+        description: 'Include slow integration tests'
+        required: false
+        default: false
+        type: boolean
+      capture_screenshots:
+        description: 'Capture screenshots on failure'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ============================================================================
+  # Build Application
+  # ============================================================================
+  build-app:
+    name: Build VoiceStudio
+    runs-on: windows-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+      
+      - name: Restore dependencies
+        run: dotnet restore VoiceStudio.sln
+      
+      - name: Build application
+        run: |
+          dotnet build VoiceStudio.sln `
+            -c Debug `
+            -p:Platform=x64 `
+            --no-restore `
+            -verbosity:minimal
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicestudio-build
+          path: |
+            src/VoiceStudio.App/bin/x64/Debug/
+          retention-days: 1
+
+  # ============================================================================
+  # UI Smoke Tests
+  # ============================================================================
+  ui-smoke:
+    name: UI Smoke Tests
+    runs-on: windows-latest
+    needs: [build-app]
+    timeout-minutes: 45
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: voicestudio-build
+          path: src/VoiceStudio.App/bin/x64/Debug/
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-timeout selenium Pillow
+      
+      - name: Create test directories
+        run: |
+          New-Item -ItemType Directory -Force -Path ".buildlogs/ui_tests/screenshots"
+          New-Item -ItemType Directory -Force -Path "artifacts/ui_smoke"
+      
+      - name: Start WinAppDriver
+        run: |
+          # WinAppDriver is pre-installed on Windows runners
+          $wadPath = "C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
+          
+          if (Test-Path $wadPath) {
+            Start-Process -FilePath $wadPath -NoNewWindow -PassThru | Out-Null
+            Start-Sleep -Seconds 5
+            
+            # Verify WinAppDriver is running
+            $process = Get-Process -Name "WinAppDriver" -ErrorAction SilentlyContinue
+            if ($process) {
+              Write-Host "WinAppDriver started successfully (PID: $($process.Id))"
+            } else {
+              Write-Error "WinAppDriver failed to start"
+              exit 1
+            }
+          } else {
+            Write-Error "WinAppDriver not found at $wadPath"
+            exit 1
+          }
+      
+      - name: Run UI smoke tests
+        id: smoke-tests
+        run: |
+          # Set environment variables
+          $env:VOICESTUDIO_APP_PATH = "$PWD\src\VoiceStudio.App\bin\x64\Debug\net8.0-windows10.0.19041.0\VoiceStudio.App.exe"
+          $env:VOICESTUDIO_UI_TEST_MODE = "true"
+          $env:VOICESTUDIO_SCREENSHOT_ON_FAILURE = "${{ inputs.capture_screenshots || 'true' }}"
+          
+          # Run pytest with smoke marker
+          $testArgs = @(
+            "tests/ui/test_smoke_workflows.py",
+            "-v",
+            "-m", "smoke",
+            "--tb=short",
+            "--junit-xml=artifacts/ui_smoke/test-results.xml",
+            "--timeout=120"
+          )
+          
+          if ("${{ inputs.run_slow_tests }}" -eq "true") {
+            Write-Host "Including slow tests..."
+          } else {
+            $testArgs += @("--ignore-glob=*slow*")
+          }
+          
+          python -m pytest @testArgs
+        continue-on-error: true
+      
+      - name: Stop WinAppDriver
+        if: always()
+        run: |
+          Stop-Process -Name "WinAppDriver" -Force -ErrorAction SilentlyContinue
+          Stop-Process -Name "VoiceStudio.App" -Force -ErrorAction SilentlyContinue
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-smoke-results
+          path: |
+            artifacts/ui_smoke/
+            .buildlogs/ui_tests/screenshots/
+          retention-days: 7
+          if-no-files-found: warn
+      
+      - name: Check test results
+        run: |
+          $resultsFile = "artifacts/ui_smoke/test-results.xml"
+          
+          if (Test-Path $resultsFile) {
+            [xml]$results = Get-Content $resultsFile
+            
+            $tests = $results.testsuites.testsuite.tests
+            $failures = $results.testsuites.testsuite.failures
+            $errors = $results.testsuites.testsuite.errors
+            $skipped = $results.testsuites.testsuite.skipped
+            
+            Write-Host "=== UI Smoke Test Results ==="
+            Write-Host "Total tests: $tests"
+            Write-Host "Failures: $failures"
+            Write-Host "Errors: $errors"
+            Write-Host "Skipped: $skipped"
+            
+            $failureCount = [int]$failures + [int]$errors
+            if ($failureCount -gt 0) {
+              Write-Error "UI smoke tests had $failureCount failure(s)"
+              exit 1
+            }
+            
+            Write-Host "All UI smoke tests passed!"
+          } else {
+            Write-Error "Test results file not found"
+            exit 1
+          }
+
+  # ============================================================================
+  # Page Object Validation
+  # ============================================================================
+  page-object-validation:
+    name: Validate Page Objects
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy
+      
+      - name: Lint page objects
+        run: |
+          ruff check tests/ui/page_objects --ignore E501 || echo "::warning::Page object linting issues"
+      
+      - name: Type check page objects
+        run: |
+          mypy tests/ui/page_objects --ignore-missing-imports --no-error-summary || echo "::warning::Type checking issues"
+      
+      - name: Validate AutomationId consistency
+        run: |
+          python -c "
+          import re
+          from pathlib import Path
+          
+          # Load Python automation IDs
+          py_ids = set()
+          fixtures = Path('tests/ui/fixtures/automation_ids.py')
+          if fixtures.exists():
+              content = fixtures.read_text()
+              py_ids = set(re.findall(r'\"([A-Za-z_][A-Za-z0-9_]*(?:View|Panel|Button|_Root)[A-Za-z0-9_]*)\"', content))
+          
+          # Load C# AutomationIds
+          cs_ids = set()
+          cs_file = Path('src/VoiceStudio.App/Constants/AutomationIds.cs')
+          if cs_file.exists():
+              content = cs_file.read_text()
+              cs_ids = set(re.findall(r'const string [A-Za-z]+ = \"([^\"]+)\"', content))
+          
+          print(f'Python fixture IDs: {len(py_ids)}')
+          print(f'C# constant IDs: {len(cs_ids)}')
+          
+          # Check for critical IDs
+          critical = ['VoiceSynthesisView_Root', 'LibraryView_Root', 'EffectsMixerView_Root']
+          missing = [id for id in critical if id not in py_ids and id not in cs_ids]
+          
+          if missing:
+              print(f'::error::Missing critical IDs: {missing}')
+              exit(1)
+          else:
+              print('All critical AutomationIds present')
+          "
+
+  # ============================================================================
+  # Report Results
+  # ============================================================================
+  report:
+    name: Report Results
+    runs-on: ubuntu-latest
+    needs: [build-app, ui-smoke, page-object-validation]
+    if: always()
+    
+    steps:
+      - name: Check job results
+        run: |
+          echo "Build: ${{ needs.build-app.result }}"
+          echo "UI Smoke: ${{ needs.ui-smoke.result }}"
+          echo "Page Objects: ${{ needs.page-object-validation.result }}"
+          
+          if [ "${{ needs.build-app.result }}" = "failure" ]; then
+            echo "::error::Build failed"
+            exit 1
+          fi
+          
+          if [ "${{ needs.ui-smoke.result }}" = "failure" ]; then
+            echo "::error::UI smoke tests failed"
+            exit 1
+          fi
+          
+          if [ "${{ needs.page-object-validation.result }}" = "failure" ]; then
+            echo "::error::Page object validation failed"
+            exit 1
+          fi
+          
+          echo "All UI smoke tests passed!"

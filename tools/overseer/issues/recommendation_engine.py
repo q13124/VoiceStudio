@@ -7,9 +7,11 @@ from historical success rates. Strategies include retry, apply_fix,
 rollback, restart, defer, escalate, and investigate.
 """
 
+from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from tools.overseer.issues.aggregator import _get_store
 from tools.overseer.issues.config import (
@@ -25,13 +27,12 @@ from tools.overseer.issues.models import (
 )
 from tools.overseer.issues.pattern_matcher import (
     FailurePattern,
-    load_learned_patterns,
     match_patterns,
 )
 from tools.overseer.issues.store import append_feedback_line, iter_feedback_lines
 
 
-def assess_risk(issue: Issue) -> Dict[str, Any]:
+def assess_risk(issue: Issue) -> dict[str, Any]:
     """
     Assess risk for an issue (frequency, blast radius, severity).
 
@@ -40,7 +41,7 @@ def assess_risk(issue: Issue) -> Dict[str, Any]:
     store = _get_store()
     frequency = store.count_by_pattern_hash(issue.pattern_hash, hours=24)
     correlated = store.get_by_correlation(issue.correlation_id)
-    blast_radius = len(set(i.instance_id for i in correlated))
+    blast_radius = len({i.instance_id for i in correlated})
     severity_weight = {
         IssueSeverity.LOW: 1,
         IssueSeverity.MEDIUM: 2,
@@ -68,7 +69,7 @@ def _action_type_for_rate(action: str) -> str:
     return action
 
 
-def get_action_success_rate(action: str, days: int = 90) -> Optional[float]:
+def get_action_success_rate(action: str, days: int = 90) -> float | None:
     """
     Return empirical success rate for an action from feedback (success / (success + failure)).
     Returns None if no feedback for that action in the window.
@@ -94,7 +95,7 @@ def record_recommendation_outcome(
     issue_id: str,
     action: str,
     outcome: str,
-    note: Optional[str] = None,
+    note: str | None = None,
 ) -> bool:
     """
     Record that a recommendation was applied and its outcome (success, failure, deferred).
@@ -119,8 +120,8 @@ def record_recommendation_outcome(
 
 def suggest_actions(
     issue: Issue,
-    matched_patterns: List[Tuple[FailurePattern, float]],
-) -> List[Recommendation]:
+    matched_patterns: list[tuple[FailurePattern, float]],
+) -> list[Recommendation]:
     """
     Suggest recommended actions for an issue given matched patterns.
 
@@ -128,11 +129,11 @@ def suggest_actions(
     restart, defer, escalate_to_human, investigate. Confidence is calibrated
     from historical feedback when available.
     """
-    recommendations: List[Recommendation] = []
+    recommendations: list[Recommendation] = []
     risk = assess_risk(issue)
     seen_actions: set = set()
 
-    def _add(action: str, default_confidence: float, rationale: str, similar: List[str]) -> None:
+    def _add(action: str, default_confidence: float, rationale: str, similar: list[str]) -> None:
         if action in seen_actions:
             return
         seen_actions.add(action)
@@ -222,7 +223,7 @@ def suggest_actions(
     return recommendations
 
 
-def generate_recommendations(issue: Issue) -> List[Recommendation]:
+def generate_recommendations(issue: Issue) -> list[Recommendation]:
     """
     Main entry: generate recommendations for an issue.
 
@@ -235,7 +236,7 @@ def generate_recommendations(issue: Issue) -> List[Recommendation]:
 def learn_from_resolution(
     issue_id: str,
     resolution_note: str,
-    fix_id: Optional[str] = None,
+    fix_id: str | None = None,
 ) -> bool:
     """
     Update learned patterns when an issue is resolved.
@@ -243,12 +244,12 @@ def learn_from_resolution(
     Optional: call from CLI resolve command to record resolution.
     """
     try:
-        from tools.overseer.learning.failure_analyzer import (
-            DEFAULT_PATTERNS_PATH,
-            record_failure_pattern,
-        )
         import os
         from pathlib import Path
+
+        from tools.overseer.learning.failure_analyzer import (
+            DEFAULT_PATTERNS_PATH,
+        )
         root = Path(__file__).resolve().parents[3]
         path = root / DEFAULT_PATTERNS_PATH.replace("/", os.sep)
         path.parent.mkdir(parents=True, exist_ok=True)

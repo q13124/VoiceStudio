@@ -3,17 +3,19 @@ Phase 7: System Diagnostics
 Task 7.7: System diagnostics and health checks.
 """
 
-import asyncio
+from __future__ import annotations
+
+import json
+import logging
 import platform
-import psutil
 import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-import logging
-import json
+from typing import Any
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ class DiagnosticResult:
     status: DiagnosticStatus
     message: str
     details: dict[str, Any] = field(default_factory=dict)
-    recommendation: Optional[str] = None
+    recommendation: str | None = None
 
 
 @dataclass
@@ -60,8 +62,8 @@ class SystemInfo:
     cpu_threads: int
     ram_total_gb: float
     ram_available_gb: float
-    gpu_name: Optional[str] = None
-    gpu_memory_gb: Optional[float] = None
+    gpu_name: str | None = None
+    gpu_memory_gb: float | None = None
     python_version: str = ""
     app_version: str = ""
 
@@ -78,39 +80,39 @@ class DiagnosticsReport:
 
 class SystemDiagnostics:
     """Service for running system diagnostics."""
-    
+
     MIN_RAM_GB = 8
     MIN_DISK_GB = 10
     MIN_PYTHON_VERSION = (3, 10)
-    
-    def __init__(self, app_path: Optional[Path] = None):
+
+    def __init__(self, app_path: Path | None = None):
         self._app_path = app_path or Path.cwd()
-    
+
     async def run_diagnostics(self) -> DiagnosticsReport:
         """Run all diagnostic checks."""
         start_time = datetime.now()
-        
+
         # Get system info
         system_info = self._get_system_info()
-        
+
         # Run checks
         results = []
-        
+
         # System checks
         results.extend(await self._check_system())
-        
+
         # Hardware checks
         results.extend(await self._check_hardware())
-        
+
         # Software checks
         results.extend(await self._check_software())
-        
+
         # Storage checks
         results.extend(await self._check_storage())
-        
+
         # Application checks
         results.extend(await self._check_application())
-        
+
         # Determine overall status
         overall_status = DiagnosticStatus.PASS
         for result in results:
@@ -119,9 +121,9 @@ class SystemDiagnostics:
                 break
             elif result.status == DiagnosticStatus.WARN and overall_status != DiagnosticStatus.FAIL:
                 overall_status = DiagnosticStatus.WARN
-        
+
         duration = (datetime.now() - start_time).total_seconds()
-        
+
         return DiagnosticsReport(
             timestamp=datetime.now(),
             system_info=system_info,
@@ -129,15 +131,15 @@ class SystemDiagnostics:
             overall_status=overall_status,
             duration_seconds=duration,
         )
-    
+
     def _get_system_info(self) -> SystemInfo:
         """Get system information."""
         ram = psutil.virtual_memory()
-        
+
         # Try to get GPU info
         gpu_name = None
         gpu_memory = None
-        
+
         try:
             import torch
             if torch.cuda.is_available():
@@ -145,7 +147,7 @@ class SystemDiagnostics:
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         except ImportError:
             logger.debug("PyTorch not available for GPU info detection")
-        
+
         return SystemInfo(
             os_name=platform.system(),
             os_version=platform.version(),
@@ -162,11 +164,11 @@ class SystemDiagnostics:
             python_version=platform.python_version(),
             app_version="1.0.0",
         )
-    
+
     async def _check_system(self) -> list[DiagnosticResult]:
         """Run system checks."""
         results = []
-        
+
         # Windows version check
         if platform.system() == "Windows":
             version = platform.release()
@@ -186,7 +188,7 @@ class SystemDiagnostics:
                     message=f"Windows {version} may not be fully supported",
                     recommendation="Consider upgrading to Windows 10 or 11",
                 ))
-        
+
         # Architecture check
         arch = platform.machine().lower()
         if 'amd64' in arch or 'x86_64' in arch:
@@ -204,17 +206,17 @@ class SystemDiagnostics:
                 message=f"32-bit system ({arch}) not supported",
                 recommendation="VoiceStudio requires a 64-bit system",
             ))
-        
+
         return results
-    
+
     async def _check_hardware(self) -> list[DiagnosticResult]:
         """Run hardware checks."""
         results = []
-        
+
         # RAM check
         ram = psutil.virtual_memory()
         ram_gb = ram.total / (1024**3)
-        
+
         if ram_gb >= self.MIN_RAM_GB:
             results.append(DiagnosticResult(
                 name="RAM",
@@ -231,14 +233,14 @@ class SystemDiagnostics:
                 message=f"Only {ram_gb:.1f} GB RAM (recommended: {self.MIN_RAM_GB} GB)",
                 recommendation=f"Consider upgrading to at least {self.MIN_RAM_GB} GB RAM",
             ))
-        
+
         # GPU check
         try:
             import torch
             if torch.cuda.is_available():
                 gpu_name = torch.cuda.get_device_name(0)
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-                
+
                 results.append(DiagnosticResult(
                     name="GPU (CUDA)",
                     category=DiagnosticCategory.HARDWARE,
@@ -261,16 +263,16 @@ class SystemDiagnostics:
                 status=DiagnosticStatus.SKIP,
                 message="PyTorch not installed, cannot check GPU",
             ))
-        
+
         return results
-    
+
     async def _check_software(self) -> list[DiagnosticResult]:
         """Run software checks."""
         results = []
-        
+
         # Python version check
         py_version = tuple(map(int, platform.python_version().split('.')[:2]))
-        
+
         if py_version >= self.MIN_PYTHON_VERSION:
             results.append(DiagnosticResult(
                 name="Python Version",
@@ -286,7 +288,7 @@ class SystemDiagnostics:
                 message=f"Python {platform.python_version()} is too old",
                 recommendation=f"Please upgrade to Python {'.'.join(map(str, self.MIN_PYTHON_VERSION))} or later",
             ))
-        
+
         # FFmpeg check
         ffmpeg_path = shutil.which("ffmpeg")
         if ffmpeg_path:
@@ -305,17 +307,17 @@ class SystemDiagnostics:
                 message="FFmpeg not found in PATH",
                 recommendation="Install FFmpeg for audio format conversion",
             ))
-        
+
         return results
-    
+
     async def _check_storage(self) -> list[DiagnosticResult]:
         """Run storage checks."""
         results = []
-        
+
         # App directory storage
         disk = psutil.disk_usage(str(self._app_path))
         free_gb = disk.free / (1024**3)
-        
+
         if free_gb >= self.MIN_DISK_GB:
             results.append(DiagnosticResult(
                 name="Disk Space",
@@ -332,7 +334,7 @@ class SystemDiagnostics:
                 message=f"Only {free_gb:.1f} GB free (recommended: {self.MIN_DISK_GB} GB)",
                 recommendation="Free up disk space for models and projects",
             ))
-        
+
         # Models directory
         models_path = self._app_path / "models"
         if models_path.exists():
@@ -351,13 +353,13 @@ class SystemDiagnostics:
                 message="Models directory not found",
                 recommendation="Models will be downloaded on first use",
             ))
-        
+
         return results
-    
+
     async def _check_application(self) -> list[DiagnosticResult]:
         """Run application checks."""
         results = []
-        
+
         # Config file
         config_path = self._app_path / "config" / "settings.json"
         if config_path.exists():
@@ -375,9 +377,9 @@ class SystemDiagnostics:
                 message="Configuration file not found",
                 recommendation="Default settings will be used",
             ))
-        
+
         return results
-    
+
     def export_report(self, report: DiagnosticsReport, path: Path) -> None:
         """Export diagnostics report to file."""
         data = {
@@ -406,5 +408,5 @@ class SystemDiagnostics:
                 for r in report.results
             ],
         }
-        
+
         path.write_text(json.dumps(data, indent=2))

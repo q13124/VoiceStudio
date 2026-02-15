@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using VoiceStudio.Core.State.Commands;
 
 namespace VoiceStudio.Core.State
 {
@@ -30,6 +31,34 @@ namespace VoiceStudio.Core.State
     /// </summary>
     /// <param name="update">Async function that takes current state and returns new state.</param>
     Task DispatchAsync(Func<AppState, Task<AppState>> update);
+
+    /// <summary>
+    /// Executes a command and tracks it for undo/redo support.
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    void ExecuteCommand(IStateCommand command);
+
+    /// <summary>
+    /// Gets whether an undo operation is available.
+    /// </summary>
+    bool CanUndo { get; }
+
+    /// <summary>
+    /// Gets whether a redo operation is available.
+    /// </summary>
+    bool CanRedo { get; }
+
+    /// <summary>
+    /// Undoes the last command.
+    /// </summary>
+    /// <returns>True if undo was performed; false if there was nothing to undo.</returns>
+    bool Undo();
+
+    /// <summary>
+    /// Redoes the last undone command.
+    /// </summary>
+    /// <returns>True if redo was performed; false if there was nothing to redo.</returns>
+    bool Redo();
 
     /// <summary>
     /// Subscribes to changes in a specific part of the state.

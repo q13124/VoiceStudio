@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "job_response.schema.json",
+  "title": "JobProgress",
+  "description": "Response schema for /api/jobs/{job_id} endpoint",
+  "type": "object",
+  "required": ["id", "name", "type", "status", "progress", "created"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique job identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Job name"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["batch", "training", "synthesis", "export", "import", "other"],
+      "description": "Job type"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "cancelled", "paused"],
+      "description": "Job status"
+    },
+    "progress": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Progress (0.0 to 1.0)"
+    },
+    "current_step": {
+      "type": ["string", "null"],
+      "description": "Current step description"
+    },
+    "total_steps": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Total number of steps"
+    },
+    "current_step_index": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Current step index"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO datetime when job was created"
+    },
+    "started": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO datetime when job started"
+    },
+    "completed": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO datetime when job completed"
+    },
+    "estimated_time_remaining": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Estimated time remaining in seconds"
+    },
+    "error_message": {
+      "type": ["string", "null"],
+      "description": "Error message if job failed"
+    },
+    "result_id": {
+      "type": ["string", "null"],
+      "description": "Result identifier if available"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional job metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

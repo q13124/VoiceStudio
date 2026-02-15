@@ -56,14 +56,14 @@ def _validate(args: argparse.Namespace) -> int:
 def _trace(args: argparse.Namespace) -> int:
     """Trace issues and audit entries by correlation ID."""
     correlation_id = args.correlation_id
-    
+
     # Query issues with this correlation ID
     store = IssueStore()
     issues = store.get_by_correlation(correlation_id)
-    
+
     print(f"=== Correlation Trace: {correlation_id} ===")
     print()
-    
+
     # Display issues
     if issues:
         print(f"Issues ({len(issues)}):")
@@ -77,13 +77,13 @@ def _trace(args: argparse.Namespace) -> int:
     else:
         print("Issues: None found")
         print()
-    
+
     # Try to get audit entries for this correlation ID
     try:
         from tools.overseer.agent.audit_store import AuditStore
         audit_store = AuditStore()
         audit_entries = audit_store.get_by_correlation_id(correlation_id)
-        
+
         if audit_entries:
             print(f"Audit Trail ({len(audit_entries)}):")
             for entry in sorted(audit_entries, key=lambda e: e.timestamp):
@@ -97,7 +97,7 @@ def _trace(args: argparse.Namespace) -> int:
             print("Audit Trail: None found")
     except Exception as e:
         print(f"Audit Trail: Error loading ({e})")
-    
+
     return 0 if issues else 1
 
 

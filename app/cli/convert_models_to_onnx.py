@@ -8,7 +8,6 @@ Usage:
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -17,10 +16,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.engines.onnx_converter import (
     convert_pytorch_to_onnx,
+    get_onnx_model_info,
     optimize_onnx_model,
     quantize_onnx_model,
     validate_onnx_model,
-    get_onnx_model_info,
 )
 
 logging.basicConfig(level=logging.INFO)

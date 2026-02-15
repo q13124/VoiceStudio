@@ -3,14 +3,15 @@ Phase 6: Template System
 Task 6.8: Project and workflow templates.
 """
 
+from __future__ import annotations
+
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-import logging
-import shutil
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class TemplateVariable:
     default: Any = None
     required: bool = True
     choices: list[Any] = field(default_factory=list)
-    validation: Optional[str] = None  # regex pattern
+    validation: str | None = None  # regex pattern
 
 
 @dataclass
@@ -57,25 +58,25 @@ class Template:
 class InstantiatedTemplate:
     """Result of instantiating a template."""
     success: bool
-    output_path: Optional[Path] = None
+    output_path: Path | None = None
     files_created: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
 
 class TemplateManager:
     """Manager for project and workflow templates."""
-    
-    def __init__(self, templates_dir: Optional[Path] = None):
+
+    def __init__(self, templates_dir: Path | None = None):
         self._templates_dir = templates_dir or Path.home() / ".voicestudio/templates"
         self._templates_dir.mkdir(parents=True, exist_ok=True)
         self._templates: dict[str, Template] = {}
         self._load_templates()
-    
+
     def _load_templates(self) -> None:
         """Load templates from disk and built-ins."""
         # Load built-in templates
         self._load_builtin_templates()
-        
+
         # Load user templates
         for template_file in self._templates_dir.glob("*.json"):
             try:
@@ -84,7 +85,7 @@ class TemplateManager:
                 self._templates[template.id] = template
             except Exception as e:
                 logger.warning(f"Failed to load template {template_file}: {e}")
-    
+
     def _load_builtin_templates(self) -> None:
         """Load built-in templates."""
         # Basic project template
@@ -114,7 +115,7 @@ class TemplateManager:
                 "README.md": "# {{project_name}}\n\nVoiceStudio project.\n",
             },
         )
-        
+
         # Podcast template
         self._templates["podcast_project"] = Template(
             id="podcast_project",
@@ -153,7 +154,7 @@ class TemplateManager:
                 "exports/.gitkeep": "",
             },
         )
-        
+
         # Audiobook template
         self._templates["audiobook_project"] = Template(
             id="audiobook_project",
@@ -194,7 +195,7 @@ class TemplateManager:
                 "voices/.gitkeep": "",
             },
         )
-        
+
         # Batch synthesis workflow
         self._templates["batch_synthesis_workflow"] = Template(
             id="batch_synthesis_workflow",
@@ -234,7 +235,7 @@ class TemplateManager:
                 }, indent=2),
             },
         )
-    
+
     def _parse_template(self, data: dict[str, Any]) -> Template:
         """Parse a template from dictionary."""
         variables = [
@@ -249,7 +250,7 @@ class TemplateManager:
             )
             for v in data.get("variables", [])
         ]
-        
+
         return Template(
             id=data["id"],
             name=data["name"],
@@ -262,23 +263,23 @@ class TemplateManager:
             files=data.get("files", {}),
             is_builtin=data.get("is_builtin", False),
         )
-    
-    def get_template(self, template_id: str) -> Optional[Template]:
+
+    def get_template(self, template_id: str) -> Template | None:
         """Get a template by ID."""
         return self._templates.get(template_id)
-    
+
     def list_templates(
         self,
-        category: Optional[TemplateCategory] = None
+        category: TemplateCategory | None = None
     ) -> list[Template]:
         """List available templates."""
         templates = list(self._templates.values())
-        
+
         if category:
             templates = [t for t in templates if t.category == category]
-        
+
         return templates
-    
+
     def instantiate(
         self,
         template_id: str,
@@ -292,9 +293,9 @@ class TemplateManager:
                 success=False,
                 errors=[f"Template not found: {template_id}"]
             )
-        
+
         result = InstantiatedTemplate(success=True)
-        
+
         try:
             # Validate required variables
             for var in template.variables:
@@ -303,45 +304,45 @@ class TemplateManager:
                         variables[var.name] = var.default
                     else:
                         result.errors.append(f"Missing required variable: {var.name}")
-            
+
             if result.errors:
                 result.success = False
                 return result
-            
+
             # Create output directory
             output_path.mkdir(parents=True, exist_ok=True)
-            
+
             # Process files
             for file_path, content in template.files.items():
                 # Replace variables in path
                 processed_path = self._replace_variables(file_path, variables)
-                
+
                 # Replace variables in content
                 processed_content = self._replace_variables(content, variables)
-                
+
                 # Write file
                 full_path = output_path / processed_path
                 full_path.parent.mkdir(parents=True, exist_ok=True)
                 full_path.write_text(processed_content, encoding='utf-8')
-                
+
                 result.files_created.append(str(full_path))
-            
+
             result.output_path = output_path
-            
+
         except Exception as e:
             result.success = False
             result.errors.append(str(e))
-        
+
         return result
-    
+
     def _replace_variables(self, text: str, variables: dict[str, Any]) -> str:
         """Replace {{variable}} placeholders in text."""
         for name, value in variables.items():
             placeholder = "{{" + name + "}}"
             text = text.replace(placeholder, str(value))
-        
+
         return text
-    
+
     def save_template(self, template: Template) -> bool:
         """Save a template to disk."""
         try:
@@ -367,32 +368,32 @@ class TemplateManager:
                 ],
                 "files": template.files,
             }
-            
+
             path = self._templates_dir / f"{template.id}.json"
             path.write_text(json.dumps(data, indent=2), encoding='utf-8')
-            
+
             self._templates[template.id] = template
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to save template: {e}")
             return False
-    
+
     def delete_template(self, template_id: str) -> bool:
         """Delete a user template."""
         template = self._templates.get(template_id)
         if not template or template.is_builtin:
             return False
-        
+
         try:
             path = self._templates_dir / f"{template_id}.json"
             if path.exists():
                 path.unlink()
-            
+
             del self._templates[template_id]
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to delete template: {e}")
             return False

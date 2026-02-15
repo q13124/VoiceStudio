@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -15,7 +15,7 @@ class IssuesSourceAdapter(BaseSourceAdapter):
     def __init__(
         self,
         max_issues: int = 10,
-        severity_filter: Optional[List[str]] = None,
+        severity_filter: list[str] | None = None,
         time_window_hours: int = 24,
         include_recommendations: bool = True,
         offline: bool = True,
@@ -26,7 +26,7 @@ class IssuesSourceAdapter(BaseSourceAdapter):
         self._time_window_hours = max(1, int(time_window_hours))
         self._include_recommendations = include_recommendations
 
-    def _parse_severity(self) -> Optional[List[IssueSeverity]]:
+    def _parse_severity(self) -> list[IssueSeverity] | None:
         if not self._severity_filter:
             return None
         out = []
@@ -38,7 +38,7 @@ class IssuesSourceAdapter(BaseSourceAdapter):
         return out or None
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             store = IssueStore()
             end = datetime.now(timezone.utc)
             start = end - timedelta(hours=self._time_window_hours)

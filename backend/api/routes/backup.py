@@ -5,13 +5,14 @@ Endpoints for backing up and restoring application data.
 Supports full backups, selective backups, and restore operations.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 try:
     import psutil  # type: ignore
@@ -25,11 +26,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from ..auth import require_auth_if_enabled
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
 )
+
+from ..auth import require_auth_if_enabled
 
 try:
     from ..optimization import cache_response
@@ -62,7 +64,7 @@ class BackupInfo(BaseModel):
     includes_projects: bool
     includes_settings: bool
     includes_models: bool
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class BackupCreateRequest(BaseModel):
@@ -73,7 +75,7 @@ class BackupCreateRequest(BaseModel):
     includes_projects: bool = True
     includes_settings: bool = True
     includes_models: bool = False
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class RestoreRequest(BaseModel):
@@ -87,7 +89,7 @@ class RestoreRequest(BaseModel):
 
 
 # In-memory backup metadata (replace with database in production)
-_backups: Dict[str, Dict] = {}
+_backups: dict[str, dict] = {}
 
 # Backup limits for memory management
 _MAX_BACKUP_SIZE_MB = 5000  # 5GB max backup size
@@ -134,11 +136,10 @@ def _cleanup_old_backups():
                 logger.info(f"Cleaned up old backup: {backup_id}")
             except Exception as e:
                 logger.warning(f"Failed to delete old backup {backup_id}: {e}")
-        if backup_id in _backups:
-            del _backups[backup_id]
+        _backups.pop(backup_id, None)
 
 
-@router.get("", response_model=List[BackupInfo])
+@router.get("", response_model=list[BackupInfo])
 @cache_response(ttl=60)  # Cache for 60 seconds (backup list changes moderately)
 async def list_backups():
     """List all available backups."""
@@ -318,7 +319,7 @@ async def create_backup(
             # Create ZIP archive with compression
             try:
                 with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                    for root, dirs, files in os.walk(temp_dir):
+                    for root, _dirs, files in os.walk(temp_dir):
                         for file in files:
                             file_path = Path(root) / file
                             # Validate path to prevent path traversal
@@ -463,7 +464,7 @@ async def restore_backup(
 
             import json
 
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata = json.load(f)
 
             # Restore profiles
@@ -510,14 +511,14 @@ async def restore_backup(
     except Exception as e:
         logger.error(f"Failed to restore backup: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to restore backup: {str(e)}"
+            status_code=500, detail=f"Failed to restore backup: {e!s}"
         ) from e
 
 
 @router.post("/upload")
 async def upload_backup(
     file: UploadFile = File(...),
-    name: Optional[str] = Query(None),
+    name: str | None = Query(None),
     _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
 ):
     """Upload a backup file."""
@@ -544,12 +545,11 @@ async def upload_backup(
 
     try:
         # Check disk space before upload
-        if hasattr(file, "size") and file.size:
-            if not _check_disk_space(float(file.size)):
-                raise HTTPException(
-                    status_code=507,
-                    detail="Insufficient disk space",
-                )
+        if hasattr(file, "size") and file.size and not _check_disk_space(float(file.size)):
+            raise HTTPException(
+                status_code=507,
+                detail="Insufficient disk space",
+            )
 
         # Read and validate archive file
         content = await file.read()
@@ -598,7 +598,7 @@ async def upload_backup(
 
             import json
 
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata = json.load(f)
 
             # Update metadata with upload info
@@ -637,7 +637,7 @@ async def upload_backup(
             except Exception:
                 pass  # Ignore cleanup errors
         raise HTTPException(
-            status_code=500, detail=f"Failed to upload backup: {str(e)}"
+            status_code=500, detail=f"Failed to upload backup: {e!s}"
         ) from e
 
 

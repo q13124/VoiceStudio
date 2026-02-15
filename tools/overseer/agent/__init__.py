@@ -10,29 +10,24 @@ Provides unified governance for development and runtime agents including:
 """
 
 # Identity and Registry
-from .identity import AgentIdentity, AgentRole, AgentState
-from .registry import AgentRegistry
-from .version_manifest import ManifestEntry, ManifestType, ReleaseChannel, VersionManifestStore
-
-# Audit Logging
-from .audit_store import AuditEntry, AuditStore
-from .audit_logger import AuditLogger
-from .replay_bundle import ReplayBundle, ReplayBundleGenerator
-
-# Policy Engine
-from .policy_loader import PolicyLoader, PolicyValidationError
-from .policy_engine import PolicyEngine, PolicyDecision, PolicyResult
-
-# Tool Gateway
-from .tool_gateway import ToolGateway, GatewayResult
+from .anomaly_detector import (
+    AnomalyDetector,
+    AnomalyEvent,
+    AnomalySeverity,
+    AnomalyType,
+)
 
 # Approval System
 from .approval_manager import (
     ApprovalManager,
-    ApprovalRequest,
     ApprovalRecord,
+    ApprovalRequest,
     ApprovalStatus,
 )
+from .audit_logger import AuditLogger
+
+# Audit Logging
+from .audit_store import AuditEntry, AuditStore
 
 # Circuit Breaker
 from .circuit_breaker import (
@@ -41,73 +36,78 @@ from .circuit_breaker import (
     CircuitConfig,
     CircuitState,
 )
-from .anomaly_detector import (
-    AnomalyDetector,
-    AnomalyEvent,
-    AnomalyType,
-    AnomalySeverity,
-)
+from .identity import AgentIdentity, AgentRole, AgentState
 
 # Kill Switch and Safe Zones
-from .kill_switch import KillSwitch, KillSwitchLevel, KillSwitchActivation
-from .safe_zones import SafeZoneManager, SafeZone, SafeZoneType, SafeZoneViolation
+from .kill_switch import KillSwitch, KillSwitchActivation, KillSwitchLevel
 
 # Manifest Signing
-from .manifest_signer import ManifestSigner, SignedManifest, SignatureAlgorithm
-from .release_manager import ReleaseManager, ReleaseBundle, BundleType
+from .manifest_signer import ManifestSigner, SignatureAlgorithm, SignedManifest
+from .policy_engine import PolicyDecision, PolicyEngine, PolicyResult
+
+# Policy Engine
+from .policy_loader import PolicyLoader, PolicyValidationError
+from .registry import AgentRegistry
+from .release_manager import BundleType, ReleaseBundle, ReleaseManager
+from .replay_bundle import ReplayBundle, ReplayBundleGenerator
+from .safe_zones import SafeZone, SafeZoneManager, SafeZoneType, SafeZoneViolation
+
+# Tool Gateway
+from .tool_gateway import GatewayResult, ToolGateway
+from .version_manifest import ManifestEntry, ManifestType, ReleaseChannel, VersionManifestStore
 
 __all__ = [
     # Identity
     "AgentIdentity",
+    "AgentRegistry",
     "AgentRole",
     "AgentState",
-    "AgentRegistry",
-    "ManifestEntry",
-    "ManifestType",
-    "ReleaseChannel",
-    "VersionManifestStore",
-    # Audit
-    "AuditEntry",
-    "AuditStore",
-    "AuditLogger",
-    "ReplayBundle",
-    "ReplayBundleGenerator",
-    # Policy
-    "PolicyLoader",
-    "PolicyValidationError",
-    "PolicyEngine",
-    "PolicyDecision",
-    "PolicyResult",
-    # Gateway
-    "ToolGateway",
-    "GatewayResult",
+    "AnomalyDetector",
+    "AnomalyEvent",
+    "AnomalySeverity",
+    "AnomalyType",
     # Approval
     "ApprovalManager",
-    "ApprovalRequest",
     "ApprovalRecord",
+    "ApprovalRequest",
     "ApprovalStatus",
+    # Audit
+    "AuditEntry",
+    "AuditLogger",
+    "AuditStore",
+    "BundleType",
     # Circuit Breaker
     "CircuitBreaker",
     "CircuitBreakerManager",
     "CircuitConfig",
     "CircuitState",
-    "AnomalyDetector",
-    "AnomalyEvent",
-    "AnomalyType",
-    "AnomalySeverity",
+    "GatewayResult",
     # Kill Switch
     "KillSwitch",
-    "KillSwitchLevel",
     "KillSwitchActivation",
-    "SafeZoneManager",
-    "SafeZone",
-    "SafeZoneType",
-    "SafeZoneViolation",
+    "KillSwitchLevel",
+    "ManifestEntry",
     # Manifest
     "ManifestSigner",
-    "SignedManifest",
-    "SignatureAlgorithm",
-    "ReleaseManager",
+    "ManifestType",
+    "PolicyDecision",
+    "PolicyEngine",
+    # Policy
+    "PolicyLoader",
+    "PolicyResult",
+    "PolicyValidationError",
     "ReleaseBundle",
-    "BundleType",
+    "ReleaseChannel",
+    "ReleaseManager",
+    "ReplayBundle",
+    "ReplayBundleGenerator",
+    "SafeZone",
+    "SafeZoneManager",
+    "SafeZoneType",
+    "SafeZoneViolation",
+    "SignatureAlgorithm",
+    "SignedManifest",
+    # Gateway
+    "ToolGateway",
+    "VersionManifestStore",
 ]

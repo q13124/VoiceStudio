@@ -5,9 +5,10 @@ Scans and redacts secrets and PII from issue messages and context
 before persistence. Prevents credential exposure and supports privacy compliance.
 """
 
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
 
+import re
+from typing import Any
 
 # Patterns that indicate secrets (match group or full match is redacted)
 _SECRET_PATTERNS = [
@@ -35,7 +36,7 @@ _PII_PATTERNS = [
 ]
 
 
-def _redact_text(text: str, patterns: List[Tuple[re.Pattern, str]]) -> str:
+def _redact_text(text: str, patterns: list[tuple[re.Pattern, str]]) -> str:
     """Apply redaction patterns to a string. Returns redacted copy."""
     if not text or not isinstance(text, str):
         return text
@@ -77,7 +78,7 @@ def sanitize_value(value: Any) -> Any:
     return value
 
 
-def sanitize_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def sanitize_context(context: dict[str, Any] | None) -> dict[str, Any]:
     """
     Sanitize a context dict (message, stack, traceback, etc.) in place or copy.
 
@@ -104,7 +105,4 @@ def scan_for_secrets(text: str) -> bool:
     """
     if not text or not isinstance(text, str):
         return False
-    for pattern, _ in _SECRET_PATTERNS:
-        if pattern.search(text):
-            return True
-    return False
+    return any(pattern.search(text) for pattern, _ in _SECRET_PATTERNS)

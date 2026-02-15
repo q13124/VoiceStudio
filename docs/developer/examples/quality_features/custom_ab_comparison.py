@@ -5,7 +5,7 @@ This example demonstrates how to create a custom comparison algorithm
 for A/B testing with weighted scoring.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 
 def normalize_metric(metric_name: str, value: float) -> float:
@@ -35,8 +35,8 @@ def normalize_metric(metric_name: str, value: float) -> float:
 
 
 def custom_ab_comparison(
-    sample_a: Dict[str, Any], sample_b: Dict[str, Any]
-) -> Dict[str, Any]:
+    sample_a: dict[str, Any], sample_b: dict[str, Any]
+) -> dict[str, Any]:
     """
     Custom A/B comparison with weighted scoring.
 

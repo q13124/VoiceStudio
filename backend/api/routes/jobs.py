@@ -3,14 +3,28 @@ Job Progress Routes
 
 Unified job progress monitoring for all job types.
 Supports batch jobs, training jobs, synthesis jobs, etc.
+
+Backend-Frontend Integration Plan - Phase 1:
+Migrated from in-memory storage to database-backed JobRepository.
 """
+
+from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.data.repositories.job_repository import (
+    JobEntity,
+    JobRepository,
+    get_job_repository,
+)
+from backend.data.repositories.job_repository import (
+    JobStatus as RepoJobStatus,
+)
+from backend.data.repository_base import QueryOptions
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response
@@ -23,8 +37,10 @@ router = APIRouter(
     dependencies=[Depends(require_auth_if_enabled)],
 )
 
-# In-memory job storage (replace with database in production)
-_jobs: Dict[str, Dict] = {}
+
+def get_repo() -> JobRepository:
+    """Dependency injection for JobRepository."""
+    return get_job_repository()
 
 
 class JobType(str):
@@ -57,16 +73,16 @@ class JobProgress(BaseModel):
     type: str  # JobType
     status: str  # JobStatus
     progress: float  # 0.0 to 1.0
-    current_step: Optional[str] = None
-    total_steps: Optional[int] = None
-    current_step_index: Optional[int] = None
+    current_step: str | None = None
+    total_steps: int | None = None
+    current_step_index: int | None = None
     created: str  # ISO datetime string
-    started: Optional[str] = None
-    completed: Optional[str] = None
-    estimated_time_remaining: Optional[int] = None  # seconds
-    error_message: Optional[str] = None
-    result_id: Optional[str] = None
-    metadata: Dict = {}
+    started: str | None = None
+    completed: str | None = None
+    estimated_time_remaining: int | None = None  # seconds
+    error_message: str | None = None
+    result_id: str | None = None
+    metadata: dict = {}
 
 
 class JobSummary(BaseModel):
@@ -78,7 +94,7 @@ class JobSummary(BaseModel):
     completed: int
     failed: int
     cancelled: int
-    by_type: Dict[str, int] = {}
+    by_type: dict[str, int] = {}
 
 
 class JobInfo(BaseModel):
@@ -102,145 +118,126 @@ class JobQueueResponse(BaseModel):
     running: int = Field(serialization_alias="Running")
     completed: int = Field(serialization_alias="Completed")
     failed: int = Field(serialization_alias="Failed")
-    active_jobs: List[JobInfo] = Field(default=[], serialization_alias="ActiveJobs")
+    active_jobs: list[JobInfo] = Field(default=[], serialization_alias="ActiveJobs")
 
 
-@router.get("", response_model=List[JobProgress])
+def _entity_to_progress(entity: JobEntity) -> JobProgress:
+    """Convert JobEntity to JobProgress response model."""
+    return JobProgress(
+        id=entity.id,
+        name=entity.name,
+        type=entity.job_type,
+        status=entity.status,
+        progress=entity.progress,
+        current_step=entity.current_step,
+        total_steps=entity.total_steps,
+        current_step_index=entity.current_step_index,
+        created=entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else str(entity.created_at),
+        started=entity.started_at,
+        completed=entity.completed_at,
+        estimated_time_remaining=entity.estimated_time_remaining,
+        error_message=entity.error,
+        result_id=entity.result_id,
+        metadata=entity.get_metadata(),
+    )
+
+
+@router.get("", response_model=list[JobProgress])
 @cache_response(ttl=5)  # Cache for 5 seconds (job status changes frequently)
 async def get_jobs(
-    job_type: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    job_type: str | None = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
+    repo: JobRepository = Depends(get_repo),
 ):
     """Get all jobs, optionally filtered."""
-    jobs = list(_jobs.values())
-
+    filters = {}
     if job_type:
-        jobs = [j for j in jobs if j.get("type") == job_type]
-
+        filters["job_type"] = job_type
     if status:
-        jobs = [j for j in jobs if j.get("status") == status]
+        filters["status"] = status
 
-    # Sort by creation date (newest first)
-    jobs.sort(key=lambda j: j.get("created", ""), reverse=True)
+    options = QueryOptions(
+        limit=limit,
+        order_by="created_at",
+        order_desc=True,
+    )
 
-    # Convert to JobProgress models
-    result = []
-    for job in jobs[:limit]:
-        result.append(
-            JobProgress(
-                id=job.get("id", ""),
-                name=job.get("name", ""),
-                type=job.get("type", "other"),
-                status=job.get("status", "pending"),
-                progress=job.get("progress", 0.0),
-                current_step=job.get("current_step"),
-                total_steps=job.get("total_steps"),
-                current_step_index=job.get("current_step_index"),
-                created=job.get("created", ""),
-                started=job.get("started"),
-                completed=job.get("completed"),
-                estimated_time_remaining=job.get("estimated_time_remaining"),
-                error_message=job.get("error_message"),
-                result_id=job.get("result_id"),
-                metadata=job.get("metadata", {}),
-            )
-        )
+    if filters:
+        entities = await repo.find(filters, options)
+    else:
+        entities = await repo.get_all(options)
 
-    return result
+    return [_entity_to_progress(e) for e in entities]
 
 
 @router.get("/{job_id}", response_model=JobProgress)
 @cache_response(ttl=5)  # Cache for 5 seconds (job status changes frequently)
-async def get_job(job_id: str):
+async def get_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Get a specific job."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    return JobProgress(
-        id=job.get("id", ""),
-        name=job.get("name", ""),
-        type=job.get("type", "other"),
-        status=job.get("status", "pending"),
-        progress=job.get("progress", 0.0),
-        current_step=job.get("current_step"),
-        total_steps=job.get("total_steps"),
-        current_step_index=job.get("current_step_index"),
-        created=job.get("created", ""),
-        started=job.get("started"),
-        completed=job.get("completed"),
-        estimated_time_remaining=job.get("estimated_time_remaining"),
-        error_message=job.get("error_message"),
-        result_id=job.get("result_id"),
-        metadata=job.get("metadata", {}),
-    )
+    return _entity_to_progress(entity)
 
 
 @router.get("/summary", response_model=JobSummary)
 @cache_response(ttl=10)  # Cache for 10 seconds (summary updates frequently)
-async def get_job_summary():
+async def get_job_summary(
+    repo: JobRepository = Depends(get_repo),
+):
     """Get summary of all jobs."""
-    total = len(_jobs)
-    pending = len([j for j in _jobs.values() if j.get("status") == "pending"])
-    running = len([j for j in _jobs.values() if j.get("status") == "running"])
-    completed = len([j for j in _jobs.values() if j.get("status") == "completed"])
-    failed = len([j for j in _jobs.values() if j.get("status") == "failed"])
-    cancelled = len([j for j in _jobs.values() if j.get("status") == "cancelled"])
-
-    # Count by type
-    by_type: Dict[str, int] = {}
-    for job in _jobs.values():
-        job_type = job.get("type", "other")
-        by_type[job_type] = by_type.get(job_type, 0) + 1
+    summary = await repo.get_summary()
+    by_type = await repo.get_by_type_count()
 
     return JobSummary(
-        total=total,
-        pending=pending,
-        running=running,
-        completed=completed,
-        failed=failed,
-        cancelled=cancelled,
+        total=summary["total"],
+        pending=summary["pending"],
+        running=summary["running"],
+        completed=summary["completed"],
+        failed=summary["failed"],
+        cancelled=summary["cancelled"],
         by_type=by_type,
     )
 
 
 @router.get("/status", response_model=JobQueueResponse, response_model_by_alias=True)
 @cache_response(ttl=5)  # Cache for 5 seconds
-async def get_job_queue_status():
+async def get_job_queue_status(
+    repo: JobRepository = Depends(get_repo),
+):
     """
     Get job queue status for DiagnosticsView dashboard.
-    
+
     Returns counts and active job list matching frontend JobQueueResponse format.
     """
-    jobs = list(_jobs.values())
-    
-    queued_count = len([j for j in jobs if j.get("status") == "pending"])
-    running_count = len([j for j in jobs if j.get("status") == "running"])
-    completed_count = len([j for j in jobs if j.get("status") == "completed"])
-    failed_count = len([j for j in jobs if j.get("status") == "failed"])
-    
-    # Get active jobs (pending or running)
+    summary = await repo.get_summary()
+    active_entities = await repo.get_active_jobs()
+
+    # Convert to JobInfo models
     active_jobs = []
-    for job in jobs:
-        if job.get("status") in ("pending", "running"):
-            active_jobs.append(JobInfo(
-                job_id=job.get("id", ""),
-                job_type=job.get("type", "other"),
-                status=job.get("status", "pending"),
-                progress=job.get("progress", 0.0),
-                start_time=job.get("started") or job.get("created", datetime.utcnow().isoformat()),
-            ))
-    
-    # Sort by start time (most recent first)
-    active_jobs.sort(key=lambda j: j.start_time, reverse=True)
-    
+    for entity in active_entities[:20]:  # Limit to 20 active jobs
+        active_jobs.append(JobInfo(
+            job_id=entity.id,
+            job_type=entity.job_type,
+            status=entity.status,
+            progress=entity.progress,
+            start_time=entity.started_at or (
+                entity.created_at.isoformat() if isinstance(entity.created_at, datetime)
+                else str(entity.created_at)
+            ),
+        ))
+
     return JobQueueResponse(
-        queued=queued_count,
-        running=running_count,
-        completed=completed_count,
-        failed=failed_count,
-        active_jobs=active_jobs[:20],  # Limit to 20 active jobs
+        queued=summary["pending"],
+        running=summary["running"],
+        completed=summary["completed"],
+        failed=summary["failed"],
+        active_jobs=active_jobs,
     )
 
 
@@ -253,128 +250,179 @@ async def get_job_queue_status_alias():
 
 
 @router.post("/{job_id}/retry")
-async def retry_job(job_id: str):
+async def retry_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Retry a failed job."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    current_status = job.get("status", "pending")
-
-    if current_status != "failed":
+    if entity.status != RepoJobStatus.FAILED.value:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot retry job with status: {current_status}. Only failed jobs can be retried."
+            detail=f"Cannot retry job with status: {entity.status}. Only failed jobs can be retried."
         )
 
-    job["status"] = "pending"
-    job["error_message"] = None
-    job["progress"] = 0.0
-    job["started"] = None
-    job["completed"] = None
+    await repo.update(job_id, {
+        "status": RepoJobStatus.PENDING.value,
+        "error": None,
+        "progress": 0.0,
+        "started_at": None,
+        "completed_at": None,
+    })
     logger.info(f"Job {job_id} queued for retry")
     return {"success": True, "message": f"Job {job_id} queued for retry"}
 
 
 @router.post("/history/clear")
-async def clear_job_history():
+async def clear_job_history(
+    repo: JobRepository = Depends(get_repo),
+):
     """Clear completed and failed jobs from history."""
-    global _jobs
-    cleared_count = 0
-    jobs_to_remove = [
-        job_id for job_id, job in _jobs.items()
-        if job.get("status") in ("completed", "failed", "cancelled")
-    ]
-    for job_id in jobs_to_remove:
-        del _jobs[job_id]
-        cleared_count += 1
+    cleared_count = await repo.clear_completed()
     logger.info(f"Cleared {cleared_count} jobs from history")
     return {"success": True, "cleared_count": cleared_count}
 
 
 @router.post("/{job_id}/cancel")
-async def cancel_job(job_id: str):
+async def cancel_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Cancel a job."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    current_status = job.get("status", "pending")
-
-    if current_status in ("completed", "failed", "cancelled"):
+    if entity.status in (RepoJobStatus.COMPLETED.value, RepoJobStatus.FAILED.value, RepoJobStatus.CANCELLED.value):
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot cancel job with status: {current_status}",
+            detail=f"Cannot cancel job with status: {entity.status}",
         )
 
-    job["status"] = "cancelled"
-    job["completed"] = datetime.utcnow().isoformat()
-    _jobs[job_id] = job
-
+    await repo.mark_cancelled(job_id)
     return {"success": True, "message": "Job cancelled"}
 
 
 @router.post("/{job_id}/pause")
-async def pause_job(job_id: str):
+async def pause_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Pause a running job."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    if job.get("status") != "running":
+    if entity.status != RepoJobStatus.RUNNING.value:
         raise HTTPException(status_code=400, detail="Can only pause running jobs")
 
-    job["status"] = "paused"
-    _jobs[job_id] = job
-
+    await repo.update(job_id, {"status": RepoJobStatus.PAUSED.value})
     return {"success": True, "message": "Job paused"}
 
 
 @router.post("/{job_id}/resume")
-async def resume_job(job_id: str):
+async def resume_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Resume a paused job."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    if job.get("status") != "paused":
+    if entity.status != RepoJobStatus.PAUSED.value:
         raise HTTPException(status_code=400, detail="Can only resume paused jobs")
 
-    job["status"] = "running"
-    _jobs[job_id] = job
-
+    await repo.update(job_id, {"status": RepoJobStatus.RUNNING.value})
     return {"success": True, "message": "Job resumed"}
 
 
 @router.delete("/{job_id}")
-async def delete_job(job_id: str):
+async def delete_job(
+    job_id: str,
+    repo: JobRepository = Depends(get_repo),
+):
     """Delete a job (only if completed, failed, or cancelled)."""
-    if job_id not in _jobs:
+    entity = await repo.get_by_id(job_id)
+    if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    job = _jobs[job_id]
-    status = job.get("status", "pending")
-
-    if status in ("pending", "running", "paused"):
+    if entity.status in (RepoJobStatus.PENDING.value, RepoJobStatus.RUNNING.value, RepoJobStatus.PAUSED.value):
         raise HTTPException(
             status_code=400,
             detail="Cannot delete active job. Cancel it first.",
         )
 
-    del _jobs[job_id]
+    await repo.delete(job_id, soft=True)
     return {"success": True, "message": "Job deleted"}
 
 
 @router.delete("")
-async def clear_completed_jobs():
+async def clear_completed_jobs(
+    repo: JobRepository = Depends(get_repo),
+):
     """Clear all completed, failed, and cancelled jobs."""
-    to_delete = [
-        job_id
-        for job_id, job in _jobs.items()
-        if job.get("status") in ("completed", "failed", "cancelled")
-    ]
+    deleted_count = await repo.clear_completed()
+    return {"success": True, "deleted_count": deleted_count}
 
-    for job_id in to_delete:
-        del _jobs[job_id]
 
-    return {"success": True, "deleted_count": len(to_delete)}
+# === Helper function to create jobs (used by other modules) ===
+
+async def create_job(
+    job_id: str,
+    job_type: str,
+    name: str,
+    metadata: dict | None = None,
+    user_id: str | None = None,
+) -> JobEntity:
+    """
+    Create a new job in the database.
+
+    Called by other services to register new jobs.
+    """
+    repo = get_job_repository()
+
+    entity = JobEntity(
+        id=job_id,
+        job_type=job_type,
+        name=name,
+        status=RepoJobStatus.PENDING.value,
+        progress=0.0,
+        metadata="{}" if metadata is None else __import__("json").dumps(metadata),
+        user_id=user_id,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+
+    return await repo.create(entity)
+
+
+async def update_job_progress(
+    job_id: str,
+    progress: float,
+    current_step: str | None = None,
+) -> JobEntity | None:
+    """Update job progress."""
+    repo = get_job_repository()
+    return await repo.update_progress(job_id, progress, current_step)
+
+
+async def complete_job(
+    job_id: str,
+    result_path: str | None = None,
+) -> JobEntity | None:
+    """Mark job as completed."""
+    repo = get_job_repository()
+    return await repo.mark_completed(job_id, result_path)
+
+
+async def fail_job(
+    job_id: str,
+    error: str,
+) -> JobEntity | None:
+    """Mark job as failed."""
+    repo = get_job_repository()
+    return await repo.mark_failed(job_id, error)

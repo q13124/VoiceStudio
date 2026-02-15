@@ -20,11 +20,12 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -102,7 +103,7 @@ class ApiJsonEncoder(json.JSONEncoder):
 def api_json_dumps(
     obj: Any,
     *,
-    indent: Optional[int] = None,
+    indent: int | None = None,
     sort_keys: bool = False,
 ) -> str:
     """
@@ -125,7 +126,7 @@ def api_json_dumps(
     )
 
 
-def api_json_loads(s: Union[str, bytes]) -> Any:
+def api_json_loads(s: str | bytes) -> Any:
     """
     Deserialize JSON string to object.
 
@@ -206,7 +207,7 @@ class BaseApiModel(BaseModel):
         return api_json_dumps(self.model_dump())
 
     @classmethod
-    def from_json(cls, s: Union[str, bytes]) -> "BaseApiModel":
+    def from_json(cls, s: str | bytes) -> BaseApiModel:
         """Deserialize from JSON string."""
         data = api_json_loads(s)
         return cls.model_validate(data)
@@ -241,7 +242,7 @@ class SuccessResponse(BaseResponseModel):
     """Standard success response."""
 
     ok: bool = True
-    message: Optional[str] = None
+    message: str | None = None
 
 
 class ErrorResponse(BaseResponseModel):
@@ -249,15 +250,15 @@ class ErrorResponse(BaseResponseModel):
 
     ok: bool = False
     error: str
-    error_code: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
-    request_id: Optional[str] = None
+    error_code: str | None = None
+    details: dict[str, Any] | None = None
+    request_id: str | None = None
 
 
 class PaginatedResponse(BaseResponseModel, Generic[T]):
     """Standard paginated response."""
 
-    items: List[Any] = Field(default_factory=list)
+    items: list[Any] = Field(default_factory=list)
     total: int = 0
     page: int = 1
     page_size: int = 20
@@ -266,11 +267,11 @@ class PaginatedResponse(BaseResponseModel, Generic[T]):
     @classmethod
     def create(
         cls,
-        items: List[Any],
+        items: list[Any],
         total: int,
         page: int = 1,
         page_size: int = 20,
-    ) -> "PaginatedResponse":
+    ) -> PaginatedResponse:
         """Create paginated response from items."""
         return cls(
             items=items,
@@ -289,19 +290,19 @@ class StandardResponse(BaseResponseModel, Generic[T]):
     """
 
     ok: bool = True
-    data: Optional[Any] = None
-    message: Optional[str] = None
-    warnings: List[str] = Field(default_factory=list)
-    request_id: Optional[str] = None
+    data: Any | None = None
+    message: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    request_id: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     @classmethod
     def success(
         cls,
         data: Any = None,
-        message: Optional[str] = None,
-        request_id: Optional[str] = None,
-    ) -> "StandardResponse":
+        message: str | None = None,
+        request_id: str | None = None,
+    ) -> StandardResponse:
         """Create success response."""
         return cls(
             ok=True,
@@ -315,8 +316,8 @@ class StandardResponse(BaseResponseModel, Generic[T]):
         cls,
         message: str,
         data: Any = None,
-        request_id: Optional[str] = None,
-    ) -> "StandardResponse":
+        request_id: str | None = None,
+    ) -> StandardResponse:
         """Create error response."""
         return cls(
             ok=False,
@@ -336,7 +337,7 @@ def serialize_response(
     *,
     exclude_none: bool = True,
     exclude_unset: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Serialize response data to dictionary.
 
@@ -372,10 +373,10 @@ def serialize_response(
 
 
 def format_datetime(
-    dt: Optional[datetime],
+    dt: datetime | None,
     *,
-    format_str: Optional[str] = None,
-) -> Optional[str]:
+    format_str: str | None = None,
+) -> str | None:
     """
     Format datetime for API response.
 
@@ -468,7 +469,7 @@ def validate_json_string(s: str) -> bool:
 
 
 def safe_parse_json(
-    s: Union[str, bytes],
+    s: str | bytes,
     default: Any = None,
 ) -> Any:
     """
@@ -507,9 +508,9 @@ def snake_to_camel(name: str) -> str:
 
 
 def convert_keys(
-    data: Dict[str, Any],
+    data: dict[str, Any],
     converter: Callable[[str], str],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convert all dictionary keys using converter function.
 
@@ -520,13 +521,13 @@ def convert_keys(
     Returns:
         Dictionary with converted keys
     """
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
     for key, value in data.items():
         new_key = converter(key)
         if isinstance(value, dict):
             result[new_key] = convert_keys(value, converter)
         elif isinstance(value, list):
-            converted_list: List[Any] = []
+            converted_list: list[Any] = []
             for item in value:
                 if isinstance(item, dict):
                     converted_list.append(convert_keys(item, converter))

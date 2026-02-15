@@ -1,68 +1,66 @@
 """
-Unit Tests for Multi Voice Generator API Route
-Tests multi-voice generation endpoints in isolation.
+Unit Tests for Multi-Voice Generator API Routes.
+
+Tests multi-voice generation jobs and comparison endpoints.
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
-# Import the route module
-try:
+@pytest.fixture(autouse=True)
+def reset_multi_voice_state():
+    """Reset multi-voice state before each test."""
     from backend.api.routes import multi_voice_generator
-except ImportError:
-    pytest.skip(
-        "Could not import multi_voice_generator route module",
-        allow_module_level=True,
-    )
+    multi_voice_generator._jobs = {}
+    yield
+    multi_voice_generator._jobs = {}
 
 
-class TestMultiVoiceGeneratorRouteImports:
-    """Test multi voice generator route module can be imported."""
-
-    def test_multi_voice_generator_module_imports(self):
-        """Test multi_voice_generator module can be imported."""
-        assert (
-            multi_voice_generator is not None
-        ), "Failed to import multi_voice_generator module"
-        assert hasattr(
-            multi_voice_generator, "router"
-        ), "multi_voice_generator module missing router"
+@pytest.fixture
+def multi_voice_client():
+    """Create test client for multi-voice generator routes."""
+    from backend.api.routes.multi_voice_generator import router
+    app = FastAPI()
+    app.include_router(router)
+    return TestClient(app)
 
 
-class TestMultiVoiceGeneratorRouteHandlers:
-    """Test multi voice generator route handlers exist and are callable."""
+class TestJobManagement:
+    """Tests for multi-voice job management."""
 
-    def test_generate_multi_voice_handler_exists(self):
-        """Test generate_multi_voice handler exists."""
-        if hasattr(multi_voice_generator, "generate_multi_voice"):
-            assert callable(
-                multi_voice_generator.generate_multi_voice
-            ), "generate_multi_voice is not callable"
+    def test_get_job_status_not_found(self, multi_voice_client):
+        """Test GET /{job_id}/status returns 404 for missing job."""
+        response = multi_voice_client.get("/api/voice/multi/nonexistent/status")
+        assert response.status_code == 404
 
-
-class TestMultiVoiceGeneratorRouter:
-    """Test multi voice generator router configuration."""
-
-    def test_router_exists(self):
-        """Test router exists and is configured."""
-        assert multi_voice_generator.router is not None, "Router should exist"
-        if hasattr(multi_voice_generator.router, "prefix"):
-            pass  # Router configuration is valid
-
-    def test_router_has_routes(self):
-        """Test router has registered routes."""
-        if hasattr(multi_voice_generator.router, "routes"):
-            routes = [route.path for route in multi_voice_generator.router.routes]
-            assert len(routes) > 0, "Router should have routes registered"
+    def test_get_job_results_not_found(self, multi_voice_client):
+        """Test GET /{job_id}/results returns 404 for missing job."""
+        response = multi_voice_client.get("/api/voice/multi/nonexistent/results")
+        assert response.status_code == 404
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+class TestMultiVoiceOperations:
+    """Tests for multi-voice operation endpoints."""
+
+    def test_generate_validation(self, multi_voice_client):
+        """Test POST /generate validates required fields."""
+        response = multi_voice_client.post("/api/voice/multi/generate", json={})
+        assert response.status_code == 422
+
+    def test_compare_validation(self, multi_voice_client):
+        """Test POST /compare validates required fields."""
+        response = multi_voice_client.post("/api/voice/multi/compare", json={})
+        assert response.status_code == 422
+
+    def test_export_validation(self, multi_voice_client):
+        """Test POST /export validates job_id parameter."""
+        response = multi_voice_client.post("/api/voice/multi/export")
+        # job_id is optional with default "", will return 404 for empty job_id
+        assert response.status_code in [200, 404, 422]
+
+    def test_import_validation(self, multi_voice_client):
+        """Test POST /import validates required fields."""
+        response = multi_voice_client.post("/api/voice/multi/import", json={})
+        assert response.status_code == 422

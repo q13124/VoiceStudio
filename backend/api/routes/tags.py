@@ -5,8 +5,9 @@ Endpoints for managing tags across the application.
 Supports CRUD operations, tag usage tracking, and categorization.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, field_validator
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/tags", tags=["tags"])
 
 # In-memory tags storage (replace with database in production)
-_tags: Dict[str, Dict] = {}
+_tags: dict[str, dict] = {}
 _MAX_TAGS = 10000  # Maximum number of tags to prevent memory issues
 
 
@@ -27,9 +28,9 @@ class Tag(BaseModel):
 
     id: str
     name: str
-    category: Optional[str] = None
-    color: Optional[str] = None  # Hex color code
-    description: Optional[str] = None
+    category: str | None = None
+    color: str | None = None  # Hex color code
+    description: str | None = None
     usage_count: int = 0  # How many resources use this tag
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
@@ -39,9 +40,9 @@ class TagCreateRequest(BaseModel):
     """Request to create a tag."""
 
     name: str
-    category: Optional[str] = None
-    color: Optional[str] = None
-    description: Optional[str] = None
+    category: str | None = None
+    color: str | None = None
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -55,7 +56,7 @@ class TagCreateRequest(BaseModel):
 
     @field_validator("color")
     @classmethod
-    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+    def validate_color(cls, v: str | None) -> str | None:
         """Validate color format."""
         if v and not v.startswith("#"):
             raise ValueError("Color must be a hex code starting with #")
@@ -65,7 +66,7 @@ class TagCreateRequest(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate description length."""
         if v and len(v) > 500:
             raise ValueError("Description cannot exceed 500 characters")
@@ -75,14 +76,14 @@ class TagCreateRequest(BaseModel):
 class TagUpdateRequest(BaseModel):
     """Request to update a tag."""
 
-    name: Optional[str] = None
-    category: Optional[str] = None
-    color: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = None
+    category: str | None = None
+    color: str | None = None
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+    def validate_name(cls, v: str | None) -> str | None:
         """Validate tag name."""
         if v is not None:
             if not v or not v.strip():
@@ -94,7 +95,7 @@ class TagUpdateRequest(BaseModel):
 
     @field_validator("color")
     @classmethod
-    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+    def validate_color(cls, v: str | None) -> str | None:
         """Validate color format."""
         if v:
             if not v.startswith("#"):
@@ -105,7 +106,7 @@ class TagUpdateRequest(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate description length."""
         if v and len(v) > 500:
             raise ValueError("Description cannot exceed 500 characters")
@@ -117,7 +118,7 @@ class TagUsageResponse(BaseModel):
 
     tag_id: str
     tag_name: str
-    resources: List[Dict]  # List of resources using this tag
+    resources: list[dict]  # List of resources using this tag
 
 
 # Initialize default tags
@@ -177,11 +178,11 @@ def _initialize_default_tags():
 _initialize_default_tags()
 
 
-@router.get("", response_model=List[Tag])
+@router.get("", response_model=list[Tag])
 @cache_response(ttl=60)  # Cache for 60 seconds (tags may change)
 async def get_tags(
-    category: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    search: str | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
 ):
     """Get all tags, optionally filtered."""
@@ -442,7 +443,7 @@ async def get_tag_usage(tag_id: str):
 
     tag = _tags[tag_id]
     tag_name = tag.get("name", "")
-    resources: List[Dict] = []
+    resources: list[dict] = []
 
     # Query profiles that use this tag
     from .profiles import _profiles
@@ -535,7 +536,7 @@ async def get_tag_categories():
         if cat:
             categories.add(cat)
 
-    return {"categories": sorted(list(categories))}
+    return {"categories": sorted(categories)}
 
 
 @router.post("/merge")

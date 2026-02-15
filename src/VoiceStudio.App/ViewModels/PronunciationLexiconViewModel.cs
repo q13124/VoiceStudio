@@ -152,7 +152,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("PronunciationLexicon.LoadEntriesFailed", ex.Message);
+        await HandleErrorAsync(ex, "LoadEntries");
       }
       finally
       {
@@ -203,7 +203,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("PronunciationLexicon.AddEntryFailed", ex.Message);
+        await HandleErrorAsync(ex, "AddEntry");
       }
       finally
       {
@@ -256,7 +256,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("PronunciationLexicon.UpdateEntryFailed", ex.Message);
+        await HandleErrorAsync(ex, "UpdateEntry");
       }
       finally
       {
@@ -290,7 +290,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("PronunciationLexicon.DeleteEntryFailed", ex.Message);
+        await HandleErrorAsync(ex, "DeleteEntry");
       }
       finally
       {
@@ -544,6 +544,14 @@ namespace VoiceStudio.App.ViewModels
         picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
         picker.FileTypeFilter.Add(".json");
         picker.FileTypeFilter.Add(".txt");
+
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
 
         var file = await picker.PickSingleFileAsync();
         if (file == null)

@@ -6,7 +6,6 @@ Endpoints for aligning audio with video for dialogue replacement.
 
 import logging
 import os
-from typing import Dict, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
@@ -193,5 +192,5 @@ async def align(req: AdrAlignRequest) -> AdrAlignResponse:
     except Exception as e:
         logger.error(f"ADR alignment failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"ADR alignment failed: {str(e)}"
+            status_code=500, detail=f"ADR alignment failed: {e!s}"
         ) from e

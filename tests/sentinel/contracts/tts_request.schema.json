@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tts_request.schema.json",
+  "title": "VoiceSynthesizeRequest",
+  "description": "Request schema for /api/voice/synthesize endpoint",
+  "type": "object",
+  "required": ["profile_id", "text"],
+  "properties": {
+    "engine": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 50,
+      "pattern": "^[a-z0-9_-]+$",
+      "description": "Engine name (e.g., xtts_v2, piper, chatterbox)"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "Voice profile ID"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "description": "Text to synthesize"
+    },
+    "language": {
+      "type": ["string", "null"],
+      "default": "en",
+      "maxLength": 10,
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "description": "Language code (ISO 639-1)"
+    },
+    "emotion": {
+      "type": ["string", "null"],
+      "maxLength": 50,
+      "description": "Emotion to apply"
+    },
+    "enhance_quality": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable quality enhancement pipeline"
+    }
+  },
+  "additionalProperties": false
+}

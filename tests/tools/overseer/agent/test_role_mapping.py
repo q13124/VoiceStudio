@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tools.overseer.agent.identity import AgentRole
 from tools.overseer.agent.role_mapping import (
-    VoiceStudioRoleId,
     agent_role_to_role_id,
     role_to_agent_role,
 )

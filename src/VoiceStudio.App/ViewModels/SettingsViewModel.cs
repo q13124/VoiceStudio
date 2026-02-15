@@ -663,8 +663,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        // If loading fails, use defaults
-        System.Diagnostics.Debug.WriteLine($"Settings load failed, using defaults: {ex.Message}");
+        // If loading fails, use defaults and log silently (non-critical background operation)
+        ErrorLoggingService?.LogWarning($"Settings load failed, using defaults: {ex.Message}", "LoadSettings");
         ResetToDefaults();
       }
 
@@ -698,7 +698,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save settings to local storage: {ex.Message}");
+        // Log save failure but don't interrupt user workflow
+        ErrorLoggingService?.LogWarning($"Failed to save settings to local storage: {ex.Message}", "SaveSettings");
       }
 
       return Task.CompletedTask;
@@ -813,9 +814,9 @@ namespace VoiceStudio.App.ViewModels
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] EXCEPTION: {ex.GetType().Name}: {ex.Message}");
-          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Stack: {ex.StackTrace}");
-          
+          // Log dependency check failure (background operation, don't interrupt user)
+          ErrorLoggingService?.LogWarning($"Dependency check failed: {ex.Message}", "DependencyCheck");
+
           // Backend check failed - use cached values instead of resetting to false
           var cached = LoadCachedDependencyStatus();
           if (cached != null && cached.Count > 0)

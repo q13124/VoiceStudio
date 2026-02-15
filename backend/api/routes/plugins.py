@@ -4,11 +4,12 @@ Plugin Management Routes
 Endpoints for plugin discovery, loading, unloading, configuration, and status.
 """
 
+from __future__ import annotations
+
 import json
 import logging
-import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -31,10 +32,10 @@ class PluginManifest(BaseModel):
     version: str
     author: str
     description: str
-    capabilities: Dict[str, Any] = {}
-    entry_points: Dict[str, str] = {}
-    dependencies: List[str] = []
-    requirements: List[str] = []
+    capabilities: dict[str, Any] = {}
+    entry_points: dict[str, str] = {}
+    dependencies: list[str] = []
+    requirements: list[str] = []
 
 
 class PluginInfo(BaseModel):
@@ -47,17 +48,17 @@ class PluginInfo(BaseModel):
     description: str
     status: str  # loaded, unloaded, error
     directory: str
-    capabilities: Dict[str, Any] = {}
+    capabilities: dict[str, Any] = {}
     is_enabled: bool = True
-    error_message: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    error_message: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class PluginConfiguration(BaseModel):
     """Plugin configuration."""
 
     plugin_id: str
-    config: Dict[str, Any] = {}
+    config: dict[str, Any] = {}
 
 
 class PluginLoadRequest(BaseModel):
@@ -80,10 +81,10 @@ class PluginStatusResponse(BaseModel):
     loaded_plugins: int
     unloaded_plugins: int
     error_plugins: int
-    plugins: List[PluginInfo]
+    plugins: list[PluginInfo]
 
 
-def _discover_plugins() -> List[Dict[str, Any]]:
+def _discover_plugins() -> list[dict[str, Any]]:
     """
     Discover all plugins in the plugins directory.
 
@@ -109,7 +110,7 @@ def _discover_plugins() -> List[Dict[str, Any]]:
             continue
 
         try:
-            with open(manifest_path, "r", encoding="utf-8") as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest_data = json.load(f)
 
             plugin_id = manifest_data.get("name", plugin_dir.name)
@@ -222,7 +223,7 @@ async def list_plugins():
         logger.error(f"Failed to list plugins: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list plugins: {str(e)}",
+            detail=f"Failed to list plugins: {e!s}",
         ) from e
 
 
@@ -248,10 +249,9 @@ async def get_plugin(plugin_id: str):
         status = _get_plugin_status(plugin_id)
         loader = get_plugin_loader()
 
-        plugin_info = None
         error_message = None
         if loader is not None:
-            plugin_info = loader.get_plugin_info(plugin_id)
+            loader.get_plugin_info(plugin_id)
 
         return PluginInfo(
             plugin_id=plugin_id,
@@ -276,7 +276,7 @@ async def get_plugin(plugin_id: str):
         logger.error(f"Failed to get plugin '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get plugin: {str(e)}",
+            detail=f"Failed to get plugin: {e!s}",
         ) from e
 
 
@@ -315,12 +315,12 @@ async def get_plugin_manifest(plugin_id: str):
         logger.error(f"Failed to get plugin manifest '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get plugin manifest: {str(e)}",
+            detail=f"Failed to get plugin manifest: {e!s}",
         ) from e
 
 
 @router.post("/{plugin_id}/load")
-async def load_plugin(plugin_id: str, request: Optional[PluginLoadRequest] = None):
+async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
     """Load a plugin."""
     try:
         # Note: Plugin loading is typically done at application startup
@@ -371,12 +371,12 @@ async def load_plugin(plugin_id: str, request: Optional[PluginLoadRequest] = Non
         logger.error(f"Failed to load plugin '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to load plugin: {str(e)}",
+            detail=f"Failed to load plugin: {e!s}",
         ) from e
 
 
 @router.post("/{plugin_id}/unload")
-async def unload_plugin(plugin_id: str, request: Optional[PluginUnloadRequest] = None):
+async def unload_plugin(plugin_id: str, request: PluginUnloadRequest | None = None):
     """Unload a plugin."""
     try:
         # Note: Plugin unloading requires careful resource cleanup
@@ -425,7 +425,7 @@ async def unload_plugin(plugin_id: str, request: Optional[PluginUnloadRequest] =
         logger.error(f"Failed to unload plugin '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to unload plugin: {str(e)}",
+            detail=f"Failed to unload plugin: {e!s}",
         ) from e
 
 
@@ -455,7 +455,7 @@ async def get_plugin_config(plugin_id: str):
         config = {}
         if config_file.exists():
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     config = json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load config for plugin '{plugin_id}': {e}")
@@ -470,12 +470,12 @@ async def get_plugin_config(plugin_id: str):
         logger.error(f"Failed to get plugin config '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get plugin config: {str(e)}",
+            detail=f"Failed to get plugin config: {e!s}",
         ) from e
 
 
 @router.put("/{plugin_id}/config", response_model=PluginConfiguration)
-async def update_plugin_config(plugin_id: str, config: Dict[str, Any]):
+async def update_plugin_config(plugin_id: str, config: dict[str, Any]):
     """Update configuration for a plugin."""
     try:
         discovered_plugins = _discover_plugins()
@@ -511,7 +511,7 @@ async def update_plugin_config(plugin_id: str, config: Dict[str, Any]):
             logger.error(f"Failed to save config for plugin '{plugin_id}': {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to save plugin config: {str(e)}",
+                detail=f"Failed to save plugin config: {e!s}",
             ) from e
     except HTTPException:
         raise
@@ -521,5 +521,5 @@ async def update_plugin_config(plugin_id: str, config: Dict[str, Any]):
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update plugin config: {str(e)}",
+            detail=f"Failed to update plugin config: {e!s}",
         ) from e

@@ -4,10 +4,11 @@ Integrates NLTK and TextBlob for SSML and TTS text preprocessing.
 Part of FREE_LIBRARIES_INTEGRATION - Worker 3.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import unicodedata
-from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ class TextPreprocessor:
 
         return text
 
-    def sentence_segmentation(self, text: str, language: str = "en") -> List[str]:
+    def sentence_segmentation(self, text: str, language: str = "en") -> list[str]:
         """
         Segment text into sentences.
 
@@ -124,12 +125,12 @@ class TextPreprocessor:
         else:
             return self._simple_sentence_split(text)
 
-    def _simple_sentence_split(self, text: str) -> List[str]:
+    def _simple_sentence_split(self, text: str) -> list[str]:
         """Simple sentence splitting fallback."""
         sentences = re.split(r"[.!?]+\s+", text)
         return [s.strip() for s in sentences if s.strip()]
 
-    def word_tokenization(self, text: str, language: str = "en") -> List[str]:
+    def word_tokenization(self, text: str, language: str = "en") -> list[str]:
         """
         Tokenize text into words.
 
@@ -149,7 +150,7 @@ class TextPreprocessor:
         else:
             return text.split()
 
-    def remove_stopwords(self, words: List[str], language: str = "en") -> List[str]:
+    def remove_stopwords(self, words: list[str], language: str = "en") -> list[str]:
         """
         Remove stopwords from word list.
 
@@ -170,7 +171,7 @@ class TextPreprocessor:
         else:
             return words
 
-    def lemmatize_words(self, words: List[str]) -> List[str]:
+    def lemmatize_words(self, words: list[str]) -> list[str]:
         """
         Lemmatize words (reduce to base form).
 
@@ -189,7 +190,7 @@ class TextPreprocessor:
         else:
             return words
 
-    def stem_words(self, words: List[str]) -> List[str]:
+    def stem_words(self, words: list[str]) -> list[str]:
         """
         Stem words (reduce to root form).
 
@@ -208,7 +209,7 @@ class TextPreprocessor:
         else:
             return words
 
-    def pos_tagging(self, words: List[str]) -> List[Tuple[str, str]]:
+    def pos_tagging(self, words: list[str]) -> list[tuple[str, str]]:
         """
         Part-of-speech tagging.
 
@@ -227,7 +228,7 @@ class TextPreprocessor:
         else:
             return [(w, "UNKNOWN") for w in words]
 
-    def sentiment_analysis(self, text: str) -> Dict[str, float]:
+    def sentiment_analysis(self, text: str) -> dict[str, float]:
         """
         Analyze sentiment of text.
 
@@ -250,7 +251,7 @@ class TextPreprocessor:
         else:
             return {"polarity": 0.0, "subjectivity": 0.5}
 
-    def detect_language(self, text: str) -> Optional[str]:
+    def detect_language(self, text: str) -> str | None:
         """
         Detect language of text.
 
@@ -262,7 +263,7 @@ class TextPreprocessor:
         """
         if HAS_TEXTBLOB:
             try:
-                blob = TextBlob(text)
+                TextBlob(text)
                 # TextBlob doesn't have direct language detection, but we can try
                 # For now, return None (can be enhanced with langdetect library)
                 return None
@@ -278,7 +279,7 @@ class TextPreprocessor:
         language: str = "en",
         normalize: bool = True,
         segment_sentences: bool = True,
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Preprocess text for TTS synthesis.
 
@@ -343,7 +344,7 @@ class TextPreprocessor:
         if add_prosody_hints and HAS_TEXTBLOB:
             processed_sentences = []
             for sentence in sentences:
-                sentiment = self.sentiment_analysis(sentence)
+                self.sentiment_analysis(sentence)
                 # Could add SSML prosody tags based on sentiment
                 # For now, just return normalized sentences
                 processed_sentences.append(sentence)
@@ -408,7 +409,7 @@ class TextPreprocessor:
 
 
 # Global preprocessor instance
-_preprocessor_instance: Optional[TextPreprocessor] = None
+_preprocessor_instance: TextPreprocessor | None = None
 
 
 def get_text_preprocessor() -> TextPreprocessor:

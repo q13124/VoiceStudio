@@ -6,18 +6,20 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import batch processing components
 try:
-    from ..engines.router import EngineRouter
+    from app.engines.router import EngineRouter
 
     HAS_ENGINE_ROUTER = True
 except ImportError:
@@ -39,7 +41,7 @@ class BatchProcessorCLI:
     - Output management
     """
 
-    def __init__(self, engine_router: Optional[EngineRouter] = None):
+    def __init__(self, engine_router: EngineRouter | None = None):
         """
         Initialize Batch Processor CLI.
 
@@ -53,11 +55,11 @@ class BatchProcessorCLI:
         input_file: Path,
         output_dir: Path,
         engine_name: str,
-        voice_profile_id: Optional[str] = None,
+        voice_profile_id: str | None = None,
         language: str = "en",
-        quality_threshold: Optional[float] = None,
+        quality_threshold: float | None = None,
         enhance_quality: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process a text file with one text per line.
 
@@ -80,7 +82,7 @@ class BatchProcessorCLI:
 
         # Read text file
         texts = []
-        with open(input_file, "r", encoding="utf-8") as f:
+        with open(input_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
@@ -173,12 +175,12 @@ class BatchProcessorCLI:
         output_dir: Path,
         engine_name: str,
         text_column: str = "text",
-        language_column: Optional[str] = None,
+        language_column: str | None = None,
         default_language: str = "en",
-        voice_profile_id: Optional[str] = None,
-        quality_threshold: Optional[float] = None,
+        voice_profile_id: str | None = None,
+        quality_threshold: float | None = None,
         enhance_quality: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process a CSV file with text data.
 
@@ -208,7 +210,7 @@ class BatchProcessorCLI:
 
         # Read CSV file
         rows = []
-        with open(input_file, "r", encoding="utf-8") as f:
+        with open(input_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 rows.append(row)
@@ -307,7 +309,7 @@ class BatchProcessorCLI:
 
     def process_json_config(
         self, config_file: Path, output_dir: Path
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process a JSON configuration file.
 
@@ -322,7 +324,7 @@ class BatchProcessorCLI:
             raise FileNotFoundError(f"Config file not found: {config_file}")
 
         # Load configuration
-        with open(config_file, "r", encoding="utf-8") as f:
+        with open(config_file, encoding="utf-8") as f:
             config = json.load(f)
 
         # Extract configuration
@@ -361,7 +363,7 @@ class BatchProcessorCLI:
                 enhance_quality=enhance_quality,
             )
 
-    def save_results(self, results: Dict[str, Any], output_path: Path):
+    def save_results(self, results: dict[str, Any], output_path: Path):
         """
         Save processing results to JSON file.
 
@@ -475,7 +477,7 @@ def main():
 
     # Initialize CLI
     try:
-        from ..engines.router import EngineRouter
+        from app.engines.router import EngineRouter
 
         engine_router = EngineRouter()
         cli = BatchProcessorCLI(engine_router=engine_router)
@@ -511,7 +513,7 @@ def main():
             )
 
         # Print summary
-        print(f"\nProcessing complete!")
+        print("\nProcessing complete!")
         print(f"Total: {results['total']}")
         print(f"Successful: {results['successful']}")
         print(f"Failed: {results['failed']}")

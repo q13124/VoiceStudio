@@ -1,0 +1,437 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.9.13, pytest-8.4.2, pluggy-1.6.0 -- C:\Python39\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.9.13', 'Platform': 'Windows-10-10.0.26200-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'typeguard': '4.4.4', 'allure-pytest': '2.15.3', 'anyio': '4.12.1', 'asyncio': '1.2.0', 'cov': '7.0.0', 'html': '4.2.0', 'metadata': '3.1.1', 'mock': '3.15.1', 'timeout': '2.4.0', 'xdist': '3.8.0'}, 'JAVA_HOME': 'C:\\Program Files\\Microsoft\\jdk-21.0.8.9-hotspot\\'}
+rootdir: E:\VoiceStudio
+configfile: pytest.ini
+plugins: typeguard-4.4.4, allure-pytest-2.15.3, anyio-4.12.1, asyncio-1.2.0, cov-7.0.0, html-4.2.0, metadata-3.1.1, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+[1mcollecting ... [0mcollected 14 items
+
+tests/unit/backend/api/routes/test_health.py::TestHealthCheck::test_health_check [31mFAILED[0m[31m [  7%][0m
+tests/unit/backend/api/routes/test_health.py::TestHealthCheck::test_simple_health_check [32mPASSED[0m[31m [ 14%][0m
+tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_readiness_check [31mFAILED[0m[31m [ 21%][0m
+tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_ready_check_alias [31mFAILED[0m[31m [ 28%][0m
+tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_liveness_check [32mPASSED[0m[31m [ 35%][0m
+tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_live_check_alias [32mPASSED[0m[31m [ 42%][0m
+tests/unit/backend/api/routes/test_health.py::TestDetailedHealth::test_detailed_health_check [31mFAILED[0m[31m [ 50%][0m
+tests/unit/backend/api/routes/test_health.py::TestDetailedHealth::test_preflight_check [31mFAILED[0m[31m [ 57%][0m
+tests/unit/backend/api/routes/test_health.py::TestResourceHealth::test_resources_endpoint [32mPASSED[0m[31m [ 64%][0m
+tests/unit/backend/api/routes/test_health.py::TestResourceHealth::test_engines_endpoint [32mPASSED[0m[31m [ 71%][0m
+tests/unit/backend/api/routes/test_health.py::TestResourceHealth::test_circuit_breakers_endpoint [32mPASSED[0m[31m [ 78%][0m
+tests/unit/backend/api/routes/test_health.py::TestPerformanceHealth::test_performance_metrics [32mPASSED[0m[31m [ 85%][0m
+tests/unit/backend/api/routes/test_health.py::TestPerformanceHealth::test_endpoint_performance_metrics [31mFAILED[0m[31m [ 92%][0m
+tests/unit/backend/api/routes/test_health.py::TestFeatureHealth::test_features_endpoint [32mPASSED[0m[31m [100%][0m
+
+================================== FAILURES ===================================
+[31m[1m______________________ TestHealthCheck.test_health_check ______________________[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:109: in test_health_check
+    [0mresponse = health_client.get([33m"[39;49;00m[33m/api/health/[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:479: in get
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().get([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1053: in get
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:451: in request
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:825: in request
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:914: in send
+    [0mresponse = [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:942: in _send_handling_auth
+    [0mresponse = [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:979: in _send_handling_redirects
+    [0mresponse = [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1014: in _send_single_request
+    [0mresponse = transport.handle_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:354: in handle_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:351: in handle_request
+    [0mportal.call([96mself[39;49;00m.app, scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:334: in call
+    [0m[94mreturn[39;49;00m cast(T_Retval, [96mself[39;49;00m.start_task_soon(func, *args).result())[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:446: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:391: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:259: in _call_func
+    [0mretval = [94mawait[39;49;00m retval_or_awaitable[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\applications.py[0m:1135: in __call__
+    [0m[94mawait[39;49;00m [96msuper[39;49;00m().[92m__call__[39;49;00m(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\applications.py[0m:113: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:186: in __call__
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:164: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, _send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\exceptions.py[0m:63: in __call__
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions([96mself[39;49;00m.app, conn)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\middleware\asyncexitstack.py[0m:18: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:716: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:736: in app
+    [0m[94mawait[39;49;00m route.handle(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:290: in handle
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:115: in app
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions(app, request)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:101: in app
+    [0mresponse = [94mawait[39;49;00m f(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:355: in app
+    [0mraw_response = [94mawait[39;49;00m run_endpoint_function([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:243: in run_endpoint_function
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m dependant.call(**values)[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:162: in health_check
+    [0mresults = [94mawait[39;49;00m _health_checker.run_all_checks()[90m[39;49;00m
+[1m[31mapp\core\resilience\health_check.py[0m:194: in run_all_checks
+    [0m[94mfor[39;49;00m name, result [95min[39;49;00m [96mzip[39;49;00m([96mself[39;49;00m.checks.keys(), check_results, strict=[94mFalse[39;49;00m):[90m[39;49;00m
+[1m[31mE   TypeError: zip() takes no keyword arguments[0m
+[31m[1m__________________ TestKubernetesProbes.test_readiness_check __________________[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:134: in test_readiness_check
+    [0mresponse = health_client.get([33m"[39;49;00m[33m/api/health/readiness[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:479: in get
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().get([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1053: in get
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:451: in request
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:825: in request
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:914: in send
+    [0mresponse = [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:942: in _send_handling_auth
+    [0mresponse = [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:979: in _send_handling_redirects
+    [0mresponse = [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1014: in _send_single_request
+    [0mresponse = transport.handle_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:354: in handle_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:351: in handle_request
+    [0mportal.call([96mself[39;49;00m.app, scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:334: in call
+    [0m[94mreturn[39;49;00m cast(T_Retval, [96mself[39;49;00m.start_task_soon(func, *args).result())[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:446: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:391: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:259: in _call_func
+    [0mretval = [94mawait[39;49;00m retval_or_awaitable[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\applications.py[0m:1135: in __call__
+    [0m[94mawait[39;49;00m [96msuper[39;49;00m().[92m__call__[39;49;00m(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\applications.py[0m:113: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:186: in __call__
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:164: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, _send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\exceptions.py[0m:63: in __call__
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions([96mself[39;49;00m.app, conn)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\middleware\asyncexitstack.py[0m:18: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:716: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:736: in app
+    [0m[94mawait[39;49;00m route.handle(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:290: in handle
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:115: in app
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions(app, request)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:101: in app
+    [0mresponse = [94mawait[39;49;00m f(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:355: in app
+    [0mraw_response = [94mawait[39;49;00m run_endpoint_function([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:243: in run_endpoint_function
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m dependant.call(**values)[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:477: in readiness_check
+    [0mresults = [94mawait[39;49;00m _health_checker.run_all_checks()[90m[39;49;00m
+[1m[31mapp\core\resilience\health_check.py[0m:194: in run_all_checks
+    [0m[94mfor[39;49;00m name, result [95min[39;49;00m [96mzip[39;49;00m([96mself[39;49;00m.checks.keys(), check_results, strict=[94mFalse[39;49;00m):[90m[39;49;00m
+[1m[31mE   TypeError: zip() takes no keyword arguments[0m
+[31m[1m_________________ TestKubernetesProbes.test_ready_check_alias _________________[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:141: in test_ready_check_alias
+    [0mresponse = health_client.get([33m"[39;49;00m[33m/api/health/ready[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:479: in get
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().get([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1053: in get
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:451: in request
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:825: in request
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:914: in send
+    [0mresponse = [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:942: in _send_handling_auth
+    [0mresponse = [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:979: in _send_handling_redirects
+    [0mresponse = [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1014: in _send_single_request
+    [0mresponse = transport.handle_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:354: in handle_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:351: in handle_request
+    [0mportal.call([96mself[39;49;00m.app, scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:334: in call
+    [0m[94mreturn[39;49;00m cast(T_Retval, [96mself[39;49;00m.start_task_soon(func, *args).result())[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:446: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:391: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:259: in _call_func
+    [0mretval = [94mawait[39;49;00m retval_or_awaitable[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\applications.py[0m:1135: in __call__
+    [0m[94mawait[39;49;00m [96msuper[39;49;00m().[92m__call__[39;49;00m(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\applications.py[0m:113: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:186: in __call__
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:164: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, _send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\exceptions.py[0m:63: in __call__
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions([96mself[39;49;00m.app, conn)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\middleware\asyncexitstack.py[0m:18: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:716: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:736: in app
+    [0m[94mawait[39;49;00m route.handle(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:290: in handle
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:115: in app
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions(app, request)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:101: in app
+    [0mresponse = [94mawait[39;49;00m f(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:355: in app
+    [0mraw_response = [94mawait[39;49;00m run_endpoint_function([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:243: in run_endpoint_function
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m dependant.call(**values)[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:528: in ready_check
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m readiness_check()[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:477: in readiness_check
+    [0mresults = [94mawait[39;49;00m _health_checker.run_all_checks()[90m[39;49;00m
+[1m[31mapp\core\resilience\health_check.py[0m:194: in run_all_checks
+    [0m[94mfor[39;49;00m name, result [95min[39;49;00m [96mzip[39;49;00m([96mself[39;49;00m.checks.keys(), check_results, strict=[94mFalse[39;49;00m):[90m[39;49;00m
+[1m[31mE   TypeError: zip() takes no keyword arguments[0m
+[31m[1m________________ TestDetailedHealth.test_detailed_health_check ________________[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:167: in test_detailed_health_check
+    [0mresponse = health_client.get([33m"[39;49;00m[33m/api/health/detailed[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:479: in get
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().get([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1053: in get
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:451: in request
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:825: in request
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:914: in send
+    [0mresponse = [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:942: in _send_handling_auth
+    [0mresponse = [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:979: in _send_handling_redirects
+    [0mresponse = [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1014: in _send_single_request
+    [0mresponse = transport.handle_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:354: in handle_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:351: in handle_request
+    [0mportal.call([96mself[39;49;00m.app, scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:334: in call
+    [0m[94mreturn[39;49;00m cast(T_Retval, [96mself[39;49;00m.start_task_soon(func, *args).result())[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:446: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:391: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:259: in _call_func
+    [0mretval = [94mawait[39;49;00m retval_or_awaitable[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\applications.py[0m:1135: in __call__
+    [0m[94mawait[39;49;00m [96msuper[39;49;00m().[92m__call__[39;49;00m(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\applications.py[0m:113: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:186: in __call__
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:164: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, _send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\exceptions.py[0m:63: in __call__
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions([96mself[39;49;00m.app, conn)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\middleware\asyncexitstack.py[0m:18: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:716: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:736: in app
+    [0m[94mawait[39;49;00m route.handle(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:290: in handle
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:115: in app
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions(app, request)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:101: in app
+    [0mresponse = [94mawait[39;49;00m f(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:355: in app
+    [0mraw_response = [94mawait[39;49;00m run_endpoint_function([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:243: in run_endpoint_function
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m dependant.call(**values)[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:438: in detailed_health_check
+    [0mresults = [94mawait[39;49;00m _health_checker.run_all_checks()[90m[39;49;00m
+[1m[31mapp\core\resilience\health_check.py[0m:194: in run_all_checks
+    [0m[94mfor[39;49;00m name, result [95min[39;49;00m [96mzip[39;49;00m([96mself[39;49;00m.checks.keys(), check_results, strict=[94mFalse[39;49;00m):[90m[39;49;00m
+[1m[31mE   TypeError: zip() takes no keyword arguments[0m
+[31m[1m___________________ TestDetailedHealth.test_preflight_check ___________________[0m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:492: in _eval_type_backport
+    [0m[94mreturn[39;49;00m _eval_type(value, globalns, localns, type_params)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:545: in _eval_type
+    [0m[94mreturn[39;49;00m typing._eval_type(  [90m# type: ignore[39;49;00m[90m[39;49;00m
+[1m[31mC:\Python39\lib\typing.py[0m:292: in _eval_type
+    [0m[94mreturn[39;49;00m t._evaluate(globalns, localns, recursive_guard)[90m[39;49;00m
+[1m[31mC:\Python39\lib\typing.py[0m:554: in _evaluate
+    [0m[96meval[39;49;00m([96mself[39;49;00m.__forward_code__, globalns, localns),[90m[39;49;00m
+[1m[31mE   TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'[0m
+
+[33mThe above exception was the direct cause of the following exception:[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:174: in test_preflight_check
+    [0mresponse = health_client.get([33m"[39;49;00m[33m/api/health/preflight[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:479: in get
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().get([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1053: in get
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:451: in request
+    [0m[94mreturn[39;49;00m [96msuper[39;49;00m().request([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:825: in request
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:914: in send
+    [0mresponse = [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:942: in _send_handling_auth
+    [0mresponse = [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:979: in _send_handling_redirects
+    [0mresponse = [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\httpx\_client.py[0m:1014: in _send_single_request
+    [0mresponse = transport.handle_request(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:354: in handle_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\testclient.py[0m:351: in handle_request
+    [0mportal.call([96mself[39;49;00m.app, scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:334: in call
+    [0m[94mreturn[39;49;00m cast(T_Retval, [96mself[39;49;00m.start_task_soon(func, *args).result())[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:446: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+[1m[31mC:\Python39\lib\concurrent\futures\_base.py[0m:391: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\from_thread.py[0m:259: in _call_func
+    [0mretval = [94mawait[39;49;00m retval_or_awaitable[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\applications.py[0m:1135: in __call__
+    [0m[94mawait[39;49;00m [96msuper[39;49;00m().[92m__call__[39;49;00m(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\applications.py[0m:113: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:186: in __call__
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\errors.py[0m:164: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, _send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\middleware\exceptions.py[0m:63: in __call__
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions([96mself[39;49;00m.app, conn)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\middleware\asyncexitstack.py[0m:18: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:716: in __call__
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.middleware_stack(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:736: in app
+    [0m[94mawait[39;49;00m route.handle(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\routing.py[0m:290: in handle
+    [0m[94mawait[39;49;00m [96mself[39;49;00m.app(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:115: in app
+    [0m[94mawait[39;49;00m wrap_app_handling_exceptions(app, request)(scope, receive, send)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:53: in wrapped_app
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\_exception_handler.py[0m:42: in wrapped_app
+    [0m[94mawait[39;49;00m app(scope, receive, sender)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:101: in app
+    [0mresponse = [94mawait[39;49;00m f(request)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:355: in app
+    [0mraw_response = [94mawait[39;49;00m run_endpoint_function([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\fastapi\routing.py[0m:245: in run_endpoint_function
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m run_in_threadpool(dependant.call, **values)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\starlette\concurrency.py[0m:38: in run_in_threadpool
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m anyio.to_thread.run_sync(func)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\to_thread.py[0m:63: in run_sync
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m get_async_backend().run_sync_in_worker_thread([90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\_backends\_asyncio.py[0m:2502: in run_sync_in_worker_thread
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m future[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\anyio\_backends\_asyncio.py[0m:986: in run
+    [0mresult = context.run(func, *args)[90m[39;49;00m
+[1m[31mbackend\api\routes\health.py[0m:600: in preflight_check
+    [0m[94mfrom[39;49;00m[90m [39;49;00m[04m[96mbackend[39;49;00m[04m[96m.[39;49;00m[04m[96mservices[39;49;00m[04m[96m.[39;49;00m[04m[96mProjectStoreService[39;49;00m[90m [39;49;00m[94mimport[39;49;00m get_project_store_service[90m[39;49;00m
+[1m[31mbackend\services\ProjectStoreService.py[0m:36: in <module>
+    [0m[94mclass[39;49;00m[90m [39;49;00m[04m[92mProjectRecord[39;49;00m(BaseModel):[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_model_construction.py[0m:242: in __new__
+    [0mset_model_fields([96mcls[39;49;00m, config_wrapper=config_wrapper, ns_resolver=ns_resolver)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_model_construction.py[0m:566: in set_model_fields
+    [0mfields, class_vars = collect_model_fields([96mcls[39;49;00m, config_wrapper, ns_resolver, typevars_map=typevars_map)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_fields.py[0m:256: in collect_model_fields
+    [0mtype_hints = _typing_extra.get_model_type_hints([96mcls[39;49;00m, ns_resolver=ns_resolver)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:350: in get_model_type_hints
+    [0mhints[name] = try_eval_type(value, globalns, localns)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:404: in try_eval_type
+    [0m[94mreturn[39;49;00m eval_type_backport(value, globalns, localns), [94mTrue[39;49;00m[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:455: in eval_type_backport
+    [0m[94mreturn[39;49;00m _eval_type_backport(value, globalns, localns, type_params)[90m[39;49;00m
+[1m[31mC:\Python39\lib\site-packages\pydantic\_internal\_typing_extra.py[0m:500: in _eval_type_backport
+    [0m[94mraise[39;49;00m [96mTypeError[39;49;00m([90m[39;49;00m
+[1m[31mE   TypeError: Unable to evaluate type annotation 'str | None'. If you are making use of the new typing syntax (unions using `|` since Python 3.10 or builtins subscripting since Python 3.9), you should either replace the use of new syntax with the existing `typing` constructs or install the `eval_type_backport` package.[0m
+[31m[1m___________ TestPerformanceHealth.test_endpoint_performance_metrics ___________[0m
+[1m[31mtests\unit\backend\api\routes\test_health.py[0m:230: in test_endpoint_performance_metrics
+    [0m[94massert[39;49;00m response.status_code [95min[39;49;00m [[94m200[39;49;00m, [94m404[39;49;00m][90m[39;49;00m
+[1m[31mE   assert 503 in [200, 404][0m
+[1m[31mE    +  where 503 = <Response [503 Service Unavailable]>.status_code[0m
+============================ slowest 10 durations =============================
+31.77s call     tests/unit/backend/api/routes/test_health.py::TestFeatureHealth::test_features_endpoint
+0.28s call     tests/unit/backend/api/routes/test_health.py::TestResourceHealth::test_resources_endpoint
+0.09s setup    tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_live_check_alias
+0.08s call     tests/unit/backend/api/routes/test_health.py::TestDetailedHealth::test_preflight_check
+0.06s setup    tests/unit/backend/api/routes/test_health.py::TestHealthCheck::test_health_check
+0.02s call     tests/unit/backend/api/routes/test_health.py::TestHealthCheck::test_health_check
+0.01s call     tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_readiness_check
+0.01s setup    tests/unit/backend/api/routes/test_health.py::TestDetailedHealth::test_preflight_check
+0.01s setup    tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_readiness_check
+0.01s call     tests/unit/backend/api/routes/test_health.py::TestKubernetesProbes::test_ready_check_alias
+[36m[1m=========================== short test summary info ===========================[0m
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestHealthCheck::test_health_check[0m - TypeError: zip() takes no keyword arguments
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestKubernetesProbes::test_readiness_check[0m - TypeError: zip() takes no keyword arguments
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestKubernetesProbes::test_ready_check_alias[0m - TypeError: zip() takes no keyword arguments
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestDetailedHealth::test_detailed_health_check[0m - TypeError: zip() takes no keyword arguments
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestDetailedHealth::test_preflight_check[0m - TypeError: Unable to evaluate type annotation 'str | None'. If you are making use of the new typing syntax (unions using `|` since Python 3.10 or builtins subscripting since Python 3.9), you should either replace the use of new syntax with the existing `typing` constructs or install the `eval_type_backport` package.
+[31mFAILED[0m tests/unit/backend/api/routes/test_health.py::[1mTestPerformanceHealth::test_endpoint_performance_metrics[0m - assert 503 in [200, 404]
+ +  where 503 = <Response [503 Service Unavailable]>.status_code
+[31m================== [31m[1m6 failed[0m, [32m8 passed[0m, [33m19 warnings[0m[31m in 36.46s[0m[31m ==================[0m
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

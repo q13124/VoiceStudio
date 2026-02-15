@@ -5,13 +5,13 @@ These tests verify that the C# BackendClient correctly interacts with
 the version API endpoints. This file tests the Python backend endpoints
 that the C# client will call.
 """
+
 import pytest
-from datetime import datetime
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.api.routes.version import router, VERSION_METADATA
-from backend.api.versioning import APIVersion, VERSION_HEADER
+from backend.api.routes.version import router
+from backend.api.versioning import VERSION_HEADER, APIVersion
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ class TestCompatibilityEndpoint:
         """Test compatibility check without X-API-Version header."""
         response = client.get("/api/version/compatibility")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["compatible"] is True
         assert "server_version" in data
@@ -49,7 +49,7 @@ class TestCompatibilityEndpoint:
             headers={VERSION_HEADER: "v2"}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["compatible"] is True
         assert data["server_version"] == "v2"
@@ -62,7 +62,7 @@ class TestCompatibilityEndpoint:
             headers={VERSION_HEADER: "v1"}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["compatible"] is True
 
@@ -73,7 +73,7 @@ class TestCompatibilityEndpoint:
             headers={VERSION_HEADER: "v99"}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["compatible"] is False
         assert "recommendation" in data
@@ -82,10 +82,10 @@ class TestCompatibilityEndpoint:
         """Test that compatibility response includes all supported versions."""
         response = client.get("/api/version/compatibility")
         assert response.status_code == 200
-        
+
         data = response.json()
         supported = data["supported_versions"]
-        
+
         # Verify both v1 and v2 are in supported versions
         assert "v1" in supported
         assert "v2" in supported
@@ -104,13 +104,13 @@ class TestVersionListEndpoint:
         """Test listing all supported versions."""
         response = client.get("/api/version/")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "current_version" in data
         assert "default_version" in data
         assert "supported_versions" in data
         assert "versions" in data
-        
+
         # Verify version details are included
         assert len(data["versions"]) >= 2
 
@@ -118,7 +118,7 @@ class TestVersionListEndpoint:
         """Test that versions include status metadata."""
         response = client.get("/api/version/")
         assert response.status_code == 200
-        
+
         data = response.json()
         for v in data["versions"]:
             assert "version" in v
@@ -133,7 +133,7 @@ class TestCurrentVersionEndpoint:
         """Test getting current API version."""
         response = client.get("/api/version/current")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["version"] == APIVersion.current().value
         assert "timestamp" in data
@@ -150,7 +150,7 @@ class TestNegotiateEndpoint:
             json={"preferred_versions": ["v2", "v1"]}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["negotiated_version"] == "v2"
         assert data["matched"] is True
@@ -162,7 +162,7 @@ class TestNegotiateEndpoint:
             json={"preferred_versions": ["v1"]}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["negotiated_version"] == "v1"
         assert data["matched"] is True
@@ -174,7 +174,7 @@ class TestNegotiateEndpoint:
             json={"preferred_versions": ["v99", "v2"]}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         # Should negotiate to v2 since v99 is unsupported
         assert data["negotiated_version"] == "v2"
@@ -187,7 +187,7 @@ class TestNegotiateEndpoint:
             json={"preferred_versions": ["v99", "v100"]}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         # Falls back to default version, marked as not matched
         assert data["matched"] is False
@@ -201,7 +201,7 @@ class TestVersionEndpointsEndpoint:
         """Test getting all versioned endpoints."""
         response = client.get("/api/version/endpoints")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "endpoints" in data
         assert "timestamp" in data
@@ -210,7 +210,7 @@ class TestVersionEndpointsEndpoint:
         """Test filtering endpoints by version."""
         response = client.get("/api/version/endpoints?version=v2")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "endpoints" in data
 
@@ -226,14 +226,14 @@ class TestClientStartupValidation:
         """Test that compatibility endpoint returns all fields needed by C# client."""
         response = client.get("/api/version/compatibility")
         assert response.status_code == 200
-        
+
         data = response.json()
-        
+
         # These fields are expected by the C# BackendClient
         assert "compatible" in data
         assert "server_version" in data
         assert "supported_versions" in data
-        
+
         # Optional but useful fields
         if not data["compatible"]:
             assert "recommendation" in data
@@ -242,9 +242,9 @@ class TestClientStartupValidation:
         """Test that version info endpoint returns all fields needed by C# client."""
         response = client.get("/api/version/")
         assert response.status_code == 200
-        
+
         data = response.json()
-        
+
         # These fields are expected by the C# BackendClient.GetApiVersionInfoAsync
         assert "current_version" in data
         assert "default_version" in data
@@ -258,7 +258,7 @@ class TestClientStartupValidation:
             "/api/version/current",
             "/api/version/compatibility",
         ]
-        
+
         for endpoint in endpoints:
             response = client.get(endpoint)
             assert response.status_code == 200, f"Endpoint {endpoint} should be accessible"

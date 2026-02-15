@@ -5,10 +5,9 @@ Provides test reporting and coverage utilities for VoiceStudio Quantum+ test sui
 
 import json
 import logging
-import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +24,15 @@ class TestReportGenerator:
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.reports: List[Dict[str, Any]] = []
+        self.reports: list[dict[str, Any]] = []
 
     def add_test_result(
         self,
         test_name: str,
         status: str,
         duration: float,
-        error: Optional[str] = None,
-        category: Optional[str] = None,
+        error: str | None = None,
+        category: str | None = None,
     ):
         """
         Add a test result to the report.
@@ -56,7 +55,7 @@ class TestReportGenerator:
             }
         )
 
-    def generate_summary(self) -> Dict[str, Any]:
+    def generate_summary(self) -> dict[str, Any]:
         """
         Generate test summary statistics.
 
@@ -83,14 +82,14 @@ class TestReportGenerator:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def generate_category_summary(self) -> Dict[str, Dict[str, Any]]:
+    def generate_category_summary(self) -> dict[str, dict[str, Any]]:
         """
         Generate summary by test category.
 
         Returns:
             Dictionary with statistics per category
         """
-        categories: Dict[str, List[Dict[str, Any]]] = {}
+        categories: dict[str, list[dict[str, Any]]] = {}
         for report in self.reports:
             category = report.get("category", "unknown")
             if category not in categories:
@@ -183,7 +182,7 @@ class TestReportGenerator:
 class CoverageReporter:
     """Reports test coverage statistics."""
 
-    def __init__(self, coverage_data: Dict[str, Any]):
+    def __init__(self, coverage_data: dict[str, Any]):
         """
         Initialize coverage reporter.
 
@@ -192,7 +191,7 @@ class CoverageReporter:
         """
         self.coverage_data = coverage_data
 
-    def generate_coverage_summary(self) -> Dict[str, Any]:
+    def generate_coverage_summary(self) -> dict[str, Any]:
         """
         Generate coverage summary.
 

@@ -5,7 +5,6 @@ Tests Vosk STT engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -29,7 +28,7 @@ class TestVoskEngineImports:
     def test_module_has_vosk_engine_class(self):
         """Test module has VoskEngine class."""
         if hasattr(vosk_engine, "VoskEngine"):
-            cls = getattr(vosk_engine, "VoskEngine")
+            cls = vosk_engine.VoskEngine
             assert isinstance(cls, type), "VoskEngine should be a class"
 
 
@@ -39,7 +38,7 @@ class TestVoskEngineClass:
     def test_vosk_engine_class_exists(self):
         """Test VoskEngine class exists."""
         if hasattr(vosk_engine, "VoskEngine"):
-            cls = getattr(vosk_engine, "VoskEngine")
+            cls = vosk_engine.VoskEngine
             assert isinstance(cls, type), "VoskEngine should be a class"
 
 

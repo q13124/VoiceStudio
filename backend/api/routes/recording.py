@@ -7,6 +7,8 @@ channels, and format. Accepts audio chunks from the frontend
 and writes them to WAV files.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading
@@ -14,7 +16,6 @@ import time
 import uuid
 import wave
 from datetime import datetime
-from typing import Dict, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/recording", tags=["recording"])
 
 # In-memory storage for active recordings
-_active_recordings: Dict[str, Dict] = {}
+_active_recordings: dict[str, dict] = {}
 _recording_lock = threading.Lock()
 
 # Try to import sounddevice for device enumeration
@@ -46,8 +47,8 @@ class RecordingStartRequest(BaseModel):
     channels: int = 1  # 1 = mono, 2 = stereo
     bit_depth: int = 16  # 16 or 24
     format: str = "wav"  # "wav" or "pcm"
-    project_id: Optional[str] = None
-    filename: Optional[str] = None
+    project_id: str | None = None
+    filename: str | None = None
 
 
 class RecordingStatusResponse(BaseModel):
@@ -60,8 +61,8 @@ class RecordingStatusResponse(BaseModel):
     channels: int
     bit_depth: int
     format: str
-    file_path: Optional[str] = None
-    audio_id: Optional[str] = None
+    file_path: str | None = None
+    audio_id: str | None = None
 
 
 class RecordingStopResponse(BaseModel):
@@ -111,7 +112,7 @@ async def start_recording(request: RecordingStartRequest):
         logger.error(f"Failed to create WAV file: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to initialize recording file: {str(e)}",
+            detail=f"Failed to initialize recording file: {e!s}",
         )
 
     # Initialize recording state
@@ -220,7 +221,7 @@ async def append_audio_chunk(
             logger.error(f"Failed to write audio chunk: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to write audio chunk: {str(e)}",
+                detail=f"Failed to write audio chunk: {e!s}",
             )
 
 

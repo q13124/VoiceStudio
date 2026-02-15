@@ -4,13 +4,8 @@ Seed Data Script
 Populates the backend with initial test data for development and testing.
 """
 
-import json
 import sys
-import uuid
 from datetime import datetime
-from pathlib import Path
-
-from _env_setup import PROJECT_ROOT
 
 
 def seed_profiles():

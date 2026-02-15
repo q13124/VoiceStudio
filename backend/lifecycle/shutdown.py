@@ -10,10 +10,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
-from dataclasses import dataclass, field
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
-from typing import Callable, Awaitable, Optional, Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ShutdownHandler:
     handler: Callable[[], Awaitable[None]]
     timeout_seconds: float = 10.0
     priority: int = 0  # Higher priority runs first within phase
-    
+
     def __hash__(self) -> int:
         return hash(self.name)
 
@@ -50,13 +50,13 @@ class ShutdownResult:
     phase: ShutdownPhase
     success: bool
     duration_ms: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class GracefulShutdownOrchestrator:
     """
     Orchestrates graceful shutdown across all backend subsystems.
-    
+
     Features:
     - Phased shutdown with configurable timeouts
     - Handler registration with priority ordering
@@ -64,7 +64,7 @@ class GracefulShutdownOrchestrator:
     - Shutdown progress tracking
     - Force shutdown after timeout
     """
-    
+
     def __init__(
         self,
         total_timeout_seconds: float = 30.0,
@@ -72,47 +72,47 @@ class GracefulShutdownOrchestrator:
     ):
         self.total_timeout_seconds = total_timeout_seconds
         self.drain_timeout_seconds = drain_timeout_seconds
-        
+
         self._handlers: list[ShutdownHandler] = []
         self._phase = ShutdownPhase.RUNNING
         self._results: list[ShutdownResult] = []
         self._shutdown_event = asyncio.Event()
-        self._shutdown_started: Optional[datetime] = None
+        self._shutdown_started: datetime | None = None
         self._in_flight_requests = 0
         self._accepting_requests = True
         self._lock = asyncio.Lock()
-        
+
         # Callbacks
-        self._on_phase_change: Optional[Callable[[ShutdownPhase], None]] = None
-        self._on_complete: Optional[Callable[[list[ShutdownResult]], None]] = None
-    
+        self._on_phase_change: Callable[[ShutdownPhase], None] | None = None
+        self._on_complete: Callable[[list[ShutdownResult]], None] | None = None
+
     @property
     def phase(self) -> ShutdownPhase:
         """Current shutdown phase."""
         return self._phase
-    
+
     @property
     def is_shutting_down(self) -> bool:
         """Whether shutdown has been initiated."""
         return self._phase != ShutdownPhase.RUNNING
-    
+
     @property
     def is_accepting_requests(self) -> bool:
         """Whether new requests are being accepted."""
         return self._accepting_requests
-    
+
     @property
     def in_flight_count(self) -> int:
         """Number of in-flight requests."""
         return self._in_flight_requests
-    
+
     def register_handler(self, handler: ShutdownHandler) -> None:
         """Register a shutdown handler."""
         self._handlers.append(handler)
         # Sort by phase, then priority (descending)
         self._handlers.sort(key=lambda h: (h.phase.value, -h.priority))
         logger.debug(f"Registered shutdown handler: {handler.name} (phase: {handler.phase.name})")
-    
+
     def register(
         self,
         name: str,
@@ -131,16 +131,16 @@ class GracefulShutdownOrchestrator:
             ))
             return func
         return decorator
-    
+
     def set_callbacks(
         self,
-        on_phase_change: Optional[Callable[[ShutdownPhase], None]] = None,
-        on_complete: Optional[Callable[[list[ShutdownResult]], None]] = None,
+        on_phase_change: Callable[[ShutdownPhase], None] | None = None,
+        on_complete: Callable[[list[ShutdownResult]], None] | None = None,
     ) -> None:
         """Set event callbacks."""
         self._on_phase_change = on_phase_change
         self._on_complete = on_complete
-    
+
     def _set_phase(self, phase: ShutdownPhase) -> None:
         """Update phase and fire callback."""
         old_phase = self._phase
@@ -152,7 +152,7 @@ class GracefulShutdownOrchestrator:
                     self._on_phase_change(phase)
                 except Exception as e:
                     logger.warning(f"Phase change callback error: {e}")
-    
+
     async def request_started(self) -> bool:
         """
         Track a new request starting.
@@ -162,15 +162,15 @@ class GracefulShutdownOrchestrator:
             return False
         self._in_flight_requests += 1
         return True
-    
+
     async def request_completed(self) -> None:
         """Track a request completing."""
         self._in_flight_requests = max(0, self._in_flight_requests - 1)
-    
+
     async def initiate_shutdown(self, reason: str = "requested") -> None:
         """
         Initiate the graceful shutdown process.
-        
+
         Args:
             reason: Reason for shutdown (for logging)
         """
@@ -178,26 +178,26 @@ class GracefulShutdownOrchestrator:
             if self._phase != ShutdownPhase.RUNNING:
                 logger.warning("Shutdown already in progress")
                 return
-            
+
             logger.info(f"Initiating graceful shutdown: {reason}")
             self._shutdown_started = datetime.now()
             self._set_phase(ShutdownPhase.INITIATED)
             self._shutdown_event.set()
-    
+
     async def execute_shutdown(self) -> list[ShutdownResult]:
         """
         Execute the full shutdown sequence.
-        
+
         Returns list of results from all handlers.
         """
         if self._phase == ShutdownPhase.RUNNING:
             await self.initiate_shutdown()
-        
+
         try:
             # Phase: Draining
             self._set_phase(ShutdownPhase.DRAINING)
             self._accepting_requests = False
-            
+
             # Wait for in-flight requests to complete
             self._set_phase(ShutdownPhase.COMPLETING)
             drain_start = asyncio.get_event_loop().time()
@@ -207,37 +207,37 @@ class GracefulShutdownOrchestrator:
                     logger.warning(f"Drain timeout, {self._in_flight_requests} requests still in flight")
                     break
                 await asyncio.sleep(0.1)
-            
+
             # Execute handlers by phase
             for phase in [ShutdownPhase.ENGINES, ShutdownPhase.CONNECTIONS, ShutdownPhase.CLEANUP]:
                 self._set_phase(phase)
                 await self._execute_phase_handlers(phase)
-            
+
             self._set_phase(ShutdownPhase.COMPLETED)
-            
+
         except Exception as e:
             logger.error(f"Shutdown error: {e}")
-        
+
         if self._on_complete:
             try:
                 self._on_complete(self._results)
             except Exception as e:
                 logger.warning(f"Complete callback error: {e}")
-        
+
         return self._results
-    
+
     async def _execute_phase_handlers(self, phase: ShutdownPhase) -> None:
         """Execute all handlers for a phase."""
         phase_handlers = [h for h in self._handlers if h.phase == phase]
-        
+
         for handler in phase_handlers:
             result = await self._execute_handler(handler)
             self._results.append(result)
-    
+
     async def _execute_handler(self, handler: ShutdownHandler) -> ShutdownResult:
         """Execute a single shutdown handler with timeout."""
         start_time = asyncio.get_event_loop().time()
-        
+
         try:
             await asyncio.wait_for(
                 handler.handler(),
@@ -271,26 +271,26 @@ class GracefulShutdownOrchestrator:
                 duration_ms=duration_ms,
                 error=str(e),
             )
-    
+
     async def wait_for_shutdown(self) -> None:
         """Wait until shutdown is initiated."""
         await self._shutdown_event.wait()
-    
+
     def setup_signal_handlers(self) -> None:
         """Set up signal handlers for graceful shutdown."""
         loop = asyncio.get_event_loop()
-        
+
         def signal_handler(sig: signal.Signals) -> None:
             logger.info(f"Received signal {sig.name}")
             asyncio.create_task(self.initiate_shutdown(f"signal: {sig.name}"))
-        
+
         for sig in (signal.SIGTERM, signal.SIGINT):
             try:
                 loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
             except NotImplementedError:
                 # Windows doesn't support add_signal_handler
                 signal.signal(sig, lambda s, f, sig=sig: signal_handler(sig))
-    
+
     def get_status(self) -> dict:
         """Get current shutdown status."""
         return {
@@ -305,7 +305,7 @@ class GracefulShutdownOrchestrator:
 
 
 # Global orchestrator instance
-_orchestrator: Optional[GracefulShutdownOrchestrator] = None
+_orchestrator: GracefulShutdownOrchestrator | None = None
 
 
 def get_shutdown_orchestrator() -> GracefulShutdownOrchestrator:

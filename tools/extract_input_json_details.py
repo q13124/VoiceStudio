@@ -4,7 +4,7 @@ import sys
 input_json_path = r"e:\VoiceStudio\src\VoiceStudio.App\obj\Debug\net8.0-windows10.0.19041.0\input.json"
 
 try:
-    with open(input_json_path, "r", encoding="utf-8") as f:
+    with open(input_json_path, encoding="utf-8") as f:
         d = json.load(f)
 
     print("=== input.json Key Details ===")

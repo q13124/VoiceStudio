@@ -6,13 +6,15 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ except ImportError:
 
 # Import parameter optimizer
 try:
-    from ..training.parameter_optimizer import ParameterOptimizer
+    from app.core.training.parameter_optimizer import ParameterOptimizer
 
     HAS_PARAMETER_OPTIMIZER = True
 except ImportError:
@@ -50,8 +52,8 @@ class SelfOptimizer:
 
     def __init__(
         self,
-        ai_governor: Optional[AIGovernor] = None,
-        optimization_data_path: Optional[Path] = None,
+        ai_governor: AIGovernor | None = None,
+        optimization_data_path: Path | None = None,
     ):
         """
         Initialize Self Optimizer.
@@ -66,9 +68,9 @@ class SelfOptimizer:
         )
 
         # Optimization tracking
-        self._optimization_history: List[Dict[str, Any]] = []
-        self._optimization_results: Dict[str, Any] = defaultdict(dict)
-        self._performance_baseline: Dict[str, Any] = {}
+        self._optimization_history: list[dict[str, Any]] = []
+        self._optimization_results: dict[str, Any] = defaultdict(dict)
+        self._performance_baseline: dict[str, Any] = {}
 
         # Load optimization data
         self._load_optimization_data()
@@ -76,8 +78,8 @@ class SelfOptimizer:
     def optimize_engine_selection(
         self,
         task_type: str,
-        sample_tasks: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        sample_tasks: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Optimize engine selection for a task type.
 
@@ -180,8 +182,8 @@ class SelfOptimizer:
         self,
         engine_name: str,
         task_type: str,
-        parameter_space: Optional[Dict[str, List[Any]]] = None,
-    ) -> Dict[str, Any]:
+        parameter_space: dict[str, list[Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Optimize parameters for an engine and task.
 
@@ -207,7 +209,7 @@ class SelfOptimizer:
             }
 
         # Use parameter optimizer
-        optimizer = ParameterOptimizer(
+        ParameterOptimizer(
             optimization_strategy="grid_search", max_iterations=9
         )
 
@@ -258,8 +260,8 @@ class SelfOptimizer:
         return result
 
     def optimize_performance(
-        self, component: str, metrics: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, component: str, metrics: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Optimize performance for a component.
 
@@ -284,12 +286,11 @@ class SelfOptimizer:
                 baseline_value = baseline.get(metric_name)
                 if baseline_value is not None and isinstance(
                     current_value, (int, float)
-                ):
-                    if baseline_value > 0:
-                        improvement = (
-                            (baseline_value - current_value) / baseline_value
-                        ) * 100.0
-                        improvements[metric_name] = improvement
+                ) and baseline_value > 0:
+                    improvement = (
+                        (baseline_value - current_value) / baseline_value
+                    ) * 100.0
+                    improvements[metric_name] = improvement
 
         result = {
             "component": component,
@@ -321,7 +322,7 @@ class SelfOptimizer:
 
     def continuous_optimization(
         self, optimization_interval: int = 3600
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run continuous optimization cycle.
 
@@ -414,7 +415,7 @@ class SelfOptimizer:
         """Load optimization data from file."""
         if self.optimization_data_path.exists():
             try:
-                with open(self.optimization_data_path, "r", encoding="utf-8") as f:
+                with open(self.optimization_data_path, encoding="utf-8") as f:
                     data = json.load(f)
                     self._optimization_results = data.get("results", {})
                     self._optimization_history = data.get("history", [])
@@ -449,7 +450,7 @@ class SelfOptimizer:
                     pass
             logger.error(f"Failed to save optimization data: {e}")
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """
         Get optimization statistics.
 
@@ -467,8 +468,8 @@ class SelfOptimizer:
 
 
 def create_self_optimizer(
-    ai_governor: Optional[AIGovernor] = None,
-    optimization_data_path: Optional[Path] = None,
+    ai_governor: AIGovernor | None = None,
+    optimization_data_path: Path | None = None,
 ) -> SelfOptimizer:
     """
     Factory function to create a Self Optimizer instance.

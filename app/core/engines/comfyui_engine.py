@@ -11,6 +11,8 @@ Compatible with:
 - HTTP API for workflow execution
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -20,7 +22,6 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PIL import Image
@@ -62,8 +63,8 @@ class ComfyUIEngine(EngineProtocol):
     def __init__(
         self,
         server_url: str = "http://127.0.0.1:8188",
-        workflow_path: Optional[str] = None,
-        device: Optional[str] = None,
+        workflow_path: str | None = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 100,
@@ -105,7 +106,7 @@ class ComfyUIEngine(EngineProtocol):
         self.pool_maxsize = max(pool_maxsize, 40)
 
         # LRU workflow cache
-        self._workflow_cache: OrderedDict[str, Dict] = OrderedDict()
+        self._workflow_cache: OrderedDict[str, dict] = OrderedDict()
         self._response_cache: OrderedDict[str, Image.Image] = OrderedDict()
         self._cache_stats = {
             "hits": 0,
@@ -181,8 +182,8 @@ class ComfyUIEngine(EngineProtocol):
         steps: int,
         cfg_scale: float,
         sampler: str,
-        seed: Optional[int],
-        workflow: Optional[Dict],
+        seed: int | None,
+        workflow: dict | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -211,11 +212,11 @@ class ComfyUIEngine(EngineProtocol):
         steps: int = 20,
         cfg_scale: float = 7.0,
         sampler: str = "euler",
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
-        workflow: Optional[Dict] = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
+        workflow: dict | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """
         Generate image using ComfyUI workflow.
 
@@ -236,9 +237,8 @@ class ComfyUIEngine(EngineProtocol):
         Returns:
             PIL Image or None if generation failed
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # Check cache
         cache_key = None
@@ -280,7 +280,7 @@ class ComfyUIEngine(EngineProtocol):
                     workflow_data = self._workflow_cache[workflow_cache_key]
                     self._workflow_cache.move_to_end(workflow_cache_key)
                 else:
-                    with open(self.workflow_path, "r") as f:
+                    with open(self.workflow_path) as f:
                         workflow_data = json.load(f)
                     # Cache workflow
                     if len(self._workflow_cache) >= self.cache_size:
@@ -348,19 +348,19 @@ class ComfyUIEngine(EngineProtocol):
 
     def batch_generate(
         self,
-        prompts: List[str],
+        prompts: list[str],
         negative_prompt: str = "",
         width: int = 512,
         height: int = 512,
         steps: int = 20,
         cfg_scale: float = 7.0,
         sampler: str = "euler",
-        seeds: Optional[List[Optional[int]]] = None,
-        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
-        workflows: Optional[List[Optional[Dict]]] = None,
-        batch_size: Optional[int] = None,
+        seeds: list[int | None] | None = None,
+        output_paths: list[str | Path | None] | None = None,
+        workflows: list[dict | None] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Optional[Image.Image]]:
+    ) -> list[Image.Image | None]:
         """
         Generate multiple images in parallel using batch processing.
 
@@ -384,9 +384,8 @@ class ComfyUIEngine(EngineProtocol):
         if not prompts:
             return []
 
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(prompts)
+        if not self._initialized and not self.initialize():
+            return [None] * len(prompts)
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -443,7 +442,7 @@ class ComfyUIEngine(EngineProtocol):
         args_list = [
             (i, prompt, seed, output_path, workflow)
             for i, (prompt, seed, output_path, workflow) in enumerate(
-                zip(prompts, seeds, output_paths, workflows)
+                zip(prompts, seeds, output_paths, workflows, strict=False)
             )
         ]
 
@@ -466,7 +465,7 @@ class ComfyUIEngine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("ComfyUI caches cleared")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_cache:
             return {"enabled": False}
@@ -497,9 +496,9 @@ class ComfyUIEngine(EngineProtocol):
         steps: int,
         cfg_scale: float,
         sampler: str,
-        seed: Optional[int],
+        seed: int | None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
         """Create default ComfyUI workflow JSON."""
         import uuid
 
@@ -573,7 +572,7 @@ class ComfyUIEngine(EngineProtocol):
 
     def _wait_for_completion(
         self, prompt_id: str, timeout: int = 300
-    ) -> Optional[Image.Image]:
+    ) -> Image.Image | None:
         """Wait for prompt completion and retrieve image."""
 
         start_time = time.time()
@@ -587,7 +586,7 @@ class ComfyUIEngine(EngineProtocol):
                     history = response.json()
                     if prompt_id in history:
                         output_images = history[prompt_id].get("outputs", {})
-                        for node_id, node_output in output_images.items():
+                        for _node_id, node_output in output_images.items():
                             if "images" in node_output:
                                 for image_info in node_output["images"]:
                                     filename = image_info.get("filename")
@@ -650,7 +649,7 @@ class ComfyUIEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -673,8 +672,8 @@ class ComfyUIEngine(EngineProtocol):
 
 def create_comfyui_engine(
     server_url: str = "http://127.0.0.1:8188",
-    workflow_path: Optional[str] = None,
-    device: Optional[str] = None,
+    workflow_path: str | None = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> ComfyUIEngine:
     """Factory function to create a ComfyUI engine instance."""

@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from tools.context.core.manager import ContextManager
 from tools.context.core.models import AllocationContext, ContextBundle, ContextLevel
@@ -28,16 +28,16 @@ class RoleContextConfig:
 
     role_id: str
     short_name: str
-    primary_gates: List[str] = field(default_factory=list)
+    primary_gates: list[str] = field(default_factory=list)
     context_level: ContextLevel = ContextLevel.MID
     include_git: bool = False
     include_issues: bool = True
     include_ledger: bool = True
     budget_chars: int = 12000
-    sources_priority: List[str] = field(default_factory=list)
+    sources_priority: list[str] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RoleContextConfig":
+    def from_dict(cls, data: dict[str, Any]) -> RoleContextConfig:
         """Create from dictionary."""
         return cls(
             role_id=data.get("id", ""),
@@ -57,16 +57,16 @@ class DistributionRecord:
     """Record of context distribution to a role."""
 
     role_id: str
-    task_id: Optional[str]
-    phase: Optional[str]
+    task_id: str | None
+    phase: str | None
     timestamp: datetime
     bundle_size_chars: int
-    sources_included: List[str]
+    sources_included: list[str]
     context_level: str
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "role_id": self.role_id,
@@ -94,8 +94,8 @@ class ContextDistributor:
 
     def __init__(
         self,
-        context_manager: Optional[ContextManager] = None,
-        config_path: Optional[Path] = None,
+        context_manager: ContextManager | None = None,
+        config_path: Path | None = None,
         history_size: int = 100,
     ):
         """
@@ -108,13 +108,13 @@ class ContextDistributor:
         """
         self._context_manager = context_manager or self._create_manager()
         self._config_path = config_path or Path("tools/context/config/distribution.json")
-        self._role_configs: Dict[str, RoleContextConfig] = {}
-        self._distribution_history: List[DistributionRecord] = []
+        self._role_configs: dict[str, RoleContextConfig] = {}
+        self._distribution_history: list[DistributionRecord] = []
         self._history_size = history_size
-        self._active_distributions: Dict[str, ContextBundle] = {}
+        self._active_distributions: dict[str, ContextBundle] = {}
         self._load_config()
 
-    def _create_manager(self) -> Optional[ContextManager]:
+    def _create_manager(self) -> ContextManager | None:
         """Create ContextManager with default config."""
         try:
             return ContextManager.from_config()
@@ -166,17 +166,17 @@ class ContextDistributor:
         except Exception as e:
             logger.warning("Failed to load roles config: %s", e)
 
-    def get_role_config(self, role_id: str) -> Optional[RoleContextConfig]:
+    def get_role_config(self, role_id: str) -> RoleContextConfig | None:
         """Get context configuration for a role."""
         return self._role_configs.get(role_id)
 
     def distribute(
         self,
         role_id: str,
-        task_id: Optional[str] = None,
-        phase: Optional[str] = None,
+        task_id: str | None = None,
+        phase: str | None = None,
         force_refresh: bool = False,
-    ) -> Optional[ContextBundle]:
+    ) -> ContextBundle | None:
         """
         Distribute context to a role.
 
@@ -263,7 +263,7 @@ class ContextDistributor:
             logger.error("Failed to distribute context to role %s: %s", role_id, e)
             return None
 
-    def _extract_sources(self, bundle: ContextBundle) -> List[str]:
+    def _extract_sources(self, bundle: ContextBundle) -> list[str]:
         """Extract list of sources included in bundle."""
         sources = []
         if bundle.task and bundle.task.id:
@@ -296,10 +296,10 @@ class ContextDistributor:
 
     def distribute_to_all(
         self,
-        task_id: Optional[str] = None,
-        phase: Optional[str] = None,
-        roles: Optional[List[str]] = None,
-    ) -> Dict[str, Optional[ContextBundle]]:
+        task_id: str | None = None,
+        phase: str | None = None,
+        roles: list[str] | None = None,
+    ) -> dict[str, ContextBundle | None]:
         """
         Distribute context to multiple roles.
 
@@ -313,7 +313,7 @@ class ContextDistributor:
         """
         if roles is None:
             # Get unique role IDs (not aliases)
-            seen: Set[str] = set()
+            seen: set[str] = set()
             roles = []
             for config in self._role_configs.values():
                 if config.role_id not in seen:
@@ -332,9 +332,9 @@ class ContextDistributor:
 
     def get_history(
         self,
-        role_id: Optional[str] = None,
+        role_id: str | None = None,
         limit: int = 20,
-    ) -> List[DistributionRecord]:
+    ) -> list[DistributionRecord]:
         """
         Get distribution history.
 
@@ -350,14 +350,14 @@ class ContextDistributor:
             records = [r for r in records if r.role_id == role_id]
         return records[-limit:]
 
-    def get_active_distribution(self, role_id: str) -> Optional[ContextBundle]:
+    def get_active_distribution(self, role_id: str) -> ContextBundle | None:
         """Get currently cached context for a role."""
         for key, bundle in self._active_distributions.items():
             if key.startswith(f"{role_id}:"):
                 return bundle
         return None
 
-    def invalidate(self, role_id: Optional[str] = None) -> int:
+    def invalidate(self, role_id: str | None = None) -> int:
         """
         Invalidate cached distributions.
 
@@ -379,11 +379,11 @@ class ContextDistributor:
             del self._active_distributions[key]
         return len(to_remove)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get distributor status summary."""
         return {
             "configured_roles": len(
-                set(c.role_id for c in self._role_configs.values())
+                {c.role_id for c in self._role_configs.values()}
             ),
             "active_distributions": len(self._active_distributions),
             "history_size": len(self._distribution_history),
@@ -394,7 +394,7 @@ class ContextDistributor:
         }
 
 
-    def get_plan_context(self) -> Dict[str, Any]:
+    def get_plan_context(self) -> dict[str, Any]:
         """Get current plan context from distribution config."""
         try:
             with open(self._config_path, encoding="utf-8") as f:
@@ -403,7 +403,7 @@ class ContextDistributor:
         except Exception:
             return {}
 
-    def get_phase_ownership(self, phase: int) -> Dict[str, Any]:
+    def get_phase_ownership(self, phase: int) -> dict[str, Any]:
         """Get ownership info for a specific phase."""
         try:
             with open(self._config_path, encoding="utf-8") as f:
@@ -413,7 +413,7 @@ class ContextDistributor:
         except Exception:
             return {}
 
-    def get_role_for_current_phase(self) -> Optional[str]:
+    def get_role_for_current_phase(self) -> str | None:
         """Get the primary role for the current plan phase."""
         plan = self.get_plan_context()
         current_phase = plan.get("current_phase")
@@ -424,7 +424,7 @@ class ContextDistributor:
 
     def distribute_for_current_phase(
         self, force_refresh: bool = False
-    ) -> Dict[str, Optional[ContextBundle]]:
+    ) -> dict[str, ContextBundle | None]:
         """
         Distribute context to all roles involved in the current phase.
 
@@ -548,7 +548,7 @@ class ContextDistributor:
         except Exception as e:
             logger.error("Failed to advance phase: %s", e)
 
-    def get_role_auto_context(self, role_id: str) -> Dict[str, bool]:
+    def get_role_auto_context(self, role_id: str) -> dict[str, bool]:
         """Get auto-context flags for a role from distribution config."""
         try:
             with open(self._config_path, encoding="utf-8") as f:
@@ -568,7 +568,7 @@ class ContextDistributor:
 
 
 # Global distributor instance
-_global_distributor: Optional[ContextDistributor] = None
+_global_distributor: ContextDistributor | None = None
 
 
 def get_distributor() -> ContextDistributor:
@@ -581,14 +581,14 @@ def get_distributor() -> ContextDistributor:
 
 def distribute_to_role(
     role_id: str,
-    task_id: Optional[str] = None,
-    phase: Optional[str] = None,
-) -> Optional[ContextBundle]:
+    task_id: str | None = None,
+    phase: str | None = None,
+) -> ContextBundle | None:
     """Convenience function to distribute context to a role."""
     return get_distributor().distribute(role_id, task_id, phase)
 
 
-def distribute_for_phase() -> Dict[str, Optional[ContextBundle]]:
+def distribute_for_phase() -> dict[str, ContextBundle | None]:
     """Convenience function to distribute context for the current phase."""
     return get_distributor().distribute_for_current_phase()
 

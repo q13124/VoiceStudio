@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -16,7 +16,7 @@ class GitKrakenAdapter(BaseSourceAdapter):
         self._commit_limit = commit_limit
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             return {"gitkraken": {"issues": [] if self._include_issues else None, "prs": [] if self._include_prs else None}}
 
         return self._measure(_load, context)

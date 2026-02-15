@@ -8,12 +8,12 @@ Compatible with:
 - ONNX Runtime 1.16+
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from pathlib import Path
-from typing import Dict, Optional, Tuple, Any
+from typing import Any
 
-import numpy as np
 import torch
 
 logger = logging.getLogger(__name__)
@@ -34,10 +34,10 @@ except ImportError:
 
 def convert_pytorch_to_onnx(
     model: torch.nn.Module,
-    input_shape: Tuple[int, ...],
+    input_shape: tuple[int, ...],
     output_path: str,
     opset_version: int = 17,
-    dynamic_axes: Optional[Dict[str, Any]] = None,
+    dynamic_axes: dict[str, Any] | None = None,
     device: str = "cpu",
 ) -> bool:
     """
@@ -180,7 +180,7 @@ def validate_onnx_model(model_path: str) -> bool:
         return False
 
 
-def get_onnx_model_info(model_path: str) -> Optional[Dict[str, Any]]:
+def get_onnx_model_info(model_path: str) -> dict[str, Any] | None:
     """
     Get information about ONNX model.
 
@@ -256,7 +256,7 @@ def quantize_onnx_model(
         return False
 
     try:
-        from onnxruntime.quantization import quantize_dynamic, QuantType
+        from onnxruntime.quantization import QuantType, quantize_dynamic
 
         # Map quantization type
         quant_type_map = {

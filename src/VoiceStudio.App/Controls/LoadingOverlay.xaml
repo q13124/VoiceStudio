@@ -14,14 +14,16 @@
             </DoubleAnimation>
         </Storyboard>
     </UserControl.Resources>
-    <Grid x:Name="LoadingGrid" Background="{StaticResource VSQ.Loading.BackgroundBrush}" Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+    <Grid x:Name="LoadingGrid" Background="{StaticResource VSQ.Loading.BackgroundBrush}" Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+          AutomationProperties.AutomationId="LoadingOverlay_Root">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="{StaticResource VSQ.Spacing.Value.Medium}">
             <!-- Use WinUI implicit ProgressRing style; apply VSQ tokens via properties. -->
             <ProgressRing
                 Width="{StaticResource VSQ.Icon.Size.Large}"
                 Height="{StaticResource VSQ.Icon.Size.Large}"
                 Foreground="{StaticResource VSQ.Loading.ForegroundBrush}"
-                IsActive="True" />
+                IsActive="True"
+                AutomationProperties.AutomationId="LoadingOverlay_ProgressRing" />
             <TextBlock Text="{x:Bind LoadingMessage, Mode=OneWay}" Foreground="{StaticResource VSQ.Loading.TextBrush}" FontSize="{StaticResource VSQ.FontSize.Body}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="300">
             </TextBlock>
         </StackPanel>

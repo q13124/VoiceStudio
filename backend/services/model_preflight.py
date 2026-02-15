@@ -28,7 +28,6 @@ import logging
 import os
 from importlib import metadata
 from pathlib import Path
-from typing import Dict, List, Optional
 
 try:
     from huggingface_hub import hf_hub_download, snapshot_download
@@ -46,7 +45,7 @@ logger = logging.getLogger(__name__)
 class PreflightError(Exception):
     """
     Service-layer exception for preflight check failures.
-    
+
     Routes should catch this and convert to HTTPException.
     This keeps the service layer independent of FastAPI.
     """
@@ -65,7 +64,7 @@ def _fail(detail: object, status_code: int = 503) -> PreflightError:
     return PreflightError(detail=detail, status_code=status_code)
 
 
-def _get_pkg_version(package_name: str) -> Optional[str]:
+def _get_pkg_version(package_name: str) -> str | None:
     try:
         return metadata.version(package_name)
     except metadata.PackageNotFoundError:
@@ -74,7 +73,7 @@ def _get_pkg_version(package_name: str) -> Optional[str]:
         return None
 
 
-def _xtts_dependency_status() -> Dict[str, object]:
+def _xtts_dependency_status() -> dict[str, object]:
     versions = {
         "coqui-tts": _get_pkg_version("coqui-tts"),
         "torch": _get_pkg_version("torch"),
@@ -90,7 +89,7 @@ def _xtts_dependency_status() -> Dict[str, object]:
     return {"ok": ok, "versions": versions, "message": message}
 
 
-def ensure_xtts(auto_download: bool = True) -> Dict[str, object]:
+def ensure_xtts(auto_download: bool = True) -> dict[str, object]:
     """
     Ensure XTTS model assets exist.
 
@@ -119,7 +118,7 @@ def ensure_xtts(auto_download: bool = True) -> Dict[str, object]:
     _ensure_dir(cache_dir)
 
     downloaded = False
-    paths: List[str] = []
+    paths: list[str] = []
 
     deps_status = _xtts_dependency_status()
     if not deps_status["ok"]:
@@ -186,7 +185,7 @@ def ensure_xtts(auto_download: bool = True) -> Dict[str, object]:
     }
 
 
-def ensure_piper(auto_download: bool = True) -> Dict[str, object]:
+def ensure_piper(auto_download: bool = True) -> dict[str, object]:
     """
     Ensure Piper voice model (.onnx + .json) exists.
     """
@@ -248,7 +247,7 @@ def ensure_piper(auto_download: bool = True) -> Dict[str, object]:
     }
 
 
-def ensure_whisper_cpp(auto_download: bool = True) -> Dict[str, object]:
+def ensure_whisper_cpp(auto_download: bool = True) -> dict[str, object]:
     """
     Ensure whisper.cpp GGUF model exists.
     """
@@ -293,7 +292,7 @@ def ensure_whisper_cpp(auto_download: bool = True) -> Dict[str, object]:
     }
 
 
-def ensure_sovits(auto_download: bool = False) -> Dict[str, object]:
+def ensure_sovits(auto_download: bool = False) -> dict[str, object]:
     """
     Validate So-VITS-SVC checkpoint + config (no auto-download; manual).
     """
@@ -317,7 +316,7 @@ def ensure_sovits(auto_download: bool = False) -> Dict[str, object]:
     infer_workdir = params.get("infer_workdir") or os.getenv("SOVITS_SVC_WORKDIR")
     allow_passthrough = bool(params.get("allow_passthrough", False))
 
-    missing: List[str] = []
+    missing: list[str] = []
     if not model_path.exists():
         missing.append(str(model_path))
     if not config_path.exists():
@@ -341,7 +340,7 @@ def ensure_sovits(auto_download: bool = False) -> Dict[str, object]:
     }
 
 
-def run_preflight(auto_download: bool = True) -> Dict[str, object]:
+def run_preflight(auto_download: bool = True) -> dict[str, object]:
     """
     Run all pre-flight checks. Returns a summary dict.
     """

@@ -8,15 +8,16 @@ Provides comprehensive performance profiling utilities:
 - Performance statistics and reporting
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 import time
-import traceback
-from collections import defaultdict
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 try:
     import psutil
@@ -52,9 +53,9 @@ class ProfileEntry:
     max_memory_delta: float = 0.0
     total_gpu_memory_delta: float = 0.0
     max_gpu_memory_delta: float = 0.0
-    last_called: Optional[datetime] = None
+    last_called: datetime | None = None
     errors: int = 0
-    call_stack: List[str] = field(default_factory=list)
+    call_stack: list[str] = field(default_factory=list)
 
     def update(
         self,
@@ -110,8 +111,8 @@ class PerformanceProfiler:
         self.enabled = enabled
         self.slow_threshold_seconds = slow_threshold_seconds
         self.warn_on_slow = warn_on_slow
-        self._profiles: Dict[str, ProfileEntry] = {}
-        self._call_stack: List[str] = []
+        self._profiles: dict[str, ProfileEntry] = {}
+        self._call_stack: list[str] = []
         self._process = None
 
         if HAS_PSUTIL:
@@ -142,7 +143,7 @@ class PerformanceProfiler:
 
     def profile_function(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         track_memory: bool = True,
         track_gpu_memory: bool = True,
     ):
@@ -205,7 +206,7 @@ class PerformanceProfiler:
                         )
 
                     return result
-                except Exception as e:
+                except Exception:
                     execution_time = time.perf_counter() - start_time
                     if func_name not in self._profiles:
                         self._profiles[func_name] = ProfileEntry(
@@ -277,7 +278,7 @@ class PerformanceProfiler:
                     f"{execution_time:.3f}s (threshold: "
                     f"{self.slow_threshold_seconds}s)"
                 )
-        except Exception as e:
+        except Exception:
             execution_time = time.perf_counter() - start_time
             if name not in self._profiles:
                 self._profiles[name] = ProfileEntry(function_name=name)
@@ -288,15 +289,15 @@ class PerformanceProfiler:
             if self._call_stack:
                 self._call_stack.pop()
 
-    def get_profile(self, function_name: str) -> Optional[ProfileEntry]:
+    def get_profile(self, function_name: str) -> ProfileEntry | None:
         """Get profile entry for a function."""
         return self._profiles.get(function_name)
 
-    def get_all_profiles(self) -> Dict[str, ProfileEntry]:
+    def get_all_profiles(self) -> dict[str, ProfileEntry]:
         """Get all profile entries."""
         return self._profiles.copy()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get profiling statistics."""
         if not self._profiles:
             return {
@@ -370,7 +371,7 @@ class PerformanceProfiler:
             ],
         }
 
-    def get_detailed_stats(self) -> Dict[str, Any]:
+    def get_detailed_stats(self) -> dict[str, Any]:
         """Get detailed profiling statistics with all functions."""
         stats = self.get_stats()
         stats["all_functions"] = {
@@ -416,7 +417,7 @@ class PerformanceProfiler:
 
 
 # Global profiler instance
-_profiler: Optional[PerformanceProfiler] = None
+_profiler: PerformanceProfiler | None = None
 
 
 def get_profiler() -> PerformanceProfiler:

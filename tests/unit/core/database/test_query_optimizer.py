@@ -4,6 +4,7 @@ Tests all optimizations: query caching (LRU with TTL), connection pooling,
 health checks, connection reuse, query statistics, and index management.
 """
 
+import contextlib
 import sqlite3
 import sys
 import tempfile
@@ -157,10 +158,8 @@ class TestConnectionPool:
         yield db_path
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             Path(db_path).unlink()
-        except Exception:
-            ...
 
     def test_pool_initialization(self, temp_db):
         """Test ConnectionPool initializes correctly."""
@@ -217,7 +216,7 @@ class TestConnectionPool:
 
         # Create connections up to max
         conns = []
-        for i in range(3):
+        for _i in range(3):
             conn = pool.get_connection()
             conns.append(conn)
             conn.__enter__()
@@ -228,10 +227,8 @@ class TestConnectionPool:
 
         # Cleanup
         for conn in conns:
-            try:
+            with contextlib.suppress(Exception):
                 conn.__exit__(None, None, None)
-            except Exception:
-                ...
 
     def test_idle_connection_cleanup(self, temp_db):
         """Test idle connections are cleaned up."""
@@ -308,10 +305,8 @@ class TestDatabaseQueryOptimizer:
         yield db_path
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             Path(db_path).unlink()
-        except Exception:
-            ...
 
     def test_optimizer_initialization(self, temp_db):
         """Test DatabaseQueryOptimizer initializes correctly."""
@@ -365,7 +360,7 @@ class TestDatabaseQueryOptimizer:
         optimizer = DatabaseQueryOptimizer(temp_db, enable_cache=False)
 
         # Execute query multiple times
-        for i in range(3):
+        for _i in range(3):
             optimizer.execute_query("SELECT * FROM test")
 
         # Access query_stats directly

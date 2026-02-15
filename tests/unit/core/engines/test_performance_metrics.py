@@ -11,9 +11,10 @@ Tests cover:
 - Statistics aggregation
 """
 
+import contextlib
 import time
 from collections import defaultdict
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -38,10 +39,8 @@ def metrics():
 
     metrics = EnginePerformanceMetrics()
     yield metrics
-    try:
+    with contextlib.suppress(Exception):
         metrics.clear()
-    except Exception:
-        ...
 
 
 class TestEnginePerformanceMetricsImports:
@@ -289,7 +288,7 @@ class TestEnginePerformanceMetricsContextManager:
 
     def test_time_synthesis_context_manager(self, metrics):
         """Test time_synthesis context manager."""
-        with metrics.time_synthesis("xtts", cached=False) as timer:
+        with metrics.time_synthesis("xtts", cached=False):
             time.sleep(0.1)  # Simulate synthesis
 
         # Check that time was recorded

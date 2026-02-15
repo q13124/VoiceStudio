@@ -11,6 +11,8 @@ Compatible with:
 - PyTorch 2.0+ (CPU)
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -19,7 +21,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -75,7 +76,7 @@ class FastSDCPUEngine(EngineProtocol):
         model_id: str = "runwayml/stable-diffusion-v1-5",
         use_onnx: bool = True,
         num_threads: int = 4,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = False,  # Force CPU
         lazy_load: bool = True,
         enable_model_cache: bool = True,
@@ -185,7 +186,7 @@ class FastSDCPUEngine(EngineProtocol):
                     )
                     # Configure ONNX session options
                     if hasattr(self.pipe, "scheduler") and HAS_ONNX:
-                        providers = ort.get_available_providers()
+                        ort.get_available_providers()
                         session_options = ort.SessionOptions()
                         session_options.intra_op_num_threads = self.num_threads
                         session_options.inter_op_num_threads = self.num_threads
@@ -226,7 +227,7 @@ class FastSDCPUEngine(EngineProtocol):
         height: int,
         steps: int,
         cfg_scale: float,
-        seed: Optional[int],
+        seed: int | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -252,16 +253,15 @@ class FastSDCPUEngine(EngineProtocol):
         height: int = 512,
         steps: int = 20,
         cfg_scale: float = 7.0,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """Generate image using fast CPU-optimized Stable Diffusion."""
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -366,17 +366,17 @@ class FastSDCPUEngine(EngineProtocol):
 
     def batch_generate(
         self,
-        prompts: List[str],
-        negative_prompts: Optional[List[str]] = None,
+        prompts: list[str],
+        negative_prompts: list[str] | None = None,
         width: int = 512,
         height: int = 512,
         steps: int = 20,
         cfg_scale: float = 7.0,
-        seeds: Optional[List[Optional[int]]] = None,
-        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
-        batch_size: Optional[int] = None,
+        seeds: list[int | None] | None = None,
+        output_paths: list[str | Path | None] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Optional[Image.Image]]:
+    ) -> list[Image.Image | None]:
         """
         Generate multiple images using batch processing.
 
@@ -399,9 +399,8 @@ class FastSDCPUEngine(EngineProtocol):
             return []
 
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(prompts)
+        if not self._initialized and not self.initialize():
+            return [None] * len(prompts)
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -450,7 +449,7 @@ class FastSDCPUEngine(EngineProtocol):
             args_list = [
                 (i, prompt, neg_prompt, seed, out_path)
                 for i, (prompt, neg_prompt, seed, out_path) in enumerate(
-                    zip(prompts, negative_prompts, seeds, output_paths)
+                    zip(prompts, negative_prompts, seeds, output_paths, strict=False)
                 )
             ]
 
@@ -491,12 +490,11 @@ class FastSDCPUEngine(EngineProtocol):
         """Clean up resources (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if not self.enable_model_cache or (
+            if (not self.enable_model_cache or (
                 self._model_key is not None and self._model_key not in self._model_cache
-            ):
-                if self.pipe is not None:
-                    del self.pipe
-                    self.pipe = None
+            )) and self.pipe is not None:
+                del self.pipe
+                self.pipe = None
 
             # Clear response cache
             if self.enable_response_cache:
@@ -511,12 +509,12 @@ class FastSDCPUEngine(EngineProtocol):
     @classmethod
     def clear_model_cache(cls):
         """Clear the shared model cache."""
-        for key, pipe in cls._model_cache.items():
+        for _key, pipe in cls._model_cache.items():
             del pipe
         cls._model_cache.clear()
         logger.info("FastSD CPU model cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_response_cache:
             return {"enabled": False}
@@ -544,7 +542,7 @@ class FastSDCPUEngine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("FastSD CPU response cache cleared")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -574,7 +572,7 @@ def create_fastsd_cpu_engine(
     model_id: str = "runwayml/stable-diffusion-v1-5",
     use_onnx: bool = True,
     num_threads: int = 4,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = False,
     lazy_load: bool = True,
 ) -> FastSDCPUEngine:

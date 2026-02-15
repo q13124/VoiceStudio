@@ -6,22 +6,23 @@ Compatible with:
 - Python 3.10+
 """
 
-import json
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import audio utilities
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         analyze_voice_characteristics,
         detect_silence,
         resample_audio,
     )
-    from ..audio.enhanced_quality_metrics import EnhancedQualityMetrics
+    from app.core.audio.enhanced_quality_metrics import EnhancedQualityMetrics
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -86,8 +87,8 @@ class DatasetQA:
                 logger.warning(f"Failed to initialize quality metrics: {e}")
 
     def validate_audio_file(
-        self, audio_path: Union[str, Path], check_quality: bool = True
-    ) -> Dict[str, Any]:
+        self, audio_path: str | Path, check_quality: bool = True
+    ) -> dict[str, Any]:
         """
         Validate a single audio file.
 
@@ -182,7 +183,7 @@ class DatasetQA:
                         logger.warning(f"Quality check failed: {e}")
 
             except Exception as e:
-                results["errors"].append(f"Failed to load audio: {str(e)}")
+                results["errors"].append(f"Failed to load audio: {e!s}")
         else:
             results["warnings"].append(
                 "librosa not available, limited validation"
@@ -195,11 +196,11 @@ class DatasetQA:
 
     def validate_dataset(
         self,
-        dataset_path: Union[str, Path],
-        audio_extensions: Optional[List[str]] = None,
+        dataset_path: str | Path,
+        audio_extensions: list[str] | None = None,
         recursive: bool = True,
         check_quality: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate an entire dataset.
 
@@ -312,8 +313,8 @@ class DatasetQA:
         return results
 
     def check_duplicates(
-        self, dataset_path: Union[str, Path], recursive: bool = True
-    ) -> Dict[str, Any]:
+        self, dataset_path: str | Path, recursive: bool = True
+    ) -> dict[str, Any]:
         """
         Check for duplicate audio files in dataset.
 
@@ -370,7 +371,7 @@ class DatasetQA:
         return results
 
     def generate_report(
-        self, validation_results: Dict[str, Any], output_path: Optional[Union[str, Path]] = None
+        self, validation_results: dict[str, Any], output_path: str | Path | None = None
     ) -> str:
         """
         Generate QA report.

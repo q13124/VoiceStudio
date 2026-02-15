@@ -5,7 +5,6 @@ Tests the base engine protocol that all engines must implement.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -16,7 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     import importlib.util
     from pathlib import Path
-    
+
     project_root = Path(__file__).parent.parent.parent.parent.parent
     base_path = project_root / "app" / "core" / "engines" / "base.py"
     spec = importlib.util.spec_from_file_location("app.core.engines.base", base_path)

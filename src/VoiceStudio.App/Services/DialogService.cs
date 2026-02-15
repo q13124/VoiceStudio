@@ -89,50 +89,70 @@ namespace VoiceStudio.App.Services
 
     public async Task<string?> ShowOpenFileAsync(string title, params string[] fileTypes)
     {
-      var picker = new FileOpenPicker();
-      InitializePicker(picker);
-      
-      foreach (var type in fileTypes)
+      try
       {
-        picker.FileTypeFilter.Add(type.StartsWith(".") ? type : $".{type}");
-      }
+        var picker = new FileOpenPicker();
+        InitializePicker(picker);
+        
+        foreach (var type in fileTypes)
+        {
+          picker.FileTypeFilter.Add(type.StartsWith(".") ? type : $".{type}");
+        }
 
-      if (fileTypes.Length == 0)
+        if (fileTypes.Length == 0)
+        {
+          picker.FileTypeFilter.Add("*");
+        }
+
+        var file = await picker.PickSingleFileAsync();
+        return file?.Path;
+      }
+      catch (System.Runtime.InteropServices.COMException ex) when (ex.HResult == unchecked((int)0x80004005))
       {
-        picker.FileTypeFilter.Add("*");
+        // WinRT FileOpenPicker fails on some systems - use native Win32 dialog as fallback
+        System.Diagnostics.Debug.WriteLine($"[DialogService] WinRT FileOpenPicker failed (0x80004005), using native fallback");
+        var hwnd = WindowNative.GetWindowHandle(_window);
+        return await NativeFileDialog.ShowOpenFileDialogAsync(hwnd, title, fileTypes);
       }
-
-      var file = await picker.PickSingleFileAsync();
-      return file?.Path;
     }
 
     public async Task<string[]?> ShowOpenFilesAsync(string title, params string[] fileTypes)
     {
-      var picker = new FileOpenPicker();
-      InitializePicker(picker);
-      
-      foreach (var type in fileTypes)
+      try
       {
-        picker.FileTypeFilter.Add(type.StartsWith(".") ? type : $".{type}");
-      }
+        var picker = new FileOpenPicker();
+        InitializePicker(picker);
+        
+        foreach (var type in fileTypes)
+        {
+          picker.FileTypeFilter.Add(type.StartsWith(".") ? type : $".{type}");
+        }
 
-      if (fileTypes.Length == 0)
+        if (fileTypes.Length == 0)
+        {
+          picker.FileTypeFilter.Add("*");
+        }
+
+        var files = await picker.PickMultipleFilesAsync();
+        
+        if (files == null || files.Count == 0)
+          return null;
+
+        var paths = new List<string>();
+        foreach (var file in files)
+        {
+          paths.Add(file.Path);
+        }
+
+        return paths.ToArray();
+      }
+      catch (System.Runtime.InteropServices.COMException ex) when (ex.HResult == unchecked((int)0x80004005))
       {
-        picker.FileTypeFilter.Add("*");
+        // WinRT FileOpenPicker fails on some systems - use native Win32 dialog as fallback
+        System.Diagnostics.Debug.WriteLine($"[DialogService] WinRT FileOpenPicker failed (0x80004005), using native fallback");
+        var hwnd = WindowNative.GetWindowHandle(_window);
+        return await NativeFileDialog.ShowOpenFilesDialogAsync(hwnd, title, fileTypes);
       }
-
-      var files = await picker.PickMultipleFilesAsync();
-      
-      if (files == null || files.Count == 0)
-        return null;
-
-      var paths = new List<string>();
-      foreach (var file in files)
-      {
-        paths.Add(file.Path);
-      }
-
-      return paths.ToArray();
     }
 
     public async Task<string?> ShowSaveFileAsync(string title, string suggestedFileName, params string[] fileTypes)

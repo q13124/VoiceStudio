@@ -5,12 +5,12 @@ This client integrates the mcp-unlock-pdf server to provide PDF reading
 and text extraction capabilities for VoiceStudio.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-import subprocess
-import json
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class PDFUnlockerClient:
     """Client for interacting with the mcp-unlock-pdf MCP server."""
 
-    def __init__(self, server_path: Optional[str] = None):
+    def __init__(self, server_path: str | None = None):
         """
         Initialize the PDF Unlocker client.
 
@@ -30,7 +30,7 @@ class PDFUnlockerClient:
             # Default to the integrated server location
             base_dir = Path(__file__).parent.parent.parent
             server_path = str(base_dir / "backend" / "mcp_servers" / "mcp-unlock-pdf")
-        
+
         self.server_path = Path(server_path)
         self.server_available = self._check_server_available()
 
@@ -42,9 +42,9 @@ class PDFUnlockerClient:
     def read_pdf(
         self,
         file_path: str,
-        password: Optional[str] = None,
-        pages: Optional[List[int]] = None
-    ) -> Dict[str, Any]:
+        password: str | None = None,
+        pages: list[int] | None = None
+    ) -> dict[str, Any]:
         """
         Read a PDF file and extract its text.
 
@@ -64,7 +64,7 @@ class PDFUnlockerClient:
 
         # Normalize file path
         file_path = os.path.abspath(os.path.expanduser(file_path))
-        
+
         if not os.path.exists(file_path):
             return {
                 "success": False,
@@ -75,13 +75,13 @@ class PDFUnlockerClient:
             # Use PyPDF2 directly (same library the MCP server uses)
             # This avoids subprocess overhead for simple operations
             import PyPDF2
-            
+
             with open(file_path, 'rb') as file:
                 pdf_reader = PyPDF2.PdfReader(file)
-                
+
                 # Check if PDF is encrypted
                 is_encrypted = pdf_reader.is_encrypted
-                
+
                 # Try to decrypt if necessary
                 if is_encrypted:
                     if password is None:
@@ -99,7 +99,7 @@ class PDFUnlockerClient:
                             "is_encrypted": True,
                             "password_required": True
                         }
-                
+
                 # Extract metadata
                 metadata = {}
                 if pdf_reader.metadata:
@@ -108,20 +108,20 @@ class PDFUnlockerClient:
                             metadata[key[1:]] = value
                         else:
                             metadata[key] = value
-                
+
                 # Determine which pages to extract
                 total_pages = len(pdf_reader.pages)
                 pages_to_extract = pages or list(range(1, total_pages + 1))
-                
+
                 # Convert to 0-indexed for internal use
                 zero_indexed_pages = [p - 1 for p in pages_to_extract if 1 <= p <= total_pages]
-                
+
                 # Extract content from requested pages
                 content = {}
                 for page_number in zero_indexed_pages:
                     page = pdf_reader.pages[page_number]
                     content[page_number + 1] = page.extract_text()
-                
+
                 return {
                     "success": True,
                     "is_encrypted": is_encrypted,
@@ -130,7 +130,7 @@ class PDFUnlockerClient:
                     "metadata": metadata,
                     "content": content
                 }
-        
+
         except ImportError:
             logger.warning("PyPDF2 not available, falling back to MCP server subprocess")
             # Note: This would require async implementation
@@ -142,14 +142,14 @@ class PDFUnlockerClient:
             logger.error(f"Error reading PDF: {e}")
             return {
                 "success": False,
-                "error": f"Error processing PDF: {str(e)}"
+                "error": f"Error processing PDF: {e!s}"
             }
 
 
     def extract_text_for_tts(
         self,
-        pdf_result: Dict[str, Any],
-        page_range: Optional[tuple] = None
+        pdf_result: dict[str, Any],
+        page_range: tuple | None = None
     ) -> str:
         """
         Extract text from PDF result for text-to-speech synthesis.
@@ -165,11 +165,11 @@ class PDFUnlockerClient:
             return ""
 
         content = pdf_result.get("content", {})
-        
+
         if page_range:
             start_page, end_page = page_range
             pages_to_extract = [
-                p for p in content.keys()
+                p for p in content
                 if start_page <= p <= end_page
             ]
         else:

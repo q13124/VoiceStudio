@@ -12,10 +12,9 @@ import json
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MAX_UNTRACKED_BYTES = 500_000
@@ -52,7 +51,7 @@ class MarkerHit:
     source: str
 
 
-def _run_git(args: list[str], root: Path) -> Optional[str]:
+def _run_git(args: list[str], root: Path) -> str | None:
     try:
         result = subprocess.run(
             ["git", *args],
@@ -81,18 +80,15 @@ def _is_guarded_path(path: str) -> bool:
     return any(normalized.startswith(prefix) for prefix in GUARDED_PREFIXES)
 
 
-def _parse_diff(diff_text: str, source: str) -> List[MarkerHit]:
-    hits: List[MarkerHit] = []
-    current_file: Optional[str] = None
+def _parse_diff(diff_text: str, source: str) -> list[MarkerHit]:
+    hits: list[MarkerHit] = []
+    current_file: str | None = None
     for raw in diff_text.splitlines():
         if raw.startswith("diff --git"):
             current_file = None
             continue
         if raw.startswith("+++ "):
-            if raw.startswith("+++ b/"):
-                current_file = raw[6:].strip()
-            else:
-                current_file = None
+            current_file = raw[6:].strip() if raw.startswith("+++ b/") else None
             continue
         if raw.startswith("--- "):
             continue
@@ -106,15 +102,15 @@ def _parse_diff(diff_text: str, source: str) -> List[MarkerHit]:
     return hits
 
 
-def _extract_untracked(status_lines: Iterable[str]) -> List[str]:
-    untracked: List[str] = []
+def _extract_untracked(status_lines: Iterable[str]) -> list[str]:
+    untracked: list[str] = []
     for line in status_lines:
         if line.startswith("?? "):
             untracked.append(line[3:].strip())
     return untracked
 
 
-def _is_in_code_fence(lines: List[str], line_no: int) -> bool:
+def _is_in_code_fence(lines: list[str], line_no: int) -> bool:
     """Check if line is inside a markdown code fence (odd number of fences before it)."""
     fence_count = 0
     for line in lines[: line_no - 1]:
@@ -123,8 +119,8 @@ def _is_in_code_fence(lines: List[str], line_no: int) -> bool:
     return fence_count % 2 == 1
 
 
-def _scan_untracked(paths: Iterable[str]) -> List[MarkerHit]:
-    hits: List[MarkerHit] = []
+def _scan_untracked(paths: Iterable[str]) -> list[MarkerHit]:
+    hits: list[MarkerHit] = []
     for rel_path in paths:
         rel_path = rel_path.replace("\\", "/")
         if not _is_guarded_path(rel_path):

@@ -11,8 +11,9 @@ Compatible with:
 - noisereduce>=3.0.2
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -104,9 +105,9 @@ class EnhancedAudioEnhancer:
     def enhance(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
-        preset: Optional[str] = None,
-        config: Optional[Dict] = None,
+        sample_rate: int | None = None,
+        preset: str | None = None,
+        config: dict | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -181,7 +182,7 @@ class EnhancedAudioEnhancer:
     def enhance_adaptive(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
+        sample_rate: int | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -204,10 +205,7 @@ class EnhancedAudioEnhancer:
         # Analyze audio characteristics
         try:
             # Convert to mono for analysis
-            if len(audio.shape) > 1:
-                audio_mono = np.mean(audio, axis=1)
-            else:
-                audio_mono = audio
+            audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
             # Calculate RMS (loudness indicator)
             rms = np.sqrt(np.mean(audio_mono**2))
@@ -259,7 +257,7 @@ class EnhancedAudioEnhancer:
             logger.warning(f"Adaptive enhancement failed: {e}, using default")
             return self.enhance(audio, sample_rate, **kwargs)
 
-    def get_preset(self, preset_name: str) -> Dict:
+    def get_preset(self, preset_name: str) -> dict:
         """Get enhancement preset configuration."""
         presets = {
             "voice_cloning": {
@@ -341,8 +339,8 @@ def create_enhanced_audio_enhancer(sample_rate: int = 24000) -> EnhancedAudioEnh
 def enhance_audio(
     audio: np.ndarray,
     sample_rate: int = 24000,
-    preset: Optional[str] = None,
-    config: Optional[Dict] = None,
+    preset: str | None = None,
+    config: dict | None = None,
     **kwargs,
 ) -> np.ndarray:
     """

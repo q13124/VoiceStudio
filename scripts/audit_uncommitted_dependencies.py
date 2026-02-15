@@ -24,7 +24,7 @@ def get_untracked_py_files():
             text=True,
             check=True
         )
-        
+
         untracked = result.stdout.strip().split("\n")
         py_files = [f for f in untracked if f.endswith(".py") and f]
         return py_files
@@ -42,7 +42,7 @@ def get_tracked_py_files():
             text=True,
             check=True
         )
-        
+
         tracked = result.stdout.strip().split("\n")
         return [f for f in tracked if f]
     except subprocess.CalledProcessError:
@@ -72,12 +72,12 @@ def extract_imports(file_path):
 
 def audit():
     """Audit for uncommitted dependencies."""
-    project_root = Path(__file__).parent.parent
-    
+    Path(__file__).parent.parent
+
     # Get untracked directories containing Python files
     untracked_files = get_untracked_py_files()
-    untracked_dirs = set(str(Path(f).parent) for f in untracked_files)
-    
+    untracked_dirs = {str(Path(f).parent) for f in untracked_files}
+
     # Convert to module names
     untracked_modules = set()
     for dir_path in untracked_dirs:
@@ -88,17 +88,17 @@ def audit():
         # Also add top-level module
         if "." in module:
             untracked_modules.add(module.split(".")[0])
-    
+
     if not untracked_modules:
         print("✅ No untracked Python modules detected")
         return 0
-    
+
     print(f"Found {len(untracked_modules)} untracked module(s): {', '.join(sorted(untracked_modules))}")
-    
+
     # Check tracked files for imports from untracked modules
     tracked_files = get_tracked_py_files()
     violations = []
-    
+
     for tracked_file in tracked_files:
         imports = extract_imports(tracked_file)
         for imp in imports:
@@ -107,7 +107,7 @@ def audit():
                     "tracked_file": tracked_file,
                     "untracked_module": imp
                 })
-    
+
     if violations:
         print(f"\n❌ Uncommitted dependency violations ({len(violations)} found):")
         print("   Tracked files importing from untracked modules:")
@@ -115,7 +115,7 @@ def audit():
             print(f"     - {v['tracked_file']} imports {v['untracked_module']}")
         print("\n   Fix: Commit the untracked modules before importing them")
         return 1
-    
+
     print("✅ No uncommitted dependencies detected")
     return 0
 

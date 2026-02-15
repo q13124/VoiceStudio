@@ -7,10 +7,8 @@ Communicates via HTTP (Flask) or stdin/stdout.
 import argparse
 import json
 import logging
-import os
 import sys
 import tempfile
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,21 +31,22 @@ def get_tts():
 
 import torch
 
-def synthesize(text: str, speaker_wav: str, language: str = "en", output_path: str = None) -> dict:
+
+def synthesize(text: str, speaker_wav: str, language: str = "en", output_path: str | None = None) -> dict:
     """Synthesize speech using XTTS."""
     try:
         tts = get_tts()
-        
+
         if output_path is None:
             output_path = tempfile.mktemp(suffix=".wav")
-        
+
         tts.tts_to_file(
             text=text,
             speaker_wav=speaker_wav,
             language=language,
             file_path=output_path
         )
-        
+
         return {
             "success": True,
             "output_path": output_path,
@@ -62,14 +61,14 @@ def synthesize(text: str, speaker_wav: str, language: str = "en", output_path: s
 
 def run_http_server(host: str = "127.0.0.1", port: int = 8081):
     """Run as HTTP microservice."""
-    from flask import Flask, request, jsonify, send_file
-    
+    from flask import Flask, jsonify, request, send_file
+
     app = Flask(__name__)
-    
+
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({"status": "ok", "service": "xtts"})
-    
+
     @app.route("/synthesize", methods=["POST"])
     def api_synthesize():
         data = request.json
@@ -80,7 +79,7 @@ def run_http_server(host: str = "127.0.0.1", port: int = 8081):
             output_path=data.get("output_path")
         )
         return jsonify(result)
-    
+
     @app.route("/synthesize_and_return", methods=["POST"])
     def api_synthesize_and_return():
         data = request.json
@@ -92,24 +91,24 @@ def run_http_server(host: str = "127.0.0.1", port: int = 8081):
         if result.get("success"):
             return send_file(result["output_path"], mimetype="audio/wav")
         return jsonify(result), 500
-    
+
     logger.info(f"Starting XTTS service on {host}:{port}")
     app.run(host=host, port=port, threaded=True)
 
 def run_stdio():
     """Run in stdio mode for subprocess communication."""
     logger.info("XTTS service starting in stdio mode...")
-    
+
     # Preload model
     get_tts()
-    
+
     print("READY", flush=True)
-    
+
     for line in sys.stdin:
         try:
             request = json.loads(line.strip())
             action = request.get("action")
-            
+
             if action == "synthesize":
                 result = synthesize(
                     text=request.get("text", ""),
@@ -134,7 +133,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8081)
     args = parser.parse_args()
-    
+
     if args.mode == "http":
         run_http_server(args.host, args.port)
     else:

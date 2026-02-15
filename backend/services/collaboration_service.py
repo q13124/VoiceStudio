@@ -10,17 +10,19 @@ Features:
 - Sharing and permissions (14.3)
 """
 
-import asyncio
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
 import uuid
 import zipfile
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +65,10 @@ class SyncEvent:
     project_id: str
     user_id: str
     timestamp: datetime
-    data: Dict[str, Any]
+    data: dict[str, Any]
     version: int
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "event_id": self.event_id,
             "event_type": self.event_type.value,
@@ -86,9 +88,9 @@ class Collaborator:
     permission: PermissionLevel
     joined_at: datetime
     is_online: bool = False
-    cursor_position: Optional[Dict[str, Any]] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    cursor_position: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "user_id": self.user_id,
             "display_name": self.display_name,
@@ -105,14 +107,14 @@ class SharedProject:
     project_id: str
     name: str
     owner_id: str
-    collaborators: Dict[str, Collaborator]
+    collaborators: dict[str, Collaborator]
     version: int
     created_at: datetime
     last_sync_at: datetime
     is_public: bool = False
-    share_link: Optional[str] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    share_link: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "name": self.name,
@@ -137,10 +139,10 @@ class ExportResult:
     file_path: str
     file_size_bytes: int
     created_at: datetime
-    expires_at: Optional[datetime]
-    download_url: Optional[str]
-    
-    def to_dict(self) -> Dict[str, Any]:
+    expires_at: datetime | None
+    download_url: str | None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "export_id": self.export_id,
             "project_id": self.project_id,
@@ -160,43 +162,43 @@ EventCallback = Callable[[SyncEvent], None]
 class CollaborationService:
     """
     Collaboration service for real-time sync and sharing.
-    
+
     Phase 14: Collaboration Features
-    
+
     Features:
     - Real-time project synchronization
     - Multi-user editing support
     - Project export/import
     - Sharing with permissions
     """
-    
-    def __init__(self, exports_dir: Optional[Path] = None):
+
+    def __init__(self, exports_dir: Path | None = None):
         self._exports_dir = exports_dir or Path("exports")
-        self._shared_projects: Dict[str, SharedProject] = {}
-        self._event_history: Dict[str, List[SyncEvent]] = {}
-        self._subscribers: Dict[str, Set[EventCallback]] = {}
-        self._active_connections: Dict[str, Set[str]] = {}  # project_id -> user_ids
+        self._shared_projects: dict[str, SharedProject] = {}
+        self._event_history: dict[str, list[SyncEvent]] = {}
+        self._subscribers: dict[str, set[EventCallback]] = {}
+        self._active_connections: dict[str, set[str]] = {}  # project_id -> user_ids
         self._initialized = False
-        
+
         logger.info("CollaborationService created")
-    
+
     async def initialize(self) -> bool:
         """Initialize the collaboration service."""
         if self._initialized:
             return True
-        
+
         try:
             self._exports_dir.mkdir(parents=True, exist_ok=True)
             self._initialized = True
             logger.info("CollaborationService initialized")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize CollaborationService: {e}")
             return False
-    
+
     # ===== Phase 14.1: Real-time Sync =====
-    
+
     async def create_shared_project(
         self,
         project_id: str,
@@ -206,7 +208,7 @@ class CollaborationService:
     ) -> SharedProject:
         """Create a new shared project."""
         now = datetime.now()
-        
+
         project = SharedProject(
             project_id=project_id,
             name=name,
@@ -224,25 +226,25 @@ class CollaborationService:
             created_at=now,
             last_sync_at=now,
         )
-        
+
         self._shared_projects[project_id] = project
         self._event_history[project_id] = []
         self._active_connections[project_id] = {owner_id}
-        
+
         logger.info(f"Created shared project: {project_id}")
         return project
-    
+
     async def join_project(
         self,
         project_id: str,
         user_id: str,
         display_name: str,
-    ) -> Optional[SharedProject]:
+    ) -> SharedProject | None:
         """Join a shared project."""
         project = self._shared_projects.get(project_id)
         if not project:
             return None
-        
+
         # Add or update collaborator
         if user_id not in project.collaborators:
             project.collaborators[user_id] = Collaborator(
@@ -251,10 +253,10 @@ class CollaborationService:
                 permission=PermissionLevel.VIEW,
                 joined_at=datetime.now(),
             )
-        
+
         project.collaborators[user_id].is_online = True
         self._active_connections.setdefault(project_id, set()).add(user_id)
-        
+
         # Broadcast user joined event
         await self._broadcast_event(
             project_id,
@@ -262,22 +264,22 @@ class CollaborationService:
             user_id,
             {"user_id": user_id, "display_name": display_name},
         )
-        
+
         logger.info(f"User {user_id} joined project {project_id}")
         return project
-    
+
     async def leave_project(self, project_id: str, user_id: str):
         """Leave a shared project."""
         project = self._shared_projects.get(project_id)
         if not project:
             return
-        
+
         if user_id in project.collaborators:
             project.collaborators[user_id].is_online = False
-        
+
         if project_id in self._active_connections:
             self._active_connections[project_id].discard(user_id)
-        
+
         # Broadcast user left event
         await self._broadcast_event(
             project_id,
@@ -285,48 +287,48 @@ class CollaborationService:
             user_id,
             {"user_id": user_id},
         )
-        
+
         logger.info(f"User {user_id} left project {project_id}")
-    
+
     async def sync_change(
         self,
         project_id: str,
         user_id: str,
         event_type: SyncEventType,
-        data: Dict[str, Any],
-    ) -> Optional[SyncEvent]:
+        data: dict[str, Any],
+    ) -> SyncEvent | None:
         """Sync a change to all collaborators."""
         project = self._shared_projects.get(project_id)
         if not project:
             return None
-        
+
         # Check permissions
         collaborator = project.collaborators.get(user_id)
         if not collaborator or collaborator.permission == PermissionLevel.VIEW:
             logger.warning(f"User {user_id} lacks permission to sync changes")
             return None
-        
+
         # Create event
         project.version += 1
         event = await self._broadcast_event(project_id, event_type, user_id, data)
-        
+
         project.last_sync_at = datetime.now()
-        
+
         return event
-    
+
     async def update_cursor(
         self,
         project_id: str,
         user_id: str,
-        cursor_position: Dict[str, Any],
+        cursor_position: dict[str, Any],
     ):
         """Update user cursor position for collaborative editing."""
         project = self._shared_projects.get(project_id)
         if not project or user_id not in project.collaborators:
             return
-        
+
         project.collaborators[user_id].cursor_position = cursor_position
-        
+
         # Broadcast cursor update
         await self._broadcast_event(
             project_id,
@@ -334,27 +336,27 @@ class CollaborationService:
             user_id,
             {"user_id": user_id, "cursor": cursor_position},
         )
-    
+
     def subscribe(self, project_id: str, callback: EventCallback):
         """Subscribe to project events."""
         self._subscribers.setdefault(project_id, set()).add(callback)
-    
+
     def unsubscribe(self, project_id: str, callback: EventCallback):
         """Unsubscribe from project events."""
         if project_id in self._subscribers:
             self._subscribers[project_id].discard(callback)
-    
+
     async def _broadcast_event(
         self,
         project_id: str,
         event_type: SyncEventType,
         user_id: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
     ) -> SyncEvent:
         """Broadcast an event to all subscribers."""
         project = self._shared_projects.get(project_id)
         version = project.version if project else 1
-        
+
         event = SyncEvent(
             event_id=f"evt_{uuid.uuid4().hex[:8]}",
             event_type=event_type,
@@ -364,10 +366,10 @@ class CollaborationService:
             data=data,
             version=version,
         )
-        
+
         # Store in history
         self._event_history.setdefault(project_id, []).append(event)
-        
+
         # Notify subscribers
         callbacks = self._subscribers.get(project_id, set())
         for callback in callbacks:
@@ -375,63 +377,63 @@ class CollaborationService:
                 callback(event)
             except Exception as e:
                 logger.warning(f"Event callback error: {e}")
-        
+
         return event
-    
+
     def get_event_history(
         self,
         project_id: str,
         since_version: int = 0,
-    ) -> List[SyncEvent]:
+    ) -> list[SyncEvent]:
         """Get event history since a version."""
         events = self._event_history.get(project_id, [])
         return [e for e in events if e.version > since_version]
-    
+
     # ===== Phase 14.2: Export/Import =====
-    
+
     async def export_project(
         self,
         project_id: str,
-        project_data: Dict[str, Any],
-        audio_files: List[Path],
+        project_data: dict[str, Any],
+        audio_files: list[Path],
         format: ExportFormat = ExportFormat.VOICESTUDIO,
     ) -> ExportResult:
         """
         Export a project to a file.
-        
+
         Args:
             project_id: Project ID
             project_data: Project JSON data
             audio_files: List of audio file paths to include
             format: Export format
-            
+
         Returns:
             ExportResult with file path
         """
         export_id = f"exp_{uuid.uuid4().hex[:8]}"
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d_%H%M%S")
-        
+
         project_name = project_data.get("name", "project")
         safe_name = "".join(c if c.isalnum() else "_" for c in project_name)
-        
+
         if format == ExportFormat.VOICESTUDIO:
             output_path = self._exports_dir / f"{safe_name}_{timestamp}.vstudio"
             await self._export_vstudio(output_path, project_data, audio_files)
-        
+
         elif format == ExportFormat.ZIP:
             output_path = self._exports_dir / f"{safe_name}_{timestamp}.zip"
             await self._export_zip(output_path, project_data, audio_files)
-        
+
         elif format == ExportFormat.JSON:
             output_path = self._exports_dir / f"{safe_name}_{timestamp}.json"
             await self._export_json(output_path, project_data)
-        
+
         else:
             raise ValueError(f"Unsupported export format: {format}")
-        
+
         file_size = output_path.stat().st_size
-        
+
         result = ExportResult(
             export_id=export_id,
             project_id=project_id,
@@ -442,15 +444,15 @@ class CollaborationService:
             expires_at=None,
             download_url=None,
         )
-        
+
         logger.info(f"Exported project {project_id} to {output_path}")
         return result
-    
+
     async def _export_vstudio(
         self,
         output_path: Path,
-        project_data: Dict[str, Any],
-        audio_files: List[Path],
+        project_data: dict[str, Any],
+        audio_files: list[Path],
     ):
         """Export to VoiceStudio format (ZIP with manifest)."""
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -461,103 +463,103 @@ class CollaborationService:
                 "created_at": datetime.now().isoformat(),
             }
             zf.writestr("manifest.json", json.dumps(manifest, indent=2))
-            
+
             # Add project data
             zf.writestr("project.json", json.dumps(project_data, indent=2))
-            
+
             # Add audio files
             for audio_path in audio_files:
                 if audio_path.exists():
                     zf.write(audio_path, f"audio/{audio_path.name}")
-    
+
     async def _export_zip(
         self,
         output_path: Path,
-        project_data: Dict[str, Any],
-        audio_files: List[Path],
+        project_data: dict[str, Any],
+        audio_files: list[Path],
     ):
         """Export to standard ZIP archive."""
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
             # Add project data
             zf.writestr("project.json", json.dumps(project_data, indent=2))
-            
+
             # Add audio files
             for audio_path in audio_files:
                 if audio_path.exists():
                     zf.write(audio_path, audio_path.name)
-    
+
     async def _export_json(
         self,
         output_path: Path,
-        project_data: Dict[str, Any],
+        project_data: dict[str, Any],
     ):
         """Export to JSON only."""
         with open(output_path, "w") as f:
             json.dump(project_data, f, indent=2)
-    
+
     async def import_project(
         self,
         file_path: Path,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Import a project from a file.
-        
+
         Args:
             file_path: Path to import file
-            
+
         Returns:
             Project data dictionary
         """
         suffix = file_path.suffix.lower()
-        
+
         if suffix == ".vstudio" or suffix == ".zip":
             return await self._import_archive(file_path)
         elif suffix == ".json":
             return await self._import_json(file_path)
         else:
             raise ValueError(f"Unsupported import format: {suffix}")
-    
-    async def _import_archive(self, file_path: Path) -> Dict[str, Any]:
+
+    async def _import_archive(self, file_path: Path) -> dict[str, Any]:
         """Import from archive format."""
         with zipfile.ZipFile(file_path, "r") as zf:
             # Read project data
             project_json = zf.read("project.json")
             project_data = json.loads(project_json)
-            
+
             # Extract audio files to temp directory
             # (In production, extract to proper location)
-            
+
             return project_data
-    
-    async def _import_json(self, file_path: Path) -> Dict[str, Any]:
+
+    async def _import_json(self, file_path: Path) -> dict[str, Any]:
         """Import from JSON."""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
-    
+
     # ===== Phase 14.3: Sharing =====
-    
+
     async def create_share_link(
         self,
         project_id: str,
         permission: PermissionLevel = PermissionLevel.VIEW,
-        expires_hours: Optional[int] = None,
+        expires_hours: int | None = None,
     ) -> str:
         """Create a shareable link for a project."""
         project = self._shared_projects.get(project_id)
         if not project:
             raise ValueError(f"Project not found: {project_id}")
-        
+
         # Generate unique share token
         token = hashlib.sha256(
             f"{project_id}:{uuid.uuid4()}".encode()
         ).hexdigest()[:16]
-        
+
         share_link = f"voicestudio://share/{token}"
         project.share_link = share_link
-        
+
         logger.info(f"Created share link for project {project_id}")
         return share_link
-    
+
     async def set_permission(
         self,
         project_id: str,
@@ -569,20 +571,20 @@ class CollaborationService:
         project = self._shared_projects.get(project_id)
         if not project:
             return False
-        
+
         # Check granter is admin
         granter = project.collaborators.get(granter_id)
         if not granter or granter.permission != PermissionLevel.ADMIN:
             return False
-        
+
         # Update permission
         if user_id in project.collaborators:
             project.collaborators[user_id].permission = permission
             logger.info(f"Set {user_id} permission to {permission.value} on {project_id}")
             return True
-        
+
         return False
-    
+
     async def remove_collaborator(
         self,
         project_id: str,
@@ -593,38 +595,38 @@ class CollaborationService:
         project = self._shared_projects.get(project_id)
         if not project:
             return False
-        
+
         # Check remover is admin
         remover = project.collaborators.get(remover_id)
         if not remover or remover.permission != PermissionLevel.ADMIN:
             return False
-        
+
         # Cannot remove owner
         if user_id == project.owner_id:
             return False
-        
+
         if user_id in project.collaborators:
             del project.collaborators[user_id]
             logger.info(f"Removed {user_id} from project {project_id}")
             return True
-        
+
         return False
-    
-    def get_project(self, project_id: str) -> Optional[SharedProject]:
+
+    def get_project(self, project_id: str) -> SharedProject | None:
         """Get shared project by ID."""
         return self._shared_projects.get(project_id)
-    
-    def get_online_collaborators(self, project_id: str) -> List[Collaborator]:
+
+    def get_online_collaborators(self, project_id: str) -> list[Collaborator]:
         """Get online collaborators for a project."""
         project = self._shared_projects.get(project_id)
         if not project:
             return []
-        
+
         return [c for c in project.collaborators.values() if c.is_online]
 
 
 # Singleton instance
-_collaboration_service: Optional[CollaborationService] = None
+_collaboration_service: CollaborationService | None = None
 
 
 def get_collaboration_service() -> CollaborationService:

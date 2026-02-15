@@ -4,9 +4,11 @@ Voice & Speech Processing Routes
 Endpoints for voice activity detection, phonemization, and speech recognition.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query
@@ -28,7 +30,7 @@ router = APIRouter(prefix="/api/voice-speech", tags=["voice-speech"])
 class VoiceActivityResult(BaseModel):
     """Voice activity detection result."""
 
-    segments: List[Dict[str, float]]  # List of {start, end} dicts
+    segments: list[dict[str, float]]  # List of {start, end} dicts
     voice_ratio: float
     total_duration: float
 
@@ -45,7 +47,7 @@ class PhonemizationResponse(BaseModel):
     """Response from phonemization."""
 
     phonemes: str
-    words: Optional[List[Dict[str, Any]]] = None
+    words: list[dict[str, Any]] | None = None
     backend: str
 
 
@@ -53,14 +55,14 @@ class SpeechRecognitionRequest(BaseModel):
     """Request for speech recognition."""
 
     audio_id: str
-    model_path: Optional[str] = None
+    model_path: str | None = None
 
 
 class SpeechRecognitionResponse(BaseModel):
     """Response from speech recognition."""
 
     text: str
-    words: List[Dict[str, Any]]
+    words: list[dict[str, Any]]
     confidence: float
 
 
@@ -102,13 +104,13 @@ async def detect_voice_activity(
     except ImportError as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Voice activity detection not available: {str(e)}",
+            detail=f"Voice activity detection not available: {e!s}",
         )
     except Exception as e:
         logger.error(f"Error in voice activity detection: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to detect voice activity: {str(e)}",
+            detail=f"Failed to detect voice activity: {e!s}",
         )
 
 
@@ -147,7 +149,7 @@ async def phonemize_text(request: PhonemizationRequest):
     except Exception as e:
         logger.error(f"Error in phonemization: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to phonemize text: {str(e)}"
+            status_code=500, detail=f"Failed to phonemize text: {e!s}"
         )
 
 
@@ -185,18 +187,18 @@ async def recognize_speech(request: SpeechRecognitionRequest):
     except ImportError as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Speech recognition not available: {str(e)}",
+            detail=f"Speech recognition not available: {e!s}",
         )
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Model configuration error: {str(e)}",
+            detail=f"Model configuration error: {e!s}",
         )
     except Exception as e:
         logger.error(f"Error in speech recognition: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to recognize speech: {str(e)}",
+            detail=f"Failed to recognize speech: {e!s}",
         )
 
 

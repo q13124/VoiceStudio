@@ -12,7 +12,6 @@ Supports:
 import json
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
@@ -21,7 +20,7 @@ project_root = Path(__file__).parent.parent
 def audit_pip():
     """Audit pip dependencies using pip-audit or safety."""
     print("Auditing pip dependencies...")
-    
+
     # Try pip-audit first (preferred)
     try:
         result = subprocess.run(
@@ -30,7 +29,7 @@ def audit_pip():
             text=True,
             cwd=project_root
         )
-        
+
         if result.returncode == 0:
             print("[OK] pip-audit: No known security vulnerabilities")
             return 0
@@ -51,13 +50,13 @@ def audit_pip():
                         print(f"  ... and {len(vulnerabilities) - 10} more")
                     return 1
             except json.JSONDecodeError:
-                print(f"[WARN] pip-audit output parsing failed")
+                print("[WARN] pip-audit output parsing failed")
                 print(result.stdout[:500] if result.stdout else "No output")
             return 1
-            
+
     except FileNotFoundError:
         print("[INFO] pip-audit not installed, trying safety...")
-        
+
     # Fallback to safety
     try:
         result = subprocess.run(
@@ -66,7 +65,7 @@ def audit_pip():
             text=True,
             cwd=project_root
         )
-        
+
         if result.returncode == 0:
             print("[OK] safety: No known security vulnerabilities")
             return 0
@@ -82,9 +81,9 @@ def audit_pip():
                         print(f"  - {pkg}: {vuln_id}")
                     return 1
             except json.JSONDecodeError:
-                print(f"[WARN] safety check found issues (parse failed)")
+                print("[WARN] safety check found issues (parse failed)")
             return 1
-            
+
     except FileNotFoundError:
         print("[WARN] Neither pip-audit nor safety installed")
         print("[INFO] Install with: pip install pip-audit safety")
@@ -96,14 +95,14 @@ def audit_pip():
 def audit_nuget():
     """Audit NuGet dependencies."""
     print("Auditing NuGet dependencies...")
-    
+
     # Find all .csproj files
     csproj_files = list(project_root.glob("**/*.csproj"))
-    
+
     if not csproj_files:
         print("[INFO] No .csproj files found")
         return 0
-    
+
     try:
         # Use dotnet list package --vulnerable
         for csproj in csproj_files:
@@ -114,7 +113,7 @@ def audit_nuget():
                 text=True,
                 cwd=project_root
             )
-            
+
             if result.returncode == 0:
                 output = result.stdout
                 if "vulnerable" in output.lower() or "security" in output.lower():
@@ -125,7 +124,7 @@ def audit_nuget():
                     print(f"[OK] No known vulnerabilities in {csproj.name}")
             else:
                 print(f"[WARN] Failed to check {csproj.name}: {result.stderr}")
-        
+
         return 0
     except FileNotFoundError:
         print("[WARN] 'dotnet' not found. Install .NET SDK")
@@ -139,10 +138,10 @@ def main():
     print("=" * 60)
     print("Dependency Security Audit")
     print("=" * 60)
-    
+
     pip_result = audit_pip()
     nuget_result = audit_nuget()
-    
+
     print("=" * 60)
     if pip_result == 0 and nuget_result == 0:
         print("[OK] All dependency audits passed")

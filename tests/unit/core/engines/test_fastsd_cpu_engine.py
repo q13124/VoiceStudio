@@ -5,7 +5,7 @@ Tests FastSD CPU image generation engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,7 +29,7 @@ class TestFastSDCPUEngineImports:
     def test_module_has_fastsd_cpu_engine_class(self):
         """Test module has FastSDCPUEngine class."""
         if hasattr(fastsd_cpu_engine, "FastSDCPUEngine"):
-            cls = getattr(fastsd_cpu_engine, "FastSDCPUEngine")
+            cls = fastsd_cpu_engine.FastSDCPUEngine
             assert isinstance(cls, type), "FastSDCPUEngine should be a class"
 
 
@@ -39,7 +39,7 @@ class TestFastSDCPUEngineClass:
     def test_fastsd_cpu_engine_class_exists(self):
         """Test FastSDCPUEngine class exists."""
         if hasattr(fastsd_cpu_engine, "FastSDCPUEngine"):
-            cls = getattr(fastsd_cpu_engine, "FastSDCPUEngine")
+            cls = fastsd_cpu_engine.FastSDCPUEngine
             assert isinstance(cls, type), "FastSDCPUEngine should be a class"
 
     def test_fastsd_cpu_engine_initialization(self):

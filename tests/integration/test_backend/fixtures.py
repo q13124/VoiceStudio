@@ -8,18 +8,20 @@ Provides reusable fixtures for backend integration testing:
 - API client factories
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import os
 import sqlite3
 import sys
 import tempfile
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Dict, Generator, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -28,9 +30,9 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from tests.integration.conftest import (
+    TEST_CONFIG,
     IntegrationTestClient,
     IntegrationTestConfig,
-    TEST_CONFIG,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,65 +47,65 @@ logger = logging.getLogger(__name__)
 class DatabaseTestContext:
     """
     Context for database testing with automatic cleanup.
-    
+
     Usage:
         with create_test_database() as ctx:
             ctx.execute("INSERT INTO profiles (name) VALUES (?)", ("test",))
             rows = ctx.query("SELECT * FROM profiles")
     """
-    
+
     connection: sqlite3.Connection
     path: Path
-    tables_created: List[str] = field(default_factory=list)
+    tables_created: list[str] = field(default_factory=list)
     _should_cleanup: bool = True
-    
+
     def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
         """Execute SQL statement."""
         return self.connection.execute(sql, params)
-    
-    def executemany(self, sql: str, params_list: List[tuple]) -> sqlite3.Cursor:
+
+    def executemany(self, sql: str, params_list: list[tuple]) -> sqlite3.Cursor:
         """Execute SQL statement with multiple parameter sets."""
         return self.connection.executemany(sql, params_list)
-    
-    def query(self, sql: str, params: tuple = ()) -> List[Dict[str, Any]]:
+
+    def query(self, sql: str, params: tuple = ()) -> list[dict[str, Any]]:
         """Execute query and return results as list of dicts."""
         cursor = self.connection.execute(sql, params)
         columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
-    
-    def query_one(self, sql: str, params: tuple = ()) -> Optional[Dict[str, Any]]:
+        return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+
+    def query_one(self, sql: str, params: tuple = ()) -> dict[str, Any] | None:
         """Execute query and return single result or None."""
         results = self.query(sql, params)
         return results[0] if results else None
-    
+
     def commit(self) -> None:
         """Commit current transaction."""
         self.connection.commit()
-    
+
     def rollback(self) -> None:
         """Rollback current transaction."""
         self.connection.rollback()
-    
+
     def create_table(self, name: str, schema: str) -> None:
         """Create a table and track it for cleanup."""
         self.execute(f"CREATE TABLE IF NOT EXISTS {name} ({schema})")
         self.tables_created.append(name)
-    
-    def seed_data(self, table: str, rows: List[Dict[str, Any]]) -> int:
+
+    def seed_data(self, table: str, rows: list[dict[str, Any]]) -> int:
         """Insert seed data into a table. Returns number of rows inserted."""
         if not rows:
             return 0
-        
+
         columns = list(rows[0].keys())
         placeholders = ", ".join(["?" for _ in columns])
         column_names = ", ".join(columns)
-        
+
         sql = f"INSERT INTO {table} ({column_names}) VALUES ({placeholders})"
         values = [tuple(row[col] for col in columns) for row in rows]
-        
+
         self.executemany(sql, values)
         return len(rows)
-    
+
     def cleanup(self) -> None:
         """Drop all created tables and close connection."""
         if self._should_cleanup:
@@ -112,7 +114,7 @@ class DatabaseTestContext:
                     self.execute(f"DROP TABLE IF EXISTS {table}")
                 except Exception as e:
                     logger.warning(f"Failed to drop table {table}: {e}")
-        
+
         try:
             self.connection.close()
         except Exception as e:
@@ -121,21 +123,21 @@ class DatabaseTestContext:
 
 @contextmanager
 def create_test_database(
-    path: Optional[Path] = None,
+    path: Path | None = None,
     in_memory: bool = False,
     cleanup: bool = True,
 ) -> Generator[DatabaseTestContext, None, None]:
     """
     Create a test database with automatic cleanup.
-    
+
     Args:
         path: Path to database file. If None, creates temp file.
         in_memory: If True, creates in-memory database.
         cleanup: If True, drops tables and closes connection on exit.
-    
+
     Yields:
         DatabaseTestContext with connection and utilities.
-    
+
     Usage:
         with create_test_database() as db:
             db.create_table("users", "id INTEGER PRIMARY KEY, name TEXT")
@@ -153,21 +155,21 @@ def create_test_database(
         else:
             db_path = path
         connection = sqlite3.connect(str(db_path))
-    
+
     # Enable foreign keys
     connection.execute("PRAGMA foreign_keys = ON")
-    
+
     ctx = DatabaseTestContext(
         connection=connection,
         path=db_path,
         _should_cleanup=cleanup,
     )
-    
+
     try:
         yield ctx
     finally:
         ctx.cleanup()
-        
+
         # Remove temp file if we created it
         if not in_memory and path is None and db_path.exists():
             try:
@@ -185,17 +187,17 @@ def create_test_database(
 class ServiceTestContext:
     """
     Context for testing services with mocked dependencies.
-    
+
     Usage:
         with ServiceTestContext() as ctx:
             ctx.mock_engine_service()
             ctx.mock_storage_service()
             # Test your service
     """
-    
-    mocks: Dict[str, MagicMock] = field(default_factory=dict)
-    patches: List[Any] = field(default_factory=list)
-    
+
+    mocks: dict[str, MagicMock] = field(default_factory=dict)
+    patches: list[Any] = field(default_factory=list)
+
     def mock_engine_service(self, **overrides) -> MagicMock:
         """Create mock engine service."""
         mock = MagicMock()
@@ -207,7 +209,7 @@ class ServiceTestContext:
         mock.synthesize.return_value = overrides.get("audio_id", "test-audio-123")
         self.mocks["engine_service"] = mock
         return mock
-    
+
     def mock_storage_service(self, **overrides) -> MagicMock:
         """Create mock storage service."""
         mock = MagicMock()
@@ -220,7 +222,7 @@ class ServiceTestContext:
         mock.list_projects.return_value = overrides.get("projects", [])
         self.mocks["storage_service"] = mock
         return mock
-    
+
     def mock_audio_service(self, **overrides) -> MagicMock:
         """Create mock audio service."""
         mock = MagicMock()
@@ -233,7 +235,7 @@ class ServiceTestContext:
         })
         self.mocks["audio_service"] = mock
         return mock
-    
+
     def mock_profile_service(self, **overrides) -> MagicMock:
         """Create mock profile service."""
         mock = MagicMock()
@@ -246,7 +248,7 @@ class ServiceTestContext:
         mock.list_profiles.return_value = overrides.get("profiles", [])
         self.mocks["profile_service"] = mock
         return mock
-    
+
     def patch(self, target: str, **kwargs) -> MagicMock:
         """Create a patch and track it for cleanup."""
         patcher = patch(target, **kwargs)
@@ -254,7 +256,7 @@ class ServiceTestContext:
         self.patches.append(patcher)
         self.mocks[target] = mock
         return mock
-    
+
     def cleanup(self) -> None:
         """Stop all patches."""
         for patcher in self.patches:
@@ -268,7 +270,7 @@ class ServiceTestContext:
 def service_context() -> Generator[ServiceTestContext, None, None]:
     """
     Create service test context with automatic cleanup.
-    
+
     Usage:
         with service_context() as ctx:
             engine_mock = ctx.mock_engine_service()
@@ -289,25 +291,25 @@ def service_context() -> Generator[ServiceTestContext, None, None]:
 
 def create_test_client(
     app: Any = None,
-    config: Optional[IntegrationTestConfig] = None,
+    config: IntegrationTestConfig | None = None,
 ) -> IntegrationTestClient:
     """
     Create an enhanced test client for API testing.
-    
+
     Args:
         app: FastAPI application instance. If None, imports from backend.
         config: Test configuration. If None, uses default.
-    
+
     Returns:
         IntegrationTestClient with tracking and validation.
-    
+
     Usage:
         client = create_test_client()
         response = client.get("/api/health")
         assert response.is_success
     """
     from fastapi.testclient import TestClient
-    
+
     if app is None:
         try:
             from backend.api.main import app as fastapi_app
@@ -316,11 +318,11 @@ def create_test_client(
             # Create minimal mock app
             from fastapi import FastAPI
             app = FastAPI()
-            
+
             @app.get("/api/health")
             def health():
                 return {"status": "ok"}
-    
+
     test_client = TestClient(app)
     return IntegrationTestClient(
         client=test_client,
@@ -334,7 +336,7 @@ def create_test_client(
 
 
 @pytest.fixture
-def sample_profile_data() -> Dict[str, Any]:
+def sample_profile_data() -> dict[str, Any]:
     """Sample profile data for testing."""
     return {
         "name": "Integration Test Profile",
@@ -345,7 +347,7 @@ def sample_profile_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_project_data() -> Dict[str, Any]:
+def sample_project_data() -> dict[str, Any]:
     """Sample project data for testing."""
     return {
         "name": "Integration Test Project",
@@ -359,7 +361,7 @@ def sample_project_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_synthesis_request() -> Dict[str, Any]:
+def sample_synthesis_request() -> dict[str, Any]:
     """Sample synthesis request for testing."""
     return {
         "profile_id": "test-profile-integration",
@@ -371,7 +373,7 @@ def sample_synthesis_request() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_audio_metadata() -> Dict[str, Any]:
+def sample_audio_metadata() -> dict[str, Any]:
     """Sample audio metadata for testing."""
     return {
         "id": "test-audio-integration",

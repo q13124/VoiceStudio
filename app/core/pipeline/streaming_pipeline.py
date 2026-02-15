@@ -5,11 +5,13 @@ Enables partial transcription → streaming LLM → buffer-ahead TTS
 for low-latency conversational voice AI.
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import time
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Callable, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ class StreamChunk:
     chunk_type: str  # "partial_transcript", "token", "audio_chunk", "complete", "error"
     content: Any = None
     timestamp_ms: float = 0.0
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class StreamingPipeline:
@@ -51,7 +53,7 @@ class StreamingPipeline:
     async def process_audio_stream(
         self,
         audio_chunks: AsyncIterator[bytes],
-        on_chunk: Optional[Callable[[StreamChunk], None]] = None,
+        on_chunk: Callable[[StreamChunk], None] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """
         Process an audio stream through the full pipeline.
@@ -232,7 +234,7 @@ class StreamingPipeline:
             logger.error(f"STT failed: {exc}")
             return ""
 
-    async def _synthesize(self, text: str) -> Optional[bytes]:
+    async def _synthesize(self, text: str) -> bytes | None:
         """Synthesize speech from text."""
         if not text.strip():
             return None

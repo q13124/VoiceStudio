@@ -11,7 +11,7 @@ from .model_explainability import ModelExplainer
 
 __all__ = [
     "HyperparameterOptimizer",
-    "OptimizationResult",
     "ModelExplainer",
+    "OptimizationResult",
 ]
 

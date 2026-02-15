@@ -5,9 +5,7 @@ Tests enhanced ensemble routing functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -47,7 +45,7 @@ class TestEnhancedEnsembleRouterClasses:
     def test_enhanced_ensemble_router_class_exists(self):
         """Test EnhancedEnsembleRouter class exists."""
         if hasattr(enhanced_ensemble_router, "EnhancedEnsembleRouter"):
-            cls = getattr(enhanced_ensemble_router, "EnhancedEnsembleRouter")
+            cls = enhanced_ensemble_router.EnhancedEnsembleRouter
             assert isinstance(
                 cls, type
             ), "EnhancedEnsembleRouter should be a class"

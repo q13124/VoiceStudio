@@ -7,6 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- Allow VoiceStudio.App to access internal members (e.g., PanelEventBase.Sequence setter) -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="VoiceStudio.App" />
+    <InternalsVisibleTo Include="VoiceStudio.App.Tests" />
+  </ItemGroup>
+
   <!-- No external package references needed - uses built-in .NET 8 features -->
   <!-- System.Text.Json.Serialization is built into .NET 8 -->
 

@@ -143,6 +143,12 @@ if "%VSQ_DEBUG_ENABLED%"=="1" (
 )
 
 if "%EXIT_CODE%"=="0" (
+  if exist "%OUTPUT_JSON%" (
+    echo.
+    echo XAML compiler exit code: 0
+    echo XAML compilation succeeded.
+    exit /b 0
+  )
   if not exist "%OUTPUT_JSON%" (
     echo XAML compiler reported success but output.json is missing - retrying...
     if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] RETRY_MISSING_OUTPUT_JSON=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "!RAW_LOG!"
@@ -160,18 +166,65 @@ echo XAML compiler exit code: %EXIT_CODE%
 if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] EXIT=%EXIT_CODE% >> "!RAW_LOG!"
 
 rem VS-0001: Some WinUI/XAML compiler builds return exit code 1 but still
-rem generate a valid output.json. Treat that as success to avoid blocking builds.
+rem generate valid .g.i.cs codegen files. Treat that as success to avoid blocking builds.
 if "%EXIT_CODE%"=="1" (
-  echo Checking if output.json was generated despite exit code 1...
+  echo Checking if XAML codegen was generated despite exit code 1...
+  for %%F in ("%OUTPUT_JSON%") do set "OUT_DIR=%%~dpF"
+  rem Case 1: output.json exists with valid content
   if exist "%OUTPUT_JSON%" (
     findstr /c:"GeneratedCodeFiles" "%OUTPUT_JSON%" >nul 2>nul
-    if "%ERRORLEVEL%"=="0" (
-      for %%F in ("%OUTPUT_JSON%") do set "OUT_DIR=%%~dpF"
+    if "!ERRORLEVEL!"=="0" (
       if exist "!OUT_DIR!App.g.i.cs" if exist "!OUT_DIR!MainWindow.g.i.cs" (
-        echo output.json found - treating as false-positive exit code 1
+        echo output.json found with GeneratedCodeFiles - treating as false-positive exit code 1
         if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] FALSE_POSITIVE=1 OUTPUT_JSON="%OUTPUT_JSON%" >> "!RAW_LOG!"
         exit /b 0
       )
+    )
+  )
+  rem Case 2: output.json missing but .g.i.cs files exist from this or prior pass
+  rem MSBuild reads output.json to discover generated code files, so we must produce one.
+  if not exist "%OUTPUT_JSON%" (
+    if exist "!OUT_DIR!App.g.i.cs" if exist "!OUT_DIR!MainWindow.g.i.cs" (
+      echo output.json missing but .g.i.cs files exist - generating output.json from discovered files...
+      if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] FALSE_POSITIVE=2 GENERATING_OUTPUT_JSON=1 >> "!RAW_LOG!"
+      echo output.json missing but .g.i.cs exist - generating output.json from top-level codegen...
+      if "%RAW_LOG_ENABLED%"=="1" echo [%date% %time%] FALSE_POSITIVE=2 GENERATING_OUTPUT_JSON=1 >> "!RAW_LOG!"
+      rem Build output.json matching MSBuild OutputDeserializer schema.
+      rem Only include top-level .g.i.cs and .g.cs files (NOT win-x64 subdirectory
+      rem to avoid duplicate definitions).
+      set "TMPOUT=%TEMP%\voicestudio_output_%RANDOM%.json"
+      echo {"GeneratedCodeFiles":[ > "!TMPOUT!"
+      set "FIRST=1"
+      for /f "delims=" %%G in ('dir /b "!OUT_DIR!*.g.i.cs" 2^>nul') do (
+        set "GFILE=!OUT_DIR!%%G"
+        set "GFILE_ESC=!GFILE:\=\\!"
+        if "!FIRST!"=="1" (
+          echo "!GFILE_ESC!" >> "!TMPOUT!"
+          set "FIRST=0"
+        ) else (
+          echo ,"!GFILE_ESC!" >> "!TMPOUT!"
+        )
+      )
+      rem Include subdirectory .g.i.cs (Controls/, Views/, etc.) but NOT win-x64/
+      for /f "delims=" %%D in ('dir /b /ad "!OUT_DIR!" 2^>nul') do (
+        if /i not "%%D"=="win-x64" (
+          for /f "delims=" %%G in ('dir /b "!OUT_DIR!%%D\*.g.i.cs" 2^>nul') do (
+            set "GFILE=!OUT_DIR!%%D\%%G"
+            set "GFILE_ESC=!GFILE:\=\\!"
+            echo ,"!GFILE_ESC!" >> "!TMPOUT!"
+          )
+        )
+      )
+      rem Include .g.cs files (XamlTypeInfo) from top level only
+      for /f "delims=" %%G in ('dir /b "!OUT_DIR!*.g.cs" 2^>nul') do (
+        set "GFILE=!OUT_DIR!%%G"
+        set "GFILE_ESC=!GFILE:\=\\!"
+        echo ,"!GFILE_ESC!" >> "!TMPOUT!"
+      )
+      echo ],"GeneratedXamlFiles":[],"GeneratedXbfFiles":[],"GeneratedXamlPagesFiles":[],"MSBuildLogEntries":[]} >> "!TMPOUT!"
+      move /y "!TMPOUT!" "%OUTPUT_JSON%" >nul
+      echo Generated output.json with top-level codegen files
+      exit /b 0
     )
   )
 )

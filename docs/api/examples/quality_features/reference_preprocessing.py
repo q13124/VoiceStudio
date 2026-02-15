@@ -41,13 +41,13 @@ def preprocess_reference_audio(
 
     result = response.json()
 
-    print(f"\n✅ Pre-processing complete!")
+    print("\n✅ Pre-processing complete!")
     print(f"Processed audio ID: {result['processed_audio_id']}")
     print(f"Processed audio URL: {result['processed_audio_url']}")
 
     # Show original analysis
     original = result["original_analysis"]
-    print(f"\nOriginal Analysis:")
+    print("\nOriginal Analysis:")
     print(f"  Quality score: {original['quality_score']:.1f}/10.0")
     print(f"  Has noise: {original['has_noise']}")
     print(f"  Has clipping: {original['has_clipping']}")
@@ -56,20 +56,20 @@ def preprocess_reference_audio(
     print(f"  Sample rate: {original['sample_rate']} Hz")
 
     if original["recommendations"]:
-        print(f"\nRecommendations:")
+        print("\nRecommendations:")
         for rec in original["recommendations"]:
             print(f"  - {rec}")
 
     # Show processed analysis if available
     if result.get("processed_analysis"):
         processed = result["processed_analysis"]
-        print(f"\nProcessed Analysis:")
+        print("\nProcessed Analysis:")
         print(f"  Quality score: {processed['quality_score']:.1f}/10.0")
         print(f"  Quality improvement: {result['quality_improvement']:.2%}")
 
     # Show improvements applied
     if result.get("improvements_applied"):
-        print(f"\nImprovements Applied:")
+        print("\nImprovements Applied:")
         for improvement in result["improvements_applied"]:
             print(f"  - {improvement}")
 

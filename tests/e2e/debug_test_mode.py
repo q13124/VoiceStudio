@@ -20,6 +20,7 @@ print(f"_is_test_mode() result: {_is_test_mode()}")
 
 import pytest
 from fastapi.testclient import TestClient
+
 from backend.api.main import app
 
 
@@ -40,12 +41,12 @@ class TestDebugMode:
         print(f"\n_is_test_mode() in test: {_is_test_mode()}")
         print(f"os.environ in test: {os.environ.get('VOICESTUDIO_TEST_MODE', 'NOT SET')}")
         print(f"app.state.test_mode: {getattr(app.state, 'test_mode', 'NOT SET')}")
-        
+
         response = client.post(
             "/api/eval/abx/start",
             json={"items": ["a", "b", "c"]},
         )
         print(f"Response status: {response.status_code}")
         print(f"Response body: {response.text}")
-        
+
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"

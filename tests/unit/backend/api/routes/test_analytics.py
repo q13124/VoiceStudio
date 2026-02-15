@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock non-existent module attributes - needs test refactoring",
     allow_module_level=True,
@@ -207,25 +208,24 @@ class TestAnalyticsEndpoints:
             # Fallback if voice module not available
             ...
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.analytics._get_model_explainer"
-            ) as mock_get_explainer:
-                mock_explainer = MagicMock()
-                mock_explainer.get_available_methods.return_value = [
-                    "shap",
-                    "lime",
-                ]
-                mock_explainer.shap_available = True
-                mock_get_explainer.return_value = mock_explainer
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.analytics._get_model_explainer"
+        ) as mock_get_explainer:
+            mock_explainer = MagicMock()
+            mock_explainer.get_available_methods.return_value = [
+                "shap",
+                "lime",
+            ]
+            mock_explainer.shap_available = True
+            mock_get_explainer.return_value = mock_explainer
 
-                # Mock quality history
-                with patch("backend.api.routes.analytics._quality_history", {}):
-                    response = client.get(
-                        f"/api/analytics/explain-quality?audio_id={audio_id}"
-                    )
-                    # May return 200 or 500 depending on dependencies
-                    assert response.status_code in [200, 500]
+            # Mock quality history
+            with patch("backend.api.routes.analytics._quality_history", {}):
+                response = client.get(
+                    f"/api/analytics/explain-quality?audio_id={audio_id}"
+                )
+                # May return 200 or 500 depending on dependencies
+                assert response.status_code in [200, 500]
 
     def test_explain_quality_prediction_method_not_available(self):
         """Test explaining quality with unavailable method."""
@@ -260,25 +260,24 @@ class TestAnalyticsEndpoints:
         except ImportError:
             ...
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.analytics._get_model_explainer"
-            ) as mock_get_explainer:
-                mock_explainer = MagicMock()
-                mock_explainer.get_available_methods.return_value = [
-                    "shap",
-                    "lime",
-                ]
-                mock_explainer.lime_available = True
-                mock_get_explainer.return_value = mock_explainer
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.analytics._get_model_explainer"
+        ) as mock_get_explainer:
+            mock_explainer = MagicMock()
+            mock_explainer.get_available_methods.return_value = [
+                "shap",
+                "lime",
+            ]
+            mock_explainer.lime_available = True
+            mock_get_explainer.return_value = mock_explainer
 
-                with patch("backend.api.routes.analytics._quality_history", {}):
-                    response = client.get(
-                        f"/api/analytics/explain-quality?"
-                        f"audio_id={audio_id}&method=lime"
-                    )
-                    # May return 200 or 500 depending on dependencies
-                    assert response.status_code in [200, 500]
+            with patch("backend.api.routes.analytics._quality_history", {}):
+                response = client.get(
+                    f"/api/analytics/explain-quality?"
+                    f"audio_id={audio_id}&method=lime"
+                )
+                # May return 200 or 500 depending on dependencies
+                assert response.status_code in [200, 500]
 
     def test_explain_quality_prediction_not_found(self):
         """Test explaining quality for non-existent audio."""

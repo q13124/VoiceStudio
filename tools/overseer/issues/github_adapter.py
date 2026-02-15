@@ -11,8 +11,8 @@ import hashlib
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
 
 # Lazy import httpx to avoid hard dependency
 _httpx = None
@@ -34,11 +34,11 @@ def _get_httpx():
 
 
 from tools.overseer.issues.models import (
+    InstanceType,
     Issue,
     IssuePriority,
     IssueSeverity,
     IssueStatus,
-    InstanceType,
 )
 
 
@@ -50,13 +50,13 @@ class GitHubIssue:
     title: str
     body: str
     state: str  # "open" or "closed"
-    labels: List[str]
+    labels: list[str]
     created_at: datetime
     updated_at: datetime
     url: str
     author: str
-    assignees: List[str]
-    milestone: Optional[str]
+    assignees: list[str]
+    milestone: str | None
     repository: str
     comments_count: int
 
@@ -64,7 +64,7 @@ class GitHubIssue:
 class GitHubAdapter:
     """
     Adapter for fetching and converting GitHub issues.
-    
+
     Supports both public and private repositories (with token).
     Uses the GitHub REST API v3.
     """
@@ -75,11 +75,11 @@ class GitHubAdapter:
         self,
         owner: str,
         repo: str,
-        token: Optional[str] = None,
+        token: str | None = None,
     ):
         """
         Initialize the adapter.
-        
+
         Args:
             owner: Repository owner (organization or user)
             repo: Repository name
@@ -106,26 +106,26 @@ class GitHubAdapter:
     def fetch_issues(
         self,
         state: str = "open",
-        labels: Optional[List[str]] = None,
-        since: Optional[datetime] = None,
+        labels: list[str] | None = None,
+        since: datetime | None = None,
         max_issues: int = 100,
-    ) -> List[GitHubIssue]:
+    ) -> list[GitHubIssue]:
         """
         Fetch issues from GitHub.
-        
+
         Args:
             state: Issue state ("open", "closed", "all")
             labels: Filter by labels
             since: Only issues updated after this date
             max_issues: Maximum number of issues to fetch
-            
+
         Returns:
             List of GitHubIssue objects
         """
         client = self._get_client()
         url = f"{self.BASE_URL}/repos/{self.owner}/{self.repo}/issues"
 
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "state": state,
             "per_page": min(max_issues, 100),
             "sort": "updated",
@@ -165,13 +165,13 @@ class GitHubAdapter:
 
         return issues
 
-    def fetch_issue(self, issue_number: int) -> Optional[GitHubIssue]:
+    def fetch_issue(self, issue_number: int) -> GitHubIssue | None:
         """
         Fetch a single issue by number.
-        
+
         Args:
             issue_number: The issue number
-            
+
         Returns:
             GitHubIssue or None if not found
         """
@@ -185,7 +185,7 @@ class GitHubAdapter:
         except Exception:
             return None
 
-    def _parse_github_issue(self, data: Dict[str, Any]) -> GitHubIssue:
+    def _parse_github_issue(self, data: dict[str, Any]) -> GitHubIssue:
         """Parse GitHub API response into GitHubIssue."""
         return GitHubIssue(
             number=data["number"],
@@ -206,10 +206,10 @@ class GitHubAdapter:
     def convert_to_issue(self, github_issue: GitHubIssue) -> Issue:
         """
         Convert a GitHub issue to the internal Issue model.
-        
+
         Args:
             github_issue: The GitHub issue to convert
-            
+
         Returns:
             Internal Issue object
         """
@@ -265,7 +265,7 @@ class GitHubAdapter:
             priority=priority,
         )
 
-    def _infer_severity(self, labels: List[str]) -> IssueSeverity:
+    def _infer_severity(self, labels: list[str]) -> IssueSeverity:
         """Infer severity from GitHub labels."""
         labels_lower = [l.lower() for l in labels]
 
@@ -277,7 +277,7 @@ class GitHubAdapter:
             return IssueSeverity.MEDIUM
         return IssueSeverity.LOW
 
-    def _infer_priority(self, labels: List[str]) -> Optional[IssuePriority]:
+    def _infer_priority(self, labels: list[str]) -> IssuePriority | None:
         """Infer priority from GitHub labels."""
         labels_lower = [l.lower() for l in labels]
 
@@ -291,7 +291,7 @@ class GitHubAdapter:
             return IssuePriority.LOW
         return None
 
-    def _infer_category(self, labels: List[str], title: str) -> str:
+    def _infer_category(self, labels: list[str], title: str) -> str:
         """Infer category from labels and title."""
         labels_lower = [l.lower() for l in labels]
         title_lower = title.lower()
@@ -363,21 +363,21 @@ class GitHubAdapter:
     def sync_issues(
         self,
         state: str = "open",
-        labels: Optional[List[str]] = None,
-        since: Optional[datetime] = None,
+        labels: list[str] | None = None,
+        since: datetime | None = None,
         max_issues: int = 100,
-    ) -> List[Issue]:
+    ) -> list[Issue]:
         """
         Fetch and convert GitHub issues to internal format.
-        
+
         Convenience method that combines fetch and convert.
-        
+
         Args:
             state: Issue state filter
             labels: Label filter
             since: Only issues updated after this date
             max_issues: Maximum issues to sync
-            
+
         Returns:
             List of converted Issue objects
         """

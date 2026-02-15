@@ -4,10 +4,12 @@ Plugin Gallery Models.
 D.1 Enhancement: Data models for plugin catalog and installation.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class InstallPhase(Enum):
@@ -40,7 +42,7 @@ class PluginVersion:
     checksum_sha256: str
     size_bytes: int
     min_voicestudio_version: str = "1.0.0"
-    dependencies: Dict[str, str] = field(default_factory=dict)
+    dependencies: dict[str, str] = field(default_factory=dict)
     changelog: str = ""
 
 
@@ -64,20 +66,20 @@ class CatalogPlugin:
     license: str = ""
     homepage: str = ""
     icon_url: str = ""
-    tags: List[str] = field(default_factory=list)
-    versions: List[PluginVersion] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    versions: list[PluginVersion] = field(default_factory=list)
     stats: PluginStats = field(default_factory=PluginStats)
     featured: bool = False
     verified: bool = False
-    
+
     @property
-    def latest_version(self) -> Optional[PluginVersion]:
+    def latest_version(self) -> PluginVersion | None:
         """Get the latest version."""
         if not self.versions:
             return None
         return self.versions[0]
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -123,17 +125,17 @@ class PluginCatalog:
     """Full plugin catalog."""
     catalog_version: str
     last_updated: str
-    plugins: List[CatalogPlugin] = field(default_factory=list)
-    categories: List[CatalogCategory] = field(default_factory=list)
-    
-    def get_plugin(self, plugin_id: str) -> Optional[CatalogPlugin]:
+    plugins: list[CatalogPlugin] = field(default_factory=list)
+    categories: list[CatalogCategory] = field(default_factory=list)
+
+    def get_plugin(self, plugin_id: str) -> CatalogPlugin | None:
         """Get a plugin by ID."""
         for plugin in self.plugins:
             if plugin.id == plugin_id:
                 return plugin
         return None
-    
-    def search(self, query: str) -> List[CatalogPlugin]:
+
+    def search(self, query: str) -> list[CatalogPlugin]:
         """Search plugins by query."""
         query_lower = query.lower()
         results = []
@@ -143,12 +145,12 @@ class PluginCatalog:
                 any(query_lower in tag.lower() for tag in plugin.tags)):
                 results.append(plugin)
         return results
-    
-    def filter_by_category(self, category: str) -> List[CatalogPlugin]:
+
+    def filter_by_category(self, category: str) -> list[CatalogPlugin]:
         """Filter plugins by category."""
         return [p for p in self.plugins if p.category == category]
-    
-    def get_featured(self) -> List[CatalogPlugin]:
+
+    def get_featured(self) -> list[CatalogPlugin]:
         """Get featured plugins."""
         return [p for p in self.plugins if p.featured]
 
@@ -158,7 +160,7 @@ class InstallProgress:
     """Installation progress information."""
     phase: InstallPhase
     progress: float  # 0.0 to 1.0
-    current_file: Optional[str] = None
+    current_file: str | None = None
     bytes_downloaded: int = 0
     total_bytes: int = 0
     message: str = ""
@@ -172,10 +174,10 @@ class InstalledPlugin:
     installed_at: datetime
     install_path: str
     state: str = "enabled"  # enabled, disabled
-    config: Dict[str, Any] = field(default_factory=dict)
-    files: List[Dict[str, str]] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    config: dict[str, Any] = field(default_factory=dict)
+    files: list[dict[str, str]] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -191,9 +193,9 @@ class InstalledPlugin:
 class DependencyCheckResult:
     """Result of dependency checking."""
     satisfied: bool
-    missing: List[str] = field(default_factory=list)
-    incompatible: List[str] = field(default_factory=list)
-    details: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    missing: list[str] = field(default_factory=list)
+    incompatible: list[str] = field(default_factory=list)
+    details: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -202,8 +204,8 @@ class InstallResult:
     success: bool
     plugin_id: str
     version: str
-    install_path: Optional[str] = None
-    error: Optional[str] = None
+    install_path: str | None = None
+    error: str | None = None
 
 
 @dataclass

@@ -12,6 +12,7 @@ Tests cover:
 - Configuration and optimization features
 """
 
+import contextlib
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -52,10 +53,8 @@ def streaming_engine(mock_engine):
 
     engine = StreamingEngine(engine=mock_engine, device="cpu", gpu=False)
     yield engine
-    try:
+    with contextlib.suppress(Exception):
         engine.cleanup()
-    except Exception:
-        ...
 
 
 class TestStreamingEngineImports:

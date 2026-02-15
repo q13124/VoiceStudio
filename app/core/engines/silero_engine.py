@@ -11,10 +11,10 @@ Compatible with:
 - silero-tts package
 """
 
+from __future__ import annotations
+
 import logging
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import soundfile as sf
@@ -35,7 +35,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=3, max_memory_mb=1536.0)  # 1.5GB max
     HAS_MODEL_CACHE = True
@@ -209,7 +209,7 @@ class SileroEngine(EngineProtocol):
         self,
         model_id: str = "v4",
         language: str = "en",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         lazy_load: bool = True,
         batch_size: int = 4,
@@ -279,7 +279,7 @@ class SileroEngine(EngineProtocol):
 
         try:
             # Load model using torch.hub (Silero's recommended method)
-            model, example_text = torch.hub.load(
+            model, _example_text = torch.hub.load(
                 repo_or_dir="snakers4/silero-models",
                 model="silero_tts",
                 language=self.default_language,
@@ -352,12 +352,12 @@ class SileroEngine(EngineProtocol):
         self,
         text: str,
         language: str = "en",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Silero TTS.
 
@@ -377,13 +377,12 @@ class SileroEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Get speaker ID
-            speaker_id = voice or kwargs.get("speaker", None)
+            speaker_id = voice or kwargs.get("speaker")
             if speaker_id is None:
                 # Use default speaker for language
                 speaker_id = self._get_default_speaker(language)
@@ -511,10 +510,10 @@ class SileroEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -546,11 +545,10 @@ class SileroEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """Get available voices/speakers."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         # Silero typically has multiple speakers per language
         # Format: "{language}_{speaker_index}"
@@ -566,18 +564,18 @@ class SileroEngine(EngineProtocol):
 
         return voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
         return self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
-        texts: List[str],
+        texts: list[str],
         language: str = "en",
-        voice: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_dir: str | Path | None = None,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -592,12 +590,11 @@ class SileroEngine(EngineProtocol):
             List of audio arrays
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(texts)
+        if not self._initialized and not self._load_model():
+            return [None] * len(texts)
 
         # Get speaker ID
-        speaker_id = voice or kwargs.get("speaker", None)
+        speaker_id = voice or kwargs.get("speaker")
         if speaker_id is None:
             speaker_id = self._get_default_speaker(language)
 
@@ -696,7 +693,7 @@ class SileroEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -721,7 +718,7 @@ class SileroEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during Silero cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -738,7 +735,7 @@ class SileroEngine(EngineProtocol):
 def create_silero_engine(
     model_id: str = "v4",
     language: str = "en",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> SileroEngine:
     """Factory function to create a Silero TTS engine instance."""

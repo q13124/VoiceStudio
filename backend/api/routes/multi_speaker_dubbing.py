@@ -6,8 +6,9 @@ Provides endpoints for speaker diarization, voice assignment,
 and background audio preservation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -40,7 +41,7 @@ class DiarizationResponse(BaseModel):
     project_id: str
     audio_id: str
     speaker_count: int
-    segments: List[SpeakerSegment]
+    segments: list[SpeakerSegment]
     total_duration: float
 
 
@@ -54,7 +55,7 @@ class VoiceAssignment(BaseModel):
 class VoiceAssignmentRequest(BaseModel):
     """Request for voice assignments."""
     project_id: str
-    assignments: List[VoiceAssignment]
+    assignments: list[VoiceAssignment]
 
 
 class VoiceAssignmentResponse(BaseModel):
@@ -85,7 +86,7 @@ class ProjectInfo(BaseModel):
     audio_id: str
     status: str
     speaker_count: int
-    voice_assignments: Dict[str, str]
+    voice_assignments: dict[str, str]
     created_at: str
 
 
@@ -96,31 +97,31 @@ class ProjectInfo(BaseModel):
 async def diarize_speakers(request: DiarizationRequest):
     """
     Perform speaker diarization on audio.
-    
+
     Phase 10.2.1: Automatic speaker diarization.
-    
+
     Args:
         request: Diarization parameters
-        
+
     Returns:
         Speaker segments with timing
     """
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         result = await service.diarize(
             audio_id=request.audio_id,
             max_speakers=request.max_speakers,
             min_segment_duration=request.min_segment_duration,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Speaker diarization failed")
             )
-        
+
         segments = [
             SpeakerSegment(
                 speaker_id=s["speaker_id"],
@@ -130,7 +131,7 @@ async def diarize_speakers(request: DiarizationRequest):
             )
             for s in result.get("segments", [])
         ]
-        
+
         return DiarizationResponse(
             project_id=result["project_id"],
             audio_id=request.audio_id,
@@ -138,14 +139,14 @@ async def diarize_speakers(request: DiarizationRequest):
             segments=segments,
             total_duration=result.get("total_duration", 0.0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Speaker diarization failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Speaker diarization failed: {str(e)}"
+            detail=f"Speaker diarization failed: {e!s}"
         ) from e
 
 
@@ -153,20 +154,20 @@ async def diarize_speakers(request: DiarizationRequest):
 async def assign_voices(request: VoiceAssignmentRequest):
     """
     Assign target voices to speakers.
-    
+
     Phase 10.2.2: Per-speaker voice assignment.
-    
+
     Args:
         request: Voice assignments for speakers
-        
+
     Returns:
         Assignment confirmation
     """
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
-        
+
         assignments = [
             {
                 "speaker_id": a.speaker_id,
@@ -175,30 +176,30 @@ async def assign_voices(request: VoiceAssignmentRequest):
             }
             for a in request.assignments
         ]
-        
+
         result = await service.assign_voices(
             project_id=request.project_id,
             assignments=assignments,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Voice assignment failed")
             )
-        
+
         return VoiceAssignmentResponse(
             project_id=request.project_id,
             assignments_applied=result.get("assignments_applied", 0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Voice assignment failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Voice assignment failed: {str(e)}"
+            detail=f"Voice assignment failed: {e!s}"
         ) from e
 
 
@@ -206,18 +207,18 @@ async def assign_voices(request: VoiceAssignmentRequest):
 async def generate_dubbing(request: DubbingRequest):
     """
     Generate dubbed audio with all voice assignments.
-    
+
     Phase 10.2.3: Background audio preservation.
-    
+
     Args:
         request: Dubbing generation parameters
-        
+
     Returns:
         Output audio ID
     """
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         result = await service.generate(
             project_id=request.project_id,
@@ -225,39 +226,39 @@ async def generate_dubbing(request: DubbingRequest):
             normalize_loudness=request.normalize_loudness,
             crossfade_duration=request.crossfade_duration,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Dubbing generation failed")
             )
-        
+
         return DubbingResponse(
             output_audio_id=result["output_audio_id"],
             segments_processed=result.get("segments_processed", 0),
             speakers_dubbed=result.get("speakers_dubbed", 0),
             background_preserved=request.preserve_background,
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Dubbing generation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Dubbing generation failed: {str(e)}"
+            detail=f"Dubbing generation failed: {e!s}"
         ) from e
 
 
-@router.get("/projects", response_model=List[ProjectInfo])
+@router.get("/projects", response_model=list[ProjectInfo])
 async def list_projects():
     """List all dubbing projects."""
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         projects = service.list_projects()
-        
+
         return [
             ProjectInfo(
                 project_id=p["project_id"],
@@ -269,12 +270,12 @@ async def list_projects():
             )
             for p in projects
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list projects: {str(e)}"
+            detail=f"Failed to list projects: {e!s}"
         ) from e
 
 
@@ -283,16 +284,16 @@ async def get_project(project_id: str):
     """Get dubbing project details."""
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         project = service.get_project(project_id)
-        
+
         if not project:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         return ProjectInfo(
             project_id=project["project_id"],
             audio_id=project["audio_id"],
@@ -301,14 +302,14 @@ async def get_project(project_id: str):
             voice_assignments=project.get("voice_assignments", {}),
             created_at=project.get("created_at", ""),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get project: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get project: {str(e)}"
+            detail=f"Failed to get project: {e!s}"
         ) from e
 
 
@@ -317,25 +318,25 @@ async def delete_project(project_id: str):
     """Delete a dubbing project."""
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         success = service.delete_project(project_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         return {"success": True, "message": f"Project '{project_id}' deleted"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to delete project: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete project: {str(e)}"
+            detail=f"Failed to delete project: {e!s}"
         ) from e
 
 
@@ -344,23 +345,23 @@ async def get_project_speakers(project_id: str):
     """Get speakers detected in a project."""
     try:
         from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
-        
+
         service = get_multi_speaker_dubbing_service()
         speakers = service.get_project_speakers(project_id)
-        
+
         if speakers is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         return {"project_id": project_id, "speakers": speakers}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get speakers: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get speakers: {str(e)}"
+            detail=f"Failed to get speakers: {e!s}"
         ) from e

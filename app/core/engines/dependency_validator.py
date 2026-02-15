@@ -3,11 +3,12 @@ Dependency Validator for Engine Initialization
 Validates all required dependencies before engine use.
 """
 
+from __future__ import annotations
+
 import importlib
 import importlib.util
 import logging
 import sys
-from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class DependencyValidator:
     }
 
     @staticmethod
-    def check_package(package_name: str, import_name: Optional[str] = None) -> bool:
+    def check_package(package_name: str, import_name: str | None = None) -> bool:
         """
         Check if a package is installed.
 
@@ -148,7 +149,7 @@ class DependencyValidator:
     @staticmethod
     def validate_engine_dependencies(
         engine_name: str, raise_on_error: bool = True
-    ) -> Tuple[bool, List[str], List[str]]:
+    ) -> tuple[bool, list[str], list[str]]:
         """
         Validate all dependencies for an engine.
 
@@ -205,7 +206,7 @@ class DependencyValidator:
         return all_valid, missing_required, missing_optional
 
     @staticmethod
-    def check_python_version(min_version: Tuple[int, int, int] = (3, 10, 0)) -> bool:
+    def check_python_version(min_version: tuple[int, int, int] = (3, 10, 0)) -> bool:
         """
         Check if Python version meets minimum requirement.
 
@@ -219,7 +220,7 @@ class DependencyValidator:
         return current >= min_version
 
     @staticmethod
-    def check_cuda_available() -> Tuple[bool, Optional[str]]:
+    def check_cuda_available() -> tuple[bool, str | None]:
         """
         Check if CUDA is available.
 
@@ -238,7 +239,7 @@ class DependencyValidator:
 
     @staticmethod
     def validate_model_files(
-        model_path: Optional[str], model_extensions: List[str] = None
+        model_path: str | None, model_extensions: list[str] | None = None
     ) -> bool:
         """
         Validate that model files exist.
@@ -267,10 +268,7 @@ class DependencyValidator:
 
         if model_path_obj.is_dir():
             # Check if directory contains model files
-            for ext in model_extensions:
-                if list(model_path_obj.rglob(f"*{ext}")):
-                    return True
-            return False
+            return any(list(model_path_obj.rglob(f"*{ext}")) for ext in model_extensions)
 
         return False
 

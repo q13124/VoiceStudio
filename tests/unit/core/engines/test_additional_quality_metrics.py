@@ -5,17 +5,17 @@ Tests spectral flatness, pitch variance, energy variance, speaking rate,
 click detection, silence ratio, and clipping ratio.
 """
 
-import pytest
 import numpy as np
+import pytest
 
 from app.core.engines.quality_metrics import (
-    calculate_spectral_flatness,
-    calculate_pitch_variance,
-    calculate_energy_variance,
-    calculate_speaking_rate,
-    detect_clicks,
-    calculate_silence_ratio,
     calculate_clipping_ratio,
+    calculate_energy_variance,
+    calculate_pitch_variance,
+    calculate_silence_ratio,
+    calculate_speaking_rate,
+    calculate_spectral_flatness,
+    detect_clicks,
 )
 
 
@@ -51,7 +51,7 @@ class TestSpectralFlatness:
         """Test spectral flatness on sine wave (should be low - tonal)."""
         audio = generate_test_audio(duration_seconds=1.0, frequency=440.0)
         flatness = calculate_spectral_flatness(audio, sample_rate=22050)
-        
+
         assert 0.0 <= flatness <= 1.0
         # Sine wave should have low flatness (tonal)
         assert flatness < 0.5
@@ -60,7 +60,7 @@ class TestSpectralFlatness:
         """Test spectral flatness on noise (should be high - noise-like)."""
         audio = np.random.normal(0, 0.1, 22050).astype(np.float32)
         flatness = calculate_spectral_flatness(audio, sample_rate=22050)
-        
+
         assert 0.0 <= flatness <= 1.0
         # Noise should have higher flatness
         assert flatness > 0.3
@@ -73,7 +73,7 @@ class TestPitchVariance:
         """Test pitch variance on constant frequency (should be low)."""
         audio = generate_test_audio(duration_seconds=1.0, frequency=440.0)
         variance = calculate_pitch_variance(audio, sample_rate=22050)
-        
+
         assert variance >= 0.0
         # Constant frequency should have low variance
         assert variance < 100.0
@@ -85,7 +85,7 @@ class TestPitchVariance:
         frequency = 440.0 + 100.0 * np.sin(2 * np.pi * 2 * t)
         audio = np.sin(2 * np.pi * frequency * t).astype(np.float32)
         variance = calculate_pitch_variance(audio, sample_rate=22050)
-        
+
         assert variance >= 0.0
 
 
@@ -96,7 +96,7 @@ class TestEnergyVariance:
         """Test energy variance on constant amplitude (should be low)."""
         audio = generate_test_audio(duration_seconds=1.0)
         variance = calculate_energy_variance(audio)
-        
+
         assert variance >= 0.0
 
     def test_energy_variance_varying_amplitude(self):
@@ -106,7 +106,7 @@ class TestEnergyVariance:
         amplitude = 0.5 + 0.3 * np.sin(2 * np.pi * 5 * t)
         audio = amplitude * np.sin(2 * np.pi * 440.0 * t).astype(np.float32)
         variance = calculate_energy_variance(audio)
-        
+
         assert variance >= 0.0
 
 
@@ -122,14 +122,14 @@ class TestSpeakingRate:
         envelope = 0.5 + 0.3 * np.sin(2 * np.pi * 2 * t)  # 2 Hz modulation
         audio = audio * envelope
         rate = calculate_speaking_rate(audio, sample_rate=22050)
-        
+
         assert rate >= 0.0
 
     def test_speaking_rate_silence(self):
         """Test speaking rate on silence (should be low)."""
         audio = np.zeros(22050, dtype=np.float32)
         rate = calculate_speaking_rate(audio, sample_rate=22050)
-        
+
         assert rate >= 0.0
 
 
@@ -140,7 +140,7 @@ class TestClickDetection:
         """Test click detection on clean audio (should detect no clicks)."""
         audio = generate_test_audio(duration_seconds=1.0)
         result = detect_clicks(audio, sample_rate=22050)
-        
+
         assert "detected" in result
         assert "click_count" in result
         assert "click_ratio" in result
@@ -157,9 +157,9 @@ class TestClickDetection:
         for pos in click_positions:
             if pos < len(audio):
                 audio[pos] = 1.0  # Sudden jump
-        
+
         result = detect_clicks(audio, sample_rate=22050, threshold=0.05)
-        
+
         assert result["detected"] is True or result["click_count"] >= 0
         assert result["click_count"] >= 0
 
@@ -171,7 +171,7 @@ class TestSilenceRatio:
         """Test silence ratio on silent audio (should be high)."""
         audio = np.zeros(22050, dtype=np.float32)
         ratio = calculate_silence_ratio(audio, sample_rate=22050)
-        
+
         assert 0.0 <= ratio <= 1.0
         assert ratio > 0.5  # Mostly silence
 
@@ -179,7 +179,7 @@ class TestSilenceRatio:
         """Test silence ratio on active audio (should be low)."""
         audio = generate_test_audio(duration_seconds=1.0)
         ratio = calculate_silence_ratio(audio, sample_rate=22050)
-        
+
         assert 0.0 <= ratio <= 1.0
         assert ratio < 0.5  # Mostly active
 
@@ -193,7 +193,7 @@ class TestClippingRatio:
         # Normalize to avoid clipping
         audio = audio / np.max(np.abs(audio)) * 0.8
         ratio = calculate_clipping_ratio(audio)
-        
+
         assert 0.0 <= ratio <= 1.0
         assert ratio < 0.1  # Low clipping
 
@@ -201,7 +201,7 @@ class TestClippingRatio:
         """Test clipping ratio on clipped audio (should be higher)."""
         audio = generate_clipped_audio(duration_seconds=1.0)
         ratio = calculate_clipping_ratio(audio, clipping_threshold=0.95)
-        
+
         assert 0.0 <= ratio <= 1.0
         assert ratio > 0.0  # Some clipping detected
 

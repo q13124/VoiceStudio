@@ -11,7 +11,7 @@ from pathlib import Path
 def main():
     """Check if any staged files contain merge conflict markers."""
     conflict_marker = "<<<<<<< HEAD"
-    
+
     errors = []
     for filename in sys.argv[1:]:
         try:
@@ -23,12 +23,12 @@ def main():
         except Exception:
             # Skip files that can't be read (binary, permissions, etc.)
             pass
-    
+
     if errors:
         for error in errors:
             print(error)
         return 1
-    
+
     return 0
 
 

@@ -4,10 +4,11 @@ Image Search Routes
 Endpoints for searching images from various sources.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
-from typing import Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/image-search", tags=["image-search"])
 
 # In-memory storage for search history (replace with database in production)
-_search_history: List["ImageSearchResult"] = []
+_search_history: list["ImageSearchResult"] = []
 
 
 class ImageSearchResult(BaseModel):
@@ -26,30 +27,30 @@ class ImageSearchResult(BaseModel):
 
     result_id: str
     image_url: str
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     source: str  # Unsplash, Pexels, Pixabay, etc.
     width: int
     height: int
-    file_size: Optional[int] = None  # bytes
-    license: Optional[str] = None
-    author: Optional[str] = None
-    author_url: Optional[str] = None
-    tags: List[str] = []
-    metadata: Dict[str, str] = {}
+    file_size: int | None = None  # bytes
+    license: str | None = None
+    author: str | None = None
+    author_url: str | None = None
+    tags: list[str] = []
+    metadata: dict[str, str] = {}
 
 
 class ImageSearchRequest(BaseModel):
     """Request to search for images."""
 
     query: str
-    source: Optional[str] = None  # unsplash, pexels, pixabay, all
-    category: Optional[str] = None  # nature, people, abstract, etc.
-    orientation: Optional[str] = None  # landscape, portrait, square
-    color: Optional[str] = None  # red, blue, green, etc.
-    min_width: Optional[int] = None
-    min_height: Optional[int] = None
+    source: str | None = None  # unsplash, pexels, pixabay, all
+    category: str | None = None  # nature, people, abstract, etc.
+    orientation: str | None = None  # landscape, portrait, square
+    color: str | None = None  # red, blue, green, etc.
+    min_width: int | None = None
+    min_height: int | None = None
     page: int = 1
     per_page: int = 20
 
@@ -57,13 +58,13 @@ class ImageSearchRequest(BaseModel):
 class ImageSearchResponse(BaseModel):
     """Image search response."""
 
-    results: List[ImageSearchResult]
+    results: list[ImageSearchResult]
     total: int
     page: int
     per_page: int
     total_pages: int
     query: str
-    source: Optional[str] = None
+    source: str | None = None
 
 
 class ImageSource(BaseModel):
@@ -92,7 +93,7 @@ async def search_images(request: ImageSearchRequest):
         results = []
 
         # Try to get API keys from APIKeyManager storage
-        api_keys: Dict[str, str] = {}
+        api_keys: dict[str, str] = {}
         try:
             from .api_key_manager import _api_keys as api_key_storage
 
@@ -111,10 +112,7 @@ async def search_images(request: ImageSearchRequest):
 
         # Search based on source
         sources_to_search = []
-        if source == "all":
-            sources_to_search = ["unsplash", "pexels", "pixabay"]
-        else:
-            sources_to_search = [source]
+        sources_to_search = ["unsplash", "pexels", "pixabay"] if source == "all" else [source]
 
         # Try to search each source
         for search_source in sources_to_search:
@@ -173,11 +171,11 @@ async def search_images(request: ImageSearchRequest):
         logger.error(f"Failed to search images: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to search images: {str(e)}",
+            detail=f"Failed to search images: {e!s}",
         ) from e
 
 
-@router.get("/sources", response_model=List[ImageSource])
+@router.get("/sources", response_model=list[ImageSource])
 async def list_image_sources():
     """List all available image search sources."""
     return [
@@ -212,10 +210,10 @@ async def list_image_sources():
     ]
 
 
-@router.get("/history", response_model=List[ImageSearchResult])
+@router.get("/history", response_model=list[ImageSearchResult])
 async def get_search_history(
     limit: int = Query(50, ge=1, le=500),
-    source: Optional[str] = Query(None),
+    source: str | None = Query(None),
 ):
     """Get recent search history."""
     try:
@@ -229,7 +227,7 @@ async def get_search_history(
         logger.error(f"Failed to get search history: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get search history: {str(e)}",
+            detail=f"Failed to get search history: {e!s}",
         ) from e
 
 
@@ -243,11 +241,11 @@ async def clear_search_history():
         logger.error(f"Failed to clear search history: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to clear search history: {str(e)}",
+            detail=f"Failed to clear search history: {e!s}",
         ) from e
 
 
-@router.get("/categories", response_model=List[str])
+@router.get("/categories", response_model=list[str])
 async def list_categories():
     """List available image categories."""
     return [
@@ -269,7 +267,7 @@ async def list_categories():
     ]
 
 
-@router.get("/colors", response_model=List[str])
+@router.get("/colors", response_model=list[str])
 async def list_colors():
     """List available color filters."""
     return [
@@ -288,8 +286,8 @@ async def list_colors():
 
 
 async def _search_source(
-    query: str, source: str, request: ImageSearchRequest, api_key: Optional[str] = None
-) -> List[ImageSearchResult]:
+    query: str, source: str, request: ImageSearchRequest, api_key: str | None = None
+) -> list[ImageSearchResult]:
     """Search images from a specific source."""
     results = []
 
@@ -307,10 +305,10 @@ async def _search_source(
 
 
 async def _search_unsplash(
-    query: str, request: ImageSearchRequest, api_key: Optional[str] = None
-) -> List[ImageSearchResult]:
+    query: str, request: ImageSearchRequest, api_key: str | None = None
+) -> list[ImageSearchResult]:
     """Search Unsplash API."""
-    results: List[ImageSearchResult] = []
+    results: list[ImageSearchResult] = []
 
     if not api_key:
         logger.debug("Unsplash API key not available")
@@ -319,7 +317,7 @@ async def _search_unsplash(
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             url = "https://api.unsplash.com/search/photos"
-            params: Dict[str, str | int] = {
+            params: dict[str, str | int] = {
                 "query": query,
                 "page": request.page,
                 "per_page": request.per_page,
@@ -361,10 +359,10 @@ async def _search_unsplash(
 
 
 async def _search_pexels(
-    query: str, request: ImageSearchRequest, api_key: Optional[str] = None
-) -> List[ImageSearchResult]:
+    query: str, request: ImageSearchRequest, api_key: str | None = None
+) -> list[ImageSearchResult]:
     """Search Pexels API."""
-    results: List[ImageSearchResult] = []
+    results: list[ImageSearchResult] = []
 
     if not api_key:
         logger.debug("Pexels API key not available")
@@ -373,7 +371,7 @@ async def _search_pexels(
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             url = "https://api.pexels.com/v1/search"
-            params: Dict[str, str | int] = {
+            params: dict[str, str | int] = {
                 "query": query,
                 "page": request.page,
                 "per_page": request.per_page,
@@ -415,10 +413,10 @@ async def _search_pexels(
 
 
 async def _search_pixabay(
-    query: str, request: ImageSearchRequest, api_key: Optional[str] = None
-) -> List[ImageSearchResult]:
+    query: str, request: ImageSearchRequest, api_key: str | None = None
+) -> list[ImageSearchResult]:
     """Search Pixabay API."""
-    results: List[ImageSearchResult] = []
+    results: list[ImageSearchResult] = []
 
     if not api_key:
         logger.debug("Pixabay API key not available")
@@ -427,7 +425,7 @@ async def _search_pixabay(
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             url = "https://pixabay.com/api/"
-            params: Dict[str, str | int] = {
+            params: dict[str, str | int] = {
                 "key": api_key,
                 "q": query,
                 "page": request.page,
@@ -479,9 +477,9 @@ async def _search_pixabay(
 
 async def _search_local_images(
     query: str, request: ImageSearchRequest
-) -> List[ImageSearchResult]:
+) -> list[ImageSearchResult]:
     """Search local image library."""
-    results: List[ImageSearchResult] = []
+    results: list[ImageSearchResult] = []
 
     try:
         # Search in common image directories
@@ -497,7 +495,7 @@ async def _search_local_images(
             if not os.path.exists(search_dir):
                 continue
 
-            for root, dirs, files in os.walk(search_dir):
+            for root, _dirs, files in os.walk(search_dir):
                 for file in files:
                     if not any(file.lower().endswith(ext) for ext in image_extensions):
                         continue
@@ -560,7 +558,7 @@ def _matches_color(result: ImageSearchResult, color: str) -> bool:
     """Check if result matches color filter."""
     if not color:
         return True
-    
+
     # Check if color is mentioned in tags or title
     color_lower = color.lower()
     searchable_text = " ".join([
@@ -568,7 +566,7 @@ def _matches_color(result: ImageSearchResult, color: str) -> bool:
         result.description or "",
         " ".join(result.tags or [])
     ]).lower()
-    
+
     # Basic color matching in text
     color_keywords = {
         "red": ["red", "crimson", "scarlet", "ruby"],
@@ -583,29 +581,29 @@ def _matches_color(result: ImageSearchResult, color: str) -> bool:
         "white": ["white", "light", "snow", "ivory"],
         "gray": ["gray", "grey", "silver", "ash"],
     }
-    
+
     if color_lower in color_keywords:
         keywords = color_keywords[color_lower]
         return any(keyword in searchable_text for keyword in keywords)
-    
+
     # Fallback: check if color name appears in text
     return color_lower in searchable_text
 
 
 def _rank_results(
-    results: List[ImageSearchResult], query: str, request: ImageSearchRequest
-) -> List[ImageSearchResult]:
+    results: list[ImageSearchResult], query: str, request: ImageSearchRequest
+) -> list[ImageSearchResult]:
     """Rank search results by relevance."""
     if not results:
         return results
-    
+
     query_lower = query.lower()
     query_words = set(query_lower.split())
-    
+
     def calculate_relevance_score(result: ImageSearchResult) -> float:
         """Calculate relevance score for a result."""
         score = 0.0
-        
+
         # Title match (highest weight)
         title_lower = (result.title or "").lower()
         if query_lower in title_lower:
@@ -615,7 +613,7 @@ def _rank_results(
             title_words = set(title_lower.split())
             matching_words = query_words.intersection(title_words)
             score += len(matching_words) * 3.0
-        
+
         # Description match (medium weight)
         description_lower = (result.description or "").lower()
         if query_lower in description_lower:
@@ -624,7 +622,7 @@ def _rank_results(
             desc_words = set(description_lower.split())
             matching_words = query_words.intersection(desc_words)
             score += len(matching_words) * 1.5
-        
+
         # Tag match (high weight)
         tags_lower = [tag.lower() for tag in (result.tags or [])]
         for tag in tags_lower:
@@ -634,7 +632,7 @@ def _rank_results(
                 tag_words = set(tag.split())
                 matching_words = query_words.intersection(tag_words)
                 score += len(matching_words) * 2.0
-        
+
         # Source preference (slight boost for certain sources)
         source_weights = {
             "unsplash": 0.5,  # High quality
@@ -643,7 +641,7 @@ def _rank_results(
             "local": 0.1,
         }
         score += source_weights.get(result.source, 0.0)
-        
+
         # Image quality indicators (dimensions)
         if result.width > 0 and result.height > 0:
             # Prefer larger images (up to a point)
@@ -652,12 +650,12 @@ def _rank_results(
                 score += 0.5
             elif area > 500000:  # > 0.5MP
                 score += 0.3
-        
+
         return score
-    
+
     # Calculate scores and sort
     scored_results = [(result, calculate_relevance_score(result)) for result in results]
     scored_results.sort(key=lambda x: x[1], reverse=True)
-    
+
     # Return sorted results
     return [result for result, _ in scored_results]

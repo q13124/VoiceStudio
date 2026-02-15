@@ -5,11 +5,14 @@ Provides LRU cache for loaded models with memory limits, statistics,
 and cache warming. Supports all engine types (XTTS, Whisper, RVC, etc.).
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import time
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 # Try importing psutil for memory pressure detection
 try:
@@ -38,8 +41,8 @@ class ModelCache:
     def __init__(
         self,
         max_models: int = 10,
-        max_memory_mb: Optional[float] = None,
-        default_ttl: Optional[float] = None,
+        max_memory_mb: float | None = None,
+        default_ttl: float | None = None,
         enable_dynamic_limits: bool = True,
         memory_pressure_threshold: float = 0.85,  # 85% memory usage
         low_memory_threshold: float = 0.70,  # 70% memory usage
@@ -73,7 +76,7 @@ class ModelCache:
         self._original_max_memory_mb = max_memory_mb
 
         # Cache storage: OrderedDict for LRU behavior
-        self._cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
+        self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
 
         # Statistics
         self._stats = {
@@ -89,7 +92,7 @@ class ModelCache:
         }
 
         # Timestamps for TTL
-        self._timestamps: Dict[str, float] = {}
+        self._timestamps: dict[str, float] = {}
 
         # Process for memory monitoring
         self._process = None
@@ -108,7 +111,7 @@ class ModelCache:
         )
 
     def _generate_key(
-        self, engine: str, model_name: str, device: Optional[str] = None
+        self, engine: str, model_name: str, device: str | None = None
     ) -> str:
         """
         Generate cache key for model.
@@ -141,7 +144,7 @@ class ModelCache:
             if hasattr(model, "parameters"):
                 # Check if it's a PyTorch model
                 try:
-                    import torch  # noqa: F401
+                    import torch
 
                     total_params = sum(p.numel() for p in model.parameters())
                     # Rough estimate: 4 bytes per float32 parameter
@@ -199,7 +202,7 @@ class ModelCache:
             logger.debug(f"Failed to get GPU memory usage: {e}")
         return 0.0
 
-    def _evict_oldest(self) -> Optional[str]:
+    def _evict_oldest(self) -> str | None:
         """
         Evict oldest model from cache.
 
@@ -220,11 +223,11 @@ class ModelCache:
         # Update memory stats
         if "memory_mb" in evicted:
             self._stats["current_memory_mb"] -= evicted["memory_mb"]
-        
+
         # Update GPU memory stats if tracked
         if "gpu_memory_mb" in evicted:
             self._stats["current_gpu_memory_mb"] -= evicted.get("gpu_memory_mb", 0.0)
-        
+
         # Clear GPU cache if this was a GPU model
         if evicted.get("device") == "cuda":
             try:
@@ -240,7 +243,7 @@ class ModelCache:
 
         return oldest_key
 
-    def _get_system_memory_usage(self) -> Optional[float]:
+    def _get_system_memory_usage(self) -> float | None:
         """
         Get current system memory usage percentage.
 
@@ -418,7 +421,7 @@ class ModelCache:
         # Check for low memory first (proactive)
         if self.auto_eviction_enabled:
             self._evict_on_low_memory()
-        
+
         # Check for memory pressure (aggressive)
         if self.auto_eviction_enabled:
             self._evict_on_memory_pressure()
@@ -436,8 +439,8 @@ class ModelCache:
         self,
         engine: str,
         model_name: str,
-        device: Optional[str] = None,
-    ) -> Optional[Any]:
+        device: str | None = None,
+    ) -> Any | None:
         """
         Get cached model if available and not expired.
 
@@ -480,10 +483,10 @@ class ModelCache:
         engine: str,
         model_name: str,
         model: Any,
-        device: Optional[str] = None,
-        memory_mb: Optional[float] = None,
-        gpu_memory_mb: Optional[float] = None,
-        ttl: Optional[float] = None,
+        device: str | None = None,
+        memory_mb: float | None = None,
+        gpu_memory_mb: float | None = None,
+        ttl: float | None = None,
     ):
         """
         Cache a model.
@@ -502,7 +505,7 @@ class ModelCache:
         # Estimate memory if not provided
         if memory_mb is None:
             memory_mb = self._estimate_memory_mb(model)
-        
+
         # Estimate GPU memory if not provided and device is CUDA
         if gpu_memory_mb is None and device == "cuda" and self.track_gpu_memory:
             try:
@@ -567,7 +570,7 @@ class ModelCache:
         self,
         engine: str,
         model_name: str,
-        device: Optional[str] = None,
+        device: str | None = None,
     ) -> bool:
         """
         Remove model from cache.
@@ -603,7 +606,7 @@ class ModelCache:
         self._stats["current_memory_mb"] = 0.0
         logger.info(f"Cleared {count} models from cache")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 
@@ -649,7 +652,7 @@ class ModelCache:
 
         return stats
 
-    def list_cached_models(self) -> List[Dict[str, Any]]:
+    def list_cached_models(self) -> list[dict[str, Any]]:
         """
         List all cached models with metadata.
 
@@ -671,7 +674,7 @@ class ModelCache:
 
     def warm_cache(
         self,
-        models_to_warm: List[Tuple[str, str, Optional[str], Callable[[], Any]]],
+        models_to_warm: list[tuple[str, str, str | None, Callable[[], Any]]],
     ):
         """
         Warm cache by pre-loading models.
@@ -709,13 +712,13 @@ class ModelCache:
 
 
 # Global model cache instance
-_global_model_cache: Optional[ModelCache] = None
+_global_model_cache: ModelCache | None = None
 
 
 def get_model_cache(
     max_models: int = 10,
-    max_memory_mb: Optional[float] = None,
-    default_ttl: Optional[float] = None,
+    max_memory_mb: float | None = None,
+    default_ttl: float | None = None,
 ) -> ModelCache:
     """
     Get or create global model cache instance.
@@ -748,4 +751,4 @@ def clear_global_cache():
 
 
 # Export
-__all__ = ["ModelCache", "get_model_cache", "clear_global_cache"]
+__all__ = ["ModelCache", "clear_global_cache", "get_model_cache"]

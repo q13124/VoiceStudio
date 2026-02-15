@@ -5,9 +5,11 @@ CRUD endpoints for managing A/B test experiments.
 Integrates with ABTestingService for experiment lifecycle management.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -17,7 +19,6 @@ from backend.services.ab_testing import (
     Experiment,
     ExperimentStatus,
     Variant,
-    VariantType,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class VariantRequest(BaseModel):
     name: str = Field(..., description="Variant display name")
     description: str = Field("", description="Variant description")
     weight: int = Field(50, ge=0, le=100, description="Traffic weight percentage")
-    config: Dict[str, Any] = Field(default_factory=dict, description="Variant configuration")
+    config: dict[str, Any] = Field(default_factory=dict, description="Variant configuration")
 
 
 class CreateExperimentRequest(BaseModel):
@@ -46,21 +47,21 @@ class CreateExperimentRequest(BaseModel):
     id: str = Field(..., description="Unique experiment identifier")
     name: str = Field(..., description="Experiment display name")
     description: str = Field("", description="Experiment description")
-    variants: List[VariantRequest] = Field(..., min_length=2, description="At least 2 variants required")
-    metrics: List[str] = Field(default_factory=list, description="Metrics to track")
-    tags: List[str] = Field(default_factory=list, description="Experiment tags")
+    variants: list[VariantRequest] = Field(..., min_length=2, description="At least 2 variants required")
+    metrics: list[str] = Field(default_factory=list, description="Metrics to track")
+    tags: list[str] = Field(default_factory=list, description="Experiment tags")
     target_sample_size: int = Field(0, ge=0, description="Target sample size (0 = unlimited)")
 
 
 class UpdateExperimentRequest(BaseModel):
     """Request model for updating an experiment."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    variants: Optional[List[VariantRequest]] = None
-    metrics: Optional[List[str]] = None
-    tags: Optional[List[str]] = None
-    target_sample_size: Optional[int] = None
+    name: str | None = None
+    description: str | None = None
+    variants: list[VariantRequest] | None = None
+    metrics: list[str] | None = None
+    tags: list[str] | None = None
+    target_sample_size: int | None = None
 
 
 class ExperimentResponse(BaseModel):
@@ -70,15 +71,15 @@ class ExperimentResponse(BaseModel):
     name: str
     description: str
     status: str
-    variants: List[Dict[str, Any]]
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    variants: list[dict[str, Any]]
+    created_at: str | None = None
+    updated_at: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
     target_sample_size: int = 0
     current_sample_size: int = 0
-    metrics: List[str] = []
-    tags: List[str] = []
+    metrics: list[str] = []
+    tags: list[str] = []
 
 
 class ExperimentStatsResponse(BaseModel):
@@ -89,13 +90,13 @@ class ExperimentStatsResponse(BaseModel):
     total_exposures: int = 0
     total_conversions: int = 0
     conversion_rate: float = 0.0
-    variant_stats: Dict[str, Any] = {}
+    variant_stats: dict[str, Any] = {}
 
 
 class ExperimentListResponse(BaseModel):
     """Response model for experiment list."""
 
-    experiments: List[ExperimentResponse]
+    experiments: list[ExperimentResponse]
     total: int
 
 
@@ -118,11 +119,11 @@ def get_ab_service() -> ABTestingService:
 async def create_experiment(request: CreateExperimentRequest):
     """
     Create a new A/B test experiment.
-    
+
     The experiment starts in DRAFT status and must be explicitly started.
     """
     service = get_ab_service()
-    
+
     # Check if experiment already exists
     existing = service.get_experiment(request.id)
     if existing:
@@ -130,7 +131,7 @@ async def create_experiment(request: CreateExperimentRequest):
             status_code=409,
             detail=f"Experiment with ID '{request.id}' already exists"
         )
-    
+
     # Convert variant requests to Variant objects
     variants = [
         Variant(
@@ -142,7 +143,7 @@ async def create_experiment(request: CreateExperimentRequest):
         )
         for v in request.variants
     ]
-    
+
     # Create experiment
     experiment = Experiment(
         id=request.id,
@@ -153,27 +154,27 @@ async def create_experiment(request: CreateExperimentRequest):
         tags=request.tags,
         target_sample_size=request.target_sample_size,
     )
-    
+
     # Register with service
     service.register_experiment(experiment)
-    
+
     return _experiment_to_response(experiment)
 
 
 @router.get("", response_model=ExperimentListResponse)
 async def list_experiments(
-    status: Optional[str] = Query(None, description="Filter by status"),
-    tag: Optional[str] = Query(None, description="Filter by tag"),
+    status: str | None = Query(None, description="Filter by status"),
+    tag: str | None = Query(None, description="Filter by tag"),
 ):
     """
     List all experiments, optionally filtered by status or tag.
     """
     service = get_ab_service()
     all_experiments = service.list_experiments()
-    
+
     # Apply filters
     filtered = all_experiments
-    
+
     if status:
         try:
             status_enum = ExperimentStatus(status)
@@ -183,10 +184,10 @@ async def list_experiments(
                 status_code=400,
                 detail=f"Invalid status: {status}. Valid values: {[s.value for s in ExperimentStatus]}"
             )
-    
+
     if tag:
         filtered = [e for e in filtered if tag in e.tags]
-    
+
     return ExperimentListResponse(
         experiments=[_experiment_to_response(e) for e in filtered],
         total=len(filtered),
@@ -200,13 +201,13 @@ async def get_experiment(experiment_id: str):
     """
     service = get_ab_service()
     experiment = service.get_experiment(experiment_id)
-    
+
     if not experiment:
         raise HTTPException(
             status_code=404,
             detail=f"Experiment '{experiment_id}' not found"
         )
-    
+
     return _experiment_to_response(experiment)
 
 
@@ -214,26 +215,26 @@ async def get_experiment(experiment_id: str):
 async def update_experiment(experiment_id: str, request: UpdateExperimentRequest):
     """
     Update an existing experiment.
-    
+
     Only DRAFT experiments can have their variants modified.
     RUNNING experiments can only have metadata updated.
     """
     service = get_ab_service()
     experiment = service.get_experiment(experiment_id)
-    
+
     if not experiment:
         raise HTTPException(
             status_code=404,
             detail=f"Experiment '{experiment_id}' not found"
         )
-    
+
     # Check if modifying variants on a non-draft experiment
     if request.variants and experiment.status != ExperimentStatus.DRAFT:
         raise HTTPException(
             status_code=400,
             detail="Cannot modify variants on a non-DRAFT experiment"
         )
-    
+
     # Update fields
     if request.name is not None:
         experiment.name = request.name
@@ -256,12 +257,12 @@ async def update_experiment(experiment_id: str, request: UpdateExperimentRequest
             )
             for v in request.variants
         ]
-    
+
     experiment.updated_at = datetime.utcnow()
-    
+
     # Re-register to save changes
     service.register_experiment(experiment)
-    
+
     return _experiment_to_response(experiment)
 
 
@@ -269,27 +270,27 @@ async def update_experiment(experiment_id: str, request: UpdateExperimentRequest
 async def delete_experiment(experiment_id: str):
     """
     Delete an experiment.
-    
+
     Only DRAFT, COMPLETED, or ARCHIVED experiments can be deleted.
     """
     service = get_ab_service()
     experiment = service.get_experiment(experiment_id)
-    
+
     if not experiment:
         raise HTTPException(
             status_code=404,
             detail=f"Experiment '{experiment_id}' not found"
         )
-    
+
     if experiment.status == ExperimentStatus.RUNNING:
         raise HTTPException(
             status_code=400,
             detail="Cannot delete a RUNNING experiment. Stop it first."
         )
-    
+
     # Archive instead of hard delete for audit trail
     service.archive_experiment(experiment_id)
-    
+
     return {"message": f"Experiment '{experiment_id}' archived successfully"}
 
 
@@ -304,7 +305,7 @@ async def start_experiment(experiment_id: str):
     Start an experiment (change status from DRAFT to RUNNING).
     """
     service = get_ab_service()
-    
+
     success = service.start_experiment(experiment_id)
     if not success:
         experiment = service.get_experiment(experiment_id)
@@ -314,7 +315,7 @@ async def start_experiment(experiment_id: str):
             status_code=400,
             detail=f"Cannot start experiment in status: {experiment.status.value}"
         )
-    
+
     return {"message": f"Experiment '{experiment_id}' started", "status": "running"}
 
 
@@ -324,7 +325,7 @@ async def pause_experiment(experiment_id: str):
     Pause a running experiment.
     """
     service = get_ab_service()
-    
+
     success = service.pause_experiment(experiment_id)
     if not success:
         experiment = service.get_experiment(experiment_id)
@@ -334,7 +335,7 @@ async def pause_experiment(experiment_id: str):
             status_code=400,
             detail=f"Cannot pause experiment in status: {experiment.status.value}"
         )
-    
+
     return {"message": f"Experiment '{experiment_id}' paused", "status": "paused"}
 
 
@@ -344,7 +345,7 @@ async def resume_experiment(experiment_id: str):
     Resume a paused experiment.
     """
     service = get_ab_service()
-    
+
     success = service.resume_experiment(experiment_id)
     if not success:
         experiment = service.get_experiment(experiment_id)
@@ -354,7 +355,7 @@ async def resume_experiment(experiment_id: str):
             status_code=400,
             detail=f"Cannot resume experiment in status: {experiment.status.value}"
         )
-    
+
     return {"message": f"Experiment '{experiment_id}' resumed", "status": "running"}
 
 
@@ -364,7 +365,7 @@ async def complete_experiment(experiment_id: str):
     Mark an experiment as completed.
     """
     service = get_ab_service()
-    
+
     success = service.complete_experiment(experiment_id)
     if not success:
         experiment = service.get_experiment(experiment_id)
@@ -374,7 +375,7 @@ async def complete_experiment(experiment_id: str):
             status_code=400,
             detail=f"Cannot complete experiment in status: {experiment.status.value}"
         )
-    
+
     return {"message": f"Experiment '{experiment_id}' completed", "status": "completed"}
 
 
@@ -390,25 +391,25 @@ async def get_experiment_stats(experiment_id: str):
     """
     service = get_ab_service()
     experiment = service.get_experiment(experiment_id)
-    
+
     if not experiment:
         raise HTTPException(
             status_code=404,
             detail=f"Experiment '{experiment_id}' not found"
         )
-    
+
     # Get variant stats
     variant_stats = {}
     for variant in experiment.variants:
         stats = service.get_variant_stats(experiment_id, variant.id)
         if stats:
             variant_stats[variant.id] = stats
-    
+
     # Calculate totals
     total_exposures = sum(s.get("exposures", 0) for s in variant_stats.values())
     total_conversions = sum(s.get("conversions", 0) for s in variant_stats.values())
     conversion_rate = (total_conversions / total_exposures * 100) if total_exposures > 0 else 0.0
-    
+
     return ExperimentStatsResponse(
         experiment_id=experiment_id,
         status=experiment.status.value,
@@ -422,7 +423,7 @@ async def get_experiment_stats(experiment_id: str):
 @router.get("/{experiment_id}/events")
 async def get_experiment_events(
     experiment_id: str,
-    event_type: Optional[str] = Query(None, description="Filter by event type"),
+    event_type: str | None = Query(None, description="Filter by event type"),
     limit: int = Query(100, ge=1, le=1000),
 ):
     """
@@ -430,15 +431,15 @@ async def get_experiment_events(
     """
     service = get_ab_service()
     experiment = service.get_experiment(experiment_id)
-    
+
     if not experiment:
         raise HTTPException(
             status_code=404,
             detail=f"Experiment '{experiment_id}' not found"
         )
-    
+
     events = service.get_experiment_events(experiment_id, event_type=event_type, limit=limit)
-    
+
     return {
         "experiment_id": experiment_id,
         "events": [e.to_dict() if hasattr(e, 'to_dict') else e for e in events],

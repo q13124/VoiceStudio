@@ -21,11 +21,10 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple, Optional
 
 from _env_setup import PROJECT_ROOT
-from app.core.audit import AuditLogger, get_audit_logger, ContextEnricher
 
+from app.core.audit import ContextEnricher, get_audit_logger
 
 # Regex patterns for parsing MSBuild output
 WARNING_PATTERN = re.compile(
@@ -46,24 +45,24 @@ SIMPLE_ERROR_PATTERN = re.compile(
 )
 
 
-def parse_msbuild_output(output: str) -> Tuple[List[dict], List[dict]]:
+def parse_msbuild_output(output: str) -> tuple[list[dict], list[dict]]:
     """
     Extract warnings and errors from MSBuild output.
-    
+
     Args:
         output: MSBuild output text
-        
+
     Returns:
         Tuple of (warnings, errors) as lists of dicts
     """
     warnings = []
     errors = []
-    
+
     for line in output.split("\n"):
         line = line.strip()
         if not line:
             continue
-        
+
         # Try full pattern with file location
         match = WARNING_PATTERN.search(line)
         if match:
@@ -75,7 +74,7 @@ def parse_msbuild_output(output: str) -> Tuple[List[dict], List[dict]]:
                 "column": int(match.group("col")),
             })
             continue
-        
+
         match = ERROR_PATTERN.search(line)
         if match:
             errors.append({
@@ -86,7 +85,7 @@ def parse_msbuild_output(output: str) -> Tuple[List[dict], List[dict]]:
                 "column": int(match.group("col")),
             })
             continue
-        
+
         # Try simple pattern without file location
         match = SIMPLE_WARNING_PATTERN.search(line)
         if match and "warning" in line.lower():
@@ -98,7 +97,7 @@ def parse_msbuild_output(output: str) -> Tuple[List[dict], List[dict]]:
                 "column": None,
             })
             continue
-        
+
         match = SIMPLE_ERROR_PATTERN.search(line)
         if match and "error" in line.lower() and "0 Error" not in line:
             errors.append({
@@ -108,11 +107,11 @@ def parse_msbuild_output(output: str) -> Tuple[List[dict], List[dict]]:
                 "line": None,
                 "column": None,
             })
-    
+
     return warnings, errors
 
 
-def get_current_commit() -> Optional[str]:
+def get_current_commit() -> str | None:
     """Get current git commit hash."""
     try:
         result = subprocess.run(
@@ -131,29 +130,29 @@ def get_current_commit() -> Optional[str]:
 
 
 def log_build_results(
-    warnings: List[dict],
-    errors: List[dict],
-    task_id: Optional[str] = None,
-    commit_hash: Optional[str] = None,
-) -> Tuple[List[str], bool]:
+    warnings: list[dict],
+    errors: list[dict],
+    task_id: str | None = None,
+    commit_hash: str | None = None,
+) -> tuple[list[str], bool]:
     """
     Log build results to audit system.
-    
+
     Args:
         warnings: List of warning dicts
         errors: List of error dicts
         task_id: Task ID from Quality Ledger
         commit_hash: Git commit hash
-        
+
     Returns:
         Tuple of (entry_ids, success)
     """
     audit_logger = get_audit_logger()
     enricher = ContextEnricher()
     audit_logger.set_context_enricher(enricher)
-    
+
     entry_ids = []
-    
+
     # Log each warning
     for warning in warnings:
         entry_id = audit_logger.log_file_change(
@@ -165,7 +164,7 @@ def log_build_results(
             actor="system",
         )
         entry_ids.append(entry_id)
-    
+
     # Log each error
     for error in errors:
         entry_id = audit_logger.log_file_change(
@@ -177,11 +176,11 @@ def log_build_results(
             actor="system",
         )
         entry_ids.append(entry_id)
-    
+
     # Log overall build result
     warning_codes = [w["code"] for w in warnings]
     error_codes = [e["code"] for e in errors]
-    
+
     entry_ids.extend(
         audit_logger.log_build_event(
             warnings=warning_codes,
@@ -190,7 +189,7 @@ def log_build_results(
             task_id=task_id,
         )
     )
-    
+
     success = len(errors) == 0
     return entry_ids, success
 
@@ -199,15 +198,15 @@ def run_build(
     solution: str = "VoiceStudio.sln",
     configuration: str = "Debug",
     platform: str = "x64",
-) -> Tuple[str, int]:
+) -> tuple[str, int]:
     """
     Run dotnet build and capture output.
-    
+
     Args:
         solution: Solution file path
         configuration: Build configuration
         platform: Build platform
-        
+
     Returns:
         Tuple of (output, exit_code)
     """
@@ -218,7 +217,7 @@ def run_build(
         f"-p:Platform={platform}",
         "--verbosity", "normal",
     ]
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -277,12 +276,12 @@ def main():
         action="store_true",
         help="Output results as JSON",
     )
-    
+
     args = parser.parse_args()
-    
+
     build_output = ""
     exit_code = 0
-    
+
     if args.run_build:
         print(f"Running build: {args.solution} ({args.configuration}|{args.platform})")
         build_output, exit_code = run_build(
@@ -300,15 +299,15 @@ def main():
     else:
         print("Error: Provide --output, --stdin, or --run-build", file=sys.stderr)
         sys.exit(1)
-    
+
     # Parse build output
     warnings, errors = parse_msbuild_output(build_output)
-    
+
     print(f"Found {len(warnings)} warning(s), {len(errors)} error(s)")
-    
+
     # Get commit hash
     commit_hash = get_current_commit()
-    
+
     # Log results
     entry_ids, success = log_build_results(
         warnings=warnings,
@@ -316,7 +315,7 @@ def main():
         task_id=args.task,
         commit_hash=commit_hash,
     )
-    
+
     if args.json:
         import json
         result = {
@@ -341,9 +340,9 @@ def main():
             print(f"\nErrors ({len(errors)}):")
             for e in errors:
                 print(f"  {e['code']}: {e['message'][:80]}")
-        
+
         print(f"\nBuild {'succeeded' if success else 'FAILED'}")
-    
+
     # Return exit code from build or 0 if just parsing
     return exit_code if args.run_build else (0 if success else 1)
 

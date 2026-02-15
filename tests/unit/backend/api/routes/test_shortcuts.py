@@ -286,7 +286,7 @@ class TestShortcutsEndpoints:
             "/api/shortcuts/check-conflict?key_code=X&modifiers=Ctrl&modifiers=Alt&modifiers=Shift"
         )
         assert response.status_code == 200
-        data = response.json()
+        response.json()
         # Should indicate no conflict for unique key combination
 
     def test_get_shortcut_categories_success(self):

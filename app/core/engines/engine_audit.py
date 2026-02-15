@@ -9,10 +9,12 @@ Automatically reviews engines for:
 - Documentation gaps
 """
 
+from __future__ import annotations
+
 import inspect
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Type
+from typing import Any
 
 from .protocols import EngineProtocol
 
@@ -24,13 +26,13 @@ class EngineAuditResult:
     """Results of engine audit."""
 
     engine_name: str
-    engine_class: Type[EngineProtocol]
+    engine_class: type[EngineProtocol]
     is_complete: bool = False
-    missing_methods: List[str] = field(default_factory=list)
-    missing_features: List[str] = field(default_factory=list)
-    optimization_opportunities: List[str] = field(default_factory=list)
-    quality_enhancements: List[str] = field(default_factory=list)
-    documentation_issues: List[str] = field(default_factory=list)
+    missing_methods: list[str] = field(default_factory=list)
+    missing_features: list[str] = field(default_factory=list)
+    optimization_opportunities: list[str] = field(default_factory=list)
+    quality_enhancements: list[str] = field(default_factory=list)
+    documentation_issues: list[str] = field(default_factory=list)
     has_batch_processing: bool = False
     has_streaming: bool = False
     has_quality_metrics: bool = False
@@ -74,10 +76,10 @@ class EngineAuditor:
 
     def __init__(self):
         """Initialize engine auditor."""
-        self.audit_results: Dict[str, EngineAuditResult] = {}
+        self.audit_results: dict[str, EngineAuditResult] = {}
 
     def audit_engine(
-        self, engine_name: str, engine_class: Type[EngineProtocol]
+        self, engine_name: str, engine_class: type[EngineProtocol]
     ) -> EngineAuditResult:
         """
         Audit a single engine.
@@ -188,8 +190,8 @@ class EngineAuditor:
         return max(0.0, min(100.0, score))
 
     def audit_all_engines(
-        self, engine_registry: Dict[str, Type[EngineProtocol]]
-    ) -> Dict[str, EngineAuditResult]:
+        self, engine_registry: dict[str, type[EngineProtocol]]
+    ) -> dict[str, EngineAuditResult]:
         """
         Audit all engines in registry.
 
@@ -210,12 +212,12 @@ class EngineAuditor:
                 results[engine_name] = EngineAuditResult(
                     engine_name=engine_name,
                     engine_class=engine_class,
-                    documentation_issues=[f"Audit failed: {str(e)}"],
+                    documentation_issues=[f"Audit failed: {e!s}"],
                 )
 
         return results
 
-    def get_audit_summary(self) -> Dict[str, Any]:
+    def get_audit_summary(self) -> dict[str, Any]:
         """
         Get summary of all audits.
 
@@ -274,7 +276,7 @@ class EngineAuditor:
 
     def get_engines_needing_attention(
         self, min_score: float = 70.0
-    ) -> List[EngineAuditResult]:
+    ) -> list[EngineAuditResult]:
         """
         Get engines that need attention (score below threshold).
 
@@ -334,4 +336,4 @@ class EngineAuditor:
 
 
 # Export
-__all__ = ["EngineAuditor", "EngineAuditResult"]
+__all__ = ["EngineAuditResult", "EngineAuditor"]

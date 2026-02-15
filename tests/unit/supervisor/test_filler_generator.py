@@ -2,7 +2,6 @@
 Unit tests for FillerPhraseGenerator (Phase 11.1.4)
 """
 
-import pytest
 
 from app.core.supervisor.filler_generator import FillerPhraseGenerator
 

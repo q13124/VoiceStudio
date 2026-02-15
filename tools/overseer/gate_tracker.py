@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from tools.overseer.ledger_parser import LedgerParser
 from tools.overseer.models import Gate, GateStatus, LedgerEntry, LedgerState
 
@@ -11,11 +9,11 @@ class GateTracker:
 
     def __init__(self, ledger_parser: LedgerParser):
         self.parser = ledger_parser
-        self._statuses: List[GateStatus] = []
+        self._statuses: list[GateStatus] = []
 
-    def compute_statuses(self, force: bool = False) -> List[GateStatus]:
+    def compute_statuses(self, force: bool = False) -> list[GateStatus]:
         entries = self.parser.parse(force=force)
-        statuses: List[GateStatus] = []
+        statuses: list[GateStatus] = []
         for gate in Gate:
             gate_entries = [e for e in entries if e.gate == gate]
             status = GateStatus(gate=gate, entries=gate_entries)
@@ -28,7 +26,7 @@ class GateTracker:
         self._statuses = statuses
         return statuses
 
-    def get_all_statuses(self) -> List[GateStatus]:
+    def get_all_statuses(self) -> list[GateStatus]:
         if not self._statuses:
             return self.compute_statuses(force=False)
         return list(self._statuses)
@@ -39,11 +37,11 @@ class GateTracker:
                 return status.gate
         return Gate.H
 
-    def get_blockers(self) -> List[LedgerEntry]:
+    def get_blockers(self) -> list[LedgerEntry]:
         return [e for e in self.parser.parse() if e.state == LedgerState.BLOCKED]
 
-    def get_next_actions(self) -> List[str]:
-        actions: List[str] = []
+    def get_next_actions(self) -> list[str]:
+        actions: list[str] = []
         for status in self.get_all_statuses():
             if status.total_entries == 0:
                 continue

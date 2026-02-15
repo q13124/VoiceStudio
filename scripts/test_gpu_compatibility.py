@@ -17,7 +17,6 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import platform
 import subprocess
 import sys
@@ -92,10 +91,10 @@ def get_system_info() -> dict[str, str]:
 def get_gpu_info() -> GPUInfo:
     """Gather GPU information using PyTorch and nvidia-smi."""
     info = GPUInfo()
-    
+
     try:
         import torch
-        
+
         if torch.cuda.is_available():
             info.name = torch.cuda.get_device_name(0)
             props = torch.cuda.get_device_properties(0)
@@ -104,7 +103,7 @@ def get_gpu_info() -> GPUInfo:
             info.memory_free_gb = (
                 props.total_memory - torch.cuda.memory_allocated(0)
             ) / (1024**3)
-            
+
             # Determine architecture from compute capability
             cc = props.major * 10 + props.minor
             if cc >= 90:
@@ -119,13 +118,13 @@ def get_gpu_info() -> GPUInfo:
                 info.architecture = "Volta"
             else:
                 info.architecture = f"Compute Capability {props.major}.{props.minor}"
-            
+
             info.cuda_version = torch.version.cuda or "Unknown"
     except ImportError:
         logger.warning("PyTorch not available")
     except Exception as e:
         logger.warning(f"Error getting GPU info: {e}")
-    
+
     # Try nvidia-smi for driver version
     try:
         result = subprocess.run(
@@ -138,7 +137,7 @@ def get_gpu_info() -> GPUInfo:
             info.driver_version = result.stdout.strip()
     except Exception:
         pass  # ALLOWED: bare except - nvidia-smi may not be available
-    
+
     return info
 
 
@@ -151,7 +150,7 @@ def get_pytorch_info() -> dict[str, str]:
         "cudnn_version": "N/A",
         "torchaudio_version": "Not installed",
     }
-    
+
     try:
         import torch
         info["version"] = torch.__version__
@@ -161,13 +160,13 @@ def get_pytorch_info() -> dict[str, str]:
             info["cudnn_version"] = str(torch.backends.cudnn.version())
     except ImportError:
         pass  # ALLOWED: bare except - torch optional for compatibility check
-    
+
     try:
         import torchaudio
         info["torchaudio_version"] = torchaudio.__version__
     except ImportError:
         pass  # ALLOWED: bare except - torchaudio optional for compatibility check
-    
+
     return info
 
 
@@ -175,7 +174,7 @@ def check_cuda_availability() -> CompatibilityResult:
     """Check if CUDA is available and functional."""
     try:
         import torch
-        
+
         if not torch.cuda.is_available():
             return CompatibilityResult(
                 check_name="CUDA Availability",
@@ -183,13 +182,13 @@ def check_cuda_availability() -> CompatibilityResult:
                 message="CUDA is not available. GPU acceleration will not work.",
                 details={"torch_cuda_available": False}
             )
-        
+
         # Try to allocate a tensor on GPU
         device = torch.device("cuda:0")
         test_tensor = torch.zeros(1, device=device)
         del test_tensor
         torch.cuda.empty_cache()
-        
+
         return CompatibilityResult(
             check_name="CUDA Availability",
             passed=True,
@@ -213,17 +212,17 @@ def check_pytorch_cuda_version() -> CompatibilityResult:
     """Check if PyTorch CUDA version matches expected."""
     expected_cuda = "12.1"
     expected_torch = "2.2.2"
-    
+
     try:
         import torch
-        
+
         cuda_version = torch.version.cuda or "Unknown"
         torch_version = torch.__version__
-        
+
         # Parse versions
         cuda_major_minor = ".".join(cuda_version.split(".")[:2])
         torch_base = torch_version.split("+")[0]
-        
+
         issues = []
         if cuda_major_minor != expected_cuda:
             issues.append(
@@ -233,7 +232,7 @@ def check_pytorch_cuda_version() -> CompatibilityResult:
             issues.append(
                 f"PyTorch version mismatch: expected {expected_torch}, got {torch_base}"
             )
-        
+
         if issues:
             return CompatibilityResult(
                 check_name="PyTorch/CUDA Version",
@@ -246,7 +245,7 @@ def check_pytorch_cuda_version() -> CompatibilityResult:
                     "actual_torch": torch_version,
                 }
             )
-        
+
         return CompatibilityResult(
             check_name="PyTorch/CUDA Version",
             passed=True,
@@ -269,10 +268,10 @@ def check_compute_capability() -> CompatibilityResult:
     """Check if GPU compute capability is supported."""
     min_cc = (6, 0)  # Minimum for PyTorch 2.x
     recommended_cc = (7, 5)  # Turing and above
-    
+
     try:
         import torch
-        
+
         if not torch.cuda.is_available():
             return CompatibilityResult(
                 check_name="Compute Capability",
@@ -280,10 +279,10 @@ def check_compute_capability() -> CompatibilityResult:
                 message="CUDA not available",
                 details={}
             )
-        
+
         props = torch.cuda.get_device_properties(0)
         cc = (props.major, props.minor)
-        
+
         if cc < min_cc:
             return CompatibilityResult(
                 check_name="Compute Capability",
@@ -291,7 +290,7 @@ def check_compute_capability() -> CompatibilityResult:
                 message=f"GPU compute capability {cc[0]}.{cc[1]} is below minimum {min_cc[0]}.{min_cc[1]}",
                 details={"compute_capability": f"{cc[0]}.{cc[1]}"}
             )
-        
+
         if cc >= recommended_cc:
             return CompatibilityResult(
                 check_name="Compute Capability",
@@ -299,7 +298,7 @@ def check_compute_capability() -> CompatibilityResult:
                 message=f"GPU compute capability {cc[0]}.{cc[1]} is optimal.",
                 details={"compute_capability": f"{cc[0]}.{cc[1]}", "optimal": True}
             )
-        
+
         return CompatibilityResult(
             check_name="Compute Capability",
             passed=True,
@@ -319,7 +318,7 @@ def check_memory_allocation() -> CompatibilityResult:
     """Test GPU memory allocation."""
     try:
         import torch
-        
+
         if not torch.cuda.is_available():
             return CompatibilityResult(
                 check_name="Memory Allocation",
@@ -327,11 +326,11 @@ def check_memory_allocation() -> CompatibilityResult:
                 message="CUDA not available",
                 details={}
             )
-        
+
         # Try allocating progressively larger tensors
         test_sizes_mb = [100, 500, 1000, 2000]
         max_allocated = 0
-        
+
         for size_mb in test_sizes_mb:
             try:
                 # Allocate tensor of specified size
@@ -342,7 +341,7 @@ def check_memory_allocation() -> CompatibilityResult:
                 torch.cuda.empty_cache()
             except RuntimeError:
                 break
-        
+
         if max_allocated >= 1000:
             return CompatibilityResult(
                 check_name="Memory Allocation",
@@ -377,7 +376,7 @@ def check_cudnn() -> CompatibilityResult:
     """Check cuDNN availability and version."""
     try:
         import torch
-        
+
         if not torch.backends.cudnn.is_available():
             return CompatibilityResult(
                 check_name="cuDNN",
@@ -385,7 +384,7 @@ def check_cudnn() -> CompatibilityResult:
                 message="cuDNN is not available. Some operations may be slower.",
                 details={}
             )
-        
+
         cudnn_version = torch.backends.cudnn.version()
         return CompatibilityResult(
             check_name="cuDNN",
@@ -406,7 +405,7 @@ def benchmark_tensor_ops() -> BenchmarkResult:
     """Benchmark basic tensor operations."""
     try:
         import torch
-        
+
         if not torch.cuda.is_available():
             return BenchmarkResult(
                 test_name="Tensor Operations",
@@ -414,37 +413,37 @@ def benchmark_tensor_ops() -> BenchmarkResult:
                 memory_used_mb=0,
                 details={"error": "CUDA not available"}
             )
-        
+
         torch.cuda.synchronize()
-        
+
         # Create large tensors
         size = (4096, 4096)
         a = torch.randn(size, device="cuda:0")
         b = torch.randn(size, device="cuda:0")
-        
+
         # Warm up
         _ = torch.matmul(a, b)
         torch.cuda.synchronize()
-        
+
         # Benchmark
         start = time.perf_counter()
         for _ in range(10):
             c = torch.matmul(a, b)
         torch.cuda.synchronize()
         end = time.perf_counter()
-        
+
         duration_ms = (end - start) * 1000
         memory_mb = torch.cuda.max_memory_allocated() / (1024**2)
-        
+
         # Clean up
         del a, b, c
         torch.cuda.empty_cache()
-        
+
         # Calculate TFLOPS
         flops_per_matmul = 2 * size[0] * size[1] * size[0]
         total_flops = flops_per_matmul * 10
         tflops = total_flops / (duration_ms / 1000) / 1e12
-        
+
         return BenchmarkResult(
             test_name="Tensor Operations (4096x4096 matmul x10)",
             duration_ms=duration_ms,
@@ -466,7 +465,7 @@ def benchmark_audio_inference() -> BenchmarkResult:
     try:
         import torch
         import torch.nn as nn
-        
+
         if not torch.cuda.is_available():
             return BenchmarkResult(
                 test_name="Audio Inference",
@@ -474,7 +473,7 @@ def benchmark_audio_inference() -> BenchmarkResult:
                 memory_used_mb=0,
                 details={"error": "CUDA not available"}
             )
-        
+
         # Simulate audio encoder-decoder
         class SimpleAudioModel(nn.Module):
             def __init__(self):
@@ -493,20 +492,20 @@ def benchmark_audio_inference() -> BenchmarkResult:
                     nn.ReLU(),
                     nn.ConvTranspose1d(64, 1, 7, padding=3),
                 )
-            
+
             def forward(self, x):
                 return self.decoder(self.encoder(x))
-        
+
         model = SimpleAudioModel().cuda().eval()
-        
+
         # 10 seconds of audio at 22050 Hz
         audio = torch.randn(1, 1, 22050 * 10, device="cuda:0")
-        
+
         # Warm up
         with torch.no_grad():
             _ = model(audio)
         torch.cuda.synchronize()
-        
+
         # Benchmark
         start = time.perf_counter()
         with torch.no_grad():
@@ -514,18 +513,18 @@ def benchmark_audio_inference() -> BenchmarkResult:
                 _ = model(audio)
         torch.cuda.synchronize()
         end = time.perf_counter()
-        
+
         duration_ms = (end - start) * 1000
         memory_mb = torch.cuda.max_memory_allocated() / (1024**2)
-        
+
         # Real-time factor (lower is better, <1.0 means faster than real-time)
         audio_duration_s = 10  # 10 seconds
         processing_time_s = duration_ms / 1000 / 10  # per sample
         rtf = processing_time_s / audio_duration_s
-        
+
         del model, audio
         torch.cuda.empty_cache()
-        
+
         return BenchmarkResult(
             test_name="Audio Inference (10s audio x10 iterations)",
             duration_ms=duration_ms,
@@ -549,7 +548,7 @@ def generate_recommendations(
 ) -> list[str]:
     """Generate recommendations based on test results."""
     recommendations = []
-    
+
     # Check for failed compatibility checks
     failed_checks = [c for c in checks if not c.passed]
     if failed_checks:
@@ -564,7 +563,7 @@ def generate_recommendations(
                     "Reinstall PyTorch with correct CUDA version: "
                     "pip install torch==2.2.2+cu121 --index-url https://download.pytorch.org/whl/cu121"
                 )
-    
+
     # Check GPU architecture
     if gpu_info.compute_capability >= (9, 0):
         recommendations.append(
@@ -572,7 +571,7 @@ def generate_recommendations(
             "PyTorch 2.4+ with CUDA 12.4 for optimal performance. "
             "Current stack (2.2.2+cu121) may still work but isn't optimal."
         )
-    
+
     # Check memory
     if gpu_info.memory_total_gb < 4:
         recommendations.append(
@@ -584,36 +583,35 @@ def generate_recommendations(
             "GPU memory is moderate (4-8GB). Larger models like XTTS may require "
             "memory optimization. Enable half-precision (fp16) inference when possible."
         )
-    
+
     # Check benchmark performance
     for bench in benchmarks:
-        if "Tensor" in bench.test_name and bench.throughput > 0:
-            if bench.throughput < 5:
-                recommendations.append(
-                    "GPU compute performance is below expected. Check for thermal throttling "
-                    "or driver issues. Expected >10 TFLOPS for modern GPUs."
-                )
+        if "Tensor" in bench.test_name and bench.throughput > 0 and bench.throughput < 5:
+            recommendations.append(
+                "GPU compute performance is below expected. Check for thermal throttling "
+                "or driver issues. Expected >10 TFLOPS for modern GPUs."
+            )
         if "Audio" in bench.test_name and bench.details.get("real_time_factor", 1) > 0.5:
             recommendations.append(
                 "Audio inference is not meeting real-time targets. Consider enabling "
                 "TorchScript optimization or using smaller model variants."
             )
-    
+
     if not recommendations:
         recommendations.append("GPU configuration is optimal for VoiceStudio.")
-    
+
     return recommendations
 
 
 def run_compatibility_tests(run_benchmarks: bool = False) -> GPUCompatibilityReport:
     """Run all compatibility tests and generate report."""
     timestamp = datetime.now().isoformat()
-    
+
     # Gather information
     system_info = get_system_info()
     gpu_info = get_gpu_info()
     pytorch_info = get_pytorch_info()
-    
+
     # Run compatibility checks
     checks = [
         check_cuda_availability(),
@@ -622,7 +620,7 @@ def run_compatibility_tests(run_benchmarks: bool = False) -> GPUCompatibilityRep
         check_memory_allocation(),
         check_cudnn(),
     ]
-    
+
     # Run benchmarks if requested
     benchmarks = []
     if run_benchmarks:
@@ -630,7 +628,7 @@ def run_compatibility_tests(run_benchmarks: bool = False) -> GPUCompatibilityRep
             benchmark_tensor_ops(),
             benchmark_audio_inference(),
         ]
-    
+
     # Determine overall status
     failed_critical = any(
         not c.passed and c.check_name in ["CUDA Availability", "PyTorch/CUDA Version"]
@@ -642,10 +640,10 @@ def run_compatibility_tests(run_benchmarks: bool = False) -> GPUCompatibilityRep
         overall_status = "PARTIAL"
     else:
         overall_status = "PASS"
-    
+
     # Generate recommendations
     recommendations = generate_recommendations(gpu_info, checks, benchmarks)
-    
+
     return GPUCompatibilityReport(
         timestamp=timestamp,
         system_info=system_info,
@@ -665,11 +663,11 @@ def print_report(report: GPUCompatibilityReport) -> None:
     print("=" * 60)
     print(f"Timestamp: {report.timestamp}")
     print(f"Overall Status: {report.overall_status}")
-    
+
     print("\n--- System Information ---")
     for key, value in report.system_info.items():
         print(f"  {key}: {value}")
-    
+
     print("\n--- GPU Information ---")
     print(f"  Name: {report.gpu_info.name}")
     print(f"  Architecture: {report.gpu_info.architecture}")
@@ -677,16 +675,16 @@ def print_report(report: GPUCompatibilityReport) -> None:
     print(f"  Memory: {report.gpu_info.memory_total_gb:.2f} GB total, {report.gpu_info.memory_free_gb:.2f} GB free")
     print(f"  CUDA Version: {report.gpu_info.cuda_version}")
     print(f"  Driver Version: {report.gpu_info.driver_version}")
-    
+
     print("\n--- PyTorch Information ---")
     for key, value in report.pytorch_info.items():
         print(f"  {key}: {value}")
-    
+
     print("\n--- Compatibility Checks ---")
     for check in report.compatibility_checks:
         status = "PASS" if check.passed else "FAIL"
         print(f"  [{status}] {check.check_name}: {check.message}")
-    
+
     if report.benchmarks:
         print("\n--- Benchmarks ---")
         for bench in report.benchmarks:
@@ -698,11 +696,11 @@ def print_report(report: GPUCompatibilityReport) -> None:
             for key, value in bench.details.items():
                 if key not in ["error"]:
                     print(f"    {key}: {value}")
-    
+
     print("\n--- Recommendations ---")
     for rec in report.recommendations:
         print(f"  • {rec}")
-    
+
     print("\n" + "=" * 60)
 
 
@@ -719,11 +717,11 @@ def save_report(report: GPUCompatibilityReport, output_path: Path) -> None:
         "overall_status": report.overall_status,
         "recommendations": report.recommendations,
     }
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(report_dict, f, indent=2)
-    
+
     logger.info(f"Report saved to {output_path}")
 
 
@@ -733,20 +731,20 @@ def main():
     parser.add_argument("--full-report", action="store_true", help="Run benchmarks and save JSON report")
     parser.add_argument("--output", type=str, default=None, help="Output path for JSON report")
     args = parser.parse_args()
-    
+
     run_benchmarks = args.benchmark or args.full_report
-    
+
     logger.info("Starting GPU compatibility tests...")
     report = run_compatibility_tests(run_benchmarks=run_benchmarks)
-    
+
     print_report(report)
-    
+
     if args.full_report or args.output:
         output_path = Path(args.output) if args.output else Path(
             "docs/reports/compatibility/GPU_COMPATIBILITY_REPORT.json"
         )
         save_report(report, output_path)
-    
+
     # Exit with appropriate code
     if report.overall_status == "FAIL":
         sys.exit(1)

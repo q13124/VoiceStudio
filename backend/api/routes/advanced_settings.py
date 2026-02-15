@@ -4,13 +4,14 @@ Advanced Settings API Routes
 Endpoints for comprehensive application settings and advanced configuration.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from ..optimization import cache_response
 
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api/advanced-settings", tags=["advanced-settings"])
 SETTINGS_FILE = Path("data/advanced_settings.json")
 
 # Cache for settings
-_settings_cache: Optional[Dict] = None
+_settings_cache: dict | None = None
 _cache_timestamp: float = 0.0
 _cache_ttl: float = 60.0
 
@@ -46,8 +47,8 @@ class PerformanceSettings(BaseModel):
     cache_size_mb: int = 512
     max_threads: int = 4
     gpu_enabled: bool = True
-    gpu_device: Optional[str] = None
-    memory_limit_mb: Optional[int] = None
+    gpu_device: str | None = None
+    memory_limit_mb: int | None = None
     background_processing: bool = True
     preload_engines: bool = False
 
@@ -80,7 +81,7 @@ class EngineAdvancedSettings(BaseModel):
 class SystemIntegrationSettings(BaseModel):
     """System integration settings."""
 
-    file_associations: Dict[str, bool] = {}
+    file_associations: dict[str, bool] = {}
     context_menu_enabled: bool = False
     auto_start: bool = False
     minimize_to_tray: bool = False
@@ -115,7 +116,7 @@ async def get_advanced_settings():
 
         # Load from file
         if SETTINGS_FILE.exists():
-            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+            with open(SETTINGS_FILE, encoding="utf-8") as f:
                 data = json.load(f)
                 _settings_cache = data
                 _cache_timestamp = current_time
@@ -130,7 +131,7 @@ async def get_advanced_settings():
         logger.error(f"Failed to load advanced settings: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to load settings: {str(e)}",
+            detail=f"Failed to load settings: {e!s}",
         ) from e
 
 
@@ -170,7 +171,7 @@ async def update_advanced_settings(
                 pass
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to save settings: {str(e)}",
+            detail=f"Failed to save settings: {e!s}",
         ) from e
 
 
@@ -191,7 +192,7 @@ async def reset_advanced_settings():
         logger.error(f"Failed to reset advanced settings: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to reset settings: {str(e)}",
+            detail=f"Failed to reset settings: {e!s}",
         ) from e
 
 
@@ -221,5 +222,5 @@ async def get_settings_category(category: str):
         logger.error(f"Failed to get category settings: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get category: {str(e)}",
+            detail=f"Failed to get category: {e!s}",
         ) from e

@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, MemoryItem, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -49,7 +49,7 @@ _MCP_TOOL_CONFIGS = {
 }
 
 
-def _resolve_openmemory_path() -> Optional[str]:
+def _resolve_openmemory_path() -> str | None:
     """
     Resolve path to openmemory.md (OpenMemory canonical store).
     Order: OPENMEMORY_PATH env -> cwd -> repo root (walk up from this file).
@@ -84,14 +84,14 @@ def _run_mcp_search(
     max_results: int,
     query_type: str = "contextual",
     provider: str = "openmemory",
-) -> Optional[List[Dict[str, Any]]]:
+) -> list[dict[str, Any]] | None:
     """
     Run memory search via MCP stdio client.
-    
+
     Supports two providers:
     - "openmemory": Local HSG memory (openmemory_query tool)
     - "mem0": Cloud-based memory (search-memory tool)
-    
+
     Returns None on any failure (caller falls back to file).
     """
     try:
@@ -106,27 +106,27 @@ def _run_mcp_search(
         logger.debug("Unknown MCP provider: %s", provider)
         return None
 
-    async def _search() -> Optional[List[Dict[str, Any]]]:
+    async def _search() -> list[dict[str, Any]] | None:
         env = os.environ.copy()
         # OpenMemory-specific environment
         if provider == "openmemory":
             env.setdefault("OM_TIER", "hybrid")
             env.setdefault("OM_EMBEDDINGS", "synthetic")
-        
+
         params = StdioServerParameters(
             command=config["command"],
             args=config["args"],
             env=env,
         )
-        
+
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                
+
                 # Build tool arguments based on provider
-                tool_args: Dict[str, Any] = {}
+                tool_args: dict[str, Any] = {}
                 param_map = config["param_mapping"]
-                
+
                 if "query" in param_map:
                     tool_args[param_map["query"]] = query
                 if "max_results" in param_map:
@@ -137,7 +137,7 @@ def _run_mcp_search(
                     tool_args[param_map["project_id"]] = PROJECT_ID
                 if "memory_types" in param_map:
                     tool_args[param_map["memory_types"]] = RELEVANT_MEMORY_TYPES
-                
+
                 tool_name = config["tool_name"]
                 logger.debug("Calling MCP tool %s with args: %s", tool_name, tool_args)
                 result = await session.call_tool(tool_name, tool_args)
@@ -157,12 +157,12 @@ def _try_all_mcp_providers(
     query: str,
     max_results: int,
     query_type: str = "contextual",
-) -> Optional[List[Dict[str, Any]]]:
+) -> list[dict[str, Any]] | None:
     """
     Try all configured MCP providers in order until one succeeds.
     Returns None if all providers fail.
     """
-    for provider in _MCP_TOOL_CONFIGS.keys():
+    for provider in _MCP_TOOL_CONFIGS:
         result = _run_mcp_search(query, max_results, query_type, provider)
         if result:
             logger.debug("MCP provider %s returned %d results", provider, len(result))
@@ -170,21 +170,21 @@ def _try_all_mcp_providers(
     return None
 
 
-def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[str, Any]]]:
+def _parse_mcp_tool_result(result: Any, max_results: int) -> list[dict[str, Any]] | None:
     """
     Parse MCP call_tool result into [{"content": str, "source": str, "relevance": float}].
-    
+
     Handles multiple response formats:
     - OpenMemory HSG: {memories: [{content, sector, salience, ...}]}
     - Mem0: {results: [{memory: {content}, metadata: {source}}]}
     - Plain list: [{content, source}]
     - Raw text fallback
-    
+
     Returns None if invalid/empty.
     """
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     raw_text = ""
-    
+
     # Extract text content from MCP result blocks
     if hasattr(result, "content") and result.content:
         for block in result.content:
@@ -193,10 +193,10 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
             elif isinstance(block, dict):
                 if block.get("type") == "text" and block.get("text"):
                     raw_text += block["text"]
-    
+
     if not raw_text:
         return None
-    
+
     # Try to parse as JSON
     try:
         data = json.loads(raw_text)
@@ -204,8 +204,8 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
         # Fallback: treat raw text as single memory
         out.append({"content": raw_text[:2000], "source": "openmemory", "relevance": 0.5})
         return out[:max_results]
-    
-    def _extract_memory(item: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _extract_memory(item: dict[str, Any]) -> dict[str, Any]:
         """Extract memory content from various item formats."""
         # Content extraction (try multiple fields)
         content = (
@@ -216,7 +216,7 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
         )
         if isinstance(content, dict):
             content = content.get("text") or content.get("content") or json.dumps(content)
-        
+
         # Source extraction
         source = (
             item.get("source")
@@ -224,7 +224,7 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
             or (item.get("metadata") or {}).get("source")
             or "openmemory"
         )
-        
+
         # Relevance/salience extraction
         relevance = (
             item.get("salience")  # OpenMemory HSG
@@ -233,13 +233,13 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
             or item.get("similarity")
             or 0.5
         )
-        
+
         return {
             "content": (str(content) if content else "")[:2000],
             "source": str(source),
             "relevance": float(relevance) if isinstance(relevance, (int, float)) else 0.5,
         }
-    
+
     # Parse based on structure
     if isinstance(data, list):
         for item in data[:max_results]:
@@ -258,14 +258,14 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
             or data.get("items")
             or []
         )
-        
+
         if isinstance(items, list):
             for item in items[:max_results]:
                 if isinstance(item, dict):
                     mem = _extract_memory(item)
                     if mem["content"]:
                         out.append(mem)
-        
+
         # Fallback: top-level content
         if not out and "content" in data:
             out.append({
@@ -273,7 +273,7 @@ def _parse_mcp_tool_result(result: Any, max_results: int) -> Optional[List[Dict[
                 "source": data.get("source", "openmemory"),
                 "relevance": data.get("salience", data.get("relevance", 0.5)),
             })
-    
+
     return out[:max_results] if out else None
 
 
@@ -288,14 +288,14 @@ class MemorySourceAdapter(BaseSourceAdapter):
     When mcp_enabled=True and offline=False, attempts OpenMemory MCP protocol
     (search-memory) first; on failure or when no MCP client is available,
     falls back to file/openmemory.md and logs once (ADR-015, option C).
-    
+
     Features:
     - Role-aware memory retrieval based on role responsibilities
     - Task context injection for relevant memories
     - Health checking for memory sources availability
     """
     _mcp_unavailable_logged: bool = False
-    
+
     # Role-specific memory query hints
     ROLE_QUERY_HINTS = {
         "overseer": ["project state", "milestones", "blockers", "governance"],
@@ -320,7 +320,7 @@ class MemorySourceAdapter(BaseSourceAdapter):
         self._max_results = max_results
         self._query_type = query_type
         self._mcp_enabled = mcp_enabled
-    
+
     def health_check(self) -> bool:
         """Check if memory sources are available."""
         try:
@@ -328,20 +328,17 @@ class MemorySourceAdapter(BaseSourceAdapter):
             openmemory_path = _resolve_openmemory_path()
             if openmemory_path and os.path.exists(openmemory_path):
                 return True
-            
+
             # Check for CONTEXT_MEMO env
             if os.getenv("CONTEXT_MEMO"):
                 return True
-            
+
             # If MCP is enabled and not offline, consider it available
-            if self._mcp_enabled and not self._offline:
-                return True
-            
-            return False
+            return bool(self._mcp_enabled and not self._offline)
         except Exception:
             return False
 
-    def _fetch_env_hint(self) -> List[MemoryItem]:
+    def _fetch_env_hint(self) -> list[MemoryItem]:
         """Fallback: read from CONTEXT_MEMO environment variable."""
         injected = os.getenv("CONTEXT_MEMO")
         if injected:
@@ -350,14 +347,14 @@ class MemorySourceAdapter(BaseSourceAdapter):
 
     def _try_openmemory_mcp_protocol(
         self, query: str, max_results: int
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> list[dict[str, Any]] | None:
         """
         Attempt OpenMemory MCP protocol via stdio client.
-        
+
         Tries configured MCP providers (openmemory, mem0) in order:
         1. openmemory: Local HSG memory (openmemory_query tool)
         2. mem0: Cloud-based memory (search-memory tool)
-        
+
         Returns None if no MCP client is available or all calls fail (fallback to file).
         """
         try:
@@ -372,7 +369,7 @@ class MemorySourceAdapter(BaseSourceAdapter):
 
     def _call_openmemory_mcp(
         self, query: str, max_results: int = 5
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> list[dict[str, Any]] | None:
         """
         Call OpenMemory MCP when mcp_enabled; else or on failure use file fallback.
         MCP unavailable -> log once, continue with file (openmemory.mdc).
@@ -389,26 +386,26 @@ class MemorySourceAdapter(BaseSourceAdapter):
                 MemorySourceAdapter._mcp_unavailable_logged = True
         return self._try_mcp_query({"query": query, "k": min(max_results, 32)})
 
-    def _try_mcp_query(self, args: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    def _try_mcp_query(self, args: dict[str, Any]) -> list[dict[str, Any]] | None:
         """
         Query OpenMemory local store (openmemory.md).
-        
+
         Uses _resolve_openmemory_path() for cwd, OPENMEMORY_PATH, or repo root.
         MCP protocol integration can be added when an MCP client is available.
         """
         openmemory_path = _resolve_openmemory_path()
         if openmemory_path and os.path.exists(openmemory_path):
             try:
-                with open(openmemory_path, "r", encoding="utf-8") as f:
+                with open(openmemory_path, encoding="utf-8") as f:
                     content = f.read()
-                    
+
                 # Extract relevant sections based on query
                 query = args.get("query", "").lower()
                 memories = []
-                
+
                 # Parse sections from openmemory.md
                 sections = self._parse_openmemory_sections(content)
-                
+
                 for section_name, section_content in sections.items():
                     # Simple relevance matching
                     if query and query in section_name.lower():
@@ -425,20 +422,20 @@ class MemorySourceAdapter(BaseSourceAdapter):
                                 "source": f"openmemory:{section_name}",
                                 "relevance": 0.5,
                             })
-                
+
                 return memories[:args.get("k", 5)]
-                
+
             except Exception as e:
                 logger.debug(f"Failed to read openmemory.md: {e}")
-        
+
         return None
 
-    def _parse_openmemory_sections(self, content: str) -> Dict[str, str]:
+    def _parse_openmemory_sections(self, content: str) -> dict[str, str]:
         """Parse openmemory.md into named sections."""
         sections = {}
         current_section = "root"
         current_content = []
-        
+
         for line in content.split("\n"):
             if line.startswith("## "):
                 # Save previous section
@@ -448,23 +445,23 @@ class MemorySourceAdapter(BaseSourceAdapter):
                 current_content = []
             else:
                 current_content.append(line)
-        
+
         # Save last section
         if current_content:
             sections[current_section] = "\n".join(current_content)
-            
+
         return sections
 
     def _build_query(self, context: AllocationContext) -> str:
         """Build role-aware search query from allocation context."""
         parts = []
-        
+
         if context.task_id:
             parts.append(f"task:{context.task_id}")
-            
+
         if context.phase:
             parts.append(f"phase:{context.phase}")
-            
+
         # Add role-specific query hints
         if context.role:
             parts.append(f"role:{context.role}")
@@ -472,25 +469,25 @@ class MemorySourceAdapter(BaseSourceAdapter):
             if hints:
                 # Add top 2 role hints to improve relevance
                 parts.extend(hints[:2])
-            
+
         if not parts:
             parts.append("VoiceStudio project context")
-            
+
         return " ".join(parts)
-    
+
     def _get_role_relevant_sections(
         self,
-        sections: Dict[str, str],
-        role: Optional[str],
-    ) -> List[Dict[str, Any]]:
+        sections: dict[str, str],
+        role: str | None,
+    ) -> list[dict[str, Any]]:
         """Filter sections relevant to a specific role."""
         if not role:
             return []
-        
+
         hints = self.ROLE_QUERY_HINTS.get(role, [])
         if not hints:
             return []
-        
+
         relevant = []
         for section_name, content in sections.items():
             # Check if section matches role hints
@@ -503,27 +500,27 @@ class MemorySourceAdapter(BaseSourceAdapter):
                         "relevance": 0.85,
                     })
                     break  # Only add once per section
-        
+
         return relevant[:self._max_results]
 
     def _convert_to_memory_items(
-        self, memories: List[Dict[str, Any]]
-    ) -> List[MemoryItem]:
+        self, memories: list[dict[str, Any]]
+    ) -> list[MemoryItem]:
         """Convert MCP response to MemoryItem list."""
         items = []
         for mem in memories:
             content = mem.get("content", "")
             source = mem.get("source", "openmemory")
-            
+
             if content:
                 items.append(MemoryItem(content=content, source=source))
-                
+
         return items
 
     def fetch(self, context: AllocationContext) -> SourceResult:
         """
         Fetch memories from OpenMemory with role-aware retrieval.
-        
+
         Priority:
         1. OpenMemory MCP query (if available and not offline)
         2. Local openmemory.md file with role-aware section filtering
@@ -532,26 +529,26 @@ class MemorySourceAdapter(BaseSourceAdapter):
         """
         def _load():
             all_memories = []
-            
+
             # Try OpenMemory MCP integration
             if not self._offline:
                 query = self._build_query(context)
                 mcp_memories = self._call_openmemory_mcp(query, self._max_results)
-                
+
                 if mcp_memories:
                     items = self._convert_to_memory_items(mcp_memories)
                     if items:
                         all_memories.extend(items)
-            
+
             # Try role-aware local retrieval
             openmemory_path = _resolve_openmemory_path()
             if openmemory_path and os.path.exists(openmemory_path):
                 try:
-                    with open(openmemory_path, "r", encoding="utf-8") as f:
+                    with open(openmemory_path, encoding="utf-8") as f:
                         content = f.read()
-                    
+
                     sections = self._parse_openmemory_sections(content)
-                    
+
                     # Get role-relevant sections first
                     if context.role:
                         role_memories = self._get_role_relevant_sections(
@@ -559,7 +556,7 @@ class MemorySourceAdapter(BaseSourceAdapter):
                         )
                         items = self._convert_to_memory_items(role_memories)
                         all_memories.extend(items)
-                    
+
                     # If still under limit, add query-matched sections
                     if len(all_memories) < self._max_results:
                         query = self._build_query(context)
@@ -574,14 +571,14 @@ class MemorySourceAdapter(BaseSourceAdapter):
                             for item in items:
                                 if item.content[:100] not in existing_contents:
                                     all_memories.append(item)
-                
+
                 except Exception as e:
                     logger.debug("Failed to read openmemory.md: %s", e)
-            
+
             # Final fallback: environment variable
             if not all_memories:
                 all_memories = self._fetch_env_hint()
-            
+
             return {"memory": all_memories[:self._max_results]}
 
         return self._measure(_load, context)
@@ -592,23 +589,23 @@ class MemorySourceAdapter(BaseSourceAdapter):
         if not mem:
             return 0
         return sum(len(m.content) for m in mem)
-    
+
     def store_memory(
         self,
         content: str,
         title: str,
         memory_type: str = "project_info",
-        section: Optional[str] = None,
+        section: str | None = None,
     ) -> bool:
         """
         Store a memory to the local openmemory.md file.
-        
+
         Args:
             content: Memory content to store
             title: Memory title
             memory_type: Type of memory (component, implementation, debug, etc.)
             section: Optional section to add to in openmemory.md
-        
+
         Returns:
             True if stored successfully
         """
@@ -616,32 +613,32 @@ class MemorySourceAdapter(BaseSourceAdapter):
         if not openmemory_path:
             # Create in cwd if not exists
             openmemory_path = str(Path(os.getcwd()) / "openmemory.md")
-        
+
         try:
             path = Path(openmemory_path)
-            
+
             # Read existing content or create template
             if path.exists():
                 existing = path.read_text(encoding="utf-8")
             else:
                 existing = self._create_openmemory_template()
-            
+
             # Format the new memory entry
             timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d")
             entry = f"\n### {title}\n- Type: {memory_type}\n- Added: {timestamp}\n\n{content}\n"
-            
+
             # Find the right section to add to
             target_section = section or self._memory_type_to_section(memory_type)
             updated = self._insert_memory_entry(existing, entry, target_section)
-            
+
             path.write_text(updated, encoding="utf-8")
             logger.info("Stored memory: %s (type: %s)", title, memory_type)
             return True
-            
+
         except Exception as e:
             logger.error("Failed to store memory: %s", e)
             return False
-    
+
     def _create_openmemory_template(self) -> str:
         """Create a new openmemory.md template."""
         return """# VoiceStudio OpenMemory
@@ -664,7 +661,7 @@ Notable debugging sessions and solutions.
 ## User Defined Namespaces
 - [Leave blank - user populates]
 """
-    
+
     def _memory_type_to_section(self, memory_type: str) -> str:
         """Map memory type to openmemory.md section."""
         mapping = {
@@ -675,7 +672,7 @@ Notable debugging sessions and solutions.
             "user_preference": "User Defined Namespaces",
         }
         return mapping.get(memory_type, "Overview")
-    
+
     def _insert_memory_entry(
         self,
         content: str,
@@ -687,29 +684,29 @@ Notable debugging sessions and solutions.
         result = []
         in_section = False
         entry_added = False
-        
-        for i, line in enumerate(lines):
+
+        for _i, line in enumerate(lines):
             result.append(line)
-            
+
             # Check if we're entering the target section
             if line.startswith("## ") and section.lower() in line.lower():
                 in_section = True
                 continue
-            
+
             # Check if we're leaving a section
             if in_section and line.startswith("## "):
                 if not entry_added:
                     result.insert(len(result) - 1, entry)
                     entry_added = True
                 in_section = False
-        
+
         # If section was at the end, add entry
         if in_section and not entry_added:
             result.append(entry)
-        
+
         # If section not found, add at end
         if not entry_added:
             result.append(f"\n## {section}")
             result.append(entry)
-        
+
         return "\n".join(result)

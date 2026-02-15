@@ -10,7 +10,8 @@
             Padding="0"
             MinWidth="600"
             MaxWidth="800"
-            MaxHeight="500">
+            MaxHeight="500"
+            AutomationProperties.AutomationId="CommandPalette_Root">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>   <!-- Search Box -->
@@ -22,13 +23,15 @@
                     PlaceholderText="Type a command or search..."
                     Margin="12,12,12,8"
                     KeyDown="SearchBox_KeyDown"
-                    TextChanged="SearchBox_TextChanged"/>
+                    TextChanged="SearchBox_TextChanged"
+                    AutomationProperties.AutomationId="CommandPalette_SearchBox"/>
             <!-- Results List -->
             <ListView x:Name="ResultsList"
                      Grid.Row="1"
                      SelectionMode="Single"
                      Margin="8,0,8,8"
-                     ItemClick="ResultsList_ItemClick">
+                     ItemClick="ResultsList_ItemClick"
+                     AutomationProperties.AutomationId="CommandPalette_ResultsList">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="services:CommandItem">
                         <Grid Padding="12,8">

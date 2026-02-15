@@ -8,10 +8,11 @@ Compatible with:
 - PyTorch 2.2.2+cu121
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -34,7 +35,7 @@ except ImportError:
 enhance_voice_cloning_quality = None
 
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         match_voice_profile,
@@ -57,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=5, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -70,7 +71,7 @@ except ImportError:
 from collections import OrderedDict
 
 _MODEL_CACHE: OrderedDict = OrderedDict()
-_EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
+_EMBEDDING_CACHE: dict[str, np.ndarray] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_EMBEDDING_CACHE_SIZE = 100  # Maximum number of embeddings to cache
 
@@ -133,7 +134,7 @@ def _cache_model(model_name: str, device: str, model):
     logger.debug(f"Cached model: {cache_key} (cache size: {len(_MODEL_CACHE)})")
 
 
-def _get_embedding_cache_key(speaker_wav: Union[str, Path]) -> str:
+def _get_embedding_cache_key(speaker_wav: str | Path) -> str:
     """Generate cache key for speaker embedding."""
     import hashlib
 
@@ -141,13 +142,13 @@ def _get_embedding_cache_key(speaker_wav: Union[str, Path]) -> str:
     return hashlib.md5(path_str.encode()).hexdigest()
 
 
-def _get_cached_embedding(speaker_wav: Union[str, Path]) -> Optional[np.ndarray]:
+def _get_cached_embedding(speaker_wav: str | Path) -> np.ndarray | None:
     """Get cached speaker embedding if available."""
     cache_key = _get_embedding_cache_key(speaker_wav)
     return _EMBEDDING_CACHE.get(cache_key)
 
 
-def _cache_embedding(speaker_wav: Union[str, Path], embedding: np.ndarray):
+def _cache_embedding(speaker_wav: str | Path, embedding: np.ndarray):
     """Cache speaker embedding with LRU eviction."""
     cache_key = _get_embedding_cache_key(speaker_wav)
 
@@ -226,7 +227,7 @@ class ChatterboxEngine(EngineProtocol):
     def __init__(
         self,
         model_name: str = "chatterbox-tts/base",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         lazy_load: bool = True,
         batch_size: int = 4,
@@ -329,14 +330,14 @@ class ChatterboxEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Union[str, Path, List[Union[str, Path]]],
+        speaker_wav: str | Path | list[str | Path],
         language: str = "en",
-        emotion: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        emotion: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using zero-shot voice cloning.
 
@@ -355,9 +356,8 @@ class ChatterboxEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Validate language
@@ -474,10 +474,10 @@ class ChatterboxEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate_metrics: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """
         Process audio with quality enhancement and/or metrics calculation.
 
@@ -552,14 +552,14 @@ class ChatterboxEngine(EngineProtocol):
 
     def clone_voice(
         self,
-        reference_audio: Union[str, Path],
+        reference_audio: str | Path,
         text: str,
         language: str = "en",
-        emotion: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        emotion: str | None = None,
+        output_path: str | Path | None = None,
         speed: float = 1.0,
         calculate_quality: bool = False,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Clone voice from reference audio and synthesize text.
 
@@ -604,13 +604,13 @@ class ChatterboxEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        speaker_wav: Union[str, Path],
+        texts: list[str],
+        speaker_wav: str | Path,
         language: str = "en",
-        emotion: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        emotion: str | None = None,
+        output_dir: str | Path | None = None,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -626,9 +626,8 @@ class ChatterboxEngine(EngineProtocol):
             List of audio arrays
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(texts)
+        if not self._initialized and not self._load_model():
+            return [None] * len(texts)
 
         # Pre-process speaker audio once if caching enabled
         speaker_embedding = None
@@ -716,7 +715,7 @@ class ChatterboxEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -726,7 +725,7 @@ class ChatterboxEngine(EngineProtocol):
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """
         Get list of supported language codes.
 
@@ -735,7 +734,7 @@ class ChatterboxEngine(EngineProtocol):
         """
         return self.SUPPORTED_LANGUAGES.copy()
 
-    def get_supported_emotions(self) -> List[str]:
+    def get_supported_emotions(self) -> list[str]:
         """
         Get list of supported emotions.
 
@@ -760,7 +759,7 @@ class ChatterboxEngine(EngineProtocol):
 # Factory function for easy instantiation
 def create_chatterbox_engine(
     model_name: str = "chatterbox-tts/base",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> ChatterboxEngine:
     """

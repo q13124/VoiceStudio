@@ -5,7 +5,7 @@ Tests Tortoise TTS engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestTortoiseEngineImports:
     def test_module_has_tortoise_engine_class(self):
         """Test module has TortoiseEngine class."""
         if hasattr(tortoise_engine, "TortoiseEngine"):
-            cls = getattr(tortoise_engine, "TortoiseEngine")
+            cls = tortoise_engine.TortoiseEngine
             assert isinstance(cls, type), "TortoiseEngine should be a class"
 
 
@@ -41,7 +41,7 @@ class TestTortoiseEngineClass:
     def test_tortoise_engine_class_exists(self):
         """Test TortoiseEngine class exists."""
         if hasattr(tortoise_engine, "TortoiseEngine"):
-            cls = getattr(tortoise_engine, "TortoiseEngine")
+            cls = tortoise_engine.TortoiseEngine
             assert isinstance(cls, type), "TortoiseEngine should be a class"
 
 

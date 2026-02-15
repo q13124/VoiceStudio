@@ -12,11 +12,13 @@ Compatible with:
 - noisereduce 3.0.2
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -303,7 +305,7 @@ def detect_silence(
     hop_length: int = 512,
     use_vad: bool = False,
     vad_aggressiveness: int = 2,
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """
     Detect silence regions in audio.
 
@@ -339,10 +341,7 @@ def detect_silence(
         raise ValueError("Audio array is empty")
 
     # Convert to mono if stereo
-    if len(audio.shape) > 1:
-        audio_mono = np.mean(audio, axis=1)
-    else:
-        audio_mono = audio
+    audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
     # Use silero-vad if available and requested (highest quality)
     if use_vad and HAS_SILERO_VAD:
@@ -568,11 +567,11 @@ def resample_audio(
 
 
 def convert_format(
-    input_path: Union[str, Path],
-    output_path: Union[str, Path],
+    input_path: str | Path,
+    output_path: str | Path,
     output_format: str = "wav",
-    sample_rate: Optional[int] = None,
-    channels: Optional[int] = None,
+    sample_rate: int | None = None,
+    channels: int | None = None,
     subtype: str = "PCM_16",
 ) -> Path:
     """
@@ -652,7 +651,7 @@ def convert_format(
 
 def analyze_voice_characteristics(
     audio: np.ndarray, sample_rate: int
-) -> Dict[str, Union[float, np.ndarray, List[float]]]:
+) -> dict[str, float | np.ndarray | list[float]]:
     """
     Extract voice characteristics from audio for voice cloning analysis.
 
@@ -686,17 +685,14 @@ def analyze_voice_characteristics(
         raise ValueError("Audio array is empty")
 
     # Convert to mono if needed
-    if len(audio.shape) > 1:
-        audio_mono = np.mean(audio, axis=1)
-    else:
-        audio_mono = audio
+    audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
     # Extract fundamental frequency (F0)
     # Use crepe (deep learning-based) if available, otherwise use librosa.pyin
     if HAS_CREPE and crepe is not None:
         try:
             # CREPE provides more accurate pitch tracking using deep learning
-            time, frequency, confidence, activation = crepe.predict(
+            _time, frequency, confidence, _activation = crepe.predict(
                 audio_mono, sample_rate, viterbi=True
             )
             # Filter by confidence threshold (0.5 is default)
@@ -715,7 +711,7 @@ def analyze_voice_characteristics(
             f0_voiced = f0[voiced_flag]
     else:
         # Use librosa.pyin (probabilistic YIN algorithm)
-        f0, voiced_flag, voiced_probs = librosa.pyin(
+        f0, voiced_flag, _voiced_probs = librosa.pyin(
             audio_mono,
             fmin=librosa.note_to_hz("C2"),  # ~65 Hz
             fmax=librosa.note_to_hz("C7"),  # ~2093 Hz
@@ -940,7 +936,7 @@ def remove_artifacts(audio: np.ndarray, sample_rate: int, threshold: float = 0.0
     return cleaned
 
 
-def load_audio(file_path: Union[str, Path]) -> Tuple[np.ndarray, int]:
+def load_audio(file_path: str | Path) -> tuple[np.ndarray, int]:
     """
     Load audio file and return audio array and sample rate.
 
@@ -996,7 +992,7 @@ def load_audio(file_path: Union[str, Path]) -> Tuple[np.ndarray, int]:
 def save_audio(
     audio: np.ndarray,
     sample_rate: int,
-    file_path: Union[str, Path],
+    file_path: str | Path,
     format: str = "wav",
     subtype: str = "PCM_16",
 ) -> Path:
@@ -1152,7 +1148,7 @@ def separate_voice_from_music(
     sample_rate: int,
     model: str = "2stems",
     output_format: str = "numpy",
-) -> Union[np.ndarray, Dict[str, np.ndarray]]:
+) -> np.ndarray | dict[str, np.ndarray]:
     """
     Separate voice from background music using spleeter.
 
@@ -1190,10 +1186,7 @@ def separate_voice_from_music(
         separator = Separator(f"spleeter:{model}")
 
         # Ensure audio is mono for spleeter (it expects mono input)
-        if len(audio.shape) > 1:
-            audio_mono = np.mean(audio, axis=1)
-        else:
-            audio_mono = audio
+        audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
         # Save audio to temporary file (spleeter requires file input)
         import os
@@ -1219,7 +1212,7 @@ def separate_voice_from_music(
             vocals_path = output_dir / "vocals.wav"
 
             if vocals_path.exists():
-                vocals_audio, vocals_sr = sf.read(str(vocals_path))
+                vocals_audio, _vocals_sr = sf.read(str(vocals_path))
 
                 # Clean up temporary files
                 os.unlink(tmp_path)
@@ -1265,7 +1258,7 @@ def separate_voice_from_music(
 
 def analyze_audio_wavelets(
     audio: np.ndarray, sample_rate: int, wavelet: str = "db4", levels: int = 5
-) -> Dict[str, Union[float, np.ndarray, List[float]]]:
+) -> dict[str, float | np.ndarray | list[float]]:
     """
     Analyze audio using wavelet transforms for detailed frequency analysis.
 
@@ -1294,10 +1287,7 @@ def analyze_audio_wavelets(
         raise ValueError("Audio array is empty")
 
     # Convert to mono if needed
-    if len(audio.shape) > 1:
-        audio_mono = np.mean(audio, axis=1)
-    else:
-        audio_mono = audio
+    audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
     # Perform wavelet decomposition
     coeffs = pywt.wavedec(audio_mono, wavelet, level=levels)
@@ -1341,7 +1331,7 @@ def analyze_audio_wavelets(
     }
 
 
-def read_audio_metadata(file_path: Union[str, Path]) -> Dict[str, any]:
+def read_audio_metadata(file_path: str | Path) -> dict[str, any]:
     """
     Read audio file metadata using mutagen.
 
@@ -1422,7 +1412,7 @@ def read_audio_metadata(file_path: Union[str, Path]) -> Dict[str, any]:
                     metadata["year"] = None
 
             # Store all tags
-            for key in tags.keys():
+            for key in tags:
                 try:
                     metadata["all_tags"][key] = str(tags[key][0]) if tags[key] else None
                 except (IndexError, TypeError):
@@ -1466,7 +1456,7 @@ def match_voice_profile(
     target_audio: np.ndarray,
     reference_sr: int,
     target_sr: int,
-) -> Dict[str, Union[float, np.ndarray]]:
+) -> dict[str, float | np.ndarray]:
     """
     Match voice profile between reference and target audio.
 
@@ -1523,7 +1513,7 @@ def match_voice_profile(
     # F1 and F2 are more important for voice identity than F3
     formant_weights = [0.4, 0.4, 0.2]  # F1, F2, F3 weights
     formant_sims = []
-    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"])):
+    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"], strict=False)):
         if ref > 0 and tgt > 0:
             # Ratio-based similarity for each formant
             formant_ratio = min(ref, tgt) / max(ref, tgt)
@@ -1607,8 +1597,8 @@ def enhance_voice_cloning_quality(
     preserve_prosody: bool = True,
     target_lufs: float = -23.0,
     use_rvc_postprocessing: bool = False,
-    reference_audio: Optional[Union[str, Path, np.ndarray]] = None,
-    rvc_model_path: Optional[str] = None,
+    reference_audio: str | Path | np.ndarray | None = None,
+    rvc_model_path: str | None = None,
 ) -> np.ndarray:
     """
     Advanced quality enhancement specifically optimized for voice cloning outputs.
@@ -1675,10 +1665,8 @@ def enhance_voice_cloning_quality(
 
         # Apply standard denoising as fallback or additional step
         if nr is not None:
-            try:
+            with contextlib.suppress(Exception):
                 enhanced = nr.reduce_noise(y=enhanced, sr=sample_rate)
-            except Exception:
-                ...
 
     # Step 3: Spectral smoothing for naturalness (if preserving prosody)
     if preserve_prosody and HAS_LIBROSA:
@@ -1729,10 +1717,8 @@ def enhance_voice_cloning_quality(
 
     # Step 5: Prosody-preserving artifact removal
     if enhancement_level in ["standard", "aggressive", "ultra"]:
-        try:
+        with contextlib.suppress(Exception):
             enhanced = remove_artifacts(enhanced, sample_rate)
-        except Exception:
-            ...
 
     # Step 6: Advanced spectral enhancement (ultra mode)
     if enhancement_level == "ultra" and HAS_LIBROSA:
@@ -1808,8 +1794,8 @@ def enhance_voice_cloning_quality(
 def _apply_rvc_postprocessing(
     audio: np.ndarray,
     sample_rate: int,
-    reference_audio: Union[str, Path, np.ndarray],
-    rvc_model_path: Optional[str] = None,
+    reference_audio: str | Path | np.ndarray,
+    rvc_model_path: str | None = None,
 ) -> np.ndarray:
     """
     Apply RVC (Retrieval-based Voice Conversion) post-processing for enhanced quality.
@@ -1828,7 +1814,7 @@ def _apply_rvc_postprocessing(
     """
     # Try to use actual RVC engine if available
     try:
-        from ..engines.rvc_engine import RVCEngine
+        from app.core.engines.rvc_engine import RVCEngine
 
         rvc_engine = RVCEngine()
         if rvc_engine.initialize():

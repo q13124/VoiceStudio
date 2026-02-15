@@ -7,7 +7,7 @@ Estimated total size: ~15-20 GB
 
 Models downloaded:
 - XTTS v2 (multilingual TTS) - ~2 GB
-- Piper voices (fast local TTS) - ~500 MB  
+- Piper voices (fast local TTS) - ~500 MB
 - Whisper models (STT) - ~3 GB
 - Silero VAD (voice activity detection) - ~10 MB
 - Speaker encoder (voice similarity) - ~20 MB
@@ -20,12 +20,9 @@ Usage:
 
 import argparse
 import logging
-import os
 import sys
 import urllib.request
-import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from _env_setup import PROJECT_ROOT
 
@@ -36,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Model registry - all models with download info
-MODEL_REGISTRY: Dict[str, Dict] = {
+MODEL_REGISTRY: dict[str, dict] = {
     # ========== TTS Models ==========
     "xtts_v2": {
         "name": "XTTS v2 (Coqui)",
@@ -66,7 +63,7 @@ MODEL_REGISTRY: Dict[str, Dict] = {
         "local_path": "models/piper/en_US-lessac-medium.onnx",
         "local_json": "models/piper/en_US-lessac-medium.onnx.json",
     },
-    
+
     # ========== STT Models ==========
     "whisper_base": {
         "name": "Whisper Base",
@@ -77,7 +74,7 @@ MODEL_REGISTRY: Dict[str, Dict] = {
         "local_path": "models/whisper/base",
     },
     "whisper_small": {
-        "name": "Whisper Small", 
+        "name": "Whisper Small",
         "description": "Balanced speed/accuracy",
         "size": "~500 MB",
         "method": "faster_whisper",
@@ -100,7 +97,7 @@ MODEL_REGISTRY: Dict[str, Dict] = {
         "model_size": "large-v3",
         "local_path": "models/whisper/large-v3",
     },
-    
+
     # ========== Voice Analysis Models ==========
     "silero_vad": {
         "name": "Silero VAD",
@@ -126,12 +123,12 @@ def download_file(url: str, dest: Path, desc: str = "") -> bool:
     try:
         dest.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Downloading {desc or url}...")
-        
+
         def progress_hook(count, block_size, total_size):
             if total_size > 0:
                 percent = min(100, count * block_size * 100 / total_size)
                 print(f"\r  Progress: {percent:.1f}%", end="", flush=True)
-        
+
         urllib.request.urlretrieve(url, dest, progress_hook)
         print()  # Newline after progress
         logger.info(f"  Saved to: {dest}")
@@ -145,10 +142,10 @@ def download_xtts() -> bool:
     """Download XTTS v2 model using Coqui TTS."""
     try:
         from TTS.api import TTS
-        
+
         logger.info("Downloading XTTS v2 model (this may take a while)...")
         # This will download to ~/.local/share/tts or equivalent
-        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+        TTS("tts_models/multilingual/multi-dataset/xtts_v2")
         logger.info("XTTS v2 model downloaded successfully!")
         return True
     except Exception as e:
@@ -160,12 +157,12 @@ def download_faster_whisper(model_size: str, local_path: Path) -> bool:
     """Download Faster Whisper model."""
     try:
         from faster_whisper import WhisperModel
-        
+
         logger.info(f"Downloading Whisper {model_size} model...")
         local_path.mkdir(parents=True, exist_ok=True)
-        
+
         # This downloads to HuggingFace cache and we copy to local
-        model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        WhisperModel(model_size, device="cpu", compute_type="int8")
         logger.info(f"Whisper {model_size} model ready!")
         return True
     except Exception as e:
@@ -177,9 +174,9 @@ def download_silero_vad() -> bool:
     """Download Silero VAD model."""
     try:
         import torch
-        
+
         logger.info("Downloading Silero VAD model...")
-        model, utils = torch.hub.load(
+        _model, _utils = torch.hub.load(
             repo_or_dir="snakers4/silero-vad",
             model="silero_vad",
             force_reload=False,
@@ -196,9 +193,9 @@ def download_resemblyzer() -> bool:
     """Download Resemblyzer speaker encoder."""
     try:
         from resemblyzer import VoiceEncoder
-        
+
         logger.info("Downloading Resemblyzer speaker encoder...")
-        encoder = VoiceEncoder()
+        VoiceEncoder()
         logger.info("Resemblyzer speaker encoder ready!")
         return True
     except Exception as e:
@@ -211,19 +208,19 @@ def download_model(model_id: str) -> bool:
     if model_id not in MODEL_REGISTRY:
         logger.error(f"Unknown model: {model_id}")
         return False
-    
+
     model = MODEL_REGISTRY[model_id]
     logger.info(f"\n{'='*60}")
     logger.info(f"Downloading: {model['name']}")
     logger.info(f"Description: {model['description']}")
     logger.info(f"Size: {model['size']}")
     logger.info(f"{'='*60}")
-    
+
     method = model["method"]
-    
+
     if method == "coqui_tts":
         return download_xtts()
-    
+
     elif method == "url":
         local_path = PROJECT_ROOT / model["local_path"]
         success = download_file(model["url"], local_path, model["name"])
@@ -231,17 +228,17 @@ def download_model(model_id: str) -> bool:
             json_path = PROJECT_ROOT / model["local_json"]
             download_file(model["json_url"], json_path, f"{model['name']} config")
         return success
-    
+
     elif method == "faster_whisper":
         local_path = PROJECT_ROOT / model["local_path"]
         return download_faster_whisper(model["model_size"], local_path)
-    
+
     elif method == "torch_hub":
         return download_silero_vad()
-    
+
     elif method == "resemblyzer":
         return download_resemblyzer()
-    
+
     else:
         logger.error(f"Unknown download method: {method}")
         return False
@@ -252,23 +249,23 @@ def list_models():
     print("\n" + "=" * 70)
     print("Available Models for VoiceStudio")
     print("=" * 70)
-    
+
     categories = {
         "TTS (Text-to-Speech)": ["xtts_v2", "piper_amy", "piper_lessac"],
         "STT (Speech-to-Text)": ["whisper_base", "whisper_small", "whisper_medium", "whisper_large_v3"],
         "Voice Analysis": ["silero_vad", "resemblyzer"],
     }
-    
+
     for category, model_ids in categories.items():
         print(f"\n{category}:")
         print("-" * 50)
         for model_id in model_ids:
             model = MODEL_REGISTRY.get(model_id, {})
-            name = model.get("name", model_id)
+            model.get("name", model_id)
             size = model.get("size", "Unknown")
             desc = model.get("description", "")
             print(f"  {model_id:<20} {size:<12} {desc}")
-    
+
     print("\n" + "=" * 70)
     print("Usage:")
     print("  python scripts/download_all_models.py                # Download all")
@@ -280,15 +277,15 @@ def list_models():
 def download_essential():
     """Download essential models for basic operation."""
     essential = ["xtts_v2", "piper_amy", "whisper_base", "silero_vad", "resemblyzer"]
-    
+
     logger.info("Downloading ESSENTIAL models for basic VoiceStudio operation...")
     logger.info(f"Models: {', '.join(essential)}")
-    
+
     success = 0
     for model_id in essential:
         if download_model(model_id):
             success += 1
-    
+
     logger.info(f"\nCompleted: {success}/{len(essential)} essential models downloaded")
     return success == len(essential)
 
@@ -296,14 +293,14 @@ def download_essential():
 def download_all():
     """Download all models."""
     logger.info("Downloading ALL models (this will take significant time and disk space)...")
-    
+
     success = 0
     total = len(MODEL_REGISTRY)
-    
+
     for model_id in MODEL_REGISTRY:
         if download_model(model_id):
             success += 1
-    
+
     logger.info(f"\n{'='*60}")
     logger.info(f"Download Complete: {success}/{total} models downloaded")
     logger.info(f"{'='*60}")
@@ -316,13 +313,13 @@ def main():
     parser.add_argument("--engine", type=str, help="Download specific engine model")
     parser.add_argument("--essential", action="store_true", help="Download essential models only")
     parser.add_argument("--all", action="store_true", help="Download all models")
-    
+
     args = parser.parse_args()
-    
+
     if args.list:
         list_models()
         return 0
-    
+
     if args.engine:
         # Map common names to model IDs
         engine_map = {
@@ -331,7 +328,7 @@ def main():
             "piper": "piper_amy",
             "whisper": "whisper_base",
             "whisper-base": "whisper_base",
-            "whisper-small": "whisper_small", 
+            "whisper-small": "whisper_small",
             "whisper-medium": "whisper_medium",
             "whisper-large": "whisper_large_v3",
             "vad": "silero_vad",
@@ -340,15 +337,15 @@ def main():
         model_id = engine_map.get(args.engine.lower(), args.engine)
         success = download_model(model_id)
         return 0 if success else 1
-    
+
     if args.essential:
         success = download_essential()
         return 0 if success else 1
-    
+
     if args.all:
         success = download_all()
         return 0 if success else 1
-    
+
     # Default: show help
     parser.print_help()
     print("\n💡 Quick start: python scripts/download_all_models.py --essential")

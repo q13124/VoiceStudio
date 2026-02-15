@@ -8,11 +8,11 @@ WebSocket Protocol (GAP-INT-002):
     See backend/api/ws/protocol.py for specification.
 """
 
-import asyncio
+from __future__ import annotations
+
 import json
 import logging
 import uuid
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -21,11 +21,11 @@ from ..middleware.auth_middleware import require_auth_if_enabled
 
 # WebSocket protocol for standardized messaging (GAP-CRIT-002)
 from ..ws.protocol import (
-    create_message,
-    create_error,
-    create_pong,
-    MessageType,
     ErrorCode,
+    MessageType,
+    create_error,
+    create_message,
+    create_pong,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ router = APIRouter(
 )
 
 # Active pipeline sessions
-_sessions: Dict[str, "PipelineSession"] = {}
+_sessions: dict[str, "PipelineSession"] = {}
 
 
 class PipelineRequest(BaseModel):
@@ -48,8 +48,8 @@ class PipelineRequest(BaseModel):
     llm_provider: str = "ollama"
     tts_engine: str = "xtts_v2"
     language: str = "en"
-    llm_model: Optional[str] = None
-    tts_voice: Optional[str] = None
+    llm_model: str | None = None
+    tts_voice: str | None = None
     synthesize: bool = True
 
 
@@ -58,8 +58,8 @@ class PipelineResponse(BaseModel):
     session_id: str
     response_text: str
     audio_available: bool = False
-    audio_id: Optional[str] = None
-    metrics: Optional[Dict] = None
+    audio_id: str | None = None
+    metrics: dict | None = None
 
 
 class PipelineSession:
@@ -68,7 +68,7 @@ class PipelineSession:
     def __init__(self, session_id: str, orchestrator):
         self.session_id = session_id
         self.orchestrator = orchestrator
-        self.turns: List[Dict] = []
+        self.turns: list[dict] = []
 
 
 @router.post("/process", response_model=PipelineResponse)
@@ -79,7 +79,7 @@ async def process_pipeline(request: PipelineRequest):
     Supports batch mode (complete response) and returns
     the LLM response with optional TTS audio.
     """
-    from app.core.pipeline.orchestrator import PipelineOrchestrator, PipelineConfig, PipelineMode
+    from app.core.pipeline.orchestrator import PipelineConfig, PipelineMode, PipelineOrchestrator
 
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
 
@@ -110,7 +110,7 @@ async def process_pipeline(request: PipelineRequest):
         if result.get("audio"):
             try:
                 from backend.services.AudioArtifactRegistry import get_audio_registry
-                registry = get_audio_registry()
+                get_audio_registry()
                 audio_id = f"pipe-{uuid.uuid4().hex[:8]}"
                 # Audio storage handled by registry
             except Exception as exc:
@@ -128,7 +128,7 @@ async def process_pipeline(request: PipelineRequest):
         logger.error(f"Pipeline processing failed: {exc}")
         raise HTTPException(
             status_code=500,
-            detail=f"Pipeline processing failed: {str(exc)}",
+            detail=f"Pipeline processing failed: {exc!s}",
         ) from exc
     finally:
         await orchestrator.cleanup()
@@ -152,7 +152,7 @@ async def pipeline_stream(websocket: WebSocket):
     session_id = f"ws-{uuid.uuid4().hex[:8]}"
     logger.info(f"Pipeline WebSocket connected: {session_id}")
 
-    from app.core.pipeline.orchestrator import PipelineOrchestrator, PipelineConfig
+    from app.core.pipeline.orchestrator import PipelineConfig, PipelineOrchestrator
 
     orchestrator = PipelineOrchestrator(PipelineConfig())
     await orchestrator.initialize()
@@ -196,7 +196,7 @@ async def pipeline_stream(websocket: WebSocket):
 async def list_pipeline_providers():
     """List available providers for each pipeline stage."""
     from backend.services.llm_provider_service import get_llm_provider_service
-    
+
     provider_service = get_llm_provider_service()
     llm_providers = [
         {"name": p.name, "local": p.local, "available": p.available}

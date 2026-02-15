@@ -4,9 +4,10 @@ Advanced Spectrogram Routes
 Endpoints for advanced spectrogram visualization and analysis.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, field_validator
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/spectrogram", tags=["spectrogram"])
 
 # In-memory spectrogram settings (replace with database in production)
-_spectrogram_settings: Dict[str, Dict] = {}
+_spectrogram_settings: dict[str, dict] = {}
 _MAX_SPECTROGRAM_SETTINGS = 1000  # Maximum number of settings to keep
 
 
@@ -40,10 +41,10 @@ class SpectrogramConfig(BaseModel):
     window_size: int = 2048
     hop_length: int = 512
     n_fft: int = 2048
-    frequency_range: Optional[Dict[str, float]] = None
-    time_range: Optional[Dict[str, float]] = None
+    frequency_range: dict[str, float] | None = None
+    time_range: dict[str, float] | None = None
     color_scheme: str = "viridis"
-    colormap_range: Optional[Dict[str, float]] = None
+    colormap_range: dict[str, float] | None = None
     show_phase: bool = False
     show_magnitude: bool = True
     log_scale: bool = True
@@ -88,14 +89,13 @@ class SpectrogramConfig(BaseModel):
     @field_validator("frequency_range", "time_range", "colormap_range")
     @classmethod
     def validate_range(
-        cls, v: Optional[Dict[str, float]]
-    ) -> Optional[Dict[str, float]]:
+        cls, v: dict[str, float] | None
+    ) -> dict[str, float] | None:
         """Validate range dictionaries."""
         if v is None:
             return v
-        if "min" in v and "max" in v:
-            if v["min"] >= v["max"]:
-                raise ValueError("Range min must be less than max")
+        if "min" in v and "max" in v and v["min"] >= v["max"]:
+            raise ValueError("Range min must be less than max")
         return v
 
 
@@ -103,9 +103,9 @@ class SpectrogramFrame(BaseModel):
     """A single spectrogram frame."""
 
     time: float
-    frequencies: List[float]
-    magnitudes: List[float]
-    phases: Optional[List[float]] = None
+    frequencies: list[float]
+    magnitudes: list[float]
+    phases: list[float] | None = None
 
 
 class SpectrogramData(BaseModel):
@@ -114,7 +114,7 @@ class SpectrogramData(BaseModel):
     audio_id: str
     sample_rate: int
     duration: float
-    frames: List[SpectrogramFrame]
+    frames: list[SpectrogramFrame]
     frequency_resolution: float
     time_resolution: float
     config: SpectrogramConfig
@@ -154,7 +154,7 @@ async def update_spectrogram_config(audio_id: str, config: SpectrogramConfig):
         logger.error(f"Failed to update spectrogram config: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update config: {str(e)}",
+            detail=f"Failed to update config: {e!s}",
         ) from e
 
 
@@ -167,10 +167,10 @@ async def get_spectrogram_data(
     window_size: int = Query(2048, ge=256, le=8192),
     hop_length: int = Query(512, ge=128, le=2048),
     n_fft: int = Query(2048, ge=256, le=8192),
-    frequency_min: Optional[float] = Query(None, ge=0.0),
-    frequency_max: Optional[float] = Query(None, ge=0.0),
-    time_start: Optional[float] = Query(None, ge=0.0),
-    time_end: Optional[float] = Query(None, ge=0.0),
+    frequency_min: float | None = Query(None, ge=0.0),
+    frequency_max: float | None = Query(None, ge=0.0),
+    time_start: float | None = Query(None, ge=0.0),
+    time_end: float | None = Query(None, ge=0.0),
     log_scale: bool = Query(True),
 ):
     """Get spectrogram data for an audio file."""
@@ -191,12 +191,11 @@ async def get_spectrogram_data(
                 status_code=400,
                 detail="frequency_min must be less than frequency_max",
             )
-    if time_start is not None and time_end is not None:
-        if time_start >= time_end:
-            raise HTTPException(
-                status_code=400,
-                detail="time_start must be less than time_end",
-            )
+    if time_start is not None and time_end is not None and time_start >= time_end:
+        raise HTTPException(
+            status_code=400,
+            detail="time_start must be less than time_end",
+        )
 
     try:
         # Get audio file path
@@ -349,7 +348,7 @@ async def get_spectrogram_data(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate spectrogram: {str(e)}",
+            detail=f"Failed to generate spectrogram: {e!s}",
         ) from e
 
 
@@ -466,7 +465,7 @@ async def compare_spectrograms(
         logger.error(f"Failed to compare spectrograms: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compare spectrograms: {str(e)}",
+            detail=f"Failed to compare spectrograms: {e!s}",
         ) from e
 
 
@@ -474,7 +473,7 @@ async def compare_spectrograms(
 @cache_response(ttl=300)  # Cache for 5 minutes (exported spectrograms are static)
 async def export_spectrogram(
     audio_id: str,
-    format: str = Query("png", regex="^(png|jpg|svg)$"),
+    format: str = Query("png", pattern="^(png|jpg|svg)$"),
     width: int = Query(1920, ge=100, le=4096),
     height: int = Query(1080, ge=100, le=4096),
 ):
@@ -516,7 +515,7 @@ async def export_spectrogram(
             )
 
         # Load audio
-        audio, sample_rate = sf.read(audio_path)
+        audio, _sample_rate = sf.read(audio_path)
         if len(audio.shape) > 1:
             audio = np.mean(audio, axis=1)
 
@@ -577,7 +576,7 @@ async def export_spectrogram(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export spectrogram: {str(e)}",
+            detail=f"Failed to export spectrogram: {e!s}",
         ) from e
 
 

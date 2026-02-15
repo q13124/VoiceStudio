@@ -38,10 +38,19 @@ namespace VoiceStudio.App.Services
         /// <summary>
         /// Executes a command by ID, fire-and-forget style.
         /// Errors are logged but not propagated.
+        /// Ensures execution on the UI thread for COM operations like file pickers.
         /// </summary>
         public void ExecuteFireAndForget(string commandId, object? parameter = null)
         {
-            _ = ExecuteSafeAsync(commandId, parameter);
+            // Ensure execution on UI thread for commands that may use COM objects (file pickers, dialogs)
+            if (_dispatcherQueue != null && !_dispatcherQueue.HasThreadAccess)
+            {
+                _dispatcherQueue.TryEnqueue(() => _ = ExecuteSafeAsync(commandId, parameter));
+            }
+            else
+            {
+                _ = ExecuteSafeAsync(commandId, parameter);
+            }
         }
 
         /// <summary>

@@ -101,6 +101,10 @@ openai-whisper>=20230314
 # whisper.cpp - Requires compiled binary (not Python package)
 # Download from: https://github.com/ggerganov/whisper.cpp/releases
 
+# WhisperX - Optional STT with word-level timestamps and speaker diarization (TD-037)
+# Install when needed: pip install whisperx (check PyTorch/CUDA compatibility)
+# whisperx>=3.1.0
+
 # ============================================================================
 # Voice Conversion Engines (Worker 1 & 3)
 # ============================================================================

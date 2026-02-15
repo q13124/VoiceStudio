@@ -3,8 +3,9 @@ Wavelet Analysis Integration
 Integrates pywavelets library for wavelet transforms and analysis.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -34,8 +35,8 @@ class WaveletAnalyzer:
         signal: np.ndarray,
         wavelet: str = "db4",
         mode: str = "symmetric",
-        level: Optional[int] = None,
-    ) -> Tuple[List[np.ndarray], np.ndarray]:
+        level: int | None = None,
+    ) -> tuple[list[np.ndarray], np.ndarray]:
         """
         Decompose signal using wavelet transform.
 
@@ -63,7 +64,7 @@ class WaveletAnalyzer:
 
     def reconstruct(
         self,
-        coeffs: List[np.ndarray],
+        coeffs: list[np.ndarray],
         approximation: np.ndarray,
         wavelet: str = "db4",
         mode: str = "symmetric",
@@ -85,7 +86,7 @@ class WaveletAnalyzer:
 
         try:
             # Combine approximation and details
-            all_coeffs = [approximation] + coeffs
+            all_coeffs = [approximation, *coeffs]
             reconstructed = pywt.waverec(all_coeffs, wavelet, mode=mode)
             return reconstructed
         except Exception as e:
@@ -96,7 +97,7 @@ class WaveletAnalyzer:
         self,
         signal: np.ndarray,
         wavelet: str = "db4",
-        level: Optional[int] = None,
+        level: int | None = None,
     ) -> dict:
         """
         Extract features from wavelet decomposition.
@@ -123,7 +124,7 @@ class WaveletAnalyzer:
             }
 
             # Calculate energy distribution
-            total_detail_energy = sum(features["energy_details"])
+            sum(features["energy_details"])
             features["energy_ratio"] = (
                 features["energy_approximation"] / features["total_energy"]
                 if features["total_energy"] > 0
@@ -135,7 +136,7 @@ class WaveletAnalyzer:
             logger.error(f"Error extracting wavelet features: {e}", exc_info=True)
             raise
 
-    def get_available_wavelets(self) -> List[str]:
+    def get_available_wavelets(self) -> list[str]:
         """
         Get list of available wavelets.
 

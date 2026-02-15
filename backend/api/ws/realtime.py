@@ -12,7 +12,10 @@ Features:
 - Connection rate limiting
 """
 
+from __future__ import annotations
+
 import asyncio
+import contextlib
 import json
 import logging
 import time
@@ -20,7 +23,6 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Optional, Set
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -43,13 +45,13 @@ class ConnectionInfo:
     websocket: WebSocket
     connected_at: datetime
     last_activity: datetime
-    last_health_check: Optional[datetime] = None
+    last_health_check: datetime | None = None
     is_healthy: bool = True
     message_count: int = 0
     error_count: int = 0
     bytes_sent: int = 0
     bytes_received: int = 0
-    subscribed_topics: Set[str] = field(default_factory=set)
+    subscribed_topics: set[str] = field(default_factory=set)
     message_queue: deque = field(default_factory=deque)
     max_queue_size: int = 100
     rate_limit_per_second: float = 100.0
@@ -96,7 +98,7 @@ class ConnectionInfo:
 
 
 # Active WebSocket connections by topic
-_active_connections: Dict[str, Set[WebSocket]] = {
+_active_connections: dict[str, set[WebSocket]] = {
     "meters": set(),
     "training": set(),
     "batch": set(),
@@ -105,10 +107,10 @@ _active_connections: Dict[str, Set[WebSocket]] = {
 }
 
 # Connection info mapping
-_connection_info: Dict[WebSocket, ConnectionInfo] = {}
+_connection_info: dict[WebSocket, ConnectionInfo] = {}
 
 # Message batching queues by topic (priority-based)
-_message_batches: Dict[str, Dict[int, deque]] = {
+_message_batches: dict[str, dict[int, deque]] = {
     "meters": {p.value: deque() for p in MessagePriority},
     "training": {p.value: deque() for p in MessagePriority},
     "batch": {p.value: deque() for p in MessagePriority},
@@ -130,7 +132,7 @@ _health_check_interval: float = 30.0
 _max_idle_time: float = 300.0
 
 # Data cache for each topic
-_data_cache: Dict[str, Dict] = {
+_data_cache: dict[str, dict] = {
     "meters": {},
     "training": {},
     "batch": {},
@@ -207,7 +209,7 @@ async def _send_batched_messages(topic: str):
             if priority.value >= MessagePriority.HIGH.value
             else _batch_size
         )
-        messages: list[Dict] = []
+        messages: list[dict] = []
         while batch and len(messages) < max_batch:
             messages.append(batch.popleft())
 
@@ -260,8 +262,7 @@ async def _send_batched_messages(topic: str):
         # Remove disconnected clients
         _active_connections[topic] -= disconnected
         for ws in disconnected:
-            if ws in _connection_info:
-                del _connection_info[ws]
+            _connection_info.pop(ws, None)
 
         # Break after processing highest priority messages
         if messages:
@@ -273,7 +274,7 @@ async def _batch_message_sender():
     while True:
         try:
             await asyncio.sleep(_batch_timeout)
-            for topic in _message_batches.keys():
+            for topic in _message_batches:
                 await _send_batched_messages(topic)
 
             # Process queued messages for each connection
@@ -326,20 +327,17 @@ async def _health_checker():
                 logger.info("Removing unhealthy WebSocket connection")
                 for topic_connections in _active_connections.values():
                     topic_connections.discard(ws)
-                if ws in _connection_info:
-                    del _connection_info[ws]
-                try:
+                _connection_info.pop(ws, None)
+                with contextlib.suppress(Exception):
                     await ws.close()
-                except Exception:
-                    ...
 
         except Exception as e:
             logger.error(f"Health checker error: {e}")
 
 
 # Start background tasks
-_batch_sender_task: Optional[asyncio.Task] = None
-_health_checker_task: Optional[asyncio.Task] = None
+_batch_sender_task: asyncio.Task | None = None
+_health_checker_task: asyncio.Task | None = None
 
 
 def _start_background_tasks():
@@ -351,7 +349,7 @@ def _start_background_tasks():
         _health_checker_task = asyncio.create_task(_health_checker())
 
 
-async def connect(ws: WebSocket, topics: Optional[list[str]] = None):
+async def connect(ws: WebSocket, topics: list[str] | None = None):
     """
     Connect a WebSocket client and subscribe to topics.
 
@@ -386,7 +384,7 @@ async def connect(ws: WebSocket, topics: Optional[list[str]] = None):
     try:
         # Send initial data for subscribed topics
         for topic in topics:
-            if topic in _data_cache and _data_cache[topic]:
+            if _data_cache.get(topic):
                 await ws.send_json(
                     {
                         "topic": topic,
@@ -451,12 +449,11 @@ async def connect(ws: WebSocket, topics: Optional[list[str]] = None):
         # Unsubscribe from all topics
         for topic_connections in _active_connections.values():
             topic_connections.discard(ws)
-        if ws in _connection_info:
-            del _connection_info[ws]
+        _connection_info.pop(ws, None)
 
 
 async def broadcast_meter_updates(
-    project_id: str, channel_id: str, meter_data: Dict, batch: bool = True
+    project_id: str, channel_id: str, meter_data: dict, batch: bool = True
 ):
     """
     Broadcast VU meter updates to subscribed clients.
@@ -494,10 +491,8 @@ async def broadcast_meter_updates(
         # Add to batch queue with priority
         priority = MessagePriority.NORMAL
         if "priority" in meter_data:
-            try:
+            with contextlib.suppress(KeyError, ValueError):
                 priority = MessagePriority[meter_data["priority"]]
-            except (KeyError, ValueError):
-                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())
@@ -525,12 +520,11 @@ async def broadcast_meter_updates(
         # Remove disconnected clients
         _active_connections[topic] -= disconnected
         for ws in disconnected:
-            if ws in _connection_info:
-                del _connection_info[ws]
+            _connection_info.pop(ws, None)
 
 
 async def broadcast_training_progress(
-    training_id: str, progress_data: Dict, batch: bool = True
+    training_id: str, progress_data: dict, batch: bool = True
 ):
     """
     Broadcast training progress updates to subscribed clients.
@@ -564,10 +558,8 @@ async def broadcast_training_progress(
         # Add to batch queue with priority
         priority = MessagePriority.NORMAL
         if "priority" in progress_data:
-            try:
+            with contextlib.suppress(KeyError, ValueError):
                 priority = MessagePriority[progress_data["priority"]]
-            except (KeyError, ValueError):
-                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())
@@ -595,12 +587,11 @@ async def broadcast_training_progress(
         # Remove disconnected clients
         _active_connections[topic] -= disconnected
         for ws in disconnected:
-            if ws in _connection_info:
-                del _connection_info[ws]
+            _connection_info.pop(ws, None)
 
 
 async def broadcast_batch_progress(
-    batch_id: str, progress_data: Dict, batch: bool = True
+    batch_id: str, progress_data: dict, batch: bool = True
 ):
     """
     Broadcast batch processing progress updates to subscribed clients.
@@ -634,10 +625,8 @@ async def broadcast_batch_progress(
         # Add to batch queue with priority
         priority = MessagePriority.NORMAL
         if "priority" in progress_data:
-            try:
+            with contextlib.suppress(KeyError, ValueError):
                 priority = MessagePriority[progress_data["priority"]]
-            except (KeyError, ValueError):
-                ...
         _message_batches[topic][priority.value].append(message)
         # Trigger immediate send if batch is full
         total_batch_size = sum(len(batch) for batch in _message_batches[topic].values())
@@ -665,11 +654,10 @@ async def broadcast_batch_progress(
         # Remove disconnected clients
         _active_connections[topic] -= disconnected
         for ws in disconnected:
-            if ws in _connection_info:
-                del _connection_info[ws]
+            _connection_info.pop(ws, None)
 
 
-async def broadcast_general_event(event_type: str, payload: Dict):
+async def broadcast_general_event(event_type: str, payload: dict):
     """
     Broadcast general events to subscribed clients.
 
@@ -707,18 +695,17 @@ async def broadcast_general_event(event_type: str, payload: Dict):
     # Remove disconnected clients
     _active_connections[topic] -= disconnected
     for ws in disconnected:
-        if ws in _connection_info:
-            del _connection_info[ws]
+        _connection_info.pop(ws, None)
 
 
-def get_subscriber_count(topic: Optional[str] = None) -> int:
+def get_subscriber_count(topic: str | None = None) -> int:
     """Get number of active subscribers for a topic or all topics."""
     if topic:
         return len(_active_connections.get(topic, set()))
     return sum(len(conns) for conns in _active_connections.values())
 
 
-def get_connection_stats() -> Dict:
+def get_connection_stats() -> dict:
     """Get WebSocket connection statistics (enhanced)."""
     total_connections = len(_connection_info)
     healthy_connections = sum(

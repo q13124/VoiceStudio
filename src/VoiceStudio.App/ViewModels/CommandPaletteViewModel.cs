@@ -181,13 +181,11 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        Debug.WriteLine($"[CommandPalette] Executing registry command: {commandId}");
         await _commandRegistry.ExecuteAsync(commandId, null, CancellationToken.None);
-        Debug.WriteLine($"[CommandPalette] Registry command completed: {commandId}");
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[CommandPalette] Registry command failed: {commandId} - {ex.Message}");
+        await HandleErrorAsync(ex, $"ExecuteCommand:{commandId}");
       }
     }
   }

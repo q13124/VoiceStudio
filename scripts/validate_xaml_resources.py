@@ -17,8 +17,6 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Set, Dict, List, Tuple
-
 
 # Paths relative to project root
 RESOURCE_DIRS = [
@@ -45,15 +43,15 @@ def find_project_root() -> Path:
     raise RuntimeError("Could not find project root (VoiceStudio.sln)")
 
 
-def collect_defined_resources(project_root: Path) -> Dict[str, Path]:
+def collect_defined_resources(project_root: Path) -> dict[str, Path]:
     """Collect all VSQ.* resources defined in ResourceDictionary files."""
     defined = {}
-    
+
     for res_dir in RESOURCE_DIRS:
         res_path = project_root / res_dir
         if not res_path.exists():
             continue
-            
+
         for xaml_file in res_path.glob("*.xaml"):
             try:
                 content = xaml_file.read_text(encoding="utf-8")
@@ -62,19 +60,19 @@ def collect_defined_resources(project_root: Path) -> Dict[str, Path]:
                     defined[key] = xaml_file
             except Exception as e:
                 print(f"Warning: Could not read {xaml_file}: {e}", file=sys.stderr)
-    
+
     return defined
 
 
-def collect_referenced_resources(project_root: Path) -> Dict[str, List[Tuple[Path, int]]]:
+def collect_referenced_resources(project_root: Path) -> dict[str, list[tuple[Path, int]]]:
     """Collect all VSQ.* resources referenced in XAML files."""
     referenced = {}
-    
+
     for xaml_dir in XAML_DIRS:
         dir_path = project_root / xaml_dir
         if not dir_path.exists():
             continue
-            
+
         for xaml_file in dir_path.rglob("*.xaml"):
             try:
                 content = xaml_file.read_text(encoding="utf-8")
@@ -86,16 +84,16 @@ def collect_referenced_resources(project_root: Path) -> Dict[str, List[Tuple[Pat
                         referenced[key].append((xaml_file, i))
             except Exception as e:
                 print(f"Warning: Could not read {xaml_file}: {e}", file=sys.stderr)
-    
+
     return referenced
 
 
-def validate_resources(defined: Dict[str, Path], 
-                       referenced: Dict[str, List[Tuple[Path, int]]],
-                       verbose: bool = False) -> Set[str]:
+def validate_resources(defined: dict[str, Path],
+                       referenced: dict[str, list[tuple[Path, int]]],
+                       verbose: bool = False) -> set[str]:
     """Find resources that are referenced but not defined."""
     missing = set()
-    
+
     for key, locations in referenced.items():
         if key not in defined:
             missing.add(key)
@@ -105,13 +103,13 @@ def validate_resources(defined: Dict[str, Path],
                     print(f"  Referenced at: {file_path.name}:{line_num}")
                 if len(locations) > 5:
                     print(f"  ... and {len(locations) - 5} more locations")
-    
+
     return missing
 
 
-def print_summary(defined: Dict[str, Path], 
-                  referenced: Dict[str, List[Tuple[Path, int]]], 
-                  missing: Set[str]):
+def print_summary(defined: dict[str, Path],
+                  referenced: dict[str, list[tuple[Path, int]]],
+                  missing: set[str]):
     """Print validation summary."""
     print("\n" + "=" * 60)
     print("XAML Resource Validation Summary")
@@ -119,19 +117,19 @@ def print_summary(defined: Dict[str, Path],
     print(f"Defined VSQ.* resources:    {len(defined)}")
     print(f"Referenced VSQ.* resources: {len(referenced)}")
     print(f"Missing resources:          {len(missing)}")
-    
+
     if missing:
         print("\n--- Missing Resources ---")
         for key in sorted(missing):
             print(f"  - {key}")
-    
+
     print("=" * 60)
 
 
-def suggest_additions(missing: Set[str]) -> str:
+def suggest_additions(missing: set[str]) -> str:
     """Generate XAML snippets for missing resources."""
     suggestions = ["<!-- Add to DesignTokens.xaml or appropriate ResourceDictionary -->"]
-    
+
     for key in sorted(missing):
         if "Brush" in key or "Color" in key:
             suggestions.append(f'<SolidColorBrush x:Key="{key}" Color="#FF808080" />')
@@ -150,7 +148,7 @@ def suggest_additions(missing: Set[str]) -> str:
             suggestions.append(f'<Style x:Key="{key}" TargetType="Button" />')
         else:
             suggestions.append(f'<!-- Unknown type: {key} -->')
-    
+
     return "\n".join(suggestions)
 
 
@@ -159,26 +157,26 @@ def main():
     parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
     parser.add_argument("--suggest", "-s", action="store_true", help="Suggest XAML for missing resources")
     args = parser.parse_args()
-    
+
     try:
         project_root = find_project_root()
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    
+
     print(f"Project root: {project_root}")
     print("Scanning for VSQ.* resources...")
-    
+
     defined = collect_defined_resources(project_root)
     referenced = collect_referenced_resources(project_root)
     missing = validate_resources(defined, referenced, verbose=args.verbose)
-    
+
     print_summary(defined, referenced, missing)
-    
+
     if args.suggest and missing:
         print("\n--- Suggested Additions ---")
         print(suggest_additions(missing))
-    
+
     if missing:
         print("\nValidation FAILED: Missing resources found")
         return 1

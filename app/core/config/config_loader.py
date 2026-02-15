@@ -4,11 +4,13 @@ Supports JSON, YAML, and TOML configuration files with validation.
 Part of FREE_LIBRARIES_INTEGRATION - Worker 3.
 """
 
+from __future__ import annotations
+
 import json
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional, Union
 import os
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,22 +48,22 @@ class ConfigLoader:
     """
     Unified configuration loader supporting JSON, YAML, and TOML formats.
     """
-    
-    def __init__(self, config_path: Union[str, Path]):
+
+    def __init__(self, config_path: str | Path):
         """
         Initialize configuration loader.
-        
+
         Args:
             config_path: Path to configuration file
         """
         self.config_path = Path(config_path)
-        self.config: Dict[str, Any] = {}
-        self.format: Optional[str] = None
-    
+        self.config: dict[str, Any] = {}
+        self.format: str | None = None
+
     def detect_format(self) -> str:
         """
         Detect configuration file format from extension.
-        
+
         Returns:
             Format string: 'json', 'yaml', 'toml', or 'unknown'
         """
@@ -74,27 +76,27 @@ class ConfigLoader:
             return 'toml'
         else:
             return 'unknown'
-    
-    def load(self, validate: bool = True, schema: Optional[Dict] = None) -> Dict[str, Any]:
+
+    def load(self, validate: bool = True, schema: dict | None = None) -> dict[str, Any]:
         """
         Load configuration from file.
-        
+
         Args:
             validate: Whether to validate configuration
             schema: Optional Cerberus schema for validation
-        
+
         Returns:
             Configuration dictionary
-        
+
         Raises:
             FileNotFoundError: If config file doesn't exist
             ValueError: If config is invalid or format unsupported
         """
         if not self.config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
-        
+
         self.format = self.detect_format()
-        
+
         # Load based on format
         if self.format == 'json':
             self.config = self._load_json()
@@ -108,7 +110,7 @@ class ConfigLoader:
             self.config = self._load_toml()
         else:
             raise ValueError(f"Unsupported configuration format: {self.format}")
-        
+
         # Validate if requested
         if validate:
             if schema and HAS_CERBERUS:
@@ -116,53 +118,53 @@ class ConfigLoader:
             elif HAS_PYDANTIC:
                 # Basic validation with pydantic
                 self._validate_pydantic()
-        
+
         logger.info(f"Loaded configuration from {self.config_path} (format: {self.format})")
         return self.config
-    
-    def _load_json(self) -> Dict[str, Any]:
+
+    def _load_json(self) -> dict[str, Any]:
         """Load JSON configuration."""
-        with open(self.config_path, 'r', encoding='utf-8') as f:
+        with open(self.config_path, encoding='utf-8') as f:
             return json.load(f)
-    
-    def _load_yaml(self) -> Dict[str, Any]:
+
+    def _load_yaml(self) -> dict[str, Any]:
         """Load YAML configuration."""
-        with open(self.config_path, 'r', encoding='utf-8') as f:
+        with open(self.config_path, encoding='utf-8') as f:
             return yaml.safe_load(f) or {}
-    
-    def _load_toml(self) -> Dict[str, Any]:
+
+    def _load_toml(self) -> dict[str, Any]:
         """Load TOML configuration."""
-        with open(self.config_path, 'r', encoding='utf-8') as f:
+        with open(self.config_path, encoding='utf-8') as f:
             return toml.load(f)
-    
-    def _validate_cerberus(self, schema: Dict) -> None:
+
+    def _validate_cerberus(self, schema: dict) -> None:
         """Validate configuration using Cerberus schema."""
         if not HAS_CERBERUS:
             return
-        
+
         validator = Validator(schema)
         if not validator.validate(self.config):
             errors = validator.errors
             raise ValueError(f"Configuration validation failed: {errors}")
-    
+
     def _validate_pydantic(self) -> None:
         """Basic validation using Pydantic (if available)."""
         if not HAS_PYDANTIC:
             return
-        
+
         # Basic type checking
         if not isinstance(self.config, dict):
             raise ValueError("Configuration must be a dictionary")
-    
-    def save(self, format: Optional[str] = None) -> None:
+
+    def save(self, format: str | None = None) -> None:
         """
         Save configuration to file.
-        
+
         Args:
             format: Output format ('json', 'yaml', 'toml'). If None, uses detected format.
         """
         save_format = format or self.format or 'json'
-        
+
         if save_format == 'json':
             self._save_json()
         elif save_format == 'yaml':
@@ -175,9 +177,9 @@ class ConfigLoader:
             self._save_toml()
         else:
             raise ValueError(f"Unsupported format: {save_format}")
-        
+
         logger.info(f"Saved configuration to {self.config_path} (format: {save_format})")
-    
+
     def _save_json(self) -> None:
         """Save as JSON atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
@@ -189,7 +191,7 @@ class ConfigLoader:
             if tmp_path.exists():
                 tmp_path.unlink()
             raise
-    
+
     def _save_yaml(self) -> None:
         """Save as YAML atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
@@ -201,7 +203,7 @@ class ConfigLoader:
             if tmp_path.exists():
                 tmp_path.unlink()
             raise
-    
+
     def _save_toml(self) -> None:
         """Save as TOML atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
@@ -213,7 +215,7 @@ class ConfigLoader:
             if tmp_path.exists():
                 tmp_path.unlink()
             raise
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key (supports dot notation)."""
         keys = key.split('.')
@@ -224,7 +226,7 @@ class ConfigLoader:
             else:
                 return default
         return value
-    
+
     def set(self, key: str, value: Any) -> None:
         """Set configuration value by key (supports dot notation)."""
         keys = key.split('.')
@@ -234,8 +236,8 @@ class ConfigLoader:
                 config[k] = {}
             config = config[k]
         config[keys[-1]] = value
-    
-    def update(self, updates: Dict[str, Any]) -> None:
+
+    def update(self, updates: dict[str, Any]) -> None:
         """Update configuration with new values."""
         self.config.update(updates)
 
@@ -249,20 +251,20 @@ class PydanticConfigModel(BaseModel):
 
 
 def load_config(
-    config_path: Union[str, Path],
-    format: Optional[str] = None,
+    config_path: str | Path,
+    format: str | None = None,
     validate: bool = True,
-    schema: Optional[Dict] = None
-) -> Dict[str, Any]:
+    schema: dict | None = None
+) -> dict[str, Any]:
     """
     Convenience function to load configuration.
-    
+
     Args:
         config_path: Path to configuration file
         format: Force format ('json', 'yaml', 'toml'). If None, auto-detect.
         validate: Whether to validate configuration
         schema: Optional Cerberus schema for validation
-    
+
     Returns:
         Configuration dictionary
     """
@@ -273,13 +275,13 @@ def load_config(
 
 
 def save_config(
-    config: Dict[str, Any],
-    config_path: Union[str, Path],
+    config: dict[str, Any],
+    config_path: str | Path,
     format: str = 'json'
 ) -> None:
     """
     Convenience function to save configuration.
-    
+
     Args:
         config: Configuration dictionary
         config_path: Path to save configuration file

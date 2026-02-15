@@ -10,8 +10,9 @@ Compatible with:
 - pyloudnorm>=0.1.1
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -88,8 +89,8 @@ class MasteringRack:
     def master(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
-        preset: Optional[str] = None,
+        sample_rate: int | None = None,
+        preset: str | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -162,7 +163,7 @@ class MasteringRack:
         self,
         audio: np.ndarray,
         sample_rate: int,
-        params: Dict,
+        params: dict,
     ) -> np.ndarray:
         """Apply multiband compression."""
         if not HAS_SCIPY:
@@ -270,7 +271,7 @@ class MasteringRack:
         return audio * gain_reduction
 
     def apply_final_eq(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply final EQ for mastering."""
         if not HAS_SCIPY:
@@ -342,7 +343,7 @@ class MasteringRack:
         return result
 
     def apply_stereo_enhancement(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply stereo enhancement."""
         width = params.get("stereo_width", 1.0)
@@ -378,7 +379,7 @@ class MasteringRack:
         return result
 
     def apply_limiter(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply limiter (brickwall)."""
         ceiling_db = params.get("ceiling", -0.3)
@@ -455,7 +456,7 @@ class MasteringRack:
         return audio
 
     def apply_dithering(
-        self, audio: np.ndarray, params: Dict
+        self, audio: np.ndarray, params: dict
     ) -> np.ndarray:
         """Apply dithering for bit depth reduction."""
         bit_depth = params.get("bit_depth", 16)
@@ -480,7 +481,7 @@ class MasteringRack:
 
         return quantized
 
-    def get_preset(self, preset_name: str) -> Dict:
+    def get_preset(self, preset_name: str) -> dict:
         """Get mastering preset parameters."""
         presets = {
             "broadcast": {
@@ -553,7 +554,7 @@ def create_mastering_rack(sample_rate: int = 24000) -> MasteringRack:
 def master_audio(
     audio: np.ndarray,
     sample_rate: int,
-    preset: Optional[str] = None,
+    preset: str | None = None,
     **kwargs,
 ) -> np.ndarray:
     """

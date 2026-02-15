@@ -5,6 +5,7 @@ automatic cleanup, data caching, and background tasks.
 """
 
 import asyncio
+import contextlib
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -268,16 +269,16 @@ class TestConnectionManagement:
         """Test connection subscribes to topics during connect."""
         ws = AsyncMock(spec=WebSocket)
         ws.accept = AsyncMock()
-        
+
         # Track if subscription happened before receive_text is called
         subscription_verified = []
-        
+
         async def mock_receive_text():
             # Verify subscription happened before receive_text is called
             if ws in realtime._active_connections["meters"]:
                 subscription_verified.append(True)
             raise asyncio.CancelledError()
-        
+
         ws.receive_text = mock_receive_text
 
         # Clear existing connections
@@ -299,16 +300,16 @@ class TestConnectionManagement:
         """Test connection can subscribe to multiple topics during connect."""
         ws = AsyncMock(spec=WebSocket)
         ws.accept = AsyncMock()
-        
+
         # Track subscriptions before receive_text is called
         subscriptions_verified = {}
-        
+
         async def mock_receive_text():
             # Verify subscriptions happened before receive_text is called
             subscriptions_verified["meters"] = ws in realtime._active_connections["meters"]
             subscriptions_verified["training"] = ws in realtime._active_connections["training"]
             raise asyncio.CancelledError()
-        
+
         ws.receive_text = mock_receive_text
 
         # Clear existing connections
@@ -338,10 +339,8 @@ class TestConnectionManagement:
         realtime._active_connections["meters"].clear()
         realtime._connection_info.clear()
 
-        try:
+        with contextlib.suppress(realtime.WebSocketDisconnect):
             await realtime.connect(ws, topics=["meters"])
-        except realtime.WebSocketDisconnect:
-            ...
 
         # Should be removed from connections
         assert ws not in realtime._active_connections["meters"]

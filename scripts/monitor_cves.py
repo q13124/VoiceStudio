@@ -21,7 +21,6 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -33,7 +32,7 @@ class Vulnerability:
     vulnerability_id: str
     severity: str
     description: str
-    fixed_version: Optional[str] = None
+    fixed_version: str | None = None
     ecosystem: str = "python"
     source: str = "unknown"
 
@@ -80,7 +79,7 @@ def get_project_root() -> Path:
 
 def run_command(
     cmd: list[str],
-    cwd: Optional[Path] = None,
+    cwd: Path | None = None,
 ) -> tuple[int, str, str]:
     """Run a command and return exit code, stdout, stderr."""
     try:
@@ -192,7 +191,7 @@ def run_safety_check(project_root: Path) -> list[Vulnerability]:
         run_command(["python", "-m", "pip", "install", "safety"])
 
     # Run safety in JSON format
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _stderr = run_command(
         ["safety", "check", "--json"],
         cwd=project_root,
     )

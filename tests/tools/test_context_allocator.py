@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from tools.context.core.allocator import ContextAllocator
-from tools.context.core.models import BudgetConstraints, MemoryItem, RuleContext, SourceResult, TaskContext
+from tools.context.core.models import (
+    BudgetConstraints,
+    MemoryItem,
+    RuleContext,
+    SourceResult,
+    TaskContext,
+)
 
 
 def _result(name: str, data: dict) -> SourceResult:

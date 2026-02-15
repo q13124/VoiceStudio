@@ -7,7 +7,7 @@ Phase 12.1: Python SDK
 
 Example:
     from voicestudio import VoiceStudioClient
-    
+
     async with VoiceStudioClient() as client:
         voices = await client.list_voices()
         audio = await client.synthesize("Hello, world!", voice_id="en-US-Neural")
@@ -15,35 +15,35 @@ Example:
 """
 
 from .client import (
-    VoiceStudioClient,
-    Voice,
     AudioResult,
-    SynthesisOptions,
     CloneResult,
+    ConnectionError,
     OutputFormat,
     SynthesisEngine,
-    VoiceStudioError,
-    ConnectionError,
     SynthesisError,
+    SynthesisOptions,
+    Voice,
     VoiceNotFoundError,
-    synthesize_sync,
-    list_voices_sync,
+    VoiceStudioClient,
+    VoiceStudioError,
     __version__,
+    list_voices_sync,
+    synthesize_sync,
 )
 
 __all__ = [
-    "VoiceStudioClient",
-    "Voice",
     "AudioResult",
-    "SynthesisOptions",
     "CloneResult",
+    "ConnectionError",
     "OutputFormat",
     "SynthesisEngine",
-    "VoiceStudioError",
-    "ConnectionError",
     "SynthesisError",
+    "SynthesisOptions",
+    "Voice",
     "VoiceNotFoundError",
-    "synthesize_sync",
-    "list_voices_sync",
+    "VoiceStudioClient",
+    "VoiceStudioError",
     "__version__",
+    "list_voices_sync",
+    "synthesize_sync",
 ]

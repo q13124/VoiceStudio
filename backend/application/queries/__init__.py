@@ -12,7 +12,12 @@ from backend.application.queries.voice_queries import (
 )
 
 __all__ = [
-    "Query", "QueryHandler", "QueryResult",
-    "GetProject", "ListProjects", "SearchProjects",
-    "GetVoiceProfile", "ListVoiceProfiles",
+    "GetProject",
+    "GetVoiceProfile",
+    "ListProjects",
+    "ListVoiceProfiles",
+    "Query",
+    "QueryHandler",
+    "QueryResult",
+    "SearchProjects",
 ]

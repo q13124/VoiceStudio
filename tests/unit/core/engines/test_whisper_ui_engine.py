@@ -5,9 +5,7 @@ Tests Whisper UI engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestWhisperUIEngineImports:
     def test_module_has_whisper_ui_engine_class(self):
         """Test module has WhisperUIEngine class."""
         if hasattr(whisper_ui_engine, "WhisperUIEngine"):
-            cls = getattr(whisper_ui_engine, "WhisperUIEngine")
+            cls = whisper_ui_engine.WhisperUIEngine
             assert isinstance(cls, type), "WhisperUIEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestWhisperUIEngineClass:
     def test_whisper_ui_engine_class_exists(self):
         """Test WhisperUIEngine class exists."""
         if hasattr(whisper_ui_engine, "WhisperUIEngine"):
-            cls = getattr(whisper_ui_engine, "WhisperUIEngine")
+            cls = whisper_ui_engine.WhisperUIEngine
             assert isinstance(cls, type), "WhisperUIEngine should be a class"
 
     def test_whisper_ui_engine_initialization(self):

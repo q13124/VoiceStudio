@@ -7,8 +7,9 @@ Compatible with:
 - numpy>=1.26.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -70,7 +71,7 @@ class EnhancedEnsembleRouter:
 
     def __init__(
         self,
-        engine_router: Optional[EngineRouter] = None,
+        engine_router: EngineRouter | None = None,
         sample_rate: int = 24000,
     ):
         """
@@ -95,9 +96,9 @@ class EnhancedEnsembleRouter:
     def select_best_engine(
         self,
         task_type: str = "tts",
-        quality_requirements: Optional[Dict] = None,
+        quality_requirements: dict | None = None,
         prefer_speed: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Select the best engine for a task based on quality requirements.
 
@@ -150,14 +151,14 @@ class EnhancedEnsembleRouter:
     def synthesize_ensemble(
         self,
         text: str,
-        speaker_wav: Union[str, List[str]],
-        engines: List[str],
+        speaker_wav: str | list[str],
+        engines: list[str],
         language: str = "en",
         selection_mode: str = "voting",
-        fusion_strategy: Optional[str] = None,
+        fusion_strategy: str | None = None,
         segment_size: float = 0.5,
         quality_threshold: float = 0.85,
-    ) -> Tuple[Optional[np.ndarray], Dict]:
+    ) -> tuple[np.ndarray | None, dict]:
         """
         Synthesize using multiple engines and combine results.
 
@@ -252,13 +253,13 @@ class EnhancedEnsembleRouter:
             return self._voting_mode(engine_outputs, engine_qualities)
 
     def _voting_mode(
-        self, engine_outputs: Dict, engine_qualities: Dict
-    ) -> Tuple[Optional[np.ndarray], Dict]:
+        self, engine_outputs: dict, engine_qualities: dict
+    ) -> tuple[np.ndarray | None, dict]:
         """Select best engine output based on quality voting."""
         best_engine = None
         best_quality = -1.0
 
-        for engine_name, output in engine_outputs.items():
+        for engine_name, _output in engine_outputs.items():
             quality = engine_qualities.get(engine_name, {})
             quality_score = quality.get("overall_quality_score", 0.0)
 
@@ -275,7 +276,7 @@ class EnhancedEnsembleRouter:
             }
 
         # Fallback: return first engine
-        first_engine = list(engine_outputs.keys())[0]
+        first_engine = next(iter(engine_outputs.keys()))
         result = engine_outputs[first_engine]
         return result["audio"], {
             "selected_engine": first_engine,
@@ -284,13 +285,13 @@ class EnhancedEnsembleRouter:
 
     def _hybrid_mode(
         self,
-        engine_outputs: Dict,
-        engine_qualities: Dict,
+        engine_outputs: dict,
+        engine_qualities: dict,
         segment_size: float,
-    ) -> Tuple[Optional[np.ndarray], Dict]:
+    ) -> tuple[np.ndarray | None, dict]:
         """Select best segments from different engines."""
         # Get target sample rate (use first engine's rate)
-        target_sr = list(engine_outputs.values())[0]["sample_rate"]
+        target_sr = next(iter(engine_outputs.values()))["sample_rate"]
 
         # Resample all to same rate
         engine_audios_resampled = {}
@@ -348,16 +349,16 @@ class EnhancedEnsembleRouter:
 
     def _fusion_mode(
         self,
-        engine_outputs: Dict,
-        engine_qualities: Dict,
-        fusion_strategy: Optional[str],
-    ) -> Tuple[Optional[np.ndarray], Dict]:
+        engine_outputs: dict,
+        engine_qualities: dict,
+        fusion_strategy: str | None,
+    ) -> tuple[np.ndarray | None, dict]:
         """Fuse multiple engine outputs with weighted combination."""
         if fusion_strategy is None:
             fusion_strategy = "quality_weighted"
 
         # Get target sample rate
-        target_sr = list(engine_outputs.values())[0]["sample_rate"]
+        target_sr = next(iter(engine_outputs.values()))["sample_rate"]
 
         # Resample and prepare all audios
         engine_audios_resampled = {}
@@ -397,7 +398,7 @@ class EnhancedEnsembleRouter:
         else:
             engine_weights = {
                 k: 1.0 / len(engine_audios_resampled)
-                for k in engine_audios_resampled.keys()
+                for k in engine_audios_resampled
             }
 
         # Find max length and fuse
@@ -428,7 +429,7 @@ class EnhancedEnsembleRouter:
 
 
 def create_enhanced_ensemble_router(
-    engine_router: Optional[EngineRouter] = None,
+    engine_router: EngineRouter | None = None,
     sample_rate: int = 24000,
 ) -> EnhancedEnsembleRouter:
     """

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Check if required packages are installed"""
-import sys
 
 def check_package(package_name, import_name=None):
     """Check if a package is installed"""

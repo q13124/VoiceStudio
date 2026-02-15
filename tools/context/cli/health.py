@@ -24,7 +24,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from tools.context.core.manager import ContextManager
 from tools.context.core.models import AllocationContext, ContextLevel
-from tools.context.sources.base import get_source_telemetry
 
 
 def setup_logging(verbose: bool = False) -> None:

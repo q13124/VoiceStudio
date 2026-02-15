@@ -4,10 +4,8 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from tools.overseer.models import Category, Gate, LedgerEntry, LedgerState, Severity
-
 
 LEDGER_DEFAULT_PATH = Path("Recovery Plan/QUALITY_LEDGER.md")
 RESERVED_IDS = {"VS-0025", "VS-0032"}
@@ -31,8 +29,8 @@ class LedgerSummary:
 @dataclass
 class ValidationResult:
     valid: bool
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
 
 
 class LedgerParser:
@@ -40,10 +38,10 @@ class LedgerParser:
 
     def __init__(self, ledger_path: Path | None = None):
         self.ledger_path = ledger_path or LEDGER_DEFAULT_PATH
-        self._entries: List[LedgerEntry] = []
-        self._last_parsed_at: Optional[datetime] = None
+        self._entries: list[LedgerEntry] = []
+        self._last_parsed_at: datetime | None = None
 
-    def parse(self, force: bool = False) -> List[LedgerEntry]:
+    def parse(self, force: bool = False) -> list[LedgerEntry]:
         if self._entries and not force:
             return list(self._entries)
         if not self.ledger_path.exists():
@@ -69,8 +67,8 @@ class LedgerParser:
         )
 
     def validate(self) -> ValidationResult:
-        errors: List[str] = []
-        warnings: List[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
         if not self.ledger_path.exists():
             errors.append(f"Ledger file not found: {self.ledger_path}")
             return ValidationResult(valid=False, errors=errors, warnings=warnings)
@@ -87,13 +85,13 @@ class LedgerParser:
     def _parse_open_index(
         self,
         text: str,
-        errors: Optional[List[str]] = None,
-        warnings: Optional[List[str]] = None,
-    ) -> List[LedgerEntry]:
+        errors: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> list[LedgerEntry]:
         errors = errors if errors is not None else []
         warnings = warnings if warnings is not None else []
         lines = text.splitlines()
-        entries: List[LedgerEntry] = []
+        entries: list[LedgerEntry] = []
         in_index = False
         for line in lines:
             if re.match(r"^\s*##\s+Open index", line, re.IGNORECASE):
@@ -125,7 +123,7 @@ class LedgerParser:
                     errors.append(f"{entry_id}: invalid state '{state_raw}'")
                     continue
                 severity = Severity.from_string(sev_raw)
-                categories: List[Category] = []
+                categories: list[Category] = []
                 for raw in category_raw.split(","):
                     raw = raw.strip()
                     if not raw:

@@ -2,7 +2,6 @@
 """Skip tests that manipulate module-level state - these need proper fixtures."""
 
 import os
-import re
 
 fixes = {
     # Tests manipulating module-level dicts that don't persist across test boundaries
@@ -34,10 +33,10 @@ for fpath, replacements in fixes.items():
     if not os.path.exists(fpath):
         print(f'Not found: {fpath}')
         continue
-    
-    with open(fpath, 'r', encoding='utf-8') as f:
+
+    with open(fpath, encoding='utf-8') as f:
         content = f.read()
-    
+
     modified = False
     for old, new in replacements:
         if old in content and new not in content:
@@ -45,7 +44,7 @@ for fpath, replacements in fixes.items():
             modified = True
             count += 1
             print(f'Fixed: {fpath} - {old[:40]}...')
-    
+
     if modified:
         with open(fpath, 'w', encoding='utf-8') as f:
             f.write(content)

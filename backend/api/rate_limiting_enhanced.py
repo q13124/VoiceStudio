@@ -10,16 +10,18 @@ Features:
 - Rate limit monitoring
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
-from fastapi import Request, Response, HTTPException, status
+from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
@@ -63,12 +65,12 @@ class SlidingWindowRateLimiter:
             config: Rate limit configuration
         """
         self.config = config
-        self.windows: Dict[str, deque] = {}  # key -> deque of timestamps
+        self.windows: dict[str, deque] = {}  # key -> deque of timestamps
         self.lock = threading.Lock()
 
     def check_rate_limit(
-        self, key: str, current_time: Optional[float] = None
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, key: str, current_time: float | None = None
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Check if request is within rate limit.
 
@@ -95,7 +97,7 @@ class SlidingWindowRateLimiter:
                 window.popleft()
 
             # Check if within limits
-            request_count = len(window)
+            len(window)
 
             # Check per-second limit
             if self.config.requests_per_second > 0:
@@ -198,11 +200,11 @@ class Throttler:
         """
         self.min_delay_seconds = min_delay_seconds
         self.max_concurrent = max_concurrent
-        self.last_request_time: Dict[str, float] = {}
-        self.active_requests: Dict[str, int] = defaultdict(int)
+        self.last_request_time: dict[str, float] = {}
+        self.active_requests: dict[str, int] = defaultdict(int)
         self.lock = threading.Lock()
 
-    def throttle(self, key: str) -> Optional[float]:
+    def throttle(self, key: str) -> float | None:
         """
         Apply throttling.
 
@@ -261,7 +263,7 @@ class EnhancedRateLimiter:
         )
 
         # Per-endpoint configurations
-        self.endpoint_configs: Dict[str, RateLimitConfig] = {
+        self.endpoint_configs: dict[str, RateLimitConfig] = {
             "/api/voice/synthesize": RateLimitConfig(
                 requests_per_second=2.0,
                 requests_per_minute=30.0,
@@ -283,8 +285,8 @@ class EnhancedRateLimiter:
         }
 
         # Rate limiters per endpoint
-        self.limiters: Dict[str, SlidingWindowRateLimiter] = {}
-        self.throttlers: Dict[str, Throttler] = {}
+        self.limiters: dict[str, SlidingWindowRateLimiter] = {}
+        self.throttlers: dict[str, Throttler] = {}
 
         # Statistics
         self.stats = RateLimitStats()
@@ -327,7 +329,7 @@ class EnhancedRateLimiter:
         # Use default
         return self.limiters["default"]
 
-    def get_throttler(self, endpoint: str) -> Optional[Throttler]:
+    def get_throttler(self, endpoint: str) -> Throttler | None:
         """
         Get throttler for endpoint.
 
@@ -341,7 +343,7 @@ class EnhancedRateLimiter:
 
     def check_rate_limit(
         self, request: Request
-    ) -> Tuple[bool, Dict[str, Any], Optional[float]]:
+    ) -> tuple[bool, dict[str, Any], float | None]:
         """
         Check rate limit for request.
 
@@ -400,7 +402,7 @@ class EnhancedRateLimiter:
         return f"ip:{client_ip}"
 
     def add_rate_limit_headers(
-        self, response: Response, rate_limit_info: Dict[str, Any]
+        self, response: Response, rate_limit_info: dict[str, Any]
     ):
         """
         Add rate limit headers to response.
@@ -433,7 +435,7 @@ class EnhancedRateLimiter:
             )
             response.headers["X-RateLimit-Remaining"] = "0"
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get rate limiting statistics."""
         with self.stats_lock:
             return {
@@ -463,7 +465,7 @@ _enhanced_rate_limiter = EnhancedRateLimiter()
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Middleware for enhanced rate limiting."""
 
-    def __init__(self, app, skip_paths: Optional[List[str]] = None):
+    def __init__(self, app, skip_paths: list[str] | None = None):
         """
         Initialize rate limit middleware.
 
@@ -511,10 +513,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 # Export
 __all__ = [
     "EnhancedRateLimiter",
-    "SlidingWindowRateLimiter",
-    "Throttler",
     "RateLimitConfig",
     "RateLimitMiddleware",
     "RateLimitStats",
+    "SlidingWindowRateLimiter",
+    "Throttler",
 ]
 

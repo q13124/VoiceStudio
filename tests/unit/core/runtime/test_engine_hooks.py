@@ -5,7 +5,6 @@ Tests engine hook system functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestEngineHooksClasses:
     def test_engine_hook_manager_class_exists(self):
         """Test EngineHookManager class exists."""
         if hasattr(engine_hooks, "EngineHookManager"):
-            cls = getattr(engine_hooks, "EngineHookManager")
+            cls = engine_hooks.EngineHookManager
             assert isinstance(cls, type), "EngineHookManager should be a class"
 
 

@@ -16,14 +16,16 @@ Categories:
 - Batch (export, import): P50 < 5s, P95 < 15s
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import statistics
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -89,7 +91,7 @@ class APISLOConfig:
 SLO = APISLOConfig()
 
 # Endpoint SLO mapping
-ENDPOINT_SLOS: Dict[str, EndpointSLO] = {
+ENDPOINT_SLOS: dict[str, EndpointSLO] = {
     "/api/health": EndpointSLO("health", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"),
     "/api/status": EndpointSLO("status", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"),
     "/api/profiles": EndpointSLO("profiles_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
@@ -114,7 +116,7 @@ class LatencyMetrics:
     """Latency metrics for an endpoint."""
 
     endpoint: str
-    samples: List[float] = field(default_factory=list)
+    samples: list[float] = field(default_factory=list)
     p50: float = 0.0
     p95: float = 0.0
     p99: float = 0.0
@@ -122,7 +124,7 @@ class LatencyMetrics:
     max: float = 0.0
     avg: float = 0.0
     slo_met: bool = True
-    slo_violation: Optional[str] = None
+    slo_violation: str | None = None
 
     def calculate(self):
         """Calculate percentile metrics from samples."""
@@ -307,7 +309,7 @@ class TestAPIPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results)
+        status_codes, elapsed_times = zip(*valid_results, strict=False)
 
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
         assert success_rate >= 0.8, f"At least 80% should succeed, got {success_rate*100:.0f}%"
@@ -362,7 +364,7 @@ class TestAPIMiddlewarePerformance:
 
     def test_validation_middleware_performance(self, client):
         """Test validation middleware performance."""
-        response, elapsed_time = safe_request(
+        _response, elapsed_time = safe_request(
             client, "post", "/api/profiles", json={"name": "Test Profile", "language": "en"}
         )
 
@@ -518,10 +520,8 @@ class TestEnhancedRoutesPerformance:
         from backend.api.routes import voice
 
         audio_id = "test-audio-123"
-        try:
+        with contextlib.suppress(AttributeError):
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
-        except AttributeError:
-            ...
 
         mock_explainer = MagicMock()
         mock_explainer.get_available_methods.return_value = ["shap", "lime"]
@@ -596,7 +596,7 @@ class TestEnhancedRoutesPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results)
+        status_codes, elapsed_times = zip(*valid_results, strict=False)
 
         # All valid requests should succeed
         assert all(
@@ -617,7 +617,7 @@ class TestEnhancedRoutesPerformance:
 
 class TestCriticalEndpointSLOs:
     """Test critical endpoint latency meets SLO targets.
-    
+
     Critical endpoints must respond in under 50ms (P50) to ensure
     responsive health checks and monitoring integration.
     """
@@ -667,7 +667,7 @@ class TestCriticalEndpointSLOs:
 
 class TestStandardEndpointSLOs:
     """Test standard CRUD endpoint latency meets SLO targets.
-    
+
     Standard endpoints must respond in under 200ms (P50) for
     acceptable user experience.
     """
@@ -719,7 +719,7 @@ class TestStandardEndpointSLOs:
 
 class TestHeavyEndpointSLOs:
     """Test heavy processing endpoint latency meets SLO targets.
-    
+
     Heavy endpoints (analysis, processing) must respond in under 1s (P50).
     """
 
@@ -771,7 +771,7 @@ class TestHeavyEndpointSLOs:
 
 class TestAPILatencyRegression:
     """Test for API latency regression detection.
-    
+
     Compares current latency against baseline to detect performance
     regressions early in development.
     """
@@ -808,7 +808,7 @@ class TestAPILatencyRegression:
 
 class TestConcurrentLoadSLOs:
     """Test API performance under concurrent load.
-    
+
     Verifies that SLOs are maintained even under moderate concurrent load.
     """
 
@@ -842,7 +842,7 @@ class TestConcurrentLoadSLOs:
         if len(valid_results) < 20:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, times = zip(*valid_results)
+        status_codes, times = zip(*valid_results, strict=False)
 
         # Most should succeed
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
@@ -889,7 +889,7 @@ class TestConcurrentLoadSLOs:
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
         # Filter out failed requests and group by endpoint
-        endpoint_times: Dict[str, List[float]] = {}
+        endpoint_times: dict[str, list[float]] = {}
         for endpoint, status, elapsed in results:
             if endpoint is not None and status == 200:
                 if endpoint not in endpoint_times:
@@ -912,7 +912,7 @@ class TestConcurrentLoadSLOs:
 
 class TestAPIThroughput:
     """Test API throughput capabilities.
-    
+
     Measures requests per second (RPS) for key endpoints.
     """
 
@@ -943,10 +943,10 @@ class TestAPIThroughput:
                 errors += 1
 
         elapsed = time.perf_counter() - start
-        
+
         if count == 0:
             pytest.skip("No successful requests in throughput test")
-        
+
         rps = count / elapsed
 
         target = self.RPS_TARGETS["/api/health"]
@@ -981,7 +981,7 @@ class TestAPIThroughput:
         if len(valid_results) < 50:
             pytest.skip("Too many errors during burst test")
 
-        status_codes, times = zip(*valid_results)
+        status_codes, _times = zip(*valid_results, strict=False)
         success_rate = sum(1 for c in status_codes if c == 200) / len(valid_results)
 
         # At least 90% success rate under burst (lowered from 95% due to middleware)
@@ -997,7 +997,7 @@ class TestAPIThroughput:
 
 class TestAPIPerformanceReport:
     """Generate comprehensive API performance report.
-    
+
     This test class generates a summary report of all endpoint performance.
     """
 

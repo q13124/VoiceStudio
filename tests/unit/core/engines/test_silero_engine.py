@@ -5,9 +5,7 @@ Tests Silero engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestSileroEngineImports:
     def test_module_has_silero_engine_class(self):
         """Test module has SileroEngine class."""
         if hasattr(silero_engine, "SileroEngine"):
-            cls = getattr(silero_engine, "SileroEngine")
+            cls = silero_engine.SileroEngine
             assert isinstance(cls, type), "SileroEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestSileroEngineClass:
     def test_silero_engine_class_exists(self):
         """Test SileroEngine class exists."""
         if hasattr(silero_engine, "SileroEngine"):
-            cls = getattr(silero_engine, "SileroEngine")
+            cls = silero_engine.SileroEngine
             assert isinstance(cls, type), "SileroEngine should be a class"
 
     def test_silero_engine_initialization(self):
@@ -102,7 +100,7 @@ class TestSileroEngineCaching:
                 ), "Caching should be enabled by default"
                 # Test that enable_caching method exists
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
-                enable_caching_method = getattr(engine, "enable_caching")
+                enable_caching_method = engine.enable_caching
                 if callable(enable_caching_method):
                     enable_caching_method(False)
                     assert hasattr(

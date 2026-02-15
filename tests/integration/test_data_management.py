@@ -4,11 +4,10 @@ Test Data Management
 Provides test data fixtures and helpers for integration tests.
 """
 
-import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any
 
 import numpy as np
 import pytest
@@ -53,7 +52,7 @@ class TestDataManager:
         audio = audio * 0.5
         return audio.astype(np.float32)
 
-    def create_test_profile_data(self) -> Dict[str, Any]:
+    def create_test_profile_data(self) -> dict[str, Any]:
         """Create test profile data."""
         return {
             "name": "Test Profile",
@@ -62,14 +61,14 @@ class TestDataManager:
             "quality_mode": "standard",
         }
 
-    def create_test_project_data(self) -> Dict[str, Any]:
+    def create_test_project_data(self) -> dict[str, Any]:
         """Create test project data."""
         return {
             "name": "Test Project",
             "description": "Test project for integration testing",
         }
 
-    def create_test_synthesis_data(self, profile_id: str) -> Dict[str, Any]:
+    def create_test_synthesis_data(self, profile_id: str) -> dict[str, Any]:
         """Create test synthesis data."""
         return {
             "profile_id": profile_id,
@@ -78,7 +77,7 @@ class TestDataManager:
             "language": "en",
         }
 
-    def create_test_batch_data(self) -> Dict[str, Any]:
+    def create_test_batch_data(self) -> dict[str, Any]:
         """Create test batch job data."""
         return {
             "name": "Test Batch Job",
@@ -121,7 +120,7 @@ class TestDataManager:
             logger.warning("soundfile not available, cannot save audio")
             return Path()
 
-    def load_test_audio(self, filename: str) -> Optional[tuple]:
+    def load_test_audio(self, filename: str) -> tuple | None:
         """
         Load test audio from file.
 

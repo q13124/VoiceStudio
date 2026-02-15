@@ -12,12 +12,12 @@ Compatible with:
 - voxcpm package or direct model loading
 """
 
+from __future__ import annotations
+
 import logging
-import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import soundfile as sf
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -62,7 +62,7 @@ def _get_cached_voxcpm_model(model_name: str, device: str):
     return None
 
 
-def _cache_voxcpm_model(model_name: str, device: str, models: Dict):
+def _cache_voxcpm_model(model_name: str, device: str, models: dict):
     """Cache VoxCPM model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -112,7 +112,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -147,7 +147,7 @@ class VoxCPMEngine(EngineProtocol):
     def __init__(
         self,
         model_name: str = "voxcpm/base",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """
@@ -310,12 +310,12 @@ class VoxCPMEngine(EngineProtocol):
         self,
         text: str,
         language: str = "zh",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using VoxCPM.
 
@@ -335,9 +335,8 @@ class VoxCPMEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Get speed
@@ -469,10 +468,10 @@ class VoxCPMEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -504,11 +503,10 @@ class VoxCPMEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """Get available voices/speakers."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         # VoxCPM typically has multiple speakers per language
         voices = []
@@ -523,21 +521,21 @@ class VoxCPMEngine(EngineProtocol):
 
         return voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
         return self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
-        texts: List[str],
+        texts: list[str],
         language: str = "zh",
-        voice: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_dir: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
         **kwargs,
-    ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -555,9 +553,8 @@ class VoxCPMEngine(EngineProtocol):
             List of audio arrays or tuples of (audio, quality_metrics)
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(texts)
+        if not self._initialized and not self._load_model():
+            return [None] * len(texts)
 
         results = []
 
@@ -623,7 +620,7 @@ class VoxCPMEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -650,7 +647,7 @@ class VoxCPMEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during VoxCPM cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -664,7 +661,7 @@ class VoxCPMEngine(EngineProtocol):
 
 
 def create_voxcpm_engine(
-    model_name: str = "voxcpm/base", device: Optional[str] = None, gpu: bool = True
+    model_name: str = "voxcpm/base", device: str | None = None, gpu: bool = True
 ) -> VoxCPMEngine:
     """Factory function to create a VoxCPM engine instance."""
     return VoxCPMEngine(model_name=model_name, device=device, gpu=gpu)

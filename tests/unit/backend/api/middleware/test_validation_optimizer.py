@@ -5,7 +5,7 @@ Tests validation optimizer middleware functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, Request, Response
@@ -42,7 +42,7 @@ class TestValidationOptimizerMiddlewareImports:
         assert hasattr(
             validation_optimizer, "ValidationOptimizerMiddleware"
         ), "ValidationOptimizerMiddleware class should exist"
-        cls = getattr(validation_optimizer, "ValidationOptimizerMiddleware")
+        cls = validation_optimizer.ValidationOptimizerMiddleware
         assert isinstance(cls, type), "ValidationOptimizerMiddleware should be a class"
         assert issubclass(
             cls, BaseHTTPMiddleware

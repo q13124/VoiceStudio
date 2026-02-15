@@ -9,22 +9,23 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Rate limiting implementation differs from test expectations",
     allow_module_level=True,
 )
 
 
-import pytest
 import time
 from unittest.mock import Mock
 
+import pytest
+
 from backend.api.rate_limiting_enhanced import (
     EnhancedRateLimiter,
+    RateLimitConfig,
     SlidingWindowRateLimiter,
     Throttler,
-    RateLimitConfig,
-    RateLimitMiddleware,
 )
 
 
@@ -54,7 +55,7 @@ class TestSlidingWindowRateLimiter:
         limiter = SlidingWindowRateLimiter(config)
 
         # Make requests up to limit
-        for i in range(2):
+        for _i in range(2):
             is_allowed, info = limiter.check_rate_limit("test_key")
             assert is_allowed is True
 

@@ -8,15 +8,17 @@ Enhanced batch processing with:
 - Error handling
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
-from .quality_metrics import calculate_all_metrics, load_audio
+from .quality_metrics import calculate_all_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,8 @@ try:
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
-    tqdm = lambda x, **kwargs: x  # No-op if tqdm not available
+    def tqdm(x, **kwargs):
+        return x  # No-op if tqdm not available
     logger.debug("tqdm not available. Progress bars will be disabled.")
 
 
@@ -110,11 +113,11 @@ class BatchProgressTracker:
 
 
 def _process_single_audio(
-    audio_path: Union[str, Path],
-    reference_path: Optional[Union[str, Path]] = None,
+    audio_path: str | Path,
+    reference_path: str | Path | None = None,
     sample_rate: int = 22050,
     use_cache: bool = True,
-) -> Tuple[str, Optional[Dict[str, Any]], Optional[str]]:
+) -> tuple[str, dict[str, Any] | None, str | None]:
     """
     Process a single audio file for quality metrics.
 
@@ -136,21 +139,21 @@ def _process_single_audio(
         )
         return (str(audio_path), metrics, None)
     except Exception as e:
-        error_msg = f"Error processing {audio_path}: {str(e)}"
+        error_msg = f"Error processing {audio_path}: {e!s}"
         logger.warning(error_msg)
         return (str(audio_path), None, error_msg)
 
 
 def calculate_quality_metrics_batch(
-    audio_files: List[Union[str, Path]],
-    reference_files: Optional[List[Union[str, Path]]] = None,
+    audio_files: list[str | Path],
+    reference_files: list[str | Path] | None = None,
     sample_rate: int = 22050,
     use_cache: bool = True,
     parallel: bool = True,
-    max_workers: Optional[int] = None,
+    max_workers: int | None = None,
     use_processes: bool = False,
     show_progress: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate quality metrics for a batch of audio files with parallel processing.
 
@@ -229,7 +232,7 @@ def calculate_quality_metrics_batch(
                         results[path] = metrics
                         progress.update(1, failed=False)
                 except Exception as e:
-                    error_msg = f"Unexpected error: {str(e)}"
+                    error_msg = f"Unexpected error: {e!s}"
                     errors[str(audio_path)] = error_msg
                     progress.update(1, failed=True)
                     logger.error(f"Error processing {audio_path}: {e}")
@@ -297,13 +300,13 @@ def calculate_quality_metrics_batch(
 
 
 def calculate_quality_metrics_batch_optimized(
-    audio_files: List[Union[str, Path]],
-    reference_files: Optional[List[Union[str, Path]]] = None,
+    audio_files: list[str | Path],
+    reference_files: list[str | Path] | None = None,
     sample_rate: int = 22050,
     use_cache: bool = True,
     batch_size: int = 10,
     show_progress: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate quality metrics for a batch using optimized batch processing.
 
@@ -383,7 +386,7 @@ def calculate_quality_metrics_batch_optimized(
 
 # Export
 __all__ = [
+    "BatchProgressTracker",
     "calculate_quality_metrics_batch",
     "calculate_quality_metrics_batch_optimized",
-    "BatchProgressTracker",
 ]

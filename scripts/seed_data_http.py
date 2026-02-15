@@ -13,7 +13,6 @@ Requirements:
 import argparse
 import asyncio
 import sys
-from typing import Dict, Optional
 
 try:
     import httpx
@@ -30,7 +29,7 @@ async def check_health(client: httpx.AsyncClient) -> bool:
         return False
 
 
-def _profile_payload(name: str, language: str, emotion: Optional[str] = None) -> Dict:
+def _profile_payload(name: str, language: str, emotion: str | None = None) -> dict:
     return {
         "name": name,
         "language": language,
@@ -39,7 +38,7 @@ def _profile_payload(name: str, language: str, emotion: Optional[str] = None) ->
     }
 
 
-def _project_payload(name: str, profile_id: Optional[str]) -> Dict:
+def _project_payload(name: str, profile_id: str | None) -> dict:
     payload = {
         "name": name,
         "description": f"Demo project: {name}",
@@ -50,7 +49,7 @@ def _project_payload(name: str, profile_id: Optional[str]) -> Dict:
     return payload
 
 
-async def create_profile(client: httpx.AsyncClient, payload: Dict) -> Optional[Dict]:
+async def create_profile(client: httpx.AsyncClient, payload: dict) -> dict | None:
     try:
         resp = await client.post("/api/profiles", json=payload)
         if resp.status_code == 200:
@@ -67,7 +66,7 @@ async def create_profile(client: httpx.AsyncClient, payload: Dict) -> Optional[D
     return None
 
 
-async def create_project(client: httpx.AsyncClient, payload: Dict) -> Optional[Dict]:
+async def create_project(client: httpx.AsyncClient, payload: dict) -> dict | None:
     try:
         resp = await client.post("/api/projects", json=payload)
         if resp.status_code == 200:

@@ -3,8 +3,9 @@ High-Quality Resampling Integration
 Integrates soxr library for high-quality audio resampling.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Optional
 
 import numpy as np
 
@@ -35,7 +36,7 @@ class HighQualityResampler:
         orig_sr: int,
         target_sr: int,
         quality: str = "HQ",
-        num_channels: Optional[int] = None,
+        num_channels: int | None = None,
     ) -> np.ndarray:
         """
         Resample audio using soxr (high quality) or librosa fallback.
@@ -57,10 +58,7 @@ class HighQualityResampler:
             try:
                 # Determine number of channels
                 if num_channels is None:
-                    if len(audio.shape) == 1:
-                        num_channels = 1
-                    else:
-                        num_channels = audio.shape[1]
+                    num_channels = 1 if len(audio.shape) == 1 else audio.shape[1]
 
                 # Resample using soxr
                 resampled = soxr.resample(

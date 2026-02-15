@@ -6,11 +6,14 @@ Contains commands, queries, and handlers.
 """
 
 from backend.application.commands.base import Command, CommandHandler
-from backend.application.queries.base import Query, QueryHandler
 from backend.application.handlers.dispatcher import CommandDispatcher, QueryDispatcher
+from backend.application.queries.base import Query, QueryHandler
 
 __all__ = [
-    "Command", "CommandHandler",
-    "Query", "QueryHandler",
-    "CommandDispatcher", "QueryDispatcher",
+    "Command",
+    "CommandDispatcher",
+    "CommandHandler",
+    "Query",
+    "QueryDispatcher",
+    "QueryHandler",
 ]

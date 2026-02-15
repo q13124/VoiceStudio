@@ -11,6 +11,8 @@ Compatible with:
 - Command-line interface for synthesis
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -21,7 +23,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import soundfile as sf
@@ -36,11 +37,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from app.core.audio.audio_utils import enhance_voice_quality, normalize_lufs, remove_artifacts
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -90,9 +87,9 @@ class FestivalFliteEngine(EngineProtocol):
     def __init__(
         self,
         use_flite: bool = True,
-        flite_path: Optional[str] = None,
-        festival_path: Optional[str] = None,
-        device: Optional[str] = None,
+        flite_path: str | None = None,
+        festival_path: str | None = None,
+        device: str | None = None,
         gpu: bool = False,
     ):
         # Use Flite (faster) or Festival (more features)
@@ -125,8 +122,8 @@ class FestivalFliteEngine(EngineProtocol):
         }
 
     def _find_executable(
-        self, name: str, custom_path: Optional[str] = None
-    ) -> Optional[str]:
+        self, name: str, custom_path: str | None = None
+    ) -> str | None:
         """Find executable in PATH or custom path."""
         if (
             custom_path
@@ -253,7 +250,7 @@ class FestivalFliteEngine(EngineProtocol):
 
             # Create reusable temp directory (using temp file manager if available)
             try:
-                from ..utils.temp_file_manager import get_temp_file_manager
+                from app.core.utils.temp_file_manager import get_temp_file_manager
 
                 temp_manager = get_temp_file_manager()
                 self._temp_dir = temp_manager.create_temp_directory(
@@ -280,12 +277,12 @@ class FestivalFliteEngine(EngineProtocol):
         self,
         text: str,
         language: str = "en",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Festival/Flite.
 
@@ -302,9 +299,8 @@ class FestivalFliteEngine(EngineProtocol):
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Check synthesis cache (LRU) - optimized
@@ -473,8 +469,8 @@ class FestivalFliteEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
-    ) -> Dict:
+        reference_audio: str | Path | None = None,
+    ) -> dict:
         """Calculate quality metrics for audio."""
         quality_metrics = {}
 
@@ -500,10 +496,10 @@ class FestivalFliteEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -524,18 +520,16 @@ class FestivalFliteEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """Get available voices."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
         return self.voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
         return (
             self.available_languages
             if self.available_languages
@@ -544,13 +538,13 @@ class FestivalFliteEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        text_list: List[str],
+        text_list: list[str],
         language: str = "en",
-        voice: Optional[str] = None,
-        output_paths: Optional[List[Union[str, Path]]] = None,
-        batch_size: Optional[int] = None,
+        voice: str | None = None,
+        output_paths: list[str | Path] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized parallel processing.
 
@@ -565,9 +559,8 @@ class FestivalFliteEngine(EngineProtocol):
         Returns:
             List of audio arrays or tuples of (audio, quality_metrics)
         """
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(text_list)
+        if not self._initialized and not self.initialize():
+            return [None] * len(text_list)
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -636,7 +629,7 @@ class FestivalFliteEngine(EngineProtocol):
 
             with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                 batch_results = list(
-                    executor.map(synthesize_single, zip(batch_texts, batch_outputs))
+                    executor.map(synthesize_single, zip(batch_texts, batch_outputs, strict=False))
                 )
             results.extend(batch_results)
 
@@ -648,7 +641,7 @@ class FestivalFliteEngine(EngineProtocol):
             # Cleanup temp directory (using temp file manager if available)
             if self._temp_dir:
                 try:
-                    from ..utils.temp_file_manager import get_temp_file_manager
+                    from app.core.utils.temp_file_manager import get_temp_file_manager
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
@@ -679,7 +672,7 @@ class FestivalFliteEngine(EngineProtocol):
         self._synthesis_cache.clear()
         logger.info("Synthesis cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str]]:
+    def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (
@@ -696,7 +689,7 @@ class FestivalFliteEngine(EngineProtocol):
             "cache_hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -713,9 +706,9 @@ class FestivalFliteEngine(EngineProtocol):
 
 def create_festival_flite_engine(
     use_flite: bool = True,
-    flite_path: Optional[str] = None,
-    festival_path: Optional[str] = None,
-    device: Optional[str] = None,
+    flite_path: str | None = None,
+    festival_path: str | None = None,
+    device: str | None = None,
     gpu: bool = False,
 ) -> FestivalFliteEngine:
     """Factory function to create a Festival/Flite engine instance."""

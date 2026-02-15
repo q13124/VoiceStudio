@@ -7,8 +7,9 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -50,9 +51,9 @@ class NeuralAudioProcessor:
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
     ):
         """
         Initialize Neural Audio Processor.
@@ -66,7 +67,7 @@ class NeuralAudioProcessor:
             "cuda" if (gpu and HAS_TORCH and torch.cuda.is_available()) else "cpu"
         )
         self.model_path = model_path
-        self.model: Optional[nn.Module] = None
+        self.model: nn.Module | None = None
 
         if HAS_TORCH:
             try:
@@ -92,7 +93,7 @@ class NeuralAudioProcessor:
         sample_rate: int = 24000,
         enhancement_type: str = "general",
         intensity: float = 0.5,
-    ) -> Tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, int]:
         """
         Enhance audio using neural processing.
 
@@ -144,8 +145,8 @@ class NeuralAudioProcessor:
         self,
         audio: np.ndarray,
         sample_rate: int = 24000,
-        noise_type: Optional[str] = None,
-    ) -> Tuple[np.ndarray, int]:
+        noise_type: str | None = None,
+    ) -> tuple[np.ndarray, int]:
         """
         Denoise audio using neural processing.
 
@@ -198,7 +199,7 @@ class NeuralAudioProcessor:
         source_rate: int,
         target_rate: int,
         method: str = "neural",
-    ) -> Tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, int]:
         """
         Upsample audio using neural processing.
 
@@ -269,7 +270,7 @@ class NeuralAudioProcessor:
         style_reference: np.ndarray,
         sample_rate: int = 24000,
         intensity: float = 0.5,
-    ) -> Tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, int]:
         """
         Transfer style from reference audio using neural processing.
 
@@ -413,9 +414,9 @@ class NeuralAudioProcessor:
 
 
 def create_neural_audio_processor(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    model_path: Optional[str] = None,
+    model_path: str | None = None,
 ) -> NeuralAudioProcessor:
     """
     Factory function to create a Neural Audio Processor instance.

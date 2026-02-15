@@ -4,13 +4,14 @@ Image Generation Routes
 High-quality image generation endpoints with support for multiple engines.
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 import os
 import tempfile
 import uuid
 from io import BytesIO
-from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from PIL import Image
@@ -19,6 +20,12 @@ from backend.core.security.file_validation import (
     FileValidationError,
     validate_image_file,
 )
+from backend.services.circuit_breaker import (
+    CircuitBreakerOpenError,
+    get_engine_breaker,
+)
+from backend.services.engine_service import get_engine_service
+
 from ..models_additional import (
     FaceEnhancementRequest,
     FaceEnhancementResponse,
@@ -28,11 +35,6 @@ from ..models_additional import (
     ImageUpscaleRequest,
     ImageUpscaleResponse,
 )
-from backend.services.circuit_breaker import (
-    CircuitBreakerOpenError,
-    get_engine_breaker,
-)
-from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +64,7 @@ def _analyze_image_artifacts(img_array: "np.ndarray") -> float:
         for x in range(0, w - block_size, block_size):
             block = img_array[y : y + block_size, x : x + block_size]
             # Convert to grayscale for variance calculation
-            if len(block.shape) == 3:
-                block_gray = np.mean(block, axis=2)
-            else:
-                block_gray = block
+            block_gray = np.mean(block, axis=2) if len(block.shape) == 3 else block
             variance = np.var(block_gray)
             variance_scores.append(variance)
 
@@ -337,7 +336,7 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
 
             except Exception as e:
                 logger.error(f"Image generation error: {e}", exc_info=True)
-                raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Image generation failed: {e!s}")
         else:
             # Engines not available - return proper error
             raise HTTPException(
@@ -353,12 +352,12 @@ async def generate_image(req: ImageGenerateRequest) -> ImageGenerateResponse:
         raise
     except Exception as e:
         logger.error(f"Unexpected error in generate_image: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
 
 @router.post("/upscale", response_model=ImageUpscaleResponse)
 async def upscale_image(
-    req: ImageUpscaleRequest, image_file: Optional[UploadFile] = File(None)
+    req: ImageUpscaleRequest, image_file: UploadFile | None = File(None)
 ) -> ImageUpscaleResponse:
     """
     Upscale image using Real-ESRGAN or other upscaling engines.
@@ -451,7 +450,7 @@ async def upscale_image(
         raise
     except Exception as e:
         logger.error(f"Upscaling error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Image upscaling failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image upscaling failed: {e!s}")
 
 
 @router.post("/enhance-face", response_model=FaceEnhancementResponse)
@@ -579,22 +578,49 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
                 quality_improvement=quality_improvement,
             )
 
-        # For videos, similar process but frame-by-frame
+        # For videos, delegate to video_face_enhancer service
         elif req.video_id:
-            # Video face enhancement would process frames
-            # Return error indicating video processing not yet implemented
-            raise HTTPException(
-                status_code=501,
-                detail="Video face enhancement is not yet implemented. "
-                "This feature requires frame-by-frame processing and temporal consistency. "
-                "Please use image face enhancement instead.",
-            )
+            try:
+                from backend.services.video_face_enhancer import enhance_video_faces
+
+                enhanced_video_id = f"enhanced_{req.video_id}"
+                result = await enhance_video_faces(
+                    video_id=req.video_id,
+                    model=req.model or "realesrgan",
+                    strength=req.strength or 0.8,
+                )
+                return FaceEnhancementResponse(
+                    image_id=None,
+                    video_id=req.video_id,
+                    enhanced_image_id=None,
+                    enhanced_video_id=result.get("enhanced_video_id", enhanced_video_id),
+                    enhanced_image_url=None,
+                    enhanced_video_url=result.get("enhanced_video_url"),
+                    original_analysis=result.get("original_analysis", {}),
+                    enhanced_analysis=result.get("enhanced_analysis", {}),
+                    quality_improvement=result.get("quality_improvement", {}),
+                )
+            except ImportError:
+                # Graceful fallback if service not available
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Video face enhancement requires additional dependencies. "
+                        "Install with: pip install opencv-python realesrgan. "
+                        "Alternatively, extract frames and use image face enhancement."
+                    ),
+                )
+            except Exception as ve:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Video face enhancement failed: {ve!s}",
+                ) from ve
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Face enhancement error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Face enhancement failed: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Face enhancement failed: {e!s}") from e
 
 
 @router.get("/{image_id}")

@@ -7,11 +7,11 @@ to ensure design token compliance.
 
 Usage:
     python scripts/check_hardcoded_colors.py [--verbose] [--strict]
-    
+
 Options:
     --verbose, -v    Show all violations (not just summary)
     --strict         Fail on any violation (default: warn only)
-    
+
 Exit codes:
     0 - No violations found (or warnings only in non-strict mode)
     1 - Violations found (in strict mode)
@@ -20,7 +20,6 @@ Exit codes:
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # Patterns that indicate hardcoded colors
 HARDCODED_PATTERNS = [
@@ -58,59 +57,59 @@ def should_skip_file(path: Path) -> bool:
     return any(skip_dir in path_str for skip_dir in SKIP_DIRS)
 
 
-def check_file(path: Path) -> List[Tuple[int, str, str]]:
+def check_file(path: Path) -> list[tuple[int, str, str]]:
     """Check a single XAML file for hardcoded colors. Returns list of (line_num, line, pattern_name)."""
     violations = []
-    
+
     try:
         content = path.read_text(encoding="utf-8")
-    except (IOError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError):
         return violations
-    
+
     lines = content.split('\n')
-    
+
     for line_num, line in enumerate(lines, 1):
         # Skip if line contains exclude patterns
         if any(re.search(pattern, line) for pattern in EXCLUDE_PATTERNS):
             continue
-        
+
         for pattern, name in HARDCODED_PATTERNS:
             if re.search(pattern, line):
                 violations.append((line_num, line.strip(), name))
                 break  # Only report first match per line
-    
+
     return violations
 
 
 def main():
     verbose = "--verbose" in sys.argv or "-v" in sys.argv
     strict = "--strict" in sys.argv
-    
+
     # Find src directory
     script_dir = Path(__file__).parent
     src_dir = script_dir.parent / "src"
-    
+
     if not src_dir.exists():
         print(f"ERROR: Source directory not found: {src_dir}")
         return 1
-    
+
     all_violations = []
     files_checked = 0
     files_with_violations = 0
-    
+
     # Scan all XAML files
     for xaml_path in src_dir.glob("**/*.xaml"):
         if should_skip_file(xaml_path):
             continue
-        
+
         files_checked += 1
         violations = check_file(xaml_path)
-        
+
         if violations:
             files_with_violations += 1
             for line_num, line, pattern_name in violations:
                 all_violations.append((xaml_path, line_num, line, pattern_name))
-    
+
     # Print results
     print("\n" + "=" * 60)
     print("Hardcoded Color Detection Results")
@@ -119,7 +118,7 @@ def main():
     print(f"Files with violations: {files_with_violations}")
     print(f"Total violations: {len(all_violations)}")
     print("=" * 60)
-    
+
     if all_violations:
         if verbose:
             print("\nViolations found:")
@@ -136,15 +135,15 @@ def main():
             file_counts = {}
             for path, _, _, _ in all_violations:
                 file_counts[path] = file_counts.get(path, 0) + 1
-            
+
             for path, count in sorted(file_counts.items(), key=lambda x: -x[1])[:10]:
                 rel_path = path.relative_to(src_dir)
                 print(f"  {count} violations: {rel_path}")
-            
+
             print("\nRun with --verbose to see all violations.")
-        
+
         print("\nRecommendation: Replace hardcoded colors with VSQ.* design tokens.")
-        
+
         if strict:
             print("\nFAIL: Hardcoded colors detected (strict mode).")
             return 1

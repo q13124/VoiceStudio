@@ -5,9 +5,12 @@ Manages tool/function definitions that the LLM can invoke during
 conversations. Bridges LLM function calls to VoiceStudio backend services.
 """
 
+from __future__ import annotations
+
 import json
 import logging
-from typing import Any, Callable, Coroutine, Dict, List, Optional
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +27,14 @@ class FunctionRegistry:
     """
 
     def __init__(self):
-        self._functions: Dict[str, FunctionSpec] = {}
-        self._handlers: Dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {}
+        self._functions: dict[str, FunctionSpec] = {}
+        self._handlers: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {}
 
     def register(
         self,
         name: str,
         description: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         handler: Callable[..., Coroutine[Any, Any, Any]],
     ) -> None:
         """Register a function that the LLM can call."""
@@ -49,15 +52,15 @@ class FunctionRegistry:
         self._functions.pop(name, None)
         self._handlers.pop(name, None)
 
-    def get_specs(self) -> List[FunctionSpec]:
+    def get_specs(self) -> list[FunctionSpec]:
         """Get all function specifications for the LLM."""
         return list(self._functions.values())
 
-    def get_spec(self, name: str) -> Optional[FunctionSpec]:
+    def get_spec(self, name: str) -> FunctionSpec | None:
         """Get a specific function specification."""
         return self._functions.get(name)
 
-    async def execute(self, name: str, arguments: Dict[str, Any]) -> Any:
+    async def execute(self, name: str, arguments: dict[str, Any]) -> Any:
         """
         Execute a registered function.
 
@@ -86,8 +89,8 @@ class FunctionRegistry:
             raise
 
     async def process_tool_calls(
-        self, tool_calls: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, tool_calls: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Process tool calls from the LLM response.
 
@@ -125,7 +128,7 @@ class FunctionRegistry:
 
 
 # Singleton instance
-_registry: Optional[FunctionRegistry] = None
+_registry: FunctionRegistry | None = None
 
 
 def get_function_registry() -> FunctionRegistry:
@@ -140,7 +143,7 @@ def get_function_registry() -> FunctionRegistry:
 def _register_default_functions(registry: FunctionRegistry) -> None:
     """Register default VoiceStudio functions for the LLM."""
 
-    async def synthesize_voice(text: str, voice_id: str = "default", language: str = "en") -> Dict[str, Any]:
+    async def synthesize_voice(text: str, voice_id: str = "default", language: str = "en") -> dict[str, Any]:
         """Synthesize speech from text."""
         try:
             from backend.services.engine_service import get_engine_service
@@ -150,7 +153,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         except Exception as exc:
             return {"status": "error", "message": str(exc)}
 
-    async def list_voices() -> Dict[str, Any]:
+    async def list_voices() -> dict[str, Any]:
         """List available voice profiles."""
         try:
             from backend.services.engine_service import get_engine_service
@@ -160,7 +163,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         except Exception as exc:
             return {"status": "error", "message": str(exc)}
 
-    async def list_engines() -> Dict[str, Any]:
+    async def list_engines() -> dict[str, Any]:
         """List available audio engines."""
         try:
             from backend.services.engine_service import get_engine_service
@@ -170,7 +173,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         except Exception as exc:
             return {"status": "error", "message": str(exc)}
 
-    async def get_project_status(project_id: str = "current") -> Dict[str, Any]:
+    async def get_project_status(project_id: str = "current") -> dict[str, Any]:
         """Get the status of a project."""
         try:
             from backend.services.ProjectStoreService import get_project_store_service

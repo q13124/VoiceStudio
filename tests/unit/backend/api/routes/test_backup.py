@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock non-existent module attributes - needs test refactoring",
     allow_module_level=True,
@@ -157,26 +158,24 @@ class TestBackupEndpoints:
             "includes_models": False,
         }
 
-        with patch("pathlib.Path.exists", return_value=False):
-            with patch("pathlib.Path.mkdir"):
-                with patch("shutil.copytree"):
-                    with patch("shutil.copy2"):
-                        with patch("zipfile.ZipFile") as mock_zip:
-                            mock_zip.return_value.__enter__.return_value = MagicMock()
-                            with patch("pathlib.Path.stat") as mock_stat:
-                                mock_stat.return_value = MagicMock(st_size=1024)
-                                with patch("pathlib.Path.unlink"):
-                                    with patch(
-                                        "backend.api.routes.backup._check_disk_space",
-                                        return_value=True,
-                                    ):
-                                        response = client.post(
-                                            "/api/backup",
-                                            json=request_data,
-                                        )
-                                        assert response.status_code == 200
-                                        data = response.json()
-                                        assert data["name"] == "Test Backup"
+        with patch("pathlib.Path.exists", return_value=False), patch("pathlib.Path.mkdir"):
+            with patch("shutil.copytree"):
+                with patch("shutil.copy2"):
+                    with patch("zipfile.ZipFile") as mock_zip:
+                        mock_zip.return_value.__enter__.return_value = MagicMock()
+                        with patch("pathlib.Path.stat") as mock_stat:
+                            mock_stat.return_value = MagicMock(st_size=1024)
+                            with patch("pathlib.Path.unlink"), patch(
+                                "backend.api.routes.backup._check_disk_space",
+                                return_value=True,
+                            ):
+                                response = client.post(
+                                    "/api/backup",
+                                    json=request_data,
+                                )
+                                assert response.status_code == 200
+                                data = response.json()
+                                assert data["name"] == "Test Backup"
 
     def test_create_backup_missing_name(self):
         """Test backup creation with missing name."""
@@ -274,13 +273,12 @@ class TestBackupEndpoints:
                 mock_zip.return_value.__enter__.return_value = MagicMock(
                     testzip=lambda: None, extractall=lambda x: None
                 )
-                with patch("pathlib.Path.mkdir"):
-                    with patch("shutil.copytree"):
-                        response = client.post(
-                            f"/api/backup/{backup_id}/restore",
-                            json=request_data,
-                        )
-                        assert response.status_code == 200
+                with patch("pathlib.Path.mkdir"), patch("shutil.copytree"):
+                    response = client.post(
+                        f"/api/backup/{backup_id}/restore",
+                        json=request_data,
+                    )
+                    assert response.status_code == 200
 
     def test_restore_backup_not_found(self):
         """Test restoring non-existent backup."""
@@ -314,10 +312,9 @@ class TestBackupEndpoints:
             "created": now,
         }
 
-        with patch("pathlib.Path.exists", return_value=True):
-            with patch("pathlib.Path.unlink"):
-                response = client.delete(f"/api/backup/{backup_id}")
-                assert response.status_code == 200
+        with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.unlink"):
+            response = client.delete(f"/api/backup/{backup_id}")
+            assert response.status_code == 200
 
     def test_delete_backup_not_found(self):
         """Test deleting non-existent backup."""

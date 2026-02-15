@@ -14,7 +14,7 @@ Tests cover:
 import sys
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -156,7 +156,7 @@ class TestEngineRouterIdleTimeout:
     def test_idle_engine_cleanup(self, engine_router, mock_engine_class):
         """Test that idle engines are automatically cleaned up."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         assert "test_engine" in engine_router._engines
 
@@ -165,7 +165,7 @@ class TestEngineRouterIdleTimeout:
 
         # Get another engine to trigger cleanup
         engine_router.register_engine("test_engine2", mock_engine_class)
-        engine2 = engine_router.get_engine("test_engine2", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine2", device="cpu", gpu=False)
 
         # First engine should be cleaned up
         assert "test_engine" not in engine_router._engines
@@ -174,7 +174,7 @@ class TestEngineRouterIdleTimeout:
     def test_cleanup_idle_engines_method(self, engine_router, mock_engine_class):
         """Test manual cleanup of idle engines."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         assert "test_engine" in engine_router._engines
 
@@ -221,10 +221,10 @@ class TestEngineRouterMemoryMonitoring:
 
         # Register and get engines
         engine_router.register_engine("engine1", mock_engine_class)
-        engine1 = engine_router.get_engine("engine1", device="cpu", gpu=False)
+        engine_router.get_engine("engine1", device="cpu", gpu=False)
 
         engine_router.register_engine("engine2", mock_engine_class)
-        engine2 = engine_router.get_engine("engine2", device="cpu", gpu=False)
+        engine_router.get_engine("engine2", device="cpu", gpu=False)
 
         # Set memory usage for engines
         engine_router._engine_memory_usage["engine1"] = 60.0  # MB
@@ -246,7 +246,7 @@ class TestEngineRouterStatistics:
     def test_get_engine_stats(self, engine_router, mock_engine_class):
         """Test getting engine statistics."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         stats = engine_router.get_engine_stats()
 
@@ -262,7 +262,7 @@ class TestEngineRouterStatistics:
     def test_engine_stats_include_idle_info(self, engine_router, mock_engine_class):
         """Test that engine stats include idle information."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         stats = engine_router.get_engine_stats()
         engine_stats = stats["engines"]["test_engine"]
@@ -279,7 +279,7 @@ class TestEngineRouterUnload:
     def test_unload_engine(self, engine_router, mock_engine_class):
         """Test manually unloading an engine."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         assert "test_engine" in engine_router._engines
 
@@ -309,7 +309,7 @@ class TestEngineRouterOptimization:
     def test_last_access_tracking_optimization(self, engine_router, mock_engine_class):
         """Test that last access tracking works."""
         engine_router.register_engine("test_engine", mock_engine_class)
-        engine = engine_router.get_engine("test_engine", device="cpu", gpu=False)
+        engine_router.get_engine("test_engine", device="cpu", gpu=False)
 
         assert "test_engine" in engine_router._engine_last_access
         last_access1 = engine_router._engine_last_access["test_engine"]

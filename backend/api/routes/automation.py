@@ -5,9 +5,10 @@ Endpoints for managing automation curves for track parameters.
 Supports CRUD operations, point editing, and curve interpolation.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/automation", tags=["automation"])
 
 # In-memory automation curves storage (replace with database in production)
-_automation_curves: Dict[str, Dict] = {}
+_automation_curves: dict[str, dict] = {}
 
 
 class AutomationPoint(BaseModel):
@@ -27,10 +28,10 @@ class AutomationPoint(BaseModel):
 
     time: float  # Time in seconds
     value: float  # Parameter value
-    bezier_handle_in_x: Optional[float] = None
-    bezier_handle_in_y: Optional[float] = None
-    bezier_handle_out_x: Optional[float] = None
-    bezier_handle_out_y: Optional[float] = None
+    bezier_handle_in_x: float | None = None
+    bezier_handle_in_y: float | None = None
+    bezier_handle_out_x: float | None = None
+    bezier_handle_out_y: float | None = None
 
 
 class AutomationCurve(BaseModel):
@@ -40,7 +41,7 @@ class AutomationCurve(BaseModel):
     name: str
     parameter_id: str  # e.g., "volume", "pitch", "speed"
     track_id: str
-    points: List[AutomationPoint] = []
+    points: list[AutomationPoint] = []
     interpolation: str = "linear"  # "linear", "bezier", "step"
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
@@ -58,16 +59,16 @@ class AutomationCurveCreateRequest(BaseModel):
 class AutomationCurveUpdateRequest(BaseModel):
     """Request to update an automation curve."""
 
-    name: Optional[str] = None
-    points: Optional[List[AutomationPoint]] = None
-    interpolation: Optional[str] = None
+    name: str | None = None
+    points: list[AutomationPoint] | None = None
+    interpolation: str | None = None
 
 
-@router.get("", response_model=List[AutomationCurve])
+@router.get("", response_model=list[AutomationCurve])
 @cache_response(ttl=30)  # Cache for 30 seconds (automation curves may change)
 async def get_automation_curves(
-    track_id: Optional[str] = Query(None),
-    parameter_id: Optional[str] = Query(None),
+    track_id: str | None = Query(None),
+    parameter_id: str | None = Query(None),
 ):
     """Get all automation curves, optionally filtered."""
     curves = list(_automation_curves.values())

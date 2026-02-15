@@ -109,13 +109,13 @@ namespace VoiceStudio.App.Services
                         cancellationToken: cancellationToken) ?? new List<PluginInfo>();
                 }
             }
-            // ALLOWED: empty catch - graceful degradation to sample data
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                // Fallback to sample data
+                System.Diagnostics.Debug.WriteLine($"Plugin API unavailable: {ex.Message}");
             }
 
-            return GetSampleFeaturedPlugins();
+            // No sample data — return empty list; UI shows "No plugins available"
+            return new List<PluginInfo>();
         }
 
         public async Task<IReadOnlyList<PluginInfo>> GetRecentPluginsAsync(
@@ -148,13 +148,13 @@ namespace VoiceStudio.App.Services
                         cancellationToken: cancellationToken);
                 }
             }
-            // ALLOWED: empty catch - graceful degradation to sample plugin data
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                // Fallback to sample data
+                System.Diagnostics.Debug.WriteLine($"Plugin API unavailable: {ex.Message}");
             }
 
-            return GetSamplePluginById(pluginId);
+            // No sample data — return null; UI shows "Plugin not found"
+            return null;
         }
 
         public async Task<IReadOnlyList<PluginVersion>> GetPluginVersionsAsync(
@@ -489,18 +489,6 @@ namespace VoiceStudio.App.Services
             // Do NOT return fake sample data - return empty list
             // The UI layer should handle this gracefully with appropriate messaging
             return new List<PluginInfo>();
-        }
-
-        private static List<PluginInfo> GetSampleFeaturedPlugins()
-        {
-            // Return empty list - no fake featured plugins
-            return GetEmptyPluginList();
-        }
-
-        private static PluginInfo? GetSamplePluginById(string pluginId)
-        {
-            // Return null - plugin not found when backend unavailable
-            return null;
         }
 
         #endregion

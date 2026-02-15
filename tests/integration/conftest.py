@@ -11,6 +11,8 @@ Features:
 - API versioning support
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -19,7 +21,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -91,6 +93,31 @@ def pytest_configure(config):
         "markers",
         "smoke: mark test as smoke test"
     )
+    # Phase 4B: Additional markers for error scenario test organization
+    config.addinivalue_line(
+        "markers",
+        "errors: mark test as error handling test"
+    )
+    config.addinivalue_line(
+        "markers",
+        "negative: mark test as negative test case"
+    )
+    config.addinivalue_line(
+        "markers",
+        "validation: mark test as input validation test"
+    )
+    config.addinivalue_line(
+        "markers",
+        "resource: mark test as resource handling test"
+    )
+    config.addinivalue_line(
+        "markers",
+        "network: mark test as network/connection test"
+    )
+    config.addinivalue_line(
+        "markers",
+        "concurrency: mark test as concurrency test"
+    )
 
 
 # =============================================================================
@@ -104,7 +131,7 @@ class TestResponse:
 
     status_code: int
     body: Any
-    headers: Dict[str, str]
+    headers: dict[str, str]
     elapsed_ms: float
     request_method: str
     request_url: str
@@ -115,7 +142,7 @@ class TestResponse:
         return 200 <= self.status_code < 300
 
     @property
-    def api_version(self) -> Optional[str]:
+    def api_version(self) -> str | None:
         return self.headers.get("x-api-version")
 
 
@@ -123,7 +150,7 @@ class ResponseTracker:
     """Track responses during test execution."""
 
     def __init__(self):
-        self.responses: List[TestResponse] = []
+        self.responses: list[TestResponse] = []
 
     def track(self, response, method: str, url: str, elapsed_ms: float):
         """Track a response."""
@@ -148,15 +175,15 @@ class ResponseTracker:
         self.responses.clear()
 
     @property
-    def last(self) -> Optional[TestResponse]:
+    def last(self) -> TestResponse | None:
         """Get last tracked response."""
         return self.responses[-1] if self.responses else None
 
-    def get_failures(self) -> List[TestResponse]:
+    def get_failures(self) -> list[TestResponse]:
         """Get all failed responses."""
         return [r for r in self.responses if not r.is_success]
 
-    def get_slow_responses(self, threshold_ms: float = 1000) -> List[TestResponse]:
+    def get_slow_responses(self, threshold_ms: float = 1000) -> list[TestResponse]:
         """Get responses slower than threshold."""
         return [r for r in self.responses if r.elapsed_ms > threshold_ms]
 
@@ -362,7 +389,7 @@ def sample_synthesis_request(sample_profile_id, sample_text):
 # =============================================================================
 
 
-def validate_response_schema(response: TestResponse, required_fields: List[str]):
+def validate_response_schema(response: TestResponse, required_fields: list[str]):
     """Validate response body has required fields."""
     if not isinstance(response.body, dict):
         raise AssertionError(f"Expected dict response, got {type(response.body)}")
@@ -426,7 +453,7 @@ def retry_request(func, *args, retries: int = 3, delay: float = 1.0, **kwargs):
     raise last_error
 
 
-def is_backend_available(base_url: str = None) -> bool:
+def is_backend_available(base_url: str | None = None) -> bool:
     """Check if backend is available."""
     import requests
 

@@ -6,8 +6,7 @@ Tests training progress monitoring functionality comprehensively.
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -16,15 +15,12 @@ sys.path.insert(0, str(project_root))
 
 # Mock dependencies before importing
 import sys
-from unittest.mock import MagicMock
 
 # Create mock modules for dependencies that might not be available
 for module_name in ["torch", "torch.utils.tensorboard", "tensorboard", "wandb"]:
     if module_name not in sys.modules:
         mock_module = MagicMock()
-        if module_name == "torch.utils.tensorboard":
-            mock_module.SummaryWriter = MagicMock()
-        elif module_name == "tensorboard":
+        if module_name == "torch.utils.tensorboard" or module_name == "tensorboard":
             mock_module.SummaryWriter = MagicMock()
         elif module_name == "wandb":
             mock_module.init = MagicMock()

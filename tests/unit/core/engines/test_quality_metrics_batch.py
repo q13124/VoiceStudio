@@ -5,9 +5,7 @@ Tests batch quality metrics processing functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -61,7 +59,7 @@ class TestQualityMetricsBatchClasses:
     def test_batch_quality_processor_class_exists(self):
         """Test BatchQualityProcessor class exists."""
         if hasattr(quality_metrics_batch, "BatchQualityProcessor"):
-            cls = getattr(quality_metrics_batch, "BatchQualityProcessor")
+            cls = quality_metrics_batch.BatchQualityProcessor
             assert isinstance(
                 cls, type
             ), "BatchQualityProcessor should be a class"

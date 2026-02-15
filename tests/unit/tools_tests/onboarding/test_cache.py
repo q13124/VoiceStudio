@@ -1,14 +1,15 @@
 """Unit tests for OnboardingCache with TTL and invalidation."""
 
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 import pytest
 
 from tools.onboarding.core.cache import (
-    OnboardingCache,
-    CacheEntry,
-    compute_source_hash,
     DEFAULT_TTL_SECONDS,
+    CacheEntry,
+    OnboardingCache,
+    compute_source_hash,
 )
 
 

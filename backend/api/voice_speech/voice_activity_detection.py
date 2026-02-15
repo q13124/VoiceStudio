@@ -4,7 +4,6 @@ Integrates silero-vad for voice activity detection.
 """
 
 import logging
-from typing import List, Tuple
 
 import numpy as np
 
@@ -38,7 +37,7 @@ class VoiceActivityDetector:
 
         if self._model is None:
             try:
-                self._model, utils = load_model()
+                self._model, _utils = load_model()
                 logger.info("Silero VAD model loaded successfully")
             except Exception as e:
                 logger.error(f"Error loading Silero VAD model: {e}", exc_info=True)
@@ -49,7 +48,7 @@ class VoiceActivityDetector:
         audio: np.ndarray,
         sample_rate: int = 16000,
         threshold: float = 0.5,
-    ) -> List[Tuple[float, float]]:
+    ) -> list[tuple[float, float]]:
         """
         Detect voice activity in audio.
 

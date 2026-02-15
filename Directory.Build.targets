@@ -46,7 +46,6 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
     <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
     <XAMLFingerprint>false</XAMLFingerprint>
-    <!-- Keep XAML compiler off VC meta + Win32 codegen (stability) -->
     <EnableWin32Codegen>false</EnableWin32Codegen>
     <UseVCMetaManaged>false</UseVCMetaManaged>
     <MarkupCompilePass1DependsOn>ResolveReferences;$(MarkupCompilePass1DependsOn)</MarkupCompilePass1DependsOn>

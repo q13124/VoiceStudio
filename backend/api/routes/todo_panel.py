@@ -4,13 +4,14 @@ Todo Panel Routes
 Endpoints for todo/task management.
 """
 
+from __future__ import annotations
+
 import json
 import logging
-import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -170,13 +171,13 @@ def _init_todo_database_simple(conn):
 
 def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
     """Load a todo from database.
-    
+
     Args:
         todo_id: The todo ID to load
-        
+
     Returns:
         Todo object if found, None if not found
-        
+
     Raises:
         HTTPException: If database is unavailable (503) or query fails (500)
     """
@@ -212,13 +213,13 @@ def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
         logger.error(f"Failed to load todo from database: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Database query failed: {str(e)}"
+            detail=f"Database query failed: {e!s}"
         )
 
 
 def _save_todo_to_db(todo: "Todo"):
     """Save a todo to database.
-    
+
     Raises:
         HTTPException: If database is unavailable (503) or save fails (500)
     """
@@ -238,8 +239,8 @@ def _save_todo_to_db(todo: "Todo"):
             cursor = db.cursor()
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO todos 
-                (todo_id, title, description, status, priority, category, tags, 
+                INSERT OR REPLACE INTO todos
+                (todo_id, title, description, status, priority, category, tags,
                  due_date, created_at, updated_at, completed_at, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -263,8 +264,8 @@ def _save_todo_to_db(todo: "Todo"):
             # DatabaseQueryOptimizer
             db.execute_query(
                 """
-                INSERT OR REPLACE INTO todos 
-                (todo_id, title, description, status, priority, category, tags, 
+                INSERT OR REPLACE INTO todos
+                (todo_id, title, description, status, priority, category, tags,
                  due_date, created_at, updated_at, completed_at, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -294,13 +295,13 @@ def _save_todo_to_db(todo: "Todo"):
         logger.error(f"Failed to save todo to database: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to save todo: {str(e)}"
+            detail=f"Failed to save todo: {e!s}"
         )
 
 
 def _delete_todo_from_db(todo_id: str) -> bool:
     """Delete a todo from database.
-    
+
     Raises:
         HTTPException: If database is unavailable (503) or delete fails (500)
     """
@@ -334,16 +335,16 @@ def _delete_todo_from_db(todo_id: str) -> bool:
         logger.error(f"Failed to delete todo from database: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete todo: {str(e)}"
+            detail=f"Failed to delete todo: {e!s}"
         )
 
 
 def _list_todos_from_db(
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    category: Optional[str] = None,
-    tag: Optional[str] = None,
-) -> List["Todo"]:
+    status: str | None = None,
+    priority: str | None = None,
+    category: str | None = None,
+    tag: str | None = None,
+) -> list["Todo"]:
     """List todos from database with optional filters."""
     db = _get_todo_database()
     if not db or not _use_database:
@@ -388,7 +389,7 @@ def _list_todos_from_db(
         return []
 
 
-def _row_to_todo(row: Dict) -> "Todo":
+def _row_to_todo(row: dict) -> "Todo":
     """Convert database row to Todo object."""
     tags = json.loads(row.get("tags", "[]")) if row.get("tags") else []
     metadata = json.loads(row.get("metadata", "{}")) if row.get("metadata") else {}
@@ -414,41 +415,41 @@ class Todo(BaseModel):
 
     todo_id: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str  # pending, in_progress, completed, cancelled
     priority: str  # low, medium, high, urgent
-    category: Optional[str] = None
-    tags: List[str] = []
-    due_date: Optional[str] = None
+    category: str | None = None
+    tags: list[str] = []
+    due_date: str | None = None
     created_at: str
     updated_at: str
-    completed_at: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    completed_at: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class TodoCreateRequest(BaseModel):
     """Request to create a new todo."""
 
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     priority: str = "medium"  # low, medium, high, urgent
-    category: Optional[str] = None
-    tags: List[str] = []
-    due_date: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    category: str | None = None
+    tags: list[str] = []
+    due_date: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class TodoUpdateRequest(BaseModel):
     """Request to update a todo."""
 
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[str] = None
-    priority: Optional[str] = None
-    category: Optional[str] = None
-    tags: Optional[List[str]] = None
-    due_date: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+    priority: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
+    due_date: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class TodoResponse(BaseModel):
@@ -456,16 +457,16 @@ class TodoResponse(BaseModel):
 
     todo_id: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str
     priority: str
-    category: Optional[str] = None
-    tags: List[str] = []
-    due_date: Optional[str] = None
+    category: str | None = None
+    tags: list[str] = []
+    due_date: str | None = None
     created_at: str
     updated_at: str
-    completed_at: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    completed_at: str | None = None
+    metadata: dict[str, str] = {}
 
 
 def _generate_todo_id() -> str:
@@ -475,13 +476,13 @@ def _generate_todo_id() -> str:
     return f"todo-{uuid.uuid4().hex[:8]}"
 
 
-@router.get("", response_model=List[TodoResponse])
+@router.get("", response_model=list[TodoResponse])
 @cache_response(ttl=30)  # Cache for 30 seconds (todos change moderately)
 async def list_todos(
-    status: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    tag: Optional[str] = Query(None),
+    status: str | None = Query(None),
+    priority: str | None = Query(None),
+    category: str | None = Query(None),
+    tag: str | None = Query(None),
 ):
     """List all todos with optional filtering."""
     try:
@@ -510,7 +511,7 @@ async def list_todos(
         logger.error(f"Failed to list todos: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list todos: {str(e)}",
+            detail=f"Failed to list todos: {e!s}",
         ) from e
 
 
@@ -545,7 +546,7 @@ async def get_todo(todo_id: str):
         logger.error(f"Failed to get todo: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get todo: {str(e)}",
+            detail=f"Failed to get todo: {e!s}",
         ) from e
 
 
@@ -607,7 +608,7 @@ async def create_todo(request: TodoCreateRequest):
         logger.error(f"Failed to create todo: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create todo: {str(e)}",
+            detail=f"Failed to create todo: {e!s}",
         ) from e
 
 
@@ -685,7 +686,7 @@ async def update_todo(todo_id: str, request: TodoUpdateRequest):
         logger.error(f"Failed to update todo: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update todo: {str(e)}",
+            detail=f"Failed to update todo: {e!s}",
         ) from e
 
 
@@ -712,11 +713,11 @@ async def delete_todo(todo_id: str):
         logger.error(f"Failed to delete todo: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete todo: {str(e)}",
+            detail=f"Failed to delete todo: {e!s}",
         ) from e
 
 
-@router.get("/categories/list", response_model=List[str])
+@router.get("/categories/list", response_model=list[str])
 @cache_response(ttl=300)  # Cache for 5 minutes (categories are relatively static)
 async def list_categories():
     """List all todo categories."""
@@ -726,16 +727,16 @@ async def list_categories():
         for todo in todos:
             if todo.category:
                 categories.add(todo.category)
-        return sorted(list(categories))
+        return sorted(categories)
     except Exception as e:
         logger.error(f"Failed to list categories: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list categories: {str(e)}",
+            detail=f"Failed to list categories: {e!s}",
         ) from e
 
 
-@router.get("/tags/list", response_model=List[str])
+@router.get("/tags/list", response_model=list[str])
 @cache_response(ttl=300)  # Cache for 5 minutes (tags are relatively static)
 async def list_tags():
     """List all todo tags."""
@@ -744,12 +745,12 @@ async def list_tags():
         tags = set()
         for todo in todos:
             tags.update(todo.tags)
-        return sorted(list(tags))
+        return sorted(tags)
     except Exception as e:
         logger.error(f"Failed to list tags: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list tags: {str(e)}",
+            detail=f"Failed to list tags: {e!s}",
         ) from e
 
 
@@ -776,7 +777,7 @@ async def get_todo_summary():
         logger.error(f"Failed to get todo summary: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get todo summary: {str(e)}",
+            detail=f"Failed to get todo summary: {e!s}",
         ) from e
 
 
@@ -866,5 +867,5 @@ async def export_todos(format: str = "json"):
         logger.error(f"Failed to export todos: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export todos: {str(e)}",
+            detail=f"Failed to export todos: {e!s}",
         ) from e

@@ -12,12 +12,13 @@ Compatible with:
 - PyTorch 2.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -52,7 +53,7 @@ def _get_cached_realesrgan_model(model_name: str, scale: int, device: str):
         cached = _model_cache.get("realesrgan", f"{model_name}_{scale}", device=device)
         if cached is not None:
             return cached
-    
+
     # Fallback to RealESRGAN-specific cache
     cache_key = _get_cache_key(model_name, scale, device)
     if cache_key in _REALESRGAN_MODEL_CACHE:
@@ -70,16 +71,16 @@ def _cache_realesrgan_model(model_name: str, scale: int, device: str, upsampler)
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to RealESRGAN-specific cache
     cache_key = _get_cache_key(model_name, scale, device)
-    
+
     if cache_key in _REALESRGAN_MODEL_CACHE:
         _REALESRGAN_MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     _REALESRGAN_MODEL_CACHE[cache_key] = upsampler
-    
+
     # Evict oldest if cache full
     if len(_REALESRGAN_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, oldest_upsampler = _REALESRGAN_MODEL_CACHE.popitem(last=False)
@@ -90,7 +91,7 @@ def _cache_realesrgan_model(model_name: str, scale: int, device: str, upsampler)
             logger.debug(f"Evicted RealESRGAN model from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting RealESRGAN model from cache: {e}")
-    
+
     logger.debug(f"Cached RealESRGAN model: {cache_key} (cache size: {len(_REALESRGAN_MODEL_CACHE)})")
 
 try:
@@ -136,7 +137,7 @@ class RealESRGANEngine(EngineProtocol):
         self,
         model_name: str = "RealESRGAN_x4plus",
         scale: int = 4,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """Initialize Real-ESRGAN engine."""
@@ -167,7 +168,7 @@ class RealESRGANEngine(EngineProtocol):
                 self.upsampler = cached_upsampler
                 self._initialized = True
                 return True
-        
+
         logger.info(
             f"Loading Real-ESRGAN model: {self.model_name} (device: {self.device}, scale: {self.scale}x)"
         )
@@ -223,7 +224,7 @@ class RealESRGANEngine(EngineProtocol):
                 half=self.device == "cuda",  # Use half precision on GPU
                 gpu_id=0 if self.device == "cuda" else None,
             )
-            
+
             # Cache upsampler
             if self.enable_caching:
                 _cache_realesrgan_model(self.model_name, self.scale, self.device, self.upsampler)
@@ -234,20 +235,20 @@ class RealESRGANEngine(EngineProtocol):
         except Exception as e:
             logger.error(f"Failed to load Real-ESRGAN model: {e}")
             return False
-    
+
     def initialize(self) -> bool:
         """Initialize the Real-ESRGAN model."""
         try:
             if self._initialized:
                 return True
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
                 logger.debug("Lazy loading enabled, model will be loaded on first use")
                 return True
-            
+
             return self._load_model()
-                    
+
         except Exception as e:
             logger.error(f"Failed to initialize Real-ESRGAN engine: {e}")
             self._initialized = False
@@ -255,10 +256,10 @@ class RealESRGANEngine(EngineProtocol):
 
     def upscale(
         self,
-        image: Union[str, Path, Image.Image],
-        output_path: Optional[Union[str, Path]] = None,
+        image: str | Path | Image.Image,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """
         Upscale image using Real-ESRGAN.
 
@@ -271,9 +272,8 @@ class RealESRGANEngine(EngineProtocol):
             Upscaled PIL Image or None if upscaling failed
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Load image
@@ -305,7 +305,7 @@ class RealESRGANEngine(EngineProtocol):
 
     def generate(
         self, prompt: str = "", **kwargs
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """
         Alias for upscale() to maintain compatibility with generate() interface.
         For Real-ESRGAN, pass image in kwargs.
@@ -322,44 +322,43 @@ class RealESRGANEngine(EngineProtocol):
 
     def batch_upscale(
         self,
-        images: List[Union[str, Path, Image.Image]],
-        output_dir: Optional[Union[str, Path]] = None,
+        images: list[str | Path | Image.Image],
+        output_dir: str | Path | None = None,
         batch_size: int = 2,
         **kwargs
-    ) -> List[Optional[Image.Image]]:
+    ) -> list[Image.Image | None]:
         """
         Upscale multiple images in batch with optimized processing.
-        
+
         Args:
             images: List of input images (paths or PIL Images)
             output_dir: Optional directory to save upscaled images
             batch_size: Number of images to process in a single batch
             **kwargs: Additional parameters
-        
+
         Returns:
             List of upscaled PIL Images or None on error
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(images)
-        
+        if not self._initialized and not self._load_model():
+            return [None] * len(images)
+
         results = []
-        
+
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
-        
+
         def upscale_single(image):
             try:
                 return self.upscale(image=image, **kwargs)
             except Exception as e:
                 logger.error(f"Batch upscaling failed for image: {e}")
                 return None
-        
+
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             batch_results = list(executor.map(upscale_single, images))
-        
+
         # Handle output directory if provided
         if output_dir:
             output_dir = Path(output_dir)
@@ -384,49 +383,49 @@ class RealESRGANEngine(EngineProtocol):
                     results.append(None)
         else:
             results = batch_results
-        
+
         # Clear GPU cache periodically
         if torch.cuda.is_available() and (len(images) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
-    def _get_memory_usage(self) -> Dict[str, float]:
+
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
-        
+
         return {
             "gpu_memory_mb": torch.cuda.get_device_properties(0).total_memory / 1024**2,
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
-    
+
     def cleanup(self):
         """Clean up resources."""
         try:
             # Don't delete cached models, just clear references
             self.upsampler = None
-            
+
             # Clear CUDA cache if using GPU
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            
+
             self._initialized = False
             logger.info("Real-ESRGAN engine cleaned up")
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -442,7 +441,7 @@ class RealESRGANEngine(EngineProtocol):
 def create_realesrgan_engine(
     model_name: str = "RealESRGAN_x4plus",
     scale: int = 4,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> RealESRGANEngine:
     """Factory function to create a Real-ESRGAN engine instance."""

@@ -16,16 +16,19 @@ namespace VoiceStudio.App.Commands
         private readonly IUnifiedCommandRegistry _registry;
         private readonly IAudioPlayerService _audioPlayer;
         private readonly ToastNotificationService? _toastService;
+        private readonly Services.MicrophoneRecordingService _recordingService;
 
         private bool _isPlaying;
         private bool _isPaused;
         private bool _isRecording;
         private TimeSpan _currentPosition;
         private TimeSpan _duration;
-        private DateTime _recordingStartTime;
 
         public event EventHandler<PlaybackState>? PlaybackStateChanged;
         public event EventHandler<TimeSpan>? PositionChanged;
+
+        /// <summary>Raised when a recording completes with the file path.</summary>
+        public event EventHandler<Services.RecordingCompletedEventArgs>? RecordingCompleted;
 
         public PlaybackOperationsHandler(
             IUnifiedCommandRegistry registry,
@@ -35,6 +38,11 @@ namespace VoiceStudio.App.Commands
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
             _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
             _toastService = toastService;
+
+            // Initialize microphone recording service
+            _recordingService = new Services.MicrophoneRecordingService();
+            _recordingService.RecordingStopped += OnRecordingCompleted;
+            _recordingService.RecordingError += OnRecordingError;
 
             RegisterCommands();
         }
@@ -313,22 +321,22 @@ namespace VoiceStudio.App.Commands
                     await StopAsync(ct);
                 }
 
-                // Recording uses the backend /api/recording/start endpoint
-                // The frontend sends audio chunks via WebSocket to /api/recording/{id}/chunk
-                // For now, we set recording state and notify the UI
-                // Full implementation requires WebSocket audio streaming from microphone
+                // Start microphone capture via NAudio
+                await _recordingService.StartRecordingAsync();
 
                 _isRecording = true;
-                _recordingStartTime = DateTime.UtcNow;
-
                 PlaybackStateChanged?.Invoke(this, PlaybackState.Recording);
                 _toastService?.ShowInfo("Recording started - speak into your microphone");
-                Debug.WriteLine("[PlaybackOperationsHandler] Recording started");
-
-                await Task.CompletedTask;
+                Debug.WriteLine("[PlaybackOperationsHandler] Recording started via MicrophoneRecordingService");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("No audio input"))
+            {
+                _toastService?.ShowError("No Microphone", "No microphone found. Please connect a microphone and try again.");
+                Debug.WriteLine($"[PlaybackOperationsHandler] No microphone: {ex.Message}");
             }
             catch (Exception ex)
             {
+                _toastService?.ShowError("Recording Failed", $"Failed to start recording: {ex.Message}");
                 Debug.WriteLine($"[PlaybackOperationsHandler] Start recording failed: {ex.Message}");
                 throw;
             }
@@ -343,18 +351,22 @@ namespace VoiceStudio.App.Commands
                     return;
                 }
 
-                // Stop recording and calculate duration
-                var duration = DateTime.UtcNow - _recordingStartTime;
+                // Stop microphone capture -- file is finalized by the service
+                var recordingPath = await _recordingService.StopRecordingAsync();
+                var duration = _recordingService.Duration;
+
                 _isRecording = false;
-
                 PlaybackStateChanged?.Invoke(this, PlaybackState.Stopped);
-                _toastService?.ShowSuccess($"Recording stopped ({duration.TotalSeconds:F1}s)");
-                Debug.WriteLine($"[PlaybackOperationsHandler] Recording stopped, duration: {duration}");
 
-                await Task.CompletedTask;
+                _toastService?.ShowSuccess($"Recording saved ({duration.TotalSeconds:F1}s)");
+                Debug.WriteLine(
+                    $"[PlaybackOperationsHandler] Recording stopped: " +
+                    $"{duration.TotalSeconds:F1}s -> {recordingPath}");
             }
             catch (Exception ex)
             {
+                _isRecording = false;
+                PlaybackStateChanged?.Invoke(this, PlaybackState.Stopped);
                 Debug.WriteLine($"[PlaybackOperationsHandler] Stop recording failed: {ex.Message}");
                 throw;
             }
@@ -401,6 +413,29 @@ namespace VoiceStudio.App.Commands
         {
             _currentPosition = position;
             PositionChanged?.Invoke(this, position);
+        }
+
+        // ---------------------------------------------------------------
+        // Recording event handlers
+        // ---------------------------------------------------------------
+
+        private void OnRecordingCompleted(
+            object? sender,
+            Services.RecordingCompletedEventArgs e)
+        {
+            Debug.WriteLine(
+                $"[PlaybackOperationsHandler] Recording completed: " +
+                $"{e.Duration.TotalSeconds:F1}s -> {e.FilePath}");
+            RecordingCompleted?.Invoke(this, e);
+        }
+
+        private void OnRecordingError(object? sender, string errorMessage)
+        {
+            _isRecording = false;
+            PlaybackStateChanged?.Invoke(this, PlaybackState.Stopped);
+            _toastService?.ShowError("Recording Error", errorMessage);
+            Debug.WriteLine(
+                $"[PlaybackOperationsHandler] Recording error: {errorMessage}");
         }
     }
 

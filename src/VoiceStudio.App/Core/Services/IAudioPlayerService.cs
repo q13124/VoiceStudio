@@ -74,6 +74,12 @@ namespace VoiceStudio.Core.Services
     void Seek(double position);
 
     /// <summary>
+    /// Gets or sets whether playback should loop when it reaches the end.
+    /// When true, playback automatically restarts from the beginning.
+    /// </summary>
+    bool IsLooping { get; set; }
+
+    /// <summary>
     /// Event raised when playback position changes.
     /// </summary>
     event EventHandler<double>? PositionChanged;

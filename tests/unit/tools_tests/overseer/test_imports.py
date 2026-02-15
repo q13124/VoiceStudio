@@ -18,13 +18,12 @@ if str(_project_root) not in sys.path:
 def test_overseer_package_imports():
     """Test basic overseer package imports."""
     from tools.overseer import (
-        LedgerEntry,
-        LedgerState,
-        Severity,
         Gate,
         GateStatus,
+        LedgerState,
+        Severity,
     )
-    
+
     assert LedgerState.DONE is not None
     assert Severity.S0_BLOCKER is not None
     assert Gate.A is not None
@@ -36,11 +35,11 @@ def test_overseer_package_imports():
 def test_overseer_agent_imports():
     """Test agent governance imports."""
     from tools.overseer.agent.identity import AgentIdentity, AgentRole, AgentState
-    
+
     assert AgentRole.OVERSEER is not None
     assert AgentRole.DEBUGGER is not None
     assert AgentState.RUNNING is not None  # API uses RUNNING, not ACTIVE
-    
+
     # Verify we can create an identity using the class factory
     identity = AgentIdentity.create(role=AgentRole.OVERSEER, user_id="test")
     assert identity.state == AgentState.CREATED  # Initial state is CREATED
@@ -49,7 +48,7 @@ def test_overseer_agent_imports():
 def test_overseer_cli_imports():
     """Test CLI module imports."""
     from tools.overseer.cli import main
-    
+
     assert main.main is not None
     assert callable(main.main)
 
@@ -62,7 +61,7 @@ def test_overseer_issues_imports():
         IssueSeverity,
         IssueStatus,
     )
-    
+
     # Verify enum values exist (per actual API)
     assert IssuePriority.HIGH is not None
     assert IssueSeverity.CRITICAL is not None
@@ -74,14 +73,14 @@ def test_overseer_agent_package_exists():
     """Verify agent package has __init__.py (prevents regression)."""
     project_root = Path(__file__).parents[4]
     agent_init = project_root / "tools" / "overseer" / "agent" / "__init__.py"
-    
+
     assert agent_init.exists(), "tools/overseer/agent/__init__.py missing (would break imports!)"
 
 
 def test_critical_packages_have_init():
     """Verify package structure for critical modules."""
     project_root = Path(__file__).parents[4]
-    
+
     critical_packages = [
         "tools/overseer",
         "tools/overseer/agent",
@@ -92,20 +91,20 @@ def test_critical_packages_have_init():
         "tools/onboarding",
         "tools/onboarding/core",
     ]
-    
+
     missing = []
     for pkg in critical_packages:
         init_file = project_root / pkg / "__init__.py"
         if not init_file.exists():
             missing.append(pkg)
-    
+
     assert not missing, f"Missing __init__.py in: {', '.join(missing)}"
 
 
 def test_agent_identity_module():
     """Test agent.identity module can be imported (regression test for missing __init__.py)."""
-    from tools.overseer.agent.identity import AgentRole, AgentIdentity, AgentState
-    
+    from tools.overseer.agent.identity import AgentRole, AgentState
+
     # Verify all roles are defined (per actual API)
     assert AgentRole.OVERSEER
     assert AgentRole.REVIEWER
@@ -114,7 +113,7 @@ def test_agent_identity_module():
     assert AgentRole.DEBUGGER
     assert AgentRole.TESTER
     assert AgentRole.SUPPORT
-    
+
     # Verify all states are defined (per actual API)
     assert AgentState.CREATED
     assert AgentState.RUNNING
@@ -127,9 +126,9 @@ def test_agent_identity_module():
 
 def test_agent_role_mapping():
     """Test role mapping functions."""
-    from tools.overseer.agent.role_mapping import role_to_agent_role
     from tools.overseer.agent.identity import AgentRole
-    
+    from tools.overseer.agent.role_mapping import role_to_agent_role
+
     # Test all VoiceStudio roles map correctly
     assert role_to_agent_role(0) == AgentRole.OVERSEER
     assert role_to_agent_role(1) == AgentRole.REVIEWER

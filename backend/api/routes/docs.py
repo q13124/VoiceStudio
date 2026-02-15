@@ -5,7 +5,7 @@ Provides endpoints for API documentation and validation.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/docs", tags=["documentation"])
 
 @router.get("/openapi.json", summary="Get OpenAPI schema")
 @cache_response(ttl=300)  # Cache 5 min (schema relatively static)
-def get_openapi_schema() -> Dict:
+def get_openapi_schema() -> dict:
     """
     Get the complete OpenAPI schema for the API.
 
@@ -49,7 +49,7 @@ def get_openapi_schema() -> Dict:
 
 @router.get("/validate", summary="Validate API documentation")
 @cache_response(ttl=60)  # Cache 60s (validation results change moderately)
-def validate_api_documentation() -> Dict[str, Any]:
+def validate_api_documentation() -> dict[str, Any]:
     """
     Validate that all API endpoints are properly documented.
 
@@ -73,7 +73,7 @@ def validate_api_documentation() -> Dict[str, Any]:
 
 @router.get("/stats", summary="Get API documentation statistics")
 @cache_response(ttl=60)  # Cache 60s (stats change moderately)
-def get_documentation_stats() -> Dict[str, Any]:
+def get_documentation_stats() -> dict[str, Any]:
     """
     Get statistics about API documentation coverage.
 
@@ -96,7 +96,7 @@ def get_documentation_stats() -> Dict[str, Any]:
         example_count = 0
 
         if "paths" in openapi_schema:
-            for path, path_item in openapi_schema["paths"].items():
+            for _path, path_item in openapi_schema["paths"].items():
                 for method in ["get", "post", "put", "delete", "patch"]:
                     if method in path_item:
                         endpoint_count += 1
@@ -106,9 +106,9 @@ def get_documentation_stats() -> Dict[str, Any]:
                             documented_count += 1
 
                         if "responses" in operation:
-                            for status_code, response in operation["responses"].items():
+                            for _status_code, response in operation["responses"].items():
                                 if "content" in response:
-                                    for content_type, content in response[
+                                    for _content_type, content in response[
                                         "content"
                                     ].items():
                                         if (

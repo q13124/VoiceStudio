@@ -8,19 +8,20 @@ Integrates filler phrases for smooth transitions, context sync across modes,
 barge-in handling for interruptions, and intent buffering for cooperative speech.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from .classifier import ClassificationResult, ComplexityLevel, IntentClassifier
-from .state_machine import SupervisorState, SupervisorStateMachine
-from .filler_generator import FillerPhraseGenerator
-from .context_sync import ContextSync
 from .barge_in import BargeInHandler
+from .classifier import ClassificationResult, IntentClassifier
+from .context_sync import ContextSync
+from .filler_generator import FillerPhraseGenerator
 from .intent_buffer import IntentBuffer
-from .interruption_fsm import InterruptionFSM
+from .state_machine import SupervisorState, SupervisorStateMachine
 
 
 class SupervisorRouter:
@@ -42,12 +43,12 @@ class SupervisorRouter:
         s2s_provider=None,
         cascade_pipeline=None,
         half_cascade_pipeline=None,
-        classifier: Optional[IntentClassifier] = None,
+        classifier: IntentClassifier | None = None,
         token_ceiling_manager=None,
-        filler_generator: Optional[FillerPhraseGenerator] = None,
-        context_sync: Optional[ContextSync] = None,
-        barge_in_handler: Optional[BargeInHandler] = None,
-        intent_buffer: Optional[IntentBuffer] = None,
+        filler_generator: FillerPhraseGenerator | None = None,
+        context_sync: ContextSync | None = None,
+        barge_in_handler: BargeInHandler | None = None,
+        intent_buffer: IntentBuffer | None = None,
     ):
         self._s2s = s2s_provider
         self._cascade = cascade_pipeline
@@ -61,23 +62,23 @@ class SupervisorRouter:
         )
         self._intent_buffer = intent_buffer or IntentBuffer()
         self._fsm = SupervisorStateMachine()
-        self._session_id: Optional[str] = None
-        self._context: Dict[str, Any] = {}
-        self._previous_mode: Optional[str] = None
+        self._session_id: str | None = None
+        self._context: dict[str, Any] = {}
+        self._previous_mode: str | None = None
 
     @property
     def state(self) -> SupervisorState:
         return self._fsm.state
 
     @property
-    def active_mode(self) -> Optional[str]:
+    def active_mode(self) -> str | None:
         return self._fsm.active_mode
 
     async def process_input(
         self,
         text: str,
-        audio_data: Optional[bytes] = None,
-    ) -> Dict[str, Any]:
+        audio_data: bytes | None = None,
+    ) -> dict[str, Any]:
         """
         Process user input through the supervisor routing logic.
 
@@ -124,7 +125,7 @@ class SupervisorRouter:
         # Record context
         self._context_sync.add_turn("user", text, route)
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "route": route,
             "classification": {
                 "complexity": classification.complexity.value,
@@ -183,8 +184,8 @@ class SupervisorRouter:
     async def _process_s2s(
         self,
         text: str,
-        audio_data: Optional[bytes] = None,
-    ) -> Dict[str, Any]:
+        audio_data: bytes | None = None,
+    ) -> dict[str, Any]:
         """Process through S2S pipeline."""
         self._fsm.transition(SupervisorState.CASUAL_MODE, trigger="s2s_route")
 
@@ -201,7 +202,7 @@ class SupervisorRouter:
         # Fallback: if no audio, use cascade
         return await self._process_cascade(text)
 
-    async def _process_cascade(self, text: str) -> Dict[str, Any]:
+    async def _process_cascade(self, text: str) -> dict[str, Any]:
         """Process through Cascade pipeline."""
         self._fsm.transition(SupervisorState.REASONING_MODE, trigger="cascade_route")
 
@@ -224,8 +225,8 @@ class SupervisorRouter:
     async def _process_half_cascade(
         self,
         text: str,
-        audio_data: Optional[bytes] = None,
-    ) -> Dict[str, Any]:
+        audio_data: bytes | None = None,
+    ) -> dict[str, Any]:
         """Process through Half-Cascade pipeline (S2S input + TTS output)."""
         self._fsm.transition(SupervisorState.REASONING_MODE, trigger="half_cascade")
 
@@ -248,7 +249,7 @@ class SupervisorRouter:
         self,
         text: str = "",
         audio_energy: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Handle user interruption (barge-in) using the barge-in handler.
 
@@ -301,7 +302,7 @@ class SupervisorRouter:
         """Set the current session for cost tracking."""
         self._session_id = session_id
 
-    def get_context(self) -> Dict[str, Any]:
+    def get_context(self) -> dict[str, Any]:
         """Get the current context including synopsis."""
         return self._context_sync.get_context_for_mode(
             self._previous_mode or "cascade"

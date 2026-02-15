@@ -10,12 +10,11 @@ Tests cover:
 - Configuration and optimization features
 """
 
-import pytest
-import tempfile
-import os
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+import contextlib
 from collections import OrderedDict
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Try to import the engine
 try:
@@ -37,10 +36,8 @@ def festival_engine():
 
     engine = FestivalFliteEngine(device="cpu", gpu=False)
     yield engine
-    try:
+    with contextlib.suppress(Exception):
         engine.cleanup()
-    except Exception:
-        ...
 
 
 class TestFestivalFliteEngineImports:
@@ -50,18 +47,14 @@ class TestFestivalFliteEngineImports:
         """Test that FestivalFliteEngine can be imported."""
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
-        from app.core.engines.festival_flite_engine import (
-            FestivalFliteEngine
-        )
+        from app.core.engines.festival_flite_engine import FestivalFliteEngine
         assert FestivalFliteEngine is not None
 
     def test_import_create_function(self):
         """Test that create_festival_flite_engine can be imported."""
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
-        from app.core.engines.festival_flite_engine import (
-            create_festival_flite_engine
-        )
+        from app.core.engines.festival_flite_engine import create_festival_flite_engine
         assert create_festival_flite_engine is not None
 
 
@@ -210,7 +203,7 @@ class TestFestivalFliteEngineBatchProcessing:
         texts = ["Test text 1", "Test text 2"]
 
         try:
-            results = festival_engine.batch_synthesize(texts, batch_size=2)
+            festival_engine.batch_synthesize(texts, batch_size=2)
             # Should have called ThreadPoolExecutor
             assert mock_executor.called
         except Exception:
@@ -260,20 +253,19 @@ class TestFestivalFliteEngineOptimization:
                 festival_engine,
                 "_find_executable",
                 return_value="/usr/bin/flite",
-            ):
-                with patch(
-                    "app.core.engines.festival_flite_engine.subprocess.run"
-                ) as mock_run:
-                    mock_run.return_value.returncode = 0
-                    mock_run.return_value.stdout = "Flite text-to-speech"
+            ), patch(
+                "app.core.engines.festival_flite_engine.subprocess.run"
+            ) as mock_run:
+                mock_run.return_value.returncode = 0
+                mock_run.return_value.stdout = "Flite text-to-speech"
 
-                    try:
-                        result = festival_engine.initialize()
-                        if result:
-                            assert festival_engine._temp_dir is not None
-                    except Exception:
-                        # If dependencies not available, skip
-                        ...
+                try:
+                    result = festival_engine.initialize()
+                    if result:
+                        assert festival_engine._temp_dir is not None
+                except Exception:
+                    # If dependencies not available, skip
+                    ...
 
     def test_cache_optimization(self, festival_engine):
         """Test that cache optimization is enabled by default."""
@@ -293,23 +285,17 @@ class TestFestivalFliteEngineCreateFunction:
         """Test that create function exists."""
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
-        from app.core.engines.festival_flite_engine import (
-            create_festival_flite_engine
-        )
+        from app.core.engines.festival_flite_engine import create_festival_flite_engine
         assert callable(create_festival_flite_engine)
 
     def test_create_function_returns_engine(self):
         """Test that create function returns engine instance."""
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
-        from app.core.engines.festival_flite_engine import (
-            create_festival_flite_engine
-        )
+        from app.core.engines.festival_flite_engine import create_festival_flite_engine
         engine = create_festival_flite_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, FestivalFliteEngine)
-        try:
+        with contextlib.suppress(Exception):
             engine.cleanup()
-        except Exception:
-            ...
 

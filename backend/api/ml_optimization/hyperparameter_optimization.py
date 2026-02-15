@@ -3,9 +3,12 @@ Hyperparameter Optimization Integration
 Integrates optuna, ray[tune], and hyperopt for hyperparameter optimization.
 """
 
+from __future__ import annotations
+
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,7 @@ except ImportError:
 
 HAS_HYPEROPT = False
 try:
-    from hyperopt import fmin, hp, tpe, Trials
+    from hyperopt import Trials, fmin, hp, tpe
 
     HAS_HYPEROPT = True
 except ImportError:
@@ -40,11 +43,11 @@ except ImportError:
 class OptimizationResult:
     """Result of hyperparameter optimization."""
 
-    best_params: Dict[str, Any]
+    best_params: dict[str, Any]
     best_score: float
     n_trials: int
     method: str
-    trials: Optional[List[Dict[str, Any]]] = None
+    trials: list[dict[str, Any]] | None = None
 
 
 class HyperparameterOptimizer:
@@ -61,10 +64,10 @@ class HyperparameterOptimizer:
     def optimize_with_optuna(
         self,
         objective: Callable,
-        search_space: Dict[str, Any],
+        search_space: dict[str, Any],
         n_trials: int = 100,
         direction: str = "minimize",
-        study_name: Optional[str] = None,
+        study_name: str | None = None,
     ) -> OptimizationResult:
         """
         Optimize hyperparameters using optuna.
@@ -140,7 +143,7 @@ class HyperparameterOptimizer:
     def optimize_with_hyperopt(
         self,
         objective: Callable,
-        search_space: Dict[str, Any],
+        search_space: dict[str, Any],
         max_evals: int = 100,
     ) -> OptimizationResult:
         """
@@ -216,7 +219,7 @@ class HyperparameterOptimizer:
             logger.error(f"Error in hyperopt optimization: {e}", exc_info=True)
             raise
 
-    def get_available_methods(self) -> List[str]:
+    def get_available_methods(self) -> list[str]:
         """
         Get list of available optimization methods.
 

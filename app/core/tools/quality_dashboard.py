@@ -6,20 +6,22 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import quality metrics
 try:
-    from ..audio.enhanced_quality_metrics import EnhancedQualityMetrics
-    from ..engines.quality_metrics import calculate_all_metrics
+    from app.core.audio.enhanced_quality_metrics import EnhancedQualityMetrics
+    from app.core.engines.quality_metrics import calculate_all_metrics
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -49,7 +51,7 @@ class QualityDashboard:
             sample_rate: Default sample rate for processing
         """
         self.sample_rate = sample_rate
-        self.quality_history: List[Dict[str, Any]] = []
+        self.quality_history: list[dict[str, Any]] = []
         self.quality_metrics = None
 
         if HAS_QUALITY_METRICS:
@@ -61,10 +63,10 @@ class QualityDashboard:
     def add_quality_record(
         self,
         audio_id: str,
-        metrics: Dict[str, Any],
-        engine: Optional[str] = None,
-        timestamp: Optional[str] = None,
-        metadata: Optional[Dict] = None,
+        metrics: dict[str, Any],
+        engine: str | None = None,
+        timestamp: str | None = None,
+        metadata: dict | None = None,
     ):
         """
         Add a quality record to the dashboard.
@@ -86,8 +88,8 @@ class QualityDashboard:
         self.quality_history.append(record)
 
     def get_statistics(
-        self, engine: Optional[str] = None, time_range: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        self, engine: str | None = None, time_range: dict | None = None
+    ) -> dict[str, Any]:
         """
         Get quality statistics.
 
@@ -166,7 +168,7 @@ class QualityDashboard:
 
         return statistics
 
-    def get_engine_comparison(self) -> Dict[str, Any]:
+    def get_engine_comparison(self) -> dict[str, Any]:
         """
         Compare quality across different engines.
 
@@ -211,7 +213,7 @@ class QualityDashboard:
 
     def get_trends(
         self, metric_name: str = "overall_quality_score", window_size: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get quality trends over time.
 
@@ -277,7 +279,7 @@ class QualityDashboard:
 
     def get_quality_distribution(
         self, metric_name: str = "overall_quality_score", bins: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get quality distribution histogram data.
 
@@ -318,7 +320,7 @@ class QualityDashboard:
         }
 
     def generate_dashboard_report(
-        self, output_path: Optional[Union[str, Path]] = None
+        self, output_path: str | Path | None = None
     ) -> str:
         """
         Generate comprehensive dashboard report.
@@ -395,7 +397,7 @@ class QualityDashboard:
 
         return report_text
 
-    def export_data(self, output_path: Union[str, Path], format: str = "json"):
+    def export_data(self, output_path: str | Path, format: str = "json"):
         """
         Export dashboard data.
 
@@ -430,7 +432,7 @@ class QualityDashboard:
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def load_data(self, input_path: Union[str, Path]):
+    def load_data(self, input_path: str | Path):
         """
         Load dashboard data from file.
 

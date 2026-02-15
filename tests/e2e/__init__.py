@@ -1,5 +1,10 @@
 """
-End-to-End tests for VoiceStudio Quantum+.
+VoiceStudio End-to-End (E2E) Tests.
 
-Tests complete workflows from user interaction to final output.
+Complete workflow tests that validate full user journeys:
+- Project lifecycle (create, edit, save, load)
+- Voice training workflows
+- Audio effects pipelines
+- Batch processing operations
+- Multi-step synthesis workflows
 """

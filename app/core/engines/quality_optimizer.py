@@ -3,8 +3,10 @@ Automated Quality Optimization for Voice Cloning
 Automatically adjusts synthesis parameters to achieve target quality levels
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -51,7 +53,7 @@ QUALITY_TIERS = {
 class QualityOptimizer:
     """
     Automated quality optimization system.
-    
+
     Analyzes quality metrics and suggests parameter adjustments
     to achieve target quality levels.
     """
@@ -59,7 +61,7 @@ class QualityOptimizer:
     def __init__(self, target_tier: str = "standard"):
         """
         Initialize quality optimizer.
-        
+
         Args:
             target_tier: Target quality tier ("fast", "standard", "high", "ultra")
         """
@@ -67,17 +69,17 @@ class QualityOptimizer:
         self.target_metrics = QUALITY_TIERS.get(
             target_tier, QUALITY_TIERS["standard"]
         )
-        self.optimization_history: List[Dict[str, Any]] = []
+        self.optimization_history: list[dict[str, Any]] = []
 
     def analyze_quality(
-        self, metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze quality metrics and determine if optimization is needed.
-        
+
         Args:
             metrics: Quality metrics dictionary
-        
+
         Returns:
             Analysis results with recommendations
         """
@@ -130,10 +132,7 @@ class QualityOptimizer:
                     target_normalized = target
 
                 # Score based on how close to target
-                if normalized >= target_normalized:
-                    score = 1.0
-                else:
-                    score = normalized / target_normalized
+                score = 1.0 if normalized >= target_normalized else normalized / target_normalized
 
                 quality_score += score * weight
                 total_weight += weight
@@ -151,14 +150,14 @@ class QualityOptimizer:
         return analysis
 
     def _generate_recommendations(
-        self, deficiencies: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, deficiencies: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Generate optimization recommendations based on deficiencies.
-        
+
         Args:
             deficiencies: List of quality deficiencies
-        
+
         Returns:
             List of recommendations
         """
@@ -252,16 +251,16 @@ class QualityOptimizer:
 
     def optimize_parameters(
         self,
-        current_metrics: Dict[str, Any],
-        current_params: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        current_metrics: dict[str, Any],
+        current_params: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Optimize synthesis parameters based on quality metrics.
-        
+
         Args:
             current_metrics: Current quality metrics
             current_params: Current synthesis parameters
-        
+
         Returns:
             Optimized parameters dictionary
         """
@@ -272,7 +271,7 @@ class QualityOptimizer:
         # Apply recommendations
         for recommendation in analysis["recommendations"]:
             action = recommendation["action"]
-            parameter = recommendation["parameter"]
+            recommendation["parameter"]
             value = recommendation["value"]
             priority = recommendation.get("priority", "medium")
 
@@ -304,14 +303,14 @@ class QualityOptimizer:
         return optimized_params
 
     def suggest_engine(
-        self, target_metrics: Optional[Dict[str, Any]] = None
+        self, target_metrics: dict[str, Any] | None = None
     ) -> str:
         """
         Suggest best engine based on target quality requirements.
-        
+
         Args:
             target_metrics: Optional target metrics (uses tier defaults if not provided)
-        
+
         Returns:
             Suggested engine name
         """
@@ -367,10 +366,10 @@ class QualityOptimizer:
 
         return best_engine
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """
         Get summary of optimization history.
-        
+
         Returns:
             Summary dictionary
         """
@@ -394,18 +393,18 @@ class QualityOptimizer:
 
 
 def optimize_synthesis_for_quality(
-    metrics: Dict[str, Any],
-    current_params: Dict[str, Any],
+    metrics: dict[str, Any],
+    current_params: dict[str, Any],
     target_tier: str = "standard",
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Convenience function to optimize synthesis parameters.
-    
+
     Args:
         metrics: Current quality metrics
         current_params: Current synthesis parameters
         target_tier: Target quality tier
-    
+
     Returns:
         Tuple of (optimized_params, analysis)
     """

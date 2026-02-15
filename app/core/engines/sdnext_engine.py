@@ -11,12 +11,13 @@ Compatible with:
 - HTTP API for image generation
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 import os
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PIL import Image
@@ -47,7 +48,7 @@ class SDNextEngine(EngineProtocol):
         sampler: str = "Euler a",
         steps: int = 20,
         cfg_scale: float = 7.0,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """Initialize SD.Next engine."""
@@ -100,17 +101,16 @@ class SDNextEngine(EngineProtocol):
         negative_prompt: str = "",
         width: int = 512,
         height: int = 512,
-        steps: Optional[int] = None,
-        cfg_scale: Optional[float] = None,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        steps: int | None = None,
+        cfg_scale: float | None = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """Generate image using SD.Next (same API as AUTOMATIC1111)."""
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             payload = {
@@ -210,7 +210,7 @@ class SDNextEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -232,7 +232,7 @@ def create_sdnext_engine(
     sampler: str = "Euler a",
     steps: int = 20,
     cfg_scale: float = 7.0,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> SDNextEngine:
     """Factory function to create an SD.Next engine instance."""

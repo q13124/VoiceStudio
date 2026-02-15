@@ -88,6 +88,12 @@ PyPDF2>=3.0.1  # PDF processing for MCP unlock-pdf integration
 protobuf>=5.28.3
 
 # ============================================================================
+# Database (Required for production - prevents placeholder mode)
+# ============================================================================
+aiosqlite>=0.19.0
+
+# ============================================================================
 # Note: Engine-specific dependencies are in requirements_engines.txt
 # ============================================================================
 
+eval_type_backport>=0.3.1  # Python 3.10+ type syntax backport for Pydantic

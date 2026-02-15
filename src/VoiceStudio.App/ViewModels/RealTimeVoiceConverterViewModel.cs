@@ -118,11 +118,14 @@ namespace VoiceStudio.App.ViewModels
       // Initialize WebSocket client via factory (GAP-009 remediation)
       if (_webSocketClientFactory != null)
       {
-        _webSocketClient = _webSocketClientFactory.CreateRealtimeVoiceClient();
-        _webSocketClient.AudioDataReceived += OnAudioDataReceived;
-        _webSocketClient.StatusChanged += OnConversionStatusChanged;
-        _webSocketClient.QualityMetricsUpdated += OnQualityMetricsUpdated;
-        _webSocketClient.LatencyInfoReceived += OnLatencyInfoReceived;
+        _webSocketClient = _webSocketClientFactory.CreateRealtimeVoiceClient() as RealtimeVoiceWebSocketClient;
+        if (_webSocketClient != null)
+        {
+          _webSocketClient.AudioDataReceived += OnAudioDataReceived;
+          _webSocketClient.StatusChanged += OnConversionStatusChanged;
+          _webSocketClient.QualityMetricsUpdated += OnQualityMetricsUpdated;
+          _webSocketClient.LatencyInfoReceived += OnLatencyInfoReceived;
+        }
       }
       else if (_backendClient.WebSocketService != null)
       {
@@ -245,8 +248,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        // Silently handle errors in background monitoring
-        System.Diagnostics.Debug.WriteLine($"Error updating metrics: {ex.Message}");
+        // Log background monitoring errors silently (non-critical)
+        ErrorLoggingService?.LogWarning($"Error updating metrics: {ex.Message}", "UpdateMetrics");
       }
     }
 
@@ -335,7 +338,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error loading quality metrics: {ex.Message}");
+        // Log quality metrics failure silently (non-critical background operation)
+        ErrorLoggingService?.LogWarning($"Error loading quality metrics: {ex.Message}", "LoadQualityMetrics");
       }
     }
 

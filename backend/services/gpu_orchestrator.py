@@ -11,14 +11,15 @@ Features:
 - Workload distribution
 """
 
+from __future__ import annotations
+
 import asyncio
+import contextlib
 import logging
-import os
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,18 +49,18 @@ class GPUInfo:
     vendor: GPUVendor
     total_memory_mb: int
     available_memory_mb: int
-    compute_capability: Optional[Tuple[int, int]]
-    temperature_c: Optional[float]
+    compute_capability: tuple[int, int] | None
+    temperature_c: float | None
     utilization_percent: float
-    power_usage_watts: Optional[float]
+    power_usage_watts: float | None
     is_available: bool
-    
+
     @property
     def memory_utilization(self) -> float:
         if self.total_memory_mb == 0:
             return 0.0
         return (self.total_memory_mb - self.available_memory_mb) / self.total_memory_mb
-    
+
     @property
     def memory_state(self) -> GPUMemoryState:
         util = self.memory_utilization
@@ -71,8 +72,8 @@ class GPUInfo:
             return GPUMemoryState.HIGH
         else:
             return GPUMemoryState.CRITICAL
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "device_id": self.device_id,
             "name": self.name,
@@ -98,7 +99,7 @@ class GPUTask:
     memory_required_mb: int
     started_at: datetime
     priority: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class LoadBalancingStrategy(Enum):
@@ -112,55 +113,55 @@ class LoadBalancingStrategy(Enum):
 class GPUOrchestrator:
     """
     GPU resource orchestration service.
-    
+
     Phase 13.1: Multi-GPU Support
-    
+
     Features:
     - Automatic GPU detection
     - Load balancing across GPUs
     - Memory-aware task scheduling
     - GPU health monitoring
     """
-    
+
     def __init__(self):
         self._initialized = False
-        self._gpus: List[GPUInfo] = []
-        self._active_tasks: Dict[str, GPUTask] = {}
-        self._gpu_locks: Dict[int, asyncio.Lock] = {}
+        self._gpus: list[GPUInfo] = []
+        self._active_tasks: dict[str, GPUTask] = {}
+        self._gpu_locks: dict[int, asyncio.Lock] = {}
         self._strategy = LoadBalancingStrategy.MEMORY_AWARE
         self._cuda_available = False
-        self._monitoring_task: Optional[asyncio.Task] = None
-        
+        self._monitoring_task: asyncio.Task | None = None
+
         logger.info("GPUOrchestrator created")
-    
+
     async def initialize(self) -> bool:
         """Initialize the GPU orchestrator."""
         if self._initialized:
             return True
-        
+
         try:
             # Detect GPUs
             self._gpus = await self._detect_gpus()
-            
+
             # Create locks for each GPU
             for gpu in self._gpus:
                 self._gpu_locks[gpu.device_id] = asyncio.Lock()
-            
+
             # Start monitoring
             self._monitoring_task = asyncio.create_task(self._monitor_gpus())
-            
+
             self._initialized = True
             logger.info(f"GPUOrchestrator initialized with {len(self._gpus)} GPU(s)")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize GPUOrchestrator: {e}")
             return False
-    
-    async def _detect_gpus(self) -> List[GPUInfo]:
+
+    async def _detect_gpus(self) -> list[GPUInfo]:
         """Detect available GPUs."""
         gpus = []
-        
+
         # Try CUDA/NVIDIA
         try:
             import torch
@@ -168,16 +169,16 @@ class GPUOrchestrator:
                 self._cuda_available = True
                 for i in range(torch.cuda.device_count()):
                     props = torch.cuda.get_device_properties(i)
-                    
+
                     # Get memory info
                     torch.cuda.set_device(i)
                     total_memory = props.total_memory // (1024 * 1024)
-                    
+
                     try:
                         free_memory = torch.cuda.mem_get_info(i)[0] // (1024 * 1024)
                     except Exception:
                         free_memory = total_memory // 2  # Estimate
-                    
+
                     gpus.append(GPUInfo(
                         device_id=i,
                         name=props.name,
@@ -190,13 +191,13 @@ class GPUOrchestrator:
                         power_usage_watts=None,
                         is_available=True,
                     ))
-                
+
                 logger.info(f"Detected {len(gpus)} NVIDIA GPU(s)")
         except ImportError:
             logger.info("PyTorch not available, skipping CUDA detection")
         except Exception as e:
             logger.warning(f"CUDA detection failed: {e}")
-        
+
         # If no GPUs found, check for CPU fallback
         if not gpus:
             logger.info("No GPUs detected, using CPU fallback")
@@ -212,28 +213,28 @@ class GPUOrchestrator:
                 power_usage_watts=None,
                 is_available=True,
             ))
-        
+
         return gpus
-    
+
     async def _monitor_gpus(self):
         """Continuous GPU monitoring loop."""
         while True:
             try:
                 await asyncio.sleep(5)  # Monitor every 5 seconds
-                
+
                 if self._cuda_available:
                     await self._update_gpu_stats()
-            
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"GPU monitoring error: {e}")
-    
+
     async def _update_gpu_stats(self):
         """Update GPU statistics."""
         try:
             import torch
-            
+
             for gpu in self._gpus:
                 if gpu.device_id >= 0 and gpu.vendor == GPUVendor.NVIDIA:
                     try:
@@ -245,39 +246,39 @@ class GPUOrchestrator:
         except ImportError:
             # Gap Analysis Fix: Log when torch is not available
             logger.debug("PyTorch not available for GPU memory refresh")
-    
+
     async def acquire_gpu(
         self,
         task_id: str,
         task_type: str,
         memory_required_mb: int = 0,
-        preferred_device: Optional[int] = None,
-    ) -> Optional[int]:
+        preferred_device: int | None = None,
+    ) -> int | None:
         """
         Acquire a GPU for a task.
-        
+
         Args:
             task_id: Unique task identifier
             task_type: Type of task (synthesis, training, etc.)
             memory_required_mb: Estimated memory requirement
             preferred_device: Optional preferred GPU device ID
-            
+
         Returns:
             GPU device ID, or None if no GPU available
         """
         if not self._initialized:
             await self.initialize()
-        
+
         # Select GPU based on strategy
         device_id = await self._select_gpu(
             memory_required_mb,
             preferred_device,
         )
-        
+
         if device_id is None:
             logger.warning(f"No GPU available for task {task_id}")
             return None
-        
+
         # Register task
         self._active_tasks[task_id] = GPUTask(
             task_id=task_id,
@@ -286,37 +287,37 @@ class GPUOrchestrator:
             memory_required_mb=memory_required_mb,
             started_at=datetime.now(),
         )
-        
+
         logger.debug(f"Acquired GPU {device_id} for task {task_id}")
         return device_id
-    
+
     async def release_gpu(self, task_id: str):
         """Release a GPU from a task."""
         if task_id in self._active_tasks:
             task = self._active_tasks.pop(task_id)
             logger.debug(f"Released GPU {task.device_id} from task {task_id}")
-    
+
     async def _select_gpu(
         self,
         memory_required_mb: int,
-        preferred_device: Optional[int],
-    ) -> Optional[int]:
+        preferred_device: int | None,
+    ) -> int | None:
         """Select the best GPU for a task."""
         available_gpus = [
             gpu for gpu in self._gpus
             if gpu.is_available and gpu.memory_state != GPUMemoryState.CRITICAL
         ]
-        
+
         if not available_gpus:
             return None
-        
+
         # If preferred device is valid and available, use it
         if preferred_device is not None:
             for gpu in available_gpus:
                 if gpu.device_id == preferred_device:
                     if memory_required_mb == 0 or gpu.available_memory_mb >= memory_required_mb:
                         return gpu.device_id
-        
+
         # Apply load balancing strategy
         if self._strategy == LoadBalancingStrategy.ROUND_ROBIN:
             return self._select_round_robin(available_gpus)
@@ -326,28 +327,28 @@ class GPUOrchestrator:
             return self._select_memory_aware(available_gpus, memory_required_mb)
         else:
             return available_gpus[0].device_id
-    
-    def _select_round_robin(self, gpus: List[GPUInfo]) -> int:
+
+    def _select_round_robin(self, gpus: list[GPUInfo]) -> int:
         """Round-robin GPU selection."""
         # Count tasks per GPU
         task_counts = {gpu.device_id: 0 for gpu in gpus}
         for task in self._active_tasks.values():
             if task.device_id in task_counts:
                 task_counts[task.device_id] += 1
-        
+
         # Select GPU with fewest tasks
         min_tasks = min(task_counts.values())
         for gpu in gpus:
             if task_counts[gpu.device_id] == min_tasks:
                 return gpu.device_id
-        
+
         return gpus[0].device_id
-    
-    def _select_least_loaded(self, gpus: List[GPUInfo]) -> int:
+
+    def _select_least_loaded(self, gpus: list[GPUInfo]) -> int:
         """Select GPU with lowest utilization."""
         return min(gpus, key=lambda g: g.utilization_percent).device_id
-    
-    def _select_memory_aware(self, gpus: List[GPUInfo], required_mb: int) -> int:
+
+    def _select_memory_aware(self, gpus: list[GPUInfo], required_mb: int) -> int:
         """Select GPU with sufficient memory and lowest utilization."""
         # Filter by memory requirement
         if required_mb > 0:
@@ -356,47 +357,45 @@ class GPUOrchestrator:
                 suitable = gpus  # Fall back to all GPUs
         else:
             suitable = gpus
-        
+
         # Select by lowest memory utilization
         return min(suitable, key=lambda g: g.memory_utilization).device_id
-    
+
     def set_strategy(self, strategy: LoadBalancingStrategy):
         """Set the load balancing strategy."""
         self._strategy = strategy
         logger.info(f"GPU load balancing strategy set to: {strategy.value}")
-    
-    def get_gpu_info(self, device_id: Optional[int] = None) -> List[GPUInfo]:
+
+    def get_gpu_info(self, device_id: int | None = None) -> list[GPUInfo]:
         """Get GPU information."""
         if device_id is not None:
             return [g for g in self._gpus if g.device_id == device_id]
         return self._gpus.copy()
-    
-    def get_active_tasks(self, device_id: Optional[int] = None) -> List[GPUTask]:
+
+    def get_active_tasks(self, device_id: int | None = None) -> list[GPUTask]:
         """Get active tasks."""
         tasks = list(self._active_tasks.values())
         if device_id is not None:
             tasks = [t for t in tasks if t.device_id == device_id]
         return tasks
-    
+
     def get_gpu_count(self) -> int:
         """Get the number of available GPUs."""
         return len([g for g in self._gpus if g.is_available and g.device_id >= 0])
-    
+
     async def cleanup(self):
         """Cleanup resources."""
         if self._monitoring_task:
             self._monitoring_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._monitoring_task
-            except asyncio.CancelledError:
-                pass
-        
+
         self._active_tasks.clear()
         logger.info("GPUOrchestrator cleaned up")
 
 
 # Singleton instance
-_gpu_orchestrator: Optional[GPUOrchestrator] = None
+_gpu_orchestrator: GPUOrchestrator | None = None
 
 
 def get_gpu_orchestrator() -> GPUOrchestrator:

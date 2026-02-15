@@ -7,11 +7,13 @@ Compatible with:
 - NumPy 1.26.4+
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -37,7 +39,7 @@ logger = logging.getLogger(__name__)
 class AudioBufferPool:
     """
     Pool of reusable audio buffers for memory efficiency.
-    
+
     Features:
     - Buffer pooling by size and dtype
     - Automatic cleanup of unused buffers
@@ -70,7 +72,7 @@ class AudioBufferPool:
         self.enable_memory_pressure_cleanup = enable_memory_pressure_cleanup
 
         # Pool storage: {buffer_key: (buffer, timestamp)}
-        self._pool: OrderedDict[str, Tuple[np.ndarray, float]] = OrderedDict()
+        self._pool: OrderedDict[str, tuple[np.ndarray, float]] = OrderedDict()
 
         # Statistics
         self._hits = 0
@@ -129,7 +131,7 @@ class AudioBufferPool:
                     best_match_size = buf_size
 
             if best_match_key:
-                buffer, timestamp = self._pool.pop(best_match_key)
+                buffer, _timestamp = self._pool.pop(best_match_key)
                 if len(buffer) > size:
                     buffer = buffer[:size]
                 self._hits += 1
@@ -170,7 +172,7 @@ class AudioBufferPool:
             self._pool.move_to_end(buffer_key)  # LRU update
             logger.debug(f"Returned buffer to pool: {buffer_key}")
 
-    def _get_system_memory_usage_percent(self) -> Optional[float]:
+    def _get_system_memory_usage_percent(self) -> float | None:
         """Get current system memory usage percentage."""
         if not HAS_PSUTIL:
             return None
@@ -234,7 +236,7 @@ class AudioBufferPool:
             self._pool.clear()
             logger.info(f"Cleared {count} buffers from pool")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get pool statistics (enhanced)."""
         with self._lock:
             total_requests = self._hits + self._misses
@@ -276,7 +278,7 @@ class AudioBufferPool:
 class AudioBufferManager:
     """
     Centralized audio buffer management system.
-    
+
     Features:
     - Automatic buffer cleanup
     - Buffer pooling/reuse
@@ -322,7 +324,7 @@ class AudioBufferManager:
             self._pool = None
 
         # Active buffers tracking
-        self._active_buffers: Dict[int, Tuple[np.ndarray, float]] = {}
+        self._active_buffers: dict[int, tuple[np.ndarray, float]] = {}
         self._buffer_counter = 0
         self._lock = threading.Lock()
 
@@ -334,7 +336,7 @@ class AudioBufferManager:
 
     def allocate_buffer(
         self, size: int, dtype: np.dtype = np.float32
-    ) -> Tuple[int, np.ndarray]:
+    ) -> tuple[int, np.ndarray]:
         """
         Allocate a new audio buffer.
 
@@ -401,7 +403,7 @@ class AudioBufferManager:
                 f"Freed buffer {buffer_id} ({buffer_memory_mb:.2f} MB)"
             )
 
-    def _get_system_memory_usage_percent(self) -> Optional[float]:
+    def _get_system_memory_usage_percent(self) -> float | None:
         """Get current system memory usage percentage."""
         if not HAS_PSUTIL:
             return None
@@ -434,7 +436,7 @@ class AudioBufferManager:
                     # Aggressive cleanup - reduce max_age for pressure
                     max_age_seconds = min(max_age_seconds, 60.0)  # Max 1 minute
 
-            for buffer_id, (buffer, timestamp) in self._active_buffers.items():
+            for buffer_id, (_buffer, timestamp) in self._active_buffers.items():
                 if current_time - timestamp > max_age_seconds:
                     to_remove.append(buffer_id)
 
@@ -461,7 +463,7 @@ class AudioBufferManager:
             if to_remove:
                 logger.info(f"Cleaned up {len(to_remove)} old buffers")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get buffer manager statistics (enhanced)."""
         with self._lock:
             current_memory = sum(
@@ -510,7 +512,7 @@ class AudioBufferManager:
 
 
 # Global buffer manager instance
-_buffer_manager: Optional[AudioBufferManager] = None
+_buffer_manager: AudioBufferManager | None = None
 
 
 def get_buffer_manager() -> AudioBufferManager:
@@ -529,8 +531,8 @@ def set_buffer_manager(manager: AudioBufferManager):
 
 # Export
 __all__ = [
-    "AudioBufferPool",
     "AudioBufferManager",
+    "AudioBufferPool",
     "get_buffer_manager",
     "set_buffer_manager",
 ]

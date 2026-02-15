@@ -6,13 +6,15 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ class ContentHashCache:
     - Cache invalidation
     """
 
-    def __init__(self, cache_file: Optional[Path] = None):
+    def __init__(self, cache_file: Path | None = None):
         """
         Initialize Content Hash Cache.
 
@@ -38,7 +40,7 @@ class ContentHashCache:
             cache_file: Optional path to cache file for persistence
         """
         self.cache_file = cache_file or Path(".content_hash_cache.json")
-        self._hash_cache: Dict[str, Dict[str, Any]] = {}
+        self._hash_cache: dict[str, dict[str, Any]] = {}
         self._load_cache()
 
     def compute_hash(
@@ -95,7 +97,7 @@ class ContentHashCache:
         logger.debug(f"Computed hash for {file_path}: {hash_value[:16]}...")
         return hash_value
 
-    def get_hash(self, file_path: Path) -> Optional[str]:
+    def get_hash(self, file_path: Path) -> str | None:
         """
         Get cached hash for a file.
 
@@ -123,8 +125,8 @@ class ContentHashCache:
         return cached_entry["hash"]
 
     def find_duplicates(
-        self, file_paths: List[Path], algorithm: str = "sha256"
-    ) -> Dict[str, List[str]]:
+        self, file_paths: list[Path], algorithm: str = "sha256"
+    ) -> dict[str, list[str]]:
         """
         Find duplicate files by content hash.
 
@@ -135,7 +137,7 @@ class ContentHashCache:
         Returns:
             Dictionary mapping hash to list of file paths with that hash
         """
-        hash_to_files: Dict[str, List[str]] = {}
+        hash_to_files: dict[str, list[str]] = {}
 
         for file_path in file_paths:
             try:
@@ -190,7 +192,7 @@ class ContentHashCache:
 
         return False
 
-    def get_files_by_hash(self, hash_value: str) -> List[str]:
+    def get_files_by_hash(self, hash_value: str) -> list[str]:
         """
         Get all files with a specific hash.
 
@@ -206,7 +208,7 @@ class ContentHashCache:
                 files.append(cached_path)
         return files
 
-    def invalidate(self, file_path: Optional[Path] = None):
+    def invalidate(self, file_path: Path | None = None):
         """
         Invalidate cache entries.
 
@@ -226,7 +228,7 @@ class ContentHashCache:
         """Load cache from file."""
         if self.cache_file.exists():
             try:
-                with open(self.cache_file, "r", encoding="utf-8") as f:
+                with open(self.cache_file, encoding="utf-8") as f:
                     self._hash_cache = json.load(f)
                 logger.info(f"Loaded {len(self._hash_cache)} cache entries")
             except Exception as e:
@@ -252,7 +254,7 @@ class ContentHashCache:
                 except Exception:
                     pass
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 
@@ -272,7 +274,7 @@ class ContentHashCache:
     def cleanup_invalid_entries(self):
         """Remove cache entries for files that no longer exist."""
         invalid_keys = []
-        for cache_key in self._hash_cache.keys():
+        for cache_key in self._hash_cache:
             file_path = Path(cache_key)
             if not file_path.exists():
                 invalid_keys.append(cache_key)
@@ -285,7 +287,7 @@ class ContentHashCache:
 
 
 def create_content_hash_cache(
-    cache_file: Optional[Path] = None,
+    cache_file: Path | None = None,
 ) -> ContentHashCache:
     """
     Factory function to create a Content Hash Cache instance.

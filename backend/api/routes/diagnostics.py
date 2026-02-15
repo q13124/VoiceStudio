@@ -5,16 +5,16 @@ Provides API endpoints for system diagnostics and troubleshooting.
 All operations are local-first and require no external dependencies.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.services.diagnostics import (
-    DiagnosticsService,
-    DiagnosticReport,
     DiagnosticCheck,
+    DiagnosticReport,
     get_diagnostics_service,
 )
 
@@ -30,31 +30,31 @@ router = APIRouter(prefix="/api/diagnostics", tags=["diagnostics"])
 
 class DiagnosticCheckResponse(BaseModel):
     """Response model for a diagnostic check."""
-    
+
     name: str
     category: str
     status: str
     message: str
-    details: Dict = {}
+    details: dict = {}
     duration_ms: float = 0.0
 
 
 class DiagnosticReportResponse(BaseModel):
     """Response model for diagnostic report."""
-    
+
     generated_at: str
     hostname: str
     platform: str
     python_version: str
     overall_status: str
-    checks: List[DiagnosticCheckResponse]
-    environment: Dict
-    recommendations: List[str]
+    checks: list[DiagnosticCheckResponse]
+    environment: dict
+    recommendations: list[str]
 
 
 class QuickStatusResponse(BaseModel):
     """Response model for quick status."""
-    
+
     timestamp: str
     hostname: str
     platform: str
@@ -64,7 +64,7 @@ class QuickStatusResponse(BaseModel):
 
 class SaveReportResponse(BaseModel):
     """Response model for save report."""
-    
+
     success: bool
     filepath: str
     message: str
@@ -110,7 +110,7 @@ def _convert_report(report: DiagnosticReport) -> DiagnosticReportResponse:
 async def get_quick_status():
     """
     Get quick system status.
-    
+
     Returns a lightweight status check without running full diagnostics.
     """
     try:
@@ -131,7 +131,7 @@ async def run_diagnostics(
 ):
     """
     Run full system diagnostics.
-    
+
     Performs comprehensive system checks including:
     - Python environment
     - System resources (CPU, memory, disk)
@@ -139,7 +139,7 @@ async def run_diagnostics(
     - Path configuration
     - Backend services
     - Network connectivity
-    
+
     Returns a detailed report with recommendations.
     """
     try:
@@ -151,34 +151,34 @@ async def run_diagnostics(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/checks", response_model=List[DiagnosticCheckResponse])
+@router.get("/checks", response_model=list[DiagnosticCheckResponse])
 async def get_checks(
-    category: Optional[str] = Query(
+    category: str | None = Query(
         None,
         description="Filter by category"
     ),
-    status: Optional[str] = Query(
+    status: str | None = Query(
         None,
         description="Filter by status (pass, warn, fail)"
     ),
 ):
     """
     Run diagnostics and get individual check results.
-    
+
     Allows filtering by category and status.
     """
     try:
         service = get_diagnostics_service()
         report = service.run_diagnostics(include_sensitive=False)
-        
+
         checks = report.checks
-        
+
         if category:
             checks = [c for c in checks if c.category == category]
-        
+
         if status:
             checks = [c for c in checks if c.status == status]
-        
+
         return [_convert_check(c) for c in checks]
     except Exception as e:
         logger.error(f"Error getting checks: {e}")
@@ -204,21 +204,21 @@ async def get_categories():
 
 @router.post("/save", response_model=SaveReportResponse)
 async def save_diagnostic_report(
-    filename: Optional[str] = Query(
+    filename: str | None = Query(
         None,
         description="Custom filename for the report"
     ),
 ):
     """
     Run diagnostics and save report to file.
-    
+
     The report is saved to .buildlogs/diagnostics/ directory.
     """
     try:
         service = get_diagnostics_service()
         report = service.run_diagnostics(include_sensitive=False)
         filepath = service.save_report(report, filename)
-        
+
         return SaveReportResponse(
             success=True,
             filepath=str(filepath),
@@ -237,7 +237,7 @@ async def get_recommendations():
     try:
         service = get_diagnostics_service()
         report = service.run_diagnostics(include_sensitive=False)
-        
+
         return {
             "overall_status": report.overall_status,
             "recommendations": report.recommendations,
@@ -253,13 +253,13 @@ async def get_recommendations():
 async def get_environment_info():
     """
     Get environment configuration.
-    
+
     Returns relevant environment variables and system information.
     """
     try:
         service = get_diagnostics_service()
         report = service.run_diagnostics(include_sensitive=False)
-        
+
         return {
             "environment": report.environment,
             "hostname": report.hostname,

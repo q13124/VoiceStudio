@@ -3,7 +3,7 @@
 VoiceStudio Model Download Script
 
 Downloads all free/open-source models for VoiceStudio engines.
-Verifies checksums and stores models in %PROGRAMDATA%\VoiceStudio\models\
+Verifies checksums and stores models in %PROGRAMDATA%\\VoiceStudio\\models\
 
 Usage:
     python tools/download_all_free_models.py                    # Download all
@@ -21,7 +21,6 @@ import sys
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 try:
@@ -81,7 +80,7 @@ def verify_checksum(file_path: Path, expected_sha256: str) -> bool:
 
 
 def download_file(
-    url: str, destination: Path, expected_sha256: Optional[str] = None
+    url: str, destination: Path, expected_sha256: str | None = None
 ) -> bool:
     """Download a file from URL with checksum verification."""
     logger.info(f"Downloading {url} to {destination}")
@@ -154,10 +153,10 @@ def extract_archive(archive_path: Path, extract_to: Path) -> bool:
         return False
 
 
-def load_index() -> Dict:
+def load_index() -> dict:
     """Load models index file."""
     if INDEX_FILE.exists():
-        with open(INDEX_FILE, "r", encoding="utf-8") as f:
+        with open(INDEX_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {
         "version": "1.0",
@@ -166,14 +165,14 @@ def load_index() -> Dict:
     }
 
 
-def save_local_index(index_data: Dict):
+def save_local_index(index_data: dict):
     """Save local index file."""
     MODELS_BASE_DIR.mkdir(parents=True, exist_ok=True)
     with open(LOCAL_INDEX_FILE, "w", encoding="utf-8") as f:
         json.dump(index_data, f, indent=2, ensure_ascii=False)
 
 
-def get_engine_models(engine_id: Optional[str] = None) -> List[Dict]:
+def get_engine_models(engine_id: str | None = None) -> list[dict]:
     """Get list of models to download, filtered by engine if specified."""
     index_data = load_index()
     models = index_data.get("models", [])
@@ -193,7 +192,7 @@ def get_engine_models(engine_id: Optional[str] = None) -> List[Dict]:
     return free_models
 
 
-def is_model_downloaded(model: Dict) -> Tuple[bool, Optional[Path]]:
+def is_model_downloaded(model: dict) -> tuple[bool, Path | None]:
     """Check if model is already downloaded and verified."""
     engine_id = model.get("engine")
     model_name = model.get("name")
@@ -231,7 +230,7 @@ def is_model_downloaded(model: Dict) -> Tuple[bool, Optional[Path]]:
     return False, None
 
 
-def download_model(model: Dict) -> bool:
+def download_model(model: dict) -> bool:
     """Download and install a single model."""
     engine_id = model.get("engine")
     model_name = model.get("name")
@@ -278,7 +277,7 @@ def download_model(model: Dict) -> bool:
     return True
 
 
-def verify_existing_models() -> Tuple[int, int]:
+def verify_existing_models() -> tuple[int, int]:
     """Verify checksums of all existing models."""
     index_data = load_index()
     models = index_data.get("models", [])

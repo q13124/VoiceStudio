@@ -9,9 +9,9 @@ Tests cover:
 - Statistics tracking
 """
 
+import contextlib
 import time
 from collections import OrderedDict
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
@@ -38,10 +38,8 @@ def buffer_pool():
         cleanup_interval_seconds=10.0,
     )
     yield pool
-    try:
+    with contextlib.suppress(Exception):
         pool.cleanup()
-    except Exception:
-        ...
 
 
 class TestAudioBufferPoolImports:
@@ -127,7 +125,7 @@ class TestAudioBufferPoolBasicOperations:
         # Get another buffer of same size - should reuse from pool
         initial_hits = buffer_pool._hits
         initial_reused = buffer_pool._reused
-        buffer2 = buffer_pool.get_buffer(size=1000, dtype=np.float32)
+        buffer_pool.get_buffer(size=1000, dtype=np.float32)
 
         # Should reuse from pool (hits and reused should increase)
         # Note: The buffer is popped from pool, so we check if stats increased
@@ -283,7 +281,7 @@ class TestAudioBufferPoolStatistics:
         # Get buffer again - should hit from pool
         initial_hits = buffer_pool._hits
         initial_reused = buffer_pool._reused
-        buf3 = buffer_pool.get_buffer(size=1000, dtype=np.float32)
+        buffer_pool.get_buffer(size=1000, dtype=np.float32)
         # Now we should have at least one hit (if buffer was in pool)
         assert buffer_pool._hits >= initial_hits
         assert buffer_pool._reused >= initial_reused
@@ -295,7 +293,7 @@ class TestAudioBufferPoolStatistics:
         # Return buffer
         buffer_pool.return_buffer(buf)
         # Get buffer again (should hit from pool)
-        buf2 = buffer_pool.get_buffer(size=1000, dtype=np.float32)
+        buffer_pool.get_buffer(size=1000, dtype=np.float32)
 
         stats = buffer_pool.get_stats()
 

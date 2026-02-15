@@ -8,16 +8,17 @@ Provides comprehensive temporary file lifecycle management:
 - Integration with background task scheduler
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import tempfile
 import threading
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 try:
     import psutil
@@ -39,8 +40,8 @@ class TempFileInfo:
     last_accessed: datetime
     size_bytes: int
     is_directory: bool
-    owner: Optional[str] = None  # Process/component that created it
-    tags: Set[str] = field(default_factory=set)  # Tags for categorization
+    owner: str | None = None  # Process/component that created it
+    tags: set[str] = field(default_factory=set)  # Tags for categorization
 
     def update_access(self):
         """Update last accessed timestamp."""
@@ -73,7 +74,7 @@ class TempFileManager:
 
     def __init__(
         self,
-        temp_root: Optional[Path] = None,
+        temp_root: Path | None = None,
         max_age_seconds: float = 3600.0,  # 1 hour default
         max_disk_usage_percent: float = 90.0,  # Cleanup when disk > 90%
         cleanup_interval_seconds: float = 300.0,  # 5 minutes
@@ -97,13 +98,13 @@ class TempFileManager:
         self.cleanup_interval_seconds = cleanup_interval_seconds
 
         # Track all temporary files
-        self._temp_files: Dict[Path, TempFileInfo] = {}
+        self._temp_files: dict[Path, TempFileInfo] = {}
         self._total_size_bytes = 0
         self._cleanup_count = 0
         self._last_cleanup = None
 
         # Background cleanup thread
-        self._cleanup_thread: Optional[threading.Thread] = None
+        self._cleanup_thread: threading.Thread | None = None
         self._stop_cleanup = threading.Event()
         self._cleanup_running = False
         self._lock = threading.Lock()
@@ -112,8 +113,8 @@ class TempFileManager:
         self,
         suffix: str = "",
         prefix: str = "vs_",
-        owner: Optional[str] = None,
-        tags: Optional[Set[str]] = None,
+        owner: str | None = None,
+        tags: set[str] | None = None,
     ) -> Path:
         """
         Create a tracked temporary file.
@@ -156,8 +157,8 @@ class TempFileManager:
         self,
         suffix: str = "",
         prefix: str = "vs_",
-        owner: Optional[str] = None,
-        tags: Optional[Set[str]] = None,
+        owner: str | None = None,
+        tags: set[str] | None = None,
     ) -> Path:
         """
         Create a tracked temporary directory.
@@ -198,8 +199,8 @@ class TempFileManager:
     def register_temp_file(
         self,
         path: Path,
-        owner: Optional[str] = None,
-        tags: Optional[Set[str]] = None,
+        owner: str | None = None,
+        tags: set[str] | None = None,
     ):
         """
         Register an existing temporary file for tracking.
@@ -265,8 +266,8 @@ class TempFileManager:
             return False
 
     def cleanup_old_files(
-        self, max_age_seconds: Optional[float] = None
-    ) -> Dict[str, int]:
+        self, max_age_seconds: float | None = None
+    ) -> dict[str, int]:
         """
         Clean up old temporary files.
 
@@ -313,7 +314,7 @@ class TempFileManager:
             "failed_count": failed_count,
         }
 
-    def cleanup_by_disk_space(self) -> Dict[str, Any]:
+    def cleanup_by_disk_space(self) -> dict[str, Any]:
         """
         Clean up temporary files based on disk space usage.
 
@@ -368,7 +369,7 @@ class TempFileManager:
             logger.error(f"Disk space cleanup failed: {e}")
             return {"error": str(e)}
 
-    def cleanup_all(self) -> Dict[str, int]:
+    def cleanup_all(self) -> dict[str, int]:
         """
         Clean up all temporary files.
 
@@ -400,7 +401,7 @@ class TempFileManager:
             "failed_count": failed_count,
         }
 
-    def get_disk_space_info(self) -> Dict[str, Any]:
+    def get_disk_space_info(self) -> dict[str, Any]:
         """Get disk space information for temp directory."""
         if not HAS_PSUTIL:
             return {"error": "psutil not available"}
@@ -417,7 +418,7 @@ class TempFileManager:
             logger.error(f"Failed to get disk space info: {e}")
             return {"error": str(e)}
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get temporary file manager statistics."""
         # Update sizes
         for info in self._temp_files.values():
@@ -428,13 +429,13 @@ class TempFileManager:
         )
 
         # Group by owner
-        by_owner: Dict[str, int] = {}
+        by_owner: dict[str, int] = {}
         for info in self._temp_files.values():
             owner = info.owner or "unknown"
             by_owner[owner] = by_owner.get(owner, 0) + 1
 
         # Group by tags
-        by_tag: Dict[str, int] = {}
+        by_tag: dict[str, int] = {}
         for info in self._temp_files.values():
             for tag in info.tags:
                 by_tag[tag] = by_tag.get(tag, 0) + 1
@@ -454,10 +455,10 @@ class TempFileManager:
 
     def list_temp_files(
         self,
-        owner: Optional[str] = None,
-        tags: Optional[Set[str]] = None,
-        max_age_seconds: Optional[float] = None,
-    ) -> List[Dict[str, Any]]:
+        owner: str | None = None,
+        tags: set[str] | None = None,
+        max_age_seconds: float | None = None,
+    ) -> list[dict[str, Any]]:
         """
         List temporary files with optional filtering.
 
@@ -590,7 +591,7 @@ class TempFileManager:
 
 
 # Global temp file manager instance
-_temp_manager: Optional[TempFileManager] = None
+_temp_manager: TempFileManager | None = None
 
 
 def get_temp_file_manager() -> TempFileManager:

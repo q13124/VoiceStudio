@@ -125,19 +125,35 @@ namespace VoiceStudio.App.Services
 
         #region Execution
 
+        private static void FileLog(string msg)
+        {
+            var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoiceStudio", "import_debug.log");
+            // ALLOWED: empty catch - Best effort debug logging, failure is acceptable
+            try { System.IO.File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}{Environment.NewLine}"); } catch { }
+        }
+
         public async Task ExecuteAsync(string commandId, object? parameter = null, CancellationToken cancellationToken = default)
         {
+            Debug.WriteLine($"[CommandRegistry] ExecuteAsync called for: {commandId}");
+            FileLog($"[CommandRegistry] ExecuteAsync called for: {commandId}");
             if (!_commands.TryGetValue(commandId, out var entry))
             {
                 Debug.WriteLine($"[CommandRegistry] Command not found: {commandId}");
+                FileLog($"[CommandRegistry] Command not found: {commandId}");
+                FileLog($"[CommandRegistry] Registered commands: {string.Join(", ", _commands.Keys)}");
                 throw new InvalidOperationException($"Command not registered: {commandId}");
             }
 
+            Debug.WriteLine($"[CommandRegistry] Found command: {commandId}, IsEnabled: {entry.Descriptor.IsEnabled}");
+            FileLog($"[CommandRegistry] Found command: {commandId}, IsEnabled: {entry.Descriptor.IsEnabled}");
             if (!entry.Descriptor.IsEnabled)
             {
                 Debug.WriteLine($"[CommandRegistry] Command disabled: {commandId}");
+                FileLog($"[CommandRegistry] Command disabled: {commandId}");
                 return;
             }
+            Debug.WriteLine($"[CommandRegistry] Executing handler for: {commandId}");
+            FileLog($"[CommandRegistry] Executing handler for: {commandId}");
 
             var stopwatch = Stopwatch.StartNew();
 

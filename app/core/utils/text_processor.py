@@ -7,8 +7,9 @@ Compatible with:
 - spacy>=3.8.7 (optional, for advanced NLP)
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,10 @@ except ImportError:
     )
 
 # Cache for loaded spacy models
-_spacy_models: Dict[str, any] = {}
+_spacy_models: dict[str, any] = {}
 
 
-def load_spacy_model(language: str = "en") -> Optional[any]:
+def load_spacy_model(language: str = "en") -> any | None:
     """
     Load spacy model for a specific language.
 
@@ -153,7 +154,7 @@ def preprocess_text(
 
 def extract_phonemes(
     text: str, language: str = "en"
-) -> Optional[List[Dict[str, Union[str, float]]]]:
+) -> list[dict[str, str | float]] | None:
     """
     Extract phonemes from text using spacy (if available).
 
@@ -195,7 +196,7 @@ def extract_phonemes(
 
 def segment_text(
     text: str, language: str = "en", max_length: int = 200
-) -> List[str]:
+) -> list[str]:
     """
     Segment text into sentences or chunks for TTS.
 
@@ -262,7 +263,7 @@ def segment_text(
 
 def analyze_text_quality(
     text: str, language: str = "en"
-) -> Dict[str, Union[int, float, List[str]]]:
+) -> dict[str, int | float | list[str]]:
     """
     Analyze text quality and characteristics.
 

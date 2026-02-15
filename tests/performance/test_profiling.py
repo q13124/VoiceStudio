@@ -10,7 +10,6 @@ CPU and memory profiling for:
 
 import logging
 import time
-from typing import Dict
 
 import pytest
 
@@ -47,7 +46,7 @@ except ImportError:
 class CPUProfiler:
     """CPU profiling utilities."""
 
-    def profile_function(self, func, *args, **kwargs) -> Dict:
+    def profile_function(self, func, *args, **kwargs) -> dict:
         """
         Profile CPU usage of a function.
 
@@ -101,7 +100,7 @@ class CPUProfiler:
 class MemoryProfiler:
     """Memory profiling utilities."""
 
-    def profile_function(self, func, *args, **kwargs) -> Dict:
+    def profile_function(self, func, *args, **kwargs) -> dict:
         """
         Profile memory usage of a function.
 
@@ -139,7 +138,7 @@ class MemoryProfiler:
             "memory_used_bytes": mem_after.rss - mem_before.rss,
         }
 
-    def get_memory_usage(self) -> Dict:
+    def get_memory_usage(self) -> dict:
         """
         Get current memory usage.
 

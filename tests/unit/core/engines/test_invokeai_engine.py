@@ -5,7 +5,7 @@ Tests InvokeAI image generation engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,7 +29,7 @@ class TestInvokeAIEngineImports:
     def test_module_has_invokeai_engine_class(self):
         """Test module has InvokeAIEngine class."""
         if hasattr(invokeai_engine, "InvokeAIEngine"):
-            cls = getattr(invokeai_engine, "InvokeAIEngine")
+            cls = invokeai_engine.InvokeAIEngine
             assert isinstance(cls, type), "InvokeAIEngine should be a class"
 
 
@@ -39,7 +39,7 @@ class TestInvokeAIEngineClass:
     def test_invokeai_engine_class_exists(self):
         """Test InvokeAIEngine class exists."""
         if hasattr(invokeai_engine, "InvokeAIEngine"):
-            cls = getattr(invokeai_engine, "InvokeAIEngine")
+            cls = invokeai_engine.InvokeAIEngine
             assert isinstance(cls, type), "InvokeAIEngine should be a class"
 
     def test_invokeai_engine_initialization(self):

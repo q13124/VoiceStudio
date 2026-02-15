@@ -6,13 +6,13 @@ When the reference count drops to zero, the artifact is eligible
 for cleanup.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import threading
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,13 @@ class ArtifactRefCounter:
     Artifacts with zero references are eligible for cleanup.
     """
 
-    def __init__(self, data_dir: Optional[str] = None):
+    def __init__(self, data_dir: str | None = None):
         self._data_dir = Path(
             data_dir or os.getenv("VOICESTUDIO_CACHE_PATH", "")
             or Path.home() / ".voicestudio" / "cache"
         )
         self._data_dir.mkdir(parents=True, exist_ok=True)
-        self._refs: Dict[str, Set[str]] = {}  # artifact_id -> set of referrer IDs
+        self._refs: dict[str, set[str]] = {}  # artifact_id -> set of referrer IDs
         self._lock = threading.RLock()
         self._load()
 
@@ -81,18 +81,18 @@ class ArtifactRefCounter:
         with self._lock:
             return len(self._refs.get(artifact_id, set()))
 
-    def get_referrers(self, artifact_id: str) -> List[str]:
+    def get_referrers(self, artifact_id: str) -> list[str]:
         """Get list of referrer IDs for an artifact."""
         with self._lock:
             return list(self._refs.get(artifact_id, set()))
 
-    def get_zero_ref_artifacts(self) -> List[str]:
+    def get_zero_ref_artifacts(self) -> list[str]:
         """Get artifacts with zero references (cleanup candidates)."""
         with self._lock:
             # Return artifacts that were tracked but now have empty referrer sets
             return [k for k, v in self._refs.items() if len(v) == 0]
 
-    def get_references(self, artifact_id: str) -> List[str]:
+    def get_references(self, artifact_id: str) -> list[str]:
         """Alias for get_referrers for compatibility."""
         return self.get_referrers(artifact_id)
 
@@ -103,12 +103,12 @@ class ArtifactRefCounter:
                 del self._refs[artifact_id]
                 self._save()
 
-    def get_all_tracked(self) -> Dict[str, int]:
+    def get_all_tracked(self) -> dict[str, int]:
         """Get all tracked artifacts and their counts."""
         with self._lock:
             return {k: len(v) for k, v in self._refs.items()}
 
-    def cleanup_zero_refs(self) -> List[str]:
+    def cleanup_zero_refs(self) -> list[str]:
         """Remove and return artifacts with zero references."""
         with self._lock:
             zero_refs = [k for k, v in self._refs.items() if len(v) == 0]
@@ -124,7 +124,7 @@ class ArtifactRefCounter:
         if not ref_file.exists():
             return
         try:
-            with open(ref_file, "r", encoding="utf-8") as f:
+            with open(ref_file, encoding="utf-8") as f:
                 data = json.load(f)
             self._refs = {k: set(v) for k, v in data.items()}
             logger.info(f"Loaded artifact refs: {len(self._refs)} artifacts tracked")
@@ -145,7 +145,7 @@ class ArtifactRefCounter:
 
 
 # Singleton
-_counter: Optional[ArtifactRefCounter] = None
+_counter: ArtifactRefCounter | None = None
 
 
 def get_ref_counter() -> ArtifactRefCounter:

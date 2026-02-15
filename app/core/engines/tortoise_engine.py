@@ -8,10 +8,11 @@ Compatible with:
 - PyTorch 2.2.2+cu121
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -26,7 +27,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         match_voice_profile,
@@ -49,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(
         max_models=3, max_memory_mb=3072.0
@@ -64,8 +65,8 @@ except ImportError:
 from collections import OrderedDict
 
 _MODEL_CACHE: OrderedDict = OrderedDict()
-_VOICE_EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
-_QUALITY_PRESET_CACHE: Dict[str, Dict] = {}
+_VOICE_EMBEDDING_CACHE: dict[str, np.ndarray] = {}
+_QUALITY_PRESET_CACHE: dict[str, dict] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_EMBEDDING_CACHE_SIZE = 50  # Maximum number of voice embeddings to cache
 
@@ -132,7 +133,7 @@ def _cache_model(quality_preset: str, device: str, model):
     logger.debug(f"Cached model: {cache_key} (cache size: {len(_MODEL_CACHE)})")
 
 
-def _get_voice_embedding_cache_key(voice_samples: List[Union[str, Path]]) -> str:
+def _get_voice_embedding_cache_key(voice_samples: list[str | Path]) -> str:
     """Generate cache key for voice embedding."""
     import hashlib
 
@@ -141,15 +142,15 @@ def _get_voice_embedding_cache_key(voice_samples: List[Union[str, Path]]) -> str
 
 
 def _get_cached_voice_embedding(
-    voice_samples: List[Union[str, Path]],
-) -> Optional[np.ndarray]:
+    voice_samples: list[str | Path],
+) -> np.ndarray | None:
     """Get cached voice embedding if available."""
     cache_key = _get_voice_embedding_cache_key(voice_samples)
     return _VOICE_EMBEDDING_CACHE.get(cache_key)
 
 
 def _cache_voice_embedding(
-    voice_samples: List[Union[str, Path]], embedding: np.ndarray
+    voice_samples: list[str | Path], embedding: np.ndarray
 ):
     """Cache voice embedding with LRU eviction."""
     cache_key = _get_voice_embedding_cache_key(voice_samples)
@@ -207,7 +208,7 @@ class TortoiseEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         quality_preset: str = "high_quality",
         lazy_load: bool = True,
@@ -320,14 +321,14 @@ class TortoiseEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Union[str, Path, List[Union[str, Path]]],
-        voice_samples: Optional[List[Union[str, Path]]] = None,
-        output_path: Optional[Union[str, Path]] = None,
-        quality_preset: Optional[str] = None,
+        speaker_wav: str | Path | list[str | Path],
+        voice_samples: list[str | Path] | None = None,
+        output_path: str | Path | None = None,
+        quality_preset: str | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using voice cloning.
 
@@ -346,9 +347,8 @@ class TortoiseEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Use provided quality preset or default
@@ -475,10 +475,10 @@ class TortoiseEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate_metrics: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """
         Process audio with quality enhancement and/or metrics calculation.
 
@@ -555,14 +555,14 @@ class TortoiseEngine(EngineProtocol):
 
     def clone_voice(
         self,
-        reference_audio: Union[str, Path],
+        reference_audio: str | Path,
         text: str,
-        output_path: Optional[Union[str, Path]] = None,
-        quality_preset: Optional[str] = None,
+        output_path: str | Path | None = None,
+        quality_preset: str | None = None,
         speed: float = 1.0,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Clone voice from reference audio and synthesize text.
 
@@ -597,12 +597,12 @@ class TortoiseEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        speaker_wav: Union[str, Path],
-        output_dir: Optional[Union[str, Path]] = None,
-        quality_preset: Optional[str] = None,
+        texts: list[str],
+        speaker_wav: str | Path,
+        output_dir: str | Path | None = None,
+        quality_preset: str | None = None,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -617,9 +617,8 @@ class TortoiseEngine(EngineProtocol):
             List of audio arrays
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(texts)
+        if not self._initialized and not self._load_model():
+            return [None] * len(texts)
 
         # Use provided quality preset or default
         preset = quality_preset or self.quality_preset
@@ -729,7 +728,7 @@ class TortoiseEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -739,7 +738,7 @@ class TortoiseEngine(EngineProtocol):
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
 
-    def get_quality_presets(self) -> List[str]:
+    def get_quality_presets(self) -> list[str]:
         """
         Get list of available quality presets.
 
@@ -776,7 +775,7 @@ class TortoiseEngine(EngineProtocol):
 
 # Factory function for easy instantiation
 def create_tortoise_engine(
-    device: Optional[str] = None, gpu: bool = True, quality_preset: str = "high_quality"
+    device: str | None = None, gpu: bool = True, quality_preset: str = "high_quality"
 ) -> TortoiseEngine:
     """
     Create and initialize Tortoise TTS engine.

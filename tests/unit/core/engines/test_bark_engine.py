@@ -5,7 +5,6 @@ Tests Bark TTS engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -29,7 +28,7 @@ class TestBarkEngineImports:
     def test_module_has_bark_engine_class(self):
         """Test module has BarkEngine class."""
         if hasattr(bark_engine, "BarkEngine"):
-            cls = getattr(bark_engine, "BarkEngine")
+            cls = bark_engine.BarkEngine
             assert isinstance(cls, type), "BarkEngine should be a class"
 
 
@@ -39,7 +38,7 @@ class TestBarkEngineClass:
     def test_bark_engine_class_exists(self):
         """Test BarkEngine class exists."""
         if hasattr(bark_engine, "BarkEngine"):
-            cls = getattr(bark_engine, "BarkEngine")
+            cls = bark_engine.BarkEngine
             assert isinstance(cls, type), "BarkEngine should be a class"
 
 

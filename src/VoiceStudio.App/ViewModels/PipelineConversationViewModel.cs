@@ -99,12 +99,15 @@ namespace VoiceStudio.App.ViewModels
       // Initialize streaming client via factory (GAP-009 remediation)
       if (_webSocketClientFactory != null)
       {
-        _streamingClient = _webSocketClientFactory.CreatePipelineStreamingClient();
-        _streamingClient.TokenReceived += OnTokenReceived;
-        _streamingClient.AudioReceived += OnAudioReceived;
-        _streamingClient.StreamComplete += OnStreamComplete;
-        _streamingClient.ErrorOccurred += OnStreamError;
-        _streamingClient.SessionStateChanged += OnSessionStateChanged;
+        _streamingClient = _webSocketClientFactory.CreatePipelineStreamingClient() as PipelineStreamingWebSocketClient;
+        if (_streamingClient != null)
+        {
+          _streamingClient.TokenReceived += OnTokenReceived;
+          _streamingClient.AudioReceived += OnAudioReceived;
+          _streamingClient.StreamComplete += OnStreamComplete;
+          _streamingClient.ErrorOccurred += OnStreamError;
+          _streamingClient.SessionStateChanged += OnSessionStateChanged;
+        }
       }
       else if (backendClient.WebSocketService != null)
       {
@@ -204,7 +207,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = $"Failed to load providers: {ex.Message}";
+        await HandleErrorAsync(ex, "RefreshProviders");
       }
     }
 
@@ -241,7 +244,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = $"Failed to process message: {ex.Message}";
+        await HandleErrorAsync(ex, "SendMessage");
         Messages.Add(new ConversationMessageItem
         {
           Role = "error",
@@ -259,6 +262,12 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task SendStreamingMessageAsync(string text, CancellationToken cancellationToken)
     {
+      ArgumentNullException.ThrowIfNull(text);
+      if (string.IsNullOrWhiteSpace(text))
+      {
+        return; // No-op for empty input
+      }
+
       if (_streamingClient == null)
       {
         await SendBatchMessageAsync(text, cancellationToken);
@@ -298,6 +307,12 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task SendBatchMessageAsync(string text, CancellationToken cancellationToken)
     {
+      ArgumentNullException.ThrowIfNull(text);
+      if (string.IsNullOrWhiteSpace(text))
+      {
+        return; // No-op for empty input
+      }
+
       var request = new PipelineRequest
       {
         Text = text,

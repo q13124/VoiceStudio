@@ -3,13 +3,15 @@ Structured Event Instrumentation
 Instruments key backend flows with structured events and request IDs.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +34,16 @@ class EventType:
 
 class StructuredEvent:
     """Structured event for logging."""
-    
+
     def __init__(
         self,
         event_type: str,
-        request_id: Optional[str] = None,
+        request_id: str | None = None,
         **kwargs
     ):
         """
         Initialize structured event.
-        
+
         Args:
             event_type: Type of event
             request_id: Request ID (if available)
@@ -51,8 +53,8 @@ class StructuredEvent:
         self.request_id = request_id or str(uuid.uuid4())
         self.timestamp = datetime.utcnow().isoformat()
         self.data = kwargs
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "event_type": self.event_type,
@@ -60,7 +62,7 @@ class StructuredEvent:
             "timestamp": self.timestamp,
             **self.data
         }
-    
+
     def log(self, level: int = logging.INFO):
         """Log the event."""
         event_dict = self.to_dict()
@@ -69,13 +71,13 @@ class StructuredEvent:
 
 def log_event(
     event_type: str,
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
     level: int = logging.INFO,
     **kwargs
 ):
     """
     Log a structured event.
-    
+
     Args:
         event_type: Type of event
         request_id: Request ID (if available)
@@ -91,25 +93,25 @@ def instrument_flow(
     event_type_start: str,
     event_type_complete: str,
     event_type_error: str,
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
     **start_data
 ):
     """
     Context manager to instrument a flow with start/complete/error events.
-    
+
     Args:
         event_type_start: Event type for start
         event_type_complete: Event type for completion
         event_type_error: Event type for error
         request_id: Request ID (if available)
         **start_data: Additional data for start event
-    
+
     Yields:
         Request ID
     """
     flow_request_id = request_id or str(uuid.uuid4())
     start_time = time.time()
-    
+
     # Log start event
     log_event(
         event_type_start,
@@ -117,7 +119,7 @@ def instrument_flow(
         level=logging.INFO,
         **start_data
     )
-    
+
     try:
         yield flow_request_id
         # Log complete event
@@ -151,7 +153,7 @@ def instrument_endpoint(
 ):
     """
     Decorator to instrument an endpoint with structured events.
-    
+
     Args:
         event_type_start: Event type for start
         event_type_complete: Event type for completion
@@ -166,7 +168,7 @@ def instrument_endpoint(
                 if hasattr(arg, 'state') and hasattr(arg.state, 'request_id'):
                     request_id = arg.state.request_id
                     break
-            
+
             with instrument_flow(
                 event_type_start,
                 event_type_complete,
@@ -175,6 +177,6 @@ def instrument_endpoint(
                 endpoint=func.__name__
             ):
                 return await func(*args, **kwargs)
-        
+
         return wrapper
     return decorator

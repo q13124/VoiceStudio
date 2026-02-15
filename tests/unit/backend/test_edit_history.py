@@ -2,10 +2,8 @@
 Unit tests for EditHistory (Phase 21.3)
 """
 
-import pytest
-from unittest.mock import MagicMock
 
-from backend.services.edit_history import EditHistory, EditCommand
+from backend.services.edit_history import EditCommand, EditHistory
 
 
 class MockCommand(EditCommand):

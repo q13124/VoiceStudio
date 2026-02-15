@@ -6,7 +6,7 @@ require actual LLM or S2S service connections.
 """
 
 import asyncio
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
 
 from app.core.engines.llm_interface import (
     BaseLLMProvider,
@@ -31,9 +31,9 @@ class MockLLMProvider(BaseLLMProvider):
     def __init__(
         self,
         response_text: str = "This is a mock response.",
-        config: Optional[LLMConfig] = None,
+        config: LLMConfig | None = None,
         latency_ms: float = 10.0,
-        stream_tokens: Optional[List[str]] = None,
+        stream_tokens: list[str] | None = None,
     ):
         super().__init__(config)
         self._response_text = response_text
@@ -51,9 +51,9 @@ class MockLLMProvider(BaseLLMProvider):
 
     async def generate(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> LLMResponse:
         self._call_count += 1
         await asyncio.sleep(self._latency_ms / 1000.0)
@@ -67,9 +67,9 @@ class MockLLMProvider(BaseLLMProvider):
 
     async def generate_stream(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         self._call_count += 1
         for token in self._stream_tokens:
@@ -95,7 +95,7 @@ class MockS2SProvider(BaseS2SProvider):
         self,
         response_audio: bytes = b"\x00" * 4800,  # 100ms at 24kHz, 16-bit
         response_text: str = "Mock S2S response",
-        config: Optional[S2SConfig] = None,
+        config: S2SConfig | None = None,
         latency_ms: float = 50.0,
     ):
         super().__init__(config)
@@ -112,7 +112,7 @@ class MockS2SProvider(BaseS2SProvider):
     def is_available(self) -> bool:
         return True
 
-    async def connect(self, config: Optional[S2SConfig] = None) -> bool:
+    async def connect(self, config: S2SConfig | None = None) -> bool:
         self._state = S2SConnectionState.CONNECTED
         return True
 
@@ -131,7 +131,7 @@ class MockS2SProvider(BaseS2SProvider):
         )
 
     async def respond(
-        self, audio_data: bytes, context: Optional[str] = None
+        self, audio_data: bytes, context: str | None = None
     ) -> S2SResponse:
         self._call_count += 1
         await asyncio.sleep(self._latency_ms / 1000.0)

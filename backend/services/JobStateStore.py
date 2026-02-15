@@ -11,13 +11,11 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from backend.services.ContentAddressedAudioCache import ENV_CACHE_DIR
+from backend.config.path_config import get_path
 
 logger = logging.getLogger(__name__)
-
-ENV_JOBS_DIR = "VOICESTUDIO_JOBS_DIR"
 
 
 class JobStateStore:
@@ -28,7 +26,7 @@ class JobStateStore:
       <jobs_root>/<namespace>/<job_id>.json
     """
 
-    def __init__(self, namespace: str, jobs_dir: Optional[str] = None):
+    def __init__(self, namespace: str, jobs_dir: str | None = None):
         if not namespace or any(c in namespace for c in "\\/:"):
             raise ValueError(f"Invalid namespace: {namespace!r}")
 
@@ -39,25 +37,16 @@ class JobStateStore:
         self.namespace_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def _resolve_jobs_root(jobs_dir: Optional[str]) -> Path:
+    def _resolve_jobs_root(jobs_dir: str | None) -> Path:
         if jobs_dir:
             return Path(jobs_dir)
-
-        env_jobs = os.getenv(ENV_JOBS_DIR)
-        if env_jobs:
-            return Path(env_jobs)
-
-        cache_dir = os.getenv(ENV_CACHE_DIR)
-        if cache_dir:
-            return Path(cache_dir) / "jobs"
-
-        return Path.home() / ".voicestudio" / "cache" / "jobs"
+        return get_path("jobs")
 
     def _job_path(self, job_id: str) -> Path:
         safe_id = job_id.replace(os.sep, "_")
         return self.namespace_dir / f"{safe_id}.json"
 
-    def upsert(self, job_id: str, payload: Dict[str, Any]) -> None:
+    def upsert(self, job_id: str, payload: dict[str, Any]) -> None:
         path = self._job_path(job_id)
         tmp = path.with_suffix(path.suffix + ".tmp")
         with self._lock:
@@ -74,7 +63,7 @@ class JobStateStore:
                 except OSError as cleanup_err:
                     logger.debug(f"Failed to cleanup temp file {tmp}: {cleanup_err}")
 
-    def get(self, job_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, job_id: str) -> dict[str, Any] | None:
         """Get job state by ID. Returns None if not found or corrupted."""
         path = self._job_path(job_id)
         with self._lock:
@@ -82,7 +71,7 @@ class JobStateStore:
                 return None
             try:
                 return json.loads(path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError, OSError) as e:
+            except (json.JSONDecodeError, OSError) as e:
                 # Job file is corrupted or unreadable - treat as missing
                 logger.debug(f"Failed to read job state {job_id}: {e}")
                 return None
@@ -96,9 +85,9 @@ class JobStateStore:
             except OSError as delete_err:
                 logger.debug(f"Failed to delete job state file {path}: {delete_err}")
 
-    def load_all(self, limit: int = 5000) -> Dict[str, Dict[str, Any]]:
+    def load_all(self, limit: int = 5000) -> dict[str, dict[str, Any]]:
         with self._lock:
-            results: Dict[str, Dict[str, Any]] = {}
+            results: dict[str, dict[str, Any]] = {}
             if not self.namespace_dir.exists():
                 return results
 
@@ -107,18 +96,18 @@ class JobStateStore:
                     payload = json.loads(p.read_text(encoding="utf-8"))
                     job_id = p.stem
                     results[job_id] = payload
-                except (json.JSONDecodeError, IOError, OSError):
+                except (json.JSONDecodeError, OSError):
                     # Skip corrupted or unreadable job files - continue loading others
                     continue
 
             return results
 
 
-_stores: Dict[str, JobStateStore] = {}
+_stores: dict[str, JobStateStore] = {}
 _stores_lock = threading.RLock()
 
 
-def get_job_state_store(namespace: str, jobs_dir: Optional[str] = None) -> JobStateStore:
+def get_job_state_store(namespace: str, jobs_dir: str | None = None) -> JobStateStore:
     key = f"{namespace}::{jobs_dir or ''}"
     with _stores_lock:
         store = _stores.get(key)

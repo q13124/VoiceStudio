@@ -6,14 +6,18 @@
     Title="Error"
     PrimaryButtonText="OK"
     CloseButtonText="Report Error"
-    DefaultButton="Primary">
+    DefaultButton="Primary"
+    AutomationProperties.AutomationId="ErrorDialog_Root">
     <!-- Phase 0: keep XAML minimal to avoid XamlCompiler.exe crashes. -->
-    <StackPanel Spacing="12">
+    <StackPanel Spacing="12" AutomationProperties.AutomationId="ErrorDialog_Content">
         <TextBlock Text="{x:Bind ErrorMessage, Mode=OneWay}"
-            TextWrapping="Wrap" />
+            TextWrapping="Wrap"
+            AutomationProperties.AutomationId="ErrorDialog_MessageText" />
         <TextBlock Text="{x:Bind ErrorDetails, Mode=OneWay}"
-            TextWrapping="Wrap" />
+            TextWrapping="Wrap"
+            AutomationProperties.AutomationId="ErrorDialog_DetailsText" />
         <TextBlock Text="{x:Bind TechnicalDetails, Mode=OneWay}"
-            TextWrapping="Wrap" />
+            TextWrapping="Wrap"
+            AutomationProperties.AutomationId="ErrorDialog_TechnicalDetailsText" />
     </StackPanel>
 </ContentDialog>

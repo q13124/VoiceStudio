@@ -5,7 +5,7 @@ Tests Automatic1111 image generation engine functionality including optimization
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestAutomatic1111EngineImports:
     def test_module_has_automatic1111_engine_class(self):
         """Test module has Automatic1111Engine class."""
         if hasattr(automatic1111_engine, "Automatic1111Engine"):
-            cls = getattr(automatic1111_engine, "Automatic1111Engine")
+            cls = automatic1111_engine.Automatic1111Engine
             assert isinstance(cls, type), "Automatic1111Engine should be a class"
 
 
@@ -41,7 +41,7 @@ class TestAutomatic1111EngineClass:
     def test_automatic1111_engine_class_exists(self):
         """Test Automatic1111Engine class exists."""
         if hasattr(automatic1111_engine, "Automatic1111Engine"):
-            cls = getattr(automatic1111_engine, "Automatic1111Engine")
+            cls = automatic1111_engine.Automatic1111Engine
             assert isinstance(cls, type), "Automatic1111Engine should be a class"
 
     def test_automatic1111_engine_initialization(self):

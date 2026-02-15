@@ -36,6 +36,9 @@ namespace VoiceStudio.App.Views.Panels
       // Load languages on initialization
       _ = ViewModel.LoadLanguagesCommand.ExecuteAsync(null);
 
+      // Track collection changes to toggle empty state visibility
+      ViewModel.Transcriptions.CollectionChanged += (s, e) => UpdateEmptyStateVisibility();
+
       // Add keyboard handler for multi-select
       this.KeyDown += TranscribeView_KeyDown;
 
@@ -129,6 +132,27 @@ namespace VoiceStudio.App.Views.Panels
       {
         var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, i);
         UpdateTranscriptionSelectionVisualsRecursive(child);
+      }
+    }
+
+    private void UpdateEmptyStateVisibility()
+    {
+      if (EmptyTranscriptionState != null)
+      {
+        EmptyTranscriptionState.Visibility = ViewModel.Transcriptions.Count == 0
+            ? Microsoft.UI.Xaml.Visibility.Visible
+            : Microsoft.UI.Xaml.Visibility.Collapsed;
+      }
+    }
+
+    private void CopyTranscriptionText_Click(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
+    {
+      if (ViewModel.SelectedTranscription != null && !string.IsNullOrEmpty(ViewModel.TranscriptionText))
+      {
+        var dataPackage = new DataPackage();
+        dataPackage.SetText(ViewModel.TranscriptionText);
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+        _toastService?.ShowToast(ToastType.Success, "Copied", "Transcription text copied to clipboard");
       }
     }
 

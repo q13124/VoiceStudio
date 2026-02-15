@@ -23,7 +23,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -44,7 +44,7 @@ class RoleProgress:
     config_exists: bool
     sources_configured: int
     sources_healthy: int
-    last_allocation: Optional[str] = None
+    last_allocation: str | None = None
     total_allocations: int = 0
     avg_allocation_time_ms: float = 0.0
 
@@ -59,7 +59,7 @@ class SourceProgress:
     failure_rate: float
     avg_fetch_time_ms: float
     offline_capable: bool
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
 
 @dataclass
@@ -69,7 +69,7 @@ class IntegrationProgress:
     status: str  # 'ready', 'partial', 'missing'
     components_total: int
     components_ready: int
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -77,12 +77,12 @@ class DashboardMetrics:
     """Complete dashboard metrics."""
     timestamp: str
     overall_progress_pct: float
-    roles: List[RoleProgress]
-    sources: List[SourceProgress]
-    integrations: List[IntegrationProgress]
-    warnings: List[str]
-    
-    def to_dict(self) -> Dict[str, Any]:
+    roles: list[RoleProgress]
+    sources: list[SourceProgress]
+    integrations: list[IntegrationProgress]
+    warnings: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "timestamp": self.timestamp,
@@ -133,11 +133,11 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
-def collect_role_progress(config_dir: Path) -> List[RoleProgress]:
+def collect_role_progress(config_dir: Path) -> list[RoleProgress]:
     """Collect progress metrics for all configured roles."""
     roles = []
-    role_configs = sorted(config_dir.glob("roles/*.json"))
-    
+    sorted(config_dir.glob("roles/*.json"))
+
     # Define known roles
     known_roles = [
         (0, "overseer"),
@@ -149,11 +149,11 @@ def collect_role_progress(config_dir: Path) -> List[RoleProgress]:
         (6, "release-engineer"),
         (7, "debug-agent"),
     ]
-    
+
     for role_id, role_name in known_roles:
         config_file = config_dir / "roles" / f"{role_name}.json"
         config_exists = config_file.exists()
-        
+
         sources_configured = 0
         if config_exists:
             try:
@@ -163,7 +163,7 @@ def collect_role_progress(config_dir: Path) -> List[RoleProgress]:
             # ALLOWED: bare except - Best effort config loading
             except Exception:
                 pass
-        
+
         roles.append(RoleProgress(
             role_name=role_name,
             role_id=role_id,
@@ -171,18 +171,18 @@ def collect_role_progress(config_dir: Path) -> List[RoleProgress]:
             sources_configured=sources_configured,
             sources_healthy=sources_configured,  # Assume healthy until checked
         ))
-    
+
     return roles
 
 
-def collect_source_progress(registry: SourceRegistry) -> List[SourceProgress]:
+def collect_source_progress(registry: SourceRegistry) -> list[SourceProgress]:
     """Collect progress metrics for all source adapters."""
     sources = []
     telemetry = get_source_telemetry()
-    
+
     for source in registry.all():
         health = telemetry.sources.get(source.source_name)
-        
+
         sources.append(SourceProgress(
             source_name=source.source_name,
             adapter_class=source.__class__.__name__,
@@ -193,14 +193,14 @@ def collect_source_progress(registry: SourceRegistry) -> List[SourceProgress]:
             offline_capable=getattr(source, 'offline', True),
             last_error=health.last_error if health else None,
         ))
-    
+
     return sources
 
 
-def collect_integration_progress() -> List[IntegrationProgress]:
+def collect_integration_progress() -> list[IntegrationProgress]:
     """Collect progress metrics for integration points."""
     integrations = []
-    
+
     # Check onboarding integration
     onboarding_components = [
         ("generate_onboarding.py", Path("tools/context/scripts/generate_onboarding.py").exists()),
@@ -214,7 +214,7 @@ def collect_integration_progress() -> List[IntegrationProgress]:
         components_total=len(onboarding_components),
         components_ready=onboarding_ready,
     ))
-    
+
     # Check handoff integration
     handoff_components = [
         ("HandoffQueue", True),  # In core models
@@ -228,7 +228,7 @@ def collect_integration_progress() -> List[IntegrationProgress]:
         components_total=len(handoff_components),
         components_ready=handoff_ready,
     ))
-    
+
     # Check STATE.md integration
     state_components = [
         ("state_adapter", Path("tools/context/sources/state_adapter.py").exists()),
@@ -242,7 +242,7 @@ def collect_integration_progress() -> List[IntegrationProgress]:
         components_total=len(state_components),
         components_ready=state_ready,
     ))
-    
+
     # Check OpenMemory integration
     memory_components = [
         ("memory_adapter", Path("tools/context/sources/memory_adapter.py").exists()),
@@ -256,47 +256,47 @@ def collect_integration_progress() -> List[IntegrationProgress]:
         components_total=len(memory_components),
         components_ready=memory_ready,
     ))
-    
+
     return integrations
 
 
-def collect_warnings(roles: List[RoleProgress], sources: List[SourceProgress]) -> List[str]:
+def collect_warnings(roles: list[RoleProgress], sources: list[SourceProgress]) -> list[str]:
     """Collect any warnings about the system state."""
     warnings = []
-    
+
     # Check for missing role configs
     missing_roles = [r.role_name for r in roles if not r.config_exists]
     if missing_roles:
         warnings.append(f"Missing role configs: {', '.join(missing_roles)}")
-    
+
     # Check for unhealthy sources
     unhealthy = [s.source_name for s in sources if not s.is_healthy]
     if unhealthy:
         warnings.append(f"Unhealthy sources: {', '.join(unhealthy)}")
-    
+
     # Check for high failure rates
     high_failure = [s.source_name for s in sources if s.failure_rate > 20]
     if high_failure:
         warnings.append(f"High failure rate (>20%): {', '.join(high_failure)}")
-    
+
     return warnings
 
 
 def collect_dashboard_metrics(manager: ContextManager) -> DashboardMetrics:
     """Collect all dashboard metrics."""
     config_dir = Path("tools/context/config")
-    
+
     roles = collect_role_progress(config_dir)
     sources = collect_source_progress(manager.registry)
     integrations = collect_integration_progress()
     warnings = collect_warnings(roles, sources)
-    
+
     # Calculate overall progress
     role_pct = sum(1 for r in roles if r.config_exists) / max(1, len(roles)) * 100
     source_pct = sum(1 for s in sources if s.is_healthy) / max(1, len(sources)) * 100
     integration_pct = sum(i.components_ready for i in integrations) / max(1, sum(i.components_total for i in integrations)) * 100
     overall_pct = (role_pct + source_pct + integration_pct) / 3
-    
+
     return DashboardMetrics(
         timestamp=datetime.now().isoformat(),
         overall_progress_pct=overall_pct,
@@ -310,13 +310,13 @@ def collect_dashboard_metrics(manager: ContextManager) -> DashboardMetrics:
 def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     """Render metrics as ASCII table (Windows-compatible)."""
     lines = []
-    
+
     lines.append("")
     lines.append("=" * 70)
     lines.append("  CONTEXT SYSTEM PROGRESS DASHBOARD")
     lines.append("=" * 70)
     lines.append("")
-    
+
     # Overall progress - use ASCII-safe characters
     pct = metrics.overall_progress_pct
     bar_width = 40
@@ -327,14 +327,14 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
     lines.append(f"Overall Progress: {color}[{bar}] {pct:.1f}%{reset}")
     lines.append(f"Timestamp: {metrics.timestamp}")
     lines.append("")
-    
+
     # Warnings
     if metrics.warnings:
         lines.append("\033[93m[!] Warnings:\033[0m")
         for warning in metrics.warnings:
             lines.append(f"  - {warning}")
         lines.append("")
-    
+
     # Roles section
     lines.append("-" * 70)
     lines.append("ROLES")
@@ -345,7 +345,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
         config_status = "\033[92mOK\033[0m" if role.config_exists else "\033[91mNO\033[0m"
         lines.append(f"{role.role_name:<20} {role.role_id:<4} {config_status:<8} {role.sources_configured:<10}")
     lines.append("")
-    
+
     # Sources section
     lines.append("-" * 70)
     lines.append("SOURCE ADAPTERS")
@@ -357,7 +357,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
         offline_icon = "Y" if source.offline_capable else "-"
         lines.append(f"{source.source_name:<20} {healthy_icon:<8} {source.total_fetches:<10} {source.failure_rate:<8.1f} {offline_icon:<8}")
     lines.append("")
-    
+
     # Integrations section
     lines.append("-" * 70)
     lines.append("INTEGRATIONS")
@@ -370,7 +370,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
         progress = f"{integration.components_ready}/{integration.components_total}"
         lines.append(f"{integration.integration_name:<25} {status_color}{integration.status:<10}{reset} {progress:<15}")
     lines.append("")
-    
+
     if detailed:
         lines.append("-" * 70)
         lines.append("DETAILED SOURCE METRICS")
@@ -384,7 +384,7 @@ def render_ascii(metrics: DashboardMetrics, detailed: bool = False) -> str:
             if source.last_error:
                 lines.append(f"  Last error: {source.last_error[:60]}...")
         lines.append("")
-    
+
     return "\n".join(lines)
 
 
@@ -396,11 +396,11 @@ def render_json(metrics: DashboardMetrics) -> str:
 def render_csv(metrics: DashboardMetrics) -> str:
     """Render metrics as CSV."""
     output = io.StringIO()
-    
+
     # Write sources CSV
     writer = csv.writer(output)
     writer.writerow(["Type", "Name", "Status", "Metric1", "Metric2", "Metric3"])
-    
+
     for role in metrics.roles:
         writer.writerow([
             "role",
@@ -410,7 +410,7 @@ def render_csv(metrics: DashboardMetrics) -> str:
             role.role_id,
             "",
         ])
-    
+
     for source in metrics.sources:
         writer.writerow([
             "source",
@@ -420,7 +420,7 @@ def render_csv(metrics: DashboardMetrics) -> str:
             f"{source.failure_rate:.1f}%",
             f"{source.avg_fetch_time_ms:.2f}ms",
         ])
-    
+
     for integration in metrics.integrations:
         writer.writerow([
             "integration",
@@ -430,7 +430,7 @@ def render_csv(metrics: DashboardMetrics) -> str:
             integration.components_total,
             f"{integration.components_ready / max(1, integration.components_total) * 100:.1f}%",
         ])
-    
+
     return output.getvalue()
 
 
@@ -479,20 +479,20 @@ def main() -> int:
             print(json.dumps({"error": str(e), "success": False}))
         elif args.csv:
             print("error,message")
-            print(f"initialization_error,{str(e)}")
+            print(f"initialization_error,{e!s}")
         else:
             print(f"ERROR: Failed to initialize context manager: {e}")
         return 1
 
     metrics = collect_dashboard_metrics(manager)
-    
+
     if args.json:
         print(render_json(metrics))
     elif args.csv:
         print(render_csv(metrics))
     else:
         print(render_ascii(metrics, detailed=args.detailed))
-    
+
     # Return exit code based on progress
     return 0 if metrics.overall_progress_pct >= 80 else 1
 

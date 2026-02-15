@@ -3,19 +3,21 @@ Phase 9: Feedback API Routes
 Task 9.10: API routes for user feedback.
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel
-from datetime import datetime
-from typing import Any, Optional
+from __future__ import annotations
+
 import logging
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 
 # Import feedback service at module level - fail fast at startup if not available
 from backend.feedback import (
-    FeedbackService,
-    Feedback,
-    FeedbackType,
     FeedbackPriority,
+    FeedbackService,
     FeedbackStatus,
+    FeedbackType,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ class FeedbackSubmission(BaseModel):
     title: str
     description: str
     priority: str = "medium"  # low, medium, high, critical
-    user_email: Optional[str] = None
+    user_email: str | None = None
     tags: list[str] = []
     metadata: dict[str, Any] = {}
 
@@ -60,11 +62,11 @@ async def submit_feedback(submission: FeedbackSubmission):
     """Submit user feedback."""
     try:
         service = FeedbackService()
-        
+
         # Map string to enum
         feedback_type = FeedbackType(submission.type)
         priority = FeedbackPriority(submission.priority)
-        
+
         feedback = service.submit(
             feedback_type=feedback_type,
             title=submission.title,
@@ -74,7 +76,7 @@ async def submit_feedback(submission: FeedbackSubmission):
             tags=submission.tags,
             metadata=submission.metadata,
         )
-        
+
         return FeedbackResponse(
             feedback_id=feedback.feedback_id,
             type=feedback.type.value,
@@ -85,28 +87,28 @@ async def submit_feedback(submission: FeedbackSubmission):
             created_at=feedback.created_at,
             updated_at=feedback.updated_at,
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/", response_model=list[FeedbackResponse])
 async def list_feedback(
-    type: Optional[str] = None,
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
+    type: str | None = None,
+    status: str | None = None,
+    priority: str | None = None,
     limit: int = 100,
     offset: int = 0
 ):
     """List feedback with optional filters."""
     try:
         service = FeedbackService()
-        
+
         # Convert string filters to enums
         ft = FeedbackType(type) if type else None
         fs = FeedbackStatus(status) if status else None
         fp = FeedbackPriority(priority) if priority else None
-        
+
         items = service.list_feedback(
             feedback_type=ft,
             status=fs,
@@ -114,7 +116,7 @@ async def list_feedback(
             limit=limit,
             offset=offset,
         )
-        
+
         return [
             FeedbackResponse(
                 feedback_id=f.feedback_id,
@@ -128,7 +130,7 @@ async def list_feedback(
             )
             for f in items
         ]
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -138,10 +140,10 @@ async def get_feedback(feedback_id: str):
     """Get feedback by ID."""
     service = FeedbackService()
     feedback = service.get(feedback_id)
-    
+
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
-    
+
     return FeedbackResponse(
         feedback_id=feedback.feedback_id,
         type=feedback.type.value,
@@ -158,20 +160,20 @@ async def get_feedback(feedback_id: str):
 async def update_feedback_status(
     feedback_id: str,
     status: str,
-    comment: Optional[str] = None
+    comment: str | None = None
 ):
     """Update feedback status."""
     try:
         service = FeedbackService()
-        
+
         new_status = FeedbackStatus(status)
         feedback = service.update_status(feedback_id, new_status, comment)
-        
+
         if not feedback:
             raise HTTPException(status_code=404, detail="Feedback not found")
-        
+
         return {"status": "updated", "new_status": status}
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -185,10 +187,10 @@ async def add_response(
     """Add a response to feedback."""
     service = FeedbackService()
     feedback = service.add_response(feedback_id, message, responder)
-    
+
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
-    
+
     return {"status": "response_added"}
 
 
@@ -199,7 +201,7 @@ async def add_attachment(
 ):
     """Add an attachment to feedback."""
     service = FeedbackService()
-    
+
     content = await file.read()
     attachment = service.add_attachment(
         feedback_id,
@@ -207,10 +209,10 @@ async def add_attachment(
         content,
         file.content_type or "application/octet-stream",
     )
-    
+
     if not attachment:
         raise HTTPException(status_code=404, detail="Feedback not found")
-    
+
     return {
         "attachment_id": attachment.attachment_id,
         "filename": attachment.filename,
@@ -223,7 +225,7 @@ async def get_feedback_stats():
     """Get feedback statistics."""
     service = FeedbackService()
     stats = service.get_stats()
-    
+
     return FeedbackStatsResponse(
         total=stats.total,
         by_type=stats.by_type,
@@ -237,8 +239,8 @@ async def get_feedback_stats():
 async def delete_feedback(feedback_id: str):
     """Delete feedback."""
     service = FeedbackService()
-    
+
     if service.delete(feedback_id):
         return {"status": "deleted"}
-    
+
     raise HTTPException(status_code=404, detail="Feedback not found")

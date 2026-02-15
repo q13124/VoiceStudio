@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
@@ -122,6 +123,9 @@ namespace VoiceStudio.App.Views.Panels
 
     [ObservableProperty]
     private bool canPlayAudio;
+
+    [ObservableProperty]
+    private TimeSpan lastSynthesizedDuration;
 
     [ObservableProperty]
     private RealTimeQualityFeedback? realTimeQualityFeedback;
@@ -286,6 +290,10 @@ namespace VoiceStudio.App.Views.Panels
 
       StopAudioCommand = new RelayCommand(StopAudio, () => _audioPlayer.IsPlaying);
 
+      // Add to Timeline command (Audit X-6: Synthesis -> Timeline)
+      AddToTimelineCommand = new RelayCommand(AddSynthesizedAudioToTimeline,
+          () => !string.IsNullOrEmpty(LastSynthesizedAudioId));
+
       // Streaming synthesis commands
       StartStreamingCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -385,6 +393,7 @@ namespace VoiceStudio.App.Views.Panels
     public EnhancedAsyncRelayCommand LoadProfilesCommand { get; }
     public EnhancedAsyncRelayCommand PlayAudioCommand { get; }
     public IRelayCommand StopAudioCommand { get; }
+    public IRelayCommand AddToTimelineCommand { get; }
     public EnhancedAsyncRelayCommand StartStreamingCommand { get; }
     public IRelayCommand StopStreamingCommand { get; }
 
@@ -590,11 +599,13 @@ namespace VoiceStudio.App.Views.Panels
           OnPropertyChanged(nameof(RealTimeQualityFeedback));
         }
 
-        // Store audio URL and ID for playback
+        // Store audio URL, ID, and duration for playback and timeline
         LastSynthesizedAudioUrl = response.AudioUrl;
         LastSynthesizedAudioId = response.AudioId;
+        LastSynthesizedDuration = TimeSpan.FromSeconds(response.Duration);
         CanPlayAudio = !string.IsNullOrWhiteSpace(LastSynthesizedAudioUrl);
         PlayAudioCommand.NotifyCanExecuteChanged();
+        AddToTimelineCommand.NotifyCanExecuteChanged();
 
         StatusMessage = ResourceHelper.FormatString("Status.SynthesisComplete", response.Duration, response.QualityScore);
 
@@ -1048,6 +1059,42 @@ namespace VoiceStudio.App.Views.Panels
         ErrorMessage = $"Failed to stop playback: {ErrorHandler.GetUserFriendlyMessage(ex)}";
         HasError = true;
       }
+    }
+
+    /// <summary>
+    /// Send synthesized audio to the Timeline panel as a new clip.
+    /// Audit remediation X-6/C.3: Synthesis -> Timeline shortcut.
+    /// </summary>
+    private void AddSynthesizedAudioToTimeline()
+    {
+      if (string.IsNullOrEmpty(LastSynthesizedAudioId))
+      {
+        return;
+      }
+
+      var eventAggregator = AppServices.TryGetEventAggregator();
+      if (eventAggregator == null)
+      {
+        _toastNotificationService?.ShowWarning("Timeline", "Event system unavailable");
+        return;
+      }
+
+      // C.3: Publish AddToTimelineEvent for direct clip addition
+      var clipName = $"Synthesis - {SelectedProfile?.Name ?? "Unknown"}";
+      eventAggregator.Publish(new AddToTimelineEvent(
+          PanelId,
+          LastSynthesizedAudioId,
+          LastSynthesizedAudioUrl ?? "",
+          LastSynthesizedDuration,
+          clipName));
+
+      // Also publish AssetAddedEvent so Library knows
+      eventAggregator.Publish(new AssetAddedEvent(
+          PanelId,
+          LastSynthesizedAudioId,
+          "audio"));
+
+      _toastNotificationService?.ShowSuccess("Added to Timeline", $"'{clipName}' sent to Timeline");
     }
 
     private void OnQualityMetricsUpdated(QualityMetricsUpdatedEventArgs e)

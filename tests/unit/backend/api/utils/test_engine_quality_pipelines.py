@@ -5,7 +5,6 @@ Tests engine quality pipeline utilities.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 

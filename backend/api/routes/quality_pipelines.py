@@ -4,10 +4,12 @@ Quality Pipeline Management Routes (IDEA 58).
 Provides endpoints for engine-specific quality enhancement pipelines.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query
@@ -27,17 +29,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/quality/pipelines", tags=["quality-pipelines"])
 
 # In-memory storage for custom pipelines (replace with database in production)
-_custom_pipelines: Dict[str, Dict[str, Any]] = {}
+_custom_pipelines: dict[str, dict[str, Any]] = {}
 
 
 class PipelineConfiguration(BaseModel):
     """Pipeline configuration request/response (IDEA 58)."""
 
     engine_id: str
-    preset_name: Optional[str] = "default"
-    steps: List[str] = []
-    settings: Dict[str, Any] = {}
-    description: Optional[str] = None
+    preset_name: str | None = "default"
+    steps: list[str] = []
+    settings: dict[str, Any] = {}
+    description: str | None = None
 
 
 class PipelinePreviewRequest(BaseModel):
@@ -45,28 +47,28 @@ class PipelinePreviewRequest(BaseModel):
 
     audio_id: str
     engine_id: str
-    pipeline_config: Optional[PipelineConfiguration] = None
-    preset_name: Optional[str] = "default"
+    pipeline_config: PipelineConfiguration | None = None
+    preset_name: str | None = "default"
 
 
 class PipelineComparisonResponse(BaseModel):
     """Response from pipeline comparison (IDEA 58)."""
 
-    before_metrics: Dict[str, Any] = {}
-    after_metrics: Dict[str, Any] = {}
-    improvements: Dict[str, Any] = {}
+    before_metrics: dict[str, Any] = {}
+    after_metrics: dict[str, Any] = {}
+    improvements: dict[str, Any] = {}
 
 
 class PipelinePreviewResponse(BaseModel):
     """Response from pipeline preview (IDEA 58)."""
 
     enhanced_audio_id: str
-    before_metrics: Dict[str, Any] = {}
-    after_metrics: Dict[str, Any] = {}
-    comparison: Optional[PipelineComparisonResponse] = None
+    before_metrics: dict[str, Any] = {}
+    after_metrics: dict[str, Any] = {}
+    comparison: PipelineComparisonResponse | None = None
 
 
-@router.get("/engines/{engine_id}/presets", response_model=List[str])
+@router.get("/engines/{engine_id}/presets", response_model=list[str])
 async def list_presets(engine_id: str):
     """
     List available presets for an engine (IDEA 58).
@@ -75,8 +77,8 @@ async def list_presets(engine_id: str):
         presets = list_engine_presets(engine_id)
         return presets
     except Exception as e:
-        logger.error(f"Error listing presets for {engine_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list presets: {str(e)}")
+        logger.error(f"Error listing presets for {engine_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list presets: {e!s}")
 
 
 @router.get(
@@ -99,10 +101,10 @@ async def get_preset(engine_id: str, preset_name: str = "default"):
         )
     except Exception as e:
         logger.error(
-            f"Error getting preset {preset_name} for {engine_id}: {str(e)}",
+            f"Error getting preset {preset_name} for {engine_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get preset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get preset: {e!s}")
 
 
 @router.post("/engines/{engine_id}/apply")
@@ -110,8 +112,8 @@ async def apply_pipeline(
     engine_id: str,
     audio_id: str = Query(..., description="Audio ID to enhance"),
     preset_name: str = Query("default", description="Preset name"),
-    pipeline_config: Optional[PipelineConfiguration] = None,
-    reference_audio_id: Optional[str] = Query(
+    pipeline_config: PipelineConfiguration | None = None,
+    reference_audio_id: str | None = Query(
         None, description="Optional reference audio ID"
     ),
 ):
@@ -179,9 +181,9 @@ async def apply_pipeline(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error applying pipeline: {str(e)}", exc_info=True)
+        logger.error(f"Error applying pipeline: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to apply pipeline: {str(e)}"
+            status_code=500, detail=f"Failed to apply pipeline: {e!s}"
         )
 
 
@@ -242,7 +244,7 @@ async def preview_pipeline(engine_id: str, request: PipelinePreviewRequest):
         _register_audio_file(enhanced_audio_id, enhanced_path)
 
         # Create comparison
-        comparison_data: Optional[PipelineComparisonResponse] = None
+        comparison_data: PipelineComparisonResponse | None = None
         if before_metrics and after_metrics:
             improvements = {}
             for key in ["mos_score", "similarity", "naturalness", "snr_db"]:
@@ -277,9 +279,9 @@ async def preview_pipeline(engine_id: str, request: PipelinePreviewRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error previewing pipeline: {str(e)}", exc_info=True)
+        logger.error(f"Error previewing pipeline: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to preview pipeline: {str(e)}"
+            status_code=500, detail=f"Failed to preview pipeline: {e!s}"
         )
 
 
@@ -288,8 +290,8 @@ async def compare_pipeline(
     engine_id: str,
     audio_id: str = Query(..., description="Audio ID to compare"),
     preset_name: str = Query("default", description="Preset name"),
-    pipeline_config: Optional[PipelineConfiguration] = None,
-    reference_audio_id: Optional[str] = Query(
+    pipeline_config: PipelineConfiguration | None = None,
+    reference_audio_id: str | None = Query(
         None, description="Optional reference audio ID"
     ),
 ):
@@ -345,7 +347,7 @@ async def compare_pipeline(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error comparing pipeline: {str(e)}", exc_info=True)
+        logger.error(f"Error comparing pipeline: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to compare pipeline: {str(e)}"
+            status_code=500, detail=f"Failed to compare pipeline: {e!s}"
         )

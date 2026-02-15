@@ -10,7 +10,7 @@ Distinguishes between different types of user interruptions:
 import logging
 import time
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class InterruptionFSM:
         user_text: str,
         ai_is_speaking: bool = True,
         audio_energy: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Classify an interruption and recommend an action.
 
@@ -148,7 +148,7 @@ class InterruptionFSM:
             "confidence": 0.5,
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get interruption statistics."""
         return {
             "total_interruptions": self._interruption_count,

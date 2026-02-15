@@ -4,9 +4,11 @@ Spatial Audio Routes
 Endpoints for spatial audio positioning and 3D audio effects.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -20,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/spatial-audio", tags=["spatial-audio"])
 
 # In-memory spatial audio configurations (replace with database in production)
-_spatial_configs: Dict[str, Dict] = {}
+_spatial_configs: dict[str, dict] = {}
 
 
 class SpatialPosition(BaseModel):
@@ -113,13 +115,13 @@ async def create_spatial_config(request: SpatialConfigCreateRequest):
         logger.error(f"Failed to create spatial config: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create config: {str(e)}",
+            detail=f"Failed to create config: {e!s}",
         ) from e
 
 
-@router.get("/configs", response_model=List[SpatialConfig])
+@router.get("/configs", response_model=list[SpatialConfig])
 @cache_response(ttl=60)  # Cache for 60 seconds (config list may change)
-async def list_spatial_configs(audio_id: Optional[str] = None):
+async def list_spatial_configs(audio_id: str | None = None):
     """List all spatial audio configurations."""
     configs = list(_spatial_configs.values())
     if audio_id:
@@ -388,7 +390,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
     except Exception as e:
         logger.error(f"Failed to apply spatial audio: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to apply spatial audio: {str(e)}"
+            status_code=500, detail=f"Failed to apply spatial audio: {e!s}"
         )
 
 
@@ -471,7 +473,7 @@ async def preview_spatial_audio(
     except Exception as e:
         logger.error(f"Failed to preview spatial audio: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to preview spatial audio: {str(e)}"
+            status_code=500, detail=f"Failed to preview spatial audio: {e!s}"
         )
 
 
@@ -499,9 +501,9 @@ class SpatialProcessRequest(BaseModel):
     """Request to process audio with spatial effects."""
 
     audio_id: str
-    config_id: Optional[str] = None
-    position: Optional[SpatialPosition] = None
-    environment: Optional[SpatialEnvironmentRequest] = None
+    config_id: str | None = None
+    position: SpatialPosition | None = None
+    environment: SpatialEnvironmentRequest | None = None
     output_format: str = "wav"
 
 
@@ -558,7 +560,7 @@ async def set_voice_position(request: SpatialPositionRequest):
         logger.error(f"Failed to set voice position: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to set voice position: {str(e)}",
+            detail=f"Failed to set voice position: {e!s}",
         ) from e
 
 
@@ -577,7 +579,7 @@ async def configure_environment(request: SpatialEnvironmentRequest):
         logger.error(f"Failed to configure environment: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to configure environment: {str(e)}",
+            detail=f"Failed to configure environment: {e!s}",
         ) from e
 
 
@@ -626,7 +628,7 @@ async def process_spatial_audio(request: SpatialProcessRequest):
         logger.error(f"Failed to process spatial audio: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process spatial audio: {str(e)}",
+            detail=f"Failed to process spatial audio: {e!s}",
         ) from e
 
 
@@ -726,7 +728,7 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
         _register_audio_file(binaural_audio_id, output_path)
 
         # Calculate quality metrics for binaural audio
-        quality_metrics: Dict[str, Any] = {}
+        quality_metrics: dict[str, Any] = {}
         try:
             engine_service = get_engine_service()
 
@@ -799,5 +801,5 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
         logger.error(f"Failed to generate binaural audio: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate binaural audio: {str(e)}",
+            detail=f"Failed to generate binaural audio: {e!s}",
         ) from e

@@ -8,9 +8,8 @@ Enables real-time emotion control during speech generation.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -41,17 +40,17 @@ class EmotionParams:
     pitch_variance: float = 1.0    # Multiplier for pitch variation
     speed: float = 1.0             # Speaking speed multiplier
     energy: float = 1.0            # Volume/energy multiplier
-    
+
     # Voice quality
     breathiness: float = 0.0       # 0-1
     roughness: float = 0.0         # 0-1
     tension: float = 0.5           # 0-1
-    
+
     # Articulation
     vowel_duration: float = 1.0    # Multiplier
     consonant_sharpness: float = 0.5  # 0-1
-    
-    def blend(self, other: "EmotionParams", weight: float) -> "EmotionParams":
+
+    def blend(self, other: EmotionParams, weight: float) -> EmotionParams:
         """Blend with another emotion params."""
         w1 = 1 - weight
         w2 = weight
@@ -69,7 +68,7 @@ class EmotionParams:
 
 
 # Preset parameters for each emotion
-EMOTION_PRESETS: Dict[Emotion, EmotionParams] = {
+EMOTION_PRESETS: dict[Emotion, EmotionParams] = {
     Emotion.NEUTRAL: EmotionParams(),
     Emotion.HAPPY: EmotionParams(
         pitch_shift=2.0, pitch_variance=1.3, speed=1.1,
@@ -105,21 +104,21 @@ EMOTION_PRESETS: Dict[Emotion, EmotionParams] = {
 class EmotionSynthesizer:
     """
     Real-time emotion synthesis engine.
-    
+
     Features:
     - Dynamic emotion injection
     - Emotion blending
     - Prosody modification
     - Real-time parameter control
     """
-    
+
     def __init__(self):
         self._current_emotion = Emotion.NEUTRAL
         self._current_params = EMOTION_PRESETS[Emotion.NEUTRAL]
         self._intensity = 1.0
         self._transition_frames = 0
-        self._target_params: Optional[EmotionParams] = None
-    
+        self._target_params: EmotionParams | None = None
+
     def set_emotion(
         self,
         emotion: Emotion,
@@ -128,7 +127,7 @@ class EmotionSynthesizer:
     ) -> None:
         """
         Set target emotion.
-        
+
         Args:
             emotion: Target emotion
             intensity: Emotion intensity (0-1)
@@ -136,14 +135,14 @@ class EmotionSynthesizer:
         """
         self._current_emotion = emotion
         self._intensity = max(0.0, min(1.0, intensity))
-        
+
         # Get preset and scale by intensity
         preset = EMOTION_PRESETS.get(emotion, EmotionParams())
         neutral = EMOTION_PRESETS[Emotion.NEUTRAL]
-        
+
         # Blend with neutral based on intensity
         target = neutral.blend(preset, self._intensity)
-        
+
         if transition_frames > 0:
             self._target_params = target
             self._transition_frames = transition_frames
@@ -151,13 +150,13 @@ class EmotionSynthesizer:
             self._current_params = target
             self._target_params = None
             self._transition_frames = 0
-    
+
     def set_custom_params(self, params: EmotionParams) -> None:
         """Set custom emotion parameters."""
         self._current_params = params
         self._target_params = None
         self._transition_frames = 0
-    
+
     def process(
         self,
         audio: np.ndarray,
@@ -165,11 +164,11 @@ class EmotionSynthesizer:
     ) -> np.ndarray:
         """
         Apply current emotion to audio.
-        
+
         Args:
             audio: Input audio samples
             sample_rate: Sample rate
-            
+
         Returns:
             Audio with applied emotion
         """
@@ -181,36 +180,36 @@ class EmotionSynthesizer:
             if self._transition_frames == 0:
                 self._current_params = self._target_params
                 self._target_params = None
-        
+
         output = audio.copy().astype(np.float32)
         params = self._current_params
-        
+
         # Apply energy
         output = output * params.energy
-        
+
         # Apply pitch shift
         if abs(params.pitch_shift) > 0.1:
             output = self._apply_pitch_shift(output, sample_rate, params.pitch_shift)
-        
+
         # Apply speed change
         if abs(params.speed - 1.0) > 0.05:
             output = self._apply_speed_change(output, params.speed)
-        
+
         # Apply breathiness
         if params.breathiness > 0.05:
             output = self._add_breathiness(output, params.breathiness)
-        
+
         # Apply roughness/distortion
         if params.roughness > 0.05:
             output = self._add_roughness(output, params.roughness)
-        
+
         # Normalize
         max_val = np.max(np.abs(output))
         if max_val > 0.99:
             output = output * (0.99 / max_val)
-        
+
         return output
-    
+
     def _apply_pitch_shift(
         self,
         audio: np.ndarray,
@@ -223,25 +222,25 @@ class EmotionSynthesizer:
             return librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=semitones)
         except ImportError:
             logger.debug("librosa not available for pitch_shift, using fallback resampling")
-        
+
         # Fallback: simple resampling
         ratio = 2 ** (semitones / 12)
         original_len = len(audio)
         new_len = int(original_len / ratio)
-        
+
         if new_len <= 0:
             return audio
-        
+
         indices = np.linspace(0, original_len - 1, new_len)
         shifted = np.interp(indices, np.arange(original_len), audio)
-        
+
         # Resample back to original length
         if len(shifted) != original_len:
             indices = np.linspace(0, len(shifted) - 1, original_len)
             shifted = np.interp(indices, np.arange(len(shifted)), shifted)
-        
+
         return shifted
-    
+
     def _apply_speed_change(self, audio: np.ndarray, speed: float) -> np.ndarray:
         """Change speaking speed (time stretch)."""
         try:
@@ -249,19 +248,19 @@ class EmotionSynthesizer:
             return librosa.effects.time_stretch(audio, rate=speed)
         except ImportError:
             logger.debug("librosa not available for time_stretch, using fallback resampling")
-        
+
         # Simple resampling (changes pitch too)
         new_len = int(len(audio) / speed)
         if new_len <= 0:
             return audio
-        
+
         indices = np.linspace(0, len(audio) - 1, new_len)
         return np.interp(indices, np.arange(len(audio)), audio)
-    
+
     def _add_breathiness(self, audio: np.ndarray, amount: float) -> np.ndarray:
         """Add breathy quality (filtered noise)."""
         noise = np.random.randn(len(audio)) * amount * 0.1
-        
+
         # Low-pass filter the noise for more natural sound
         try:
             from scipy.signal import butter, filtfilt
@@ -269,24 +268,24 @@ class EmotionSynthesizer:
             noise = filtfilt(b, a, noise)
         except ImportError:
             logger.debug("scipy not available for noise filtering, using unfiltered noise")
-        
+
         return audio + noise
-    
+
     def _add_roughness(self, audio: np.ndarray, amount: float) -> np.ndarray:
         """Add rough/gravelly quality."""
         # Soft clipping for distortion
         threshold = 1.0 - amount * 0.5
         output = np.tanh(audio / threshold) * threshold
         return output
-    
+
     @property
     def current_emotion(self) -> Emotion:
         return self._current_emotion
-    
+
     @property
     def current_params(self) -> EmotionParams:
         return self._current_params
-    
+
     @property
     def intensity(self) -> float:
         return self._intensity
@@ -295,15 +294,15 @@ class EmotionSynthesizer:
 class EmotionTimeline:
     """
     Manage emotion changes over time.
-    
+
     Allows scheduling emotion changes at specific timestamps.
     """
-    
+
     def __init__(self, sample_rate: int = 16000):
         self._sample_rate = sample_rate
-        self._events: List[Tuple[int, Emotion, float]] = []  # (sample, emotion, intensity)
+        self._events: list[tuple[int, Emotion, float]] = []  # (sample, emotion, intensity)
         self._synthesizer = EmotionSynthesizer()
-    
+
     def add_event(
         self,
         time_seconds: float,
@@ -314,11 +313,11 @@ class EmotionTimeline:
         sample = int(time_seconds * self._sample_rate)
         self._events.append((sample, emotion, intensity))
         self._events.sort(key=lambda x: x[0])
-    
+
     def clear_events(self) -> None:
         """Clear all events."""
         self._events.clear()
-    
+
     def process(
         self,
         audio: np.ndarray,
@@ -326,29 +325,29 @@ class EmotionTimeline:
     ) -> np.ndarray:
         """
         Process audio with timeline emotions.
-        
+
         Args:
             audio: Full audio to process
             chunk_size: Processing chunk size
-            
+
         Returns:
             Processed audio with emotions applied
         """
         output = np.zeros_like(audio)
         event_idx = 0
-        
+
         for start in range(0, len(audio), chunk_size):
             end = min(start + chunk_size, len(audio))
             chunk = audio[start:end]
-            
+
             # Check for emotion events in this chunk
             while event_idx < len(self._events) and self._events[event_idx][0] <= start:
                 _, emotion, intensity = self._events[event_idx]
                 self._synthesizer.set_emotion(emotion, intensity, transition_frames=5)
                 event_idx += 1
-            
+
             # Process chunk
             processed = self._synthesizer.process(chunk, self._sample_rate)
             output[start:end] = processed
-        
+
         return output

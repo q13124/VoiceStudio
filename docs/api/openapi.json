@@ -3,7 +3,9 @@
   "info": {
     "title": "VoiceStudio Quantum+ Backend API",
     "description": "\n    VoiceStudio Quantum+ provides a comprehensive REST API for voice cloning, audio processing, and project management.\n\n    ## Features\n\n    - **Voice Cloning:** Multiple engines (XTTS v2, Chatterbox TTS, Tortoise TTS, OpenVoice, RVC, and more)\n    - **Audio Processing:** 17+ audio effects and processing tools\n    - **Project Management:** Projects, tracks, clips, and timeline management\n    - **Quality Metrics:** MOS score, similarity, naturalness, SNR, artifact detection\n    - **Training:** Custom voice model training with data optimization\n    - **Batch Processing:** Queue-based batch synthesis\n    - **Transcription:** Whisper-based speech-to-text\n    - **Real-time Updates:** WebSocket support for real-time updates\n\n    ## Error Handling\n\n    All errors follow a standardized format with error codes, recovery suggestions, and context.\n    See the error handling documentation for details.\n\n    ## Rate Limiting\n\n    API endpoints are rate-limited to ensure fair usage and system stability.\n    Rate limit information is provided in response headers.\n    See the rate limiting documentation for details.\n    ",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "x-generated-at": "2026-02-14T01:38:57.715898Z",
+    "x-generator": "VoiceStudio OpenAPI Generator"
   },
   "paths": {
     "/": {
@@ -11,6 +13,26 @@
         "summary": "Root",
         "description": "Root endpoint with version information.",
         "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/version": {
+      "get": {
+        "tags": [
+          "versioning"
+        ],
+        "summary": "Api Version Info",
+        "description": "Get API version information including negotiated version and compatibility.\n\nReturns:\n    - current_version: The current API version\n    - min_supported_version: Minimum supported API version\n    - negotiated_version: The version negotiated for this request\n    - supported_versions: List of all supported versions\n    - version_info: Application version details",
+        "operationId": "api_version_info_api_version_get",
         "responses": {
           "200": {
             "description": "Successful Response",

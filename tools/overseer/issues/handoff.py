@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tools.context.core.models import ContextBundle
@@ -21,7 +22,7 @@ DEFAULT_HANDOFF_STORE = Path("%APPDATA%/VoiceStudio/handoffs").expanduser()
 @dataclass
 class HandoffEntry:
     """A single handoff entry with context distribution support."""
-    
+
     id: str
     issue_id: str
     from_role: str
@@ -29,20 +30,20 @@ class HandoffEntry:
     message: str
     priority: str  # "low", "medium", "high", "urgent"
     handed_off_at: datetime
-    acknowledged_at: Optional[datetime] = None
-    acknowledged_by: Optional[str] = None
-    completed_at: Optional[datetime] = None
-    resolution: Optional[str] = None
+    acknowledged_at: datetime | None = None
+    acknowledged_by: str | None = None
+    completed_at: datetime | None = None
+    resolution: str | None = None
     severity: str = "medium"
     status: str = "pending"
     instance_type: str = "agent"
     correlation_id: str = ""
-    task_id: Optional[str] = None
-    phase: Optional[str] = None
+    task_id: str | None = None
+    phase: str | None = None
     context_prepared: bool = False
     context_size_chars: int = 0
     auto_distributed: bool = False
-    
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -66,7 +67,7 @@ class HandoffEntry:
             "context_size_chars": self.context_size_chars,
             "auto_distributed": self.auto_distributed,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> HandoffEntry:
         return cls(
@@ -96,17 +97,17 @@ class HandoffEntry:
 class HandoffQueue:
     """
     Manages cross-role issue handoffs with automatic context distribution.
-    
+
     Features:
     - Issue escalation and delegation between roles
     - Automatic context bundle preparation for target role
     - Notification hooks for handoff events
     - Progress tracking integration
     """
-    
+
     def __init__(
         self,
-        storage_dir: Optional[Path] = None,
+        storage_dir: Path | None = None,
         auto_distribute_context: bool = True,
     ):
         if storage_dir:
@@ -115,13 +116,13 @@ class HandoffQueue:
             import os
             appdata = os.getenv("APPDATA", os.path.expanduser("~"))
             self._storage_dir = Path(appdata) / "VoiceStudio" / "handoffs"
-        
+
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._index_file = self._storage_dir / "handoff_index.jsonl"
         self._auto_distribute = auto_distribute_context
         self._distributor = None
-        self._notification_callbacks: List[Callable[[HandoffEntry], None]] = []
-    
+        self._notification_callbacks: list[Callable[[HandoffEntry], None]] = []
+
     def _get_distributor(self):
         """Lazy-load context distributor."""
         if self._distributor is None:
@@ -131,19 +132,19 @@ class HandoffQueue:
             except Exception as e:
                 logger.warning("Failed to load ContextDistributor: %s", e)
         return self._distributor
-    
+
     def register_notification(
         self,
         callback: Callable[[HandoffEntry], None],
     ) -> None:
         """
         Register a callback for handoff notifications.
-        
+
         Args:
             callback: Function called when handoff is created
         """
         self._notification_callbacks.append(callback)
-    
+
     def handoff(
         self,
         issue_id: str,
@@ -152,13 +153,13 @@ class HandoffQueue:
         reason: str,
         priority: str = "medium",
         severity: str = "medium",
-        task_id: Optional[str] = None,
-        phase: Optional[str] = None,
-        distribute_context: Optional[bool] = None,
+        task_id: str | None = None,
+        phase: str | None = None,
+        distribute_context: bool | None = None,
     ) -> HandoffEntry:
         """
         Create handoff entry for issue with automatic context distribution.
-        
+
         Args:
             issue_id: Issue ID to handoff
             from_role: Source role
@@ -169,7 +170,7 @@ class HandoffQueue:
             task_id: Optional task ID for context
             phase: Optional phase name for context
             distribute_context: Override auto_distribute setting
-        
+
         Returns:
             HandoffEntry record with context prepared if enabled
         """
@@ -186,25 +187,25 @@ class HandoffQueue:
             task_id=task_id,
             phase=phase,
         )
-        
+
         # Auto-distribute context to target role if enabled
         should_distribute = (
             distribute_context if distribute_context is not None
             else self._auto_distribute
         )
-        
+
         if should_distribute:
             entry = self._distribute_context_for_handoff(entry)
-        
+
         self._append(entry)
-        
+
         # Fire notification callbacks
         for callback in self._notification_callbacks:
             try:
                 callback(entry)
             except Exception as e:
                 logger.warning("Notification callback failed: %s", e)
-        
+
         logger.info(
             "Handoff created: %s -> %s (issue: %s, context: %s)",
             from_role,
@@ -212,9 +213,9 @@ class HandoffQueue:
             issue_id,
             "prepared" if entry.context_prepared else "skipped",
         )
-        
+
         return entry
-    
+
     def _distribute_context_for_handoff(
         self,
         entry: HandoffEntry,
@@ -223,7 +224,7 @@ class HandoffQueue:
         distributor = self._get_distributor()
         if distributor is None:
             return entry
-        
+
         try:
             bundle = distributor.distribute(
                 role_id=entry.to_role,
@@ -231,7 +232,7 @@ class HandoffQueue:
                 phase=entry.phase,
                 force_refresh=True,
             )
-            
+
             if bundle:
                 entry.context_prepared = True
                 entry.context_size_chars = len(bundle.to_json())
@@ -243,62 +244,62 @@ class HandoffQueue:
                 )
         except Exception as e:
             logger.warning("Failed to distribute context for handoff: %s", e)
-        
+
         return entry
-    
+
     def get_context_for_handoff(
         self,
         entry_id: str,
-    ) -> Optional["ContextBundle"]:
+    ) -> ContextBundle | None:
         """
         Get the prepared context bundle for a handoff.
-        
+
         Args:
             entry_id: Handoff entry ID
-        
+
         Returns:
             ContextBundle if available, None otherwise
         """
         entries = self._load_all()
-        
+
         for entry_data in entries:
             if entry_data["id"] == entry_id:
                 if not entry_data.get("context_prepared"):
                     return None
-                
+
                 distributor = self._get_distributor()
                 if distributor is None:
                     return None
-                
+
                 to_role = entry_data.get("to_role")
                 return distributor.get_active_distribution(to_role)
-        
+
         return None
-    
+
     def get_role_queue(
         self,
         role: str,
         unacknowledged_only: bool = True,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Get handoff queue for a role.
-        
+
         Args:
             role: Role short name (e.g., "core-platform")
             unacknowledged_only: Only return unacknowledged entries
-        
+
         Returns:
             List of handoff entries as dicts
         """
         entries = self._load_all()
-        
+
         filtered = [
             e for e in entries
             if e["to_role"] == role
             and (not unacknowledged_only or e["acknowledged_at"] is None)
             and e["status"] != "completed"
         ]
-        
+
         # Sort by priority then date
         priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
         filtered.sort(
@@ -307,22 +308,22 @@ class HandoffQueue:
                 e["handed_off_at"]
             )
         )
-        
+
         return filtered
-    
+
     def acknowledge(self, entry_id: str, role: str) -> bool:
         """
         Acknowledge receipt of handoff.
-        
+
         Args:
             entry_id: Handoff entry ID
             role: Role acknowledging
-        
+
         Returns:
             True if acknowledged, False if not found
         """
         entries = self._load_all()
-        
+
         for entry in entries:
             if entry["id"] == entry_id:
                 entry["acknowledged_at"] = datetime.now().isoformat()
@@ -330,22 +331,22 @@ class HandoffQueue:
                 entry["status"] = "acknowledged"
                 self._rewrite_all(entries)
                 return True
-        
+
         return False
-    
+
     def complete(self, entry_id: str, resolution: str) -> bool:
         """
         Mark handoff as completed.
-        
+
         Args:
             entry_id: Handoff entry ID
             resolution: Resolution description
-        
+
         Returns:
             True if completed, False if not found
         """
         entries = self._load_all()
-        
+
         for entry in entries:
             if entry["id"] == entry_id:
                 entry["completed_at"] = datetime.now().isoformat()
@@ -353,21 +354,21 @@ class HandoffQueue:
                 entry["status"] = "completed"
                 self._rewrite_all(entries)
                 return True
-        
+
         return False
-    
+
     def _append(self, entry: HandoffEntry) -> None:
         """Append handoff entry to index."""
         with open(self._index_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.to_dict()) + "\n")
-    
-    def _load_all(self) -> List[Dict]:
+
+    def _load_all(self) -> list[dict]:
         """Load all handoff entries."""
         if not self._index_file.exists():
             return []
-        
+
         entries = []
-        with open(self._index_file, "r", encoding="utf-8") as f:
+        with open(self._index_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -376,34 +377,34 @@ class HandoffQueue:
                     entries.append(json.loads(line))
                 except json.JSONDecodeError:
                     continue
-        
+
         return entries
-    
-    def _rewrite_all(self, entries: List[Dict]) -> None:
+
+    def _rewrite_all(self, entries: list[dict]) -> None:
         """Rewrite entire index (for updates)."""
         tmp_file = self._index_file.with_suffix(".tmp")
         with open(tmp_file, "w", encoding="utf-8") as f:
             for entry in entries:
                 f.write(json.dumps(entry) + "\n")
-        
+
         import os
         os.replace(tmp_file, self._index_file)
-    
+
     def get_pending_with_context(
         self,
         role: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get pending handoffs for a role with context summary.
-        
+
         Args:
             role: Target role
-        
+
         Returns:
             List of handoffs with context_summary field
         """
         pending = self.get_role_queue(role, unacknowledged_only=True)
-        
+
         for entry in pending:
             if entry.get("context_prepared"):
                 entry["context_summary"] = {
@@ -414,50 +415,50 @@ class HandoffQueue:
                 }
             else:
                 entry["context_summary"] = {"ready": False}
-        
+
         return pending
-    
+
     def refresh_context(self, entry_id: str) -> bool:
         """
         Refresh context for an existing handoff.
-        
+
         Args:
             entry_id: Handoff entry ID
-        
+
         Returns:
             True if refresh succeeded
         """
         entries = self._load_all()
-        
+
         for entry_data in entries:
             if entry_data["id"] == entry_id:
                 entry = HandoffEntry.from_dict(entry_data)
                 entry = self._distribute_context_for_handoff(entry)
-                
+
                 # Update entry in list
                 entry_data.update(entry.to_dict())
                 self._rewrite_all(entries)
                 return entry.context_prepared
-        
+
         return False
-    
-    def get_statistics(self) -> Dict[str, Any]:
+
+    def get_statistics(self) -> dict[str, Any]:
         """Get handoff queue statistics."""
         entries = self._load_all()
-        
+
         pending = [e for e in entries if e.get("status") == "pending"]
         acknowledged = [e for e in entries if e.get("status") == "acknowledged"]
         completed = [e for e in entries if e.get("status") == "completed"]
-        
+
         # Group by role
-        by_role: Dict[str, int] = {}
+        by_role: dict[str, int] = {}
         for e in pending:
             role = e.get("to_role", "unknown")
             by_role[role] = by_role.get(role, 0) + 1
-        
+
         # Context stats
         with_context = sum(1 for e in entries if e.get("context_prepared"))
-        
+
         return {
             "total": len(entries),
             "pending": len(pending),
@@ -470,7 +471,7 @@ class HandoffQueue:
 
 
 # Global handoff queue instance
-_global_queue: Optional[HandoffQueue] = None
+_global_queue: HandoffQueue | None = None
 
 
 def get_handoff_queue() -> HandoffQueue:
@@ -487,7 +488,7 @@ def create_handoff(
     to_role: str,
     reason: str,
     priority: str = "medium",
-    task_id: Optional[str] = None,
+    task_id: str | None = None,
 ) -> HandoffEntry:
     """Convenience function to create a handoff."""
     return get_handoff_queue().handoff(

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -19,22 +19,22 @@ from tools.context.sources.base import BaseSourceAdapter
 class AuditSourceAdapter(BaseSourceAdapter):
     """
     Fetch recent audit entries for context injection.
-    
+
     Reads audit logs from the .audit/ directory and provides
     filtered entries based on severity and time window.
     """
-    
+
     def __init__(
         self,
         max_entries: int = 20,
-        severity_filter: Optional[List[str]] = None,
+        severity_filter: list[str] | None = None,
         hours_lookback: int = 24,
-        audit_dir: Optional[Path] = None,
+        audit_dir: Path | None = None,
         offline: bool = True,
     ):
         """
         Initialize the AuditSourceAdapter.
-        
+
         Args:
             max_entries: Maximum number of audit entries to include
             severity_filter: List of severity levels to include (default: error, warning)
@@ -47,60 +47,60 @@ class AuditSourceAdapter(BaseSourceAdapter):
         self._severity_filter = severity_filter or ["error", "warning", "critical"]
         self._hours_lookback = max(1, int(hours_lookback))
         self._audit_dir = audit_dir or Path(".audit")
-    
+
     def fetch(self, context: AllocationContext) -> SourceResult:
         """Fetch recent audit entries for context."""
-        
-        def _load() -> Dict[str, Any]:
+
+        def _load() -> dict[str, Any]:
             entries = self._get_recent_entries()
-            
+
             # Group by subsystem for better context organization
-            by_subsystem: Dict[str, List[Dict]] = {}
+            by_subsystem: dict[str, list[dict]] = {}
             for entry in entries:
                 subsystem = entry.get("subsystem") or "unknown"
                 if subsystem not in by_subsystem:
                     by_subsystem[subsystem] = []
                 by_subsystem[subsystem].append(self._format_entry(entry))
-            
+
             # Build summary statistics
             stats = {
                 "total_entries": len(entries),
                 "by_severity": self._count_by_field(entries, "severity"),
                 "by_event_type": self._count_by_field(entries, "event_type"),
             }
-            
+
             return {
                 "audit_entries": [self._format_entry(e) for e in entries[:self._max_entries]],
                 "by_subsystem": by_subsystem,
                 "stats": stats,
                 "lookback_hours": self._hours_lookback,
             }
-        
+
         return self._measure(_load, context)
-    
-    def _get_recent_entries(self) -> List[Dict[str, Any]]:
+
+    def _get_recent_entries(self) -> list[dict[str, Any]]:
         """Load recent audit entries from log files."""
         entries = []
         cutoff = datetime.now(timezone.utc) - timedelta(hours=self._hours_lookback)
-        
+
         # Read today's log and potentially yesterday's
         for days_ago in range(2):  # Today and yesterday
             log_date = (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime("%Y-%m-%d")
             log_path = self._audit_dir / f"log-{log_date}.jsonl"
-            
+
             if not log_path.exists():
                 continue
-            
+
             try:
-                with open(log_path, "r", encoding="utf-8") as f:
+                with open(log_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if not line:
                             continue
-                        
+
                         try:
                             entry = json.loads(line)
-                            
+
                             # Check timestamp
                             timestamp_str = entry.get("timestamp", "")
                             if timestamp_str:
@@ -113,26 +113,26 @@ class AuditSourceAdapter(BaseSourceAdapter):
                                 # Best effort - failure is acceptable here
                                 except (ValueError, TypeError):
                                     pass
-                            
+
                             # Check severity filter
                             severity = (entry.get("severity") or "").lower()
                             if severity and severity not in self._severity_filter:
                                 continue
-                            
+
                             entries.append(entry)
-                            
+
                         except json.JSONDecodeError:
                             continue
-                            
-            except (IOError, OSError):
+
+            except OSError:
                 continue
-        
+
         # Sort by timestamp descending (most recent first)
         entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
-        
+
         return entries[:self._max_entries]
-    
-    def _format_entry(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _format_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
         """Format an entry for context output."""
         return {
             "id": entry.get("entry_id", ""),
@@ -146,7 +146,7 @@ class AuditSourceAdapter(BaseSourceAdapter):
             "error_code": entry.get("error_code", ""),
             "message": self._truncate(entry.get("message", ""), 200),
         }
-    
+
     def _format_timestamp(self, timestamp: str) -> str:
         """Format timestamp for display."""
         if not timestamp:
@@ -156,21 +156,21 @@ class AuditSourceAdapter(BaseSourceAdapter):
             return dt.strftime("%Y-%m-%d %H:%M")
         except (ValueError, TypeError):
             return timestamp[:16] if len(timestamp) > 16 else timestamp
-    
+
     def _truncate(self, text: str, max_len: int) -> str:
         """Truncate text to max length."""
         if not text or len(text) <= max_len:
             return text
         return text[:max_len - 3] + "..."
-    
-    def _count_by_field(self, entries: List[Dict], field: str) -> Dict[str, int]:
+
+    def _count_by_field(self, entries: list[dict], field: str) -> dict[str, int]:
         """Count entries by a field value."""
-        counts: Dict[str, int] = {}
+        counts: dict[str, int] = {}
         for entry in entries:
             value = entry.get(field) or "unknown"
             counts[value] = counts.get(value, 0) + 1
         return counts
-    
+
     def estimate_size(self, context: AllocationContext) -> int:
         """Estimate the size of audit context in characters."""
         # Rough estimate: ~150 chars per entry

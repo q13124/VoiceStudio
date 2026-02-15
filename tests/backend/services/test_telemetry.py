@@ -3,8 +3,6 @@
 import pytest
 
 from backend.services.telemetry import (
-    TelemetryService,
-    Span,
     SpanStatus,
     get_telemetry_service,
     reset_telemetry_service,
@@ -52,9 +50,8 @@ class TestTelemetryService:
         """Test that span captures errors correctly."""
         telemetry = get_telemetry_service()
 
-        with pytest.raises(ValueError):
-            with telemetry.trace("error_op") as span:
-                raise ValueError("test error")
+        with pytest.raises(ValueError), telemetry.trace("error_op") as span:
+            raise ValueError("test error")
 
         assert span.status == SpanStatus.ERROR
         assert "test error" in span.error

@@ -51,15 +51,15 @@ for fname in files_to_skip:
     if not os.path.exists(fpath):
         print(f'Not found: {fname}')
         continue
-    
-    with open(fpath, 'r', encoding='utf-8') as f:
+
+    with open(fpath, encoding='utf-8') as f:
         content = f.read()
-    
+
     # Check if already has our skip block
     if 'Tests mock non-existent module attributes - needs test refactoring' in content:
         print(f'Already has our skip: {fname}')
         continue
-    
+
     # Find the module docstring (first """)
     if content.startswith('"""'):
         # Find end of docstring
@@ -69,10 +69,10 @@ for fname in files_to_skip:
     else:
         # No docstring, insert at beginning
         new_content = skip_block + '\n' + content
-    
+
     with open(fpath, 'w', encoding='utf-8') as f:
         f.write(new_content)
-    
+
     count += 1
     print(f'Skipped: {fname}')
 

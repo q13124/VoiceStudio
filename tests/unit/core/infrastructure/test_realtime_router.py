@@ -5,7 +5,6 @@ Tests realtime routing functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -46,7 +45,7 @@ class TestRealtimeRouterClasses:
     def test_realtime_router_class_exists(self):
         """Test RealtimeRouter class exists."""
         if hasattr(realtime_router, "RealtimeRouter"):
-            cls = getattr(realtime_router, "RealtimeRouter")
+            cls = realtime_router.RealtimeRouter
             assert isinstance(
                 cls, type
             ), "RealtimeRouter should be a class"

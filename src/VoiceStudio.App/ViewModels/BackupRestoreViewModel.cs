@@ -341,6 +341,14 @@ namespace VoiceStudio.App.ViewModels
         openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
         openPicker.FileTypeFilter.Add(".zip");
 
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+        }
+
         var file = await openPicker.PickSingleFileAsync();
         cancellationToken.ThrowIfCancellationRequested();
 

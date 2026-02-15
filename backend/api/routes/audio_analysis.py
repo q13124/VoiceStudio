@@ -5,10 +5,12 @@ Endpoints for comprehensive audio analysis including spectral,
 temporal, and perceptual metrics.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query
@@ -16,7 +18,6 @@ from pydantic import BaseModel
 
 from ..audio_processing import (
     AudioMetadataExtractor,
-    HighQualityResampler,
     PitchTracker,
     WaveletAnalyzer,
 )
@@ -27,8 +28,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/audio-analysis", tags=["audio-analysis"])
 
 # In-memory analysis results storage (replace with database in production)
-_analysis_results: Dict[str, Dict] = {}
-_analysis_timestamps: Dict[str, float] = {}  # audio_id -> creation_time
+_analysis_results: dict[str, dict] = {}
+_analysis_timestamps: dict[str, float] = {}  # audio_id -> creation_time
 _MAX_ANALYSIS_RESULTS = 500  # Maximum number of cached analysis results
 _ANALYSIS_CACHE_TTL = 3600  # Cache TTL in seconds (1 hour)
 
@@ -65,10 +66,8 @@ def _cleanup_old_analysis_results():
 
     # Remove results
     for audio_id in to_remove:
-        if audio_id in _analysis_results:
-            del _analysis_results[audio_id]
-        if audio_id in _analysis_timestamps:
-            del _analysis_timestamps[audio_id]
+        _analysis_results.pop(audio_id, None)
+        _analysis_timestamps.pop(audio_id, None)
 
     if to_remove:
         logger.info(f"Cleaned up {len(to_remove)} old analysis results")
@@ -92,10 +91,10 @@ class TemporalAnalysis(BaseModel):
 
     rms: float  # RMS energy
     zero_crossing_rate: float
-    attack_time: Optional[float] = None  # Attack time in seconds
-    decay_time: Optional[float] = None  # Decay time in seconds
-    sustain_level: Optional[float] = None
-    release_time: Optional[float] = None  # Release time in seconds
+    attack_time: float | None = None  # Attack time in seconds
+    decay_time: float | None = None  # Decay time in seconds
+    sustain_level: float | None = None
+    release_time: float | None = None  # Release time in seconds
 
 
 class PerceptualAnalysis(BaseModel):
@@ -106,7 +105,7 @@ class PerceptualAnalysis(BaseModel):
     true_peak_db: float  # True peak in dB
     dynamic_range: float  # Dynamic range in dB
     crest_factor: float  # Crest factor
-    lra: Optional[float] = None  # Loudness range
+    lra: float | None = None  # Loudness range
 
 
 class AudioAnalysisResult(BaseModel):
@@ -471,7 +470,6 @@ async def analyze_audio(audio_id: str):
     """Trigger analysis for an audio file."""
     import asyncio
     import uuid
-    from datetime import datetime
 
     # Validate audio exists
     from .audio import _get_audio_path
@@ -487,7 +485,7 @@ async def analyze_audio(audio_id: str):
     async def _process_analysis():
         try:
             # Get analysis result (this will compute and cache it)
-            result = await get_audio_analysis(audio_id)
+            await get_audio_analysis(audio_id)
             # Result is automatically cached by get_audio_analysis
             logger.info(f"Audio analysis completed for {audio_id}, job {job_id}")
         except Exception as e:
@@ -589,9 +587,9 @@ async def compare_audio_analysis(audio_id: str, reference_audio_id: str):
 class PitchAnalysisResult(BaseModel):
     """Pitch analysis result."""
 
-    times: List[float]
-    frequencies: List[float]
-    statistics: Dict[str, float]
+    times: list[float]
+    frequencies: list[float]
+    statistics: dict[str, float]
     method: str  # "crepe" or "pyin"
 
 
@@ -631,7 +629,7 @@ async def get_pitch_analysis(
                 method="crepe",
             )
         elif method.lower() == "pyin" and pitch_tracker.pyin_available:
-            f0, voiced_flag, voiced_prob = pitch_tracker.track_pitch_pyin(
+            f0, voiced_flag, _voiced_prob = pitch_tracker.track_pitch_pyin(
                 audio, sample_rate
             )
             # Convert to times array
@@ -657,7 +655,7 @@ async def get_pitch_analysis(
     except Exception as e:
         logger.error(f"Error in pitch analysis: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to analyze pitch: {str(e)}"
+            status_code=500, detail=f"Failed to analyze pitch: {e!s}"
         )
 
 
@@ -678,14 +676,14 @@ async def get_audio_metadata(audio_id: str):
     except Exception as e:
         logger.error(f"Error extracting metadata: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to extract metadata: {str(e)}"
+            status_code=500, detail=f"Failed to extract metadata: {e!s}"
         )
 
 
 class WaveletAnalysisResult(BaseModel):
     """Wavelet analysis result."""
 
-    features: Dict[str, Any]
+    features: dict[str, Any]
     num_levels: int
     wavelet: str
 
@@ -707,7 +705,7 @@ async def get_wavelet_analysis(
         import soundfile as sf
 
         # Load audio
-        audio, sample_rate = sf.read(audio_path)
+        audio, _sample_rate = sf.read(audio_path)
 
         # Convert to mono if stereo
         if len(audio.shape) > 1:
@@ -738,5 +736,5 @@ async def get_wavelet_analysis(
     except Exception as e:
         logger.error(f"Error in wavelet analysis: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to analyze wavelet: {str(e)}"
+            status_code=500, detail=f"Failed to analyze wavelet: {e!s}"
         )

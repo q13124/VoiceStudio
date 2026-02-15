@@ -3,12 +3,12 @@ Phase 7: Installer Configuration
 Task 7.1: Installer configuration and metadata.
 """
 
+import json
+import platform
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-import json
-import platform
+from typing import Any
 
 
 class InstallerType(Enum):
@@ -43,28 +43,28 @@ class InstallerMetadata:
     publisher_display_name: str = "VoiceStudio Team"
     description: str = "Professional AI voice synthesis and cloning studio"
     copyright: str = "Copyright © 2026 VoiceStudio"
-    
+
     # Installation
     install_dir_name: str = "VoiceStudio"
     default_install_path: str = "%PROGRAMFILES%\\VoiceStudio"
-    
+
     # Icons and branding
     app_icon: str = "assets/icon.ico"
     installer_icon: str = "assets/installer.ico"
     banner_image: str = "assets/banner.bmp"
-    
+
     # Requirements
     min_windows_version: WindowsVersion = WindowsVersion.WIN10_2004
     architectures: list[Architecture] = field(
         default_factory=lambda: [Architecture.X64]
     )
-    
+
     # Features
     requires_admin: bool = True
     create_desktop_shortcut: bool = True
     create_start_menu_entry: bool = True
     register_file_associations: bool = True
-    
+
     # URLs
     website_url: str = "https://voicestudio.app"
     support_url: str = "https://voicestudio.app/support"
@@ -98,22 +98,22 @@ class InstallerConfig:
     """Complete installer configuration."""
     metadata: InstallerMetadata = field(default_factory=InstallerMetadata)
     installer_type: InstallerType = InstallerType.INNO_SETUP
-    
+
     # Components
     components: list[Component] = field(default_factory=list)
-    
+
     # File associations
     file_associations: list[FileAssociation] = field(default_factory=list)
-    
+
     # Prerequisites
     prerequisites: list[dict[str, Any]] = field(default_factory=list)
-    
+
     # Post-install actions
     post_install_commands: list[str] = field(default_factory=list)
-    
+
     # Uninstall
-    uninstall_feedback_url: Optional[str] = None
-    
+    uninstall_feedback_url: str | None = None
+
     def __post_init__(self):
         """Initialize default components."""
         if not self.components:
@@ -154,7 +154,7 @@ class InstallerConfig:
                     size_mb=20.0,
                 ),
             ]
-        
+
         if not self.file_associations:
             self.file_associations = [
                 FileAssociation(
@@ -170,7 +170,7 @@ class InstallerConfig:
                     description="VoiceStudio Voice Model",
                 ),
             ]
-        
+
         if not self.prerequisites:
             self.prerequisites = [
                 {
@@ -192,7 +192,7 @@ class InstallerConfig:
                     "required": True,
                 },
             ]
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -225,26 +225,26 @@ class InstallerConfig:
             ],
             "prerequisites": self.prerequisites,
         }
-    
+
     def save(self, path: Path) -> None:
         """Save configuration to file."""
         path.write_text(json.dumps(self.to_dict(), indent=2))
-    
+
     @classmethod
     def load(cls, path: Path) -> "InstallerConfig":
         """Load configuration from file."""
         data = json.loads(path.read_text())
-        
+
         config = cls()
-        
+
         if "metadata" in data:
             for key, value in data["metadata"].items():
                 if hasattr(config.metadata, key):
                     setattr(config.metadata, key, value)
-        
+
         if "installer_type" in data:
             config.installer_type = InstallerType(data["installer_type"])
-        
+
         return config
 
 

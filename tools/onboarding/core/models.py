@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -11,8 +11,8 @@ class RoleConfig:
     short_name: str
     name: str
     prompt_path: str
-    guide_path: Optional[str] = None
-    primary_gates: List[str] = field(default_factory=list)
+    guide_path: str | None = None
+    primary_gates: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -30,18 +30,18 @@ class GuideContent:
 
 @dataclass
 class ProjectState:
-    phase: Optional[str] = None
-    active_gate: Optional[str] = None
-    active_task_id: Optional[str] = None
-    active_task_title: Optional[str] = None
+    phase: str | None = None
+    active_gate: str | None = None
+    active_task_id: str | None = None
+    active_task_title: str | None = None
 
 
 @dataclass
 class ActiveTask:
-    id: Optional[str] = None
-    title: Optional[str] = None
-    priority: Optional[str] = None
-    blockers: Optional[str] = None
+    id: str | None = None
+    title: str | None = None
+    priority: str | None = None
+    blockers: str | None = None
 
 
 @dataclass
@@ -55,7 +55,7 @@ class Blocker:
 
 @dataclass
 class RoleContext:
-    blockers: List[Blocker] = field(default_factory=list)
+    blockers: list[Blocker] = field(default_factory=list)
 
 
 @dataclass
@@ -65,6 +65,6 @@ class OnboardingPacket:
     guide: GuideContent
     project_state: ProjectState
     role_context: RoleContext
-    context_bundle: Optional[Any] = None
-    issues: List[dict] = field(default_factory=list)
+    context_bundle: Any | None = None
+    issues: list[dict] = field(default_factory=list)
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())

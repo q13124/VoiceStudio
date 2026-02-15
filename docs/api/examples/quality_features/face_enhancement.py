@@ -37,11 +37,11 @@ def enhance_face_image(image_id, enhancement_preset="portrait", multi_stage=True
 
     result = response.json()
 
-    print(f"\n✅ Face enhancement complete!")
+    print("\n✅ Face enhancement complete!")
 
     # Show original analysis
     original = result["original_analysis"]
-    print(f"\nOriginal Analysis:")
+    print("\nOriginal Analysis:")
     print(f"  Resolution score: {original['resolution_score']:.1f}/10.0")
     print(f"  Artifact score: {original['artifact_score']:.1f}/10.0")
     print(f"  Alignment score: {original['alignment_score']:.1f}/10.0")
@@ -51,7 +51,7 @@ def enhance_face_image(image_id, enhancement_preset="portrait", multi_stage=True
     # Show enhanced analysis if available
     if result.get("enhanced_analysis"):
         enhanced = result["enhanced_analysis"]
-        print(f"\nEnhanced Analysis:")
+        print("\nEnhanced Analysis:")
         print(f"  Resolution score: {enhanced['resolution_score']:.1f}/10.0")
         print(f"  Artifact score: {enhanced['artifact_score']:.1f}/10.0")
         print(f"  Alignment score: {enhanced['alignment_score']:.1f}/10.0")
@@ -61,7 +61,7 @@ def enhance_face_image(image_id, enhancement_preset="portrait", multi_stage=True
 
     # Show recommendations
     if original.get("recommendations"):
-        print(f"\nRecommendations:")
+        print("\nRecommendations:")
         for rec in original["recommendations"]:
             print(f"  - {rec}")
 
@@ -95,7 +95,7 @@ def enhance_face_video(video_id, enhancement_preset="portrait"):
 
     result = response.json()
 
-    print(f"\n✅ Video face enhancement complete!")
+    print("\n✅ Video face enhancement complete!")
     if result.get("enhanced_video_id"):
         print(f"Enhanced video URL: {result['enhanced_video_url']}")
 

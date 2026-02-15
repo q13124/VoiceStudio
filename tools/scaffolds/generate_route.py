@@ -37,15 +37,15 @@ class ScaffoldResult(NamedTuple):
 def find_project_root() -> Path:
     """Find the VoiceStudio project root directory."""
     current = Path(__file__).resolve().parent
-    
+
     markers = ["VoiceStudio.sln", "global.json", ".cursor"]
-    
+
     for _ in range(10):
         for marker in markers:
             if (current / marker).exists():
                 return current
         current = current.parent
-    
+
     return Path.cwd()
 
 
@@ -83,68 +83,68 @@ def generate_route(
 ) -> ScaffoldResult:
     """
     Generate a new API route with all required files.
-    
+
     Args:
         name: snake_case name for the route (e.g., "quality_metrics")
         methods: HTTP methods to include (default: GET, POST)
         project_root: Project root directory
         dry_run: If True, don't create files, just report what would be created
-    
+
     Returns:
         ScaffoldResult with created files and any errors
     """
     if project_root is None:
         project_root = find_project_root()
-    
+
     if methods is None:
         methods = ["GET", "POST"]
-    
+
     errors: list[str] = []
     files_created: list[str] = []
     manual_steps: list[str] = []
-    
+
     # Validate name
     if not re.match(r'^[a-z][a-z0-9_]*$', name):
         errors.append(f"Invalid route name (use snake_case): {name}")
         return ScaffoldResult(False, files_created, errors, manual_steps)
-    
+
     # Prepare replacements
     pascal_name = to_pascal_case(name)
     display_name = to_display_name(name)
     route_path = name.replace("_", "-")
-    
+
     replacements = {
         "NAME": pascal_name,
         "SNAKE_NAME": name,
         "DISPLAY_NAME": display_name,
         "ROUTE_PATH": route_path,
     }
-    
+
     # Define output paths
     routes_dir = project_root / "backend" / "api" / "routes"
     models_dir = project_root / "backend" / "api" / "models"
     tests_dir = project_root / "tests" / "unit" / "backend" / "api" / "routes"
-    
+
     output_files = [
         (routes_dir / f"{name}.py", "route_router.py.template"),
         (models_dir / f"{name}_models.py", "route_models.py.template"),
         (tests_dir / f"test_{name}.py", "route_test.py.template"),
     ]
-    
+
     # Check for existing files
     for output_path, _ in output_files:
         if output_path.exists():
             errors.append(f"File already exists: {output_path}")
-    
+
     if errors and not dry_run:
         return ScaffoldResult(False, files_created, errors, manual_steps)
-    
+
     # Generate files
     for output_path, template_name in output_files:
         try:
             template = load_template(template_name, project_root)
             content = render_template(template, replacements)
-            
+
             if dry_run:
                 files_created.append(f"[DRY RUN] {output_path}")
             else:
@@ -153,10 +153,10 @@ def generate_route(
                 files_created.append(str(output_path.relative_to(project_root)))
         except Exception as e:
             errors.append(f"Failed to create {output_path}: {e}")
-    
+
     # Add manual steps
     manual_steps.append(
-        f"1. Register router in backend/api/main.py:"
+        "1. Register router in backend/api/main.py:"
     )
     manual_steps.append(
         f"   from backend.api.routes.{name} import router as {name}_router"
@@ -166,7 +166,7 @@ def generate_route(
     )
     manual_steps.append(f"2. Test: python -m pytest tests/unit/backend/api/routes/test_{name}.py -v")
     manual_steps.append(f"3. Start backend and test endpoint: curl http://localhost:8001/api/{route_path}")
-    
+
     success = len(errors) == 0
     return ScaffoldResult(success, files_created, errors, manual_steps)
 
@@ -188,45 +188,45 @@ def main() -> int:
         "--dry-run", action="store_true",
         help="Show what would be created without creating files"
     )
-    
+
     args = parser.parse_args()
-    
+
     methods = [m.strip().upper() for m in args.methods.split(",")]
-    
+
     result = generate_route(
         name=args.name,
         methods=methods,
         dry_run=args.dry_run
     )
-    
+
     print("\n" + "=" * 60)
     print("VOICESTUDIO ROUTE SCAFFOLD")
     print("=" * 60)
-    
+
     if result.errors:
         print("\nErrors:")
         for error in result.errors:
             print(f"  [ERROR] {error}")
-    
+
     if result.files_created:
         print("\nFiles created:")
         for file in result.files_created:
             print(f"  [OK] {file}")
-    
+
     if result.manual_steps:
         print("\nManual steps required:")
         for step in result.manual_steps:
             print(f"  {step}")
-    
+
     print("\n" + "=" * 60)
-    
+
     if result.success:
         print(f"[OK] Route scaffold for '{args.name}' generated successfully!")
     else:
-        print(f"[ERROR] Route scaffold generation failed.")
-    
+        print("[ERROR] Route scaffold generation failed.")
+
     print("=" * 60 + "\n")
-    
+
     return 0 if result.success else 1
 
 

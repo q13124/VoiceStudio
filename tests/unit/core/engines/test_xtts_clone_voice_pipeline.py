@@ -38,8 +38,8 @@ class TestXTTSEngineCloneVoicePipeline:
         engine.synthesize = MagicMock(return_value=(synth_audio, synth_metrics))
         apply_prosody_mock = MagicMock()
         process_quality_mock = MagicMock()
-        setattr(engine, "_apply_prosody_control", apply_prosody_mock)
-        setattr(engine, "_process_audio_quality", process_quality_mock)
+        engine._apply_prosody_control = apply_prosody_mock
+        engine._process_audio_quality = process_quality_mock
 
         result: object = clone_voice(
             reference_audio="ref.wav",
@@ -91,8 +91,8 @@ class TestXTTSEngineCloneVoicePipeline:
         engine.synthesize = MagicMock(return_value=synth_audio)
         apply_prosody_mock = MagicMock(return_value=audio_after_prosody)
         process_quality_mock = MagicMock(return_value=(final_audio, final_metrics))
-        setattr(engine, "_apply_prosody_control", apply_prosody_mock)
-        setattr(engine, "_process_audio_quality", process_quality_mock)
+        engine._apply_prosody_control = apply_prosody_mock
+        engine._process_audio_quality = process_quality_mock
 
         result: object = clone_voice(
             reference_audio="ref.wav",
@@ -145,8 +145,8 @@ class TestXTTSEngineCloneVoicePipeline:
         engine.synthesize = MagicMock(return_value=synth_audio)
         apply_prosody_mock = MagicMock(return_value=audio_after_prosody)
         process_quality_mock = MagicMock()
-        setattr(engine, "_apply_prosody_control", apply_prosody_mock)
-        setattr(engine, "_process_audio_quality", process_quality_mock)
+        engine._apply_prosody_control = apply_prosody_mock
+        engine._process_audio_quality = process_quality_mock
 
         result: object = clone_voice(
             reference_audio="ref.wav",

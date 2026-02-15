@@ -17,18 +17,18 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 def _now_utc_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-def _read_json(path: Path) -> Dict[str, Any]:
+def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _split_entry_point(entry_point: str) -> Tuple[str, str]:
+def _split_entry_point(entry_point: str) -> tuple[str, str]:
     """
     Returns (module_path, symbol_name) for an entry point like:
     app.core.engines.xtts_engine.XTTSEngine
@@ -48,20 +48,20 @@ class EngineManifestRecord:
     kind: str  # engine_manifest | runtime_manifest
     engine_id: str
     display_name: str
-    engine_type: Optional[str]
-    engine_subtype: Optional[str]
-    version: Optional[str]
+    engine_type: str | None
+    engine_subtype: str | None
+    version: str | None
     manifest_path: str
-    entry_point: Optional[str]
-    entry_module: Optional[str]
-    entry_symbol: Optional[str]
-    entry_repo_path: Optional[str]
-    entry_repo_path_exists: Optional[bool]
-    tasks: List[str]
-    capabilities: List[str]
-    dependencies: Dict[str, Any]
+    entry_point: str | None
+    entry_module: str | None
+    entry_symbol: str | None
+    entry_repo_path: str | None
+    entry_repo_path_exists: bool | None
+    tasks: list[str]
+    capabilities: list[str]
+    dependencies: dict[str, Any]
 
-    def to_json_obj(self) -> Dict[str, Any]:
+    def to_json_obj(self) -> dict[str, Any]:
         return {
             "kind": self.kind,
             "engine_id": self.engine_id,
@@ -81,14 +81,14 @@ class EngineManifestRecord:
         }
 
 
-def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
+def extract_catalog(repo_root: Path, engines_root: Path) -> dict[str, Any]:
     if not engines_root.exists():
         raise FileNotFoundError(f"Engines root not found: {engines_root}")
     if not engines_root.is_dir():
         raise NotADirectoryError(f"Engines root is not a directory: {engines_root}")
 
-    records: List[EngineManifestRecord] = []
-    errors: List[Dict[str, str]] = []
+    records: list[EngineManifestRecord] = []
+    errors: list[dict[str, str]] = []
 
     for manifest_path in sorted(engines_root.rglob("engine.manifest.json")):
         try:
@@ -112,7 +112,7 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
                 entry_repo_path = _python_module_to_repo_path(entry_module)
                 entry_repo_path_exists = (repo_root / entry_repo_path).exists()
 
-            deps: Dict[str, Any]
+            deps: dict[str, Any]
             raw_deps = data.get("dependencies", {})
             if isinstance(raw_deps, dict):
                 deps = raw_deps
@@ -121,11 +121,11 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
             else:
                 deps = {"__raw__": raw_deps}
 
-            tasks: List[str] = []
+            tasks: list[str] = []
             if isinstance(data.get("tasks"), list):
                 tasks = [str(t) for t in data["tasks"]]
 
-            capabilities: List[str] = []
+            capabilities: list[str] = []
             if isinstance(data.get("capabilities"), list):
                 capabilities = [str(c) for c in data["capabilities"]]
 
@@ -162,7 +162,7 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
             engine_type = data.get("type")
             version = data.get("version")
 
-            tasks: List[str] = []
+            tasks: list[str] = []
             if isinstance(data.get("tasks"), list):
                 tasks = [str(t) for t in data["tasks"]]
 
@@ -172,7 +172,7 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
             entry_repo_path = None
             entry_repo_path_exists = None
 
-            deps: Dict[str, Any] = {}
+            deps: dict[str, Any] = {}
             records.append(
                 EngineManifestRecord(
                     kind="runtime_manifest",
@@ -197,7 +197,7 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
 
     records.sort(key=lambda r: (r.kind, (r.engine_type or ""), r.engine_id))
 
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for r in records:
         counts[r.kind] = counts.get(r.kind, 0) + 1
 
@@ -211,7 +211,7 @@ def extract_catalog(repo_root: Path, engines_root: Path) -> Dict[str, Any]:
     }
 
 
-def _parse_args(argv: List[str]) -> argparse.Namespace:
+def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Extract engine manifest catalog to JSON.")
     parser.add_argument(
         "--repo-root",
@@ -234,7 +234,7 @@ def _parse_args(argv: List[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: List[str]) -> int:
+def main(argv: list[str]) -> int:
     args = _parse_args(argv)
     repo_root = Path(args.repo_root).resolve()
     engines_root = Path(args.engines_root).resolve()

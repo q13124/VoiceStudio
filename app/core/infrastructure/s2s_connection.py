@@ -5,11 +5,14 @@ Manages persistent WebSocket connections for real-time speech-to-speech
 models. Handles reconnection, heartbeat, and connection lifecycle.
 """
 
+from __future__ import annotations
+
 import asyncio
+import contextlib
 import json
 import logging
-import time
-from typing import Any, AsyncIterator, Callable, Dict, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ class S2SWebSocketConnection:
     def __init__(
         self,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         max_retries: int = 3,
         heartbeat_interval: float = 30.0,
         send_timeout: float = DEFAULT_SEND_TIMEOUT,
@@ -53,7 +56,7 @@ class S2SWebSocketConnection:
         self._receive_timeout = receive_timeout
         self._ws = None
         self._connected = False
-        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_task: asyncio.Task | None = None
         self._message_queue: asyncio.Queue = asyncio.Queue()
 
     @property
@@ -95,10 +98,8 @@ class S2SWebSocketConnection:
         self._connected = False
         if self._heartbeat_task:
             self._heartbeat_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._heartbeat_task
-            except asyncio.CancelledError:
-                pass
         if self._ws:
             try:
                 await self._ws.close()
@@ -107,7 +108,7 @@ class S2SWebSocketConnection:
             self._ws = None
         logger.info("S2S WebSocket disconnected")
 
-    async def send_json(self, data: Dict[str, Any]) -> None:
+    async def send_json(self, data: dict[str, Any]) -> None:
         """Send JSON data over WebSocket with timeout."""
         if not self.is_connected:
             raise ConnectionError("Not connected")
@@ -154,7 +155,7 @@ class S2SWebSocketConnection:
             self._connected = False
             raise
 
-    async def receive_one(self, timeout: Optional[float] = None) -> Any:
+    async def receive_one(self, timeout: float | None = None) -> Any:
         """
         Receive a single message with optional timeout.
 

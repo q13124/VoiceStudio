@@ -5,9 +5,7 @@ Tests MockingBird engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestMockingBirdEngineImports:
     def test_module_has_mockingbird_engine_class(self):
         """Test module has MockingBirdEngine class."""
         if hasattr(mockingbird_engine, "MockingBirdEngine"):
-            cls = getattr(mockingbird_engine, "MockingBirdEngine")
+            cls = mockingbird_engine.MockingBirdEngine
             assert isinstance(cls, type), "MockingBirdEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestMockingBirdEngineClass:
     def test_mockingbird_engine_class_exists(self):
         """Test MockingBirdEngine class exists."""
         if hasattr(mockingbird_engine, "MockingBirdEngine"):
-            cls = getattr(mockingbird_engine, "MockingBirdEngine")
+            cls = mockingbird_engine.MockingBirdEngine
             assert isinstance(cls, type), "MockingBirdEngine should be a class"
 
     def test_mockingbird_engine_initialization(self):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 So-VITS-SVC Conversion Proof
 
@@ -13,7 +12,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
@@ -29,14 +28,14 @@ DEFAULT_LANGUAGE = "en"
 
 class SovitsSvcConversionProof:
     def __init__(
-        self, backend_url: str = DEFAULT_BACKEND_URL, output_dir: Optional[str] = None
+        self, backend_url: str = DEFAULT_BACKEND_URL, output_dir: str | None = None
     ):
         self.backend_url_requested = backend_url.rstrip("/")
         self.backend_url = self.backend_url_requested
-        self._backend_resolution_error: Optional[str] = None
+        self._backend_resolution_error: str | None = None
         self.output_dir = output_dir or self._create_output_dir()
         Path(self.output_dir).resolve().mkdir(parents=True, exist_ok=True)
-        self.proof_data: Dict[str, Any] = {
+        self.proof_data: dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
             "workflow": "sovits_svc_conversion",
             "steps": [],
@@ -63,7 +62,7 @@ class SovitsSvcConversionProof:
         with open(proof_file, "w", encoding="utf-8") as f:
             json.dump(self.proof_data, f, indent=2, ensure_ascii=False)
 
-    def _check_backend_health(self, base_url: Optional[str] = None) -> bool:
+    def _check_backend_health(self, base_url: str | None = None) -> bool:
         base_url = (base_url or self.backend_url).rstrip("/")
         for endpoint in ["/api/health", "/health"]:
             try:
@@ -74,7 +73,7 @@ class SovitsSvcConversionProof:
                 continue
         return False
 
-    def _check_required_routes(self, base_url: Optional[str] = None) -> bool:
+    def _check_required_routes(self, base_url: str | None = None) -> bool:
         base_url = (base_url or self.backend_url).rstrip("/")
         try:
             response = requests.get(f"{base_url}/openapi.json", timeout=10)
@@ -136,7 +135,7 @@ class SovitsSvcConversionProof:
         )
         return False
 
-    def _fetch_preflight(self) -> Optional[Dict[str, Any]]:
+    def _fetch_preflight(self) -> dict[str, Any] | None:
         try:
             response = requests.get(
                 f"{self.backend_url}/api/engines/preflight", timeout=30
@@ -195,7 +194,7 @@ class SovitsSvcConversionProof:
             return False
         return False
 
-    def run(self, checkpoint_path: str, config_path: str) -> Dict[str, Any]:
+    def run(self, checkpoint_path: str, config_path: str) -> dict[str, Any]:
         self.proof_data["inputs"]["checkpoint_path"] = checkpoint_path
         self.proof_data["inputs"]["config_path"] = config_path
         self.proof_data["config"]["engine"] = "sovits_svc"

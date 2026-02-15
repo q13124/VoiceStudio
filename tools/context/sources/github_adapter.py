@@ -20,29 +20,29 @@ class GitHubAdapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """
         Fetch PR/issue data from GitHub via MCP.
-        
+
         When enabled, queries GitHub for:
         - Open PRs related to task
         - Issue discussions and comments
         - CI/CD status
         - Code review feedback
-        
+
         Falls back gracefully if MCP unavailable.
         """
         def _load() -> dict:
             if not self._mcp_enabled:
                 return {"github_prs": [], "github_issues": [], "note": "GitHub MCP disabled"}
-            
+
             # Attempt MCP call to GitHub
             prs, issues = self._query_github(context)
             return {"github_prs": prs, "github_issues": issues}
-        
+
         return self._measure(_load, context)
 
     def _query_github(self, context: AllocationContext) -> tuple[list, list]:
         """
         Query GitHub for PR and issue data.
-        
+
         Implementation notes:
         - Parse task_id to extract PR/issue numbers if applicable
         - Query GitHub API via MCP for PR details

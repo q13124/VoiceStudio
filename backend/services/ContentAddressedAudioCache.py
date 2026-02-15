@@ -19,7 +19,6 @@ import os
 import shutil
 import threading
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ class ContentAddressedAudioCache:
     - Thread-safe operations
     """
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """
         Initialize content-addressed audio cache.
 
@@ -50,7 +49,7 @@ class ContentAddressedAudioCache:
         self.audio_cache_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def _resolve_cache_dir(cache_dir: Optional[str]) -> Path:
+    def _resolve_cache_dir(cache_dir: str | None) -> Path:
         if cache_dir:
             return Path(cache_dir)
 
@@ -132,7 +131,7 @@ class ContentAddressedAudioCache:
 
         return cached_path, hash_value
 
-    def get_by_hash(self, hash_value: str) -> Optional[Path]:
+    def get_by_hash(self, hash_value: str) -> Path | None:
         """
         Get cached file path by hash, if it exists.
 
@@ -163,10 +162,10 @@ class ContentAddressedAudioCache:
         return cached_path
 
 
-_service_instance: Optional[ContentAddressedAudioCache] = None
+_service_instance: ContentAddressedAudioCache | None = None
 
 
-def get_audio_cache(cache_dir: Optional[str] = None) -> ContentAddressedAudioCache:
+def get_audio_cache(cache_dir: str | None = None) -> ContentAddressedAudioCache:
     """
     Get global ContentAddressedAudioCache instance.
 

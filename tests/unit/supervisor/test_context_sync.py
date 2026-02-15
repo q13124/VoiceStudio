@@ -2,7 +2,6 @@
 Unit tests for ContextSync (Phase 11.1.5)
 """
 
-import pytest
 
 from app.core.supervisor.context_sync import ContextSync, ConversationTurn
 

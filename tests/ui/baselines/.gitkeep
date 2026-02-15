@@ -1,0 +1,2 @@
+# Visual regression baseline images directory
+# Run tests with UPDATE_VISUAL_BASELINES=1 to capture baselines

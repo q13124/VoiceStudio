@@ -5,9 +5,7 @@ Tests Piper engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestPiperEngineImports:
     def test_module_has_piper_engine_class(self):
         """Test module has PiperEngine class."""
         if hasattr(piper_engine, "PiperEngine"):
-            cls = getattr(piper_engine, "PiperEngine")
+            cls = piper_engine.PiperEngine
             assert isinstance(cls, type), "PiperEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestPiperEngineClass:
     def test_piper_engine_class_exists(self):
         """Test PiperEngine class exists."""
         if hasattr(piper_engine, "PiperEngine"):
-            cls = getattr(piper_engine, "PiperEngine")
+            cls = piper_engine.PiperEngine
             assert isinstance(cls, type), "PiperEngine should be a class"
 
     def test_piper_engine_initialization(self):
@@ -103,7 +101,7 @@ class TestPiperEngineCaching:
                 # Test that enable_caching method exists and can be called
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 # The method sets self.enable_caching, so after calling it becomes a property
-                enable_caching_method = getattr(engine, "enable_caching")
+                enable_caching_method = engine.enable_caching
                 if callable(enable_caching_method):
                     # Call the method to disable caching
                     enable_caching_method(False)

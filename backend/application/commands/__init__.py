@@ -3,16 +3,21 @@
 from backend.application.commands.base import Command, CommandHandler, CommandResult
 from backend.application.commands.project_commands import (
     CreateProject,
-    UpdateProject,
     DeleteProject,
+    UpdateProject,
 )
 from backend.application.commands.synthesis_commands import (
-    SynthesizeSpeech,
     ProcessAudioClip,
+    SynthesizeSpeech,
 )
 
 __all__ = [
-    "Command", "CommandHandler", "CommandResult",
-    "CreateProject", "UpdateProject", "DeleteProject",
-    "SynthesizeSpeech", "ProcessAudioClip",
+    "Command",
+    "CommandHandler",
+    "CommandResult",
+    "CreateProject",
+    "DeleteProject",
+    "ProcessAudioClip",
+    "SynthesizeSpeech",
+    "UpdateProject",
 ]

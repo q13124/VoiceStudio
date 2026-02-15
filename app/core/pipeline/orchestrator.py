@@ -6,14 +6,16 @@ Supports streaming mode (low latency) and batch mode (high quality).
 Uses a state machine to manage pipeline lifecycle and error recovery.
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import time
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import AsyncIterator, Callable
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ class PipelineMetrics:
     stt_text: str = ""
     llm_response_length: int = 0
     tts_audio_bytes: int = 0
-    error: Optional[str] = None
+    error: str | None = None
     timestamp: str = ""
 
 
@@ -66,15 +68,15 @@ class PipelineConfig:
     tts_engine: str = "xtts_v2"
     language: str = "en"
     # STT config
-    stt_model: Optional[str] = None
+    stt_model: str | None = None
     # LLM config
-    llm_model: Optional[str] = None
+    llm_model: str | None = None
     llm_temperature: float = 0.7
     llm_max_tokens: int = 512
-    llm_system_prompt: Optional[str] = None
+    llm_system_prompt: str | None = None
     # TTS config
-    tts_voice: Optional[str] = None
-    tts_speaker_wav: Optional[str] = None
+    tts_voice: str | None = None
+    tts_speaker_wav: str | None = None
     # Pipeline behavior
     enable_function_calling: bool = True
     buffer_ahead: bool = True
@@ -90,13 +92,13 @@ class PipelineOrchestrator:
     state transitions, error recovery, and metrics collection.
     """
 
-    def __init__(self, config: Optional[PipelineConfig] = None):
+    def __init__(self, config: PipelineConfig | None = None):
         self._config = config or PipelineConfig()
         self._state = PipelineState.IDLE
         self._pipeline_id = f"pipe-{uuid.uuid4().hex[:8]}"
-        self._conversation_history: List[Dict[str, str]] = []
-        self._metrics_history: List[PipelineMetrics] = []
-        self._on_state_change: Optional[Callable] = None
+        self._conversation_history: list[dict[str, str]] = []
+        self._metrics_history: list[PipelineMetrics] = []
+        self._on_state_change: Callable | None = None
         self._llm_provider = None
         # Note: STT/TTS use get_engine_service() directly
         logger.info(f"Pipeline orchestrator created: {self._pipeline_id}")
@@ -110,7 +112,7 @@ class PipelineOrchestrator:
         return self._pipeline_id
 
     @property
-    def metrics(self) -> List[PipelineMetrics]:
+    def metrics(self) -> list[PipelineMetrics]:
         return self._metrics_history
 
     def on_state_change(self, callback: Callable) -> None:
@@ -119,7 +121,7 @@ class PipelineOrchestrator:
 
     def _persist_turn(self, role: str, content: str) -> None:
         """Persist a conversation turn to disk for short-term memory sliding window.
-        
+
         This enables the ConversationSourceAdapter to read recent conversation
         context and inject it into future AI interactions.
         """
@@ -187,8 +189,8 @@ class PipelineOrchestrator:
         provider_name = self._config.llm_provider.lower()
 
         if provider_name == "ollama":
-            from app.core.engines.llm_local_adapter import OllamaLLMProvider
             from app.core.engines.llm_interface import LLMConfig
+            from app.core.engines.llm_local_adapter import OllamaLLMProvider
             config = LLMConfig(
                 model=self._config.llm_model or "llama3.2",
                 temperature=self._config.llm_temperature,
@@ -198,8 +200,8 @@ class PipelineOrchestrator:
             return OllamaLLMProvider(config)
 
         elif provider_name == "localai":
-            from app.core.engines.llm_local_adapter import LocalAILLMProvider
             from app.core.engines.llm_interface import LLMConfig
+            from app.core.engines.llm_local_adapter import LocalAILLMProvider
             config = LLMConfig(
                 model=self._config.llm_model or "gpt-3.5-turbo",
                 temperature=self._config.llm_temperature,
@@ -209,8 +211,8 @@ class PipelineOrchestrator:
             return LocalAILLMProvider(config)
 
         elif provider_name == "openai":
-            from app.core.engines.llm_openai_adapter import OpenAILLMProvider
             from app.core.engines.llm_interface import LLMConfig
+            from app.core.engines.llm_openai_adapter import OpenAILLMProvider
             config = LLMConfig(
                 model=self._config.llm_model or "gpt-4o-mini",
                 temperature=self._config.llm_temperature,
@@ -226,7 +228,7 @@ class PipelineOrchestrator:
         self,
         audio_data: bytes,
         sample_rate: int = 16000,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process audio through the full STT → LLM → TTS pipeline (batch mode).
 
@@ -293,7 +295,7 @@ class PipelineOrchestrator:
             logger.error(f"Pipeline processing failed: {exc}")
             raise
 
-    async def process_text(self, text: str) -> Dict[str, Any]:
+    async def process_text(self, text: str) -> dict[str, Any]:
         """
         Process text through LLM → TTS pipeline (skip STT).
 
@@ -343,7 +345,7 @@ class PipelineOrchestrator:
             self._set_state(PipelineState.ERROR)
             raise
 
-    async def stream_text(self, text: str) -> AsyncIterator[Dict[str, Any]]:
+    async def stream_text(self, text: str) -> AsyncIterator[dict[str, Any]]:
         """
         Stream LLM response tokens with buffer-ahead TTS (streaming mode).
 
@@ -357,7 +359,6 @@ class PipelineOrchestrator:
             if self._llm_provider is None:
                 raise RuntimeError("LLM provider not initialized")
 
-            from app.core.engines.llm_interface import Message, MessageRole
 
             # Build messages
             messages = self._build_conversation_messages(text)
@@ -399,7 +400,7 @@ class PipelineOrchestrator:
             self._set_state(PipelineState.ERROR)
             yield {"type": "error", "error": str(exc)}
 
-    def _build_conversation_messages(self, text: str) -> List:
+    def _build_conversation_messages(self, text: str) -> list:
         """Build LLM message list from conversation history."""
         from app.core.engines.llm_interface import Message, MessageRole
 
@@ -434,7 +435,6 @@ class PipelineOrchestrator:
         if self._llm_provider is None:
             raise RuntimeError("No LLM provider available")
 
-        from app.core.engines.llm_interface import LLMConfig
 
         messages = self._build_conversation_messages(text)
 
@@ -456,8 +456,8 @@ class PipelineOrchestrator:
         # Handle tool calls - send results back to LLM for follow-up
         if response.tool_calls and self._config.enable_function_calling:
             try:
-                from backend.services.llm_function_calling import get_function_registry
                 from app.core.engines.llm_interface import Message, MessageRole
+                from backend.services.llm_function_calling import get_function_registry
 
                 registry = get_function_registry()
                 tool_results = await registry.process_tool_calls(response.tool_calls)
@@ -491,7 +491,7 @@ class PipelineOrchestrator:
 
         return response.content
 
-    async def _synthesize(self, text: str) -> Optional[bytes]:
+    async def _synthesize(self, text: str) -> bytes | None:
         """Synthesize speech from text using the configured TTS engine."""
         if not text.strip():
             return None

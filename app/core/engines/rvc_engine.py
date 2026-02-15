@@ -12,10 +12,12 @@ Compatible with:
 - Fairseq (for HuBERT)
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -37,7 +39,7 @@ except ImportError:
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=3, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -50,7 +52,7 @@ except ImportError:
 from collections import OrderedDict
 
 _RVC_MODEL_CACHE: OrderedDict = OrderedDict()
-_VOICE_EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
+_VOICE_EMBEDDING_CACHE: dict[str, np.ndarray] = {}
 _MAX_CACHE_SIZE = 3  # Maximum number of models to cache in memory
 _MAX_EMBEDDING_CACHE_SIZE = 50  # Maximum number of voice embeddings to cache
 _MAX_FEATURE_CACHE_SIZE = 100  # Maximum number of features to cache
@@ -121,7 +123,7 @@ def _get_voice_embedding_cache_key(speaker_model: str) -> str:
     return hashlib.md5(speaker_model.encode()).hexdigest()
 
 
-def _get_cached_voice_embedding(speaker_model: str) -> Optional[np.ndarray]:
+def _get_cached_voice_embedding(speaker_model: str) -> np.ndarray | None:
     """Get cached voice embedding if available."""
     cache_key = _get_voice_embedding_cache_key(speaker_model)
     return _VOICE_EMBEDDING_CACHE.get(cache_key)
@@ -172,11 +174,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from app.core.audio.audio_utils import enhance_voice_quality, normalize_lufs, remove_artifacts
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -298,8 +296,8 @@ class RVCEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
-        device: Optional[str] = None,
+        model_path: str | None = None,
+        device: str | None = None,
         gpu: bool = True,
         sample_rate: int = 40000,
         hop_length: int = 128,
@@ -453,15 +451,15 @@ class RVCEngine(EngineProtocol):
 
     def convert_voice(
         self,
-        source_audio: Union[str, Path, np.ndarray],
-        target_speaker_model: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        source_audio: str | Path | np.ndarray,
+        target_speaker_model: str | None = None,
+        output_path: str | Path | None = None,
         pitch_shift: int = 0,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        cancellation_token: Optional[CancellationToken] = None,
+        cancellation_token: CancellationToken | None = None,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Convert voice using RVC.
 
@@ -481,13 +479,13 @@ class RVCEngine(EngineProtocol):
         Returns:
             Converted audio array or None if conversion failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
-            
+
         Raises:
             OperationCancelledError: If cancellation is requested via token
         """
         # Set cancellation token for cooperative cancellation
         self.set_cancellation_token(cancellation_token)
-        
+
         try:
             # Lazy load models if needed
             if not self._initialized:
@@ -497,7 +495,7 @@ class RVCEngine(EngineProtocol):
 
             # Check cancellation before audio processing
             self.check_cancellation()
-            
+
             # Load source audio
             if isinstance(source_audio, (str, Path)):
                 if HAS_LIBROSA:
@@ -554,7 +552,7 @@ class RVCEngine(EngineProtocol):
 
             # Check cancellation before feature extraction
             self.check_cancellation()
-            
+
             # Extract HuBERT features (matching RVC implementation)
             if self.hubert_model is not None:
                 # Use proper HuBERT extraction
@@ -646,7 +644,7 @@ class RVCEngine(EngineProtocol):
     def convert_realtime(
         self,
         audio_chunk: np.ndarray,
-        target_speaker_model: Optional[str] = None,
+        target_speaker_model: str | None = None,
         pitch_shift: int = 0,
         **kwargs,
     ) -> np.ndarray:
@@ -662,9 +660,8 @@ class RVCEngine(EngineProtocol):
         Returns:
             Converted audio chunk
         """
-        if not self._initialized:
-            if not self.initialize():
-                return audio_chunk  # Return original if initialization fails
+        if not self._initialized and not self.initialize():
+            return audio_chunk  # Return original if initialization fails
 
         try:
             # Validate input
@@ -690,33 +687,32 @@ class RVCEngine(EngineProtocol):
     def synthesize_stream(
         self,
         audio_input: np.ndarray,
-        target_speaker_model: Optional[str] = None,
+        target_speaker_model: str | None = None,
         chunk_size: int = 4800,
         pitch_shift: int = 0,
         **kwargs,
     ):
         """
         Stream voice-converted audio in chunks.
-        
+
         D.3 Enhancement: Streaming interface for RVC engine.
         This method provides a consistent streaming interface similar to TTS engines.
-        
+
         Args:
             audio_input: Full audio input to convert.
             target_speaker_model: Path to target speaker model.
             chunk_size: Size of each output chunk in samples.
             pitch_shift: Pitch shift in semitones.
             **kwargs: Additional parameters.
-            
+
         Yields:
             Converted audio chunks as numpy arrays.
         """
-        if not self._initialized:
-            if not self.initialize():
-                # If initialization fails, yield original audio in chunks
-                for i in range(0, len(audio_input), chunk_size):
-                    yield audio_input[i:i + chunk_size]
-                return
+        if not self._initialized and not self.initialize():
+            # If initialization fails, yield original audio in chunks
+            for i in range(0, len(audio_input), chunk_size):
+                yield audio_input[i:i + chunk_size]
+            return
 
         try:
             # Convert entire audio first
@@ -739,7 +735,7 @@ class RVCEngine(EngineProtocol):
 
     def _extract_pyworld_features(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
         Extract vocoder features using pyworld.
 
@@ -765,8 +761,8 @@ class RVCEngine(EngineProtocol):
             return {}
 
     def _get_f0_post(
-        self, f0: Union[np.ndarray, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, f0: np.ndarray | torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Post-process F0 values matching RVC implementation.
 
@@ -795,7 +791,7 @@ class RVCEngine(EngineProtocol):
 
     def _extract_f0(
         self, audio: np.ndarray, pitch_shift: int = 0, method: str = "harvest"
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Extract F0 (fundamental frequency) from audio matching RVC implementation.
 
@@ -872,7 +868,7 @@ class RVCEngine(EngineProtocol):
 
     def _extract_praat_features(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Extract prosody features using praat-parselmouth.
 
@@ -1087,7 +1083,7 @@ class RVCEngine(EngineProtocol):
 
     def _find_similar_voice_embedding(
         self, query_features: np.ndarray, k: int = 5
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """
         Find similar voice embeddings using faiss for efficient similarity search.
 
@@ -1132,7 +1128,7 @@ class RVCEngine(EngineProtocol):
 
             # Return results with similarity scores
             results = []
-            for idx, dist in zip(indices[0], distances[0]):
+            for idx, dist in zip(indices[0], distances[0], strict=False):
                 if idx < len(self._faiss_embedding_ids):
                     embedding_id = self._faiss_embedding_ids[idx]
                     # Convert L2 distance to similarity (lower distance = higher similarity)
@@ -1149,7 +1145,7 @@ class RVCEngine(EngineProtocol):
         self,
         audio_16k: np.ndarray,
         features: np.ndarray,
-        target_speaker_model: Optional[str],
+        target_speaker_model: str | None,
         pitch_shift: int = 0,
         **kwargs,
     ) -> np.ndarray:
@@ -1244,7 +1240,7 @@ class RVCEngine(EngineProtocol):
     def _convert_features(
         self,
         features: np.ndarray,
-        target_speaker_model: Optional[str],
+        target_speaker_model: str | None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -1255,7 +1251,7 @@ class RVCEngine(EngineProtocol):
         # Extract audio from features if possible, or use fallback
         return self._convert_features_fallback(features, **kwargs)
 
-    def _load_rvc_model(self, model_path: Optional[str]) -> Optional[Dict]:
+    def _load_rvc_model(self, model_path: str | None) -> dict | None:
         """Load RVC model from file."""
         if model_path is None:
             model_path = self.model_path
@@ -1467,11 +1463,11 @@ class RVCEngine(EngineProtocol):
 
     def _run_rvc_inference(
         self,
-        features: Union[np.ndarray, torch.Tensor],
+        features: np.ndarray | torch.Tensor,
         f0_coarse: torch.Tensor,
         f0_float: torch.Tensor,
         **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Run RVC synthesizer model inference matching old implementation.
 
@@ -1582,7 +1578,7 @@ class RVCEngine(EngineProtocol):
             return None
 
     def _apply_rvc_model(
-        self, features: np.ndarray, model: Dict, **kwargs
+        self, features: np.ndarray, model: dict, **kwargs
     ) -> np.ndarray:
         """Apply RVC model to convert features (legacy method)."""
         try:
@@ -1609,12 +1605,12 @@ class RVCEngine(EngineProtocol):
                         # Check for encoder/decoder structure (common RVC architecture)
                         has_encoder = any(
                             "encoder" in str(k)
-                            for k in state_dict.keys()
+                            for k in state_dict
                             if isinstance(k, str)
                         )
                         has_decoder = any(
                             "decoder" in str(k)
-                            for k in state_dict.keys()
+                            for k in state_dict
                             if isinstance(k, str)
                         )
 
@@ -1711,7 +1707,7 @@ class RVCEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         features: np.ndarray,
-        target_speaker_model: Optional[str] = None,
+        target_speaker_model: str | None = None,
         pitch_shift: int = 0,
         **kwargs,
     ) -> np.ndarray:
@@ -1756,7 +1752,6 @@ class RVCEngine(EngineProtocol):
                     # Create a smooth spectral modification curve
                     freqs = librosa.fft_frequencies(sr=16000, n_fft=2048)
                     # Shift formants slightly to simulate different vocal tract characteristics
-                    formant_shift = 1.1  # Slight shift for voice conversion effect
                     # Preserve baseline spectrum; only adjust target band so we don't zero-out other freqs.
                     modified_magnitude = magnitude.copy()
 
@@ -1948,7 +1943,7 @@ class RVCEngine(EngineProtocol):
             return None
 
     def _extract_hubert_features(
-        self, audio: np.ndarray, output_layer: Optional[int] = None
+        self, audio: np.ndarray, output_layer: int | None = None
     ) -> np.ndarray:
         """
         Extract features using HuBERT model with HuggingFace transformers.
@@ -2031,7 +2026,7 @@ class RVCEngine(EngineProtocol):
     def _convert_chunk_realtime(
         self,
         audio_chunk: np.ndarray,
-        target_speaker_model: Optional[str],
+        target_speaker_model: str | None,
         pitch_shift: int,
         **kwargs,
     ) -> np.ndarray:
@@ -2061,7 +2056,7 @@ class RVCEngine(EngineProtocol):
         sample_rate: int,
         enhance: bool,
         calculate: bool,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation with advanced features."""
         quality_metrics = {}
 
@@ -2159,12 +2154,12 @@ class RVCEngine(EngineProtocol):
 
     def batch_convert_voice(
         self,
-        source_audios: List[Union[str, Path, np.ndarray]],
-        target_speaker_model: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        source_audios: list[str | Path | np.ndarray],
+        target_speaker_model: str | None = None,
+        output_dir: str | Path | None = None,
         pitch_shift: int = 0,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Convert multiple audio files in batch with optimized processing.
 
@@ -2179,9 +2174,8 @@ class RVCEngine(EngineProtocol):
             List of converted audio arrays
         """
         # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return [None] * len(source_audios)
+        if not self._initialized and not self._load_models():
+            return [None] * len(source_audios)
 
         results = []
 
@@ -2237,7 +2231,7 @@ class RVCEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -2263,7 +2257,7 @@ class RVCEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during RVC cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -2277,8 +2271,8 @@ class RVCEngine(EngineProtocol):
 
 
 def create_rvc_engine(
-    model_path: Optional[str] = None,
-    device: Optional[str] = None,
+    model_path: str | None = None,
+    device: str | None = None,
     gpu: bool = True,
     sample_rate: int = 40000,
     hop_length: int = 128,

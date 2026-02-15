@@ -5,7 +5,6 @@ Tests runtime engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestRuntimeEngineClasses:
     def test_runtime_engine_class_exists(self):
         """Test RuntimeEngine class exists."""
         if hasattr(runtime_engine, "RuntimeEngine"):
-            cls = getattr(runtime_engine, "RuntimeEngine")
+            cls = runtime_engine.RuntimeEngine
             assert isinstance(cls, type), "RuntimeEngine should be a class"
 
 

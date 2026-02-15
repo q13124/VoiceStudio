@@ -9,6 +9,8 @@ Compatible with:
 - transformers 4.20.0+
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -17,7 +19,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -73,7 +74,7 @@ class SVDEngine(EngineProtocol):
     def __init__(
         self,
         model_id: str = "stabilityai/stable-video-diffusion-img2vid",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         num_frames: int = 14,
         num_inference_steps: int = 25,
@@ -234,13 +235,12 @@ class SVDEngine(EngineProtocol):
         """Clean up resources and free memory (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if not self.enable_model_cache or (
+            if (not self.enable_model_cache or (
                 self._model_key is not None
                 and self._model_key not in self._model_cache
-            ):
-                if self.pipeline is not None:
-                    del self.pipeline
-                    self.pipeline = None
+            )) and self.pipeline is not None:
+                del self.pipeline
+                self.pipeline = None
 
             # Clear response cache
             if self.enable_response_cache:
@@ -260,7 +260,7 @@ class SVDEngine(EngineProtocol):
     @classmethod
     def clear_model_cache(cls):
         """Clear the shared model cache."""
-        for key, pipeline in cls._model_cache.items():
+        for _key, pipeline in cls._model_cache.items():
             del pipeline
         cls._model_cache.clear()
         if torch.cuda.is_available():
@@ -269,11 +269,11 @@ class SVDEngine(EngineProtocol):
 
     def _generate_cache_key(
         self,
-        image_path: Union[str, Path, Image.Image],
+        image_path: str | Path | Image.Image,
         num_frames: int,
         num_inference_steps: int,
         motion_bucket_id: int,
-        seed: Optional[int],
+        seed: int | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -292,22 +292,22 @@ class SVDEngine(EngineProtocol):
             "num_inference_steps": num_inference_steps,
             "motion_bucket_id": motion_bucket_id,
             "seed": seed if seed is not None else -1,
-            "kwargs": {k: v for k, v in kwargs.items()},
+            "kwargs": dict(kwargs.items()),
         }
         cache_str = json.dumps(cache_data, sort_keys=True)
         return hashlib.sha256(cache_str.encode()).hexdigest()
 
     def generate_video(
         self,
-        image_path: Union[str, Path, Image.Image],
-        output_path: Optional[Union[str, Path]] = None,
-        num_frames: Optional[int] = None,
-        num_inference_steps: Optional[int] = None,
+        image_path: str | Path | Image.Image,
+        output_path: str | Path | None = None,
+        num_frames: int | None = None,
+        num_inference_steps: int | None = None,
         motion_bucket_id: int = 127,
         fps: int = 7,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         **kwargs,
-    ) -> Union[str, Tuple[str, Dict]]:
+    ) -> str | tuple[str, dict]:
         """
         Generate video from image.
 
@@ -325,9 +325,8 @@ class SVDEngine(EngineProtocol):
             Path to generated video, or tuple of (path, metadata) if return_metadata=True
         """
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Failed to initialize SVD engine.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Failed to initialize SVD engine.")
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -472,16 +471,16 @@ class SVDEngine(EngineProtocol):
 
     def batch_generate_videos(
         self,
-        image_paths: List[Union[str, Path, Image.Image]],
-        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
-        num_frames: Optional[int] = None,
-        num_inference_steps: Optional[int] = None,
-        motion_bucket_ids: Optional[List[int]] = None,
+        image_paths: list[str | Path | Image.Image],
+        output_paths: list[str | Path | None] | None = None,
+        num_frames: int | None = None,
+        num_inference_steps: int | None = None,
+        motion_bucket_ids: list[int] | None = None,
         fps: int = 7,
-        seeds: Optional[List[Optional[int]]] = None,
-        batch_size: Optional[int] = None,
+        seeds: list[int | None] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Union[str, None]]:
+    ) -> list[str | None]:
         """
         Generate multiple videos from images using batch processing.
 
@@ -503,9 +502,8 @@ class SVDEngine(EngineProtocol):
             return []
 
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(image_paths)
+        if not self._initialized and not self.initialize():
+            return [None] * len(image_paths)
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -555,7 +553,7 @@ class SVDEngine(EngineProtocol):
             args_list = [
                 (i, img_path, out_path, motion_id, seed)
                 for i, (img_path, out_path, motion_id, seed) in enumerate(
-                    zip(image_paths, output_paths, motion_bucket_ids, seeds)
+                    zip(image_paths, output_paths, motion_bucket_ids, seeds, strict=False)
                 )
             ]
 
@@ -597,7 +595,7 @@ class SVDEngine(EngineProtocol):
                 ...
             return [None] * len(image_paths)
 
-    def _save_video_cv2(self, frames: List[Image.Image], output_path: str, fps: int):
+    def _save_video_cv2(self, frames: list[Image.Image], output_path: str, fps: int):
         """Save frames as video using OpenCV."""
         if not HAS_CV2:
             raise ImportError("opencv-python required for video saving")
@@ -617,7 +615,7 @@ class SVDEngine(EngineProtocol):
         finally:
             out.release()
 
-    def _save_video_pil(self, frames: List[Image.Image], output_path: str, fps: int):
+    def _save_video_pil(self, frames: list[Image.Image], output_path: str, fps: int):
         """Save frames as video using PIL/imageio fallback."""
         try:
             import imageio
@@ -631,7 +629,7 @@ class SVDEngine(EngineProtocol):
         # Save as video
         imageio.mimwrite(output_path, frame_arrays, fps=fps, codec="libx264", quality=8)
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_response_cache:
             return {"enabled": False}
@@ -661,7 +659,7 @@ class SVDEngine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("SVD response cache cleared")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -688,7 +686,7 @@ class SVDEngine(EngineProtocol):
 
 def create_svd_engine(
     model_id: str = "stabilityai/stable-video-diffusion-img2vid",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
     num_frames: int = 14,
     num_inference_steps: int = 25,

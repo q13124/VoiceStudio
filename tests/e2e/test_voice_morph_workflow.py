@@ -36,7 +36,7 @@ class TestVoiceMorphConfigWorkflow:
         POST /api/voice-morph/configs creates a new morph configuration.
         """
         print("\n[E2E] Creating morph configuration...")
-        
+
         response = client.post(
             "/api/voice-morph/configs",
             json={
@@ -51,7 +51,7 @@ class TestVoiceMorphConfigWorkflow:
                 "preserve_prosody": True,
             },
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "config_id" in data
@@ -64,7 +64,7 @@ class TestVoiceMorphConfigWorkflow:
         GET /api/voice-morph/configs lists all morph configurations.
         """
         print("\n[E2E] Listing morph configurations...")
-        
+
         # Create a config first
         client.post(
             "/api/voice-morph/configs",
@@ -74,10 +74,10 @@ class TestVoiceMorphConfigWorkflow:
                 "target_voices": [{"voice_profile_id": "test-voice", "weight": 1.0}],
             },
         )
-        
+
         response = client.get("/api/voice-morph/configs")
         assert response.status_code == 200
-        
+
         configs = response.json()
         assert isinstance(configs, list)
         print(f"[E2E] Found {len(configs)} morph configurations")
@@ -87,7 +87,7 @@ class TestVoiceMorphConfigWorkflow:
         GET /api/voice-morph/configs/{config_id} returns config details.
         """
         print("\n[E2E] Getting morph configuration...")
-        
+
         # Create a config
         create_response = client.post(
             "/api/voice-morph/configs",
@@ -98,11 +98,11 @@ class TestVoiceMorphConfigWorkflow:
             },
         )
         config_id = create_response.json()["config_id"]
-        
+
         # Get the config
         response = client.get(f"/api/voice-morph/configs/{config_id}")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["config_id"] == config_id
         assert data["name"] == "Get Test Config"
@@ -113,7 +113,7 @@ class TestVoiceMorphConfigWorkflow:
         PUT /api/voice-morph/configs/{config_id} updates a configuration.
         """
         print("\n[E2E] Updating morph configuration...")
-        
+
         # Create a config
         create_response = client.post(
             "/api/voice-morph/configs",
@@ -125,7 +125,7 @@ class TestVoiceMorphConfigWorkflow:
             },
         )
         config_id = create_response.json()["config_id"]
-        
+
         # Update the config
         response = client.put(
             f"/api/voice-morph/configs/{config_id}",
@@ -136,7 +136,7 @@ class TestVoiceMorphConfigWorkflow:
                 "morph_strength": 0.8,
             },
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Name"
@@ -148,7 +148,7 @@ class TestVoiceMorphConfigWorkflow:
         DELETE /api/voice-morph/configs/{config_id} deletes a configuration.
         """
         print("\n[E2E] Deleting morph configuration...")
-        
+
         # Create a config
         create_response = client.post(
             "/api/voice-morph/configs",
@@ -159,11 +159,11 @@ class TestVoiceMorphConfigWorkflow:
             },
         )
         config_id = create_response.json()["config_id"]
-        
+
         # Delete the config
         response = client.delete(f"/api/voice-morph/configs/{config_id}")
         assert response.status_code == 200
-        
+
         # Verify it's gone
         get_response = client.get(f"/api/voice-morph/configs/{config_id}")
         assert get_response.status_code == 404
@@ -184,12 +184,12 @@ class TestVoiceMorphApplyWorkflow:
         POST /api/voice-morph/apply returns 404 for non-existent config.
         """
         print("\n[E2E] Testing apply morph with invalid config...")
-        
+
         response = client.post(
             "/api/voice-morph/apply",
             json={"config_id": "non-existent-config"},
         )
-        
+
         assert response.status_code == 404
         print("[E2E] Correctly returned 404 for invalid config")
 
@@ -198,7 +198,7 @@ class TestVoiceMorphApplyWorkflow:
         Test the complete morph apply workflow.
         """
         print("\n[E2E] Testing morph apply workflow...")
-        
+
         # Create a config
         create_response = client.post(
             "/api/voice-morph/configs",
@@ -213,13 +213,13 @@ class TestVoiceMorphApplyWorkflow:
             },
         )
         config_id = create_response.json()["config_id"]
-        
+
         # Apply the morph (may fail if source audio doesn't exist, which is expected)
         response = client.post(
             "/api/voice-morph/apply",
             json={"config_id": config_id},
         )
-        
+
         # Accept 200 (success), 404 (source not found), or 503 (deps missing)
         assert response.status_code in [200, 404, 503]
         print(f"[E2E] Apply morph response: {response.status_code}")
@@ -239,13 +239,13 @@ class TestVoiceBlendWorkflow:
         POST /api/voice-morph/voice/blend validates input.
         """
         print("\n[E2E] Testing voice blend input validation...")
-        
+
         # Missing voice IDs
         response = client.post(
             "/api/voice-morph/voice/blend",
             json={"blend_ratio": 0.5},
         )
-        
+
         # 400 for business logic validation, 422 for schema validation (FastAPI/Pydantic)
         assert response.status_code in [400, 422]
         print("[E2E] Correctly validated missing voice IDs")
@@ -255,7 +255,7 @@ class TestVoiceBlendWorkflow:
         POST /api/voice-morph/voice/blend validates blend ratio.
         """
         print("\n[E2E] Testing blend ratio validation...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/blend",
             json={
@@ -264,7 +264,7 @@ class TestVoiceBlendWorkflow:
                 "blend_ratio": 1.5,  # Invalid - should be 0.0-1.0
             },
         )
-        
+
         assert response.status_code == 400
         print("[E2E] Correctly validated invalid blend ratio")
 
@@ -273,7 +273,7 @@ class TestVoiceBlendWorkflow:
         Test the complete voice blend workflow.
         """
         print("\n[E2E] Testing voice blend workflow...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/blend",
             json={
@@ -283,10 +283,10 @@ class TestVoiceBlendWorkflow:
                 "text": "Testing voice blend.",
             },
         )
-        
+
         # Accept 200 (success) or 500 (synthesis dependencies)
         assert response.status_code in [200, 500]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert "blend_ratio" in data
@@ -309,7 +309,7 @@ class TestVoiceMorphWorkflow:
         POST /api/voice-morph/voice/morph morphs voice over time.
         """
         print("\n[E2E] Testing voice morph over time...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/morph",
             json={
@@ -321,10 +321,10 @@ class TestVoiceMorphWorkflow:
                 "morph_speed": 1.0,
             },
         )
-        
+
         # Accept 200 (success) or 500 (processing error)
         assert response.status_code in [200, 500]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert "morphed_audio_id" in data
@@ -347,12 +347,12 @@ class TestVoiceEmbeddingWorkflow:
         POST /api/voice-morph/voice/embedding validates input.
         """
         print("\n[E2E] Testing voice embedding validation...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/embedding",
             json={"voice_profile_id": ""},
         )
-        
+
         assert response.status_code == 400
         print("[E2E] Correctly validated empty profile ID")
 
@@ -361,12 +361,12 @@ class TestVoiceEmbeddingWorkflow:
         POST /api/voice-morph/voice/embedding returns 404 for unknown profile.
         """
         print("\n[E2E] Testing voice embedding profile not found...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/embedding",
             json={"voice_profile_id": "non-existent-profile"},
         )
-        
+
         assert response.status_code == 404
         print("[E2E] Correctly returned 404 for non-existent profile")
 
@@ -385,12 +385,12 @@ class TestVoicePreviewWorkflow:
         POST /api/voice-morph/voice/preview validates input.
         """
         print("\n[E2E] Testing voice preview validation...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/preview",
             json={"text": ""},  # Empty text
         )
-        
+
         assert response.status_code == 400
         print("[E2E] Correctly validated empty text")
 
@@ -399,11 +399,11 @@ class TestVoicePreviewWorkflow:
         POST /api/voice-morph/voice/preview requires profile or blend voices.
         """
         print("\n[E2E] Testing preview requires voice specification...")
-        
+
         response = client.post(
             "/api/voice-morph/voice/preview",
             json={"text": "Test preview text."},  # No voice specified
         )
-        
+
         assert response.status_code == 400
         print("[E2E] Correctly required voice specification")

@@ -9,13 +9,14 @@ Enhanced caching system for quality metrics with:
 - Optimized key generation
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -26,17 +27,17 @@ logger = logging.getLogger(__name__)
 class CacheEntry:
     """Cache entry for quality metrics."""
 
-    metrics: Dict[str, Any]
+    metrics: dict[str, Any]
     timestamp: float
     access_count: int = 0
     last_accessed: float = field(default_factory=time.time)
-    ttl: Optional[float] = None  # Time-to-live in seconds
+    ttl: float | None = None  # Time-to-live in seconds
 
 
 class QualityMetricsCache:
     """
     Optimized cache for quality metrics with LRU eviction and statistics.
-    
+
     Features:
     - LRU eviction policy
     - TTL support
@@ -48,7 +49,7 @@ class QualityMetricsCache:
     def __init__(
         self,
         max_size: int = 500,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         enable_statistics: bool = True,
     ):
         """
@@ -82,12 +83,12 @@ class QualityMetricsCache:
 
     def _generate_cache_key(
         self,
-        audio: Optional[np.ndarray] = None,
-        audio_hash: Optional[str] = None,
-        reference_audio: Optional[np.ndarray] = None,
-        reference_hash: Optional[str] = None,
+        audio: np.ndarray | None = None,
+        audio_hash: str | None = None,
+        reference_audio: np.ndarray | None = None,
+        reference_hash: str | None = None,
         metric_type: str = "all",
-        sample_rate: Optional[int] = None,
+        sample_rate: int | None = None,
     ) -> str:
         """
         Generate cache key for quality metrics.
@@ -174,13 +175,13 @@ class QualityMetricsCache:
 
     def get(
         self,
-        audio: Optional[np.ndarray] = None,
-        audio_hash: Optional[str] = None,
-        reference_audio: Optional[np.ndarray] = None,
-        reference_hash: Optional[str] = None,
+        audio: np.ndarray | None = None,
+        audio_hash: str | None = None,
+        reference_audio: np.ndarray | None = None,
+        reference_hash: str | None = None,
         metric_type: str = "all",
-        sample_rate: Optional[int] = None,
-    ) -> Optional[Dict[str, Any]]:
+        sample_rate: int | None = None,
+    ) -> dict[str, Any] | None:
         """
         Get cached quality metrics.
 
@@ -235,14 +236,14 @@ class QualityMetricsCache:
 
     def set(
         self,
-        metrics: Dict[str, Any],
-        audio: Optional[np.ndarray] = None,
-        audio_hash: Optional[str] = None,
-        reference_audio: Optional[np.ndarray] = None,
-        reference_hash: Optional[str] = None,
+        metrics: dict[str, Any],
+        audio: np.ndarray | None = None,
+        audio_hash: str | None = None,
+        reference_audio: np.ndarray | None = None,
+        reference_hash: str | None = None,
         metric_type: str = "all",
-        sample_rate: Optional[int] = None,
-        ttl: Optional[float] = None,
+        sample_rate: int | None = None,
+        ttl: float | None = None,
     ):
         """
         Cache quality metrics.
@@ -273,7 +274,7 @@ class QualityMetricsCache:
             # Check if cache is full
             while len(self._cache) >= self.max_size:
                 # Evict oldest (first) entry
-                oldest_key, oldest_entry = self._cache.popitem(last=False)
+                oldest_key, _oldest_entry = self._cache.popitem(last=False)
                 self._stats["evictions"] += 1
                 logger.debug(f"Evicted cache entry: {oldest_key}")
 
@@ -294,9 +295,9 @@ class QualityMetricsCache:
 
     def invalidate(
         self,
-        audio: Optional[np.ndarray] = None,
-        audio_hash: Optional[str] = None,
-        pattern: Optional[str] = None,
+        audio: np.ndarray | None = None,
+        audio_hash: str | None = None,
+        pattern: str | None = None,
     ) -> int:
         """
         Invalidate cache entries.
@@ -324,10 +325,8 @@ class QualityMetricsCache:
         invalidated = 0
         keys_to_remove = []
 
-        for key in self._cache.keys():
-            if pattern and pattern in key:
-                keys_to_remove.append(key)
-            elif audio_hash and audio_hash in key:
+        for key in self._cache:
+            if (pattern and pattern in key) or (audio_hash and audio_hash in key):
                 keys_to_remove.append(key)
 
         for key in keys_to_remove:
@@ -345,7 +344,7 @@ class QualityMetricsCache:
         self._stats["invalidations"] += count
         logger.info(f"Cleared cache ({count} entries)")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 
@@ -392,12 +391,12 @@ class QualityMetricsCache:
 
 
 # Global cache instance
-_global_cache: Optional[QualityMetricsCache] = None
+_global_cache: QualityMetricsCache | None = None
 
 
 def get_quality_metrics_cache(
     max_size: int = 500,
-    default_ttl: Optional[float] = None,
+    default_ttl: float | None = None,
 ) -> QualityMetricsCache:
     """
     Get or create global quality metrics cache.
@@ -429,9 +428,9 @@ def clear_global_cache():
 
 # Export
 __all__ = [
-    "QualityMetricsCache",
     "CacheEntry",
-    "get_quality_metrics_cache",
+    "QualityMetricsCache",
     "clear_global_cache",
+    "get_quality_metrics_cache",
 ]
 

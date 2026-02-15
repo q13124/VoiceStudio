@@ -9,41 +9,47 @@ Migration Note (GAP-ENG-003):
 - EnhancedRuntimeEngine adds lifecycle, port, resource management, and security
 """
 
+from .engine_hook import EngineHook, hook
+from .engine_lifecycle import EngineLifecycleManager, EngineState, get_lifecycle_manager
+from .hooks import HookRegistry, get_hook_registry
+from .port_manager import PortManager, get_port_manager
+from .resource_manager import (
+    JobPriority,
+    JobStatus,
+    ResourceManager,
+    ResourceRequirement,
+    get_resource_manager,
+)
 from .runtime_engine import RuntimeEngine, RuntimeEngineManager
 from .runtime_engine_enhanced import EnhancedRuntimeEngine, EnhancedRuntimeEngineManager
-from .engine_hook import EngineHook, hook
-from .port_manager import PortManager, get_port_manager
-from .resource_manager import ResourceManager, get_resource_manager, JobPriority, ResourceRequirement, JobStatus
-from .engine_lifecycle import EngineLifecycleManager, get_lifecycle_manager, EngineState
-from .hooks import HookRegistry, get_hook_registry
 from .security import SecurityPolicy, load_security_policy
 
 __all__ = [
-    # Core runtime engine (prefer EnhancedRuntimeEngine for new code)
-    "RuntimeEngine",
-    "RuntimeEngineManager",
+    "EngineHook",
+    # Lifecycle management
+    "EngineLifecycleManager",
+    "EngineState",
     # Enhanced runtime engine (recommended)
     "EnhancedRuntimeEngine",
     "EnhancedRuntimeEngineManager",
-    "EngineHook",
-    "hook",
-    # Port management
-    "PortManager",
-    "get_port_manager",
-    # Resource management
-    "ResourceManager",
-    "get_resource_manager",
-    "JobPriority",
-    "ResourceRequirement",
-    "JobStatus",
-    # Lifecycle management
-    "EngineLifecycleManager",
-    "get_lifecycle_manager",
-    "EngineState",
     # Hooks
     "HookRegistry",
-    "get_hook_registry",
+    "JobPriority",
+    "JobStatus",
+    # Port management
+    "PortManager",
+    # Resource management
+    "ResourceManager",
+    "ResourceRequirement",
+    # Core runtime engine (prefer EnhancedRuntimeEngine for new code)
+    "RuntimeEngine",
+    "RuntimeEngineManager",
     # Security
     "SecurityPolicy",
+    "get_hook_registry",
+    "get_lifecycle_manager",
+    "get_port_manager",
+    "get_resource_manager",
+    "hook",
     "load_security_policy",
 ]

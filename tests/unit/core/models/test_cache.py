@@ -5,7 +5,6 @@ Tests model caching functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestCacheClasses:
     def test_model_cache_class_exists(self):
         """Test ModelCache class exists."""
         if hasattr(cache, "ModelCache"):
-            cls = getattr(cache, "ModelCache")
+            cls = cache.ModelCache
             assert isinstance(cls, type), "ModelCache should be a class"
 
 

@@ -12,10 +12,13 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Events;
 
 // Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
 using BatchJob = VoiceStudio.Core.Models.BatchJob;
 using Macro = VoiceStudio.Core.Models.Macro;
+
+// Backend-Frontend Integration Plan - Phase 3: WebSocket migration
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -28,6 +31,13 @@ namespace VoiceStudio.App.Views.Panels
     private MultiSelectState? _multiSelectState;
     private CancellationTokenSource? _pollingCts;
     private bool _isPolling;
+
+    // Phase 3: WebSocket client for real-time job progress updates
+    private readonly JobProgressWebSocketClient? _jobProgressClient;
+    private bool _isWebSocketConnected;
+
+    // Phase 4: EventAggregator for cross-panel synchronization
+    private readonly IEventAggregator? _eventAggregator;
 
     public string PanelId => "batch_processing";
     public string DisplayName => ResourceHelper.GetString("Panel.BatchProcessing.DisplayName", "Batch Processing");
@@ -140,6 +150,37 @@ namespace VoiceStudio.App.Views.Panels
       {
         // Service may not be initialized yet - that's okay
         _undoRedoService = null;
+      }
+
+      // Phase 3: Initialize WebSocket client for real-time updates
+      try
+      {
+        var webSocketFactory = AppServices.TryGetWebSocketClientFactory();
+        if (webSocketFactory != null)
+        {
+          var jobProgressClient = webSocketFactory.CreateJobProgressClient();
+          if (jobProgressClient is JobProgressWebSocketClient wsClient)
+          {
+            _jobProgressClient = wsClient;
+            SubscribeToWebSocketEvents();
+          }
+        }
+      }
+      catch
+      {
+        // WebSocket service may not be available - fall back to polling
+        _jobProgressClient = null;
+      }
+
+      // Phase 4: Initialize EventAggregator for cross-panel synchronization
+      try
+      {
+        _eventAggregator = AppServices.TryGetEventAggregator();
+      }
+      catch
+      {
+        // EventAggregator service may not be available
+        _eventAggregator = null;
       }
 
       LoadJobsCommand = new EnhancedAsyncRelayCommand(async (ct) =>
@@ -280,8 +321,171 @@ namespace VoiceStudio.App.Views.Panels
       CreateJobCommand.NotifyCanExecuteChanged();
     }
 
+    #region Phase 3: WebSocket Integration
+
+    private void SubscribeToWebSocketEvents()
+    {
+      if (_jobProgressClient == null)
+        return;
+
+      _jobProgressClient.ProgressUpdated += OnJobProgressUpdated;
+      _jobProgressClient.StatusChanged += OnJobStatusChanged;
+      _jobProgressClient.JobCompleted += OnJobCompleted;
+      _jobProgressClient.JobFailed += OnJobFailed;
+    }
+
+    private void UnsubscribeFromWebSocketEvents()
+    {
+      if (_jobProgressClient == null)
+        return;
+
+      _jobProgressClient.ProgressUpdated -= OnJobProgressUpdated;
+      _jobProgressClient.StatusChanged -= OnJobStatusChanged;
+      _jobProgressClient.JobCompleted -= OnJobCompleted;
+      _jobProgressClient.JobFailed -= OnJobFailed;
+    }
+
+    private async Task ConnectWebSocketAsync()
+    {
+      if (_jobProgressClient == null || _isWebSocketConnected)
+        return;
+
+      try
+      {
+        await _jobProgressClient.ConnectAsync();
+        _isWebSocketConnected = _jobProgressClient.IsConnected;
+        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket connected: {_isWebSocketConnected}");
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket connection failed: {ex.Message}");
+        _isWebSocketConnected = false;
+      }
+    }
+
+    private async Task DisconnectWebSocketAsync()
+    {
+      if (_jobProgressClient == null || !_isWebSocketConnected)
+        return;
+
+      try
+      {
+        await _jobProgressClient.DisconnectAsync();
+        _isWebSocketConnected = false;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket disconnect error: {ex.Message}");
+      }
+    }
+
+    private void OnJobProgressUpdated(object? sender, JobProgressUpdate update)
+    {
+      // Dispatch to UI thread
+      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() =>
+      {
+        var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
+        if (job != null)
+        {
+          job.Progress = update.Progress;
+          job.Status = ParseJobStatus(update.Status);
+          // Notify UI of change
+          OnPropertyChanged(nameof(Jobs));
+        }
+      });
+    }
+
+    private void OnJobStatusChanged(object? sender, JobStatusUpdate update)
+    {
+      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() =>
+      {
+        var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
+        if (job != null)
+        {
+          job.Status = ParseJobStatus(update.Status);
+          OnPropertyChanged(nameof(Jobs));
+          
+          // Refresh commands that depend on job status
+          StartJobCommand.NotifyCanExecuteChanged();
+          CancelJobCommand.NotifyCanExecuteChanged();
+        }
+      });
+    }
+
+    private void OnJobCompleted(object? sender, JobCompletedUpdate update)
+    {
+      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(async () =>
+      {
+        var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
+        if (job != null)
+        {
+          job.Status = JobStatus.Completed;
+          job.Progress = 1.0;
+          OnPropertyChanged(nameof(Jobs));
+          
+          // Show success notification
+          _toastNotificationService?.ShowSuccess($"Job '{job.Name}' completed successfully");
+        }
+
+        // Refresh quality statistics when a job completes
+        await LoadQualityStatisticsAsync(CancellationToken.None);
+      });
+    }
+
+    private void OnJobFailed(object? sender, JobFailedUpdate update)
+    {
+      Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() =>
+      {
+        var job = Jobs.FirstOrDefault(j => j.Id == update.JobId);
+        if (job != null)
+        {
+          job.Status = JobStatus.Failed;
+          job.ErrorMessage = update.Error;
+          OnPropertyChanged(nameof(Jobs));
+          
+          // Show error notification
+          _toastNotificationService?.ShowError($"Job '{job.Name}' failed: {update.Error}");
+        }
+      });
+    }
+
+    private static JobStatus ParseJobStatus(string? status)
+    {
+      if (string.IsNullOrEmpty(status))
+        return JobStatus.Pending;
+
+      return status.ToLowerInvariant() switch
+      {
+        "pending" => JobStatus.Pending,
+        "running" => JobStatus.Running,
+        "completed" or "complete" or "success" => JobStatus.Completed,
+        "failed" or "error" => JobStatus.Failed,
+        "cancelled" or "canceled" => JobStatus.Cancelled,
+        "paused" => JobStatus.Pending, // Paused maps to Pending until supported
+        _ => JobStatus.Pending
+      };
+    }
+
+    #endregion
+
     private void StartPolling()
     {
+      // Phase 3: Prefer WebSocket over polling
+      if (_jobProgressClient != null)
+      {
+        _ = ConnectWebSocketAsync();
+        // Even with WebSocket, do initial load
+        if (!_isPolling)
+        {
+          _isPolling = true;
+          // Load once, then rely on WebSocket for updates
+          _ = LoadJobsAsync(CancellationToken.None);
+          _ = LoadQueueStatusAsync(CancellationToken.None);
+        }
+        return;
+      }
+
+      // Fall back to polling if WebSocket is not available
       if (_isPolling)
         return;
 
@@ -296,6 +500,14 @@ namespace VoiceStudio.App.Views.Panels
       _pollingCts?.Cancel();
       _pollingCts?.Dispose();
       _pollingCts = null;
+
+      // Phase 3: Also disconnect WebSocket
+      if (_jobProgressClient != null)
+      {
+        _ = DisconnectWebSocketAsync();
+        UnsubscribeFromWebSocketEvents();
+        _jobProgressClient.Dispose();
+      }
     }
 
     private async Task PollJobsAsync(CancellationToken cancellationToken)
@@ -528,6 +740,9 @@ namespace VoiceStudio.App.Views.Panels
 
         var jobName = job.Name ?? "Unnamed Job";
         _toastNotificationService?.ShowSuccess($"Batch job '{jobName}' started", "Job Started");
+
+        // Phase 4: Publish job started event for cross-panel synchronization
+        _eventAggregator?.Publish(new JobStartedEvent(PanelId, job.Id, "batch", jobName));
       }
       catch (OperationCanceledException)
       {

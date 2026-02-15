@@ -9,11 +9,10 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class QualityMetricsDatabase:
     )
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         if db_path is None:
             db_dir = Path(_DEFAULT_DB_DIR)
             db_dir.mkdir(parents=True, exist_ok=True)
@@ -82,7 +81,7 @@ class QualityMetricsDatabase:
         finally:
             conn.close()
 
-    def insert(self, entry: Dict[str, Any]) -> str:
+    def insert(self, entry: dict[str, Any]) -> str:
         """
         Insert a quality history entry. Returns the entry id.
 
@@ -176,13 +175,13 @@ class QualityMetricsDatabase:
     def get_entries_by_profile(
         self,
         profile_id: str,
-        limit: Optional[int] = None,
-        since: Optional[str] = None,
-        until: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        limit: int | None = None,
+        since: str | None = None,
+        until: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get quality history entries for a profile."""
         query = "SELECT id, profile_id, timestamp, engine, metrics, quality_score, synthesis_text, audio_url, enhanced_quality, metadata FROM quality_history WHERE profile_id = ?"
-        params: List[Any] = [profile_id]
+        params: list[Any] = [profile_id]
         if since:
             query += " AND timestamp >= ?"
             params.append(since)
@@ -200,7 +199,7 @@ class QualityMetricsDatabase:
             conn.close()
         return [self._row_to_entry(r) for r in rows]
 
-    def get_all_entries_for_aggregation(self) -> List[Dict[str, Any]]:
+    def get_all_entries_for_aggregation(self) -> list[dict[str, Any]]:
         """Get all entries (for in-memory aggregation by engine). Used by /metrics and /slo."""
         conn = sqlite3.connect(self._db_path)
         try:
@@ -211,10 +210,10 @@ class QualityMetricsDatabase:
             conn.close()
         return [self._row_to_entry(r) for r in rows]
 
-    def query(self, engine_id: str, since: Optional[datetime] = None) -> List[Dict[str, Any]]:
+    def query(self, engine_id: str, since: datetime | None = None) -> list[dict[str, Any]]:
         """Query entries by engine_id and optional since datetime."""
         query = "SELECT id, profile_id, timestamp, engine, metrics, quality_score, synthesis_text, audio_url, enhanced_quality, metadata FROM quality_history WHERE engine = ?"
-        params: List[Any] = [engine_id]
+        params: list[Any] = [engine_id]
         if since is not None:
             query += " AND timestamp >= ?"
             params.append(since.isoformat())
@@ -228,7 +227,7 @@ class QualityMetricsDatabase:
 
     def get_engine_metrics(
         self, engine_id: str, period: timedelta
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get aggregated metrics for an engine over a time period.
 
@@ -285,7 +284,7 @@ class QualityMetricsDatabase:
     @staticmethod
     def _row_to_entry(
         row: tuple,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         (
             id_,
             profile_id,
@@ -327,10 +326,10 @@ class QualityMetricsDatabase:
 
 
 # Singleton for use by routes
-_quality_db: Optional[QualityMetricsDatabase] = None
+_quality_db: QualityMetricsDatabase | None = None
 
 
-def get_quality_metrics_db(db_path: Optional[str] = None) -> QualityMetricsDatabase:
+def get_quality_metrics_db(db_path: str | None = None) -> QualityMetricsDatabase:
     """Get or create the quality metrics database singleton."""
     global _quality_db
     if _quality_db is None:

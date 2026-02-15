@@ -5,10 +5,10 @@ Provides the orchestrator and pipeline modes for chaining
 STT → LLM → TTS components with streaming and batch support.
 """
 
-from .orchestrator import PipelineOrchestrator, PipelineMode, PipelineState
+from .orchestrator import PipelineMode, PipelineOrchestrator, PipelineState
 
 __all__ = [
-    "PipelineOrchestrator",
     "PipelineMode",
+    "PipelineOrchestrator",
     "PipelineState",
 ]

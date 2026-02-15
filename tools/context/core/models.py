@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ContextLevel(str, Enum):
     """Tiered context loading levels for progressive disclosure."""
-    
+
     HIGH = "high"      # STATE, TASK (Level 1) - always loaded
     MID = "mid"        # Brief, Ledger (Level 2) - loaded if budget allows
     LOW = "low"        # Rules, Memory, Git (Level 3) - loaded if budget allows
@@ -17,7 +17,7 @@ class ContextLevel(str, Enum):
 
 class PartCategory(str, Enum):
     """P.A.R.T. framework categories."""
-    
+
     PROMPT = "prompt"       # Core directives: task, role, phase
     ARCHIVE = "archive"     # Recent history: steps, proof index
     RESOURCES = "resources" # Domain knowledge: rules, memory, ledger
@@ -28,9 +28,9 @@ class PartCategory(str, Enum):
 class AllocationContext:
     """Immutable allocation request context."""
 
-    task_id: Optional[str]
-    phase: Optional[str]
-    role: Optional[str]
+    task_id: str | None
+    phase: str | None
+    role: str | None
     include_git: bool = False
     budget_chars: int = 12000
     max_level: ContextLevel = ContextLevel.LOW  # Maximum depth to load
@@ -42,8 +42,8 @@ class BudgetConstraints:
     """Budget allocation per source."""
 
     total_chars: int
-    source_limits: Dict[str, int]
-    priority_order: List[str]
+    source_limits: dict[str, int]
+    priority_order: list[str]
 
     def limit_for(self, source: str) -> int:
         return self.source_limits.get(source, max(0, self.total_chars))
@@ -51,45 +51,45 @@ class BudgetConstraints:
 
 @dataclass
 class TaskContext:
-    id: Optional[str] = None
-    title: Optional[str] = None
-    priority: Optional[str] = None
-    blockers: Optional[str] = None
+    id: str | None = None
+    title: str | None = None
+    priority: str | None = None
+    blockers: str | None = None
 
 
 @dataclass
 class StateContext:
-    phase: Optional[str] = None
-    started: Optional[str] = None
-    context: Optional[str] = None
-    next_steps: List[str] = field(default_factory=list)
+    phase: str | None = None
+    started: str | None = None
+    context: str | None = None
+    next_steps: list[str] = field(default_factory=list)
 
 
 @dataclass
 class BriefContext:
-    path: Optional[str] = None
-    objective: Optional[str] = None
-    acceptance: Optional[str] = None
-    proofs: Optional[str] = None
+    path: str | None = None
+    objective: str | None = None
+    acceptance: str | None = None
+    proofs: str | None = None
 
 
 @dataclass
 class RuleContext:
     path: str
-    description: Optional[str] = None
+    description: str | None = None
     always_apply: bool = False
 
 
 @dataclass
 class MemoryItem:
     content: str
-    source: Optional[str] = None
+    source: str | None = None
 
 
 @dataclass
 class GitContext:
-    status: Optional[str] = None
-    shortlog: Optional[str] = None
+    status: str | None = None
+    shortlog: str | None = None
 
 
 @dataclass
@@ -99,19 +99,19 @@ class SourceResult:
     data: Any
     size_chars: int
     fetch_time_ms: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class PartStructure:
     """P.A.R.T. framework structure for context organization."""
-    
-    prompt: Dict[str, Any] = field(default_factory=dict)      # Core directives
-    archive: Dict[str, Any] = field(default_factory=dict)     # Recent history
-    resources: Dict[str, Any] = field(default_factory=dict)   # Domain knowledge
-    tools: Dict[str, Any] = field(default_factory=dict)       # Capabilities
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    prompt: dict[str, Any] = field(default_factory=dict)      # Core directives
+    archive: dict[str, Any] = field(default_factory=dict)     # Recent history
+    resources: dict[str, Any] = field(default_factory=dict)   # Domain knowledge
+    tools: dict[str, Any] = field(default_factory=dict)       # Capabilities
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "prompt": self.prompt,
             "archive": self.archive,
@@ -123,39 +123,39 @@ class PartStructure:
 @dataclass
 class ProgressContext:
     """Project progress tracking context."""
-    
+
     current_gate: str = ""
     current_phase: str = ""
     progress_percent: float = 0.0
     blockers_count: int = 0
     in_progress_count: int = 0
-    next_actions: List[str] = field(default_factory=list)
-    gate_details: List[Dict[str, Any]] = field(default_factory=list)
+    next_actions: list[str] = field(default_factory=list)
+    gate_details: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
 class ContextBundle:
     task: TaskContext = field(default_factory=TaskContext)
     state: StateContext = field(default_factory=StateContext)
-    brief: Optional[BriefContext] = None
-    rules: List[RuleContext] = field(default_factory=list)
-    memory: List[MemoryItem] = field(default_factory=list)
-    git: Optional[GitContext] = None
-    ledger: Optional[List[Dict[str, Any]]] = None
-    telemetry: Optional[Dict[str, Any]] = None
-    proof_index: Optional[List[Dict[str, Any]]] = None
-    progress: Optional[ProgressContext] = None
+    brief: BriefContext | None = None
+    rules: list[RuleContext] = field(default_factory=list)
+    memory: list[MemoryItem] = field(default_factory=list)
+    git: GitContext | None = None
+    ledger: list[dict[str, Any]] | None = None
+    telemetry: dict[str, Any] | None = None
+    proof_index: list[dict[str, Any]] | None = None
+    progress: ProgressContext | None = None
     meta: dict = field(default_factory=dict)
-    
-    # P.A.R.T. structure metadata
-    _part_structure: Optional[PartStructure] = field(default=None, init=False, repr=False)
 
-    def with_meta(self, budget_chars: int) -> "ContextBundle":
+    # P.A.R.T. structure metadata
+    _part_structure: PartStructure | None = field(default=None, init=False, repr=False)
+
+    def with_meta(self, budget_chars: int) -> ContextBundle:
         self.meta["generated_at"] = datetime.now().isoformat()
         self.meta["budget_chars"] = budget_chars
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         def _serialize(obj: Any) -> Any:
             if hasattr(obj, "__dict__"):
                 return {k: _serialize(v) for k, v in obj.__dict__.items()}
@@ -163,7 +163,7 @@ class ContextBundle:
                 return [_serialize(x) for x in obj]
             return obj
 
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "task": _serialize(self.task),
             "state": _serialize(self.state),
             "brief": _serialize(self.brief),
@@ -184,11 +184,11 @@ class ContextBundle:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
-    
+
     def to_part_structure(self) -> PartStructure:
         """Convert bundle to P.A.R.T. framework structure."""
         part = PartStructure()
-        
+
         # PROMPT: Core directives (task, role, phase, objective)
         part.prompt["task"] = {
             "id": self.task.id,
@@ -204,7 +204,7 @@ class ContextBundle:
             part.prompt["objective"] = self.brief.objective
             part.prompt["acceptance"] = self.brief.acceptance
         part.prompt["role"] = self.meta.get("role")
-        
+
         # ARCHIVE: Recent history (next steps, proof index, progress)
         part.archive["next_steps"] = self.state.next_steps or []
         part.archive["proof_index"] = self.proof_index or []
@@ -217,7 +217,7 @@ class ContextBundle:
                 "in_progress_count": self.progress.in_progress_count,
                 "next_actions": self.progress.next_actions,
             }
-        
+
         # RESOURCES: Domain knowledge (rules, memory, ledger)
         part.resources["rules"] = [
             {"path": r.path, "description": r.description, "always_apply": r.always_apply}
@@ -229,7 +229,7 @@ class ContextBundle:
         ]
         part.resources["ledger"] = self.ledger or []
         part.resources["ledger_context"] = self.meta.get("ledger_context")
-        
+
         # TOOLS: Capabilities (git, telemetry, MCP)
         if self.git:
             part.tools["git"] = {
@@ -239,15 +239,15 @@ class ContextBundle:
         if self.telemetry:
             part.tools["telemetry"] = self.telemetry
         part.tools["mcp_available"] = self.meta.get("mcp_available", False)
-        
+
         self._part_structure = part
         return part
-    
+
     def to_part_markdown(self) -> str:
         """Render P.A.R.T. structure as markdown."""
         part = self.to_part_structure()
         lines = ["# Context Bundle (P.A.R.T. Framework)", ""]
-        
+
         # P: PROMPT
         lines.append("## P: PROMPT (Core Directives)")
         lines.append("")
@@ -260,7 +260,7 @@ class ContextBundle:
         if part.prompt.get("objective"):
             lines.append(f"**Objective**: {part.prompt['objective'][:200]}...")
         lines.append("")
-        
+
         # A: ARCHIVE
         lines.append("## A: ARCHIVE (Recent History)")
         lines.append("")
@@ -275,7 +275,7 @@ class ContextBundle:
             for entry in proof[:5]:
                 lines.append(f"- [{entry.get('date')}] {entry.get('task')}: {entry.get('artifact', '')[:80]}")
             lines.append("")
-        
+
         # R: RESOURCES
         lines.append("## R: RESOURCES (Domain Knowledge)")
         lines.append("")
@@ -297,7 +297,7 @@ class ContextBundle:
             for entry in ledger[:5]:
                 lines.append(f"- [{entry.get('id')}] {entry.get('title', '')[:80]}")
             lines.append("")
-        
+
         # T: TOOLS
         lines.append("## T: TOOLS (Available Capabilities)")
         lines.append("")
@@ -309,7 +309,7 @@ class ContextBundle:
         if part.tools.get("mcp_available"):
             lines.append("**MCP**: Enabled")
         lines.append("")
-        
+
         return "\n".join(lines)
 
     def to_preamble_markdown(self) -> str:

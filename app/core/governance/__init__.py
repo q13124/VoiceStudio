@@ -8,7 +8,7 @@ from .self_optimizer import SelfOptimizer, create_self_optimizer
 
 __all__ = [
     "AIGovernor",
-    "create_ai_governor",
     "SelfOptimizer",
+    "create_ai_governor",
     "create_self_optimizer",
 ]

@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult, StateContext, TaskContext
 from tools.context.sources.base import BaseSourceAdapter
 
-
 STATE_PATH = Path(".cursor/STATE.md")
 
 
-def _parse_proof_index(text: str) -> List[Dict[str, Any]]:
+def _parse_proof_index(text: str) -> list[dict[str, Any]]:
     """Parse Proof Index table from STATE.md into list of dicts (Date, Task, Artifact, Type, Verified)."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     in_section = False
     for line in text.splitlines():
         if re.search(r"^\s*##\s+Proof\s+Index", line, re.IGNORECASE):
@@ -40,7 +39,7 @@ def _parse_proof_index(text: str) -> List[Dict[str, Any]]:
     return out
 
 
-def _extract_list(lines: List[str], header: str) -> list:
+def _extract_list(lines: list[str], header: str) -> list:
     items = []
     in_section = False
     for line in lines:

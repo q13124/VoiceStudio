@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VoiceStudio.App.Views.Panels"
     xmlns:models="using:VoiceStudio.Core.Plugins.Models"
-    AutomationProperties.AutomationId="PluginDetailView">
+    AutomationProperties.AutomationId="PluginDetailView_Root">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>

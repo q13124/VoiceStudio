@@ -4,26 +4,26 @@ Comprehensive tests for VoiceStudio Audio Utilities
 Tests all core audio functions and quality enhancement features.
 """
 
-import os
+import shutil
 import sys
+import tempfile
+from pathlib import Path
+
 import numpy as np
 import pytest
-from pathlib import Path
-import tempfile
-import shutil
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.audio.audio_utils import (
-    normalize_lufs,
-    detect_silence,
-    resample_audio,
-    convert_format,
     analyze_voice_characteristics,
+    convert_format,
+    detect_silence,
     enhance_voice_quality,
+    match_voice_profile,
+    normalize_lufs,
     remove_artifacts,
-    match_voice_profile
+    resample_audio,
 )
 
 
@@ -61,16 +61,16 @@ def audio_with_silence(sample_rate):
     """Generate audio with leading and trailing silence"""
     duration = 2.0
     t = np.linspace(0, duration, int(sample_rate * duration), False)
-    
+
     # First 0.5s: silence
     silence1 = np.zeros(int(sample_rate * 0.5))
-    
+
     # Middle 1.0s: signal
     signal = np.sin(2 * np.pi * 440.0 * t[:int(sample_rate * 1.0)]).astype(np.float32)
-    
+
     # Last 0.5s: silence
     silence2 = np.zeros(int(sample_rate * 0.5))
-    
+
     audio = np.concatenate([silence1, signal, silence2])
     return audio
 
@@ -89,11 +89,11 @@ def test_normalize_lufs_mono(mono_audio, sample_rate):
     """Test LUFS normalization for mono audio"""
     try:
         normalized = normalize_lufs(mono_audio, sample_rate, target_lufs=-23.0)
-        
+
         assert normalized.shape == mono_audio.shape
         assert normalized.dtype == np.float32
         assert np.all(np.abs(normalized) <= 1.0)  # Should be clipped
-        
+
         # Check that normalization changed the audio (unless already at target)
         # In most cases, normalization will change the audio
         assert isinstance(normalized, np.ndarray)
@@ -105,7 +105,7 @@ def test_normalize_lufs_stereo(stereo_audio, sample_rate):
     """Test LUFS normalization for stereo audio"""
     try:
         normalized = normalize_lufs(stereo_audio, sample_rate, target_lufs=-23.0)
-        
+
         assert normalized.shape == stereo_audio.shape
         assert normalized.dtype == np.float32
         assert np.all(np.abs(normalized) <= 1.0)
@@ -132,11 +132,11 @@ def test_detect_silence(audio_with_silence, sample_rate):
             threshold_db=-40.0,
             min_silence_duration=0.1
         )
-        
+
         assert isinstance(silence_regions, list)
         # Should detect at least the leading and trailing silence
         assert len(silence_regions) >= 2
-        
+
         # Check that silence regions are tuples of (start, end)
         for region in silence_regions:
             assert isinstance(region, tuple)
@@ -155,7 +155,7 @@ def test_detect_silence_no_silence(mono_audio, sample_rate):
             threshold_db=-40.0,
             min_silence_duration=0.1
         )
-        
+
         # Should return empty list or very few regions
         assert isinstance(silence_regions, list)
     except ImportError:
@@ -167,13 +167,13 @@ def test_resample_audio(mono_audio, sample_rate):
     try:
         target_sr = 16000
         resampled = resample_audio(mono_audio, sample_rate, target_sr)
-        
+
         assert isinstance(resampled, np.ndarray)
         # Duration should be approximately the same
         original_duration = len(mono_audio) / sample_rate
         resampled_duration = len(resampled) / target_sr
         assert abs(original_duration - resampled_duration) < 0.1
-        
+
         # Should maintain same dtype
         assert resampled.dtype == mono_audio.dtype
     except ImportError:
@@ -204,11 +204,11 @@ def test_convert_format(mono_audio, sample_rate, temp_dir):
     """Test audio format conversion"""
     try:
         import soundfile as sf
-        
+
         # Create input WAV file
         input_path = Path(temp_dir) / "input.wav"
         sf.write(str(input_path), mono_audio, sample_rate)
-        
+
         # Convert to FLAC
         output_path = Path(temp_dir) / "output.flac"
         result_path = convert_format(
@@ -217,10 +217,10 @@ def test_convert_format(mono_audio, sample_rate, temp_dir):
             output_format="flac",
             sample_rate=sample_rate
         )
-        
+
         assert result_path.exists()
         assert result_path == output_path
-        
+
         # Verify output can be read
         audio_out, sr_out = sf.read(str(result_path))
         assert sr_out == sample_rate
@@ -233,10 +233,10 @@ def test_convert_format_resample(mono_audio, sample_rate, temp_dir):
     """Test format conversion with resampling"""
     try:
         import soundfile as sf
-        
+
         input_path = Path(temp_dir) / "input.wav"
         sf.write(str(input_path), mono_audio, sample_rate)
-        
+
         output_path = Path(temp_dir) / "output.wav"
         target_sr = 16000
         result_path = convert_format(
@@ -245,9 +245,9 @@ def test_convert_format_resample(mono_audio, sample_rate, temp_dir):
             output_format="wav",
             sample_rate=target_sr
         )
-        
+
         # Verify resampling occurred
-        audio_out, sr_out = sf.read(str(result_path))
+        _audio_out, sr_out = sf.read(str(result_path))
         assert sr_out == target_sr
     except ImportError:
         pytest.skip("soundfile or librosa not installed")
@@ -257,10 +257,10 @@ def test_convert_format_channel_conversion(stereo_audio, sample_rate, temp_dir):
     """Test format conversion with channel conversion"""
     try:
         import soundfile as sf
-        
+
         input_path = Path(temp_dir) / "input_stereo.wav"
         sf.write(str(input_path), stereo_audio, sample_rate)
-        
+
         # Convert to mono
         output_path = Path(temp_dir) / "output_mono.wav"
         result_path = convert_format(
@@ -269,8 +269,8 @@ def test_convert_format_channel_conversion(stereo_audio, sample_rate, temp_dir):
             output_format="wav",
             channels=1
         )
-        
-        audio_out, sr_out = sf.read(str(result_path))
+
+        audio_out, _sr_out = sf.read(str(result_path))
         assert len(audio_out.shape) == 1  # Should be mono
     except ImportError:
         pytest.skip("soundfile or librosa not installed")
@@ -282,7 +282,7 @@ def test_analyze_voice_characteristics(mono_audio, sample_rate):
     """Test voice characteristics analysis"""
     try:
         characteristics = analyze_voice_characteristics(mono_audio, sample_rate)
-        
+
         assert isinstance(characteristics, dict)
         assert "f0_mean" in characteristics
         assert "f0_std" in characteristics
@@ -291,7 +291,7 @@ def test_analyze_voice_characteristics(mono_audio, sample_rate):
         assert "spectral_rolloff" in characteristics
         assert "zero_crossing_rate" in characteristics
         assert "mfcc" in characteristics
-        
+
         # Check types
         assert isinstance(characteristics["f0_mean"], (int, float))
         assert isinstance(characteristics["formants"], list)
@@ -321,7 +321,7 @@ def test_enhance_voice_quality(mono_audio, sample_rate):
             normalize=True,
             denoise=False  # Skip denoising if noisereduce not available
         )
-        
+
         assert enhanced.shape == mono_audio.shape
         assert enhanced.dtype == mono_audio.dtype
         assert np.all(np.abs(enhanced) <= 1.0)
@@ -338,7 +338,7 @@ def test_enhance_voice_quality_no_normalize(mono_audio, sample_rate):
             normalize=False,
             denoise=False
         )
-        
+
         assert enhanced.shape == mono_audio.shape
     except ImportError:
         pytest.skip("Required libraries not installed")
@@ -350,9 +350,9 @@ def test_remove_artifacts(mono_audio, sample_rate):
     audio_with_artifacts = mono_audio.copy()
     # Create a click
     audio_with_artifacts[len(audio_with_artifacts) // 2] = 0.9
-    
+
     cleaned = remove_artifacts(audio_with_artifacts, sample_rate)
-    
+
     assert cleaned.shape == audio_with_artifacts.shape
     assert np.all(np.abs(cleaned) <= 1.0)
 
@@ -360,7 +360,7 @@ def test_remove_artifacts(mono_audio, sample_rate):
 def test_remove_artifacts_stereo(stereo_audio, sample_rate):
     """Test artifact removal on stereo audio"""
     cleaned = remove_artifacts(stereo_audio, sample_rate)
-    
+
     assert cleaned.shape == stereo_audio.shape
     assert np.all(np.abs(cleaned) <= 1.0)
 
@@ -375,14 +375,14 @@ def test_match_voice_profile(mono_audio, sample_rate):
             sample_rate,
             sample_rate
         )
-        
+
         assert isinstance(match_result, dict)
         assert "f0_similarity" in match_result
         assert "formant_similarity" in match_result
         assert "mfcc_distance" in match_result
         assert "overall_similarity" in match_result
         assert "recommendations" in match_result
-        
+
         # Same audio should have high similarity
         assert 0.0 <= match_result["overall_similarity"] <= 1.0
         assert isinstance(match_result["recommendations"], list)
@@ -398,14 +398,14 @@ def test_match_voice_profile_different_audio(mono_audio, sample_rate):
         frequency = 880.0  # Different frequency
         t = np.linspace(0, duration, int(sample_rate * duration), False)
         different_audio = np.sin(2 * np.pi * frequency * t).astype(np.float32)
-        
+
         match_result = match_voice_profile(
             mono_audio,
             different_audio,
             sample_rate,
             sample_rate
         )
-        
+
         assert isinstance(match_result, dict)
         assert "overall_similarity" in match_result
         # Different audio should have lower similarity
@@ -419,14 +419,14 @@ def test_match_voice_profile_resampling(mono_audio, sample_rate):
     try:
         target_sr = 16000
         target_audio = resample_audio(mono_audio, sample_rate, target_sr)
-        
+
         match_result = match_voice_profile(
             mono_audio,
             target_audio,
             sample_rate,
             target_sr
         )
-        
+
         assert isinstance(match_result, dict)
         assert "overall_similarity" in match_result
     except ImportError:
@@ -439,19 +439,19 @@ def test_quality_metrics_validation(mono_audio, sample_rate):
     """Test that quality metrics are within expected ranges"""
     try:
         characteristics = analyze_voice_characteristics(mono_audio, sample_rate)
-        
+
         # F0 should be reasonable for voice (50-500 Hz typically)
         assert 0 <= characteristics["f0_mean"] <= 2000
-        
+
         # Formants should be positive
         for formant in characteristics["formants"]:
             assert formant >= 0
-        
+
         # Spectral features should be positive
         assert characteristics["spectral_centroid"] > 0
         assert characteristics["spectral_rolloff"] > 0
         assert 0 <= characteristics["zero_crossing_rate"] <= 1
-        
+
         # MFCC should have 13 coefficients
         assert len(characteristics["mfcc"]) == 13
     except ImportError:
@@ -466,19 +466,19 @@ def test_full_pipeline(mono_audio, sample_rate):
         # 1. Analyze characteristics
         chars = analyze_voice_characteristics(mono_audio, sample_rate)
         assert chars is not None
-        
+
         # 2. Enhance quality
         enhanced = enhance_voice_quality(mono_audio, sample_rate)
         assert enhanced is not None
-        
+
         # 3. Normalize
         normalized = normalize_lufs(enhanced, sample_rate)
         assert normalized is not None
-        
+
         # 4. Remove artifacts
         cleaned = remove_artifacts(normalized, sample_rate)
         assert cleaned is not None
-        
+
         # All should maintain shape
         assert cleaned.shape == mono_audio.shape
     except ImportError:

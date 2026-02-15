@@ -11,16 +11,18 @@ Features:
 - Capability discovery
 """
 
+from __future__ import annotations
+
 import asyncio
+import contextlib
 import json
 import logging
 import subprocess
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,17 +57,17 @@ class EngineInfo:
     engine_id: str
     name: str
     version: str
-    capabilities: Set[EngineCapability]
+    capabilities: set[EngineCapability]
     status: EngineStatus
-    languages: List[str]
-    sample_rates: List[int]
+    languages: list[str]
+    sample_rates: list[int]
     requires_gpu: bool
-    model_path: Optional[str]
-    config: Dict[str, Any]
-    last_health_check: Optional[datetime]
-    error_message: Optional[str] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    model_path: str | None
+    config: dict[str, Any]
+    last_health_check: datetime | None
+    error_message: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "engine_id": self.engine_id,
             "name": self.name,
@@ -88,12 +90,12 @@ class ExternalTool:
     tool_id: str
     name: str
     executable_path: str
-    version: Optional[str]
+    version: str | None
     is_available: bool
-    capabilities: List[str]
-    config: Dict[str, Any]
-    
-    def to_dict(self) -> Dict[str, Any]:
+    capabilities: list[str]
+    config: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "tool_id": self.tool_id,
             "name": self.name,
@@ -108,51 +110,51 @@ class ExternalTool:
 class EngineIntegrationService:
     """
     Engine integration and management service.
-    
+
     Phase 17: Integration Improvements
-    
+
     Features:
     - Dynamic engine discovery
     - Health monitoring
     - Capability-based routing
     - External tool integration
     """
-    
-    def __init__(self, engines_dir: Optional[Path] = None):
+
+    def __init__(self, engines_dir: Path | None = None):
         self._engines_dir = engines_dir or Path("engines")
-        self._engines: Dict[str, EngineInfo] = {}
-        self._external_tools: Dict[str, ExternalTool] = {}
+        self._engines: dict[str, EngineInfo] = {}
+        self._external_tools: dict[str, ExternalTool] = {}
         self._health_check_interval = 60  # seconds
-        self._health_check_task: Optional[asyncio.Task] = None
+        self._health_check_task: asyncio.Task | None = None
         self._initialized = False
-        
+
         logger.info("EngineIntegrationService created")
-    
+
     async def initialize(self) -> bool:
         """Initialize the engine integration service."""
         if self._initialized:
             return True
-        
+
         try:
             # Discover engines
             await self._discover_engines()
-            
+
             # Discover external tools
             await self._discover_external_tools()
-            
+
             # Start health monitoring
             self._health_check_task = asyncio.create_task(self._health_monitor_loop())
-            
+
             self._initialized = True
             logger.info(f"EngineIntegrationService initialized with {len(self._engines)} engines")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize EngineIntegrationService: {e}")
             return False
-    
+
     # ===== Phase 17.1: Engine Integration =====
-    
+
     async def _discover_engines(self):
         """Discover available engines from manifests."""
         # Built-in engines
@@ -276,10 +278,10 @@ class EngineIntegrationService:
                 last_health_check=None,
             ),
         ]
-        
+
         for engine in builtin_engines:
             self._engines[engine.engine_id] = engine
-        
+
         # Load from manifests
         if self._engines_dir.exists():
             for manifest_path in self._engines_dir.glob("**/*.manifest.json"):
@@ -287,21 +289,21 @@ class EngineIntegrationService:
                     await self._load_engine_manifest(manifest_path)
                 except Exception as e:
                     logger.warning(f"Failed to load engine manifest {manifest_path}: {e}")
-    
+
     async def _load_engine_manifest(self, manifest_path: Path):
         """Load engine from manifest file."""
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             manifest = json.load(f)
-        
+
         engine_id = manifest.get("id", manifest_path.stem.replace(".manifest", ""))
-        
+
         capabilities = set()
         for cap in manifest.get("capabilities", []):
             try:
                 capabilities.add(EngineCapability(cap))
             except ValueError:
                 logger.debug("Unknown capability '%s' in engine manifest", cap)
-        
+
         engine = EngineInfo(
             engine_id=engine_id,
             name=manifest.get("name", engine_id),
@@ -315,42 +317,42 @@ class EngineIntegrationService:
             config=manifest.get("config", {}),
             last_health_check=None,
         )
-        
+
         self._engines[engine_id] = engine
         logger.info(f"Loaded engine from manifest: {engine_id}")
-    
+
     async def register_engine(self, engine: EngineInfo):
         """Register a new engine."""
         self._engines[engine.engine_id] = engine
         logger.info(f"Registered engine: {engine.engine_id}")
-    
+
     async def unregister_engine(self, engine_id: str):
         """Unregister an engine."""
         if engine_id in self._engines:
             del self._engines[engine_id]
             logger.info(f"Unregistered engine: {engine_id}")
-    
-    def get_engine(self, engine_id: str) -> Optional[EngineInfo]:
+
+    def get_engine(self, engine_id: str) -> EngineInfo | None:
         """Get engine by ID."""
         return self._engines.get(engine_id)
-    
+
     def list_engines(
         self,
-        capability: Optional[EngineCapability] = None,
-        status: Optional[EngineStatus] = None,
-    ) -> List[EngineInfo]:
+        capability: EngineCapability | None = None,
+        status: EngineStatus | None = None,
+    ) -> list[EngineInfo]:
         """List engines with optional filtering."""
         engines = list(self._engines.values())
-        
+
         if capability:
             engines = [e for e in engines if capability in e.capabilities]
-        
+
         if status:
             engines = [e for e in engines if e.status == status]
-        
+
         return engines
-    
-    def get_engines_for_task(self, task_type: str) -> List[EngineInfo]:
+
+    def get_engines_for_task(self, task_type: str) -> list[EngineInfo]:
         """Get engines suitable for a specific task."""
         capability_map = {
             "synthesis": EngineCapability.TTS,
@@ -358,51 +360,51 @@ class EngineIntegrationService:
             "cloning": EngineCapability.VOICE_CLONING,
             "conversion": EngineCapability.VOICE_CONVERSION,
         }
-        
+
         capability = capability_map.get(task_type)
         if not capability:
             return []
-        
+
         return self.list_engines(capability=capability, status=EngineStatus.READY)
-    
+
     async def check_engine_health(self, engine_id: str) -> bool:
         """Check health of a specific engine."""
         engine = self._engines.get(engine_id)
         if not engine:
             return False
-        
+
         try:
             # Simulate health check
             # In real implementation, would call engine's health endpoint
             await asyncio.sleep(0.1)
-            
+
             engine.status = EngineStatus.READY
             engine.last_health_check = datetime.now()
             engine.error_message = None
-            
+
             return True
-        
+
         except Exception as e:
             engine.status = EngineStatus.ERROR
             engine.error_message = str(e)
             return False
-    
+
     async def _health_monitor_loop(self):
         """Continuous health monitoring loop."""
         while True:
             try:
                 await asyncio.sleep(self._health_check_interval)
-                
+
                 for engine_id in list(self._engines.keys()):
                     await self.check_engine_health(engine_id)
-            
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Health monitor error: {e}")
-    
+
     # ===== Phase 17.2: External Tool Integration =====
-    
+
     async def _discover_external_tools(self):
         """Discover external tools."""
         tools_to_check = [
@@ -412,16 +414,16 @@ class EngineIntegrationService:
             ("imagemagick", ["magick", "-version"], ["image_processing"]),
             ("yt-dlp", ["yt-dlp", "--version"], ["media_download"]),
         ]
-        
+
         for tool_id, version_cmd, capabilities in tools_to_check:
             tool = await self._check_tool(tool_id, version_cmd, capabilities)
             self._external_tools[tool_id] = tool
-    
+
     async def _check_tool(
         self,
         tool_id: str,
-        version_cmd: List[str],
-        capabilities: List[str],
+        version_cmd: list[str],
+        capabilities: list[str],
     ) -> ExternalTool:
         """Check if external tool is available."""
         try:
@@ -431,10 +433,10 @@ class EngineIntegrationService:
                 text=True,
                 timeout=5,
             )
-            
+
             is_available = result.returncode == 0
             version = None
-            
+
             if is_available:
                 # Extract version from output
                 output = result.stdout + result.stderr
@@ -442,7 +444,7 @@ class EngineIntegrationService:
                     if 'version' in line.lower():
                         version = line.strip()[:50]
                         break
-            
+
             return ExternalTool(
                 tool_id=tool_id,
                 name=tool_id.title(),
@@ -452,8 +454,8 @@ class EngineIntegrationService:
                 capabilities=capabilities if is_available else [],
                 config={},
             )
-        
-        except Exception as e:
+
+        except Exception:
             return ExternalTool(
                 tool_id=tool_id,
                 name=tool_id.title(),
@@ -463,14 +465,14 @@ class EngineIntegrationService:
                 capabilities=[],
                 config={},
             )
-    
+
     async def register_external_tool(
         self,
         tool_id: str,
         name: str,
         executable_path: str,
-        capabilities: List[str],
-        config: Optional[Dict[str, Any]] = None,
+        capabilities: list[str],
+        config: dict[str, Any] | None = None,
     ) -> ExternalTool:
         """Register an external tool."""
         # Verify tool exists
@@ -483,7 +485,7 @@ class EngineIntegrationService:
             is_available = result.returncode == 0
         except Exception:
             is_available = False
-        
+
         tool = ExternalTool(
             tool_id=tool_id,
             name=name,
@@ -493,62 +495,60 @@ class EngineIntegrationService:
             capabilities=capabilities,
             config=config or {},
         )
-        
+
         self._external_tools[tool_id] = tool
         logger.info(f"Registered external tool: {tool_id}")
-        
+
         return tool
-    
-    def get_external_tool(self, tool_id: str) -> Optional[ExternalTool]:
+
+    def get_external_tool(self, tool_id: str) -> ExternalTool | None:
         """Get external tool by ID."""
         return self._external_tools.get(tool_id)
-    
-    def list_external_tools(self, available_only: bool = True) -> List[ExternalTool]:
+
+    def list_external_tools(self, available_only: bool = True) -> list[ExternalTool]:
         """List external tools."""
         tools = list(self._external_tools.values())
         if available_only:
             tools = [t for t in tools if t.is_available]
         return tools
-    
+
     async def run_external_tool(
         self,
         tool_id: str,
-        args: List[str],
-        input_data: Optional[bytes] = None,
+        args: list[str],
+        input_data: bytes | None = None,
         timeout: int = 300,
     ) -> subprocess.CompletedProcess:
         """Run an external tool."""
         tool = self._external_tools.get(tool_id)
         if not tool or not tool.is_available:
             raise ValueError(f"Tool not available: {tool_id}")
-        
-        cmd = [tool.executable_path] + args
-        
+
+        cmd = [tool.executable_path, *args]
+
         result = subprocess.run(
             cmd,
             input=input_data,
             capture_output=True,
             timeout=timeout,
         )
-        
+
         return result
-    
+
     # ===== Cleanup =====
-    
+
     async def cleanup(self):
         """Cleanup resources."""
         if self._health_check_task:
             self._health_check_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._health_check_task
-            except asyncio.CancelledError:
-                pass
-        
+
         logger.info("EngineIntegrationService cleaned up")
 
 
 # Singleton
-_engine_integration_service: Optional[EngineIntegrationService] = None
+_engine_integration_service: EngineIntegrationService | None = None
 
 
 def get_engine_integration_service() -> EngineIntegrationService:

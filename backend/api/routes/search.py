@@ -4,10 +4,11 @@ Implements IDEA 5: Global Search with Panel Context.
 Implements IDEA 36: Advanced Search with Natural Language.
 """
 
+from __future__ import annotations
+
 import logging
-import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -41,10 +42,10 @@ class SearchResultItem(BaseModel):
         ..., description="Item type (profile, project, audio, marker, script)"
     )
     title: str = Field(..., description="Item title/name")
-    description: Optional[str] = Field(None, description="Item description")
+    description: str | None = Field(None, description="Item description")
     panel_id: str = Field(..., description="Panel ID to navigate to")
-    preview: Optional[str] = Field(None, description="Preview text snippet")
-    metadata: Dict[str, Any] = Field(
+    preview: str | None = Field(None, description="Preview text snippet")
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -53,30 +54,30 @@ class ParsedQuery(BaseModel):
     """Parsed natural language query with extracted filters."""
 
     original_query: str = Field(..., description="Original query")
-    search_terms: List[str] = Field(default_factory=list, description="Search terms")
-    filters: Dict[str, Any] = Field(
+    search_terms: list[str] = Field(default_factory=list, description="Search terms")
+    filters: dict[str, Any] = Field(
         default_factory=dict, description="Extracted filters"
     )
-    types: Optional[List[str]] = Field(None, description="Content types to search")
+    types: list[str] | None = Field(None, description="Content types to search")
 
 
 class SearchResponse(BaseModel):
     """Response from global search."""
 
     query: str = Field(..., description="Search query")
-    results: List[SearchResultItem] = Field(
+    results: list[SearchResultItem] = Field(
         default_factory=list, description="Search results"
     )
     total_results: int = Field(..., description="Total number of results")
-    results_by_type: Dict[str, int] = Field(
+    results_by_type: dict[str, int] = Field(
         default_factory=dict, description="Result count by type"
     )
-    parsed_query: Optional[ParsedQuery] = Field(
+    parsed_query: ParsedQuery | None = Field(
         None, description="Parsed natural language query (if applicable)"
     )
 
 
-def _search_profiles(query: str, limit: int = 10) -> List[SearchResultItem]:
+def _search_profiles(query: str, limit: int = 10) -> list[SearchResultItem]:
     """Search voice profiles."""
     if not STORAGE_AVAILABLE:
         return []
@@ -118,7 +119,7 @@ def _search_profiles(query: str, limit: int = 10) -> List[SearchResultItem]:
     return results[:limit]
 
 
-def _search_projects(query: str, limit: int = 10) -> List[SearchResultItem]:
+def _search_projects(query: str, limit: int = 10) -> list[SearchResultItem]:
     """Search projects."""
     if not STORAGE_AVAILABLE:
         return []
@@ -152,7 +153,7 @@ def _search_projects(query: str, limit: int = 10) -> List[SearchResultItem]:
     return results[:limit]
 
 
-def _search_audio_files(query: str, limit: int = 10) -> List[SearchResultItem]:
+def _search_audio_files(query: str, limit: int = 10) -> list[SearchResultItem]:
     """Search audio files."""
     if not STORAGE_AVAILABLE:
         return []
@@ -183,7 +184,7 @@ def _search_audio_files(query: str, limit: int = 10) -> List[SearchResultItem]:
     return results[:limit]
 
 
-def _search_markers(query: str, limit: int = 10) -> List[SearchResultItem]:
+def _search_markers(query: str, limit: int = 10) -> list[SearchResultItem]:
     """Search timeline markers."""
     if not STORAGE_AVAILABLE:
         return []
@@ -219,7 +220,7 @@ def _search_markers(query: str, limit: int = 10) -> List[SearchResultItem]:
     return results[:limit]
 
 
-def _search_scripts(query: str, limit: int = 10) -> List[SearchResultItem]:
+def _search_scripts(query: str, limit: int = 10) -> list[SearchResultItem]:
     """Search scripts."""
     if not STORAGE_AVAILABLE:
         return []
@@ -354,10 +355,10 @@ def _parse_natural_language_query(query: str) -> ParsedQuery:
 
 
 def _apply_quality_filter(
-    results: List[SearchResultItem],
-    quality_min: Optional[float] = None,
-    quality_max: Optional[float] = None,
-) -> List[SearchResultItem]:
+    results: list[SearchResultItem],
+    quality_min: float | None = None,
+    quality_max: float | None = None,
+) -> list[SearchResultItem]:
     """Filter results by quality score if available in metadata."""
     if not quality_min and not quality_max:
         return results
@@ -386,7 +387,7 @@ def _apply_quality_filter(
 @cache_response(ttl=30)  # Cache for 30 seconds (search results may change)
 async def search(
     q: str = Query(..., description="Search query", min_length=2),
-    types: Optional[str] = Query(
+    types: str | None = Query(
         None,
         description="Comma-separated list of types to search (profile,project,audio,marker,script)",
     ),
@@ -496,4 +497,4 @@ async def search(
 
     except Exception as e:
         logger.error(f"Search failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {e!s}")

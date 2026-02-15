@@ -5,9 +5,7 @@ Tests audio mastering rack functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -43,7 +41,7 @@ class TestMasteringRackClasses:
     def test_mastering_rack_class_exists(self):
         """Test MasteringRack class exists."""
         if hasattr(mastering_rack, "MasteringRack"):
-            cls = getattr(mastering_rack, "MasteringRack")
+            cls = mastering_rack.MasteringRack
             assert isinstance(cls, type), "MasteringRack should be a class"
 
 

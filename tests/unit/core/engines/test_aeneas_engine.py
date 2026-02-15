@@ -10,12 +10,13 @@ Tests cover:
 - Configuration and optimization features
 """
 
-import pytest
-import tempfile
+import contextlib
 import os
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+import tempfile
 from collections import OrderedDict
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Try to import the engine
 try:
@@ -42,13 +43,11 @@ def aeneas_engine():
     """Create an Aeneas engine instance for testing."""
     if not HAS_AENEAS:
         pytest.skip("Aeneas engine not available")
-    
+
     engine = AeneasEngine(device="cpu", gpu=False)
     yield engine
-    try:
+    with contextlib.suppress(Exception):
         engine.cleanup()
-    except Exception:
-        ...
 
 
 class TestAeneasEngineImports:
@@ -117,7 +116,7 @@ class TestAeneasEngineCache:
         """Test enabling and disabling cache."""
         aeneas_engine.enable_cache = True
         assert aeneas_engine.enable_cache is True
-        
+
         aeneas_engine.enable_cache = False
         assert aeneas_engine.enable_cache is False
 
@@ -134,7 +133,7 @@ class TestAeneasEngineCache:
         aeneas_engine._alignment_cache["test1"] = {"data": "test1"}
         aeneas_engine._alignment_cache["test2"] = {"data": "test2"}
         assert len(aeneas_engine._alignment_cache) == 2
-        
+
         aeneas_engine.clear_cache()
         assert len(aeneas_engine._alignment_cache) == 0
 
@@ -152,20 +151,20 @@ class TestAeneasEngineCache:
     def test_cache_lru_eviction(self, aeneas_engine):
         """Test LRU cache eviction when max size is reached."""
         aeneas_engine._cache_max_size = 3
-        
+
         # Add entries up to max size
         for i in range(3):
             aeneas_engine._alignment_cache[f"key{i}"] = {"data": f"value{i}"}
-        
+
         assert len(aeneas_engine._alignment_cache) == 3
-        
+
         # Add one more - manually evict oldest if needed (simulating cache behavior)
         if len(aeneas_engine._alignment_cache) >= aeneas_engine._cache_max_size:
             oldest_key = next(iter(aeneas_engine._alignment_cache))
             del aeneas_engine._alignment_cache[oldest_key]
         aeneas_engine._alignment_cache["key3"] = {"data": "value3"}
         aeneas_engine._alignment_cache.move_to_end("key3")  # LRU update
-        
+
         # Check that oldest was evicted
         assert len(aeneas_engine._alignment_cache) == 3
         assert "key0" not in aeneas_engine._alignment_cache
@@ -193,20 +192,20 @@ class TestAeneasEngineBatchProcessing:
         # Mock the align method to return success
         aeneas_engine.align = Mock(return_value={"result": "success"})
         aeneas_engine._initialized = True
-        
+
         # Mock ThreadPoolExecutor
         mock_executor_instance = MagicMock()
         mock_executor.return_value.__enter__.return_value = mock_executor_instance
         mock_executor.return_value.__exit__.return_value = None
-        
+
         # Create batch alignment tasks
         tasks = [
             (temp_audio_file, "Test text 1", "en"),
             (temp_audio_file, "Test text 2", "en"),
         ]
-        
+
         try:
-            results = aeneas_engine.batch_align(tasks, batch_size=2)
+            aeneas_engine.batch_align(tasks, batch_size=2)
             # Should have called ThreadPoolExecutor
             assert mock_executor.called
         except Exception:
@@ -246,13 +245,13 @@ class TestAeneasEngineOptimization:
         # Initialize to create temp directory
         with patch("app.core.engines.aeneas_engine.tempfile.mkdtemp") as mock_mkdtemp:
             mock_mkdtemp.return_value = "/tmp/test_aeneas"
-            
+
             # Mock initialization to succeed
             with patch.object(aeneas_engine, "_find_python_executable", return_value="/usr/bin/python3"):
                 with patch("app.core.engines.aeneas_engine.subprocess.run") as mock_run:
                     mock_run.return_value.returncode = 0
                     mock_run.return_value.stdout = "aeneas 1.7.3"
-                    
+
                     try:
                         result = aeneas_engine.initialize()
                         if result:
@@ -290,8 +289,6 @@ class TestAeneasEngineCreateFunction:
         engine = create_aeneas_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, AeneasEngine)
-        try:
+        with contextlib.suppress(Exception):
             engine.cleanup()
-        except Exception:
-            ...
 

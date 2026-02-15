@@ -5,6 +5,8 @@ Provides unique identification, role declaration, lifecycle tracking,
 and version pinning for agents.
 """
 
+from __future__ import annotations
+
 import hashlib
 import platform
 import uuid
@@ -16,7 +18,7 @@ from typing import Optional
 
 class AgentRole(str, Enum):
     """Declared roles for agents."""
-    
+
     CODER = "Coder"
     TESTER = "Tester"
     SUPPORT = "Support"
@@ -26,7 +28,7 @@ class AgentRole(str, Enum):
     REVIEWER = "Reviewer"
     BUILDER = "Builder"
     DEBUGGER = "Debugger"
-    
+
     @classmethod
     def from_string(cls, value: str) -> Optional["AgentRole"]:
         """Parse role from string."""
@@ -39,7 +41,7 @@ class AgentRole(str, Enum):
 
 class AgentState(str, Enum):
     """Lifecycle states for agents."""
-    
+
     CREATED = "Created"
     RUNNING = "Running"
     PAUSED = "Paused"
@@ -47,7 +49,7 @@ class AgentState(str, Enum):
     COMPLETED = "Completed"
     QUARANTINED = "Quarantined"
     TERMINATED = "Terminated"
-    
+
     def can_transition_to(self, target: "AgentState") -> bool:
         """Check if transition to target state is valid."""
         valid_transitions = {
@@ -77,7 +79,7 @@ class AgentState(str, Enum):
 class AgentIdentity:
     """
     Unique identity for an agent instance.
-    
+
     Attributes:
         agent_id: UUID unique to this run
         machine_id: Hardware fingerprint of the machine
@@ -90,7 +92,7 @@ class AgentIdentity:
         parent_agent_id: ID of parent agent if this is a subagent
         session_id: Session identifier for grouping related agents
     """
-    
+
     agent_id: str
     machine_id: str
     user_id: str
@@ -99,40 +101,40 @@ class AgentIdentity:
     config_hash: str = ""
     created_at: datetime = field(default_factory=datetime.now)
     correlation_id: str = ""
-    parent_agent_id: Optional[str] = None
+    parent_agent_id: str | None = None
     session_id: str = ""
-    
+
     def __post_init__(self):
         """Initialize computed fields."""
         if not self.correlation_id:
             self.correlation_id = str(uuid.uuid4())
         if not self.session_id:
             self.session_id = str(uuid.uuid4())
-    
+
     @classmethod
     def create(
         cls,
         role: AgentRole,
         user_id: str,
-        config: Optional[dict] = None,
-        parent_agent_id: Optional[str] = None,
+        config: dict | None = None,
+        parent_agent_id: str | None = None,
     ) -> "AgentIdentity":
         """
         Factory method to create a new agent identity.
-        
+
         Args:
             role: The role this agent will perform
             user_id: Identifier for the user
             config: Optional configuration dict to hash
             parent_agent_id: Optional parent agent ID for subagents
-            
+
         Returns:
             A new AgentIdentity instance
         """
         agent_id = str(uuid.uuid4())
         machine_id = cls._get_machine_id()
         config_hash = cls._hash_config(config) if config else ""
-        
+
         return cls(
             agent_id=agent_id,
             machine_id=machine_id,
@@ -141,12 +143,12 @@ class AgentIdentity:
             config_hash=config_hash,
             parent_agent_id=parent_agent_id,
         )
-    
+
     @staticmethod
     def _get_machine_id() -> str:
         """
         Generate a machine fingerprint.
-        
+
         Uses platform info to create a stable identifier.
         """
         components = [
@@ -157,21 +159,21 @@ class AgentIdentity:
         ]
         fingerprint = "|".join(components)
         return hashlib.sha256(fingerprint.encode()).hexdigest()[:16]
-    
+
     @staticmethod
     def _hash_config(config: dict) -> str:
         """Hash a configuration dictionary."""
         import json
         config_str = json.dumps(config, sort_keys=True)
         return hashlib.sha256(config_str.encode()).hexdigest()
-    
+
     def transition_to(self, new_state: AgentState) -> bool:
         """
         Attempt to transition to a new state.
-        
+
         Args:
             new_state: The target state
-            
+
         Returns:
             True if transition succeeded, False otherwise
         """
@@ -179,7 +181,7 @@ class AgentIdentity:
             self.state = new_state
             return True
         return False
-    
+
     def is_active(self) -> bool:
         """Check if agent is in an active (non-terminal) state."""
         return self.state in {
@@ -188,7 +190,7 @@ class AgentIdentity:
             AgentState.PAUSED,
             AgentState.AWAITING_APPROVAL,
         }
-    
+
     def is_terminal(self) -> bool:
         """Check if agent is in a terminal state."""
         return self.state in {
@@ -196,7 +198,7 @@ class AgentIdentity:
             AgentState.QUARANTINED,
             AgentState.TERMINATED,
         }
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         return {
@@ -211,7 +213,7 @@ class AgentIdentity:
             "parent_agent_id": self.parent_agent_id,
             "session_id": self.session_id,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "AgentIdentity":
         """Create from dictionary."""

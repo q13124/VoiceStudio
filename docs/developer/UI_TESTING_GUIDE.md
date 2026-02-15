@@ -110,14 +110,22 @@ dotnet test src/VoiceStudio.App.Tests -c Debug --filter "Category=UI" -v detaile
 
 ```
 tests/ui/
-├── conftest.py                     # Pytest fixtures, WinAppDriver setup
+├── conftest.py                     # Pytest fixtures, WinAppDriverSession
 ├── test_navigation.py              # Navigation tests
-├── test_panel_functionality.py     # Panel tests (20+ panels)
+├── test_panel_functionality.py     # Panel loading tests
+├── test_expanded_panel_functionality.py  # Advanced panel tests
 ├── test_user_interactions.py       # User interaction tests
-├── test_command_palette.py         # Command palette tests
-├── test_keyboard_shortcuts.py      # Keyboard shortcut tests
+├── test_command_palette.py         # Global search tests
+├── test_keyboard_shortcuts.py      # Focus and keyboard tests
+├── helpers/                        # Test helper modules
+│   ├── navigation.py               # Navigation helper
+│   ├── assertions.py               # Assertion utilities
+│   └── backend.py                  # Backend API helper
 ├── PANEL_TESTING_SPECIFICATION.md  # Test specification
 └── README.md                       # Setup instructions
+
+scripts/
+└── discover_automation_ids.py      # Automation ID discovery tool
 ```
 
 ### Prerequisites
@@ -156,18 +164,35 @@ pytest test_navigation.py -v
 ### Example Test
 
 ```python
-import pytest
-from appium import webdriver
+import time
 
-def test_panel_navigation(driver):
+def test_panel_navigation(driver, app_launched):
     """Test navigating to Settings panel."""
     # Find and click Settings in navigation
-    settings_btn = driver.find_element_by_accessibility_id("Settings_NavButton")
+    settings_btn = driver.find_element("accessibility id", "NavSettings")
     settings_btn.click()
+    time.sleep(0.5)
     
-    # Verify panel loaded
-    settings_panel = driver.find_element_by_accessibility_id("SettingsPanel")
-    assert settings_panel.is_displayed()
+    # Verify navigation worked
+    settings_btn_after = driver.find_element("accessibility id", "NavSettings")
+    assert settings_btn_after is not None
+```
+
+### Using Helper Modules
+
+```python
+from tests.ui.helpers import NavigationHelper, UIAssertions
+
+def test_with_helpers(driver, app_launched):
+    """Test using helper modules."""
+    nav = NavigationHelper(driver)
+    assertions = UIAssertions(driver)
+    
+    # Navigate to profiles
+    nav.navigate_to("profiles")
+    
+    # Assert element exists
+    assertions.assert_element_exists("NavProfiles")
 ```
 
 ---
@@ -255,15 +280,36 @@ public class MyFeatureTests : SmokeTestBase
 
 1. Create file in `tests/ui/`
 2. Use pytest fixtures from `conftest.py`
-3. Find elements by `AccessibilityId` (from `AutomationProperties.AutomationId`)
+3. Find elements by `accessibility id` (from `AutomationProperties.AutomationId`)
 
 ```python
-def test_my_feature(driver):
+import time
+
+def test_my_feature(driver, app_launched):
     """Test description."""
-    element = driver.find_element_by_accessibility_id("MyControl_AutomationId")
+    # Use our custom WinAppDriverSession methods
+    element = driver.find_element("accessibility id", "NavProfiles")
     element.click()
-    assert driver.find_element_by_accessibility_id("ExpectedResult").is_displayed()
+    time.sleep(0.5)
+    
+    # Verify element exists
+    result = driver.find_element("accessibility id", "NavProfiles")
+    assert result is not None
 ```
+
+### Custom WinAppDriverSession
+
+VoiceStudio uses a custom `WinAppDriverSession` class that directly communicates
+with WinAppDriver using the JSON Wire Protocol. This bypasses W3C protocol issues
+with modern Selenium/Appium clients.
+
+Key methods:
+- `find_element(strategy, value)` - Find single element
+- `find_elements(strategy, value)` - Find multiple elements
+- `save_screenshot(filename)` - Capture screenshot
+- `quit()` - Close session and app
+
+Supported strategies: `accessibility id`, `name`, `xpath`
 
 ---
 
@@ -320,8 +366,22 @@ ui-automation:
 
 ---
 
+## Automation ID Discovery
+
+To discover all automation IDs in the running application:
+
+```powershell
+# Ensure WinAppDriver is running
+python scripts/discover_automation_ids.py
+```
+
+This generates:
+- `docs/developer/AUTOMATION_ID_MAP.json` - Machine-readable mapping
+- `docs/developer/AUTOMATION_ID_REFERENCE.md` - Human-readable reference
+
 ## References
 
+- [Automation ID Reference](AUTOMATION_ID_REFERENCE.md)
 - [WinUI 3 Testing Guide](../testing/WINUI3_TEST_SETUP_GUIDE.md)
 - [Panel Testing Specification](../../tests/ui/PANEL_TESTING_SPECIFICATION.md)
 - [Accessibility Testing Guide](../testing/ACCESSIBILITY_TESTING_GUIDE.md)
@@ -329,5 +389,5 @@ ui-automation:
 
 ---
 
-**Last Updated:** 2026-02-02  
-**Framework Versions:** MSTest 3.6+, Appium.WebDriver 5.0, WinAppDriver 1.2
+**Last Updated:** 2026-02-09  
+**Framework Versions:** MSTest 3.6+, WinAppDriver 1.2

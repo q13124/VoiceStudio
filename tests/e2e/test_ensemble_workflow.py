@@ -36,7 +36,7 @@ class TestEnsembleWorkflow:
         POST /api/ensemble creates an ensemble job and returns job_id.
         """
         print("\n[E2E] Creating ensemble synthesis job...")
-        
+
         # Create ensemble request
         response = client.post(
             "/api/ensemble",
@@ -49,7 +49,7 @@ class TestEnsembleWorkflow:
                 "output_format": "wav",
             },
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "job_id" in data
@@ -61,7 +61,7 @@ class TestEnsembleWorkflow:
         GET /api/ensemble/{job_id} returns job progress and status.
         """
         print("\n[E2E] Testing ensemble job status polling...")
-        
+
         # Create a job first
         create_response = client.post(
             "/api/ensemble",
@@ -72,15 +72,15 @@ class TestEnsembleWorkflow:
                 "mix_mode": "sequential",
             },
         )
-        
+
         assert create_response.status_code == 200
         job_id = create_response.json()["job_id"]
         print(f"[E2E] Created job: {job_id}")
-        
+
         # Poll for status
         status_response = client.get(f"/api/ensemble/{job_id}")
         assert status_response.status_code == 200
-        
+
         status = status_response.json()
         assert "status" in status
         assert "progress" in status
@@ -93,10 +93,10 @@ class TestEnsembleWorkflow:
         GET /api/ensemble lists all ensemble jobs.
         """
         print("\n[E2E] Listing ensemble jobs...")
-        
+
         response = client.get("/api/ensemble")
         assert response.status_code == 200
-        
+
         jobs = response.json()
         assert isinstance(jobs, list)
         print(f"[E2E] Found {len(jobs)} ensemble jobs")
@@ -106,7 +106,7 @@ class TestEnsembleWorkflow:
         POST /api/ensemble/{job_id}/cancel cancels a running job.
         """
         print("\n[E2E] Testing ensemble job cancellation...")
-        
+
         # Create a job
         create_response = client.post(
             "/api/ensemble",
@@ -119,11 +119,11 @@ class TestEnsembleWorkflow:
                 "mix_mode": "sequential",
             },
         )
-        
+
         assert create_response.status_code == 200
         job_id = create_response.json()["job_id"]
         print(f"[E2E] Created job for cancellation: {job_id}")
-        
+
         # Cancel the job
         cancel_response = client.post(f"/api/ensemble/{job_id}/cancel")
         # Accept 200 (cancelled) or 404 (if job already completed)
@@ -145,7 +145,7 @@ class TestMultiEngineEnsembleWorkflow:
         POST /api/ensemble/multi-engine creates a multi-engine ensemble job.
         """
         print("\n[E2E] Creating multi-engine ensemble job...")
-        
+
         response = client.post(
             "/api/ensemble/multi-engine",
             json={
@@ -155,7 +155,7 @@ class TestMultiEngineEnsembleWorkflow:
                 "selection_mode": "voting",
             },
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "job_id" in data
@@ -166,7 +166,7 @@ class TestMultiEngineEnsembleWorkflow:
         GET /api/ensemble/multi-engine/{job_id} returns job status.
         """
         print("\n[E2E] Testing multi-engine ensemble job status...")
-        
+
         # Create a job first
         create_response = client.post(
             "/api/ensemble/multi-engine",
@@ -176,14 +176,14 @@ class TestMultiEngineEnsembleWorkflow:
                 "engines": ["piper"],
             },
         )
-        
+
         assert create_response.status_code == 200
         job_id = create_response.json()["job_id"]
-        
+
         # Get status
         status_response = client.get(f"/api/ensemble/multi-engine/{job_id}")
         assert status_response.status_code == 200
-        
+
         status = status_response.json()
         assert "status" in status
         print(f"[E2E] Multi-engine job status: {status['status']}")
@@ -193,7 +193,7 @@ class TestMultiEngineEnsembleWorkflow:
         Test multi-engine ensemble with fusion selection mode.
         """
         print("\n[E2E] Testing multi-engine ensemble with fusion mode...")
-        
+
         response = client.post(
             "/api/ensemble/multi-engine",
             json={
@@ -204,7 +204,7 @@ class TestMultiEngineEnsembleWorkflow:
                 "fusion_strategy": "quality_weighted",
             },
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "job_id" in data
@@ -225,7 +225,7 @@ class TestEnsembleMixModes:
         Test sequential mix mode - voices one after another.
         """
         print("\n[E2E] Testing sequential mix mode...")
-        
+
         response = client.post(
             "/api/ensemble",
             json={
@@ -236,7 +236,7 @@ class TestEnsembleMixModes:
                 "mix_mode": "sequential",
             },
         )
-        
+
         assert response.status_code == 200
         print(f"[E2E] Sequential mix job: {response.json()['job_id']}")
 
@@ -245,7 +245,7 @@ class TestEnsembleMixModes:
         Test parallel mix mode - voices simultaneously.
         """
         print("\n[E2E] Testing parallel mix mode...")
-        
+
         response = client.post(
             "/api/ensemble",
             json={
@@ -256,7 +256,7 @@ class TestEnsembleMixModes:
                 "mix_mode": "parallel",
             },
         )
-        
+
         assert response.status_code == 200
         print(f"[E2E] Parallel mix job: {response.json()['job_id']}")
 
@@ -265,7 +265,7 @@ class TestEnsembleMixModes:
         Test layered mix mode - voices overlapping.
         """
         print("\n[E2E] Testing layered mix mode...")
-        
+
         response = client.post(
             "/api/ensemble",
             json={
@@ -276,7 +276,7 @@ class TestEnsembleMixModes:
                 "mix_mode": "layered",
             },
         )
-        
+
         assert response.status_code == 200
         print(f"[E2E] Layered mix job: {response.json()['job_id']}")
 
@@ -295,7 +295,7 @@ class TestEnsembleJobPolling:
         Test polling job status until completion or timeout.
         """
         print("\n[E2E] Testing job polling until completion...")
-        
+
         # Create a job
         create_response = client.post(
             "/api/ensemble",
@@ -304,28 +304,28 @@ class TestEnsembleJobPolling:
                 "mix_mode": "sequential",
             },
         )
-        
+
         assert create_response.status_code == 200
         job_id = create_response.json()["job_id"]
         print(f"[E2E] Created job: {job_id}")
-        
+
         # Poll with timeout
         max_attempts = 10
         poll_interval = 0.5  # seconds
-        
+
         for attempt in range(max_attempts):
             status_response = client.get(f"/api/ensemble/{job_id}")
             assert status_response.status_code == 200
-            
+
             status = status_response.json()["status"]
             progress = status_response.json().get("progress", 0)
             print(f"[E2E] Attempt {attempt + 1}/{max_attempts}: status={status}, progress={progress}")
-            
+
             if status in ["completed", "failed"]:
                 break
-            
+
             time.sleep(poll_interval)
-        
+
         print(f"[E2E] Final status: {status}")
 
     def test_job_not_found(self, client: TestClient):
@@ -333,7 +333,7 @@ class TestEnsembleJobPolling:
         Test retrieving status for non-existent job.
         """
         print("\n[E2E] Testing job not found scenario...")
-        
+
         response = client.get("/api/ensemble/non-existent-job-id")
         assert response.status_code == 404
         print("[E2E] Correctly returned 404 for non-existent job")

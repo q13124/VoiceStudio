@@ -46,24 +46,24 @@ def save_schema_hash(hash_value: str):
 
 class TestOpenAPISchemaDrift:
     """Test that OpenAPI schema hasn't changed unexpectedly."""
-    
+
     def test_schema_hash_matches(self):
         """Test that current schema hash matches stored hash."""
         # Load current schema
         if not SCHEMA_FILE.exists():
             pytest.skip(f"Schema file not found: {SCHEMA_FILE}")
-        
-        with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
+
+        with open(SCHEMA_FILE, encoding="utf-8") as f:
             current_schema = json.load(f)
-        
+
         current_hash = get_schema_hash(current_schema)
         stored_hash = load_stored_hash()
-        
+
         if not stored_hash:
             # First run - save hash
             save_schema_hash(current_hash)
             pytest.skip("First run - schema hash saved. Run again to verify.")
-        
+
         assert current_hash == stored_hash, (
             "OpenAPI schema has changed! This indicates a breaking change.\n"
             f"Expected hash: {stored_hash}\n"
@@ -74,46 +74,46 @@ class TestOpenAPISchemaDrift:
             "3. Run: python scripts/export_openapi_schema.py\n"
             "4. Update the stored hash by running this test again"
         )
-    
+
     def test_schema_structure(self):
         """Test that schema has required structure."""
         if not SCHEMA_FILE.exists():
             pytest.skip(f"Schema file not found: {SCHEMA_FILE}")
-        
-        with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
+
+        with open(SCHEMA_FILE, encoding="utf-8") as f:
             schema = json.load(f)
-        
+
         # Check required top-level keys
         assert "openapi" in schema, "Schema missing 'openapi' version"
         assert "info" in schema, "Schema missing 'info'"
         assert "paths" in schema, "Schema missing 'paths'"
-        
+
         # Check info structure
         info = schema["info"]
         assert "title" in info, "Schema info missing 'title'"
         assert "version" in info, "Schema info missing 'version'"
-        
+
         # Check paths exist
         assert isinstance(schema["paths"], dict), "Schema 'paths' must be a dictionary"
         assert len(schema["paths"]) > 0, "Schema must have at least one path"
-    
+
     def test_schema_paths_consistent(self):
         """Test that all paths have consistent structure."""
         if not SCHEMA_FILE.exists():
             pytest.skip(f"Schema file not found: {SCHEMA_FILE}")
-        
-        with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
+
+        with open(SCHEMA_FILE, encoding="utf-8") as f:
             schema = json.load(f)
-        
+
         paths = schema.get("paths", {})
-        
+
         for path, methods in paths.items():
             assert isinstance(methods, dict), f"Path {path} must have methods"
-            
+
             for method, operation in methods.items():
                 assert isinstance(operation, dict), f"Method {method} on {path} must be an object"
                 assert "responses" in operation, f"Operation {method} {path} must have 'responses'"
-                
+
                 # Check that responses have at least one status code
                 responses = operation["responses"]
                 assert len(responses) > 0, f"Operation {method} {path} must have at least one response"
@@ -125,7 +125,7 @@ def update_schema_hash():
     yield
     # After tests pass, update hash if needed
     if SCHEMA_FILE.exists():
-        with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
+        with open(SCHEMA_FILE, encoding="utf-8") as f:
             schema = json.load(f)
         current_hash = get_schema_hash(schema)
         save_schema_hash(current_hash)

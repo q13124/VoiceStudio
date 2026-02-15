@@ -11,7 +11,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class PIIMatch:
 @dataclass
 class PIIDetectorConfig:
     """Configuration for PII detector."""
-    enabled_types: Set[PIIType] = field(default_factory=lambda: set(PIIType))
+    enabled_types: set[PIIType] = field(default_factory=lambda: set(PIIType))
     redaction_char: str = "*"
     min_confidence: float = 0.7
     max_context_chars: int = 20
@@ -55,7 +54,7 @@ class PIIDetectorConfig:
 class PIIDetector:
     """
     PII detection and redaction.
-    
+
     Features:
     - Multiple PII type detection
     - Configurable sensitivity
@@ -63,7 +62,7 @@ class PIIDetector:
     - Context capture
     - Confidence scoring
     """
-    
+
     # Regex patterns for PII detection
     PATTERNS = {
         PIIType.EMAIL: (
@@ -95,46 +94,46 @@ class PIIDetector:
             0.80,
         ),
     }
-    
-    def __init__(self, config: Optional[PIIDetectorConfig] = None):
+
+    def __init__(self, config: PIIDetectorConfig | None = None):
         self.config = config or PIIDetectorConfig()
-        
+
         # Compile patterns
-        self._compiled_patterns: Dict[PIIType, Tuple[re.Pattern, float]] = {}
+        self._compiled_patterns: dict[PIIType, tuple[re.Pattern, float]] = {}
         for pii_type, (pattern, confidence) in self.PATTERNS.items():
             if pii_type in self.config.enabled_types:
                 self._compiled_patterns[pii_type] = (
                     re.compile(pattern, re.IGNORECASE),
                     confidence,
                 )
-    
-    def detect(self, text: str) -> List[PIIMatch]:
+
+    def detect(self, text: str) -> list[PIIMatch]:
         """
         Detect PII in text.
-        
+
         Args:
             text: Text to scan
-            
+
         Returns:
             List of PII matches
         """
         if not text:
             return []
-        
-        matches: List[PIIMatch] = []
-        
+
+        matches: list[PIIMatch] = []
+
         for pii_type, (pattern, base_confidence) in self._compiled_patterns.items():
             for match in pattern.finditer(text):
                 confidence = self._calculate_confidence(
                     pii_type, match.group(), base_confidence
                 )
-                
+
                 if confidence >= self.config.min_confidence:
                     # Get context
                     start = max(0, match.start() - self.config.max_context_chars)
                     end = min(len(text), match.end() + self.config.max_context_chars)
                     context = text[start:end]
-                    
+
                     matches.append(PIIMatch(
                         pii_type=pii_type,
                         value=match.group(),
@@ -143,12 +142,12 @@ class PIIDetector:
                         confidence=confidence,
                         context=context,
                     ))
-        
+
         # Sort by position
         matches.sort(key=lambda m: m.start)
-        
+
         return matches
-    
+
     def _calculate_confidence(
         self,
         pii_type: PIIType,
@@ -157,28 +156,28 @@ class PIIDetector:
     ) -> float:
         """Calculate confidence score for a match."""
         confidence = base_confidence
-        
+
         # Adjust based on type-specific validation
         if pii_type == PIIType.CREDIT_CARD:
             if self._validate_luhn(value.replace("-", "").replace(" ", "")):
                 confidence = min(1.0, confidence + 0.05)
             else:
                 confidence = max(0.0, confidence - 0.3)
-        
+
         elif pii_type == PIIType.SSN:
             # SSNs shouldn't start with 000, 666, or 9xx
             clean = value.replace("-", "").replace(" ", "")
             if clean.startswith(("000", "666")) or clean[0] == "9":
                 confidence = max(0.0, confidence - 0.3)
-        
+
         elif pii_type == PIIType.PHONE:
             # Check for common non-phone patterns
             clean = re.sub(r'\D', '', value)
             if clean.startswith("0000") or clean == "1234567890":
                 confidence = max(0.0, confidence - 0.5)
-        
+
         return confidence
-    
+
     @staticmethod
     def _validate_luhn(number: str) -> bool:
         """Validate credit card number using Luhn algorithm."""
@@ -186,40 +185,40 @@ class PIIDetector:
             digits = [int(d) for d in number if d.isdigit()]
             if len(digits) < 13:
                 return False
-            
+
             # Double every second digit from right
             for i in range(len(digits) - 2, -1, -2):
                 digits[i] *= 2
                 if digits[i] > 9:
                     digits[i] -= 9
-            
+
             return sum(digits) % 10 == 0
         except Exception:
             return False
-    
+
     def redact(
         self,
         text: str,
-        pii_types: Optional[Set[PIIType]] = None,
+        pii_types: set[PIIType] | None = None,
     ) -> str:
         """
         Redact PII from text.
-        
+
         Args:
             text: Text to redact
             pii_types: Specific types to redact (None for all)
-            
+
         Returns:
             Redacted text
         """
         matches = self.detect(text)
-        
+
         if pii_types:
             matches = [m for m in matches if m.pii_type in pii_types]
-        
+
         # Sort in reverse order to preserve positions
         matches.sort(key=lambda m: m.start, reverse=True)
-        
+
         result = text
         for match in matches:
             # Keep first and last char, redact middle
@@ -232,28 +231,28 @@ class PIIDetector:
                 )
             else:
                 redacted = self.config.redaction_char * len(value)
-            
+
             result = result[:match.start] + redacted + result[match.end:]
-        
+
         return result
-    
+
     def redact_dict(
         self,
-        data: Dict,
-        pii_types: Optional[Set[PIIType]] = None,
-    ) -> Dict:
+        data: dict,
+        pii_types: set[PIIType] | None = None,
+    ) -> dict:
         """
         Recursively redact PII from a dictionary.
-        
+
         Args:
             data: Dictionary to redact
             pii_types: Specific types to redact
-            
+
         Returns:
             Redacted dictionary
         """
         result = {}
-        
+
         for key, value in data.items():
             if isinstance(value, str):
                 result[key] = self.redact(value, pii_types)
@@ -268,27 +267,27 @@ class PIIDetector:
                 ]
             else:
                 result[key] = value
-        
+
         return result
-    
+
     def has_pii(self, text: str) -> bool:
         """Check if text contains PII."""
         return len(self.detect(text)) > 0
-    
-    def get_pii_summary(self, text: str) -> Dict[str, int]:
+
+    def get_pii_summary(self, text: str) -> dict[str, int]:
         """Get summary of PII types found."""
         matches = self.detect(text)
-        summary: Dict[str, int] = {}
-        
+        summary: dict[str, int] = {}
+
         for match in matches:
             type_name = match.pii_type.value
             summary[type_name] = summary.get(type_name, 0) + 1
-        
+
         return summary
 
 
 # Global detector
-_detector: Optional[PIIDetector] = None
+_detector: PIIDetector | None = None
 
 
 def get_pii_detector() -> PIIDetector:

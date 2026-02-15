@@ -5,9 +5,11 @@ Enforces min_app_version and version compatibility ranges
 from plugin manifests to prevent compatibility issues.
 """
 
+from __future__ import annotations
+
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 APP_VERSION = "1.0.1"
 
 
-def parse_version(version_str: str) -> Tuple[int, ...]:
+def parse_version(version_str: str) -> tuple[int, ...]:
     """Parse a semver-like version string into a tuple of ints."""
     match = re.match(r"(\d+)\.(\d+)\.(\d+)", version_str.strip())
     if not match:
@@ -51,9 +53,9 @@ def version_satisfies(version: str, constraint: str) -> bool:
 
 
 def check_plugin_compatibility(
-    manifest: Dict[str, Any],
+    manifest: dict[str, Any],
     app_version: str = APP_VERSION,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Check if a plugin is compatible with the current app version.
 
@@ -64,7 +66,7 @@ def check_plugin_compatibility(
     Returns:
         Compatibility check result.
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "compatible": True,
         "plugin_id": manifest.get("engine_id", manifest.get("name", "unknown")),
         "plugin_version": manifest.get("version", "0.0.0"),
@@ -75,21 +77,19 @@ def check_plugin_compatibility(
 
     # Check min_app_version
     min_version = manifest.get("min_app_version", "")
-    if min_version:
-        if not version_satisfies(app_version, f">={min_version}"):
-            result["compatible"] = False
-            result["errors"].append(
-                f"Requires app version >= {min_version}, current is {app_version}"
-            )
+    if min_version and not version_satisfies(app_version, f">={min_version}"):
+        result["compatible"] = False
+        result["errors"].append(
+            f"Requires app version >= {min_version}, current is {app_version}"
+        )
 
     # Check max_app_version
     max_version = manifest.get("max_app_version", "")
-    if max_version:
-        if not version_satisfies(app_version, f"<={max_version}"):
-            result["compatible"] = False
-            result["errors"].append(
-                f"Maximum supported app version is {max_version}, current is {app_version}"
-            )
+    if max_version and not version_satisfies(app_version, f"<={max_version}"):
+        result["compatible"] = False
+        result["errors"].append(
+            f"Maximum supported app version is {max_version}, current is {app_version}"
+        )
 
     # Check Python dependency versions
     deps = manifest.get("dependencies", {})
@@ -103,9 +103,9 @@ def check_plugin_compatibility(
 
 
 def check_all_plugins(
-    manifests: List[Dict[str, Any]],
+    manifests: list[dict[str, Any]],
     app_version: str = APP_VERSION,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Check compatibility of all plugins."""
     results = []
     incompatible = []

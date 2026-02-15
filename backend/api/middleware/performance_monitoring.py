@@ -5,12 +5,14 @@ Tracks response times, error rates, and provides comprehensive
 API endpoint performance monitoring.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -36,10 +38,10 @@ class EndpointMetrics:
     avg_response_size: float = 0.0
     errors: int = 0
     error_rate: float = 0.0
-    status_codes: Dict[int, int] = field(default_factory=lambda: defaultdict(int))
-    last_called: Optional[datetime] = None
+    status_codes: dict[int, int] = field(default_factory=lambda: defaultdict(int))
+    last_called: datetime | None = None
     # Timing history for percentile calculations (last 1000 requests)
-    _timing_history: List[float] = field(default_factory=list)
+    _timing_history: list[float] = field(default_factory=list)
     _max_history_size: int = 1000
 
     def update(
@@ -72,7 +74,7 @@ class EndpointMetrics:
             self.errors += 1
         self.error_rate = self.errors / self.call_count if self.call_count > 0 else 0.0
 
-    def get_percentiles(self) -> Dict[str, float]:
+    def get_percentiles(self) -> dict[str, float]:
         """Get percentile statistics for response times."""
         if not self._timing_history:
             return {}
@@ -125,7 +127,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         self.track_response_size = track_response_size
         self.slow_threshold_seconds = slow_threshold_seconds
         self.warn_on_slow = warn_on_slow
-        self._metrics: Dict[str, EndpointMetrics] = {}
+        self._metrics: dict[str, EndpointMetrics] = {}
         self._lock = None
 
         # Import threading lock
@@ -240,7 +242,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                 )
 
             return response
-        except Exception as e:
+        except Exception:
             execution_time = time.perf_counter() - start_time
             status_code = 500
 
@@ -287,7 +289,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             execution_time, request_size, response_size, status_code
         )
 
-    def get_metrics(self, endpoint: Optional[str] = None) -> Dict[str, Any]:
+    def get_metrics(self, endpoint: str | None = None) -> dict[str, Any]:
         """
         Get performance metrics.
 
@@ -308,7 +310,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             for key, metrics in self._metrics.items()
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get overall statistics."""
         if not self._metrics:
             return {
@@ -402,7 +404,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             ],
         }
 
-    def _serialize_metrics(self, metrics: EndpointMetrics) -> Dict[str, Any]:
+    def _serialize_metrics(self, metrics: EndpointMetrics) -> dict[str, Any]:
         """Serialize metrics to dictionary (enhanced with percentiles)."""
         percentiles = metrics.get_percentiles()
         return {
@@ -449,10 +451,10 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
 
 # Global middleware instance
-_performance_middleware: Optional[PerformanceMonitoringMiddleware] = None
+_performance_middleware: PerformanceMonitoringMiddleware | None = None
 
 
-def get_performance_middleware() -> Optional[PerformanceMonitoringMiddleware]:
+def get_performance_middleware() -> PerformanceMonitoringMiddleware | None:
     """Get the global performance monitoring middleware instance."""
     return _performance_middleware
 

@@ -6,9 +6,7 @@ Verifies that all backend routes have complete implementations with no placehold
 
 import ast
 import logging
-import os
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,7 +42,7 @@ ALLOWED_CONTEXTS = [
 ]
 
 
-def is_allowed_pass(line: str, context: List[str]) -> bool:
+def is_allowed_pass(line: str, context: list[str]) -> bool:
     """
     Check if a 'pass' statement is allowed in context.
 
@@ -73,7 +71,7 @@ def is_allowed_pass(line: str, context: List[str]) -> bool:
     return False
 
 
-def check_file_for_placeholders(file_path: Path) -> Tuple[List[Dict], bool]:
+def check_file_for_placeholders(file_path: Path) -> tuple[list[dict], bool]:
     """
     Check a Python file for placeholders and incomplete code.
 
@@ -86,7 +84,7 @@ def check_file_for_placeholders(file_path: Path) -> Tuple[List[Dict], bool]:
     issues = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         import re
@@ -138,23 +136,22 @@ def check_file_for_placeholders(file_path: Path) -> Tuple[List[Dict], bool]:
         try:
             tree = ast.parse("".join(lines), filename=str(file_path))
             for node in ast.walk(tree):
-                if isinstance(node, ast.Raise):
-                    if isinstance(node.exc, ast.Name):
-                        if node.exc.id == "NotImplementedError":
-                            # Get line number
-                            line_num = node.lineno
-                            issues.append(
-                                {
-                                    "file": str(file_path),
-                                    "line": line_num,
-                                    "pattern": "NotImplementedError",
-                                    "content": (
-                                        lines[line_num - 1].strip()
-                                        if line_num <= len(lines)
-                                        else ""
-                                    ),
-                                }
-                            )
+                if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Name):
+                    if node.exc.id == "NotImplementedError":
+                        # Get line number
+                        line_num = node.lineno
+                        issues.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "pattern": "NotImplementedError",
+                                "content": (
+                                    lines[line_num - 1].strip()
+                                    if line_num <= len(lines)
+                                    else ""
+                                ),
+                            }
+                        )
         except SyntaxError:
             # Skip files with syntax errors (they'll be caught by other tools)
             ...
@@ -173,7 +170,7 @@ def check_file_for_placeholders(file_path: Path) -> Tuple[List[Dict], bool]:
     return issues, len(issues) > 0
 
 
-def verify_backend_routes() -> Dict:
+def verify_backend_routes() -> dict:
     """
     Verify all backend routes for completeness.
 

@@ -3,8 +3,10 @@ Model Explainability Integration
 Integrates shap and lime libraries for model interpretability.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -43,9 +45,9 @@ class ModelExplainer:
         self,
         model: Any,
         X: np.ndarray,
-        feature_names: Optional[List[str]] = None,
+        feature_names: list[str] | None = None,
         explainer_type: str = "TreeExplainer",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Explain model predictions using SHAP.
 
@@ -101,7 +103,7 @@ class ModelExplainer:
                 result["feature_importance_dict"] = {
                     name: float(importance)
                     for name, importance in zip(
-                        feature_names, feature_importance
+                        feature_names, feature_importance, strict=False
                     )
                 }
 
@@ -115,9 +117,9 @@ class ModelExplainer:
         model: Any,
         X: np.ndarray,
         instance: np.ndarray,
-        feature_names: Optional[List[str]] = None,
+        feature_names: list[str] | None = None,
         num_features: int = 10,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Explain model prediction for a single instance using LIME.
 
@@ -168,7 +170,7 @@ class ModelExplainer:
             logger.error(f"Error in LIME explanation: {e}", exc_info=True)
             raise
 
-    def get_available_methods(self) -> List[str]:
+    def get_available_methods(self) -> list[str]:
         """
         Get list of available explainability methods.
 

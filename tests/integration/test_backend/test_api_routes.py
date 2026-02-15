@@ -7,7 +7,6 @@ These tests verify the API endpoints work correctly with mocked services.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,7 +29,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def mock_diagnostics_service(self):
         """Create mock diagnostics service."""
         mock_service = MagicMock()
-        
+
         # Mock quick status
         mock_service.get_quick_status.return_value = {
             "timestamp": datetime.now().isoformat(),
@@ -39,7 +38,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
             "python_version": "3.9.13",
             "diagnostics_available": True,
         }
-        
+
         # Mock diagnostic check
         mock_check = MagicMock()
         mock_check.name = "python_version"
@@ -48,7 +47,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
         mock_check.message = "Python 3.9.13 detected"
         mock_check.details = {"version": "3.9.13"}
         mock_check.duration_ms = 1.5
-        
+
         # Mock diagnostic report
         mock_report = MagicMock()
         mock_report.generated_at = datetime.now().isoformat()
@@ -59,12 +58,12 @@ class TestDiagnosticsAPI(IntegrationTestBase):
         mock_report.checks = [mock_check]
         mock_report.environment = {"VOICESTUDIO_ROOT": "E:/VoiceStudio"}
         mock_report.recommendations = []
-        
+
         mock_service.run_diagnostics.return_value = mock_report
-        
+
         # Mock save_report
         mock_service.save_report.return_value = "/tmp/diagnostics_report.json"
-        
+
         return mock_service
 
     @pytest.fixture
@@ -74,19 +73,20 @@ class TestDiagnosticsAPI(IntegrationTestBase):
             "backend.api.routes.diagnostics.get_diagnostics_service",
             return_value=mock_diagnostics_service,
         ):
-            from backend.api.routes.diagnostics import router
             from fastapi import FastAPI
-            
+
+            from backend.api.routes.diagnostics import router
+
             app = FastAPI()
             app.include_router(router)
-            
+
             yield TestClient(app)
 
     @integration
     def test_get_quick_status(self, diagnostics_client):
         """Test GET /diagnostics/status endpoint."""
         response = diagnostics_client.get("/diagnostics/status")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "timestamp" in data
@@ -97,7 +97,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_run_diagnostics(self, diagnostics_client):
         """Test GET /diagnostics/run endpoint."""
         response = diagnostics_client.get("/diagnostics/run")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "overall_status" in data
@@ -108,7 +108,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_run_diagnostics_with_sensitive(self, diagnostics_client, mock_diagnostics_service):
         """Test diagnostics with include_sensitive flag."""
         response = diagnostics_client.get("/diagnostics/run?include_sensitive=true")
-        
+
         assert response.status_code == 200
         mock_diagnostics_service.run_diagnostics.assert_called_with(True)
 
@@ -116,7 +116,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_get_checks(self, diagnostics_client):
         """Test GET /diagnostics/checks endpoint."""
         response = diagnostics_client.get("/diagnostics/checks")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -125,14 +125,14 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_get_checks_with_filter(self, diagnostics_client):
         """Test checks filtering by category."""
         response = diagnostics_client.get("/diagnostics/checks?category=environment")
-        
+
         assert response.status_code == 200
 
     @integration
     def test_get_categories(self, diagnostics_client):
         """Test GET /diagnostics/categories endpoint."""
         response = diagnostics_client.get("/diagnostics/categories")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "categories" in data
@@ -142,7 +142,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_save_diagnostic_report(self, diagnostics_client):
         """Test POST /diagnostics/save endpoint."""
         response = diagnostics_client.post("/diagnostics/save")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -152,7 +152,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_get_recommendations(self, diagnostics_client):
         """Test GET /diagnostics/recommendations endpoint."""
         response = diagnostics_client.get("/diagnostics/recommendations")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "overall_status" in data
@@ -162,7 +162,7 @@ class TestDiagnosticsAPI(IntegrationTestBase):
     def test_get_environment_info(self, diagnostics_client):
         """Test GET /diagnostics/environment endpoint."""
         response = diagnostics_client.get("/diagnostics/environment")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "environment" in data
@@ -181,14 +181,14 @@ class TestErrorsAPI(IntegrationTestBase):
     def mock_error_tracker(self):
         """Create mock error tracker."""
         mock_tracker = MagicMock()
-        
+
         # Create mock enum values
         mock_severity = MagicMock()
         mock_severity.value = "error"
-        
+
         mock_category = MagicMock()
         mock_category.value = "api"
-        
+
         # Mock tracked error
         mock_error = MagicMock()
         mock_error.error_id = "err-001"
@@ -202,7 +202,7 @@ class TestErrorsAPI(IntegrationTestBase):
         mock_error.context = None
         mock_error.tags = []
         mock_error.resolved = False
-        
+
         # Mock aggregate
         mock_aggregate = MagicMock()
         mock_aggregate.fingerprint = "abc123"
@@ -214,7 +214,7 @@ class TestErrorsAPI(IntegrationTestBase):
         mock_aggregate.message = "Test error"
         mock_aggregate.exception_type = "ValueError"
         mock_aggregate.affected_endpoints = ["/api/test"]
-        
+
         # Mock summary
         mock_summary = MagicMock()
         mock_summary.total_errors = 10
@@ -223,14 +223,14 @@ class TestErrorsAPI(IntegrationTestBase):
         mock_summary.errors_by_category = {"api": 7, "engine": 3}
         mock_summary.error_rate = 0.05
         mock_summary.top_errors = [mock_aggregate]
-        
+
         mock_tracker.get_summary.return_value = mock_summary
         mock_tracker.get_errors.return_value = [mock_error]
         mock_tracker.get_aggregates.return_value = [mock_aggregate]
         mock_tracker.resolve_error.return_value = True
         mock_tracker.export_report.return_value = "/tmp/error_report.json"
         mock_tracker.clear_resolved.return_value = 3
-        
+
         return mock_tracker
 
     @pytest.fixture
@@ -240,19 +240,20 @@ class TestErrorsAPI(IntegrationTestBase):
             "backend.api.routes.errors.get_error_tracker",
             return_value=mock_error_tracker,
         ):
-            from backend.api.routes.errors import router
             from fastapi import FastAPI
-            
+
+            from backend.api.routes.errors import router
+
             app = FastAPI()
             app.include_router(router)
-            
+
             yield TestClient(app)
 
     @integration
     def test_get_error_summary(self, errors_client):
         """Test GET /errors/summary endpoint."""
         response = errors_client.get("/errors/summary")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "total_errors" in data
@@ -263,7 +264,7 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_get_recent_errors(self, errors_client):
         """Test GET /errors/recent endpoint."""
         response = errors_client.get("/errors/recent")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -272,14 +273,14 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_get_recent_errors_with_filter(self, errors_client, mock_error_tracker):
         """Test error filtering by severity."""
         response = errors_client.get("/errors/recent?severity=error&limit=50")
-        
+
         assert response.status_code == 200
 
     @integration
     def test_get_error_aggregates(self, errors_client):
         """Test GET /errors/aggregates endpoint."""
         response = errors_client.get("/errors/aggregates")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -288,7 +289,7 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_get_error_categories(self, errors_client):
         """Test GET /errors/categories endpoint."""
         response = errors_client.get("/errors/categories")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "categories" in data
@@ -301,7 +302,7 @@ class TestErrorsAPI(IntegrationTestBase):
             "/errors/err-001/resolve",
             json={"resolution_notes": "Fixed in PR #123"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -310,19 +311,19 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_resolve_error_not_found(self, errors_client, mock_error_tracker):
         """Test resolve for non-existent error."""
         mock_error_tracker.resolve_error.return_value = False
-        
+
         response = errors_client.post(
             "/errors/nonexistent/resolve",
             json={"resolution_notes": ""},
         )
-        
+
         assert response.status_code == 404
 
     @integration
     def test_export_error_report(self, errors_client):
         """Test POST /errors/export endpoint."""
         response = errors_client.post("/errors/export")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -332,7 +333,7 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_clear_resolved_errors(self, errors_client):
         """Test DELETE /errors/resolved endpoint."""
         response = errors_client.delete("/errors/resolved")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -342,7 +343,7 @@ class TestErrorsAPI(IntegrationTestBase):
     def test_get_error_rate(self, errors_client):
         """Test GET /errors/rate endpoint."""
         response = errors_client.get("/errors/rate")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "error_rate" in data
@@ -360,11 +361,11 @@ class TestSLOAPI(IntegrationTestBase):
     def mock_slo_monitor(self):
         """Create mock SLO monitor."""
         mock_monitor = MagicMock()
-        
+
         # Mock severity enum
         mock_severity = MagicMock()
         mock_severity.value = "warning"
-        
+
         # Mock SLO status
         mock_status = MagicMock()
         mock_status.slo_id = "api-latency"
@@ -378,7 +379,7 @@ class TestSLOAPI(IntegrationTestBase):
         mock_status.last_updated = datetime.now().isoformat()
         mock_status.burn_rate = 1.5
         mock_status.error_budget_remaining = 0.5
-        
+
         # Mock alert
         mock_alert = MagicMock()
         mock_alert.alert_id = "alert-001"
@@ -394,7 +395,7 @@ class TestSLOAPI(IntegrationTestBase):
         mock_alert.acknowledged_at = None
         mock_alert.resolved = False
         mock_alert.resolved_at = None
-        
+
         mock_monitor.get_all_slo_statuses.return_value = [mock_status]
         mock_monitor.get_active_alerts.return_value = [mock_alert]
         mock_monitor.get_overall_health.return_value = "degraded"
@@ -402,7 +403,7 @@ class TestSLOAPI(IntegrationTestBase):
         mock_monitor.get_alert_history.return_value = [mock_alert]
         mock_monitor.acknowledge_alert.return_value = True
         mock_monitor.export_status.return_value = "/tmp/slo_status.json"
-        
+
         return mock_monitor
 
     @pytest.fixture
@@ -412,19 +413,20 @@ class TestSLOAPI(IntegrationTestBase):
             "backend.api.routes.slo.get_slo_monitor",
             return_value=mock_slo_monitor,
         ):
-            from backend.api.routes.slo import router
             from fastapi import FastAPI
-            
+
+            from backend.api.routes.slo import router
+
             app = FastAPI()
             app.include_router(router)
-            
+
             yield TestClient(app)
 
     @integration
     def test_get_all_slos(self, slo_client):
         """Test GET /slo endpoint."""
         response = slo_client.get("/slo")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "overview" in data
@@ -435,7 +437,7 @@ class TestSLOAPI(IntegrationTestBase):
     def test_get_slo_health(self, slo_client):
         """Test GET /slo/health endpoint."""
         response = slo_client.get("/slo/health")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "status" in data
@@ -444,7 +446,7 @@ class TestSLOAPI(IntegrationTestBase):
     def test_get_slo_status(self, slo_client):
         """Test GET /slo/{slo_id} endpoint."""
         response = slo_client.get("/slo/api-latency")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["slo_id"] == "api-latency"
@@ -455,16 +457,16 @@ class TestSLOAPI(IntegrationTestBase):
     def test_get_slo_status_not_found(self, slo_client, mock_slo_monitor):
         """Test SLO not found."""
         mock_slo_monitor.get_slo_status.return_value = None
-        
+
         response = slo_client.get("/slo/nonexistent")
-        
+
         assert response.status_code == 404
 
     @integration
     def test_get_active_alerts(self, slo_client):
         """Test GET /slo/alerts/active endpoint."""
         response = slo_client.get("/slo/alerts/active")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "active_count" in data
@@ -474,7 +476,7 @@ class TestSLOAPI(IntegrationTestBase):
     def test_get_alert_history(self, slo_client):
         """Test GET /slo/alerts/history endpoint."""
         response = slo_client.get("/slo/alerts/history")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "alerts" in data
@@ -486,7 +488,7 @@ class TestSLOAPI(IntegrationTestBase):
             "/slo/alerts/alert-001/acknowledge",
             json={"acknowledged_by": "tester"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -495,19 +497,19 @@ class TestSLOAPI(IntegrationTestBase):
     def test_acknowledge_alert_not_found(self, slo_client, mock_slo_monitor):
         """Test acknowledge for non-existent alert."""
         mock_slo_monitor.acknowledge_alert.return_value = False
-        
+
         response = slo_client.post(
             "/slo/alerts/nonexistent/acknowledge",
             json={"acknowledged_by": "tester"},
         )
-        
+
         assert response.status_code == 404
 
     @integration
     def test_export_slo_status(self, slo_client):
         """Test POST /slo/export endpoint."""
         response = slo_client.post("/slo/export")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -516,7 +518,7 @@ class TestSLOAPI(IntegrationTestBase):
     def test_record_metric(self, slo_client):
         """Test POST /slo/record/{metric_name} endpoint."""
         response = slo_client.post("/slo/record/api_latency_ms?value=150.5")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -536,7 +538,7 @@ class TestTracingAPI(IntegrationTestBase):
         """Create a mock span."""
         mock_status = MagicMock()
         mock_status.value = "ok"
-        
+
         span = MagicMock()
         span.trace_id = "trace-001"
         span.span_id = "span-001"
@@ -551,9 +553,9 @@ class TestTracingAPI(IntegrationTestBase):
     def mock_trace_exporter(self, mock_span):
         """Create mock trace exporter."""
         mock_exporter = MagicMock()
-        
+
         mock_exporter.get_traces.return_value = [mock_span]
-        
+
         # Mock summary
         mock_summary = MagicMock()
         mock_summary.total_traces = 10
@@ -565,18 +567,18 @@ class TestTracingAPI(IntegrationTestBase):
         mock_summary.p95_duration_ms = 150.0
         mock_summary.p99_duration_ms = 190.0
         mock_summary.error_rate = 0.02
-        
+
         mock_exporter.calculate_summary.return_value = mock_summary
         mock_exporter.group_by_trace.return_value = {"trace-001": [mock_span]}
         mock_exporter.export_to_json.return_value = "/tmp/traces.json"
-        
+
         return mock_exporter
 
     @pytest.fixture
     def mock_trace_analyzer(self, mock_span):
         """Create mock trace analyzer."""
         mock_analyzer = MagicMock()
-        
+
         mock_analyzer.get_operation_stats.return_value = {
             "api.request": {
                 "count": 100,
@@ -595,7 +597,7 @@ class TestTracingAPI(IntegrationTestBase):
             "status": "ok",
             "children": [],
         }
-        
+
         return mock_analyzer
 
     @pytest.fixture
@@ -608,19 +610,20 @@ class TestTracingAPI(IntegrationTestBase):
             "backend.api.routes.tracing.get_trace_analyzer",
             return_value=mock_trace_analyzer,
         ):
-            from backend.api.routes.tracing import router
             from fastapi import FastAPI
-            
+
+            from backend.api.routes.tracing import router
+
             app = FastAPI()
             app.include_router(router)
-            
+
             yield TestClient(app)
 
     @integration
     def test_get_trace_summary(self, tracing_client):
         """Test GET /tracing/summary endpoint."""
         response = tracing_client.get("/tracing/summary")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "total_traces" in data
@@ -632,7 +635,7 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_recent_spans(self, tracing_client):
         """Test GET /tracing/recent endpoint."""
         response = tracing_client.get("/tracing/recent")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -641,14 +644,14 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_recent_spans_with_filter(self, tracing_client):
         """Test spans filtering by operation."""
         response = tracing_client.get("/tracing/recent?operation=api&limit=50")
-        
+
         assert response.status_code == 200
 
     @integration
     def test_get_operation_statistics(self, tracing_client):
         """Test GET /tracing/operations endpoint."""
         response = tracing_client.get("/tracing/operations")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -660,7 +663,7 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_slow_spans(self, tracing_client):
         """Test GET /tracing/slow-spans endpoint."""
         response = tracing_client.get("/tracing/slow-spans?threshold_ms=100")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -669,7 +672,7 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_error_spans(self, tracing_client):
         """Test GET /tracing/errors endpoint."""
         response = tracing_client.get("/tracing/errors")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -678,7 +681,7 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_trace_tree(self, tracing_client):
         """Test GET /tracing/trace/{trace_id}/tree endpoint."""
         response = tracing_client.get("/tracing/trace/trace-001/tree")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "span_id" in data
@@ -688,16 +691,16 @@ class TestTracingAPI(IntegrationTestBase):
     def test_get_trace_tree_not_found(self, tracing_client, mock_trace_analyzer):
         """Test trace tree not found."""
         mock_trace_analyzer.get_trace_tree.return_value = None
-        
+
         response = tracing_client.get("/tracing/trace/nonexistent/tree")
-        
+
         assert response.status_code == 404
 
     @integration
     def test_export_traces(self, tracing_client):
         """Test POST /tracing/export endpoint."""
         response = tracing_client.post("/tracing/export")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True

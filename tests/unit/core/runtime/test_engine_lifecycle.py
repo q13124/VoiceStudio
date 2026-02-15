@@ -5,7 +5,6 @@ Tests engine lifecycle management functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -67,7 +66,7 @@ class TestEngineLifecycleClasses:
     def test_engine_lifecycle_manager_exists(self):
         """Test EngineLifecycleManager class exists."""
         if hasattr(engine_lifecycle, "EngineLifecycleManager"):
-            cls = getattr(engine_lifecycle, "EngineLifecycleManager")
+            cls = engine_lifecycle.EngineLifecycleManager
             assert isinstance(cls, type), "EngineLifecycleManager should be a class"
 
 

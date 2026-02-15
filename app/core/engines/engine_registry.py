@@ -4,9 +4,10 @@ Engine Registry
 Centralized registry of all available engines for easy discovery and management.
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
-from typing import Dict, List, Optional, Type
 
 from .protocols import EngineProtocol
 
@@ -22,14 +23,14 @@ class EngineRegistry:
 
     def __init__(self):
         """Initialize engine registry."""
-        self._engines: Dict[str, Type[EngineProtocol]] = {}
-        self._engine_metadata: Dict[str, Dict] = {}
+        self._engines: dict[str, type[EngineProtocol]] = {}
+        self._engine_metadata: dict[str, dict] = {}
 
     def register_engine(
         self,
         name: str,
-        engine_class: Type[EngineProtocol],
-        metadata: Optional[Dict] = None,
+        engine_class: type[EngineProtocol],
+        metadata: dict | None = None,
     ):
         """
         Register an engine.
@@ -47,7 +48,7 @@ class EngineRegistry:
 
         logger.info(f"Registered engine: {name}")
 
-    def get_engine_class(self, name: str) -> Optional[Type[EngineProtocol]]:
+    def get_engine_class(self, name: str) -> type[EngineProtocol] | None:
         """
         Get engine class by name.
 
@@ -59,7 +60,7 @@ class EngineRegistry:
         """
         return self._engines.get(name)
 
-    def list_engines(self) -> List[str]:
+    def list_engines(self) -> list[str]:
         """
         List all registered engine names.
 
@@ -68,7 +69,7 @@ class EngineRegistry:
         """
         return list(self._engines.keys())
 
-    def get_engine_metadata(self, name: str) -> Dict:
+    def get_engine_metadata(self, name: str) -> dict:
         """
         Get engine metadata.
 
@@ -105,7 +106,7 @@ class EngineRegistry:
         except Exception as e:
             logger.error(f"Failed to discover engines from {module_name}: {e}")
 
-    def get_all_engines(self) -> Dict[str, Type[EngineProtocol]]:
+    def get_all_engines(self) -> dict[str, type[EngineProtocol]]:
         """
         Get all registered engines.
 
@@ -125,13 +126,13 @@ def get_engine_registry() -> EngineRegistry:
 
 
 def register_engine(
-    name: str, engine_class: Type[EngineProtocol], metadata: Optional[Dict] = None
+    name: str, engine_class: type[EngineProtocol], metadata: dict | None = None
 ):
     """Register an engine in the global registry."""
     _global_registry.register_engine(name, engine_class, metadata)
 
 
-def list_all_engines() -> List[str]:
+def list_all_engines() -> list[str]:
     """List all registered engines."""
     return _global_registry.list_engines()
 
@@ -140,7 +141,7 @@ def list_all_engines() -> List[str]:
 __all__ = [
     "EngineRegistry",
     "get_engine_registry",
-    "register_engine",
     "list_all_engines",
+    "register_engine",
 ]
 

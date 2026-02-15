@@ -6,12 +6,9 @@ This test suite verifies that engines work correctly with newly integrated libra
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pytest
 
 # Add project root to path
@@ -298,7 +295,7 @@ class TestUIPanelsWithNewFeatures:
 
 class TestEndToEndIntegration:
     """End-to-end integration test with new libraries and tools."""
-    
+
     def test_complete_workflow(self):
         """Test complete workflow using new libraries and tools."""
         # End-to-end integration test framework is ready
@@ -306,7 +303,7 @@ class TestEndToEndIntegration:
         logger.info("End-to-end integration test framework ready")
         # Framework is complete - actual execution requires integrated libraries/tools
         assert True
-    
+
     def test_quality_benchmarking_workflow(self):
         """Test quality benchmarking workflow with new tools."""
         # Test framework verifies quality benchmarking can be performed end-to-end
@@ -314,7 +311,7 @@ class TestEndToEndIntegration:
         logger.info("Quality benchmarking workflow test ready")
         # Framework is complete - actual execution requires integrated tools
         assert True
-    
+
     def test_dataset_qa_workflow(self):
         """Test dataset QA workflow with new tools."""
         # Test framework verifies dataset QA can be performed end-to-end

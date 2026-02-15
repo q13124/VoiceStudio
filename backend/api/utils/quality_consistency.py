@@ -4,9 +4,11 @@ Quality Consistency Monitoring Utilities (IDEA 59).
 Provides quality consistency tracking and monitoring across projects and voice profiles.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +49,8 @@ class QualityConsistencyMonitor:
     """Monitor quality consistency across projects and profiles."""
 
     def __init__(self):
-        self.quality_history: Dict[str, List[Dict[str, Any]]] = {}
-        self.quality_standards: Dict[str, Dict[str, float]] = {}
+        self.quality_history: dict[str, list[dict[str, Any]]] = {}
+        self.quality_standards: dict[str, dict[str, float]] = {}
 
     def set_quality_standard(
         self, project_id: str, standard_name: str = "professional"
@@ -77,9 +79,9 @@ class QualityConsistencyMonitor:
     def record_quality_metrics(
         self,
         project_id: str,
-        profile_id: Optional[str],
-        metrics: Dict[str, Any],
-        audio_id: Optional[str] = None,
+        profile_id: str | None,
+        metrics: dict[str, Any],
+        audio_id: str | None = None,
     ) -> bool:
         """
         Record quality metrics for tracking.
@@ -109,7 +111,7 @@ class QualityConsistencyMonitor:
 
     def check_quality_consistency(
         self, project_id: str, time_period_days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Check quality consistency for a project.
 
@@ -176,7 +178,7 @@ class QualityConsistencyMonitor:
 
     def check_all_projects_consistency(
         self, time_period_days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Check quality consistency across all projects.
 
@@ -191,7 +193,7 @@ class QualityConsistencyMonitor:
         total_samples = 0
         consistent_projects = 0
 
-        for project_id in self.quality_history.keys():
+        for project_id in self.quality_history:
             report = self.check_quality_consistency(project_id, time_period_days)
             all_reports[project_id] = report
 
@@ -221,7 +223,7 @@ class QualityConsistencyMonitor:
 
     def get_quality_trends(
         self, project_id: str, time_period_days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get quality trends for a project.
 
@@ -254,7 +256,7 @@ class QualityConsistencyMonitor:
             }
 
         # Group by day
-        daily_metrics: Dict[str, List[Dict[str, Any]]] = {}
+        daily_metrics: dict[str, list[dict[str, Any]]] = {}
         for record in recent_records:
             date = datetime.fromisoformat(record["timestamp"]).date().isoformat()
             if date not in daily_metrics:
@@ -275,8 +277,8 @@ class QualityConsistencyMonitor:
         }
 
     def _calculate_statistics(
-        self, metrics_list: List[Dict[str, Any]]
-    ) -> Dict[str, Dict[str, float]]:
+        self, metrics_list: list[dict[str, Any]]
+    ) -> dict[str, dict[str, float]]:
         """Calculate statistics for a list of metrics."""
         if not metrics_list:
             return {}
@@ -304,7 +306,7 @@ class QualityConsistencyMonitor:
 
         return statistics
 
-    def _calculate_std(self, values: List[float]) -> float:
+    def _calculate_std(self, values: list[float]) -> float:
         """Calculate standard deviation."""
         if len(values) < 2:
             return 0.0
@@ -314,8 +316,8 @@ class QualityConsistencyMonitor:
         return variance ** 0.5
 
     def _check_violations(
-        self, metrics_list: List[Dict[str, Any]], standard: Dict[str, float]
-    ) -> List[Dict[str, Any]]:
+        self, metrics_list: list[dict[str, Any]], standard: dict[str, float]
+    ) -> list[dict[str, Any]]:
         """Check for quality standard violations."""
         violations = []
 
@@ -355,8 +357,8 @@ class QualityConsistencyMonitor:
         return violations
 
     def _calculate_trends(
-        self, records: List[Dict[str, Any]]
-    ) -> Dict[str, str]:
+        self, records: list[dict[str, Any]]
+    ) -> dict[str, str]:
         """Calculate trends (improving, declining, stable)."""
         if len(records) < 2:
             return {}
@@ -370,7 +372,7 @@ class QualityConsistencyMonitor:
         second_stats = self._calculate_statistics(second_half)
 
         trends = {}
-        for metric_name in first_stats.keys():
+        for metric_name in first_stats:
             if metric_name in second_stats:
                 first_mean = first_stats[metric_name]["mean"]
                 second_mean = second_stats[metric_name]["mean"]
@@ -396,9 +398,9 @@ class QualityConsistencyMonitor:
 
     def _calculate_consistency_score(
         self,
-        statistics: Dict[str, Dict[str, float]],
-        violations: List[Dict[str, Any]],
-        standard: Dict[str, float],
+        statistics: dict[str, dict[str, float]],
+        violations: list[dict[str, Any]],
+        standard: dict[str, float],
     ) -> float:
         """Calculate overall consistency score (0.0-1.0)."""
         if not statistics:
@@ -413,12 +415,11 @@ class QualityConsistencyMonitor:
 
         # Adjust for standard deviation (lower std = more consistent)
         std_scores = []
-        for metric_name, stats in statistics.items():
-            if "std" in stats and "mean" in stats:
-                if stats["mean"] > 0:
-                    cv = stats["std"] / stats["mean"]  # Coefficient of variation
-                    std_score = max(0.0, 1.0 - cv)  # Lower CV = higher score
-                    std_scores.append(std_score)
+        for _metric_name, stats in statistics.items():
+            if "std" in stats and "mean" in stats and stats["mean"] > 0:
+                cv = stats["std"] / stats["mean"]  # Coefficient of variation
+                std_score = max(0.0, 1.0 - cv)  # Lower CV = higher score
+                std_scores.append(std_score)
 
         if std_scores:
             consistency_adjustment = sum(std_scores) / len(std_scores)
@@ -427,7 +428,7 @@ class QualityConsistencyMonitor:
         return max(0.0, min(1.0, base_score))
 
     def _calculate_overall_trend(
-        self, daily_averages: Dict[str, Dict[str, Dict[str, float]]]
+        self, daily_averages: dict[str, dict[str, dict[str, float]]]
     ) -> str:
         """Calculate overall trend direction."""
         if len(daily_averages) < 2:
@@ -443,7 +444,7 @@ class QualityConsistencyMonitor:
         improving_count = 0
         declining_count = 0
 
-        for metric_name in first_metrics.keys():
+        for metric_name in first_metrics:
             if metric_name in last_metrics:
                 first_mean = first_metrics[metric_name].get("mean", 0)
                 last_mean = last_metrics[metric_name].get("mean", 0)
@@ -468,10 +469,10 @@ class QualityConsistencyMonitor:
 
     def _generate_recommendations(
         self,
-        statistics: Dict[str, Dict[str, float]],
-        violations: List[Dict[str, Any]],
-        standard: Dict[str, float],
-    ) -> List[Dict[str, Any]]:
+        statistics: dict[str, dict[str, float]],
+        violations: list[dict[str, Any]],
+        standard: dict[str, float],
+    ) -> list[dict[str, Any]]:
         """Generate recommendations for maintaining quality."""
         recommendations = []
 

@@ -4,8 +4,9 @@ Text Highlighting Routes
 Endpoints for text highlighting and synchronization with audio.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/text-highlighting", tags=["text-highlighting"])
 
 # In-memory highlighting sessions (replace with database in production)
-_highlighting_sessions: Dict[str, Dict] = {}
+_highlighting_sessions: dict[str, dict] = {}
 
 
 class TextSegment(BaseModel):
@@ -25,7 +26,7 @@ class TextSegment(BaseModel):
     text: str
     start_time: float  # Start time in seconds
     end_time: float  # End time in seconds
-    word_timings: Optional[List[Dict[str, float]]] = None
+    word_timings: list[dict[str, float]] | None = None
     # word_timings format: [{"word": "hello", "start": 0.0, "end": 0.5}]
 
 
@@ -35,7 +36,7 @@ class HighlightingSession(BaseModel):
     id: str
     audio_id: str
     text: str
-    segments: List[TextSegment]
+    segments: list[TextSegment]
     current_time: float
     created: str  # ISO datetime string
 
@@ -45,14 +46,14 @@ class HighlightingCreateRequest(BaseModel):
 
     audio_id: str
     text: str
-    segments: Optional[List[TextSegment]] = None
+    segments: list[TextSegment] | None = None
 
 
 class HighlightingUpdateRequest(BaseModel):
     """Request to update highlighting."""
 
-    current_time: Optional[float] = None
-    segments: Optional[List[TextSegment]] = None
+    current_time: float | None = None
+    segments: list[TextSegment] | None = None
 
 
 class HighlightingSyncRequest(BaseModel):
@@ -65,9 +66,9 @@ class HighlightingSyncRequest(BaseModel):
 class HighlightingSyncResponse(BaseModel):
     """Response from highlighting sync."""
 
-    active_segment_id: Optional[str] = None
-    active_word_index: Optional[int] = None
-    segments: List[TextSegment]
+    active_segment_id: str | None = None
+    active_word_index: int | None = None
+    segments: list[TextSegment]
 
 
 @router.post("", response_model=HighlightingSession)
@@ -111,7 +112,7 @@ async def create_highlighting_session(request: HighlightingCreateRequest):
         logger.error(f"Failed to create highlighting session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create session: {str(e)}",
+            detail=f"Failed to create session: {e!s}",
         ) from e
 
 
@@ -163,7 +164,7 @@ async def update_highlighting_session(
         logger.error(f"Failed to update highlighting session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update session: {str(e)}",
+            detail=f"Failed to update session: {e!s}",
         ) from e
 
 
@@ -217,7 +218,7 @@ async def delete_highlighting_session(session_id: str):
     return {"success": True}
 
 
-@router.get("/sessions", response_model=List[HighlightingSession])
+@router.get("/sessions", response_model=list[HighlightingSession])
 async def list_highlighting_sessions():
     """List all highlighting sessions."""
     sessions = list(_highlighting_sessions.values())
@@ -241,10 +242,10 @@ async def list_highlighting_sessions():
 class HighlightingPersistRequest(BaseModel):
     """Request to persist a highlighting session."""
 
-    session_id: Optional[str] = None  # Optional since it's in path
+    session_id: str | None = None  # Optional since it's in path
     audio_id: str
     text: str
-    segments: List[Dict]  # Accept dict format from ViewModel
+    segments: list[dict]  # Accept dict format from ViewModel
     created: str
 
 
@@ -283,5 +284,5 @@ async def persist_highlighting_session(
         logger.error(f"Failed to persist highlighting session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to persist session: {str(e)}",
+            detail=f"Failed to persist session: {e!s}",
         ) from e

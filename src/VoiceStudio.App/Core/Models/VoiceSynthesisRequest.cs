@@ -38,6 +38,7 @@ namespace VoiceStudio.Core.Models
     public string Language { get; set; } = "en"; // Language code for synthesis
     public Dictionary<string, double>? ProsodyParams { get; set; } // Advanced prosody control: pitch (semitones), tempo (multiplier), formant_shift (factor), energy (multiplier)
     public string? ProjectId { get; set; } // Optional project association for saved outputs
+    public string? ProfileName { get; set; } // Custom name for the created voice profile
   }
 
   public class VoiceCloneResponse

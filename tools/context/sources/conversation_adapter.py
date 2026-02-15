@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, MemoryItem, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -56,7 +56,7 @@ class ConversationSourceAdapter(BaseSourceAdapter):
             p = root / p
         return p
 
-    def _load_turns(self, path: Path) -> List[Dict[str, Any]]:
+    def _load_turns(self, path: Path) -> list[dict[str, Any]]:
         """Load last max_turns lines from JSONL; each line is {role, content, timestamp}."""
         if not path.exists():
             return []
@@ -76,7 +76,7 @@ class ConversationSourceAdapter(BaseSourceAdapter):
             logger.debug("Conversation history read failed: %s", e)
             return []
 
-    def _summarize_turns(self, turns: List[Dict[str, Any]]) -> str:
+    def _summarize_turns(self, turns: list[dict[str, Any]]) -> str:
         """Condense older turns into one short summary (no LLM)."""
         parts = []
         for t in turns:
@@ -86,7 +86,7 @@ class ConversationSourceAdapter(BaseSourceAdapter):
                 parts.append(f"{role}: {_truncate(content, SUMMARY_TRUNCATE)}")
         return "Earlier: " + " | ".join(parts) if parts else ""
 
-    def _format_recent(self, turns: List[Dict[str, Any]]) -> str:
+    def _format_recent(self, turns: list[dict[str, Any]]) -> str:
         """Format recent turns for context."""
         lines = []
         for t in turns:
@@ -99,7 +99,7 @@ class ConversationSourceAdapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """Load conversation history, summarize if needed, return as memory items."""
 
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             path = self._resolve_path(root)
             turns = self._load_turns(path)

@@ -4,9 +4,10 @@ Model Inspection Routes
 Endpoints for inspecting model internals, layers, and activations.
 """
 
+from __future__ import annotations
+
 import base64
 import logging
-from typing import Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
@@ -322,7 +323,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
     except Exception as e:
         logger.error(f"Model inspection failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Model inspection failed: {str(e)}"
+            status_code=500, detail=f"Model inspection failed: {e!s}"
         ) from e
 
 
@@ -353,7 +354,7 @@ def _build_inspection_status(
 
 @router.get("/inspect/layers")
 async def list_layers(
-    model_name: Optional[str] = None,
+    model_name: str | None = None,
 ) -> dict:
     """
     List all layers in a model.
@@ -429,5 +430,5 @@ async def list_layers(
     except Exception as e:
         logger.error(f"Failed to list layers: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list layers: {str(e)}"
+            status_code=500, detail=f"Failed to list layers: {e!s}"
         ) from e

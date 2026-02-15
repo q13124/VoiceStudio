@@ -1,6 +1,5 @@
 """Verify engine integration pattern works correctly."""
 
-from _env_setup import PROJECT_ROOT
 
 import sys
 from pathlib import Path

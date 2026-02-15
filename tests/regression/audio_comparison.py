@@ -11,7 +11,7 @@ import wave
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -47,13 +47,13 @@ class GoldenComparisonReport:
     test_id: str
     engine: str
     passed: bool
-    results: List[ComparisonResult]
+    results: list[ComparisonResult]
     golden_file: str
-    generated_file: Optional[str]
+    generated_file: str | None
     timestamp: str
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "test_id": self.test_id,
@@ -78,14 +78,14 @@ class GoldenComparisonReport:
         }
 
 
-def load_golden_config(config_path: Path) -> Dict[str, Any]:
+def load_golden_config(config_path: Path) -> dict[str, Any]:
     """Load golden test configuration."""
     if not config_path.exists():
         raise FileNotFoundError(f"Golden config not found: {config_path}")
     return json.loads(config_path.read_text(encoding="utf-8"))
 
 
-def load_audio_as_numpy(audio_path: Path) -> Tuple[np.ndarray, int]:
+def load_audio_as_numpy(audio_path: Path) -> tuple[np.ndarray, int]:
     """Load WAV file as numpy array and return with sample rate."""
     with wave.open(str(audio_path), "rb") as wav:
         sample_rate = wav.getframerate()
@@ -120,7 +120,7 @@ def load_audio_as_numpy(audio_path: Path) -> Tuple[np.ndarray, int]:
     return audio, sample_rate
 
 
-def calculate_metrics(audio: np.ndarray, sample_rate: int) -> Dict[str, float]:
+def calculate_metrics(audio: np.ndarray, sample_rate: int) -> dict[str, float]:
     """Calculate quality metrics for audio."""
     metrics = {}
 
@@ -136,7 +136,7 @@ def calculate_metrics(audio: np.ndarray, sample_rate: int) -> Dict[str, float]:
     # SNR estimation (assuming noise floor is lowest 10% energy)
     frame_size = int(0.025 * sample_rate)  # 25ms frames
     hop_size = int(0.010 * sample_rate)  # 10ms hop
-    
+
     if len(audio) > frame_size:
         n_frames = (len(audio) - frame_size) // hop_size
         frame_energies = []
@@ -145,14 +145,14 @@ def calculate_metrics(audio: np.ndarray, sample_rate: int) -> Dict[str, float]:
             frame = audio[start : start + frame_size]
             energy = np.sum(frame**2)
             frame_energies.append(energy)
-        
+
         if frame_energies:
             sorted_energies = sorted(frame_energies)
             noise_floor = np.mean(sorted_energies[: max(1, len(sorted_energies) // 10)])
             signal_power = np.mean(sorted_energies[-len(sorted_energies) // 2 :])
             snr = 10 * np.log10((signal_power + 1e-10) / (noise_floor + 1e-10))
             metrics["snr_db"] = float(snr)
-    
+
     if "snr_db" not in metrics:
         metrics["snr_db"] = 0.0
 
@@ -180,10 +180,10 @@ def calculate_metrics(audio: np.ndarray, sample_rate: int) -> Dict[str, float]:
 
 
 def compare_metrics(
-    actual_metrics: Dict[str, float],
-    expected_metrics: Dict[str, float],
-    tolerances: Dict[str, float],
-) -> List[ComparisonResult]:
+    actual_metrics: dict[str, float],
+    expected_metrics: dict[str, float],
+    tolerances: dict[str, float],
+) -> list[ComparisonResult]:
     """Compare actual metrics against expected with tolerances."""
     results = []
 
@@ -229,7 +229,7 @@ def compare_with_golden(
     generated_audio_path: Path,
     golden_audio_path: Path,
     golden_metadata_path: Path,
-    tolerances: Dict[str, float],
+    tolerances: dict[str, float],
     test_id: str,
     engine: str,
 ) -> GoldenComparisonReport:
@@ -326,9 +326,9 @@ def compare_with_golden(
 def update_golden_metadata(
     audio_path: Path,
     metadata_path: Path,
-    test_config: Dict[str, Any],
+    test_config: dict[str, Any],
     engine: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Update golden metadata file with current metrics.
 

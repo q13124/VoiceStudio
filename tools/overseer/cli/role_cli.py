@@ -26,10 +26,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 def _invoke(args: argparse.Namespace) -> int:
     """Run onboarding + context allocation for role_id; print context preamble. Optionally write packet to --output."""
-    from tools.onboarding.core.assembler import OnboardingAssembler
-    from tools.onboarding.core.role_registry import RoleRegistry
     from tools.context.core.manager import ContextManager
     from tools.context.core.models import AllocationContext
+    from tools.onboarding.core.assembler import OnboardingAssembler
+    from tools.onboarding.core.role_registry import RoleRegistry
 
     roles_path = PROJECT_ROOT / "tools" / "onboarding" / "config" / "roles.json"
     context_config_path = PROJECT_ROOT / "tools" / "context" / "config" / "context-sources.json"

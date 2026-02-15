@@ -6,9 +6,10 @@ Endpoints for managing API keys for external services.
 Security: All endpoints require authentication when auth is enabled.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/api-keys", tags=["api-keys"])
 
 # In-memory storage (replace with encrypted storage in production)
-_api_keys: Dict[str, "APIKey"] = {}
+_api_keys: dict[str, "APIKey"] = {}
 
 
 class APIKey(BaseModel):
@@ -30,12 +31,12 @@ class APIKey(BaseModel):
     key_id: str
     service_name: str  # OpenAI, ElevenLabs, Voice.ai, etc.
     key_value: str  # Encrypted in production
-    description: Optional[str] = None
+    description: str | None = None
     created_at: str
-    last_used: Optional[str] = None
+    last_used: str | None = None
     is_active: bool = True
     usage_count: int = 0
-    metadata: Dict[str, str] = {}
+    metadata: dict[str, str] = {}
 
 
 class APIKeyCreateRequest(BaseModel):
@@ -43,17 +44,17 @@ class APIKeyCreateRequest(BaseModel):
 
     service_name: str
     key_value: str
-    description: Optional[str] = None
-    metadata: Dict[str, str] = {}
+    description: str | None = None
+    metadata: dict[str, str] = {}
 
 
 class APIKeyUpdateRequest(BaseModel):
     """Request to update an API key."""
 
-    key_value: Optional[str] = None
-    description: Optional[str] = None
-    is_active: Optional[bool] = None
-    metadata: Dict[str, str] = {}
+    key_value: str | None = None
+    description: str | None = None
+    is_active: bool | None = None
+    metadata: dict[str, str] = {}
 
 
 class APIKeyResponse(BaseModel):
@@ -62,12 +63,12 @@ class APIKeyResponse(BaseModel):
     key_id: str
     service_name: str
     key_value_masked: str  # Shows only last 4 characters
-    description: Optional[str] = None
+    description: str | None = None
     created_at: str
-    last_used: Optional[str] = None
+    last_used: str | None = None
     is_active: bool = True
     usage_count: int = 0
-    metadata: Dict[str, str] = {}
+    metadata: dict[str, str] = {}
 
 
 def _mask_key(key_value: str) -> str:
@@ -84,7 +85,7 @@ def _generate_key_id() -> str:
     return f"key-{uuid.uuid4().hex[:8]}"
 
 
-@router.get("", response_model=List[APIKeyResponse], dependencies=[Depends(require_auth_if_enabled)])
+@router.get("", response_model=list[APIKeyResponse], dependencies=[Depends(require_auth_if_enabled)])
 @cache_response(ttl=60)  # Cache for 60 seconds (API key list may change)
 async def list_api_keys():
     """List all API keys."""
@@ -117,7 +118,7 @@ async def list_api_keys():
         logger.error(f"Failed to list API keys: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list API keys: {str(e)}",
+            detail=f"Failed to list API keys: {e!s}",
         ) from e
 
 
@@ -156,7 +157,7 @@ async def get_api_key(key_id: str):
         logger.error(f"Failed to get API key: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get API key: {str(e)}",
+            detail=f"Failed to get API key: {e!s}",
         ) from e
 
 
@@ -218,7 +219,7 @@ def _decrypt_key(encrypted_value: str) -> str:
         from cryptography.fernet import Fernet
 
         encryption_key_env = os.getenv("API_KEY_ENCRYPTION_KEY")
-        encryption_key: Optional[bytes] = None
+        encryption_key: bytes | None = None
 
         if encryption_key_env:
             encryption_key = encryption_key_env.encode()
@@ -249,12 +250,12 @@ def _decrypt_key(encrypted_value: str) -> str:
         return base64.b64decode(encrypted_value.encode()).decode()
     except Exception as e:
         logger.error(f"Failed to decrypt key: {e}")
-        raise ValueError(f"Failed to decrypt key: {str(e)}")
+        raise ValueError(f"Failed to decrypt key: {e!s}")
 
 
 def _validate_key_format(
     service_name: str, key_value: str
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """Validate API key format for a service."""
     service_name_lower = service_name.lower()
 
@@ -364,7 +365,7 @@ async def create_api_key(request: APIKeyCreateRequest):
         logger.error(f"Failed to create API key: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create API key: {str(e)}",
+            detail=f"Failed to create API key: {e!s}",
         ) from e
 
 
@@ -417,7 +418,7 @@ async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
         logger.error(f"Failed to update API key: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update API key: {str(e)}",
+            detail=f"Failed to update API key: {e!s}",
         ) from e
 
 
@@ -438,7 +439,7 @@ async def delete_api_key(key_id: str):
         logger.error(f"Failed to delete API key: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete API key: {str(e)}",
+            detail=f"Failed to delete API key: {e!s}",
         ) from e
 
 
@@ -458,7 +459,7 @@ async def validate_api_key(key_id: str):
             logger.error(f"Failed to decrypt key for validation: {e}")
             return {
                 "valid": False,
-                "message": f"Failed to decrypt key: {str(e)}",
+                "message": f"Failed to decrypt key: {e!s}",
                 "last_used": None,
             }
 
@@ -548,7 +549,7 @@ async def validate_api_key(key_id: str):
         except Exception as e:
             logger.warning(f"API key validation error for {key.service_name}: {e}")
             is_valid = False
-            error_message = f"Validation error: {str(e)}"
+            error_message = f"Validation error: {e!s}"
 
         # Update key usage
         if is_valid:
@@ -576,11 +577,11 @@ async def validate_api_key(key_id: str):
         logger.error(f"Failed to validate API key: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to validate API key: {str(e)}",
+            detail=f"Failed to validate API key: {e!s}",
         ) from e
 
 
-@router.get("/services/list", response_model=List[str], dependencies=[Depends(require_auth_if_enabled)])
+@router.get("/services/list", response_model=list[str], dependencies=[Depends(require_auth_if_enabled)])
 @cache_response(ttl=600)  # Cache for 10 minutes (supported services are static)
 async def list_supported_services():
     """List all supported service names."""

@@ -4,11 +4,9 @@ API Workflow Integration Tests
 Tests complete API workflows including request/response cycles, error handling, and data flow.
 """
 
-import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
 
 import pytest
 
@@ -259,7 +257,7 @@ class TestAPIWorkflows:
                     responses.append(response.status_code)
 
                 # Check for rate limiting (429)
-                rate_limited = any(status == 429 for status in responses)
+                any(status == 429 for status in responses)
                 # Rate limiting may or may not be active, so we just verify the workflow
                 assert all(status in [200, 429] for status in responses), \
                     "Unexpected status codes in rate limiting test"

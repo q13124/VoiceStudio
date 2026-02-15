@@ -8,12 +8,15 @@ Compatible with:
 - requests>=2.28.0
 """
 
+from __future__ import annotations
+
+import contextlib
 import hashlib
 import logging
 import os
 from collections import OrderedDict
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -77,7 +80,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -119,11 +122,11 @@ class OpenAITTSEngine(EngineProtocol):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
         model: str = "tts-1",
         voice: str = "alloy",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 100,
@@ -228,17 +231,17 @@ class OpenAITTSEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         language: str = "en",
-        output_path: Optional[Union[str, Path]] = None,
-        voice: Optional[str] = None,
-        model: Optional[str] = None,
+        output_path: str | Path | None = None,
+        voice: str | None = None,
+        model: str | None = None,
         format: str = "mp3",
         speed: float = 1.0,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using OpenAI TTS API.
 
@@ -259,9 +262,8 @@ class OpenAITTSEngine(EngineProtocol):
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Use provided voice or instance voice
@@ -337,8 +339,8 @@ class OpenAITTSEngine(EngineProtocol):
     def synthesize_stream(
         self,
         text: str,
-        voice: Optional[str] = None,
-        model: Optional[str] = None,
+        voice: str | None = None,
+        model: str | None = None,
         format: str = "mp3",
         speed: float = 1.0,
         chunk_size: int = 100,
@@ -359,9 +361,8 @@ class OpenAITTSEngine(EngineProtocol):
         Yields:
             Audio chunks (numpy arrays)
         """
-        if not self._initialized:
-            if not self.initialize():
-                return
+        if not self._initialized and not self.initialize():
+            return
 
         try:
             # Use provided voice or instance voice
@@ -407,10 +408,9 @@ class OpenAITTSEngine(EngineProtocol):
 
     def _convert_audio_to_numpy(
         self, audio_data: bytes, format: str
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """Convert audio bytes to numpy array."""
         try:
-            import io
             import tempfile
 
             # Create temporary file
@@ -425,7 +425,7 @@ class OpenAITTSEngine(EngineProtocol):
                 if HAS_SOUNDFILE:
                     audio, sample_rate = sf.read(tmp_path)
                 elif HAS_LIBROSA:
-                    audio, sample_rate = librosa.load(tmp_path, sr=None)
+                    audio, _sample_rate = librosa.load(tmp_path, sr=None)
                 else:
                     logger.error(
                         "Neither soundfile nor librosa available for audio loading"
@@ -448,10 +448,8 @@ class OpenAITTSEngine(EngineProtocol):
 
             finally:
                 # Clean up temporary file
-                try:
+                with contextlib.suppress(Exception):
                     os.unlink(tmp_path)
-                except Exception:
-                    ...
 
         except Exception as e:
             logger.error(f"Failed to convert audio to numpy: {e}")
@@ -460,10 +458,10 @@ class OpenAITTSEngine(EngineProtocol):
     def _process_audio_output(
         self,
         audio: np.ndarray,
-        output_path: Optional[Union[str, Path]],
+        output_path: str | Path | None,
         enhance_quality: bool,
         calculate_quality: bool,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """Process audio output with quality enhancement and/or metrics."""
         quality_metrics = {}
 
@@ -511,7 +509,7 @@ class OpenAITTSEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def _split_text_into_chunks(self, text: str, chunk_size: int) -> List[str]:
+    def _split_text_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """Split text into chunks for streaming."""
         chunks = []
         words = text.split()
@@ -557,7 +555,7 @@ class OpenAITTSEngine(EngineProtocol):
         self._response_cache.clear()
         logger.info("Response cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._response_cache),
@@ -565,7 +563,7 @@ class OpenAITTSEngine(EngineProtocol):
             "cache_enabled": self.enable_cache,
         }
 
-    def get_voices(self) -> List[str]:
+    def get_voices(self) -> list[str]:
         """Get available voices."""
         return self.SUPPORTED_VOICES.copy()
 
@@ -587,7 +585,7 @@ class OpenAITTSEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during OpenAI TTS cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -605,11 +603,11 @@ class OpenAITTSEngine(EngineProtocol):
 
 
 def create_openai_tts_engine(
-    api_key: Optional[str] = None,
-    base_url: Optional[str] = None,
+    api_key: str | None = None,
+    base_url: str | None = None,
     model: str = "tts-1",
     voice: str = "alloy",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
     enable_cache: bool = True,
 ) -> OpenAITTSEngine:

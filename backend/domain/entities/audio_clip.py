@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.domain.entities.base import AggregateRoot
 
@@ -34,65 +34,65 @@ class ClipType(Enum):
 class AudioClip(AggregateRoot):
     """
     Audio clip aggregate.
-    
+
     Represents a segment of audio in a project.
     """
-    
+
     name: str = ""
     description: str = ""
-    
+
     # Audio properties
-    file_path: Optional[str] = None
+    file_path: str | None = None
     duration_seconds: float = 0.0
     sample_rate: int = 22050
     channels: int = 1
     bit_depth: int = 16
     file_size_bytes: int = 0
-    
+
     # Content
     transcript: str = ""
     language: str = "en"
-    
+
     # Processing state
     status: ClipStatus = field(default=ClipStatus.PENDING)
     clip_type: ClipType = field(default=ClipType.ORIGINAL)
-    error_message: Optional[str] = None
-    
+    error_message: str | None = None
+
     # References
-    project_id: Optional[str] = None
-    voice_profile_id: Optional[str] = None
-    source_clip_id: Optional[str] = None  # For processed clips
-    
+    project_id: str | None = None
+    voice_profile_id: str | None = None
+    source_clip_id: str | None = None  # For processed clips
+
     # Timeline position
     start_time: float = 0.0
     end_time: float = 0.0
     track_index: int = 0
-    
+
     # Metadata
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     # Domain methods
-    
+
     def rename(self, new_name: str) -> None:
         """Rename the audio clip."""
         if not new_name.strip():
             raise ValueError("Audio clip name cannot be empty")
-        
+
         self.name = new_name.strip()
         self.touch()
-    
+
     def set_transcript(self, transcript: str) -> None:
         """Set the transcript text."""
         self.transcript = transcript
         self.touch()
-    
+
     def start_processing(self) -> None:
         """Mark clip as processing."""
         self.status = ClipStatus.PROCESSING
         self.error_message = None
         self.touch()
-    
+
     def complete_processing(
         self,
         file_path: str,
@@ -112,13 +112,13 @@ class AudioClip(AggregateRoot):
         self.file_size_bytes = file_size_bytes
         self.end_time = self.start_time + duration_seconds
         self.touch()
-    
+
     def fail_processing(self, error_message: str) -> None:
         """Mark processing as failed."""
         self.status = ClipStatus.FAILED
         self.error_message = error_message
         self.touch()
-    
+
     def set_timeline_position(
         self,
         start_time: float,
@@ -129,26 +129,26 @@ class AudioClip(AggregateRoot):
         self.end_time = start_time + self.duration_seconds
         self.track_index = track_index
         self.touch()
-    
+
     def move_to_track(self, track_index: int) -> None:
         """Move to a different track."""
         self.track_index = track_index
         self.touch()
-    
+
     def is_ready(self) -> bool:
         """Check if clip is ready for playback."""
         return self.status == ClipStatus.READY and self.file_path is not None
-    
-    def overlaps_with(self, other: "AudioClip") -> bool:
+
+    def overlaps_with(self, other: AudioClip) -> bool:
         """Check if this clip overlaps with another on the same track."""
         if self.track_index != other.track_index:
             return False
-        
+
         return not (self.end_time <= other.start_time or self.start_time >= other.end_time)
-    
+
     # Persistence
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for persistence."""
         base = super().to_dict()
         base.update({
@@ -175,9 +175,9 @@ class AudioClip(AggregateRoot):
             "metadata": self.metadata,
         })
         return base
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AudioClip":
+    def from_dict(cls, data: dict[str, Any]) -> AudioClip:
         """Create from dictionary."""
         return cls(
             id=data["id"],

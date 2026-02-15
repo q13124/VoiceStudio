@@ -4,11 +4,12 @@ Emotion Control Routes
 Endpoints for fine-grained emotion control in voice synthesis.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/emotion", tags=["emotion"])
 
 # In-memory storage for emotion presets (replace with database in production)
-_emotion_presets: Dict[str, "EmotionPreset"] = {}
+_emotion_presets: dict[str, "EmotionPreset"] = {}
 
 # Available emotions
 AVAILABLE_EMOTIONS = [
@@ -43,10 +44,10 @@ class EmotionPreset(BaseModel):
 
     preset_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     primary_emotion: str
     primary_intensity: float  # 0-100
-    secondary_emotion: Optional[str] = None
+    secondary_emotion: str | None = None
     secondary_intensity: float = 0.0  # 0-100
     created_at: str
     updated_at: str
@@ -56,22 +57,22 @@ class EmotionPresetCreateRequest(BaseModel):
     """Request to create an emotion preset."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     primary_emotion: str
     primary_intensity: float
-    secondary_emotion: Optional[str] = None
+    secondary_emotion: str | None = None
     secondary_intensity: float = 0.0
 
 
 class EmotionPresetUpdateRequest(BaseModel):
     """Request to update an emotion preset."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    primary_emotion: Optional[str] = None
-    primary_intensity: Optional[float] = None
-    secondary_emotion: Optional[str] = None
-    secondary_intensity: Optional[float] = None
+    name: str | None = None
+    description: str | None = None
+    primary_emotion: str | None = None
+    primary_intensity: float | None = None
+    secondary_emotion: str | None = None
+    secondary_intensity: float | None = None
 
 
 class EmotionPresetResponse(BaseModel):
@@ -79,10 +80,10 @@ class EmotionPresetResponse(BaseModel):
 
     preset_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     primary_emotion: str
     primary_intensity: float
-    secondary_emotion: Optional[str] = None
+    secondary_emotion: str | None = None
     secondary_intensity: float
     created_at: str
     updated_at: str
@@ -94,12 +95,12 @@ class EmotionApplyExtendedRequest(BaseModel):
     audio_id: str
     primary_emotion: str
     primary_intensity: float  # 0-100
-    secondary_emotion: Optional[str] = None
+    secondary_emotion: str | None = None
     secondary_intensity: float = 0.0  # 0-100
-    timeline_curve: Optional[List[float]] = None  # Automation curve
+    timeline_curve: list[float] | None = None  # Automation curve
 
 
-@router.get("/list", response_model=List[str])
+@router.get("/list", response_model=list[str])
 @cache_response(ttl=600)  # Cache for 10 minutes (emotion list is static)
 async def list_emotions():
     """List all available emotions."""
@@ -343,14 +344,14 @@ async def analyze(req: dict) -> dict:
         except Exception as e:
             logger.error(f"Failed to analyze emotion: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Failed to analyze emotion: {str(e)}"
+                status_code=500, detail=f"Failed to analyze emotion: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to analyze emotion: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to analyze emotion: {str(e)}"
+            status_code=500, detail=f"Failed to analyze emotion: {e!s}"
         ) from e
 
 
@@ -518,7 +519,7 @@ async def apply_extended(req: EmotionApplyExtendedRequest) -> ApiOk:
         logger.error(f"Failed to apply emotion to audio: {e}", exc_info=True)
         # Return error response instead of silently failing
         raise HTTPException(
-            status_code=500, detail=f"Failed to apply emotion to audio: {str(e)}"
+            status_code=500, detail=f"Failed to apply emotion to audio: {e!s}"
         )
 
     return ApiOk()
@@ -593,11 +594,11 @@ async def save_preset(request: EmotionPresetCreateRequest):
         logger.error(f"Failed to save emotion preset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to save emotion preset: {str(e)}",
+            detail=f"Failed to save emotion preset: {e!s}",
         ) from e
 
 
-@router.get("/preset/list", response_model=List[EmotionPresetResponse])
+@router.get("/preset/list", response_model=list[EmotionPresetResponse])
 @cache_response(ttl=60)  # Cache for 60 seconds (preset list may change)
 async def list_presets():
     """List all emotion presets."""
@@ -622,7 +623,7 @@ async def list_presets():
         logger.error(f"Failed to list emotion presets: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list emotion presets: {str(e)}",
+            detail=f"Failed to list emotion presets: {e!s}",
         ) from e
 
 
@@ -655,7 +656,7 @@ async def get_preset(preset_id: str):
         logger.error(f"Failed to get emotion preset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get emotion preset: {str(e)}",
+            detail=f"Failed to get emotion preset: {e!s}",
         ) from e
 
 
@@ -726,7 +727,7 @@ async def update_preset(preset_id: str, request: EmotionPresetUpdateRequest):
         logger.error(f"Failed to update emotion preset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update emotion preset: {str(e)}",
+            detail=f"Failed to update emotion preset: {e!s}",
         ) from e
 
 
@@ -749,7 +750,7 @@ async def delete_preset(preset_id: str):
         logger.error(f"Failed to delete emotion preset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete emotion preset: {str(e)}",
+            detail=f"Failed to delete emotion preset: {e!s}",
         ) from e
 
 
@@ -757,11 +758,11 @@ async def delete_preset(preset_id: str):
 
 class EmotionPreviewRequest(BaseModel):
     """Request to preview emotion-adjusted audio."""
-    text: Optional[str] = None
-    audio_id: Optional[str] = None
+    text: str | None = None
+    audio_id: str | None = None
     emotion: str = "neutral"
     intensity: float = 0.5
-    blend: Optional[dict] = None
+    blend: dict | None = None
 
 
 @router.post("/preview")

@@ -7,9 +7,11 @@ This API supports the frontend TimelineUseCase component.
 GAP-API-001: Implements /api/timeline/* endpoints expected by TimelineUseCase.cs
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -68,10 +70,10 @@ class TimelineState(BaseModel):
     name: str = "Untitled Timeline"
     duration: float = 0.0  # seconds
     sample_rate: int = 48000
-    tracks: List[Track] = Field(default_factory=list)
+    tracks: list[Track] = Field(default_factory=list)
     playhead_position: float = 0.0
-    loop_start: Optional[float] = None
-    loop_end: Optional[float] = None
+    loop_start: float | None = None
+    loop_end: float | None = None
     zoom_level: float = 1.0
     scroll_offset: float = 0.0
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
@@ -81,15 +83,15 @@ class TimelineState(BaseModel):
 class CreateTimelineOptions(BaseModel):
     """Options for creating a new timeline."""
 
-    name: Optional[str] = "Untitled Timeline"
-    sample_rate: Optional[int] = 48000
+    name: str | None = "Untitled Timeline"
+    sample_rate: int | None = 48000
 
 
 class AddTrackRequest(BaseModel):
     """Request to add a track."""
 
-    name: Optional[str] = "Track"
-    type: Optional[str] = "audio"
+    name: str | None = "Track"
+    type: str | None = "audio"
 
 
 class DeleteRequest(BaseModel):
@@ -109,24 +111,24 @@ class AddClipRequest(BaseModel):
     """Request to add a clip."""
 
     track_id: str
-    source_path: Optional[str] = None
+    source_path: str | None = None
     start_time: float = 0.0
     duration: float = 1.0
-    name: Optional[str] = "Clip"
+    name: str | None = "Clip"
 
 
 class MoveClipRequest(BaseModel):
     """Request to move a clip."""
 
     new_start_time: float
-    new_track_id: Optional[str] = None
+    new_track_id: str | None = None
 
 
 class TrimClipRequest(BaseModel):
     """Request to trim a clip."""
 
-    new_start: Optional[float] = None
-    new_end: Optional[float] = None
+    new_start: float | None = None
+    new_end: float | None = None
 
 
 class SplitClipRequest(BaseModel):
@@ -160,7 +162,7 @@ class ExportRequest(BaseModel):
 
     output_path: str
     format: str = "wav"
-    sample_rate: Optional[int] = None
+    sample_rate: int | None = None
 
 
 class ExportResponse(BaseModel):
@@ -175,7 +177,7 @@ class UndoResponse(BaseModel):
     """Response after undo/redo."""
 
     success: bool
-    operation: Optional[str] = None
+    operation: str | None = None
 
 
 class UndoRedoState(BaseModel):
@@ -183,17 +185,17 @@ class UndoRedoState(BaseModel):
 
     can_undo: bool = False
     can_redo: bool = False
-    undo_description: Optional[str] = None
-    redo_description: Optional[str] = None
+    undo_description: str | None = None
+    redo_description: str | None = None
 
 
 # ============================================================================
 # In-memory state (replace with database/service in production)
 # ============================================================================
 
-_timeline_state: Optional[TimelineState] = None
-_undo_stack: List[TimelineState] = []
-_redo_stack: List[TimelineState] = []
+_timeline_state: TimelineState | None = None
+_undo_stack: list[TimelineState] = []
+_redo_stack: list[TimelineState] = []
 
 
 def _get_or_create_timeline() -> TimelineState:
@@ -447,7 +449,6 @@ async def split_clip(clip_id: str, request: SplitClipRequest):
     )
 
     # Update original clip
-    original_end = clip.end_time
     clip.end_time = request.split_position
     clip_before = clip.model_copy()
 

@@ -3,17 +3,16 @@ Phase 7: Licensing System
 Task 7.3: License management for enterprise deployment.
 """
 
-import asyncio
+from __future__ import annotations
+
 import hashlib
-import hmac
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-import logging
-import base64
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +60,9 @@ class License:
     status: LicenseStatus
     issued_to: str
     issued_at: datetime
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     features: LicenseFeatures
-    machine_id: Optional[str] = None
+    machine_id: str | None = None
     seats: int = 1
     activated_seats: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -75,13 +74,13 @@ class LicenseValidationResult:
     valid: bool
     status: LicenseStatus
     message: str
-    features: Optional[LicenseFeatures] = None
-    days_remaining: Optional[int] = None
+    features: LicenseFeatures | None = None
+    days_remaining: int | None = None
 
 
 class LicenseService:
     """Service for managing licenses."""
-    
+
     # Feature sets for each license type
     LICENSE_FEATURES = {
         LicenseType.FREE: LicenseFeatures(
@@ -127,38 +126,38 @@ class LicenseService:
             advanced_effects=True,
         ),
     }
-    
+
     def __init__(
         self,
-        license_path: Optional[Path] = None,
-        validation_url: Optional[str] = None
+        license_path: Path | None = None,
+        validation_url: str | None = None
     ):
         self._license_path = license_path or Path.home() / ".voicestudio/license.json"
         self._validation_url = validation_url
-        self._current_license: Optional[License] = None
+        self._current_license: License | None = None
         self._machine_id = self._generate_machine_id()
-    
+
     @property
-    def current_license(self) -> Optional[License]:
+    def current_license(self) -> License | None:
         """Get current license."""
         return self._current_license
-    
+
     @property
     def features(self) -> LicenseFeatures:
         """Get current license features."""
         if self._current_license and self._current_license.status == LicenseStatus.VALID:
             return self._current_license.features
-        
+
         return self.LICENSE_FEATURES[LicenseType.FREE]
-    
-    async def load_license(self) -> Optional[License]:
+
+    async def load_license(self) -> License | None:
         """Load license from disk."""
         try:
             if not self._license_path.exists():
                 return None
-            
+
             data = json.loads(self._license_path.read_text())
-            
+
             license = License(
                 license_key=data["license_key"],
                 license_type=LicenseType(data["license_type"]),
@@ -170,24 +169,24 @@ class LicenseService:
                 machine_id=data.get("machine_id"),
                 seats=data.get("seats", 1),
             )
-            
+
             # Validate loaded license
             result = await self.validate_license(license.license_key)
-            
+
             if result.valid:
                 self._current_license = license
                 return license
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to load license: {e}")
             return None
-    
+
     async def activate_license(
         self,
         license_key: str,
-        user_email: Optional[str] = None
+        user_email: str | None = None
     ) -> LicenseValidationResult:
         """Activate a license key."""
         try:
@@ -198,26 +197,26 @@ class LicenseService:
                     status=LicenseStatus.INVALID,
                     message="Invalid license key format"
                 )
-            
+
             # Parse license key
             license_info = self._parse_license_key(license_key)
-            
+
             if not license_info:
                 return LicenseValidationResult(
                     valid=False,
                     status=LicenseStatus.INVALID,
                     message="Unable to parse license key"
                 )
-            
+
             # Check online validation if URL provided
             if self._validation_url:
                 online_result = await self._validate_online(license_key)
                 if not online_result.valid:
                     return online_result
-            
+
             # Create license object
             license_type = LicenseType(license_info.get("type", "personal"))
-            
+
             license = License(
                 license_key=license_key,
                 license_type=license_type,
@@ -228,11 +227,11 @@ class LicenseService:
                 features=self.LICENSE_FEATURES[license_type],
                 machine_id=self._machine_id,
             )
-            
+
             # Save license
             await self._save_license(license)
             self._current_license = license
-            
+
             return LicenseValidationResult(
                 valid=True,
                 status=LicenseStatus.VALID,
@@ -240,7 +239,7 @@ class LicenseService:
                 features=license.features,
                 days_remaining=365,
             )
-            
+
         except Exception as e:
             logger.error(f"License activation failed: {e}")
             return LicenseValidationResult(
@@ -248,21 +247,21 @@ class LicenseService:
                 status=LicenseStatus.INVALID,
                 message=str(e)
             )
-    
+
     async def validate_license(
         self,
-        license_key: Optional[str] = None
+        license_key: str | None = None
     ) -> LicenseValidationResult:
         """Validate a license key."""
         key = license_key or (self._current_license.license_key if self._current_license else None)
-        
+
         if not key:
             return LicenseValidationResult(
                 valid=False,
                 status=LicenseStatus.INVALID,
                 message="No license key provided"
             )
-        
+
         try:
             # Check format
             if not self._validate_key_format(key):
@@ -271,7 +270,7 @@ class LicenseService:
                     status=LicenseStatus.INVALID,
                     message="Invalid license key format"
                 )
-            
+
             # Check expiration
             if self._current_license and self._current_license.expires_at:
                 if datetime.now() > self._current_license.expires_at:
@@ -280,15 +279,15 @@ class LicenseService:
                         status=LicenseStatus.EXPIRED,
                         message="License has expired"
                     )
-                
+
                 days_remaining = (self._current_license.expires_at - datetime.now()).days
             else:
                 days_remaining = None
-            
+
             # Online validation
             if self._validation_url:
                 return await self._validate_online(key)
-            
+
             return LicenseValidationResult(
                 valid=True,
                 status=LicenseStatus.VALID,
@@ -296,7 +295,7 @@ class LicenseService:
                 features=self.features,
                 days_remaining=days_remaining,
             )
-            
+
         except Exception as e:
             logger.error(f"License validation failed: {e}")
             return LicenseValidationResult(
@@ -304,44 +303,40 @@ class LicenseService:
                 status=LicenseStatus.INVALID,
                 message=str(e)
             )
-    
+
     async def deactivate_license(self) -> bool:
         """Deactivate the current license."""
         try:
             if self._license_path.exists():
                 self._license_path.unlink()
-            
+
             self._current_license = None
             return True
-            
+
         except Exception as e:
             logger.error(f"License deactivation failed: {e}")
             return False
-    
+
     def check_feature(self, feature_name: str) -> bool:
         """Check if a feature is enabled by the current license."""
         features = self.features
         return getattr(features, feature_name, False)
-    
+
     def _validate_key_format(self, key: str) -> bool:
         """Validate license key format."""
         # Expected format: XXXX-XXXX-XXXX-XXXX
         parts = key.split('-')
         if len(parts) != 4:
             return False
-        
-        for part in parts:
-            if len(part) != 4 or not part.isalnum():
-                return False
-        
-        return True
-    
-    def _parse_license_key(self, key: str) -> Optional[dict[str, Any]]:
+
+        return all(not (len(part) != 4 or not part.isalnum()) for part in parts)
+
+    def _parse_license_key(self, key: str) -> dict[str, Any] | None:
         """Parse license key to extract information."""
         try:
             # Simple parsing - in production, use proper encryption
             parts = key.replace('-', '')
-            
+
             # Extract type from first characters
             type_map = {
                 'F': 'free',
@@ -350,35 +345,35 @@ class LicenseService:
                 'E': 'enterprise',
                 'T': 'trial',
             }
-            
+
             license_type = type_map.get(parts[0], 'personal')
-            
+
             return {
                 "type": license_type,
                 "checksum": parts[-4:],
             }
-            
+
         except Exception:
             return None
-    
+
     def _generate_machine_id(self) -> str:
         """Generate a unique machine identifier."""
         import platform
         import uuid
-        
+
         components = [
             platform.node(),
             platform.machine(),
             str(uuid.getnode()),
         ]
-        
+
         combined = '|'.join(components)
         return hashlib.sha256(combined.encode()).hexdigest()[:32]
-    
+
     async def _save_license(self, license: License) -> None:
         """Save license to disk."""
         self._license_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         data = {
             "license_key": license.license_key,
             "license_type": license.license_type.value,
@@ -402,9 +397,9 @@ class LicenseService:
                 "custom_models": license.features.custom_models,
             },
         }
-        
+
         self._license_path.write_text(json.dumps(data, indent=2))
-    
+
     async def _validate_online(self, license_key: str) -> LicenseValidationResult:
         """Validate license with online server."""
         # In production, this would make an HTTP request

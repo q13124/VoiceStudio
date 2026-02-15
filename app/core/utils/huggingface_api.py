@@ -8,9 +8,11 @@ Compatible with:
 - huggingface_hub>=0.20.0
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +112,7 @@ def get_model_url(model_id: str) -> str:
     return f"{HF_API_BASE}/{model_id}"
 
 
-def get_api_headers(token: Optional[str] = None) -> Dict[str, str]:
+def get_api_headers(token: str | None = None) -> dict[str, str]:
     """
     Get headers for Hugging Face API requests.
 
@@ -137,7 +139,7 @@ def get_api_headers(token: Optional[str] = None) -> Dict[str, str]:
     return headers
 
 
-def check_api_compatibility() -> Dict[str, Any]:
+def check_api_compatibility() -> dict[str, Any]:
     """
     Check Hugging Face API compatibility and endpoint status.
 

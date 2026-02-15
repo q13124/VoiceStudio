@@ -7,8 +7,7 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -17,7 +16,6 @@ sys.path.insert(0, str(project_root))
 
 # Mock dependencies before importing
 import sys
-from unittest.mock import MagicMock
 
 # Create mock modules for dependencies that might not be available
 for module_name in ["torch", "torch.cuda"]:
@@ -125,7 +123,7 @@ class TestAutoTrainerParameterGeneration:
         """Test generating parameter sets."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         param_sets = trainer._generate_parameter_sets(3)
         assert len(param_sets) == 3
         for params in param_sets:
@@ -141,7 +139,7 @@ class TestAutoTrainerParameterGeneration:
         """Test generating parameter sets with large number."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         # Should limit to available combinations
         param_sets = trainer._generate_parameter_sets(1000)
         assert len(param_sets) <= 64  # 4 * 4 * 4 = 64 max combinations
@@ -155,7 +153,7 @@ class TestAutoTrainerRecommendedParams:
         """Test recommended params for small dataset."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         params = trainer.get_recommended_params(
             dataset_size=5,
             audio_duration=10.0,
@@ -173,7 +171,7 @@ class TestAutoTrainerRecommendedParams:
         """Test recommended params for large dataset."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         params = trainer.get_recommended_params(
             dataset_size=100,
             audio_duration=10.0,
@@ -187,7 +185,7 @@ class TestAutoTrainerRecommendedParams:
         """Test recommended params for fast quality target."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         params = trainer.get_recommended_params(
             dataset_size=50,
             audio_duration=10.0,
@@ -201,7 +199,7 @@ class TestAutoTrainerRecommendedParams:
         """Test recommended params for high quality target."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         params = trainer.get_recommended_params(
             dataset_size=50,
             audio_duration=10.0,
@@ -215,7 +213,7 @@ class TestAutoTrainerRecommendedParams:
         """Test recommended params for ultra quality target."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         params = trainer.get_recommended_params(
             dataset_size=50,
             audio_duration=10.0,
@@ -235,7 +233,7 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train raises error when unified trainer not available."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         with pytest.raises(RuntimeError, match="Unified trainer not available"):
             import asyncio
             asyncio.run(trainer.auto_train("metadata.json"))
@@ -247,24 +245,24 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train without parameter optimization."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with patch("app.core.training.auto_trainer.UnifiedTrainer") as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
                 mock_trainer.export_model.return_value = str(Path(tmpdir) / "model")
                 mock_trainer_class.return_value = mock_trainer
-                
+
                 result = await trainer.auto_train(
                     str(metadata_path),
                     optimize_params=False,
                     max_runs=1
                 )
-                
+
                 assert "best_model_path" in result
                 assert "best_quality" in result
                 assert "best_params" in result
@@ -278,24 +276,24 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train with parameter optimization."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with patch("app.core.training.auto_trainer.UnifiedTrainer") as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
                 mock_trainer.export_model.return_value = str(Path(tmpdir) / "model")
                 mock_trainer_class.return_value = mock_trainer
-                
+
                 result = await trainer.auto_train(
                     str(metadata_path),
                     optimize_params=True,
                     max_runs=2
                 )
-                
+
                 assert result["total_runs"] == 2
                 assert len(result["training_history"]) == 2
 
@@ -306,30 +304,30 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train with progress callback."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         callback_calls = []
-        
+
         def progress_callback(update):
             callback_calls.append(update)
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with patch("app.core.training.auto_trainer.UnifiedTrainer") as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
                 mock_trainer.export_model.return_value = str(Path(tmpdir) / "model")
                 mock_trainer_class.return_value = mock_trainer
-                
+
                 await trainer.auto_train(
                     str(metadata_path),
                     optimize_params=False,
                     max_runs=1,
                     progress_callback=progress_callback
                 )
-                
+
                 assert len(callback_calls) > 0
 
     @patch("app.core.training.auto_trainer.Path")
@@ -339,22 +337,22 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train handles model initialization failure."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with patch("app.core.training.auto_trainer.UnifiedTrainer") as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = False
                 mock_trainer_class.return_value = mock_trainer
-                
+
                 result = await trainer.auto_train(
                     str(metadata_path),
                     optimize_params=False,
                     max_runs=1
                 )
-                
+
                 assert result["successful_runs"] == 0
 
     @patch("app.core.training.auto_trainer.Path")
@@ -364,23 +362,23 @@ class TestAutoTrainerAutoTrain:
         """Test auto_train handles training failure."""
         mock_path.return_value.mkdir = MagicMock()
         trainer = AutoTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with patch("app.core.training.auto_trainer.UnifiedTrainer") as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(side_effect=Exception("Training failed"))
                 mock_trainer_class.return_value = mock_trainer
-                
+
                 result = await trainer.auto_train(
                     str(metadata_path),
                     optimize_params=False,
                     max_runs=1
                 )
-                
+
                 assert result["successful_runs"] == 0
                 assert len(result["training_history"]) == 1
                 assert "error" in result["training_history"][0]

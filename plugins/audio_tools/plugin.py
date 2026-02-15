@@ -14,7 +14,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -32,7 +32,7 @@ class EnhanceRequest(BaseModel):
     """Request model for audio enhancement"""
 
     input_path: str
-    output_path: Optional[str] = None
+    output_path: str | None = None
     noise_reduction: float = 0.5
     normalize: bool = True
     eq_preset: str = "vocal"
@@ -47,12 +47,12 @@ class AudioTools:
         """Initialize audio tools"""
         manifest_path = PLUGIN_DIR / "plugin.json"
         if manifest_path.exists():
-            with open(manifest_path, "r", encoding="utf-8") as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 self.manifest = json.load(f)
         else:
             self.manifest = {}
 
-    def get_tool(self, name: str) -> Optional[str]:
+    def get_tool(self, name: str) -> str | None:
         """Get path to audio tool executable"""
         if name == "ffmpeg":
             return find_ffmpeg() or "ffmpeg"
@@ -74,7 +74,7 @@ class AudioTools:
                 raise RuntimeError(f"{tool} not found")
             return None
         return subprocess.run(
-            [exe] + list(args), capture_output=capture_output, check=check
+            [exe, *list(args)], capture_output=capture_output, check=check
         )
 
     def enhance_voice_quality(
@@ -84,7 +84,7 @@ class AudioTools:
         noise_reduction: float = 0.5,
         normalize: bool = True,
         eq_preset: str = "vocal",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply professional voice quality enhancement pipeline"""
         try:
             args = ["-i", input_path]
@@ -122,12 +122,12 @@ class AudioTools:
             }
         except Exception as e:
             logger.error(f"Enhancement failed: {e}", exc_info=True)
-            detail = f"Enhancement failed: {str(e)}"
+            detail = f"Enhancement failed: {e!s}"
             raise HTTPException(status_code=500, detail=detail)
 
     def normalize_lufs(
         self, input_path: str, output_path: str, target_lufs: float = -16.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Normalize to broadcast standard loudness (LUFS)"""
         try:
             self.run_tool(
@@ -145,12 +145,12 @@ class AudioTools:
         except Exception as e:
             logger.error(f"Normalization failed: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Normalization failed: {str(e)}"
+                status_code=500, detail=f"Normalization failed: {e!s}"
             )
 
     def remove_plosives(
         self, input_path: str, output_path: str, strength: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Reduce harsh plosives (p, b sounds)"""
         try:
             self.run_tool(
@@ -166,7 +166,7 @@ class AudioTools:
         except Exception as e:
             logger.error(f"Plosive removal failed: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Plosive removal failed: {str(e)}"
+                status_code=500, detail=f"Plosive removal failed: {e!s}"
             )
 
     def _get_vocal_eq_filter(self, preset: str) -> str:
@@ -238,7 +238,7 @@ class AudioToolsPlugin(BasePlugin):
     async def normalize_audio(
         self,
         input_path: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         target_lufs: float = -16.0,
     ):
         """Normalize audio to target LUFS"""
@@ -253,7 +253,7 @@ class AudioToolsPlugin(BasePlugin):
         return result
 
     async def remove_plosives_endpoint(
-        self, input_path: str, output_path: Optional[str] = None, strength: float = 1.0
+        self, input_path: str, output_path: str | None = None, strength: float = 1.0
     ):
         """Remove plosives from audio"""
         if not output_path:

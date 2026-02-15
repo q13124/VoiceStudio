@@ -11,10 +11,11 @@ Compatible with:
 - PyTorch 2.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -43,8 +44,8 @@ class RealisticVisionEngine(EngineProtocol):
     def __init__(
         self,
         model_id: str = "SG161222/Realistic_Vision_V5.1_noVAE",
-        vae: Optional[str] = None,
-        device: Optional[str] = None,
+        vae: str | None = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """Initialize Realistic Vision engine."""
@@ -116,15 +117,14 @@ class RealisticVisionEngine(EngineProtocol):
         height: int = 512,
         steps: int = 20,
         cfg_scale: float = 7.0,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """Generate photorealistic image."""
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             generator = None
@@ -170,7 +170,7 @@ class RealisticVisionEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -185,8 +185,8 @@ class RealisticVisionEngine(EngineProtocol):
 
 def create_realistic_vision_engine(
     model_id: str = "SG161222/Realistic_Vision_V5.1_noVAE",
-    vae: Optional[str] = None,
-    device: Optional[str] = None,
+    vae: str | None = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> RealisticVisionEngine:
     """Factory function to create a Realistic Vision engine instance."""

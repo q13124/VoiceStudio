@@ -5,13 +5,15 @@ Migrates voice profiles from in-memory storage to durable disk-backed
 JsonFileStore. Profiles persist across restarts with fast index lookup.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
-import time
 import threading
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,7 @@ class ProfileStore:
 
     def __init__(
         self,
-        base_dir: Optional[str] = None,
+        base_dir: str | None = None,
         max_profiles: int = 5000,
     ):
         self._base_dir = Path(
@@ -43,11 +45,11 @@ class ProfileStore:
         )
         self._base_dir.mkdir(parents=True, exist_ok=True)
         self._max_profiles = max_profiles
-        self._index: Dict[str, Dict[str, Any]] = {}
+        self._index: dict[str, dict[str, Any]] = {}
         self._lock = threading.RLock()
         self._load_index()
 
-    def get(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, profile_id: str) -> dict[str, Any] | None:
         """Get a profile by ID."""
         with self._lock:
             if profile_id not in self._index:
@@ -60,13 +62,13 @@ class ProfileStore:
                 return self._index.get(profile_id)
 
             try:
-                with open(profile_file, "r", encoding="utf-8") as f:
+                with open(profile_file, encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, OSError) as exc:
                 logger.warning(f"Failed to load profile {profile_id}: {exc}")
                 return self._index.get(profile_id)
 
-    def save(self, profile: Dict[str, Any]) -> str:
+    def save(self, profile: dict[str, Any]) -> str:
         """
         Save a voice profile.
 
@@ -136,9 +138,9 @@ class ProfileStore:
         self,
         limit: int = 100,
         offset: int = 0,
-        language: Optional[str] = None,
-        search: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        language: str | None = None,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
         """List profiles from the index with optional filtering."""
         with self._lock:
             profiles = list(self._index.values())
@@ -168,7 +170,7 @@ class ProfileStore:
         index_file = self._base_dir / "index.json"
         if index_file.exists():
             try:
-                with open(index_file, "r", encoding="utf-8") as f:
+                with open(index_file, encoding="utf-8") as f:
                     self._index = json.load(f)
                 logger.info(f"Loaded profile index: {len(self._index)} profiles")
                 return
@@ -184,7 +186,7 @@ class ProfileStore:
         for item in self._base_dir.iterdir():
             if item.is_dir() and (item / "profile.json").exists():
                 try:
-                    with open(item / "profile.json", "r", encoding="utf-8") as f:
+                    with open(item / "profile.json", encoding="utf-8") as f:
                         profile = json.load(f)
                     self._index[item.name] = {
                         "id": item.name,
@@ -212,7 +214,7 @@ class ProfileStore:
 
 
 # Singleton
-_store: Optional[ProfileStore] = None
+_store: ProfileStore | None = None
 
 
 def get_profile_store() -> ProfileStore:

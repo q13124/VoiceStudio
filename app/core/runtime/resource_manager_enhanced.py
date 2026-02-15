@@ -10,17 +10,19 @@ Improved resource management with:
 - Historical resource usage tracking
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .resource_manager import (
-    ResourceManager,
     JobPriority,
+    ResourceManager,
     ResourceRequirement,
 )
 
@@ -89,16 +91,16 @@ class EnhancedResourceManager(ResourceManager):
         self.resource_history: deque = deque(maxlen=1000)
 
         # Resource usage by engine
-        self.engine_resource_usage: Dict[str, List[ResourceUsage]] = defaultdict(list)
+        self.engine_resource_usage: dict[str, list[ResourceUsage]] = defaultdict(list)
 
         # Resource predictions
-        self.resource_predictions: Dict[str, ResourcePrediction] = {}
+        self.resource_predictions: dict[str, ResourcePrediction] = {}
 
         # VRAM fragmentation tracking
         self.vram_fragmentation: float = 0.0  # 0.0 to 1.0
 
         # Resource alerts
-        self.resource_alerts: List[Dict[str, Any]] = []
+        self.resource_alerts: list[dict[str, Any]] = []
         self.alert_thresholds = {
             "vram_usage_percent": 90.0,
             "ram_usage_percent": 85.0,
@@ -118,7 +120,7 @@ class EnhancedResourceManager(ResourceManager):
         }
 
         # Monitoring thread
-        self.monitoring_thread: Optional[threading.Thread] = None
+        self.monitoring_thread: threading.Thread | None = None
         self._start_monitoring()
 
     def _start_monitoring(self):
@@ -238,7 +240,7 @@ class EnhancedResourceManager(ResourceManager):
                 {"cpu_usage_percent": latest.cpu_usage_percent},
             )
 
-    def _trigger_alert(self, alert_type: str, message: str, data: Dict[str, Any]):
+    def _trigger_alert(self, alert_type: str, message: str, data: dict[str, Any]):
         """Trigger a resource alert."""
         alert = {
             "type": alert_type,
@@ -340,7 +342,7 @@ class EnhancedResourceManager(ResourceManager):
             prediction_window_seconds=window_seconds,
         )
 
-    def get_resource_statistics(self) -> Dict[str, Any]:
+    def get_resource_statistics(self) -> dict[str, Any]:
         """
         Get comprehensive resource statistics.
 
@@ -417,8 +419,8 @@ class EnhancedResourceManager(ResourceManager):
         task: str,
         priority: JobPriority,
         requirements: ResourceRequirement,
-        payload: Dict[str, Any],
-        callback: Optional[Any] = None,
+        payload: dict[str, Any],
+        callback: Any | None = None,
     ) -> bool:
         """
         Submit job with enhanced resource checking and prediction.
@@ -447,7 +449,7 @@ class EnhancedResourceManager(ResourceManager):
 
         return result
 
-    def complete_job(self, job_id: str, success: bool = True, error: Optional[str] = None):
+    def complete_job(self, job_id: str, success: bool = True, error: str | None = None):
         """Complete job with enhanced statistics tracking."""
         super().complete_job(job_id, success, error)
 
@@ -457,7 +459,7 @@ class EnhancedResourceManager(ResourceManager):
             else:
                 self.stats["total_jobs_failed"] += 1
 
-    def get_resource_history(self, window_seconds: Optional[float] = None) -> List[ResourceUsage]:
+    def get_resource_history(self, window_seconds: float | None = None) -> list[ResourceUsage]:
         """
         Get resource usage history.
 
@@ -507,7 +509,7 @@ def create_enhanced_resource_manager(
 # Export
 __all__ = [
     "EnhancedResourceManager",
-    "ResourceUsage",
     "ResourcePrediction",
+    "ResourceUsage",
     "create_enhanced_resource_manager",
 ]

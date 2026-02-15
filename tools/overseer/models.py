@@ -4,6 +4,8 @@ Data models for Overseer tools.
 Uses dataclasses for simplicity (no pydantic dependency required).
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

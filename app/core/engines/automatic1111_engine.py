@@ -11,6 +11,8 @@ Compatible with:
 - HTTP API for image generation
 """
 
+from __future__ import annotations
+
 import base64
 import hashlib
 import logging
@@ -20,7 +22,6 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PIL import Image
@@ -66,7 +67,7 @@ class Automatic1111Engine(EngineProtocol):
         sampler: str = "Euler a",
         steps: int = 20,
         cfg_scale: float = 7.0,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 100,
@@ -182,10 +183,10 @@ class Automatic1111Engine(EngineProtocol):
         negative_prompt: str,
         width: int,
         height: int,
-        steps: Optional[int],
-        cfg_scale: Optional[float],
-        sampler: Optional[str],
-        seed: Optional[int],
+        steps: int | None,
+        cfg_scale: float | None,
+        sampler: str | None,
+        seed: int | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -211,13 +212,13 @@ class Automatic1111Engine(EngineProtocol):
         negative_prompt: str = "",
         width: int = 512,
         height: int = 512,
-        steps: Optional[int] = None,
-        cfg_scale: Optional[float] = None,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        steps: int | None = None,
+        cfg_scale: float | None = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """
         Generate image from text prompt using AUTOMATIC1111 WebUI.
 
@@ -241,9 +242,8 @@ class Automatic1111Engine(EngineProtocol):
         Returns:
             PIL Image or None if generation failed
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # Check cache (only for txt2img without image input)
         cache_key = None
@@ -382,18 +382,18 @@ class Automatic1111Engine(EngineProtocol):
 
     def batch_generate(
         self,
-        prompts: List[str],
+        prompts: list[str],
         negative_prompt: str = "",
         width: int = 512,
         height: int = 512,
-        steps: Optional[int] = None,
-        cfg_scale: Optional[float] = None,
-        sampler: Optional[str] = None,
-        seeds: Optional[List[Optional[int]]] = None,
-        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
-        batch_size: Optional[int] = None,
+        steps: int | None = None,
+        cfg_scale: float | None = None,
+        sampler: str | None = None,
+        seeds: list[int | None] | None = None,
+        output_paths: list[str | Path | None] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Optional[Image.Image]]:
+    ) -> list[Image.Image | None]:
         """
         Generate multiple images in parallel using batch processing.
 
@@ -416,9 +416,8 @@ class Automatic1111Engine(EngineProtocol):
         if not prompts:
             return []
 
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(prompts)
+        if not self._initialized and not self.initialize():
+            return [None] * len(prompts)
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -474,7 +473,7 @@ class Automatic1111Engine(EngineProtocol):
         args_list = [
             (i, prompt, seed, output_path)
             for i, (prompt, seed, output_path) in enumerate(
-                zip(prompts, seeds, output_paths)
+                zip(prompts, seeds, output_paths, strict=False)
             )
         ]
 
@@ -496,7 +495,7 @@ class Automatic1111Engine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("AUTOMATIC1111 response cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_cache:
             return {"enabled": False}
@@ -531,7 +530,7 @@ class Automatic1111Engine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -560,7 +559,7 @@ def create_automatic1111_engine(
     sampler: str = "Euler a",
     steps: int = 20,
     cfg_scale: float = 7.0,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> Automatic1111Engine:
     """Factory function to create an AUTOMATIC1111 WebUI engine instance."""

@@ -1,35 +1,207 @@
 ---
-description: "Python FastAPI guidance for VoiceStudio backend."
-globs: ["backend/**/*.py"]
+description: "Python 3.9+ and FastAPI conventions for VoiceStudio backend"
+globs: ["backend/**/*.py", "app/**/*.py", "engines/**/*.py", "tests/**/*.py"]
 alwaysApply: false
 ---
-# FastAPI backend guidance
 
-## Structure
-- Keep route handlers in `backend/api/routes/`.
-- Keep business logic in `backend/services/`.
-- Define Pydantic models in `backend/api/models*.py`.
+# Python 3.9+ / FastAPI Backend Conventions
 
-## API conventions
-- Validate inputs with Pydantic models and types.
-- Use explicit response models where possible.
-- Return clear HTTP errors with appropriate status codes.
+**ACTIVE WHEN:** Working on files in `backend/`, `app/`, `engines/`, or `tests/`
 
-## Dependency discipline
-- Do not upgrade dependencies casually; document the reason.
-- Keep dependency pins aligned with compatibility snapshots.
+## Language Requirements
 
-## Async and performance
-- Use async for I/O-bound work; avoid blocking calls in async routes.
-- Prefer BackgroundTasks for long-running work.
-- Keep route handlers thin and delegate to services.
+- **Python 3.9+** (prefer 3.11+ features when available)
+- **FastAPI** for API routes
+- **Pydantic v2** for data validation
+- **asyncio** for async operations
 
-## Error handling
-- Catch and rethrow as `HTTPException` with safe messages.
-- Log internal details without leaking secrets.
-- **No error suppression** — no `noqa`, `pylint: disable`, `# type: ignore`, or bare `except: pass`.
-- See `no-suppression.mdc` for full policy.
+## Critical Conventions
 
-## Proof requirements
-- Run relevant unit or integration tests for touched routes.
-- Provide an API smoke step for modified endpoints.
+### Naming (PEP 8)
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Functions | snake_case | `load_voice_profile` |
+| Variables | snake_case | `voice_id` |
+| Classes | PascalCase | `VoiceEngine` |
+| Constants | UPPER_SNAKE | `MAX_RETRY_COUNT` |
+| Private | _prefix | `_internal_cache` |
+| Modules | snake_case | `engine_service.py` |
+
+### Type Hints (REQUIRED)
+
+```python
+# ✅ CORRECT - Full type hints
+from typing import Optional, List, Dict
+from pydantic import BaseModel
+
+async def get_voice(voice_id: str) -> Optional[Voice]:
+    """Retrieve voice by ID."""
+    return await voice_repository.get(voice_id)
+
+def process_batch(items: List[str], config: Dict[str, Any]) -> List[Result]:
+    ...
+
+# ❌ WRONG - Missing type hints
+async def get_voice(voice_id):  # No types!
+    return await voice_repository.get(voice_id)
+```
+
+### Async/Await
+
+```python
+# ✅ CORRECT - async def with await
+async def synthesize_voice(text: str, voice_id: str) -> bytes:
+    engine = await engine_manager.get_engine(voice_id)
+    audio = await engine.synthesize(text)
+    return audio
+
+# ❌ WRONG - Blocking call in async context
+async def synthesize_voice(text: str, voice_id: str) -> bytes:
+    engine = engine_manager.get_engine_sync(voice_id)  # Blocks event loop!
+    return engine.synthesize(text)
+```
+
+### FastAPI Routes
+
+```python
+# ✅ CORRECT - Typed parameters, Pydantic models, proper responses
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+
+router = APIRouter(prefix="/api/voices", tags=["voices"])
+
+class VoiceRequest(BaseModel):
+    text: str
+    voice_id: str
+    speed: float = 1.0
+
+@router.post("/synthesize", response_model=SynthesisResponse)
+async def synthesize(
+    request: VoiceRequest,
+    engine_service: EngineService = Depends(get_engine_service),
+) -> SynthesisResponse:
+    try:
+        result = await engine_service.synthesize(request)
+        return SynthesisResponse(audio_id=result.id)
+    except EngineNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+# ❌ WRONG - No types, dict instead of Pydantic
+@router.post("/synthesize")
+async def synthesize(request: dict):  # No validation!
+    return {"audio": engine.synthesize(request["text"])}
+```
+
+### Exception Handling
+
+```python
+# ✅ CORRECT - Specific exceptions, logging, re-raise or handle
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    result = await engine.process(audio_data)
+except EngineTimeoutError as e:
+    logger.warning("Engine timeout for voice %s: %s", voice_id, e)
+    raise HTTPException(status_code=504, detail="Engine timeout")
+except Exception as e:
+    logger.error("Unexpected error: %s", e, exc_info=True)
+    raise
+
+# ❌ WRONG - Bare except, silent pass
+try:
+    result = await engine.process(audio_data)
+except:
+    pass  # FORBIDDEN - hides all errors
+```
+
+### Pydantic Models (v2)
+
+```python
+# ✅ CORRECT - Pydantic v2 syntax
+from pydantic import BaseModel, Field, ConfigDict
+
+class VoiceProfile(BaseModel):
+    model_config = ConfigDict(strict=True)
+    
+    id: str = Field(..., description="Unique voice identifier")
+    name: str = Field(..., min_length=1, max_length=100)
+    language: str = Field(default="en")
+    
+    def get_display_name(self) -> str:
+        return f"{self.name} ({self.language})"
+
+# ❌ WRONG - Pydantic v1 syntax (deprecated)
+class VoiceProfile(BaseModel):
+    class Config:  # Old v1 style
+        strict = True
+```
+
+### Dependency Injection (FastAPI)
+
+```python
+# ✅ CORRECT - Depends() for DI
+from fastapi import Depends
+
+def get_engine_service() -> EngineService:
+    return EngineService()
+
+@router.get("/engines")
+async def list_engines(
+    service: EngineService = Depends(get_engine_service),
+) -> List[EngineInfo]:
+    return await service.list_engines()
+```
+
+## File Structure
+
+```
+backend/
+├── api/
+│   ├── main.py          # FastAPI app initialization
+│   ├── routes/          # API route modules
+│   └── middleware/      # Middleware (auth, logging)
+├── services/            # Business logic services
+├── data/               # Data access layer
+│   ├── repositories/   # Repository pattern
+│   └── migrations/     # Database migrations
+└── models/             # Pydantic models
+
+app/core/
+├── engines/            # Engine implementations
+│   ├── base.py         # EngineProtocol
+│   └── *_engine.py     # Specific engines
+└── runtime/            # Runtime orchestration
+
+engines/                # Engine manifests (JSON)
+```
+
+## Common Mistakes to Avoid
+
+1. **Using C# syntax** — No `var`, `readonly`, `null`, `PascalCase` methods
+2. **Missing type hints** — All functions need return types
+3. **Bare except** — Always catch specific exceptions
+4. **Pydantic v1 Config** — Use `model_config = ConfigDict(...)` not `class Config`
+5. **Blocking in async** — Use `await` for all I/O operations
+6. **Wrong casing** — Functions are `snake_case`, not `PascalCase`
+
+## Quick Reference
+
+| C# | Python Equivalent |
+|----|-------------------|
+| `null` | `None` |
+| `this` | `self` |
+| `void Method()` | `def method() -> None:` |
+| `{ }` (empty block) | `pass` |
+| `using Namespace;` | `import module` |
+| `PascalCase` method | `snake_case` method |
+| `// comment` | `# comment` |
+| `/// <summary>` | `"""docstring"""` |
+| `async Task<T>` | `async def ... -> T:` |
+| `await FuncAsync()` | `await func()` |
+| `var x = ...` | `x = ...` or `x: Type = ...` |
+| `readonly` | (no equivalent, use `Final`) |
+| `string.Empty` | `""` |
+| `$"interpolation"` | `f"interpolation"` |

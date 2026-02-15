@@ -6,9 +6,11 @@ When transitioning from S2S to Cascade (or vice versa), the
 context synopsis is injected into the new pipeline's system prompt.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ class ConversationTurn:
     content: str
     mode: str  # "s2s" or "cascade"
     timestamp: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ContextSync:
@@ -36,16 +38,16 @@ class ContextSync:
     SYNOPSIS_MAX_LENGTH = 500
 
     def __init__(self):
-        self._turns: List[ConversationTurn] = []
+        self._turns: list[ConversationTurn] = []
         self._synopsis: str = ""
-        self._user_state: Dict[str, Any] = {}
+        self._user_state: dict[str, Any] = {}
 
     def add_turn(
         self,
         role: str,
         content: str,
         mode: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a conversation turn."""
         import time
@@ -74,7 +76,7 @@ class ContextSync:
         """
         return self._synopsis
 
-    def get_context_for_mode(self, target_mode: str) -> Dict[str, Any]:
+    def get_context_for_mode(self, target_mode: str) -> dict[str, Any]:
         """
         Get context package for injecting into a pipeline mode.
 

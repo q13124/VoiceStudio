@@ -5,9 +5,10 @@ Advanced endpoints for detailed dataset editing including audio file management,
 transcript editing, and dataset validation.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/dataset-editor", tags=["dataset-editor"])
 
 # In-memory dataset details (replace with database in production)
-_dataset_details: Dict[str, Dict] = {}
+_dataset_details: dict[str, dict] = {}
 
 
 class DatasetAudioFile(BaseModel):
@@ -25,9 +26,9 @@ class DatasetAudioFile(BaseModel):
 
     id: str
     audio_id: str
-    transcript: Optional[str] = None
-    duration: Optional[float] = None
-    sample_rate: Optional[int] = None
+    transcript: str | None = None
+    duration: float | None = None
+    sample_rate: int | None = None
     order: int  # Order in dataset
     created: str  # ISO datetime string
 
@@ -37,8 +38,8 @@ class DatasetDetail(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    audio_files: List[DatasetAudioFile]
+    description: str | None = None
+    audio_files: list[DatasetAudioFile]
     total_duration: float
     total_files: int
     created: str
@@ -49,23 +50,23 @@ class DatasetAddAudioRequest(BaseModel):
     """Request to add audio to dataset."""
 
     audio_id: str
-    transcript: Optional[str] = None
-    order: Optional[int] = None
+    transcript: str | None = None
+    order: int | None = None
 
 
 class DatasetUpdateAudioRequest(BaseModel):
     """Request to update audio in dataset."""
 
-    transcript: Optional[str] = None
-    order: Optional[int] = None
+    transcript: str | None = None
+    order: int | None = None
 
 
 class DatasetValidateResponse(BaseModel):
     """Response from dataset validation."""
 
     valid: bool
-    errors: List[str] = []
-    warnings: List[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
     total_duration: float
     total_files: int
 
@@ -143,7 +144,7 @@ async def add_audio_to_dataset(dataset_id: str, request: DatasetAddAudioRequest)
         logger.error(f"Failed to add audio to dataset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to add audio: {str(e)}",
+            detail=f"Failed to add audio: {e!s}",
         ) from e
 
 
@@ -200,7 +201,7 @@ async def update_audio_in_dataset(
         logger.error(f"Failed to update audio in dataset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update audio: {str(e)}",
+            detail=f"Failed to update audio: {e!s}",
         ) from e
 
 
@@ -241,7 +242,7 @@ async def remove_audio_from_dataset(dataset_id: str, audio_file_id: str):
         logger.error(f"Failed to remove audio from dataset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to remove audio: {str(e)}",
+            detail=f"Failed to remove audio: {e!s}",
         ) from e
 
 

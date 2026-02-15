@@ -4,11 +4,9 @@ Tests all optimizations: schema caching (LRU), early validation failures,
 batch validation, performance metrics, and validation middleware.
 """
 
+import contextlib
 import sys
-from collections import OrderedDict
 from pathlib import Path
-from typing import Optional
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -48,7 +46,7 @@ class TestModelOptional(BaseModel):
     """Test model with optional fields."""
 
     name: str
-    age: Optional[int] = None
+    age: int | None = None
 
 
 class TestValidationOptimizer:
@@ -174,10 +172,8 @@ class TestValidationOptimizer:
         optimizer.validate(TestModel, {"name": "Test", "age": 25})
 
         # Invalid validation
-        try:
+        with contextlib.suppress(ValidationError):
             optimizer.validate(TestModel, {"name": "Test"})
-        except ValidationError:
-            ...
 
         stats = optimizer.get_stats()
         assert stats["validation_count"] == 2

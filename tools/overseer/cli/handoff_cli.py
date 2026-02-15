@@ -92,14 +92,14 @@ def _create(args: argparse.Namespace) -> int:
 def _queue_list(args: argparse.Namespace) -> int:
     """List pending handoffs in queue for a role."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     pending = queue.get_pending_with_context(args.role)
-    
+
     if not pending:
         print(f"No pending handoffs for role: {args.role}")
         return 0
-    
+
     print(f"Pending handoffs for {args.role}:")
     print("-" * 60)
     for entry in pending:
@@ -111,14 +111,14 @@ def _queue_list(args: argparse.Namespace) -> int:
         print(f"         Issue: {entry['issue_id']}")
         print(f"         {entry['message'][:60]}...")
         print()
-    
+
     return 0
 
 
 def _queue_handoff(args: argparse.Namespace) -> int:
     """Create a new handoff with context distribution."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     entry = queue.handoff(
         issue_id=args.issue,
@@ -129,21 +129,21 @@ def _queue_handoff(args: argparse.Namespace) -> int:
         task_id=args.task,
         distribute_context=not args.no_context,
     )
-    
+
     print(f"Created handoff: {entry.id}")
     print(f"  From: {entry.from_role} -> To: {entry.to_role}")
     print(f"  Issue: {entry.issue_id}")
     print(f"  Context: {'prepared' if entry.context_prepared else 'not prepared'}")
     if entry.context_size_chars:
         print(f"  Context size: {entry.context_size_chars} chars")
-    
+
     return 0
 
 
 def _queue_acknowledge(args: argparse.Namespace) -> int:
     """Acknowledge a handoff."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     if queue.acknowledge(args.entry_id, args.role):
         print(f"Acknowledged: {args.entry_id}")
@@ -156,7 +156,7 @@ def _queue_acknowledge(args: argparse.Namespace) -> int:
 def _queue_complete(args: argparse.Namespace) -> int:
     """Complete a handoff."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     if queue.complete(args.entry_id, args.resolution):
         print(f"Completed: {args.entry_id}")
@@ -169,10 +169,10 @@ def _queue_complete(args: argparse.Namespace) -> int:
 def _queue_stats(args: argparse.Namespace) -> int:
     """Show handoff queue statistics."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     stats = queue.get_statistics()
-    
+
     print("Handoff Queue Statistics")
     print("=" * 40)
     print(f"Total handoffs: {stats['total']}")
@@ -182,19 +182,19 @@ def _queue_stats(args: argparse.Namespace) -> int:
     print()
     print(f"With context: {stats['with_context']} ({stats['context_rate']:.1%})")
     print()
-    
+
     if stats['pending_by_role']:
         print("Pending by role:")
         for role, count in stats['pending_by_role'].items():
             print(f"  {role}: {count}")
-    
+
     return 0
 
 
 def _queue_refresh(args: argparse.Namespace) -> int:
     """Refresh context for a handoff."""
     from tools.overseer.issues.handoff import get_handoff_queue
-    
+
     queue = get_handoff_queue()
     if queue.refresh_context(args.entry_id):
         print(f"Context refreshed for: {args.entry_id}")
@@ -231,12 +231,12 @@ def main(argv=None) -> int:
     create_parser.add_argument("name", help="Handoff name or VS-XXXX id")
     create_parser.add_argument("--template", help="Template markdown path")
     create_parser.set_defaults(func=_create)
-    
+
     # Queue-based commands with context distribution
     queue_list_parser = subparsers.add_parser("queue", help="List pending queue handoffs for a role")
     queue_list_parser.add_argument("role", help="Role to check (e.g., debug-agent)")
     queue_list_parser.set_defaults(func=_queue_list)
-    
+
     send_parser = subparsers.add_parser("send", help="Create handoff with context distribution")
     send_parser.add_argument("--issue", "-i", required=True, help="Issue ID")
     send_parser.add_argument("--from-role", "-f", required=True, help="Source role")
@@ -246,20 +246,20 @@ def main(argv=None) -> int:
     send_parser.add_argument("--task", help="Task ID for context")
     send_parser.add_argument("--no-context", action="store_true", help="Skip context distribution")
     send_parser.set_defaults(func=_queue_handoff)
-    
+
     ack_parser = subparsers.add_parser("ack", help="Acknowledge a handoff")
     ack_parser.add_argument("entry_id", help="Handoff entry ID (HO-xxxxxxxx)")
     ack_parser.add_argument("--role", "-r", required=True, help="Acknowledging role")
     ack_parser.set_defaults(func=_queue_acknowledge)
-    
+
     done_parser = subparsers.add_parser("done", help="Complete a handoff")
     done_parser.add_argument("entry_id", help="Handoff entry ID")
     done_parser.add_argument("--resolution", "-r", required=True, help="Resolution description")
     done_parser.set_defaults(func=_queue_complete)
-    
+
     stats_parser = subparsers.add_parser("stats", help="Show handoff queue statistics")
     stats_parser.set_defaults(func=_queue_stats)
-    
+
     refresh_parser = subparsers.add_parser("refresh", help="Refresh context for handoff")
     refresh_parser.add_argument("entry_id", help="Handoff entry ID")
     refresh_parser.set_defaults(func=_queue_refresh)

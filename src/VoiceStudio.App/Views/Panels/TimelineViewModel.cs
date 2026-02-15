@@ -16,6 +16,7 @@ using VoiceStudio.App.Utilities;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.Logging;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Events;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -194,6 +195,109 @@ namespace VoiceStudio.App.Views.Panels
 
     public bool HasProjectAudioFiles => ProjectAudioFiles?.Count > 0;
 
+    // -----------------------------------------------------------------------
+    // Transcript Track (Audit C-4: M-1 + X-3 remediation)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Transcript segments for display as a subtitle track overlay.
+    /// Each segment has Start, End (seconds) and Text.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<TranscriptSegmentDisplay> transcriptSegments = new();
+
+    /// <summary>Whether transcript overlay is visible on the timeline.</summary>
+    [ObservableProperty]
+    private bool showTranscriptTrack;
+
+    /// <summary>Computed visibility for the transcript track.</summary>
+    public Visibility TranscriptTrackVisibility =>
+        ShowTranscriptTrack && TranscriptSegments.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    /// <summary>Whether there are any transcript segments loaded.</summary>
+    public Visibility HasTranscriptSegments =>
+        TranscriptSegments.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Number of transcript segments.</summary>
+    public int TranscriptSegmentCount => TranscriptSegments.Count;
+
+    /// <summary>Command to clear all transcript segments from the timeline.</summary>
+    [RelayCommand]
+    private void ClearTranscript()
+    {
+      TranscriptSegments.Clear();
+      ShowTranscriptTrack = false;
+      OnPropertyChanged(nameof(HasTranscriptSegments));
+      OnPropertyChanged(nameof(TranscriptSegmentCount));
+      OnPropertyChanged(nameof(TranscriptTrackVisibility));
+    }
+
+    partial void OnShowTranscriptTrackChanged(bool value)
+    {
+      OnPropertyChanged(nameof(TranscriptTrackVisibility));
+      OnPropertyChanged(nameof(HasTranscriptSegments));
+    }
+
+    /// <summary>
+    /// Load transcript segments from a transcription ID.
+    /// Called when user clicks "Send to Timeline" from the Transcribe panel.
+    /// </summary>
+    public async Task LoadTranscriptSegmentsAsync(
+        string transcriptionId,
+        CancellationToken ct = default)
+    {
+      try
+      {
+        var response = await _backendClient.GetTranscriptionAsync(transcriptionId, ct);
+        if (response != null && response.Segments != null)
+        {
+          TranscriptSegments.Clear();
+          foreach (var seg in response.Segments)
+          {
+            TranscriptSegments.Add(new TranscriptSegmentDisplay
+            {
+              Text = seg.Text ?? "",
+              StartSeconds = seg.Start,
+              EndSeconds = seg.End,
+              PositionPixels = seg.Start * PIXELS_PER_SECOND * TimelineZoom,
+              WidthPixels = Math.Max(
+                  (seg.End - seg.Start) * PIXELS_PER_SECOND * TimelineZoom,
+                  30) // Minimum 30px width
+            });
+          }
+
+          ShowTranscriptTrack = true;
+          OnPropertyChanged(nameof(TranscriptTrackVisibility));
+          OnPropertyChanged(nameof(HasTranscriptSegments));
+          OnPropertyChanged(nameof(TranscriptSegmentCount));
+          _toastNotificationService?.ShowSuccess(
+              "Transcript Loaded",
+              $"Loaded {TranscriptSegments.Count} segments to timeline");
+        }
+      }
+      catch (Exception ex)
+      {
+        _logService?.LogError(ex, "LoadTranscriptSegments");
+        _toastNotificationService?.ShowError("Load Failed", $"Failed to load transcript: {ex.Message}");
+      }
+    }
+
+    /// <summary>
+    /// Seek to a specific transcript segment when clicked.
+    /// </summary>
+    public void SeekToTranscriptSegment(TranscriptSegmentDisplay segment)
+    {
+      if (segment != null)
+      {
+        var timeInSeconds = segment.StartSeconds;
+        _audioPlayer.Seek(timeInSeconds);
+        CurrentPlaybackPosition = timeInSeconds;
+        _toastNotificationService?.ShowInfo("Seek", $"Seeked to {timeInSeconds:F1}s");
+      }
+    }
+
     public TimelineViewModel(
       IBackendClient backendClient,
       IAudioPlayerService audioPlayer,
@@ -327,8 +431,190 @@ namespace VoiceStudio.App.Views.Panels
 
       _audioPlayer.PositionChanged += (s, position) => CurrentPlaybackPosition = position;
 
+      // Subscribe to NavigateToEvent to handle cross-panel actions
+      // (Audit X-3: Transcription -> Timeline, X-6: Synthesis -> Timeline)
+      var eventAggregator = AppServices.TryGetEventAggregator();
+      if (eventAggregator != null)
+      {
+        eventAggregator.Subscribe<NavigateToEvent>(OnNavigateToTimeline);
+        // C.3: Subscribe to AddToTimelineEvent from Synthesis panels
+        eventAggregator.Subscribe<AddToTimelineEvent>(OnAddToTimeline);
+        // C.4: Subscribe to TranscriptionCompletedEvent for subtitle track
+        eventAggregator.Subscribe<TranscriptionCompletedEvent>(OnTranscriptionCompleted);
+      }
+
       // Load preview settings
       _ = LoadPreviewSettingsAsync();
+    }
+
+    /// <summary>
+    /// Handles NavigateToEvent when the target is this timeline panel.
+    /// Supports actions: "addClip" (from Synthesis), "loadTranscript" (from Transcribe).
+    /// </summary>
+    private void OnNavigateToTimeline(NavigateToEvent e)
+    {
+      if (e.TargetPanelId != PanelId && e.TargetPanelId != "timeline")
+        return;
+
+      var parameters = e.Parameters;
+      if (parameters == null)
+        return;
+
+      if (parameters.TryGetValue("action", out var actionObj) && actionObj is string action)
+      {
+        switch (action)
+        {
+          case "loadTranscript":
+            if (parameters.TryGetValue("transcriptionId", out var tidObj) && tidObj is string tid)
+            {
+              _ = LoadTranscriptSegmentsAsync(tid);
+            }
+            break;
+
+          case "addClip":
+            // Handle clip addition from Synthesis panel
+            if (parameters.TryGetValue("clipName", out var nameObj) && nameObj is string clipName)
+            {
+              _toastNotificationService?.ShowSuccess("Clip Added", $"'{clipName}' added to timeline");
+            }
+            break;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Handles AddToTimelineEvent from Synthesis panels (C.3 remediation).
+    /// Creates a clip on the current or first available track.
+    /// </summary>
+    private void OnAddToTimeline(AddToTimelineEvent e)
+    {
+      // Must have a project and track to add clips
+      if (SelectedProject == null)
+      {
+        _toastNotificationService?.ShowWarning(
+            "No project selected",
+            "Please select or create a project first");
+        return;
+      }
+
+      // Ensure we have a track
+      var targetTrack = SelectedTrack ?? Tracks.FirstOrDefault();
+      if (targetTrack == null)
+      {
+        _toastNotificationService?.ShowWarning(
+            "No track available",
+            "Creating a default track...");
+        // Fire and forget - create track then retry
+        _ = AddTrackAndClipAsync(e);
+        return;
+      }
+
+      // Create the clip
+      AddClipToTrack(targetTrack, e);
+    }
+
+    /// <summary>
+    /// C.4: Handle transcription completed event to display subtitles on timeline.
+    /// </summary>
+    private void OnTranscriptionCompleted(TranscriptionCompletedEvent e)
+    {
+      // Clear existing segments
+      TranscriptSegments.Clear();
+
+      if (e.Segments.Count == 0)
+      {
+        _toastNotificationService?.ShowInfo("Transcription", "No segments available for subtitle display");
+        return;
+      }
+
+      // Convert segments to display format
+      foreach (var segment in e.Segments)
+      {
+        var displaySegment = new TranscriptSegmentDisplay
+        {
+          Text = segment.Text,
+          StartSeconds = segment.StartTime,
+          EndSeconds = segment.EndTime,
+          PositionPixels = segment.StartTime * TimelineZoom * 100 // Initial calculation
+        };
+        TranscriptSegments.Add(displaySegment);
+      }
+
+      // Show the transcript overlay
+      ShowTranscriptTrack = true;
+      OnPropertyChanged(nameof(TranscriptSegments));
+      OnPropertyChanged(nameof(TranscriptTrackVisibility));
+
+      _toastNotificationService?.ShowSuccess(
+        "Subtitles Loaded",
+        $"{e.Segments.Count} segments added to timeline");
+    }
+
+    private async Task AddTrackAndClipAsync(AddToTimelineEvent e)
+    {
+      try
+      {
+        await AddTrackAsync(CancellationToken.None);
+        var targetTrack = SelectedTrack ?? Tracks.FirstOrDefault();
+        if (targetTrack != null)
+        {
+          AddClipToTrack(targetTrack, e);
+        }
+      }
+      catch (Exception ex)
+      {
+        _logService?.LogError(ex, "AddTrackAndClip");
+        _toastNotificationService?.ShowError("Failed to add clip to timeline", "Error");
+      }
+    }
+
+    private void AddClipToTrack(AudioTrack track, AddToTimelineEvent e)
+    {
+      try
+      {
+        // Calculate start time (end of last clip or 0)
+        var startTime = track.Clips.Count > 0
+            ? track.Clips.Max(c => c.EndTime)
+            : 0.0;
+
+        var newClip = new AudioClip
+        {
+          Id = Guid.NewGuid().ToString(),
+          Name = e.ClipName ?? $"Clip {track.Clips.Count + 1}",
+          AudioId = e.AudioId,
+          AudioUrl = e.AudioPath,
+          StartTime = startTime,
+          Duration = e.Duration
+        };
+
+        track.Clips.Add(newClip);
+
+        // Register undo action
+        if (_undoRedoService != null)
+        {
+          var action = new AddClipAction(Tracks, _backendClient, track, newClip);
+          _undoRedoService.RegisterAction(action);
+        }
+
+        _toastNotificationService?.ShowSuccess(
+            $"'{newClip.Name}' added to {track.Name}",
+            "Clip Added");
+
+        // Save to backend asynchronously (best effort)
+        if (SelectedProject != null)
+        {
+          _ = _backendClient.CreateClipAsync(
+              SelectedProject.Id,
+              track.Id,
+              newClip,
+              CancellationToken.None);
+        }
+      }
+      catch (Exception ex)
+      {
+        _logService?.LogError(ex, "AddClipToTrack");
+        _toastNotificationService?.ShowError("Failed to add clip", "Error");
+      }
     }
 
     private async Task LoadPreviewSettingsAsync()

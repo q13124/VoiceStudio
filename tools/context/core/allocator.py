@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+from typing import Any
 
 from tools.context.core.models import (
-    AllocationContext,
     BudgetConstraints,
     ContextBundle,
     ContextLevel,
@@ -18,19 +17,19 @@ from tools.context.core.models import (
 )
 from tools.context.core.protocols import AllocatorProtocol
 
-
 # Map sources to context levels for progressive disclosure
 SOURCE_LEVEL_MAP = {
     # Level 1 (HIGH): Always loaded
     "state": ContextLevel.HIGH,
     "task": ContextLevel.HIGH,
+    "file_context": ContextLevel.HIGH,  # Language reminders critical for cross-stack work
     "progress": ContextLevel.HIGH,  # Progress tracking is critical context
-    
+
     # Level 2 (MID): Loaded if budget allows
     "brief": ContextLevel.MID,
     "ledger": ContextLevel.MID,
     "issues": ContextLevel.MID,
-    
+
     # Level 3 (LOW): Loaded if budget allows
     "rules": ContextLevel.LOW,
     "memory": ContextLevel.LOW,
@@ -60,18 +59,18 @@ class ContextAllocator(AllocatorProtocol):
 
     def allocate(
         self,
-        sources: List[SourceResult],
+        sources: list[SourceResult],
         budget: BudgetConstraints,
         max_level: ContextLevel = ContextLevel.LOW,
     ) -> ContextBundle:
         """
         Allocate context bundle with progressive disclosure.
-        
+
         Args:
             sources: Source results to allocate from
             budget: Budget constraints
             max_level: Maximum context level to load (HIGH, MID, or LOW)
-        
+
         Returns:
             Context bundle with sources filtered by level
         """
@@ -80,7 +79,7 @@ class ContextAllocator(AllocatorProtocol):
             s for s in sources
             if self._should_include_source(s.source_name, max_level)
         ]
-        
+
         # Sort by source priority order if provided, else keep input order.
         priority_order = budget.priority_order or []
         order_map = {name: idx for idx, name in enumerate(priority_order)}
@@ -132,14 +131,26 @@ class ContextAllocator(AllocatorProtocol):
                         next_actions=prog_data.get("next_actions", []),
                         gate_details=prog_data.get("gate_details", []),
                     )
+            # File context (language detection and reminders)
+            if "file_context" in data and "language_reminder" not in bundle.meta:
+                file_ctx = data.get("file_context")
+                lang_reminder = data.get("language_reminder", "")
+                if file_ctx:
+                    bundle.meta["file_context"] = {
+                        "primary_language": getattr(file_ctx, "primary_language", "unknown"),
+                        "stack": getattr(file_ctx, "stack", "unknown"),
+                        "files_detected": getattr(file_ctx, "files_detected", [])[:5],
+                    }
+                if lang_reminder:
+                    bundle.meta["language_reminder"] = lang_reminder
 
         self._apply_budget(bundle, budget)
         return bundle.with_meta(budget_chars=budget.total_chars)
-    
+
     def _should_include_source(self, source_name: str, max_level: ContextLevel) -> bool:
         """Determine if source should be included based on level."""
         source_level = SOURCE_LEVEL_MAP.get(source_name, ContextLevel.LOW)
-        
+
         if max_level == ContextLevel.HIGH:
             return source_level == ContextLevel.HIGH
         elif max_level == ContextLevel.MID:
@@ -168,7 +179,7 @@ class ContextAllocator(AllocatorProtocol):
         if bundle.rules:
             rules_limit = budget.limit_for("rules")
             remaining = rules_limit
-            truncated: List[RuleContext] = []
+            truncated: list[RuleContext] = []
             for rule in bundle.rules:
                 desc = rule.description or ""
                 if not desc:
@@ -186,7 +197,7 @@ class ContextAllocator(AllocatorProtocol):
         # Memory
         if bundle.memory:
             mem_limit = budget.limit_for("memory")
-            acc: List[MemoryItem] = []
+            acc: list[MemoryItem] = []
             remaining = mem_limit
             for item in bundle.memory:
                 if remaining <= 0:
@@ -208,7 +219,7 @@ class ContextAllocator(AllocatorProtocol):
         # Ledger
         if bundle.ledger:
             ledger_limit = budget.limit_for("ledger")
-            acc_ledger: List[Dict[str, Any]] = []
+            acc_ledger: list[dict[str, Any]] = []
             remaining = ledger_limit
             for entry in bundle.ledger:
                 try:

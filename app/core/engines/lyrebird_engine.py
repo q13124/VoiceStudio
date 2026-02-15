@@ -8,15 +8,16 @@ Compatible with:
 - aiohttp 3.8.0+ (for async)
 """
 
-import json
+from __future__ import annotations
+
 import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import torch
+    pass
 
 import numpy as np
 
@@ -64,7 +65,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         normalize_lufs,
@@ -93,9 +94,9 @@ class LyrebirdEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         api_url: str = "https://api.descript.com/v1",
         use_local: bool = True,
     ):
@@ -198,7 +199,7 @@ class LyrebirdEngine(EngineProtocol):
         self._synthesis_cache.clear()
         logger.info("Synthesis cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._synthesis_cache),
@@ -207,14 +208,14 @@ class LyrebirdEngine(EngineProtocol):
 
     def clone_voice(
         self,
-        reference_audio_path: Union[str, Path],
+        reference_audio_path: str | Path,
         text: str,
-        output_path: Optional[Union[str, Path]] = None,
-        voice_name: Optional[str] = None,
+        output_path: str | Path | None = None,
+        voice_name: str | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[str, Tuple[str, Dict]]:
+    ) -> str | tuple[str, dict]:
         """
         Clone voice from reference audio and synthesize text.
 
@@ -356,10 +357,10 @@ class LyrebirdEngine(EngineProtocol):
 
     def _clone_local(
         self,
-        reference_audio_path: Union[str, Path],
+        reference_audio_path: str | Path,
         text: str,
-        output_path: Optional[Union[str, Path]],
-        voice_name: Optional[str],
+        output_path: str | Path | None,
+        voice_name: str | None,
         **kwargs,
     ) -> str:
         """
@@ -459,7 +460,7 @@ class LyrebirdEngine(EngineProtocol):
 
     def _synthesize_with_local_model(
         self,
-        reference_audio_path: Union[str, Path],
+        reference_audio_path: str | Path,
         text: str,
         output_path: Path,
         **kwargs,
@@ -469,7 +470,6 @@ class LyrebirdEngine(EngineProtocol):
             import numpy as np
             import soundfile as sf
             import torch
-            import torch.nn.functional as F
 
             # Load reference audio
             ref_audio, sr = sf.read(str(reference_audio_path))
@@ -641,7 +641,7 @@ class LyrebirdEngine(EngineProtocol):
             logger.warning(f"Voice embedding extraction failed: {e}")
             return np.array([0.0])
 
-    def _text_to_tokens(self, text: str) -> List[int]:
+    def _text_to_tokens(self, text: str) -> list[int]:
         """Convert text to tokens."""
         # Simple character-based tokenization
         # In real implementation, would use proper tokenizer
@@ -649,7 +649,7 @@ class LyrebirdEngine(EngineProtocol):
 
     def _clone_with_fallback_engine(
         self,
-        reference_audio_path: Union[str, Path],
+        reference_audio_path: str | Path,
         text: str,
         output_path: Path,
         **kwargs,
@@ -714,10 +714,10 @@ class LyrebirdEngine(EngineProtocol):
 
     def _clone_cloud(
         self,
-        reference_audio_path: Union[str, Path],
+        reference_audio_path: str | Path,
         text: str,
-        output_path: Optional[Union[str, Path]],
-        voice_name: Optional[str],
+        output_path: str | Path | None,
+        voice_name: str | None,
         **kwargs,
     ) -> str:
         """Clone voice using cloud API."""
@@ -783,7 +783,7 @@ class LyrebirdEngine(EngineProtocol):
         logger.info(f"Voice cloned (cloud): {output_path}")
         return str(output_path)
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -799,9 +799,9 @@ class LyrebirdEngine(EngineProtocol):
 
 
 def create_lyrebird_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     api_url: str = "https://api.descript.com/v1",
     use_local: bool = True,
 ) -> LyrebirdEngine:

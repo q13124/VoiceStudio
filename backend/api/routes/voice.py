@@ -6,14 +6,16 @@ High-quality voice cloning endpoints with support for multiple engines.
 WebSocket Protocol Migration (GAP-INT-002):
     This file contains WebSocket endpoints that should use the standardized
     protocol from backend.api.ws.protocol. New WebSocket messages should use:
-    
+
         from backend.api.ws import create_message, create_error, MessageType
-        
+
         await ws.send_json(create_message(MessageType.AUDIO_CHUNK, {...}))
         await ws.send_json(create_error("Failed", code=ErrorCode.ENGINE_ERROR))
-    
+
     See backend/api/ws/protocol.py for the full protocol specification.
 """
+
+from __future__ import annotations
 
 import asyncio
 import base64
@@ -25,7 +27,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import numpy as np
@@ -50,52 +52,45 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from ..middleware.auth_middleware import require_auth_if_enabled
-
-# WebSocket protocol for standardized messaging (GAP-CRIT-002)
-from ..ws.protocol import (
-    create_message,
-    create_error,
-    create_progress,
-    create_complete,
-    MessageType,
-    ErrorCode,
-)
-
-from backend.services.model_preflight import (
-    ensure_piper, 
-    ensure_sovits, 
-    ensure_xtts,
-    PreflightError,
+from backend.core.security.file_validation import (
+    FileCategory,
+    FileValidationError,
+    validate_audio_file,
+    validate_media_for_audio_extraction,
 )
 from backend.services.circuit_breaker import (
     get_engine_breaker,
-    CircuitBreakerOpenError,
 )
-from backend.services.engine_service import get_engine_service, IEngineService
-from backend.core.security.file_validation import (
-    FileValidationError,
-    validate_audio_file,
-)
-
-from ..deps import (
-    EngineServiceDep,
-    EngineConfigServiceDep,
-    AudioRegistryDep,
-    AudioCacheDep,
-)
-
-from ..exceptions import (
-    ProfileNotFoundException,
-    InvalidEngineException,
-    EngineUnavailableException,
-    EngineProcessingException,
-    AudioProcessingException,
-    InvalidInputException,
+from backend.services.engine_service import get_engine_service
+from backend.services.model_preflight import (
+    PreflightError,
+    ensure_piper,
+    ensure_sovits,
+    ensure_xtts,
 )
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
+from ..deps import (
+    EngineConfigServiceDep,
+    EngineServiceDep,
+)
+from ..exceptions import (
+    EngineProcessingException,
+    EngineUnavailableException,
+    InvalidEngineException,
+    ProfileNotFoundException,
+)
+from ..middleware.auth_middleware import require_auth_if_enabled
+
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    ErrorCode,
+    MessageType,
+    create_complete,
+    create_error,
+    create_message,
+)
 
 try:
     from ..audio_processing import PitchTracker
@@ -104,6 +99,10 @@ except Exception as e:
     logging.getLogger(__name__).warning(
         "Pitch tracking unavailable (audio_processing import failed): %s", e
     )
+# Import correlation ID support for enhanced logging (Phase 3A)
+import contextlib
+
+from ..middleware.correlation_id import get_correlation_id
 from ..models_additional import (
     ABTestRequest,
     ABTestResponse,
@@ -132,6 +131,21 @@ from ..utils.quality_batch import calculate_batch_quality_score
 
 logger = logging.getLogger(__name__)
 
+
+def _log_context(**kwargs) -> dict[str, Any]:
+    """
+    Build structured logging context with correlation ID.
+
+    Args:
+        **kwargs: Additional context fields to include
+
+    Returns:
+        Dict with correlation_id and any additional fields
+    """
+    context = {"correlation_id": get_correlation_id() or "no-correlation-id"}
+    context.update(kwargs)
+    return context
+
 # Quality optimization via EngineService (ADR-008 compliant)
 HAS_QUALITY_OPTIMIZATION = False
 try:
@@ -147,50 +161,50 @@ _URL_CACHE_DIR = Path(tempfile.gettempdir()) / "voicestudio_url_cache"
 _URL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-async def _download_url_to_file(url: str, timeout: float = 30.0) -> Optional[str]:
+async def _download_url_to_file(url: str, timeout: float = 30.0) -> str | None:
     """
     Download a file from URL and cache it locally.
-    
+
     Args:
         url: The URL to download from
         timeout: Download timeout in seconds
-        
+
     Returns:
         Path to the downloaded file, or None if download failed
     """
     if not HAS_HTTPX:
         logger.warning("httpx not available for URL downloads")
         return None
-    
+
     try:
         # Generate cache key from URL
         url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
         parsed = urlparse(url)
         ext = Path(parsed.path).suffix or ".wav"
         cache_path = _URL_CACHE_DIR / f"{url_hash}{ext}"
-        
+
         # Check if already cached
         if cache_path.exists():
             logger.debug(f"Using cached file for {url}: {cache_path}")
             return str(cache_path)
-        
+
         # Download the file
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.get(url, follow_redirects=True)
             response.raise_for_status()
-            
+
             # Verify content type is audio
             content_type = response.headers.get("content-type", "")
             if not any(t in content_type.lower() for t in ["audio", "octet-stream", "wav", "mp3", "flac"]):
                 logger.warning(f"Unexpected content type for audio URL: {content_type}")
-            
+
             # Write to cache
             with open(cache_path, "wb") as f:
                 f.write(response.content)
-            
+
             logger.info(f"Downloaded {len(response.content)} bytes from {url} to {cache_path}")
             return str(cache_path)
-            
+
     except Exception as e:
         logger.error(f"Failed to download URL {url}: {e}")
         return None
@@ -234,11 +248,11 @@ def _normalize_candidate_metrics(candidate_metrics: Any) -> list[dict[str, Any]]
 def _build_clone_response(
     *,
     profile_id: str,
-    audio_id: Optional[str],
-    duration: Optional[float],
+    audio_id: str | None,
+    duration: float | None,
     quality_score: float,
-    quality_metrics: Optional[QualityMetrics],
-    device: Optional[str],
+    quality_metrics: QualityMetrics | None,
+    device: str | None,
     candidate_metrics: Any,
 ) -> VoiceCloneResponse:
     """
@@ -263,7 +277,7 @@ def _build_clone_response(
 def _ensure_tts_assets(engine_id: str):
     """
     Ensure required TTS assets exist (auto-download when allowed).
-    
+
     Catches PreflightError from service layer and converts to HTTPException.
     """
     try:
@@ -278,7 +292,7 @@ def _ensure_tts_assets(engine_id: str):
 def _ensure_vc_assets(engine_id: str):
     """
     Ensure VC assets (So-VITS) exist.
-    
+
     Catches PreflightError from service layer and converts to HTTPException.
     """
     try:
@@ -304,7 +318,7 @@ def _dedupe_and_get_path(output_path: str) -> str:
     return output_path
 
 
-def _get_wav_duration_seconds(path: str) -> Optional[float]:
+def _get_wav_duration_seconds(path: str) -> float | None:
     try:
         import wave
 
@@ -332,13 +346,13 @@ def _normalize_metrics_payload(value: Any) -> Any:
     return value
 
 
-def _coerce_optional_bool(value: Any) -> Optional[bool]:
+def _coerce_optional_bool(value: Any) -> bool | None:
     if value is None:
         return None
     return bool(_normalize_metrics_payload(value))
 
 
-def _coerce_optional_float(value: Any) -> Optional[float]:
+def _coerce_optional_float(value: Any) -> float | None:
     if value is None:
         return None
     normalized = _normalize_metrics_payload(value)
@@ -395,8 +409,7 @@ def _cleanup_old_audio_files():
                 _audio_registry.remove(audio_id)
             except Exception as e:
                 logger.debug(f"Failed to remove audio_id from registry: {e}")
-        if audio_id in _audio_storage_timestamps:
-            del _audio_storage_timestamps[audio_id]
+        _audio_storage_timestamps.pop(audio_id, None)
 
     if to_remove:
         logger.info(f"Cleaned up {len(to_remove)} old audio files from storage")
@@ -406,8 +419,8 @@ def _register_audio_file(
     audio_id: str,
     file_path: str,
     *,
-    project_id: Optional[str] = None,
-    source: Optional[str] = None,
+    project_id: str | None = None,
+    source: str | None = None,
 ):
     """
     Register an audio file in storage with timestamp.
@@ -456,33 +469,43 @@ def _save_audio_to_project(project_id: str, audio_id: str, source_path: str) -> 
     return str(dest_path)
 
 
-# Engine router for voice synthesis
+# Engine router for voice synthesis (initialized lazily)
 ENGINE_AVAILABLE = False
 engine_router = None
 quality_metrics = None
+_voice_engine_service = None
 
-# Voice engine initialization via EngineService (ADR-008 compliant)
-ENGINE_AVAILABLE = False
 
-try:
-    # Ensure _voice_engine_service is available (may already be set above)
-    if "_voice_engine_service" not in dir() or _voice_engine_service is None:
-        _voice_engine_service = get_engine_service()
-    
-    engines = _voice_engine_service.list_engines()
-    ENGINE_AVAILABLE = len(engines) > 0
-    if ENGINE_AVAILABLE:
-        engine_names = [e.get("id", e.get("name", "")) for e in engines]
-        logger.info(f"Voice EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
-    else:
-        logger.warning("No engines available for voice synthesis")
-except Exception as e:
-    logger.warning(
-        "EngineService not available: %s. Voice synthesis endpoints will "
-        "return 503 Service Unavailable when engines are not available.",
-        e,
-    )
-    ENGINE_AVAILABLE = False
+def _ensure_engine_router():
+    """Lazy initialization of engine router - called at request time, not import time."""
+    global engine_router, ENGINE_AVAILABLE, _voice_engine_service
+
+    if engine_router is not None:
+        return  # Already initialized
+
+    try:
+        if _voice_engine_service is None:
+            _voice_engine_service = get_engine_service()
+
+        # Get the actual engine router from the service
+        engine_router = _voice_engine_service.get_engine_router()
+
+        if engine_router is not None:
+            # Try to load engines if not already loaded
+            engines = engine_router.list_engines()
+            if not engines:
+                engine_router.load_all_engines("engines")
+                engines = engine_router.list_engines()
+
+            ENGINE_AVAILABLE = len(engines) > 0
+            if ENGINE_AVAILABLE:
+                logger.info(f"Voice engine router initialized with {len(engines)} engines")
+        else:
+            ENGINE_AVAILABLE = False
+            logger.warning("Engine router not available from service")
+    except Exception as e:
+        logger.warning(f"Failed to initialize engine router: {e}")
+        ENGINE_AVAILABLE = False
 
 
 def _get_quality_metrics():
@@ -498,6 +521,418 @@ def _get_quality_metrics():
     }
 
 
+# ============================================================================
+# Synthesis Helper Functions (extracted per Quality Improvement Plan Phase 1B)
+# ============================================================================
+
+
+async def _resolve_profile_audio(
+    profile_id: str,
+    profile: Any,
+    profile_dir: str,
+) -> str:
+    """
+    Resolve the reference audio path for a voice profile.
+
+    Priority order:
+    1. Authoritative path: ~/.voicestudio/profiles/{id}/reference_audio.wav
+    2. Alternate names in profile dir (reference.wav, audio.wav)
+    3. profile.reference_audio_url (file path or HTTP URL)
+
+    Args:
+        profile_id: The profile identifier
+        profile: The profile object with reference_audio_url attribute
+        profile_dir: Directory containing profile files
+
+    Returns:
+        Path to the reference audio file
+
+    Raises:
+        HTTPException: If no valid reference audio is found
+    """
+    profile_audio_path = None
+
+    # Try authoritative path first
+    authoritative_path = os.path.join(profile_dir, "reference_audio.wav")
+    if os.path.exists(authoritative_path):
+        profile_audio_path = authoritative_path
+        logger.debug("Using authoritative reference audio: %s", authoritative_path)
+    else:
+        # Fallback: other common filenames in profile directory
+        fallback_names = ["reference.wav", "audio.wav"]
+        for name in fallback_names:
+            candidate = os.path.join(profile_dir, name)
+            if os.path.exists(candidate):
+                profile_audio_path = candidate
+                logger.info(
+                    "Reference audio found at fallback path '%s' for profile %s. "
+                    "Consider renaming to 'reference_audio.wav' for consistency.",
+                    name,
+                    profile_id,
+                )
+                break
+
+    # Fallback: profile.reference_audio_url (file path or HTTP URL)
+    if not profile_audio_path and profile.reference_audio_url:
+        if profile.reference_audio_url.startswith("http"):
+            logger.info("Downloading reference audio from URL: %s", profile.reference_audio_url)
+            downloaded_path = await _download_url_to_file(profile.reference_audio_url)
+            if downloaded_path and os.path.exists(downloaded_path):
+                profile_audio_path = downloaded_path
+            else:
+                logger.warning(
+                    "Failed to download reference audio from URL: %s",
+                    profile.reference_audio_url,
+                )
+        elif os.path.exists(profile.reference_audio_url):
+            profile_audio_path = profile.reference_audio_url
+            logger.info(
+                "Using reference_audio_url path: %s",
+                profile.reference_audio_url,
+            )
+        else:
+            logger.warning(
+                "reference_audio_url does not exist on disk: %s",
+                profile.reference_audio_url,
+            )
+
+    # If still not found, raise clear error
+    if not profile_audio_path or not os.path.exists(profile_audio_path):
+        logger.error(
+            "Reference audio not found for profile %s. "
+            "Checked: %s, fallbacks in %s, reference_audio_url=%s",
+            profile_id,
+            authoritative_path,
+            profile_dir,
+            profile.reference_audio_url or "(not set)",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Reference audio not found for profile '{profile_id}'. "
+                f"Expected at: {authoritative_path}. "
+                "Please upload reference audio or re-run the cloning wizard."
+            ),
+        )
+
+    return profile_audio_path
+
+
+def _select_engine_with_fallback(
+    requested_engine: str,
+    valid_engines: list[str],
+) -> str:
+    """
+    Select an engine with fallback chain if requested engine is unavailable.
+
+    Fallback chain: XTTS -> Piper -> eSpeak
+
+    Args:
+        requested_engine: The engine requested by the user
+        valid_engines: List of available engine IDs
+
+    Returns:
+        The selected engine ID (may be a fallback)
+
+    Raises:
+        InvalidEngineException: If no valid engine is available
+    """
+    engine_id = _normalize_engine_id(requested_engine)
+
+    if valid_engines and engine_id not in valid_engines:
+        # Try fallback chain: XTTS -> Piper -> eSpeak
+        fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+        original_engine_id = engine_id
+
+        for fallback_engine in fallback_chain:
+            if fallback_engine in valid_engines:
+                engine_id = fallback_engine
+                logger.info(
+                    f"Engine '{original_engine_id}' not available, "
+                    f"falling back to '{fallback_engine}'"
+                )
+                return engine_id
+
+        # No fallback available
+        engines_str = (
+            ", ".join(valid_engines)
+            if valid_engines
+            else "none (engines not loaded)"
+        )
+        raise InvalidEngineException(
+            engine=requested_engine,
+            available_engines=engines_str.split(", ") if engines_str != "none (engines not loaded)" else [],
+        )
+
+    return engine_id
+
+
+async def _perform_synthesis_with_retry(
+    engine: Any,
+    synthesis_kwargs: dict[str, Any],
+    engine_id: str,
+    text_to_synthesize: str,
+    language: str,
+    output_path: str,
+    max_retries: int = 2,
+) -> tuple[Any, Exception | None]:
+    """
+    Perform synthesis with circuit breaker, retries, and utility TTS fallback.
+
+    Args:
+        engine: The engine instance to use
+        synthesis_kwargs: Keyword arguments for synthesis
+        engine_id: Engine identifier for circuit breaker
+        text_to_synthesize: Text to synthesize
+        language: Language code
+        output_path: Output file path
+        max_retries: Maximum retry attempts
+
+    Returns:
+        Tuple of (result, error) - result is synthesis output, error is None on success
+    """
+    result = None
+    synthesis_error = None
+
+    # Get circuit breaker for this engine (TD-014)
+    engine_breaker = get_engine_breaker(engine_id)
+
+    # Check if circuit is open before attempting
+    if not engine_breaker.allow_request():
+        logger.warning(
+            f"Circuit breaker OPEN for engine '{engine_id}', "
+            f"retry in {engine_breaker.time_until_retry():.1f}s"
+        )
+        raise HTTPException(
+            status_code=503,
+            detail=f"Engine '{engine_id}' is temporarily unavailable. "
+            f"Retry in {int(engine_breaker.time_until_retry())} seconds."
+        )
+
+    for attempt in range(max_retries + 1):
+        try:
+            result = engine.synthesize(**synthesis_kwargs)
+            # Record success with circuit breaker
+            engine_breaker.record_success()
+            return result, None  # Success
+        except RuntimeError as e:
+            # Record failure with circuit breaker
+            engine_breaker.record_failure()
+            error_msg = str(e).lower()
+
+            # GPU/device errors - may be recoverable
+            if "cuda" in error_msg or "gpu" in error_msg or "device" in error_msg:
+                if attempt < max_retries:
+                    logger.warning(
+                        f"Synthesis attempt {attempt + 1} failed with device error: {e}. "
+                        "Retrying..."
+                    )
+                    # Try to reinitialize engine on device error
+                    try:
+                        engine.cleanup()
+                        engine.initialize()
+                    except Exception as cleanup_error:
+                        logger.warning(f"Engine reinitialization failed: {cleanup_error}")
+                    synthesis_error = e
+                    continue
+            synthesis_error = e
+            break
+        except MemoryError as e:
+            # Memory errors - not recoverable without cleanup
+            logger.error(f"Memory error during synthesis: {e}")
+            synthesis_error = e
+            break
+        except Exception as e:
+            # Other errors - log and retry if timeout
+            logger.error(
+                f"Synthesis error (attempt {attempt + 1}): {e}",
+                exc_info=True,
+                extra=_log_context(
+                    operation="synthesis_retry",
+                    engine=engine_id,
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                    error_type=type(e).__name__,
+                    text_length=len(text_to_synthesize) if text_to_synthesize else 0,
+                ),
+            )
+            synthesis_error = e
+            if attempt < max_retries and "timeout" in str(e).lower():
+                continue
+            break
+
+    # Try fallback to utility TTS if all main engine attempts failed
+    if result is None and synthesis_error is not None:
+        result = await _try_utility_tts_fallback(
+            text_to_synthesize, language, output_path, synthesis_error
+        )
+        if result is not None or os.path.exists(output_path):
+            return result, None  # Fallback succeeded
+
+    return result, synthesis_error
+
+
+async def _try_utility_tts_fallback(
+    text: str,
+    language: str,
+    output_path: str,
+    original_error: Exception,
+) -> Any | None:
+    """
+    Try gTTS and pyttsx3 as fallback TTS when main engine fails.
+
+    Args:
+        text: Text to synthesize
+        language: Language code
+        output_path: Output file path
+        original_error: The error from the main engine
+
+    Returns:
+        None (file saved to output_path) on success, or None with no file on failure
+    """
+    try:
+        import sys
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent.parent.parent
+        sys.path.insert(0, str(project_root / "app"))
+        from app.core.tts.tts_utilities import synthesize_with_utility
+
+        logger.warning(f"Main engine failed, trying utility TTS fallback: {original_error}")
+
+        # Try gTTS as fallback
+        try:
+            fallback_output = tempfile.mktemp(suffix=".mp3")
+            synthesize_with_utility(
+                text,
+                utility="gtts",
+                language=language or "en",
+                output_path=fallback_output,
+            )
+            # Convert MP3 to WAV if needed
+            try:
+                import soundfile as sf
+                audio, sr = sf.read(fallback_output)
+                sf.write(output_path, audio, sr)
+                logger.info("Fallback to gTTS successful")
+                return None  # File saved
+            except ImportError:
+                import shutil
+                shutil.copy(fallback_output, output_path)
+                logger.info("Fallback to gTTS successful (MP3 format)")
+                return None
+        except Exception as gtts_error:
+            logger.warning(f"gTTS fallback failed: {gtts_error}")
+
+            # Try pyttsx3 as last resort
+            try:
+                fallback_output = tempfile.mktemp(suffix=".wav")
+                synthesize_with_utility(
+                    text,
+                    utility="pyttsx3",
+                    output_path=fallback_output,
+                )
+                import shutil
+                shutil.copy(fallback_output, output_path)
+                logger.info("Fallback to pyttsx3 successful")
+                return None  # File saved
+            except Exception as pyttsx3_error:
+                logger.warning(f"pyttsx3 fallback also failed: {pyttsx3_error}")
+                return None
+    except ImportError:
+        logger.debug("TTS utilities not available for fallback")
+        return None
+
+
+def _extract_quality_metrics(
+    result: Any,
+    engine: Any,
+    output_path: str,
+) -> tuple[float, float, QualityMetrics | None]:
+    """
+    Extract quality metrics from synthesis result and calculate duration.
+
+    Args:
+        result: The synthesis result (audio array or tuple)
+        engine: The engine instance (for sample rate)
+        output_path: Path to the output audio file
+
+    Returns:
+        Tuple of (duration, quality_score, detailed_metrics)
+    """
+    # Handle both single return and tuple (audio, metrics)
+    if isinstance(result, tuple):
+        audio, engine_quality_metrics = result
+    else:
+        audio = result
+        engine_quality_metrics = {}
+
+    # Calculate duration from audio array
+    if isinstance(audio, np.ndarray):
+        sample_rate = getattr(engine, "sample_rate", 22050)
+        duration = len(audio) / sample_rate
+    else:
+        # If audio was saved to file, estimate duration
+        import wave
+        try:
+            with wave.open(output_path, "rb") as wav_file:
+                frames = wav_file.getnframes()
+                sample_rate = wav_file.getframerate()
+                duration = frames / float(sample_rate)
+        except (wave.Error, OSError) as wav_err:
+            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
+            duration = 2.5  # Fallback
+
+    # Extract quality metrics
+    detailed_metrics = None
+    quality_score = 0.85  # Default
+
+    if engine_quality_metrics:
+        # Extract detailed metrics
+        artifacts_info = engine_quality_metrics.get("artifacts", {})
+        if isinstance(artifacts_info, dict):
+            artifact_score = artifacts_info.get("artifact_score", 0.0)
+            has_clicks = artifacts_info.get("has_clicks", False)
+            has_distortion = artifacts_info.get("has_distortion", False)
+        else:
+            artifact_score = 0.0
+            has_clicks = False
+            has_distortion = False
+
+        # Build detailed metrics object
+        detailed_metrics = QualityMetrics(
+            mos_score=engine_quality_metrics.get("mos_score"),
+            similarity=engine_quality_metrics.get("similarity"),
+            naturalness=engine_quality_metrics.get("naturalness"),
+            snr_db=engine_quality_metrics.get("snr_db"),
+            artifact_score=artifact_score,
+            has_clicks=has_clicks,
+            has_distortion=has_distortion,
+            voice_profile_match=engine_quality_metrics.get("voice_profile_match"),
+        )
+
+        # Calculate overall quality score from metrics
+        if engine_quality_metrics.get("mos_score"):
+            quality_score = engine_quality_metrics["mos_score"] / 5.0  # Normalize MOS to 0-1
+        elif engine_quality_metrics.get("similarity"):
+            quality_score = engine_quality_metrics["similarity"]  # Use similarity as quality score
+        else:
+            # Average available metrics
+            metric_values = [
+                v
+                for k, v in engine_quality_metrics.items()
+                if k not in ["artifacts", "voice_profile_match"]
+                and isinstance(v, (int, float))
+            ]
+            if metric_values:
+                quality_score = sum(metric_values) / len(metric_values)
+                # Normalize if needed
+                if quality_score > 1.0:
+                    quality_score = quality_score / 5.0
+
+    return duration, quality_score, detailed_metrics
+
+
 @router.post("/synthesize", response_model=VoiceSynthesizeResponse)
 async def synthesize(
     req: VoiceSynthesizeRequest,
@@ -511,6 +946,9 @@ async def synthesize(
     Any engine with an engine.manifest.json file in engines/ will be available.
     No hardcoded engine limits - add as many engines as needed.
     """
+    # Lazy-initialize engine router at request time (not import time)
+    _ensure_engine_router()
+
     # Get request ID from middleware
     request_id = getattr(request.state, "request_id", None)
 
@@ -540,7 +978,6 @@ async def synthesize(
     _ensure_tts_assets(engine_id)
 
     # Instrument synthesis flow
-    from ..utils.instrumentation import EventType, instrument_flow
 
     with instrument_flow(
         EventType.SYNTHESIS_START,
@@ -576,7 +1013,13 @@ async def synthesize(
                         engine_id = fallback_engine
                         logger.info(
                             f"Engine '{original_engine_id}' not available, "
-                            f"falling back to '{fallback_engine}'"
+                            f"falling back to '{fallback_engine}'",
+                            extra=_log_context(
+                                operation="synthesis",
+                                original_engine=original_engine_id,
+                                fallback_engine=fallback_engine,
+                                profile_id=req.profile_id,
+                            ),
                         )
                         break
                 else:
@@ -615,50 +1058,17 @@ async def synthesize(
                         )
 
                     profile = _profiles[req.profile_id]
-                    profile_audio_path = None
 
-                    # Check if profile has reference_audio_url
-                    if profile.reference_audio_url:
-                        # Extract path from URL or use directly if it's a path
-                        if profile.reference_audio_url.startswith("http"):
-                            # URL - download the audio file
-                            logger.info(f"Downloading reference audio from URL: {profile.reference_audio_url}")
-                            downloaded_path = await _download_url_to_file(profile.reference_audio_url)
-                            if downloaded_path and os.path.exists(downloaded_path):
-                                profile_audio_path = downloaded_path
-                                logger.info(f"Using downloaded reference audio: {profile_audio_path}")
-                            else:
-                                logger.warning(
-                                    f"Failed to download reference audio from URL: {profile.reference_audio_url}"
-                                )
-                        else:
-                            profile_audio_path = profile.reference_audio_url
-
-                    # If no reference_audio_url, try standard profile directory
-                    if not profile_audio_path:
-                        profile_dir = os.path.join(
-                            os.path.expanduser("~"),
-                            ".voicestudio",
-                            "profiles",
-                            req.profile_id,
-                        )
-                        potential_paths = [
-                            os.path.join(profile_dir, "reference.wav"),
-                            os.path.join(profile_dir, "reference_audio.wav"),
-                            os.path.join(profile_dir, "audio.wav"),
-                        ]
-                        for path in potential_paths:
-                            if os.path.exists(path):
-                                profile_audio_path = path
-                                break
-
-                    # If still not found, raise error
-                    if not profile_audio_path or not os.path.exists(profile_audio_path):
-                        raise HTTPException(
-                            status_code=404,
-                            detail=f"Profile reference audio not found for profile: {req.profile_id}. "
-                            f"Please ensure the profile has a reference audio file.",
-                        )
+                    # Resolve reference audio path using helper (Phase 1B extraction)
+                    profile_dir = os.path.join(
+                        os.path.expanduser("~"),
+                        ".voicestudio",
+                        "profiles",
+                        req.profile_id,
+                    )
+                    profile_audio_path = await _resolve_profile_audio(
+                        req.profile_id, profile, profile_dir
+                    )
 
                     # Preprocess text using NLP if available
                     text_to_synthesize = req.text
@@ -772,7 +1182,14 @@ async def synthesize(
                         if not engine_breaker.allow_request():
                             logger.warning(
                                 f"Circuit breaker OPEN for engine '{engine_id}', "
-                                f"retry in {engine_breaker.time_until_retry():.1f}s"
+                                f"retry in {engine_breaker.time_until_retry():.1f}s",
+                                extra=_log_context(
+                                    operation="synthesis",
+                                    engine=engine_id,
+                                    profile_id=req.profile_id,
+                                    circuit_state="open",
+                                    retry_after_seconds=engine_breaker.time_until_retry(),
+                                ),
                             )
                             raise HTTPException(
                                 status_code=503,
@@ -959,7 +1376,10 @@ async def synthesize(
                             pass  # TTS utilities not available
 
                     # Handle synthesis result or error
-                    if result is None:
+                    # Some engines write to output_path and return None - check file first
+                    file_written_early = output_path and os.path.exists(output_path)
+
+                    if result is None and not file_written_early:
                         # Provide detailed error message based on error type
                         if synthesis_error:
                             error_msg = str(synthesis_error)
@@ -1003,10 +1423,9 @@ async def synthesize(
                     # Some engines write to output_path and return None (or (None, metrics)).
                     # Treat that as success if the file exists on disk.
                     if isinstance(result, tuple):
-                        audio, engine_quality_metrics = result
+                        audio, _engine_quality_metrics = result
                     else:
                         audio = result
-                        engine_quality_metrics = {}
 
                     file_written = os.path.exists(output_path)
                     if audio is None and not file_written:
@@ -1016,75 +1435,10 @@ async def synthesize(
                             "The engine may not be properly initialized or the input may be invalid.",
                         )
 
-                    # Calculate duration from audio array
-                    if isinstance(audio, np.ndarray):
-                        sample_rate = getattr(engine, "sample_rate", 22050)
-                        duration = len(audio) / sample_rate
-                    else:
-                        # If audio was saved to file, estimate duration
-                        import wave
-
-                        try:
-                            with wave.open(output_path, "rb") as wav_file:
-                                frames = wav_file.getnframes()
-                                sample_rate = wav_file.getframerate()
-                                duration = frames / float(sample_rate)
-                        except (wave.Error, OSError) as wav_err:
-                            logger.debug(f"Could not read duration from {output_path}: {wav_err}")
-                            duration = 2.5  # Fallback
-
-                    # Extract quality metrics from engine output
-                    detailed_metrics = None
-                    quality_score = 0.85  # Default
-
-                    if engine_quality_metrics:
-                        # Extract detailed metrics
-                        artifacts_info = engine_quality_metrics.get("artifacts", {})
-                        if isinstance(artifacts_info, dict):
-                            artifact_score = artifacts_info.get("artifact_score", 0.0)
-                            has_clicks = artifacts_info.get("has_clicks", False)
-                            has_distortion = artifacts_info.get("has_distortion", False)
-                        else:
-                            artifact_score = 0.0
-                            has_clicks = False
-                            has_distortion = False
-
-                        # Build detailed metrics object
-                        detailed_metrics = QualityMetrics(
-                            mos_score=engine_quality_metrics.get("mos_score"),
-                            similarity=engine_quality_metrics.get("similarity"),
-                            naturalness=engine_quality_metrics.get("naturalness"),
-                            snr_db=engine_quality_metrics.get("snr_db"),
-                            artifact_score=artifact_score,
-                            has_clicks=has_clicks,
-                            has_distortion=has_distortion,
-                            voice_profile_match=engine_quality_metrics.get(
-                                "voice_profile_match"
-                            ),
-                        )
-
-                        # Calculate overall quality score from metrics
-                        if engine_quality_metrics.get("mos_score"):
-                            quality_score = (
-                                engine_quality_metrics["mos_score"] / 5.0
-                            )  # Normalize MOS to 0-1
-                        elif engine_quality_metrics.get("similarity"):
-                            quality_score = engine_quality_metrics[
-                                "similarity"
-                            ]  # Use similarity as quality score
-                        else:
-                            # Average available metrics
-                            metric_values = [
-                                v
-                                for k, v in engine_quality_metrics.items()
-                                if k not in ["artifacts", "voice_profile_match"]
-                                and isinstance(v, (int, float))
-                            ]
-                            if metric_values:
-                                quality_score = sum(metric_values) / len(metric_values)
-                                # Normalize if needed
-                                if quality_score > 1.0:
-                                    quality_score = quality_score / 5.0
+                    # Extract duration and quality metrics using helper (Phase 1B extraction)
+                    duration, quality_score, detailed_metrics = _extract_quality_metrics(
+                        result, engine, output_path
+                    )
 
                     audio_id = f"synth_{req.profile_id}_" f"{uuid.uuid4().hex[:8]}"
 
@@ -1135,8 +1489,18 @@ async def synthesize(
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Synthesis error: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Synthesis failed: {str(e)}")
+            logger.error(
+                f"Synthesis error: {e}",
+                exc_info=True,
+                extra=_log_context(
+                    operation="synthesis",
+                    engine=engine_id,
+                    profile_id=req.profile_id,
+                    text_length=len(req.text) if req.text else 0,
+                    error_type=type(e).__name__,
+                ),
+            )
+            raise HTTPException(status_code=500, detail=f"Synthesis failed: {e!s}")
 
 
 @router.post("/synthesize/multipass", response_model=MultiPassSynthesisResponse)
@@ -1221,17 +1585,12 @@ async def synthesize_multipass(
             )
 
         # Determine pass strategy based on preset
-        pass_focus = None
-        if req.pass_preset == "naturalness_focus":
-            pass_focus = "naturalness"
-        elif req.pass_preset == "similarity_focus":
-            pass_focus = "similarity"
-        elif req.pass_preset == "artifact_focus":
-            pass_focus = "artifacts"
+        if req.pass_preset == "naturalness_focus" or req.pass_preset == "similarity_focus" or req.pass_preset == "artifact_focus":
+            pass
 
         # Generate multiple passes
-        passes: List[PassResult] = []
-        improvement_tracking: List[float] = []
+        passes: list[PassResult] = []
+        improvement_tracking: list[float] = []
         best_pass = 0
         best_quality = 0.0
         previous_quality = 0.0
@@ -1289,13 +1648,12 @@ async def synthesize_multipass(
                 best_pass = pass_num
 
             # Adaptive stopping: stop if improvement is too small
-            if req.adaptive and pass_num > 1:
-                if improvement < min_improvement:
-                    logger.info(
-                        f"Multi-pass synthesis: Stopping early at pass {pass_num} "
-                        f"(improvement {improvement:.4f} < {min_improvement})"
-                    )
-                    break
+            if req.adaptive and pass_num > 1 and improvement < min_improvement:
+                logger.info(
+                    f"Multi-pass synthesis: Stopping early at pass {pass_num} "
+                    f"(improvement {improvement:.4f} < {min_improvement})"
+                )
+                break
 
             previous_quality = quality_score
 
@@ -1335,15 +1693,15 @@ async def synthesize_multipass(
     except Exception as e:
         logger.error(f"Multi-pass synthesis error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Multi-pass synthesis failed: {str(e)}"
+            status_code=500, detail=f"Multi-pass synthesis failed: {e!s}"
         ) from e
 
 
 @router.post("/analyze", response_model=VoiceAnalyzeResponse)
 async def analyze(
     audio_file: UploadFile = File(...),
-    reference_audio: Optional[UploadFile] = File(None),
-    metrics: Optional[str] = None,
+    reference_audio: UploadFile | None = File(None),
+    metrics: str | None = None,
 ) -> VoiceAnalyzeResponse:
     """
     Analyze audio quality and voice characteristics.
@@ -1363,7 +1721,7 @@ async def analyze(
                 status_code=400,
                 detail=f"Invalid audio file: {e.message}",
             ) from e
-        
+
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
             tmp_file.write(content)
@@ -1395,10 +1753,10 @@ async def analyze(
                     ref_path = ref_file.name
 
             # Perform analysis using quality metrics if available
-            results: Dict[str, float] = {}
-            missing_deps: List[str] = []
+            results: dict[str, float] = {}
+            missing_deps: list[str] = []
             include_all = "all" in metric_list or len(metric_list) == 0
-            metrics_all: Dict[str, Any] = {}
+            metrics_all: dict[str, Any] = {}
 
             if quality_metrics and ENGINE_AVAILABLE:
                 try:
@@ -1462,33 +1820,32 @@ async def analyze(
 
                     if ref_path is None and (
                         "similarity" in metric_list or include_all
-                    ):
-                        if "similarity" not in results:
-                            try:
-                                similarity_value = quality_metrics["similarity"](
-                                    tmp_path, tmp_path
-                                )
-                                if similarity_value is not None and not isinstance(
-                                    similarity_value, bool
-                                ):
-                                    coerced = _coerce_optional_float(similarity_value)
-                                    if coerced is not None:
-                                        results["similarity"] = coerced
-                            except Exception as e:
-                                logger.debug(f"Self-similarity calculation failed: {e}")
+                    ) and "similarity" not in results:
+                        try:
+                            similarity_value = quality_metrics["similarity"](
+                                tmp_path, tmp_path
+                            )
+                            if similarity_value is not None and not isinstance(
+                                similarity_value, bool
+                            ):
+                                coerced = _coerce_optional_float(similarity_value)
+                                if coerced is not None:
+                                    results["similarity"] = coerced
+                        except Exception as e:
+                            logger.debug(f"Self-similarity calculation failed: {e}")
 
                 except ImportError as e:
                     raise HTTPException(
                         status_code=503,
                         detail=(
-                            "Quality metrics dependencies are missing. " f"{str(e)}"
+                            "Quality metrics dependencies are missing. " f"{e!s}"
                         ),
                     ) from e
                 except Exception as e:
                     logger.warning(f"Quality metrics calculation failed: {e}")
                     raise HTTPException(
                         status_code=500,
-                        detail=f"Quality metrics calculation failed: {str(e)}",
+                        detail=f"Quality metrics calculation failed: {e!s}",
                     ) from e
             else:
                 # Quality metrics not available - return error for requested metrics
@@ -1620,7 +1977,7 @@ async def analyze(
 
     except Exception as e:
         logger.error(f"Analysis error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {e!s}")
 
 
 @router.post("/remove-artifacts", response_model=ArtifactRemovalResponse)
@@ -1638,7 +1995,6 @@ async def remove_artifacts(
 
     from ..models_additional import (
         ArtifactDetection,
-        ArtifactRemovalRequest,
         ArtifactRemovalResponse,
     )
 
@@ -1672,13 +2028,10 @@ async def remove_artifacts(
         audio, sample_rate = sf.read(audio_path)
 
         # Convert to mono if stereo
-        if len(audio.shape) > 1:
-            audio_mono = np.mean(audio, axis=1)
-        else:
-            audio_mono = audio
+        audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
         # Detect artifacts
-        artifacts_detected: List[ArtifactDetection] = []
+        artifacts_detected: list[ArtifactDetection] = []
         artifact_types_to_check = req.artifact_types or [
             "clicks",
             "pops",
@@ -1740,7 +2093,7 @@ async def remove_artifacts(
                             start = clipping_samples[i]
                     clipping_regions.append((start, clipping_samples[-1]))
 
-                    for start_idx, end_idx in clipping_regions[
+                    for start_idx, _end_idx in clipping_regions[
                         :5
                     ]:  # Limit to first 5 regions
                         artifacts_detected.append(
@@ -1824,7 +2177,6 @@ async def remove_artifacts(
 
             if not req.preview and len(artifacts_detected) > 0:
                 # Determine repair strategy from preset
-                repair_strategy = req.repair_preset or "comprehensive"
 
                 # Apply artifact removal
                 repaired_audio = remove_artifacts_func(audio_mono, sample_rate)
@@ -1888,7 +2240,7 @@ async def remove_artifacts(
     except Exception as e:
         logger.error(f"Artifact removal error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Artifact removal failed: {str(e)}"
+            status_code=500, detail=f"Artifact removal failed: {e!s}"
         ) from e
 
 
@@ -2059,7 +2411,7 @@ async def analyze_voice_characteristics_endpoint(
     except Exception as e:
         logger.error(f"Voice characteristic analysis error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Voice characteristic analysis failed: {str(e)}"
+            status_code=500, detail=f"Voice characteristic analysis failed: {e!s}"
         ) from e
 
 
@@ -2166,7 +2518,7 @@ async def prosody_control(req: ProsodyControlRequest) -> ProsodyControlResponse:
         except Exception as e:
             logger.error(f"Prosody control processing error: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Prosody control processing failed: {str(e)}"
+                status_code=500, detail=f"Prosody control processing failed: {e!s}"
             )
 
     except HTTPException:
@@ -2174,7 +2526,7 @@ async def prosody_control(req: ProsodyControlRequest) -> ProsodyControlResponse:
     except Exception as e:
         logger.error(f"Prosody control error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Prosody control failed: {str(e)}"
+            status_code=500, detail=f"Prosody control failed: {e!s}"
         ) from e
 
 
@@ -2475,7 +2827,7 @@ async def post_process_pipeline(
             except Exception as e:
                 logger.error(f"Image post-processing failed: {e}", exc_info=True)
                 raise HTTPException(
-                    status_code=500, detail=f"Image post-processing failed: {str(e)}"
+                    status_code=500, detail=f"Image post-processing failed: {e!s}"
                 )
 
         # Process video
@@ -2694,7 +3046,7 @@ async def post_process_pipeline(
             except Exception as e:
                 logger.error(f"Video post-processing failed: {e}", exc_info=True)
                 raise HTTPException(
-                    status_code=500, detail=f"Video post-processing failed: {str(e)}"
+                    status_code=500, detail=f"Video post-processing failed: {e!s}"
                 )
 
     except HTTPException:
@@ -2702,22 +3054,23 @@ async def post_process_pipeline(
     except Exception as e:
         logger.error(f"Post-processing pipeline error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Post-processing pipeline failed: {str(e)}"
+            status_code=500, detail=f"Post-processing pipeline failed: {e!s}"
         ) from e
 
 
 @router.post("/clone", response_model=VoiceCloneResponse)
 async def clone(
-    reference_audio: List[UploadFile] = File(...),
-    text: Optional[str] = Form(None),
+    reference_audio: list[UploadFile] = File(...),
+    text: str | None = Form(None),
     engine: str = Form("xtts"),
     quality_mode: str = Form("standard"),
     enhance_quality: bool = Form(False),
     use_multi_reference: bool = Form(False),
     use_rvc_postprocessing: bool = Form(False),
     language: str = Form("en"),
-    prosody_params: Optional[str] = Form(None),
-    project_id: Optional[str] = Form(None),
+    prosody_params: str | None = Form(None),
+    project_id: str | None = Form(None),
+    profile_name: str | None = Form(None),
 ) -> VoiceCloneResponse:
     """
     Clone voice from reference audio and optionally synthesize text with advanced features.
@@ -2772,7 +3125,12 @@ async def clone(
         elif not valid_engines:
             # No engines available - this is a configuration issue
             logger.warning(
-                "No engines available - engine router not initialized or no engines loaded"
+                "No engines available - engine router not initialized or no engines loaded",
+                extra=_log_context(
+                    operation="clone",
+                    requested_engine=requested_engine,
+                    quality_mode=quality_mode,
+                ),
             )
 
         # Validate quality mode
@@ -2783,26 +3141,84 @@ async def clone(
                 detail=f"Invalid quality_mode. Must be one of: {', '.join(valid_modes)}",
             )
 
-        # Save and validate reference audio(s)
-        ref_paths: List[str] = []
+        # Save and validate reference audio(s) - accepts video files for audio extraction
+        ref_paths: list[str] = []
         reference_files = reference_audio or []
         for ref_file in reference_files:
             content = await ref_file.read()
             try:
-                validate_audio_file(content, filename=ref_file.filename)
+                file_info = validate_media_for_audio_extraction(content, filename=ref_file.filename)
+                is_video_or_non_wav = file_info.category == FileCategory.VIDEO or file_info.extension not in ("wav", "wave")
             except FileValidationError as e:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid reference audio file '{ref_file.filename}': {e.message}",
                 ) from e
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+
+            # Save to temp file
+            original_ext = os.path.splitext(ref_file.filename or "audio.wav")[1] or ".wav"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=original_ext) as tmp_file:
                 tmp_file.write(content)
-                ref_paths.append(tmp_file.name)
+                tmp_path = tmp_file.name
+
+            # Convert to WAV if needed (video files or non-WAV audio)
+            if is_video_or_non_wav:
+                wav_path = tmp_path.rsplit(".", 1)[0] + ".wav"
+                try:
+                    from pathlib import Path
+
+                    from backend.core.audio.conversion import get_conversion_service
+
+                    conversion_service = get_conversion_service()
+                    result = await conversion_service.convert_to_wav(
+                        input_path=Path(tmp_path),
+                        output_path=Path(wav_path),
+                        sample_rate=44100,
+                        channels=2,
+                        bit_depth=16,
+                    )
+
+                    if result.success:
+                        ref_paths.append(wav_path)
+                        # Clean up original temp file
+                        with contextlib.suppress(OSError):
+                            os.unlink(tmp_path)
+                        logger.info(
+                            "Converted reference audio '%s' to WAV for cloning",
+                            ref_file.filename,
+                        )
+                    else:
+                        # Conversion failed - use original (may not work with cloning)
+                        ref_paths.append(tmp_path)
+                        logger.warning(
+                            "Audio conversion failed for '%s': %s (using original)",
+                            ref_file.filename,
+                            result.error,
+                        )
+                except ImportError:
+                    ref_paths.append(tmp_path)
+                    logger.warning("AudioConversionService not available; using original format")
+                except Exception as conv_error:
+                    ref_paths.append(tmp_path)
+                    logger.warning(
+                        "Conversion failed for '%s', using original: %s",
+                        ref_file.filename,
+                        conv_error,
+                    )
+            else:
+                ref_paths.append(tmp_path)
         ref_path = ref_paths[0] if ref_paths else None
 
         try:
             # Use a stable, non-process-random identifier (built-in hash() is salted per process).
-            profile_id = f"clone_{uuid.uuid4().hex[:12]}"
+            # If profile_name is provided, use it as part of the ID (sanitized)
+            if profile_name:
+                # Sanitize profile name for use in ID (alphanumeric and dashes only)
+                import re
+                sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "_", profile_name.strip())[:32]
+                profile_id = f"{sanitized_name}_{uuid.uuid4().hex[:8]}"
+            else:
+                profile_id = f"clone_{uuid.uuid4().hex[:12]}"
 
             # If engines are available and text is provided, synthesize
             if ENGINE_AVAILABLE and engine_router and text:
@@ -2841,11 +3257,11 @@ async def clone(
                                 logger.warning(f"Failed to parse prosody_params: {e}")
 
                         # Use clone_voice if available, otherwise use synthesize
-                        output_path: Optional[str] = None
+                        output_path: str | None = None
                         if hasattr(engine_instance, "clone_voice"):
                             output_path = tempfile.mktemp(suffix=".wav")
                             if use_multi_reference and len(ref_paths) > 1:
-                                reference_audio_arg: Union[str, List[str]] = ref_paths
+                                reference_audio_arg: Union[str, list[str]] = ref_paths
                             else:
                                 reference_audio_arg = (
                                     ref_paths[0] if ref_paths else ref_path
@@ -2870,7 +3286,16 @@ async def clone(
                                 clone_kwargs["enhance_quality"] = True
 
                             logger.info(
-                                f"Calling clone_voice with output_path={output_path}"
+                                f"Calling clone_voice with output_path={output_path}",
+                                extra=_log_context(
+                                    operation="clone",
+                                    engine=engine_id,
+                                    quality_mode=quality_mode,
+                                    profile_id=profile_id,
+                                    text_length=len(text) if text else 0,
+                                    multi_reference=use_multi_reference,
+                                    rvc_postprocessing=use_rvc_postprocessing,
+                                ),
                             )
                             result = engine_instance.clone_voice(**clone_kwargs)
                             candidate_metrics = getattr(
@@ -2971,7 +3396,14 @@ async def clone(
                         logger.info(
                             f"Clone synthesis result: file_written={file_written}, "
                             f"output_path={output_path}, has_output_path={output_path is not None}, "
-                            f"output_path_exists={os.path.exists(output_path) if output_path else False}"
+                            f"output_path_exists={os.path.exists(output_path) if output_path else False}",
+                            extra=_log_context(
+                                operation="clone",
+                                engine=engine_id,
+                                profile_id=profile_id,
+                                file_written=file_written,
+                                output_path=output_path,
+                            ),
                         )
 
                         # Extract detailed quality metrics (when available)
@@ -3095,7 +3527,7 @@ async def clone(
                                         )
                                     raise HTTPException(
                                         status_code=500,
-                                        detail=f"Failed to save project audio: {str(e)}",
+                                        detail=f"Failed to save project audio: {e!s}",
                                     )
                             if cached_path != output_path and os.path.exists(
                                 output_path
@@ -3158,7 +3590,7 @@ async def clone(
         raise
     except Exception as e:
         logger.error(f"Cloning error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Cloning failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Cloning failed: {e!s}")
 
 
 @router.get("/audio/{audio_id}")
@@ -3176,10 +3608,8 @@ async def get_audio(audio_id: str):
 
     if not os.path.exists(file_path):
         # Clean up invalid entry
-        if audio_id in _audio_storage:
-            del _audio_storage[audio_id]
-        if audio_id in _audio_storage_timestamps:
-            del _audio_storage_timestamps[audio_id]
+        _audio_storage.pop(audio_id, None)
+        _audio_storage_timestamps.pop(audio_id, None)
         raise HTTPException(status_code=404, detail="Audio file not found on disk")
 
     return FileResponse(
@@ -3196,13 +3626,13 @@ async def synthesize_with_style(
     profile_id: str,
     engine: str = "openvoice",
     language: str = "en",
-    emotion: Optional[str] = None,
-    accent: Optional[str] = None,
-    rhythm: Optional[float] = None,
-    pauses: Optional[str] = None,  # JSON string of pause positions and durations
-    pitch_shift: Optional[float] = None,
-    pitch_variance: Optional[float] = None,
-    energy: Optional[float] = None,
+    emotion: str | None = None,
+    accent: str | None = None,
+    rhythm: float | None = None,
+    pauses: str | None = None,  # JSON string of pause positions and durations
+    pitch_shift: float | None = None,
+    pitch_variance: float | None = None,
+    energy: float | None = None,
     enhance_quality: bool = True,
     calculate_quality: bool = True,
 ):
@@ -3265,7 +3695,7 @@ async def synthesize_with_style(
 
         # Synthesize with style
         output_path = tempfile.mktemp(suffix=".wav")
-        audio = engine_instance.synthesize_with_style(
+        engine_instance.synthesize_with_style(
             text=text,
             speaker_wav=profile_audio_path,
             language=language,
@@ -3323,7 +3753,7 @@ async def synthesize_with_style(
         raise
     except Exception as e:
         logger.error(f"Style synthesis error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Synthesis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Synthesis failed: {e!s}")
 
 
 @router.post("/ab-test", response_model=ABTestResponse)
@@ -3358,7 +3788,7 @@ async def ab_test(request: ABTestRequest) -> ABTestResponse:
 
         # Helper function to synthesize one sample
         async def synthesize_sample(
-            engine_name: str, emotion: Optional[str], enhance_quality: bool, label: str
+            engine_name: str, emotion: str | None, enhance_quality: bool, label: str
         ) -> ABTestResult:
             """Synthesize one sample for A/B test."""
             # Create synthesis request
@@ -3452,7 +3882,7 @@ async def ab_test(request: ABTestRequest) -> ABTestResponse:
         raise
     except Exception as e:
         logger.error(f"A/B test failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"A/B test failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"A/B test failed: {e!s}")
 
 
 @router.post("/synthesize/cross-lingual")
@@ -3559,7 +3989,7 @@ async def synthesize_cross_lingual(
         raise
     except Exception as e:
         logger.error(f"Cross-lingual synthesis error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Synthesis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Synthesis failed: {e!s}")
 
 
 # Engines that support streaming synthesis
@@ -3582,17 +4012,17 @@ def _engine_supports_streaming(engine_instance: Any) -> bool:
 
 
 @router.get("/streaming/capabilities")
-async def get_streaming_capabilities() -> Dict[str, Any]:
+async def get_streaming_capabilities() -> dict[str, Any]:
     """
     Get streaming synthesis capabilities.
-    
+
     Returns information about which engines support streaming synthesis,
     WebSocket endpoint URL, and streaming parameters.
-    
+
     C.2 Enhancement: Streaming capability discovery endpoint.
     """
     available_streaming_engines = []
-    
+
     if ENGINE_AVAILABLE and engine_router:
         for engine_id in STREAMING_ENGINES:
             try:
@@ -3613,7 +4043,7 @@ async def get_streaming_capabilities() -> Dict[str, Any]:
             except Exception as e:
                 # Engine check failed - skip this engine silently as this is a capability probe
                 logger.debug(f"Failed to check streaming capability for {engine_id}: {e}")
-    
+
     return {
         "websocket_endpoint": "/api/voice/synthesize/stream",
         "streaming_engines": list(STREAMING_ENGINES),
@@ -3625,24 +4055,24 @@ async def get_streaming_capabilities() -> Dict[str, Any]:
 
 
 @router.get("/streaming/capabilities/{engine_id}")
-async def get_engine_streaming_capability(engine_id: str) -> Dict[str, Any]:
+async def get_engine_streaming_capability(engine_id: str) -> dict[str, Any]:
     """
     Check if a specific engine supports streaming.
-    
+
     C.2 Enhancement: Per-engine streaming capability check.
     """
     if not ENGINE_AVAILABLE or not engine_router:
         raise HTTPException(status_code=503, detail="Engine system not available")
-    
+
     engine_instance = engine_router.get_engine(engine_id)
     if engine_instance is None:
         raise HTTPException(status_code=404, detail=f"Engine '{engine_id}' not found")
-    
+
     supports_streaming = _engine_supports_streaming(engine_instance)
     supports_batch = hasattr(engine_instance, "synthesize") and callable(
         getattr(engine_instance, "synthesize", None)
     )
-    
+
     return {
         "engine_id": engine_id,
         "supports_streaming": supports_streaming,
@@ -3676,7 +4106,7 @@ async def _stream_synthesis_chunks(
     engine_instance: Any,
     engine_id: str,
     text: str,
-    profile_audio_path: Optional[str],
+    profile_audio_path: str | None,
     language: str,
     chunk_size: int,
     overlap: int,
@@ -3684,7 +4114,7 @@ async def _stream_synthesis_chunks(
 ) -> None:
     """
     Stream audio chunks from an engine's synthesize_stream method.
-    
+
     Handles both generator and async generator streaming modes.
     """
     sample_rate = _get_engine_sample_rate(engine_instance, engine_id)
@@ -3745,7 +4175,7 @@ async def _stream_synthesis_chunks(
     except Exception as e:
         logger.error(f"Streaming error for {engine_id}: {e}", exc_info=True)
         await websocket.send_json(
-            {"type": "error", "message": f"Streaming failed: {str(e)}"}
+            {"type": "error", "message": f"Streaming failed: {e!s}"}
         )
 
 
@@ -3820,7 +4250,6 @@ async def synthesize_stream(websocket: WebSocket):
         )
 
         engine_instance = None
-        current_engine_id = None
 
         while True:
             # Receive request
@@ -3858,7 +4287,6 @@ async def synthesize_stream(websocket: WebSocket):
                     )
                     continue
 
-                current_engine_id = engine_id
 
                 # Check if engine supports streaming
                 if not _engine_supports_streaming(engine_instance):
@@ -3892,7 +4320,7 @@ async def synthesize_stream(websocket: WebSocket):
                         except Exception as e:
                             logger.error(f"Synthesis error: {e}", exc_info=True)
                             await websocket.send_json(
-                                create_error(f"Synthesis failed: {str(e)}", code=ErrorCode.ENGINE_ERROR)
+                                create_error(f"Synthesis failed: {e!s}", code=ErrorCode.ENGINE_ERROR)
                             )
                         continue
                     else:
@@ -3956,7 +4384,7 @@ async def synthesize_stream(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}", exc_info=True)
         try:
             await websocket.send_json(
-                create_error(f"WebSocket error: {str(e)}", code=ErrorCode.INTERNAL_ERROR)
+                create_error(f"WebSocket error: {e!s}", code=ErrorCode.INTERNAL_ERROR)
             )
         except Exception as send_err:
             logger.debug(f"Could not send error to WebSocket client: {send_err}")

@@ -18,11 +18,13 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using VoiceStudio.App.Logging;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Events;
 
 namespace VoiceStudio.App.Views.Panels
 {
   // GAP-005: Updated to inherit from BaseViewModel for standardized error handling
-  public partial class ProfilesViewModel : BaseViewModel, IPanelView
+  // Backend-Frontend Integration Plan - Phase 2: Implements state persistence.
+  public partial class ProfilesViewModel : BaseViewModel, IPanelView, IPanelStatePersistable
   {
     private readonly IBackendClient _backendClient;
     private readonly IProfilesUseCase _profilesUseCase;
@@ -31,6 +33,8 @@ namespace VoiceStudio.App.Views.Panels
     private readonly UndoRedoService? _undoRedoService;
     private readonly IErrorPresentationService? _errorService;
     private readonly IErrorLoggingService? _logService;
+    private readonly IEventAggregator? _eventAggregator;
+    private readonly IContextManager? _contextManager;
 
     public string PanelId => "profiles";
     public string DisplayName => ResourceHelper.GetString("Panel.Profiles.DisplayName", "Profiles");
@@ -100,6 +104,16 @@ namespace VoiceStudio.App.Views.Panels
 
     [ObservableProperty]
     private double? previewQualityScore;
+
+    // View and sort state (Phase 2 - Backend-Frontend Integration Plan)
+    [ObservableProperty]
+    private string viewMode = "Grid";
+
+    [ObservableProperty]
+    private string? sortColumn;
+
+    [ObservableProperty]
+    private bool sortDescending;
 
     // Reference audio enhancement
     [ObservableProperty]
@@ -220,6 +234,8 @@ namespace VoiceStudio.App.Views.Panels
 
       _errorService = errorService;
       _logService = logService;
+      _eventAggregator = AppServices.TryGetEventAggregator();
+      _contextManager = AppServices.TryGetContextManager();
 
       LoadProfilesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -608,6 +624,10 @@ namespace VoiceStudio.App.Views.Panels
           SelectedProfile = newProfile;
           UpdateAvailableFilters();
           ApplyFilters();
+
+          // Publish profile created event for cross-panel synchronization (Phase 4)
+          _eventAggregator?.Publish(new ProfileCreatedEvent(PanelId, newProfile.Id, newProfile.Name ?? duplicateName));
+
           var message = string.Format(
               ResourceHelper.GetString("Profile.DuplicateSuccess", "Duplicated {0}"),
               duplicateName);
@@ -671,6 +691,17 @@ namespace VoiceStudio.App.Views.Panels
         SelectedProfile = updated;
         UpdateAvailableFilters();
         ApplyFilters();
+
+        // Publish profile updated event for cross-panel synchronization (Phase 4)
+        if (updated != null)
+        {
+          _eventAggregator?.Publish(new ProfileUpdatedEvent(PanelId, updated.Id, new Dictionary<string, object>
+          {
+            { "Name", updated.Name ?? "" },
+            { "Language", updated.Language ?? "" },
+            { "Emotion", updated.Emotion ?? "" }
+          }));
+        }
 
         _toastNotificationService?.ShowSuccess(
             ResourceHelper.GetString("Profile.UpdateSuccess", "Profile updated"),
@@ -1016,6 +1047,9 @@ namespace VoiceStudio.App.Views.Panels
           _undoRedoService.RegisterAction(action);
         }
 
+        // Publish profile created event for cross-panel synchronization (Phase 4)
+        _eventAggregator?.Publish(new ProfileCreatedEvent(PanelId, profile.Id, profile.Name ?? name!));
+
         // Show success toast
         _toastNotificationService?.ShowSuccess(
             ResourceHelper.FormatString("Success.ProfileCreated", name ?? string.Empty),
@@ -1099,6 +1133,9 @@ namespace VoiceStudio.App.Views.Panels
               _undoRedoService.RegisterAction(action);
             }
 
+            // Publish profile deleted event for cross-panel synchronization (Phase 4)
+            _eventAggregator?.Publish(new ProfileDeletedEvent(PanelId, profileId));
+
             // Show success toast
             _toastNotificationService?.ShowSuccess(
                 ResourceHelper.FormatString("Success.ProfileDeleted", profileName),
@@ -1137,6 +1174,25 @@ namespace VoiceStudio.App.Views.Panels
     {
       CanPreview = SelectedProfile != null;
       PreviewProfileCommand.NotifyCanExecuteChanged();
+
+      // Use ContextManager for centralized profile state (Panel Architecture Phase 2)
+      // Falls back to direct event publishing if context manager unavailable
+      if (value != null)
+      {
+        if (_contextManager != null)
+        {
+          _contextManager.SetActiveProfile(value.Id, value.Name, InteractionIntent.Navigation);
+        }
+        else
+        {
+          _eventAggregator?.Publish(new ProfileSelectedEvent(PanelId, value.Id, value.Name));
+        }
+      }
+      else if (_contextManager != null)
+      {
+        // Clear the active profile when deselected
+        _contextManager.SetActiveProfile(null, null);
+      }
 
       // Cancel any pending profile change operations to avoid race conditions
       try
@@ -2006,5 +2062,98 @@ namespace VoiceStudio.App.Views.Panels
         LoadQualityBaselineCommand.NotifyCanExecuteChanged();
       }
     }
+
+    #region IPanelStatePersistable Implementation
+
+    /// <summary>
+    /// Gets the current panel state for persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public PanelStateData? GetCurrentState()
+    {
+      try
+      {
+        var state = new PanelStateData
+        {
+          PanelId = PanelId,
+          SelectedItemId = SelectedProfile?.Id,
+          SearchText = SearchQuery,
+          CapturedAt = DateTime.UtcNow,
+          CustomData = new Dictionary<string, object>()
+        };
+
+        // Store filter states
+        if (!string.IsNullOrEmpty(SelectedLanguage))
+          state.CustomData["SelectedLanguage"] = SelectedLanguage;
+        if (!string.IsNullOrEmpty(SelectedEmotion))
+          state.CustomData["SelectedEmotion"] = SelectedEmotion;
+        if (!string.IsNullOrEmpty(SelectedQualityRange))
+          state.CustomData["SelectedQualityRange"] = SelectedQualityRange;
+
+        // Store view mode
+        state.CustomData["ViewMode"] = ViewMode;
+
+        // Store sort state
+        state.SortColumn = SortColumn;
+        state.SortDescending = SortDescending;
+
+        return state;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Failed to get ProfilesViewModel state: {ex.Message}");
+        return null;
+      }
+    }
+
+    /// <summary>
+    /// Restores panel state from persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public async Task RestoreStateAsync(PanelStateData state, CancellationToken cancellationToken = default)
+    {
+      if (state == null) return;
+
+      try
+      {
+        // Restore search query
+        if (!string.IsNullOrEmpty(state.SearchText))
+          SearchQuery = state.SearchText;
+
+        // Restore filter states
+        if (state.CustomData?.TryGetValue("SelectedLanguage", out var lang) == true && lang is string langStr)
+          SelectedLanguage = langStr;
+        if (state.CustomData?.TryGetValue("SelectedEmotion", out var emotion) == true && emotion is string emotionStr)
+          SelectedEmotion = emotionStr;
+        if (state.CustomData?.TryGetValue("SelectedQualityRange", out var quality) == true && quality is string qualityStr)
+          SelectedQualityRange = qualityStr;
+
+        // Restore view mode
+        if (state.CustomData?.TryGetValue("ViewMode", out var viewMode) == true && viewMode is string viewModeStr)
+          ViewMode = viewModeStr;
+
+        // Restore sort state
+        if (!string.IsNullOrEmpty(state.SortColumn))
+          SortColumn = state.SortColumn;
+        if (state.SortDescending.HasValue)
+          SortDescending = state.SortDescending.Value;
+
+        // Restore profile selection (need profiles to be loaded first)
+        if (!string.IsNullOrEmpty(state.SelectedItemId))
+        {
+          var profile = Profiles.FirstOrDefault(p => p.Id == state.SelectedItemId);
+          if (profile != null)
+            SelectedProfile = profile;
+        }
+
+        await Task.CompletedTask;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Failed to restore ProfilesViewModel state: {ex.Message}");
+      }
+    }
+
+    #endregion
   }
 }

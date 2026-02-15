@@ -14,6 +14,7 @@ from tools.overseer.issues.models import (
     IssueSeverity,
     IssueStatus,
 )
+from tools.overseer.issues.pattern_matcher import FailurePattern
 from tools.overseer.issues.recommendation_engine import (
     assess_risk,
     generate_recommendations,
@@ -21,8 +22,7 @@ from tools.overseer.issues.recommendation_engine import (
     record_recommendation_outcome,
     suggest_actions,
 )
-from tools.overseer.issues.store import IssueStore, get_feedback_file_path
-from tools.overseer.issues.pattern_matcher import FailurePattern
+from tools.overseer.issues.store import IssueStore
 
 
 def _issue(

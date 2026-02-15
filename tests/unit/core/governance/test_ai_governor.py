@@ -5,7 +5,6 @@ Tests AI governance functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestAIGovernorClasses:
     def test_ai_governor_class_exists(self):
         """Test AIGovernor class exists."""
         if hasattr(ai_governor, "AIGovernor"):
-            cls = getattr(ai_governor, "AIGovernor")
+            cls = ai_governor.AIGovernor
             assert isinstance(cls, type), "AIGovernor should be a class"
 
 

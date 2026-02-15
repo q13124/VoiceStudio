@@ -16,7 +16,6 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # Fix Windows console encoding for emoji
 if sys.platform == "win32":
@@ -116,11 +115,11 @@ class MockCodeDetector:
 
     def __init__(self, strict: bool = False):
         self.strict = strict
-        self.issues: List[Dict] = []
+        self.issues: list[dict] = []
         self.file_count = 0
         self.issue_count = 0
 
-    def check_file(self, file_path: Path) -> List[Dict]:
+    def check_file(self, file_path: Path) -> list[dict]:
         """Check a single file for mock code patterns."""
         issues = []
 
@@ -178,12 +177,9 @@ class MockCodeDetector:
                 return True
 
         # Allow documentation examples
-        if "# Example:" in line or "// Example:" in line:
-            return True
+        return bool("# Example:" in line or "// Example:" in line)
 
-        return False
-
-    def check_directory(self, directory: Path) -> List[Dict]:
+    def check_directory(self, directory: Path) -> list[dict]:
         """Recursively check all code files in a directory."""
         all_issues = []
 
@@ -205,7 +201,7 @@ class MockCodeDetector:
 
         return all_issues
 
-    def print_report(self, issues: List[Dict]):
+    def print_report(self, issues: list[dict]):
         """Print a formatted report of all issues."""
         if not issues:
             print("\n[OK] No mock code or placeholders detected!")
@@ -217,7 +213,7 @@ class MockCodeDetector:
         warnings = [i for i in issues if i["severity"] == "warning"]
 
         print(f"\n{'='*80}")
-        print(f"Mock Code Detection Report")
+        print("Mock Code Detection Report")
         print(f"{'='*80}")
         print(f"Files checked: {self.file_count}")
         print(f"Total issues: {len(issues)}")
@@ -226,7 +222,7 @@ class MockCodeDetector:
         print(f"{'='*80}\n")
 
         # Group by file
-        by_file: Dict[str, List[Dict]] = {}
+        by_file: dict[str, list[dict]] = {}
         for issue in issues:
             file_path = issue["file"]
             if file_path not in by_file:

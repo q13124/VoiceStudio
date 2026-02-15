@@ -1,10 +1,13 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using VoiceStudio.App.Core.Audio;
 using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.Services;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Services;
 
@@ -335,11 +338,41 @@ namespace VoiceStudio.App.Commands
             }
         }
 
+        private static void FileLog(string msg)
+        {
+            var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoiceStudio", "import_debug.log");
+            // ALLOWED: empty catch - Best effort debug logging, failure is acceptable
+            try { System.IO.File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}{Environment.NewLine}"); } catch { }
+        }
+
         public async Task ImportAudioAsync(CancellationToken ct = default)
         {
-            var files = await _dialogService.ShowOpenFilesAsync(
-                "Import Audio Files",
-                ".wav", ".mp3", ".flac", ".ogg", ".m4a");
+            Debug.WriteLine("[FileOperationsHandler] ImportAudioAsync called");
+            FileLog("[FileOperationsHandler] ImportAudioAsync called");
+            
+            string[]? files;
+            try
+            {
+                Debug.WriteLine("[FileOperationsHandler] Calling ShowOpenFilesAsync...");
+                FileLog("[FileOperationsHandler] Calling ShowOpenFilesAsync...");
+                // Use centralized format list for all supported audio formats
+                files = await _dialogService.ShowOpenFilesAsync(
+                    "Import Audio Files",
+                    AudioFileFormats.ImportExtensions.ToArray());
+                Debug.WriteLine($"[FileOperationsHandler] ShowOpenFilesAsync returned: {(files == null ? "null" : $"{files.Length} files")}");
+                FileLog($"[FileOperationsHandler] ShowOpenFilesAsync returned: {(files == null ? "null" : $"{files.Length} files")}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FileOperationsHandler] ShowOpenFilesAsync EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                FileLog($"[FileOperationsHandler] ShowOpenFilesAsync EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                FileLog($"[FileOperationsHandler] Stack: {ex.StackTrace}");
+                if (ex is System.Runtime.InteropServices.COMException comEx)
+                {
+                    FileLog($"[FileOperationsHandler] COM HResult: 0x{comEx.HResult:X8}");
+                }
+                throw;
+            }
 
             if (files == null || files.Length == 0)
             {
@@ -378,6 +411,14 @@ namespace VoiceStudio.App.Commands
                             {
                                 await _backendClient.SaveAudioToProjectAsync(_currentProject.Id, result.Id, fileName, ct);
                             }
+
+                            // Publish AssetAddedEvent so Library and other panels refresh
+                            var eventAggregator = AppServices.TryGetEventAggregator();
+                            eventAggregator?.Publish(new AssetAddedEvent(
+                                "file-operations",
+                                result.Id,
+                                "audio",
+                                files[i]));
                         }
                         else
                         {
@@ -418,10 +459,11 @@ namespace VoiceStudio.App.Commands
                 return;
             }
 
+            // Use centralized format list for all supported export formats
             var path = await _dialogService.ShowSaveFileAsync(
                 "Export Audio",
                 $"{_currentProject.Name}.wav",
-                ".wav", ".mp3", ".flac");
+                AudioFileFormats.ExportExtensions.ToArray());
 
             if (string.IsNullOrEmpty(path))
             {
@@ -442,13 +484,36 @@ namespace VoiceStudio.App.Commands
                 {
                     // Get audio files from project
                     var audioFiles = await _backendClient.ListProjectAudioAsync(_currentProject.Id, ct);
-                    progress.SetProgress(0.5);
+                    progress.SetProgress(0.4);
 
                     if (audioFiles.Count > 0)
                     {
                         // Export the first/main audio file
                         var mainAudio = audioFiles[0];
-                        using var audioStream = await _backendClient.GetProjectAudioAsync(_currentProject.Id, mainAudio.Filename, ct);
+                        
+                        // Determine target format from the selected file extension
+                        var targetExtension = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
+                        var sourceFilename = mainAudio.Filename;
+                        
+                        progress.SetMessage($"Converting to {targetExtension.ToUpperInvariant()}...");
+                        progress.SetProgress(0.5);
+
+                        // Get default bitrate for lossy formats
+                        var targetFormat = AudioFileFormats.GetFormatByExtension(targetExtension);
+                        int? bitrateKbps = null;
+                        if (targetFormat.HasValue)
+                        {
+                            var formatInfo = AudioFileFormats.GetInfo(targetFormat.Value);
+                            bitrateKbps = formatInfo.DefaultBitrateKbps;
+                        }
+
+                        // Use the new export API with format conversion
+                        using var audioStream = await _backendClient.ExportAudioAsync(
+                            source: mainAudio.AudioId ?? sourceFilename,
+                            targetFormat: targetExtension,
+                            bitrateKbps: bitrateKbps,
+                            cancellationToken: ct);
+                        
                         progress.SetProgress(0.75);
 
                         // Write to file
@@ -457,7 +522,7 @@ namespace VoiceStudio.App.Commands
                         progress.SetProgress(1.0);
 
                         _toastService?.ShowSuccess($"Audio exported to: {Path.GetFileName(path)}");
-                        Debug.WriteLine($"[FileOperationsHandler] Exported to: {path}");
+                        Debug.WriteLine($"[FileOperationsHandler] Exported to: {path} (format: {targetExtension})");
                     }
                     else
                     {
@@ -472,6 +537,11 @@ namespace VoiceStudio.App.Commands
                     _toastService?.ShowWarning("Export", "Backend service not available for export");
                     Debug.WriteLine("[FileOperationsHandler] Backend not available for export");
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FileOperationsHandler] Export failed: {ex.Message}");
+                _toastService?.ShowError("Export Failed", ex.Message);
             }
             finally
             {

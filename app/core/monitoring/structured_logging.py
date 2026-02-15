@@ -4,12 +4,14 @@ Structured Logging System
 Provides structured logging with JSON format, log aggregation, and enhanced context.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class StructuredFormatter(logging.Formatter):
@@ -27,7 +29,7 @@ class StructuredFormatter(logging.Formatter):
         include_function: bool = True,
         include_line: bool = True,
         include_traceback: bool = True,
-        extra_fields: Optional[Dict[str, Any]] = None,
+        extra_fields: dict[str, Any] | None = None,
     ):
         """
         Initialize structured formatter.
@@ -60,7 +62,7 @@ class StructuredFormatter(logging.Formatter):
         Returns:
             JSON-formatted log string
         """
-        log_data: Dict[str, Any] = {}
+        log_data: dict[str, Any] = {}
 
         # Timestamp
         if self.include_timestamp:
@@ -136,8 +138,8 @@ class StructuredLogger:
         name: str,
         level: int = logging.INFO,
         use_json: bool = True,
-        log_file: Optional[Path] = None,
-        extra_fields: Optional[Dict[str, Any]] = None,
+        log_file: Path | None = None,
+        extra_fields: dict[str, Any] | None = None,
     ):
         """
         Initialize structured logger.
@@ -180,7 +182,7 @@ class StructuredLogger:
 
         self.extra_fields = extra_fields or {}
 
-    def _add_context(self, **kwargs) -> Dict[str, Any]:
+    def _add_context(self, **kwargs) -> dict[str, Any]:
         """Add context to log record."""
         context = self.extra_fields.copy()
         context.update(kwargs)
@@ -214,8 +216,8 @@ class StructuredLogger:
 def setup_structured_logging(
     level: str = "INFO",
     use_json: bool = True,
-    log_file: Optional[Path] = None,
-    extra_fields: Optional[Dict[str, Any]] = None,
+    log_file: Path | None = None,
+    extra_fields: dict[str, Any] | None = None,
 ) -> StructuredLogger:
     """
     Setup structured logging for the application.
@@ -243,7 +245,7 @@ def setup_structured_logging(
 
 
 # Global structured logger instance
-_structured_logger: Optional[StructuredLogger] = None
+_structured_logger: StructuredLogger | None = None
 
 
 def get_structured_logger() -> StructuredLogger:

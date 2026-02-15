@@ -4,10 +4,11 @@ AI Assistant Action Execution Routes
 Endpoints for executing predefined actions through the AI assistant.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
 # In-memory action registry (replace with database in production)
-_action_registry: Dict[str, Dict] = {
+_action_registry: dict[str, dict] = {
     "synthesize": {
         "name": "Synthesize Voice",
         "description": "Generate voice synthesis from text",
@@ -216,7 +217,7 @@ async def run(req: AssistantRunRequest) -> dict:
     except Exception as e:
         logger.error(f"Assistant action execution failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Assistant action execution failed: {str(e)}"
+            status_code=500, detail=f"Assistant action execution failed: {e!s}"
         ) from e
 
 

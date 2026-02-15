@@ -9,6 +9,8 @@ Compatible with:
 - transformers 4.20.0+
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -17,7 +19,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -54,7 +55,7 @@ def _load_diffusers_pipeline():
         from diffusers import StableDiffusionPipeline
 
         return StableDiffusionPipeline
-    except Exception as exc:  # noqa: BLE001 - surface dependency issues clearly
+    except Exception as exc:
         raise RuntimeError(
             "DeforumEngine requires diffusers plus a compatible transformers/torch "
             "stack. Install or repair the Deforum environment (recommended: a "
@@ -93,7 +94,7 @@ class DeforumEngine(EngineProtocol):
     def __init__(
         self,
         model_id: str = "runwayml/stable-diffusion-v1-5",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         width: int = 512,
         height: int = 512,
@@ -248,13 +249,12 @@ class DeforumEngine(EngineProtocol):
         """Clean up resources and free memory (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if not self.enable_model_cache or (
+            if (not self.enable_model_cache or (
                 self._model_key is not None
                 and self._model_key not in self._model_cache
-            ):
-                if self.pipeline is not None:
-                    del self.pipeline
-                    self.pipeline = None
+            )) and self.pipeline is not None:
+                del self.pipeline
+                self.pipeline = None
 
             # Clear response cache
             if self.enable_response_cache:
@@ -274,7 +274,7 @@ class DeforumEngine(EngineProtocol):
     @classmethod
     def clear_model_cache(cls):
         """Clear the shared model cache."""
-        for key, pipeline in cls._model_cache.items():
+        for _key, pipeline in cls._model_cache.items():
             del pipeline
         cls._model_cache.clear()
         if torch.cuda.is_available():
@@ -283,12 +283,12 @@ class DeforumEngine(EngineProtocol):
 
     def _generate_cache_key(
         self,
-        prompts: Union[str, List[str], Dict[int, str]],
+        prompts: str | list[str] | dict[int, str],
         num_frames: int,
         fps: int,
-        seed: Optional[int],
-        keyframes: Optional[Dict[int, Dict]],
-        camera_motion: Optional[Dict],
+        seed: int | None,
+        keyframes: dict[int, dict] | None,
+        camera_motion: dict | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -310,20 +310,20 @@ class DeforumEngine(EngineProtocol):
             "width": self.width,
             "height": self.height,
             "num_inference_steps": self.num_inference_steps,
-            "kwargs": {k: v for k, v in kwargs.items()},
+            "kwargs": dict(kwargs.items()),
         }
         cache_str = json.dumps(cache_data, sort_keys=True)
         return hashlib.sha256(cache_str.encode()).hexdigest()
 
     def generate_animation(
         self,
-        prompts: Union[str, List[str], Dict[int, str]],
-        output_path: Optional[Union[str, Path]] = None,
+        prompts: str | list[str] | dict[int, str],
+        output_path: str | Path | None = None,
         num_frames: int = 120,
         fps: int = 24,
-        seed: Optional[int] = None,
-        keyframes: Optional[Dict[int, Dict]] = None,
-        camera_motion: Optional[Dict] = None,
+        seed: int | None = None,
+        keyframes: dict[int, dict] | None = None,
+        camera_motion: dict | None = None,
         **kwargs,
     ) -> str:
         """
@@ -343,9 +343,8 @@ class DeforumEngine(EngineProtocol):
             Path to generated video
         """
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Failed to initialize Deforum engine.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Failed to initialize Deforum engine.")
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -517,8 +516,8 @@ class DeforumEngine(EngineProtocol):
             raise RuntimeError(f"Failed to generate animation: {e}")
 
     def batch_generate_animations(
-        self, animations_config: List[Dict], batch_size: Optional[int] = None, **kwargs
-    ) -> List[Union[str, None]]:
+        self, animations_config: list[dict], batch_size: int | None = None, **kwargs
+    ) -> list[str | None]:
         """
         Generate multiple animations using batch processing.
 
@@ -541,9 +540,8 @@ class DeforumEngine(EngineProtocol):
             return []
 
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(animations_config)
+        if not self._initialized and not self.initialize():
+            return [None] * len(animations_config)
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -626,9 +624,9 @@ class DeforumEngine(EngineProtocol):
 
     def _parse_prompts(
         self,
-        prompts: Union[str, List[str], Dict[int, str]],
+        prompts: str | list[str] | dict[int, str],
         num_frames: int,
-    ) -> Dict[int, str]:
+    ) -> dict[int, str]:
         """Parse prompts into frame-based dictionary."""
         if isinstance(prompts, str):
             return {0: prompts, num_frames - 1: prompts}
@@ -642,16 +640,16 @@ class DeforumEngine(EngineProtocol):
             return prompts
 
     def _interpolate_prompt(
-        self, prompt_dict: Dict[int, str], frame: int, num_frames: int
+        self, prompt_dict: dict[int, str], frame: int, num_frames: int
     ) -> str:
         """Interpolate prompt between keyframes."""
         if frame in prompt_dict:
             return prompt_dict[frame]
 
         # Find surrounding keyframes
-        prev_frame = max([f for f in prompt_dict.keys() if f <= frame], default=0)
+        prev_frame = max([f for f in prompt_dict if f <= frame], default=0)
         next_frame = min(
-            [f for f in prompt_dict.keys() if f > frame], default=num_frames - 1
+            [f for f in prompt_dict if f > frame], default=num_frames - 1
         )
 
         if prev_frame == next_frame:
@@ -661,8 +659,8 @@ class DeforumEngine(EngineProtocol):
         return prompt_dict[prev_frame]
 
     def _interpolate_camera(
-        self, camera_motion: Dict, frame: int, num_frames: int
-    ) -> Dict:
+        self, camera_motion: dict, frame: int, num_frames: int
+    ) -> dict:
         """Interpolate camera motion parameters."""
         zoom_start = camera_motion.get("zoom_start", camera_motion.get("zoom", 1.0))
         zoom_end = camera_motion.get("zoom_end", zoom_start)
@@ -685,7 +683,7 @@ class DeforumEngine(EngineProtocol):
         }
 
     def _apply_camera_transform(
-        self, image: Image.Image, cam_params: Dict
+        self, image: Image.Image, cam_params: dict
     ) -> Image.Image:
         """Apply camera transform to image."""
         if not HAS_CV2:
@@ -717,14 +715,14 @@ class DeforumEngine(EngineProtocol):
 
         return Image.fromarray(img_array)
 
-    def _save_video(self, frames: List[Image.Image], output_path: str, fps: int):
+    def _save_video(self, frames: list[Image.Image], output_path: str, fps: int):
         """Save frames as video."""
         if HAS_CV2:
             self._save_video_cv2(frames, output_path, fps)
         else:
             self._save_video_pil(frames, output_path, fps)
 
-    def _save_video_cv2(self, frames: List[Image.Image], output_path: str, fps: int):
+    def _save_video_cv2(self, frames: list[Image.Image], output_path: str, fps: int):
         """Save frames as video using OpenCV."""
         if not HAS_CV2:
             raise ImportError("opencv-python required for video saving")
@@ -740,7 +738,7 @@ class DeforumEngine(EngineProtocol):
         finally:
             out.release()
 
-    def _save_video_pil(self, frames: List[Image.Image], output_path: str, fps: int):
+    def _save_video_pil(self, frames: list[Image.Image], output_path: str, fps: int):
         """Save frames as video using PIL/imageio fallback."""
         try:
             import imageio
@@ -750,7 +748,7 @@ class DeforumEngine(EngineProtocol):
         frame_arrays = [np.array(frame) for frame in frames]
         imageio.mimwrite(output_path, frame_arrays, fps=fps, codec="libx264", quality=8)
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_response_cache:
             return {"enabled": False}
@@ -780,7 +778,7 @@ class DeforumEngine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("Deforum response cache cleared")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -808,7 +806,7 @@ class DeforumEngine(EngineProtocol):
 
 def create_deforum_engine(
     model_id: str = "runwayml/stable-diffusion-v1-5",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
     width: int = 512,
     height: int = 512,

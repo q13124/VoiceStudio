@@ -5,15 +5,13 @@ Middleware to optimize request validation using cached schemas and early validat
 """
 
 import logging
-import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from ..validation_optimizer import (
-    clear_validation_cache,
     get_cache_stats,
     get_validation_stats,
 )

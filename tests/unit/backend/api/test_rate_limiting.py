@@ -5,7 +5,6 @@ Tests rate limiting functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestRateLimitingClasses:
     def test_rate_limiter_class_exists(self):
         """Test RateLimiter class exists."""
         if hasattr(rate_limiting, "RateLimiter"):
-            cls = getattr(rate_limiting, "RateLimiter")
+            cls = rate_limiting.RateLimiter
             assert isinstance(cls, type), "RateLimiter should be a class"
 
 

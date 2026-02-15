@@ -4,14 +4,15 @@ Authentication Routes
 Endpoints for authentication, token management, and user management.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pydantic import EmailStr
@@ -22,11 +23,8 @@ else:
     except ImportError:
         EmailStr = str  # type: ignore
 
-from ..auth import (Permission, User, UserRole, get_api_key_manager,
-                    get_jwt_manager)
-from ..error_handling import ErrorCodes
-from ..middleware.auth_middleware import (get_current_user,
-                                          require_authentication)
+from ..auth import User, UserRole, get_api_key_manager, get_jwt_manager
+from ..middleware.auth_middleware import require_authentication
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +37,8 @@ class LoginRequest(BaseModel):
     """Login request."""
 
     username: str
-    password: Optional[str] = None  # For future password support
-    api_key: Optional[str] = None
+    password: str | None = None  # For future password support
+    api_key: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -57,18 +55,18 @@ class UserResponse(BaseModel):
 
     user_id: str
     username: str
-    email: Optional[str] = None
+    email: str | None = None
     role: str
     is_active: bool
     created_at: str
-    last_login: Optional[str] = None
+    last_login: str | None = None
 
 
 class CreateUserRequest(BaseModel):
     """Create user request."""
 
     username: str
-    email: Optional[str] = None  # Using str instead of EmailStr to avoid email-validator dependency
+    email: str | None = None  # Using str instead of EmailStr to avoid email-validator dependency
     role: UserRole = UserRole.USER
     generate_api_key: bool = True
 
@@ -77,7 +75,7 @@ class CreateUserResponse(BaseModel):
     """Create user response."""
 
     user: UserResponse
-    api_key: Optional[str] = None  # Only returned on creation
+    api_key: str | None = None  # Only returned on creation
 
 
 @router.post("/login", response_model=TokenResponse)

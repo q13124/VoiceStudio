@@ -8,17 +8,18 @@ Compatible with:
 - PyTorch 2.2.2+cu121 (optional, for GPU)
 """
 
+from __future__ import annotations
+
 import logging
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
 
 # Optional audio utilities import
 try:
-    from ..audio.audio_utils import load_audio_file
+    from app.core.audio.audio_utils import load_audio_file
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -58,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
     _model_cache = get_model_cache(max_models=3, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -68,7 +69,7 @@ except ImportError:
 
 # Fallback: Whisper-specific cache (for backward compatibility)
 _MODEL_CACHE: OrderedDict = OrderedDict()
-_TRANSCRIPTION_CACHE: Dict[str, Dict] = {}
+_TRANSCRIPTION_CACHE: dict[str, dict] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_TRANSCRIPTION_CACHE_SIZE = 200  # Maximum number of transcriptions to cache
 
@@ -85,7 +86,7 @@ def _get_cached_model(model_name: str, device: str, compute_type: str):
         cached = _model_cache.get("whisper", model_name, device=device)
         if cached is not None:
             return cached
-    
+
     # Fallback to Whisper-specific cache
     cache_key = _get_cache_key(model_name, device, compute_type)
     if cache_key in _MODEL_CACHE:
@@ -104,18 +105,18 @@ def _cache_model(model_name: str, device: str, compute_type: str, model):
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to Whisper-specific cache
     cache_key = _get_cache_key(model_name, device, compute_type)
-    
+
     # Remove if already exists
     if cache_key in _MODEL_CACHE:
         _MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     # Add new model
     _MODEL_CACHE[cache_key] = model
-    
+
     # Evict oldest if cache full
     if len(_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, oldest_model = _MODEL_CACHE.popitem(last=False)
@@ -127,19 +128,19 @@ def _cache_model(model_name: str, device: str, compute_type: str, model):
             logger.debug(f"Evicted model from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting model from cache: {e}")
-    
+
     logger.debug(f"Cached model: {cache_key} (cache size: {len(_MODEL_CACHE)})")
 
 
 def _get_transcription_cache_key(
-    audio: Union[str, np.ndarray, Path],
-    language: Optional[str],
+    audio: str | np.ndarray | Path,
+    language: str | None,
     task: str,
     word_timestamps: bool,
-) -> Optional[str]:
+) -> str | None:
     """Generate cache key for transcription."""
     import hashlib
-    
+
     # For file paths, use file path + modification time
     if isinstance(audio, (str, Path)):
         audio_path = Path(audio)
@@ -147,22 +148,22 @@ def _get_transcription_cache_key(
             mtime = audio_path.stat().st_mtime
             key_data = f"{audio_path}::{mtime}::{language}::{task}::{word_timestamps}"
             return hashlib.md5(key_data.encode()).hexdigest()
-    
+
     # For numpy arrays, use hash of audio data
     if isinstance(audio, np.ndarray):
         audio_hash = hashlib.md5(audio.tobytes()).hexdigest()
         key_data = f"{audio_hash}::{language}::{task}::{word_timestamps}"
         return hashlib.md5(key_data.encode()).hexdigest()
-    
+
     return None
 
 
 def _get_cached_transcription(
-    audio: Union[str, np.ndarray, Path],
-    language: Optional[str],
+    audio: str | np.ndarray | Path,
+    language: str | None,
     task: str,
     word_timestamps: bool,
-) -> Optional[Dict]:
+) -> dict | None:
     """Get cached transcription if available."""
     cache_key = _get_transcription_cache_key(audio, language, task, word_timestamps)
     if cache_key:
@@ -171,37 +172,37 @@ def _get_cached_transcription(
 
 
 def _cache_transcription(
-    audio: Union[str, np.ndarray, Path],
-    language: Optional[str],
+    audio: str | np.ndarray | Path,
+    language: str | None,
     task: str,
     word_timestamps: bool,
-    result: Dict,
+    result: dict,
 ):
     """Cache transcription with LRU eviction."""
     cache_key = _get_transcription_cache_key(audio, language, task, word_timestamps)
     if not cache_key:
         return
-    
+
     # Remove if already exists
     if cache_key in _TRANSCRIPTION_CACHE:
         return
-    
+
     # Add new transcription
     _TRANSCRIPTION_CACHE[cache_key] = result
-    
+
     # Evict oldest if cache full
     if len(_TRANSCRIPTION_CACHE) > _MAX_TRANSCRIPTION_CACHE_SIZE:
         # Remove first item (oldest)
         oldest_key = next(iter(_TRANSCRIPTION_CACHE))
         del _TRANSCRIPTION_CACHE[oldest_key]
         logger.debug(f"Evicted transcription from cache: {oldest_key[:8]}")
-    
+
     logger.debug(f"Cached transcription: {cache_key[:8]} (cache size: {len(_TRANSCRIPTION_CACHE)})")
 
 
 # Try importing VAD (Voice Activity Detection)
 try:
-    from silero_vad import load_vad_model, get_speech_timestamps
+    from silero_vad import get_speech_timestamps, load_vad_model
     HAS_VAD = True
 except ImportError:
     HAS_VAD = False
@@ -324,7 +325,7 @@ class WhisperEngine(EngineProtocol):
     def __init__(
         self,
         model_name: str = "base",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         compute_type: str = "float16",
         lazy_load: bool = True,
@@ -365,12 +366,12 @@ class WhisperEngine(EngineProtocol):
             if compute_type not in ["int8", "float32"]:
                 self.compute_type = "int8"  # Default for CPU (faster)
 
-        self.model: Optional[WhisperModel] = None
+        self.model: WhisperModel | None = None
         self.lazy_load = lazy_load
         self.batch_size = batch_size
         self.enable_caching = enable_caching
         self.enable_vad = enable_vad and HAS_VAD
-        
+
         # VAD model (loaded on demand)
         self._vad_model = None
 
@@ -384,7 +385,7 @@ class WhisperEngine(EngineProtocol):
                 self.model = cached_model
                 self._initialized = True
                 return True
-        
+
         # Load model
         logger.info(
             f"Loading Whisper model: {self.model_name} on {self.whisper_device}"
@@ -403,30 +404,30 @@ class WhisperEngine(EngineProtocol):
         self._initialized = True
         logger.info("Whisper model loaded successfully")
         return True
-    
+
     def initialize(self) -> bool:
         """Initialize the Whisper model."""
         try:
             if self._initialized:
                 return True
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
                 logger.debug("Lazy loading enabled, model will be loaded on first use")
                 return True
-            
+
             return self._load_model()
 
         except Exception as e:
             logger.error(f"Failed to initialize Whisper model: {e}")
             self._initialized = False
             return False
-    
+
     def _load_vad_model(self):
         """Load VAD model if enabled."""
         if not self.enable_vad or not HAS_VAD:
             return None
-        
+
         if self._vad_model is None:
             try:
                 self._vad_model = load_vad_model(device=self.whisper_device)
@@ -434,21 +435,21 @@ class WhisperEngine(EngineProtocol):
             except Exception as e:
                 logger.warning(f"Failed to load VAD model: {e}")
                 self._vad_model = None
-        
+
         return self._vad_model
 
     def transcribe(
         self,
-        audio: Union[str, np.ndarray, Path],
-        language: Optional[str] = None,
+        audio: str | np.ndarray | Path,
+        language: str | None = None,
         task: str = "transcribe",
         word_timestamps: bool = False,
         beam_size: int = 5,
         best_of: int = 5,
-        temperature: Union[float, List[float]] = 0.0,
-        initial_prompt: Optional[str] = None,
+        temperature: float | list[float] = 0.0,
+        initial_prompt: str | None = None,
         condition_on_previous_text: bool = True,
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Transcribe audio to text.
 
@@ -473,9 +474,8 @@ class WhisperEngine(EngineProtocol):
             }
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                raise RuntimeError("Failed to load Whisper model")
+        if not self._initialized and not self._load_model():
+            raise RuntimeError("Failed to load Whisper model")
 
         try:
             # Check transcription cache
@@ -484,7 +484,7 @@ class WhisperEngine(EngineProtocol):
                 if cached_result is not None:
                     logger.debug("Using cached transcription")
                     return cached_result.copy()
-            
+
             # Load audio if path provided
             if isinstance(audio, (str, Path)):
                 audio_path = Path(audio)
@@ -577,55 +577,54 @@ class WhisperEngine(EngineProtocol):
             logger.debug(
                 f"Transcription complete: language={result['language']}, duration={result['duration']:.2f}s"
             )
-            
+
             # Cache transcription result
             if self.enable_caching:
                 _cache_transcription(audio, language, task, word_timestamps, result)
-            
+
             return result
 
         except Exception as e:
             logger.error(f"Transcription failed: {e}", exc_info=True)
             raise
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """Get list of supported language codes."""
         return self.SUPPORTED_LANGUAGES.copy()
 
     def batch_transcribe(
         self,
-        audio_files: List[Union[str, Path]],
-        language: Optional[str] = None,
+        audio_files: list[str | Path],
+        language: str | None = None,
         task: str = "transcribe",
         word_timestamps: bool = False,
         **kwargs
-    ) -> List[Dict[str, any]]:
+    ) -> list[dict[str, any]]:
         """
         Transcribe multiple audio files in batch.
-        
+
         Args:
             audio_files: List of audio file paths
             language: Language code (None for auto-detect)
             task: Task type ("transcribe" or "translate")
             word_timestamps: Whether to return word-level timestamps
             **kwargs: Additional transcription parameters
-        
+
         Returns:
             List of transcription results
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [{"error": "Failed to load model"}] * len(audio_files)
-        
+        if not self._initialized and not self._load_model():
+            return [{"error": "Failed to load model"}] * len(audio_files)
+
         results = []
-        
+
         # Process in batches for better GPU utilization
         batch_size = self.batch_size
         for batch_start in range(0, len(audio_files), batch_size):
             batch_files = audio_files[batch_start:batch_start + batch_size]
             batch_results = []
-            
+
             for audio_file in batch_files:
                 try:
                     result = self.transcribe(
@@ -639,25 +638,25 @@ class WhisperEngine(EngineProtocol):
                 except Exception as e:
                     logger.error(f"Batch transcription failed for {audio_file}: {e}")
                     batch_results.append({"error": str(e)})
-            
+
             results.extend(batch_results)
-            
+
             # Clear GPU cache periodically
             if torch.cuda.is_available() and (batch_start + batch_size) % (batch_size * 2) == 0:
                 torch.cuda.empty_cache()
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Transcription caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
+
     def enable_vad(self, enable: bool = True):
         """Enable or disable VAD optimization."""
         if enable and not HAS_VAD:
@@ -667,17 +666,17 @@ class WhisperEngine(EngineProtocol):
         if enable:
             self._load_vad_model()
         logger.info(f"VAD optimization {'enabled' if enable else 'disabled'}")
-    
-    def _get_memory_usage(self) -> Dict[str, float]:
+
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
-        
+
         return {
             "gpu_memory_mb": torch.cuda.get_device_properties(0).total_memory / 1024**2,
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
-    
+
     def cleanup(self):
         """Clean up resources."""
         if self.model is not None:
@@ -689,7 +688,7 @@ class WhisperEngine(EngineProtocol):
         self._initialized = False
         logger.info("Whisper engine cleaned up")
 
-    def get_info(self) -> Dict[str, any]:
+    def get_info(self) -> dict[str, any]:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -705,7 +704,7 @@ class WhisperEngine(EngineProtocol):
 
 
 def create_whisper_engine(
-    model_name: str = "base", device: Optional[str] = None, gpu: bool = True
+    model_name: str = "base", device: str | None = None, gpu: bool = True
 ) -> WhisperEngine:
     """
     Factory function to create a Whisper engine.

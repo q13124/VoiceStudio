@@ -2,8 +2,9 @@
 Unit tests for HalfCascadePipeline (Phase 11.3.1)
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.core.pipeline.half_cascade import HalfCascadePipeline
 

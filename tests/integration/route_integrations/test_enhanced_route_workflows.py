@@ -3,6 +3,7 @@ Integration Tests for Enhanced Route Workflows
 Tests route interactions and end-to-end workflows for routes enhanced with new library integrations.
 """
 
+import contextlib
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -171,27 +172,24 @@ class TestAnalyticsQualityWorkflow:
         audio_id = "test-audio-123"
 
         # Step 1: Set up audio storage
-        try:
+        with contextlib.suppress(AttributeError):
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
-        except AttributeError:
-            ...
 
         # Step 2: Get quality explanation
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.analytics._get_model_explainer"
-            ) as mock_get_explainer:
-                mock_explainer = MagicMock()
-                mock_explainer.get_available_methods.return_value = ["shap", "lime"]
-                mock_explainer.shap_available = True
-                mock_get_explainer.return_value = mock_explainer
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.analytics._get_model_explainer"
+        ) as mock_get_explainer:
+            mock_explainer = MagicMock()
+            mock_explainer.get_available_methods.return_value = ["shap", "lime"]
+            mock_explainer.shap_available = True
+            mock_get_explainer.return_value = mock_explainer
 
-                with patch("backend.api.routes.analytics._quality_history", {}):
-                    response = client.get(
-                        f"/api/analytics/explain-quality?audio_id={audio_id}"
-                    )
-                    # May succeed or fail depending on dependencies
-                    assert response.status_code in [200, 404, 500]
+            with patch("backend.api.routes.analytics._quality_history", {}):
+                response = client.get(
+                    f"/api/analytics/explain-quality?audio_id={audio_id}"
+                )
+                # May succeed or fail depending on dependencies
+                assert response.status_code in [200, 404, 500]
 
     def test_analytics_summary_to_quality_explanation(self, client):
         """Test workflow: get analytics summary -> explain specific quality."""
@@ -203,26 +201,23 @@ class TestAnalyticsQualityWorkflow:
 
         # Step 2: Explain quality for specific audio
         audio_id = "test-audio-123"
-        try:
+        with contextlib.suppress(AttributeError):
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
-        except AttributeError:
-            ...
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.analytics._get_model_explainer"
-            ) as mock_get_explainer:
-                mock_explainer = MagicMock()
-                mock_explainer.get_available_methods.return_value = ["shap"]
-                mock_explainer.shap_available = True
-                mock_get_explainer.return_value = mock_explainer
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.analytics._get_model_explainer"
+        ) as mock_get_explainer:
+            mock_explainer = MagicMock()
+            mock_explainer.get_available_methods.return_value = ["shap"]
+            mock_explainer.shap_available = True
+            mock_get_explainer.return_value = mock_explainer
 
-                with patch("backend.api.routes.analytics._quality_history", {}):
-                    response = client.get(
-                        f"/api/analytics/explain-quality?audio_id={audio_id}"
-                    )
-                    # May succeed or fail depending on dependencies
-                    assert response.status_code in [200, 404, 500]
+            with patch("backend.api.routes.analytics._quality_history", {}):
+                response = client.get(
+                    f"/api/analytics/explain-quality?audio_id={audio_id}"
+                )
+                # May succeed or fail depending on dependencies
+                assert response.status_code in [200, 404, 500]
 
 
 class TestEffectsPostFXProcessorWorkflow:

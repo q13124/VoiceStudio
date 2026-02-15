@@ -5,11 +5,14 @@ Manages state transitions between Idle, Casual (S2S), Complex (Cascade),
 and Handoff states for the hybrid supervisor architecture.
 """
 
+from __future__ import annotations
+
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +37,7 @@ class StateTransition:
     to_state: SupervisorState
     trigger: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class SupervisorStateMachine:
@@ -94,23 +97,23 @@ class SupervisorStateMachine:
 
     def __init__(self):
         self._state = SupervisorState.IDLE
-        self._history: List[StateTransition] = []
-        self._callbacks: Dict[str, List[Callable]] = {}
-        self._active_mode: Optional[str] = None  # "s2s" or "cascade"
+        self._history: list[StateTransition] = []
+        self._callbacks: dict[str, list[Callable]] = {}
+        self._active_mode: str | None = None  # "s2s" or "cascade"
 
     @property
     def state(self) -> SupervisorState:
         return self._state
 
     @property
-    def active_mode(self) -> Optional[str]:
+    def active_mode(self) -> str | None:
         return self._active_mode
 
     def transition(
         self,
         to_state: SupervisorState,
         trigger: str = "",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """
         Attempt a state transition.
@@ -161,7 +164,7 @@ class SupervisorStateMachine:
     def on_transition(
         self,
         callback: Callable[[SupervisorState, SupervisorState], None],
-        from_state: Optional[SupervisorState] = None,
+        from_state: SupervisorState | None = None,
     ) -> None:
         """Register a callback for state transitions."""
         key = from_state.value if from_state else "_any"
@@ -190,7 +193,7 @@ class SupervisorStateMachine:
         self._state = SupervisorState.IDLE
         self._active_mode = None
 
-    def get_history(self, count: int = 20) -> List[Dict[str, Any]]:
+    def get_history(self, count: int = 20) -> list[dict[str, Any]]:
         """Get recent transition history."""
         return [
             {

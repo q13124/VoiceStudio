@@ -5,7 +5,6 @@ Tests enhanced runtime engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -46,9 +45,7 @@ class TestRuntimeEngineEnhancedClasses:
     def test_enhanced_runtime_engine_class_exists(self):
         """Test EnhancedRuntimeEngine class exists."""
         if hasattr(runtime_engine_enhanced, "EnhancedRuntimeEngine"):
-            cls = getattr(
-                runtime_engine_enhanced, "EnhancedRuntimeEngine"
-            )
+            cls = runtime_engine_enhanced.EnhancedRuntimeEngine
             assert isinstance(
                 cls, type
             ), "EnhancedRuntimeEngine should be a class"

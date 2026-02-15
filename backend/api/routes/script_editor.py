@@ -4,12 +4,14 @@ Script Editor Routes
 Endpoints for managing scripts and transcripts for voice synthesis.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/script-editor", tags=["script-editor"])
 
 # In-memory scripts storage (replace with database in production)
-_scripts: Dict[str, Dict] = {}
+_scripts: dict[str, dict] = {}
 
 
 class ScriptSegment(BaseModel):
@@ -25,13 +27,13 @@ class ScriptSegment(BaseModel):
 
     id: str
     text: str
-    start_time: Optional[float] = None
-    end_time: Optional[float] = None
-    speaker: Optional[str] = None
-    voice_profile_id: Optional[str] = None
-    prosody: Optional[Dict] = None
-    phonemes: Optional[List[str]] = None
-    notes: Optional[str] = None
+    start_time: float | None = None
+    end_time: float | None = None
+    speaker: str | None = None
+    voice_profile_id: str | None = None
+    prosody: dict | None = None
+    phonemes: list[str] | None = None
+    notes: str | None = None
 
 
 class Script(BaseModel):
@@ -39,10 +41,10 @@ class Script(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    segments: List[ScriptSegment] = []
-    metadata: Dict = {}
+    segments: list[ScriptSegment] = []
+    metadata: dict = {}
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
     version: int = 1
@@ -52,25 +54,25 @@ class ScriptCreateRequest(BaseModel):
     """Request to create a script."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    segments: Optional[List[ScriptSegment]] = None
-    metadata: Optional[Dict] = None
+    segments: list[ScriptSegment] | None = None
+    metadata: dict | None = None
 
 
 class ScriptUpdateRequest(BaseModel):
     """Request to update a script."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    segments: Optional[List[ScriptSegment]] = None
-    metadata: Optional[Dict] = None
+    name: str | None = None
+    description: str | None = None
+    segments: list[ScriptSegment] | None = None
+    metadata: dict | None = None
 
 
-@router.get("", response_model=List[Script])
+@router.get("", response_model=list[Script])
 async def get_scripts(
-    project_id: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    project_id: str | None = Query(None),
+    search: str | None = Query(None),
 ):
     """Get all scripts, optionally filtered."""
     try:
@@ -123,10 +125,10 @@ async def get_scripts(
         ]
     except Exception as e:
         logger.error(
-            f"Error getting scripts (project_id={project_id}, search={search}): {str(e)}",
+            f"Error getting scripts (project_id={project_id}, search={search}): {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get scripts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get scripts: {e!s}")
 
 
 @router.get("/{script_id}", response_model=Script)
@@ -169,8 +171,8 @@ async def get_script(script_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting script {script_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get script: {str(e)}")
+        logger.error(f"Error getting script {script_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get script: {e!s}")
 
 
 @router.post("", response_model=Script)
@@ -230,9 +232,9 @@ async def create_script(request: ScriptCreateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating script: {str(e)}", exc_info=True)
+        logger.error(f"Error creating script: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create script: {str(e)}"
+            status_code=500, detail=f"Failed to create script: {e!s}"
         )
 
 
@@ -305,9 +307,9 @@ async def update_script(script_id: str, request: ScriptUpdateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating script {script_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error updating script {script_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to update script: {str(e)}"
+            status_code=500, detail=f"Failed to update script: {e!s}"
         )
 
 
@@ -328,9 +330,9 @@ async def delete_script(script_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting script {script_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error deleting script {script_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete script: {str(e)}"
+            status_code=500, detail=f"Failed to delete script: {e!s}"
         )
 
 
@@ -397,9 +399,9 @@ async def add_segment_to_script(script_id: str, segment: ScriptSegment):
         raise
     except Exception as e:
         logger.error(
-            f"Error adding segment to script {script_id}: {str(e)}", exc_info=True
+            f"Error adding segment to script {script_id}: {e!s}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail=f"Failed to add segment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add segment: {e!s}")
 
 
 @router.delete("/{script_id}/segments/{segment_id}")
@@ -438,11 +440,11 @@ async def remove_segment_from_script(script_id: str, segment_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error removing segment {segment_id} from script {script_id}: {str(e)}",
+            f"Error removing segment {segment_id} from script {script_id}: {e!s}",
             exc_info=True,
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to remove segment: {str(e)}"
+            status_code=500, detail=f"Failed to remove segment: {e!s}"
         )
 
 
@@ -503,7 +505,7 @@ async def synthesize_script(script_id: str):
                     continue
 
                 voice_profile_id = segment.get("voice_profile_id")
-                prosody = segment.get("prosody")
+                segment.get("prosody")
 
                 # Prepare synthesis parameters
                 synthesis_kwargs = {
@@ -598,12 +600,12 @@ async def synthesize_script(script_id: str):
         except Exception as e:
             logger.error(f"Error synthesizing script: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Failed to synthesize script: {str(e)}"
+                status_code=500, detail=f"Failed to synthesize script: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error synthesizing script {script_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error synthesizing script {script_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to synthesize script: {str(e)}"
+            status_code=500, detail=f"Failed to synthesize script: {e!s}"
         )

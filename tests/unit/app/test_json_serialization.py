@@ -4,23 +4,22 @@ Tests for JSON serialization conventions used between Python backend and C# clie
 These tests verify that the Python backend produces JSON in the expected format
 that the C# client can consume correctly.
 """
-import pytest
 import json
 from datetime import datetime, timezone
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class SampleModel(BaseModel):
     """Sample model for testing snake_case serialization."""
-    
+
     audio_id: str
     voice_profile_id: str
     created_at: datetime
     sample_rate: int
     is_active: bool
-    gpu_enabled: Optional[bool] = None
-    multi_word_property_name: Optional[str] = None
+    gpu_enabled: bool | None = None
+    multi_word_property_name: str | None = None
 
 
 class TestSnakeCaseNamingConvention:
@@ -35,17 +34,17 @@ class TestSnakeCaseNamingConvention:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         json_str = model.model_dump_json()
         data = json.loads(json_str)
-        
+
         # Verify snake_case keys
         assert "audio_id" in data
         assert "voice_profile_id" in data
         assert "created_at" in data
         assert "sample_rate" in data
         assert "is_active" in data
-        
+
         # Verify no PascalCase keys
         assert "AudioId" not in data
         assert "audioId" not in data
@@ -60,9 +59,9 @@ class TestSnakeCaseNamingConvention:
             is_active=True,
             multi_word_property_name="test value",
         )
-        
+
         data = json.loads(model.model_dump_json())
-        
+
         assert "multi_word_property_name" in data
         assert data["multi_word_property_name"] == "test value"
 
@@ -75,10 +74,10 @@ class TestSnakeCaseNamingConvention:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         # Exclude None values
         data = model.model_dump(exclude_none=True)
-        
+
         assert "gpu_enabled" not in data
         assert "multi_word_property_name" not in data
 
@@ -95,10 +94,10 @@ class TestDateTimeSerialization:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         data = json.loads(model.model_dump_json())
         timestamp = data["created_at"]
-        
+
         # Should be ISO 8601 format
         assert "2024-06-15" in timestamp
         assert "T" in timestamp  # Date/time separator
@@ -113,10 +112,10 @@ class TestDateTimeSerialization:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         data = json.loads(model.model_dump_json())
         timestamp = data["created_at"]
-        
+
         # UTC timezone indicator
         assert timestamp.endswith("Z") or "+00:00" in timestamp
 
@@ -130,10 +129,10 @@ class TestDateTimeSerialization:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         json_str = model.model_dump_json()
         parsed = SampleModel.model_validate_json(json_str)
-        
+
         # Round-trip should preserve the datetime
         assert parsed.created_at == original
 
@@ -151,9 +150,9 @@ class TestBooleanSerialization:
             is_active=True,
             gpu_enabled=False,
         )
-        
+
         json_str = model.model_dump_json()
-        
+
         # Should contain literal true/false
         assert '"is_active":true' in json_str.replace(' ', '') or '"is_active": true' in json_str
         assert '"gpu_enabled":false' in json_str.replace(' ', '') or '"gpu_enabled": false' in json_str
@@ -171,9 +170,9 @@ class TestNumberSerialization:
             sample_rate=44100,
             is_active=True,
         )
-        
+
         data = json.loads(model.model_dump_json())
-        
+
         # Should be actual integer, not string
         assert isinstance(data["sample_rate"], int)
         assert data["sample_rate"] == 44100
@@ -185,7 +184,7 @@ class TestSerializationConsistency:
     def test_serialization_matches_expected_csharp_format(self):
         """
         Verify the JSON format matches what C# SnakeCaseJsonNamingPolicy expects.
-        
+
         C# property AudioId should match JSON key "audio_id"
         C# property VoiceProfileId should match JSON key "voice_profile_id"
         C# property CreatedAt should match JSON key "created_at"
@@ -197,9 +196,9 @@ class TestSerializationConsistency:
             sample_rate=48000,
             is_active=True,
         )
-        
+
         data = json.loads(model.model_dump_json())
-        
+
         # Exact key names that C# client expects
         expected_keys = [
             "audio_id",
@@ -208,6 +207,6 @@ class TestSerializationConsistency:
             "sample_rate",
             "is_active",
         ]
-        
+
         for key in expected_keys:
             assert key in data, f"Expected key '{key}' not found in serialized JSON"

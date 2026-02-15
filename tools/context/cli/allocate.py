@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import io
-import json
 import sys
 from pathlib import Path
 
@@ -34,11 +33,11 @@ def main(argv=None) -> int:
     config_path = Path(args.config) if args.config else Path("tools/context/config/context-sources.json")
     manager = ContextManager.from_config(config_path)
     budget = args.budget if args.budget is not None else manager.config.get("budgets", {}).get("total_chars", 12000)
-    
+
     # Parse max_level
     level_map = {"high": ContextLevel.HIGH, "mid": ContextLevel.MID, "low": ContextLevel.LOW}
     max_level = level_map[args.level]
-    
+
     bundle = manager.allocate(
         AllocationContext(
             task_id=args.task,

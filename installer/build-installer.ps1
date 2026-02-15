@@ -197,6 +197,22 @@ else {
     Write-Host "Found $($EngineManifests.Count) engine manifest(s)!" -ForegroundColor Green
 }
 
+# Check for bundled runtime (optional - prepared by prepare-runtime.ps1)
+$RuntimePython = Join-Path $InstallerDir "runtime\python\python.exe"
+$RuntimeFFmpeg = Join-Path $InstallerDir "runtime\ffmpeg\ffmpeg.exe"
+if (Test-Path $RuntimePython) {
+    Write-Host "Bundled Python runtime found - will be included in installer." -ForegroundColor Green
+}
+else {
+    Write-Host "No bundled Python runtime. Run prepare-runtime.ps1 to bundle Python." -ForegroundColor Yellow
+}
+if (Test-Path $RuntimeFFmpeg) {
+    Write-Host "Bundled FFmpeg found - will be included in installer." -ForegroundColor Green
+}
+else {
+    Write-Host "No bundled FFmpeg. Run prepare-runtime.ps1 to bundle FFmpeg." -ForegroundColor Yellow
+}
+
 # Build Installer
 Write-Host ""
 Write-Host "Building installer ($InstallerType)..." -ForegroundColor Yellow

@@ -23,7 +23,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 NPM_REGISTRY_BASE = "https://registry.npmjs.org/"
 
@@ -31,10 +31,10 @@ NPM_REGISTRY_BASE = "https://registry.npmjs.org/"
 @dataclass(frozen=True)
 class NpxPackageRef:
     package: str
-    raw_args: Tuple[str, ...]
+    raw_args: tuple[str, ...]
 
 
-def _extract_npx_package(server_cfg: Dict[str, Any]) -> Optional[NpxPackageRef]:
+def _extract_npx_package(server_cfg: dict[str, Any]) -> NpxPackageRef | None:
     """
     Cursor MCP entries commonly look like:
       { "command": "npx", "args": ["-y", "@scope/pkg"] }
@@ -63,7 +63,7 @@ def _extract_npx_package(server_cfg: Dict[str, Any]) -> Optional[NpxPackageRef]:
     return NpxPackageRef(package=package, raw_args=tuple(str(a) for a in args))
 
 
-def _npm_registry_exists(package: str, timeout_sec: float = 7.5) -> Tuple[bool, str]:
+def _npm_registry_exists(package: str, timeout_sec: float = 7.5) -> tuple[bool, str]:
     """
     Returns (exists, detail). 'detail' is a short string safe for reports.
     """
@@ -83,7 +83,7 @@ def _npm_registry_exists(package: str, timeout_sec: float = 7.5) -> Tuple[bool, 
         return False, f"error: {type(e).__name__}"
 
 
-def _is_openmemory_placeholder(server_cfg: Dict[str, Any]) -> bool:
+def _is_openmemory_placeholder(server_cfg: dict[str, Any]) -> bool:
     headers = server_cfg.get("headers") or {}
     if not isinstance(headers, dict):
         return False
@@ -93,12 +93,12 @@ def _is_openmemory_placeholder(server_cfg: Dict[str, Any]) -> bool:
     return "YOUR OPENMEMORY API KEY" in auth or "om-{" in auth
 
 
-def _load_json(path: Path) -> Dict[str, Any]:
+def _load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def _write_json(path: Path, data: Dict[str, Any]) -> None:
+def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, sort_keys=True)
@@ -131,14 +131,14 @@ def main(argv: list[str]) -> int:
 
     start = time.time()
 
-    kept: Dict[str, Any] = {}
+    kept: dict[str, Any] = {}
     missing: list[tuple[str, str, str]] = []  # (server_key, package, detail)
     exists: list[tuple[str, str, str]] = []  # (server_key, package, detail)
     non_npx: list[str] = []
     needs_config: list[str] = []
 
     # Small cache because the config can repeat packages.
-    pkg_cache: Dict[str, Tuple[bool, str]] = {}
+    pkg_cache: dict[str, tuple[bool, str]] = {}
 
     for key, cfg in servers.items():
         if not isinstance(cfg, dict):

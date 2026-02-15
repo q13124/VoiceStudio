@@ -18,7 +18,6 @@ Usage:
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # Add project root to path
 _project_root = Path(__file__).parent.parent
@@ -58,54 +57,54 @@ def get_context(content: str, pos: int) -> str:
     """Get function/class context for the position."""
     # Look backward for def or class
     substring = content[:pos]
-    
+
     # Find the last function definition
     func_match = list(re.finditer(r"def\s+(\w+)\s*\(", substring))
     if func_match:
         return func_match[-1].group(1)
-    
+
     # Find the last class definition
     class_match = list(re.finditer(r"class\s+(\w+)", substring))
     if class_match:
         return class_match[-1].group(1)
-    
+
     return "module"
 
 
-def fix_bare_excepts(content: str, filename: str) -> Tuple[str, int]:
+def fix_bare_excepts(content: str, filename: str) -> tuple[str, int]:
     """
     Fix bare except blocks in Python content.
-    
+
     Strategy:
     1. `except ImportError: pass` -> Add "# Optional dependency" comment
     2. `except Exception: pass` -> Add "# Best effort - failure acceptable" comment
     3. `except: pass` -> Add "# Best effort - failure acceptable" comment
-    
+
     Returns tuple of (fixed_content, number_of_fixes)
     """
     fixes = 0
     lines = content.split("\n")
     new_lines = []
     i = 0
-    
+
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
-        
+
         # Check for except patterns
         if stripped.startswith("except") and i + 1 < len(lines):
             next_stripped = lines[i + 1].strip()
             indent = len(line) - len(line.lstrip())
-            
+
             # Check if this is a pass-only except
             if next_stripped == "pass":
                 # Check if already allowlisted
                 context_start = max(0, i - 3)
                 context_lines = "\n".join(lines[context_start:i+2])
-                
+
                 if not any(re.search(pat, context_lines) for pat in ALLOWLIST_PATTERNS):
                     fixes += 1
-                    
+
                     # Determine the type of comment to add
                     if "ImportError" in stripped:
                         comment = "# Optional dependency - import failure is acceptable"
@@ -113,13 +112,13 @@ def fix_bare_excepts(content: str, filename: str) -> Tuple[str, int]:
                         comment = "# Best effort - failure is acceptable here"
                     else:
                         comment = "# Best effort - failure is acceptable here"
-                    
+
                     # Add comment before the except
                     new_lines.append(" " * indent + comment)
-        
+
         new_lines.append(line)
         i += 1
-    
+
     return "\n".join(new_lines), fixes
 
 
@@ -130,16 +129,16 @@ def process_file(filepath: Path, dry_run: bool = False) -> int:
     except Exception as e:
         print(f"  Error reading {filepath}: {e}")
         return 0
-    
+
     fixed_content, fixes = fix_bare_excepts(content, filepath.name)
-    
+
     if fixes == 0:
         return 0
-    
+
     if dry_run:
         print(f"  Would fix {fixes} bare except(s) in {filepath}")
         return fixes
-    
+
     try:
         filepath.write_text(fixed_content, encoding="utf-8")
         print(f"  Fixed {fixes} bare except(s) in {filepath}")
@@ -152,28 +151,28 @@ def process_file(filepath: Path, dry_run: bool = False) -> int:
 def main():
     dry_run = "--dry-run" in sys.argv
     fix_all = "--all" in sys.argv
-    
+
     if not fix_all and not dry_run:
         print("Usage: python scripts/fix_bare_excepts.py [--dry-run] [--all]")
         return 1
-    
+
     print("=" * 70)
     print("Bare Except Block Fixer (TD-018 - Python)")
     print("=" * 70)
     print()
-    
+
     if dry_run:
         print("DRY RUN - No files will be modified")
         print()
-    
+
     total_fixes = 0
     files_fixed = 0
-    
+
     for src_dir in SOURCE_DIRS:
         src_path = _project_root / src_dir
         if not src_path.exists():
             continue
-        
+
         for filepath in sorted(src_path.rglob("*.py")):
             if should_skip(filepath):
                 continue
@@ -181,17 +180,17 @@ def main():
                 continue
             if filepath.name == "check_empty_catches.py":
                 continue
-            
+
             fixes = process_file(filepath, dry_run)
             total_fixes += fixes
             if fixes > 0:
                 files_fixed += 1
-    
+
     print()
     print("-" * 70)
     print(f"Total fixes: {total_fixes} in {files_fixed} files")
     print("-" * 70)
-    
+
     return 0
 
 

@@ -71,6 +71,32 @@ namespace VoiceStudio.Core.Services
     // Audio retrieval
     Task<Stream> GetAudioStreamAsync(string audioId, CancellationToken cancellationToken = default);
 
+    // Audio export/conversion
+    /// <summary>
+    /// Exports an audio file to the specified format.
+    /// </summary>
+    /// <param name="source">Source audio ID or filename.</param>
+    /// <param name="targetFormat">Target format extension (e.g., "mp3", "flac").</param>
+    /// <param name="sampleRate">Optional target sample rate in Hz.</param>
+    /// <param name="channels">Optional number of channels.</param>
+    /// <param name="bitrateKbps">Optional bitrate for lossy formats.</param>
+    /// <param name="normalize">Whether to normalize audio.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Stream containing the converted audio file.</returns>
+    Task<Stream> ExportAudioAsync(
+        string source,
+        string targetFormat,
+        int? sampleRate = null,
+        int? channels = null,
+        int? bitrateKbps = null,
+        bool normalize = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the list of supported audio formats for import/export.
+    /// </summary>
+    Task<List<VoiceStudio.App.Core.Models.AudioFormatInfo>> GetSupportedAudioFormatsAsync(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Uploads an audio file to the backend for analysis.
     /// </summary>

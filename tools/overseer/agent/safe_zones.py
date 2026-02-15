@@ -5,18 +5,19 @@ Defines protected paths and resources that agents must never modify.
 Provides automatic rollback when safe zone violations occur.
 """
 
+from __future__ import annotations
+
 import os
 import re
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set
 
 
 class SafeZoneType(str, Enum):
     """Types of safe zones."""
-    
+
     FILESYSTEM = "Filesystem"
     REGISTRY = "Registry"
     NETWORK = "Network"
@@ -25,7 +26,7 @@ class SafeZoneType(str, Enum):
 
 class ViolationAction(str, Enum):
     """Actions to take on safe zone violation."""
-    
+
     WARN = "Warn"
     DENY = "Deny"
     QUARANTINE = "Quarantine"
@@ -37,7 +38,7 @@ class ViolationAction(str, Enum):
 class SafeZone:
     """
     Definition of a protected safe zone.
-    
+
     Attributes:
         zone_type: Type of safe zone
         pattern: Pattern to match (path, registry key, etc.)
@@ -45,13 +46,13 @@ class SafeZone:
         action: Action to take on violation
         enabled: Whether the zone is active
     """
-    
+
     zone_type: SafeZoneType
     pattern: str
     description: str = ""
     action: ViolationAction = ViolationAction.QUARANTINE_AND_ALERT
     enabled: bool = True
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
@@ -61,7 +62,7 @@ class SafeZone:
             "action": self.action.value,
             "enabled": self.enabled,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "SafeZone":
         """Create from dictionary."""
@@ -78,7 +79,7 @@ class SafeZone:
 class SafeZoneViolation:
     """
     Record of a safe zone violation.
-    
+
     Attributes:
         timestamp: When the violation occurred
         agent_id: ID of the violating agent
@@ -87,14 +88,14 @@ class SafeZoneViolation:
         tool_name: Tool that triggered the violation
         action_taken: What action was taken
     """
-    
+
     timestamp: datetime
     agent_id: str
     zone: SafeZone
     attempted_resource: str
     tool_name: str
     action_taken: ViolationAction
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
@@ -111,7 +112,7 @@ class SafeZoneManager:
     """
     Manages safe zones and checks for violations.
     """
-    
+
     # Default safe zones for Windows
     DEFAULT_SAFE_ZONES = [
         SafeZone(
@@ -163,44 +164,44 @@ class SafeZoneManager:
             action=ViolationAction.QUARANTINE_AND_ALERT,
         ),
     ]
-    
+
     def __init__(
         self,
-        custom_zones: Optional[List[SafeZone]] = None,
-        on_violation: Optional[Callable[[SafeZoneViolation], None]] = None,
+        custom_zones: list[SafeZone] | None = None,
+        on_violation: Callable[[SafeZoneViolation], None] | None = None,
         include_defaults: bool = True,
     ):
         """
         Initialize the safe zone manager.
-        
+
         Args:
             custom_zones: Additional safe zones to protect
             on_violation: Callback when violation occurs
             include_defaults: Whether to include default safe zones
         """
-        self._zones: List[SafeZone] = []
+        self._zones: list[SafeZone] = []
         self._on_violation = on_violation
-        self._violations: List[SafeZoneViolation] = []
-        
+        self._violations: list[SafeZoneViolation] = []
+
         # Add default zones
         if include_defaults:
             self._zones.extend(self.DEFAULT_SAFE_ZONES)
-        
+
         # Add custom zones
         if custom_zones:
             self._zones.extend(custom_zones)
-        
+
         # Cache expanded patterns
-        self._expanded_patterns: Dict[str, str] = {}
+        self._expanded_patterns: dict[str, str] = {}
         self._expand_all_patterns()
-    
+
     def _expand_env_vars(self, pattern: str) -> str:
         """Expand environment variables in a pattern."""
         if pattern in self._expanded_patterns:
             return self._expanded_patterns[pattern]
-        
+
         result = pattern
-        
+
         # Common environment variables
         env_vars = {
             "PROGRAMFILES": os.environ.get("PROGRAMFILES", "C:\\Program Files"),
@@ -212,28 +213,28 @@ class SafeZoneManager:
             "TEMP": os.environ.get("TEMP", "C:\\Temp"),
             "PROJECT_ROOT": os.environ.get("PROJECT_ROOT", os.getcwd()),
         }
-        
+
         for var, value in env_vars.items():
             result = result.replace(f"${{{var}}}", value)
-        
+
         self._expanded_patterns[pattern] = result
         return result
-    
+
     def _expand_all_patterns(self) -> None:
         """Pre-expand all zone patterns."""
         for zone in self._zones:
             self._expand_env_vars(zone.pattern)
-    
+
     def _match_pattern(self, resource: str, pattern: str) -> bool:
         """Check if resource matches a glob-like pattern."""
         import fnmatch
-        
+
         expanded = self._expand_env_vars(pattern)
-        
+
         # Normalize paths
         resource = resource.replace("\\", "/")
         expanded = expanded.replace("\\", "/")
-        
+
         # Handle ** for recursive matching
         if "**" in expanded:
             # Convert to regex
@@ -243,33 +244,33 @@ class SafeZoneManager:
             return bool(re.match(regex_pattern, resource, re.IGNORECASE))
         else:
             return fnmatch.fnmatch(resource.lower(), expanded.lower())
-    
+
     def check(
         self,
         agent_id: str,
         resource: str,
         tool_name: str,
         zone_type: SafeZoneType = SafeZoneType.FILESYSTEM,
-    ) -> Optional[SafeZoneViolation]:
+    ) -> SafeZoneViolation | None:
         """
         Check if accessing a resource violates any safe zone.
-        
+
         Args:
             agent_id: ID of the agent
             resource: Resource being accessed (path, key, etc.)
             tool_name: Tool performing the access
             zone_type: Type of safe zone to check
-            
+
         Returns:
             Violation record if violated, None otherwise
         """
         for zone in self._zones:
             if not zone.enabled:
                 continue
-            
+
             if zone.zone_type != zone_type:
                 continue
-            
+
             if self._match_pattern(resource, zone.pattern):
                 violation = SafeZoneViolation(
                     timestamp=datetime.now(),
@@ -279,22 +280,22 @@ class SafeZoneManager:
                     tool_name=tool_name,
                     action_taken=zone.action,
                 )
-                
+
                 self._violations.append(violation)
-                
+
                 if self._on_violation:
                     self._on_violation(violation)
-                
+
                 return violation
-        
+
         return None
-    
+
     def check_path(
         self,
         agent_id: str,
         path: str,
         tool_name: str,
-    ) -> Optional[SafeZoneViolation]:
+    ) -> SafeZoneViolation | None:
         """Check if a filesystem path violates safe zones."""
         return self.check(
             agent_id=agent_id,
@@ -302,13 +303,13 @@ class SafeZoneManager:
             tool_name=tool_name,
             zone_type=SafeZoneType.FILESYSTEM,
         )
-    
+
     def check_registry(
         self,
         agent_id: str,
         key: str,
         tool_name: str,
-    ) -> Optional[SafeZoneViolation]:
+    ) -> SafeZoneViolation | None:
         """Check if a registry key violates safe zones."""
         return self.check(
             agent_id=agent_id,
@@ -316,12 +317,12 @@ class SafeZoneManager:
             tool_name=tool_name,
             zone_type=SafeZoneType.REGISTRY,
         )
-    
+
     def add_zone(self, zone: SafeZone) -> None:
         """Add a new safe zone."""
         self._zones.append(zone)
         self._expand_env_vars(zone.pattern)
-    
+
     def remove_zone(self, pattern: str) -> bool:
         """Remove a safe zone by pattern."""
         for i, zone in enumerate(self._zones):
@@ -329,7 +330,7 @@ class SafeZoneManager:
                 del self._zones[i]
                 return True
         return False
-    
+
     def enable_zone(self, pattern: str) -> bool:
         """Enable a safe zone by pattern."""
         for zone in self._zones:
@@ -337,7 +338,7 @@ class SafeZoneManager:
                 zone.enabled = True
                 return True
         return False
-    
+
     def disable_zone(self, pattern: str) -> bool:
         """Disable a safe zone by pattern."""
         for zone in self._zones:
@@ -345,40 +346,40 @@ class SafeZoneManager:
                 zone.enabled = False
                 return True
         return False
-    
+
     def get_zones(
         self,
-        zone_type: Optional[SafeZoneType] = None,
+        zone_type: SafeZoneType | None = None,
         enabled_only: bool = True,
-    ) -> List[SafeZone]:
+    ) -> list[SafeZone]:
         """Get safe zones with optional filtering."""
         zones = self._zones
-        
+
         if zone_type:
             zones = [z for z in zones if z.zone_type == zone_type]
-        
+
         if enabled_only:
             zones = [z for z in zones if z.enabled]
-        
+
         return zones
-    
+
     def get_violations(
         self,
-        agent_id: Optional[str] = None,
-        since: Optional[datetime] = None,
+        agent_id: str | None = None,
+        since: datetime | None = None,
         limit: int = 100,
-    ) -> List[SafeZoneViolation]:
+    ) -> list[SafeZoneViolation]:
         """Get recorded violations."""
         violations = self._violations
-        
+
         if agent_id:
             violations = [v for v in violations if v.agent_id == agent_id]
-        
+
         if since:
             violations = [v for v in violations if v.timestamp >= since]
-        
+
         return violations[-limit:]
-    
+
     def get_stats(self) -> dict:
         """Get safe zone statistics."""
         return {

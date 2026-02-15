@@ -12,7 +12,6 @@ Comprehensive performance benchmarks for:
 
 import logging
 import time
-from typing import Dict, List
 
 import pytest
 
@@ -34,7 +33,7 @@ class PerformanceBenchmark:
 
     def __init__(self):
         """Initialize benchmark."""
-        self.results: Dict[str, List[float]] = {}
+        self.results: dict[str, list[float]] = {}
 
     def measure_time(self, func, *args, **kwargs) -> float:
         """
@@ -49,11 +48,11 @@ class PerformanceBenchmark:
             Execution time in seconds
         """
         start_time = time.perf_counter()
-        result = func(*args, **kwargs)
+        func(*args, **kwargs)
         end_time = time.perf_counter()
         return end_time - start_time
 
-    def measure_memory(self, func, *args, **kwargs) -> Dict[str, float]:
+    def measure_memory(self, func, *args, **kwargs) -> dict[str, float]:
         """
         Measure memory usage of a function.
 
@@ -68,7 +67,7 @@ class PerformanceBenchmark:
         process = psutil.Process()
         mem_before = process.memory_info().rss / 1024 / 1024  # MB
 
-        result = func(*args, **kwargs)
+        func(*args, **kwargs)
 
         mem_after = process.memory_info().rss / 1024 / 1024  # MB
         mem_used = mem_after - mem_before
@@ -79,7 +78,7 @@ class PerformanceBenchmark:
             "memory_used_mb": mem_used,
         }
 
-    def benchmark(self, name: str, func, *args, iterations: int = 10, **kwargs) -> Dict:
+    def benchmark(self, name: str, func, *args, iterations: int = 10, **kwargs) -> dict:
         """
         Run benchmark with multiple iterations.
 

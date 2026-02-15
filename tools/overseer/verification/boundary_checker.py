@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import List, Optional, Set, Tuple
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_CLIENT_PATH = "src/VoiceStudio.App/Services/BackendClient.cs"
@@ -29,14 +28,14 @@ def _normalize_path(path: str) -> str:
 
 def _normalize_path_params(path: str) -> str:
     """Normalize path parameters to a common format for comparison.
-    
+
     Converts all {param_name} to {*} for parameter-agnostic matching.
     This handles differences like {jobId} vs {job_id}.
     """
     return re.sub(r"\{[^}]+\}", "{*}", path)
 
 
-def extract_ui_api_paths(root: Path) -> Set[str]:
+def extract_ui_api_paths(root: Path) -> set[str]:
     """Extract /api/... paths from BackendClient.cs."""
     path = root / BACKEND_CLIENT_PATH.replace("/", "\\" if str(root).find("\\") >= 0 else "/")
     path = root / "src" / "VoiceStudio.App" / "Services" / "BackendClient.cs"
@@ -54,7 +53,7 @@ def extract_ui_api_paths(root: Path) -> Set[str]:
     return found
 
 
-def extract_backend_routes_from_openapi(root: Path) -> Set[str]:
+def extract_backend_routes_from_openapi(root: Path) -> set[str]:
     """Extract /api/... paths from openapi.json if present."""
     path = root / OPENAPI_PATH.replace("/", "\\" if str(root).find("\\") >= 0 else "/")
     path = root / "docs" / "api" / "openapi.json"
@@ -63,14 +62,14 @@ def extract_backend_routes_from_openapi(root: Path) -> Set[str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         paths = data.get("paths", {})
-        return set(p for p in paths if p.startswith("/api"))
+        return {p for p in paths if p.startswith("/api")}
     except Exception:
         return set()
 
 
 def verify_ui_backend_alignment(
-    root: Optional[Path] = None,
-) -> Tuple[bool, str]:
+    root: Path | None = None,
+) -> tuple[bool, str]:
     """
     Verify UI-called backend endpoints exist in backend (openapi).
 
@@ -90,7 +89,7 @@ def verify_ui_backend_alignment(
     # Normalize backend paths for parameter-agnostic matching
     backend_normalized = {_normalize_path_params(b): b for b in backend_paths}
 
-    missing: List[str] = []
+    missing: list[str] = []
     for p in ui_paths:
         # Try exact match first
         if p in backend_paths:
@@ -106,7 +105,7 @@ def verify_ui_backend_alignment(
         base = base.rstrip("/") or "/api"
 
         # Backend has a route that starts with same base
-        if any(b == p or b.startswith(base + "/") or b == base for b in backend_paths):
+        if any(b in (p, base) or b.startswith(base + "/") for b in backend_paths):
             continue
         if base in {b.split("{")[0].rstrip("/") for b in backend_paths}:
             continue
@@ -118,7 +117,7 @@ def verify_ui_backend_alignment(
     return False, f"FAIL: UI paths not found in backend (openapi): {missing[:10]}"
 
 
-def run_boundary_checks(root: Optional[Path] = None) -> Tuple[bool, str]:
+def run_boundary_checks(root: Path | None = None) -> tuple[bool, str]:
     """
     Run cross-boundary coherence checks.
 

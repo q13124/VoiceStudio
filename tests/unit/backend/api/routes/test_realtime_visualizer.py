@@ -1,73 +1,196 @@
 """
-Unit Tests for Realtime Visualizer API Route
-Tests realtime visualization endpoints in isolation.
+Unit Tests for Real-Time Visualizer API Routes.
+
+Tests real-time audio visualization session management.
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
-# Import the route module
-try:
+# =============================================================================
+# Fixtures
+# =============================================================================
+
+
+@pytest.fixture(autouse=True)
+def reset_visualizer_state():
+    """Reset visualizer state before each test."""
     from backend.api.routes import realtime_visualizer
-except ImportError:
-    pytest.skip(
-        "Could not import realtime_visualizer route module",
-        allow_module_level=True,
-    )
+    realtime_visualizer._visualizer_sessions = {}
+    yield
+    realtime_visualizer._visualizer_sessions = {}
 
 
-class TestRealtimeVisualizerRouteImports:
-    """Test realtime visualizer route module can be imported."""
+@pytest.fixture
+def visualizer_client():
+    """Create test client for realtime visualizer routes."""
+    from backend.api.routes.realtime_visualizer import router
 
-    def test_realtime_visualizer_module_imports(self):
-        """Test realtime_visualizer module can be imported."""
-        assert (
-            realtime_visualizer is not None
-        ), "Failed to import realtime_visualizer module"
-        assert hasattr(
-            realtime_visualizer, "router"
-        ), "realtime_visualizer module missing router"
+    app = FastAPI()
+    app.include_router(router)
+    return TestClient(app)
 
 
-class TestRealtimeVisualizerRouteHandlers:
-    """Test realtime visualizer route handlers exist and are callable."""
-
-    def test_start_visualization_handler_exists(self):
-        """Test start_visualization handler exists."""
-        if hasattr(realtime_visualizer, "start_visualization"):
-            assert callable(
-                realtime_visualizer.start_visualization
-            ), "start_visualization is not callable"
-
-
-class TestRealtimeVisualizerRouter:
-    """Test realtime visualizer router configuration."""
-
-    def test_router_exists(self):
-        """Test router exists and is configured."""
-        assert (
-            realtime_visualizer.router is not None
-        ), "Router should exist"
-        if hasattr(realtime_visualizer.router, "prefix"):
-            pass  # Router configuration is valid
-
-    def test_router_has_routes(self):
-        """Test router has registered routes."""
-        if hasattr(realtime_visualizer.router, "routes"):
-            routes = [
-                route.path for route in realtime_visualizer.router.routes
-            ]
-            assert len(routes) > 0, "Router should have routes registered"
+@pytest.fixture
+def sample_start_request():
+    """Sample visualizer start request data."""
+    return {
+        "visualization_type": "both",
+        "update_rate": 30.0,
+        "fft_size": 2048,
+        "window_type": "hann",
+        "show_phase": False,
+        "color_scheme": "default",
+    }
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+# =============================================================================
+# Session Management Tests
+# =============================================================================
 
+
+class TestSessionManagement:
+    """Tests for visualizer session CRUD operations."""
+
+    def test_start_session(self, visualizer_client, sample_start_request):
+        """Test POST /start creates a new visualizer session."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json=sample_start_request,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "session_id" in data
+        assert data["session_id"].startswith("viz-")
+        assert "message" in data
+
+    def test_start_session_minimal(self, visualizer_client):
+        """Test POST /start works with minimal data (defaults)."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json={},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "session_id" in data
+
+    def test_get_session(self, visualizer_client, sample_start_request):
+        """Test GET /{session_id} returns session config."""
+        # Start a session
+        start_response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json=sample_start_request,
+        )
+        session_id = start_response.json()["session_id"]
+
+        # Get session
+        response = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["session_id"] == session_id
+        assert data["visualization_type"] == sample_start_request["visualization_type"]
+        assert data["fft_size"] == sample_start_request["fft_size"]
+
+    def test_get_session_not_found(self, visualizer_client):
+        """Test GET /{session_id} returns 404 for missing session."""
+        response = visualizer_client.get("/api/realtime-visualizer/nonexistent-session")
+        assert response.status_code == 404
+
+    def test_stop_session(self, visualizer_client, sample_start_request):
+        """Test POST /{session_id}/stop stops visualizer session."""
+        # Start a session
+        start_response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json=sample_start_request,
+        )
+        session_id = start_response.json()["session_id"]
+
+        # Stop session
+        stop_response = visualizer_client.post(f"/api/realtime-visualizer/{session_id}/stop")
+        assert stop_response.status_code == 200
+
+    def test_stop_session_not_found(self, visualizer_client):
+        """Test POST /{session_id}/stop returns 404 for missing session."""
+        response = visualizer_client.post("/api/realtime-visualizer/nonexistent/stop")
+        assert response.status_code == 404
+
+    def test_delete_session(self, visualizer_client, sample_start_request):
+        """Test DELETE /{session_id} removes session."""
+        # Start a session
+        start_response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json=sample_start_request,
+        )
+        session_id = start_response.json()["session_id"]
+
+        # Delete session
+        delete_response = visualizer_client.delete(f"/api/realtime-visualizer/{session_id}")
+        assert delete_response.status_code == 200
+
+        # Verify it's gone
+        get_response = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert get_response.status_code == 404
+
+    def test_delete_session_not_found(self, visualizer_client):
+        """Test DELETE /{session_id} returns 404 for missing session."""
+        response = visualizer_client.delete("/api/realtime-visualizer/nonexistent")
+        assert response.status_code == 404
+
+
+# =============================================================================
+# Configuration Tests
+# =============================================================================
+
+
+class TestVisualizerConfig:
+    """Tests for visualizer configuration options."""
+
+    def test_waveform_visualization(self, visualizer_client):
+        """Test starting waveform-only visualization."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json={"visualization_type": "waveform"},
+        )
+        assert response.status_code == 200
+        session_id = response.json()["session_id"]
+
+        config = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert config.json()["visualization_type"] == "waveform"
+
+    def test_spectrogram_visualization(self, visualizer_client):
+        """Test starting spectrogram visualization."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json={"visualization_type": "spectrogram"},
+        )
+        assert response.status_code == 200
+        session_id = response.json()["session_id"]
+
+        config = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert config.json()["visualization_type"] == "spectrogram"
+
+    def test_custom_fft_size(self, visualizer_client):
+        """Test custom FFT size configuration."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json={"fft_size": 4096},
+        )
+        assert response.status_code == 200
+        session_id = response.json()["session_id"]
+
+        config = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert config.json()["fft_size"] == 4096
+
+    def test_custom_update_rate(self, visualizer_client):
+        """Test custom update rate configuration."""
+        response = visualizer_client.post(
+            "/api/realtime-visualizer/start",
+            json={"update_rate": 60.0},
+        )
+        assert response.status_code == 200
+        session_id = response.json()["session_id"]
+
+        config = visualizer_client.get(f"/api/realtime-visualizer/{session_id}")
+        assert config.json()["update_rate"] == 60.0

@@ -5,7 +5,6 @@ Tests graceful degradation functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -49,7 +48,7 @@ class TestGracefulDegradationClasses:
     def test_graceful_degradation_class_exists(self):
         """Test GracefulDegradation class exists."""
         if hasattr(graceful_degradation, "GracefulDegradation"):
-            cls = getattr(graceful_degradation, "GracefulDegradation")
+            cls = graceful_degradation.GracefulDegradation
             assert isinstance(
                 cls, type
             ), "GracefulDegradation should be a class"

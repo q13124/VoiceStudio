@@ -8,11 +8,13 @@ Compatible with:
 - aiohttp 3.8.0+ (for async)
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     import numpy as np
@@ -62,9 +64,12 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (enhance_voice_cloning_quality,
-                                     enhance_voice_quality, normalize_lufs,
-                                     remove_artifacts)
+    from app.core.audio.audio_utils import (
+        enhance_voice_cloning_quality,
+        enhance_voice_quality,
+        normalize_lufs,
+        remove_artifacts,
+    )
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -88,9 +93,9 @@ class VoiceAIEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         api_url: str = "https://api.voice.ai/v1",
         use_local: bool = True,
     ):
@@ -191,7 +196,7 @@ class VoiceAIEngine(EngineProtocol):
         self._conversion_cache.clear()
         logger.info("Conversion cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._conversion_cache),
@@ -200,13 +205,13 @@ class VoiceAIEngine(EngineProtocol):
 
     def convert_voice(
         self,
-        audio_path: Union[str, Path],
+        audio_path: str | Path,
         target_voice_id: str,
-        output_path: Optional[Union[str, Path]] = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[str, Tuple[str, Dict]]:
+    ) -> str | tuple[str, dict]:
         """
         Convert voice using target voice ID.
 
@@ -327,9 +332,9 @@ class VoiceAIEngine(EngineProtocol):
 
     def _convert_local(
         self,
-        audio_path: Union[str, Path],
+        audio_path: str | Path,
         target_voice_id: str,
-        output_path: Optional[Union[str, Path]],
+        output_path: str | Path | None,
         **kwargs,
     ) -> str:
         """Convert voice using local model."""
@@ -408,7 +413,7 @@ class VoiceAIEngine(EngineProtocol):
 
     def _convert_with_local_model(
         self,
-        audio_path: Union[str, Path],
+        audio_path: str | Path,
         target_voice_id: str,
         output_path: Path,
         **kwargs,
@@ -418,7 +423,6 @@ class VoiceAIEngine(EngineProtocol):
             import numpy as np
             import soundfile as sf
             import torch
-            import torch.nn.functional as F
 
             # Load input audio
             audio, sr = sf.read(str(audio_path))
@@ -458,7 +462,7 @@ class VoiceAIEngine(EngineProtocol):
             converted_audio = None
             with torch.no_grad():
                 model = model_data.get("model")
-                
+
                 if model is None:
                     logger.warning("Model data is None, using fallback")
                     return self._convert_with_fallback_engine(
@@ -468,7 +472,7 @@ class VoiceAIEngine(EngineProtocol):
                 # Try different voice conversion architectures
                 if isinstance(model, dict):
                     state_dict = model.get("state_dict", model)
-                    
+
                     # Method 1: Try RVC-like architecture (common for voice conversion)
                     try:
                         converted_audio = self._convert_rvc_like(
@@ -476,7 +480,7 @@ class VoiceAIEngine(EngineProtocol):
                         )
                     except Exception as e:
                         logger.debug(f"RVC-like conversion failed: {e}")
-                    
+
                     # Method 2: Try SoVITS-like architecture
                     if converted_audio is None:
                         try:
@@ -485,7 +489,7 @@ class VoiceAIEngine(EngineProtocol):
                             )
                         except Exception as e:
                             logger.debug(f"SoVITS-like conversion failed: {e}")
-                    
+
                     # Method 3: Try generic encoder-decoder approach
                     if converted_audio is None:
                         try:
@@ -494,20 +498,20 @@ class VoiceAIEngine(EngineProtocol):
                             )
                         except Exception as e:
                             logger.debug(f"Generic encoder-decoder conversion failed: {e}")
-                    
+
                     if converted_audio is not None:
                         # Convert to numpy and save
                         if isinstance(converted_audio, torch.Tensor):
                             converted_audio = converted_audio.cpu().numpy()
-                        
+
                         # Ensure mono
                         if len(converted_audio.shape) > 1:
                             converted_audio = np.mean(converted_audio, axis=1)
-                        
+
                         # Normalize
                         if np.max(np.abs(converted_audio)) > 0:
                             converted_audio = converted_audio / np.max(np.abs(converted_audio)) * 0.95
-                        
+
                         # Save to file
                         sf.write(str(output_path), converted_audio, sr)
                         logger.info(f"Local model voice conversion successful: {output_path}")
@@ -527,17 +531,17 @@ class VoiceAIEngine(EngineProtocol):
                         else:
                             logger.warning("Model object has no convert or forward method")
                             converted_audio = None
-                        
+
                         if converted_audio is not None:
                             if isinstance(converted_audio, torch.Tensor):
                                 converted_audio = converted_audio.cpu().numpy()
-                            
+
                             if len(converted_audio.shape) > 1:
                                 converted_audio = np.mean(converted_audio, axis=1)
-                            
+
                             if np.max(np.abs(converted_audio)) > 0:
                                 converted_audio = converted_audio / np.max(np.abs(converted_audio)) * 0.95
-                            
+
                             sf.write(str(output_path), converted_audio, sr)
                             logger.info(f"Local model voice conversion successful: {output_path}")
                             return str(output_path)
@@ -555,7 +559,7 @@ class VoiceAIEngine(EngineProtocol):
             return self._convert_with_fallback_engine(
                 audio_path, target_voice_id, output_path, **kwargs
             )
-    
+
     def _get_target_voice_embedding(self, target_voice_id: str, device: "torch.device") -> "torch.Tensor":
         """Get or generate target voice embedding."""
         try:
@@ -571,7 +575,7 @@ class VoiceAIEngine(EngineProtocol):
                 os.path.join(profile_dir, "reference_audio.wav"),
                 os.path.join(profile_dir, "audio.wav"),
             ]
-            
+
             for ref_path in reference_paths:
                 if os.path.exists(ref_path):
                     import numpy as np
@@ -579,18 +583,18 @@ class VoiceAIEngine(EngineProtocol):
                     ref_audio, _ = sf.read(ref_path)
                     if len(ref_audio.shape) > 1:
                         ref_audio = np.mean(ref_audio, axis=1)
-                    
+
                     # Extract embedding
                     embedding = self._extract_voice_embedding(ref_audio, 16000)
                     return torch.tensor(embedding, dtype=torch.float32, device=device).unsqueeze(0)
-            
+
             # Generate default embedding if no reference found
             return torch.randn(1, 256, device=device) * 0.1
-            
+
         except Exception as e:
             logger.debug(f"Failed to get target voice embedding: {e}")
             return torch.randn(1, 256, device=device) * 0.1
-    
+
     def _extract_voice_embedding(self, audio: "np.ndarray", sample_rate: int) -> "np.ndarray":
         """Extract voice embedding from audio."""
         try:
@@ -618,96 +622,96 @@ class VoiceAIEngine(EngineProtocol):
         except Exception as e:
             logger.debug(f"Voice embedding extraction failed: {e}")
             return np.zeros(256)
-    
+
     def _convert_rvc_like(
-        self, state_dict: Dict, audio_tensor: "torch.Tensor",
+        self, state_dict: dict, audio_tensor: "torch.Tensor",
         target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
     ) -> Optional["torch.Tensor"]:
         """Attempt conversion using RVC-like architecture."""
         try:
             # Check for RVC-like keys
-            has_encoder = any("encoder" in k for k in state_dict.keys())
-            has_decoder = any("decoder" in k for k in state_dict.keys())
-            
+            has_encoder = any("encoder" in k for k in state_dict)
+            has_decoder = any("decoder" in k for k in state_dict)
+
             if not (has_encoder and has_decoder):
                 return None
-            
+
             # Simplified RVC-like conversion
             # Extract features from input audio
             # Apply voice embedding
             # Decode to output audio
-            
+
             # Create feature representation
             audio_features = F.conv1d(
                 audio_tensor.unsqueeze(0),
                 torch.randn(1, 1, 512, device=device) * 0.01,
                 padding=256
             )
-            
+
             # Apply voice embedding influence
             if target_voice_embedding.shape[1] > 0:
                 voice_features = target_voice_embedding.unsqueeze(-1).expand(-1, -1, audio_features.shape[2])
                 combined = (audio_features + voice_features) / 2
             else:
                 combined = audio_features
-            
+
             # Decode to audio
             converted = F.conv_transpose1d(
                 combined,
                 torch.randn(1, 1, 512, device=device) * 0.01,
                 padding=256
             )
-            
+
             return converted.squeeze(0)
-            
+
         except Exception as e:
             logger.debug(f"RVC-like conversion error: {e}")
             return None
-    
+
     def _convert_sovits_like(
-        self, state_dict: Dict, audio_tensor: "torch.Tensor",
+        self, state_dict: dict, audio_tensor: "torch.Tensor",
         target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
     ) -> Optional["torch.Tensor"]:
         """Attempt conversion using SoVITS-like architecture."""
         try:
             # Check for SoVITS-like keys
-            has_vq = any("vq" in k or "quantizer" in k for k in state_dict.keys())
-            has_generator = any("generator" in k or "decoder" in k for k in state_dict.keys())
-            
+            any("vq" in k or "quantizer" in k for k in state_dict)
+            has_generator = any("generator" in k or "decoder" in k for k in state_dict)
+
             if not has_generator:
                 return None
-            
+
             # Simplified SoVITS-like conversion
             # Encode audio to features
             # Apply voice embedding
             # Generate output
-            
+
             audio_features = F.conv1d(
                 audio_tensor.unsqueeze(0),
                 torch.randn(1, 1, 256, device=device) * 0.01,
                 padding=128
             )
-            
+
             if target_voice_embedding.shape[1] > 0:
                 voice_features = target_voice_embedding.unsqueeze(-1).expand(-1, -1, audio_features.shape[2])
                 combined = (audio_features + voice_features) / 2
             else:
                 combined = audio_features
-            
+
             converted = F.conv_transpose1d(
                 combined,
                 torch.randn(1, 1, 256, device=device) * 0.01,
                 padding=128
             )
-            
+
             return converted.squeeze(0)
-            
+
         except Exception as e:
             logger.debug(f"SoVITS-like conversion error: {e}")
             return None
-    
+
     def _convert_generic_encoder_decoder(
-        self, state_dict: Dict, audio_tensor: "torch.Tensor",
+        self, state_dict: dict, audio_tensor: "torch.Tensor",
         target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
     ) -> Optional["torch.Tensor"]:
         """Attempt conversion using generic encoder-decoder approach."""
@@ -716,34 +720,34 @@ class VoiceAIEngine(EngineProtocol):
             # Extract spectral features
             import librosa
             import numpy as np
-            
+
             audio_np = audio_tensor.squeeze().cpu().numpy()
-            
+
             # Get mel spectrogram
             mel_spec = librosa.feature.melspectrogram(
                 y=audio_np, sr=sample_rate, n_mels=80
             )
             mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
-            
+
             # Apply voice embedding influence
             if target_voice_embedding.shape[1] > 0:
                 voice_emb_np = target_voice_embedding.squeeze().cpu().numpy()
                 if len(voice_emb_np) == mel_spec_db.shape[0]:
                     mel_spec_db = mel_spec_db + voice_emb_np.reshape(-1, 1) * 0.1
-            
+
             # Convert back to audio using Griffin-Lim
             linear_spec = librosa.feature.inverse.mel_to_stft(mel_spec_db, sr=sample_rate)
             converted_audio = librosa.griffinlim(linear_spec, n_iter=32)
-            
+
             return torch.tensor(converted_audio, dtype=torch.float32, device=device)
-            
+
         except Exception as e:
             logger.debug(f"Generic encoder-decoder conversion error: {e}")
             return None
 
     def _convert_with_fallback_engine(
         self,
-        audio_path: Union[str, Path],
+        audio_path: str | Path,
         target_voice_id: str,
         output_path: Path,
         **kwargs,
@@ -796,7 +800,7 @@ class VoiceAIEngine(EngineProtocol):
             shutil.copy(str(audio_path), str(output_path))
             return str(output_path)
 
-    def _find_voice_model(self, voice_id: str) -> Optional[str]:
+    def _find_voice_model(self, voice_id: str) -> str | None:
         """Find voice model file by ID."""
         try:
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
@@ -808,7 +812,7 @@ class VoiceAIEngine(EngineProtocol):
                 )
 
             # Look for model with matching ID
-            for root, dirs, files in os.walk(model_cache_dir):
+            for root, _dirs, files in os.walk(model_cache_dir):
                 for file in files:
                     if voice_id in file and file.endswith((".pth", ".pt", ".ckpt")):
                         return os.path.join(root, file)
@@ -820,9 +824,9 @@ class VoiceAIEngine(EngineProtocol):
 
     def _convert_cloud(
         self,
-        audio_path: Union[str, Path],
+        audio_path: str | Path,
         target_voice_id: str,
-        output_path: Optional[Union[str, Path]],
+        output_path: str | Path | None,
         **kwargs,
     ) -> str:
         """Convert voice using cloud API."""
@@ -868,7 +872,7 @@ class VoiceAIEngine(EngineProtocol):
         logger.info(f"Voice converted (cloud): {output_path}")
         return str(output_path)
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -884,9 +888,9 @@ class VoiceAIEngine(EngineProtocol):
 
 
 def create_voice_ai_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     api_url: str = "https://api.voice.ai/v1",
     use_local: bool = True,
 ) -> VoiceAIEngine:

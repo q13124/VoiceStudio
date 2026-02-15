@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 from tools.overseer.gate_tracker import GateTracker
-from tools.overseer.handoff_manager import HandoffManager
 from tools.overseer.ledger_parser import LedgerParser
 from tools.overseer.report_engine import ReportEngine
 

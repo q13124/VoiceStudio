@@ -5,9 +5,8 @@ Tests MaryTTS engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +29,7 @@ class TestMaryTTSEngineImports:
     def test_module_has_marytts_engine_class(self):
         """Test module has MaryTTSEngine class."""
         if hasattr(marytts_engine, "MaryTTSEngine"):
-            cls = getattr(marytts_engine, "MaryTTSEngine")
+            cls = marytts_engine.MaryTTSEngine
             assert isinstance(cls, type), "MaryTTSEngine should be a class"
 
 
@@ -40,7 +39,7 @@ class TestMaryTTSEngineClass:
     def test_marytts_engine_class_exists(self):
         """Test MaryTTSEngine class exists."""
         if hasattr(marytts_engine, "MaryTTSEngine"):
-            cls = getattr(marytts_engine, "MaryTTSEngine")
+            cls = marytts_engine.MaryTTSEngine
             assert isinstance(cls, type), "MaryTTSEngine should be a class"
 
     def test_marytts_engine_initialization(self):

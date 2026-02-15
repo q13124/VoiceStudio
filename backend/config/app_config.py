@@ -16,10 +16,10 @@ Environment Variables:
 Examples:
     >>> get_api_host()
     'localhost'
-    
+
     >>> get_api_url()
     'http://localhost:8000'
-    
+
     >>> get_timeout("request")
     30.0
 """
@@ -27,7 +27,7 @@ Examples:
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 
 def _get_env_int(key: str, default: int) -> int:
@@ -67,7 +67,7 @@ def _get_env_bool(key: str, default: bool) -> bool:
 def get_api_host() -> str:
     """
     Get the API host address.
-    
+
     Returns:
         API host (default: localhost)
     """
@@ -77,7 +77,7 @@ def get_api_host() -> str:
 def get_api_port() -> int:
     """
     Get the API port.
-    
+
     Returns:
         API port (default: 8000)
     """
@@ -87,7 +87,7 @@ def get_api_port() -> int:
 def get_websocket_port() -> int:
     """
     Get the WebSocket port.
-    
+
     Returns:
         WebSocket port (default: 8001)
     """
@@ -97,7 +97,7 @@ def get_websocket_port() -> int:
 def get_api_url() -> str:
     """
     Get the full API base URL.
-    
+
     Returns:
         API URL (e.g., http://localhost:8000)
     """
@@ -107,7 +107,7 @@ def get_api_url() -> str:
 def get_websocket_url() -> str:
     """
     Get the WebSocket URL.
-    
+
     Returns:
         WebSocket URL (e.g., ws://localhost:8001)
     """
@@ -121,7 +121,7 @@ def get_websocket_url() -> str:
 def get_health_check_interval_ms() -> int:
     """
     Get health check interval in milliseconds.
-    
+
     Returns:
         Health check interval (default: 5000ms)
     """
@@ -131,7 +131,7 @@ def get_health_check_interval_ms() -> int:
 def get_reconnect_delay_ms() -> int:
     """
     Get reconnect delay in milliseconds.
-    
+
     Returns:
         Reconnect delay (default: 3000ms)
     """
@@ -141,7 +141,7 @@ def get_reconnect_delay_ms() -> int:
 def get_request_timeout_ms() -> int:
     """
     Get request timeout in milliseconds.
-    
+
     Returns:
         Request timeout (default: 30000ms)
     """
@@ -151,10 +151,10 @@ def get_request_timeout_ms() -> int:
 def get_timeout(timeout_type: str) -> float:
     """
     Get timeout value in seconds.
-    
+
     Args:
         timeout_type: Type of timeout (request, connect, read, synthesis, transcription)
-    
+
     Returns:
         Timeout in seconds
     """
@@ -175,7 +175,7 @@ def get_timeout(timeout_type: str) -> float:
 def get_max_retries() -> int:
     """
     Get maximum retry count for operations.
-    
+
     Returns:
         Max retries (default: 3)
     """
@@ -185,7 +185,7 @@ def get_max_retries() -> int:
 def get_retry_delay_ms() -> int:
     """
     Get delay between retries in milliseconds.
-    
+
     Returns:
         Retry delay (default: 1000ms)
     """
@@ -199,7 +199,7 @@ def get_retry_delay_ms() -> int:
 def get_buffer_size() -> int:
     """
     Get default buffer size in bytes.
-    
+
     Returns:
         Buffer size (default: 4096)
     """
@@ -209,7 +209,7 @@ def get_buffer_size() -> int:
 def get_chunk_size() -> int:
     """
     Get audio chunk size in samples.
-    
+
     Returns:
         Chunk size (default: 4000)
     """
@@ -219,7 +219,7 @@ def get_chunk_size() -> int:
 def get_max_file_size_mb() -> int:
     """
     Get maximum file size in megabytes.
-    
+
     Returns:
         Max file size (default: 100MB)
     """
@@ -229,7 +229,7 @@ def get_max_file_size_mb() -> int:
 def get_max_backup_size_mb() -> int:
     """
     Get maximum backup size in megabytes.
-    
+
     Returns:
         Max backup size (default: 500MB)
     """
@@ -243,7 +243,7 @@ def get_max_backup_size_mb() -> int:
 def is_debug_mode() -> bool:
     """
     Check if debug mode is enabled.
-    
+
     Returns:
         True if debug mode is enabled
     """
@@ -253,7 +253,7 @@ def is_debug_mode() -> bool:
 def is_telemetry_enabled() -> bool:
     """
     Check if telemetry is enabled (opt-in only).
-    
+
     Returns:
         True if telemetry is enabled
     """
@@ -267,7 +267,7 @@ def is_telemetry_enabled() -> bool:
 def get_all_config() -> dict[str, Any]:
     """
     Get all configuration values.
-    
+
     Returns:
         Dictionary of all configuration values
     """

@@ -5,10 +5,11 @@ Endpoints for reading and extracting text from PDF files (protected and unprotec
 Useful for extracting text from PDFs for voice synthesis.
 """
 
-import logging
-from typing import List, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+import logging
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...mcp_bridge.pdf_unlocker_client import PDFUnlockerClient
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/pdf", tags=["pdf"])
 
 # Initialize PDF unlocker client
-_pdf_client: Optional[PDFUnlockerClient] = None
+_pdf_client: PDFUnlockerClient | None = None
 
 
 def get_pdf_client() -> PDFUnlockerClient:
@@ -33,8 +34,8 @@ class PDFReadRequest(BaseModel):
     """Request to read a PDF file."""
 
     file_path: str
-    password: Optional[str] = None
-    pages: Optional[List[int]] = None
+    password: str | None = None
+    pages: list[int] | None = None
 
 
 class PDFReadResponse(BaseModel):
@@ -43,19 +44,19 @@ class PDFReadResponse(BaseModel):
     success: bool
     is_encrypted: bool
     total_pages: int
-    extracted_pages: List[int]
+    extracted_pages: list[int]
     metadata: dict
     content: dict
-    error: Optional[str] = None
-    password_required: Optional[bool] = None
+    error: str | None = None
+    password_required: bool | None = None
 
 
 class PDFTextExtractRequest(BaseModel):
     """Request to extract text from PDF for TTS."""
 
     file_path: str
-    password: Optional[str] = None
-    page_range: Optional[tuple] = None
+    password: str | None = None
+    page_range: tuple | None = None
 
 
 class PDFTextExtractResponse(BaseModel):
@@ -64,7 +65,7 @@ class PDFTextExtractResponse(BaseModel):
     success: bool
     text: str
     page_count: int
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @router.post("/read", response_model=PDFReadResponse)
@@ -104,7 +105,7 @@ async def read_pdf(request: PDFReadRequest):
         logger.error(f"Error reading PDF: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error reading PDF: {str(e)}"
+            detail=f"Error reading PDF: {e!s}"
         ) from e
 
 
@@ -118,7 +119,7 @@ async def extract_text_for_tts(request: PDFTextExtractRequest):
     """
     try:
         client = get_pdf_client()
-        
+
         # Read the PDF
         pdf_result = client.read_pdf(
             file_path=request.file_path,
@@ -149,7 +150,7 @@ async def extract_text_for_tts(request: PDFTextExtractRequest):
         logger.error(f"Error extracting text from PDF: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error extracting text: {str(e)}"
+            detail=f"Error extracting text: {e!s}"
         ) from e
 
 
@@ -163,7 +164,7 @@ async def get_page_count(file_path: str):
     try:
         client = get_pdf_client()
         page_count = client.get_page_count(file_path)
-        
+
         return {
             "success": True,
             "file_path": file_path,
@@ -173,7 +174,7 @@ async def get_page_count(file_path: str):
         logger.error(f"Error getting page count: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error getting page count: {str(e)}"
+            detail=f"Error getting page count: {e!s}"
         ) from e
 
 
@@ -183,7 +184,7 @@ async def pdf_health_check():
     try:
         client = get_pdf_client()
         available = client.server_available
-        
+
         return {
             "service": "pdf-unlocker",
             "available": available,

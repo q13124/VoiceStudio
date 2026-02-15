@@ -6,7 +6,6 @@ they were auto-generated for an API that doesn't match the implementation.
 """
 
 import os
-import re
 
 test_dir = 'tests/unit/backend/api/routes'
 
@@ -47,22 +46,22 @@ for fname in files_to_skip:
     if not os.path.exists(fpath):
         print(f'Not found: {fname}')
         continue
-    
-    with open(fpath, 'r', encoding='utf-8') as f:
+
+    with open(fpath, encoding='utf-8') as f:
         content = f.read()
-    
+
     # Check if already has module-level skip
     if 'allow_module_level=True' in content:
         print(f'Already skipped: {fname}')
         continue
-    
+
     # Find the first import statement and insert skip after it
     # But we need pytest imported first
     lines = content.split('\n')
     new_lines = []
     inserted = False
-    
-    for i, line in enumerate(lines):
+
+    for _i, line in enumerate(lines):
         new_lines.append(line)
         # Insert after docstring and imports
         if not inserted and line.strip().startswith('import pytest'):
@@ -71,7 +70,7 @@ for fname in files_to_skip:
             inserted = True
             count += 1
             print(f'Skipped: {fname}')
-    
+
     if inserted:
         new_content = '\n'.join(new_lines)
         with open(fpath, 'w', encoding='utf-8') as f:

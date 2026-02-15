@@ -628,6 +628,14 @@ namespace VoiceStudio.App.ViewModels
         picker.SuggestedFileName = $"embeddings_export_{DateTime.Now:yyyyMMdd_HHmmss}";
         picker.FileTypeChoices.Add("JSON", new[] { ".json" });
 
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
+
         var file = await picker.PickSaveFileAsync();
         if (file == null)
         {
@@ -695,6 +703,14 @@ namespace VoiceStudio.App.ViewModels
         picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
         picker.SuggestedFileName = $"visualization_export_{DateTime.Now:yyyyMMdd_HHmmss}";
         picker.FileTypeChoices.Add("JSON", new[] { ".json" });
+
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
 
         var file = await picker.PickSaveFileAsync();
         cancellationToken.ThrowIfCancellationRequested();

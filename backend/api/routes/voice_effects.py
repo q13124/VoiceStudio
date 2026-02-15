@@ -5,8 +5,10 @@ Phase 9.3: Expose RealtimeVoiceChangerService via REST API.
 Provides endpoints for voice effects, presets, and hotkey management.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -23,7 +25,7 @@ class ApplyEffectRequest(BaseModel):
     """Request to apply voice effect."""
     audio_id: str = Field(..., description="Audio ID to process")
     effect_id: str = Field(..., description="Effect preset ID or custom effect")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Custom effect parameters")
+    parameters: dict[str, Any] | None = Field(None, description="Custom effect parameters")
 
 
 class ApplyEffectResponse(BaseModel):
@@ -39,7 +41,7 @@ class EffectPreset(BaseModel):
     name: str
     category: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
 
 
 class HotkeyConfig(BaseModel):
@@ -51,9 +53,9 @@ class HotkeyConfig(BaseModel):
 
 class RealtimeSessionRequest(BaseModel):
     """Request to start realtime voice changer session."""
-    input_device: Optional[str] = Field(None, description="Input audio device name")
-    output_device: Optional[str] = Field(None, description="Output audio device name")
-    effect_id: Optional[str] = Field(None, description="Initial effect preset")
+    input_device: str | None = Field(None, description="Input audio device name")
+    output_device: str | None = Field(None, description="Output audio device name")
+    effect_id: str | None = Field(None, description="Initial effect preset")
     latency_mode: str = Field("balanced", description="Latency mode: low, balanced, high_quality")
 
 
@@ -67,22 +69,22 @@ class RealtimeSessionResponse(BaseModel):
 # --- API Endpoints ---
 
 
-@router.get("/presets", response_model=List[EffectPreset])
+@router.get("/presets", response_model=list[EffectPreset])
 async def list_effect_presets():
     """
     List all available voice effect presets.
-    
+
     Phase 9.3.3: Voice effect library.
-    
+
     Returns:
         List of effect presets organized by category
     """
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         presets = service.list_presets()
-        
+
         return [
             EffectPreset(
                 id=p["id"],
@@ -93,12 +95,12 @@ async def list_effect_presets():
             )
             for p in presets
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list presets: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list presets: {str(e)}"
+            detail=f"Failed to list presets: {e!s}"
         ) from e
 
 
@@ -107,16 +109,16 @@ async def get_effect_preset(preset_id: str):
     """Get details of a specific effect preset."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         preset = service.get_preset(preset_id)
-        
+
         if not preset:
             raise HTTPException(
                 status_code=404,
                 detail=f"Preset '{preset_id}' not found"
             )
-        
+
         return EffectPreset(
             id=preset["id"],
             name=preset["name"],
@@ -124,14 +126,14 @@ async def get_effect_preset(preset_id: str):
             description=preset.get("description", ""),
             parameters=preset.get("parameters", {}),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get preset: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get preset: {str(e)}"
+            detail=f"Failed to get preset: {e!s}"
         ) from e
 
 
@@ -139,42 +141,42 @@ async def get_effect_preset(preset_id: str):
 async def apply_voice_effect(request: ApplyEffectRequest):
     """
     Apply voice effect to audio.
-    
+
     Args:
         request: Effect application parameters
-        
+
     Returns:
         Processed audio ID
     """
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         result = await service.apply_effect(
             audio_id=request.audio_id,
             effect_id=request.effect_id,
             parameters=request.parameters,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Effect application failed")
             )
-        
+
         return ApplyEffectResponse(
             output_audio_id=result["output_audio_id"],
             effect_id=request.effect_id,
             processing_time_ms=result.get("processing_time_ms", 0.0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Effect application failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Effect application failed: {str(e)}"
+            detail=f"Effect application failed: {e!s}"
         ) from e
 
 
@@ -195,19 +197,19 @@ async def list_effect_categories():
 # --- Hotkey Management ---
 
 
-@router.get("/hotkeys", response_model=List[HotkeyConfig])
+@router.get("/hotkeys", response_model=list[HotkeyConfig])
 async def list_hotkeys():
     """
     List configured hotkeys for voice switching.
-    
+
     Phase 9.3.5: Hotkey voice switching.
     """
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         hotkeys = service.list_hotkeys()
-        
+
         return [
             HotkeyConfig(
                 hotkey=h["hotkey"],
@@ -216,12 +218,12 @@ async def list_hotkeys():
             )
             for h in hotkeys
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list hotkeys: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list hotkeys: {str(e)}"
+            detail=f"Failed to list hotkeys: {e!s}"
         ) from e
 
 
@@ -230,29 +232,29 @@ async def set_hotkey(config: HotkeyConfig):
     """Configure a hotkey for voice switching."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         success = service.set_hotkey(
             hotkey=config.hotkey,
             effect_id=config.effect_id,
             enabled=config.enabled,
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=400,
                 detail="Failed to configure hotkey"
             )
-        
+
         return {"success": True, "message": f"Hotkey '{config.hotkey}' configured"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to set hotkey: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to set hotkey: {str(e)}"
+            detail=f"Failed to set hotkey: {e!s}"
         ) from e
 
 
@@ -261,25 +263,25 @@ async def remove_hotkey(hotkey: str):
     """Remove a configured hotkey."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         success = service.remove_hotkey(hotkey)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Hotkey '{hotkey}' not found"
             )
-        
+
         return {"success": True, "message": f"Hotkey '{hotkey}' removed"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to remove hotkey: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to remove hotkey: {str(e)}"
+            detail=f"Failed to remove hotkey: {e!s}"
         ) from e
 
 
@@ -290,12 +292,12 @@ async def remove_hotkey(hotkey: str):
 async def start_realtime_session(request: RealtimeSessionRequest):
     """
     Start a realtime voice changer session.
-    
+
     Phase 9.3.2: Low-latency RVC pipeline.
     """
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         result = await service.start_realtime_session(
             input_device=request.input_device,
@@ -303,26 +305,26 @@ async def start_realtime_session(request: RealtimeSessionRequest):
             effect_id=request.effect_id,
             latency_mode=request.latency_mode,
         )
-        
+
         if not result.get("success", False):
             raise HTTPException(
                 status_code=500,
                 detail=result.get("error", "Failed to start realtime session")
             )
-        
+
         return RealtimeSessionResponse(
             session_id=result["session_id"],
             status="active",
             latency_ms=result.get("latency_ms", 0.0),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to start realtime session: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start realtime session: {str(e)}"
+            detail=f"Failed to start realtime session: {e!s}"
         ) from e
 
 
@@ -331,25 +333,25 @@ async def stop_realtime_session(session_id: str):
     """Stop a realtime voice changer session."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         success = await service.stop_realtime_session(session_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Session '{session_id}' not found"
             )
-        
+
         return {"success": True, "message": f"Session '{session_id}' stopped"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to stop realtime session: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to stop realtime session: {str(e)}"
+            detail=f"Failed to stop realtime session: {e!s}"
         ) from e
 
 
@@ -358,25 +360,25 @@ async def change_realtime_effect(session_id: str, effect_id: str):
     """Change the active effect in a realtime session."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         success = await service.change_effect(session_id, effect_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Session '{session_id}' not found or effect change failed"
             )
-        
+
         return {"success": True, "effect_id": effect_id}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to change effect: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to change effect: {str(e)}"
+            detail=f"Failed to change effect: {e!s}"
         ) from e
 
 
@@ -385,15 +387,15 @@ async def list_audio_devices():
     """List available audio input/output devices."""
     try:
         from backend.services.realtime_voice_changer import get_realtime_voice_changer
-        
+
         service = get_realtime_voice_changer()
         devices = service.list_audio_devices()
-        
+
         return devices
-    
+
     except Exception as e:
         logger.error(f"Failed to list audio devices: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list audio devices: {str(e)}"
+            detail=f"Failed to list audio devices: {e!s}"
         ) from e

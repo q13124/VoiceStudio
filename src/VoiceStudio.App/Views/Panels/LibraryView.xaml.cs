@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Media;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using Windows.Foundation;
 using Windows.System;
@@ -27,6 +28,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private LibraryAsset? _draggedAsset;
     private DragDropVisualFeedbackService? _dragDropService;
+    private VoiceStudio.Core.Services.IDragDropService? _panelDragDropService;
     private IAudioPlayerService? _audioPlayer;
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
@@ -43,6 +45,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _dragDropService = ServiceProvider.GetDragDropVisualFeedbackService();
+      _panelDragDropService = AppServices.TryGetDragDropService();
       _audioPlayer = ServiceProvider.GetAudioPlayerService();
       _toastService = ServiceProvider.GetToastNotificationService();
       _undoRedoService = ServiceProvider.GetUndoRedoService();
@@ -105,6 +108,103 @@ namespace VoiceStudio.App.Views.Panels
       HelpOverlay.Show();
     }
 
+    /// <summary>
+    /// Handle context menu requested for asset items (right-click or long-press).
+    /// Audit remediation C.2: Context actions for Clone Reference, Use Voice Now.
+    /// </summary>
+    private void AssetItem_ContextRequested(UIElement sender, ContextRequestedEventArgs e)
+    {
+      if (sender is Grid grid && grid.DataContext is LibraryAsset asset)
+      {
+        // Get the MenuFlyout from the Grid's ContextFlyout
+        if (grid.ContextFlyout is MenuFlyout menu)
+        {
+          // Wire up menu item commands
+          foreach (var item in menu.Items)
+          {
+            if (item is MenuFlyoutItem menuItem)
+            {
+              // Clear any previous click handlers to avoid duplicates
+              // Then add new handler based on item name
+              switch (menuItem.Name)
+              {
+                case "PlayMenuItem":
+                  menuItem.Click -= PlayMenuItem_Click;
+                  menuItem.Click += PlayMenuItem_Click;
+                  menuItem.Tag = asset;
+                  break;
+                case "CloneReferenceMenuItem":
+                  menuItem.Click -= CloneReferenceMenuItem_Click;
+                  menuItem.Click += CloneReferenceMenuItem_Click;
+                  menuItem.Tag = asset;
+                  // Only enable for audio assets
+                  menuItem.IsEnabled = IsAudioAssetType(asset.Type);
+                  break;
+                case "UseSynthesisVoiceMenuItem":
+                  menuItem.Click -= UseSynthesisVoiceMenuItem_Click;
+                  menuItem.Click += UseSynthesisVoiceMenuItem_Click;
+                  menuItem.Tag = asset;
+                  // Only enable for voice profile assets
+                  menuItem.IsEnabled = IsVoiceProfileType(asset.Type);
+                  break;
+                case "DeleteMenuItem":
+                  menuItem.Click -= DeleteMenuItem_Click;
+                  menuItem.Click += DeleteMenuItem_Click;
+                  menuItem.Tag = asset;
+                  break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    private void PlayMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+      if (sender is MenuFlyoutItem menuItem && menuItem.Tag is LibraryAsset asset)
+      {
+        ViewModel.PlayAssetCommand?.Execute(asset);
+      }
+    }
+
+    private void CloneReferenceMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+      if (sender is MenuFlyoutItem menuItem && menuItem.Tag is LibraryAsset asset)
+      {
+        ViewModel.UseAsCloneReferenceCommand?.Execute(asset);
+      }
+    }
+
+    private void UseSynthesisVoiceMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+      if (sender is MenuFlyoutItem menuItem && menuItem.Tag is LibraryAsset asset)
+      {
+        ViewModel.UseSynthesisVoiceCommand?.Execute(asset);
+      }
+    }
+
+    private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+      if (sender is MenuFlyoutItem menuItem && menuItem.Tag is LibraryAsset asset)
+      {
+        _ = ViewModel.DeleteAssetCommand?.ExecuteAsync(asset);
+      }
+    }
+
+    private static bool IsAudioAssetType(string? assetType)
+    {
+      if (string.IsNullOrEmpty(assetType)) return true; // Default to allow
+      var audioTypes = new[] { "audio", "wav", "mp3", "flac", "ogg", "m4a", "recording" };
+      return audioTypes.Contains(assetType.ToLowerInvariant());
+    }
+
+    private static bool IsVoiceProfileType(string? assetType)
+    {
+      if (string.IsNullOrEmpty(assetType)) return false;
+      var voiceTypes = new[] { "voice", "voice_profile", "profile", "clone", "xtts", "rvc" };
+      return voiceTypes.Contains(assetType.ToLowerInvariant());
+    }
+
     private void File_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
       if (sender is Border border && border.DataContext != null)
@@ -113,7 +213,7 @@ namespace VoiceStudio.App.Views.Panels
         var menuService = ServiceProvider.GetContextMenuService();
         var menu = menuService.CreateContextMenu("audio", border.DataContext);
 
-        // Wire up menu item commands
+        // Wire up menu item commands (includes "Use as Clone Reference" for audio assets)
         WireUpFileMenuCommands(menu, border.DataContext);
 
         var position = e.GetPosition(border);
@@ -153,6 +253,21 @@ namespace VoiceStudio.App.Views.Panels
           menuItem.Click += (_, __) => HandleFileMenuClick(menuItem.Text, fileData);
         }
       }
+
+      // Add "Use as Clone Reference" context action for audio assets (Audit X-4)
+      var assetType = GetPropertyValue(fileData, "Type")?.ToString() ?? "";
+      if (assetType == "audio" || string.IsNullOrEmpty(assetType))
+      {
+        menu.Items.Add(new MenuFlyoutSeparator());
+
+        var cloneRefItem = new MenuFlyoutItem
+        {
+          Text = "Use as Clone Reference",
+          Icon = new FontIcon { Glyph = "\uE8D6" }
+        };
+        cloneRefItem.Click += (_, __) => NavigateToCloneWithAudio(fileData);
+        menu.Items.Add(cloneRefItem);
+      }
     }
 
     private void AddFolderMenuItems(MenuFlyout menu, dynamic folder)
@@ -173,6 +288,56 @@ namespace VoiceStudio.App.Views.Panels
       var deleteItem = new MenuFlyoutItem { Text = "Delete" };
       deleteItem.Click += (_, __) => HandleFolderMenuClick("Delete", folder);
       menu.Items.Add(deleteItem);
+    }
+
+    /// <summary>
+    /// Navigates to the Voice Cloning Wizard with this audio pre-loaded as reference.
+    /// Audit remediation X-4: Audio-to-clone shortcut from Library context menu.
+    /// </summary>
+    private void NavigateToCloneWithAudio(object fileData)
+    {
+      try
+      {
+        var assetId = GetPropertyValue(fileData, "Id")?.ToString();
+        var assetName = GetPropertyValue(fileData, "Name")?.ToString();
+        var assetPath = GetPropertyValue(fileData, "Path")?.ToString();
+
+        if (string.IsNullOrEmpty(assetId))
+        {
+          _toastService?.ShowToast(ToastType.Warning, "Clone", "Could not determine audio asset ID");
+          return;
+        }
+
+        // Publish NavigateToEvent to switch to Voice Cloning Wizard
+        // with the audio pre-loaded as reference
+        var eventAggregator = AppServices.TryGetEventAggregator();
+        if (eventAggregator != null)
+        {
+          eventAggregator.Publish(new VoiceStudio.Core.Events.NavigateToEvent(
+              "library",
+              "voice-cloning-wizard",
+              new System.Collections.Generic.Dictionary<string, object>
+              {
+                { "referenceAudioId", assetId },
+                { "referenceAudioName", assetName ?? "Audio" },
+                { "referenceAudioPath", assetPath ?? "" }
+              }));
+
+          _toastService?.ShowToast(
+              ToastType.Info,
+              "Clone Reference",
+              $"Opening Voice Cloning Wizard with '{assetName}' as reference...");
+        }
+        else
+        {
+          _toastService?.ShowToast(ToastType.Warning, "Navigation", "Navigation service is not available");
+        }
+      }
+      catch (Exception ex)
+      {
+        _toastService?.ShowToast(ToastType.Error, "Clone Reference", $"Failed to navigate: {ex.Message}");
+        System.Diagnostics.Debug.WriteLine($"[LibraryView] NavigateToCloneWithAudio error: {ex}");
+      }
     }
 
     private async void HandleFileMenuClick(string action, object fileData)
@@ -1036,6 +1201,14 @@ namespace VoiceStudio.App.Views.Panels
 
         // Reduce opacity of source element
         border.Opacity = 0.5;
+
+        // Notify cross-panel drag service (Panel Architecture Phase 4)
+        var payload = DragPayload.FromAsset(
+          ViewModel.PanelId,
+          asset.Id,
+          asset.Name ?? "Unnamed Asset",
+          asset.Type);
+        _panelDragDropService?.StartDrag(payload);
       }
     }
 
@@ -1053,8 +1226,118 @@ namespace VoiceStudio.App.Views.Panels
         DragDropCanvas.Children.Clear();
       }
 
+      // Cancel cross-panel drag if it wasn't completed by a drop target (Panel Architecture Phase 4)
+      if (_panelDragDropService?.IsDragging == true)
+      {
+        _panelDragDropService.CancelDrag();
+      }
+
       _draggedAsset = null;
     }
+
+    // -------------------------------------------------------------------------
+    // External File Import via Drag-and-Drop (Audit C-1 / H-3 remediation)
+    // -------------------------------------------------------------------------
+
+    // Supported media formats for audio import (includes video for audio extraction)
+    private static readonly HashSet<string> SupportedAudioExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+      // Audio formats
+      ".wav", ".wave", ".mp3", ".flac", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif",
+      // Video formats (audio will be extracted)
+      ".mp4", ".mov", ".mkv", ".avi", ".webm", ".wmv"
+    };
+
+    private void LibraryPanel_DragOver(object sender, DragEventArgs e)
+    {
+      // Accept files dragged from Windows Explorer
+      if (e.DataView.Contains(StandardDataFormats.StorageItems))
+      {
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = "Import audio to library";
+        e.DragUIOverride.IsGlyphVisible = true;
+        e.DragUIOverride.IsContentVisible = true;
+        e.Handled = true;
+      }
+    }
+
+    private async void LibraryPanel_Drop(object sender, DragEventArgs e)
+    {
+      if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+        return;
+
+      try
+      {
+        var items = await e.DataView.GetStorageItemsAsync();
+        if (items == null || items.Count == 0)
+          return;
+
+        var backendClient = ServiceProvider.GetBackendClient();
+        if (backendClient == null)
+        {
+          _toastService?.ShowToast(ToastType.Warning, "Import", "Backend is not available. Start the backend and try again.");
+          return;
+        }
+
+        int imported = 0;
+        int skipped = 0;
+
+        foreach (var item in items)
+        {
+          if (item is Windows.Storage.StorageFile file)
+          {
+            var ext = System.IO.Path.GetExtension(file.Name).ToLowerInvariant();
+            if (!SupportedAudioExtensions.Contains(ext))
+            {
+              skipped++;
+              System.Diagnostics.Debug.WriteLine($"[LibraryView] Skipped non-audio file: {file.Name}");
+              continue;
+            }
+
+            try
+            {
+              // Upload to backend
+              var uploadResult = await backendClient.UploadAudioFileAsync(file.Path);
+              System.Diagnostics.Debug.WriteLine($"[LibraryView] Uploaded: {file.Name} -> {uploadResult.Id}");
+              imported++;
+            }
+            catch (Exception ex)
+            {
+              System.Diagnostics.Debug.WriteLine($"[LibraryView] Failed to import {file.Name}: {ex.Message}");
+            }
+          }
+        }
+
+        // Refresh the library list
+        if (imported > 0 && ViewModel?.LoadAssetsCommand?.CanExecute(null) == true)
+        {
+          await ViewModel.LoadAssetsCommand.ExecuteAsync(null);
+        }
+
+        // Show result
+        if (imported > 0 && skipped == 0)
+        {
+          _toastService?.ShowToast(ToastType.Success, "Import Complete", $"Imported {imported} audio file(s) to library");
+        }
+        else if (imported > 0 && skipped > 0)
+        {
+          _toastService?.ShowToast(ToastType.Success, "Import Complete", $"Imported {imported} file(s), skipped {skipped} non-audio file(s)");
+        }
+        else if (skipped > 0)
+        {
+          _toastService?.ShowToast(ToastType.Warning, "No Media Files", "None of the dropped files are supported media formats. Supported: audio (.wav, .mp3, .flac, .ogg, .m4a, .aac, .wma, .aiff) and video (.mp4, .mov, .mkv, .avi, .webm) for audio extraction.");
+        }
+      }
+      catch (Exception ex)
+      {
+        _toastService?.ShowToast(ToastType.Error, "Import Failed", $"Drag-drop import failed: {ex.Message}");
+        System.Diagnostics.Debug.WriteLine($"[LibraryView] Drag-drop import error: {ex}");
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal Asset Drag-and-Drop (existing reorder/move logic)
+    // -------------------------------------------------------------------------
 
     private void Asset_DragOver(object sender, DragEventArgs e)
     {

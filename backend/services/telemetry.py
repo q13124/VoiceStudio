@@ -21,11 +21,12 @@ import threading
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Generator, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -91,14 +92,14 @@ class Span:
     span_id: str
     name: str
     start_time: float = field(default_factory=time.time)  # Unix timestamp
-    end_time: Optional[float] = None
+    end_time: float | None = None
     status: SpanStatus = SpanStatus.OK
-    attributes: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
-    parent_span_id: Optional[str] = None
+    attributes: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    parent_span_id: str | None = None
     # Internal perf counter for accurate duration measurement
     _perf_start: float = field(default_factory=time.perf_counter, repr=False)
-    _perf_end: Optional[float] = field(default=None, repr=False)
+    _perf_end: float | None = field(default=None, repr=False)
 
     @property
     def duration_ms(self) -> float:
@@ -109,7 +110,7 @@ class Span:
     def set_attribute(self, key: str, value: Any) -> None:
         self.attributes[key] = value
 
-    def set_status(self, status: SpanStatus, error: Optional[str] = None) -> None:
+    def set_status(self, status: SpanStatus, error: str | None = None) -> None:
         self.status = status
         self.error = error
 
@@ -117,7 +118,7 @@ class Span:
         self._perf_end = time.perf_counter()
         self.end_time = time.time()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "trace_id": self.trace_id,
             "span_id": self.span_id,
@@ -136,12 +137,12 @@ class Span:
 _span_context = threading.local()
 
 
-def get_current_span() -> Optional[Span]:
+def get_current_span() -> Span | None:
     """Get the current active span (if any)."""
     return getattr(_span_context, "span", None)
 
 
-def _set_current_span(span: Optional[Span]) -> None:
+def _set_current_span(span: Span | None) -> None:
     _span_context.span = span
 
 
@@ -166,7 +167,7 @@ class MetricValue:
     sum: float = 0.0
     min: float = float("inf")
     max: float = float("-inf")
-    values: List[float] = field(default_factory=list)  # For histogram buckets
+    values: list[float] = field(default_factory=list)  # For histogram buckets
 
     def record(self, value: float = 1.0) -> None:
         self.count += 1
@@ -191,7 +192,7 @@ class MetricValue:
         idx = int(len(sorted_vals) * p / 100)
         return sorted_vals[min(idx, len(sorted_vals) - 1)]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "count": self.count,
             "sum": self.sum,
@@ -224,10 +225,10 @@ class TelemetryService:
 
     def __init__(self, service_name: str = "voicestudio.backend"):
         self.service_name = service_name
-        self._metrics: Dict[str, Dict[str, MetricValue]] = defaultdict(
+        self._metrics: dict[str, dict[str, MetricValue]] = defaultdict(
             lambda: defaultdict(MetricValue)
         )
-        self._spans: List[Span] = []
+        self._spans: list[Span] = []
         self._max_spans = 1000  # Keep last N spans
         self._lock = threading.Lock()
 
@@ -245,7 +246,7 @@ class TelemetryService:
     def trace(
         self,
         name: str,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> Generator[Span, None, None]:
         """
         Context manager for tracing an operation.
@@ -305,12 +306,12 @@ class TelemetryService:
             setattr(log_record, k, v)
         logger.handle(log_record)
 
-    def get_recent_spans(self, limit: int = 100) -> List[Span]:
+    def get_recent_spans(self, limit: int = 100) -> list[Span]:
         """Get recent spans as Span objects."""
         with self._lock:
             return list(self._spans[-limit:])
 
-    def get_recent_spans_dict(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_recent_spans_dict(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get recent spans as dictionaries for debugging/API."""
         with self._lock:
             return [s.to_dict() for s in self._spans[-limit:]]
@@ -321,7 +322,7 @@ class TelemetryService:
         self,
         name: str,
         value: float = 1.0,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> None:
         """Increment a counter metric."""
         label_key = self._label_key(labels)
@@ -332,19 +333,19 @@ class TelemetryService:
         self,
         name: str,
         value: float,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> None:
         """Record a histogram observation."""
         label_key = self._label_key(labels)
         with self._lock:
             self._metrics[name][label_key].record(value)
 
-    def _label_key(self, labels: Optional[Dict[str, str]]) -> str:
+    def _label_key(self, labels: dict[str, str] | None) -> str:
         if not labels:
             return ""
         return ",".join(f"{k}={v}" for k, v in sorted(labels.items()))
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get all metrics as a dictionary."""
         with self._lock:
             result = {}
@@ -392,7 +393,7 @@ class TelemetryService:
             labels={"engine": engine_id, "operation": operation},
         )
 
-    def record_error(self, error_type: str, path: Optional[str] = None) -> None:
+    def record_error(self, error_type: str, path: str | None = None) -> None:
         """Record an error occurrence."""
         labels = {"type": error_type}
         if path:
@@ -401,7 +402,7 @@ class TelemetryService:
 
     # ----- Summary -----
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of telemetry data."""
         metrics = self.get_metrics()
         spans = self.get_recent_spans(10)
@@ -425,7 +426,7 @@ class TelemetryService:
 # Global Instance
 # ============================================================================
 
-_telemetry_service: Optional[TelemetryService] = None
+_telemetry_service: TelemetryService | None = None
 
 
 def get_telemetry_service() -> TelemetryService:

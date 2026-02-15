@@ -11,8 +11,9 @@ Compatible with:
 - noisereduce>=3.0.2
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -95,8 +96,8 @@ class EnhancedPreprocessor:
     def preprocess(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
-        config: Optional[Dict] = None,
+        sample_rate: int | None = None,
+        config: dict | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -171,9 +172,8 @@ class EnhancedPreprocessor:
             processed = self._apply_normalization(processed, sample_rate, target_lufs)
 
         # 9. Final artifact removal
-        if config.get("remove_artifacts", True):
-            if HAS_AUDIO_UTILS:
-                processed = remove_artifacts(processed, sample_rate)
+        if config.get("remove_artifacts", True) and HAS_AUDIO_UTILS:
+            processed = remove_artifacts(processed, sample_rate)
 
         return processed
 
@@ -233,10 +233,7 @@ class EnhancedPreprocessor:
             return audio
 
         # Convert to mono for VAD
-        if len(audio.shape) > 1:
-            audio_mono = np.mean(audio, axis=1)
-        else:
-            audio_mono = audio
+        audio_mono = np.mean(audio, axis=1) if len(audio.shape) > 1 else audio
 
         try:
             # Use librosa's trim function
@@ -262,7 +259,7 @@ class EnhancedPreprocessor:
             return audio
 
     def _apply_denoising(
-        self, audio: np.ndarray, sample_rate: int, config: Dict
+        self, audio: np.ndarray, sample_rate: int, config: dict
     ) -> np.ndarray:
         """Apply advanced denoising."""
         if HAS_AUDIO_UTILS:
@@ -422,7 +419,7 @@ class EnhancedPreprocessor:
             return audio / max_val * 0.95
         return audio
 
-    def get_preset(self, preset_name: str) -> Dict:
+    def get_preset(self, preset_name: str) -> dict:
         """Get preprocessing preset configuration."""
         presets = {
             "voice_cloning": {
@@ -502,8 +499,8 @@ def create_enhanced_preprocessor(
 def preprocess_audio(
     audio: np.ndarray,
     sample_rate: int = 24000,
-    preset: Optional[str] = None,
-    config: Optional[Dict] = None,
+    preset: str | None = None,
+    config: dict | None = None,
     **kwargs,
 ) -> np.ndarray:
     """

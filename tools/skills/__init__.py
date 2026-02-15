@@ -5,21 +5,21 @@ Provides programmatic skill management, discovery, and registration.
 """
 
 from tools.skills.registry import (
-    SkillRegistry,
     Skill,
     SkillCategory,
+    SkillRegistry,
     get_registry,
-    list_skills,
     get_skill,
+    list_skills,
     register_skill,
 )
 
 __all__ = [
-    "SkillRegistry",
     "Skill",
     "SkillCategory",
+    "SkillRegistry",
     "get_registry",
-    "list_skills",
     "get_skill",
+    "list_skills",
     "register_skill",
 ]

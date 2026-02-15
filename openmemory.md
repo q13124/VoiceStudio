@@ -254,3 +254,23 @@ This file is a **living index** of VoiceStudio’s architecture, contracts, and 
 - **HandoffQueue**: Cross-role issue escalation system at `tools/overseer/issues/handoff.py` with JSONL persistence; methods: handoff(), get_role_queue(), acknowledge(), complete() (2026-01-30).
 - **Path config**: Enhanced `backend/config/path_config.py` with `get_ffmpeg_path()` (env → PATH → known dirs → bundled), `get_path(path_type)` supporting 7 types (models, ffmpeg, cache, checkpoints, logs, artifacts, data, config), `validate_path()`, comprehensive docstrings (2026-01-30).
 - **Lifecycle hooks**: `hooks.json` config with beforeSubmitPrompt (state validation), afterFileEdit (audit), stop (closure reminder), sessionStart (role detection); scripts in `.cursor/hooks/` (2026-01-30).
+
+## UI Testing Infrastructure (2026-02-13)
+
+- **WinAppDriverSession class**: `tests/ui/conftest.py` contains a custom `WinAppDriverSession` class that makes direct HTTP requests to WinAppDriver, bypassing Selenium's WebDriver API entirely.
+  - **Selenium 4.x Incompatibility**: Selenium 4.x uses W3C capabilities format, which WinAppDriver (JSON Wire Protocol) does not support. This caused `WebDriverException: Message: Bad capabilities` errors.
+  - **Solution**: The `WinAppDriverSession` class directly POSTs session creation requests to WinAppDriver with the old-style capabilities format.
+  - **Methods**: `find_element_by_*`, `click()`, `send_keys()`, `implicitly_wait()`, `quit()`.
+- **UI Test Structure**:
+  - `tests/ui/conftest.py`: Core fixtures (`winappdriver_service`, `driver`, `WinAppDriverSession`), app path discovery, WinAppDriver startup.
+  - `tests/e2e/conftest.py`: E2E-specific fixtures, imports `WinAppDriverSession` from UI conftest.
+  - `tests/ui/test_performance.py`, `test_accessibility.py`, `test_visual_regression.py`: All use `WinAppDriverSession` for driver fixture.
+- **Application Path Discovery**: Test fixtures search multiple locations for `VoiceStudio.App.exe`:
+  1. `VS_APP_PATH` environment variable (highest priority)
+  2. `.buildlogs/x64/Debug/net8.0-windows10.0.19041.0/`
+  3. `.buildlogs/publish/`
+  4. `src/VoiceStudio.App/bin/x64/Debug/net8.0-windows10.0.19041.0/`
+- **Prerequisites for UI Tests**:
+  - WinAppDriver must be running (`C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe` on port 4723).
+  - VoiceStudio app must be built (`dotnet build VoiceStudio.sln -c Debug -p:Platform=x64`).
+  - Python deps: `pytest`, `selenium`, `websocket-client`, `Pillow`, `psutil`, `pytest-html`.

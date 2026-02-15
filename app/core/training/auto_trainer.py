@@ -7,10 +7,12 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import logging
-from datetime import datetime
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ except ImportError:
 
 # Import quality metrics
 try:
-    from ..audio.enhanced_quality_metrics import EnhancedQualityMetrics
+    from app.core.audio.enhanced_quality_metrics import EnhancedQualityMetrics
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -48,9 +50,9 @@ class AutoTrainer:
     def __init__(
         self,
         engine: str = "xtts",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ):
         """
         Initialize Auto Trainer.
@@ -77,11 +79,11 @@ class AutoTrainer:
     async def auto_train(
         self,
         metadata_path: str,
-        validation_audio: Optional[str] = None,
+        validation_audio: str | None = None,
         max_runs: int = 3,
         optimize_params: bool = True,
-        progress_callback: Optional[Callable[[Dict], None]] = None,
-    ) -> Dict[str, Any]:
+        progress_callback: Callable[[dict], None] | None = None,
+    ) -> dict[str, Any]:
         """
         Automatically train with parameter optimization.
 
@@ -170,26 +172,26 @@ class AutoTrainer:
                     try:
                         # Export model
                         model_path = trainer.export_model()
-                        
+
                         # Load trained model and synthesize test audio
                         try:
                             import numpy as np
                             import soundfile as sf
 
-                            from ..engines.quality_metrics import (
+                            from app.core.engines.quality_metrics import (
                                 calculate_mos_score,
                                 calculate_similarity,
                             )
-                            from ..engines.xtts_engine import XTTSEngine
+                            from app.core.engines.xtts_engine import XTTSEngine
 
                             # Load validation audio
-                            val_audio, val_sr = sf.read(validation_audio)
-                            
+                            _val_audio, val_sr = sf.read(validation_audio)
+
                             # Create engine with trained model
                             test_engine = XTTSEngine(model_name=model_path, device=self.device, gpu=self.gpu)
                             if not test_engine.initialize():
                                 raise RuntimeError("Failed to initialize test engine")
-                            
+
                             # Synthesize test audio using a standard test sentence
                             test_text = "The quick brown fox jumps over the lazy dog."
                             synthesized_audio = test_engine.synthesize(
@@ -197,7 +199,7 @@ class AutoTrainer:
                                 speaker_wav=validation_audio,
                                 language="en"
                             )
-                            
+
                             if synthesized_audio is not None:
                                 # Calculate similarity between validation and synthesized audio
                                 similarity = calculate_similarity(
@@ -205,27 +207,27 @@ class AutoTrainer:
                                     generated_audio=synthesized_audio,
                                     method="embedding"
                                 )
-                                
+
                                 # Calculate MOS score for synthesized audio
                                 mos_score = calculate_mos_score(synthesized_audio, sample_rate=val_sr)
-                                
+
                                 # Combine metrics into quality score (0.0 to 1.0)
                                 # Similarity weight: 0.6, MOS weight: 0.4 (normalized to 0-1)
                                 quality_score = (similarity * 0.6) + ((mos_score / 5.0) * 0.4)
                                 quality_score = max(0.0, min(1.0, quality_score))  # Clamp to [0, 1]
-                                
+
                                 logger.info(f"Quality evaluation: similarity={similarity:.3f}, MOS={mos_score:.2f}, combined={quality_score:.3f}")
                             else:
                                 logger.warning("Synthesis failed, using loss-based quality score")
                                 raise RuntimeError("Synthesis failed")
-                                
+
                         except ImportError as e:
                             logger.warning(f"Quality metrics not available: {e}, using loss-based score")
                             raise
                         except Exception as e:
                             logger.warning(f"Quality evaluation failed: {e}, using loss-based score")
                             raise
-                            
+
                     except Exception as e:
                         logger.warning(f"Quality evaluation failed: {e}, falling back to loss-based score")
 
@@ -279,7 +281,7 @@ class AutoTrainer:
             "successful_runs": len([h for h in training_history if "error" not in h]),
         }
 
-    def _generate_parameter_sets(self, num_sets: int) -> List[Dict[str, Any]]:
+    def _generate_parameter_sets(self, num_sets: int) -> list[dict[str, Any]]:
         """
         Generate parameter sets for hyperparameter optimization.
 
@@ -317,7 +319,7 @@ class AutoTrainer:
         dataset_size: int,
         audio_duration: float,
         quality_target: str = "standard",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get recommended training parameters based on dataset characteristics.
 
@@ -330,7 +332,7 @@ class AutoTrainer:
             Dictionary with recommended parameters
         """
         # Calculate total training data duration
-        total_duration = dataset_size * audio_duration
+        dataset_size * audio_duration
 
         # Base parameters
         base_epochs = 100
@@ -371,9 +373,9 @@ class AutoTrainer:
 
 def create_auto_trainer(
     engine: str = "xtts",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    output_dir: Optional[str] = None,
+    output_dir: str | None = None,
 ) -> AutoTrainer:
     """
     Factory function to create an Auto Trainer instance.

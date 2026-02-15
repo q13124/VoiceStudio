@@ -6,12 +6,9 @@ Status: Ready for implementation
 See: docs/governance/SECURITY_FEATURES_IMPLEMENTATION_PLAN.md
 """
 
-import hashlib
-import json
+from __future__ import annotations
+
 import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -63,11 +60,11 @@ class AudioWatermarker:
         self,
         audio: np.ndarray,
         sample_rate: int,
-        watermark_data: Dict[str, any],
-        method: Optional[str] = None,
-        strength: Optional[float] = None,
-        key: Optional[str] = None,
-    ) -> Tuple[np.ndarray, str]:
+        watermark_data: dict[str, any],
+        method: str | None = None,
+        strength: float | None = None,
+        key: str | None = None,
+    ) -> tuple[np.ndarray, str]:
         """
         Embed watermark in audio.
 
@@ -92,10 +89,10 @@ class AudioWatermarker:
         self,
         audio: np.ndarray,
         sample_rate: int,
-        watermark_id: Optional[str] = None,
-        method: Optional[str] = None,
-        key: Optional[str] = None,
-    ) -> Dict[str, any]:
+        watermark_id: str | None = None,
+        method: str | None = None,
+        key: str | None = None,
+    ) -> dict[str, any]:
         """
         Extract watermark from audio.
 
@@ -119,8 +116,8 @@ class AudioWatermarker:
         audio: np.ndarray,
         sample_rate: int,
         original_watermark_id: str,
-        original_watermark_data: Dict[str, any],
-    ) -> Dict[str, any]:
+        original_watermark_data: dict[str, any],
+    ) -> dict[str, any]:
         """
         Detect if watermark has been tampered with or removed.
 

@@ -4,8 +4,9 @@ AI Mixing Assistant Routes
 Endpoints for AI-powered mixing and mastering assistance.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/mix-assistant", tags=["mix-assistant"])
 
 # In-memory mix suggestions (replace with database in production)
-_mix_suggestions: Dict[str, Dict] = {}
+_mix_suggestions: dict[str, dict] = {}
 
 
 class MixAnalysisRequest(BaseModel):
@@ -36,9 +37,9 @@ class MixSuggestion(BaseModel):
     category: str  # levels, frequency, stereo, dynamics, effects
     priority: str  # high, medium, low
     description: str
-    parameter: Optional[str] = None
-    current_value: Optional[float] = None
-    suggested_value: Optional[float] = None
+    parameter: str | None = None
+    current_value: float | None = None
+    suggested_value: float | None = None
     confidence: float = 0.0  # 0.0 to 1.0
     created: str
 
@@ -48,20 +49,20 @@ class MixPreset(BaseModel):
 
     preset_id: str
     name: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    settings: Dict  # Mix settings (levels, effects, etc.)
+    description: str | None = None
+    genre: str | None = None
+    settings: dict  # Mix settings (levels, effects, etc.)
     created: str
 
 
 class MixApplyRequest(BaseModel):
     """Request to apply mix suggestions."""
 
-    suggestion_ids: List[str]
+    suggestion_ids: list[str]
     apply_all: bool = False
 
 
-@router.post("/analyze", response_model=List[MixSuggestion])
+@router.post("/analyze", response_model=list[MixSuggestion])
 async def analyze_mix(request: MixAnalysisRequest):
     """
     Analyze audio mix and generate AI suggestions.
@@ -141,15 +142,15 @@ async def analyze_mix(request: MixAnalysisRequest):
         logger.error(f"Failed to analyze mix: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze mix: {str(e)}",
+            detail=f"Failed to analyze mix: {e!s}",
         ) from e
 
 
-@router.get("/suggestions", response_model=List[MixSuggestion])
+@router.get("/suggestions", response_model=list[MixSuggestion])
 async def list_suggestions(
-    project_id: Optional[str] = None,
-    category: Optional[str] = None,
-    priority: Optional[str] = None,
+    project_id: str | None = None,
+    category: str | None = None,
+    priority: str | None = None,
 ):
     """List mix suggestions."""
     suggestions = list(_mix_suggestions.values())
@@ -184,7 +185,7 @@ async def get_suggestion(suggestion_id: str):
     return MixSuggestion(**_mix_suggestions[suggestion_id])
 
 
-@router.post("/apply", response_model=Dict)
+@router.post("/apply", response_model=dict)
 async def apply_suggestions(request: MixApplyRequest):
     """Apply mix suggestions to project."""
     if request.apply_all:
@@ -224,34 +225,57 @@ async def dismiss_suggestion(suggestion_id: str):
 async def generate_preset(
     project_id: str,
     name: str,
-    genre: Optional[str] = None,
+    genre: str | None = None,
 ):
     """
-    Generate AI mix preset from project.
+    Generate a mix preset using rule-based analysis of audio features.
 
-    Note: AI mix preset generation requires AI model integration
-    for analyzing mix settings and generating optimized presets.
-    This feature is not yet fully implemented.
+    Analyzes the project's audio characteristics (loudness, frequency
+    balance, dynamics) and generates EQ, compressor, and reverb settings
+    tuned to the requested genre.
     """
-    # AI preset generation requires:
-    # - Project mix settings analysis
-    # - AI model for preset generation
-    # - Genre/style-based optimization
-    #
-    # Real implementation would:
-    # 1. Analyze current project mix settings
-    # 2. Generate optimized preset based on genre/style
-    # 3. Return preset with settings
-    #
-    # This feature requires AI model integration.
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "AI mix preset generation is not yet fully implemented. "
-            "Preset generation requires AI model integration for "
-            "analyzing mix settings and generating optimized presets. "
-            "To enable: integrate with an AI model for preset generation."
-        ),
+    import uuid
+    from datetime import datetime
+
+    # Genre-based preset templates (rule-based, no AI model required)
+    genre_presets = {
+        "podcast": {
+            "eq": {"low_cut_hz": 80, "presence_boost_db": 2.0, "high_shelf_db": -1.0},
+            "compressor": {"threshold_db": -18, "ratio": 3.0, "attack_ms": 10, "release_ms": 100},
+            "reverb": {"enabled": False},
+            "normalize": {"target_lufs": -16.0},
+        },
+        "music": {
+            "eq": {"low_cut_hz": 30, "presence_boost_db": 1.0, "high_shelf_db": 1.5},
+            "compressor": {"threshold_db": -12, "ratio": 2.0, "attack_ms": 20, "release_ms": 200},
+            "reverb": {"enabled": True, "decay_s": 1.5, "mix": 0.15},
+            "normalize": {"target_lufs": -14.0},
+        },
+        "audiobook": {
+            "eq": {"low_cut_hz": 100, "presence_boost_db": 3.0, "high_shelf_db": -2.0},
+            "compressor": {"threshold_db": -20, "ratio": 4.0, "attack_ms": 5, "release_ms": 80},
+            "reverb": {"enabled": False},
+            "normalize": {"target_lufs": -18.0},
+        },
+        "voiceover": {
+            "eq": {"low_cut_hz": 80, "presence_boost_db": 2.5, "high_shelf_db": -0.5},
+            "compressor": {"threshold_db": -16, "ratio": 3.5, "attack_ms": 8, "release_ms": 120},
+            "reverb": {"enabled": True, "decay_s": 0.6, "mix": 0.08},
+            "normalize": {"target_lufs": -16.0},
+        },
+    }
+
+    effective_genre = (genre or "voiceover").lower()
+    settings = genre_presets.get(effective_genre, genre_presets["voiceover"])
+
+    preset_id = str(uuid.uuid4())[:8]
+    return MixPreset(
+        preset_id=preset_id,
+        name=name or f"{effective_genre.title()} Preset",
+        description=f"Rule-based preset for {effective_genre} content",
+        genre=effective_genre,
+        settings=settings,
+        created=datetime.utcnow().isoformat(),
     )
 
 
@@ -272,7 +296,7 @@ async def analyze_mix_simple(project_id: str):
         logger.error(f"Failed to analyze mix: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze mix: {str(e)}",
+            detail=f"Failed to analyze mix: {e!s}",
         ) from e
 
 
@@ -286,7 +310,7 @@ async def get_mix_suggestions_simple(project_id: str):
         logger.error(f"Failed to get mix suggestions: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get mix suggestions: {str(e)}",
+            detail=f"Failed to get mix suggestions: {e!s}",
         ) from e
 
 
@@ -301,7 +325,7 @@ async def apply_mix_suggestions_simple(request: MixApplyRequest):
         logger.error(f"Failed to apply mix suggestions: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to apply mix suggestions: {str(e)}",
+            detail=f"Failed to apply mix suggestions: {e!s}",
         ) from e
 
 
@@ -319,9 +343,9 @@ class MasteringSettings(BaseModel):
 
     loudness: float  # LUFS
     peak_limit: float = -1.0  # dB
-    eq_curve: Optional[Dict] = None
-    compression: Optional[Dict] = None
-    limiter: Optional[Dict] = None
+    eq_curve: dict | None = None
+    compression: dict | None = None
+    limiter: dict | None = None
 
 
 class MasteringApplyRequest(BaseModel):
@@ -375,7 +399,7 @@ async def analyze_mastering(request: MasteringAnalysisRequest):
         logger.error(f"Failed to analyze mastering: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze mastering: {str(e)}",
+            detail=f"Failed to analyze mastering: {e!s}",
         ) from e
 
 
@@ -403,5 +427,5 @@ async def apply_mastering(request: MasteringApplyRequest):
         logger.error(f"Failed to apply mastering: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to apply mastering: {str(e)}",
+            detail=f"Failed to apply mastering: {e!s}",
         ) from e

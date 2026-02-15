@@ -6,13 +6,12 @@ Discovers, manages, and provides access to skills in .cursor/skills/.
 
 from __future__ import annotations
 
-import json
 import re
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 
 class SkillCategory(str, Enum):
@@ -32,7 +31,7 @@ class Skill:
     description: str = ""
     display_name: str = ""
     has_script: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def skill_md_path(self) -> Path:
@@ -40,7 +39,7 @@ class Skill:
         return self.path / "SKILL.md"
 
     @property
-    def invoke_script_path(self) -> Optional[Path]:
+    def invoke_script_path(self) -> Path | None:
         """Path to invoke.py script, if exists."""
         script_path = self.path / "scripts" / "invoke.py"
         return script_path if script_path.exists() else None
@@ -50,7 +49,7 @@ class Skill:
         """Full skill identifier (e.g., roles/build-tooling)."""
         return f"{self.category.value}/{self.name}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "name": self.name,
@@ -66,9 +65,9 @@ class Skill:
 class SkillRegistry:
     """
     Registry for discovering and managing skills.
-    
+
     Skills are stored in .cursor/skills/ with the following structure:
-    
+
     .cursor/skills/
         roles/
             build-tooling/
@@ -82,15 +81,15 @@ class SkillRegistry:
                     invoke.py
     """
 
-    def __init__(self, skills_root: Optional[Path] = None):
+    def __init__(self, skills_root: Path | None = None):
         """
         Initialize the registry.
-        
+
         Args:
             skills_root: Root directory for skills (default: .cursor/skills/)
         """
         self._skills_root = skills_root or self._find_skills_root()
-        self._skills: Dict[str, Skill] = {}
+        self._skills: dict[str, Skill] = {}
         self._lock = threading.RLock()
         self._loaded = False
 
@@ -134,7 +133,7 @@ class SkillRegistry:
 
             self._loaded = True
 
-    def _parse_skill(self, skill_dir: Path, category: SkillCategory) -> Optional[Skill]:
+    def _parse_skill(self, skill_dir: Path, category: SkillCategory) -> Skill | None:
         """Parse a skill from its directory."""
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.exists():
@@ -181,7 +180,7 @@ class SkillRegistry:
             has_script=has_script,
         )
 
-    def get_all(self) -> List[Skill]:
+    def get_all(self) -> list[Skill]:
         """Get all registered skills."""
         if not self._loaded:
             self._discover_skills()
@@ -189,13 +188,13 @@ class SkillRegistry:
         with self._lock:
             return list(self._skills.values())
 
-    def get(self, skill_id: str) -> Optional[Skill]:
+    def get(self, skill_id: str) -> Skill | None:
         """
         Get a skill by ID.
-        
+
         Args:
             skill_id: Full skill ID (e.g., "roles/build-tooling") or name only
-        
+
         Returns:
             Skill or None if not found
         """
@@ -214,7 +213,7 @@ class SkillRegistry:
 
             return None
 
-    def get_by_category(self, category: SkillCategory) -> List[Skill]:
+    def get_by_category(self, category: SkillCategory) -> list[Skill]:
         """Get all skills in a category."""
         if not self._loaded:
             self._discover_skills()
@@ -225,7 +224,7 @@ class SkillRegistry:
     def refresh(self) -> int:
         """
         Refresh the skill registry by re-discovering skills.
-        
+
         Returns:
             Number of skills discovered
         """
@@ -243,19 +242,19 @@ class SkillRegistry:
     ) -> Skill:
         """
         Register a new skill.
-        
+
         Creates the skill directory structure and SKILL.md file.
-        
+
         Args:
             name: Skill name (kebab-case)
             category: Skill category
             description: Short description
             display_name: Human-readable name
             with_script: Whether to create invoke.py template
-        
+
         Returns:
             The created Skill
-        
+
         Raises:
             ValueError: If skill name is invalid or already exists
         """
@@ -355,7 +354,7 @@ if __name__ == "__main__":
 
 
 # Global registry instance
-_registry_instance: Optional[SkillRegistry] = None
+_registry_instance: SkillRegistry | None = None
 _registry_lock = threading.Lock()
 
 
@@ -369,13 +368,13 @@ def get_registry() -> SkillRegistry:
         return _registry_instance
 
 
-def list_skills(category: Optional[str] = None) -> List[Skill]:
+def list_skills(category: str | None = None) -> list[Skill]:
     """
     List all skills, optionally filtered by category.
-    
+
     Args:
         category: Optional category filter ("roles" or "tools")
-    
+
     Returns:
         List of skills
     """
@@ -391,13 +390,13 @@ def list_skills(category: Optional[str] = None) -> List[Skill]:
     return registry.get_all()
 
 
-def get_skill(skill_id: str) -> Optional[Skill]:
+def get_skill(skill_id: str) -> Skill | None:
     """
     Get a skill by ID or name.
-    
+
     Args:
         skill_id: Skill ID (e.g., "roles/build-tooling") or name ("build-tooling")
-    
+
     Returns:
         Skill or None
     """
@@ -413,14 +412,14 @@ def register_skill(
 ) -> Skill:
     """
     Register a new skill.
-    
+
     Args:
         name: Skill name (kebab-case)
         category: "roles" or "tools"
         description: Short description
         display_name: Human-readable name
         with_script: Create invoke.py template
-    
+
     Returns:
         Created Skill
     """

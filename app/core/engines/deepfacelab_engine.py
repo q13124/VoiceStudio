@@ -8,10 +8,12 @@ Compatible with:
 - opencv-python 4.5.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 from PIL import Image
@@ -88,9 +90,9 @@ class DeepFaceLabEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
         require_consent: bool = True,
     ):
         """
@@ -234,9 +236,9 @@ class DeepFaceLabEngine(EngineProtocol):
 
     def swap_face(
         self,
-        source_image: Union[str, Path, Image.Image],
-        target_image: Union[str, Path, Image.Image],
-        output_path: Optional[Union[str, Path]] = None,
+        source_image: str | Path | Image.Image,
+        target_image: str | Path | Image.Image,
+        output_path: str | Path | None = None,
         blend_factor: float = 0.5,
         **kwargs,
     ) -> str:
@@ -373,7 +375,7 @@ class DeepFaceLabEngine(EngineProtocol):
             logger.error(f"Error performing face swap: {e}")
             raise RuntimeError(f"Failed to perform face swap: {e}")
 
-    def _detect_face_insightface(self, image: np.ndarray) -> Optional[Dict[str, Any]]:
+    def _detect_face_insightface(self, image: np.ndarray) -> dict[str, Any] | None:
         """
         Detect face using InsightFace (if available).
 
@@ -420,7 +422,7 @@ class DeepFaceLabEngine(EngineProtocol):
 
     def _detect_and_extract_face(
         self, image: np.ndarray, return_bbox: bool = False
-    ) -> Union[Optional[np.ndarray], Optional[Tuple[np.ndarray, Dict]]]:
+    ) -> np.ndarray | None | tuple[np.ndarray, dict] | None:
         """
         Detect and extract face from image.
 
@@ -520,32 +522,31 @@ class DeepFaceLabEngine(EngineProtocol):
                 if model_files:
                     model_path = str(model_files[0])
 
-            if model_path and os.path.exists(model_path):
-                if HAS_TENSORFLOW:
-                    import tensorflow as tf
+            if model_path and os.path.exists(model_path) and HAS_TENSORFLOW:
+                import tensorflow as tf
 
-                    # Configure TensorFlow device
-                    if self.device == "gpu":
-                        gpus = tf.config.experimental.list_physical_devices("GPU")
-                        if gpus:
-                            try:
-                                for gpu in gpus:
-                                    tf.config.experimental.set_memory_growth(gpu, True)
-                            except RuntimeError:
-                                ...
+                # Configure TensorFlow device
+                if self.device == "gpu":
+                    gpus = tf.config.experimental.list_physical_devices("GPU")
+                    if gpus:
+                        try:
+                            for gpu in gpus:
+                                tf.config.experimental.set_memory_growth(gpu, True)
+                        except RuntimeError:
+                            ...
 
-                    # Load model
-                    if model_path.endswith(".h5"):
-                        model = tf.keras.models.load_model(model_path)
-                    elif model_path.endswith(".pb"):
-                        # Load saved model
-                        model = tf.saved_model.load(model_path)
-                    else:
-                        # Try to load as checkpoint
-                        model = tf.keras.models.load_model(model_path)
+                # Load model
+                if model_path.endswith(".h5"):
+                    model = tf.keras.models.load_model(model_path)
+                elif model_path.endswith(".pb"):
+                    # Load saved model
+                    model = tf.saved_model.load(model_path)
+                else:
+                    # Try to load as checkpoint
+                    model = tf.keras.models.load_model(model_path)
 
-                    logger.info(f"Loaded DeepFaceLab model from: {model_path}")
-                    return {"model": model, "path": model_path, "device": self.device}
+                logger.info(f"Loaded DeepFaceLab model from: {model_path}")
+                return {"model": model, "path": model_path, "device": self.device}
 
             return None
 
@@ -660,7 +661,7 @@ class DeepFaceLabEngine(EngineProtocol):
                     left_eye = lm[36:42].mean(axis=0)  # Left eye landmarks
                     right_eye = lm[42:48].mean(axis=0)  # Right eye landmarks
                     nose_tip = lm[30]  # Nose tip
-                    mouth_center = lm[48:68].mean(axis=0)  # Mouth landmarks
+                    lm[48:68].mean(axis=0)  # Mouth landmarks
 
                     # Define target positions (normalized face)
                     h, w = face.shape[:2]
@@ -815,7 +816,7 @@ class DeepFaceLabEngine(EngineProtocol):
         ).astype(np.uint8)
 
     def _composite_face(
-        self, background: np.ndarray, face: np.ndarray, bbox: Dict
+        self, background: np.ndarray, face: np.ndarray, bbox: dict
     ) -> np.ndarray:
         """Composite face back onto background."""
         result = background.copy()
@@ -831,7 +832,7 @@ class DeepFaceLabEngine(EngineProtocol):
 
         return result
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -846,9 +847,9 @@ class DeepFaceLabEngine(EngineProtocol):
 
 
 def create_deepfacelab_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    model_path: Optional[str] = None,
+    model_path: str | None = None,
     require_consent: bool = True,
 ) -> DeepFaceLabEngine:
     """

@@ -4,7 +4,7 @@ Security Headers Middleware
 Adds security headers to all API responses.
 """
 
-from fastapi import Request, Response
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 

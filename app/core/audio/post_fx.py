@@ -9,9 +9,9 @@ Compatible with:
 - soundfile>=0.12.1
 """
 
+from __future__ import annotations
+
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -65,17 +65,17 @@ except ImportError:
 try:
     import pedalboard
     from pedalboard import (
-        Pedalboard,
-        Reverb,
-        Delay,
         Chorus,
-        Phaser,
+        Compressor,
+        Delay,
         Distortion,
         Gain,
-        LowpassFilter,
         HighpassFilter,
-        Compressor,
         Limiter,
+        LowpassFilter,
+        Pedalboard,
+        Phaser,
+        Reverb,
     )
 
     HAS_PEDALBOARD = True
@@ -124,8 +124,8 @@ class PostFXProcessor:
     def process(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
-        effects: Optional[List[Dict]] = None,
+        sample_rate: int | None = None,
+        effects: list[dict] | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -178,7 +178,7 @@ class PostFXProcessor:
         audio: np.ndarray,
         sample_rate: int,
         effect_type: str,
-        params: Dict,
+        params: dict,
     ) -> np.ndarray:
         """
         Apply a single effect to audio.
@@ -226,7 +226,7 @@ class PostFXProcessor:
             return audio
 
     def _apply_normalize(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply normalization effect."""
         method = params.get("method", "lufs").lower()
@@ -249,10 +249,10 @@ class PostFXProcessor:
         return audio
 
     def _apply_denoise(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply denoising effect."""
-        strength = params.get("strength", 0.5)
+        params.get("strength", 0.5)
 
         if HAS_AUDIO_UTILS:
             try:
@@ -271,7 +271,7 @@ class PostFXProcessor:
         return audio
 
     def _apply_eq(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply 3-band EQ effect."""
         if not HAS_SCIPY:
@@ -347,7 +347,7 @@ class PostFXProcessor:
         return result
 
     def _apply_compressor(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply compressor effect."""
         threshold_db = params.get("threshold", -12.0)
@@ -416,7 +416,7 @@ class PostFXProcessor:
         return result
 
     def _apply_reverb(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply reverb effect."""
         room_size = params.get("room_size", 0.5)
@@ -450,7 +450,7 @@ class PostFXProcessor:
         return result
 
     def _apply_delay(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply delay effect."""
         delay_time_ms = params.get("delay_time", 200.0)
@@ -483,7 +483,7 @@ class PostFXProcessor:
         return result
 
     def _apply_filter(
-        self, audio: np.ndarray, sample_rate: int, params: Dict
+        self, audio: np.ndarray, sample_rate: int, params: dict
     ) -> np.ndarray:
         """Apply filter effect."""
         if not HAS_SCIPY:
@@ -540,7 +540,7 @@ class PostFXProcessor:
         audio: np.ndarray,
         sample_rate: int,
         effect_type: str,
-        params: Dict,
+        params: dict,
     ) -> np.ndarray:
         """
         Apply effect using pedalboard for professional-quality processing.
@@ -692,7 +692,7 @@ def create_post_fx_processor(sample_rate: int = 24000) -> PostFXProcessor:
 def process_audio_with_post_fx(
     audio: np.ndarray,
     sample_rate: int,
-    effects: Optional[List[Dict]] = None,
+    effects: list[dict] | None = None,
     **kwargs,
 ) -> np.ndarray:
     """

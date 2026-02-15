@@ -4,9 +4,8 @@ FastAPI Dependencies for Optimized Validation
 Provides dependencies for using the validation optimizer in route handlers.
 """
 
-from typing import Type, TypeVar
+from typing import TypeVar
 
-from fastapi import Depends
 from pydantic import BaseModel
 
 from app.core.validation.optimizer import (
@@ -17,7 +16,7 @@ from app.core.validation.optimizer import (
 T = TypeVar("T", bound=BaseModel)
 
 
-def get_validator(model: Type[T]) -> ValidationOptimizer:
+def get_validator(model: type[T]) -> ValidationOptimizer:
     """
     Dependency to get validation optimizer for a specific model.
 
@@ -33,7 +32,7 @@ def get_validator(model: Type[T]) -> ValidationOptimizer:
     return optimizer
 
 
-def optimized_validate_dependency(model: Type[T]):
+def optimized_validate_dependency(model: type[T]):
     """
     Create a dependency for optimized validation of a model.
 

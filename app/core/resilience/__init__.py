@@ -4,60 +4,57 @@ Resilience Module
 Provides error recovery, retry logic, circuit breakers, health checks, and graceful degradation.
 """
 
-from .retry import (
-    RetryStrategy,
-    RetryableError,
-    NonRetryableError,
-    is_retryable_error,
-    retry_with_backoff,
-    retry,
-)
-
 from .circuit_breaker import (
-    CircuitState,
     CircuitBreaker,
     CircuitBreakerOpenError,
-    get_circuit_breaker,
+    CircuitState,
     circuit_breaker,
+    get_circuit_breaker,
 )
-
-from .health_check import (
-    HealthStatus,
-    HealthCheckResult,
-    HealthChecker,
-    get_health_checker,
-    create_simple_check,
-)
-
 from .graceful_degradation import (
     DegradationLevel,
     GracefulDegradation,
     graceful_degradation,
 )
+from .health_check import (
+    HealthChecker,
+    HealthCheckResult,
+    HealthStatus,
+    create_simple_check,
+    get_health_checker,
+)
+from .retry import (
+    NonRetryableError,
+    RetryableError,
+    RetryStrategy,
+    is_retryable_error,
+    retry,
+    retry_with_backoff,
+)
 
 __all__ = [
-    # Retry
-    "RetryStrategy",
-    "RetryableError",
-    "NonRetryableError",
-    "is_retryable_error",
-    "retry_with_backoff",
-    "retry",
-    # Circuit Breaker
-    "CircuitState",
     "CircuitBreaker",
     "CircuitBreakerOpenError",
-    "get_circuit_breaker",
-    "circuit_breaker",
-    # Health Check
-    "HealthStatus",
-    "HealthCheckResult",
-    "HealthChecker",
-    "get_health_checker",
-    "create_simple_check",
+    # Circuit Breaker
+    "CircuitState",
     # Graceful Degradation
     "DegradationLevel",
     "GracefulDegradation",
+    "HealthCheckResult",
+    "HealthChecker",
+    # Health Check
+    "HealthStatus",
+    "NonRetryableError",
+    # Retry
+    "RetryStrategy",
+    "RetryableError",
+    "circuit_breaker",
+    "create_simple_check",
+    "get_circuit_breaker",
+    "get_health_checker",
     "graceful_degradation",
+    "is_retryable_error",
+    "retry",
+    "retry_with_backoff",
 ]
 

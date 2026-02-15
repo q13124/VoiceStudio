@@ -2,10 +2,11 @@
 Unit tests for StreamingPipeline (Phase 9.2.2)
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.pipeline.streaming_pipeline import StreamingPipeline, StreamChunk
+import pytest
+
+from app.core.pipeline.streaming_pipeline import StreamChunk, StreamingPipeline
 
 
 class TestStreamingPipeline:

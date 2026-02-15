@@ -4,10 +4,9 @@ Page object for Profile Editor/Profiles panel.
 Provides methods to interact with voice profiles for E2E testing.
 """
 
-from typing import List, Optional
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class ProfileEditorPage:
@@ -21,7 +20,7 @@ class ProfileEditorPage:
     DELETE_PROFILE_BUTTON_ID = "Profiles.Button.Delete"
     CLONE_PROFILE_BUTTON_ID = "Profiles.Button.Clone"
     SEARCH_INPUT_ID = "Profiles.TextBox.Search"
-    
+
     # Profile Editor Dialog
     EDITOR_DIALOG_ID = "ProfileEditor.Dialog"
     NAME_INPUT_ID = "ProfileEditor.TextBox.Name"
@@ -30,7 +29,7 @@ class ProfileEditorPage:
     VOICE_COMBO_ID = "ProfileEditor.ComboBox.Voice"
     SAVE_BUTTON_ID = "ProfileEditor.Button.Save"
     CANCEL_BUTTON_ID = "ProfileEditor.Button.Cancel"
-    
+
     # Audio Upload
     AUDIO_UPLOAD_BUTTON_ID = "ProfileEditor.Button.UploadAudio"
     AUDIO_RECORD_BUTTON_ID = "ProfileEditor.Button.RecordAudio"
@@ -58,7 +57,7 @@ class ProfileEditorPage:
             )
         )
 
-    def get_profile_names(self) -> List[str]:
+    def get_profile_names(self) -> list[str]:
         """Get list of profile names."""
         try:
             list_view = self.driver.find_element(
@@ -152,7 +151,7 @@ class ProfileEditorPage:
             AppiumBy.ACCESSIBILITY_ID, self.ENGINE_COMBO_ID
         )
         combo.click()
-        
+
         engine_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, engine_name)
@@ -166,7 +165,7 @@ class ProfileEditorPage:
             AppiumBy.ACCESSIBILITY_ID, self.VOICE_COMBO_ID
         )
         combo.click()
-        
+
         voice_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, voice_name)

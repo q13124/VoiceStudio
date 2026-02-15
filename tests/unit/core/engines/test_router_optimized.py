@@ -5,7 +5,6 @@ Tests optimized engine routing functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -46,7 +45,7 @@ class TestRouterOptimizedClasses:
     def test_optimized_engine_router_class_exists(self):
         """Test OptimizedEngineRouter class exists."""
         if hasattr(router_optimized, "OptimizedEngineRouter"):
-            cls = getattr(router_optimized, "OptimizedEngineRouter")
+            cls = router_optimized.OptimizedEngineRouter
             assert isinstance(
                 cls, type
             ), "OptimizedEngineRouter should be a class"

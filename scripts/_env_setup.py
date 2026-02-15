@@ -19,7 +19,7 @@ This module:
 Example:
     #!/usr/bin/env python3
     from _env_setup import PROJECT_ROOT
-    
+
     from app.core.engines import router
     from tools.context import ContextManager
 """
@@ -55,14 +55,14 @@ BUILDLOGS_DIR.mkdir(exist_ok=True)
 VERIFICATION_DIR.mkdir(exist_ok=True)
 
 __all__ = [
+    "APP_DIR",
+    "BACKEND_DIR",
+    "BUILDLOGS_DIR",
+    "DOCS_DIR",
     "PROJECT_ROOT",
     "SCRIPTS_DIR",
-    "BACKEND_DIR",
-    "APP_DIR",
-    "TOOLS_DIR",
-    "TESTS_DIR",
-    "DOCS_DIR",
     "SRC_DIR",
-    "BUILDLOGS_DIR",
+    "TESTS_DIR",
+    "TOOLS_DIR",
     "VERIFICATION_DIR",
 ]

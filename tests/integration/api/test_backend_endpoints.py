@@ -3,17 +3,15 @@ Backend API Endpoint Test Suite
 Tests all 133+ backend API endpoints for functionality, error handling, and placeholder detection.
 """
 
-import sys
+import logging
 import os
+import re
+import sys
 from pathlib import Path
+from typing import Any
+
 import pytest
 import requests
-import json
-import logging
-from typing import Dict, List, Any, Optional
-import importlib.util
-import inspect
-import re
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -38,27 +36,27 @@ FORBIDDEN_TERMS = [
 ]
 
 
-def get_all_route_files() -> List[Path]:
+def get_all_route_files() -> list[Path]:
     """Get all route files from backend/api/routes."""
     routes_dir = project_root / "backend" / "api" / "routes"
-    
+
     if not routes_dir.exists():
         return []
-    
+
     route_files = list(routes_dir.glob("*.py"))
     route_files = [f for f in route_files if f.name != "__init__.py"]
-    
+
     return sorted(route_files)
 
 
-def check_file_for_forbidden_terms(file_path: Path) -> List[str]:
+def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
     """Check file for forbidden placeholder terms."""
     violations = []
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
             lines = content.split('\n')
-            
+
             for line_num, line in enumerate(lines, 1):
                 line_lower = line.lower()
                 for term in FORBIDDEN_TERMS:
@@ -68,30 +66,30 @@ def check_file_for_forbidden_terms(file_path: Path) -> List[str]:
                             violations.append(f"Line {line_num}: Found '{term}' - {line.strip()[:80]}")
     except Exception as e:
         logger.warning(f"Could not read {file_path}: {e}")
-    
+
     return violations
 
 
-def extract_endpoints_from_route_file(file_path: Path) -> List[Dict[str, Any]]:
+def extract_endpoints_from_route_file(file_path: Path) -> list[dict[str, Any]]:
     """Extract endpoint definitions from route file."""
     endpoints = []
-    
+
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
-            
+
             route_patterns = [
                 (r'@router\.(get|post|put|delete|patch)\("([^"]+)"', r'\1', r'\2'),
                 (r'@app\.(get|post|put|delete|patch)\("([^"]+)"', r'\1', r'\2'),
                 (r'@.*\.route\("([^"]+)",\s*methods=\[["\']([^"\']+)["\']', r'\2', r'\1'),
             ]
-            
+
             for pattern, method_group, path_group in route_patterns:
                 matches = re.finditer(pattern, content)
                 for match in matches:
                     method = match.group(method_group).upper() if method_group.isdigit() else match.group(int(method_group))
                     path = match.group(path_group) if path_group.isdigit() else match.group(int(path_group))
-                    
+
                     endpoints.append({
                         "method": method,
                         "path": path,
@@ -99,7 +97,7 @@ def extract_endpoints_from_route_file(file_path: Path) -> List[Dict[str, Any]]:
                     })
     except Exception as e:
         logger.warning(f"Could not extract endpoints from {file_path}: {e}")
-    
+
     return endpoints
 
 
@@ -115,12 +113,12 @@ def backend_available():
 
 class TestBackendRoutePlaceholderDetection:
     """Test suite for detecting placeholders in backend route code."""
-    
+
     @pytest.mark.parametrize("route_file", get_all_route_files())
     def test_no_forbidden_terms(self, route_file):
         """Verify route files contain no forbidden placeholder terms."""
         violations = check_file_for_forbidden_terms(route_file)
-        
+
         if violations:
             violation_msg = "\n".join(violations[:10])
             pytest.fail(f"Found forbidden terms in {route_file.name}:\n{violation_msg}")
@@ -128,30 +126,30 @@ class TestBackendRoutePlaceholderDetection:
 
 class TestBackendEndpointAvailability:
     """Test suite for endpoint availability."""
-    
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true", 
+
+    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
                          reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_health_endpoint(self, backend_available):
         """Test health endpoint is available."""
         if not backend_available:
             pytest.skip("Backend not available")
-        
+
         try:
             response = requests.get(f"{API_BASE_URL}/health", timeout=5)
             assert response.status_code == 200, f"Health endpoint returned {response.status_code}"
-            
+
             data = response.json()
             assert "status" in data, "Health response missing 'status' field"
         except Exception as e:
             pytest.fail(f"Health endpoint test failed: {e}")
-    
+
     @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
                          reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_profiles_endpoint(self, backend_available):
         """Test profiles endpoint is available."""
         if not backend_available:
             pytest.skip("Backend not available")
-        
+
         try:
             response = requests.get(f"{API_BASE_URL}/profiles", timeout=5)
             assert response.status_code in [200, 401, 403], \
@@ -162,14 +160,14 @@ class TestBackendEndpointAvailability:
 
 class TestBackendEndpointFunctionality:
     """Test suite for endpoint functionality."""
-    
+
     @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
                          reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_profiles_crud(self, backend_available):
         """Test profiles CRUD operations."""
         if not backend_available:
             pytest.skip("Backend not available")
-        
+
         try:
             create_response = requests.post(
                 f"{API_BASE_URL}/profiles",
@@ -179,15 +177,15 @@ class TestBackendEndpointFunctionality:
                 },
                 timeout=5
             )
-            
+
             if create_response.status_code == 200:
                 profile_data = create_response.json()
                 profile_id = profile_data.get("id")
-                
+
                 if profile_id:
                     get_response = requests.get(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
                     assert get_response.status_code == 200, "Failed to retrieve created profile"
-                    
+
                     delete_response = requests.delete(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
                     assert delete_response.status_code in [200, 204], "Failed to delete profile"
         except Exception as e:
@@ -196,14 +194,14 @@ class TestBackendEndpointFunctionality:
 
 class TestBackendEndpointErrorHandling:
     """Test suite for endpoint error handling."""
-    
+
     @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
                          reason="Backend not available (set BACKEND_AVAILABLE=true)")
     def test_invalid_endpoint_returns_404(self, backend_available):
         """Test invalid endpoints return 404."""
         if not backend_available:
             pytest.skip("Backend not available")
-        
+
         try:
             response = requests.get(f"{API_BASE_URL}/nonexistent-endpoint", timeout=5)
             assert response.status_code == 404, \

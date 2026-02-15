@@ -14,7 +14,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,9 @@ def extract_pattern(error_msg: str) -> str:
 
 def record_failure_pattern(
     error_msg: str,
-    context: Optional[Dict[str, Any]] = None,
-    patterns_path: Optional[Path] = None,
-    root: Optional[Path] = None,
+    context: dict[str, Any] | None = None,
+    patterns_path: Path | None = None,
+    root: Path | None = None,
 ) -> bool:
     """
     Record a failure pattern to the learned patterns file.
@@ -85,10 +85,10 @@ def record_failure_pattern(
 
 
 def load_recent_patterns(
-    patterns_path: Optional[Path] = None,
-    root: Optional[Path] = None,
+    patterns_path: Path | None = None,
+    root: Path | None = None,
     limit: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Load recent learned failure patterns (for injection into context).
 

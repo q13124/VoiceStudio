@@ -11,16 +11,16 @@ Compatible with:
 - System installation of Piper
 """
 
-import json
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import subprocess
 import tempfile
 from collections import OrderedDict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import soundfile as sf
@@ -40,7 +40,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -58,15 +58,15 @@ _PIPER_INSTANCE_CACHE: OrderedDict = OrderedDict()
 _MAX_PIPER_CACHE_SIZE = 3  # Maximum number of Piper instances to cache
 
 # Temp directory cache (reuse temp directory)
-_temp_dir: Optional[tempfile.TemporaryDirectory] = None
+_temp_dir: tempfile.TemporaryDirectory | None = None
 
 
-def _get_piper_cache_key(voice: Optional[str], model_path: Optional[str]) -> str:
+def _get_piper_cache_key(voice: str | None, model_path: str | None) -> str:
     """Generate cache key for Piper instance."""
     return f"piper::{voice or 'default'}::{model_path or 'default'}"
 
 
-def _get_cached_piper_instance(voice: Optional[str], model_path: Optional[str]):
+def _get_cached_piper_instance(voice: str | None, model_path: str | None):
     """Get cached Piper instance if available."""
     cache_key = _get_piper_cache_key(voice, model_path)
     if cache_key in _PIPER_INSTANCE_CACHE:
@@ -76,7 +76,7 @@ def _get_cached_piper_instance(voice: Optional[str], model_path: Optional[str]):
     return None
 
 
-def _cache_piper_instance(voice: Optional[str], model_path: Optional[str], instance):
+def _cache_piper_instance(voice: str | None, model_path: str | None, instance):
     """Cache Piper instance with LRU eviction."""
     cache_key = _get_piper_cache_key(voice, model_path)
 
@@ -166,10 +166,10 @@ class PiperEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
-        voice: Optional[str] = None,
-        piper_path: Optional[str] = None,
-        device: Optional[str] = None,
+        model_path: str | None = None,
+        voice: str | None = None,
+        piper_path: str | None = None,
+        device: str | None = None,
         gpu: bool = False,
         lazy_load: bool = True,
         batch_size: int = 4,
@@ -223,8 +223,8 @@ class PiperEngine(EngineProtocol):
                 )
 
     def _find_executable(
-        self, name: str, custom_path: Optional[str] = None
-    ) -> Optional[str]:
+        self, name: str, custom_path: str | None = None
+    ) -> str | None:
         """Find executable in PATH or custom path."""
         if (
             custom_path
@@ -365,12 +365,12 @@ class PiperEngine(EngineProtocol):
         self,
         text: str,
         language: str = "en",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Piper.
 
@@ -389,14 +389,13 @@ class PiperEngine(EngineProtocol):
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Get synthesis parameters
             speed = kwargs.get("speed", 1.0)
-            length_scale = kwargs.get("length_scale", 1.0)
+            kwargs.get("length_scale", 1.0)
 
             # Use provided voice or default
             selected_voice = voice or self.voice
@@ -531,10 +530,10 @@ class PiperEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -566,11 +565,10 @@ class PiperEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """Get available voices/speakers."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         # Common Piper voices
         voices = [
@@ -598,18 +596,18 @@ class PiperEngine(EngineProtocol):
 
         return voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
         return self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
-        texts: List[str],
+        texts: list[str],
         language: str = "en",
-        voice: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_dir: str | Path | None = None,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -623,9 +621,8 @@ class PiperEngine(EngineProtocol):
         Returns:
             List of audio arrays
         """
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(texts)
+        if not self._initialized and not self.initialize():
+            return [None] * len(texts)
 
         results = []
 
@@ -721,7 +718,7 @@ class PiperEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -741,10 +738,10 @@ class PiperEngine(EngineProtocol):
 
 
 def create_piper_engine(
-    model_path: Optional[str] = None,
-    voice: Optional[str] = None,
-    piper_path: Optional[str] = None,
-    device: Optional[str] = None,
+    model_path: str | None = None,
+    voice: str | None = None,
+    piper_path: str | None = None,
+    device: str | None = None,
     gpu: bool = False,
 ) -> PiperEngine:
     """Factory function to create a Piper engine instance."""

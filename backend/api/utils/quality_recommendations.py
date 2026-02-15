@@ -3,7 +3,8 @@ Quality recommendation system for adaptive quality optimization.
 Uses text analysis to recommend optimal quality settings.
 """
 
-from typing import Dict, Optional
+from __future__ import annotations
+
 
 from api.utils.text_analysis import ContentType, TextAnalysisResult, TextComplexity
 
@@ -27,7 +28,7 @@ class QualityRecommendation:
         self.reasoning = reasoning
         self.confidence = confidence
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
             "recommended_engine": self.recommended_engine,
@@ -41,8 +42,8 @@ class QualityRecommendation:
 
 def recommend_quality_settings(
     text_analysis: TextAnalysisResult,
-    available_engines: Optional[list] = None,
-    target_quality: Optional[float] = None,
+    available_engines: list | None = None,
+    target_quality: float | None = None,
 ) -> QualityRecommendation:
     """
     Recommend optimal quality settings based on text analysis.
@@ -133,14 +134,12 @@ def _select_engine(
             return "chatterbox"
 
     # Dialogue benefits from balanced engines
-    if content_type == ContentType.DIALOGUE:
-        if "chatterbox" in available_engines:
-            return "chatterbox"
+    if content_type == ContentType.DIALOGUE and "chatterbox" in available_engines:
+        return "chatterbox"
 
     # Technical content needs clarity
-    if content_type == ContentType.TECHNICAL:
-        if "chatterbox" in available_engines:
-            return "chatterbox"
+    if content_type == ContentType.TECHNICAL and "chatterbox" in available_engines:
+        return "chatterbox"
 
     # Default to first available engine
     return available_engines[0] if available_engines else "xtts"
@@ -195,7 +194,7 @@ def _select_quality_mode(
 def _should_enhance_quality(
     complexity: TextComplexity,
     content_type: ContentType,
-    target_quality: Optional[float],
+    target_quality: float | None,
 ) -> bool:
     """
     Determine if quality enhancement should be enabled.
@@ -323,7 +322,7 @@ def _generate_reasoning(
 
 
 def _calculate_confidence(
-    text_analysis: TextAnalysisResult, target_quality: Optional[float]
+    text_analysis: TextAnalysisResult, target_quality: float | None
 ) -> float:
     """
     Calculate confidence in recommendations (0.0-1.0).

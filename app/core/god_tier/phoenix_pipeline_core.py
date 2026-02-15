@@ -7,8 +7,10 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -61,9 +63,9 @@ class PhoenixPipelineCore:
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
         quality_mode: str = "ultra",
     ):
         """
@@ -80,9 +82,9 @@ class PhoenixPipelineCore:
         )
         self.model_path = model_path
         self.quality_mode = quality_mode
-        self.model: Optional[nn.Module] = None
-        self.voice_encoder: Optional[nn.Module] = None
-        self.emotion_controller: Optional[nn.Module] = None
+        self.model: nn.Module | None = None
+        self.voice_encoder: nn.Module | None = None
+        self.emotion_controller: nn.Module | None = None
 
         if HAS_TORCH:
             try:
@@ -107,11 +109,11 @@ class PhoenixPipelineCore:
         reference_audio: np.ndarray,
         text: str,
         sample_rate: int = 24000,
-        emotion: Optional[str] = None,
+        emotion: str | None = None,
         emotion_intensity: float = 0.5,
-        prosody_params: Optional[Dict[str, float]] = None,
-        quality_mode: Optional[str] = None,
-    ) -> Tuple[np.ndarray, int, Dict[str, Any]]:
+        prosody_params: dict[str, float] | None = None,
+        quality_mode: str | None = None,
+    ) -> tuple[np.ndarray, int, dict[str, Any]]:
         """
         Clone voice with hyperreal quality.
 
@@ -221,7 +223,7 @@ class PhoenixPipelineCore:
             f0_features = None
             if HAS_CREPE:
                 try:
-                    time, frequency, confidence, activation = crepe.predict(
+                    _time, frequency, confidence, _activation = crepe.predict(
                         audio, sample_rate, viterbi=True
                     )
                     f0_features = np.array(
@@ -324,7 +326,7 @@ class PhoenixPipelineCore:
         return embedding
 
     def _apply_prosody_control(
-        self, embedding: np.ndarray, prosody_params: Dict[str, float]
+        self, embedding: np.ndarray, prosody_params: dict[str, float]
     ) -> np.ndarray:
         """
         Apply prosody control to voice embedding.
@@ -399,7 +401,7 @@ class PhoenixPipelineCore:
         synthesized: np.ndarray,
         reference: np.ndarray,
         sample_rate: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate comprehensive quality metrics.
 
@@ -433,7 +435,7 @@ class PhoenixPipelineCore:
         audio: np.ndarray,
         sample_rate: int = 24000,
         enhancement_steps: int = 3,
-    ) -> Tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, int]:
         """
         Enhance clone quality with multi-step processing.
 
@@ -447,7 +449,7 @@ class PhoenixPipelineCore:
         """
         enhanced = audio.copy()
 
-        for step in range(enhancement_steps):
+        for _step in range(enhancement_steps):
             # Apply noise reduction
             enhanced = self._reduce_noise(enhanced)
 
@@ -476,9 +478,9 @@ class PhoenixPipelineCore:
 
 
 def create_phoenix_pipeline_core(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    model_path: Optional[str] = None,
+    model_path: str | None = None,
     quality_mode: str = "ultra",
 ) -> PhoenixPipelineCore:
     """

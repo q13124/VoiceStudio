@@ -4,8 +4,9 @@ Deepfake Creator Routes
 Endpoints for face swapping and face replacement (with consent/watermark requirements).
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -22,8 +23,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/deepfake-creator", tags=["deepfake-creator"])
 
 # In-memory storage for deepfake jobs (replace with database in production)
-_deepfake_jobs: Dict[str, "DeepfakeJob"] = {}
-_job_queue: List[str] = []  # Queue of job IDs
+_deepfake_jobs: dict[str, "DeepfakeJob"] = {}
+_job_queue: list[str] = []  # Queue of job IDs
 _processing_jobs: set[str] = set()  # Jobs currently being processed
 _max_concurrent_jobs: int = 2  # Maximum concurrent deepfake processing jobs
 
@@ -34,16 +35,16 @@ class DeepfakeJob(BaseModel):
     job_id: str
     source_face_file: str
     target_media_file: str
-    output_file: Optional[str] = None
+    output_file: str | None = None
     media_type: str  # image, video
     engine: str  # deepfacelab, fomm, etc.
     status: str  # pending, processing, completed, failed
     progress: float = 0.0  # 0.0 to 100.0
     consent_given: bool = False
     watermark_applied: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
     created_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class DeepfakeRequest(BaseModel):
@@ -54,7 +55,7 @@ class DeepfakeRequest(BaseModel):
     consent_given: bool = False
     apply_watermark: bool = True
     quality: str = "high"  # low, medium, high
-    additional_params: Dict[str, str] = {}
+    additional_params: dict[str, str] = {}
 
 
 class DeepfakeResponse(BaseModel):
@@ -63,10 +64,10 @@ class DeepfakeResponse(BaseModel):
     job_id: str
     status: str
     progress: float
-    output_file: Optional[str] = None
+    output_file: str | None = None
     consent_given: bool
     watermark_applied: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class DeepfakeEngine(BaseModel):
@@ -75,7 +76,7 @@ class DeepfakeEngine(BaseModel):
     engine_id: str
     name: str
     description: str
-    supported_types: List[str]  # image, video
+    supported_types: list[str]  # image, video
     requires_consent: bool = True
     watermark_required: bool = True
     is_available: bool = True
@@ -102,9 +103,8 @@ async def create_deepfake(
                 detail="media_type must be 'image' or 'video'",
             )
 
-        import uuid
-        import os
         import tempfile
+        import uuid
         from datetime import datetime
         from pathlib import Path
 
@@ -165,12 +165,12 @@ async def create_deepfake(
         if request.media_type == "image" and target_ext not in valid_image_exts:
             raise HTTPException(
                 status_code=400,
-                detail=f"Target must be an image for image deepfake"
+                detail="Target must be an image for image deepfake"
             )
         elif request.media_type == "video" and target_ext not in valid_video_exts:
             raise HTTPException(
                 status_code=400,
-                detail=f"Target must be a video for video deepfake"
+                detail="Target must be a video for video deepfake"
             )
 
         # Create job
@@ -225,7 +225,7 @@ async def create_deepfake(
         logger.error(f"Failed to create deepfake: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create deepfake: {str(e)}",
+            detail=f"Failed to create deepfake: {e!s}",
         ) from e
 
 
@@ -255,11 +255,11 @@ async def get_deepfake_job(job_id: str):
         logger.error(f"Failed to get deepfake job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get deepfake job: {str(e)}",
+            detail=f"Failed to get deepfake job: {e!s}",
         ) from e
 
 
-@router.get("/jobs", response_model=List[DeepfakeResponse])
+@router.get("/jobs", response_model=list[DeepfakeResponse])
 async def list_deepfake_jobs():
     """List all deepfake jobs."""
     try:
@@ -281,7 +281,7 @@ async def list_deepfake_jobs():
         logger.error(f"Failed to list deepfake jobs: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list deepfake jobs: {str(e)}",
+            detail=f"Failed to list deepfake jobs: {e!s}",
         ) from e
 
 
@@ -307,24 +307,22 @@ async def delete_deepfake_job(job_id: str):
         logger.error(f"Failed to delete deepfake job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete deepfake job: {str(e)}",
+            detail=f"Failed to delete deepfake job: {e!s}",
         ) from e
 
 
 async def _process_deepfake_job(job_id: str):
     """Process a single deepfake job."""
     import asyncio
-    import os
-    import tempfile
     from datetime import datetime
     from pathlib import Path
-    
+
     try:
         job = _deepfake_jobs.get(job_id)
         if not job:
             logger.warning(f"Deepfake job {job_id} not found")
             return
-        
+
         job.status = "processing"
         job.progress = 5.0
         _deepfake_jobs[job_id] = job
@@ -343,34 +341,34 @@ async def _process_deepfake_job(job_id: str):
             source_face_path = Path(job.source_face_file)
             target_media_path = Path(job.target_media_file)
             temp_dir = source_face_path.parent
-            
+
             # Process deepfake
             output_path = temp_dir / f"output_{job_id}.{('png' if job.media_type == 'image' else 'mp4')}"
-            
+
             if job.media_type == "image":
                 # Process image deepfake
                 job.progress = 25.0
                 _deepfake_jobs[job_id] = job
-                
-                result = engine.swap_face(
+
+                engine.swap_face(
                     source_face_path=str(source_face_path),
                     target_image_path=str(target_media_path),
                     output_path=str(output_path)
                 )
-                
+
                 job.progress = 70.0
                 _deepfake_jobs[job_id] = job
             else:
                 # Process video deepfake
                 job.progress = 20.0
                 _deepfake_jobs[job_id] = job
-                
-                result = engine.swap_face_video(
+
+                engine.swap_face_video(
                     source_face_path=str(source_face_path),
                     target_video_path=str(target_media_path),
                     output_path=str(output_path)
                 )
-                
+
                 job.progress = 60.0
                 _deepfake_jobs[job_id] = job
 
@@ -402,13 +400,13 @@ async def _process_deepfake_job(job_id: str):
             job.output_file = str(output_path)
             job.completed_at = datetime.utcnow().isoformat()
             _deepfake_jobs[job_id] = job
-            
+
             logger.info(f"Deepfake job completed: {job_id}")
 
         except Exception as e:
             logger.error(f"Deepfake processing failed: {e}", exc_info=True)
             job.status = "failed"
-            job.error_message = f"Processing failed: {str(e)}"
+            job.error_message = f"Processing failed: {e!s}"
             job.completed_at = datetime.utcnow().isoformat()
             _deepfake_jobs[job_id] = job
 
@@ -417,7 +415,7 @@ async def _process_deepfake_job(job_id: str):
         job = _deepfake_jobs.get(job_id)
         if job:
             job.status = "failed"
-            job.error_message = f"Job processing error: {str(e)}"
+            job.error_message = f"Job processing error: {e!s}"
             job.completed_at = datetime.utcnow().isoformat()
             _deepfake_jobs[job_id] = job
     finally:
@@ -432,29 +430,29 @@ async def _process_deepfake_job(job_id: str):
 async def _process_job_queue():
     """Process jobs from the queue."""
     import asyncio
-    
+
     while _job_queue and len(_processing_jobs) < _max_concurrent_jobs:
         # Get next job from queue
         if not _job_queue:
             break
-            
+
         job_id = _job_queue[0]
         if job_id in _processing_jobs:
             _job_queue.pop(0)
             continue
-            
+
         job = _deepfake_jobs.get(job_id)
         if not job or job.status != "pending":
             _job_queue.pop(0)
             continue
-        
+
         # Start processing
         _processing_jobs.add(job_id)
         _job_queue.pop(0)
-        
+
         # Process job
         asyncio.create_task(_process_deepfake_job(job_id))
-        
+
         await asyncio.sleep(0.1)  # Small delay to prevent tight loop
 
 
@@ -473,11 +471,11 @@ async def get_queue_status():
         logger.error(f"Failed to get queue status: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get queue status: {str(e)}",
+            detail=f"Failed to get queue status: {e!s}",
         ) from e
 
 
-@router.get("/engines", response_model=List[DeepfakeEngine])
+@router.get("/engines", response_model=list[DeepfakeEngine])
 async def list_deepfake_engines():
     """List all available deepfake engines."""
     return [

@@ -7,10 +7,10 @@ Compatible with:
 - ONNX Runtime GPU 1.16+ (for CUDA support)
 """
 
+from __future__ import annotations
+
 import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -40,7 +40,7 @@ class ONNXInferenceEngine:
         self,
         model_path: str,
         device: str = "cuda",
-        providers: Optional[List[str]] = None,
+        providers: list[str] | None = None,
     ):
         """
         Initialize ONNX inference engine.
@@ -104,8 +104,8 @@ class ONNXInferenceEngine:
             self.input_shapes[inp.name] = shape
 
     def infer(
-        self, inputs: Dict[str, np.ndarray]
-    ) -> Dict[str, np.ndarray]:
+        self, inputs: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """
         Run inference.
 
@@ -129,7 +129,7 @@ class ONNXInferenceEngine:
             outputs = self.session.run(self.output_names, ort_inputs)
 
             # Convert to dictionary
-            result = {name: output for name, output in zip(self.output_names, outputs)}
+            result = dict(zip(self.output_names, outputs, strict=False))
 
             return result
 
@@ -137,7 +137,7 @@ class ONNXInferenceEngine:
             logger.error(f"ONNX inference failed: {e}", exc_info=True)
             raise
 
-    def get_input_info(self) -> Dict[str, Any]:
+    def get_input_info(self) -> dict[str, Any]:
         """
         Get input information.
 
@@ -152,7 +152,7 @@ class ONNXInferenceEngine:
             }
         return info
 
-    def get_output_info(self) -> Dict[str, Any]:
+    def get_output_info(self) -> dict[str, Any]:
         """
         Get output information.
 
@@ -167,7 +167,7 @@ class ONNXInferenceEngine:
             }
         return info
 
-    def get_providers(self) -> List[str]:
+    def get_providers(self) -> list[str]:
         """Get available execution providers."""
         return self.session.get_providers()
 
@@ -183,7 +183,7 @@ class ONNXInferenceEngine:
 def create_onnx_inference_engine(
     model_path: str,
     device: str = "cuda",
-    providers: Optional[List[str]] = None,
+    providers: list[str] | None = None,
 ) -> ONNXInferenceEngine:
     """Factory function to create an ONNX inference engine."""
     return ONNXInferenceEngine(

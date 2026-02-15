@@ -8,6 +8,8 @@ This directory contains test assets used by the VoiceStudio test suite.
   - Used for synthesis, processing, and audio I/O tests
   - Mono, 16-bit PCM
 
+- **`canonical/`** - Canonical test audio (Allan Watts). **This is the standard reference for all voice cloning, transcription, and synthesis tests.** See [canonical/README.md](canonical/README.md) for paths, formats, and usage. The primary standard format is `canonical/standard/allan_watts.wav`.
+
 ## Generating New Test Assets
 
 To regenerate or create new test assets:
@@ -45,5 +47,6 @@ def sample_audio_path():
 
 ## Notes
 
-- Do NOT commit large audio files (>1MB) to this directory
+- Do NOT commit large audio files (>1MB) to this directory (exception: canonical test audio; see `canonical/README.md`)
 - For engine-specific test audio, use the engine's test fixtures
+- Use the `canonical_audio_path` pytest fixture (in `tests/conftest.py`) or `tests.fixtures.canonical.get_canonical_wav_path()` for the standard test audio (WAV)

@@ -4,20 +4,22 @@ Dataset Scoring and Culling Routes
 Endpoints for scoring audio clips in datasets and culling low-quality clips.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ..models import ApiOk
-from ..models_additional import DatasetScoreRequest, ScoreResult, DatasetCullRequest
+from ..models_additional import DatasetCullRequest, DatasetScoreRequest, ScoreResult
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +170,7 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
     except Exception as e:
         logger.error(f"Failed to score dataset: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to score dataset: {str(e)}"
+            status_code=500, detail=f"Failed to score dataset: {e!s}"
         ) from e
 
 
@@ -253,7 +255,7 @@ async def cull(req: DatasetCullRequest) -> ApiOk:
     except Exception as e:
         logger.error(f"Failed to cull dataset: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to cull dataset: {str(e)}"
+            status_code=500, detail=f"Failed to cull dataset: {e!s}"
         ) from e
 
 
@@ -267,23 +269,23 @@ class DatasetAnalysisResult(BaseModel):
     average_quality: float
     average_snr: float
     average_lufs: float
-    quality_distribution: Dict[str, int]  # "high", "medium", "low" -> count
-    snr_distribution: Dict[str, int]  # "excellent", "good", "fair", "poor" -> count
+    quality_distribution: dict[str, int]  # "high", "medium", "low" -> count
+    snr_distribution: dict[str, int]  # "excellent", "good", "fair", "poor" -> count
     # "optimal", "acceptable", "too_loud", "too_quiet" -> count
-    lufs_distribution: Dict[str, int]
+    lufs_distribution: dict[str, int]
     total_duration: float  # Total duration in seconds
     average_duration: float  # Average clip duration in seconds
-    sample_rates: Dict[int, int]  # Sample rate -> count
-    channels: Dict[int, int]  # Channel count -> count
-    errors: List[str]  # List of validation errors
+    sample_rates: dict[int, int]  # Sample rate -> count
+    channels: dict[int, int]  # Channel count -> count
+    errors: list[str]  # List of validation errors
 
 
 class DatasetValidationResult(BaseModel):
     """Dataset validation results."""
 
     is_valid: bool
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
     clip_count: int
     valid_clip_count: int
 
@@ -292,14 +294,14 @@ class DatasetExportRequest(BaseModel):
     """Request to export a dataset."""
 
     dataset_id: str
-    clips: List[str]
+    clips: list[str]
     format: str = "zip"  # "zip" or "json"
     include_metadata: bool = True
     include_scores: bool = True
-    output_path: Optional[str] = None
+    output_path: str | None = None
 
 
-def _validate_dataset(clips: List[str]) -> DatasetValidationResult:
+def _validate_dataset(clips: list[str]) -> DatasetValidationResult:
     """
     Validate a dataset structure and clips.
 
@@ -376,7 +378,7 @@ def _validate_dataset(clips: List[str]) -> DatasetValidationResult:
                     )
                 valid_clip_count += 1
             except Exception as e:
-                errors.append(f"Failed to load clip {clip}: {str(e)}")
+                errors.append(f"Failed to load clip {clip}: {e!s}")
         else:
             # Can't validate audio without processing libraries
             valid_clip_count += 1
@@ -414,7 +416,7 @@ async def validate_dataset(req: DatasetScoreRequest) -> DatasetValidationResult:
     except Exception as e:
         logger.error(f"Failed to validate dataset: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to validate dataset: {str(e)}"
+            status_code=500, detail=f"Failed to validate dataset: {e!s}"
         ) from e
 
 
@@ -518,9 +520,9 @@ async def analyze_dataset(req: DatasetScoreRequest) -> DatasetAnalysisResult:
 
         # Calculate durations and audio characteristics
         total_duration = 0.0
-        sample_rates: Dict[int, int] = {}
-        channels: Dict[int, int] = {}
-        errors: List[str] = []
+        sample_rates: dict[int, int] = {}
+        channels: dict[int, int] = {}
+        errors: list[str] = []
 
         for clip in req.clips:
             try:
@@ -542,7 +544,7 @@ async def analyze_dataset(req: DatasetScoreRequest) -> DatasetAnalysisResult:
                     num_channels = 1 if len(audio.shape) == 1 else audio.shape[1]
                     channels[num_channels] = channels.get(num_channels, 0) + 1
             except Exception as e:
-                errors.append(f"Failed to analyze clip {clip}: {str(e)}")
+                errors.append(f"Failed to analyze clip {clip}: {e!s}")
 
         average_duration = total_duration / valid_clips if valid_clips > 0 else 0.0
 
@@ -568,7 +570,7 @@ async def analyze_dataset(req: DatasetScoreRequest) -> DatasetAnalysisResult:
     except Exception as e:
         logger.error(f"Failed to analyze dataset: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to analyze dataset: {str(e)}"
+            status_code=500, detail=f"Failed to analyze dataset: {e!s}"
         ) from e
 
 
@@ -632,7 +634,7 @@ async def export_dataset(req: DatasetExportRequest):
 
                         # Add metadata if requested
                         if req.include_metadata:
-                            clip_info: Dict[str, Any] = {
+                            clip_info: dict[str, Any] = {
                                 "original_path": clip,
                                 "filename": clip_name,
                             }
@@ -677,7 +679,7 @@ async def export_dataset(req: DatasetExportRequest):
             }
 
             for clip in req.clips:
-                clip_info: Dict[str, Any] = {"clip_id": clip}
+                clip_info: dict[str, Any] = {"clip_id": clip}
 
                 clip_path = clip
                 if not os.path.exists(clip_path):
@@ -724,5 +726,5 @@ async def export_dataset(req: DatasetExportRequest):
     except Exception as e:
         logger.error(f"Failed to export dataset: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to export dataset: {str(e)}"
+            status_code=500, detail=f"Failed to export dataset: {e!s}"
         ) from e

@@ -8,8 +8,7 @@ Provides fast, high-quality TTS with multi-language support.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -38,10 +37,10 @@ SUPPORTED_LANGUAGES = list(AVAILABLE_MODELS.keys())
 class Tacotron2Engine(EngineProtocol):
     """
     Tacotron 2 TTS engine via Coqui TTS.
-    
+
     Provides fast, high-quality text-to-speech synthesis with support
     for multiple languages using pre-trained Tacotron 2 models.
-    
+
     Features:
     - Multi-language support (en, de, fr, es, it, pt, pl, tr, ru)
     - Fast inference on both CPU and GPU
@@ -54,13 +53,13 @@ class Tacotron2Engine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_name: Optional[str] = None,
+        model_name: str | None = None,
     ):
         """
         Initialize Tacotron 2 engine.
-        
+
         Args:
             device: Device to use ('cuda', 'cpu', or None for auto).
             gpu: Whether to use GPU if available.
@@ -76,7 +75,7 @@ class Tacotron2Engine(EngineProtocol):
     def initialize(self) -> bool:
         """
         Initialize the Tacotron 2 model via Coqui TTS.
-        
+
         Returns:
             True if initialization successful, False otherwise.
         """
@@ -86,21 +85,21 @@ class Tacotron2Engine(EngineProtocol):
 
         try:
             from TTS.api import TTS
-            
+
             use_gpu = self.device == "cuda"
             logger.info(
                 "Initializing Tacotron 2 with model=%s, gpu=%s",
                 self._model_name,
                 use_gpu,
             )
-            
+
             self._tts = TTS(model_name=self._model_name, gpu=use_gpu)
             self._sample_rate = getattr(
-                self._tts.synthesizer.output_sample_rate, 
-                "item", 
+                self._tts.synthesizer.output_sample_rate,
+                "item",
                 lambda: self._tts.synthesizer.output_sample_rate
             )() if hasattr(self._tts, "synthesizer") else 22050
-            
+
             self._initialized = True
             logger.info(
                 "Tacotron2Engine initialized successfully (sample_rate=%d)",
@@ -119,24 +118,24 @@ class Tacotron2Engine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         language: str = "en",
-        speaker_idx: Optional[int] = None,
+        speaker_idx: int | None = None,
         **kwargs: Any,
     ) -> np.ndarray:
         """
         Synthesize speech from text.
-        
+
         Args:
             text: Input text to synthesize.
             output_path: Optional path to save WAV file.
             language: Language code (en, de, fr, es, it, pt, pl, tr, ru).
             speaker_idx: Speaker index for multi-speaker models.
             **kwargs: Additional synthesis parameters.
-            
+
         Returns:
             Audio data as numpy array (float32, mono).
-            
+
         Raises:
             RuntimeError: If engine not initialized.
             ValueError: If language not supported.
@@ -197,7 +196,7 @@ class Tacotron2Engine(EngineProtocol):
     def _switch_language(self, language: str) -> None:
         """
         Switch to a different language model.
-        
+
         Args:
             language: Language code to switch to.
         """
@@ -221,11 +220,11 @@ class Tacotron2Engine(EngineProtocol):
             self.cleanup_gpu_memory()
             logger.info("Tacotron2Engine cleanup complete")
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """Get list of supported language codes."""
         return SUPPORTED_LANGUAGES.copy()
 
-    def get_available_models(self) -> Dict[str, str]:
+    def get_available_models(self) -> dict[str, str]:
         """Get dictionary of available models by language."""
         return AVAILABLE_MODELS.copy()
 
@@ -242,15 +241,15 @@ class Tacotron2Engine(EngineProtocol):
     ):
         """
         Stream synthesized audio in chunks.
-        
+
         D.3 Enhancement: Streaming synthesis support for Tacotron 2.
-        
+
         Args:
             text: Input text to synthesize.
             language: Language code.
             chunk_size: Size of each audio chunk in samples.
             **kwargs: Additional parameters.
-            
+
         Yields:
             Audio chunks as numpy arrays.
         """
@@ -272,7 +271,7 @@ class Tacotron2Engine(EngineProtocol):
             # Synthesize full audio first, then stream in chunks
             # (Tacotron 2 doesn't support true streaming, so we simulate it)
             audio = self._tts.tts(text=text)
-            
+
             if not isinstance(audio, np.ndarray):
                 audio = np.array(audio, dtype=np.float32)
 
@@ -284,7 +283,7 @@ class Tacotron2Engine(EngineProtocol):
             logger.error("Streaming synthesis failed: %s", e)
             raise
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         base_info = super().get_info()
         base_info.update({
@@ -304,18 +303,16 @@ class Tacotron2Engine(EngineProtocol):
     def health_check(self) -> bool:
         """
         Check if engine is healthy and ready for synthesis.
-        
+
         Returns:
             True if engine is ready, False otherwise.
         """
-        if not self._initialized or self._tts is None:
-            return False
-        return True
+        return not (not self._initialized or self._tts is None)
 
-    def get_health_details(self) -> Dict[str, Any]:
+    def get_health_details(self) -> dict[str, Any]:
         """
         Get detailed health status.
-        
+
         Returns:
             Dictionary with health status details.
         """

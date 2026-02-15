@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
 from tools.overseer.ledger_parser import LedgerParser
-
 
 DEFAULT_LEDGER_PATH = Path("Recovery Plan/QUALITY_LEDGER.md")
 
@@ -20,13 +19,13 @@ class LedgerSourceAdapter(BaseSourceAdapter):
         self._include_done = include_done
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             path = self._ledger_path
             if not path.exists():
                 return {"ledger": []}
             parser = LedgerParser(path)
             entries = parser.parse()
-            out: List[Dict[str, Any]] = []
+            out: list[dict[str, Any]] = []
             for entry in entries:
                 if not self._include_done and getattr(entry, "state", None) and entry.state.value == "DONE":
                     continue

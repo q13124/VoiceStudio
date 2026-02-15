@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, BriefContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
-
 
 DEFAULT_TASKS_DIR = "docs/tasks"
 STATE_PATH = Path(".cursor/STATE.md")
 
 
-def _extract_section(text: str, header: str) -> Optional[str]:
+def _extract_section(text: str, header: str) -> str | None:
     pattern = re.compile(rf"^\s*##\s+{re.escape(header)}\s*$", re.IGNORECASE)
     lines = text.splitlines()
     out = []
@@ -29,7 +28,7 @@ def _extract_section(text: str, header: str) -> Optional[str]:
     return content or None
 
 
-def _parse_active_task_id(state_text: str) -> Optional[str]:
+def _parse_active_task_id(state_text: str) -> str | None:
     in_active = False
     for line in state_text.splitlines():
         if line.strip().startswith("## Active Task"):
@@ -57,7 +56,7 @@ class TaskSourceAdapter(BaseSourceAdapter):
             p = root / p
         return p
 
-    def _resolve_task_id(self, context: AllocationContext, root: Path) -> Optional[str]:
+    def _resolve_task_id(self, context: AllocationContext, root: Path) -> str | None:
         if context.task_id:
             return context.task_id
         if STATE_PATH.exists():
@@ -69,7 +68,7 @@ class TaskSourceAdapter(BaseSourceAdapter):
         return None
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             task_id = self._resolve_task_id(context, root)
             if not task_id:

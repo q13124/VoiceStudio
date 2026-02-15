@@ -5,12 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
 
 class RootCauseCategory(str, Enum):
     """Categories of root causes."""
-    
+
     CODE_LOGIC = "code_logic"
     CONFIGURATION = "configuration"
     DEPENDENCY = "dependency"
@@ -26,12 +25,12 @@ class RootCauseCategory(str, Enum):
 @dataclass(frozen=True)
 class CodeLocation:
     """Immutable code location reference."""
-    
+
     file: str
-    line: Optional[int] = None
-    function: Optional[str] = None
-    module: Optional[str] = None
-    
+    line: int | None = None
+    function: str | None = None
+    module: str | None = None
+
     def __str__(self) -> str:
         if self.line and self.function:
             return f"{self.file}:{self.line} in {self.function}"
@@ -44,14 +43,14 @@ class CodeLocation:
 @dataclass(frozen=True)
 class RootCause:
     """Immutable root cause identification."""
-    
+
     category: RootCauseCategory
     location: CodeLocation
     description: str
-    evidence_paths: List[str]
+    evidence_paths: list[str]
     confidence: float  # 0.0 - 1.0
-    technical_details: Optional[str] = None
-    
+    technical_details: str | None = None
+
     def __post_init__(self):
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("Confidence must be between 0.0 and 1.0")
@@ -60,7 +59,7 @@ class RootCause:
 @dataclass(frozen=True)
 class FileChange:
     """Immutable record of file modification."""
-    
+
     path: str
     content: str
     change_type: str  # "modify", "create", "delete"
@@ -70,9 +69,9 @@ class FileChange:
 @dataclass(frozen=True)
 class Fix:
     """Immutable fix proposal."""
-    
+
     issue_id: str
-    file_changes: List[FileChange]
+    file_changes: list[FileChange]
     rationale: str
     estimated_risk: str  # "low", "medium", "high", "critical"
 
@@ -80,16 +79,16 @@ class Fix:
 @dataclass(frozen=True)
 class ValidationResult:
     """Immutable validation result."""
-    
+
     passed: bool
     build_success: bool
     tests_passed: int
     tests_failed: int
     gate_status: str
-    errors: List[str]
-    proof_artifacts: List[str]
+    errors: list[str]
+    proof_artifacts: list[str]
     executed_at: datetime
-    
+
     @property
     def is_valid(self) -> bool:
         return self.passed and self.build_success and self.tests_failed == 0
@@ -98,13 +97,13 @@ class ValidationResult:
 @dataclass(frozen=True)
 class Resolution:
     """Immutable resolution record."""
-    
+
     fix: Fix
     validation: ValidationResult
     applied_at: datetime
     applied_by: str
-    pr_link: Optional[str] = None
-    
+    pr_link: str | None = None
+
     @classmethod
     def from_fix(cls, fix: Fix, validation: ValidationResult, applied_by: str = "debug-agent") -> Resolution:
         return cls(
@@ -119,10 +118,10 @@ class Resolution:
 class ResolutionLog:
     """
     Immutable record of bug resolution (value object).
-    
+
     Complete structured summary per Debug Role specification.
     """
-    
+
     issue_id: str
     resolved_at: datetime
     resolved_by: str
@@ -130,10 +129,10 @@ class ResolutionLog:
     fix_rationale: str
     discovery_process: str
     originator_analysis: str
-    prevention_recommendations: List[str]
+    prevention_recommendations: list[str]
     validation_results: ValidationResult
-    proof_artifacts: List[str]
-    
+    proof_artifacts: list[str]
+
     def to_markdown(self) -> str:
         """Format as Resolution Summary markdown per specification."""
         lines = [
@@ -186,27 +185,27 @@ class ResolutionLog:
         ])
         lines.extend([f"- `{artifact}`" for artifact in self.proof_artifacts])
         lines.append("")
-        
+
         return "\n".join(lines)
 
 
 @dataclass
 class Hypothesis:
     """Investigation hypothesis to test."""
-    
+
     description: str
-    supporting_evidence: List[str] = field(default_factory=list)
-    contradicting_evidence: List[str] = field(default_factory=list)
+    supporting_evidence: list[str] = field(default_factory=list)
+    contradicting_evidence: list[str] = field(default_factory=list)
     tested: bool = False
-    result: Optional[str] = None  # "confirmed", "refuted", "inconclusive"
+    result: str | None = None  # "confirmed", "refuted", "inconclusive"
 
 
 @dataclass
 class Evidence:
     """Evidence collected during investigation."""
-    
+
     description: str
     source: str  # "log", "test", "code_review", "reproduction", etc.
     confidence: float  # 0.0 - 1.0
     timestamp: datetime = field(default_factory=datetime.now)
-    artifacts: List[str] = field(default_factory=list)
+    artifacts: list[str] = field(default_factory=list)

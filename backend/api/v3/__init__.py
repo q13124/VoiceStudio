@@ -9,14 +9,26 @@ Breaking changes from v2:
 - gRPC support for high-performance engine communication
 - New error response format with machine-readable codes
 - Pagination uses cursor-based instead of offset-based
+- StandardResponse[T] envelope format for all responses
 """
 
 from fastapi import APIRouter
 
 from .engines import router as engines_router
+from .models import (
+    ErrorCode,
+    ErrorDetail,
+    PaginationMeta,
+    RequestMeta,
+    ResponseStatus,
+    StandardResponse,
+    error_response,
+    paginated_response,
+    success_response,
+)
+from .projects import router as projects_router
 from .synthesis import router as synthesis_router
 from .voices import router as voices_router
-from .projects import router as projects_router
 
 # Create main v3 router
 router = APIRouter(prefix="/v3", tags=["v3"])
@@ -27,4 +39,17 @@ router.include_router(synthesis_router)
 router.include_router(voices_router)
 router.include_router(projects_router)
 
-__all__ = ["router"]
+__all__ = [
+    "ErrorCode",
+    "ErrorDetail",
+    "PaginationMeta",
+    "RequestMeta",
+    "ResponseStatus",
+    # Response envelope models
+    "StandardResponse",
+    "error_response",
+    "paginated_response",
+    "router",
+    # Helper functions
+    "success_response",
+]

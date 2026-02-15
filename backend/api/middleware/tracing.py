@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, Optional
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -28,6 +29,7 @@ from starlette.types import ASGIApp
 # OpenTelemetry imports with graceful fallback
 try:
     from opentelemetry import trace
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import (
         BatchSpanProcessor,
@@ -35,8 +37,7 @@ try:
         SpanExporter,
         SpanExportResult,
     )
-    from opentelemetry.sdk.resources import Resource, SERVICE_NAME
-    from opentelemetry.trace import Status, StatusCode, SpanKind
+    from opentelemetry.trace import SpanKind, Status, StatusCode
     from opentelemetry.trace.propagation.tracecontext import (
         TraceContextTextMapPropagator,
     )
@@ -113,7 +114,7 @@ class LocalFileSpanExporter(_base_class):
         from pathlib import Path
         Path(self.export_dir).mkdir(parents=True, exist_ok=True)
 
-    def export(self, spans) -> "SpanExportResult":
+    def export(self, spans) -> SpanExportResult:
         """Export spans to JSON file."""
         import json
         from datetime import datetime
@@ -168,7 +169,7 @@ class LocalFileSpanExporter(_base_class):
 # Tracer Configuration
 # =============================================================================
 
-_tracer_provider: Optional[TracerProvider] = None
+_tracer_provider: TracerProvider | None = None
 _tracer = None
 
 
@@ -184,7 +185,7 @@ def setup_tracing(
     service_name: str = TRACING_SERVICE_NAME,
     export_to_console: bool = False,
     export_to_file: bool = True,
-) -> Optional[TracerProvider]:
+) -> TracerProvider | None:
     """
     Initialize OpenTelemetry tracing.
 
@@ -262,9 +263,9 @@ def shutdown_tracing() -> None:
 # =============================================================================
 
 def traced(
-    name: Optional[str] = None,
-    attributes: Optional[Dict[str, Any]] = None,
-    kind: Optional[SpanKind] = None,
+    name: str | None = None,
+    attributes: dict[str, Any] | None = None,
+    kind: SpanKind | None = None,
 ):
     """
     Decorator to trace a function with OpenTelemetry.
@@ -282,10 +283,7 @@ def traced(
 
         span_name = name or func.__name__
         span_attributes = attributes or {}
-        if OPENTELEMETRY_AVAILABLE:
-            span_kind = kind or SpanKind.INTERNAL
-        else:
-            span_kind = None
+        span_kind = kind or SpanKind.INTERNAL if OPENTELEMETRY_AVAILABLE else None
 
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -363,7 +361,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         app: ASGIApp,
         service_name: str = TRACING_SERVICE_NAME,
         enabled: bool = True,
-        skip_paths: Optional[frozenset] = None,
+        skip_paths: frozenset | None = None,
         sample_rate: float = TRACING_SAMPLE_RATE,
     ):
         super().__init__(app)
@@ -477,7 +475,7 @@ def setup_opentelemetry_middleware(
     enabled: bool = True,
     export_to_console: bool = False,
     export_to_file: bool = True,
-) -> Optional[OpenTelemetryMiddleware]:
+) -> OpenTelemetryMiddleware | None:
     """
     Setup OpenTelemetry tracing for a FastAPI application.
 
@@ -517,7 +515,7 @@ def setup_opentelemetry_middleware(
 @contextmanager
 def trace_operation(
     name: str,
-    attributes: Optional[Dict[str, Any]] = None,
+    attributes: dict[str, Any] | None = None,
 ) -> Generator[Any, None, None]:
     """
     Context manager for tracing an operation.
@@ -559,17 +557,17 @@ __all__ = [
     # Constants
     "OPENTELEMETRY_AVAILABLE",
     "TRACING_ENABLED",
-    "X_TRACE_ID_HEADER",
     "X_SPAN_ID_HEADER",
+    "X_TRACE_ID_HEADER",
+    "LocalFileSpanExporter",
+    # Classes
+    "OpenTelemetryMiddleware",
+    # Tracing utilities
+    "get_tracer",
+    "setup_opentelemetry_middleware",
     # Setup functions
     "setup_tracing",
     "shutdown_tracing",
-    "setup_opentelemetry_middleware",
-    # Tracing utilities
-    "get_tracer",
-    "traced",
     "trace_operation",
-    # Classes
-    "OpenTelemetryMiddleware",
-    "LocalFileSpanExporter",
+    "traced",
 ]

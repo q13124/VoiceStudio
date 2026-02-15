@@ -15,11 +15,10 @@ Requirements:
 
 import argparse
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import requests
 
@@ -32,7 +31,7 @@ def create_proof_directory() -> Path:
     return proof_dir
 
 
-def step_result(step_name: str, status: str, details: Optional[str] = None) -> Dict[str, Any]:
+def step_result(step_name: str, status: str, details: str | None = None) -> dict[str, Any]:
     """Create a step result dictionary."""
     result = {
         "step": step_name,
@@ -48,9 +47,9 @@ def run_wizard_flow(
     backend_url: str,
     reference_audio: Path,
     proof_dir: Path,
-) -> Tuple[List[Dict[str, Any]], bool]:
+) -> tuple[list[dict[str, Any]], bool]:
     """Run the wizard flow steps and return results."""
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     all_passed = True
     audio_id = None
     profile_id = None
@@ -105,7 +104,7 @@ def run_wizard_flow(
                 data=data,
                 timeout=120,
             )
-        
+
         if response.status_code == 200:
             clone_result = response.json()
             profile_id = clone_result.get("profile_id")
@@ -140,7 +139,7 @@ def run_wizard_flow(
             },
             timeout=60,
         )
-        
+
         if response.status_code == 200:
             synth_result = response.json()
             audio_id = synth_result.get("audio_id", audio_id)
@@ -164,13 +163,13 @@ def run_wizard_flow(
                 f"{backend_url}/api/voice/audio/{audio_id}",
                 timeout=30,
             )
-            
+
             if response.status_code == 200:
-                content_type = response.headers.get("content-type", "")
+                response.headers.get("content-type", "")
                 content_length = len(response.content)
                 results.append(step_result("retrieve", "PASS", f"Audio: {content_length} bytes"))
                 print(f"  [PASS] Audio retrieved: {content_length} bytes")
-                
+
                 # Save audio to proof directory
                 audio_path = proof_dir / f"synthesized_{audio_id}.wav"
                 with open(audio_path, "wb") as f:
@@ -250,11 +249,11 @@ def main():
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
-    
+
     passed = sum(1 for r in results if r["status"] == "PASS")
     failed = sum(1 for r in results if r["status"] == "FAIL")
     skipped = sum(1 for r in results if r["status"] == "SKIP")
-    
+
     print(f"Passed:  {passed}")
     print(f"Failed:  {failed}")
     print(f"Skipped: {skipped}")

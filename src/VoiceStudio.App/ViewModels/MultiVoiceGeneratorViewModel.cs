@@ -267,6 +267,14 @@ namespace VoiceStudio.App.ViewModels
         picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
         picker.FileTypeFilter.Add(".csv");
 
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
+
         var file = await picker.PickSingleFileAsync();
         if (file != null)
         {

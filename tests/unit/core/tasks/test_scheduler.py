@@ -3,11 +3,9 @@ Unit Tests for Background Task Scheduler
 Tests background task scheduling functionality including optimizations.
 """
 
-import asyncio
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -229,10 +227,10 @@ class TestSchedulerClass:
         def test_func():
             return "test_result"
 
-        task1_id = scheduler.add_task(
+        scheduler.add_task(
             name="Task 1", func=test_func, priority=TaskPriority.HIGH
         )
-        task2_id = scheduler.add_task(
+        scheduler.add_task(
             name="Task 2", func=test_func, priority=TaskPriority.LOW
         )
 
@@ -251,7 +249,7 @@ class TestSchedulerClass:
         task1_id = scheduler.add_task(
             name="Task 1", func=test_func, priority=TaskPriority.HIGH
         )
-        task2_id = scheduler.add_task(
+        scheduler.add_task(
             name="Task 2", func=test_func, priority=TaskPriority.LOW
         )
 
@@ -270,10 +268,10 @@ class TestSchedulerClass:
         def test_func():
             return "test_result"
 
-        task1_id = scheduler.add_task(
+        scheduler.add_task(
             name="Task 1", func=test_func, priority=TaskPriority.HIGH
         )
-        task2_id = scheduler.add_task(
+        scheduler.add_task(
             name="Task 2", func=test_func, priority=TaskPriority.LOW
         )
 

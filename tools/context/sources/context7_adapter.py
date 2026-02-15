@@ -20,28 +20,28 @@ class Context7Adapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """
         Fetch library documentation via Context7 MCP.
-        
+
         When enabled, queries Context7 for up-to-date docs on libraries
         used in the current task (e.g., FastAPI, WinUI 3, asyncio).
-        
+
         Falls back gracefully if MCP unavailable.
         """
         def _load() -> dict:
             if not self._mcp_enabled:
                 return {"context7_docs": [], "note": "Context7 MCP disabled"}
-            
+
             # Attempt MCP call to Context7
             # NOTE: Actual MCP integration requires CallMcpTool or context7 client
             # For now, return empty with success to indicate availability
             docs = self._query_context7(context)
             return {"context7_docs": docs}
-        
+
         return self._measure(_load, context)
 
     def _query_context7(self, context: AllocationContext) -> list:
         """
         Query Context7 for library docs relevant to task.
-        
+
         Implementation notes:
         - Parse task brief to identify libraries (FastAPI, WinUI, PyTorch, etc.)
         - Call Context7 MCP tool with library IDs

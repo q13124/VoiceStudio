@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 Ensure engines ready: one-shot script to check engine model readiness.
 
 Calls /api/engines/preflight and reports missing models in E:\VoiceStudio\models.
@@ -20,7 +20,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 try:
     import requests
@@ -103,7 +103,7 @@ def main() -> int:
 
     # Parse preflight results
     all_ok = True
-    missing_models: list[Dict[str, Any]] = []
+    missing_models: list[dict[str, Any]] = []
     ready_engines: list[str] = []
 
     # Expected structure: { "engines": { "engine_id": { "ok": bool, "message": str, ... } } }
@@ -175,7 +175,7 @@ def main() -> int:
                         print(f"    ... and {len(model['paths']) - 3} more")
 
             print("\nTo download missing models:")
-            print(f"  python -m backend.scripts.ensure_engines_ready --auto-download")
+            print("  python -m backend.scripts.ensure_engines_ready --auto-download")
 
     return 0 if all_ok else 1
 

@@ -5,9 +5,10 @@ Endpoints for managing project templates.
 Supports CRUD operations, template categories, and template application.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/templates", tags=["templates"])
 
 # In-memory templates storage (replace with database in production)
-_templates: Dict[str, Dict] = {}
+_templates: dict[str, dict] = {}
 
 
 class Template(BaseModel):
@@ -28,11 +29,11 @@ class Template(BaseModel):
     id: str
     name: str
     category: str
-    description: Optional[str] = None
-    thumbnail_url: Optional[str] = None
-    project_data: Dict = {}  # Template project structure
-    tags: List[str] = []
-    author: Optional[str] = None
+    description: str | None = None
+    thumbnail_url: str | None = None
+    project_data: dict = {}  # Template project structure
+    tags: list[str] = []
+    author: str | None = None
     version: str = "1.0"
     is_public: bool = False
     usage_count: int = 0
@@ -45,31 +46,31 @@ class TemplateCreateRequest(BaseModel):
 
     name: str
     category: str
-    description: Optional[str] = None
-    thumbnail_url: Optional[str] = None
-    project_data: Dict = {}
-    tags: List[str] = []
-    author: Optional[str] = None
+    description: str | None = None
+    thumbnail_url: str | None = None
+    project_data: dict = {}
+    tags: list[str] = []
+    author: str | None = None
     is_public: bool = False
 
 
 class TemplateUpdateRequest(BaseModel):
     """Request to update a template."""
 
-    name: Optional[str] = None
-    category: Optional[str] = None
-    description: Optional[str] = None
-    thumbnail_url: Optional[str] = None
-    project_data: Optional[Dict] = None
-    tags: Optional[List[str]] = None
-    is_public: Optional[bool] = None
+    name: str | None = None
+    category: str | None = None
+    description: str | None = None
+    thumbnail_url: str | None = None
+    project_data: dict | None = None
+    tags: list[str] | None = None
+    is_public: bool | None = None
 
 
 class TemplateApplyRequest(BaseModel):
     """Request to apply a template."""
 
-    project_id: Optional[str] = None  # Apply to existing project
-    project_name: Optional[str] = None  # Name for new project
+    project_id: str | None = None  # Apply to existing project
+    project_name: str | None = None  # Name for new project
 
 
 # Initialize default templates
@@ -138,12 +139,12 @@ def _initialize_default_templates():
 _initialize_default_templates()
 
 
-@router.get("", response_model=List[Template])
+@router.get("", response_model=list[Template])
 @cache_response(ttl=60)  # Cache for 60 seconds (templates may change)
 async def get_templates(
-    category: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    is_public: Optional[bool] = Query(None),
+    category: str | None = Query(None),
+    search: str | None = Query(None),
+    is_public: bool | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
 ):
     """Get all templates, optionally filtered."""
@@ -353,4 +354,4 @@ async def get_template_categories():
         if cat:
             categories.add(cat)
 
-    return {"categories": sorted(list(categories))}
+    return {"categories": sorted(categories)}

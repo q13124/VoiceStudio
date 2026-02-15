@@ -5,7 +5,6 @@ Tests RVC (Retrieval-based Voice Conversion) engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -29,7 +28,7 @@ class TestRVCEngineImports:
     def test_module_has_rvc_engine_class(self):
         """Test module has RVCEngine class."""
         if hasattr(rvc_engine, "RVCEngine"):
-            cls = getattr(rvc_engine, "RVCEngine")
+            cls = rvc_engine.RVCEngine
             assert isinstance(cls, type), "RVCEngine should be a class"
 
 
@@ -39,7 +38,7 @@ class TestRVCEngineClass:
     def test_rvc_engine_class_exists(self):
         """Test RVCEngine class exists."""
         if hasattr(rvc_engine, "RVCEngine"):
-            cls = getattr(rvc_engine, "RVCEngine")
+            cls = rvc_engine.RVCEngine
             assert isinstance(cls, type), "RVCEngine should be a class"
 
 

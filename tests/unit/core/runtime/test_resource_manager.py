@@ -39,7 +39,7 @@ class TestResourceManagerClasses:
     def test_resource_manager_class_exists(self):
         """Test ResourceManager class exists."""
         if hasattr(resource_manager, "ResourceManager"):
-            cls = getattr(resource_manager, "ResourceManager")
+            cls = resource_manager.ResourceManager
             assert isinstance(cls, type), "ResourceManager should be a class"
 
 

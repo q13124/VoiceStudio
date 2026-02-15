@@ -12,7 +12,6 @@ Features:
 """
 
 import logging
-from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -113,7 +112,7 @@ def enhance_spectral_quality(
 
 
 def preserve_formants(
-    audio: np.ndarray, sample_rate: int, reference_audio: Optional[np.ndarray] = None
+    audio: np.ndarray, sample_rate: int, reference_audio: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Preserve or enhance formant structure for natural voice quality.
@@ -215,15 +214,15 @@ def enhance_prosody(
                 # Calculate average F0 shift needed
                 f0_mean = np.nanmean(f0_smooth)
                 f0_enhanced_mean = np.nanmean(f0_enhanced)
-                
+
                 if f0_mean > 0 and abs(f0_enhanced_mean - f0_mean) > 1.0:
                     # Calculate pitch shift in semitones
                     pitch_ratio = f0_enhanced_mean / f0_mean
                     semitones = 12 * np.log2(pitch_ratio)
-                    
+
                     # Limit pitch shift to reasonable range
                     semitones = max(-2.0, min(2.0, semitones))
-                    
+
                     if abs(semitones) > 0.1:
                         # Apply pitch shift using librosa or pyrubberband
                         try:
@@ -243,7 +242,7 @@ def enhance_prosody(
                     enhanced = audio.copy()
             else:
                 enhanced = audio.copy()
-            
+
             return enhanced
 
         return audio
@@ -274,10 +273,7 @@ def advanced_denoise(
     try:
         # Convert to mono if stereo
         is_stereo = len(audio.shape) > 1
-        if is_stereo:
-            audio_mono = np.mean(audio, axis=0)
-        else:
-            audio_mono = audio
+        audio_mono = np.mean(audio, axis=0) if is_stereo else audio
 
         # Multi-stage denoising
         # Stage 1: General noise reduction
@@ -338,10 +334,7 @@ def remove_artifacts_advanced(
     try:
         # Convert to mono if stereo
         is_stereo = len(audio.shape) > 1
-        if is_stereo:
-            audio_mono = np.mean(audio, axis=0)
-        else:
-            audio_mono = audio
+        audio_mono = np.mean(audio, axis=0) if is_stereo else audio
 
         cleaned = audio_mono.copy()
 
@@ -395,7 +388,7 @@ def remove_artifacts_advanced(
 def enhance_voice_quality_advanced(
     audio: np.ndarray,
     sample_rate: int,
-    reference_audio: Optional[np.ndarray] = None,
+    reference_audio: np.ndarray | None = None,
     normalize: bool = True,
     denoise: bool = True,
     spectral_enhance: bool = True,
@@ -474,10 +467,7 @@ def enhance_voice_quality_advanced(
         try:
             # Convert to mono for LUFS calculation
             is_stereo = len(enhanced.shape) > 1
-            if is_stereo:
-                enhanced_mono = np.mean(enhanced, axis=0)
-            else:
-                enhanced_mono = enhanced
+            enhanced_mono = np.mean(enhanced, axis=0) if is_stereo else enhanced
 
             # Measure loudness
             meter = pyln.Meter(sample_rate)
@@ -499,10 +489,7 @@ def enhance_voice_quality_advanced(
                     enhanced_mono = enhanced_mono * (0.95 / max_val)
 
                 # Restore stereo if needed
-                if is_stereo:
-                    enhanced = np.stack([enhanced_mono, enhanced_mono])
-                else:
-                    enhanced = enhanced_mono
+                enhanced = np.stack([enhanced_mono, enhanced_mono]) if is_stereo else enhanced_mono
         except Exception as e:
             logger.warning(f"LUFS normalization failed: {e}")
             # Fallback to peak normalization

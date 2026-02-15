@@ -7,10 +7,12 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import logging
-from datetime import datetime
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ except ImportError:
 
 # Import RVC trainer
 try:
-    from .rvc_trainer import RVCTrainer, HAS_RVC_TRAINER
+    from .rvc_trainer import HAS_RVC_TRAINER, RVCTrainer
 
 except ImportError:
     HAS_RVC_TRAINER = False
@@ -58,9 +60,9 @@ class UnifiedTrainer:
     def __init__(
         self,
         engine: str = "xtts",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ):
         """
         Initialize Unified Trainer.
@@ -139,9 +141,9 @@ class UnifiedTrainer:
 
     def prepare_dataset(
         self,
-        audio_files: List[str],
-        transcripts: Optional[List[str]] = None,
-        output_metadata: Optional[str] = None,
+        audio_files: list[str],
+        transcripts: list[str] | None = None,
+        output_metadata: str | None = None,
     ) -> str:
         """
         Prepare training dataset.
@@ -167,7 +169,7 @@ class UnifiedTrainer:
             )
 
     def initialize_model(
-        self, config_path: Optional[str] = None, base_model: Optional[str] = None
+        self, config_path: str | None = None, base_model: str | None = None
     ) -> bool:
         """
         Initialize training model.
@@ -203,10 +205,10 @@ class UnifiedTrainer:
         epochs: int = 100,
         batch_size: int = 4,
         learning_rate: float = 0.0001,
-        progress_callback: Optional[Callable[[Dict], None]] = None,
-        checkpoint_dir: Optional[str] = None,
+        progress_callback: Callable[[dict], None] | None = None,
+        checkpoint_dir: str | None = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Start training.
 
@@ -286,7 +288,7 @@ class UnifiedTrainer:
             return True  # Cancellation requested successfully
 
     def export_model(
-        self, output_path: Optional[str] = None, model_name: Optional[str] = None
+        self, output_path: str | None = None, model_name: str | None = None
     ) -> str:
         """
         Export trained model.
@@ -306,7 +308,7 @@ class UnifiedTrainer:
         else:
             raise RuntimeError(f"Model export unavailable for engine '{self.engine}'")
 
-    def get_training_status(self) -> Dict[str, Any]:
+    def get_training_status(self) -> dict[str, Any]:
         """
         Get current training status.
 
@@ -327,7 +329,7 @@ class UnifiedTrainer:
 
         return status
 
-    def get_supported_engines(self) -> List[str]:
+    def get_supported_engines(self) -> list[str]:
         """
         Get list of supported training engines.
 
@@ -356,9 +358,9 @@ class UnifiedTrainer:
     @staticmethod
     def create_trainer(
         engine: str = "xtts",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ) -> "UnifiedTrainer":
         """
         Factory method to create a Unified Trainer instance.
@@ -379,9 +381,9 @@ class UnifiedTrainer:
 
 def create_unified_trainer(
     engine: str = "xtts",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    output_dir: Optional[str] = None,
+    output_dir: str | None = None,
 ) -> UnifiedTrainer:
     """
     Factory function to create a Unified Trainer instance.

@@ -12,8 +12,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, MemoryItem
 from tools.context.sources.memory_adapter import MemorySourceAdapter
@@ -25,17 +24,17 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MemoryEntry:
     """A memory entry with metadata."""
-    
+
     content: str
     title: str
     memory_type: str = "project_info"
     source: str = "unknown"
     relevance: float = 0.5
     created_at: str = ""
-    role: Optional[str] = None
-    task_id: Optional[str] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+    role: str | None = None
+    task_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "content": self.content,
             "title": self.title,
@@ -51,17 +50,17 @@ class MemoryEntry:
 @dataclass
 class MemorySearchResult:
     """Result of a memory search."""
-    
-    memories: List[MemoryEntry] = field(default_factory=list)
+
+    memories: list[MemoryEntry] = field(default_factory=list)
     total_found: int = 0
     search_time_ms: float = 0.0
-    sources_queried: List[str] = field(default_factory=list)
+    sources_queried: list[str] = field(default_factory=list)
 
 
 class MemoryService:
     """
     Unified memory service for VoiceStudio context system.
-    
+
     Features:
     - Role-aware memory retrieval
     - Dual-store support (file + vector)
@@ -69,16 +68,16 @@ class MemoryService:
     - Memory persistence and retrieval
     - Health monitoring
     """
-    
+
     def __init__(
         self,
-        file_adapter: Optional[MemorySourceAdapter] = None,
-        vector_adapter: Optional[VectorMemoryAdapter] = None,
+        file_adapter: MemorySourceAdapter | None = None,
+        vector_adapter: VectorMemoryAdapter | None = None,
         prefer_vector: bool = False,
     ):
         """
         Initialize memory service.
-        
+
         Args:
             file_adapter: File-based memory adapter
             vector_adapter: Vector memory adapter
@@ -87,19 +86,19 @@ class MemoryService:
         self._file_adapter = file_adapter or MemorySourceAdapter(offline=True)
         self._vector_adapter = vector_adapter or VectorMemoryAdapter(offline=True)
         self._prefer_vector = prefer_vector
-    
+
     def search(
         self,
-        query: Optional[str] = None,
-        role: Optional[str] = None,
-        task_id: Optional[str] = None,
-        phase: Optional[str] = None,
+        query: str | None = None,
+        role: str | None = None,
+        task_id: str | None = None,
+        phase: str | None = None,
         max_results: int = 5,
         include_vector: bool = True,
     ) -> MemorySearchResult:
         """
         Search memories with optional role context.
-        
+
         Args:
             query: Search query (optional)
             role: Role for context-aware retrieval
@@ -107,13 +106,13 @@ class MemoryService:
             phase: Phase for context
             max_results: Maximum results to return
             include_vector: Include vector search results
-        
+
         Returns:
             MemorySearchResult with found memories
         """
         import time
         start = time.time()
-        
+
         # Build allocation context
         ctx = AllocationContext(
             task_id=task_id,
@@ -122,10 +121,10 @@ class MemoryService:
             include_git=False,
             budget_chars=10000,
         )
-        
+
         memories = []
         sources = []
-        
+
         # Fetch from file adapter
         try:
             file_result = self._file_adapter.fetch(ctx)
@@ -142,7 +141,7 @@ class MemoryService:
                 sources.append("file")
         except Exception as e:
             logger.debug("File memory search failed: %s", e)
-        
+
         # Fetch from vector adapter if enabled
         if include_vector:
             try:
@@ -153,42 +152,42 @@ class MemoryService:
                         if isinstance(mem, MemoryItem):
                             memories.append(MemoryEntry(
                                 content=mem.content,
-                                title=f"Vector memory",
+                                title="Vector memory",
                                 source=mem.source or "vector",
                                 memory_type="vector",
                             ))
                     sources.append("vector")
             except Exception as e:
                 logger.debug("Vector memory search failed: %s", e)
-        
+
         # Sort by relevance and limit
         memories = sorted(
             memories,
             key=lambda m: m.relevance,
             reverse=True,
         )[:max_results]
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return MemorySearchResult(
             memories=memories,
             total_found=len(memories),
             search_time_ms=elapsed,
             sources_queried=sources,
         )
-    
+
     def store(
         self,
         content: str,
         title: str,
         memory_type: str = "project_info",
-        role: Optional[str] = None,
-        task_id: Optional[str] = None,
+        role: str | None = None,
+        task_id: str | None = None,
         persist_to_vector: bool = False,
     ) -> bool:
         """
         Store a memory.
-        
+
         Args:
             content: Memory content
             title: Memory title
@@ -196,12 +195,12 @@ class MemoryService:
             role: Associated role
             task_id: Associated task
             persist_to_vector: Also store in vector database
-        
+
         Returns:
             True if stored successfully
         """
         success = False
-        
+
         # Store to file
         try:
             section = self._get_section_for_role(role, memory_type)
@@ -213,7 +212,7 @@ class MemoryService:
             )
         except Exception as e:
             logger.error("Failed to store to file: %s", e)
-        
+
         # Optionally store to vector
         if persist_to_vector:
             try:
@@ -232,14 +231,14 @@ class MemoryService:
                 success = success or vec_success
             except Exception as e:
                 logger.error("Failed to store to vector: %s", e)
-        
+
         return success
-    
+
     def _get_section_for_role(
         self,
-        role: Optional[str],
+        role: str | None,
         memory_type: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Determine openmemory.md section based on role and type."""
         if role:
             role_sections = {
@@ -251,25 +250,25 @@ class MemoryService:
             }
             if role in role_sections:
                 return role_sections[role]
-        
+
         return None  # Use default based on memory_type
-    
-    def get_health(self) -> Dict[str, Any]:
+
+    def get_health(self) -> dict[str, Any]:
         """Get health status of memory sources."""
         return {
             "file_available": self._file_adapter.health_check(),
             "vector_available": self._vector_adapter.health_check(),
             "vector_stats": self._vector_adapter.get_stats(),
         }
-    
+
     def get_role_context(
         self,
         role: str,
         max_results: int = 3,
-    ) -> List[MemoryEntry]:
+    ) -> list[MemoryEntry]:
         """
         Get memories specifically relevant to a role.
-        
+
         Shortcut for search with role context.
         """
         result = self.search(
@@ -281,7 +280,7 @@ class MemoryService:
 
 
 # Global memory service instance
-_global_service: Optional[MemoryService] = None
+_global_service: MemoryService | None = None
 
 
 def get_memory_service() -> MemoryService:
@@ -293,10 +292,10 @@ def get_memory_service() -> MemoryService:
 
 
 def search_memories(
-    query: Optional[str] = None,
-    role: Optional[str] = None,
+    query: str | None = None,
+    role: str | None = None,
     max_results: int = 5,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Convenience function to search memories."""
     service = get_memory_service()
     result = service.search(query=query, role=role, max_results=max_results)

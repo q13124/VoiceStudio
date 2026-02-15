@@ -37,17 +37,8 @@ namespace VoiceStudio.App
       ServiceProvider.Initialize();
       _startupProfiler.Checkpoint("ServiceProvider.Initialize");
 
-      // Bootstrap command handlers (registers all commands with the unified registry)
-      try
-      {
-        CommandHandlerBootstrapper.Initialize();
-        _startupProfiler.Checkpoint("CommandHandlerBootstrapper.Initialize");
-      }
-      catch (Exception ex)
-      {
-        Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
-        // Non-fatal - app can continue without command handlers
-      }
+      // Command handlers are bootstrapped in OnLaunched after MainWindow is created
+      // (DialogService requires Window which is only available after window creation)
 
       // Start backend process in background (non-blocking)
       _ = Task.Run(async () =>
@@ -253,6 +244,17 @@ namespace VoiceStudio.App
           MainWindowInstance = m_window;
           _startupProfiler?.Checkpoint("MainWindow Created");
 
+          // Bootstrap command handlers now that MainWindow is available (DialogService requires Window)
+          try
+          {
+            CommandHandlerBootstrapper.Initialize();
+            _startupProfiler?.Checkpoint("CommandHandlerBootstrapper.Initialize");
+          }
+          catch (Exception ex)
+          {
+            Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
+          }
+
           if (IsSmokeHinted())
           {
             WriteUiSmokeDebugSnapshot(phase: "mainwindow_created", args: args, smokeExit: smokeExit, uiSmoke: uiSmoke);
@@ -332,6 +334,18 @@ namespace VoiceStudio.App
       m_window = new MainWindow();
       MainWindowInstance = m_window;
       _startupProfiler?.Checkpoint("MainWindow Created");
+
+      // Bootstrap command handlers now that MainWindow is available (DialogService requires Window)
+      try
+      {
+        CommandHandlerBootstrapper.Initialize();
+        _startupProfiler?.Checkpoint("CommandHandlerBootstrapper.Initialize");
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
+        // Non-fatal - app can continue without command handlers
+      }
 
       if (IsSmokeHinted())
       {

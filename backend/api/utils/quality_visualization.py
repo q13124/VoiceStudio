@@ -4,9 +4,10 @@ Advanced Quality Metrics Visualization Utilities (IDEA 60).
 Provides advanced analysis and visualization data for quality metrics.
 """
 
+from __future__ import annotations
+
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -14,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_quality_heatmap(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     x_dimension: str = "engine",
     y_dimension: str = "profile",
     metric: str = "mos_score",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate quality heatmap data.
 
@@ -32,7 +33,7 @@ def calculate_quality_heatmap(
         Heatmap data dictionary
     """
     # Group data by dimensions
-    heatmap_data: Dict[Tuple[str, str], List[float]] = {}
+    heatmap_data: dict[tuple[str, str], list[float]] = {}
     x_values = set()
     y_values = set()
 
@@ -54,7 +55,7 @@ def calculate_quality_heatmap(
     for x_val in sorted(x_values):
         for y_val in sorted(y_values):
             key = (x_val, y_val)
-            if key in heatmap_data and heatmap_data[key]:
+            if heatmap_data.get(key):
                 avg_value = sum(heatmap_data[key]) / len(heatmap_data[key])
                 heatmap_matrix[f"{x_val}_{y_val}"] = {
                     "x": x_val,
@@ -67,8 +68,8 @@ def calculate_quality_heatmap(
         "x_dimension": x_dimension,
         "y_dimension": y_dimension,
         "metric": metric,
-        "x_values": sorted(list(x_values)),
-        "y_values": sorted(list(y_values)),
+        "x_values": sorted(x_values),
+        "y_values": sorted(y_values),
         "matrix": heatmap_matrix,
         "min_value": min(
             (cell["value"] for cell in heatmap_matrix.values()), default=0.0
@@ -80,8 +81,8 @@ def calculate_quality_heatmap(
 
 
 def calculate_quality_correlations(
-    quality_data: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    quality_data: list[dict[str, Any]],
+) -> dict[str, Any]:
     """
     Calculate correlations between quality metrics.
 
@@ -92,10 +93,10 @@ def calculate_quality_correlations(
         Correlation matrix dictionary
     """
     metrics_list = ["mos_score", "similarity", "naturalness", "snr_db", "artifact_score"]
-    correlation_matrix: Dict[str, Dict[str, float]] = {}
+    correlation_matrix: dict[str, dict[str, float]] = {}
 
     # Extract metric values
-    metric_vectors: Dict[str, List[float]] = {m: [] for m in metrics_list}
+    metric_vectors: dict[str, list[float]] = {m: [] for m in metrics_list}
 
     for record in quality_data:
         metrics = record.get("metrics", {})
@@ -135,10 +136,10 @@ def calculate_quality_correlations(
 
 
 def detect_quality_anomalies(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     metric: str = "mos_score",
     threshold_std: float = 2.0,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Detect quality anomalies and outliers.
 
@@ -169,7 +170,7 @@ def detect_quality_anomalies(
 
     # Detect anomalies (values beyond threshold_std standard deviations)
     anomalies = []
-    for i, (value, record) in enumerate(zip(values, records_with_values)):
+    for i, (value, record) in enumerate(zip(values, records_with_values, strict=False)):
         z_score = abs((value - mean) / std) if std > 0 else 0.0
         if z_score > threshold_std:
             anomalies.append(
@@ -189,9 +190,9 @@ def detect_quality_anomalies(
 
 
 def predict_quality(
-    quality_data: List[Dict[str, Any]],
-    input_factors: Dict[str, Any],
-) -> Dict[str, Any]:
+    quality_data: list[dict[str, Any]],
+    input_factors: dict[str, Any],
+) -> dict[str, Any]:
     """
     Predict quality based on input factors (simple linear regression).
 
@@ -244,9 +245,9 @@ def predict_quality(
 
 
 def generate_quality_insights(
-    quality_data: List[Dict[str, Any]],
+    quality_data: list[dict[str, Any]],
     time_period_days: int = 30,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Generate quality insights and recommendations.
 
@@ -323,7 +324,7 @@ def generate_quality_insights(
                 )
 
     # Insight 3: Engine comparison
-    engine_stats: Dict[str, List[float]] = {}
+    engine_stats: dict[str, list[float]] = {}
     for record in quality_data:
         engine = record.get("engine", "unknown")
         mos = record.get("metrics", {}).get("mos_score")
@@ -396,7 +397,7 @@ def generate_quality_insights(
     return insights
 
 
-def _calculate_pearson_correlation(x: List[float], y: List[float]) -> float:
+def _calculate_pearson_correlation(x: list[float], y: list[float]) -> float:
     """Calculate Pearson correlation coefficient."""
     if len(x) != len(y) or len(x) < 2:
         return 0.0

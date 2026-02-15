@@ -4,11 +4,13 @@ Voice Style Transfer Routes
 Endpoints for voice style transfer and voice conversion.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/style-transfer", tags=["style-transfer"])
 
 # In-memory style transfer jobs (replace with database in production)
-_style_transfer_jobs: Dict[str, Dict] = {}
+_style_transfer_jobs: dict[str, dict] = {}
 
 
 class StyleTransferRequest(BaseModel):
@@ -39,10 +41,10 @@ class StyleTransferJob(BaseModel):
     transfer_strength: float
     status: str  # pending, processing, completed, failed
     progress: float = 0.0  # 0.0 to 1.0
-    output_audio_id: Optional[str] = None
-    error_message: Optional[str] = None
+    output_audio_id: str | None = None
+    error_message: str | None = None
     created: str
-    completed: Optional[str] = None
+    completed: str | None = None
 
 
 class StylePreset(BaseModel):
@@ -50,9 +52,9 @@ class StylePreset(BaseModel):
 
     preset_id: str
     name: str
-    description: Optional[str] = None
-    voice_profile_id: Optional[str] = None
-    style_characteristics: Dict  # Style attributes
+    description: str | None = None
+    voice_profile_id: str | None = None
+    style_characteristics: dict  # Style attributes
     created: str
 
 
@@ -90,14 +92,14 @@ async def create_style_transfer(request: StyleTransferRequest):
         logger.error(f"Failed to create style transfer job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create job: {str(e)}",
+            detail=f"Failed to create job: {e!s}",
         ) from e
 
 
-@router.get("/jobs", response_model=List[StyleTransferJob])
+@router.get("/jobs", response_model=list[StyleTransferJob])
 async def list_style_transfer_jobs(
-    source_audio_id: Optional[str] = None,
-    status: Optional[str] = None,
+    source_audio_id: str | None = None,
+    status: str | None = None,
 ):
     """List all style transfer jobs."""
     jobs = list(_style_transfer_jobs.values())
@@ -131,7 +133,7 @@ async def delete_style_transfer_job(job_id: str):
     return {"success": True}
 
 
-@router.get("/presets", response_model=List[StylePreset])
+@router.get("/presets", response_model=list[StylePreset])
 async def list_style_presets():
     """
     List available voice style presets.
@@ -149,9 +151,9 @@ async def list_style_presets():
 @router.post("/presets", response_model=StylePreset)
 async def create_style_preset(
     name: str,
-    description: Optional[str] = None,
-    voice_profile_id: Optional[str] = None,
-    style_characteristics: Optional[Dict] = None,
+    description: str | None = None,
+    voice_profile_id: str | None = None,
+    style_characteristics: dict | None = None,
 ):
     """Create a new voice style preset."""
     import uuid
@@ -177,7 +179,7 @@ async def create_style_preset(
         logger.error(f"Failed to create style preset: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create preset: {str(e)}",
+            detail=f"Failed to create preset: {e!s}",
         ) from e
 
 
@@ -198,9 +200,9 @@ class StyleProfile(BaseModel):
     pitch_variation: float  # Standard deviation
     energy: float  # Average energy
     speaking_rate: float  # Words per second
-    emotion_tag: Optional[str] = None  # e.g., "Angry", "Excited"
-    prosodic_features: Dict  # Detailed prosodic features
-    style_embedding: Optional[List[float]] = None  # Style embedding vector
+    emotion_tag: str | None = None  # e.g., "Angry", "Excited"
+    prosodic_features: dict  # Detailed prosodic features
+    style_embedding: list[float] | None = None  # Style embedding vector
 
 
 class StyleAnalyzeRequest(BaseModel):
@@ -213,10 +215,10 @@ class StyleAnalyzeResponse(BaseModel):
     """Style analysis response."""
 
     audio_id: str
-    pitch_contour: List[float]
-    energy_contour: List[float]
-    timing_patterns: Dict
-    style_markers: List[Dict]  # Pauses, emphasis points, etc.
+    pitch_contour: list[float]
+    energy_contour: list[float]
+    timing_patterns: dict
+    style_markers: list[dict]  # Pauses, emphasis points, etc.
 
 
 class StyleSynthesizeRequest(BaseModel):
@@ -224,8 +226,8 @@ class StyleSynthesizeRequest(BaseModel):
 
     voice_profile_id: str
     text: str
-    reference_audio_id: Optional[str] = None
-    style_embedding: Optional[List[float]] = None
+    reference_audio_id: str | None = None
+    style_embedding: list[float] | None = None
     style_intensity: float = 0.8  # 0.0 to 1.0
     language: str = "en"
 
@@ -345,7 +347,7 @@ async def extract_style(request: StyleExtractRequest):
         logger.error(f"Failed to extract style: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to extract style: {str(e)}",
+            detail=f"Failed to extract style: {e!s}",
         ) from e
 
 
@@ -493,7 +495,7 @@ async def analyze_style(request: StyleAnalyzeRequest):
         logger.error(f"Failed to analyze style: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze style: {str(e)}",
+            detail=f"Failed to analyze style: {e!s}",
         ) from e
 
 
@@ -530,7 +532,7 @@ async def synthesize_with_style(request: StyleSynthesizeRequest):
         logger.error(f"Failed to synthesize with style: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to synthesize with style: {str(e)}",
+            detail=f"Failed to synthesize with style: {e!s}",
         ) from e
 
 
@@ -540,8 +542,6 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
     import tempfile
     import uuid
     from datetime import datetime
-
-    import numpy as np
 
     from .voice import _audio_storage, _register_audio_file
 
@@ -572,7 +572,7 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
         try:
             from app.core.audio.audio_utils import load_audio, save_audio
 
-            source_audio, sample_rate = load_audio(source_audio_path)
+            _source_audio, _sample_rate = load_audio(source_audio_path)
         except ImportError:
             raise ValueError("Audio processing libraries not available")
 

@@ -8,6 +8,8 @@ using VoiceStudio.App.Core.ErrorHandling;
 using VoiceStudio.App.Logging;
 using VoiceStudio.App.Services;
 using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
 using Windows.Foundation;
 using Windows.System;
 using Windows.ApplicationModel.DataTransfer;
@@ -15,6 +17,7 @@ using Windows.UI.Core;
 using Windows.UI;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace VoiceStudio.App.Views.Panels
@@ -27,6 +30,7 @@ namespace VoiceStudio.App.Views.Panels
 
     private Storyboard? _playheadPulseAnimation;
     private DragDropVisualFeedbackService? _dragDropService;
+    private IDragDropService? _panelDragDropService;
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
     private AudioClip? _clipboardClip; // For cut/copy/paste
@@ -51,6 +55,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _dragDropService = AppServices.GetDragDropVisualFeedbackService();
+      _panelDragDropService = AppServices.TryGetDragDropService();
       _toastService = AppServices.TryGetToastNotificationService();
       _undoRedoService = AppServices.TryGetUndoRedoService();
       _keyboardShortcutService = AppServices.TryGetKeyboardShortcutService();
@@ -66,6 +71,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Setup keyboard navigation
       this.Loaded += TimelineView_Loaded;
+      this.Unloaded += TimelineView_Unloaded;
 
       // Setup Escape key to close help overlay
       KeyboardNavigationHelper.SetupEscapeKeyHandling(this, () =>
@@ -119,6 +125,83 @@ namespace VoiceStudio.App.Views.Panels
 
       // Configure virtualization for tracks list to optimize large projects
       Controls.VirtualizedListHelper.ConfigureListView(TracksListView);
+
+      // Register as drop target for Asset and Profile payloads (Panel Architecture Phase 4)
+      _panelDragDropService?.RegisterDropTarget(
+          ViewModel.PanelId,
+          CanAcceptCrossPanelDrop);
+    }
+
+    private void TimelineView_Unloaded(object _, RoutedEventArgs __)
+    {
+      // Unregister from drop target (Panel Architecture Phase 4)
+      _panelDragDropService?.UnregisterDropTarget(ViewModel.PanelId);
+    }
+
+    /// <summary>
+    /// Determines if this panel can accept a cross-panel drag payload.
+    /// Accepts Assets (audio) and Profiles for timeline operations.
+    /// </summary>
+    private static bool CanAcceptCrossPanelDrop(DragPayload payload)
+    {
+      return payload.PayloadType == DragPayloadType.Asset ||
+             payload.PayloadType == DragPayloadType.Profile ||
+             payload.PayloadType == DragPayloadType.TimelineClip ||
+             payload.PayloadType == DragPayloadType.ExternalFile;
+    }
+
+    /// <summary>
+    /// Handles a dropped Asset, Profile, or external file payload from cross-panel drag.
+    /// </summary>
+    private async Task HandleCrossPanelDropAsync(DragPayload payload, CancellationToken cancellationToken)
+    {
+      if (ViewModel.SelectedTrack == null || ViewModel.SelectedProject == null)
+      {
+        _toastService?.ShowToast(ToastType.Warning, "Drop Failed", "Select a track first to add clips");
+        return;
+      }
+
+      switch (payload.PayloadType)
+      {
+        case DragPayloadType.Asset:
+          foreach (var item in payload.Items)
+          {
+            // Create clip from asset
+            var clip = new AudioClip
+            {
+              Id = Guid.NewGuid().ToString(),
+              Name = item.DisplayName,
+              AudioId = item.Id,
+              StartTime = ViewModel.SelectedTrack.Clips.Count > 0
+                  ? ViewModel.SelectedTrack.Clips.Max(c => c.EndTime)
+                  : 0.0,
+              Duration = TimeSpan.FromSeconds(5), // Default duration, will be updated by backend
+            };
+
+            ViewModel.SelectedTrack.Clips.Add(clip);
+            _toastService?.ShowToast(ToastType.Success, "Asset Added", $"Added '{item.DisplayName}' to timeline");
+          }
+          break;
+
+        case DragPayloadType.Profile:
+          // When a profile is dropped, it could set the default voice for new clips
+          var profileId = payload.Items.FirstOrDefault()?.Id;
+          if (!string.IsNullOrEmpty(profileId))
+          {
+            _toastService?.ShowToast(ToastType.Info, "Profile Selected", $"Profile '{payload.Items.First().DisplayName}' selected for new clips");
+          }
+          break;
+
+        case DragPayloadType.ExternalFile:
+          foreach (var item in payload.Items)
+          {
+            // Import external audio file
+            _toastService?.ShowToast(ToastType.Info, "Import Started", $"Importing '{item.DisplayName}'...");
+          }
+          break;
+      }
+
+      await Task.CompletedTask;
     }
 
     private void RegisterKeyboardShortcuts()
@@ -1153,6 +1236,16 @@ namespace VoiceStudio.App.Views.Panels
         return DropPosition.After;
       else
         return DropPosition.On;
+    }
+
+    private void TranscriptSegment_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+      if (sender is Border border && border.DataContext is TranscriptSegmentDisplay segment)
+      {
+        // Seek to the transcript segment's start position (already computed in pixels)
+        ViewModel.SeekToPositionCommand.Execute(segment.PositionPixels);
+        e.Handled = true;
+      }
     }
   }
 }

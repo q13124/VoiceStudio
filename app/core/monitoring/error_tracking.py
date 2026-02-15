@@ -4,13 +4,15 @@ Error Tracking System
 Provides error tracking and aggregation for monitoring and debugging.
 """
 
+from __future__ import annotations
+
 import traceback
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ErrorSeverity(Enum):
@@ -28,8 +30,8 @@ class ErrorRecord:
     message: str
     severity: ErrorSeverity
     timestamp: datetime = field(default_factory=datetime.now)
-    traceback: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    traceback: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
     count: int = 1
     first_occurrence: datetime = field(default_factory=datetime.now)
     last_occurrence: datetime = field(default_factory=datetime.now)
@@ -39,40 +41,40 @@ class ErrorTracker:
     """
     Error tracker for monitoring and debugging.
     """
-    
+
     def __init__(self, max_errors: int = 1000):
         """
         Initialize error tracker.
-        
+
         Args:
             max_errors: Maximum number of unique errors to track
         """
         self.max_errors = max_errors
-        self.errors: Dict[str, ErrorRecord] = {}
-        self.error_counts: Dict[str, int] = defaultdict(int)
+        self.errors: dict[str, ErrorRecord] = {}
+        self.error_counts: dict[str, int] = defaultdict(int)
         self.lock = Lock()
-    
+
     def record_error(
         self,
         error: Exception,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ):
         """
         Record an error.
-        
+
         Args:
             error: Exception to record
             severity: Error severity
             context: Optional context information
         """
         error_type = type(error).__name__
-        error_key = f"{error_type}:{str(error)}"
-        
+        error_key = f"{error_type}:{error!s}"
+
         with self.lock:
             # Update count
             self.error_counts[error_key] += 1
-            
+
             # Get or create error record
             if error_key in self.errors:
                 record = self.errors[error_key]
@@ -88,7 +90,7 @@ class ErrorTracker:
                     context=context or {},
                 )
                 self.errors[error_key] = record
-            
+
             # Limit number of errors
             if len(self.errors) > self.max_errors:
                 # Remove oldest errors
@@ -98,11 +100,11 @@ class ErrorTracker:
                 )
                 for key, _ in sorted_errors[:len(sorted_errors) - self.max_errors]:
                     del self.errors[key]
-    
-    def get_error_summary(self) -> Dict[str, Any]:
+
+    def get_error_summary(self) -> dict[str, Any]:
         """
         Get error summary.
-        
+
         Returns:
             Error summary with counts and recent errors
         """
@@ -111,14 +113,14 @@ class ErrorTracker:
             by_severity = defaultdict(int)
             for record in self.errors.values():
                 by_severity[record.severity.value] += record.count
-            
+
             # Get top errors
             top_errors = sorted(
                 self.errors.values(),
                 key=lambda x: x.count,
                 reverse=True
             )[:10]
-            
+
             return {
                 "total_unique_errors": len(self.errors),
                 "total_error_count": sum(self.error_counts.values()),
@@ -135,14 +137,14 @@ class ErrorTracker:
                     for err in top_errors
                 ],
             }
-    
-    def get_errors_by_type(self, error_type: str) -> List[ErrorRecord]:
+
+    def get_errors_by_type(self, error_type: str) -> list[ErrorRecord]:
         """
         Get errors by type.
-        
+
         Args:
             error_type: Error type name
-            
+
         Returns:
             List of error records
         """
@@ -152,7 +154,7 @@ class ErrorTracker:
                 for record in self.errors.values()
                 if record.error_type == error_type
             ]
-    
+
     def clear(self):
         """Clear all error records."""
         with self.lock:
@@ -161,14 +163,14 @@ class ErrorTracker:
 
 
 # Global error tracker
-_error_tracker: Optional[ErrorTracker] = None
+_error_tracker: ErrorTracker | None = None
 _tracker_lock = Lock()
 
 
 def get_error_tracker() -> ErrorTracker:
     """
     Get or create global error tracker.
-    
+
     Returns:
         Error tracker instance
     """

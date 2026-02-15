@@ -6,11 +6,12 @@ by file I/O. Issues are built synchronously and enqueued; a background
 thread flushes them to the store.
 """
 
+from __future__ import annotations
+
 import logging
 import queue
 import threading
 import time
-from typing import Optional
 
 from tools.overseer.issues.aggregator import (
     _get_store,
@@ -33,8 +34,8 @@ _BUFFER_MAX_SIZE = 500
 _DRAIN_INTERVAL_SEC = 2.0
 _DRAIN_TIMEOUT_SEC = 5.0
 
-_write_queue: Optional[queue.Queue] = None
-_worker_thread: Optional[threading.Thread] = None
+_write_queue: queue.Queue | None = None
+_worker_thread: threading.Thread | None = None
 _worker_stop = threading.Event()
 
 
@@ -84,9 +85,9 @@ def record_issue_async(
     correlation_id: str,
     error_type: str,
     message: str,
-    context: Optional[dict] = None,
-    severity: Optional[IssueSeverity] = None,
-    category: Optional[str] = None,
+    context: dict | None = None,
+    severity: IssueSeverity | None = None,
+    category: str | None = None,
 ) -> Issue:
     """
     Record an issue asynchronously: build the issue and enqueue for write.
@@ -132,7 +133,7 @@ def record_issue_async(
     return issue
 
 
-def flush_async_writes(timeout: Optional[float] = None) -> None:
+def flush_async_writes(timeout: float | None = None) -> None:
     """
     Block until the write-behind queue is drained or timeout.
     timeout: seconds to wait (default _DRAIN_TIMEOUT_SEC * 2).

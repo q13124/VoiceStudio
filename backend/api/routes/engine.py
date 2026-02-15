@@ -4,13 +4,15 @@ Engine Telemetry Routes
 Endpoints for engine performance telemetry and monitoring.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from backend.services.engine_service import IEngineService, get_engine_service
+
 from ..models_additional import Telemetry
 from ..optimization import cache_response
 
@@ -19,13 +21,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/engine", tags=["engine", "telemetry"])
 
 # In-memory telemetry storage (replace with database in production)
-_telemetry_history: Dict[str, list] = {}
+_telemetry_history: dict[str, list] = {}
 
 
 @router.get("/telemetry")
 @cache_response(ttl=5)  # Cache for 5 seconds (telemetry updates frequently)
 async def telemetry(
-    engine_id: Optional[str] = Query(None, description="Specific engine ID"),
+    engine_id: str | None = Query(None, description="Specific engine ID"),
     engine_service: IEngineService = Depends(get_engine_service),
 ) -> Telemetry:
     """
@@ -65,17 +67,17 @@ async def telemetry(
                 if all_stats and not all_stats.get("error"):
                     # Calculate averages
                     total_ms = sum(
-                        s.get("avg_synthesis_time_ms", 0.0) 
-                        for s in all_stats.values() 
+                        s.get("avg_synthesis_time_ms", 0.0)
+                        for s in all_stats.values()
                         if isinstance(s, dict)
                     )
                     total_underruns = sum(
-                        s.get("underruns", 0) 
+                        s.get("underruns", 0)
                         for s in all_stats.values()
                         if isinstance(s, dict)
                     )
                     total_vram = sum(
-                        s.get("vram_usage_percent", 0.0) 
+                        s.get("vram_usage_percent", 0.0)
                         for s in all_stats.values()
                         if isinstance(s, dict)
                     )
@@ -149,7 +151,7 @@ async def telemetry(
 @router.get("/telemetry/history")
 @cache_response(ttl=10)  # Cache for 10 seconds (telemetry updates frequently)
 async def get_telemetry_history(
-    engine_id: Optional[str] = Query(None),
+    engine_id: str | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
 ) -> dict:
     """
@@ -187,7 +189,7 @@ async def get_telemetry_history(
         logger.error(f"Failed to get telemetry history: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get telemetry history: {str(e)}",
+            detail=f"Failed to get telemetry history: {e!s}",
         ) from e
 
 
@@ -196,7 +198,7 @@ async def record_telemetry(
     engine_id: str,
     engine_ms: float,
     underruns: int = 0,
-    vram_pct: Optional[float] = None,
+    vram_pct: float | None = None,
 ) -> dict:
     """
     Record telemetry data for an engine.
@@ -258,5 +260,5 @@ async def record_telemetry(
     except Exception as e:
         logger.error(f"Failed to record telemetry: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to record telemetry: {str(e)}"
+            status_code=500, detail=f"Failed to record telemetry: {e!s}"
         ) from e

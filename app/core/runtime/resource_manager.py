@@ -3,14 +3,17 @@ Resource Manager
 VRAM-aware resource scheduling and admission control for engine jobs
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import PriorityQueue
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ class ResourceRequirement:
     vram_gb: float = 0.0
     ram_gb: float = 0.0
     cpu_cores: int = 1
-    duration_hint_seconds: Optional[float] = None
+    duration_hint_seconds: float | None = None
     requires_gpu: bool = False
 
 
@@ -53,13 +56,13 @@ class Job:
     task: str
     priority: JobPriority
     requirements: ResourceRequirement
-    payload: Dict[str, Any]
-    callback: Optional[Callable] = None
+    payload: dict[str, Any]
+    callback: Callable | None = None
     status: JobStatus = JobStatus.QUEUED
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error: str | None = None
 
 
 # Try importing performance monitoring libraries
@@ -210,7 +213,7 @@ class GPUMonitor:
         available = self.get_available_vram_gb()
         return available >= (required_gb + headroom_gb)
 
-    def get_cpu_info(self) -> Dict[str, Any]:
+    def get_cpu_info(self) -> dict[str, Any]:
         """
         Get CPU information using py-cpuinfo.
 
@@ -234,7 +237,7 @@ class GPUMonitor:
             logger.warning(f"Failed to get CPU info: {e}")
             return {}
 
-    def get_gpu_info(self) -> Dict[str, Any]:
+    def get_gpu_info(self) -> dict[str, Any]:
         """
         Get detailed GPU information.
 
@@ -271,7 +274,7 @@ class GPUMonitor:
 
         return info
 
-    def get_vram_info(self) -> Dict[str, float]:
+    def get_vram_info(self) -> dict[str, float]:
         """Get current VRAM information."""
         return {
             "has_gpu": self._has_gpu,
@@ -309,31 +312,31 @@ class ResourceManager:
         self.batch_queue: PriorityQueue = PriorityQueue()
 
         # Active jobs
-        self.active_jobs: Dict[str, Job] = {}
+        self.active_jobs: dict[str, Job] = {}
 
         # Job history
-        self.job_history: List[Job] = []
+        self.job_history: list[Job] = []
         self.max_history = 1000
 
         # Engine health tracking
-        self.engine_failures: Dict[str, int] = {}  # Count of consecutive failures
-        self.engine_backoff: Dict[str, float] = {}  # Backoff until timestamp
-        self.engine_circuit_breaker: Dict[str, bool] = {}  # Circuit breaker state
+        self.engine_failures: dict[str, int] = {}  # Count of consecutive failures
+        self.engine_backoff: dict[str, float] = {}  # Backoff until timestamp
+        self.engine_circuit_breaker: dict[str, bool] = {}  # Circuit breaker state
 
         # Threading
         self.lock = threading.Lock()
         self.running = True
 
         # Track allocated resources
-        self.allocated_vram_gb: Dict[str, float] = {}  # job_id -> vram_gb
+        self.allocated_vram_gb: dict[str, float] = {}  # job_id -> vram_gb
 
         # TD-013: Per-engine VRAM budgets and tracking
-        self.engine_vram_budgets: Dict[str, float] = {}  # engine_id -> max_vram_gb
-        self.engine_vram_usage: Dict[str, float] = {}  # engine_id -> current_vram_gb
+        self.engine_vram_budgets: dict[str, float] = {}  # engine_id -> max_vram_gb
+        self.engine_vram_usage: dict[str, float] = {}  # engine_id -> current_vram_gb
 
         # TD-013: Eviction tracking
         self.eviction_enabled: bool = True
-        self.evicted_jobs: List[str] = []  # Track evicted job IDs
+        self.evicted_jobs: list[str] = []  # Track evicted job IDs
 
     def submit_job(
         self,
@@ -342,8 +345,8 @@ class ResourceManager:
         task: str,
         priority: JobPriority,
         requirements: ResourceRequirement,
-        payload: Dict[str, Any],
-        callback: Optional[Callable] = None,
+        payload: dict[str, Any],
+        callback: Callable | None = None,
     ) -> bool:
         """
         Submit a job for execution.
@@ -406,7 +409,7 @@ class ResourceManager:
             logger.info(f"Job {job_id} queued with priority {priority.name}")
             return True
 
-    def get_next_job(self) -> Optional[Job]:
+    def get_next_job(self) -> Job | None:
         """
         Get next job to execute based on priority and resource availability.
 
@@ -465,7 +468,7 @@ class ResourceManager:
 
     def _find_eviction_candidates(
         self, required_vram_gb: float, requesting_priority: JobPriority
-    ) -> List[Job]:
+    ) -> list[Job]:
         """
         Find jobs that can be evicted to free up VRAM.
 
@@ -585,7 +588,7 @@ class ResourceManager:
                     f"(engine {engine_id} total: {self.engine_vram_usage[engine_id]:.2f}GB)"
                 )
 
-    def complete_job(self, job_id: str, success: bool = True, error: Optional[str] = None):
+    def complete_job(self, job_id: str, success: bool = True, error: str | None = None):
         """Mark job as completed and release resources."""
         with self.lock:
             if job_id not in self.active_jobs:
@@ -664,7 +667,7 @@ class ResourceManager:
             logger.warning(f"Job {job_id} not found or already completed")
             return False
 
-    def get_resource_status(self) -> Dict[str, Any]:
+    def get_resource_status(self) -> dict[str, Any]:
         """Get current resource status."""
         with self.lock:
             # Collect all known engine IDs
@@ -702,7 +705,7 @@ class ResourceManager:
 
 
 # Global resource manager instance
-_resource_manager: Optional[ResourceManager] = None
+_resource_manager: ResourceManager | None = None
 
 
 def get_resource_manager(vram_headroom_gb: float = 1.0) -> ResourceManager:

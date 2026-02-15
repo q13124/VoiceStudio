@@ -4,17 +4,18 @@ Machine Learning Optimization Routes
 Endpoints for hyperparameter optimization and model explainability.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..ml_optimization import (
     HyperparameterOptimizer,
     ModelExplainer,
-    OptimizationResult,
 )
 from ..optimization import cache_response
 
@@ -28,7 +29,7 @@ class OptimizationRequest(BaseModel):
     """Request for hyperparameter optimization."""
 
     objective_function: str  # JSON string or function name
-    search_space: Dict[str, Any]
+    search_space: dict[str, Any]
     method: str = "optuna"  # "optuna", "hyperopt", or "ray"
     n_trials: int = 100
     direction: str = "minimize"  # "minimize" or "maximize"
@@ -37,27 +38,27 @@ class OptimizationRequest(BaseModel):
 class OptimizationResponse(BaseModel):
     """Response from hyperparameter optimization."""
 
-    best_params: Dict[str, Any]
+    best_params: dict[str, Any]
     best_score: float
     n_trials: int
     method: str
-    trials: Optional[List[Dict[str, Any]]] = None
+    trials: list[dict[str, Any]] | None = None
 
 
 class ExplainabilityRequest(BaseModel):
     """Request for model explainability."""
 
     model_type: str  # "tree", "linear", "neural", etc.
-    features: List[List[float]]  # Input features
+    features: list[list[float]]  # Input features
     method: str = "shap"  # "shap" or "lime"
-    feature_names: Optional[List[str]] = None
+    feature_names: list[str] | None = None
 
 
 class ExplainabilityResponse(BaseModel):
     """Response from model explainability."""
 
-    feature_importance: Dict[str, float]
-    explanation: Dict[str, Any]
+    feature_importance: dict[str, float]
+    explanation: dict[str, Any]
     method: str
 
 
@@ -83,7 +84,7 @@ async def optimize_hyperparameters(request: OptimizationRequest):
 
         # For demo purposes, create a simple objective function
         # In production, this would be passed as a callable or job reference
-        def simple_objective(params: Dict[str, Any]) -> float:
+        def simple_objective(params: dict[str, Any]) -> float:
             # Example: minimize sum of squared parameters
             score = sum(v ** 2 for v in params.values() if isinstance(v, (int, float)))
             return score
@@ -102,14 +103,11 @@ async def optimize_hyperparameters(request: OptimizationRequest):
                 max_evals=request.n_trials,
             )
         elif request.method == "ray":
-            # Ray[tune] requires more complex setup with config
-            # For now, return a message indicating it needs custom implementation
             raise HTTPException(
-                status_code=501,
+                status_code=400,
                 detail=(
-                    "Ray[tune] optimization requires custom configuration. "
-                    "Please use optuna or hyperopt for general optimization, "
-                    "or implement a custom ray[tune] study for your specific use case."
+                    "Ray[tune] is not supported. "
+                    "Use 'optuna' or 'hyperopt' instead."
                 ),
             )
         else:
@@ -132,7 +130,7 @@ async def optimize_hyperparameters(request: OptimizationRequest):
         logger.error(f"Error in hyperparameter optimization: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to optimize hyperparameters: {str(e)}",
+            detail=f"Failed to optimize hyperparameters: {e!s}",
         )
 
 
@@ -193,7 +191,7 @@ async def explain_model(request: ExplainabilityRequest):
                 logger.error(f"SHAP explanation failed: {e}", exc_info=True)
                 raise HTTPException(
                     status_code=500,
-                    detail=f"SHAP explanation failed: {str(e)}",
+                    detail=f"SHAP explanation failed: {e!s}",
                 )
         elif request.method == "lime":
             try:
@@ -206,7 +204,7 @@ async def explain_model(request: ExplainabilityRequest):
                 logger.error(f"LIME explanation failed: {e}", exc_info=True)
                 raise HTTPException(
                     status_code=500,
-                    detail=f"LIME explanation failed: {str(e)}",
+                    detail=f"LIME explanation failed: {e!s}",
                 )
         else:
             raise HTTPException(
@@ -227,7 +225,7 @@ async def explain_model(request: ExplainabilityRequest):
         logger.error(f"Error in model explainability: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to explain model: {str(e)}",
+            detail=f"Failed to explain model: {e!s}",
         )
 
 

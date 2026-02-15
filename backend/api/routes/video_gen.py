@@ -4,11 +4,13 @@ Video Generation Routes
 High-quality video generation endpoints with support for multiple engines.
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 import tempfile
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -17,6 +19,12 @@ from backend.core.security.file_validation import (
     validate_audio_file,
     validate_video_file,
 )
+from backend.services.circuit_breaker import (
+    CircuitBreakerOpenError,
+    get_engine_breaker,
+)
+from backend.services.engine_service import get_engine_service
+
 from ..models_additional import (
     TemporalAnalysis,
     TemporalConsistencyRequest,
@@ -25,11 +33,6 @@ from ..models_additional import (
     VideoGenerateResponse,
     VideoUpscaleRequest,
     VideoUpscaleResponse,
-)
-from backend.services.engine_service import get_engine_service
-from backend.services.circuit_breaker import (
-    CircuitBreakerOpenError,
-    get_engine_breaker,
 )
 
 logger = logging.getLogger(__name__)
@@ -189,7 +192,7 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
 
             except Exception as e:
                 logger.error(f"Video generation error: {e}", exc_info=True)
-                raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Video generation failed: {e!s}")
         else:
             # Engines not available - return proper error
             raise HTTPException(
@@ -205,12 +208,12 @@ async def generate_video(req: VideoGenerateRequest) -> VideoGenerateResponse:
         raise
     except Exception as e:
         logger.error(f"Unexpected error in generate_video: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
 
 @router.post("/upscale", response_model=VideoUpscaleResponse)
 async def upscale_video(
-    req: VideoUpscaleRequest, video_file: Optional[UploadFile] = File(None)
+    req: VideoUpscaleRequest, video_file: UploadFile | None = File(None)
 ) -> VideoUpscaleResponse:
     """
     Upscale video using Real-ESRGAN or other upscaling engines.
@@ -322,7 +325,7 @@ async def upscale_video(
         raise
     except Exception as e:
         logger.error(f"Upscaling error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Video upscaling failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Video upscaling failed: {e!s}")
 
 
 @router.post("/temporal-consistency", response_model=TemporalConsistencyResponse)
@@ -484,7 +487,7 @@ async def enhance_temporal_consistency(
     except Exception as e:
         logger.error(f"Temporal consistency error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Temporal consistency enhancement failed: {str(e)}"
+            status_code=500, detail=f"Temporal consistency enhancement failed: {e!s}"
         ) from e
 
 
@@ -542,7 +545,7 @@ async def get_video(video_id: str):
 @router.post("/voice/convert")
 async def convert_voice(
     audio_file: UploadFile = File(...),
-    target_voice_id: Optional[str] = None,
+    target_voice_id: str | None = None,
     engine: str = "voice_ai",
     **kwargs,
 ) -> dict:
@@ -617,10 +620,8 @@ async def convert_voice(
             )
 
         # Clean up input file
-        try:
+        with contextlib.suppress(Exception):
             os.unlink(input_audio_path)
-        except Exception:
-            ...
 
         if not os.path.exists(converted_path):
             raise HTTPException(status_code=500, detail="Voice conversion failed")
@@ -639,7 +640,7 @@ async def convert_voice(
         raise
     except Exception as e:
         logger.error(f"Voice conversion error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Voice conversion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Voice conversion failed: {e!s}")
 
 
 # --- Video quality metrics (called by VideoGenViewModel) ---

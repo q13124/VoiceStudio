@@ -5,9 +5,7 @@ Tests Higgs Audio engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestHiggsAudioEngineImports:
     def test_module_has_higgs_audio_engine_class(self):
         """Test module has HiggsAudioEngine class."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
-            cls = getattr(higgs_audio_engine, "HiggsAudioEngine")
+            cls = higgs_audio_engine.HiggsAudioEngine
             assert isinstance(cls, type), "HiggsAudioEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestHiggsAudioEngineClass:
     def test_higgs_audio_engine_class_exists(self):
         """Test HiggsAudioEngine class exists."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
-            cls = getattr(higgs_audio_engine, "HiggsAudioEngine")
+            cls = higgs_audio_engine.HiggsAudioEngine
             assert isinstance(cls, type), "HiggsAudioEngine should be a class"
 
     def test_higgs_audio_engine_initialization(self):
@@ -105,7 +103,7 @@ class TestHiggsAudioEngineCaching:
             assert hasattr(engine, "enable_caching"), "enable_caching should exist"
             # The method sets self.enable_caching, so after calling it becomes a property
             # We test that the method exists and the property can be accessed
-            enable_caching_method = getattr(engine, "enable_caching")
+            enable_caching_method = engine.enable_caching
             if callable(enable_caching_method):
                 # Call the method to disable caching
                 enable_caching_method(False)

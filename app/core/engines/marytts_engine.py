@@ -11,14 +11,13 @@ Compatible with:
 - HTTP requests for synthesis
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
-import os
-import tempfile
 from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import requests
@@ -48,7 +47,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -86,7 +85,7 @@ class MaryTTSEngine(EngineProtocol):
     def __init__(
         self,
         server_url: str = "http://localhost:59125",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = False,  # MaryTTS server handles GPU internally
     ):
         """
@@ -152,13 +151,13 @@ class MaryTTSEngine(EngineProtocol):
                         ]
                         # Extract languages from voices
                         self.available_languages = list(
-                            set(
-                                [
+                            {
+
                                     v.split("(")[1].split(")")[0].strip()
                                     for v in self.voices
                                     if "(" in v and ")" in v
-                                ]
-                            )
+
+                            }
                         )
                         logger.info(
                             f"Found {len(self.voices)} voices in {len(self.available_languages)} languages"
@@ -219,12 +218,12 @@ class MaryTTSEngine(EngineProtocol):
         self,
         text: str,
         language: str = "en",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using MaryTTS.
 
@@ -243,9 +242,8 @@ class MaryTTSEngine(EngineProtocol):
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Check synthesis cache (LRU)
@@ -372,8 +370,8 @@ class MaryTTSEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
-    ) -> Dict:
+        reference_audio: str | Path | None = None,
+    ) -> dict:
         """Calculate quality metrics for audio."""
         quality_metrics = {}
 
@@ -400,10 +398,10 @@ class MaryTTSEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """
         Process audio for quality enhancement and/or metrics calculation.
 
@@ -450,7 +448,7 @@ class MaryTTSEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """
         Get available voices.
 
@@ -460,24 +458,22 @@ class MaryTTSEngine(EngineProtocol):
         Returns:
             List of voice names
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         if language:
             return [v for v in self.voices if f"({language})" in v]
         return self.voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """
         Get available languages.
 
         Returns:
             List of language codes
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         return (
             self.available_languages
@@ -501,7 +497,7 @@ class MaryTTSEngine(EngineProtocol):
         self._synthesis_cache.clear()
         logger.info("Synthesis cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._synthesis_cache),
@@ -509,7 +505,7 @@ class MaryTTSEngine(EngineProtocol):
             "cache_enabled": self.enable_cache,
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -525,7 +521,7 @@ class MaryTTSEngine(EngineProtocol):
 
 def create_marytts_engine(
     server_url: str = "http://localhost:59125",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = False,
 ) -> MaryTTSEngine:
     """

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VoiceStudio - Panel Architecture: Drop Zone Visual Overlay -->
+<!-- Provides visual feedback during drag operations -->
+<UserControl
+    x:Class="VoiceStudio.App.Controls.DropZoneOverlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    IsHitTestVisible="False">
+
+    <Grid x:Name="RootGrid" Opacity="0">
+        <!-- Semi-transparent overlay background -->
+        <Border 
+            x:Name="OverlayBorder"
+            Background="#403399FF"
+            CornerRadius="8" />
+        
+        <!-- Border effect -->
+        <Border
+            x:Name="AccentBorder"
+            BorderBrush="#FF3399FF"
+            BorderThickness="2"
+            CornerRadius="8"
+            Opacity="0.8" />
+
+        <!-- Drop icon and text -->
+        <StackPanel
+            x:Name="ValidDropContent"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Spacing="8">
+            
+            <FontIcon
+                x:Name="DropIcon"
+                Glyph="&#xE896;"
+                FontSize="32"
+                Foreground="#FF3399FF" />
+            
+            <TextBlock
+                x:Name="DropHintText"
+                Text="Drop here"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Foreground="#FF3399FF"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Invalid drop indicator (shown when drop not allowed) -->
+        <Border
+            x:Name="InvalidOverlay"
+            Visibility="Collapsed"
+            Background="#40FF0000"
+            CornerRadius="8">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8">
+                <FontIcon
+                    Glyph="&#xE711;"
+                    FontSize="32"
+                    Foreground="#FFFF4444" />
+                <TextBlock
+                    Text="Cannot drop here"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="#FFFF4444"
+                    HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

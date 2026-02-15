@@ -7,7 +7,6 @@ from tools.onboarding.core.models import ActiveTask, ProjectState
 from tools.overseer.gate_tracker import GateTracker
 from tools.overseer.ledger_parser import LedgerParser
 
-
 STATE_PATH = Path(".cursor/STATE.md")
 
 

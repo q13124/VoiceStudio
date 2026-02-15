@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
@@ -67,10 +68,29 @@ namespace VoiceStudio.App.Services
     private readonly string _workspaceProfilesDirectory;
     private readonly string _projectStatesDirectory;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly JsonSerializerOptions _embeddedLayoutOptions;
     private WorkspaceLayout? _currentLayout;
-    private string _currentWorkspaceProfile = "Default";
+    private string _currentWorkspaceProfile = "studio";
     private bool _disposed;
 
+    /// <summary>Maps workspace profile ID (e.g. studio, batch_lab) to embedded resource file name (e.g. Studio.json, BatchLab.json).</summary>
+    private static readonly Dictionary<string, string> ProfileIdToResourceName = new(StringComparer.OrdinalIgnoreCase)
+    {
+      ["studio"] = "Studio",
+      ["default"] = "Studio",
+      ["recording"] = "Recording",
+      ["mixing"] = "Mixing",
+      ["synthesis"] = "Synthesis",
+      ["analysis"] = "Analysis",
+      ["training"] = "Training",
+      ["batch_lab"] = "BatchLab",
+      ["pro_mix"] = "ProMix"
+    };
+
+    /// <summary>
+    /// Initializes the panel state service.
+    /// </summary>
+    /// <param name="settingsService">Settings service for loading and saving workspace layout to app settings.</param>
     public PanelStateService(ISettingsService settingsService)
     {
       _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -88,6 +108,12 @@ namespace VoiceStudio.App.Services
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
       };
 
+      _embeddedLayoutOptions = new JsonSerializerOptions
+      {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
+      };
+
       // Load current workspace layout from settings (fire-and-forget with error handling)
       _ = LoadCurrentWorkspaceAsync();
     }
@@ -95,6 +121,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Gets the current workspace layout.
     /// </summary>
+    /// <returns>The current layout; a new empty layout is created if none is loaded.</returns>
     public WorkspaceLayout GetCurrentLayout()
     {
       if (_currentLayout == null)
@@ -103,7 +130,7 @@ namespace VoiceStudio.App.Services
         {
           ProfileName = _currentWorkspaceProfile,
           Version = "1.0",
-          IsDefault = _currentWorkspaceProfile == "Default"
+          IsDefault = string.Equals(_currentWorkspaceProfile, "studio", StringComparison.OrdinalIgnoreCase)
         };
       }
       return _currentLayout;
@@ -117,6 +144,9 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Saves panel state for a specific region.
     /// </summary>
+    /// <param name="region">The panel region (Left, Center, Right, Bottom).</param>
+    /// <param name="activePanelId">The ID of the currently active panel in the region.</param>
+    /// <param name="openedPanels">List of panel IDs open in the region (e.g. for tabs).</param>
     public void SaveRegionState(PanelRegion region, string activePanelId, List<string> openedPanels)
     {
       var layout = GetCurrentLayout();
@@ -145,6 +175,9 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Saves panel-specific state (scroll position, selected items, etc.).
     /// </summary>
+    /// <param name="region">The panel region.</param>
+    /// <param name="panelId">The panel ID.</param>
+    /// <param name="state">The panel state to save.</param>
     public void SavePanelState(PanelRegion region, string panelId, PanelState state)
     {
       var layout = GetCurrentLayout();
@@ -169,6 +202,9 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Gets panel state for a specific panel.
     /// </summary>
+    /// <param name="region">The panel region.</param>
+    /// <param name="panelId">The panel ID.</param>
+    /// <returns>The saved panel state, or null if not found.</returns>
     public PanelState? GetPanelState(PanelRegion region, string panelId)
     {
       var layout = GetCurrentLayout();
@@ -179,6 +215,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Gets region state for a specific region.
     /// </summary>
+    /// <param name="region">The panel region.</param>
+    /// <returns>The region state, or null if not found.</returns>
     public RegionState? GetRegionState(PanelRegion region)
     {
       var layout = GetCurrentLayout();
@@ -188,6 +226,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Saves panel state for a specific project.
     /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="layout">The workspace layout to save.</param>
     public async Task SaveProjectStateAsync(string projectId, WorkspaceLayout layout)
     {
       try
@@ -206,6 +246,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Loads panel state for a specific project.
     /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <returns>The saved workspace layout, or null if not found or on error.</returns>
     public async Task<WorkspaceLayout?> LoadProjectStateAsync(string projectId)
     {
       try
@@ -227,6 +269,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Saves a workspace profile.
     /// </summary>
+    /// <param name="profile">The workspace profile to save.</param>
     public async Task SaveWorkspaceProfileAsync(WorkspaceProfile profile)
     {
       try
@@ -243,8 +286,54 @@ namespace VoiceStudio.App.Services
     }
 
     /// <summary>
+    /// Tries to load a workspace layout from embedded Resources/Workspaces JSON (when profile is missing or has no regions).
+    /// </summary>
+    /// <param name="profileId">The workspace profile ID (e.g. studio, recording, training).</param>
+    /// <returns>The loaded workspace profile, or null if not found or invalid.</returns>
+    private async Task<WorkspaceProfile?> TryLoadEmbeddedLayoutAsync(string profileId)
+    {
+      if (string.IsNullOrWhiteSpace(profileId))
+        return null;
+      if (!ProfileIdToResourceName.TryGetValue(profileId.Trim(), out var resourceName))
+        return null;
+
+      try
+      {
+        // Unpackaged/self-contained: content is under BaseDirectory. Packaged MSIX may need ms-appx fallback (future).
+        var baseDir = AppContext.BaseDirectory;
+        var path = Path.Combine(baseDir, "Resources", "Workspaces", $"{resourceName}.json");
+        if (!File.Exists(path))
+        {
+          System.Diagnostics.Debug.WriteLine($"[PanelStateService] Embedded workspace not found: {path}");
+          return null;
+        }
+
+        var json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+        var definition = JsonSerializer.Deserialize<EmbeddedWorkspaceDefinition>(json, _embeddedLayoutOptions);
+        if (definition?.Layout == null || definition.Layout.Regions == null || definition.Layout.Regions.Count == 0)
+          return null;
+
+        return new WorkspaceProfile
+        {
+          Name = profileId,
+          Description = definition.Name ?? profileId,
+          Layout = definition.Layout,
+          CreatedAt = DateTime.UtcNow,
+          ModifiedAt = DateTime.UtcNow
+        };
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[PanelStateService] Failed to load embedded workspace '{profileId}': {ex.Message}");
+        return null;
+      }
+    }
+
+    /// <summary>
     /// Loads a workspace profile by name.
     /// </summary>
+    /// <param name="profileName">The profile name (e.g. studio, recording).</param>
+    /// <returns>The workspace profile, or null if not found or on error.</returns>
     public async Task<WorkspaceProfile?> LoadWorkspaceProfileAsync(string profileName)
     {
       try
@@ -266,6 +355,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Lists all available workspace profiles.
     /// </summary>
+    /// <returns>Ordered list of workspace profiles, including an ensured default if none exist.</returns>
     public async Task<List<WorkspaceProfile>> ListWorkspaceProfilesAsync()
     {
       var profiles = new List<WorkspaceProfile>();
@@ -295,23 +385,28 @@ namespace VoiceStudio.App.Services
         System.Diagnostics.Debug.WriteLine($"Failed to list workspace profiles: {ex.Message}");
       }
 
-      // Ensure Default profile exists
-      if (!profiles.Any(p => p.Name == "Default"))
+      // Ensure studio (canonical default) profile exists
+      if (!profiles.Any(p => string.Equals(p.Name, "studio", StringComparison.OrdinalIgnoreCase)))
       {
-        var defaultProfile = new WorkspaceProfile
+        var studioProfile = await TryLoadEmbeddedLayoutAsync("studio").ConfigureAwait(false);
+        if (studioProfile != null)
         {
-          Name = "Default",
-          Description = "Default workspace layout",
-          Layout = new WorkspaceLayout
+          profiles.Insert(0, studioProfile);
+          await SaveWorkspaceProfileAsync(studioProfile).ConfigureAwait(false);
+        }
+        else
+        {
+          var defaultProfile = new WorkspaceProfile
           {
-            ProfileName = "Default",
-            IsDefault = true
-          },
-          CreatedAt = DateTime.UtcNow,
-          ModifiedAt = DateTime.UtcNow
-        };
-        profiles.Insert(0, defaultProfile);
-        await SaveWorkspaceProfileAsync(defaultProfile);
+            Name = "studio",
+            Description = "Default workspace layout",
+            Layout = new WorkspaceLayout { ProfileName = "studio", Version = "1.0", IsDefault = true },
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+          };
+          profiles.Insert(0, defaultProfile);
+          await SaveWorkspaceProfileAsync(defaultProfile).ConfigureAwait(false);
+        }
       }
 
       return profiles.OrderBy(p => p.Name).ToList();
@@ -320,10 +415,12 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Deletes a workspace profile.
     /// </summary>
+    /// <param name="profileName">The profile name to delete.</param>
+    /// <returns>True if the profile was deleted; false if not found or if the profile is the protected default.</returns>
     public Task<bool> DeleteWorkspaceProfileAsync(string profileName)
     {
-      if (profileName == "Default")
-        return Task.FromResult(false); // Cannot delete default profile
+      if (string.Equals(profileName, "studio", StringComparison.OrdinalIgnoreCase))
+        return Task.FromResult(false); // Cannot delete built-in default profile
 
       try
       {
@@ -345,6 +442,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Switches to a different workspace profile.
     /// </summary>
+    /// <param name="profileName">The profile name or ID to switch to (e.g. studio, recording).</param>
+    /// <returns>True if the switch succeeded; false on error.</returns>
     public async Task<bool> SwitchWorkspaceProfileAsync(string profileName)
     {
       try
@@ -352,11 +451,25 @@ namespace VoiceStudio.App.Services
         // Save current layout before switching
         SaveCurrentWorkspace();
 
-        // Load new profile
-        var profile = await LoadWorkspaceProfileAsync(profileName);
+        // Load new profile from disk first
+        var profile = await LoadWorkspaceProfileAsync(profileName).ConfigureAwait(false);
+
+        // If missing or layout has no regions, try embedded Resources/Workspaces JSON
+        var usedEmbedded = false;
+        if (profile == null || profile.Layout?.Regions == null || profile.Layout.Regions.Count == 0)
+        {
+          var embedded = await TryLoadEmbeddedLayoutAsync(profileName).ConfigureAwait(false);
+          if (embedded != null)
+          {
+            profile = embedded;
+            usedEmbedded = true;
+          }
+        }
+
         if (profile == null)
         {
-          // Create new profile if it doesn't exist
+          // Create new profile with empty layout if no embedded definition exists
+          WorkspaceFallbackToEmpty?.Invoke(this, new WorkspaceFallbackToEmptyEventArgs(profileName));
           profile = new WorkspaceProfile
           {
             Name = profileName,
@@ -368,7 +481,11 @@ namespace VoiceStudio.App.Services
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow
           };
-          await SaveWorkspaceProfileAsync(profile);
+          await SaveWorkspaceProfileAsync(profile).ConfigureAwait(false);
+        }
+        else if (usedEmbedded)
+        {
+          await SaveWorkspaceProfileAsync(profile).ConfigureAwait(false);
         }
 
         _currentWorkspaceProfile = profileName;
@@ -377,11 +494,14 @@ namespace VoiceStudio.App.Services
         // Save to settings
         await SaveCurrentWorkspaceAsync();
 
-        WorkspaceProfileChanged?.Invoke(this, new WorkspaceProfileChangedEventArgs
+        if (profile.Layout != null)
         {
-          ProfileName = profileName,
-          Layout = profile.Layout
-        });
+          WorkspaceProfileChanged?.Invoke(this, new WorkspaceProfileChangedEventArgs
+          {
+            ProfileName = profileName,
+            Layout = profile.Layout
+          });
+        }
 
         return true;
       }
@@ -430,30 +550,40 @@ namespace VoiceStudio.App.Services
     }
 
     /// <summary>
-    /// Loads current workspace layout from settings.
+    /// Loads current workspace layout from settings. On first run or when missing, uses embedded Studio layout.
     /// </summary>
     private async Task LoadCurrentWorkspaceAsync()
     {
       try
       {
-        var settingsData = await _settingsService.LoadSettingsAsync();
-        if (settingsData?.WorkspaceLayout != null)
+        var settingsData = await _settingsService.LoadSettingsAsync().ConfigureAwait(false);
+        if (settingsData?.WorkspaceLayout != null && settingsData.WorkspaceLayout.Regions?.Count > 0)
         {
           _currentLayout = settingsData.WorkspaceLayout;
-          _currentWorkspaceProfile = _currentLayout.ProfileName;
+          // Migration: treat legacy "Default" as canonical "studio"
+          _currentWorkspaceProfile = string.Equals(_currentLayout.ProfileName, "Default", StringComparison.OrdinalIgnoreCase)
+            ? "studio"
+            : _currentLayout.ProfileName;
+          if (string.Equals(_currentLayout.ProfileName, "Default", StringComparison.OrdinalIgnoreCase))
+            _currentLayout.ProfileName = "studio";
+          return;
         }
       }
       catch (Exception ex)
       {
-        // Use default if loading fails, but log the error
         System.Diagnostics.Debug.WriteLine($"[PanelStateService] Failed to load workspace: {ex.Message}");
-        _currentLayout = new WorkspaceLayout
-        {
-          ProfileName = "Default",
-          Version = "1.0",
-          IsDefault = true
-        };
       }
+
+      _currentWorkspaceProfile = "studio";
+      var embedded = await TryLoadEmbeddedLayoutAsync("studio").ConfigureAwait(false);
+      var studioLayout = embedded?.Layout;
+      if (studioLayout != null && studioLayout.Regions?.Count > 0)
+        _currentLayout = studioLayout;
+      else
+        _currentLayout = new WorkspaceLayout { ProfileName = "studio", Version = "1.0", IsDefault = true };
+
+      // Persist first-run studio layout so next launch loads from settings
+      await SaveCurrentWorkspaceAsync().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -461,11 +591,20 @@ namespace VoiceStudio.App.Services
     /// </summary>
     public event EventHandler<WorkspaceProfileChangedEventArgs>? WorkspaceProfileChanged;
 
+    /// <summary>
+    /// Event raised when switching to a profile that has no saved layout and no embedded layout (fallback to empty).
+    /// Subscribers (e.g. toolbar) may show a non-blocking warning toast.
+    /// </summary>
+    public event EventHandler<WorkspaceFallbackToEmptyEventArgs>? WorkspaceFallbackToEmpty;
+
     #region IUnifiedWorkspaceService Implementation
 
     /// <summary>
     /// Creates a new workspace profile from the current layout.
     /// </summary>
+    /// <param name="name">The profile name.</param>
+    /// <param name="description">Optional description.</param>
+    /// <returns>The created workspace profile.</returns>
     public async Task<WorkspaceProfile> CreateWorkspaceProfileAsync(string name, string? description = null)
     {
       var profile = new WorkspaceProfile
@@ -484,6 +623,9 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Duplicates an existing workspace profile.
     /// </summary>
+    /// <param name="sourceName">The name of the profile to copy.</param>
+    /// <param name="newName">The name for the new profile.</param>
+    /// <returns>The duplicated profile, or null if the source was not found.</returns>
     public async Task<WorkspaceProfile?> DuplicateWorkspaceProfileAsync(string sourceName, string newName)
     {
       var source = await LoadWorkspaceProfileAsync(sourceName);
@@ -510,6 +652,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Applies a workspace template.
     /// </summary>
+    /// <param name="templateId">The template ID (e.g. recording, mixing, synthesis).</param>
     public async Task ApplyTemplateAsync(string templateId)
     {
       var template = _builtInTemplates.FirstOrDefault(t => t.Id == templateId);
@@ -536,6 +679,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Exports a workspace profile to JSON.
     /// </summary>
+    /// <param name="profileName">The profile name to export.</param>
+    /// <returns>JSON string of the profile, or "{}" if not found.</returns>
     public async Task<string> ExportWorkspaceAsync(string profileName)
     {
       var profile = await LoadWorkspaceProfileAsync(profileName);
@@ -547,6 +692,8 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Imports a workspace profile from JSON.
     /// </summary>
+    /// <param name="json">The JSON string of the workspace profile.</param>
+    /// <returns>The imported profile, or null on parse error.</returns>
     public async Task<WorkspaceProfile?> ImportWorkspaceAsync(string json)
     {
       try
@@ -592,5 +739,27 @@ namespace VoiceStudio.App.Services
   {
     public string ProfileName { get; set; } = string.Empty;
     public WorkspaceLayout Layout { get; set; } = null!;
+  }
+
+  /// <summary>
+  /// Event args when workspace falls back to empty layout (no saved and no embedded profile).
+  /// </summary>
+  public class WorkspaceFallbackToEmptyEventArgs : EventArgs
+  {
+    public string ProfileName { get; set; } = string.Empty;
+    public WorkspaceFallbackToEmptyEventArgs(string profileName) => ProfileName = profileName ?? string.Empty;
+  }
+
+  /// <summary>
+  /// DTO for embedded Resources/Workspaces/*.json files.
+  /// </summary>
+  internal sealed class EmbeddedWorkspaceDefinition
+  {
+    public string? Id { get; set; }
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Category { get; set; }
+    public string? Version { get; set; }
+    public WorkspaceLayout? Layout { get; set; }
   }
 }

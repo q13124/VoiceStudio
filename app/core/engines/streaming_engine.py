@@ -8,14 +8,17 @@ Compatible with:
 - asyncio for async streaming
 """
 
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import logging
 import queue
 import threading
 from collections import OrderedDict
+from collections.abc import AsyncIterator, Callable, Iterator
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Dict, Iterator, List, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -68,9 +71,9 @@ class StreamingEngine(EngineProtocol):
 
     def __init__(
         self,
-        engine: Optional[EngineProtocol] = None,
-        engine_name: Optional[str] = None,
-        device: Optional[str] = None,
+        engine: EngineProtocol | None = None,
+        engine_name: str | None = None,
+        device: str | None = None,
         gpu: bool = True,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         buffer_size: int = DEFAULT_BUFFER_SIZE,
@@ -99,16 +102,16 @@ class StreamingEngine(EngineProtocol):
         # Audio queue for streaming
         self._audio_queue: queue.Queue = queue.Queue(maxsize=10)
         self._is_streaming = False
-        self._stream_thread: Optional[threading.Thread] = None
+        self._stream_thread: threading.Thread | None = None
 
         # Buffer for overlap-add
-        self._overlap_buffer: Optional[np.ndarray] = None
+        self._overlap_buffer: np.ndarray | None = None
 
         # LRU caching for performance (optimized)
-        self._chunk_cache: OrderedDict[str, List[str]] = (
+        self._chunk_cache: OrderedDict[str, list[str]] = (
             OrderedDict()
         )  # LRU cache for text chunks
-        self._stream_cache: OrderedDict[str, List[np.ndarray]] = (
+        self._stream_cache: OrderedDict[str, list[np.ndarray]] = (
             OrderedDict()
         )  # LRU cache for stream results
         self._cache_max_size = 200  # Increased cache size for better hit rate
@@ -121,12 +124,12 @@ class StreamingEngine(EngineProtocol):
         }
 
         # Buffer pool for reuse (optimized)
-        self._buffer_pool: List[np.ndarray] = []  # Pool of reusable buffers
+        self._buffer_pool: list[np.ndarray] = []  # Pool of reusable buffers
         self._max_buffer_pool_size = 20  # Increased pool size for better reuse
         self._buffer_pool_stats = {"hits": 0, "misses": 0, "created": 0}
 
         # Connection pool for streaming endpoints (if used in web context)
-        self._connection_pool: Dict[str, Any] = {}  # connection_id -> connection_info
+        self._connection_pool: dict[str, Any] = {}  # connection_id -> connection_info
         self._max_connections = 100  # Maximum concurrent streaming connections
 
     def initialize(self) -> bool:
@@ -160,10 +163,9 @@ class StreamingEngine(EngineProtocol):
                 return False
 
             # Initialize underlying engine
-            if not self.engine.is_initialized():
-                if not self.engine.initialize():
-                    logger.error("Failed to initialize underlying engine")
-                    return False
+            if not self.engine.is_initialized() and not self.engine.initialize():
+                logger.error("Failed to initialize underlying engine")
+                return False
 
             self._initialized = True
             logger.info("Streaming Engine initialized successfully")
@@ -177,7 +179,7 @@ class StreamingEngine(EngineProtocol):
     def synthesize_stream(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         language: str = "en",
         **kwargs,
     ) -> Iterator[np.ndarray]:
@@ -193,9 +195,8 @@ class StreamingEngine(EngineProtocol):
         Yields:
             Audio chunks (numpy arrays)
         """
-        if not self._initialized:
-            if not self.initialize():
-                return
+        if not self._initialized and not self.initialize():
+            return
 
         try:
             # Check if engine supports streaming
@@ -220,7 +221,7 @@ class StreamingEngine(EngineProtocol):
     async def synthesize_stream_async(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         language: str = "en",
         **kwargs,
     ) -> AsyncIterator[np.ndarray]:
@@ -236,9 +237,8 @@ class StreamingEngine(EngineProtocol):
         Yields:
             Audio chunks (numpy arrays)
         """
-        if not self._initialized:
-            if not self.initialize():
-                return
+        if not self._initialized and not self.initialize():
+            return
 
         try:
             # Run synchronous streaming in executor
@@ -260,7 +260,7 @@ class StreamingEngine(EngineProtocol):
     def _synthesize_chunked(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]],
+        speaker_wav: str | Path | None,
         language: str,
         **kwargs,
     ) -> Iterator[np.ndarray]:
@@ -353,7 +353,7 @@ class StreamingEngine(EngineProtocol):
             self._stream_cache[cache_key] = stream_result
             self._stream_cache.move_to_end(cache_key)  # LRU update
 
-    def _split_text_into_chunks(self, text: str, chunk_size: int) -> List[str]:
+    def _split_text_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """Split text into chunks for streaming."""
         # Check LRU cache - optimized
         if self.enable_cache:
@@ -496,9 +496,9 @@ class StreamingEngine(EngineProtocol):
     def start_streaming(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         language: str = "en",
-        callback: Optional[Callable[[np.ndarray], None]] = None,
+        callback: Callable[[np.ndarray], None] | None = None,
         **kwargs,
     ):
         """
@@ -562,7 +562,7 @@ class StreamingEngine(EngineProtocol):
             except queue.Empty:
                 break
 
-    def get_next_chunk(self, timeout: float = 1.0) -> Optional[np.ndarray]:
+    def get_next_chunk(self, timeout: float = 1.0) -> np.ndarray | None:
         """
         Get next audio chunk from stream.
 
@@ -584,11 +584,11 @@ class StreamingEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Optional[Union[str, Path]] = None,
+        speaker_wav: str | Path | None = None,
         language: str = "en",
-        output_path: Optional[Union[str, Path]] = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Synthesize full text (non-streaming).
 
@@ -602,9 +602,8 @@ class StreamingEngine(EngineProtocol):
         Returns:
             Audio array or None if synthesis failed
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # Delegate to underlying engine
         return self.engine.synthesize(
@@ -647,7 +646,7 @@ class StreamingEngine(EngineProtocol):
         self._stream_cache.clear()
         logger.info("Stream caches cleared")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics (enhanced)."""
         chunk_total = (
             self._cache_stats["chunk_hits"] + self._cache_stats["chunk_misses"]
@@ -696,7 +695,7 @@ class StreamingEngine(EngineProtocol):
             "max_connections": self._max_connections,
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -715,9 +714,9 @@ class StreamingEngine(EngineProtocol):
 
 
 def create_streaming_engine(
-    engine: Optional[EngineProtocol] = None,
-    engine_name: Optional[str] = None,
-    device: Optional[str] = None,
+    engine: EngineProtocol | None = None,
+    engine_name: str | None = None,
+    device: str | None = None,
     gpu: bool = True,
     chunk_size: int = StreamingEngine.DEFAULT_CHUNK_SIZE,
     buffer_size: int = (StreamingEngine.DEFAULT_BUFFER_SIZE),

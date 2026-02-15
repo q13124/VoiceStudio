@@ -5,7 +5,6 @@ Tests metrics collection functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 

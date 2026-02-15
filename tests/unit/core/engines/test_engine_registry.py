@@ -5,7 +5,6 @@ Tests engine registry functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -46,7 +45,7 @@ class TestEngineRegistryClasses:
     def test_engine_registry_class_exists(self):
         """Test EngineRegistry class exists."""
         if hasattr(engine_registry, "EngineRegistry"):
-            cls = getattr(engine_registry, "EngineRegistry")
+            cls = engine_registry.EngineRegistry
             assert isinstance(cls, type), "EngineRegistry should be a class"
 
 

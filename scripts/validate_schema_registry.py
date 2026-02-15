@@ -17,7 +17,7 @@ from pathlib import Path
 
 def calculate_schema_hash(schema_path: Path) -> str:
     """Stable hash of a schema file (normalized JSON)."""
-    with open(schema_path, "r", encoding="utf-8") as f:
+    with open(schema_path, encoding="utf-8") as f:
         content = json.load(f)
     normalized = json.dumps(content, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -29,7 +29,7 @@ def main() -> int:
     if not registry_path.exists():
         print("Error: _registry.json not found", file=sys.stderr)
         return 1
-    with open(registry_path, "r", encoding="utf-8") as f:
+    with open(registry_path, encoding="utf-8") as f:
         registry = json.load(f)
     mismatches = []
     for schema_path, metadata in registry.get("schemas", {}).items():

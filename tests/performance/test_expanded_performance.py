@@ -8,7 +8,6 @@ Worker 3 - Performance Tests Expansion
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -27,7 +26,6 @@ except ImportError:
 from tests.performance.performance_test_utils import (
     LoadTester,
     PerformanceBenchmark,
-    PerformanceMetrics,
     PerformanceTimer,
 )
 
@@ -215,7 +213,7 @@ class TestQualityMetricsPerformance:
         benchmark = PerformanceBenchmark("mos_score")
 
         def calculate_mos():
-            audio = np.random.randn(44100).astype(np.float32)
+            np.random.randn(44100).astype(np.float32)
             # Mock MOS calculation
             mos = 4.0 + np.random.rand() * 0.5
             return mos
@@ -228,7 +226,7 @@ class TestQualityMetricsPerformance:
         benchmark = PerformanceBenchmark("full_quality_metrics")
 
         def calculate_full_metrics():
-            audio = np.random.randn(44100).astype(np.float32)
+            np.random.randn(44100).astype(np.float32)
             # Mock full metrics calculation
             metrics_dict = {
                 "mos_score": 4.0,
@@ -308,7 +306,7 @@ class TestMemoryPerformance:
 
         # Perform some operations
         audio = np.random.randn(44100 * 10).astype(np.float32)  # 10 seconds
-        processed = audio * 1.1
+        audio * 1.1
 
         mem_after = process.memory_info().rss / 1024 / 1024  # MB
         mem_used = mem_after - mem_before
@@ -321,10 +319,10 @@ class TestMemoryPerformance:
         process = psutil.Process()
         mem_samples = []
 
-        for i in range(10):
+        for _i in range(10):
             # Perform operation
             audio = np.random.randn(44100).astype(np.float32)
-            processed = audio * 1.1
+            audio * 1.1
 
             mem_used = process.memory_info().rss / 1024 / 1024  # MB
             mem_samples.append(mem_used)
@@ -389,7 +387,7 @@ class TestCachingPerformance:
 
     def test_cache_hit_performance(self, client):
         """Test cache hit performance improvement."""
-        benchmark = PerformanceBenchmark("cache_performance")
+        PerformanceBenchmark("cache_performance")
 
         # First request (cache miss)
         start_time = time.perf_counter()
@@ -418,11 +416,11 @@ class TestResourceUsagePerformance:
         process = psutil.Process()
 
         # Measure CPU during operation
-        cpu_before = process.cpu_percent(interval=0.1)
+        process.cpu_percent(interval=0.1)
 
         # Perform operation
         audio = np.random.randn(44100).astype(np.float32)
-        processed = audio * 1.1
+        audio * 1.1
 
         cpu_after = process.cpu_percent(interval=0.1)
 
@@ -438,7 +436,7 @@ class TestResourceUsagePerformance:
         # Perform multiple operations
         for _ in range(20):
             audio = np.random.randn(44100).astype(np.float32)
-            processed = audio * 1.1
+            audio * 1.1
             mem_used = process.memory_info().rss / 1024 / 1024  # MB
             mem_samples.append(mem_used)
 

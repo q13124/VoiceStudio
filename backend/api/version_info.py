@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Try to get version from version_lock.json
 _version = "1.0.0"
@@ -20,7 +20,7 @@ try:
     project_root = Path(__file__).parent.parent.parent
     version_file = project_root / "version_lock.json"
     if version_file.exists():
-        with open(version_file, "r", encoding="utf-8") as f:
+        with open(version_file, encoding="utf-8") as f:
             version_data = json.load(f)
             _version = version_data.get("version", "1.0.0")
             _build_date = version_data.get("build_date")
@@ -58,7 +58,7 @@ if not _git_commit:
         ...
 
 
-def get_version_info() -> Dict[str, Any]:
+def get_version_info() -> dict[str, Any]:
     """
     Get version and build information.
 

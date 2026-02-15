@@ -13,10 +13,9 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Type
 
-from backend.plugins.core.base import Plugin, PluginMetadata, PluginState
-from backend.plugins.core.version_check import check_plugin_compatibility, APP_VERSION
+from backend.plugins.core.base import Plugin, PluginMetadata
+from backend.plugins.core.version_check import APP_VERSION, check_plugin_compatibility
 
 logger = logging.getLogger(__name__)
 
@@ -24,41 +23,41 @@ logger = logging.getLogger(__name__)
 class PluginLoader:
     """
     Discovers and loads plugins from directories.
-    
+
     Features:
     - Directory scanning for plugins
     - Manifest-based discovery
     - Dependency resolution
     - Hot reloading support
     """
-    
+
     MANIFEST_FILE = "plugin.json"
-    
-    def __init__(self, plugin_dirs: Optional[List[Path]] = None):
+
+    def __init__(self, plugin_dirs: list[Path] | None = None):
         """
         Initialize plugin loader.
-        
+
         Args:
             plugin_dirs: Directories to scan for plugins
         """
         self._plugin_dirs = plugin_dirs or []
-        self._loaded_modules: Dict[str, any] = {}
-    
+        self._loaded_modules: dict[str, any] = {}
+
     def add_plugin_directory(self, path: Path) -> None:
         """Add a directory to scan for plugins."""
         if path.exists() and path.is_dir():
             self._plugin_dirs.append(path)
             logger.info(f"Added plugin directory: {path}")
-    
-    def discover(self) -> List[PluginMetadata]:
+
+    def discover(self) -> list[PluginMetadata]:
         """
         Discover available plugins.
-        
+
         Returns:
             List of plugin metadata
         """
         discovered = []
-        
+
         for plugin_dir in self._plugin_dirs:
             for item in plugin_dir.iterdir():
                 if item.is_dir():
@@ -70,30 +69,30 @@ class PluginLoader:
                             logger.debug(f"Discovered plugin: {metadata.id}")
                         except Exception as e:
                             logger.error(f"Failed to load manifest {manifest_path}: {e}")
-        
+
         return discovered
-    
+
     def _load_manifest(self, path: Path) -> PluginMetadata:
         """Load plugin manifest from JSON file."""
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
-        
+
         return PluginMetadata.from_dict(data)
-    
+
     async def load_plugin(
         self,
         plugin_id: str,
-        config: Optional[Dict] = None,
+        config: dict | None = None,
         skip_version_check: bool = False,
-    ) -> Optional[Plugin]:
+    ) -> Plugin | None:
         """
         Load a plugin by ID.
-        
+
         Args:
             plugin_id: Plugin identifier
             config: Optional configuration
             skip_version_check: Skip version compatibility check (not recommended)
-            
+
         Returns:
             Loaded plugin instance or None
         """
@@ -102,17 +101,17 @@ class PluginLoader:
         if not plugin_dir:
             logger.error(f"Plugin not found: {plugin_id}")
             return None
-        
+
         try:
             # Load manifest
             manifest_path = plugin_dir / self.MANIFEST_FILE
             metadata = self._load_manifest(manifest_path)
-            
+
             # Phase 23.2: Version compatibility check
             if not skip_version_check:
                 manifest_dict = metadata.to_dict()
                 compat_result = check_plugin_compatibility(manifest_dict)
-                
+
                 if not compat_result["compatible"]:
                     for error in compat_result["errors"]:
                         logger.error(f"Plugin {plugin_id} incompatible: {error}")
@@ -122,25 +121,25 @@ class PluginLoader:
                         f"Current app: {APP_VERSION}"
                     )
                     return None
-                
+
                 for warning in compat_result.get("warnings", []):
                     logger.warning(f"Plugin {plugin_id}: {warning}")
-            
+
             # Load the plugin module
             module = self._load_module(plugin_dir, plugin_id)
             if not module:
                 return None
-            
+
             # Find the plugin class
             plugin_class = self._find_plugin_class(module)
             if not plugin_class:
                 logger.error(f"No Plugin class found in {plugin_id}")
                 return None
-            
+
             # Create instance with config
             merged_config = {**metadata.default_config, **(config or {})}
             plugin = plugin_class(merged_config)
-            
+
             # Load the plugin
             if await plugin.load():
                 logger.info(f"Loaded plugin: {plugin_id}")
@@ -148,104 +147,104 @@ class PluginLoader:
             else:
                 logger.error(f"Plugin load failed: {plugin_id}")
                 return None
-                
+
         except Exception as e:
             logger.exception(f"Error loading plugin {plugin_id}: {e}")
             return None
-    
-    def _find_plugin_dir(self, plugin_id: str) -> Optional[Path]:
+
+    def _find_plugin_dir(self, plugin_id: str) -> Path | None:
         """Find the directory for a plugin."""
         for plugin_dir in self._plugin_dirs:
             candidate = plugin_dir / plugin_id
             if candidate.exists() and (candidate / self.MANIFEST_FILE).exists():
                 return candidate
         return None
-    
-    def _load_module(self, plugin_dir: Path, plugin_id: str) -> Optional[any]:
+
+    def _load_module(self, plugin_dir: Path, plugin_id: str) -> any | None:
         """Load the plugin Python module."""
         module_path = plugin_dir / "__init__.py"
-        
+
         if not module_path.exists():
             # Try plugin.py as fallback
             module_path = plugin_dir / "plugin.py"
-        
+
         if not module_path.exists():
             logger.error(f"No module file found for plugin {plugin_id}")
             return None
-        
+
         try:
             spec = importlib.util.spec_from_file_location(
                 f"voicestudio_plugins.{plugin_id}",
                 module_path,
             )
-            
+
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[spec.name] = module
                 spec.loader.exec_module(module)
                 self._loaded_modules[plugin_id] = module
                 return module
-                
+
         except Exception as e:
             logger.exception(f"Failed to load module for {plugin_id}: {e}")
-        
+
         return None
-    
-    def _find_plugin_class(self, module: any) -> Optional[Type[Plugin]]:
+
+    def _find_plugin_class(self, module: any) -> type[Plugin] | None:
         """Find the Plugin subclass in a module."""
         for name in dir(module):
             obj = getattr(module, name)
-            
+
             if (
                 isinstance(obj, type) and
                 issubclass(obj, Plugin) and
                 obj is not Plugin
             ):
                 return obj
-        
+
         return None
-    
+
     async def unload_plugin(self, plugin_id: str) -> bool:
         """
         Unload a plugin.
-        
+
         Args:
             plugin_id: Plugin identifier
-            
+
         Returns:
             True if unloaded successfully
         """
         module_name = f"voicestudio_plugins.{plugin_id}"
-        
+
         if module_name in sys.modules:
             del sys.modules[module_name]
             logger.info(f"Unloaded plugin: {plugin_id}")
-            
+
         if plugin_id in self._loaded_modules:
             del self._loaded_modules[plugin_id]
-        
+
         return True
-    
+
     async def reload_plugin(
         self,
         plugin_id: str,
-        config: Optional[Dict] = None,
+        config: dict | None = None,
         skip_version_check: bool = False,
-    ) -> Optional[Plugin]:
+    ) -> Plugin | None:
         """
         Reload a plugin (hot reload).
-        
+
         Args:
             plugin_id: Plugin identifier
             config: Optional new configuration
             skip_version_check: Skip version compatibility check
-            
+
         Returns:
             Reloaded plugin instance
         """
         await self.unload_plugin(plugin_id)
         return await self.load_plugin(plugin_id, config, skip_version_check)
-    
-    def get_loaded_modules(self) -> List[str]:
+
+    def get_loaded_modules(self) -> list[str]:
         """Get list of loaded plugin module names."""
         return list(self._loaded_modules.keys())

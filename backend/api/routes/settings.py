@@ -7,11 +7,14 @@ Supports both:
 - Legacy JSON config (fallback for migration)
 """
 
+from __future__ import annotations
+
+import contextlib
 import json
 import logging
 import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
@@ -31,7 +34,7 @@ except ImportError:
 
 # Try importing UnifiedConfigService
 try:
-    from backend.services.unified_config import get_config, UnifiedConfigService
+    from backend.services.unified_config import UnifiedConfigService, get_config
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
@@ -199,21 +202,21 @@ class QualitySettings(BaseModel):
 
 
 class SettingsData(BaseModel):
-    general: Optional[GeneralSettings] = None
-    engine: Optional[EngineSettings] = None
-    audio: Optional[AudioSettings] = None
-    timeline: Optional[TimelineSettings] = None
-    backend: Optional[BackendSettings] = None
-    performance: Optional[PerformanceSettings] = None
-    plugins: Optional[PluginSettings] = None
-    mcp: Optional[McpSettings] = None
-    quality: Optional[QualitySettings] = None
+    general: GeneralSettings | None = None
+    engine: EngineSettings | None = None
+    audio: AudioSettings | None = None
+    timeline: TimelineSettings | None = None
+    backend: BackendSettings | None = None
+    performance: PerformanceSettings | None = None
+    plugins: PluginSettings | None = None
+    mcp: McpSettings | None = None
+    quality: QualitySettings | None = None
 
 
 def _load_from_unified_config(unified) -> SettingsData:
     """Transform UnifiedConfigService.voicestudio to SettingsData."""
     vs = unified.voicestudio
-    
+
     return SettingsData(
         general=GeneralSettings(
             theme=vs.general.get("theme", "Dark") if hasattr(vs, "general") else "Dark",
@@ -308,7 +311,7 @@ def load_settings(force_reload: bool = False) -> SettingsData:
                     detail="Settings file is corrupted or too large",
                 )
 
-            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+            with open(SETTINGS_FILE, encoding="utf-8") as f:
                 data = json.load(f)
                 settings = SettingsData(**data)
                 # Update cache
@@ -394,10 +397,8 @@ def save_settings(settings: SettingsData) -> None:
         except Exception:
             # Clean up temp file on error
             if temp_file.exists():
-                try:
+                with contextlib.suppress(Exception):
                     temp_file.unlink()
-                except Exception:
-                    ...
             raise
 
         # Update cache
@@ -408,7 +409,7 @@ def save_settings(settings: SettingsData) -> None:
     except Exception as e:
         logger.error(f"Failed to save settings: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to save settings: {str(e)}"
+            status_code=500, detail=f"Failed to save settings: {e!s}"
         )
 
 
@@ -500,14 +501,14 @@ async def save_settings_endpoint(
     except Exception as e:
         logger.error(f"Failed to save settings: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to save settings: {str(e)}"
+            status_code=500, detail=f"Failed to save settings: {e!s}"
         )
 
 
 @router.put("/{category}")
 async def update_settings_category(
     category: str,
-    data: Dict,
+    data: dict,
     _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
 ):
     """Update settings for a specific category."""
@@ -571,7 +572,7 @@ async def update_settings_category(
     except Exception as e:
         logger.error(f"Failed to update settings category: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to update settings: {str(e)}"
+            status_code=500, detail=f"Failed to update settings: {e!s}"
         )
 
 
@@ -598,7 +599,7 @@ async def reset_settings(
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to reset settings: {str(e)}"
+            status_code=500, detail=f"Failed to reset settings: {e!s}"
         )
 
 
@@ -607,13 +608,12 @@ async def reset_settings(
 @router.get("/check/dependencies")
 async def get_system_dependencies():
     """Check system dependency status.
-    
+
     Returns package status in a format compatible with the frontend SettingsViewModel.
     Keys match the frontend's Name.ToLower().Replace(" ", "_") transformation.
     """
     import importlib
-    import subprocess
-    
+
     # Map frontend display names to actual Python package names
     # Frontend uses: dep.Name.ToLower().Replace(" ", "_")
     package_map = {
@@ -629,16 +629,16 @@ async def get_system_dependencies():
         "pytorch": "torch",
         "numpy": "numpy",
     }
-    
+
     result = {}
-    
+
     for frontend_key, import_name in package_map.items():
         try:
             mod = importlib.import_module(import_name)
-            version = getattr(mod, "__version__", "installed")
+            getattr(mod, "__version__", "installed")
             # Frontend expects: bool or string "installed"/"true"
             result[frontend_key] = True
         except ImportError:
             result[frontend_key] = False
-    
+
     return result

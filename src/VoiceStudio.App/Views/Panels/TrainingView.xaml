@@ -14,6 +14,7 @@
     <StackPanel Grid.Column="0" Spacing="10">
       <TextBlock Text="Datasets" FontSize="16" FontWeight="SemiBold" />
       <ListView x:Name="DatasetsListView"
+        AutomationProperties.AutomationId="TrainingView_DatasetsListView"
         ItemsSource="{x:Bind ViewModel.Datasets, Mode=OneWay}"
         SelectedItem="{x:Bind ViewModel.SelectedDataset, Mode=TwoWay}"
         SelectionMode="None"
@@ -29,19 +30,24 @@
       </ListView>
 
       <TextBlock Text="Create Dataset" FontWeight="SemiBold" Margin="0,8,0,0" />
-      <TextBox Header="Name" Text="{x:Bind ViewModel.DatasetName, Mode=TwoWay}" />
-      <TextBox Header="Description" Text="{x:Bind ViewModel.DatasetDescription, Mode=TwoWay}" />
+      <TextBox Header="Name" Text="{x:Bind ViewModel.DatasetName, Mode=TwoWay}"
+        AutomationProperties.AutomationId="TrainingView_DatasetNameTextBox" />
+      <TextBox Header="Description" Text="{x:Bind ViewModel.DatasetDescription, Mode=TwoWay}"
+        AutomationProperties.AutomationId="TrainingView_DatasetDescriptionTextBox" />
       <TextBox Header="Audio Files (comma-separated IDs)"
-        Text="{x:Bind ViewModel.AudioFilesText, Mode=TwoWay}" AcceptsReturn="True" Height="80" />
+        Text="{x:Bind ViewModel.AudioFilesText, Mode=TwoWay}" AcceptsReturn="True" Height="80"
+        AutomationProperties.AutomationId="TrainingView_AudioFilesTextBox" />
       <Button Content="Create Dataset"
         Command="{x:Bind ViewModel.CreateDatasetCommand}"
-        HorizontalAlignment="Left" />
+        HorizontalAlignment="Left"
+        AutomationProperties.AutomationId="TrainingView_CreateDatasetButton" />
     </StackPanel>
 
     <StackPanel Grid.Column="1" Spacing="10">
       <TextBlock Text="Training Jobs" FontSize="16" FontWeight="SemiBold" />
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <ComboBox x:Name="StatusFilter" Width="160" SelectionChanged="StatusFilter_SelectionChanged">
+      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+        <ComboBox x:Name="StatusFilter" MinWidth="100" SelectionChanged="StatusFilter_SelectionChanged"
+          AutomationProperties.AutomationId="TrainingView_StatusFilterComboBox">
           <ComboBoxItem Content="All" Tag="" IsSelected="True" />
           <ComboBoxItem Content="Running" Tag="running" />
           <ComboBoxItem Content="Pending" Tag="pending" />
@@ -49,10 +55,12 @@
           <ComboBoxItem Content="Failed" Tag="failed" />
           <ComboBoxItem Content="Cancelled" Tag="cancelled" />
         </ComboBox>
-        <Button Content="Refresh" Command="{x:Bind ViewModel.LoadTrainingJobsCommand}" />
+        <Button Content="Refresh" Command="{x:Bind ViewModel.LoadTrainingJobsCommand}" Padding="12,6"
+          AutomationProperties.AutomationId="TrainingView_RefreshButton" />
       </StackPanel>
 
       <ListView x:Name="TrainingJobsListView"
+        AutomationProperties.AutomationId="TrainingView_JobsListView"
         ItemsSource="{x:Bind ViewModel.TrainingJobs, Mode=OneWay}"
         SelectedItem="{x:Bind ViewModel.SelectedTrainingJob, Mode=TwoWay}"
         SelectionMode="None"

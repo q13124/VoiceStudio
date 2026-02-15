@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ab_summary_response.schema.json",
+  "title": "ABTestResponse",
+  "description": "Response schema for /api/voice/synthesize/ab endpoint",
+  "type": "object",
+  "required": ["test_id", "sample_a", "sample_b"],
+  "properties": {
+    "test_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique A/B test identifier"
+    },
+    "sample_a": {
+      "type": "object",
+      "description": "Sample A synthesis result",
+      "required": ["sample_label", "audio_id", "audio_url", "engine", "duration"],
+      "properties": {
+        "sample_label": {
+          "type": "string",
+          "enum": ["A", "B"],
+          "description": "Sample label (A or B)"
+        },
+        "audio_id": {
+          "type": "string",
+          "description": "Audio identifier for sample A"
+        },
+        "audio_url": {
+          "type": "string",
+          "description": "URL to sample A audio"
+        },
+        "engine": {
+          "type": "string",
+          "description": "Engine used for sample A"
+        },
+        "emotion": {
+          "type": ["string", "null"],
+          "description": "Emotion applied to sample A"
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Duration in seconds"
+        },
+        "quality_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Quality score (0.0-1.0), optional"
+        },
+        "quality_metrics": {
+          "type": ["object", "null"],
+          "description": "Detailed quality metrics",
+          "properties": {
+            "mos_score": {
+              "type": ["number", "null"],
+              "minimum": 1,
+              "maximum": 5,
+              "description": "Mean Opinion Score (1.0-5.0)"
+            },
+            "similarity": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Voice similarity (0.0-1.0)"
+            },
+            "naturalness": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Naturalness score (0.0-1.0)"
+            },
+            "snr_db": {
+              "type": ["number", "null"],
+              "description": "Signal-to-noise ratio (dB)"
+            },
+            "artifact_score": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Artifact score (lower is better)"
+            },
+            "has_clicks": {
+              "type": ["boolean", "null"],
+              "description": "Whether clicks were detected"
+            },
+            "has_distortion": {
+              "type": ["boolean", "null"],
+              "description": "Whether distortion was detected"
+            },
+            "voice_profile_match": {
+              "type": ["object", "null"],
+              "description": "Voice profile matching results",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    },
+    "sample_b": {
+      "type": "object",
+      "description": "Sample B synthesis result",
+      "required": ["sample_label", "audio_id", "audio_url", "engine", "duration"],
+      "properties": {
+        "sample_label": {
+          "type": "string",
+          "enum": ["A", "B"],
+          "description": "Sample label (A or B)"
+        },
+        "audio_id": {
+          "type": "string",
+          "description": "Audio identifier for sample B"
+        },
+        "audio_url": {
+          "type": "string",
+          "description": "URL to sample B audio"
+        },
+        "engine": {
+          "type": "string",
+          "description": "Engine used for sample B"
+        },
+        "emotion": {
+          "type": ["string", "null"],
+          "description": "Emotion applied to sample B"
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Duration in seconds"
+        },
+        "quality_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Quality score (0.0-1.0), optional"
+        },
+        "quality_metrics": {
+          "type": ["object", "null"],
+          "description": "Detailed quality metrics",
+          "properties": {
+            "mos_score": {
+              "type": ["number", "null"],
+              "minimum": 1,
+              "maximum": 5,
+              "description": "Mean Opinion Score (1.0-5.0)"
+            },
+            "similarity": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Voice similarity (0.0-1.0)"
+            },
+            "naturalness": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Naturalness score (0.0-1.0)"
+            },
+            "snr_db": {
+              "type": ["number", "null"],
+              "description": "Signal-to-noise ratio (dB)"
+            },
+            "artifact_score": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Artifact score (lower is better)"
+            },
+            "has_clicks": {
+              "type": ["boolean", "null"],
+              "description": "Whether clicks were detected"
+            },
+            "has_distortion": {
+              "type": ["boolean", "null"],
+              "description": "Whether distortion was detected"
+            },
+            "voice_profile_match": {
+              "type": ["object", "null"],
+              "description": "Voice profile matching results",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": ["object", "null"],
+      "description": "Automated comparison results",
+      "properties": {
+        "quality_difference": {
+          "type": ["number", "null"],
+          "description": "Quality score difference (A - B)"
+        },
+        "duration_difference": {
+          "type": ["number", "null"],
+          "description": "Duration difference in seconds"
+        },
+        "recommendation": {
+          "type": ["string", "null"],
+          "enum": ["A", "B", "tie", null],
+          "description": "Recommended sample"
+        }
+      }
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "description": "Test metadata",
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "description": "Voice profile used"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text synthesized"
+        },
+        "language": {
+          "type": "string",
+          "description": "Language code"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Test timestamp"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

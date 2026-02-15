@@ -5,9 +5,7 @@ Tests OpenVoice engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestOpenVoiceEngineImports:
     def test_module_has_openvoice_engine_class(self):
         """Test module has OpenVoiceEngine class."""
         if hasattr(openvoice_engine, "OpenVoiceEngine"):
-            cls = getattr(openvoice_engine, "OpenVoiceEngine")
+            cls = openvoice_engine.OpenVoiceEngine
             assert isinstance(cls, type), "OpenVoiceEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestOpenVoiceEngineClass:
     def test_openvoice_engine_class_exists(self):
         """Test OpenVoiceEngine class exists."""
         if hasattr(openvoice_engine, "OpenVoiceEngine"):
-            cls = getattr(openvoice_engine, "OpenVoiceEngine")
+            cls = openvoice_engine.OpenVoiceEngine
             assert isinstance(cls, type), "OpenVoiceEngine should be a class"
 
     def test_openvoice_engine_initialization(self):

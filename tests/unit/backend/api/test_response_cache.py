@@ -11,19 +11,20 @@ Tests cover:
 - Cache decorator
 """
 
-import pytest
 import time
-from unittest.mock import MagicMock
 from collections import OrderedDict
+from unittest.mock import MagicMock
+
+import pytest
 
 # Try to import the response cache module
 try:
     from backend.api.response_cache import (
         ResponseCache,
-        get_response_cache,
-        set_response_cache,
-        response_cache_middleware,
         cache_response,
+        get_response_cache,
+        response_cache_middleware,
+        set_response_cache,
     )
 
     HAS_RESPONSE_CACHE = True
@@ -194,7 +195,7 @@ class TestResponseCacheTTL:
 
         # Check that default TTL was used
         # Cache stores: (response_data, timestamp, ttl, size_bytes, tags)
-        _, timestamp, ttl, _, _ = response_cache._cache[cache_key]
+        _, _timestamp, ttl, _, _ = response_cache._cache[cache_key]
         assert ttl == response_cache.default_ttl
 
     def test_custom_ttl(self, response_cache):
@@ -207,7 +208,7 @@ class TestResponseCacheTTL:
 
         # Check that custom TTL was used
         # Cache stores: (response_data, timestamp, ttl, size_bytes, tags)
-        _, timestamp, ttl, _, _ = response_cache._cache[cache_key]
+        _, _timestamp, ttl, _, _ = response_cache._cache[cache_key]
         assert ttl == custom_ttl
 
 

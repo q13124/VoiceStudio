@@ -6,6 +6,8 @@ operations. Supports histogram-style metrics for latency distribution analysis.
 All operations are local-first with file-based persistence.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import threading
@@ -13,7 +15,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +61,8 @@ class Histogram:
 
     name: str
     help_text: str = ""
-    labels: Dict[str, str] = field(default_factory=dict)
-    buckets: List[HistogramBucket] = field(default_factory=list)
+    labels: dict[str, str] = field(default_factory=dict)
+    buckets: list[HistogramBucket] = field(default_factory=list)
     count: int = 0
     sum_value: float = 0.0
     last_value: float = 0.0
@@ -92,10 +94,7 @@ class Histogram:
         for i, bucket in enumerate(self.buckets):
             if cumulative + bucket.count >= target:
                 # Linear interpolation within bucket
-                if i == 0:
-                    prev_le = 0.0
-                else:
-                    prev_le = self.buckets[i - 1].le
+                prev_le = 0.0 if i == 0 else self.buckets[i - 1].le
 
                 if bucket.count == 0:
                     return bucket.le
@@ -112,7 +111,7 @@ class Histogram:
         """Calculate mean of observations."""
         return self.sum_value / self.count if self.count > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert histogram to dictionary for serialization."""
         return {
             "name": self.name,
@@ -136,7 +135,7 @@ class Counter:
 
     name: str
     help_text: str = ""
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     value: float = 0.0
     last_updated: float = field(default_factory=time.time)
 
@@ -145,7 +144,7 @@ class Counter:
         self.value += amount
         self.last_updated = time.time()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert counter to dictionary."""
         return {
             "name": self.name,
@@ -168,19 +167,19 @@ class EngineMetricsCollector:
     _lock = threading.Lock()
 
     # Histograms
-    _synthesis_latency: Dict[str, Histogram]
-    _transcription_latency: Dict[str, Histogram]
-    _audio_duration: Dict[str, Histogram]
-    _synthesis_throughput: Dict[str, Histogram]  # chars/sec
-    _transcription_rtf: Dict[str, Histogram]  # real-time factor
+    _synthesis_latency: dict[str, Histogram]
+    _transcription_latency: dict[str, Histogram]
+    _audio_duration: dict[str, Histogram]
+    _synthesis_throughput: dict[str, Histogram]  # chars/sec
+    _transcription_rtf: dict[str, Histogram]  # real-time factor
 
     # Counters
-    _synthesis_count: Dict[str, Counter]
-    _synthesis_errors: Dict[str, Counter]
-    _transcription_count: Dict[str, Counter]
-    _transcription_errors: Dict[str, Counter]
-    _total_chars_synthesized: Dict[str, Counter]
-    _total_audio_generated_seconds: Dict[str, Counter]
+    _synthesis_count: dict[str, Counter]
+    _synthesis_errors: dict[str, Counter]
+    _transcription_count: dict[str, Counter]
+    _transcription_errors: dict[str, Counter]
+    _total_chars_synthesized: dict[str, Counter]
+    _total_audio_generated_seconds: dict[str, Counter]
 
     def __new__(cls) -> "EngineMetricsCollector":
         if cls._instance is None:
@@ -212,7 +211,7 @@ class EngineMetricsCollector:
         self,
         name: str,
         help_text: str,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new latency histogram with default buckets."""
         buckets = [
@@ -229,7 +228,7 @@ class EngineMetricsCollector:
         self,
         name: str,
         help_text: str,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new audio duration histogram."""
         buckets = [
@@ -246,7 +245,7 @@ class EngineMetricsCollector:
         self,
         name: str,
         help_text: str,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new throughput histogram (chars/sec)."""
         buckets = [
@@ -263,7 +262,7 @@ class EngineMetricsCollector:
         self,
         name: str,
         help_text: str,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new real-time factor histogram."""
         buckets = [
@@ -276,7 +275,7 @@ class EngineMetricsCollector:
             buckets=buckets,
         )
 
-    def _get_key(self, engine: str, extra: Optional[str] = None) -> str:
+    def _get_key(self, engine: str, extra: str | None = None) -> str:
         """Generate a unique key for the metric."""
         if extra:
             return f"{engine}:{extra}"
@@ -504,32 +503,32 @@ class EngineMetricsCollector:
     # =========================================================================
 
     def get_synthesis_stats(
-        self, engine: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, engine: str | None = None
+    ) -> dict[str, Any]:
         """Get synthesis statistics for an engine or all engines."""
         with self._lock:
             if engine:
                 return self._get_engine_stats(engine, "synthesis")
             return {
                 eng: self._get_engine_stats(eng, "synthesis")
-                for eng in self._synthesis_count.keys()
+                for eng in self._synthesis_count
             }
 
     def get_transcription_stats(
-        self, engine: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, engine: str | None = None
+    ) -> dict[str, Any]:
         """Get transcription statistics."""
         with self._lock:
             if engine:
                 return self._get_engine_stats(engine, "transcription")
             return {
                 eng: self._get_engine_stats(eng, "transcription")
-                for eng in self._transcription_count.keys()
+                for eng in self._transcription_count
             }
 
-    def _get_engine_stats(self, engine: str, op_type: str) -> Dict[str, Any]:
+    def _get_engine_stats(self, engine: str, op_type: str) -> dict[str, Any]:
         """Get stats for a specific engine and operation type."""
-        stats: Dict[str, Any] = {"engine": engine, "type": op_type}
+        stats: dict[str, Any] = {"engine": engine, "type": op_type}
 
         if op_type == "synthesis":
             count = self._synthesis_count.get(engine)
@@ -586,7 +585,7 @@ class EngineMetricsCollector:
 
         return stats
 
-    def get_all_metrics(self) -> Dict[str, Any]:
+    def get_all_metrics(self) -> dict[str, Any]:
         """Get all collected metrics."""
         with self._lock:
             synth_lat = {

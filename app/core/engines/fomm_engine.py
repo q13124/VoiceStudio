@@ -8,10 +8,11 @@ Compatible with:
 - opencv-python 4.5.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -60,9 +61,9 @@ class FOMMEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
     ):
         """
         Initialize FOMM engine.
@@ -169,9 +170,9 @@ class FOMMEngine(EngineProtocol):
 
     def transfer_motion(
         self,
-        source_image: Union[str, Path, Image.Image],
-        driving_video: Union[str, Path, List[Image.Image]],
-        output_path: Optional[Union[str, Path]] = None,
+        source_image: str | Path | Image.Image,
+        driving_video: str | Path | list[Image.Image],
+        output_path: str | Path | None = None,
         fps: int = 30,
         **kwargs,
     ) -> str:
@@ -299,7 +300,7 @@ class FOMMEngine(EngineProtocol):
             logger.error(f"Error transferring motion: {e}")
             raise RuntimeError(f"Failed to transfer motion: {e}")
 
-    def _load_video(self, video_path: str) -> List[np.ndarray]:
+    def _load_video(self, video_path: str) -> list[np.ndarray]:
         """Load video frames."""
         if not HAS_CV2:
             raise ImportError("opencv-python required")
@@ -319,7 +320,7 @@ class FOMMEngine(EngineProtocol):
 
         return frames
 
-    def _extract_keypoints(self, image: np.ndarray) -> Dict:
+    def _extract_keypoints(self, image: np.ndarray) -> dict:
         """Extract keypoints from image."""
         if self.face_aligner is not None:
             try:
@@ -340,7 +341,7 @@ class FOMMEngine(EngineProtocol):
         return {"type": "none"}
 
     def _generate_frame(
-        self, source_img: np.ndarray, source_kp: Dict, driving_kp: Dict
+        self, source_img: np.ndarray, source_kp: dict, driving_kp: dict
     ) -> np.ndarray:
         """Generate frame using motion transfer."""
         try:
@@ -393,12 +394,11 @@ class FOMMEngine(EngineProtocol):
             return None
 
     def _generate_frame_with_model(
-        self, source_img: np.ndarray, source_kp: Dict, driving_kp: Dict
+        self, source_img: np.ndarray, source_kp: dict, driving_kp: dict
     ) -> np.ndarray:
         """Generate frame using loaded model."""
         try:
-            import torch.nn.functional as F
-            
+
             model_data = self.model
             device = model_data["device"]
             checkpoint = model_data.get("checkpoint", {})
@@ -413,16 +413,16 @@ class FOMMEngine(EngineProtocol):
 
             # Try to use model checkpoint for inference
             output = None
-            
+
             # Method 1: Try FOMM-specific architecture
             if isinstance(checkpoint, dict):
                 state_dict = checkpoint.get("state_dict", checkpoint)
-                
+
                 # Check for FOMM model keys
-                has_kp_detector = any("kp_detector" in k or "keypoint" in k.lower() for k in state_dict.keys())
-                has_generator = any("generator" in k or "decoder" in k for k in state_dict.keys())
-                has_dense_motion = any("dense_motion" in k or "motion" in k.lower() for k in state_dict.keys())
-                
+                has_kp_detector = any("kp_detector" in k or "keypoint" in k.lower() for k in state_dict)
+                has_generator = any("generator" in k or "decoder" in k for k in state_dict)
+                has_dense_motion = any("dense_motion" in k or "motion" in k.lower() for k in state_dict)
+
                 if has_kp_detector and has_generator:
                     try:
                         output = self._infer_fomm_architecture(
@@ -430,7 +430,7 @@ class FOMMEngine(EngineProtocol):
                         )
                     except Exception as e:
                         logger.debug(f"FOMM architecture inference failed: {e}")
-                
+
                 # Method 2: Try generic motion transfer approach
                 if output is None and (has_generator or has_dense_motion):
                     try:
@@ -439,7 +439,7 @@ class FOMMEngine(EngineProtocol):
                         )
                     except Exception as e:
                         logger.debug(f"Generic motion transfer inference failed: {e}")
-            
+
             # Method 3: Enhanced keypoint-based transformation
             if output is None:
                 output = self._apply_enhanced_keypoint_transformation(
@@ -455,15 +455,14 @@ class FOMMEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Model frame generation failed: {e}")
             return self._generate_frame_fallback(source_img, source_kp, driving_kp)
-    
+
     def _infer_fomm_architecture(
-        self, state_dict: Dict, source_tensor: torch.Tensor,
+        self, state_dict: dict, source_tensor: torch.Tensor,
         source_kp_tensor: torch.Tensor, driving_kp_tensor: torch.Tensor, device: torch.device
     ) -> torch.Tensor:
         """Infer using FOMM-like architecture."""
         try:
-            import torch.nn as nn
-            
+
             # FOMM architecture: kp_detector -> dense_motion -> generator
             # Step 1: Extract keypoints (if not already provided)
             if source_kp_tensor is None or driving_kp_tensor is None:
@@ -478,25 +477,25 @@ class FOMMEngine(EngineProtocol):
                 # Convert keypoints to feature maps
                 kp_features_source = self._keypoints_to_feature_map(source_kp_tensor, source_tensor.shape, device)
                 kp_features_driving = self._keypoints_to_feature_map(driving_kp_tensor, source_tensor.shape, device)
-            
+
             # Step 2: Compute dense motion field
             # Motion field maps each pixel in source to corresponding pixel in driving
             motion_field = self._compute_dense_motion(
                 kp_features_source, kp_features_driving, source_tensor.shape, device
             )
-            
+
             # Step 3: Apply motion using generator
             # Warp source image according to motion field
             output = self._apply_dense_motion(source_tensor, motion_field, device)
-            
+
             return output
-            
+
         except Exception as e:
             logger.debug(f"FOMM architecture inference error: {e}")
             raise
-    
+
     def _infer_generic_motion_transfer(
-        self, state_dict: Dict, source_tensor: torch.Tensor,
+        self, state_dict: dict, source_tensor: torch.Tensor,
         source_kp_tensor: torch.Tensor, driving_kp_tensor: torch.Tensor, device: torch.device
     ) -> torch.Tensor:
         """Infer using generic motion transfer approach."""
@@ -507,17 +506,17 @@ class FOMMEngine(EngineProtocol):
                 motion_field = self._keypoints_to_motion_field(
                     source_kp_tensor, driving_kp_tensor, source_tensor.shape, device
                 )
-                
+
                 # Apply motion field to source image
                 output = self._apply_dense_motion(source_tensor, motion_field, device)
                 return output
-            
+
             return source_tensor
-            
+
         except Exception as e:
             logger.debug(f"Generic motion transfer inference error: {e}")
             raise
-    
+
     def _apply_enhanced_keypoint_transformation(
         self, source_tensor: torch.Tensor,
         source_kp_tensor: torch.Tensor, driving_kp_tensor: torch.Tensor, device: torch.device
@@ -526,55 +525,55 @@ class FOMMEngine(EngineProtocol):
         try:
             if source_kp_tensor is None or driving_kp_tensor is None:
                 return source_tensor
-            
+
             # Compute motion delta
             motion_delta = driving_kp_tensor - source_kp_tensor
-            
+
             if motion_delta.numel() == 0:
                 return source_tensor
-            
+
             # Enhanced motion application with multiple transformation types
             output = source_tensor
-            
+
             # Apply affine transformation
             if motion_delta.shape[0] >= 3:
                 output = self._apply_affine_from_keypoints(
                     output, source_kp_tensor, driving_kp_tensor, device
                 )
-            
+
             # Apply local warping for fine details
             if motion_delta.shape[0] >= 5:
                 output = self._apply_local_warping(
                     output, source_kp_tensor, driving_kp_tensor, device
                 )
-            
+
             return output
-            
+
         except Exception as e:
             logger.debug(f"Enhanced keypoint transformation failed: {e}")
             return source_tensor
-    
+
     def _keypoints_to_feature_map(
-        self, keypoints: torch.Tensor, image_shape: Tuple, device: torch.device
+        self, keypoints: torch.Tensor, image_shape: tuple, device: torch.device
     ) -> torch.Tensor:
         """Convert keypoints to feature map representation."""
         try:
             batch, channels, height, width = image_shape
-            
+
             # Create feature map from keypoints
             feature_map = torch.zeros(batch, 64, height, width, device=device)
-            
+
             if keypoints.numel() > 0 and keypoints.shape[0] >= 2:
                 # Convert keypoints to spatial coordinates
                 kp_coords = keypoints[:min(10, keypoints.shape[0])]  # Use first 10 keypoints
-                
+
                 # Create Gaussian heatmaps for each keypoint
                 for i, kp in enumerate(kp_coords):
                     if kp.numel() >= 2:
                         x, y = int(kp[0].item()), int(kp[1].item())
                         x = max(0, min(width - 1, x))
                         y = max(0, min(height - 1, y))
-                        
+
                         # Create Gaussian around keypoint
                         y_coords, x_coords = torch.meshgrid(
                             torch.arange(height, device=device),
@@ -586,25 +585,25 @@ class FOMMEngine(EngineProtocol):
                             -((x_coords - x) ** 2 + (y_coords - y) ** 2) / (2 * sigma ** 2)
                         )
                         feature_map[0, i % 64, :, :] += gaussian
-            
+
             return feature_map
-            
+
         except Exception as e:
             logger.debug(f"Keypoints to feature map conversion failed: {e}")
-            batch, channels, height, width = image_shape
+            batch, _channels, height, width = image_shape
             return torch.zeros(batch, 64, height, width, device=device)
-    
+
     def _compute_dense_motion(
         self, source_features: torch.Tensor, driving_features: torch.Tensor,
-        image_shape: Tuple, device: torch.device
+        image_shape: tuple, device: torch.device
     ) -> torch.Tensor:
         """Compute dense motion field from features."""
         try:
             batch, channels, height, width = image_shape
-            
+
             # Compute feature difference
             feature_diff = driving_features - source_features
-            
+
             # Convert to motion field (x, y offsets)
             # Use convolution to compute motion vectors
             motion_x = F.conv2d(
@@ -612,89 +611,89 @@ class FOMMEngine(EngineProtocol):
                 torch.randn(1, feature_diff.shape[1], 3, 3, device=device) * 0.01,
                 padding=1
             ).mean(dim=1, keepdim=True) * 0.1  # Scale down motion
-            
+
             motion_y = F.conv2d(
                 feature_diff,
                 torch.randn(1, feature_diff.shape[1], 3, 3, device=device) * 0.01,
                 padding=1
             ).mean(dim=1, keepdim=True) * 0.1
-            
+
             # Combine into motion field (2 channels: x, y)
             motion_field = torch.cat([motion_x, motion_y], dim=1)
-            
+
             # Normalize motion field
             motion_field = torch.tanh(motion_field) * 20.0  # Limit motion range
-            
+
             return motion_field
-            
+
         except Exception as e:
             logger.debug(f"Dense motion computation failed: {e}")
-            batch, channels, height, width = image_shape
+            batch, _channels, height, width = image_shape
             return torch.zeros(batch, 2, height, width, device=device)
-    
+
     def _apply_dense_motion(
         self, image_tensor: torch.Tensor, motion_field: torch.Tensor, device: torch.device
     ) -> torch.Tensor:
         """Apply dense motion field to image using spatial transformer."""
         try:
-            batch, channels, height, width = image_tensor.shape
-            
+            batch, _channels, height, width = image_tensor.shape
+
             # Create coordinate grid
             y_coords, x_coords = torch.meshgrid(
                 torch.arange(height, dtype=torch.float32, device=device),
                 torch.arange(width, dtype=torch.float32, device=device),
                 indexing='ij'
             )
-            
+
             # Normalize coordinates to [-1, 1]
             x_coords = (x_coords / (width - 1)) * 2.0 - 1.0
             y_coords = (y_coords / (height - 1)) * 2.0 - 1.0
-            
+
             # Apply motion field
             motion_x = motion_field[:, 0:1, :, :]
             motion_y = motion_field[:, 1:2, :, :]
-            
+
             # Normalize motion to grid coordinates
             motion_x_norm = motion_x / (width - 1) * 2.0
             motion_y_norm = motion_y / (height - 1) * 2.0
-            
+
             # Create sampling grid
             grid_x = x_coords.unsqueeze(0).expand(batch, -1, -1) + motion_x_norm.squeeze(1)
             grid_y = y_coords.unsqueeze(0).expand(batch, -1, -1) + motion_y_norm.squeeze(1)
-            
+
             grid = torch.stack([grid_x, grid_y], dim=-1)
-            
+
             # Sample image using grid
             output = F.grid_sample(
                 image_tensor, grid, mode='bilinear', padding_mode='border', align_corners=False
             )
-            
+
             return output
-            
+
         except Exception as e:
             logger.debug(f"Dense motion application failed: {e}")
             return image_tensor
-    
+
     def _keypoints_to_motion_field(
         self, source_kp: torch.Tensor, driving_kp: torch.Tensor,
-        image_shape: Tuple, device: torch.device
+        image_shape: tuple, device: torch.device
     ) -> torch.Tensor:
         """Convert keypoint differences to dense motion field."""
         try:
             batch, channels, height, width = image_shape
-            
+
             # Compute keypoint motion vectors
             if source_kp.shape[0] != driving_kp.shape[0]:
                 # Align keypoints (use minimum length)
                 min_len = min(source_kp.shape[0], driving_kp.shape[0])
                 source_kp = source_kp[:min_len]
                 driving_kp = driving_kp[:min_len]
-            
+
             motion_vectors = driving_kp - source_kp
-            
+
             # Create motion field by interpolating keypoint motions
             motion_field = torch.zeros(batch, 2, height, width, device=device)
-            
+
             if motion_vectors.numel() > 0:
                 # Use inverse distance weighting to interpolate motion
                 y_coords, x_coords = torch.meshgrid(
@@ -702,34 +701,34 @@ class FOMMEngine(EngineProtocol):
                     torch.arange(width, dtype=torch.float32, device=device),
                     indexing='ij'
                 )
-                
+
                 for i in range(min(10, source_kp.shape[0])):
                     kp_x, kp_y = source_kp[i, 0].item(), source_kp[i, 1].item()
                     mv_x, mv_y = motion_vectors[i, 0].item(), motion_vectors[i, 1].item()
-                    
+
                     # Compute distance from each pixel to keypoint
                     dist = torch.sqrt((x_coords - kp_x) ** 2 + (y_coords - kp_y) ** 2 + 1e-8)
                     weight = 1.0 / (dist + 1.0)  # Inverse distance weight
-                    
+
                     # Accumulate weighted motion
                     motion_field[0, 0, :, :] += weight * mv_x
                     motion_field[0, 1, :, :] += weight * mv_y
-                
+
                 # Normalize by total weight
                 total_weight = torch.sum(1.0 / (torch.sqrt(
                     (x_coords.unsqueeze(0) - source_kp[:min(10, source_kp.shape[0]), 0:1].T) ** 2 +
                     (y_coords.unsqueeze(0) - source_kp[:min(10, source_kp.shape[0]), 1:2].T) ** 2
                 ) + 1.0), dim=0)
-                
+
                 motion_field = motion_field / (total_weight.unsqueeze(0).unsqueeze(0) + 1e-8)
-            
+
             return motion_field
-            
+
         except Exception as e:
             logger.debug(f"Keypoints to motion field conversion failed: {e}")
-            batch, channels, height, width = image_shape
+            batch, _channels, height, width = image_shape
             return torch.zeros(batch, 2, height, width, device=device)
-    
+
     def _apply_affine_from_keypoints(
         self, image_tensor: torch.Tensor,
         source_kp: torch.Tensor, driving_kp: torch.Tensor, device: torch.device
@@ -740,28 +739,28 @@ class FOMMEngine(EngineProtocol):
             if source_kp.shape[0] >= 3 and driving_kp.shape[0] >= 3:
                 source_pts = source_kp[:3].cpu().numpy()
                 driving_pts = driving_kp[:3].cpu().numpy()
-                
+
                 # Compute affine transformation matrix
                 transform_matrix = cv2.getAffineTransform(
                     source_pts.astype(np.float32),
                     driving_pts.astype(np.float32)
                 )
-                
+
                 # Convert to torch tensor
                 theta = torch.from_numpy(transform_matrix).float().unsqueeze(0).to(device)
-                
+
                 # Apply affine transformation
                 grid = F.affine_grid(theta, image_tensor.size(), align_corners=False)
                 output = F.grid_sample(image_tensor, grid, align_corners=False)
-                
+
                 return output
-            
+
             return image_tensor
-            
+
         except Exception as e:
             logger.debug(f"Affine transformation failed: {e}")
             return image_tensor
-    
+
     def _apply_local_warping(
         self, image_tensor: torch.Tensor,
         source_kp: torch.Tensor, driving_kp: torch.Tensor, device: torch.device
@@ -769,24 +768,24 @@ class FOMMEngine(EngineProtocol):
         """Apply local warping based on keypoint differences."""
         try:
             # Create local deformation fields around each keypoint
-            batch, channels, height, width = image_tensor.shape
-            
+            _batch, _channels, _height, _width = image_tensor.shape
+
             # Compute motion field from keypoints
             motion_field = self._keypoints_to_motion_field(
                 source_kp, driving_kp, image_tensor.shape, device
             )
-            
+
             # Apply using dense motion
             output = self._apply_dense_motion(image_tensor, motion_field, device)
-            
+
             return output
-            
+
         except Exception as e:
             logger.debug(f"Local warping failed: {e}")
             return image_tensor
 
     def _generate_frame_fallback(
-        self, source_img: np.ndarray, source_kp: Dict, driving_kp: Dict
+        self, source_img: np.ndarray, source_kp: dict, driving_kp: dict
     ) -> np.ndarray:
         """Generate frame using fallback method (keypoint-based warping)."""
         try:
@@ -820,14 +819,14 @@ class FOMMEngine(EngineProtocol):
             logger.warning(f"Fallback frame generation failed: {e}")
             return source_img.copy()
 
-    def _keypoints_to_tensor(self, kp: Dict, device: torch.device):
+    def _keypoints_to_tensor(self, kp: dict, device: torch.device):
         """Convert keypoints to tensor."""
         try:
             if kp.get("type") == "face" and "landmarks" in kp:
                 landmarks = kp["landmarks"]
                 tensor = torch.from_numpy(landmarks).float().to(device)
                 return tensor
-            elif "keypoints" in kp and kp["keypoints"]:
+            elif kp.get("keypoints"):
                 # Convert ORB keypoints
                 kp_list = kp["keypoints"]
                 coords = np.array([[kp.pt[0], kp.pt[1]] for kp in kp_list])
@@ -879,7 +878,7 @@ class FOMMEngine(EngineProtocol):
         except Exception:
             return image_tensor
 
-    def _save_video(self, frames: List[np.ndarray], output_path: str, fps: int):
+    def _save_video(self, frames: list[np.ndarray], output_path: str, fps: int):
         """Save frames as video."""
         if not HAS_CV2:
             raise ImportError("opencv-python required")
@@ -898,7 +897,7 @@ class FOMMEngine(EngineProtocol):
         finally:
             out.release()
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -911,7 +910,7 @@ class FOMMEngine(EngineProtocol):
 
 
 def create_fomm_engine(
-    device: Optional[str] = None, gpu: bool = True, model_path: Optional[str] = None
+    device: str | None = None, gpu: bool = True, model_path: str | None = None
 ) -> FOMMEngine:
     """
     Create and initialize FOMM engine.

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.App.Services;
@@ -28,6 +29,8 @@ namespace VoiceStudio.App.ViewModels
   {
     private readonly IBackendClient _backendClient;
     private readonly ToastNotificationService? _toastNotificationService;
+    private readonly IEventAggregator? _eventAggregator;
+    private ISubscriptionToken? _cloneReferenceSubscription;
 
     public string PanelId => "voice-cloning-wizard";
     public string DisplayName => ResourceHelper.GetString("Panel.VoiceCloningWizard.DisplayName", "Voice Cloning Wizard");
@@ -106,6 +109,10 @@ namespace VoiceStudio.App.ViewModels
 
       // Get services using helper (reduces code duplication)
       _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
+      
+      // Subscribe to CloneReferenceSelectedEvent for inter-panel workflow
+      _eventAggregator = AppServices.TryGetEventAggregator();
+      _cloneReferenceSubscription = _eventAggregator?.Subscribe<CloneReferenceSelectedEvent>(OnCloneReferenceSelected);
 
       SelectedAudioFiles.CollectionChanged += SelectedAudioFiles_CollectionChanged;
       AudioValidations.CollectionChanged += AudioValidations_CollectionChanged;
@@ -197,6 +204,30 @@ namespace VoiceStudio.App.ViewModels
     {
       NextStepCommand.NotifyCanExecuteChanged();
       StartProcessingCommand.NotifyCanExecuteChanged();
+      OnPropertyChanged(nameof(MultiReferenceWarning));
+    }
+
+    /// <summary>
+    /// Warning message shown when multiple reference files are selected
+    /// but the chosen engine only uses the first one.
+    /// Audit remediation M-7: Multi-reference behavior documentation.
+    /// </summary>
+    public string? MultiReferenceWarning
+    {
+      get
+      {
+        if (SelectedAudioFiles.Count <= 1)
+          return null;
+
+        // Only XTTS supports multi-reference ensemble
+        var engine = SelectedEngine?.ToLowerInvariant() ?? "";
+        if (engine == "xtts" || engine == "xtts_v2")
+          return null;
+
+        return $"Note: {SelectedEngine ?? "This engine"} uses only the first reference file. "
+               + "Only XTTS v2 benefits from multiple reference files (ensemble cloning). "
+               + "Additional files will be ignored.";
+      }
     }
 
     partial void OnProcessingStatusChanged(string? value)
@@ -223,10 +254,20 @@ namespace VoiceStudio.App.ViewModels
         var picker = new FileOpenPicker();
         picker.ViewMode = PickerViewMode.List;
         picker.SuggestedStartLocation = PickerLocationId.MusicLibrary;
-        picker.FileTypeFilter.Add(".wav");
-        picker.FileTypeFilter.Add(".mp3");
-        picker.FileTypeFilter.Add(".flac");
-        picker.FileTypeFilter.Add(".m4a");
+        
+        // Add all supported media formats (audio + video for audio extraction)
+        foreach (var ext in Core.Audio.AudioFileFormats.GetMediaFileTypeChoices())
+        {
+          picker.FileTypeFilter.Add(ext);
+        }
+
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        }
 
         var files = await picker.PickMultipleFilesAsync();
         cancellationToken.ThrowIfCancellationRequested();
@@ -644,6 +685,28 @@ namespace VoiceStudio.App.ViewModels
           _toastNotificationService?.ShowSuccess(
               ResourceHelper.GetString("VoiceCloningWizard.WizardComplete", "Wizard Complete"),
               ResourceHelper.FormatString("VoiceCloningWizard.ProfileCreatedSuccess", response.ProfileName));
+
+          // Publish ProfileCreatedEvent so Library refreshes (X-2)
+          // and other panels know a new profile is available
+          var eventAggregator = AppServices.TryGetEventAggregator();
+          if (eventAggregator != null && !string.IsNullOrEmpty(response.ProfileId))
+          {
+            eventAggregator.Publish(new ProfileCreatedEvent(
+                PanelId,
+                response.ProfileId,
+                response.ProfileName ?? ProfileName ?? "Cloned Voice"));
+
+            // Navigate to Synthesis panel with the new profile pre-selected (X-5)
+            eventAggregator.Publish(new NavigateToEvent(
+                PanelId,
+                "voice-synthesis",
+                new Dictionary<string, object>
+                {
+                  { "selectedProfileId", response.ProfileId },
+                  { "selectedProfileName", response.ProfileName ?? ProfileName ?? "" }
+                }));
+          }
+
           // Reset wizard for next use
           await ResetWizardAsync();
         }
@@ -721,6 +784,80 @@ namespace VoiceStudio.App.ViewModels
       StatusMessage = null;
 
       return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles the CloneReferenceSelectedEvent from Library panel.
+    /// Adds the selected audio file to the wizard's audio collection.
+    /// </summary>
+    private async void OnCloneReferenceSelected(CloneReferenceSelectedEvent e)
+    {
+      try
+      {
+        if (string.IsNullOrEmpty(e.AssetPath))
+        {
+          return;
+        }
+
+        // Load the audio file from the asset path
+        await LoadAudioFromPathAsync(e.AssetPath, e.AssetName);
+
+        StatusMessage = ResourceHelper.FormatString(
+          "VoiceCloningWizard.LoadedFromLibrary",
+          $"Added '{e.AssetName ?? Path.GetFileName(e.AssetPath)}' for cloning"
+        );
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error loading clone reference in wizard: {ex.Message}");
+        ErrorMessage = $"Failed to load audio: {ex.Message}";
+      }
+    }
+
+    /// <summary>
+    /// Loads an audio file from a file path (used by inter-panel workflow).
+    /// </summary>
+    private async Task LoadAudioFromPathAsync(string path, string? displayName = null)
+    {
+      if (string.IsNullOrEmpty(path) || !File.Exists(path))
+      {
+        throw new FileNotFoundException($"Audio file not found: {path}");
+      }
+
+      // Get StorageFile from path
+      var file = await StorageFile.GetFileFromPathAsync(path);
+
+      // Add to the audio files collection
+      if (!SelectedAudioFiles.Any(f => f.Path == file.Path))
+      {
+        SelectedAudioFiles.Add(file);
+      }
+
+      // Set profile name from display name or filename if not already set
+      if (string.IsNullOrWhiteSpace(ProfileName) && !string.IsNullOrWhiteSpace(displayName))
+      {
+        ProfileName = displayName;
+      }
+
+      // Reset to step 1 if we're adding audio
+      if (CurrentStep > 1 && ProcessingStatus != "processing")
+      {
+        CurrentStep = 1;
+      }
+    }
+
+    /// <summary>
+    /// Cleanup subscriptions when view model is disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected override void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        _cloneReferenceSubscription?.Dispose();
+        _cloneReferenceSubscription = null;
+      }
+      base.Dispose(disposing);
     }
 
     // Request/Response models

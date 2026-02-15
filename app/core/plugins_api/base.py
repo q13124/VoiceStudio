@@ -8,7 +8,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class PluginMetadata:
     def load_manifest(self):
         """Load manifest.json file"""
         try:
-            with open(self.manifest_path, "r", encoding="utf-8") as f:
+            with open(self.manifest_path, encoding="utf-8") as f:
                 self.manifest_data = json.load(f)
         except Exception as e:
             logger.error(f"Failed to load plugin manifest {self.manifest_path}: {e}")
@@ -52,17 +52,17 @@ class PluginMetadata:
         return self.manifest_data.get("description", "")
 
     @property
-    def capabilities(self) -> Dict[str, Any]:
+    def capabilities(self) -> dict[str, Any]:
         """Plugin capabilities"""
         return self.manifest_data.get("capabilities", {})
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         """Plugin dependencies"""
         return self.manifest_data.get("dependencies", [])
 
     @property
-    def entry_points(self) -> Dict[str, str]:
+    def entry_points(self) -> dict[str, str]:
         """Plugin entry points"""
         return self.manifest_data.get("entry_points", {})
 
@@ -140,7 +140,7 @@ class BasePlugin(ABC):
         """Check if plugin is initialized"""
         return self._initialized
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get plugin information"""
         return {
             "name": self.name,

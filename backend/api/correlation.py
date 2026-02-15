@@ -21,12 +21,12 @@ from __future__ import annotations
 import logging
 import uuid
 from contextvars import ContextVar
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import Request
 
 # Context variable for correlation ID in async context
-_correlation_id: ContextVar[Optional[str]] = ContextVar(
+_correlation_id: ContextVar[str | None] = ContextVar(
     "correlation_id", default=None
 )
 
@@ -82,7 +82,7 @@ def get_correlation_id(request: Request) -> str:
     return new_id
 
 
-def get_current_correlation_id() -> Optional[str]:
+def get_current_correlation_id() -> str | None:
     """
     Get the correlation ID from the current async context.
 
@@ -106,7 +106,7 @@ def log_with_correlation(
     log: logging.Logger,
     level: str,
     message: str,
-    correlation_id: Optional[str] = None,
+    correlation_id: str | None = None,
     **extra: Any,
 ) -> None:
     """
@@ -122,7 +122,7 @@ def log_with_correlation(
     cid = correlation_id or get_current_correlation_id()
 
     # Build structured log data
-    log_data: Dict[str, Any] = {"correlation_id": cid}
+    log_data: dict[str, Any] = {"correlation_id": cid}
     log_data.update(extra)
 
     # Format message with correlation context
@@ -137,7 +137,7 @@ def structured_log(
     log: logging.Logger,
     level: str,
     event: str,
-    correlation_id: Optional[str] = None,
+    correlation_id: str | None = None,
     **data: Any,
 ) -> None:
     """
@@ -172,8 +172,8 @@ class CorrelationLoggerAdapter(logging.LoggerAdapter):
     """
 
     def process(
-        self, msg: str, kwargs: Dict[str, Any]
-    ) -> tuple[str, Dict[str, Any]]:
+        self, msg: str, kwargs: dict[str, Any]
+    ) -> tuple[str, dict[str, Any]]:
         """Process log message to include correlation ID."""
         correlation_id = get_current_correlation_id()
 

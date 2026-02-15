@@ -1,16 +1,15 @@
 """
 Tests for datetime utilities.
 """
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend.api.utils.datetime_utils import (
-    utc_now,
-    to_iso8601,
-    to_iso8601_with_micros,
     from_iso8601,
     timestamp_now,
     timestamp_now_with_micros,
+    to_iso8601,
+    to_iso8601_with_micros,
+    utc_now,
 )
 
 
@@ -28,7 +27,7 @@ class TestUtcNow:
         before = datetime.now(timezone.utc)
         result = utc_now()
         after = datetime.now(timezone.utc)
-        
+
         assert before <= result <= after
 
 
@@ -39,7 +38,7 @@ class TestToIso8601:
         """Verify output ends with Z."""
         dt = datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc)
         result = to_iso8601(dt)
-        
+
         assert result.endswith("Z")
         assert result == "2024-01-15T10:30:00Z"
 
@@ -47,7 +46,7 @@ class TestToIso8601:
         """Verify naive datetime is treated as UTC."""
         dt = datetime(2024, 1, 15, 10, 30, 0)  # No timezone
         result = to_iso8601(dt)
-        
+
         assert result == "2024-01-15T10:30:00Z"
 
     def test_converts_non_utc_to_utc(self):
@@ -56,7 +55,7 @@ class TestToIso8601:
         est = timezone(timedelta(hours=-5))
         dt = datetime(2024, 1, 15, 10, 30, 0, tzinfo=est)
         result = to_iso8601(dt)
-        
+
         # 10:30 EST = 15:30 UTC
         assert result == "2024-01-15T15:30:00Z"
 
@@ -72,7 +71,7 @@ class TestToIso8601WithMicros:
         """Verify microseconds are included."""
         dt = datetime(2024, 1, 15, 10, 30, 45, 123456, tzinfo=timezone.utc)
         result = to_iso8601_with_micros(dt)
-        
+
         assert "123456" in result
         assert result == "2024-01-15T10:30:45.123456Z"
 
@@ -87,7 +86,7 @@ class TestFromIso8601:
     def test_parses_z_suffix(self):
         """Verify Z suffix is correctly parsed."""
         result = from_iso8601("2024-01-15T10:30:00Z")
-        
+
         assert result.year == 2024
         assert result.month == 1
         assert result.day == 15
@@ -98,14 +97,14 @@ class TestFromIso8601:
     def test_parses_offset_format(self):
         """Verify +00:00 format is correctly parsed."""
         result = from_iso8601("2024-01-15T10:30:00+00:00")
-        
+
         assert result.year == 2024
         assert result.hour == 10
 
     def test_parses_with_microseconds(self):
         """Verify microseconds are preserved."""
         result = from_iso8601("2024-01-15T10:30:45.123456Z")
-        
+
         assert result.microsecond == 123456
 
     def test_handles_none(self):
@@ -119,7 +118,7 @@ class TestTimestampNow:
     def test_returns_iso8601_string(self):
         """Verify return value is valid ISO 8601."""
         result = timestamp_now()
-        
+
         assert isinstance(result, str)
         assert result.endswith("Z")
         assert "T" in result
@@ -128,7 +127,7 @@ class TestTimestampNow:
         """Verify timestamp can be round-tripped."""
         timestamp = timestamp_now()
         parsed = from_iso8601(timestamp)
-        
+
         assert parsed is not None
         assert parsed.tzinfo is not None
 
@@ -139,7 +138,7 @@ class TestTimestampNowWithMicros:
     def test_includes_microseconds(self):
         """Verify microseconds are included."""
         result = timestamp_now_with_micros()
-        
+
         # Should have microseconds (6 digits after decimal)
         parts = result.split(".")
         assert len(parts) == 2
@@ -154,10 +153,10 @@ class TestRoundTrip:
     def test_round_trip_preserves_datetime(self):
         """Verify datetime survives serialization round-trip."""
         original = datetime(2024, 6, 15, 14, 30, 45, tzinfo=timezone.utc)
-        
+
         serialized = to_iso8601(original)
         parsed = from_iso8601(serialized)
-        
+
         # Should be equal (ignoring microseconds since to_iso8601 drops them)
         assert parsed.year == original.year
         assert parsed.month == original.month
@@ -169,8 +168,8 @@ class TestRoundTrip:
     def test_round_trip_with_micros(self):
         """Verify datetime with microseconds survives round-trip."""
         original = datetime(2024, 6, 15, 14, 30, 45, 123456, tzinfo=timezone.utc)
-        
+
         serialized = to_iso8601_with_micros(original)
         parsed = from_iso8601(serialized)
-        
+
         assert parsed.microsecond == original.microsecond

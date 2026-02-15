@@ -3,16 +3,18 @@ Phase 6: Workflow Automation
 Task 6.4: Workflow automation engine for batch processing.
 """
 
+from __future__ import annotations
+
 import asyncio
+import json
+import logging
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
-import json
-import logging
-import uuid
+from typing import Any
 
 from backend.core.security.expression_evaluator import evaluate_condition
 
@@ -48,7 +50,7 @@ class StepResult:
     """Result of a workflow step."""
     success: bool
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     duration_seconds: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -64,7 +66,7 @@ class WorkflowStep:
     outputs: dict[str, str] = field(default_factory=dict)  # variable mappings
     on_error: str = "fail"  # fail, skip, retry
     retry_count: int = 0
-    condition: Optional[str] = None  # expression to evaluate
+    condition: str | None = None  # expression to evaluate
 
 
 @dataclass
@@ -90,20 +92,20 @@ class WorkflowExecution:
     current_step_index: int = 0
     variables: dict[str, Any] = field(default_factory=dict)
     step_results: list[StepResult] = field(default_factory=list)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error: str | None = None
 
 
 class StepExecutor(ABC):
     """Abstract base class for step executors."""
-    
+
     @property
     @abstractmethod
     def step_type(self) -> StepType:
         """Get the step type this executor handles."""
         pass
-    
+
     @abstractmethod
     async def execute(
         self,
@@ -116,11 +118,11 @@ class StepExecutor(ABC):
 
 class SynthesizeStepExecutor(StepExecutor):
     """Executor for synthesis steps."""
-    
+
     @property
     def step_type(self) -> StepType:
         return StepType.SYNTHESIZE
-    
+
     async def execute(
         self,
         step: WorkflowStep,
@@ -128,27 +130,27 @@ class SynthesizeStepExecutor(StepExecutor):
     ) -> StepResult:
         """Execute synthesis step."""
         start_time = datetime.now()
-        
+
         try:
             text = step.config.get("text", "")
-            voice = step.config.get("voice", "default")
-            engine = step.config.get("engine", "xtts")
-            
+            step.config.get("voice", "default")
+            step.config.get("engine", "xtts")
+
             # Resolve variables
             if text.startswith("$"):
                 text = context.get(text[1:], "")
-            
+
             # Simulate synthesis
             await asyncio.sleep(0.5)
-            
+
             output_path = Path("temp") / f"synthesis_{step.id}.wav"
-            
+
             return StepResult(
                 success=True,
                 output={"audio_path": str(output_path)},
                 duration_seconds=(datetime.now() - start_time).total_seconds()
             )
-            
+
         except Exception as e:
             return StepResult(
                 success=False,
@@ -159,11 +161,11 @@ class SynthesizeStepExecutor(StepExecutor):
 
 class ApplyEffectsStepExecutor(StepExecutor):
     """Executor for applying audio effects."""
-    
+
     @property
     def step_type(self) -> StepType:
         return StepType.APPLY_EFFECTS
-    
+
     async def execute(
         self,
         step: WorkflowStep,
@@ -171,27 +173,27 @@ class ApplyEffectsStepExecutor(StepExecutor):
     ) -> StepResult:
         """Execute effects step."""
         start_time = datetime.now()
-        
+
         try:
             audio_path = step.config.get("audio_path", "")
             effects = step.config.get("effects", [])
-            
+
             # Resolve variables
             if audio_path.startswith("$"):
                 audio_path = context.get(audio_path[1:], "")
-            
+
             # Simulate effects processing
             await asyncio.sleep(0.3)
-            
+
             output_path = Path("temp") / f"effects_{step.id}.wav"
-            
+
             return StepResult(
                 success=True,
                 output={"audio_path": str(output_path)},
                 metadata={"effects_applied": effects},
                 duration_seconds=(datetime.now() - start_time).total_seconds()
             )
-            
+
         except Exception as e:
             return StepResult(
                 success=False,
@@ -202,11 +204,11 @@ class ApplyEffectsStepExecutor(StepExecutor):
 
 class ExportStepExecutor(StepExecutor):
     """Executor for export steps."""
-    
+
     @property
     def step_type(self) -> StepType:
         return StepType.EXPORT
-    
+
     async def execute(
         self,
         step: WorkflowStep,
@@ -214,27 +216,27 @@ class ExportStepExecutor(StepExecutor):
     ) -> StepResult:
         """Execute export step."""
         start_time = datetime.now()
-        
+
         try:
             audio_path = step.config.get("audio_path", "")
             output_format = step.config.get("format", "wav")
             output_dir = step.config.get("output_dir", "output")
-            
+
             # Resolve variables
             if audio_path.startswith("$"):
                 audio_path = context.get(audio_path[1:], "")
-            
+
             # Simulate export
             await asyncio.sleep(0.2)
-            
+
             output_path = Path(output_dir) / f"export_{step.id}.{output_format}"
-            
+
             return StepResult(
                 success=True,
                 output={"output_path": str(output_path)},
                 duration_seconds=(datetime.now() - start_time).total_seconds()
             )
-            
+
         except Exception as e:
             return StepResult(
                 success=False,
@@ -245,54 +247,54 @@ class ExportStepExecutor(StepExecutor):
 
 class WorkflowEngine:
     """Engine for executing workflows."""
-    
+
     def __init__(self):
         self._executors: dict[StepType, StepExecutor] = {}
         self._workflows: dict[str, WorkflowDefinition] = {}
         self._executions: dict[str, WorkflowExecution] = {}
         self._running: dict[str, asyncio.Task] = {}
-        
+
         # Register default executors
         self.register_executor(SynthesizeStepExecutor())
         self.register_executor(ApplyEffectsStepExecutor())
         self.register_executor(ExportStepExecutor())
-    
+
     def register_executor(self, executor: StepExecutor) -> None:
         """Register a step executor."""
         self._executors[executor.step_type] = executor
-    
+
     def register_workflow(self, workflow: WorkflowDefinition) -> None:
         """Register a workflow definition."""
         self._workflows[workflow.id] = workflow
-    
-    def get_workflow(self, workflow_id: str) -> Optional[WorkflowDefinition]:
+
+    def get_workflow(self, workflow_id: str) -> WorkflowDefinition | None:
         """Get a workflow by ID."""
         return self._workflows.get(workflow_id)
-    
+
     async def start_workflow(
         self,
         workflow_id: str,
-        variables: Optional[dict[str, Any]] = None
+        variables: dict[str, Any] | None = None
     ) -> str:
         """Start a workflow execution."""
         workflow = self._workflows.get(workflow_id)
         if not workflow:
             raise ValueError(f"Workflow not found: {workflow_id}")
-        
+
         # Create execution
         execution = WorkflowExecution(
             workflow_id=workflow_id,
             variables={**workflow.variables, **(variables or {})},
         )
-        
+
         self._executions[execution.id] = execution
-        
+
         # Start execution task
         task = asyncio.create_task(self._execute_workflow(execution, workflow))
         self._running[execution.id] = task
-        
+
         return execution.id
-    
+
     async def pause_workflow(self, execution_id: str) -> bool:
         """Pause a workflow execution."""
         execution = self._executions.get(execution_id)
@@ -300,7 +302,7 @@ class WorkflowEngine:
             execution.status = WorkflowStatus.PAUSED
             return True
         return False
-    
+
     async def resume_workflow(self, execution_id: str) -> bool:
         """Resume a paused workflow execution."""
         execution = self._executions.get(execution_id)
@@ -312,24 +314,24 @@ class WorkflowEngine:
                 self._running[execution_id] = task
                 return True
         return False
-    
+
     async def cancel_workflow(self, execution_id: str) -> bool:
         """Cancel a workflow execution."""
         if execution_id in self._running:
             self._running[execution_id].cancel()
             del self._running[execution_id]
-        
+
         execution = self._executions.get(execution_id)
         if execution:
             execution.status = WorkflowStatus.CANCELLED
             return True
-        
+
         return False
-    
-    def get_execution(self, execution_id: str) -> Optional[WorkflowExecution]:
+
+    def get_execution(self, execution_id: str) -> WorkflowExecution | None:
         """Get an execution by ID."""
         return self._executions.get(execution_id)
-    
+
     async def _execute_workflow(
         self,
         execution: WorkflowExecution,
@@ -338,35 +340,35 @@ class WorkflowEngine:
         """Execute a workflow."""
         execution.status = WorkflowStatus.RUNNING
         execution.started_at = datetime.now()
-        
+
         try:
             while execution.current_step_index < len(workflow.steps):
                 # Check for pause/cancel
                 if execution.status == WorkflowStatus.PAUSED:
                     return
-                
+
                 if execution.status == WorkflowStatus.CANCELLED:
                     return
-                
+
                 step = workflow.steps[execution.current_step_index]
-                
+
                 # Check condition
                 if step.condition:
                     if not self._evaluate_condition(step.condition, execution.variables):
                         execution.current_step_index += 1
                         continue
-                
+
                 # Execute step
                 result = await self._execute_step(step, execution.variables)
                 execution.step_results.append(result)
-                
+
                 if result.success:
                     # Update variables from outputs
                     if result.output:
                         for key, var_name in step.outputs.items():
                             if key in result.output:
                                 execution.variables[var_name] = result.output[key]
-                    
+
                     execution.current_step_index += 1
                 else:
                     if step.on_error == "skip":
@@ -378,9 +380,9 @@ class WorkflowEngine:
                         execution.status = WorkflowStatus.FAILED
                         execution.error = result.error
                         return
-            
+
             execution.status = WorkflowStatus.COMPLETED
-            
+
         except asyncio.CancelledError:
             execution.status = WorkflowStatus.CANCELLED
         except Exception as e:
@@ -391,7 +393,7 @@ class WorkflowEngine:
             execution.completed_at = datetime.now()
             if execution.id in self._running:
                 del self._running[execution.id]
-    
+
     async def _execute_step(
         self,
         step: WorkflowStep,
@@ -404,13 +406,13 @@ class WorkflowEngine:
                 success=False,
                 error=f"No executor for step type: {step.step_type}"
             )
-        
+
         # Resolve input variables
         resolved_config = step.config.copy()
         for key, var_name in step.inputs.items():
             if var_name in context:
                 resolved_config[key] = context[var_name]
-        
+
         step_with_resolved = WorkflowStep(
             id=step.id,
             name=step.name,
@@ -421,13 +423,13 @@ class WorkflowEngine:
             on_error=step.on_error,
             retry_count=step.retry_count,
         )
-        
+
         return await executor.execute(step_with_resolved, context)
-    
+
     def _evaluate_condition(self, condition: str, variables: dict[str, Any]) -> bool:
         """Evaluate a condition expression using safe evaluator."""
         return evaluate_condition(condition, variables, default=False)
-    
+
     def save_workflow(self, workflow: WorkflowDefinition, path: Path) -> None:
         """Save a workflow to file."""
         data = {
@@ -452,13 +454,13 @@ class WorkflowEngine:
             "variables": workflow.variables,
             "triggers": workflow.triggers,
         }
-        
+
         path.write_text(json.dumps(data, indent=2))
-    
+
     def load_workflow(self, path: Path) -> WorkflowDefinition:
         """Load a workflow from file."""
         data = json.loads(path.read_text())
-        
+
         steps = [
             WorkflowStep(
                 id=s["id"],
@@ -473,7 +475,7 @@ class WorkflowEngine:
             )
             for s in data["steps"]
         ]
-        
+
         return WorkflowDefinition(
             id=data["id"],
             name=data["name"],

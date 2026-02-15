@@ -9,18 +9,19 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=2, max_memory_mb=1024.0)  # 1GB max
     HAS_MODEL_CACHE = True
@@ -62,7 +63,7 @@ def _get_cached_speaker_encoder_model(backend: str, device: str):
     return None
 
 
-def _cache_speaker_encoder_model(backend: str, device: str, encoder_data: Dict):
+def _cache_speaker_encoder_model(backend: str, device: str, encoder_data: dict):
     """Cache Speaker Encoder model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -186,7 +187,7 @@ class SpeakerEncoderEngine(EngineProtocol):
     def __init__(
         self,
         backend: str = "resemblyzer",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 1000,
@@ -326,12 +327,12 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def extract_embedding(
         self,
-        audio: Union[str, Path, np.ndarray],
-        sample_rate: Optional[int] = None,
+        audio: str | Path | np.ndarray,
+        sample_rate: int | None = None,
         use_cache: bool = True,
         normalize: bool = True,
         extract_features: bool = True,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Extract speaker embedding from audio.
 
@@ -344,9 +345,8 @@ class SpeakerEncoderEngine(EngineProtocol):
             Speaker embedding vector or None if extraction failed
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return None
+        if not self._initialized and not self._load_model():
+            return None
 
         try:
             # Generate cache key
@@ -432,7 +432,7 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def _extract_resemblyzer_embedding(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """Extract embedding using resemblyzer."""
         try:
             # Preprocess audio (resample to 16kHz if needed)
@@ -464,7 +464,7 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def _extract_speechbrain_embedding(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """Extract embedding using speechbrain."""
         try:
             # Resample to 16kHz if needed
@@ -547,7 +547,7 @@ class SpeakerEncoderEngine(EngineProtocol):
 
             # Prosodic features (pitch/F0)
             try:
-                f0, voiced_flag, voiced_probs = librosa.pyin(
+                f0, voiced_flag, _voiced_probs = librosa.pyin(
                     audio, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
                 )
                 f0_clean = f0[~np.isnan(f0)]
@@ -581,11 +581,11 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def compare_speakers(
         self,
-        audio1: Union[str, Path, np.ndarray],
-        audio2: Union[str, Path, np.ndarray],
-        sample_rate1: Optional[int] = None,
-        sample_rate2: Optional[int] = None,
-    ) -> Optional[float]:
+        audio1: str | Path | np.ndarray,
+        audio2: str | Path | np.ndarray,
+        sample_rate1: int | None = None,
+        sample_rate2: int | None = None,
+    ) -> float | None:
         """
         Compare similarity between two speakers.
 
@@ -636,10 +636,10 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def extract_batch_embeddings(
         self,
-        audio_list: List[Union[str, Path, np.ndarray]],
-        sample_rates: Optional[List[int]] = None,
-        batch_size: Optional[int] = None,
-    ) -> List[Optional[np.ndarray]]:
+        audio_list: list[str | Path | np.ndarray],
+        sample_rates: list[int] | None = None,
+        batch_size: int | None = None,
+    ) -> list[np.ndarray | None]:
         """
         Extract embeddings for multiple audio files with optimized batch processing.
 
@@ -652,9 +652,8 @@ class SpeakerEncoderEngine(EngineProtocol):
             List of embeddings (None for failed extractions)
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(audio_list)
+        if not self._initialized and not self._load_model():
+            return [None] * len(audio_list)
 
         if sample_rates is None:
             sample_rates = [None] * len(audio_list)
@@ -674,7 +673,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             embeddings = list(
-                executor.map(extract_single, zip(audio_list, sample_rates))
+                executor.map(extract_single, zip(audio_list, sample_rates, strict=False))
             )
 
         # Clear GPU cache periodically
@@ -689,11 +688,11 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def find_similar_speakers(
         self,
-        reference_audio: Union[str, Path, np.ndarray],
-        candidate_audio_list: List[Union[str, Path, np.ndarray]],
+        reference_audio: str | Path | np.ndarray,
+        candidate_audio_list: list[str | Path | np.ndarray],
         threshold: float = 0.7,
-        sample_rate: Optional[int] = None,
-    ) -> List[Tuple[int, float]]:
+        sample_rate: int | None = None,
+    ) -> list[tuple[int, float]]:
         """
         Find speakers similar to reference.
 
@@ -740,7 +739,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.error(f"Find similar speakers failed: {e}")
             return []
 
-    def _get_file_hash(self, file_path: Union[str, Path]) -> str:
+    def _get_file_hash(self, file_path: str | Path) -> str:
         """Generate hash for file (based on path and mtime)."""
         try:
             path = Path(file_path)
@@ -786,7 +785,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         self._embedding_cache.clear()
         logger.info("Embedding cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._embedding_cache),
@@ -804,7 +803,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         self.enable_model_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not HAS_TORCH or not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
@@ -833,11 +832,11 @@ class SpeakerEncoderEngine(EngineProtocol):
 
     def visualize_embeddings(
         self,
-        embeddings: List[np.ndarray],
+        embeddings: list[np.ndarray],
         n_components: int = 2,
         n_neighbors: int = 15,
         min_dist: float = 0.1,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Visualize embeddings using UMAP dimensionality reduction.
 
@@ -894,7 +893,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.error(f"Failed to visualize embeddings with UMAP: {e}")
             return None
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -913,7 +912,7 @@ class SpeakerEncoderEngine(EngineProtocol):
 
 def create_speaker_encoder_engine(
     backend: str = "resemblyzer",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
     enable_cache: bool = True,
 ) -> SpeakerEncoderEngine:

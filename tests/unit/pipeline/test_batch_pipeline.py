@@ -2,8 +2,9 @@
 Unit tests for BatchPipeline (Phase 9.2.3)
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.core.pipeline.batch_pipeline import BatchPipeline, BatchResult
 

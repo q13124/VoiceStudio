@@ -1,6 +1,6 @@
 # VoiceStudio Future Work Registry
 
-> **Last Updated**: 2026-02-12  
+> **Last Updated**: 2026-02-13 (Production Completion Audit)  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Document deferred items, enhancement proposals, and future work for VoiceStudio
 
@@ -65,9 +65,19 @@ This document tracks items that are intentionally deferred to future development
 | Feature | Description | Complexity | Notes |
 |---------|-------------|------------|-------|
 | ~~Bark Integration~~ | ~~Add Bark TTS engine with emotion control~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - Added SUPPORTED_EMOTIONS, EMOTION_PROMPTS, emotion parameter, get_supported_emotions() |
-| Tacotron 2 | Classic TTS model integration | Low | Legacy, lower priority |
-| RVC v2 | Voice conversion model upgrade | Medium | Awaiting stable release |
-| Streaming Synthesis | Real-time audio streaming | High | Requires architecture changes |
+| ~~Tacotron 2~~ | ~~Classic TTS model integration~~ | ~~Low~~ | **COMPLETE** — `tacotron2_engine.py` with synthesize + synthesize_stream |
+| ~~RVC v2~~ | ~~Voice conversion model upgrade~~ | ~~Medium~~ | **COMPLETE** — `engines/audio/rvc_v2/engine.manifest.json` + RVCEngine supports v2 |
+| ~~Streaming Synthesis~~ | ~~Real-time audio streaming~~ | ~~High~~ | **COMPLETE** — `streaming_engine.py` with synthesize_stream + async streaming |
+
+### External Tool Integrations (v1.1+ Roadmap)
+
+| Feature | Description | Complexity | Target | Notes |
+|---------|-------------|------------|--------|-------|
+| ~~REAPER Project Import~~ | ~~Parse RPP files to extract audio tracks, markers, tempo~~ | ~~Medium~~ | v1.1+ | **IMPLEMENTED** (2026-02-12) – `daw_integration.py` ReaperIntegration.import_from_daw, RPP parser, tests in test_daw_integration.py |
+| ~~Audacity Project Import~~ | ~~Parse AUP/AUP3 files to extract audio, labels~~ | ~~Medium~~ | v1.1+ | **IMPLEMENTED** (2026-02-12) – AudacityIntegration.import_from_daw, AUP3/AUP parsing, sampleblock export; tests in test_daw_integration.py |
+| ~~DAW Export Presets~~ | ~~Pre-configured export settings per DAW~~ | ~~Low~~ | ~~v1.1+~~ | **IMPLEMENTED** (2026-02-12) – TD-038: DAW_EXPORT_PRESETS, GET /api/integrations/daw/presets, export accepts preset_id |
+
+**Current State**: `/api/integrations/daw/*` endpoints work for basic export. REAPER (RPP) and Audacity (AUP3/AUP) project import are implemented in `backend/integrations/external/daw_integration.py`; use `open_project()` then `import_from_daw(project, track_index)` to get audio paths.
 
 ### UI Enhancements
 
@@ -78,29 +88,37 @@ This document tracks items that are intentionally deferred to future development
 | ~~Plugin Gallery~~ | ~~In-app engine/plugin browser~~ | ~~High~~ | **COMPLETE** (2026-02-11) - IPluginGateway, PluginGateway, PluginGalleryViewModel, PluginCard, PluginGalleryView, PluginDetailView panels registered |
 | ~~Touch Optimization~~ | ~~Tablet-friendly UI adjustments~~ | ~~Medium~~ | **COMPLETE** (2026-02-09) - 44px targets, Density.Touch.xaml, Touch density mode |
 
-### Phase 0 Control Stubs (Deferred to v1.1+)
+### Phase 0 Controls (Implemented)
 
-These controls were stubbed during Phase 0 for XAML compiler stability. They maintain binding surface compatibility but lack full rendering/interaction.
+All seven controls now use WinUI Canvas/Path/Shapes for rendering (no Win2D). Binding surface and public API unchanged.
 
-| Control | File | Purpose | Target |
+| Control | File | Purpose | Status |
 |---------|------|---------|--------|
-| MacroNodeEditorControl | `Controls/MacroNodeEditorControl.xaml.cs` | Node-based visual macro programming | v1.1+ |
-| LoudnessChartControl | `Controls/LoudnessChartControl.xaml.cs` | Real-time loudness metering | v1.1+ |
-| TrainingProgressChart | `Controls/TrainingProgressChart.xaml.cs` | Training loss/quality visualization | v1.1+ |
-| RadarChartControl | `Controls/RadarChartControl.xaml.cs` | Multi-axis quality comparison | v1.1+ |
-| AutomationCurveEditorControl | `Controls/AutomationCurveEditorControl.xaml.cs` | Single automation curve editing | v1.1+ |
-| AutomationCurvesEditorControl | `Controls/AutomationCurvesEditorControl.xaml.cs` | Multi-curve editing | v1.1+ |
-| EnsembleTimelineControl | `Controls/EnsembleTimelineControl.xaml.cs` | Ensemble timeline visualization | v1.1+ |
+| MacroNodeEditorControl | `Controls/MacroNodeEditorControl.xaml.cs` | Node-based visual macro programming | Implemented |
+| LoudnessChartControl | `Controls/LoudnessChartControl.xaml.cs` | Real-time loudness metering | Implemented |
+| TrainingProgressChart | `Controls/TrainingProgressChart.xaml.cs` | Training loss/quality visualization | Implemented |
+| RadarChartControl | `Controls/RadarChartControl.xaml.cs` | Multi-axis quality comparison | Implemented |
+| AutomationCurveEditorControl | `Controls/AutomationCurveEditorControl.xaml.cs` | Single automation curve editing | Implemented |
+| AutomationCurvesEditorControl | `Controls/AutomationCurvesEditorControl.xaml.cs` | Multi-curve editing | Implemented |
+| EnsembleTimelineControl | `Controls/EnsembleTimelineControl.xaml.cs` | Ensemble timeline visualization | Implemented |
 
-**Implementation approach**: Win2D or Community Toolkit controls for canvas-based rendering.
+### ~~Coming Soon APIs~~ (Resolved)
+
+These endpoints have been resolved as of 2026-02-13 (Production Completion Plan Phase 1):
+
+| Endpoint | Feature | Resolution |
+|----------|---------|------------|
+| `/api/integrations/sync/start` | Cloud Sync | Returns `local_only` — local-first policy (ADR-010). Use `/api/backup` for project transfer. |
+| `/api/integrations/workflows/start` | Workflow Automation | **IMPLEMENTED** — dispatches to job queue; supports batch_synthesis and custom workflows. |
+| `/api/integrations/batch/start` | Batch Processing | **IMPLEMENTED** — creates queued jobs with progress tracking via `/api/jobs/{id}`. |
 
 ### Infrastructure
 
 | Feature | Description | Complexity | Notes |
 |---------|-------------|------------|-------|
 | Cross-Platform | macOS/Linux via Avalonia/MAUI | Very High | Major architecture change |
-| Cloud Sync | Optional cloud backup for profiles | Medium | Requires server infrastructure |
-| CI/CD Pipeline | Automated build and deployment | Medium | DevOps enhancement |
+| ~~Cloud Sync~~ | ~~Optional cloud backup for profiles~~ | ~~Medium~~ | Moved to **Coming Soon APIs (v1.2)** |
+| ~~CI/CD Pipeline~~ | ~~Automated build and deployment~~ | ~~Medium~~ | **COMPLETE** — 7 workflows in `.github/workflows/` (ci, build, test, release, security-monitor, sbom, governance) |
 | ~~Telemetry (Opt-in)~~ | ~~Usage analytics for improvement~~ | ~~Low~~ | **COMPLETE** (2026-02-09) - AnalyticsService consent, TelemetryConsentDialog, SettingsView privacy section, PRIVACY_POLICY.md |
 
 ### MCP Integration Roadmap (Future)

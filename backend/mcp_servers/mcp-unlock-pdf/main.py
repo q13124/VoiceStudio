@@ -1,10 +1,12 @@
-from mcp.server.fastmcp import FastMCP
+
+from __future__ import annotations
 import os
+
 import PyPDF2
-from typing import Dict, List, Optional
+from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP(
-    "PDF Reader", 
+    "PDF Reader",
     dependencies=["PyPDF2>=3.0.0"]
 )
 
@@ -15,17 +17,17 @@ mcp = FastMCP(
 @mcp.tool()
 def read_pdf(
     file_path: str,
-    password: str = None,
-    pages: Optional[List[int]] = None
-) -> Dict:
+    password: str | None = None,
+    pages: list[int] | None = None
+) -> dict:
     """
     Read a PDF file and extract its text. Works with both protected and unprotected PDFs.
-    
+
     Args:
         file_path: Path to the PDF file
         password: Optional password to decrypt the PDF if it's protected
         pages: Optional list of specific page numbers to extract (1-indexed). If None, all pages are extracted.
-        
+
     Returns:
         Dictionary containing the PDF content by page and metadata
     """
@@ -35,14 +37,14 @@ def read_pdf(
             "success": False,
             "error": f"File not found: {file_path}"
         }
-    
+
     try:
         with open(file_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
-            
+
             # Check if PDF is encrypted
             is_encrypted = pdf_reader.is_encrypted
-            
+
             # Try to decrypt if necessary
             decrypt_success = True
             if is_encrypted:
@@ -54,7 +56,7 @@ def read_pdf(
                         "password_required": True
                     }
                 decrypt_success = pdf_reader.decrypt(password)
-            
+
             # Return error if decryption failed
             if is_encrypted and not decrypt_success:
                 return {
@@ -63,7 +65,7 @@ def read_pdf(
                     "is_encrypted": True,
                     "password_required": True
                 }
-            
+
             # Extract metadata
             metadata = {}
             if pdf_reader.metadata:
@@ -72,20 +74,20 @@ def read_pdf(
                         metadata[key[1:]] = value
                     else:
                         metadata[key] = value
-            
+
             # Determine which pages to extract
             total_pages = len(pdf_reader.pages)
             pages_to_extract = pages or list(range(1, total_pages + 1))
-            
+
             # Convert to 0-indexed for internal use
             zero_indexed_pages = [p - 1 for p in pages_to_extract if 1 <= p <= total_pages]
-            
+
             # Extract content from requested pages
             content = {}
             for page_number in zero_indexed_pages:
                 page = pdf_reader.pages[page_number]
                 content[page_number + 1] = page.extract_text()
-            
+
             return {
                 "success": True,
                 "is_encrypted": is_encrypted,
@@ -94,11 +96,11 @@ def read_pdf(
                 "metadata": metadata,
                 "content": content
             }
-    
+
     except Exception as e:
         return {
             "success": False,
-            "error": f"Error processing PDF: {str(e)}"
+            "error": f"Error processing PDF: {e!s}"
         }
 
 @mcp.resource("pdf://{file_path}")
@@ -106,76 +108,76 @@ def pdf_resource_no_password(file_path: str) -> str:
     """
     Read a PDF file and format its content as a resource.
     For unprotected PDFs.
-    
+
     Args:
         file_path: Path to the PDF file
     """
     # Replace URL-encoded characters in file path
     file_path = file_path.replace('%20', ' ')
-    
+
     result = read_pdf(file_path)
-    
+
     if not result["success"]:
         if result.get("password_required", False):
             return f"# Password Required\n\nThis PDF is protected with a password. Please use the PDF resource with a password parameter: `pdf://{file_path}/YOUR_PASSWORD`"
         return f"# Error Reading PDF\n\n{result['error']}"
-    
+
     # Format the PDF content as a Markdown document
     output = f"# PDF Content: {os.path.basename(file_path)}\n\n"
-    
+
     if result["metadata"]:
         output += "## Metadata\n\n"
         for key, value in result["metadata"].items():
             output += f"- **{key}**: {value}\n"
         output += "\n"
-    
+
     output += f"## Content ({result['total_pages']} pages total)\n\n"
-    
+
     for page_num, page_text in result["content"].items():
         output += f"### Page {page_num}\n\n"
         output += page_text + "\n\n"
-    
+
     return output
 
 @mcp.resource("pdf://{file_path}/{password}")
 def pdf_resource_with_password(file_path: str, password: str) -> str:
     """
     Read a password-protected PDF file and format its content as a resource.
-    
+
     Args:
         file_path: Path to the PDF file
         password: Password to decrypt the PDF
     """
     # Replace URL-encoded characters in file path
     file_path = file_path.replace('%20', ' ')
-    
+
     result = read_pdf(file_path, password)
-    
+
     if not result["success"]:
         return f"# Error Reading PDF\n\n{result['error']}"
-    
+
     # Format the PDF content as a Markdown document
     output = f"# PDF Content: {os.path.basename(file_path)}\n\n"
-    
+
     if result["metadata"]:
         output += "## Metadata\n\n"
         for key, value in result["metadata"].items():
             output += f"- **{key}**: {value}\n"
         output += "\n"
-    
+
     output += f"## Content ({result['total_pages']} pages total)\n\n"
-    
+
     for page_num, page_text in result["content"].items():
         output += f"### Page {page_num}\n\n"
         output += page_text + "\n\n"
-    
+
     return output
 
 @mcp.prompt()
 def pdf_reader_prompt(file_path: str = "") -> str:
     """
     Create a prompt for reading and summarizing a PDF file.
-    
+
     Args:
         file_path: Path to the PDF file
     """

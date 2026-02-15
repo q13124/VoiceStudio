@@ -5,13 +5,16 @@ Endpoints for editing audio by editing its transcript.
 Game-changing feature that dramatically speeds up voiceover revisions.
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
@@ -19,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/edit", tags=["text-speech-editor"])
 
 # In-memory storage for edit sessions (replace with database in production)
-_edit_sessions: Dict[str, "EditSession"] = {}
+_edit_sessions: dict[str, "EditSession"] = {}
 
 
 class WordAlignment(BaseModel):
@@ -37,7 +40,7 @@ class TranscriptSegment(BaseModel):
     text: str
     start_time: float
     end_time: float
-    words: List[WordAlignment]
+    words: list[WordAlignment]
 
 
 class EditOperation(BaseModel):
@@ -45,9 +48,9 @@ class EditOperation(BaseModel):
 
     operation_id: str
     operation_type: str  # delete, insert, replace
-    segment_index: Optional[int] = None
-    word_index: Optional[int] = None
-    new_text: Optional[str] = None
+    segment_index: int | None = None
+    word_index: int | None = None
+    new_text: str | None = None
     timestamp: float
 
 
@@ -58,8 +61,8 @@ class EditSession(BaseModel):
     audio_id: str
     original_transcript: str
     edited_transcript: str
-    segments: List[TranscriptSegment]
-    operations: List[EditOperation]
+    segments: list[TranscriptSegment]
+    operations: list[EditOperation]
     created_at: str
     updated_at: str
 
@@ -75,7 +78,7 @@ class AlignRequest(BaseModel):
 class AlignResponse(BaseModel):
     """Response with aligned transcript segments."""
 
-    segments: List[TranscriptSegment]
+    segments: list[TranscriptSegment]
     alignment_confidence: float
 
 
@@ -83,8 +86,8 @@ class MergeRequest(BaseModel):
     """Request to merge original and synthesized segments."""
 
     session_id: str
-    original_segments: List[Dict]
-    synthesized_segments: List[Dict]
+    original_segments: list[dict]
+    synthesized_segments: list[dict]
     crossfade_duration: float = 0.05
 
 
@@ -100,7 +103,7 @@ class RemoveFillerWordsRequest(BaseModel):
     """Request to remove filler words."""
 
     session_id: str
-    filler_words: List[str] = ["um", "uh", "er", "ah", "like", "you know"]
+    filler_words: list[str] = ["um", "uh", "er", "ah", "like", "you know"]
 
 
 class RemoveFillerWordsResponse(BaseModel):
@@ -108,7 +111,7 @@ class RemoveFillerWordsResponse(BaseModel):
 
     updated_transcript: str
     removed_count: int
-    removed_words: List[str]
+    removed_words: list[str]
 
 
 class InsertTextRequest(BaseModel):
@@ -128,7 +131,7 @@ class InsertTextResponse(BaseModel):
     inserted_audio_id: str
     inserted_audio_url: str
     duration: float
-    new_segments: List[TranscriptSegment]
+    new_segments: list[TranscriptSegment]
 
 
 class ReplaceWordRequest(BaseModel):
@@ -149,14 +152,14 @@ class ReplaceWordResponse(BaseModel):
     replaced_audio_id: str
     replaced_audio_url: str
     duration: float
-    updated_segments: List[TranscriptSegment]
+    updated_segments: list[TranscriptSegment]
 
 
 class ApplyEditsRequest(BaseModel):
     """Request to apply all edits."""
 
     session_id: str
-    output_name: Optional[str] = None
+    output_name: str | None = None
 
 
 class ApplyEditsResponse(BaseModel):
@@ -310,7 +313,7 @@ async def align_transcript(request: AlignRequest):
         logger.error(f"Failed to align transcript: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to align transcript: {str(e)}",
+            detail=f"Failed to align transcript: {e!s}",
         ) from e
 
 
@@ -348,7 +351,7 @@ async def merge_segments(request: MergeRequest):
         # Sort by start time
         all_segments.sort(key=lambda x: x[1].get("start_time", 0.0))
 
-        for seg_type, seg in all_segments:
+        for _seg_type, seg in all_segments:
             audio_id = seg.get("audio_id")
             if not audio_id or audio_id not in _audio_storage:
                 continue
@@ -427,7 +430,7 @@ async def merge_segments(request: MergeRequest):
         logger.error(f"Failed to merge segments: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to merge segments: {str(e)}",
+            detail=f"Failed to merge segments: {e!s}",
         ) from e
 
 
@@ -474,7 +477,7 @@ async def remove_filler_words(request: RemoveFillerWordsRequest):
         logger.error(f"Failed to remove filler words: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to remove filler words: {str(e)}",
+            detail=f"Failed to remove filler words: {e!s}",
         ) from e
 
 
@@ -615,10 +618,8 @@ async def insert_text(request: InsertTextRequest):
         except Exception:
             # Clean up temp file on error
             if os.path.exists(output_path):
-                try:
+                with contextlib.suppress(OSError):
                     os.remove(output_path)
-                except OSError:
-                    ...
             raise
     except HTTPException:
         raise
@@ -626,7 +627,7 @@ async def insert_text(request: InsertTextRequest):
         logger.error(f"Failed to insert text: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to insert text: {str(e)}",
+            detail=f"Failed to insert text: {e!s}",
         ) from e
 
 
@@ -771,10 +772,8 @@ async def replace_word(request: ReplaceWordRequest):
         except Exception:
             # Clean up temp file on error
             if os.path.exists(output_path):
-                try:
+                with contextlib.suppress(OSError):
                     os.remove(output_path)
-                except OSError:
-                    ...
             raise
     except HTTPException:
         raise
@@ -782,7 +781,7 @@ async def replace_word(request: ReplaceWordRequest):
         logger.error(f"Failed to replace word: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to replace word: {str(e)}",
+            detail=f"Failed to replace word: {e!s}",
         ) from e
 
 
@@ -831,7 +830,7 @@ async def apply_edits(request: ApplyEditsRequest):
         # Sort segments by start time
         sorted_segments = sorted(session.segments, key=lambda s: s.start_time)
 
-        for i, segment in enumerate(sorted_segments):
+        for _i, segment in enumerate(sorted_segments):
             # Check if this segment has synthesized audio (from insert/replace operations)
             # For now, we'll use original audio for segments that weren't edited
             # In a full implementation, we'd track which segments have synthesized audio
@@ -914,7 +913,7 @@ async def apply_edits(request: ApplyEditsRequest):
         logger.error(f"Failed to apply edits: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to apply edits: {str(e)}",
+            detail=f"Failed to apply edits: {e!s}",
         ) from e
 
 
@@ -943,7 +942,7 @@ async def create_edit_session(audio_id: str, transcript: str):
         logger.error(f"Failed to create edit session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create edit session: {str(e)}",
+            detail=f"Failed to create edit session: {e!s}",
         ) from e
 
 
@@ -1001,7 +1000,7 @@ async def get_edit_session(session_id: str):
         logger.error(f"Failed to get edit session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get edit session: {str(e)}",
+            detail=f"Failed to get edit session: {e!s}",
         ) from e
 
 
@@ -1010,28 +1009,28 @@ async def get_edit_session(session_id: str):
 
 class SessionCreateRequest(BaseModel):
     """Request to create an edit session."""
-    audio_id: Optional[str] = None
-    transcript: Optional[str] = ""
-    name: Optional[str] = None
+    audio_id: str | None = None
+    transcript: str | None = ""
+    name: str | None = None
 
 
 class SessionUpdateRequest(BaseModel):
     """Request to update an edit session."""
-    edited_transcript: Optional[str] = None
-    name: Optional[str] = None
+    edited_transcript: str | None = None
+    name: str | None = None
 
 
 class SynthesizeRequest(BaseModel):
     """Request to synthesize from session."""
-    engine_id: Optional[str] = None
-    voice_id: Optional[str] = None
+    engine_id: str | None = None
+    voice_id: str | None = None
 
 
 @router.get("/sessions")
 async def list_sessions():
     """List all edit sessions."""
     sessions = []
-    for sid, session in _edit_sessions.items():
+    for _sid, session in _edit_sessions.items():
         sessions.append({
             "session_id": session.session_id,
             "audio_id": session.audio_id,

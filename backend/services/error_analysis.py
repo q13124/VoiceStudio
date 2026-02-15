@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -69,11 +69,11 @@ class ErrorEntry:
     message: str
     severity: ErrorSeverity = ErrorSeverity.MEDIUM
     source: str = ""
-    correlation_id: Optional[str] = None
-    stack_trace: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    correlation_id: str | None = None
+    stack_trace: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -87,7 +87,7 @@ class ErrorEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ErrorEntry":
+    def from_dict(cls, data: dict[str, Any]) -> ErrorEntry:
         """Create from dictionary."""
         return cls(
             timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -111,8 +111,8 @@ class ErrorTrend:
     previous_rate: float
     change_percent: float
     total_count: int
-    first_seen: Optional[datetime] = None
-    last_seen: Optional[datetime] = None
+    first_seen: datetime | None = None
+    last_seen: datetime | None = None
 
 
 @dataclass
@@ -125,7 +125,7 @@ class ErrorPattern:
     first_occurrence: datetime
     last_occurrence: datetime
     message_template: str
-    affected_sources: List[str] = field(default_factory=list)
+    affected_sources: list[str] = field(default_factory=list)
     severity: ErrorSeverity = ErrorSeverity.MEDIUM
 
 
@@ -137,11 +137,11 @@ class ErrorSummary:
     total_errors: int
     error_rate_per_hour: float
     unique_error_types: int
-    top_errors: List[Dict[str, Any]]
-    trends: List[ErrorTrend]
-    patterns: List[ErrorPattern]
-    severity_distribution: Dict[str, int]
-    source_distribution: Dict[str, int]
+    top_errors: list[dict[str, Any]]
+    trends: list[ErrorTrend]
+    patterns: list[ErrorPattern]
+    severity_distribution: dict[str, int]
+    source_distribution: dict[str, int]
 
 
 class ErrorAnalysisService:
@@ -151,15 +151,15 @@ class ErrorAnalysisService:
     Thread-safe singleton for consistent error tracking.
     """
 
-    _instance: Optional["ErrorAnalysisService"] = None
+    _instance: ErrorAnalysisService | None = None
     _lock = threading.Lock()
 
-    def __new__(cls) -> "ErrorAnalysisService":
+    def __new__(cls) -> ErrorAnalysisService:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     instance = super().__new__(cls)
-                    instance._errors: List[ErrorEntry] = []
+                    instance._errors: list[ErrorEntry] = []
                     instance._error_lock = threading.Lock()
                     instance._data_dir = ERROR_DATA_DIR
                     instance._init_storage()
@@ -202,9 +202,9 @@ class ErrorAnalysisService:
         message: str,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         source: str = "",
-        correlation_id: Optional[str] = None,
-        stack_trace: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        correlation_id: str | None = None,
+        stack_trace: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ErrorEntry:
         """
         Record a new error occurrence.
@@ -241,10 +241,10 @@ class ErrorAnalysisService:
     def get_errors(
         self,
         window: str = "24h",
-        error_type: Optional[str] = None,
-        severity: Optional[ErrorSeverity] = None,
-        source: Optional[str] = None,
-    ) -> List[ErrorEntry]:
+        error_type: str | None = None,
+        severity: ErrorSeverity | None = None,
+        source: str | None = None,
+    ) -> list[ErrorEntry]:
         """
         Get errors matching filters within time window.
 
@@ -277,7 +277,7 @@ class ErrorAnalysisService:
     def get_error_rate(
         self,
         window: str = "1h",
-        error_type: Optional[str] = None,
+        error_type: str | None = None,
     ) -> float:
         """
         Get error rate (errors per hour) for window.
@@ -370,7 +370,7 @@ class ErrorAnalysisService:
         self,
         window: str = "24h",
         min_occurrences: int = 3,
-    ) -> List[ErrorPattern]:
+    ) -> list[ErrorPattern]:
         """
         Detect recurring error patterns.
 
@@ -384,7 +384,7 @@ class ErrorAnalysisService:
         errors = self.get_errors(window)
 
         # Group by error type
-        by_type: Dict[str, List[ErrorEntry]] = defaultdict(list)
+        by_type: dict[str, list[ErrorEntry]] = defaultdict(list)
         for error in errors:
             by_type[error.error_type].append(error)
 
@@ -393,7 +393,7 @@ class ErrorAnalysisService:
             if len(type_errors) < min_occurrences:
                 continue
 
-            sources = list(set(e.source for e in type_errors if e.source))
+            sources = list({e.source for e in type_errors if e.source})
             severities = [e.severity for e in type_errors]
             most_common_severity = max(
                 set(severities),
@@ -431,7 +431,7 @@ class ErrorAnalysisService:
         hours = duration.total_seconds() / 3600
 
         # Count by type
-        by_type: Dict[str, int] = defaultdict(int)
+        by_type: dict[str, int] = defaultdict(int)
         for error in errors:
             by_type[error.error_type] += 1
 
@@ -442,12 +442,12 @@ class ErrorAnalysisService:
         ]
 
         # Severity distribution
-        severity_dist: Dict[str, int] = defaultdict(int)
+        severity_dist: dict[str, int] = defaultdict(int)
         for error in errors:
             severity_dist[error.severity.name] += 1
 
         # Source distribution
-        source_dist: Dict[str, int] = defaultdict(int)
+        source_dist: dict[str, int] = defaultdict(int)
         for error in errors:
             if error.source:
                 source_dist[error.source] += 1
@@ -473,7 +473,7 @@ class ErrorAnalysisService:
             source_distribution=dict(source_dist),
         )
 
-    def get_impact_score(self, window: str = "24h") -> Dict[str, Any]:
+    def get_impact_score(self, window: str = "24h") -> dict[str, Any]:
         """
         Calculate impact score based on error severity and frequency.
 
@@ -501,7 +501,7 @@ class ErrorAnalysisService:
         impact_score = min(100, (total_weight / max_possible) * 100)
 
         # Breakdown by severity
-        breakdown: Dict[str, Dict[str, Any]] = {}
+        breakdown: dict[str, dict[str, Any]] = {}
         for severity in ErrorSeverity:
             count = sum(1 for e in errors if e.severity == severity)
             weight = count * weights[severity]

@@ -5,7 +5,6 @@ Tests engine configuration functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestEngineConfigClasses:
     def test_engine_config_class_exists(self):
         """Test EngineConfig class exists."""
         if hasattr(config, "EngineConfig"):
-            cls = getattr(config, "EngineConfig")
+            cls = config.EngineConfig
             assert isinstance(cls, type), "EngineConfig should be a class"
 
 

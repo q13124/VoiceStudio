@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PluginState(Enum):
@@ -28,37 +28,37 @@ class PluginState(Enum):
 class PluginMetadata:
     """
     Plugin metadata and configuration.
-    
+
     Describes the plugin's identity, version, and capabilities.
     """
-    
+
     # Identity
     id: str
     name: str
     version: str
-    
+
     # Description
     description: str = ""
     author: str = ""
     website: str = ""
     license: str = ""
-    
+
     # Dependencies
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     python_requires: str = ">=3.10"
-    
+
     # Capabilities
-    capabilities: List[str] = field(default_factory=list)
-    
+    capabilities: list[str] = field(default_factory=list)
+
     # Configuration
-    config_schema: Optional[Dict[str, Any]] = None
-    default_config: Dict[str, Any] = field(default_factory=dict)
-    
+    config_schema: dict[str, Any] | None = None
+    default_config: dict[str, Any] = field(default_factory=dict)
+
     # Resource requirements
     requires_gpu: bool = False
     min_memory_mb: int = 0
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -76,9 +76,9 @@ class PluginMetadata:
             "requires_gpu": self.requires_gpu,
             "min_memory_mb": self.min_memory_mb,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PluginMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> PluginMetadata:
         """Create from dictionary."""
         return cls(
             id=data["id"],
@@ -101,120 +101,120 @@ class PluginMetadata:
 class Plugin(ABC):
     """
     Base class for all plugins.
-    
+
     Plugins extend VoiceStudio's capabilities by providing
     new engines, effects, or integrations.
     """
-    
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize plugin.
-        
+
         Args:
             config: Plugin configuration
         """
         self._config = config or {}
         self._state = PluginState.DISCOVERED
-        self._error: Optional[str] = None
-        self._loaded_at: Optional[datetime] = None
-    
+        self._error: str | None = None
+        self._loaded_at: datetime | None = None
+
     @property
     @abstractmethod
     def metadata(self) -> PluginMetadata:
         """Return plugin metadata."""
         pass
-    
+
     @property
     def state(self) -> PluginState:
         """Get current plugin state."""
         return self._state
-    
+
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         """Get plugin configuration."""
         return self._config
-    
+
     @property
-    def error(self) -> Optional[str]:
+    def error(self) -> str | None:
         """Get error message if in error state."""
         return self._error
-    
+
     async def load(self) -> bool:
         """
         Load the plugin.
-        
+
         Called when the plugin is first loaded.
         Override to load resources, check dependencies, etc.
-        
+
         Returns:
             True if loaded successfully
         """
         self._state = PluginState.LOADED
         self._loaded_at = datetime.now()
         return True
-    
+
     async def initialize(self) -> bool:
         """
         Initialize the plugin.
-        
+
         Called after loading to set up the plugin.
-        
+
         Returns:
             True if initialized successfully
         """
         self._state = PluginState.INITIALIZED
         return True
-    
+
     async def activate(self) -> bool:
         """
         Activate the plugin.
-        
+
         Called to make the plugin active and ready for use.
-        
+
         Returns:
             True if activated successfully
         """
         self._state = PluginState.ACTIVE
         return True
-    
+
     async def deactivate(self) -> bool:
         """
         Deactivate the plugin.
-        
+
         Called to temporarily disable the plugin.
-        
+
         Returns:
             True if deactivated successfully
         """
         self._state = PluginState.SUSPENDED
         return True
-    
+
     async def unload(self) -> bool:
         """
         Unload the plugin.
-        
+
         Called to fully unload and clean up the plugin.
-        
+
         Returns:
             True if unloaded successfully
         """
         self._state = PluginState.UNLOADED
         return True
-    
+
     def set_error(self, message: str) -> None:
         """Set plugin to error state."""
         self._state = PluginState.ERROR
         self._error = message
-    
-    def update_config(self, config: Dict[str, Any]) -> None:
+
+    def update_config(self, config: dict[str, Any]) -> None:
         """Update plugin configuration."""
         self._config.update(config)
-    
+
     def has_capability(self, capability: str) -> bool:
         """Check if plugin has a capability."""
         return capability in self.metadata.capabilities
-    
-    def get_info(self) -> Dict[str, Any]:
+
+    def get_info(self) -> dict[str, Any]:
         """Get plugin info for display."""
         return {
             "metadata": self.metadata.to_dict(),

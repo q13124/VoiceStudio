@@ -265,9 +265,7 @@ namespace VoiceStudio.App
       if (bottomPanelHost != null) bottomPanelHost.OnPanelDockRequested += PanelHost_OnPanelDockRequested;
       profiler.Checkpoint("Panel Docking Handlers Wired");
 
-      // Load workspace layout before assigning panels
-      LoadWorkspaceLayout();
-      profiler.Checkpoint("Workspace Layout Loaded");
+      profiler.Checkpoint("Workspace Layout Ready");
 
       // Subscribe to workspace profile changes
       if (_panelStateService != null)
@@ -733,6 +731,71 @@ namespace VoiceStudio.App
         }
 
         AppendStepLog($"STEP_DONE\t{step.Name}");
+        await Task.Delay(250).ConfigureAwait(false);
+      }
+
+      // ── TD-036: Workspace profile switch smoke steps ──
+      // Switch to "training" workspace and assert center panel matches the Training layout.
+      // This validates that workspace switching, embedded layout loading, and panel restoration work end-to-end.
+      var workspaceSteps = new (string Name, string ProfileId, string ExpectedCenterViewType)[]
+      {
+        ("WorkspaceSwitchToTraining", "training", "TrainingView"),
+        ("WorkspaceSwitchToStudio", "studio", "TimelineView"),
+      };
+
+      foreach (var wsStep in workspaceSteps)
+      {
+        executed.Add(wsStep.Name);
+        AppendStepLog($"STEP_BEGIN\t{wsStep.Name}");
+
+        try
+        {
+          // Perform the workspace switch on a background thread (the async service call),
+          // then dispatch the layout restoration and assertion onto the UI thread.
+          if (_panelStateService != null)
+          {
+            var switchResult = await _panelStateService.SwitchWorkspaceProfileAsync(wsStep.ProfileId).ConfigureAwait(false);
+            AppendStepLog($"WORKSPACE_SWITCH_RESULT\t{wsStep.Name}\tprofile={wsStep.ProfileId}\tsuccess={switchResult}");
+
+            // Allow UI to process the WorkspaceProfileChanged event and apply layout
+            await Task.Delay(500).ConfigureAwait(false);
+
+            // Assert on the UI thread: verify center panel content type matches expected
+            var assertTask = RunOnUiThreadAsync($"Assert_{wsStep.Name}", () =>
+            {
+              var centerPanelHost = FindNameOnContent("CenterPanelHost") as Controls.PanelHost;
+              var actualContentType = centerPanelHost?.Content?.GetType().Name ?? "(null)";
+              AppendStepLog($"WORKSPACE_ASSERT\t{wsStep.Name}\texpected={wsStep.ExpectedCenterViewType}\tactual={actualContentType}");
+
+              if (!string.Equals(actualContentType, wsStep.ExpectedCenterViewType, StringComparison.Ordinal))
+              {
+                throw new InvalidOperationException(
+                  $"Workspace smoke assertion failed for '{wsStep.ProfileId}': " +
+                  $"expected center panel '{wsStep.ExpectedCenterViewType}', got '{actualContentType}'.");
+              }
+            });
+
+            var assertCompleted = await Task.WhenAny(assertTask, Task.Delay(perStepTimeout)).ConfigureAwait(false);
+            if (assertCompleted != assertTask)
+            {
+              AppendStepLog($"STEP_TIMEOUT\tAssert_{wsStep.Name}\ttimeout_sec={(int)perStepTimeout.TotalSeconds}");
+              return (executed.ToArray(), true, $"Assert_{wsStep.Name}");
+            }
+
+            await assertTask.ConfigureAwait(false);
+          }
+          else
+          {
+            AppendStepLog($"WORKSPACE_SKIP\t{wsStep.Name}\tPanelStateService not available");
+          }
+        }
+        catch (Exception ex)
+        {
+          AppendStepLog($"STEP_EXCEPTION\t{wsStep.Name}\t{ex.GetType().Name}\t{ex.Message}");
+          throw;
+        }
+
+        AppendStepLog($"STEP_DONE\t{wsStep.Name}");
         await Task.Delay(250).ConfigureAwait(false);
       }
 
@@ -1938,41 +2001,111 @@ namespace VoiceStudio.App
       }
     }
 
-    private async void ImportAudioFile()
+    public async void ImportAudioFile()
     {
+      var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoiceStudio", "import_debug.log");
+      System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(logPath)!);
+      void Log(string msg)
+      {
+        var line = $"[{DateTime.Now:HH:mm:ss.fff}] {msg}";
+        Debug.WriteLine(line);
+        // ALLOWED: empty catch - Best effort debug logging, failure is acceptable
+        try { System.IO.File.AppendAllText(logPath, line + Environment.NewLine); } catch { }
+      }
+      
+      Log("[MainWindow] ImportAudioFile() called");
+      
+      // Check if we're on UI thread
+      var dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+      Log($"[MainWindow] DispatcherQueue: {(dispatcherQueue != null ? "available" : "NULL")}");
+      Log($"[MainWindow] Thread ID: {Environment.CurrentManagedThreadId}");
+      
       try
       {
-        var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary;
-        picker.FileTypeFilter.Add(".wav");
-        picker.FileTypeFilter.Add(".mp3");
-        picker.FileTypeFilter.Add(".flac");
-        picker.FileTypeFilter.Add(".ogg");
-        picker.FileTypeFilter.Add(".m4a");
-        picker.FileTypeFilter.Add(".aac");
-        picker.FileTypeFilter.Add(".wma");
-        picker.FileTypeFilter.Add("*");
-
-        // Required for WinUI 3 desktop apps
+        Log("[MainWindow] Getting window handle...");
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-        var file = await picker.PickSingleFileAsync();
-        if (file != null)
+        Log($"[MainWindow] HWND: 0x{hwnd:X}");
+        
+        string? filePath = null;
+        
+        try
         {
-          // Switch to Voice Synthesis panel for immediate use
-          SwitchToPanel(PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView());
-          SetActiveNavButton("NavStudio");
+          // Try WinRT FileOpenPicker first
+          Log("[MainWindow] Trying WinRT FileOpenPicker...");
+          var picker = new Windows.Storage.Pickers.FileOpenPicker();
+          picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary;
+          picker.FileTypeFilter.Add(".wav");
+          picker.FileTypeFilter.Add(".mp3");
+          picker.FileTypeFilter.Add(".flac");
+          picker.FileTypeFilter.Add(".ogg");
+          picker.FileTypeFilter.Add(".m4a");
+          picker.FileTypeFilter.Add(".aac");
+          picker.FileTypeFilter.Add(".wma");
+          
+          WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+          Log("[MainWindow] Picker initialized, calling PickSingleFileAsync...");
+          
+          var file = await picker.PickSingleFileAsync();
+          filePath = file?.Path;
+          Log($"[MainWindow] WinRT PickSingleFileAsync returned: {(filePath == null ? "null" : filePath)}");
+        }
+        catch (System.Runtime.InteropServices.COMException ex) when (ex.HResult == unchecked((int)0x80004005))
+        {
+          // WinRT FileOpenPicker fails on some systems (known issue) - use native Win32 dialog
+          Log($"[MainWindow] WinRT FileOpenPicker failed (0x80004005), using native Win32 fallback");
+          filePath = await Services.NativeFileDialog.ShowOpenFileDialogAsync(
+            hwnd, "Import Audio File", ".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac", ".wma");
+          Log($"[MainWindow] Native dialog returned: {(filePath == null ? "null" : filePath)}");
+        }
+        
+        if (!string.IsNullOrEmpty(filePath))
+        {
+          Log($"[MainWindow] Selected file: {filePath}");
+          
+          var backendClient = ServiceProvider.GetBackendClient();
+          if (backendClient != null)
+          {
+            var uploadResult = await backendClient.UploadAudioFileAsync(filePath);
+            Debug.WriteLine($"[MainWindow] Audio uploaded: {System.IO.Path.GetFileName(filePath)} -> {uploadResult.Id}");
 
-          var toastService = ServiceProvider.GetToastNotificationService();
-          toastService?.ShowToast(
-              Services.ToastType.Success,
-              "Audio Imported",
-              $"Imported: {file.Name}");
+            // Publish AssetAddedEvent so Library and other panels refresh
+            var eventAggregator = AppServices.TryGetEventAggregator();
+            eventAggregator?.Publish(new VoiceStudio.Core.Events.AssetAddedEvent(
+                "main-window",
+                uploadResult.Id,
+                "audio",
+                filePath));
+            Log($"[MainWindow] Published AssetAddedEvent for {uploadResult.Id}");
+
+            var toastService = ServiceProvider.GetToastNotificationService();
+            toastService?.ShowToast(
+                Services.ToastType.Success,
+                "Audio Imported",
+                $"Uploaded: {System.IO.Path.GetFileName(filePath)}");
+          }
+          else
+          {
+            var toastService = ServiceProvider.GetToastNotificationService();
+            toastService?.ShowToast(
+                Services.ToastType.Warning,
+                "Import Incomplete",
+                $"Selected {System.IO.Path.GetFileName(filePath)} but backend is not available. Start the backend and try again.");
+          }
+        }
+        else
+        {
+          Log("[MainWindow] File selection cancelled");
         }
       }
       catch (Exception ex)
       {
+        Log($"[MainWindow] ImportAudioFile EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+        Log($"[MainWindow] Stack: {ex.StackTrace}");
+        if (ex is System.Runtime.InteropServices.COMException comEx)
+        {
+          Log($"[MainWindow] COM HResult: 0x{comEx.HResult:X8}");
+        }
+        Debug.WriteLine($"[MainWindow] ImportAudioFile failed: {ex.Message}");
         var toastService = ServiceProvider.GetToastNotificationService();
         toastService?.ShowToast(
             Services.ToastType.Error,
@@ -2758,26 +2891,9 @@ namespace VoiceStudio.App
     }
 
     /// <summary>
-    /// Loads workspace layout from PanelStateService and restores panel arrangement.
-    /// </summary>
-    private void LoadWorkspaceLayout()
-    {
-      if (_panelStateService == null)
-        return;
-
-      try
-      {
-        var layout = _panelStateService.GetCurrentLayout();
-        // Layout will be used by RestorePanelsFromLayout
-      }
-      catch (Exception ex)
-      {
-        System.Diagnostics.Debug.WriteLine($"Failed to load workspace layout: {ex.Message}");
-      }
-    }
-
-    /// <summary>
     /// Restores panels from saved workspace layout.
+    /// Only the active panel per region is restored. OpenedPanels is persisted for future tab support;
+    /// PanelHost currently supports a single panel per region.
     /// Returns true if panels were restored, false if using defaults.
     /// </summary>
     private bool RestorePanelsFromLayout()
@@ -2829,6 +2945,10 @@ namespace VoiceStudio.App
               System.Diagnostics.Debug.WriteLine($"Failed to restore panel '{activePanelId}': {panelEx.Message}");
             }
           }
+          else if (!string.IsNullOrEmpty(activePanelId))
+          {
+            System.Diagnostics.Debug.WriteLine($"Panel ID '{activePanelId}' not found in registry for region {regionState.Region}; skipping.");
+          }
         }
 
         return restoredAny;
@@ -2873,8 +2993,6 @@ namespace VoiceStudio.App
     {
       try
       {
-        // Reload layout and restore panels
-        LoadWorkspaceLayout();
         RestorePanelsFromLayout();
       }
       catch (Exception ex)
@@ -3032,6 +3150,9 @@ namespace VoiceStudio.App
       if (_disposed)
         return;
 
+      // Clean up temporary audio files (Audit L-2)
+      CleanupTempAudioFiles();
+
       // Dispose clock timer
       _clockTimer?.Dispose();
       _clockTimer = null;
@@ -3057,6 +3178,52 @@ namespace VoiceStudio.App
       }
 
       _disposed = true;
+    }
+
+    /// <summary>
+    /// Clean up temporary audio files created during synthesis and recording.
+    /// Audit remediation L-2: Temp files not cleaned up on exit.
+    /// Removes %TEMP%\voicestudio_*.wav and %TEMP%\voicestudio_recording_*.wav files.
+    /// </summary>
+    private static void CleanupTempAudioFiles()
+    {
+      try
+      {
+        var tempDir = System.IO.Path.GetTempPath();
+        var patterns = new[] { "voicestudio_*.wav", "voicestudio_recording_*.wav" };
+
+        int cleaned = 0;
+        foreach (var pattern in patterns)
+        {
+          foreach (var file in System.IO.Directory.GetFiles(tempDir, pattern))
+          {
+            try
+            {
+              System.IO.File.Delete(file);
+              cleaned++;
+            }
+            catch (System.IO.IOException)
+            {
+              // File in use -- skip, will be cleaned next exit
+              Debug.WriteLine("[MainWindow] Temp file in use, skipped: " + file);
+            }
+            catch (UnauthorizedAccessException)
+            {
+              // Permission denied -- skip
+              Debug.WriteLine("[MainWindow] Temp file access denied, skipped: " + file);
+            }
+          }
+        }
+
+        if (cleaned > 0)
+        {
+          Debug.WriteLine($"[MainWindow] Cleaned up {cleaned} temporary audio file(s)");
+        }
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine($"[MainWindow] Temp cleanup failed (non-critical): {ex.Message}");
+      }
     }
 
     ~MainWindow()

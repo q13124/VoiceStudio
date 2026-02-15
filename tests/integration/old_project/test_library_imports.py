@@ -7,10 +7,8 @@ can be imported and have basic functionality working.
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import pytest
 

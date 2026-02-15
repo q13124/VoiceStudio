@@ -4,9 +4,10 @@ Sonography Visualization Routes
 Endpoints for sonography (waterfall/3D spectrogram) visualization.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sonography", tags=["sonography"])
 
 # In-memory sonography data (replace with database in production)
-_sonography_data: Dict[str, Dict] = {}
+_sonography_data: dict[str, dict] = {}
 
 
 class SonographyConfig(BaseModel):
@@ -38,9 +39,9 @@ class SonographyFrame(BaseModel):
     """A single sonography frame."""
 
     timestamp: float
-    frequencies: List[float]
-    magnitudes: List[float]
-    phase: Optional[List[float]] = None
+    frequencies: list[float]
+    magnitudes: list[float]
+    phase: list[float] | None = None
 
 
 class SonographyData(BaseModel):
@@ -48,7 +49,7 @@ class SonographyData(BaseModel):
 
     audio_id: str
     config: SonographyConfig
-    frames: List[SonographyFrame]
+    frames: list[SonographyFrame]
     total_duration: float
     sample_rate: int
 
@@ -97,14 +98,14 @@ async def generate_sonography(request: SonographyGenerateRequest):
         except ImportError as e:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio processing libraries not available: {str(e)}. "
+                detail=f"Audio processing libraries not available: {e!s}. "
                 "Install with: pip install librosa==0.11.0 soundfile==0.12.1",
             )
         except Exception as e:
             logger.error(f"Failed to load audio file {audio_path}: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to load audio file: {str(e)}",
+                detail=f"Failed to load audio file: {e!s}",
             )
 
         # Convert to mono for analysis
@@ -213,7 +214,7 @@ async def generate_sonography(request: SonographyGenerateRequest):
         logger.error(f"Failed to generate sonography: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate sonography: {str(e)}",
+            detail=f"Failed to generate sonography: {e!s}",
         ) from e
 
 

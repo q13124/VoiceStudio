@@ -52,13 +52,13 @@ def get_engine_recommendation(
 
     result = response.json()
 
-    print(f"\n✅ Recommendation received!")
+    print("\n✅ Recommendation received!")
     print(f"\n🎯 Recommended Engine: {result['recommended_engine']}")
     print(f"📊 Target Tier: {result['target_tier']}")
     print(f"📋 Reasoning: {result['reasoning']}")
 
-    if "target_metrics" in result and result["target_metrics"]:
-        print(f"\n📈 Target Metrics:")
+    if result.get("target_metrics"):
+        print("\n📈 Target Metrics:")
         for metric, value in result["target_metrics"].items():
             print(f"  {metric}: {value}")
 

@@ -7,10 +7,6 @@ This module tests:
 from __future__ import annotations
 
 import argparse
-import os
-from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -19,7 +15,6 @@ from tools.context.sources.base import BaseSourceAdapter
 from tools.context.sources.context7_adapter import Context7Adapter
 from tools.context.sources.github_adapter import GitHubAdapter
 from tools.context.sources.linear_adapter import LinearAdapter
-
 
 # -----------------------------------------------------------------------------
 # BUG-001/BUG-002: CLI Argument Parsing Tests
@@ -110,9 +105,9 @@ class TestMCPAdapterMeasurePattern:
         """Context7Adapter.fetch() should return SourceResult via _measure()."""
         adapter = Context7Adapter(priority=1, offline=False)
         context = AllocationContext(task_id="TASK-001", phase="Construct", role="test")
-        
+
         result = adapter.fetch(context)
-        
+
         assert isinstance(result, SourceResult)
         assert result.source_name == "context7"
         assert result.success is True
@@ -124,9 +119,9 @@ class TestMCPAdapterMeasurePattern:
         monkeypatch.delenv("VOICESTUDIO_CONTEXT7_ENABLED", raising=False)
         adapter = Context7Adapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         result = adapter.fetch(context)
-        
+
         assert result.success is True
         assert "note" in result.data
         assert "disabled" in result.data["note"].lower()
@@ -135,9 +130,9 @@ class TestMCPAdapterMeasurePattern:
         """GitHubAdapter.fetch() should return SourceResult via _measure()."""
         adapter = GitHubAdapter(priority=1, offline=False)
         context = AllocationContext(task_id="TASK-001", phase="Construct", role="test")
-        
+
         result = adapter.fetch(context)
-        
+
         assert isinstance(result, SourceResult)
         assert result.source_name == "github"
         assert result.success is True
@@ -148,9 +143,9 @@ class TestMCPAdapterMeasurePattern:
         monkeypatch.delenv("VOICESTUDIO_GITHUB_MCP_ENABLED", raising=False)
         adapter = GitHubAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         result = adapter.fetch(context)
-        
+
         assert result.success is True
         assert "note" in result.data
         assert "disabled" in result.data["note"].lower()
@@ -159,9 +154,9 @@ class TestMCPAdapterMeasurePattern:
         """LinearAdapter.fetch() should return SourceResult via _measure()."""
         adapter = LinearAdapter(priority=1, offline=False)
         context = AllocationContext(task_id="TASK-001", phase="Construct", role="test")
-        
+
         result = adapter.fetch(context)
-        
+
         assert isinstance(result, SourceResult)
         assert result.source_name == "linear"
         assert result.success is True
@@ -172,9 +167,9 @@ class TestMCPAdapterMeasurePattern:
         monkeypatch.delenv("VOICESTUDIO_LINEAR_ENABLED", raising=False)
         adapter = LinearAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         result = adapter.fetch(context)
-        
+
         assert result.success is True
         assert "note" in result.data
         assert "disabled" in result.data["note"].lower()
@@ -187,11 +182,11 @@ class TestMCPAdapterMeasureWithLoader:
         """_measure() should receive a callable that returns dict."""
         adapter = Context7Adapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         # Track what _measure receives
         original_measure = adapter._measure
         measure_calls = []
-        
+
         def tracking_measure(loader, ctx):
             measure_calls.append({
                 "loader_callable": callable(loader),
@@ -199,10 +194,10 @@ class TestMCPAdapterMeasureWithLoader:
                 "context": ctx
             })
             return original_measure(loader, ctx)
-        
+
         adapter._measure = tracking_measure
         adapter.fetch(context)
-        
+
         assert len(measure_calls) == 1
         assert measure_calls[0]["loader_callable"] is True
         assert isinstance(measure_calls[0]["loader_result"], dict)
@@ -212,17 +207,17 @@ class TestMCPAdapterMeasureWithLoader:
         class FailingAdapter(BaseSourceAdapter):
             def __init__(self):
                 super().__init__(source_name="failing", priority=0, offline=True)
-            
+
             def fetch(self, context: AllocationContext) -> SourceResult:
                 def _load() -> dict:
                     raise RuntimeError("Simulated failure")
                 return self._measure(_load, context)
-        
+
         adapter = FailingAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         result = adapter.fetch(context)
-        
+
         assert result.success is False
         assert result.error == "Simulated failure"
         assert result.fetch_time_ms >= 0
@@ -235,13 +230,13 @@ class TestMCPAdapterTelemetry:
         """Successful fetch should update health status."""
         from tools.context.sources.base import reset_source_telemetry
         reset_source_telemetry()
-        
+
         adapter = Context7Adapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         initial_fetches = adapter.health_status.total_fetches
         adapter.fetch(context)
-        
+
         assert adapter.health_status.total_fetches == initial_fetches + 1
         assert adapter.health_status.is_healthy is True
 
@@ -249,15 +244,15 @@ class TestMCPAdapterTelemetry:
         """Each adapter should track its own health status."""
         from tools.context.sources.base import reset_source_telemetry
         reset_source_telemetry()
-        
+
         context7 = Context7Adapter()
         github = GitHubAdapter()
         linear = LinearAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         context7.fetch(context)
         github.fetch(context)
-        
+
         assert context7.health_status.total_fetches == 1
         assert github.health_status.total_fetches == 1
         assert linear.health_status.total_fetches == 0
@@ -271,7 +266,7 @@ class TestMCPAdapterEstimateSize:
         monkeypatch.delenv("VOICESTUDIO_CONTEXT7_ENABLED", raising=False)
         adapter = Context7Adapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         assert adapter.estimate_size(context) == 0
 
     def test_context7_estimate_size_when_enabled(self, monkeypatch) -> None:
@@ -279,7 +274,7 @@ class TestMCPAdapterEstimateSize:
         monkeypatch.setenv("VOICESTUDIO_CONTEXT7_ENABLED", "1")
         adapter = Context7Adapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         assert adapter.estimate_size(context) > 0
 
     def test_github_estimate_size_when_disabled(self, monkeypatch) -> None:
@@ -287,7 +282,7 @@ class TestMCPAdapterEstimateSize:
         monkeypatch.delenv("VOICESTUDIO_GITHUB_MCP_ENABLED", raising=False)
         adapter = GitHubAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         assert adapter.estimate_size(context) == 0
 
     def test_linear_estimate_size_when_disabled(self, monkeypatch) -> None:
@@ -295,5 +290,5 @@ class TestMCPAdapterEstimateSize:
         monkeypatch.delenv("VOICESTUDIO_LINEAR_ENABLED", raising=False)
         adapter = LinearAdapter()
         context = AllocationContext(task_id=None, phase=None, role=None)
-        
+
         assert adapter.estimate_size(context) == 0

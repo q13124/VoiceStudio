@@ -9,9 +9,10 @@ Compatible with:
 - numpy>=1.26.0
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -57,7 +58,7 @@ except ImportError:
 # Import speaker encoder for style embedding (optional)
 HAS_SPEAKER_ENCODER = False
 try:
-    from ..engines.speaker_encoder_engine import SpeakerEncoderEngine
+    from app.core.engines.speaker_encoder_engine import SpeakerEncoderEngine
 
     HAS_SPEAKER_ENCODER = True
 except (ImportError, AttributeError, Exception):
@@ -88,9 +89,9 @@ class StyleTransfer:
 
     def transfer_style(
         self,
-        source_audio: Union[str, Path, np.ndarray],
-        style_reference: Union[str, Path, np.ndarray],
-        sample_rate: Optional[int] = None,
+        source_audio: str | Path | np.ndarray,
+        style_reference: str | Path | np.ndarray,
+        sample_rate: int | None = None,
         transfer_strength: float = 0.8,
         preserve_content: bool = True,
         preserve_emotion: bool = False,
@@ -117,21 +118,19 @@ class StyleTransfer:
         # Load audio if paths provided
         if isinstance(source_audio, (str, Path)):
             source, src_sr = load_audio(str(source_audio))
-            if sample_rate != src_sr:
-                if HAS_LIBROSA:
-                    source = librosa.resample(
-                        source, orig_sr=src_sr, target_sr=sample_rate
-                    )
+            if sample_rate != src_sr and HAS_LIBROSA:
+                source = librosa.resample(
+                    source, orig_sr=src_sr, target_sr=sample_rate
+                )
         else:
             source = source_audio
 
         if isinstance(style_reference, (str, Path)):
             reference, ref_sr = load_audio(str(style_reference))
-            if sample_rate != ref_sr:
-                if HAS_LIBROSA:
-                    reference = librosa.resample(
-                        reference, orig_sr=ref_sr, target_sr=sample_rate
-                    )
+            if sample_rate != ref_sr and HAS_LIBROSA:
+                reference = librosa.resample(
+                    reference, orig_sr=ref_sr, target_sr=sample_rate
+                )
         else:
             reference = style_reference
 
@@ -157,7 +156,7 @@ class StyleTransfer:
 
         return transferred
 
-    def extract_style_features(self, audio: np.ndarray, sample_rate: int) -> Dict:
+    def extract_style_features(self, audio: np.ndarray, sample_rate: int) -> dict:
         """
         Extract style features from audio.
 
@@ -176,7 +175,7 @@ class StyleTransfer:
 
         try:
             # Extract fundamental frequency (F0)
-            f0, voiced_flag, voiced_probs = librosa.pyin(
+            f0, voiced_flag, _voiced_probs = librosa.pyin(
                 audio,
                 fmin=librosa.note_to_hz("C2"),
                 fmax=librosa.note_to_hz("C7"),
@@ -191,7 +190,7 @@ class StyleTransfer:
                 )
 
             # Extract tempo (speaking rate)
-            tempo, beats = librosa.beat.beat_track(
+            tempo, _beats = librosa.beat.beat_track(
                 y=audio, sr=sample_rate, units="time"
             )
             features["tempo"] = float(tempo)
@@ -224,7 +223,7 @@ class StyleTransfer:
     def apply_style_transfer(
         self,
         source_audio: np.ndarray,
-        style_features: Dict,
+        style_features: dict,
         sample_rate: int,
         transfer_strength: float,
         preserve_content: bool,
@@ -477,8 +476,8 @@ def create_style_transfer(sample_rate: int = 24000) -> StyleTransfer:
 
 
 def transfer_voice_style(
-    source_audio: Union[str, Path, np.ndarray],
-    style_reference: Union[str, Path, np.ndarray],
+    source_audio: str | Path | np.ndarray,
+    style_reference: str | Path | np.ndarray,
     sample_rate: int = 24000,
     transfer_strength: float = 0.8,
     **kwargs,

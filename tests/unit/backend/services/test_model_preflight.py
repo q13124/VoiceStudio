@@ -64,11 +64,16 @@ def test_ensure_sovits_missing_files_raises(tmp_path, monkeypatch):
         model_preflight, "get_engine_config_service", _fake_config_service
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises((HTTPException, model_preflight.PreflightError)) as exc:
         model_preflight.ensure_sovits(auto_download=False)
 
-    assert exc.value.status_code == 424
-    assert "missing" in str(exc.value.detail)
+    err = exc.value
+    if isinstance(err, HTTPException):
+        assert err.status_code == 424
+        assert "missing" in str(err.detail)
+    else:
+        # PreflightError (service-layer, route converts to HTTPException)
+        assert "missing" in str(err).lower() or "checkpoint" in str(err).lower()
 
 
 def test_ensure_sovits_ok_when_files_exist(tmp_path, monkeypatch):

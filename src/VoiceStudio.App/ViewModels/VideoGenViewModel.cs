@@ -494,6 +494,8 @@ namespace VoiceStudio.App.ViewModels
 
     private async Task LoadVideoQualityMetricsAsync(GeneratedVideo video, CancellationToken cancellationToken)
     {
+      ArgumentNullException.ThrowIfNull(video);
+
       try
       {
         var metricsResponse = await _backendClient.SendRequestAsync<object, VideoQualityMetricsResponse>(
@@ -635,6 +637,14 @@ namespace VoiceStudio.App.ViewModels
         openPicker.FileTypeFilter.Add(".webp");
         openPicker.FileTypeFilter.Add(".gif");
 
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+        }
+
         var file = await openPicker.PickSingleFileAsync();
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -671,6 +681,14 @@ namespace VoiceStudio.App.ViewModels
         openPicker.FileTypeFilter.Add(".ogg");
         openPicker.FileTypeFilter.Add(".m4a");
         openPicker.FileTypeFilter.Add(".aac");
+
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+        }
 
         var file = await openPicker.PickSingleFileAsync();
         cancellationToken.ThrowIfCancellationRequested();

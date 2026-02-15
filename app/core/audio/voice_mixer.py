@@ -9,8 +9,9 @@ Compatible with:
 - scipy>=1.9.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -76,9 +77,9 @@ class VoiceMixer:
 
     def mix(
         self,
-        channels: Dict[str, np.ndarray],
-        mixer_state: Dict,
-        sample_rate: Optional[int] = None,
+        channels: dict[str, np.ndarray],
+        mixer_state: dict,
+        sample_rate: int | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -134,7 +135,7 @@ class VoiceMixer:
         self,
         audio: np.ndarray,
         channel_id: str,
-        mixer_state: Dict,
+        mixer_state: dict,
         sample_rate: int,
     ) -> np.ndarray:
         """Process a single channel with volume, pan, mute, solo."""
@@ -180,10 +181,10 @@ class VoiceMixer:
 
     def _process_sends(
         self,
-        channel_outputs: Dict[str, np.ndarray],
-        mixer_state: Dict,
+        channel_outputs: dict[str, np.ndarray],
+        mixer_state: dict,
         sample_rate: int,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Process send busses."""
         send_outputs = {}
         sends = mixer_state.get("sends", [])
@@ -211,7 +212,7 @@ class VoiceMixer:
                 send_levels = routing.get("send_levels", {})
                 send_enabled = routing.get("send_enabled", {})
 
-                if send_id in send_enabled and send_enabled[send_id]:
+                if send_enabled.get(send_id):
                     level = send_levels.get(send_id, 0.0)
                     if level > 0:
                         # Resize send_audio if needed
@@ -243,8 +244,8 @@ class VoiceMixer:
         return send_outputs
 
     def _process_returns(
-        self, send_outputs: Dict[str, np.ndarray], mixer_state: Dict, sample_rate: int
-    ) -> Dict[str, np.ndarray]:
+        self, send_outputs: dict[str, np.ndarray], mixer_state: dict, sample_rate: int
+    ) -> dict[str, np.ndarray]:
         """Process return busses."""
         return_outputs = {}
         returns = mixer_state.get("returns", [])
@@ -304,10 +305,10 @@ class VoiceMixer:
 
     def _process_subgroups(
         self,
-        channel_outputs: Dict[str, np.ndarray],
-        mixer_state: Dict,
+        channel_outputs: dict[str, np.ndarray],
+        mixer_state: dict,
         sample_rate: int,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Process sub-group busses."""
         subgroup_outputs = {}
         subgroups = mixer_state.get("sub_groups", [])
@@ -379,10 +380,10 @@ class VoiceMixer:
 
     def _process_master(
         self,
-        channel_outputs: Dict[str, np.ndarray],
-        subgroup_outputs: Dict[str, np.ndarray],
-        return_outputs: Dict[str, np.ndarray],
-        mixer_state: Dict,
+        channel_outputs: dict[str, np.ndarray],
+        subgroup_outputs: dict[str, np.ndarray],
+        return_outputs: dict[str, np.ndarray],
+        mixer_state: dict,
         sample_rate: int,
     ) -> np.ndarray:
         """Process master bus."""
@@ -419,7 +420,7 @@ class VoiceMixer:
                 master_audio += channel_audio
 
         # Mix sub-groups
-        for subgroup_id, subgroup_audio in subgroup_outputs.items():
+        for _subgroup_id, subgroup_audio in subgroup_outputs.items():
             if master_audio.shape[1] == 0:
                 master_audio = np.zeros_like(subgroup_audio)
             elif master_audio.shape[1] < subgroup_audio.shape[1]:
@@ -436,7 +437,7 @@ class VoiceMixer:
             master_audio += subgroup_audio
 
         # Mix returns
-        for return_id, return_audio in return_outputs.items():
+        for _return_id, return_audio in return_outputs.items():
             if master_audio.shape[1] == 0:
                 master_audio = np.zeros_like(return_audio)
             elif master_audio.shape[1] < return_audio.shape[1]:
@@ -488,7 +489,7 @@ class VoiceMixer:
 
     def calculate_levels(
         self, audio: np.ndarray, window_size: int = 1024
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculate peak and RMS levels for audio.
 
@@ -526,8 +527,8 @@ def create_voice_mixer(sample_rate: int = 24000, num_channels: int = 8) -> Voice
 
 
 def mix_audio(
-    channels: Dict[str, np.ndarray],
-    mixer_state: Dict,
+    channels: dict[str, np.ndarray],
+    mixer_state: dict,
     sample_rate: int = 24000,
     **kwargs,
 ) -> np.ndarray:

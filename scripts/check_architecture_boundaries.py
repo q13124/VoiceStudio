@@ -27,7 +27,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, NamedTuple
+from typing import NamedTuple
 
 
 class Violation(NamedTuple):
@@ -124,39 +124,36 @@ EXEMPT_FILES = [
 
 def is_allowed(line: str) -> bool:
     """Check if a line has an explicit allowlist marker."""
-    for pattern in ALLOWED_PATTERNS:
-        if re.search(pattern, line, re.IGNORECASE):
-            return True
-    return False
+    return any(re.search(pattern, line, re.IGNORECASE) for pattern in ALLOWED_PATTERNS)
 
 
-def check_csharp_ui_boundaries(repo_root: Path) -> List[Violation]:
+def check_csharp_ui_boundaries(repo_root: Path) -> list[Violation]:
     """Check C# UI code for boundary violations."""
     violations = []
-    
+
     # UI code is in src/VoiceStudio.App/
     ui_path = repo_root / "src" / "VoiceStudio.App"
     if not ui_path.exists():
         return violations
-    
+
     # Exclude test files and generated files
     exclude_patterns = ["*.g.cs", "*.Designer.cs", "obj/", "bin/"]
-    
+
     for cs_file in ui_path.rglob("*.cs"):
         # Skip excluded patterns
         if any(pattern.replace("*", "") in str(cs_file) for pattern in exclude_patterns):
             continue
         if "obj" in cs_file.parts or "bin" in cs_file.parts:
             continue
-            
+
         try:
             content = cs_file.read_text(encoding="utf-8")
             lines = content.split("\n")
-            
+
             for line_num, line in enumerate(lines, 1):
                 if is_allowed(line):
                     continue
-                    
+
                 for pattern, violation_type, suggestion in CSHARP_FORBIDDEN_PATTERNS:
                     if re.search(pattern, line, re.IGNORECASE):
                         violations.append(Violation(
@@ -168,28 +165,28 @@ def check_csharp_ui_boundaries(repo_root: Path) -> List[Violation]:
                         ))
         except Exception as e:
             print(f"Warning: Could not read {cs_file}: {e}", file=sys.stderr)
-    
+
     return violations
 
 
-def check_python_route_boundaries(repo_root: Path) -> List[Violation]:
+def check_python_route_boundaries(repo_root: Path) -> list[Violation]:
     """Check Python route files for boundary violations."""
     violations = []
-    
+
     # Routes are in backend/api/routes/
     routes_path = repo_root / "backend" / "api" / "routes"
     if not routes_path.exists():
         return violations
-    
+
     for py_file in routes_path.rglob("*.py"):
         try:
             content = py_file.read_text(encoding="utf-8")
             lines = content.split("\n")
-            
+
             for line_num, line in enumerate(lines, 1):
                 if is_allowed(line):
                     continue
-                    
+
                 for pattern, violation_type, suggestion in PYTHON_ROUTE_FORBIDDEN_PATTERNS:
                     if re.search(pattern, line, re.IGNORECASE):
                         # Additional check: allow EngineProtocol imports
@@ -204,7 +201,7 @@ def check_python_route_boundaries(repo_root: Path) -> List[Violation]:
                         ))
         except Exception as e:
             print(f"Warning: Could not read {py_file}: {e}", file=sys.stderr)
-    
+
     return violations
 
 
@@ -224,35 +221,32 @@ def is_file_exempt(file_path: Path, repo_root: Path) -> bool:
         rel_path = file_path.relative_to(repo_root).as_posix()
     except ValueError:
         rel_path = str(file_path)
-    
-    for exempt in EXEMPT_FILES:
-        if rel_path.endswith(exempt) or exempt in rel_path:
-            return True
-    return False
+
+    return any(rel_path.endswith(exempt) or exempt in rel_path for exempt in EXEMPT_FILES)
 
 
-def check_python_service_boundaries(repo_root: Path) -> List[Violation]:
+def check_python_service_boundaries(repo_root: Path) -> list[Violation]:
     """Check Python service files for boundary violations (e.g., HTTPException in services)."""
     violations = []
-    
+
     # Services are in backend/services/
     services_path = repo_root / "backend" / "services"
     if not services_path.exists():
         return violations
-    
+
     for py_file in services_path.rglob("*.py"):
         # Skip exempt files
         if is_file_exempt(py_file, repo_root):
             continue
-            
+
         try:
             content = py_file.read_text(encoding="utf-8")
             lines = content.split("\n")
-            
+
             for line_num, line in enumerate(lines, 1):
                 if is_allowed(line):
                     continue
-                    
+
                 for pattern, violation_type, suggestion in PYTHON_SERVICE_FORBIDDEN_PATTERNS:
                     if re.search(pattern, line, re.IGNORECASE):
                         violations.append(Violation(
@@ -264,20 +258,20 @@ def check_python_service_boundaries(repo_root: Path) -> List[Violation]:
                         ))
         except Exception as e:
             print(f"Warning: Could not read {py_file}: {e}", file=sys.stderr)
-    
+
     return violations
 
 
-def format_violations(violations: List[Violation], show_suggestions: bool = False) -> str:
+def format_violations(violations: list[Violation], show_suggestions: bool = False) -> str:
     """Format violations for display."""
     if not violations:
         return ""
-    
+
     lines = []
     lines.append(f"\n{'='*70}")
     lines.append(f"ARCHITECTURE BOUNDARY VIOLATIONS FOUND: {len(violations)}")
     lines.append(f"{'='*70}\n")
-    
+
     for v in violations:
         rel_path = v.file
         try:
@@ -285,21 +279,21 @@ def format_violations(violations: List[Violation], show_suggestions: bool = Fals
         # ALLOWED: bare except - File may not be relative to cwd, keep absolute path
         except ValueError:
             pass
-        
+
         lines.append(f"{rel_path}:{v.line_number}")
         lines.append(f"  Type: {v.violation_type}")
         lines.append(f"  Line: {v.line_content[:80]}{'...' if len(v.line_content) > 80 else ''}")
         if show_suggestions:
             lines.append(f"  Fix:  {v.suggestion}")
         lines.append("")
-    
+
     lines.append(f"{'='*70}")
     lines.append("Sacred Boundaries (ADR-008):")
     lines.append("  - UI may NOT call engine internals directly")
     lines.append("  - UI interacts through stable core contracts")
     lines.append("  - Engines attach via adapters implementing contracts")
     lines.append(f"{'='*70}")
-    
+
     return "\n".join(lines)
 
 
@@ -322,39 +316,39 @@ def main() -> int:
         action="store_true",
         help="Only output if violations found"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Find repo root (look for .cursor or .git)
     repo_root = Path.cwd()
-    for parent in [repo_root] + list(repo_root.parents):
+    for parent in [repo_root, *list(repo_root.parents)]:
         if (parent / ".cursor").exists() or (parent / ".git").exists():
             repo_root = parent
             break
-    
+
     if not args.quiet:
         print(f"Checking architecture boundaries in: {repo_root}")
         print("Per ADR-008: Sacred Boundaries (UI <-> Core <-> Engines)")
         print()
-    
+
     # Run checks
     all_violations = []
-    
+
     if not args.quiet:
         print("Checking C# UI code for engine imports...")
     csharp_violations = check_csharp_ui_boundaries(repo_root)
     all_violations.extend(csharp_violations)
-    
+
     if not args.quiet:
         print("Checking Python routes for direct engine imports...")
     python_violations = check_python_route_boundaries(repo_root)
     all_violations.extend(python_violations)
-    
+
     if not args.quiet:
         print("Checking Python services for HTTPException usage...")
     service_violations = check_python_service_boundaries(repo_root)
     all_violations.extend(service_violations)
-    
+
     # Report results
     if all_violations:
         print(format_violations(all_violations, show_suggestions=args.fix))
@@ -364,7 +358,7 @@ def main() -> int:
         if not args.quiet:
             print("\n[PASS] No architecture boundary violations found!")
             print("  Sacred boundaries are intact.")
-    
+
     return 0
 
 

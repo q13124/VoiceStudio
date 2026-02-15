@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
-from urllib.request import urlopen
+from typing import Any
 from urllib.error import URLError
+from urllib.request import urlopen
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
@@ -19,7 +19,7 @@ class TelemetrySourceAdapter(BaseSourceAdapter):
         self._include_passing = include_passing
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             try:
                 with urlopen(self._endpoint, timeout=self._timeout) as resp:
                     raw = resp.read().decode("utf-8")

@@ -11,7 +11,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VoiceStudio.App.Features.VoiceProfile;
+using VoiceStudio.App.Services;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Gateways;
 using VoiceStudio.Core.Services;
 
@@ -112,6 +114,8 @@ public partial class SynthesisViewModel : BaseViewModel
 {
     private readonly IVoiceGateway _voiceGateway;
     private readonly IEngineGateway _engineGateway;
+    private readonly IEventAggregator? _eventAggregator;
+    private ISubscriptionToken? _voiceProfileSelectedSubscription;
 
     private string _inputText = "";
     private EngineInfo? _selectedEngine;
@@ -142,6 +146,11 @@ public partial class SynthesisViewModel : BaseViewModel
         PauseCommand = new RelayCommand(Pause);
         SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         ClearHistoryCommand = new RelayCommand(ClearHistory);
+        AddToTimelineCommand = new RelayCommand(AddToTimeline, CanAddToTimeline);
+        
+        // Subscribe to VoiceProfileSelectedEvent for inter-panel workflow
+        _eventAggregator = AppServices.TryGetEventAggregator();
+        _voiceProfileSelectedSubscription = _eventAggregator?.Subscribe<VoiceProfileSelectedEvent>(OnVoiceProfileSelected);
     }
 
     // Input
@@ -250,6 +259,7 @@ public partial class SynthesisViewModel : BaseViewModel
     public RelayCommand PauseCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
     public RelayCommand ClearHistoryCommand { get; }
+    public RelayCommand AddToTimelineCommand { get; }
 
     public async Task InitializeAsync()
     {
@@ -473,6 +483,17 @@ public partial class SynthesisViewModel : BaseViewModel
                 
                 Progress = 100;
                 StatusMessage = "Synthesis complete";
+                
+                // Publish event for cross-panel integration (C.3: Synthesis to Timeline)
+                var eventAggregator = AppServices.TryGetEventAggregator();
+                eventAggregator?.Publish(new SynthesisCompletedEvent(
+                    "synthesis-panel",
+                    synthesisResult.AudioId,
+                    synthesisResult.AudioPath,
+                    synthesisResult.Duration,
+                    synthesisResult.Text,
+                    synthesisResult.Voice,
+                    synthesisResult.Engine));
             }
             else
             {
@@ -550,4 +571,131 @@ public partial class SynthesisViewModel : BaseViewModel
     {
         History.Clear();
     }
+
+    #region Timeline Integration (Audit remediation C.3)
+
+    private bool CanAddToTimeline() => CurrentResult != null;
+
+    private void AddToTimeline()
+    {
+        if (CurrentResult == null)
+        {
+            return;
+        }
+
+        var eventAggregator = AppServices.TryGetEventAggregator();
+        eventAggregator?.Publish(new AddToTimelineEvent(
+            "synthesis-panel",
+            CurrentResult.AudioId,
+            CurrentResult.AudioPath,
+            CurrentResult.Duration,
+            $"Synthesis: {CurrentResult.Text?.Substring(0, Math.Min(30, CurrentResult.Text?.Length ?? 0))}...",
+            targetTrackIndex: null,
+            insertPosition: null));
+
+        StatusMessage = "Added to timeline";
+    }
+
+    /// <summary>
+    /// Add a specific synthesis result to the timeline.
+    /// </summary>
+    public void AddToTimeline(SynthesisResult result)
+    {
+        if (result == null)
+        {
+            return;
+        }
+
+        var eventAggregator = AppServices.TryGetEventAggregator();
+        eventAggregator?.Publish(new AddToTimelineEvent(
+            "synthesis-panel",
+            result.AudioId,
+            result.AudioPath,
+            result.Duration,
+            $"Synthesis: {result.Text?.Substring(0, Math.Min(30, result.Text?.Length ?? 0))}...",
+            targetTrackIndex: null,
+            insertPosition: null));
+    }
+
+    #endregion
+
+    #region Inter-Panel Workflow
+
+    /// <summary>
+    /// Handles the VoiceProfileSelectedEvent from Library or other panels.
+    /// Sets the selected voice profile for synthesis.
+    /// </summary>
+    private void OnVoiceProfileSelected(VoiceProfileSelectedEvent e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(e.ProfileId))
+            {
+                return;
+            }
+
+            // Find the voice profile in available voices
+            var profile = AvailableVoices.FirstOrDefault(v => v.Id == e.ProfileId);
+            if (profile != null)
+            {
+                SelectedVoice = profile;
+                StatusMessage = $"Voice profile '{profile.Name ?? e.ProfileName}' selected for synthesis";
+            }
+            else
+            {
+                // Profile not loaded - load it asynchronously
+                _ = LoadAndSelectVoiceProfileAsync(e.ProfileId, e.ProfileName);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error selecting voice profile: {ex.Message}");
+            ErrorMessage = $"Failed to select voice profile: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Loads a voice profile by ID and sets it as selected.
+    /// </summary>
+    private async Task LoadAndSelectVoiceProfileAsync(string profileId, string? profileName)
+    {
+        try
+        {
+            // Refresh voice list to ensure we have the latest
+            await LoadVoicesAsync();
+
+            // Try to find and select the profile now
+            var profile = AvailableVoices.FirstOrDefault(v => v.Id == profileId);
+            if (profile != null)
+            {
+                SelectedVoice = profile;
+                StatusMessage = $"Voice profile '{profile.Name ?? profileName}' loaded and selected";
+            }
+            else
+            {
+                ErrorMessage = $"Voice profile '{profileName ?? profileId}' not found";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading voice profile: {ex.Message}");
+            ErrorMessage = $"Failed to load voice profile: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Cleanup subscriptions when view model is disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _voiceProfileSelectedSubscription?.Dispose();
+            _voiceProfileSelectedSubscription = null;
+        }
+        base.Dispose(disposing);
+    }
+
+    #endregion
 }

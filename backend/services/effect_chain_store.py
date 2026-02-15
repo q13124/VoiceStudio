@@ -5,8 +5,10 @@ Migrates effect chains and presets from in-memory storage to durable
 disk-backed JsonFileStore. Chains persist across restarts.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .json_file_store import JsonFileStore
 
@@ -26,7 +28,7 @@ class EffectChainStore:
 
     def __init__(self, max_chains: int = 5000):
         self._store = JsonFileStore("effect_chains", max_items=max_chains)
-        self._project_index: Dict[str, List[str]] = {}
+        self._project_index: dict[str, list[str]] = {}
         self._rebuild_project_index()
 
     def _rebuild_project_index(self) -> None:
@@ -45,11 +47,11 @@ class EffectChainStore:
             f"across {len(self._project_index)} projects"
         )
 
-    def get(self, chain_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, chain_id: str) -> dict[str, Any] | None:
         """Get an effect chain by ID."""
         return self._store.get(chain_id)
 
-    def save(self, chain: Dict[str, Any]) -> str:
+    def save(self, chain: dict[str, Any]) -> str:
         """
         Save an effect chain.
 
@@ -66,7 +68,7 @@ class EffectChainStore:
             chain["id"] = chain_id
 
         project_id = chain.get("project_id", "")
-        
+
         # Save to store
         self._store.put(chain_id, chain)
 
@@ -87,7 +89,7 @@ class EffectChainStore:
             return False
 
         project_id = chain.get("project_id", "")
-        
+
         # Remove from store
         result = self._store.delete(chain_id)
 
@@ -101,7 +103,7 @@ class EffectChainStore:
         logger.debug(f"EffectChainStore: Deleted chain {chain_id}")
         return result
 
-    def list_by_project(self, project_id: str) -> List[Dict[str, Any]]:
+    def list_by_project(self, project_id: str) -> list[dict[str, Any]]:
         """List all effect chains for a project."""
         chain_ids = self._project_index.get(project_id, [])
         chains = []
@@ -111,7 +113,7 @@ class EffectChainStore:
                 chains.append(chain)
         return chains
 
-    def list_all(self) -> List[Dict[str, Any]]:
+    def list_all(self) -> list[dict[str, Any]]:
         """List all effect chains."""
         return self._store.list()
 
@@ -141,7 +143,7 @@ class EffectPresetStore:
 
     def __init__(self, max_presets: int = 1000):
         self._store = JsonFileStore("effect_presets", max_items=max_presets)
-        self._type_index: Dict[str, List[str]] = {}
+        self._type_index: dict[str, list[str]] = {}
         self._rebuild_type_index()
 
     def _rebuild_type_index(self) -> None:
@@ -160,11 +162,11 @@ class EffectPresetStore:
             f"across {len(self._type_index)} effect types"
         )
 
-    def get(self, preset_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, preset_id: str) -> dict[str, Any] | None:
         """Get an effect preset by ID."""
         return self._store.get(preset_id)
 
-    def save(self, preset: Dict[str, Any]) -> str:
+    def save(self, preset: dict[str, Any]) -> str:
         """
         Save an effect preset.
 
@@ -181,7 +183,7 @@ class EffectPresetStore:
             preset["id"] = preset_id
 
         effect_type = preset.get("effect_type", "")
-        
+
         # Save to store
         self._store.put(preset_id, preset)
 
@@ -202,7 +204,7 @@ class EffectPresetStore:
             return False
 
         effect_type = preset.get("effect_type", "")
-        
+
         # Remove from store
         result = self._store.delete(preset_id)
 
@@ -216,7 +218,7 @@ class EffectPresetStore:
         logger.debug(f"EffectPresetStore: Deleted preset {preset_id}")
         return result
 
-    def list_by_type(self, effect_type: str) -> List[Dict[str, Any]]:
+    def list_by_type(self, effect_type: str) -> list[dict[str, Any]]:
         """List all presets for an effect type."""
         preset_ids = self._type_index.get(effect_type, [])
         presets = []
@@ -226,7 +228,7 @@ class EffectPresetStore:
                 presets.append(preset)
         return presets
 
-    def list_all(self) -> List[Dict[str, Any]]:
+    def list_all(self) -> list[dict[str, Any]]:
         """List all effect presets."""
         return self._store.list()
 
@@ -240,8 +242,8 @@ class EffectPresetStore:
 
 
 # Singletons
-_chain_store: Optional[EffectChainStore] = None
-_preset_store: Optional[EffectPresetStore] = None
+_chain_store: EffectChainStore | None = None
+_preset_store: EffectPresetStore | None = None
 
 
 def get_effect_chain_store() -> EffectChainStore:

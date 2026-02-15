@@ -15,7 +15,8 @@ Families:
 - venv_video: SadTalker, FOMM, Deforum, SVD, DeepFaceLab
 """
 
-import json
+from __future__ import annotations
+
 import logging
 import os
 import subprocess
@@ -23,7 +24,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,13 +59,13 @@ class FamilyConfig:
     requirements_file: str
     python_version: str = "3.11"
     description: str = ""
-    engines: List[str] = field(default_factory=list)
+    engines: list[str] = field(default_factory=list)
     gpu_required: bool = False
     estimated_size_gb: float = 0.0
 
 
 # Family configurations
-FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
+FAMILY_CONFIGS: dict[VenvFamily, FamilyConfig] = {
     VenvFamily.CORE_TTS: FamilyConfig(
         family=VenvFamily.CORE_TTS,
         requirements_file="requirements-core-tts.txt",
@@ -169,7 +170,7 @@ FAMILY_CONFIGS: Dict[VenvFamily, FamilyConfig] = {
 }
 
 # Engine to family mapping (reverse lookup)
-ENGINE_TO_FAMILY: Dict[str, VenvFamily] = {}
+ENGINE_TO_FAMILY: dict[str, VenvFamily] = {}
 for family, config in FAMILY_CONFIGS.items():
     for engine_id in config.engines:
         ENGINE_TO_FAMILY[engine_id] = family
@@ -188,8 +189,8 @@ class VenvFamilyManager:
 
     def __init__(
         self,
-        venvs_root: Optional[Path] = None,
-        requirements_root: Optional[Path] = None,
+        venvs_root: Path | None = None,
+        requirements_root: Path | None = None,
     ):
         """
         Initialize venv family manager.
@@ -207,11 +208,11 @@ class VenvFamilyManager:
         self.requirements_root.mkdir(parents=True, exist_ok=True)
 
         # Track created venvs
-        self._created_venvs: Dict[VenvFamily, bool] = {}
+        self._created_venvs: dict[VenvFamily, bool] = {}
 
         logger.info(f"VenvFamilyManager initialized: venvs={self.venvs_root}")
 
-    def get_family_for_engine(self, engine_id: str) -> Optional[VenvFamily]:
+    def get_family_for_engine(self, engine_id: str) -> VenvFamily | None:
         """
         Get the venv family for an engine.
 
@@ -249,7 +250,7 @@ class VenvFamilyManager:
     def create_venv(
         self,
         family: VenvFamily,
-        python_executable: Optional[str] = None,
+        python_executable: str | None = None,
         force: bool = False,
     ) -> bool:
         """
@@ -367,9 +368,8 @@ class VenvFamilyManager:
         Returns:
             True if venv is ready
         """
-        if not self.is_venv_created(family):
-            if not self.create_venv(family):
-                return False
+        if not self.is_venv_created(family) and not self.create_venv(family):
+            return False
 
         # Check if requirements are installed (simple check: look for marker file)
         marker_file = self.get_venv_path(family) / ".requirements_installed"
@@ -383,9 +383,9 @@ class VenvFamilyManager:
     def run_in_venv(
         self,
         family: VenvFamily,
-        command: List[str],
-        cwd: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
+        command: list[str],
+        cwd: Path | None = None,
+        env: dict[str, str] | None = None,
         timeout: int = 300,
     ) -> subprocess.CompletedProcess:
         """
@@ -419,7 +419,7 @@ class VenvFamilyManager:
             run_env["PATH"] = f"{venv_path / 'bin'}:{run_env.get('PATH', '')}"
 
         # Run command
-        full_command = [str(python_exe)] + command
+        full_command = [str(python_exe), *command]
 
         return subprocess.run(
             full_command,
@@ -430,7 +430,7 @@ class VenvFamilyManager:
             timeout=timeout,
         )
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get status of all venv families."""
         status = {}
         for family, config in FAMILY_CONFIGS.items():
@@ -467,7 +467,7 @@ class VenvFamilyManager:
 
 
 # Global manager instance
-_venv_manager: Optional[VenvFamilyManager] = None
+_venv_manager: VenvFamilyManager | None = None
 
 
 def get_venv_manager() -> VenvFamilyManager:

@@ -4,12 +4,14 @@ Macros and Automation Routes
 CRUD operations for macros and automation curves.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -44,9 +46,9 @@ class MacroNode(BaseModel):
     name: str
     x: float
     y: float
-    properties: Dict[str, Any] = {}
-    input_ports: List[MacroPort] = []
-    output_ports: List[MacroPort] = []
+    properties: dict[str, Any] = {}
+    input_ports: list[MacroPort] = []
+    output_ports: list[MacroPort] = []
 
 
 class MacroConnection(BaseModel):
@@ -60,10 +62,10 @@ class MacroConnection(BaseModel):
 class Macro(BaseModel):
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    nodes: List[MacroNode] = []
-    connections: List[MacroConnection] = []
+    nodes: list[MacroNode] = []
+    connections: list[MacroConnection] = []
     is_enabled: bool = True
     created: str
     modified: str
@@ -71,19 +73,19 @@ class Macro(BaseModel):
 
 class MacroCreateRequest(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    nodes: Optional[List[MacroNode]] = None
-    connections: Optional[List[MacroConnection]] = None
+    nodes: list[MacroNode] | None = None
+    connections: list[MacroConnection] | None = None
     is_enabled: bool = True
 
 
 class MacroUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    nodes: Optional[List[MacroNode]] = None
-    connections: Optional[List[MacroConnection]] = None
-    is_enabled: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    nodes: list[MacroNode] | None = None
+    connections: list[MacroConnection] | None = None
+    is_enabled: bool | None = None
 
 
 class MacroExecutionStatus(BaseModel):
@@ -91,20 +93,20 @@ class MacroExecutionStatus(BaseModel):
     status: str  # "idle", "running", "completed", "failed"
     current_node_index: int = 0
     total_nodes: int = 0
-    current_node_name: Optional[str] = None
+    current_node_name: str | None = None
     progress: float = 0.0  # 0.0 to 1.0
-    error_message: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    error_message: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
 
 class AutomationPoint(BaseModel):
     time: float
     value: float
-    bezier_handle_in_x: Optional[float] = None
-    bezier_handle_in_y: Optional[float] = None
-    bezier_handle_out_x: Optional[float] = None
-    bezier_handle_out_y: Optional[float] = None
+    bezier_handle_in_x: float | None = None
+    bezier_handle_in_y: float | None = None
+    bezier_handle_out_x: float | None = None
+    bezier_handle_out_y: float | None = None
 
 
 class AutomationCurve(BaseModel):
@@ -112,7 +114,7 @@ class AutomationCurve(BaseModel):
     name: str
     parameter_id: str
     track_id: str
-    points: List[AutomationPoint] = []
+    points: list[AutomationPoint] = []
     interpolation: str = "linear"  # "linear", "bezier", "step"
 
 
@@ -120,22 +122,22 @@ class AutomationCurveCreateRequest(BaseModel):
     name: str
     parameter_id: str
     track_id: str
-    points: Optional[List[AutomationPoint]] = None
+    points: list[AutomationPoint] | None = None
     interpolation: str = "linear"
 
 
 class AutomationCurveUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    parameter_id: Optional[str] = None
-    points: Optional[List[AutomationPoint]] = None
-    interpolation: Optional[str] = None
+    name: str | None = None
+    parameter_id: str | None = None
+    points: list[AutomationPoint] | None = None
+    interpolation: str | None = None
 
 
 # In-memory storage (replace with database in production)
-_macros: Dict[str, Macro] = {}  # macro_id -> Macro
-_automation_curves: Dict[str, AutomationCurve] = {}  # curve_id -> AutomationCurve
-_macro_execution_status: Dict[str, MacroExecutionStatus] = {}  # macro_id -> Status
-_macro_schedules: Dict[str, Dict[str, Any]] = {}  # macro_id -> Schedule info
+_macros: dict[str, Macro] = {}  # macro_id -> Macro
+_automation_curves: dict[str, AutomationCurve] = {}  # curve_id -> AutomationCurve
+_macro_execution_status: dict[str, MacroExecutionStatus] = {}  # macro_id -> Status
+_macro_schedules: dict[str, dict[str, Any]] = {}  # macro_id -> Schedule info
 _MAX_MACROS = 1000
 _MAX_AUTOMATION_CURVES = 2000
 
@@ -164,7 +166,7 @@ def _validate_track_id(track_id: str) -> None:
         raise HTTPException(status_code=400, detail="Track ID is required")
 
 
-def _validate_macro_structure(macro: Macro) -> List[str]:
+def _validate_macro_structure(macro: Macro) -> list[str]:
     """
     Validate macro structure comprehensively.
 
@@ -218,12 +220,12 @@ def _validate_macro_structure(macro: Macro) -> List[str]:
 
     # Check for cycles (using DFS)
     if macro.connections:
-        graph: Dict[str, List[str]] = {node_id: [] for node_id in node_ids}
+        graph: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
         for conn in macro.connections:
             if conn.source_node_id in graph:
                 graph[conn.source_node_id].append(conn.target_node_id)
 
-        def has_cycle(node_id: str, visited: Set[str], rec_stack: Set[str]) -> bool:
+        def has_cycle(node_id: str, visited: set[str], rec_stack: set[str]) -> bool:
             visited.add(node_id)
             rec_stack.add(node_id)
 
@@ -237,12 +239,11 @@ def _validate_macro_structure(macro: Macro) -> List[str]:
             rec_stack.remove(node_id)
             return False
 
-        visited: Set[str] = set()
+        visited: set[str] = set()
         for node_id in node_ids:
-            if node_id not in visited:
-                if has_cycle(node_id, visited, set()):
-                    errors.append("Macro contains circular dependencies")
-                    break
+            if node_id not in visited and has_cycle(node_id, visited, set()):
+                errors.append("Macro contains circular dependencies")
+                break
 
     # Check for at least one source node
     source_nodes = [n for n in macro.nodes if n.type == "source"]
@@ -257,11 +258,11 @@ def _validate_macro_structure(macro: Macro) -> List[str]:
     return errors
 
 
-@router.get("", response_model=List[Macro])
+@router.get("", response_model=list[Macro])
 @cache_response(ttl=30)  # Cache for 30 seconds (macros may change frequently)
 def list_macros(
-    project_id: Optional[str] = Query(None, description="Filter by project ID")
-) -> List[Macro]:
+    project_id: str | None = Query(None, description="Filter by project ID")
+) -> list[Macro]:
     """
     List all macros, optionally filtered by project ID.
     """
@@ -281,8 +282,8 @@ def list_macros(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error listing macros: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list macros: {str(e)}")
+        logger.error(f"Error listing macros: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list macros: {e!s}")
 
 
 @router.get("/{macro_id}", response_model=Macro)
@@ -303,9 +304,9 @@ def get_macro(macro_id: str) -> Macro:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving macro {macro_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error retrieving macro {macro_id}: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve macro: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve macro: {e!s}"
         )
 
 
@@ -363,8 +364,8 @@ def create_macro(request: MacroCreateRequest) -> Macro:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating macro: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create macro: {str(e)}")
+        logger.error(f"Error creating macro: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create macro: {e!s}")
 
 
 @router.put("/{macro_id}", response_model=Macro)
@@ -418,12 +419,12 @@ def update_macro(macro_id: str, request: MacroUpdateRequest) -> Macro:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating macro {macro_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update macro: {str(e)}")
+        logger.error(f"Error updating macro {macro_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update macro: {e!s}")
 
 
 @router.delete("/{macro_id}")
-def delete_macro(macro_id: str) -> Dict[str, bool]:
+def delete_macro(macro_id: str) -> dict[str, bool]:
     """
     Delete a macro.
     """
@@ -451,12 +452,12 @@ def delete_macro(macro_id: str) -> Dict[str, bool]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting macro {macro_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete macro: {str(e)}")
+        logger.error(f"Error deleting macro {macro_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete macro: {e!s}")
 
 
 @router.post("/{macro_id}/execute")
-def execute_macro(macro_id: str) -> Dict[str, bool]:
+def execute_macro(macro_id: str) -> dict[str, bool]:
     """
     Execute a macro.
 
@@ -516,7 +517,7 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
             execution_order = _build_execution_order(macro)
 
             # Execute nodes in order
-            node_outputs: Dict[str, Any] = {}
+            node_outputs: dict[str, Any] = {}
             for i, node_id in enumerate(execution_order):
                 node = next((n for n in macro.nodes if n.id == node_id), None)
                 if not node:
@@ -540,7 +541,7 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
                     logger.error(f"Node {node.name} execution failed: {e}")
                     execution_status.status = "failed"
                     execution_status.error_message = (
-                        f"Node '{node.name}' failed: {str(e)}"
+                        f"Node '{node.name}' failed: {e!s}"
                     )
                     execution_status.completed_at = datetime.utcnow().isoformat()
                     raise
@@ -560,7 +561,7 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error executing macro {macro_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error executing macro {macro_id}: {e!s}", exc_info=True)
 
         # Update execution status to failed
         if macro_id in _macro_execution_status:
@@ -571,11 +572,11 @@ def execute_macro(macro_id: str) -> Dict[str, bool]:
             )
 
         raise HTTPException(
-            status_code=500, detail=f"Failed to execute macro: {str(e)}"
+            status_code=500, detail=f"Failed to execute macro: {e!s}"
         )
 
 
-def _build_execution_order(macro: Macro) -> List[str]:
+def _build_execution_order(macro: Macro) -> list[str]:
     """Build execution order for macro nodes based on connections."""
     if not macro.nodes:
         return []
@@ -585,7 +586,7 @@ def _build_execution_order(macro: Macro) -> List[str]:
         return [node.id for node in macro.nodes]
 
     # Build dependency graph
-    node_deps: Dict[str, List[str]] = {node.id: [] for node in macro.nodes}
+    node_deps: dict[str, list[str]] = {node.id: [] for node in macro.nodes}
     for conn in macro.connections:
         if conn.target_node_id not in node_deps:
             node_deps[conn.target_node_id] = []
@@ -593,7 +594,7 @@ def _build_execution_order(macro: Macro) -> List[str]:
 
     # Topological sort
     execution_order = []
-    remaining = set(node.id for node in macro.nodes)
+    remaining = {node.id for node in macro.nodes}
     processed = set()
 
     while remaining:
@@ -618,13 +619,13 @@ def _build_execution_order(macro: Macro) -> List[str]:
 
 
 def _execute_macro_node(
-    node: MacroNode, node_outputs: Dict[str, Any], macro: Macro
-) -> Dict[str, Any]:
+    node: MacroNode, node_outputs: dict[str, Any], macro: Macro
+) -> dict[str, Any]:
     """Execute a single macro node."""
     node_type = node.type.lower()
 
     # Get input values from connected nodes
-    inputs: Dict[str, Any] = {}
+    inputs: dict[str, Any] = {}
     for conn in macro.connections:
         if conn.target_node_id == node.id:
             source_output = node_outputs.get(conn.source_node_id, {})
@@ -648,7 +649,7 @@ def _execute_macro_node(
         raise ValueError(f"Unknown node type: {node_type}")
 
 
-def _execute_source_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_source_node(node: MacroNode, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute a source node (generates data)."""
     source_type = node.properties.get("source_type", "constant")
 
@@ -665,15 +666,15 @@ def _execute_source_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, A
         return {"output": None}
 
 
-def _execute_processor_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_processor_node(node: MacroNode, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute a processor node (transforms data)."""
     processor_type = node.properties.get("processor_type", "passthrough")
 
     if processor_type == "passthrough":
-        return {"output": inputs.get("input", None)}
+        return {"output": inputs.get("input")}
     elif processor_type == "transform":
         # Apply transformation based on properties
-        input_value = inputs.get("input", None)
+        input_value = inputs.get("input")
         transform = node.properties.get("transform", "none")
 
         if transform == "uppercase" and isinstance(input_value, str):
@@ -685,10 +686,10 @@ def _execute_processor_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str
         else:
             return {"output": input_value}
     else:
-        return {"output": inputs.get("input", None)}
+        return {"output": inputs.get("input")}
 
 
-def _execute_control_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_control_node(node: MacroNode, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute a control node (delay, loop, etc.)."""
     control_type = node.properties.get("control_type", "delay")
 
@@ -697,24 +698,24 @@ def _execute_control_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, 
         import time
 
         time.sleep(delay_seconds)
-        return {"output": inputs.get("input", None)}
+        return {"output": inputs.get("input")}
     elif control_type == "loop":
         iterations = node.properties.get("iterations", 1)
         results = []
-        for i in range(iterations):
-            results.append(inputs.get("input", None))
+        for _i in range(iterations):
+            results.append(inputs.get("input"))
         return {"output": results}
     else:
-        return {"output": inputs.get("input", None)}
+        return {"output": inputs.get("input")}
 
 
 def _execute_conditional_node(
-    node: MacroNode, inputs: Dict[str, Any]
-) -> Dict[str, Any]:
+    node: MacroNode, inputs: dict[str, Any]
+) -> dict[str, Any]:
     """Execute a conditional node (if/else logic)."""
     condition_type = node.properties.get("condition_type", "equals")
 
-    input_value = inputs.get("input", None)
+    input_value = inputs.get("input")
     expected_value = node.properties.get("expected_value", None)
 
     result = False
@@ -743,13 +744,13 @@ def _execute_conditional_node(
             "condition_result": True,
         }
     else:
-        return {"output": inputs.get("false_output", None), "condition_result": False}
+        return {"output": inputs.get("false_output"), "condition_result": False}
 
 
-def _execute_output_node(node: MacroNode, inputs: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_output_node(node: MacroNode, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute an output node (final result)."""
     output_type = node.properties.get("output_type", "result")
-    input_value = inputs.get("input", None)
+    input_value = inputs.get("input")
 
     if output_type == "save_file":
         file_path = node.properties.get("file_path", "")
@@ -809,11 +810,11 @@ def get_macro_execution_status(macro_id: str) -> MacroExecutionStatus:
         raise
     except Exception as e:
         logger.error(
-            f"Error retrieving macro execution status {macro_id}: {str(e)}",
+            f"Error retrieving macro execution status {macro_id}: {e!s}",
             exc_info=True,
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve execution status: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve execution status: {e!s}"
         )
 
 
@@ -831,9 +832,9 @@ def get_macro_execution_status_alias(macro_id: str) -> MacroExecutionStatus:
 class MacroScheduleRequest(BaseModel):
     """Request to schedule a macro."""
 
-    scheduled_at: Optional[str] = None  # ISO datetime string
-    interval_seconds: Optional[float] = None  # Repeat interval
-    max_executions: Optional[int] = None  # Max times to execute (None = unlimited)
+    scheduled_at: str | None = None  # ISO datetime string
+    interval_seconds: float | None = None  # Repeat interval
+    max_executions: int | None = None  # Max times to execute (None = unlimited)
     priority: str = "normal"  # "low", "normal", "high", "critical"
 
 
@@ -841,10 +842,10 @@ class MacroScheduleResponse(BaseModel):
     """Response for macro scheduling."""
 
     macro_id: str
-    scheduled_at: Optional[str]
-    interval_seconds: Optional[float]
-    next_execution: Optional[str]
-    max_executions: Optional[int]
+    scheduled_at: str | None
+    interval_seconds: float | None
+    next_execution: str | None
+    max_executions: int | None
     execution_count: int = 0
     is_scheduled: bool
 
@@ -1003,7 +1004,7 @@ async def schedule_macro(macro_id: str, request: MacroScheduleRequest):
     except Exception as e:
         logger.error(f"Failed to schedule macro {macro_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to schedule macro: {str(e)}"
+            status_code=500, detail=f"Failed to schedule macro: {e!s}"
         ) from e
 
 
@@ -1044,12 +1045,12 @@ async def get_macro_schedule(macro_id: str):
     except Exception as e:
         logger.error(f"Failed to get macro schedule {macro_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get macro schedule: {str(e)}"
+            status_code=500, detail=f"Failed to get macro schedule: {e!s}"
         ) from e
 
 
 @router.delete("/{macro_id}/schedule")
-async def cancel_macro_schedule(macro_id: str) -> Dict[str, bool]:
+async def cancel_macro_schedule(macro_id: str) -> dict[str, bool]:
     """Cancel a scheduled macro."""
     try:
         _validate_macro_id(macro_id)
@@ -1081,18 +1082,18 @@ async def cancel_macro_schedule(macro_id: str) -> Dict[str, bool]:
     except Exception as e:
         logger.error(f"Failed to cancel macro schedule {macro_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to cancel macro schedule: {str(e)}"
+            status_code=500, detail=f"Failed to cancel macro schedule: {e!s}"
         ) from e
 
 
 # Automation curves endpoints
-@router.get("/automation/curves", response_model=List[AutomationCurve])
+@router.get("/automation/curves", response_model=list[AutomationCurve])
 @cache_response(
     ttl=30
 )  # Cache for 30 seconds (automation curves may change frequently)
 def list_automation_curves(
     track_id: str = Query(..., description="Track ID")
-) -> List[AutomationCurve]:
+) -> list[AutomationCurve]:
     """
     List all automation curves for a track.
     """
@@ -1108,11 +1109,11 @@ def list_automation_curves(
         raise
     except Exception as e:
         logger.error(
-            f"Error listing automation curves for track {track_id}: {str(e)}",
+            f"Error listing automation curves for track {track_id}: {e!s}",
             exc_info=True,
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to list automation curves: {str(e)}"
+            status_code=500, detail=f"Failed to list automation curves: {e!s}"
         )
 
 
@@ -1169,9 +1170,9 @@ def create_automation_curve(request: AutomationCurveCreateRequest) -> Automation
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating automation curve: {str(e)}", exc_info=True)
+        logger.error(f"Error creating automation curve: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to create automation curve: {e!s}"
         )
 
 
@@ -1226,15 +1227,15 @@ def update_automation_curve(
         raise
     except Exception as e:
         logger.error(
-            f"Error updating automation curve {curve_id}: {str(e)}", exc_info=True
+            f"Error updating automation curve {curve_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to update automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to update automation curve: {e!s}"
         )
 
 
 @router.delete("/automation/curves/{curve_id}")
-def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
+def delete_automation_curve(curve_id: str) -> dict[str, bool]:
     """
     Delete an automation curve.
     """
@@ -1255,10 +1256,10 @@ def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
         raise
     except Exception as e:
         logger.error(
-            f"Error deleting automation curve {curve_id}: {str(e)}", exc_info=True
+            f"Error deleting automation curve {curve_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to delete automation curve: {e!s}"
         )
 
 
@@ -1268,9 +1269,9 @@ def delete_automation_curve(curve_id: str) -> Dict[str, bool]:
 # =============================================================================
 
 
-@router.get("/automation/{track_id}", response_model=List[AutomationCurve])
+@router.get("/automation/{track_id}", response_model=list[AutomationCurve])
 @cache_response(ttl=30)
-def list_track_automation(track_id: str) -> List[AutomationCurve]:
+def list_track_automation(track_id: str) -> list[AutomationCurve]:
     """
     List all automation curves for a track.
     Frontend-compatible path-based route.
@@ -1284,11 +1285,11 @@ def list_track_automation(track_id: str) -> List[AutomationCurve]:
         raise
     except Exception as e:
         logger.error(
-            f"Error listing automation curves for track {track_id}: {str(e)}",
+            f"Error listing automation curves for track {track_id}: {e!s}",
             exc_info=True,
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to list automation curves: {str(e)}"
+            status_code=500, detail=f"Failed to list automation curves: {e!s}"
         )
 
 
@@ -1340,9 +1341,9 @@ def create_track_automation(request: AutomationCurveCreateRequest) -> Automation
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating automation curve: {str(e)}", exc_info=True)
+        logger.error(f"Error creating automation curve: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to create automation curve: {e!s}"
         )
 
 
@@ -1396,15 +1397,15 @@ def update_track_automation(
         raise
     except Exception as e:
         logger.error(
-            f"Error updating automation curve {curve_id}: {str(e)}", exc_info=True
+            f"Error updating automation curve {curve_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to update automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to update automation curve: {e!s}"
         )
 
 
 @router.delete("/automation/{curve_id}")
-def delete_track_automation(curve_id: str) -> Dict[str, bool]:
+def delete_track_automation(curve_id: str) -> dict[str, bool]:
     """
     Delete an automation curve.
     Frontend-compatible path-based route.
@@ -1424,8 +1425,8 @@ def delete_track_automation(curve_id: str) -> Dict[str, bool]:
         raise
     except Exception as e:
         logger.error(
-            f"Error deleting automation curve {curve_id}: {str(e)}", exc_info=True
+            f"Error deleting automation curve {curve_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete automation curve: {str(e)}"
+            status_code=500, detail=f"Failed to delete automation curve: {e!s}"
         )

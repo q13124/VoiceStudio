@@ -7,8 +7,7 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -17,7 +16,6 @@ sys.path.insert(0, str(project_root))
 
 # Mock dependencies before importing
 import sys
-from unittest.mock import MagicMock
 
 # Create mock modules for dependencies that might not be available
 for module_name in ["torch", "torch.cuda", "TTS", "TTS.api", "TTS.trainer", "TTS.tts.configs.xtts_config", "TTS.tts.models.xtts", "TTS.utils.audio", "TTS.utils.manage", "TTS.datasets", "TTS.utils.generic_utils", "audiomentations", "optuna", "ray", "ray.tune", "hyperopt"]:
@@ -141,7 +139,7 @@ class TestXTTSTrainerAugmentationPipeline:
         """Test creating augmentation pipeline when audiomentations is available."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with patch("app.core.training.xtts_trainer.Compose") as mock_compose:
             mock_compose.return_value = MagicMock()
             pipeline = trainer.create_augmentation_pipeline()
@@ -165,7 +163,7 @@ class TestXTTSTrainerAugmentationPipeline:
         """Test creating augmentation pipeline with custom options."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with patch("app.core.training.xtts_trainer.Compose") as mock_compose:
             mock_compose.return_value = MagicMock()
             pipeline = trainer.create_augmentation_pipeline(
@@ -187,7 +185,7 @@ class TestXTTSTrainerDatasetPreparation:
         """Test prepare_dataset raises error with no files."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with pytest.raises(ValueError, match="No audio files provided"):
             trainer.prepare_dataset([])
 
@@ -197,7 +195,7 @@ class TestXTTSTrainerDatasetPreparation:
         """Test prepare_dataset raises error with invalid files."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with pytest.raises(ValueError, match="No valid audio files found"):
             trainer.prepare_dataset(["nonexistent_file.wav"])
 
@@ -207,21 +205,21 @@ class TestXTTSTrainerDatasetPreparation:
         """Test prepare_dataset with valid files."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create test audio files
             audio_file1 = Path(tmpdir) / "test1.wav"
             audio_file2 = Path(tmpdir) / "test2.wav"
             audio_file1.touch()
             audio_file2.touch()
-            
+
             metadata_path = trainer.prepare_dataset(
                 [str(audio_file1), str(audio_file2)],
                 transcripts=["Test transcript 1", "Test transcript 2"]
             )
-            
+
             assert Path(metadata_path).exists()
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
                 assert len(metadata) == 2
                 assert metadata[0]["audio_file"] == str(audio_file1.absolute())
@@ -234,15 +232,15 @@ class TestXTTSTrainerDatasetPreparation:
         """Test prepare_dataset without transcripts."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             audio_file = Path(tmpdir) / "test_audio.wav"
             audio_file.touch()
-            
+
             metadata_path = trainer.prepare_dataset([str(audio_file)])
-            
+
             assert Path(metadata_path).exists()
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
                 assert len(metadata) == 1
                 assert metadata[0]["text"] != ""  # Should extract from filename
@@ -257,27 +255,27 @@ class TestXTTSTrainerModelInitialization:
         """Test successful model initialization."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with patch("app.core.training.xtts_trainer.TTS") as mock_tts, \
              patch("app.core.training.xtts_trainer.XttsConfig") as mock_config, \
              patch("app.core.training.xtts_trainer.Xtts") as mock_xtts, \
              patch("app.core.training.xtts_trainer.Path") as mock_path:
-            
+
             mock_tts_instance = MagicMock()
             mock_tts_instance.model_path = "/path/to/model"
             mock_tts_instance.to = MagicMock()
             mock_tts.return_value = mock_tts_instance
-            
+
             mock_config_instance = MagicMock()
             mock_config.return_value = mock_config_instance
-            
+
             mock_xtts_instance = MagicMock()
             mock_xtts_instance.load_checkpoint = MagicMock()
             mock_xtts_instance.to = MagicMock()
             mock_xtts.init_from_config.return_value = mock_xtts_instance
-            
+
             mock_path.return_value.exists.return_value = False
-            
+
             result = trainer.initialize_model()
             assert result is True
             assert trainer.model is not None
@@ -289,10 +287,10 @@ class TestXTTSTrainerModelInitialization:
         """Test model initialization failure."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with patch("app.core.training.xtts_trainer.TTS") as mock_tts:
             mock_tts.side_effect = Exception("Model loading failed")
-            
+
             result = trainer.initialize_model()
             assert result is False
 
@@ -307,11 +305,11 @@ class TestXTTSTrainerTraining:
         """Test train raises error when model not initialized."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with pytest.raises(RuntimeError, match="Model not initialized"):
                 await trainer.train(str(metadata_path))
 
@@ -324,11 +322,11 @@ class TestXTTSTrainerTraining:
         trainer = XTTSTrainer()
         trainer.model = MagicMock()
         trainer._is_training = True
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
-            
+
             with pytest.raises(RuntimeError, match="Training already in progress"):
                 await trainer.train(str(metadata_path))
 
@@ -339,7 +337,7 @@ class TestXTTSTrainerTraining:
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
         trainer._is_training = True
-        
+
         trainer.cancel_training()
         assert trainer._training_cancelled is True
 
@@ -349,7 +347,7 @@ class TestXTTSTrainerTraining:
         """Test is_training method."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         assert trainer.is_training() is False
         trainer._is_training = True
         assert trainer.is_training() is True
@@ -364,13 +362,13 @@ class TestXTTSTrainerExport:
         """Test successful model export."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint_dir = Path(tmpdir) / "checkpoint"
             checkpoint_dir.mkdir()
             (checkpoint_dir / "model.pth").touch()
             (checkpoint_dir / "config.json").touch()
-            
+
             output_path = trainer.export_model(str(checkpoint_dir))
             assert Path(output_path).exists()
 
@@ -380,7 +378,7 @@ class TestXTTSTrainerExport:
         """Test export raises error when checkpoint not found."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with pytest.raises(FileNotFoundError, match="Checkpoint not found"):
             trainer.export_model("nonexistent_checkpoint")
 
@@ -395,13 +393,13 @@ class TestXTTSTrainerHyperparameterOptimization:
         """Test hyperparameter optimization with optuna."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         with patch("app.core.training.xtts_trainer.optuna") as mock_optuna:
             mock_study = MagicMock()
             mock_study.best_params = {"learning_rate": 0.001, "batch_size": 8}
             mock_study.best_value = 0.95
             mock_optuna.create_study.return_value = mock_study
-            
+
             result = trainer.optimize_hyperparameters(method="optuna", n_trials=10)
             assert "best_params" in result
             assert "best_value" in result
@@ -413,7 +411,7 @@ class TestXTTSTrainerHyperparameterOptimization:
         """Test hyperparameter optimization when optuna not available."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         result = trainer.optimize_hyperparameters(method="optuna", n_trials=10)
         assert "error" in result or "best_params" not in result
 
@@ -423,7 +421,7 @@ class TestXTTSTrainerHyperparameterOptimization:
         """Test hyperparameter optimization with invalid method."""
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
-        
+
         result = trainer.optimize_hyperparameters(method="invalid_method", n_trials=10)
         assert "error" in result or "best_params" not in result
 

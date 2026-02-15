@@ -10,14 +10,13 @@ including attached property syntax issues on ContentPresenter and animation targ
 
 Usage:
     python scripts/lint_xaml.py [files...]
-    
+
 If no files are provided, checks all XAML files in the src/ directory.
 """
 
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Set
 
 # Patterns that cause XAML compiler crashes in WinAppSDK 1.8
 # Note: Patterns should be line-scoped or element-scoped to avoid matching comments
@@ -85,28 +84,28 @@ def should_skip_path(path: Path) -> bool:
     return bool(parts & SKIP_DIRS)
 
 
-def check_xaml_file(path: Path) -> Tuple[List[Tuple[int, str, str]], List[Tuple[int, str, str]]]:
+def check_xaml_file(path: Path) -> tuple[list[tuple[int, str, str]], list[tuple[int, str, str]]]:
     """
     Check a XAML file for problematic patterns.
-    
+
     Returns:
         Tuple of (errors, warnings) where each is a list of (line_num, description, suggestion)
     """
     errors = []
     warnings = []
-    
+
     try:
         content = path.read_text(encoding='utf-8')
     except Exception as e:
         print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
         return errors, warnings
-    
+
     # Check forbidden patterns (errors)
     for pattern, description, suggestion in FORBIDDEN_PATTERNS:
         for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
             line_num = content.count('\n', 0, match.start()) + 1
             errors.append((line_num, description, suggestion))
-    
+
     # Check warning patterns
     for pattern, description, suggestion in WARNING_PATTERNS:
         for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
@@ -114,11 +113,11 @@ def check_xaml_file(path: Path) -> Tuple[List[Tuple[int, str, str]], List[Tuple[
             # Only report first match per file for warnings
             warnings.append((line_num, description, suggestion))
             break
-    
+
     return errors, warnings
 
 
-def get_all_xaml_files(root: Path) -> List[Path]:
+def get_all_xaml_files(root: Path) -> list[Path]:
     """Get all XAML files, respecting skip dirs."""
     files = []
     for path in root.rglob('*.xaml'):
@@ -127,12 +126,12 @@ def get_all_xaml_files(root: Path) -> List[Path]:
     return files
 
 
-def main(args: List[str]) -> int:
+def main(args: list[str]) -> int:
     """Main entry point."""
     exit_code = 0
-    all_errors: List[Tuple[Path, int, str, str]] = []
-    all_warnings: List[Tuple[Path, int, str, str]] = []
-    
+    all_errors: list[tuple[Path, int, str, str]] = []
+    all_warnings: list[tuple[Path, int, str, str]] = []
+
     if args:
         # Check specific files
         files = [Path(f) for f in args if Path(f).exists() and Path(f).suffix.lower() == '.xaml']
@@ -140,52 +139,52 @@ def main(args: List[str]) -> int:
         # Check all XAML files in src/
         root = Path(__file__).parent.parent / "src"
         files = get_all_xaml_files(root)
-    
+
     for path in files:
         if should_skip_path(path):
             continue
-            
+
         errors, warnings = check_xaml_file(path)
-        
+
         for line_num, desc, suggestion in errors:
             all_errors.append((path, line_num, desc, suggestion))
-        
+
         for line_num, desc, suggestion in warnings:
             all_warnings.append((path, line_num, desc, suggestion))
-    
+
     # Report warnings (non-blocking)
     if all_warnings:
         print("\n" + "-" * 70)
         print("XAML WARNINGS (non-blocking)")
         print("-" * 70 + "\n")
-        
+
         for path, line_num, desc, suggestion in all_warnings:
             print(f"  {path}:{line_num}")
             print(f"    Warning: {desc}")
             print(f"    Suggestion: {suggestion}")
             print()
-    
+
     # Report errors (blocking)
     if all_errors:
         print("\n" + "=" * 70)
         print("XAML SAFETY CHECK FAILED")
         print("=" * 70)
         print("\nThe following patterns will cause XAML compiler crashes:\n")
-        
+
         for path, line_num, desc, suggestion in all_errors:
             print(f"  {path}:{line_num}")
             print(f"    ERROR: {desc}")
             print(f"    FIX: {suggestion}")
             print()
-        
+
         print("=" * 70)
         print("REFERENCE: See docs/developer/XAML_CHANGE_PROTOCOL.md for guidance")
         print("=" * 70 + "\n")
-        
+
         exit_code = 1
     else:
         print("XAML safety check: PASS")
-    
+
     return exit_code
 
 

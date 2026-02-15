@@ -3,12 +3,13 @@ Video Editing API Routes
 Handles video editing operations (trim, split, effects, transitions, export)
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import subprocess
 import uuid
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -28,26 +29,26 @@ class VideoEditRequest(BaseModel):
     operation: (
         str  # trim, split, effect, transition, export, resize, add_audio, upscale
     )
-    input_path: Optional[str] = None
-    output_path: Optional[str] = None
-    start_time: Optional[float] = None
-    end_time: Optional[float] = None
-    split_time: Optional[float] = None
-    effect: Optional[str] = None
-    transition: Optional[str] = None
-    duration: Optional[float] = None
-    format: Optional[str] = None
-    quality: Optional[int] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
-    audio_path: Optional[str] = None
-    scale: Optional[float] = None
+    input_path: str | None = None
+    output_path: str | None = None
+    start_time: float | None = None
+    end_time: float | None = None
+    split_time: float | None = None
+    effect: str | None = None
+    transition: str | None = None
+    duration: float | None = None
+    format: str | None = None
+    quality: int | None = None
+    width: int | None = None
+    height: int | None = None
+    audio_path: str | None = None
+    scale: float | None = None
 
 
 class VideoEditResponse(BaseModel):
     success: bool
-    output_path: Optional[str] = None
-    message: Optional[str] = None
+    output_path: str | None = None
+    message: str | None = None
 
 
 class VideoInfo(BaseModel):
@@ -55,7 +56,7 @@ class VideoInfo(BaseModel):
     width: int
     height: int
     fps: float
-    format: Optional[str] = None
+    format: str | None = None
 
 
 def check_ffmpeg() -> bool:
@@ -126,7 +127,7 @@ def get_video_info(video_path: str) -> VideoInfo:
     except Exception as e:
         logger.error(f"Failed to get video info: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get video info: {str(e)}"
+            status_code=500, detail=f"Failed to get video info: {e!s}"
         )
 
 
@@ -473,7 +474,7 @@ async def get_video_info_endpoint(
     except Exception as e:
         logger.error(f"Failed to get video info: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get video info: {str(e)}"
+            status_code=500, detail=f"Failed to get video info: {e!s}"
         )
 
 
@@ -628,4 +629,4 @@ async def edit_video(request: VideoEditRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to edit video: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to edit video: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to edit video: {e!s}")

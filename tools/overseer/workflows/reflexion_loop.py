@@ -9,8 +9,8 @@ after that, escalate to Overseer.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Tuple
 
 
 @dataclass
@@ -48,7 +48,7 @@ def build_reflection_prompt(diagnosis: str, attempt: int = 1, max_retries: int =
 
 
 def run_verification_step(
-    verify_fn: Callable[[], Tuple[bool, str]],
+    verify_fn: Callable[[], tuple[bool, str]],
     attempt: int = 1,
 ) -> ReflexionResult:
     """

@@ -5,6 +5,8 @@ Endpoints for voice model training.
 Supports dataset management, training job control, and progress tracking.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -15,13 +17,11 @@ import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-
-from ..middleware.auth_middleware import require_auth_if_enabled
 
 from backend.core.security.file_validation import (
     FileValidationError,
@@ -29,6 +29,7 @@ from backend.core.security.file_validation import (
 )
 from backend.services.engine_service import get_engine_service
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..ml_optimization import HyperparameterOptimizer
 from ..models import ApiOk
 from ..models_additional import (
@@ -57,8 +58,8 @@ router = APIRouter(
 
 # In-memory storage (replace with database in production)
 _training_jobs: dict[str, dict] = {}
-_training_logs: dict[str, List[dict]] = {}
-_training_quality_history: dict[str, List[dict]] = (
+_training_logs: dict[str, list[dict]] = {}
+_training_quality_history: dict[str, list[dict]] = (
     {}
 )  # job_id -> list of quality metrics (IDEA 54)
 _MAX_TRAINING_JOBS = 100  # Maximum number of training jobs
@@ -80,12 +81,9 @@ def _cleanup_old_training_jobs():
         )
         excess = len(_training_jobs) - _MAX_TRAINING_JOBS
         for job_id, _ in sorted_jobs[:excess]:
-            if job_id in _training_jobs:
-                del _training_jobs[job_id]
-            if job_id in _training_logs:
-                del _training_logs[job_id]
-            if job_id in _training_job_timestamps:
-                del _training_job_timestamps[job_id]
+            _training_jobs.pop(job_id, None)
+            _training_logs.pop(job_id, None)
+            _training_job_timestamps.pop(job_id, None)
         logger.info(f"Cleaned up {excess} old training jobs from storage")
 
 
@@ -111,9 +109,9 @@ class TrainingDataset(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    audio_files: List[str]  # List of audio IDs or file paths
-    transcripts: Optional[List[str]] = None  # Optional transcripts for each audio file
+    description: str | None = None
+    audio_files: list[str]  # List of audio IDs or file paths
+    transcripts: list[str] | None = None  # Optional transcripts for each audio file
     created: datetime
     modified: datetime
 
@@ -128,19 +126,19 @@ class TrainingRequest(BaseModel):
     batch_size: int = 4
     learning_rate: float = 0.0001
     gpu: bool = True
-    output_path: Optional[str] = None
+    output_path: str | None = None
 
 
 class TrainingQualityMetrics(BaseModel):
     """Quality metrics for a training epoch (IDEA 54)."""
 
     epoch: int
-    training_loss: Optional[float] = None
-    validation_loss: Optional[float] = None
-    quality_score: Optional[float] = None
-    mos_score: Optional[float] = None
-    similarity: Optional[float] = None
-    naturalness: Optional[float] = None
+    training_loss: float | None = None
+    validation_loss: float | None = None
+    quality_score: float | None = None
+    mos_score: float | None = None
+    similarity: float | None = None
+    naturalness: float | None = None
     timestamp: datetime
 
 
@@ -161,8 +159,8 @@ class EarlyStoppingRecommendation(BaseModel):
     reason: str
     confidence: float  # 0.0 to 1.0
     current_epoch: int
-    best_epoch: Optional[int] = None
-    best_metrics: Optional[TrainingQualityMetrics] = None
+    best_epoch: int | None = None
+    best_metrics: TrainingQualityMetrics | None = None
 
 
 class TrainingStatus(BaseModel):
@@ -176,16 +174,16 @@ class TrainingStatus(BaseModel):
     progress: float  # 0.0 to 1.0
     current_epoch: int
     total_epochs: int
-    loss: Optional[float] = None
-    started: Optional[datetime] = None
-    completed: Optional[datetime] = None
-    error_message: Optional[str] = None
+    loss: float | None = None
+    started: datetime | None = None
+    completed: datetime | None = None
+    error_message: str | None = None
 
     # Quality metrics (IDEA 54)
-    quality_score: Optional[float] = None
-    validation_loss: Optional[float] = None
-    quality_alerts: Optional[List[TrainingQualityAlert]] = None
-    early_stopping_recommendation: Optional[EarlyStoppingRecommendation] = None
+    quality_score: float | None = None
+    validation_loss: float | None = None
+    quality_alerts: list[TrainingQualityAlert] | None = None
+    early_stopping_recommendation: EarlyStoppingRecommendation | None = None
 
 
 class TrainingLogEntry(BaseModel):
@@ -194,16 +192,16 @@ class TrainingLogEntry(BaseModel):
     timestamp: datetime
     level: str  # info, warning, error
     message: str
-    epoch: Optional[int] = None
-    loss: Optional[float] = None
+    epoch: int | None = None
+    loss: float | None = None
 
 
 class DatasetCreateRequest(BaseModel):
     """Request to create a dataset."""
 
     name: str
-    description: Optional[str] = None
-    audio_files: Optional[List[str]] = None
+    description: str | None = None
+    audio_files: list[str] | None = None
 
 
 @router.post("/datasets", response_model=TrainingDataset)
@@ -236,13 +234,13 @@ async def create_dataset(request: DatasetCreateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating training dataset: {str(e)}", exc_info=True)
+        logger.error(f"Error creating training dataset: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create dataset: {str(e)}"
+            status_code=500, detail=f"Failed to create dataset: {e!s}"
         )
 
 
-@router.get("/datasets", response_model=List[TrainingDataset])
+@router.get("/datasets", response_model=list[TrainingDataset])
 @cache_response(ttl=60)  # Cache for 60 seconds (dataset list doesn't change frequently)
 async def list_datasets():
     """List all training datasets."""
@@ -255,9 +253,9 @@ async def list_datasets():
         logger.debug(f"Listed {len(datasets)} training datasets")
         return datasets
     except Exception as e:
-        logger.error(f"Error listing training datasets: {str(e)}", exc_info=True)
+        logger.error(f"Error listing training datasets: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list datasets: {str(e)}"
+            status_code=500, detail=f"Failed to list datasets: {e!s}"
         )
 
 
@@ -280,9 +278,9 @@ async def get_dataset(dataset_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error getting training dataset {dataset_id}: {str(e)}", exc_info=True
+            f"Error getting training dataset {dataset_id}: {e!s}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get dataset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get dataset: {e!s}")
 
 
 class HyperparameterOptimizationRequest(BaseModel):
@@ -293,20 +291,20 @@ class HyperparameterOptimizationRequest(BaseModel):
     engine: str = "xtts"
     method: str = "optuna"  # optuna, hyperopt, ray[tune]
     n_trials: int = 20
-    timeout_seconds: Optional[int] = None
-    hyperparameters: Optional[dict] = None  # Custom hyperparameter space
+    timeout_seconds: int | None = None
+    hyperparameters: dict | None = None  # Custom hyperparameter space
 
 
 class HyperparameterOptimizationResponse(BaseModel):
     """Response from hyperparameter optimization."""
 
-    best_params: Dict[str, Any]
+    best_params: dict[str, Any]
     best_score: float
     optimization_method: str
     n_trials: int
     trials_completed: int
     optimization_time_seconds: float
-    recommendations: List[str]
+    recommendations: list[str]
 
 
 @router.post(
@@ -418,7 +416,7 @@ async def optimize_hyperparameters(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Hyperparameter optimization failed: {str(e)}",
+            detail=f"Hyperparameter optimization failed: {e!s}",
         )
 
 
@@ -469,7 +467,7 @@ async def optimize_training_data(
                             import numpy as np
                             import soundfile as sf
 
-                            audio, sr = sf.read(audio_path)
+                            audio, _sr = sf.read(audio_path)
                             if len(audio.shape) > 1:
                                 audio = np.mean(audio, axis=1)
                             mos = engine_service.calculate_mos_score(audio)
@@ -575,7 +573,7 @@ async def optimize_training_data(
     except Exception as e:
         logger.error(f"Training data optimization error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Training data optimization failed: {str(e)}"
+            status_code=500, detail=f"Training data optimization failed: {e!s}"
         ) from e
 
 
@@ -651,7 +649,7 @@ async def start_training(request: TrainingRequest):
     except Exception as e:
         logger.error(f"Failed to start training: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to start training: {str(e)}"
+            status_code=500, detail=f"Failed to start training: {e!s}"
         )
 
 
@@ -913,7 +911,7 @@ async def _execute_real_training(training_id: str, request: TrainingRequest):
                 {
                     "timestamp": datetime.utcnow().isoformat(),
                     "level": "error",
-                    "message": f"Training failed: {str(e)}",
+                    "message": f"Training failed: {e!s}",
                 }
             )
 
@@ -1121,18 +1119,18 @@ async def get_training_status(training_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error getting training status {training_id}: {str(e)}", exc_info=True
+            f"Error getting training status {training_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to get training status: {str(e)}"
+            status_code=500, detail=f"Failed to get training status: {e!s}"
         )
 
 
-@router.get("/status", response_model=List[TrainingStatus])
+@router.get("/status", response_model=list[TrainingStatus])
 @cache_response(ttl=10)  # Cache for 10 seconds (job list may change frequently)
 async def list_training_jobs(
-    profile_id: Optional[str] = Query(None, description="Filter by profile ID"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    profile_id: str | None = Query(None, description="Filter by profile ID"),
+    status: str | None = Query(None, description="Filter by status"),
 ):
     """List all training jobs, optionally filtered."""
     try:
@@ -1153,21 +1151,21 @@ async def list_training_jobs(
         )
         return jobs
     except Exception as e:
-        logger.error(f"Error listing training jobs: {str(e)}", exc_info=True)
+        logger.error(f"Error listing training jobs: {e!s}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list training jobs: {str(e)}"
+            status_code=500, detail=f"Failed to list training jobs: {e!s}"
         )
 
 
 @router.get(
-    "/{training_id}/quality-history", response_model=List[TrainingQualityMetrics]
+    "/{training_id}/quality-history", response_model=list[TrainingQualityMetrics]
 )
 @cache_response(
     ttl=5
 )  # Cache for 5 seconds (quality history updates frequently during training)
 async def get_training_quality_history(
     training_id: str,
-    limit: Optional[int] = Query(
+    limit: int | None = Query(
         100, description="Maximum number of entries to return"
     ),
 ):
@@ -1220,10 +1218,10 @@ async def get_training_quality_history(
         raise
     except Exception as e:
         logger.error(
-            f"Error getting quality history for {training_id}: {str(e)}", exc_info=True
+            f"Error getting quality history for {training_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to get quality history: {str(e)}"
+            status_code=500, detail=f"Failed to get quality history: {e!s}"
         )
 
 
@@ -1266,18 +1264,18 @@ async def cancel_training(training_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error cancelling training job {training_id}: {str(e)}", exc_info=True
+            f"Error cancelling training job {training_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to cancel training: {str(e)}"
+            status_code=500, detail=f"Failed to cancel training: {e!s}"
         )
 
 
-@router.get("/logs/{training_id}", response_model=List[TrainingLogEntry])
+@router.get("/logs/{training_id}", response_model=list[TrainingLogEntry])
 @cache_response(ttl=5)  # Cache for 5 seconds (logs update frequently during training)
 async def get_training_logs(
     training_id: str,
-    limit: Optional[int] = Query(
+    limit: int | None = Query(
         100, description="Maximum number of log entries to return"
     ),
 ):
@@ -1309,10 +1307,10 @@ async def get_training_logs(
         raise
     except Exception as e:
         logger.error(
-            f"Error getting training logs for {training_id}: {str(e)}", exc_info=True
+            f"Error getting training logs for {training_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to get training logs: {str(e)}"
+            status_code=500, detail=f"Failed to get training logs: {e!s}"
         )
 
 
@@ -1337,8 +1335,7 @@ async def delete_training_job(training_id: str):
             )
 
         del _training_jobs[key]
-        if training_id in _training_logs:
-            del _training_logs[training_id]
+        _training_logs.pop(training_id, None)
 
         logger.info(f"Deleted training job: {training_id}")
         return ApiOk(message="Training job deleted")
@@ -1346,10 +1343,10 @@ async def delete_training_job(training_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Error deleting training job {training_id}: {str(e)}", exc_info=True
+            f"Error deleting training job {training_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete training job: {str(e)}"
+            status_code=500, detail=f"Failed to delete training job: {e!s}"
         )
 
 
@@ -1357,7 +1354,7 @@ class ModelExportRequest(BaseModel):
     """Request to export a trained model."""
 
     training_id: str
-    profile_id: Optional[str] = None
+    profile_id: str | None = None
     include_metadata: bool = True
 
 
@@ -1418,7 +1415,7 @@ async def export_trained_model(request: ModelExportRequest, http_request: Reques
             zip_path = export_dir / f"model_{export_id}.zip"
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Add model files
-                for root, dirs, files in os.walk(model_dir):
+                for root, _dirs, files in os.walk(model_dir):
                     for file in files:
                         file_path = Path(root) / file
                         arcname = file_path.relative_to(model_dir.parent)
@@ -1451,14 +1448,14 @@ async def export_trained_model(request: ModelExportRequest, http_request: Reques
         except Exception as e:
             logger.error(f"Failed to export model: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Failed to export model: {str(e)}"
+                status_code=500, detail=f"Failed to export model: {e!s}"
             )
 
 
 @router.post("/import", response_model=TrainingStatus)
 async def import_trained_model(
     file: UploadFile = File(...),
-    profile_id: Optional[str] = Query(None),
+    profile_id: str | None = Query(None),
     request: Request = None,
 ):
     """Import a trained model from a ZIP package."""
@@ -1514,7 +1511,7 @@ async def import_trained_model(
                     detail="Invalid model package: missing metadata.json",
                 )
 
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
 
             # Find model directory
@@ -1572,7 +1569,7 @@ async def import_trained_model(
         except Exception as e:
             logger.error(f"Failed to import model: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500, detail=f"Failed to import model: {str(e)}"
+                status_code=500, detail=f"Failed to import model: {e!s}"
             )
 
 

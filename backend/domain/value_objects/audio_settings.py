@@ -7,7 +7,7 @@ Task 3.1.2: Value object for audio configuration.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from backend.domain.value_objects.base import ValueObject
 
@@ -16,60 +16,60 @@ from backend.domain.value_objects.base import ValueObject
 class AudioSettings(ValueObject):
     """
     Audio settings configuration.
-    
+
     Immutable settings for audio processing and output.
     """
-    
+
     # Sample rate in Hz
     sample_rate: int = 22050
-    
+
     # Bit depth
     bit_depth: int = 16
-    
+
     # Number of channels (1=mono, 2=stereo)
     channels: int = 1
-    
+
     # Output format
     format: str = "wav"
-    
+
     # Normalization
     normalize: bool = True
     target_db: float = -3.0
-    
+
     # Silence removal
     remove_silence: bool = False
     silence_threshold_db: float = -40.0
     min_silence_duration: float = 0.1
-    
+
     # Speed/pitch adjustment
     speed: float = 1.0
     pitch: float = 0.0
-    
+
     # Effects
     add_reverb: bool = False
     reverb_room_size: float = 0.5
-    
+
     def _validate(self) -> None:
         """Validate audio settings."""
         if self.sample_rate not in (8000, 16000, 22050, 24000, 44100, 48000):
             raise ValueError(f"Invalid sample rate: {self.sample_rate}")
-        
+
         if self.bit_depth not in (8, 16, 24, 32):
             raise ValueError(f"Invalid bit depth: {self.bit_depth}")
-        
+
         if self.channels not in (1, 2):
             raise ValueError(f"Invalid channels: {self.channels}")
-        
+
         if self.format not in ("wav", "mp3", "ogg", "flac"):
             raise ValueError(f"Invalid format: {self.format}")
-        
+
         if self.speed < 0.25 or self.speed > 4.0:
             raise ValueError(f"Speed must be 0.25-4.0: {self.speed}")
-        
+
         if self.pitch < -12.0 or self.pitch > 12.0:
             raise ValueError(f"Pitch must be -12 to +12: {self.pitch}")
-    
-    def with_sample_rate(self, sample_rate: int) -> "AudioSettings":
+
+    def with_sample_rate(self, sample_rate: int) -> AudioSettings:
         """Create new settings with different sample rate."""
         return AudioSettings(
             sample_rate=sample_rate,
@@ -86,8 +86,8 @@ class AudioSettings(ValueObject):
             add_reverb=self.add_reverb,
             reverb_room_size=self.reverb_room_size,
         )
-    
-    def with_format(self, format: str) -> "AudioSettings":
+
+    def with_format(self, format: str) -> AudioSettings:
         """Create new settings with different format."""
         return AudioSettings(
             sample_rate=self.sample_rate,
@@ -104,8 +104,8 @@ class AudioSettings(ValueObject):
             add_reverb=self.add_reverb,
             reverb_room_size=self.reverb_room_size,
         )
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "sample_rate": self.sample_rate,
@@ -122,9 +122,9 @@ class AudioSettings(ValueObject):
             "add_reverb": self.add_reverb,
             "reverb_room_size": self.reverb_room_size,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AudioSettings":
+    def from_dict(cls, data: dict[str, Any]) -> AudioSettings:
         """Create from dictionary."""
         return cls(
             sample_rate=data.get("sample_rate", 22050),

@@ -10,12 +10,11 @@ Tests cover:
 - Configuration and optimization features
 """
 
-import pytest
-import tempfile
-import os
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+import contextlib
 from collections import OrderedDict
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Try to import the engine
 try:
@@ -37,10 +36,8 @@ def espeak_engine():
 
     engine = ESpeakNGEngine(device="cpu", gpu=False)
     yield engine
-    try:
+    with contextlib.suppress(Exception):
         engine.cleanup()
-    except Exception:
-        ...
 
 
 class TestESpeakNGEngineImports:
@@ -204,7 +201,7 @@ class TestESpeakNGEngineBatchProcessing:
         texts = ["Test text 1", "Test text 2"]
 
         try:
-            results = espeak_engine.batch_synthesize(texts, batch_size=2)
+            espeak_engine.batch_synthesize(texts, batch_size=2)
             # Should have called ThreadPoolExecutor
             assert mock_executor.called
         except Exception:
@@ -247,20 +244,19 @@ class TestESpeakNGEngineOptimization:
             # Mock initialization to succeed
             with patch.object(
                 espeak_engine, "_find_executable", return_value="/usr/bin/espeak-ng"
-            ):
-                with patch(
-                    "app.core.engines.espeak_ng_engine.subprocess.run"
-                ) as mock_run:
-                    mock_run.return_value.returncode = 0
-                    mock_run.return_value.stdout = "eSpeak-ng text-to-speech"
+            ), patch(
+                "app.core.engines.espeak_ng_engine.subprocess.run"
+            ) as mock_run:
+                mock_run.return_value.returncode = 0
+                mock_run.return_value.stdout = "eSpeak-ng text-to-speech"
 
-                    try:
-                        result = espeak_engine.initialize()
-                        if result:
-                            assert espeak_engine._temp_dir is not None
-                    except Exception:
-                        # If dependencies not available, skip
-                        ...
+                try:
+                    result = espeak_engine.initialize()
+                    if result:
+                        assert espeak_engine._temp_dir is not None
+                except Exception:
+                    # If dependencies not available, skip
+                    ...
 
     def test_cache_optimization(self, espeak_engine):
         """Test that cache optimization is enabled by default."""
@@ -291,8 +287,6 @@ class TestESpeakNGEngineCreateFunction:
         engine = create_espeak_ng_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, ESpeakNGEngine)
-        try:
+        with contextlib.suppress(Exception):
             engine.cleanup()
-        except Exception:
-            ...
 

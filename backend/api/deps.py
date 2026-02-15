@@ -16,22 +16,14 @@ Usage:
         return config_service.get_default_engine("tts")
 """
 
-from typing import Annotated, Optional, TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends
 
 if TYPE_CHECKING:
-    from backend.services.EngineConfigService import EngineConfigService
-    from backend.services.engine_service import IEngineService
-    from backend.services.AudioArtifactRegistry import AudioArtifactRegistry
-    from backend.services.ContentAddressedAudioCache import ContentAddressedAudioCache
-    from backend.services.JobStateStore import JobStateStore
-    from backend.services.ProjectStoreService import ProjectStoreService
-    from backend.services.profile_store import ProfileStore
-    from backend.services.track_store import TrackStore
-    from backend.services.artifact_ref_counter import ArtifactRefCounter
-    from backend.services.edit_history import EditHistory
-    from backend.services.unified_config import UnifiedConfigService
+    pass
 
 
 # EngineConfigService dependency
@@ -45,7 +37,7 @@ try:
     from backend.services.EngineConfigService import (
         EngineConfigService as _EngineConfigService,
     )
-    EngineConfigServiceDep: Optional[type] = Annotated[
+    EngineConfigServiceDep: type | None = Annotated[
         _EngineConfigService, Depends(get_engine_config_service_dep)
     ]
 except ImportError:
@@ -61,7 +53,7 @@ def get_engine_service_dep():
 
 try:
     from backend.services.engine_service import IEngineService as _IEngineService
-    EngineServiceDep: Optional[type] = Annotated[
+    EngineServiceDep: type | None = Annotated[
         _IEngineService, Depends(get_engine_service_dep)
     ]
 except ImportError:
@@ -79,7 +71,7 @@ try:
     from backend.services.AudioArtifactRegistry import (
         AudioArtifactRegistry as _AudioArtifactRegistry,
     )
-    AudioRegistryDep: Optional[type] = Annotated[
+    AudioRegistryDep: type | None = Annotated[
         _AudioArtifactRegistry, Depends(get_audio_registry_dep)
     ]
 except ImportError:
@@ -97,7 +89,7 @@ try:
     from backend.services.ContentAddressedAudioCache import (
         ContentAddressedAudioCache as _ContentAddressedAudioCache,
     )
-    AudioCacheDep: Optional[type] = Annotated[
+    AudioCacheDep: type | None = Annotated[
         _ContentAddressedAudioCache, Depends(get_audio_cache_dep)
     ]
 except ImportError:
@@ -113,7 +105,7 @@ def get_job_state_store_dep():
 
 try:
     from backend.services.JobStateStore import JobStateStore as _JobStateStore
-    JobStateStoreDep: Optional[type] = Annotated[
+    JobStateStoreDep: type | None = Annotated[
         _JobStateStore, Depends(get_job_state_store_dep)
     ]
 except ImportError:
@@ -138,7 +130,7 @@ try:
     from backend.services.ProjectStoreService import (
         ProjectStoreService as _ProjectStoreService,
     )
-    ProjectStoreServiceDep: Optional[type] = Annotated[
+    ProjectStoreServiceDep: type | None = Annotated[
         _ProjectStoreService, Depends(get_project_store_service_dep)
     ]
 except ImportError:
@@ -154,7 +146,7 @@ def get_profile_store_dep():
 
 try:
     from backend.services.profile_store import ProfileStore as _ProfileStore
-    ProfileStoreDep: Optional[type] = Annotated[
+    ProfileStoreDep: type | None = Annotated[
         _ProfileStore, Depends(get_profile_store_dep)
     ]
 except ImportError:
@@ -170,7 +162,7 @@ def get_track_store_dep():
 
 try:
     from backend.services.track_store import TrackStore as _TrackStore
-    TrackStoreDep: Optional[type] = Annotated[
+    TrackStoreDep: type | None = Annotated[
         _TrackStore, Depends(get_track_store_dep)
     ]
 except ImportError:
@@ -188,7 +180,7 @@ try:
     from backend.services.artifact_ref_counter import (
         ArtifactRefCounter as _ArtifactRefCounter,
     )
-    ArtifactRefCounterDep: Optional[type] = Annotated[
+    ArtifactRefCounterDep: type | None = Annotated[
         _ArtifactRefCounter, Depends(get_ref_counter_dep)
     ]
 except ImportError:
@@ -204,7 +196,7 @@ def get_edit_history_dep():
 
 try:
     from backend.services.edit_history import EditHistory as _EditHistory
-    EditHistoryDep: Optional[type] = Annotated[
+    EditHistoryDep: type | None = Annotated[
         _EditHistory, Depends(get_edit_history_dep)
     ]
 except ImportError:
@@ -220,7 +212,7 @@ def get_unified_config_dep():
 
 try:
     from backend.services.unified_config import UnifiedConfigService as _UnifiedConfigService
-    UnifiedConfigDep: Optional[type] = Annotated[
+    UnifiedConfigDep: type | None = Annotated[
         _UnifiedConfigService, Depends(get_unified_config_dep)
     ]
 except ImportError:
@@ -229,27 +221,27 @@ except ImportError:
 
 # Export all dependencies
 __all__ = [
-    "EngineServiceDep",
-    "EngineConfigServiceDep",
-    "AudioRegistryDep",
-    "AudioCacheDep",
-    "JobStateStoreDep",
-    "ProjectStoreServiceDep",
-    "ProfileStoreDep",
-    "TrackStoreDep",
     "ArtifactRefCounterDep",
+    "AudioCacheDep",
+    "AudioRegistryDep",
     "EditHistoryDep",
+    "EngineConfigServiceDep",
+    "EngineServiceDep",
+    "JobStateStoreDep",
+    "ProfileStoreDep",
+    "ProjectStoreServiceDep",
+    "TrackStoreDep",
     "UnifiedConfigDep",
-    "get_engine_service_dep",
-    "get_engine_config_service_dep",
-    "get_audio_registry_dep",
     "get_audio_cache_dep",
-    "get_job_state_store_dep",
-    "get_project_store_service_dep",
-    "get_profile_store_dep",
-    "get_track_store_dep",
-    "get_ref_counter_dep",
-    "get_edit_history_dep",
-    "get_unified_config_dep",
+    "get_audio_registry_dep",
     "get_circuit_breaker_dep",
+    "get_edit_history_dep",
+    "get_engine_config_service_dep",
+    "get_engine_service_dep",
+    "get_job_state_store_dep",
+    "get_profile_store_dep",
+    "get_project_store_service_dep",
+    "get_ref_counter_dep",
+    "get_track_store_dep",
+    "get_unified_config_dep",
 ]

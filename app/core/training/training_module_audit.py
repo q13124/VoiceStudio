@@ -11,10 +11,12 @@ Automatically reviews training modules for:
 - Checkpoint management
 """
 
+from __future__ import annotations
+
 import inspect
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Type
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +26,12 @@ class TrainingModuleAuditResult:
     """Results of training module audit."""
 
     module_name: str
-    module_class: Type
+    module_class: type
     is_complete: bool = False
-    missing_features: List[str] = field(default_factory=list)
-    optimization_opportunities: List[str] = field(default_factory=list)
-    error_handling_issues: List[str] = field(default_factory=list)
-    performance_issues: List[str] = field(default_factory=list)
+    missing_features: list[str] = field(default_factory=list)
+    optimization_opportunities: list[str] = field(default_factory=list)
+    error_handling_issues: list[str] = field(default_factory=list)
+    performance_issues: list[str] = field(default_factory=list)
     has_analytics: bool = False
     has_checkpoint_management: bool = False
     has_progress_monitoring: bool = False
@@ -71,10 +73,10 @@ class TrainingModuleAuditor:
 
     def __init__(self):
         """Initialize training module auditor."""
-        self.audit_results: Dict[str, TrainingModuleAuditResult] = {}
+        self.audit_results: dict[str, TrainingModuleAuditResult] = {}
 
     def audit_module(
-        self, module_name: str, module_class: Type
+        self, module_name: str, module_class: type
     ) -> TrainingModuleAuditResult:
         """
         Audit a single training module.
@@ -195,8 +197,8 @@ class TrainingModuleAuditor:
         return max(0.0, min(100.0, score))
 
     def audit_all_modules(
-        self, modules: Dict[str, Type]
-    ) -> Dict[str, TrainingModuleAuditResult]:
+        self, modules: dict[str, type]
+    ) -> dict[str, TrainingModuleAuditResult]:
         """
         Audit all modules.
 
@@ -217,12 +219,12 @@ class TrainingModuleAuditor:
                 results[module_name] = TrainingModuleAuditResult(
                     module_name=module_name,
                     module_class=module_class,
-                    error_handling_issues=[f"Audit failed: {str(e)}"],
+                    error_handling_issues=[f"Audit failed: {e!s}"],
                 )
 
         return results
 
-    def get_audit_summary(self) -> Dict[str, Any]:
+    def get_audit_summary(self) -> dict[str, Any]:
         """
         Get summary of all audits.
 
@@ -298,7 +300,7 @@ class TrainingModuleAuditor:
 
     def get_modules_needing_attention(
         self, min_score: float = 70.0
-    ) -> List[TrainingModuleAuditResult]:
+    ) -> list[TrainingModuleAuditResult]:
         """
         Get modules that need attention (score below threshold).
 
@@ -367,5 +369,5 @@ class TrainingModuleAuditor:
 
 
 # Export
-__all__ = ["TrainingModuleAuditor", "TrainingModuleAuditResult"]
+__all__ = ["TrainingModuleAuditResult", "TrainingModuleAuditor"]
 

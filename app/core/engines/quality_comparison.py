@@ -3,9 +3,10 @@ Quality Comparison Utility
 Compare quality metrics across multiple synthesis results
 """
 
+from __future__ import annotations
+
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -29,16 +30,16 @@ class QualityComparison:
 
     def __init__(self):
         """Initialize quality comparison."""
-        self.comparisons: List[Dict[str, Any]] = []
+        self.comparisons: list[dict[str, Any]] = []
 
     def add_sample(
         self,
         name: str,
         audio: Any,
-        reference_audio: Optional[Any] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        reference_audio: Any | None = None,
+        metadata: dict[str, Any] | None = None,
         sample_rate: int = 22050,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Add audio sample for comparison.
 
@@ -79,7 +80,7 @@ class QualityComparison:
             logger.error(f"Failed to add sample '{name}': {e}")
             return {}
 
-    def compare(self) -> Dict[str, Any]:
+    def compare(self) -> dict[str, Any]:
         """
         Compare all added samples.
 
@@ -156,7 +157,7 @@ class QualityComparison:
 
         return results
 
-    def _create_comparison_table(self) -> List[Dict[str, Any]]:
+    def _create_comparison_table(self) -> list[dict[str, Any]]:
         """
         Create comparison table for all samples.
 
@@ -180,7 +181,7 @@ class QualityComparison:
 
         return table
 
-    def get_best_sample(self, metric: Optional[str] = None) -> Optional[str]:
+    def get_best_sample(self, metric: str | None = None) -> str | None:
         """
         Get name of best sample.
 
@@ -200,10 +201,9 @@ class QualityComparison:
 
             for entry in self.comparisons:
                 value = entry["metrics"].get(metric)
-                if value is not None:
-                    if best_value is None or value > best_value:
-                        best_value = value
-                        best_name = entry["name"]
+                if value is not None and (best_value is None or value > best_value):
+                    best_value = value
+                    best_name = entry["name"]
 
             return best_name
         else:
@@ -213,7 +213,7 @@ class QualityComparison:
                 return comparison["rankings"][1]["name"]
             return None
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         Get summary of comparison.
 
@@ -241,8 +241,8 @@ class QualityComparison:
 
 
 def compare_audio_samples(
-    samples: List[Dict[str, Any]], reference_audio: Optional[Any] = None
-) -> Dict[str, Any]:
+    samples: list[dict[str, Any]], reference_audio: Any | None = None
+) -> dict[str, Any]:
     """
     Convenience function to compare multiple audio samples.
 

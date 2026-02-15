@@ -7,11 +7,12 @@ Compatible with:
 - torch>=2.0.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Callable, Any, Tuple
-from pathlib import Path
-from datetime import datetime
 import random
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ except ImportError:
 
 # Import quality metrics
 try:
-    from ..audio.enhanced_quality_metrics import EnhancedQualityMetrics
+    from app.core.audio.enhanced_quality_metrics import EnhancedQualityMetrics
 
     HAS_QUALITY_METRICS = True
 except ImportError:
@@ -61,7 +62,7 @@ class ParameterOptimizer:
         """
         self.optimization_strategy = optimization_strategy.lower()
         self.max_iterations = max_iterations
-        self.optimization_history: List[Dict[str, Any]] = []
+        self.optimization_history: list[dict[str, Any]] = []
 
         # Validate strategy
         valid_strategies = ["grid_search", "random_search", "bayesian"]
@@ -74,13 +75,13 @@ class ParameterOptimizer:
     def optimize_parameters(
         self,
         metadata_path: str,
-        parameter_space: Dict[str, List[Any]],
-        validation_audio: Optional[str] = None,
+        parameter_space: dict[str, list[Any]],
+        validation_audio: str | None = None,
         engine: str = "xtts",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        progress_callback: Optional[Callable[[Dict], None]] = None,
-    ) -> Dict[str, Any]:
+        progress_callback: Callable[[dict], None] | None = None,
+    ) -> dict[str, Any]:
         """
         Optimize training parameters.
 
@@ -250,8 +251,8 @@ class ParameterOptimizer:
         }
 
     def _generate_grid_search(
-        self, parameter_space: Dict[str, List[Any]]
-    ) -> List[Dict[str, Any]]:
+        self, parameter_space: dict[str, list[Any]]
+    ) -> list[dict[str, Any]]:
         """
         Generate parameter sets for grid search.
 
@@ -269,14 +270,14 @@ class ParameterOptimizer:
         from itertools import product
 
         for combination in product(*param_values):
-            param_set = dict(zip(param_names, combination))
+            param_set = dict(zip(param_names, combination, strict=False))
             param_sets.append(param_set)
 
         return param_sets
 
     def _generate_random_search(
-        self, parameter_space: Dict[str, List[Any]], num_samples: int
-    ) -> List[Dict[str, Any]]:
+        self, parameter_space: dict[str, list[Any]], num_samples: int
+    ) -> list[dict[str, Any]]:
         """
         Generate parameter sets for random search.
 
@@ -298,8 +299,8 @@ class ParameterOptimizer:
         return param_sets
 
     def _generate_bayesian_search(
-        self, parameter_space: Dict[str, List[Any]], num_samples: int
-    ) -> List[Dict[str, Any]]:
+        self, parameter_space: dict[str, list[Any]], num_samples: int
+    ) -> list[dict[str, Any]]:
         """
         Generate parameter sets for Bayesian optimization (simplified).
 
@@ -320,7 +321,7 @@ class ParameterOptimizer:
         self,
         dataset_size: int,
         quality_target: str = "standard",
-    ) -> Dict[str, List[Any]]:
+    ) -> dict[str, list[Any]]:
         """
         Get recommended parameter space based on dataset characteristics.
 
@@ -358,7 +359,7 @@ class ParameterOptimizer:
             "learning_rate": lr_range,
         }
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """
         Get summary of optimization results.
 

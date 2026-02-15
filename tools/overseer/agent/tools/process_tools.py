@@ -5,14 +5,13 @@ Governed process execution.
 """
 
 import subprocess
-from typing import Any, Dict, List, Optional, Union
 
 from .base_tool import BaseTool, ToolResult
 
 
 class RunProcessTool(BaseTool):
     """Execute a subprocess."""
-    
+
     name = "RunProcess"
     description = "Execute a process with arguments"
     required_params = ("exe",)
@@ -23,11 +22,11 @@ class RunProcessTool(BaseTool):
         "timeout": 300,
         "capture_output": True,
     }
-    
+
     def execute(self, **params) -> ToolResult:
         """
         Execute a process.
-        
+
         Args:
             exe: Executable path or name
             args: Arguments to pass
@@ -35,29 +34,29 @@ class RunProcessTool(BaseTool):
             env: Environment variables (extends current env)
             timeout: Timeout in seconds
             capture_output: Whether to capture stdout/stderr
-            
+
         Returns:
             ToolResult with process output
         """
         import os
-        
+
         exe = params["exe"]
         args = self.get_param(params, "args", [])
         cwd = self.get_param(params, "cwd", None)
         env_override = self.get_param(params, "env", None)
         timeout = self.get_param(params, "timeout", 300)
         capture_output = self.get_param(params, "capture_output", True)
-        
+
         # Build command
         if isinstance(args, str):
             args = args.split()
-        cmd = [exe] + list(args)
-        
+        cmd = [exe, *list(args)]
+
         # Build environment
         env = os.environ.copy()
         if env_override:
             env.update(env_override)
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -67,13 +66,13 @@ class RunProcessTool(BaseTool):
                 timeout=timeout,
                 text=True,
             )
-            
+
             output = {
                 "returncode": result.returncode,
                 "stdout": result.stdout if capture_output else None,
                 "stderr": result.stderr if capture_output else None,
             }
-            
+
             if result.returncode == 0:
                 return ToolResult.ok(
                     output=output,
@@ -87,7 +86,7 @@ class RunProcessTool(BaseTool):
                     stdout=result.stdout if capture_output else None,
                     stderr=result.stderr if capture_output else None,
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ToolResult.fail(
                 error=f"Process timed out after {timeout}s",

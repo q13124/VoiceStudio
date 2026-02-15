@@ -8,17 +8,19 @@ This schema combines requirements from:
 All audit entries use this schema for consistency across Python and C# components.
 """
 
+from __future__ import annotations
+
+import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
-import json
-import uuid
+from typing import Any
 
 
 class AuditEventType(str, Enum):
     """Types of events that can be logged to the audit system."""
-    
+
     FILE_CREATE = "file_create"
     FILE_MODIFY = "file_modify"
     FILE_DELETE = "file_delete"
@@ -38,7 +40,7 @@ class AuditEventType(str, Enum):
 
 class AuditActor(str, Enum):
     """Who or what performed the action."""
-    
+
     HUMAN = "human"
     AI_AGENT = "ai-agent"
     SYSTEM = "system"
@@ -47,7 +49,7 @@ class AuditActor(str, Enum):
 
 class AuditOperation(str, Enum):
     """File operation types."""
-    
+
     CREATE = "create"
     MODIFY = "modify"
     DELETE = "delete"
@@ -58,49 +60,49 @@ class AuditOperation(str, Enum):
 class AuditEntry:
     """
     A single audit log entry with full context for traceability.
-    
+
     This schema enables:
     - Tracing changes back to commits, tasks, and roles
     - Correlating errors with file modifications
     - Cross-referencing crash artifacts with triggering changes
     - Filtering logs by subsystem, role, or task
     """
-    
+
     # Required fields
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     event_type: str = field(default="")  # AuditEventType value
     entry_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    
+
     # Context fields (from Enhanced Traceability proposal)
     correlation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    task_id: Optional[str] = None  # VS-XXXX from Quality Ledger
-    role: Optional[str] = None  # Role 0-6 or "AI-Agent"
+    task_id: str | None = None  # VS-XXXX from Quality Ledger
+    role: str | None = None  # Role 0-6 or "AI-Agent"
     actor: str = field(default=AuditActor.SYSTEM.value)
-    
+
     # File change fields (from AI Change Logging proposal)
-    file_path: Optional[str] = None
-    operation: Optional[str] = None  # AuditOperation value
+    file_path: str | None = None
+    operation: str | None = None  # AuditOperation value
     lines_added: int = 0
     lines_removed: int = 0
-    
+
     # Error fields
-    error_code: Optional[str] = None  # CS####, RCS####, XAML####
-    message: Optional[str] = None
-    stack_trace: Optional[str] = None
-    severity: Optional[str] = None  # info, warning, error, critical
-    
+    error_code: str | None = None  # CS####, RCS####, XAML####
+    message: str | None = None
+    stack_trace: str | None = None
+    severity: str | None = None  # info, warning, error, critical
+
     # Linkage fields
-    commit_hash: Optional[str] = None
-    subsystem: Optional[str] = None  # Panel name, engine ID, workflow
-    gate: Optional[str] = None  # Gate A-H if applicable
-    linked_artifacts: List[str] = field(default_factory=list)
-    
+    commit_hash: str | None = None
+    subsystem: str | None = None  # Panel name, engine ID, workflow
+    gate: str | None = None  # Gate A-H if applicable
+    linked_artifacts: list[str] = field(default_factory=list)
+
     # Metadata
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     summary: str = ""  # Human-readable description
-    extra: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "timestamp": self.timestamp,
@@ -126,13 +128,13 @@ class AuditEntry:
             "summary": self.summary,
             "extra": self.extra,
         }
-    
+
     def to_json(self) -> str:
         """Serialize to JSON string."""
         return json.dumps(self.to_dict(), default=str)
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AuditEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "AuditEntry":
         """Create AuditEntry from dictionary."""
         return cls(
             timestamp=data.get("timestamp", ""),
@@ -158,19 +160,19 @@ class AuditEntry:
             summary=data.get("summary", ""),
             extra=data.get("extra", {}),
         )
-    
+
     @classmethod
     def from_json(cls, json_str: str) -> "AuditEntry":
         """Deserialize from JSON string."""
         return cls.from_dict(json.loads(json_str))
-    
+
     def to_markdown(self) -> str:
         """Format as human-readable Markdown row."""
         timestamp_short = self.timestamp[:19].replace("T", " ") if self.timestamp else ""
         role_display = self.role or "System"
         task_display = self.task_id or "-"
         file_display = self.file_path.split("/")[-1] if self.file_path else "-"
-        
+
         return (
             f"| {timestamp_short} | {self.event_type} | {role_display} | "
             f"{task_display} | {file_display} | {self.summary} |"
@@ -209,11 +211,11 @@ def create_file_change_entry(
 
 def create_build_event_entry(
     event_type: str,
-    error_code: Optional[str] = None,
-    message: Optional[str] = None,
-    file_path: Optional[str] = None,
-    task_id: Optional[str] = None,
-    commit_hash: Optional[str] = None,
+    error_code: str | None = None,
+    message: str | None = None,
+    file_path: str | None = None,
+    task_id: str | None = None,
+    commit_hash: str | None = None,
 ) -> AuditEntry:
     """Factory function for build event audit entries."""
     severity = "error" if "error" in event_type.lower() else "warning"
@@ -233,13 +235,13 @@ def create_build_event_entry(
 def create_exception_entry(
     exception: Exception,
     subsystem: str,
-    correlation_id: Optional[str] = None,
-    task_id: Optional[str] = None,
-    extra_context: Optional[Dict[str, Any]] = None,
+    correlation_id: str | None = None,
+    task_id: str | None = None,
+    extra_context: dict[str, Any] | None = None,
 ) -> AuditEntry:
     """Factory function for runtime exception audit entries."""
     import traceback
-    
+
     return AuditEntry(
         event_type=AuditEventType.RUNTIME_EXCEPTION.value,
         message=str(exception),
@@ -258,7 +260,7 @@ def create_xaml_failure_entry(
     file_path: str,
     error_type: str,
     message: str,
-    commit_hash: Optional[str] = None,
+    commit_hash: str | None = None,
 ) -> AuditEntry:
     """Factory function for XAML failure audit entries."""
     event_type = (

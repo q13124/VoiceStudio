@@ -20,20 +20,19 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
 
 # Default budget: current count + 20% headroom
 # Based on BUILD_WARNING_ANALYSIS.md (2026-02-02): 2046 warnings after reduction
 DEFAULT_BUDGET = 2500
 
 
-def run_build() -> Tuple[int, str, str]:
+def run_build() -> tuple[int, str, str]:
     """Run dotnet build and capture output."""
     cmd = [
         "dotnet", "build", "VoiceStudio.sln",
         "-c", "Debug", "-p:Platform=x64"
     ]
-    
+
     result = subprocess.run(
         cmd,
         capture_output=True,
@@ -42,28 +41,28 @@ def run_build() -> Tuple[int, str, str]:
         errors="replace",
         cwd=Path(__file__).parent.parent
     )
-    
+
     return result.returncode, result.stdout, result.stderr
 
 
-def parse_warning_count(stdout: str, stderr: str) -> Optional[int]:
+def parse_warning_count(stdout: str, stderr: str) -> int | None:
     """Extract warning count from build output."""
     combined = stdout + stderr
-    
+
     # Look for the summary line: "X Warning(s)"
     match = re.search(r"(\d+)\s+Warning\(s\)", combined)
     if match:
         return int(match.group(1))
-    
+
     return None
 
 
 def check_budget(budget: int, emit_json: bool = False) -> int:
     """Run build and check warning count against budget."""
-    
-    print(f"Building VoiceStudio.sln (Debug x64)...")
+
+    print("Building VoiceStudio.sln (Debug x64)...")
     exit_code, stdout, stderr = run_build()
-    
+
     # Check for build failure
     if exit_code != 0:
         # Check if it's just warnings (exit code 0 expected)
@@ -82,10 +81,10 @@ def check_budget(budget: int, emit_json: bool = False) -> int:
                 else:
                     print(f"FAIL: Build failed with {result['errors']} error(s)")
                 return 2
-    
+
     # Parse warning count
     warning_count = parse_warning_count(stdout, stderr)
-    
+
     if warning_count is None:
         result = {
             "passed": False,
@@ -98,11 +97,11 @@ def check_budget(budget: int, emit_json: bool = False) -> int:
         else:
             print("FAIL: Could not parse warning count from build output")
         return 2
-    
+
     # Check against budget
     passed = warning_count <= budget
     headroom = budget - warning_count
-    
+
     result = {
         "passed": passed,
         "warning_count": warning_count,
@@ -110,7 +109,7 @@ def check_budget(budget: int, emit_json: bool = False) -> int:
         "headroom": headroom,
         "utilization_percent": round((warning_count / budget) * 100, 1)
     }
-    
+
     if emit_json:
         print(json.dumps(result, indent=2))
     else:
@@ -118,7 +117,7 @@ def check_budget(budget: int, emit_json: bool = False) -> int:
             print(f"PASS: {warning_count} warnings (budget: {budget}, headroom: {headroom})")
         else:
             print(f"FAIL: {warning_count} warnings exceeds budget of {budget} by {-headroom}")
-    
+
     return 0 if passed else 1
 
 
@@ -138,7 +137,7 @@ def main():
         help="Output result as JSON"
     )
     args = parser.parse_args()
-    
+
     return check_budget(args.budget, args.json)
 
 

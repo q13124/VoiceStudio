@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, SourceResult
 from tools.context.core.protocols import ContextSourceProtocol
@@ -27,13 +28,13 @@ class SourceHealthStatus:
     source_name: str
     is_healthy: bool
     last_check: datetime = field(default_factory=datetime.now)
-    last_success: Optional[datetime] = None
-    last_failure: Optional[datetime] = None
+    last_success: datetime | None = None
+    last_failure: datetime | None = None
     consecutive_failures: int = 0
     avg_fetch_time_ms: float = 0.0
     total_fetches: int = 0
     total_failures: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
     def record_success(self, fetch_time_ms: float) -> None:
         """Record a successful fetch."""
@@ -62,7 +63,7 @@ class SourceHealthStatus:
         if self.consecutive_failures >= 3:
             self.is_healthy = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "source_name": self.source_name,
@@ -83,7 +84,7 @@ class SourceHealthStatus:
 class SourceTelemetry:
     """Telemetry data for all source adapters."""
 
-    sources: Dict[str, SourceHealthStatus] = field(default_factory=dict)
+    sources: dict[str, SourceHealthStatus] = field(default_factory=dict)
     collection_started: datetime = field(default_factory=datetime.now)
 
     def get_or_create(self, source_name: str) -> SourceHealthStatus:
@@ -95,7 +96,7 @@ class SourceTelemetry:
             )
         return self.sources[source_name]
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get summary of all source health."""
         total = len(self.sources)
         healthy = sum(1 for s in self.sources.values() if s.is_healthy)
@@ -148,7 +149,7 @@ class BaseSourceAdapter(ContextSourceProtocol):
         """
         return self._health.is_healthy
 
-    def _measure(self, loader: Callable[[], Dict[str, Any]], context: AllocationContext) -> SourceResult:
+    def _measure(self, loader: Callable[[], dict[str, Any]], context: AllocationContext) -> SourceResult:
         start = time.perf_counter()
         try:
             data = loader() or {}

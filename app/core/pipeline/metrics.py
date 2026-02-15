@@ -5,12 +5,13 @@ Tracks Time to First Token (TTFT), end-to-end latency, and
 per-stage performance metrics for the voice AI pipeline.
 """
 
+from __future__ import annotations
+
 import logging
 import statistics
-import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class StageMetric:
     stage: str  # "stt", "llm", "tts", "total"
     latency_ms: float
     timestamp: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -29,14 +30,14 @@ class PipelineExecutionMetrics:
     """Complete metrics for a single pipeline execution."""
     execution_id: str
     mode: str  # "streaming", "batch"
-    stages: List[StageMetric] = field(default_factory=list)
+    stages: list[StageMetric] = field(default_factory=list)
     time_to_first_token_ms: float = 0.0
     time_to_first_audio_ms: float = 0.0
     total_latency_ms: float = 0.0
     input_length: int = 0
     output_length: int = 0
     timestamp: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class PipelineMetricsCollector:
@@ -49,10 +50,10 @@ class PipelineMetricsCollector:
 
     def __init__(self, window_size: int = 100):
         self._window_size = window_size
-        self._executions: Deque[PipelineExecutionMetrics] = deque(maxlen=window_size)
-        self._ttft_samples: Deque[float] = deque(maxlen=window_size)
-        self._total_latency_samples: Deque[float] = deque(maxlen=window_size)
-        self._stage_samples: Dict[str, Deque[float]] = {
+        self._executions: deque[PipelineExecutionMetrics] = deque(maxlen=window_size)
+        self._ttft_samples: deque[float] = deque(maxlen=window_size)
+        self._total_latency_samples: deque[float] = deque(maxlen=window_size)
+        self._stage_samples: dict[str, deque[float]] = {
             "stt": deque(maxlen=window_size),
             "llm": deque(maxlen=window_size),
             "tts": deque(maxlen=window_size),
@@ -72,7 +73,7 @@ class PipelineMetricsCollector:
             if stage_metric.stage in self._stage_samples:
                 self._stage_samples[stage_metric.stage].append(stage_metric.latency_ms)
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get aggregated metrics summary."""
         return {
             "total_executions": len(self._executions),
@@ -86,7 +87,7 @@ class PipelineMetricsCollector:
             "window_size": self._window_size,
         }
 
-    def get_recent(self, count: int = 10) -> List[Dict[str, Any]]:
+    def get_recent(self, count: int = 10) -> list[dict[str, Any]]:
         """Get recent execution metrics."""
         recent = list(self._executions)[-count:]
         return [
@@ -100,7 +101,7 @@ class PipelineMetricsCollector:
             for e in recent
         ]
 
-    def check_sla(self, target_p90_ms: float = 800.0) -> Dict[str, Any]:
+    def check_sla(self, target_p90_ms: float = 800.0) -> dict[str, Any]:
         """
         Check if pipeline meets SLA targets.
 
@@ -122,7 +123,7 @@ class PipelineMetricsCollector:
         }
 
     @staticmethod
-    def _compute_percentiles(samples: List[float]) -> Dict[str, float]:
+    def _compute_percentiles(samples: list[float]) -> dict[str, float]:
         """Compute P50, P90, P99 percentiles."""
         if not samples:
             return {"p50": 0, "p90": 0, "p99": 0, "mean": 0, "min": 0, "max": 0, "count": 0}
@@ -139,7 +140,7 @@ class PipelineMetricsCollector:
         }
 
     @staticmethod
-    def _percentile(sorted_data: List[float], percentile: float) -> float:
+    def _percentile(sorted_data: list[float], percentile: float) -> float:
         """Calculate a percentile from sorted data."""
         if not sorted_data:
             return 0.0
@@ -152,7 +153,7 @@ class PipelineMetricsCollector:
 
 
 # Singleton collector
-_collector: Optional[PipelineMetricsCollector] = None
+_collector: PipelineMetricsCollector | None = None
 
 
 def get_metrics_collector() -> PipelineMetricsCollector:

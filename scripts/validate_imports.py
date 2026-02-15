@@ -10,11 +10,9 @@ Exit codes:
   1 - Import validation failed
 """
 
-from _env_setup import PROJECT_ROOT
 
 import io
 import sys
-from pathlib import Path
 
 # Ensure UTF-8 output on Windows console
 if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
@@ -25,7 +23,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
 def validate_imports():
     """Validate that critical modules can be imported."""
     errors = []
-    
+
     # Critical modules to validate (must be importable for governance tooling)
     # Only includes modules required for verification/governance; backend/engines have optional deps
     critical_modules = [
@@ -36,9 +34,9 @@ def validate_imports():
         "tools.context",
         "tools.onboarding",
     ]
-    
+
     print("Validating critical module imports...")
-    
+
     for module in critical_modules:
         try:
             __import__(module)
@@ -46,11 +44,11 @@ def validate_imports():
         except (ModuleNotFoundError, ImportError) as e:
             errors.append(f"{module}: {e}")
             print(f"  ✗ {module}: {e}")
-    
+
     if errors:
         print(f"\n❌ Import validation failed ({len(errors)} errors)")
         return 1
-    
+
     print(f"\n✅ All {len(critical_modules)} critical imports valid")
     return 0
 

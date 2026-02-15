@@ -5,12 +5,13 @@ CRUD operations for effect chains and presets.
 Enhanced with PostFXProcessor for professional-quality audio effects.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import tempfile
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query
@@ -40,7 +41,7 @@ class EffectParameter(BaseModel):
     value: float
     min_value: float = 0.0
     max_value: float = 1.0
-    unit: Optional[str] = None
+    unit: str | None = None
 
 
 class Effect(BaseModel):
@@ -49,37 +50,37 @@ class Effect(BaseModel):
     name: str
     enabled: bool = True
     order: int
-    parameters: List[EffectParameter] = []
+    parameters: list[EffectParameter] = []
 
 
 class EffectChain(BaseModel):
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
-    effects: List[Effect] = []
+    effects: list[Effect] = []
     created: str
     modified: str
 
 
 class EffectChainCreateRequest(BaseModel):
     name: str
-    description: Optional[str] = None
-    effects: Optional[List[Effect]] = None
+    description: str | None = None
+    effects: list[Effect] | None = None
 
 
 class EffectChainUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    effects: Optional[List[Effect]] = None
+    name: str | None = None
+    description: str | None = None
+    effects: list[Effect] | None = None
 
 
 class EffectPreset(BaseModel):
     id: str
     effect_type: str
     name: str
-    description: Optional[str] = None
-    parameters: List[EffectParameter] = []
+    description: str | None = None
+    parameters: list[EffectParameter] = []
     created: str
     modified: str
 
@@ -87,18 +88,18 @@ class EffectPreset(BaseModel):
 class EffectPresetCreateRequest(BaseModel):
     effect_type: str
     name: str
-    description: Optional[str] = None
-    parameters: Optional[List[EffectParameter]] = None
+    description: str | None = None
+    parameters: list[EffectParameter] | None = None
 
 
 class EffectProcessRequest(BaseModel):
     audio_id: str
-    output_filename: Optional[str] = None
+    output_filename: str | None = None
 
 
 class EffectProcessResponse(BaseModel):
     success: bool
-    output_audio_id: Optional[str] = None
+    output_audio_id: str | None = None
     message: str
 
 
@@ -112,13 +113,13 @@ _MAX_CHAINS = 1000
 _MAX_PRESETS = 500
 
 
-def _get_effect_chains() -> Dict[str, EffectChain]:
+def _get_effect_chains() -> dict[str, EffectChain]:
     """Get all effect chains as a dict (compatibility wrapper)."""
     store = get_effect_chain_store()
     return {chain["id"]: EffectChain(**chain) for chain in store.list_all()}
 
 
-def _get_chain(chain_id: str) -> Optional[EffectChain]:
+def _get_chain(chain_id: str) -> EffectChain | None:
     """Get an effect chain by ID."""
     store = get_effect_chain_store()
     chain_data = store.get(chain_id)
@@ -139,19 +140,19 @@ def _delete_chain(chain_id: str) -> bool:
     return store.delete(chain_id)
 
 
-def _get_chains_for_project(project_id: str) -> List[EffectChain]:
+def _get_chains_for_project(project_id: str) -> list[EffectChain]:
     """Get all effect chains for a project."""
     store = get_effect_chain_store()
     return [EffectChain(**chain) for chain in store.list_by_project(project_id)]
 
 
-def _get_effect_presets() -> Dict[str, EffectPreset]:
+def _get_effect_presets() -> dict[str, EffectPreset]:
     """Get all effect presets as a dict (compatibility wrapper)."""
     store = get_effect_preset_store()
     return {preset["id"]: EffectPreset(**preset) for preset in store.list_all()}
 
 
-def _get_preset(preset_id: str) -> Optional[EffectPreset]:
+def _get_preset(preset_id: str) -> EffectPreset | None:
     """Get an effect preset by ID."""
     store = get_effect_preset_store()
     preset_data = store.get(preset_id)
@@ -190,9 +191,9 @@ def _validate_preset_id(preset_id: str) -> None:
         raise HTTPException(status_code=400, detail="Preset ID is required")
 
 
-@router.get("/chains", response_model=List[EffectChain])
+@router.get("/chains", response_model=list[EffectChain])
 @cache_response(ttl=30)  # Cache for 30 seconds (effect chains may change frequently)
-def list_effect_chains(project_id: str = Query(..., description="Project ID")) -> List[EffectChain]:
+def list_effect_chains(project_id: str = Query(..., description="Project ID")) -> list[EffectChain]:
     """
     List all effect chains for a project.
     """
@@ -208,10 +209,10 @@ def list_effect_chains(project_id: str = Query(..., description="Project ID")) -
         raise
     except Exception as e:
         logger.error(
-            f"Error listing effect chains for project {project_id}: {str(e)}",
+            f"Error listing effect chains for project {project_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Failed to list effect chains: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list effect chains: {e!s}")
 
 
 @router.get("/chains/{chain_id}", response_model=EffectChain)
@@ -241,8 +242,8 @@ def get_effect_chain(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving effect chain {chain_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve effect chain: {str(e)}")
+        logger.error(f"Error retrieving effect chain {chain_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve effect chain: {e!s}")
 
 
 @router.post("/chains", response_model=EffectChain)
@@ -290,8 +291,8 @@ def create_effect_chain(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating effect chain: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create effect chain: {str(e)}")
+        logger.error(f"Error creating effect chain: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create effect chain: {e!s}")
 
 
 @router.put("/chains/{chain_id}", response_model=EffectChain)
@@ -337,14 +338,14 @@ def update_effect_chain(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating effect chain {chain_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update effect chain: {str(e)}")
+        logger.error(f"Error updating effect chain {chain_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update effect chain: {e!s}")
 
 
 @router.delete("/chains/{chain_id}")
 def delete_effect_chain(
     chain_id: str, project_id: str = Query(..., description="Project ID")
-) -> Dict[str, bool]:
+) -> dict[str, bool]:
     """
     Delete an effect chain.
     """
@@ -369,8 +370,8 @@ def delete_effect_chain(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting effect chain {chain_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {str(e)}")
+        logger.error(f"Error deleting effect chain {chain_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {e!s}")
 
 
 @router.post("/chains/{chain_id}/process", response_model=EffectProcessResponse)
@@ -429,7 +430,7 @@ def process_audio_with_chain(
             raise HTTPException(status_code=503, detail="Audio processing libraries not available")
         except Exception as e:
             logger.error(f"Failed to load audio: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to load audio file: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to load audio file: {e!s}")
 
         # Apply effects in order
         processed_audio = audio.copy()
@@ -479,7 +480,6 @@ def process_audio_with_chain(
                     # Continue with next effect
 
         # Save processed audio
-        output_filename = request.output_filename or f"processed_{request.audio_id}.wav"
         output_path = tempfile.mktemp(suffix=".wav")
 
         try:
@@ -501,24 +501,24 @@ def process_audio_with_chain(
             )
         except Exception as e:
             logger.error(f"Failed to save processed audio: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to save processed audio: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to save processed audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error processing audio with chain {chain_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+        logger.error(f"Error processing audio with chain {chain_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
 
 
-@router.get("/presets", response_model=List[EffectPreset])
+@router.get("/presets", response_model=list[EffectPreset])
 def list_effect_presets(
-    effect_type: Optional[str] = Query(None, description="Filter by effect type")
-) -> List[EffectPreset]:
+    effect_type: str | None = Query(None, description="Filter by effect type")
+) -> list[EffectPreset]:
     """
     List all effect presets, optionally filtered by effect type.
     """
     try:
         store = get_effect_preset_store()
-        
+
         # Filter by effect type if provided
         if effect_type:
             effect_type = effect_type.strip().lower()
@@ -532,8 +532,8 @@ def list_effect_presets(
         )
         return presets
     except Exception as e:
-        logger.error(f"Error listing effect presets: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list effect presets: {str(e)}")
+        logger.error(f"Error listing effect presets: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list effect presets: {e!s}")
 
 
 @router.post("/presets", response_model=EffectPreset)
@@ -579,12 +579,12 @@ def create_effect_preset(request: EffectPresetCreateRequest) -> EffectPreset:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating effect preset: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create effect preset: {str(e)}")
+        logger.error(f"Error creating effect preset: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create effect preset: {e!s}")
 
 
 @router.delete("/presets/{preset_id}")
-def delete_effect_preset(preset_id: str) -> Dict[str, bool]:
+def delete_effect_preset(preset_id: str) -> dict[str, bool]:
     """
     Delete an effect preset.
     """
@@ -600,8 +600,8 @@ def delete_effect_preset(preset_id: str) -> Dict[str, bool]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting effect preset {preset_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete effect preset: {str(e)}")
+        logger.error(f"Error deleting effect preset {preset_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete effect preset: {e!s}")
 
 
 def _apply_effect(audio: np.ndarray, sample_rate: int, effect: Effect) -> np.ndarray:
@@ -630,7 +630,7 @@ def _apply_effect(audio: np.ndarray, sample_rate: int, effect: Effect) -> np.nda
         return audio
 
 
-def _apply_eq(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> np.ndarray:
+def _apply_eq(audio: np.ndarray, sample_rate: int, params: dict[str, float]) -> np.ndarray:
     """Apply EQ (3-band equalizer) to audio."""
     try:
         from scipy import signal
@@ -676,7 +676,7 @@ def _apply_eq(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> 
         return audio
 
 
-def _apply_compressor(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> np.ndarray:
+def _apply_compressor(audio: np.ndarray, sample_rate: int, params: dict[str, float]) -> np.ndarray:
     """Apply compressor to audio."""
     try:
         threshold_db = params.get("threshold", -12.0)
@@ -685,8 +685,8 @@ def _apply_compressor(audio: np.ndarray, sample_rate: int, params: Dict[str, flo
         release_ms = params.get("release", 50.0)
 
         threshold_linear = 10 ** (threshold_db / 20.0)
-        attack_samples = int(sample_rate * attack_ms / 1000.0)
-        release_samples = int(sample_rate * release_ms / 1000.0)
+        int(sample_rate * attack_ms / 1000.0)
+        int(sample_rate * release_ms / 1000.0)
 
         processed = audio.copy()
 
@@ -732,7 +732,7 @@ def _apply_compressor(audio: np.ndarray, sample_rate: int, params: Dict[str, flo
         return audio
 
 
-def _apply_reverb(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> np.ndarray:
+def _apply_reverb(audio: np.ndarray, sample_rate: int, params: dict[str, float]) -> np.ndarray:
     """Apply reverb to audio."""
     try:
         room_size = params.get("room_size", 0.5)
@@ -759,7 +759,7 @@ def _apply_reverb(audio: np.ndarray, sample_rate: int, params: Dict[str, float])
         return audio
 
 
-def _apply_delay(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> np.ndarray:
+def _apply_delay(audio: np.ndarray, sample_rate: int, params: dict[str, float]) -> np.ndarray:
     """Apply delay to audio."""
     try:
         delay_ms = params.get("delay_time", 250.0)
@@ -786,7 +786,7 @@ def _apply_delay(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) 
         return audio
 
 
-def _apply_filter(audio: np.ndarray, sample_rate: int, params: Dict[str, float]) -> np.ndarray:
+def _apply_filter(audio: np.ndarray, sample_rate: int, params: dict[str, float]) -> np.ndarray:
     """Apply filter (lowpass/highpass/bandpass) to audio."""
     try:
         from scipy import signal
@@ -827,9 +827,9 @@ def _apply_filter(audio: np.ndarray, sample_rate: int, params: Dict[str, float])
 project_effects_router = APIRouter(prefix="/api/effects/chains", tags=["project-effects"])
 
 
-@project_effects_router.get("/{project_id}", response_model=List[EffectChain])
+@project_effects_router.get("/{project_id}", response_model=list[EffectChain])
 @cache_response(ttl=30)
-async def list_project_effect_chains(project_id: str) -> List[EffectChain]:
+async def list_project_effect_chains(project_id: str) -> list[EffectChain]:
     """
     List all effect chains for a project.
     Path-based route for frontend compatibility.
@@ -843,7 +843,7 @@ async def list_project_effect_chains(project_id: str) -> List[EffectChain]:
         raise
     except Exception as e:
         logger.error(f"Error listing effect chains for project {project_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list effect chains: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list effect chains: {e!s}")
 
 
 @project_effects_router.get("/{project_id}/{chain_id}", response_model=EffectChain)
@@ -870,7 +870,7 @@ async def get_project_effect_chain(project_id: str, chain_id: str) -> EffectChai
         raise
     except Exception as e:
         logger.error(f"Error getting effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get effect chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get effect chain: {e!s}")
 
 
 @project_effects_router.post("/{project_id}", response_model=EffectChain)
@@ -915,7 +915,7 @@ async def create_project_effect_chain(
         raise
     except Exception as e:
         logger.error(f"Error creating effect chain: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create effect chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create effect chain: {e!s}")
 
 
 @project_effects_router.put("/{project_id}/{chain_id}", response_model=EffectChain)
@@ -959,11 +959,11 @@ async def update_project_effect_chain(
         raise
     except Exception as e:
         logger.error(f"Error updating effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update effect chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update effect chain: {e!s}")
 
 
 @project_effects_router.delete("/{project_id}/{chain_id}")
-async def delete_project_effect_chain(project_id: str, chain_id: str) -> Dict[str, bool]:
+async def delete_project_effect_chain(project_id: str, chain_id: str) -> dict[str, bool]:
     """
     Delete an effect chain.
     Path-based route for frontend compatibility.
@@ -986,7 +986,7 @@ async def delete_project_effect_chain(project_id: str, chain_id: str) -> Dict[st
         raise
     except Exception as e:
         logger.error(f"Error deleting effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {e!s}")
 
 
 @project_effects_router.post("/{project_id}/{chain_id}/process", response_model=EffectProcessResponse)
@@ -994,7 +994,7 @@ async def process_project_effect_chain(
     project_id: str,
     chain_id: str,
     audio_id: str = Query(..., description="Audio file ID to process"),
-    output_filename: Optional[str] = Query(None, description="Output filename"),
+    output_filename: str | None = Query(None, description="Output filename"),
 ) -> EffectProcessResponse:
     """
     Process audio through a project's effect chain.
@@ -1085,10 +1085,10 @@ async def process_project_effect_chain(
             raise
         except Exception as e:
             logger.error(f"Audio processing failed: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error processing effect chain {chain_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to process effect chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process effect chain: {e!s}")

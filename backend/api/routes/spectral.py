@@ -249,5 +249,5 @@ async def inpaint(req: SpectralInpaintRequest) -> SpectralInpaintResponse:
     except Exception as e:
         logger.error(f"Spectral inpainting failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Spectral inpainting failed: {str(e)}"
+            status_code=500, detail=f"Spectral inpainting failed: {e!s}"
         ) from e

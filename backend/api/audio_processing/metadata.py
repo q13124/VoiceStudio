@@ -5,7 +5,6 @@ Integrates mutagen library for audio file metadata extraction.
 
 import logging
 import os
-from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ class AudioMetadataExtractor:
         """Initialize metadata extractor."""
         self.mutagen_available = HAS_MUTAGEN
 
-    def extract_metadata(self, file_path: str) -> Dict:
+    def extract_metadata(self, file_path: str) -> dict:
         """
         Extract metadata from audio file.
 
@@ -103,7 +102,7 @@ class AudioMetadataExtractor:
             try:
                 import librosa
 
-                y, sr = librosa.load(file_path, sr=None, duration=0.1)
+                _y, sr = librosa.load(file_path, sr=None, duration=0.1)
                 metadata["sample_rate"] = int(sr)
                 # Get full duration
                 y_full, _ = librosa.load(file_path, sr=sr)

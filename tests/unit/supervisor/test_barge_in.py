@@ -2,8 +2,9 @@
 Unit tests for BargeInHandler (Phase 11.2.3)
 """
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from app.core.supervisor.barge_in import BargeInHandler
 

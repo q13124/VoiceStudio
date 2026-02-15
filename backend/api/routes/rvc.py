@@ -4,11 +4,13 @@ Real-time voice conversion endpoints
 
 WebSocket Protocol Migration (GAP-INT-002):
     New WebSocket messages should use the standardized protocol:
-    
+
         from backend.api.ws import create_message, create_error, MessageType
-        
+
     See backend/api/ws/protocol.py for the full specification.
 """
+
+from __future__ import annotations
 
 import base64
 import json
@@ -16,7 +18,6 @@ import logging
 import os
 import tempfile
 import uuid
-from typing import Optional
 
 import numpy as np
 from fastapi import (
@@ -29,28 +30,27 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
-from ..middleware.auth_middleware import require_auth_if_enabled
-
-# WebSocket protocol for standardized messaging (GAP-CRIT-002)
-from ..ws.protocol import (
-    create_message,
-    create_error,
-    create_pong,
-    MessageType,
-    ErrorCode,
-)
-
-from backend.services.model_preflight import ensure_sovits, PreflightError
+from backend.config.path_config import get_models_path
 from backend.services.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
 )
 from backend.services.engine_service import get_engine_service
+from backend.services.model_preflight import PreflightError, ensure_sovits
 
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..models import ApiOk
-from pydantic import BaseModel
 from ..models_additional import RvcStartRequest
+
+# WebSocket protocol for standardized messaging (GAP-CRIT-002)
+from ..ws.protocol import (
+    ErrorCode,
+    MessageType,
+    create_error,
+    create_message,
+)
 
 
 class RvcStartResponse(BaseModel):
@@ -256,7 +256,7 @@ async def convert_voice(
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
         logger.error(f"RVC conversion error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {e!s}")
 
 
 @router.websocket("/convert/realtime")
@@ -363,7 +363,7 @@ async def convert_realtime(websocket: WebSocket):
                 except Exception as e:
                     logger.error(f"Chunk conversion failed: {e}")
                     await websocket.send_json(
-                        create_error(f"Chunk conversion failed: {str(e)}", code=ErrorCode.ENGINE_ERROR)
+                        create_error(f"Chunk conversion failed: {e!s}", code=ErrorCode.ENGINE_ERROR)
                     )
 
             elif request_type == "stop":
@@ -378,7 +378,7 @@ async def convert_realtime(websocket: WebSocket):
     except Exception as e:
         logger.error(f"RVC WebSocket error: {e}", exc_info=True)
         try:
-            await websocket.send_json(create_error(f"WebSocket error: {str(e)}", code=ErrorCode.INTERNAL_ERROR))
+            await websocket.send_json(create_error(f"WebSocket error: {e!s}", code=ErrorCode.INTERNAL_ERROR))
         except Exception as send_err:
             logger.debug(f"Could not send error to RVC WebSocket client: {send_err}")
     finally:
@@ -397,14 +397,7 @@ async def get_models():
         List of available RVC models
     """
     try:
-        model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
-        if not model_cache_dir:
-            model_cache_dir = os.path.join(
-                os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                "VoiceStudio",
-                "models",
-                "rvc",
-            )
+        model_cache_dir = os.path.join(str(get_models_path()), "rvc")
 
         models = []
         if os.path.exists(model_cache_dir):
@@ -432,7 +425,7 @@ async def get_models():
 
 
 @router.post("/models/upload")
-async def upload_model(model_file: UploadFile = File(...), model_name: Optional[str] = None):
+async def upload_model(model_file: UploadFile = File(...), model_name: str | None = None):
     """
     Upload RVC model.
 
@@ -444,14 +437,7 @@ async def upload_model(model_file: UploadFile = File(...), model_name: Optional[
         Upload result with model_id
     """
     try:
-        model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
-        if not model_cache_dir:
-            model_cache_dir = os.path.join(
-                os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                "VoiceStudio",
-                "models",
-                "rvc",
-            )
+        model_cache_dir = os.path.join(str(get_models_path()), "rvc")
         os.makedirs(model_cache_dir, exist_ok=True)
 
         # Generate model ID
@@ -474,7 +460,7 @@ async def upload_model(model_file: UploadFile = File(...), model_name: Optional[
 
     except Exception as e:
         logger.error(f"Model upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {e!s}")
 
 
 @router.get("/audio/{audio_id}")
@@ -536,7 +522,7 @@ async def start(req: RvcStartRequest) -> RvcStartResponse:
         raise
     except Exception as e:
         logger.error(f"Failed to start RVC session: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to start session: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Failed to start session: {e!s}") from e
 
 
 @router.post("/stop")
@@ -567,4 +553,4 @@ async def stop(req: dict) -> ApiOk:
 
     except Exception as e:
         logger.error(f"Failed to stop RVC session: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to stop session: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Failed to stop session: {e!s}") from e

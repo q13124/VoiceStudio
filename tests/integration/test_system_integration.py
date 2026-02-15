@@ -4,11 +4,9 @@ System Integration Tests
 Tests complete system integration including database, caching, monitoring, and resilience features.
 """
 
-import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any
 
 import pytest
 
@@ -25,8 +23,8 @@ class TestSystemIntegration:
     def test_database_integration(self):
         """Test database integration."""
         try:
-            from app.core.security.database import WatermarkDatabase
             from app.core.database.query_optimizer import DatabaseQueryOptimizer
+            from app.core.security.database import WatermarkDatabase
 
             # Create database
             db = WatermarkDatabase()
@@ -49,8 +47,8 @@ class TestSystemIntegration:
     def test_caching_integration(self):
         """Test caching system integration."""
         try:
-            from app.core.models.cache import get_model_cache
             from app.core.engines.quality_metrics_cache import get_quality_metrics_cache
+            from app.core.models.cache import get_model_cache
 
             # Test model cache
             model_cache = get_model_cache(max_models=5, max_memory_mb=100.0)
@@ -66,8 +64,8 @@ class TestSystemIntegration:
     def test_monitoring_integration(self):
         """Test monitoring system integration."""
         try:
-            from app.core.monitoring.metrics import get_metrics_collector
             from app.core.monitoring.error_tracking import get_error_tracker
+            from app.core.monitoring.metrics import get_metrics_collector
             from app.core.monitoring.structured_logging import get_structured_logger
 
             # Test metrics collector
@@ -89,9 +87,9 @@ class TestSystemIntegration:
     def test_resilience_integration(self):
         """Test resilience system integration."""
         try:
-            from app.core.resilience.retry import get_metrics_collector
             from app.core.resilience.circuit_breaker import get_circuit_breaker
             from app.core.resilience.health_check import get_health_checker
+            from app.core.resilience.retry import get_metrics_collector
 
             # Test circuit breaker
             breaker = get_circuit_breaker("test_service")
@@ -108,11 +106,12 @@ class TestSystemIntegration:
     async def test_complete_system_workflow(self):
         """Test complete system workflow."""
         try:
-            from app.core.engines.xtts_engine import XTTSEngine
+            import numpy as np
+
             from app.core.audio import enhance_voice_quality
             from app.core.engines.quality_metrics import calculate_all_metrics
-            from app.core.monitoring.metrics import get_metrics_collector, Timer
-            import numpy as np
+            from app.core.engines.xtts_engine import XTTSEngine
+            from app.core.monitoring.metrics import Timer, get_metrics_collector
 
             # Generate test audio
             audio = np.random.randn(48000).astype(np.float32) * 0.1

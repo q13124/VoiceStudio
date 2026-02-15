@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any
 
-from tools.onboarding.core.models import OnboardingPacket, RoleConfig
+from tools.onboarding.core.models import OnboardingPacket
 from tools.onboarding.core.role_registry import RoleRegistry
 from tools.onboarding.sources.context_source import RoleContextSource
 from tools.onboarding.sources.guide_source import GuideSource
@@ -22,7 +22,7 @@ DEFAULT_TEMPLATE_PATH = Path("tools/onboarding/templates/onboarding_packet.md.j2
 DEFAULT_CONTEXT_CONFIG = Path("tools/context/config/context-sources.json")
 
 
-def _default_agent_registry() -> Optional["AgentRegistry"]:
+def _default_agent_registry() -> AgentRegistry | None:
     """Return AgentRegistry if VOICESTUDIO_REGISTER_AGENT_ON_ONBOARD=1, else None."""
     if os.environ.get("VOICESTUDIO_REGISTER_AGENT_ON_ONBOARD", "").strip() == "1":
         try:
@@ -33,7 +33,7 @@ def _default_agent_registry() -> Optional["AgentRegistry"]:
     return None
 
 
-def _default_context_manager() -> Optional["ContextManager"]:
+def _default_context_manager() -> ContextManager | None:
     """Build ContextManager from default config when integration is enabled."""
     try:
         from tools.context.core.manager import ContextManager
@@ -53,8 +53,8 @@ class OnboardingAssembler:
     def __init__(
         self,
         config_path: Path = DEFAULT_ONBOARDING_CONFIG,
-        agent_registry: Optional["AgentRegistry"] = None,
-        context_manager: Optional["ContextManager"] = None,
+        agent_registry: AgentRegistry | None = None,
+        context_manager: ContextManager | None = None,
     ):
         self._config_path = config_path
         self._config = self._load_config(config_path)
@@ -86,7 +86,7 @@ class OnboardingAssembler:
             return {}
         return json.loads(path.read_text(encoding="utf-8"))
 
-    def _fetch_role_issues(self, role_id: str) -> List[Any]:
+    def _fetch_role_issues(self, role_id: str) -> list[Any]:
         """
         Fetch issues assigned to or relevant for this role.
 
@@ -113,28 +113,28 @@ class OnboardingAssembler:
 
             return issues
 
-        except Exception as e:
+        except Exception:
             # Graceful degradation
             return []
 
-    def assemble(self, role_id: str, include_full_guide: Optional[bool] = None) -> OnboardingPacket:
+    def assemble(self, role_id: str, include_full_guide: bool | None = None) -> OnboardingPacket:
         """
         Assemble onboarding packet for role.
-        
+
         Integrates with:
         - RoleRegistry: Role config and metadata
         - StateSource: Project state and active task
         - ContextManager: Context bundle allocation (ADR-015)
         - AgentRegistry: Agent registration when enabled
         - PolicyEngine: Role permission validation (via AgentRegistry)
-        
+
         Args:
             role_id: Role ID or alias (0-7, or short-name)
             include_full_guide: Include full role guide in packet
-        
+
         Returns:
             OnboardingPacket with all components
-            
+
         Raises:
             ValueError: If role_id unknown or policy validation fails
         """
@@ -196,13 +196,14 @@ class OnboardingAssembler:
         # Register agent with policy validation (ADR-003: Agent Governance)
         if self._agent_registry is not None:
             try:
+                import logging
+
                 from tools.overseer.agent.identity import AgentIdentity
                 from tools.overseer.agent.role_mapping import role_to_agent_role
-                import logging
-                
+
                 ar = role_to_agent_role(role_id)
                 identity = AgentIdentity.create(role=ar, user_id="voicestudio")
-                
+
                 # Policy validation would happen here via PolicyEngine if integrated
                 # For now, registry.register performs basic validation
                 self._agent_registry.register(identity)
@@ -221,17 +222,17 @@ class OnboardingAssembler:
                 )
 
         return packet
-    
+
     def _validate_packet_components(
         self, role, prompt, guide, project_state
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Validate packet completeness.
-        
+
         Returns list of validation errors (empty if valid).
         """
         errors = []
-        
+
         if not role or not role.id:
             errors.append("Role missing or invalid")
         if not prompt or not prompt.full_text:
@@ -240,7 +241,7 @@ class OnboardingAssembler:
             errors.append(f"Guide missing for role {role.id if role else 'unknown'}")
         if not project_state:
             errors.append("Project state unavailable")
-        
+
         return errors
 
     def render(self, packet: OnboardingPacket) -> str:

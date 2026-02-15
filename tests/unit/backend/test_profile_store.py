@@ -2,12 +2,8 @@
 Unit tests for ProfileStore (Phase 21.3)
 """
 
-import tempfile
 import shutil
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-import json
-from pathlib import Path
+import tempfile
 
 from backend.services.profile_store import ProfileStore
 

@@ -1,69 +1,66 @@
 """
-Unit Tests for Deepfake Creator API Route
-Tests deepfake creation endpoints in isolation.
+Unit Tests for Deepfake Creator API Routes.
+
+Tests deepfake creation jobs and engine management endpoints.
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
-# Import the route module
-try:
+@pytest.fixture(autouse=True)
+def reset_deepfake_state():
+    """Reset deepfake state before each test."""
     from backend.api.routes import deepfake_creator
-except ImportError:
-    pytest.skip(
-        "Could not import deepfake_creator route module",
-        allow_module_level=True,
-    )
+    deepfake_creator._deepfake_jobs = {}
+    yield
+    deepfake_creator._deepfake_jobs = {}
 
 
-class TestDeepfakeCreatorRouteImports:
-    """Test deepfake creator route module can be imported."""
-
-    def test_deepfake_creator_module_imports(self):
-        """Test deepfake_creator module can be imported."""
-        assert (
-            deepfake_creator is not None
-        ), "Failed to import deepfake_creator module"
-        assert hasattr(
-            deepfake_creator, "router"
-        ), "deepfake_creator module missing router"
+@pytest.fixture
+def deepfake_client():
+    """Create test client for deepfake creator routes."""
+    from backend.api.routes.deepfake_creator import router
+    app = FastAPI()
+    app.include_router(router)
+    return TestClient(app)
 
 
-class TestDeepfakeCreatorRouteHandlers:
-    """Test deepfake creator route handlers exist and are callable."""
+class TestDeepfakeCRUD:
+    """Tests for deepfake job management."""
 
-    def test_create_deepfake_handler_exists(self):
-        """Test create_deepfake handler exists."""
-        if hasattr(deepfake_creator, "create_deepfake"):
-            assert callable(
-                deepfake_creator.create_deepfake
-            ), "create_deepfake is not callable"
+    def test_get_engines(self, deepfake_client):
+        """Test GET /engines returns available engines."""
+        response = deepfake_client.get("/api/deepfake-creator/engines")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
 
+    def test_get_queue_status(self, deepfake_client):
+        """Test GET /queue/status returns queue state."""
+        response = deepfake_client.get("/api/deepfake-creator/queue/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data is not None
 
-class TestDeepfakeCreatorRouter:
-    """Test deepfake creator router configuration."""
+    def test_list_jobs_empty(self, deepfake_client):
+        """Test GET /jobs returns empty list initially."""
+        response = deepfake_client.get("/api/deepfake-creator/jobs")
+        assert response.status_code == 200
+        assert response.json() == []
 
-    def test_router_exists(self):
-        """Test router exists and is configured."""
-        assert deepfake_creator.router is not None, "Router should exist"
-        if hasattr(deepfake_creator.router, "prefix"):
-            pass  # Router configuration is valid
+    def test_get_job_not_found(self, deepfake_client):
+        """Test GET /jobs/{job_id} returns 404 for missing job."""
+        response = deepfake_client.get("/api/deepfake-creator/jobs/nonexistent")
+        assert response.status_code == 404
 
-    def test_router_has_routes(self):
-        """Test router has registered routes."""
-        if hasattr(deepfake_creator.router, "routes"):
-            routes = [route.path for route in deepfake_creator.router.routes]
-            assert len(routes) > 0, "Router should have routes registered"
+    def test_delete_job_not_found(self, deepfake_client):
+        """Test DELETE /jobs/{job_id} returns 404 for missing job."""
+        response = deepfake_client.delete("/api/deepfake-creator/jobs/nonexistent")
+        assert response.status_code == 404
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
-
+    def test_create_validation(self, deepfake_client):
+        """Test POST /create validates required fields."""
+        response = deepfake_client.post("/api/deepfake-creator/create", json={})
+        assert response.status_code == 422

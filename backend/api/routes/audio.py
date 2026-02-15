@@ -5,13 +5,13 @@ Endpoints for audio visualization data: waveforms, spectrograms, and meters.
 Provides downsampled data optimized for real-time rendering in the UI.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
-import time
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import numpy as np
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
@@ -39,7 +39,7 @@ except ImportError:
 class WaveformData(BaseModel):
     """Waveform data for rendering."""
 
-    samples: List[float]
+    samples: list[float]
     sample_rate: int
     duration: float
     channels: int
@@ -51,13 +51,13 @@ class SpectrogramFrame(BaseModel):
     """Single frame of spectrogram data."""
 
     time: float
-    frequencies: List[float]
+    frequencies: list[float]
 
 
 class SpectrogramData(BaseModel):
     """Spectrogram data for rendering."""
 
-    frames: List[SpectrogramFrame]
+    frames: list[SpectrogramFrame]
     sample_rate: int
     fft_size: int
     hop_length: int
@@ -70,17 +70,17 @@ class AudioMeters(BaseModel):
 
     peak: float
     rms: float
-    lufs: Optional[float] = None
-    channels: List[Dict[str, float]] = []
+    lufs: float | None = None
+    channels: list[dict[str, float]] = []
 
 
 class LoudnessData(BaseModel):
     """Loudness (LUFS) data for visualization."""
 
-    times: List[float]
-    lufs_values: List[float]
-    integrated_lufs: Optional[float] = None
-    peak_lufs: Optional[float] = None
+    times: list[float]
+    lufs_values: list[float]
+    integrated_lufs: float | None = None
+    peak_lufs: float | None = None
     sample_rate: int
     duration: float
 
@@ -88,21 +88,21 @@ class LoudnessData(BaseModel):
 class RadarData(BaseModel):
     """Radar chart data for frequency domain visualization."""
 
-    band_names: List[str]
-    frequencies: List[float]
-    magnitudes: List[float]
-    phases: Optional[List[float]] = None
+    band_names: list[str]
+    frequencies: list[float]
+    magnitudes: list[float]
+    phases: list[float] | None = None
     sample_rate: int
 
 
 class PhaseData(BaseModel):
     """Phase analysis data for visualization."""
 
-    times: List[float]
-    correlation: List[float]
-    phase_difference: Optional[List[float]] = None
-    stereo_width: Optional[List[float]] = None
-    average_correlation: Optional[float] = None
+    times: list[float]
+    correlation: list[float]
+    phase_difference: list[float] | None = None
+    stereo_width: list[float] | None = None
+    average_correlation: float | None = None
     sample_rate: int
     duration: float
 
@@ -125,12 +125,12 @@ class RadarDataPoint(BaseModel):
 class RadarChartData(BaseModel):
     """Radar chart data for rendering."""
 
-    axes: List[RadarAxis]
-    points: List[RadarDataPoint]
+    axes: list[RadarAxis]
+    points: list[RadarDataPoint]
     label: str = ""
 
 
-def _get_audio_path(audio_id: str) -> Optional[str]:
+def _get_audio_path(audio_id: str) -> str | None:
     """Get audio file path from audio_id.
 
     Checks:
@@ -161,7 +161,7 @@ def _get_audio_path(audio_id: str) -> Optional[str]:
             return str(project_dir)
 
     # Also check if audio_id is just a filename without path
-    if not os.path.sep in audio_id and not os.path.altsep in audio_id:
+    if os.path.sep not in audio_id and os.path.altsep not in audio_id:
         # It's just a filename, search all project audio directories
         for project_dir in Path(projects_dir).glob("*/audio/*"):
             if project_dir.is_file() and project_dir.name == audio_id:
@@ -280,20 +280,20 @@ def get_waveform_data(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for waveform {audio_id}: {str(e)}",
+                f"Failed to load or process audio for waveform {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error generating waveform data for {audio_id}: {str(e)}", exc_info=True
+            f"Error generating waveform data for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate waveform data: {str(e)}"
+            status_code=500, detail=f"Failed to generate waveform data: {e!s}"
         )
 
 
@@ -392,20 +392,20 @@ def get_spectrogram_data(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for spectrogram {audio_id}: {str(e)}",
+                f"Failed to load or process audio for spectrogram {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error generating spectrogram data for {audio_id}: {str(e)}", exc_info=True
+            f"Error generating spectrogram data for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate spectrogram data: {str(e)}"
+            status_code=500, detail=f"Failed to generate spectrogram data: {e!s}"
         )
 
 
@@ -558,20 +558,20 @@ def get_loudness_data(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for loudness analysis {audio_id}: {str(e)}",
+                f"Failed to load or process audio for loudness analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error generating loudness data for {audio_id}: {str(e)}", exc_info=True
+            f"Error generating loudness data for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate loudness data: {str(e)}"
+            status_code=500, detail=f"Failed to generate loudness data: {e!s}"
         )
 
 
@@ -646,20 +646,20 @@ def get_audio_meters(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for meters {audio_id}: {str(e)}",
+                f"Failed to load or process audio for meters {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error calculating audio meters for {audio_id}: {str(e)}", exc_info=True
+            f"Error calculating audio meters for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to calculate audio meters: {str(e)}"
+            status_code=500, detail=f"Failed to calculate audio meters: {e!s}"
         )
 
 
@@ -727,7 +727,7 @@ def get_radar_data(
             frequencies = []
             phases = []
 
-            for (low_freq, high_freq), band_name in zip(band_ranges, band_names):
+            for (low_freq, high_freq), _band_name in zip(band_ranges, band_names, strict=False):
                 # Find frequency bins in this range
                 mask = (freq_bins >= low_freq) & (freq_bins <= high_freq)
                 if np.any(mask):
@@ -762,20 +762,20 @@ def get_radar_data(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for radar analysis {audio_id}: {str(e)}",
+                f"Failed to load or process audio for radar analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error generating radar data for {audio_id}: {str(e)}", exc_info=True
+            f"Error generating radar data for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate radar data: {str(e)}"
+            status_code=500, detail=f"Failed to generate radar data: {e!s}"
         )
 
 
@@ -916,62 +916,418 @@ def get_phase_data(
             )
         except Exception as e:
             logger.error(
-                f"Failed to load or process audio for phase analysis {audio_id}: {str(e)}",
+                f"Failed to load or process audio for phase analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {str(e)}"
+                status_code=500, detail=f"Failed to process audio: {e!s}"
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            f"Error generating phase data for {audio_id}: {str(e)}", exc_info=True
+            f"Error generating phase data for {audio_id}: {e!s}", exc_info=True
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate phase data: {str(e)}"
+            status_code=500, detail=f"Failed to generate phase data: {e!s}"
         )
 
 
 # --- Audio Upload ---
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data", "audio_uploads")
+# Base upload directory
+_UPLOAD_BASE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+    "data", "audio_uploads"
+)
+UPLOAD_DIR = _UPLOAD_BASE  # Legacy compatibility
+UPLOAD_ORIGINALS_DIR = os.path.join(_UPLOAD_BASE, "originals")
+UPLOAD_WAV_DIR = os.path.join(_UPLOAD_BASE, "wav")
 
 
 class AudioUploadResponse(BaseModel):
     """Response from audio upload."""
     id: str
     filename: str
-    path: str
+    path: str  # Path to canonical WAV file
+    original_path: str | None = None  # Path to original uploaded file
+    canonical_path: str | None = None  # Alias for path (WAV)
     size: int
-    content_type: Optional[str] = None
+    original_size: int | None = None
+    content_type: str | None = None
+    detected_format: str | None = None
+    converted: bool = False  # True if conversion to WAV was performed
 
 
 @router.post("/upload", response_model=AudioUploadResponse, status_code=201)
 async def upload_audio(file: UploadFile = File(...)):
-    """Upload an audio file for processing."""
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    """
+    Upload an audio file for processing.
+
+    Validates the file is a genuine audio file (format, size, content headers)
+    before persisting to disk. The original file is preserved and a canonical
+    WAV copy is created for internal processing.
+
+    **Supported audio formats (Standard Set):**
+    - WAV (.wav) - Recommended, uncompressed
+    - MP3 (.mp3) - Compressed, widely supported
+    - FLAC (.flac) - Lossless compressed
+    - OGG/Vorbis (.ogg) - Open format compressed
+    - Opus (.opus) - Modern compressed format
+    - M4A (.m4a) - MPEG-4 Audio (AAC in container)
+    - AAC (.aac) - Advanced Audio Coding (raw)
+    - WMA (.wma) - Windows Media Audio
+    - AIFF (.aiff, .aif) - Apple lossless format
+
+    **Behavior:**
+    - Original file is saved to originals/ directory
+    - File is converted to canonical WAV format (44100 Hz, 16-bit, stereo)
+    - WAV file is saved to wav/ directory
+    - Both paths are returned in the response
+
+    **Limits:**
+    - Maximum file size: 500MB
+    - Sample rates: 8000-96000 Hz supported (22050+ recommended for cloning)
+    """
+    # Ensure directories exist
+    os.makedirs(UPLOAD_ORIGINALS_DIR, exist_ok=True)
+    os.makedirs(UPLOAD_WAV_DIR, exist_ok=True)
+
+    # Read file content
+    content = await file.read()
+    original_size = len(content)
+
+    # Validate media file before saving (accepts audio + video for audio extraction)
+    detected_format = None
+    is_video_source = False
+    try:
+        from backend.core.security.file_validation import (
+            FileCategory,
+            validate_media_for_audio_extraction,
+        )
+        file_info = validate_media_for_audio_extraction(content, filename=file.filename)
+        detected_format = file_info.extension
+        is_video_source = file_info.category == FileCategory.VIDEO
+        if is_video_source:
+            logger.info(
+                "Video file '%s' accepted for audio extraction (will convert to WAV)",
+                file.filename,
+            )
+    except ImportError:
+        logger.warning("file_validation module not available; skipping audio validation")
+    except Exception as validation_error:
+        logger.warning(
+            "Audio upload validation failed for '%s': %s",
+            file.filename,
+            validation_error,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid audio file: {validation_error!s}"
+        ) from validation_error
 
     file_id = str(uuid.uuid4())
-    ext = os.path.splitext(file.filename or "audio.wav")[1] or ".wav"
-    safe_filename = f"{file_id}{ext}"
-    dest_path = os.path.join(UPLOAD_DIR, safe_filename)
+    original_ext = os.path.splitext(file.filename or "audio.wav")[1] or ".wav"
+    original_filename = f"{file_id}{original_ext}"
+    original_path = os.path.join(UPLOAD_ORIGINALS_DIR, original_filename)
+
+    wav_filename = f"{file_id}.wav"
+    wav_path = os.path.join(UPLOAD_WAV_DIR, wav_filename)
 
     try:
-        with open(dest_path, "wb") as out:
-            content = await file.read()
+        # Save original file
+        with open(original_path, "wb") as out:
             out.write(content)
+
+        # Check if conversion is needed
+        is_wav = original_ext.lower() in (".wav", ".wave")
+        converted = False
+
+        if is_wav:
+            # Already WAV - just copy to wav directory
+            shutil.copy2(original_path, wav_path)
+        else:
+            # Convert to WAV using AudioConversionService
+            try:
+                from backend.core.audio.conversion import get_conversion_service
+
+                conversion_service = get_conversion_service()
+                result = await conversion_service.convert_to_wav(
+                    input_path=Path(original_path),
+                    output_path=Path(wav_path),
+                    sample_rate=44100,
+                    channels=2,
+                    bit_depth=16,
+                )
+
+                if not result.success:
+                    logger.error(
+                        f"Audio conversion failed for {file.filename}: {result.error}"
+                    )
+                    # Fall back to keeping original only
+                    shutil.copy2(original_path, wav_path)
+                else:
+                    converted = True
+                    logger.info(
+                        f"Converted {file.filename} ({detected_format}) to WAV"
+                    )
+            except ImportError:
+                logger.warning("AudioConversionService not available; copying original")
+                shutil.copy2(original_path, wav_path)
+            except Exception as conv_error:
+                logger.warning(f"Conversion failed, copying original: {conv_error}")
+                shutil.copy2(original_path, wav_path)
+
+        wav_size = os.path.getsize(wav_path) if os.path.exists(wav_path) else original_size
 
         return AudioUploadResponse(
             id=file_id,
-            filename=file.filename or safe_filename,
-            path=dest_path,
-            size=len(content),
+            filename=file.filename or original_filename,
+            path=wav_path,  # Primary path is the canonical WAV
+            original_path=original_path,
+            canonical_path=wav_path,
+            size=wav_size,
+            original_size=original_size,
             content_type=file.content_type,
+            detected_format=detected_format,
+            converted=converted,
         )
     except Exception as e:
         # Clean up on failure
-        if os.path.exists(dest_path):
-            os.remove(dest_path)
+        for path in [original_path, wav_path]:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                # ALLOWED: bare except - Best effort cleanup, failure is acceptable
+                except Exception:
+                    pass
         logger.error(f"Audio upload failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {e!s}")
+
+
+# --- Audio Export ---
+
+class AudioExportRequest(BaseModel):
+    """Request for audio export with format conversion."""
+    source: str  # audio_id or filename
+    format: str  # Target format (wav, mp3, flac, ogg, opus, m4a, aac, wma, aiff)
+    sample_rate: int | None = None  # Output sample rate (Hz)
+    channels: int | None = None  # Output channels (1=mono, 2=stereo)
+    bitrate_kbps: int | None = None  # Bitrate for lossy formats
+    normalize: bool = False  # Apply loudness normalization
+
+
+class AudioExportResponse(BaseModel):
+    """Response from audio export."""
+    success: bool
+    filename: str
+    format: str
+    size: int
+    content_type: str
+    error: str | None = None
+
+
+# Supported export formats with MIME types
+EXPORT_FORMAT_MIME_TYPES = {
+    "wav": "audio/wav",
+    "mp3": "audio/mpeg",
+    "flac": "audio/flac",
+    "ogg": "audio/ogg",
+    "opus": "audio/opus",
+    "m4a": "audio/mp4",
+    "aac": "audio/aac",
+    "wma": "audio/x-ms-wma",
+    "aiff": "audio/aiff",
+}
+
+
+@router.post("/export")
+async def export_audio(request: AudioExportRequest):
+    """
+    Export an audio file to a different format.
+
+    Converts the source audio to the requested format and returns the file
+    as a streaming response.
+
+    **Supported export formats:**
+    - wav - Uncompressed PCM (highest quality)
+    - mp3 - MPEG Layer 3 (widely compatible)
+    - flac - Free Lossless Audio Codec
+    - ogg - OGG Vorbis
+    - opus - Opus codec (modern, efficient)
+    - m4a - MPEG-4 Audio (AAC)
+    - aac - Advanced Audio Coding (raw)
+    - wma - Windows Media Audio
+    - aiff - Audio Interchange File Format
+
+    **Parameters:**
+    - source: Audio ID or filename to export
+    - format: Target format (required)
+    - sample_rate: Output sample rate (optional, uses source rate)
+    - channels: Output channels (optional, uses source channels)
+    - bitrate_kbps: Bitrate for lossy formats (optional, uses format default)
+    - normalize: Apply loudness normalization (optional, default false)
+    """
+    import tempfile
+
+    from fastapi.responses import StreamingResponse
+
+    target_format = request.format.lower().lstrip(".")
+
+    if target_format not in EXPORT_FORMAT_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported export format: {request.format}. "
+                   f"Supported formats: {', '.join(EXPORT_FORMAT_MIME_TYPES.keys())}"
+        )
+
+    # Find source audio file
+    audio_path = _get_audio_path(request.source)
+    if not audio_path or not os.path.exists(audio_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Audio file not found: {request.source}"
+        )
+
+    # Import conversion service
+    try:
+        from backend.core.audio.conversion import get_conversion_service
+        from backend.core.audio.formats import AudioFormat, get_format_by_extension
+    except ImportError as e:
+        logger.error(f"Audio conversion module not available: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Audio conversion service not available"
+        )
+
+    # Map format string to AudioFormat enum
+    format_map = {
+        "wav": AudioFormat.WAV,
+        "mp3": AudioFormat.MP3,
+        "flac": AudioFormat.FLAC,
+        "ogg": AudioFormat.OGG,
+        "opus": AudioFormat.OPUS,
+        "m4a": AudioFormat.M4A,
+        "aac": AudioFormat.AAC,
+        "wma": AudioFormat.WMA,
+        "aiff": AudioFormat.AIFF,
+    }
+
+    audio_format = format_map.get(target_format)
+    if audio_format is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown audio format: {target_format}"
+        )
+
+    # Create temporary output file
+    with tempfile.NamedTemporaryFile(
+        suffix=f".{target_format}",
+        delete=False
+    ) as tmp:
+        output_path = Path(tmp.name)
+
+    try:
+        # Perform conversion
+        service = get_conversion_service()
+        result = await service.convert_to_format(
+            input_path=Path(audio_path),
+            output_path=output_path,
+            target_format=audio_format,
+            bitrate_kbps=request.bitrate_kbps,
+            sample_rate=request.sample_rate,
+            channels=request.channels,
+            normalize=request.normalize,
+        )
+
+        if not result.success:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Conversion failed: {result.error}"
+            )
+
+        # Generate output filename
+        source_basename = os.path.splitext(os.path.basename(audio_path))[0]
+        output_filename = f"{source_basename}.{target_format}"
+
+        # Stream the file back
+        def iterfile():
+            with open(output_path, "rb") as f:
+                while chunk := f.read(65536):  # 64KB chunks
+                    yield chunk
+            # Clean up temp file after streaming
+            try:
+                os.unlink(output_path)
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
+            except Exception:
+                pass
+
+        return StreamingResponse(
+            iterfile(),
+            media_type=EXPORT_FORMAT_MIME_TYPES[target_format],
+            headers={
+                "Content-Disposition": f'attachment; filename="{output_filename}"',
+                "Content-Length": str(result.file_size_bytes),
+            }
+        )
+
+    except HTTPException:
+        # Clean up and re-raise
+        if output_path.exists():
+            try:
+                os.unlink(output_path)
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
+            except Exception:
+                pass
+        raise
+    except Exception as e:
+        # Clean up on error
+        if output_path.exists():
+            try:
+                os.unlink(output_path)
+            # ALLOWED: bare except - Best effort cleanup, failure is acceptable
+            except Exception:
+                pass
+        logger.error(f"Audio export failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Export failed: {e!s}"
+        )
+
+
+@router.get("/formats")
+async def get_supported_formats():
+    """
+    Get list of supported audio formats for import and export.
+
+    Returns format information including extensions, MIME types,
+    and whether the format is lossy or lossless.
+    """
+    try:
+        from backend.core.audio.formats import STANDARD_AUDIO_FORMATS
+
+        formats = []
+        for fmt_info in STANDARD_AUDIO_FORMATS.values():
+            formats.append({
+                "id": fmt_info.format.value,
+                "name": fmt_info.name,
+                "description": fmt_info.description,
+                "extensions": list(fmt_info.extensions),
+                "mime_types": list(fmt_info.mime_types),
+                "is_lossy": fmt_info.is_lossy,
+                "supports_metadata": fmt_info.supports_metadata,
+                "default_bitrate_kbps": fmt_info.default_bitrate_kbps,
+            })
+
+        return {
+            "formats": formats,
+            "import_extensions": list(EXPORT_FORMAT_MIME_TYPES.keys()),
+            "export_extensions": list(EXPORT_FORMAT_MIME_TYPES.keys()),
+        }
+    except ImportError:
+        # Fallback if format catalog not available
+        return {
+            "formats": [],
+            "import_extensions": list(EXPORT_FORMAT_MIME_TYPES.keys()),
+            "export_extensions": list(EXPORT_FORMAT_MIME_TYPES.keys()),
+        }

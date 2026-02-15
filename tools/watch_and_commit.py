@@ -65,7 +65,7 @@ def schedule_commit(interval: float, skip_verify: bool) -> None:
     def do_commit():
         if has_changes():
             print(f"\n[{time.strftime('%H:%M:%S')}] Auto-committing changes...")
-            result = subprocess.run(
+            subprocess.run(
                 [sys.executable, str(AUTO_COMMIT_SCRIPT)]
                 + (["--skip-verify"] if skip_verify else []),
                 cwd=PROJECT_ROOT,

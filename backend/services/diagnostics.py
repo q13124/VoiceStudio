@@ -22,10 +22,9 @@ import os
 import platform
 import subprocess
 import sys
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -41,27 +40,27 @@ DEFAULT_DIAGNOSTICS_DIR = Path(".buildlogs/diagnostics")
 @dataclass
 class DiagnosticCheck:
     """Result of a single diagnostic check."""
-    
+
     name: str
     category: str
     status: str  # "pass", "warn", "fail", "skip"
     message: str
-    details: Dict = field(default_factory=dict)
+    details: dict = field(default_factory=dict)
     duration_ms: float = 0.0
 
 
 @dataclass
 class DiagnosticReport:
     """Complete diagnostic report."""
-    
+
     generated_at: str
     hostname: str
     platform: str
     python_version: str
     overall_status: str
-    checks: List[DiagnosticCheck] = field(default_factory=list)
-    environment: Dict = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
+    checks: list[DiagnosticCheck] = field(default_factory=list)
+    environment: dict = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
 
 
 # =============================================================================
@@ -72,36 +71,36 @@ class DiagnosticReport:
 class DiagnosticsService:
     """
     Provides comprehensive system diagnostics.
-    
+
     Usage:
         service = DiagnosticsService()
         report = service.run_diagnostics()
         service.save_report(report)
     """
-    
-    def __init__(self, output_dir: Optional[Path] = None):
+
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize diagnostics service.
-        
+
         Args:
             output_dir: Directory for diagnostic reports
         """
         self.output_dir = output_dir or DEFAULT_DIAGNOSTICS_DIR
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self._checks: List[DiagnosticCheck] = []
-    
+        self._checks: list[DiagnosticCheck] = []
+
     def run_diagnostics(self, include_sensitive: bool = False) -> DiagnosticReport:
         """
         Run all diagnostic checks.
-        
+
         Args:
             include_sensitive: Include sensitive information in report
-            
+
         Returns:
             Complete diagnostic report
         """
         self._checks = []
-        
+
         # Run all check categories
         self._check_python_environment()
         self._check_system_resources()
@@ -109,7 +108,7 @@ class DiagnosticsService:
         self._check_paths()
         self._check_backend_services()
         self._check_network()
-        
+
         # Calculate overall status
         statuses = [c.status for c in self._checks]
         if "fail" in statuses:
@@ -118,13 +117,13 @@ class DiagnosticsService:
             overall = "degraded"
         else:
             overall = "healthy"
-        
+
         # Collect environment info
         env_info = self._collect_environment(include_sensitive)
-        
+
         # Generate recommendations
         recommendations = self._generate_recommendations()
-        
+
         return DiagnosticReport(
             generated_at=datetime.utcnow().isoformat() + "Z",
             hostname=platform.node(),
@@ -135,14 +134,14 @@ class DiagnosticsService:
             environment=env_info,
             recommendations=recommendations,
         )
-    
+
     def _add_check(
         self,
         name: str,
         category: str,
         status: str,
         message: str,
-        details: Optional[Dict] = None,
+        details: dict | None = None,
         duration_ms: float = 0.0,
     ) -> None:
         """Add a diagnostic check result."""
@@ -154,12 +153,12 @@ class DiagnosticsService:
             details=details or {},
             duration_ms=duration_ms,
         ))
-    
+
     def _check_python_environment(self) -> None:
         """Check Python environment."""
         import time
         start = time.perf_counter()
-        
+
         # Python version
         major, minor = sys.version_info[:2]
         if major >= 3 and minor >= 9:
@@ -174,7 +173,7 @@ class DiagnosticsService:
                 f"Python {major}.{minor} below required 3.9",
                 {"version": sys.version}
             )
-        
+
         # Virtual environment
         in_venv = hasattr(sys, 'real_prefix') or (
             hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
@@ -191,18 +190,18 @@ class DiagnosticsService:
                 "Not running in virtual environment",
                 {"prefix": sys.prefix}
             )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Python environment checks: {elapsed:.2f}ms")
-    
+
     def _check_system_resources(self) -> None:
         """Check system resources."""
         import time
         start = time.perf_counter()
-        
+
         try:
             import psutil
-            
+
             # Memory
             memory = psutil.virtual_memory()
             if memory.available / (1024**3) >= 4:
@@ -221,7 +220,7 @@ class DiagnosticsService:
                     f"Low memory ({memory.available / (1024**3):.1f} GB available)",
                     {"available_gb": memory.available / (1024**3)}
                 )
-            
+
             # Disk
             disk = psutil.disk_usage("/")
             if disk.free / (1024**3) >= 10:
@@ -236,7 +235,7 @@ class DiagnosticsService:
                     f"Low disk space ({disk.free / (1024**3):.1f} GB free)",
                     {"free_gb": disk.free / (1024**3)}
                 )
-            
+
             # CPU
             cpu_count = psutil.cpu_count()
             self._add_check(
@@ -244,36 +243,36 @@ class DiagnosticsService:
                 f"CPU available ({cpu_count} cores)",
                 {"cores": cpu_count, "percent": psutil.cpu_percent(interval=0.1)}
             )
-            
+
         except ImportError:
             self._add_check(
                 "psutil", "resources", "warn",
                 "psutil not installed - cannot check system resources",
                 {}
             )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Resource checks: {elapsed:.2f}ms")
-    
+
     def _check_dependencies(self) -> None:
         """Check required dependencies."""
         import time
         start = time.perf_counter()
-        
+
         required_packages = [
             ("fastapi", "Backend framework"),
             ("pydantic", "Data validation"),
             ("uvicorn", "ASGI server"),
             ("aiohttp", "HTTP client"),
         ]
-        
+
         optional_packages = [
             ("torch", "ML framework"),
             ("numpy", "Numerical computing"),
             ("scipy", "Scientific computing"),
             ("soundfile", "Audio I/O"),
         ]
-        
+
         for package, description in required_packages:
             try:
                 __import__(package)
@@ -288,7 +287,7 @@ class DiagnosticsService:
                     f"{description} ({package}) not installed",
                     {}
                 )
-        
+
         for package, description in optional_packages:
             try:
                 __import__(package)
@@ -303,21 +302,21 @@ class DiagnosticsService:
                     f"{description} ({package}) not installed (optional)",
                     {}
                 )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Dependency checks: {elapsed:.2f}ms")
-    
+
     def _check_paths(self) -> None:
         """Check required paths and directories."""
         import time
         start = time.perf_counter()
-        
+
         paths_to_check = [
             ("VOICESTUDIO_MODELS_PATH", "Model storage path"),
             ("VOICESTUDIO_PROJECTS_DIR", "Projects directory"),
             ("VOICESTUDIO_CACHE_DIR", "Cache directory"),
         ]
-        
+
         for env_var, description in paths_to_check:
             path = os.environ.get(env_var)
             if path:
@@ -346,7 +345,7 @@ class DiagnosticsService:
                     f"{description} not configured ({env_var})",
                     {}
                 )
-        
+
         # Check ffmpeg
         ffmpeg_path = os.environ.get("VOICESTUDIO_FFMPEG_PATH")
         if ffmpeg_path and os.path.exists(ffmpeg_path):
@@ -381,15 +380,15 @@ class DiagnosticsService:
                     "ffmpeg not found",
                     {}
                 )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Path checks: {elapsed:.2f}ms")
-    
+
     def _check_backend_services(self) -> None:
         """Check backend services."""
         import time
         start = time.perf_counter()
-        
+
         # Telemetry service
         try:
             from backend.services.telemetry import get_telemetry_service
@@ -405,7 +404,7 @@ class DiagnosticsService:
                 f"Telemetry service unavailable: {e}",
                 {}
             )
-        
+
         # SLO monitor
         try:
             from backend.services.slo_monitor import get_slo_monitor
@@ -421,7 +420,7 @@ class DiagnosticsService:
                 f"SLO monitor unavailable: {e}",
                 {}
             )
-        
+
         # Trace exporter
         try:
             from backend.services.trace_export import get_trace_exporter
@@ -437,15 +436,15 @@ class DiagnosticsService:
                 f"Trace exporter unavailable: {e}",
                 {}
             )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Service checks: {elapsed:.2f}ms")
-    
+
     def _check_network(self) -> None:
         """Check network connectivity."""
         import time
         start = time.perf_counter()
-        
+
         # Check localhost binding
         import socket
         try:
@@ -453,7 +452,7 @@ class DiagnosticsService:
             sock.settimeout(2)
             result = sock.connect_ex(('127.0.0.1', 8000))
             sock.close()
-            
+
             if result == 0:
                 self._add_check(
                     "port_8000", "network", "pass",
@@ -472,11 +471,11 @@ class DiagnosticsService:
                 f"Could not check port 8000: {e}",
                 {}
             )
-        
+
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Network checks: {elapsed:.2f}ms")
-    
-    def _collect_environment(self, include_sensitive: bool) -> Dict:
+
+    def _collect_environment(self, include_sensitive: bool) -> dict:
         """Collect environment information."""
         env_vars = [
             "VOICESTUDIO_MODELS_PATH",
@@ -488,13 +487,13 @@ class DiagnosticsService:
             "CUDA_VISIBLE_DEVICES",
             "PYTHONPATH",
         ]
-        
+
         env_info = {}
         for var in env_vars:
             value = os.environ.get(var)
             if value:
                 env_info[var] = value
-        
+
         # Add system info
         env_info["_system"] = {
             "os": platform.system(),
@@ -502,13 +501,13 @@ class DiagnosticsService:
             "machine": platform.machine(),
             "processor": platform.processor(),
         }
-        
+
         return env_info
-    
-    def _generate_recommendations(self) -> List[str]:
+
+    def _generate_recommendations(self) -> list[str]:
         """Generate recommendations based on check results."""
         recommendations = []
-        
+
         for check in self._checks:
             if check.status == "fail":
                 if "python_version" in check.name:
@@ -536,28 +535,28 @@ class DiagnosticsService:
                         f"Configure {check.name.replace('path_', '').upper()} "
                         "environment variable"
                     )
-        
+
         return list(set(recommendations))  # Remove duplicates
-    
+
     def save_report(
         self,
         report: DiagnosticReport,
-        filename: Optional[str] = None,
+        filename: str | None = None,
     ) -> Path:
         """Save diagnostic report to file."""
         if filename is None:
             timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
             filename = f"diagnostic_report_{timestamp}.json"
-        
+
         filepath = self.output_dir / filename
-        
+
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(asdict(report), f, indent=2, default=str)
-        
+
         logger.info(f"Diagnostic report saved to {filepath}")
         return filepath
-    
-    def get_quick_status(self) -> Dict:
+
+    def get_quick_status(self) -> dict:
         """Get a quick status summary without running all checks."""
         return {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -572,7 +571,7 @@ class DiagnosticsService:
 # Global Instance
 # =============================================================================
 
-_diagnostics_service: Optional[DiagnosticsService] = None
+_diagnostics_service: DiagnosticsService | None = None
 
 
 def get_diagnostics_service() -> DiagnosticsService:

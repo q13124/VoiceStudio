@@ -5,16 +5,17 @@ CRUD operations for voice profiles.
 Uses ProfileStore for persistent, disk-backed storage.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..middleware.auth_middleware import require_auth_if_enabled
-from ..deps import ProfileStoreDep, get_profile_store_dep
+from ..deps import ProfileStoreDep
 from ..exceptions import ProfileNotFoundException
+from ..middleware.auth_middleware import require_auth_if_enabled
 from ..models import ApiOk
 from ..models_additional import (
     ReferenceAudioPreprocessRequest,
@@ -23,6 +24,90 @@ from ..models_additional import (
 from ..optimization import cache_response, get_pagination_params
 
 logger = logging.getLogger(__name__)
+
+
+# Backward-compatible module-level exports for legacy code that imports _profiles
+# These are lazy-initialized to avoid import-time issues
+def _get_profiles_wrapper():
+    """Get the profile store for legacy imports."""
+    from backend.services.profile_store import get_profile_store
+    return get_profile_store()
+
+
+class _DictToObject:
+    """Wrapper to make dict accessible via attribute access (for legacy code)."""
+
+    def __init__(self, data: dict):
+        # Use object.__setattr__ to avoid triggering __getattr__
+        object.__setattr__(self, '_data', data or {})
+
+    def __getattr__(self, name):
+        data = object.__getattribute__(self, '_data')
+        return data.get(name)
+
+    def get(self, key, default=None):
+        data = object.__getattribute__(self, '_data')
+        return data.get(key, default)
+
+    def __getitem__(self, key):
+        data = object.__getattribute__(self, '_data')
+        return data[key]
+
+    def __contains__(self, key):
+        data = object.__getattribute__(self, '_data')
+        return key in data
+
+    def __repr__(self):
+        data = object.__getattribute__(self, '_data')
+        return f"_DictToObject({data})"
+
+
+# Module-level proxy for backward compatibility
+class _ProfilesProxy:
+    """Proxy class to provide backward-compatible dict-like access to profiles."""
+
+    @property
+    def _store(self):
+        return _get_profiles_wrapper()
+
+    def _wrap(self, data):
+        """Wrap dict in object for attribute access."""
+        if data is None:
+            return None
+        return _DictToObject(data)
+
+    def get(self, profile_id, default=None):
+        result = self._store.get(profile_id)
+        if result is None:
+            return default
+        return self._wrap(result)
+
+    def __getitem__(self, profile_id):
+        result = self._store.get(profile_id)
+        if result is None:
+            raise KeyError(profile_id)
+        return self._wrap(result)
+
+    def __contains__(self, profile_id):
+        return self._store.get(profile_id) is not None
+
+    def __iter__(self):
+        return iter(self._store.list_ids())
+
+    def keys(self):
+        return self._store.list_ids()
+
+    def values(self):
+        return [self._wrap(p) for p in self._store.list_profiles()]
+
+    def items(self):
+        for pid in self._store.list_ids():
+            yield pid, self._wrap(self._store.get(pid))
+
+
+# Export for backward compatibility
+_profiles = _ProfilesProxy()
+_profile_timestamps = {}  # Timestamps are not tracked in the new store - return empty dict
 
 router = APIRouter(
     prefix="/api/profiles",
@@ -37,11 +122,11 @@ class VoiceProfile(BaseModel):
     id: str
     name: str
     language: str = "en"
-    emotion: Optional[str] = None
+    emotion: str | None = None
     quality_score: float = 0.0
-    tags: List[str] = []
-    reference_audio_url: Optional[str] = None
-    avatar_url: Optional[str] = None  # URL or path to profile avatar image
+    tags: list[str] = []
+    reference_audio_url: str | None = None
+    avatar_url: str | None = None  # URL or path to profile avatar image
 
 
 class ProfileCreateRequest(BaseModel):
@@ -49,19 +134,19 @@ class ProfileCreateRequest(BaseModel):
 
     name: str
     language: str = "en"
-    emotion: Optional[str] = None
-    tags: List[str] = []
-    avatar_url: Optional[str] = None
+    emotion: str | None = None
+    tags: list[str] = []
+    avatar_url: str | None = None
 
 
 class ProfileUpdateRequest(BaseModel):
     """Request model for updating an existing voice profile."""
 
-    name: Optional[str] = None
-    language: Optional[str] = None
-    emotion: Optional[str] = None
-    tags: Optional[List[str]] = None
-    avatar_url: Optional[str] = None
+    name: str | None = None
+    language: str | None = None
+    emotion: str | None = None
+    tags: list[str] | None = None
+    avatar_url: str | None = None
 
 
 # ProfileStore is now used for persistent storage
@@ -73,14 +158,14 @@ class ProfileUpdateRequest(BaseModel):
     summary="List voice profiles",
     description="""
     Retrieve a paginated list of all voice profiles.
-    
+
     **Query Parameters:**
     - `page`: Page number (default: 1)
     - `page_size`: Items per page (default: 50, max: 1000)
-    
+
     **Response:**
     Returns a paginated list of voice profiles with metadata.
-    
+
     **Example:**
     ```json
     {
@@ -165,11 +250,12 @@ def list_profiles(
         raise
     except Exception as e:
         logger.error(f"Failed to list profiles: {e}", exc_info=True)
-        from ..exceptions import VoiceStudioException
         from fastapi import status
+
+        from ..exceptions import VoiceStudioException
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list profiles: {str(e)}",
+            detail=f"Failed to list profiles: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support."
         ) from e
@@ -200,11 +286,12 @@ def get_profile(
         raise
     except Exception as e:
         logger.error(f"Failed to get profile {profile_id}: {e}", exc_info=True)
-        from ..exceptions import VoiceStudioException
         from fastapi import status
+
+        from ..exceptions import VoiceStudioException
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile: {str(e)}",
+            detail=f"Failed to get profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support.",
             context={"profile_id": profile_id}
@@ -261,11 +348,12 @@ def create_profile(
         raise
     except Exception as e:
         logger.error(f"Failed to create profile: {e}", exc_info=True)
-        from ..exceptions import VoiceStudioException
         from fastapi import status
+
+        from ..exceptions import VoiceStudioException
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create profile: {str(e)}",
+            detail=f"Failed to create profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support."
         ) from e
@@ -325,7 +413,7 @@ def update_profile(
     except Exception as e:
         logger.error(f"Failed to update profile {profile_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to update profile: {str(e)}"
+            status_code=500, detail=f"Failed to update profile: {e!s}"
         ) from e
 
 
@@ -346,11 +434,12 @@ def delete_profile(
         raise
     except Exception as e:
         logger.error(f"Failed to delete profile {profile_id}: {e}", exc_info=True)
-        from ..exceptions import VoiceStudioException
         from fastapi import status
+
+        from ..exceptions import VoiceStudioException
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete profile: {str(e)}",
+            detail=f"Failed to delete profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support.",
             context={"profile_id": profile_id}
@@ -380,7 +469,6 @@ async def preprocess_reference_audio(
 
     from ..models_additional import (
         ReferenceAudioAnalysis,
-        ReferenceAudioPreprocessRequest,
         ReferenceAudioPreprocessResponse,
     )
 
@@ -435,8 +523,9 @@ async def preprocess_reference_audio(
             )
 
         if not HAS_AUDIO_LIBS:
-            from ..exceptions import VoiceStudioException
             from fastapi import status
+
+            from ..exceptions import VoiceStudioException
             raise VoiceStudioException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Audio analysis libraries not available. Install librosa and soundfile.",
@@ -675,11 +764,12 @@ async def preprocess_reference_audio(
         raise
     except Exception as e:
         logger.error(f"Reference audio pre-processing error: {e}", exc_info=True)
-        from ..exceptions import VoiceStudioException
         from fastapi import status
+
+        from ..exceptions import VoiceStudioException
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Reference audio pre-processing failed: {str(e)}",
+            detail=f"Reference audio pre-processing failed: {e!s}",
             error_code="AUDIO_PROCESSING_ERROR",
             recovery_suggestion="Please check the audio file format and try again.",
             context={"profile_id": profile_id}

@@ -8,6 +8,8 @@ Compatible with:
 - FFmpeg binary with AI plugins
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -18,7 +20,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 # Import base protocol
 try:
@@ -54,9 +55,9 @@ class FFmpegAIEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        ffmpeg_path: Optional[str] = None,
+        ffmpeg_path: str | None = None,
         enable_cache: bool = True,
         cache_size: int = 100,
         batch_size: int = 4,
@@ -89,7 +90,7 @@ class FFmpegAIEngine(EngineProtocol):
             "misses": 0,
         }
         # Subprocess pool for reuse (limited pool size)
-        self._subprocess_pool: List[subprocess.Popen] = []
+        self._subprocess_pool: list[subprocess.Popen] = []
         self._max_pool_size = 4
 
     def initialize(self) -> bool:
@@ -110,7 +111,7 @@ class FFmpegAIEngine(EngineProtocol):
 
             # Create reusable temp directory (using temp file manager if available)
             try:
-                from ..utils.temp_file_manager import get_temp_file_manager
+                from app.core.utils.temp_file_manager import get_temp_file_manager
 
                 temp_manager = get_temp_file_manager()
                 self._temp_dir = temp_manager.create_temp_directory(
@@ -152,7 +153,7 @@ class FFmpegAIEngine(EngineProtocol):
             # Cleanup temp directory (using temp file manager if available)
             if self._temp_dir:
                 try:
-                    from ..utils.temp_file_manager import get_temp_file_manager
+                    from app.core.utils.temp_file_manager import get_temp_file_manager
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
@@ -177,12 +178,12 @@ class FFmpegAIEngine(EngineProtocol):
 
     def transcode_video(
         self,
-        input_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        input_path: str | Path,
+        output_path: str | Path | None = None,
         codec: str = "libx264",
         quality: str = "medium",
-        resolution: Optional[Tuple[int, int]] = None,
-        fps: Optional[float] = None,
+        resolution: tuple[int, int] | None = None,
+        fps: float | None = None,
         **kwargs,
     ) -> str:
         """
@@ -200,9 +201,8 @@ class FFmpegAIEngine(EngineProtocol):
         Returns:
             Path to transcoded video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Engine not initialized. Call initialize() first.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Engine not initialized. Call initialize() first.")
 
         try:
             input_path = Path(input_path)
@@ -303,8 +303,8 @@ class FFmpegAIEngine(EngineProtocol):
 
     def upscale_video(
         self,
-        input_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        input_path: str | Path,
+        output_path: str | Path | None = None,
         scale_factor: float = 2.0,
         model: str = "espcn",
         **kwargs,
@@ -322,9 +322,8 @@ class FFmpegAIEngine(EngineProtocol):
         Returns:
             Path to upscaled video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Engine not initialized. Call initialize() first.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Engine not initialized. Call initialize() first.")
 
         try:
             input_path = Path(input_path)
@@ -399,10 +398,10 @@ class FFmpegAIEngine(EngineProtocol):
             logger.error(f"Error upscaling video: {e}")
             raise RuntimeError(f"Failed to upscale video: {e}")
 
-    def _find_ffmpeg(self) -> Optional[str]:
+    def _find_ffmpeg(self) -> str | None:
         """Find FFmpeg binary deterministically."""
         try:
-            from ..utils.native_tools import find_ffmpeg
+            from app.core.utils.native_tools import find_ffmpeg
 
             return find_ffmpeg()
         except Exception:
@@ -423,15 +422,15 @@ class FFmpegAIEngine(EngineProtocol):
 
     def batch_transcode(
         self,
-        videos: List[
-            Tuple[
-                Union[str, Path],
-                Optional[Union[str, Path]],
-                Optional[Dict],
+        videos: list[
+            tuple[
+                str | Path,
+                str | Path | None,
+                dict | None,
             ]
         ],
-        batch_size: Optional[int] = None,
-    ) -> List[str]:
+        batch_size: int | None = None,
+    ) -> list[str]:
         """
         Transcode multiple videos in batch with parallel processing.
 
@@ -442,9 +441,8 @@ class FFmpegAIEngine(EngineProtocol):
         Returns:
             List of output paths
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -495,15 +493,15 @@ class FFmpegAIEngine(EngineProtocol):
 
     def batch_upscale(
         self,
-        videos: List[
-            Tuple[
-                Union[str, Path],
-                Optional[Union[str, Path]],
-                Optional[Dict],
+        videos: list[
+            tuple[
+                str | Path,
+                str | Path | None,
+                dict | None,
             ]
         ],
-        batch_size: Optional[int] = None,
-    ) -> List[str]:
+        batch_size: int | None = None,
+    ) -> list[str]:
         """
         Upscale multiple videos in batch with parallel processing.
 
@@ -514,9 +512,8 @@ class FFmpegAIEngine(EngineProtocol):
         Returns:
             List of output paths
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -583,10 +580,10 @@ class FFmpegAIEngine(EngineProtocol):
 
         # Evict oldest if cache full
         if len(self._processing_cache) > self.cache_size:
-            oldest_key, oldest_path = self._processing_cache.popitem(last=False)
+            oldest_key, _oldest_path = self._processing_cache.popitem(last=False)
             logger.debug(f"Evicted from cache: {oldest_key[:8]}")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str]]:
+    def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (
@@ -603,7 +600,7 @@ class FFmpegAIEngine(EngineProtocol):
             "cache_hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information (enhanced)."""
         info = super().get_info()
         info.update(
@@ -624,7 +621,7 @@ class FFmpegAIEngine(EngineProtocol):
 
 
 def create_ffmpeg_ai_engine(
-    device: Optional[str] = None, gpu: bool = True, ffmpeg_path: Optional[str] = None
+    device: str | None = None, gpu: bool = True, ffmpeg_path: str | None = None
 ) -> FFmpegAIEngine:
     """
     Create and initialize FFmpeg AI engine.

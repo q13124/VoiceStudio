@@ -89,6 +89,37 @@ Source: "..\docs\user\*.md"; DestDir: "{app}\Docs\user"; Flags: ignoreversion
 Source: "..\docs\api\*.md"; DestDir: "{app}\Docs\api"; Flags: ignoreversion
 Source: "..\docs\developer\*.md"; DestDir: "{app}\Docs\developer"; Flags: ignoreversion
 
+; Backend Services and Data layer
+Source: "..\backend\services\*.py"; DestDir: "{app}\Backend\services"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\backend\data\*.py"; DestDir: "{app}\Backend\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\backend\integrations\*.py"; DestDir: "{app}\Backend\integrations"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\backend\security\*.py"; DestDir: "{app}\Backend\security"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\backend\monitoring\*.py"; DestDir: "{app}\Backend\monitoring"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\backend\settings.py"; DestDir: "{app}\Backend"; Flags: ignoreversion
+Source: "..\backend\__init__.py"; DestDir: "{app}\Backend"; Flags: ignoreversion
+
+; App core utilities
+Source: "..\app\core\utils\*.py"; DestDir: "{app}\Core\utils"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\app\core\tasks\*.py"; DestDir: "{app}\Core\tasks"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\app\__init__.py"; DestDir: "{app}\app"; Flags: ignoreversion
+Source: "..\app\core\__init__.py"; DestDir: "{app}\Core"; Flags: ignoreversion
+
+; Shared schemas
+Source: "..\shared\*"; DestDir: "{app}\Shared"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{src}\..\shared'))
+
+; LLM engine manifests
+Source: "..\engines\llm\*"; DestDir: "{app}\Engines\llm"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Bundled Python Runtime (if prepared by build script)
+Source: "..\installer\runtime\python\*"; DestDir: "{app}\Runtime\python"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{src}\..\runtime\python'))
+
+; Bundled FFmpeg (if prepared by build script)
+Source: "..\installer\runtime\ffmpeg\*"; DestDir: "{app}\Runtime\ffmpeg"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{src}\..\runtime\ffmpeg'))
+
+; Requirements files (for manual pip install)
+Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\requirements_engines.txt"; DestDir: "{app}"; Flags: ignoreversion
+
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\App\{#MyAppExeName}"
 Name: "{group}\User Manual"; Filename: "{app}\Docs\user\USER_MANUAL.md"
@@ -117,9 +148,16 @@ Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "DataP
 Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "ModelsPath"; ValueData: "{commonappdata}\VoiceStudio\models"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "SOFTWARE\VoiceStudio"; ValueType: string; ValueName: "CachePath"; ValueData: "{commonappdata}\VoiceStudio\cache"; Flags: uninsdeletekey
 
+; Environment Variables (user-level so they persist without admin)
+Root: HKCU; Subkey: "Environment"; ValueType: string; ValueName: "VOICESTUDIO_MODELS_PATH"; ValueData: "{commonappdata}\VoiceStudio\models"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Environment"; ValueType: string; ValueName: "VOICESTUDIO_FFMPEG_PATH"; ValueData: "{app}\Runtime\ffmpeg\ffmpeg.exe"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Environment"; ValueType: string; ValueName: "VOICESTUDIO_CACHE_PATH"; ValueData: "{commonappdata}\VoiceStudio\cache"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Environment"; ValueType: string; ValueName: "VOICESTUDIO_LOGS_PATH"; ValueData: "{commonappdata}\VoiceStudio\logs"; Flags: uninsdeletevalue
+
 [Run]
-; Install Python Packages (if Python is installed)
-Filename: "python"; Parameters: "-m pip install -r ""{app}\Backend\requirements.txt"""; StatusMsg: "Installing Python packages..."; Check: IsPythonInstalled; Flags: runhidden
+; Install Python Packages (prefer bundled runtime, fall back to system Python)
+Filename: "{app}\Runtime\python\python.exe"; Parameters: "-m pip install -r ""{app}\Backend\requirements.txt"" --quiet"; StatusMsg: "Installing Python packages (bundled runtime)..."; Check: FileExists(ExpandConstant('{app}\Runtime\python\python.exe')); Flags: runhidden
+Filename: "python"; Parameters: "-m pip install -r ""{app}\Backend\requirements.txt"" --quiet"; StatusMsg: "Installing Python packages (system Python)..."; Check: (not FileExists(ExpandConstant('{app}\Runtime\python\python.exe'))) and IsPythonInstalled; Flags: runhidden
 
 ; Create User Data Directories
 Filename: "powershell"; Parameters: "-Command ""New-Item -ItemType Directory -Force -Path $env:APPDATA\VoiceStudio"""; StatusMsg: "Creating user data directories..."; Flags: runhidden

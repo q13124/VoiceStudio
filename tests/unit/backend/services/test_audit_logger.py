@@ -80,7 +80,7 @@ class TestAuditLoggerCreation:
 
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = temp_audit_dir / f"audit_{today}.jsonl"
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             line = f.readline()
             entry = json.loads(line)
             assert entry["action"] == "create"
@@ -113,7 +113,7 @@ class TestAuditLoggerSeverity:
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = temp_audit_dir / f"audit_{today}.jsonl"
 
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             lines = f.readlines()
 
         assert len(lines) == 5
@@ -288,7 +288,7 @@ class TestAuditLoggerSensitiveData:
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = temp_audit_dir / f"audit_{today}.jsonl"
 
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             entry = json.loads(f.readline())
 
         assert entry["new_value"]["username"] == "alice"

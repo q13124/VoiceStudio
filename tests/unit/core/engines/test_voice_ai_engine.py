@@ -5,9 +5,8 @@ Tests Voice AI engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +29,7 @@ class TestVoiceAIEngineImports:
     def test_module_has_voice_ai_engine_class(self):
         """Test module has VoiceAIEngine class."""
         if hasattr(voice_ai_engine, "VoiceAIEngine"):
-            cls = getattr(voice_ai_engine, "VoiceAIEngine")
+            cls = voice_ai_engine.VoiceAIEngine
             assert isinstance(cls, type), "VoiceAIEngine should be a class"
 
 
@@ -40,7 +39,7 @@ class TestVoiceAIEngineClass:
     def test_voice_ai_engine_class_exists(self):
         """Test VoiceAIEngine class exists."""
         if hasattr(voice_ai_engine, "VoiceAIEngine"):
-            cls = getattr(voice_ai_engine, "VoiceAIEngine")
+            cls = voice_ai_engine.VoiceAIEngine
             assert isinstance(cls, type), "VoiceAIEngine should be a class"
 
     def test_voice_ai_engine_initialization(self):

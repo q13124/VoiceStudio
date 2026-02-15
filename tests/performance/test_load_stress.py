@@ -8,11 +8,9 @@ Tests system behavior under:
 - Stress scenarios
 """
 
-import asyncio
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List
 
 import pytest
 
@@ -33,11 +31,11 @@ class LoadTester:
 
     def __init__(self):
         """Initialize load tester."""
-        self.results: Dict[str, List] = {}
+        self.results: dict[str, list] = {}
 
     def run_concurrent_requests(
-        self, func, args_list: List, max_workers: int = 10
-    ) -> Dict:
+        self, func, args_list: list, max_workers: int = 10
+    ) -> dict:
         """
         Run concurrent requests.
 
@@ -80,7 +78,7 @@ class LoadTester:
 
     def stress_test(
         self, func, args, duration_seconds: int = 60, max_workers: int = 20
-    ) -> Dict:
+    ) -> dict:
         """
         Run stress test for specified duration.
 

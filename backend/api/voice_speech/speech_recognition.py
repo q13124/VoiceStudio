@@ -3,8 +3,9 @@ Speech Recognition Integration
 Integrates vosk library for offline speech recognition.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -27,7 +28,7 @@ class SpeechRecognizer:
     Speech recognition using vosk library.
     """
 
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: str | None = None):
         """
         Initialize speech recognizer.
 
@@ -66,7 +67,7 @@ class SpeechRecognizer:
         self,
         audio: np.ndarray,
         sample_rate: int = 16000,
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Recognize speech in audio.
 

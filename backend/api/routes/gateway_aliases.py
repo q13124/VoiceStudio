@@ -12,15 +12,16 @@ Aliases provided:
     - /api/projects/{id}/timeline/* -> various timeline endpoints (TimelineGateway)
 """
 
-import logging
-from typing import List, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import logging
+
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from ..deps import (
-    TrackStoreDep,
     ArtifactRefCounterDep,
+    TrackStoreDep,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,49 +48,49 @@ class VoiceInfoAlias(BaseModel):
     """Voice info model matching VoiceGateway expectations."""
     id: str
     name: str
-    engine_id: Optional[str] = None
-    language: Optional[str] = None
-    gender: Optional[str] = None
-    description: Optional[str] = None
-    preview_url: Optional[str] = None
-    tags: List[str] = []
+    engine_id: str | None = None
+    language: str | None = None
+    gender: str | None = None
+    description: str | None = None
+    preview_url: str | None = None
+    tags: list[str] = []
 
 
 class VoicesListResponse(BaseModel):
     """Response model for voices list."""
-    voices: List[VoiceInfoAlias]
+    voices: list[VoiceInfoAlias]
     total: int
 
 
-@voice_alias_router.get("/voices", response_model=List[VoiceInfoAlias])
+@voice_alias_router.get("/voices", response_model=list[VoiceInfoAlias])
 async def get_available_voices(
-    engine_id: Optional[str] = Query(None, description="Filter by engine ID"),
-) -> List[VoiceInfoAlias]:
+    engine_id: str | None = Query(None, description="Filter by engine ID"),
+) -> list[VoiceInfoAlias]:
     """
     Alias for /api/voice-browser/voices.
-    
+
     Returns available voices, optionally filtered by engine.
     This endpoint exists for VoiceGateway compatibility.
     """
     try:
         vb = _get_voice_browser_data()
-        
+
         # Get all voices from the catalog
         catalog = getattr(vb, '_voice_catalog', {})
-        
+
         if not catalog:
             # Try to load if empty
             load_fn = getattr(vb, '_load_catalog', None)
             if load_fn:
                 load_fn()
             catalog = getattr(vb, '_voice_catalog', {})
-        
+
         voices = []
         for voice_id, voice_data in catalog.items():
             # Filter by engine if specified
             if engine_id and voice_data.get('engine_id') != engine_id:
                 continue
-            
+
             voices.append(VoiceInfoAlias(
                 id=voice_id,
                 name=voice_data.get('name', voice_id),
@@ -100,14 +101,14 @@ async def get_available_voices(
                 preview_url=voice_data.get('preview_url'),
                 tags=voice_data.get('tags', []),
             ))
-        
+
         logger.info(f"Returned {len(voices)} voices (engine_id filter: {engine_id})")
         return voices
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting voices: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get voices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get voices: {e!s}")
 
 
 # ============================================================================
@@ -124,8 +125,8 @@ class TimelineDetailAlias(BaseModel):
     """Complete timeline detail matching TimelineGateway expectations."""
     project_id: str
     duration_seconds: float = 0.0
-    tracks: List[dict] = []
-    markers: List[dict] = []
+    tracks: list[dict] = []
+    markers: list[dict] = []
 
 
 class TrackInfoAlias(BaseModel):
@@ -134,14 +135,14 @@ class TrackInfoAlias(BaseModel):
     name: str
     project_id: str
     track_number: int
-    clips: List[dict] = []
-    engine: Optional[str] = None
+    clips: list[dict] = []
+    engine: str | None = None
 
 
 class TrackCreateRequestAlias(BaseModel):
     """Request to create a track."""
     name: str
-    engine: Optional[str] = None
+    engine: str | None = None
 
 
 class ClipInfoAlias(BaseModel):
@@ -153,8 +154,8 @@ class ClipInfoAlias(BaseModel):
     audio_url: str
     duration_seconds: float
     start_time: float
-    engine: Optional[str] = None
-    quality_score: Optional[float] = None
+    engine: str | None = None
+    quality_score: float | None = None
 
 
 class ClipCreateRequestAlias(BaseModel):
@@ -165,14 +166,14 @@ class ClipCreateRequestAlias(BaseModel):
     audio_url: str
     duration_seconds: float
     start_time: float
-    engine: Optional[str] = None
-    quality_score: Optional[float] = None
+    engine: str | None = None
+    quality_score: float | None = None
 
 
 class ClipUpdateRequestAlias(BaseModel):
     """Request to update a clip."""
-    name: Optional[str] = None
-    start_time: Optional[float] = None
+    name: str | None = None
+    start_time: float | None = None
 
 
 class MarkerInfoAlias(BaseModel):
@@ -180,20 +181,20 @@ class MarkerInfoAlias(BaseModel):
     id: str
     name: str
     time_seconds: float
-    color: Optional[str] = None
-    description: Optional[str] = None
+    color: str | None = None
+    description: str | None = None
 
 
 class MarkerCreateRequestAlias(BaseModel):
     """Request to create a marker."""
     name: str
     time_seconds: float
-    color: Optional[str] = None
-    description: Optional[str] = None
+    color: str | None = None
+    description: str | None = None
 
 
 # In-memory marker storage (per project) - can be moved to persistent store later
-_project_markers: dict[str, List[dict]] = {}
+_project_markers: dict[str, list[dict]] = {}
 
 
 @timeline_alias_router.get("", response_model=TimelineDetailAlias)
@@ -203,24 +204,24 @@ async def get_timeline(
 ) -> TimelineDetailAlias:
     """
     Get complete timeline for a project.
-    
+
     Returns the timeline with all tracks and markers (GAP-CRIT-003).
     This is the composite endpoint that TimelineGateway expects.
     """
     try:
         # Get tracks from the track store
         track_data_list = track_store.list_tracks(project_id)
-        
+
         # Get markers for this project
         markers = _project_markers.get(project_id, [])
-        
+
         # Calculate duration from tracks and clips
         duration = 0.0
         for track in track_data_list:
             for clip in track.get('clips', []):
                 clip_end = clip.get('start_time', 0.0) + clip.get('duration_seconds', 0.0)
                 duration = max(duration, clip_end)
-        
+
         return TimelineDetailAlias(
             project_id=project_id,
             duration_seconds=duration,
@@ -229,7 +230,7 @@ async def get_timeline(
         )
     except Exception as e:
         logger.error(f"Error getting timeline for project {project_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get timeline: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get timeline: {e!s}")
 
 
 @timeline_alias_router.post("/tracks", response_model=TrackInfoAlias)
@@ -240,21 +241,21 @@ async def add_track(
 ) -> TrackInfoAlias:
     """
     Add a track to the project timeline.
-    
+
     Alias for POST /api/projects/{project_id}/tracks
     """
     try:
         from . import tracks as tracks_module
-        
+
         # Create the track request
         track_request = tracks_module.TrackCreateRequest(
             name=request.name,
             engine=request.engine,
         )
-        
+
         # Use the existing create_track function
         result = tracks_module.create_track(project_id, track_request, track_store)
-        
+
         return TrackInfoAlias(
             id=result.id,
             name=result.name,
@@ -267,7 +268,7 @@ async def add_track(
         raise
     except Exception as e:
         logger.error(f"Error adding track to project {project_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to add track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add track: {e!s}")
 
 
 @timeline_alias_router.delete("/tracks/{track_id}")
@@ -279,21 +280,21 @@ async def remove_track(
 ) -> dict:
     """
     Remove a track from the project timeline.
-    
+
     Alias for DELETE /api/projects/{project_id}/tracks/{track_id}
     """
     try:
         from . import tracks as tracks_module
-        
+
         # Use the existing delete_track function
         tracks_module.delete_track(project_id, track_id, track_store, ref_counter)
-        
+
         return {"ok": True}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error removing track {track_id} from project {project_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to remove track: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to remove track: {e!s}")
 
 
 @timeline_alias_router.post("/tracks/{track_id}/clips", response_model=ClipInfoAlias)
@@ -306,12 +307,12 @@ async def add_clip(
 ) -> ClipInfoAlias:
     """
     Add a clip to a track.
-    
+
     Alias for POST /api/projects/{project_id}/tracks/{track_id}/clips
     """
     try:
         from . import tracks as tracks_module
-        
+
         clip_request = tracks_module.ClipCreateRequest(
             name=request.name,
             profile_id=request.profile_id,
@@ -322,9 +323,9 @@ async def add_clip(
             engine=request.engine,
             quality_score=request.quality_score,
         )
-        
+
         result = tracks_module.create_clip(project_id, track_id, clip_request, track_store, ref_counter)
-        
+
         return ClipInfoAlias(
             id=result.id,
             name=result.name,
@@ -340,7 +341,7 @@ async def add_clip(
         raise
     except Exception as e:
         logger.error(f"Error adding clip to track {track_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to add clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add clip: {e!s}")
 
 
 @timeline_alias_router.put("/tracks/{track_id}/clips/{clip_id}", response_model=ClipInfoAlias)
@@ -353,19 +354,19 @@ async def update_clip(
 ) -> ClipInfoAlias:
     """
     Update a clip in a track.
-    
+
     Alias for PUT /api/projects/{project_id}/tracks/{track_id}/clips/{clip_id}
     """
     try:
         from . import tracks as tracks_module
-        
+
         clip_request = tracks_module.ClipUpdateRequest(
             name=request.name,
             start_time=request.start_time,
         )
-        
+
         result = tracks_module.update_clip(project_id, track_id, clip_id, clip_request, track_store)
-        
+
         return ClipInfoAlias(
             id=result.id,
             name=result.name,
@@ -381,7 +382,7 @@ async def update_clip(
         raise
     except Exception as e:
         logger.error(f"Error updating clip {clip_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update clip: {e!s}")
 
 
 @timeline_alias_router.delete("/tracks/{track_id}/clips/{clip_id}")
@@ -394,20 +395,20 @@ async def remove_clip(
 ) -> dict:
     """
     Remove a clip from a track.
-    
+
     Alias for DELETE /api/projects/{project_id}/tracks/{track_id}/clips/{clip_id}
     """
     try:
         from . import tracks as tracks_module
-        
+
         tracks_module.delete_clip(project_id, track_id, clip_id, track_store, ref_counter)
-        
+
         return {"ok": True}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error removing clip {clip_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to remove clip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to remove clip: {e!s}")
 
 
 @timeline_alias_router.post("/markers", response_model=MarkerInfoAlias)
@@ -420,7 +421,7 @@ async def add_marker(
     """
     try:
         import uuid
-        
+
         marker = {
             "id": str(uuid.uuid4()),
             "name": request.name,
@@ -428,17 +429,17 @@ async def add_marker(
             "color": request.color,
             "description": request.description,
         }
-        
+
         if project_id not in _project_markers:
             _project_markers[project_id] = []
         _project_markers[project_id].append(marker)
-        
+
         logger.info(f"Added marker {marker['id']} to project {project_id}")
-        
+
         return MarkerInfoAlias(**marker)
     except Exception as e:
         logger.error(f"Error adding marker to project {project_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to add marker: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add marker: {e!s}")
 
 
 @timeline_alias_router.delete("/markers/{marker_id}")
@@ -452,17 +453,17 @@ async def remove_marker(
     try:
         markers = _project_markers.get(project_id, [])
         original_count = len(markers)
-        
+
         _project_markers[project_id] = [m for m in markers if m.get("id") != marker_id]
-        
+
         if len(_project_markers[project_id]) == original_count:
             raise HTTPException(status_code=404, detail="Marker not found")
-        
+
         logger.info(f"Removed marker {marker_id} from project {project_id}")
-        
+
         return {"ok": True}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error removing marker {marker_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to remove marker: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to remove marker: {e!s}")

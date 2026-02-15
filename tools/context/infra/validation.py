@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float))
 
 
-def validate_config(config: Dict[str, Any]) -> List[str]:
+def validate_config(config: dict[str, Any]) -> list[str]:
     """Lightweight validation for context config."""
-    errors: List[str] = []
+    errors: list[str] = []
     if not isinstance(config, dict):
         return ["Config must be a JSON object."]
 

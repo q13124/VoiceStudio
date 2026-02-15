@@ -1,432 +1,304 @@
 """
-E2E Test Configuration and Fixtures.
+E2E Test Configuration and Shared Fixtures.
 
-Provides pytest fixtures for end-to-end testing including:
-- Application session management
-- Backend availability checks
-- Screenshot capture on failure
-- Test data generation
+Provides common setup for end-to-end workflow tests.
 """
 
-import logging
+import contextlib
 import os
+import subprocess
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
-from typing import Generator, Optional
-
-# Set test mode BEFORE any backend imports - this must happen first
-# Use monkeypatch-style permanent setting
-os.environ["VOICESTUDIO_TEST_MODE"] = "1"
-
-
-def pytest_configure(config):
-    """Set test mode before any tests run."""
-    os.environ["VOICESTUDIO_TEST_MODE"] = "1"
 
 import pytest
 
-
-@pytest.fixture(autouse=True, scope="session")
-def set_test_mode():
-    """Ensure test mode environment variable is set for all tests."""
-    os.environ["VOICESTUDIO_TEST_MODE"] = "1"
-    
-    # Also set app.state.test_mode for reliable detection in FastAPI routes
-    try:
-        from backend.api.main import app
-        app.state.test_mode = True
-    except Exception:
-        pass  # ALLOWED: bare except - app may not be available in all test contexts
-    
-    yield
-    
-    # Clean up
-    try:
-        from backend.api.main import app
-        app.state.test_mode = False
-    except Exception:
-        pass  # ALLOWED: bare except - app may not be available in all test contexts
-    os.environ.pop("VOICESTUDIO_TEST_MODE", None)
-
-# Add project root to path
+# Add project roots to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "tests" / "ui"))
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tests.e2e.framework.base import E2EConfig, E2ETestBase
-from tests.e2e.framework.session import (
-    SessionConfig,
-    SessionManager,
-    MockSessionManager,
-    create_session_manager,
-)
-from tests.e2e.framework.helpers import (
-    ScreenshotHelper,
-    TestDataHelper,
-    PerformanceTimer,
-)
+try:
+    import requests
+except ImportError:
+    requests = None
 
-logger = logging.getLogger(__name__)
+try:
+    from selenium import webdriver
+    from selenium.common.exceptions import TimeoutException
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
+except ImportError:
+    webdriver = None
 
 
-# =============================================================================
 # Configuration
-# =============================================================================
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
+WINAPPDRIVER_URL = "http://127.0.0.1:4723"
+OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/e2e"))
+SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "true").lower() == "true"
 
+# Resolve app path - check VS_APP_PATH first, then VOICESTUDIO_APP_PATH, then search for it
+def _find_app_path() -> str:
+    """Find the VoiceStudio app executable."""
+    # Check environment variables first
+    env_path = os.getenv("VS_APP_PATH") or os.getenv("VOICESTUDIO_APP_PATH")
+    if env_path and Path(env_path).exists():
+        return env_path
 
-def pytest_addoption(parser):
-    """Add E2E-specific command line options."""
-    parser.addoption(
-        "--app-path",
-        action="store",
-        default=None,
-        help="Path to VoiceStudio application executable"
-    )
-    parser.addoption(
-        "--backend-url",
-        action="store",
-        default="http://localhost:8000",
-        help="Backend API URL"
-    )
-    parser.addoption(
-        "--winappdriver-url",
-        action="store",
-        default="http://127.0.0.1:4723",
-        help="WinAppDriver URL"
-    )
-    parser.addoption(
-        "--use-mock-driver",
-        action="store_true",
-        default=False,
-        help="Use mock driver instead of real WinAppDriver"
-    )
-    parser.addoption(
-        "--capture-screenshots",
-        action="store_true",
-        default=True,
-        help="Capture screenshots on test failure"
-    )
-    parser.addoption(
-        "--run-e2e",
-        action="store_true",
-        default=False,
-        help="Run E2E tests"
-    )
+    # Search in common build locations
+    possible_paths = [
+        PROJECT_ROOT / ".buildlogs" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT / ".buildlogs" / "publish" / "VoiceStudio.App.exe",
+        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.22621.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+    ]
 
+    for path in possible_paths:
+        if path.exists():
+            return str(path)
 
-def pytest_configure(config):
-    """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "e2e: mark test as an end-to-end test"
-    )
-    config.addinivalue_line(
-        "markers", "requires_app: mark test as requiring the application"
-    )
-    config.addinivalue_line(
-        "markers", "requires_backend: mark test as requiring the backend"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "wizard: mark test as a wizard workflow test"
-    )
-    config.addinivalue_line(
-        "markers", "synthesis: mark test as a synthesis workflow test"
-    )
-    config.addinivalue_line(
-        "markers", "project: mark test as a project workflow test"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as a performance benchmark test"
-    )
-    config.addinivalue_line(
-        "markers", "ui: mark test as a UI automation test"
-    )
+    # Return the most likely path for error messages
+    return str(possible_paths[0])
 
+APP_PATH = _find_app_path()
 
-# =============================================================================
-# Configuration Fixtures
-# =============================================================================
+# Ensure output directory exists
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture(scope="session")
-def e2e_config(request) -> E2EConfig:
-    """Provide E2E configuration."""
-    config = E2EConfig.from_env()
-    
-    # Override with command line options
-    if app_path := request.config.getoption("--app-path"):
-        config.app_path = Path(app_path)
-    if backend_url := request.config.getoption("--backend-url"):
-        config.backend_url = backend_url
-        
-    return config
+def backend_url():
+    """Return backend URL."""
+    return BACKEND_URL
 
 
 @pytest.fixture(scope="session")
-def session_config(e2e_config, request) -> SessionConfig:
-    """Provide session configuration."""
-    winappdriver_url = request.config.getoption("--winappdriver-url")
-    
-    return SessionConfig(
-        app_path=str(e2e_config.app_path.absolute()),
-        winappdriver_url=winappdriver_url
-    )
+def api_client():
+    """Create API client for backend interaction."""
+    if requests is None:
+        pytest.skip("requests not installed")
 
-
-# =============================================================================
-# Session Fixtures
-# =============================================================================
-
-
-@pytest.fixture(scope="session")
-def session_manager(session_config, request) -> Generator[SessionManager, None, None]:
-    """
-    Provide session manager for the test session.
-    
-    Uses mock driver if --use-mock-driver is specified or
-    if WinAppDriver is not available.
-    """
-    use_mock = request.config.getoption("--use-mock-driver")
-    
-    if use_mock:
-        logger.info("Using mock driver")
-        mock_manager = MockSessionManager(session_config)
-        yield mock_manager
-        return
-    
-    manager = SessionManager(session_config)
-    
-    # Check if WinAppDriver is available
-    if not manager.is_winappdriver_running():
-        logger.warning(
-            "WinAppDriver not running. Attempting to start..."
-        )
-        if not manager.start_winappdriver():
-            logger.warning("Could not start WinAppDriver. Using mock driver.")
-            mock_manager = MockSessionManager(session_config)
-            yield mock_manager
-            return
-    
-    yield manager
-    
-    # Cleanup
-    manager.stop_winappdriver()
-
-
-@pytest.fixture(scope="function")
-def app_session(session_manager, session_config, request):
-    """
-    Provide an application session for each test.
-    
-    Creates a new session and closes it after the test.
-    Captures screenshots on failure if configured.
-    
-    Skips tests marked with 'requires_app' when using mock session.
-    """
-    # Skip tests that require real app when using mock session
-    is_mock_session = isinstance(session_manager, MockSessionManager)
-    requires_app_marker = request.node.get_closest_marker("requires_app")
-    
-    if is_mock_session and requires_app_marker:
-        pytest.skip("Test requires real application (WinAppDriver not available)")
-    
-    driver = None
-    
-    try:
-        driver = session_manager.create_session(session_config)
-        
-        # Wait for app to be ready
-        if not session_manager.wait_for_app_ready():
-            pytest.skip("Application did not become ready")
-        
-        yield driver
-        
-    except Exception as e:
-        logger.error(f"Session error: {e}")
-        raise
-        
-    finally:
-        # Capture screenshot on failure
-        if request.node.rep_call and request.node.rep_call.failed:
-            if request.config.getoption("--capture-screenshots"):
-                screenshot_helper = ScreenshotHelper(
-                    Path(".buildlogs/e2e/screenshots")
-                )
-                screenshot_helper.capture_on_failure(
-                    driver, request.node.name
-                )
-        
-        session_manager.close_session()
-
-
-@pytest.fixture
-def mock_session():
-    """Provide a mock session for testing without real app."""
-    manager = MockSessionManager()
-    driver = manager.create_session()
-    yield driver
-    manager.close_session()
-
-
-# =============================================================================
-# Backend Fixtures
-# =============================================================================
-
-
-@pytest.fixture(scope="session")
-def backend_available(e2e_config) -> bool:
-    """Check if backend is available for the test session."""
-    import requests
-    
-    try:
-        response = requests.get(
-            f"{e2e_config.backend_url}/health",
-            timeout=5
-        )
-        return response.status_code == 200
-    except Exception:
-        return False
-
-
-@pytest.fixture
-def require_backend(backend_available):
-    """Skip test if backend is not available."""
-    if not backend_available:
-        pytest.skip("Backend not available")
-
-
-@pytest.fixture
-def api_client(e2e_config, backend_available):
-    """Provide an API client for backend interactions."""
-    import requests
-    
-    if not backend_available:
-        pytest.skip("Backend not available")
-    
     class APIClient:
         def __init__(self, base_url: str):
             self.base_url = base_url
             self.session = requests.Session()
-        
-        def get(self, path: str, **kwargs):
+
+        def get(self, path: str, **kwargs) -> requests.Response:
             return self.session.get(f"{self.base_url}{path}", **kwargs)
-        
-        def post(self, path: str, **kwargs):
+
+        def post(self, path: str, **kwargs) -> requests.Response:
             return self.session.post(f"{self.base_url}{path}", **kwargs)
-        
-        def put(self, path: str, **kwargs):
+
+        def put(self, path: str, **kwargs) -> requests.Response:
             return self.session.put(f"{self.base_url}{path}", **kwargs)
-        
-        def delete(self, path: str, **kwargs):
+
+        def delete(self, path: str, **kwargs) -> requests.Response:
             return self.session.delete(f"{self.base_url}{path}", **kwargs)
-    
-    return APIClient(e2e_config.backend_url)
 
+        def health_check(self) -> bool:
+            try:
+                resp = self.get("/api/health", timeout=5)
+                return resp.status_code == 200
+            except Exception:
+                return False
 
-# =============================================================================
-# Test Data Fixtures
-# =============================================================================
-
-
-@pytest.fixture
-def test_data() -> TestDataHelper:
-    """Provide test data helper."""
-    return TestDataHelper()
-
-
-@pytest.fixture
-def unique_name(test_data):
-    """Generate a unique name for test artifacts."""
-    return test_data.unique_name("E2ETest")
-
-
-@pytest.fixture
-def sample_text(test_data):
-    """Provide sample text for synthesis testing."""
-    return test_data.sample_text()
-
-
-@pytest.fixture
-def sample_project_config(test_data):
-    """Provide sample project configuration."""
-    return test_data.sample_project_config()
-
-
-@pytest.fixture
-def sample_voice_profile(test_data):
-    """Provide sample voice profile data."""
-    return test_data.sample_voice_profile()
-
-
-# =============================================================================
-# Screenshot Fixtures
-# =============================================================================
+    return APIClient(BACKEND_URL)
 
 
 @pytest.fixture(scope="session")
-def screenshot_helper(e2e_config) -> ScreenshotHelper:
-    """Provide screenshot helper."""
-    return ScreenshotHelper(e2e_config.screenshot_dir)
+def backend_available(api_client):
+    """Check if backend is available and skip if not."""
+    if not api_client.health_check():
+        pytest.skip("Backend not available")
+    return True
 
 
-@pytest.fixture
-def capture_screenshot(screenshot_helper, app_session):
-    """Provide function to capture screenshots during test."""
-    def _capture(name: str):
-        return screenshot_helper.capture(app_session, name)
-    return _capture
+@pytest.fixture(scope="session")
+def winappdriver_process():
+    """Start WinAppDriver if not running."""
+    WINAPPDRIVER_PATH = r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
 
+    if not Path(WINAPPDRIVER_PATH).exists():
+        pytest.skip("WinAppDriver not installed")
 
-# =============================================================================
-# Performance Fixtures
-# =============================================================================
+    # Check if already running
+    try:
+        if requests:
+            resp = requests.get(f"{WINAPPDRIVER_URL}/status", timeout=2)
+            if resp.status_code == 200:
+                yield None  # Already running, no process to manage
+                return
+    except Exception:
+        pass
 
-
-@pytest.fixture
-def performance_timer():
-    """Provide performance timer for measuring test operations."""
-    return PerformanceTimer
-
-
-@pytest.fixture
-def timer():
-    """Provide a started timer for the test."""
-    timer = PerformanceTimer("Test")
-    timer.start()
-    yield timer
-    timer.stop()
-
-
-# =============================================================================
-# Hooks
-# =============================================================================
-
-
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    """Hook to capture test results for screenshot on failure."""
-    outcome = yield
-    rep = outcome.get_result()
-    setattr(item, f"rep_{rep.when}", rep)
-
-
-def pytest_collection_modifyitems(config, items):
-    """Modify test collection to handle E2E markers."""
-    skip_e2e = pytest.mark.skip(
-        reason="E2E tests skipped (use --run-e2e to run)"
+    # Start WinAppDriver
+    process = subprocess.Popen(
+        [WINAPPDRIVER_PATH],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
-    skip_slow = pytest.mark.skip(
-        reason="Slow tests skipped (use --run-slow to run)"
-    )
-    
-    for item in items:
-        # Skip E2E tests if not explicitly requested
-        if "e2e" in item.keywords:
-            if not config.getoption("--run-e2e", default=False):
-                # Don't skip by default for E2E test directory
-                pass
-        
-        # Add timeout for slow tests
-        if "slow" in item.keywords:
-            item.add_marker(pytest.mark.timeout(300))
+    time.sleep(2)
+
+    yield process
+
+    # Cleanup
+    if process:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except Exception:
+            process.kill()
+
+
+@pytest.fixture(scope="function")
+def driver(winappdriver_process):
+    """Create WinAppDriver session for UI automation."""
+    if not Path(APP_PATH).exists():
+        pytest.skip(f"App not found at {APP_PATH}")
+
+    # Import the custom WinAppDriverSession from UI tests
+    # This bypasses Selenium 4.x W3C capabilities issue
+    try:
+        from conftest import WinAppDriverSession
+    except ImportError:
+        # Fallback: define inline if import fails
+        WinAppDriverSession = None
+
+    if WinAppDriverSession is None:
+        pytest.skip("WinAppDriverSession not available - UI conftest not on path")
+
+    session = WinAppDriverSession(APP_PATH, WINAPPDRIVER_URL)
+    session.implicitly_wait(10)
+
+    # Wait for app to load
+    time.sleep(3)
+
+    yield session
+
+    # Cleanup
+    with contextlib.suppress(Exception):
+        session.quit()
+
+
+@pytest.fixture(scope="function")
+def app_session(driver):
+    """Alias for driver fixture - provides app session for UI tests."""
+    return driver
+
+
+@pytest.fixture
+def screenshot_capture(driver):
+    """Capture screenshots during test execution."""
+    screenshots = []
+
+    def capture(name: str):
+        if not SCREENSHOTS_ENABLED:
+            return None
+
+        timestamp = datetime.now().strftime("%H%M%S")
+        filename = f"{name}_{timestamp}.png"
+        filepath = OUTPUT_DIR / "screenshots" / filename
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            driver.save_screenshot(str(filepath))
+            screenshots.append(filepath)
+            return filepath
+        except Exception:
+            return None
+
+    yield capture
+
+    return screenshots
+
+
+@pytest.fixture
+def test_audio_file():
+    """Provide path to test audio file."""
+    audio_dir = PROJECT_ROOT / "tests" / "ui" / "fixtures" / "audio"
+    test_file = audio_dir / "test_speech_short.wav"
+
+    if not test_file.exists():
+        # Try to generate it
+        generator = PROJECT_ROOT / "tests" / "ui" / "fixtures" / "generate_test_audio.py"
+        if generator.exists():
+            subprocess.run([sys.executable, str(generator)], cwd=str(audio_dir.parent))
+
+    if test_file.exists():
+        return test_file
+
+    pytest.skip("Test audio file not available")
+
+
+@pytest.fixture
+def workflow_state():
+    """Track workflow state across steps."""
+    state = {
+        "steps": [],
+        "start_time": datetime.now(),
+        "artifacts": [],
+        "errors": [],
+    }
+
+    def record_step(name: str, success: bool = True, data: dict | None = None):
+        state["steps"].append({
+            "name": name,
+            "success": success,
+            "data": data,
+            "timestamp": datetime.now().isoformat(),
+        })
+
+    def record_artifact(path: str, type: str):
+        state["artifacts"].append({"path": path, "type": type})
+
+    def record_error(error: str, step: str):
+        state["errors"].append({"error": error, "step": step})
+
+    state["record_step"] = record_step
+    state["record_artifact"] = record_artifact
+    state["record_error"] = record_error
+
+    yield state
+
+    # Calculate duration
+    state["duration_seconds"] = (datetime.now() - state["start_time"]).total_seconds()
+
+
+def find_element_safe(driver, by, value, timeout: float = 5.0):
+    """Safely find element with timeout."""
+    try:
+        wait = WebDriverWait(driver, timeout)
+        return wait.until(EC.presence_of_element_located((by, value)))
+    except TimeoutException:
+        return None
+    except Exception:
+        return None
+
+
+def click_element_safe(driver, by, value, timeout: float = 5.0) -> bool:
+    """Safely click element."""
+    element = find_element_safe(driver, by, value, timeout)
+    if element:
+        try:
+            element.click()
+            return True
+        except Exception:
+            pass
+    return False
+
+
+def send_keys_safe(driver, by, value, text: str, timeout: float = 5.0) -> bool:
+    """Safely send keys to element."""
+    element = find_element_safe(driver, by, value, timeout)
+    if element:
+        try:
+            element.clear()
+            element.send_keys(text)
+            return True
+        except Exception:
+            pass
+    return False

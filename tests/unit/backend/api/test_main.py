@@ -5,7 +5,7 @@ Tests FastAPI application initialization, configuration, and cache endpoints.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -256,7 +256,6 @@ class TestEndpointMetricsEndpoints:
     @pytest.fixture
     def mock_middleware(self):
         """Create a mock performance monitoring middleware."""
-        from unittest.mock import AsyncMock
 
         async def mock_dispatch(request, call_next):
             """Mock async dispatch that calls the next middleware."""

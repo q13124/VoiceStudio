@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.Core.State;
 using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.UseCases;
 using VoiceStudio.App.ViewModels;
@@ -36,8 +37,12 @@ namespace VoiceStudio.App.Services
     {
       var services = new ServiceCollection();
 
-      // Config and backend
-      services.AddSingleton(new BackendClientConfig { BaseUrl = "http://localhost:8001", WebSocketUrl = "ws://localhost:8001/ws/realtime" });
+      // Config and backend - use environment variable with fallback to 8001
+      var apiHost = Environment.GetEnvironmentVariable("VOICESTUDIO_API_HOST") ?? "localhost";
+      var apiPort = Environment.GetEnvironmentVariable("VOICESTUDIO_API_PORT") ?? "8001";
+      var baseUrl = $"http://{apiHost}:{apiPort}";
+      var wsUrl = $"ws://{apiHost}:{apiPort}/ws/realtime";
+      services.AddSingleton(new BackendClientConfig { BaseUrl = baseUrl, WebSocketUrl = wsUrl });
       services.AddSingleton<IBackendClient, BackendClient>();
 
       // Use cases
@@ -52,7 +57,13 @@ namespace VoiceStudio.App.Services
       });
 
       // Core app services (register implementations; order may matter for dependencies)
-      services.AddSingleton<IDialogService, DialogService>();
+      // DialogService requires Window - use factory to lazily get App.MainWindowInstance
+      services.AddSingleton<IDialogService>(sp =>
+      {
+        var window = App.MainWindowInstance
+          ?? throw new InvalidOperationException("MainWindow not yet created. DialogService must be resolved after OnLaunched.");
+        return new DialogService(window);
+      });
       services.AddSingleton<ISettingsService, SettingsService>();
       services.AddSingleton<IUpdateService, UpdateService>();
       services.AddSingleton<IPanelRegistry, PanelRegistry>();
@@ -92,6 +103,64 @@ namespace VoiceStudio.App.Services
 
       // Theme service: unified theme management with persistence
       services.AddSingleton<IUnifiedThemeService, ThemeManager>();
+
+      // Event aggregator for cross-panel synchronization (Phase 4)
+      services.AddSingleton<IEventAggregator, EventAggregator>();
+      
+      // Context manager for centralized active state (Panel Architecture Phase 2)
+      // Uses AppStateStore for undo/redo support (Phase 5)
+      services.AddSingleton<IContextManager>(sp => new ContextManager(
+          sp.GetRequiredService<IEventAggregator>(),
+          sp.GetService<AppStateStore>()));
+      
+      // Layout and Workspace services (Panel Architecture Phase 3)
+      services.AddSingleton<ILayoutService, LayoutService>();
+      services.AddSingleton<IWorkspaceService>(sp => new WorkspaceService(
+          sp.GetService<ILayoutService>(),
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<WorkspaceService>>()));
+      
+      // Central state store with undo/redo support (Panel Architecture Phase 5)
+      services.AddSingleton<IAppStateStore, AppStateStore>();
+      services.AddSingleton<AppStateStore>();
+      
+      // Selection navigation stack for back/forward navigation (Panel Architecture Phase 5)
+      services.AddSingleton<ISelectionStack, SelectionStack>();
+      
+      // Drag and Drop service (Panel Architecture Phase 4)
+      // Injecting StateStore for command pattern support
+      services.AddSingleton<IDragDropService>(sp => new DragDropService(
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<IAppStateStore>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<DragDropService>>()));
+      
+      // Capability service for engine/feature progressive disclosure (Panel Architecture Phase 7)
+      services.AddSingleton<ICapabilityService, CapabilityService>();
+      
+      // Job service for unified job tracking across panels (Panel Architecture)
+      services.AddSingleton<IJobService>(sp => new JobService(
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<JobService>>()));
+      
+      // Selection broadcast service for follow-selection behavior (Panel Architecture Phase D)
+      services.AddSingleton<ISelectionBroadcastService>(sp => new SelectionBroadcastService(
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<SelectionBroadcastService>>()));
+      
+      // Synchronized scroll service for cross-panel scroll coordination (Panel Architecture Phase D)
+      services.AddSingleton<ISynchronizedScrollService>(sp => new SynchronizedScrollService(
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<SynchronizedScrollService>>()));
+      
+      // Event replay service for debug capture and replay bundles (Panel Architecture Phase D)
+      services.AddSingleton<IEventReplayService>(sp => new EventReplayService(
+          sp.GetService<IEventAggregator>(),
+          sp.GetService<IAppStateStore>(),
+          sp.GetService<IContextManager>(),
+          sp.GetService<Microsoft.Extensions.Logging.ILogger<EventReplayService>>()));
+      
+      // Workflow coordinator for multi-panel sequences (Panel Workflow Integration)
+      services.AddSingleton<IWorkflowCoordinatorService, WorkflowCoordinatorService>();
 
       // ITelemetryService: stub when no dedicated implementation (GAP-003 follow-up can add real impl)
       services.AddSingleton<ITelemetryService, TelemetryServiceStub>();
@@ -203,6 +272,32 @@ namespace VoiceStudio.App.Services
     public static BackendProcessManager? TryGetBackendProcessManager() => GetService<BackendProcessManager>();
     public static IUnifiedThemeService GetThemeService() => GetRequiredService<IUnifiedThemeService>();
     public static IUnifiedThemeService? TryGetThemeService() => GetService<IUnifiedThemeService>();
+    public static IWebSocketClientFactory GetWebSocketClientFactory() => GetRequiredService<IWebSocketClientFactory>();
+    public static IWebSocketClientFactory? TryGetWebSocketClientFactory() => GetService<IWebSocketClientFactory>();
+    public static IEventAggregator GetEventAggregator() => GetRequiredService<IEventAggregator>();
+    public static IEventAggregator? TryGetEventAggregator() => GetService<IEventAggregator>();
+    public static IContextManager GetContextManager() => GetRequiredService<IContextManager>();
+    public static IContextManager? TryGetContextManager() => GetService<IContextManager>();
+    public static ILayoutService GetLayoutService() => GetRequiredService<ILayoutService>();
+    public static ILayoutService? TryGetLayoutService() => GetService<ILayoutService>();
+    public static IWorkspaceService GetWorkspaceService() => GetRequiredService<IWorkspaceService>();
+    public static IWorkspaceService? TryGetWorkspaceService() => GetService<IWorkspaceService>();
+    public static IDragDropService GetDragDropService() => GetRequiredService<IDragDropService>();
+    public static IDragDropService? TryGetDragDropService() => GetService<IDragDropService>();
+    public static IWorkflowCoordinatorService GetWorkflowCoordinatorService() => GetRequiredService<IWorkflowCoordinatorService>();
+    public static IWorkflowCoordinatorService? TryGetWorkflowCoordinatorService() => GetService<IWorkflowCoordinatorService>();
+    public static ICapabilityService GetCapabilityService() => GetRequiredService<ICapabilityService>();
+    public static ICapabilityService? TryGetCapabilityService() => GetService<ICapabilityService>();
+    public static IJobService GetJobService() => GetRequiredService<IJobService>();
+    public static ISelectionBroadcastService GetSelectionBroadcastService() => GetRequiredService<ISelectionBroadcastService>();
+    public static ISelectionBroadcastService? TryGetSelectionBroadcastService() => GetService<ISelectionBroadcastService>();
+    public static ISynchronizedScrollService GetSynchronizedScrollService() => GetRequiredService<ISynchronizedScrollService>();
+    public static ISynchronizedScrollService? TryGetSynchronizedScrollService() => GetService<ISynchronizedScrollService>();
+    public static IEventReplayService GetEventReplayService() => GetRequiredService<IEventReplayService>();
+    public static IEventReplayService? TryGetEventReplayService() => GetService<IEventReplayService>();
+    public static IJobService? TryGetJobService() => GetService<IJobService>();
+    public static ISelectionStack GetSelectionStack() => GetRequiredService<ISelectionStack>();
+    public static ISelectionStack? TryGetSelectionStack() => GetService<ISelectionStack>();
   }
 
   /// <summary>

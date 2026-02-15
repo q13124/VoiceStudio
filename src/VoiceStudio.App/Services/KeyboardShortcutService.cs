@@ -53,6 +53,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         RegisterShortcut("file.open", VirtualKey.O, VirtualKeyModifiers.Control, "Open Project");
         RegisterShortcut("file.save", VirtualKey.S, VirtualKeyModifiers.Control, "Save Project");
         RegisterShortcut("file.saveAs", VirtualKey.S, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Save As");
+        RegisterShortcut("file.import", VirtualKey.I, VirtualKeyModifiers.Control, "Import Audio");
         RegisterShortcut("file.export", VirtualKey.E, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, "Export Audio");
 
         // Edit operations
@@ -67,6 +68,8 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         // Playback controls
         RegisterShortcut("playback.play", VirtualKey.Space, VirtualKeyModifiers.None, "Play/Pause");
         RegisterShortcut("playback.stop", VirtualKey.Escape, VirtualKeyModifiers.None, "Stop");
+        RegisterShortcut("playback.record", VirtualKey.R, VirtualKeyModifiers.Control, "Record");
+        RegisterShortcut("playback.loop", VirtualKey.L, VirtualKeyModifiers.Control, "Toggle Loop");
         RegisterShortcut("playback.rewind", VirtualKey.Home, VirtualKeyModifiers.None, "Go to Start");
         RegisterShortcut("playback.forward", VirtualKey.End, VirtualKeyModifiers.None, "Go to End");
         RegisterShortcut("playback.stepBack", VirtualKey.Left, VirtualKeyModifiers.None, "Step Back");

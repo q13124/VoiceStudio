@@ -5,8 +5,7 @@ Tests authentication and authorization middleware functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, AsyncMock
-from typing import Optional
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -15,8 +14,8 @@ sys.path.insert(0, str(project_root))
 
 # Import the auth middleware
 try:
+    from backend.api.auth import Permission, User, UserRole
     from backend.api.middleware import auth_middleware
-    from backend.api.auth import User, Permission, UserRole
 except ImportError:
     pytest.skip(
         "Could not import auth_middleware or auth dependencies", allow_module_level=True
@@ -52,16 +51,16 @@ class TestGetCurrentUser:
         mock_user = Mock(spec=User)
         mock_user.user_id = "user123"
         mock_user.username = "testuser"
-        
+
         # Create mock request with API key
         mock_request = Mock()
         mock_request.headers = {"X-API-Key": "vs_test_api_key"}
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_auth:
             mock_auth.return_value = mock_user
-            
+
             user = await auth_middleware.get_current_user(mock_request)
-            
+
             assert user is not None, "Should return user with valid API key"
             assert user.user_id == "user123", "Should return correct user"
             mock_auth.assert_called_once_with("vs_test_api_key")
@@ -73,23 +72,23 @@ class TestGetCurrentUser:
         mock_user = Mock(spec=User)
         mock_user.user_id = "user456"
         mock_user.username = "jwtuser"
-        
+
         # Create mock request with JWT token
         mock_request = Mock()
         mock_request.headers = {}
-        
+
         # Mock HTTPBearer security (async function)
         mock_credentials = Mock()
         mock_credentials.credentials = "jwt_token_here"
-        
+
         # Patch security to return async mock
         mock_security_async = AsyncMock(return_value=mock_credentials)
         with patch.object(auth_middleware, "security", mock_security_async):
             with patch("backend.api.middleware.auth_middleware.get_current_user_from_token") as mock_token_auth:
                 mock_token_auth.return_value = mock_user
-                
+
                 user = await auth_middleware.get_current_user(mock_request)
-                
+
                 assert user is not None, "Should return user with valid JWT token"
                 assert user.user_id == "user456", "Should return correct user"
                 mock_token_auth.assert_called_once_with("jwt_token_here")
@@ -99,15 +98,15 @@ class TestGetCurrentUser:
         """Test get_current_user with no authentication."""
         mock_request = Mock()
         mock_request.headers = {}
-        
+
         # Mock HTTPBearer to return None (async)
         mock_security_async = AsyncMock(return_value=None)
         with patch.object(auth_middleware, "security", mock_security_async):
             with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_api_key:
                 mock_api_key.return_value = None
-                
+
                 user = await auth_middleware.get_current_user(mock_request)
-                
+
                 assert user is None, "Should return None when no authentication provided"
 
     @pytest.mark.asyncio
@@ -116,22 +115,22 @@ class TestGetCurrentUser:
         mock_user_api = Mock(spec=User)
         mock_user_api.user_id = "api_user"
         mock_user_api.username = "apiuser"
-        
+
         mock_user_jwt = Mock(spec=User)
         mock_user_jwt.user_id = "jwt_user"
-        
+
         mock_request = Mock()
         mock_request.headers = {"X-API-Key": "vs_api_key"}
-        
+
         mock_credentials = Mock()
         mock_credentials.credentials = "jwt_token"
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_api_key:
             mock_api_key.return_value = mock_user_api
             mock_security_async = AsyncMock(return_value=mock_credentials)
             with patch.object(auth_middleware, "security", mock_security_async):
                 user = await auth_middleware.get_current_user(mock_request)
-                
+
                 assert user is not None, "Should return user"
                 assert user.user_id == "api_user", "Should prefer API key over JWT"
                 mock_api_key.assert_called_once()
@@ -141,13 +140,13 @@ class TestGetCurrentUser:
         """Test get_current_user with invalid API key."""
         mock_request = Mock()
         mock_request.headers = {"X-API-Key": "invalid_key"}
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_auth:
             mock_auth.return_value = None
             mock_security_async = AsyncMock(return_value=None)
             with patch.object(auth_middleware, "security", mock_security_async):
                 user = await auth_middleware.get_current_user(mock_request)
-                
+
                 assert user is None, "Should return None with invalid API key"
 
     @pytest.mark.asyncio
@@ -155,17 +154,17 @@ class TestGetCurrentUser:
         """Test get_current_user with invalid JWT token."""
         mock_request = Mock()
         mock_request.headers = {}
-        
+
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_jwt_token"
-        
+
         mock_security_async = AsyncMock(return_value=mock_credentials)
         with patch.object(auth_middleware, "security", mock_security_async):
             with patch("backend.api.middleware.auth_middleware.get_current_user_from_token") as mock_token_auth:
                 mock_token_auth.return_value = None
-                
+
                 user = await auth_middleware.get_current_user(mock_request)
-                
+
                 assert user is None, "Should return None with invalid JWT token"
 
 
@@ -177,18 +176,18 @@ class TestRequireAuthentication:
         """Test require_authentication with valid user."""
         mock_user = Mock(spec=User)
         mock_user.user_id = "user123"
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req123"
         mock_request.url.path = "/api/test"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
             mock_get_user.return_value = mock_user
-            
+
             user = await auth_middleware.require_authentication(mock_request)
-            
+
             assert user is not None, "Should return user when authenticated"
             assert user.user_id == "user123", "Should return correct user"
 
@@ -200,13 +199,13 @@ class TestRequireAuthentication:
         mock_request.state.request_id = "req456"
         mock_request.url.path = "/api/test"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
             mock_get_user.return_value = None
-            
+
             with pytest.raises(Exception) as exc_info:
                 await auth_middleware.require_authentication(mock_request)
-            
+
             # Should raise HTTPException with 401 status
             assert exc_info.value.status_code == 401, "Should raise 401 Unauthorized"
 
@@ -218,7 +217,7 @@ class TestRequireAuthentication:
         mock_request.state.request_id = "req789"
         mock_request.url.path = "/api/protected"
         mock_request.method = "POST"
-        
+
         with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
             mock_get_user.return_value = None
             with patch("backend.api.middleware.auth_middleware.logger") as mock_logger:
@@ -226,7 +225,7 @@ class TestRequireAuthentication:
                     await auth_middleware.require_authentication(mock_request)
                 except Exception:
                     pass  # Expected exception
-                
+
                 # Verify logging was called
                 mock_logger.warning.assert_called_once()
 
@@ -240,20 +239,20 @@ class TestRequirePermissionMiddleware:
         mock_user = Mock(spec=User)
         mock_user.user_id = "user123"
         mock_user.has_permission = Mock(return_value=True)
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req123"
         mock_request.url.path = "/api/test"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             user = await auth_middleware.require_permission_middleware(
                 mock_request, Permission.PROFILE_READ
             )
-            
+
             assert user is not None, "Should return user with permission"
             mock_user.has_permission.assert_called_once_with(Permission.PROFILE_READ)
 
@@ -264,21 +263,21 @@ class TestRequirePermissionMiddleware:
         mock_user.user_id = "user123"
         mock_user.username = "testuser"
         mock_user.has_permission = Mock(return_value=False)
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req456"
         mock_request.url.path = "/api/protected"
         mock_request.method = "POST"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             with pytest.raises(Exception) as exc_info:
                 await auth_middleware.require_permission_middleware(
                     mock_request, Permission.PROFILE_DELETE
                 )
-            
+
             # Should raise HTTPException with 403 status
             assert exc_info.value.status_code == 403, "Should raise 403 Forbidden"
 
@@ -289,13 +288,13 @@ class TestRequirePermissionMiddleware:
         mock_user.user_id = "user123"
         mock_user.username = "testuser"
         mock_user.has_permission = Mock(return_value=False)
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req789"
         mock_request.url.path = "/api/protected"
         mock_request.method = "DELETE"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
             with patch("backend.api.middleware.auth_middleware.logger") as mock_logger:
@@ -305,7 +304,7 @@ class TestRequirePermissionMiddleware:
                     )
                 except Exception:
                     pass  # Expected exception
-                
+
                 # Verify logging was called
                 mock_logger.warning.assert_called_once()
 
@@ -320,20 +319,20 @@ class TestRequireRoleMiddleware:
         mock_user.user_id = "admin123"
         mock_user.username = "admin"
         mock_user.role = UserRole.ADMIN
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req123"
         mock_request.url.path = "/api/admin"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             user = await auth_middleware.require_role_middleware(
                 mock_request, UserRole.ADMIN
             )
-            
+
             assert user is not None, "Should return user with required role"
 
     @pytest.mark.asyncio
@@ -343,21 +342,21 @@ class TestRequireRoleMiddleware:
         mock_user.user_id = "admin123"
         mock_user.username = "admin"
         mock_user.role = UserRole.ADMIN
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req456"
         mock_request.url.path = "/api/user"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             # Admin should have access to USER level endpoints
             user = await auth_middleware.require_role_middleware(
                 mock_request, UserRole.USER
             )
-            
+
             assert user is not None, "Admin should have access to user-level endpoints"
 
     @pytest.mark.asyncio
@@ -367,21 +366,21 @@ class TestRequireRoleMiddleware:
         mock_user.user_id = "user123"
         mock_user.username = "regularuser"
         mock_user.role = UserRole.USER
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req789"
         mock_request.url.path = "/api/admin"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             with pytest.raises(Exception) as exc_info:
                 await auth_middleware.require_role_middleware(
                     mock_request, UserRole.ADMIN
                 )
-            
+
             # Should raise HTTPException with 403 status
             assert exc_info.value.status_code == 403, "Should raise 403 Forbidden"
 
@@ -392,21 +391,21 @@ class TestRequireRoleMiddleware:
         mock_user.user_id = "guest123"
         mock_user.username = "guest"
         mock_user.role = UserRole.GUEST
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req999"
         mock_request.url.path = "/api/user"
         mock_request.method = "GET"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
-            
+
             with pytest.raises(Exception) as exc_info:
                 await auth_middleware.require_role_middleware(
                     mock_request, UserRole.USER
                 )
-            
+
             assert exc_info.value.status_code == 403, "Should raise 403 Forbidden"
 
     @pytest.mark.asyncio
@@ -416,13 +415,13 @@ class TestRequireRoleMiddleware:
         mock_user.user_id = "user123"
         mock_user.username = "regularuser"
         mock_user.role = UserRole.USER
-        
+
         mock_request = Mock()
         mock_request.state = Mock()
         mock_request.state.request_id = "req111"
         mock_request.url.path = "/api/admin"
         mock_request.method = "POST"
-        
+
         with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
             mock_req_auth.return_value = mock_user
             with patch("backend.api.middleware.auth_middleware.logger") as mock_logger:
@@ -432,7 +431,7 @@ class TestRequireRoleMiddleware:
                     )
                 except Exception:
                     pass  # Expected exception
-                
+
                 # Verify logging was called
                 mock_logger.warning.assert_called_once()
 
@@ -444,68 +443,68 @@ class TestGetOptionalUser:
         """Test get_optional_user returns user when authenticated."""
         mock_user = Mock(spec=User)
         mock_user.user_id = "user123"
-        
+
         mock_request = Mock()
-        
+
         # Mock asyncio.get_event_loop to return a non-running loop
         mock_loop = Mock()
         mock_loop.is_running.return_value = False
         mock_loop.run_until_complete.return_value = mock_user
-        
+
         with patch("asyncio.get_event_loop") as mock_get_loop:
             mock_get_loop.return_value = mock_loop
-            with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
+            with patch("backend.api.middleware.auth_middleware.get_current_user"):
                 user = auth_middleware.get_optional_user(mock_request)
-                
+
                 assert user is not None, "Should return user when authenticated"
                 assert user.user_id == "user123", "Should return correct user"
 
     def test_get_optional_user_no_authentication(self):
         """Test get_optional_user returns None when not authenticated."""
         mock_request = Mock()
-        
+
         # Mock asyncio.get_event_loop to return a non-running loop
         mock_loop = Mock()
         mock_loop.is_running.return_value = False
         mock_loop.run_until_complete.return_value = None
-        
+
         with patch("asyncio.get_event_loop") as mock_get_loop:
             mock_get_loop.return_value = mock_loop
-            with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
+            with patch("backend.api.middleware.auth_middleware.get_current_user"):
                 user = auth_middleware.get_optional_user(mock_request)
-                
+
                 assert user is None, "Should return None when not authenticated"
 
     def test_get_optional_user_handles_runtime_error(self):
         """Test get_optional_user handles RuntimeError gracefully."""
         mock_request = Mock()
-        
-        with patch("backend.api.middleware.auth_middleware.get_current_user") as mock_get_user:
+
+        with patch("backend.api.middleware.auth_middleware.get_current_user"):
             with patch("asyncio.get_event_loop") as mock_get_loop:
                 mock_loop = Mock()
                 mock_loop.is_running.return_value = True
                 mock_get_loop.return_value = mock_loop
-                
+
                 user = auth_middleware.get_optional_user(mock_request)
-                
+
                 assert user is None, "Should return None when event loop is running"
 
     def test_get_optional_user_handles_exception(self):
         """Test get_optional_user handles exceptions gracefully."""
         mock_request = Mock()
-        
+
         # First try to get event loop - raises RuntimeError
         # Then try asyncio.run - raises Exception, which is caught
         with patch("asyncio.get_event_loop") as mock_get_loop:
             mock_get_loop.side_effect = RuntimeError("No event loop")
-            
+
             with patch("asyncio.run") as mock_run:
                 # Mock asyncio.run to raise exception
                 # The code catches Exception and returns None
                 def raise_exception(*args, **kwargs):
                     raise Exception("Test exception")
                 mock_run.side_effect = raise_exception
-                
+
                 # The function should catch the exception and return None
                 try:
                     user = auth_middleware.get_optional_user(mock_request)

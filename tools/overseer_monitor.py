@@ -21,7 +21,6 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 # Try to import watchdog, but don't fail if not available
 try:
@@ -35,11 +34,11 @@ except ImportError:
 # Import overseer tools
 try:
     # Try relative import first (when run from project root)
-    from tools.overseer.ledger_parser import LedgerParser
     from tools.overseer.gate_tracker import GateTracker
     from tools.overseer.handoff_manager import HandoffManager
+    from tools.overseer.ledger_parser import LedgerParser
+    from tools.overseer.models import Gate, LedgerState
     from tools.overseer.report_engine import ReportEngine
-    from tools.overseer.models import LedgerState, Gate
 
     OVERSEER_TOOLS_AVAILABLE = True
 except ImportError:
@@ -49,11 +48,11 @@ except ImportError:
         if str(_project_root) not in sys.path:
             sys.path.insert(0, str(_project_root))
 
-        from tools.overseer.ledger_parser import LedgerParser
         from tools.overseer.gate_tracker import GateTracker
         from tools.overseer.handoff_manager import HandoffManager
+        from tools.overseer.ledger_parser import LedgerParser
+        from tools.overseer.models import Gate, LedgerState
         from tools.overseer.report_engine import ReportEngine
-        from tools.overseer.models import LedgerState, Gate
 
         OVERSEER_TOOLS_AVAILABLE = True
     except ImportError:
@@ -66,7 +65,7 @@ class TaskChecklistMonitor:
     def __init__(self, checklist_path: Path, callback):
         self.checklist_path = checklist_path
         self.callback = callback
-        self.last_hash: Optional[str] = None
+        self.last_hash: str | None = None
         self.last_mtime: float = 0.0
         self.last_task_count: int = 0
         self.last_complete_count: int = 0
@@ -111,7 +110,7 @@ class TaskChecklistMonitor:
 
         return False
 
-    def _count_tasks(self, content: str) -> Tuple[int, int]:
+    def _count_tasks(self, content: str) -> tuple[int, int]:
         """Count total and completed tasks in checklist."""
         # Count task patterns: [x] = complete, [ ] = incomplete
         complete = len(re.findall(r"\[x\]|\[X\]|COMPLETE", content))
@@ -125,7 +124,7 @@ class ProgressFileMonitor:
     def __init__(self, progress_dir: Path, callback):
         self.progress_dir = progress_dir
         self.callback = callback
-        self.known_files: Dict[str, float] = {}
+        self.known_files: dict[str, float] = {}
 
     def check_for_changes(self):
         """Check for new or updated progress files."""
@@ -153,7 +152,7 @@ class LedgerMonitor:
     def __init__(self, ledger_path: Path, callback):
         self.ledger_path = ledger_path
         self.callback = callback
-        self.last_hash: Optional[str] = None
+        self.last_hash: str | None = None
         self.last_mtime: float = 0.0
 
     def check_for_changes(self) -> bool:
@@ -206,10 +205,10 @@ class OverseerMonitor:
         self.ledger_monitor = LedgerMonitor(self.ledger_path, self.handle_event)
 
         # Initialize overseer tools if available
-        self.parser: Optional[LedgerParser] = None
-        self.tracker: Optional[GateTracker] = None
-        self.handoff_mgr: Optional[HandoffManager] = None
-        self.report_engine: Optional[ReportEngine] = None
+        self.parser: LedgerParser | None = None
+        self.tracker: GateTracker | None = None
+        self.handoff_mgr: HandoffManager | None = None
+        self.report_engine: ReportEngine | None = None
 
         if OVERSEER_TOOLS_AVAILABLE:
             try:
@@ -232,7 +231,7 @@ class OverseerMonitor:
         self.comprehensive_review_interval = timedelta(hours=6)
 
         # File watching (if available)
-        self.observer: Optional[Observer] = None
+        self.observer: Observer | None = None
         if WATCHDOG_AVAILABLE:
             self.setup_file_watching()
 
@@ -274,7 +273,7 @@ class OverseerMonitor:
         if recovery_dir.exists():
             self.observer.schedule(FileHandler(), str(recovery_dir), recursive=False)
 
-    def handle_event(self, event_type: str, file_path: str, info: Dict):
+    def handle_event(self, event_type: str, file_path: str, info: dict):
         """Handle monitoring events."""
         self.log(f"Event: {event_type}")
 
@@ -285,7 +284,7 @@ class OverseerMonitor:
         elif event_type == "ledger_updated":
             self.review_ledger_changes()
 
-    def review_checklist_changes(self, info: Dict):
+    def review_checklist_changes(self, info: dict):
         """Review checklist changes with detailed analysis."""
         self.log("Reviewing checklist changes...")
 
@@ -313,7 +312,7 @@ class OverseerMonitor:
         self.log(f"Reviewing worker progress: {Path(progress_file).name}")
 
         try:
-            with open(progress_file, "r") as f:
+            with open(progress_file) as f:
                 progress = json.load(f)
 
             worker = progress.get("worker", "Unknown")
@@ -342,7 +341,7 @@ class OverseerMonitor:
         except Exception as e:
             self.log(f"  Error reading progress file: {e}")
 
-    def _generate_blocker_guidance(self, blockers: List[str]) -> List[str]:
+    def _generate_blocker_guidance(self, blockers: list[str]) -> list[str]:
         """Generate guidance for resolving blockers."""
         guidance = []
 
@@ -443,7 +442,7 @@ class OverseerMonitor:
         if self.handoff_mgr:
             try:
                 matched, missing, orphan = self.handoff_mgr.reconcile_with_ledger()
-                self.log(f"Handoff reconciliation:")
+                self.log("Handoff reconciliation:")
                 self.log(f"  Matched: {len(matched)}")
                 self.log(f"  Missing handoffs: {len(missing)}")
                 self.log(f"  Orphan handoffs: {len(orphan)}")

@@ -5,11 +5,9 @@ exponential backoff, GPU monitoring, resource predictions, and alerts.
 """
 
 import sys
-import threading
 import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -65,7 +63,7 @@ class TestGPUMonitor:
             assert result1 == 4.0
 
             # Force check should update
-            result2 = monitor.get_available_vram_gb(force_check=True)
+            monitor.get_available_vram_gb(force_check=True)
             mock_update.assert_called_once()
 
     def test_has_sufficient_vram(self):
@@ -232,7 +230,7 @@ class TestResourceManager:
         job = Job("job1", "engine1", "task", JobPriority.REALTIME, req, {})
 
         # Fail job 3 times
-        for i in range(3):
+        for _i in range(3):
             manager.start_job(job)
             manager.complete_job("job1", success=False, error="Test error")
 
@@ -255,7 +253,7 @@ class TestResourceManager:
         job = Job("job1", "engine1", "task", JobPriority.REALTIME, req, {})
 
         # Fail job 5 times
-        for i in range(5):
+        for _i in range(5):
             manager.start_job(job)
             manager.complete_job("job1", success=False, error="Test error")
 
@@ -402,7 +400,7 @@ class TestEnhancedResourceManager:
         )
 
         # Collect some history
-        for i in range(15):
+        for _i in range(15):
             manager._collect_resource_usage()
             time.sleep(0.01)
 
@@ -493,7 +491,7 @@ class TestEnhancedResourceManager:
         )
 
         # Collect some history
-        for i in range(10):
+        for _i in range(10):
             manager._collect_resource_usage()
 
         req = ResourceRequirement(vram_gb=2.0)

@@ -2,7 +2,6 @@
 Pipeline Metrics Unit Tests (Phase 14.1.3)
 """
 
-import pytest
 
 from app.core.pipeline.metrics import (
     PipelineExecutionMetrics,

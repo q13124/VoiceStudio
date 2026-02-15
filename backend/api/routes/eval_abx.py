@@ -5,24 +5,25 @@ Endpoints for ABX testing (audio comparison testing) to evaluate
 voice synthesis quality through perceptual testing.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..models import ApiOk
-from ..models_additional import AbxStartRequest, AbxResult
+from ..models_additional import AbxResult, AbxStartRequest
 
 logger = logging.getLogger(__name__)
 
 
 def _is_test_mode() -> bool:
     """Check if running in test mode (runtime check).
-    
+
     Checks multiple sources:
     1. VOICESTUDIO_TEST_MODE environment variable
     2. app.state.test_mode flag (set by test fixtures)
@@ -30,7 +31,7 @@ def _is_test_mode() -> bool:
     # Check environment variable first
     if os.environ.get("VOICESTUDIO_TEST_MODE", "").lower() in ("1", "true", "yes"):
         return True
-    
+
     # Check app state (set by test fixtures)
     try:
         from backend.api.main import app
@@ -38,24 +39,24 @@ def _is_test_mode() -> bool:
             return True
     except Exception:
         pass  # ALLOWED: bare except - checking test mode should not raise in production
-    
+
     return False
 
 router = APIRouter(prefix="/api/eval/abx", tags=["eval", "abx"])
 
 # In-memory ABX test sessions (replace with database in production)
-_abx_sessions: Dict[str, Dict] = {}
-_abx_results: Dict[str, List[Dict]] = {}
+_abx_sessions: dict[str, dict] = {}
+_abx_results: dict[str, list[dict]] = {}
 
 
 class ABXSession(BaseModel):
     """ABX test session information."""
 
     session_id: str
-    items: List[str]  # Audio IDs for comparison
+    items: list[str]  # Audio IDs for comparison
     status: str  # pending, active, completed
     created: str
-    completed: Optional[str] = None
+    completed: str | None = None
 
 
 class ABXTestResult(BaseModel):
@@ -65,7 +66,7 @@ class ABXTestResult(BaseModel):
     item: str
     mos: float  # Mean Opinion Score
     pref: str  # Preference (A, B, or X)
-    confidence: Optional[float] = None
+    confidence: float | None = None
     timestamp: str
 
 
@@ -73,44 +74,44 @@ class ABXTestResult(BaseModel):
 async def start(req: AbxStartRequest) -> ABXSession:
     """
     Start an ABX evaluation test session.
-    
+
     ABX testing compares audio samples where:
     - A and B are reference samples
     - X is the test sample
     - Users identify which reference (A or B) X is closer to
-    
+
     Args:
         req: Request with list of audio IDs to test
-        
+
     Returns:
         ABX session information
     """
     try:
         test_mode = _is_test_mode()
         logger.info(f"ABX start called - test_mode={test_mode}, VOICESTUDIO_TEST_MODE={os.environ.get('VOICESTUDIO_TEST_MODE', 'NOT SET')}")
-        
+
         if not req.items or len(req.items) < 2:
             raise HTTPException(
                 status_code=400,
                 detail="At least 2 audio items are required for ABX testing"
             )
-        
+
         # Validate audio files exist (skip validation if no audio storage has been populated yet,
         # which indicates a test environment or fresh startup)
         try:
             from .voice import _audio_storage
             storage_len = len(_audio_storage) if _audio_storage else 0
             logger.info(f"Audio storage check: length={storage_len}, test_mode={test_mode}")
-            
+
             # Skip validation in test mode OR when storage is empty (likely test/fresh startup)
             skip_validation = test_mode or storage_len == 0
-            
+
             if not skip_validation:
                 missing_audio = []
                 for audio_id in req.items:
                     if audio_id not in _audio_storage:
                         missing_audio.append(audio_id)
-                
+
                 if missing_audio:
                     raise HTTPException(
                         status_code=404,
@@ -121,11 +122,11 @@ async def start(req: AbxStartRequest) -> ABXSession:
         except ImportError:
             # voice module not available, skip validation
             logger.warning("Voice module not available, skipping audio validation")
-        
+
         # Create ABX session
         session_id = f"abx-{uuid.uuid4().hex[:8]}"
         now = datetime.utcnow().isoformat()
-        
+
         session = {
             "session_id": session_id,
             "items": req.items,
@@ -133,12 +134,12 @@ async def start(req: AbxStartRequest) -> ABXSession:
             "created": now,
             "completed": None,
         }
-        
+
         _abx_sessions[session_id] = session
         _abx_results[session_id] = []
-        
+
         logger.info(f"Started ABX test session: {session_id} with {len(req.items)} items")
-        
+
         return ABXSession(
             session_id=session_id,
             items=req.items,
@@ -152,18 +153,18 @@ async def start(req: AbxStartRequest) -> ABXSession:
         logger.error(f"Failed to start ABX test: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start ABX test: {str(e)}"
+            detail=f"Failed to start ABX test: {e!s}"
         ) from e
 
 
-@router.get("/results", response_model=List[AbxResult])
-async def results(session_id: Optional[str] = None) -> List[AbxResult]:
+@router.get("/results", response_model=list[AbxResult])
+async def results(session_id: str | None = None) -> list[AbxResult]:
     """
     Get ABX test results.
-    
+
     Args:
         session_id: Optional session ID to filter results
-        
+
     Returns:
         List of ABX test results
     """
@@ -175,7 +176,7 @@ async def results(session_id: Optional[str] = None) -> List[AbxResult]:
                     status_code=404,
                     detail=f"ABX session '{session_id}' not found"
                 )
-            
+
             results_data = _abx_results[session_id]
             return [
                 AbxResult(
@@ -190,7 +191,7 @@ async def results(session_id: Optional[str] = None) -> List[AbxResult]:
             all_results = []
             for session_results in _abx_results.values():
                 all_results.extend(session_results)
-            
+
             return [
                 AbxResult(
                     item=r.get("item", ""),
@@ -205,7 +206,7 @@ async def results(session_id: Optional[str] = None) -> List[AbxResult]:
         logger.error(f"Failed to get ABX results: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get ABX results: {str(e)}"
+            detail=f"Failed to get ABX results: {e!s}"
         ) from e
 
 
@@ -214,17 +215,17 @@ async def submit_result(
     session_id: str,
     item: str,
     pref: str,
-    confidence: Optional[float] = None
+    confidence: float | None = None
 ) -> ApiOk:
     """
     Submit an ABX test result.
-    
+
     Args:
         session_id: ABX session ID
         item: Audio item ID that was tested
         pref: Preference (A, B, or X)
         confidence: Optional confidence score (0.0-1.0)
-        
+
     Returns:
         Success response
     """
@@ -234,18 +235,18 @@ async def submit_result(
                 status_code=404,
                 detail=f"ABX session '{session_id}' not found"
             )
-        
+
         if pref not in ["A", "B", "X"]:
             raise HTTPException(
                 status_code=400,
                 detail="pref must be 'A', 'B', or 'X'"
             )
-        
+
         # Calculate MOS score based on preference
         # A = 5.0, B = 1.0, X = 3.0 (neutral)
         mos_map = {"A": 5.0, "B": 1.0, "X": 3.0}
         mos = mos_map.get(pref, 3.0)
-        
+
         # Adjust MOS based on confidence if provided
         if confidence is not None:
             confidence = max(0.0, min(1.0, confidence))
@@ -256,7 +257,7 @@ async def submit_result(
                 mos = 3.0 - (2.0 * confidence)
             else:
                 mos = 3.0
-        
+
         # Store result
         result = {
             "session_id": session_id,
@@ -266,17 +267,17 @@ async def submit_result(
             "confidence": confidence,
             "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         if session_id not in _abx_results:
             _abx_results[session_id] = []
-        
+
         _abx_results[session_id].append(result)
-        
+
         logger.info(
             f"ABX result submitted: session={session_id}, "
             f"item={item}, pref={pref}, mos={mos:.2f}"
         )
-        
+
         return ApiOk()
     except HTTPException:
         raise
@@ -284,7 +285,7 @@ async def submit_result(
         logger.error(f"Failed to submit ABX result: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to submit ABX result: {str(e)}"
+            detail=f"Failed to submit ABX result: {e!s}"
         ) from e
 
 
@@ -296,7 +297,7 @@ async def get_session(session_id: str) -> ABXSession:
             status_code=404,
             detail=f"ABX session '{session_id}' not found"
         )
-    
+
     session = _abx_sessions[session_id]
     return ABXSession(
         session_id=session["session_id"],
@@ -315,10 +316,10 @@ async def complete_session(session_id: str) -> ApiOk:
             status_code=404,
             detail=f"ABX session '{session_id}' not found"
         )
-    
+
     _abx_sessions[session_id]["status"] = "completed"
     _abx_sessions[session_id]["completed"] = datetime.utcnow().isoformat()
-    
+
     logger.info(f"ABX session completed: {session_id}")
-    
+
     return ApiOk()

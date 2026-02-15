@@ -5,7 +5,6 @@ Tests error recovery functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestErrorRecoveryClasses:
     def test_error_recovery_manager_class_exists(self):
         """Test ErrorRecoveryManager class exists."""
         if hasattr(error_recovery, "ErrorRecoveryManager"):
-            cls = getattr(error_recovery, "ErrorRecoveryManager")
+            cls = error_recovery.ErrorRecoveryManager
             assert isinstance(
                 cls, type
             ), "ErrorRecoveryManager should be a class"

@@ -9,8 +9,6 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -122,7 +120,6 @@ class TestAudioProcessingWorkflows:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # Step 1: Upload audio (simulated with mock data)
                 # In real test, would upload actual audio file
-                audio_data = b"fake_audio_data"
 
                 # Step 2: Analyze audio
                 analysis_response = await client.post(
@@ -443,7 +440,7 @@ class TestDataPersistenceWorkflows:
                 # Step 1: Get current settings
                 get_response = await client.get(f"{API_BASE_URL}/settings")
                 if get_response.status_code == 200:
-                    settings_data = get_response.json()
+                    get_response.json()
 
                     # Step 2: Update settings
                     update_response = await client.put(

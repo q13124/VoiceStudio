@@ -5,7 +5,6 @@ Tests custom exception classes.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestExceptionsClasses:
     def test_voice_studio_exception_class_exists(self):
         """Test VoiceStudioException class exists."""
         if hasattr(exceptions, "VoiceStudioException"):
-            cls = getattr(exceptions, "VoiceStudioException")
+            cls = exceptions.VoiceStudioException
             assert isinstance(
                 cls, type
             ), "VoiceStudioException should be a class"

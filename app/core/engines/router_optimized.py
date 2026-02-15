@@ -9,17 +9,18 @@ Enhanced engine routing with:
 - Engine recommendations
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from .router import EngineRouter
 from .protocols import EngineProtocol
+from .router import EngineRouter
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +48,9 @@ class EnginePerformanceMetrics:
     min_response_time: float = float("inf")
     max_response_time: float = 0.0
     current_load: int = 0  # Number of active requests
-    last_request_time: Optional[datetime] = None
-    last_success_time: Optional[datetime] = None
-    last_failure_time: Optional[datetime] = None
+    last_request_time: datetime | None = None
+    last_success_time: datetime | None = None
+    last_failure_time: datetime | None = None
     consecutive_failures: int = 0
     health_score: float = 1.0  # 0.0 to 1.0
     quality_score: float = 0.0  # From manifest or measured
@@ -159,12 +160,12 @@ class OptimizedEngineRouter(EngineRouter):
         self.performance_window_seconds = performance_window_seconds
 
         # Performance tracking
-        self.performance_metrics: Dict[str, EnginePerformanceMetrics] = {}
-        self.round_robin_index: Dict[str, int] = {}  # task_type -> index
+        self.performance_metrics: dict[str, EnginePerformanceMetrics] = {}
+        self.round_robin_index: dict[str, int] = {}  # task_type -> index
 
         # Engine discovery cache
-        self._discovery_cache: Dict[str, List[str]] = {}  # task_type -> engine_ids
-        self._discovery_cache_time: Dict[str, float] = {}
+        self._discovery_cache: dict[str, list[str]] = {}  # task_type -> engine_ids
+        self._discovery_cache_time: dict[str, float] = {}
         self._discovery_cache_ttl: float = 60.0  # 1 minute
 
         # Threading
@@ -173,9 +174,9 @@ class OptimizedEngineRouter(EngineRouter):
     def get_engine(
         self,
         name: str,
-        task_type: Optional[str] = None,
+        task_type: str | None = None,
         **kwargs,
-    ) -> Optional[EngineProtocol]:
+    ) -> EngineProtocol | None:
         """
         Get or create an engine instance with performance tracking.
 
@@ -201,11 +202,11 @@ class OptimizedEngineRouter(EngineRouter):
     def select_engine(
         self,
         task_type: str,
-        load_balancing_strategy: Optional[LoadBalancingStrategy] = None,
+        load_balancing_strategy: LoadBalancingStrategy | None = None,
         min_health_score: float = 0.5,
         prefer_fast: bool = False,
         **kwargs,
-    ) -> Optional[EngineProtocol]:
+    ) -> EngineProtocol | None:
         """
         Select best engine for a task using load balancing.
 
@@ -236,9 +237,8 @@ class OptimizedEngineRouter(EngineRouter):
         healthy_engines = []
         for engine_id in available_engines:
             metrics = self.performance_metrics.get(engine_id)
-            if metrics:
-                if metrics.health_score < min_health_score:
-                    continue
+            if metrics and metrics.health_score < min_health_score:
+                continue
             healthy_engines.append(engine_id)
 
         if not healthy_engines:
@@ -268,10 +268,10 @@ class OptimizedEngineRouter(EngineRouter):
 
     def _select_engine_by_strategy(
         self,
-        engine_ids: List[str],
+        engine_ids: list[str],
         strategy: LoadBalancingStrategy,
         prefer_fast: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Select engine based on strategy.
 
@@ -357,7 +357,7 @@ class OptimizedEngineRouter(EngineRouter):
             # Default: return first engine
             return engine_ids[0]
 
-    def _get_engines_for_task(self, task_type: str) -> List[str]:
+    def _get_engines_for_task(self, task_type: str) -> list[str]:
         """
         Get engines that support a task type (with caching).
 
@@ -385,9 +385,7 @@ class OptimizedEngineRouter(EngineRouter):
             manifest_type = manifest.get("type", "")
             manifest_subtype = manifest.get("subtype", "")
 
-            if manifest_type == "audio" and manifest_subtype == task_type:
-                engines.append(engine_id)
-            elif manifest_type == task_type:
+            if (manifest_type == "audio" and manifest_subtype == task_type) or manifest_type == task_type:
                 engines.append(engine_id)
 
         # Update cache
@@ -436,8 +434,8 @@ class OptimizedEngineRouter(EngineRouter):
     def get_engine_recommendation(
         self,
         task_type: str,
-        requirements: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        requirements: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """
         Get engine recommendation for a task.
 
@@ -513,7 +511,7 @@ class OptimizedEngineRouter(EngineRouter):
 
         return None
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """
         Get performance statistics.
 
@@ -551,7 +549,7 @@ class OptimizedEngineRouter(EngineRouter):
 
             return stats
 
-    def clear_performance_metrics(self, engine_id: Optional[str] = None):
+    def clear_performance_metrics(self, engine_id: str | None = None):
         """
         Clear performance metrics.
 
@@ -565,7 +563,7 @@ class OptimizedEngineRouter(EngineRouter):
             else:
                 self.performance_metrics.clear()
 
-    def invalidate_discovery_cache(self, task_type: Optional[str] = None):
+    def invalidate_discovery_cache(self, task_type: str | None = None):
         """
         Invalidate engine discovery cache.
 
@@ -606,9 +604,9 @@ def create_optimized_router(
 
 # Export
 __all__ = [
-    "OptimizedEngineRouter",
-    "LoadBalancingStrategy",
     "EnginePerformanceMetrics",
+    "LoadBalancingStrategy",
+    "OptimizedEngineRouter",
     "create_optimized_router",
 ]
 

@@ -15,7 +15,6 @@ import pytest
 
 from backend.services.backup_service import (
     BackupConfig,
-    BackupManifest,
     BackupService,
     BackupStatus,
     BackupType,

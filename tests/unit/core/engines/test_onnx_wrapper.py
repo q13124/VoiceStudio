@@ -5,7 +5,6 @@ Tests ONNX model wrapper functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestONNXWrapperClasses:
     def test_onnx_wrapper_class_exists(self):
         """Test ONNXWrapper class exists."""
         if hasattr(onnx_wrapper, "ONNXWrapper"):
-            cls = getattr(onnx_wrapper, "ONNXWrapper")
+            cls = onnx_wrapper.ONNXWrapper
             assert isinstance(cls, type), "ONNXWrapper should be a class"
 
 

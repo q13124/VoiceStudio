@@ -8,13 +8,14 @@ Provides bidirectional audio streaming with low-latency buffering.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
-import struct
 import time
+from collections import deque
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, AsyncIterator
-from collections import deque
+from typing import Any
 
 import numpy as np
 
@@ -66,7 +67,7 @@ class StreamStats:
 class AudioBuffer:
     """
     Lock-free audio buffer for low-latency streaming.
-    
+
     Uses a ring buffer to minimize allocation overhead.
     """
 
@@ -84,14 +85,14 @@ class AudioBuffer:
             self._buffer.append(audio_chunk.copy())
             return True
 
-    async def pop(self) -> Optional[np.ndarray]:
+    async def pop(self) -> np.ndarray | None:
         """Remove and return oldest audio chunk."""
         async with self._lock:
             if not self._buffer:
                 return None
             return self._buffer.popleft()
 
-    async def peek(self) -> Optional[np.ndarray]:
+    async def peek(self) -> np.ndarray | None:
         """Return oldest chunk without removing."""
         async with self._lock:
             if not self._buffer:
@@ -120,7 +121,7 @@ class AudioBuffer:
 class AudioStreamProcessor:
     """
     Real-time audio stream processor.
-    
+
     Features:
     - Bidirectional streaming
     - Low-latency buffering
@@ -128,7 +129,7 @@ class AudioStreamProcessor:
     - Processing callback pipeline
     """
 
-    def __init__(self, config: Optional[StreamConfig] = None):
+    def __init__(self, config: StreamConfig | None = None):
         self.config = config or StreamConfig()
         self._input_buffer = AudioBuffer(
             max_chunks=self.config.buffer_size * 2,
@@ -139,9 +140,9 @@ class AudioStreamProcessor:
             chunk_size=self.config.chunk_size,
         )
         self._stats = StreamStats()
-        self._processors: List[Callable] = []
+        self._processors: list[Callable] = []
         self._running = False
-        self._processing_task: Optional[asyncio.Task] = None
+        self._processing_task: asyncio.Task | None = None
 
     def add_processor(
         self,
@@ -149,7 +150,7 @@ class AudioStreamProcessor:
     ) -> None:
         """
         Add a processing callback to the pipeline.
-        
+
         Args:
             processor: Function (audio_chunk, sample_rate) -> processed_chunk
         """
@@ -174,10 +175,8 @@ class AudioStreamProcessor:
         self._running = False
         if self._processing_task:
             self._processing_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._processing_task
-            except asyncio.CancelledError:
-                pass
         await self._input_buffer.clear()
         await self._output_buffer.clear()
         logger.info("Audio stream processor stopped")
@@ -220,10 +219,10 @@ class AudioStreamProcessor:
     async def feed_audio(self, audio_bytes: bytes) -> bool:
         """
         Feed raw audio bytes into the stream.
-        
+
         Args:
             audio_bytes: Raw audio data in configured format
-            
+
         Returns:
             True if accepted, False if buffer full
         """
@@ -234,10 +233,10 @@ class AudioStreamProcessor:
         audio = self._bytes_to_array(audio_bytes)
         return await self._input_buffer.push(audio)
 
-    async def get_processed(self) -> Optional[bytes]:
+    async def get_processed(self) -> bytes | None:
         """
         Get processed audio bytes.
-        
+
         Returns:
             Processed audio bytes or None if not available
         """
@@ -289,19 +288,19 @@ class AudioStreamProcessor:
 class WebSocketAudioStream:
     """
     WebSocket-based audio streaming for real-time processing.
-    
+
     Designed for FastAPI WebSocket endpoints.
     """
 
     def __init__(
         self,
         websocket: Any,  # FastAPI WebSocket
-        config: Optional[StreamConfig] = None,
+        config: StreamConfig | None = None,
     ):
         self._websocket = websocket
         self._processor = AudioStreamProcessor(config)
-        self._receive_task: Optional[asyncio.Task] = None
-        self._send_task: Optional[asyncio.Task] = None
+        self._receive_task: asyncio.Task | None = None
+        self._send_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Start bidirectional streaming."""

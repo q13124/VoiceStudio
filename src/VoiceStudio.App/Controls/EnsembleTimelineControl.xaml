@@ -3,11 +3,9 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:local="using:VoiceStudio.App.Controls"
   x:DataType="local:EnsembleTimelineControl">
-  <Grid>
-    <TextBlock Text="Ensemble timeline temporarily disabled (XAML compiler stability)"
-      TextWrapping="Wrap"
-      HorizontalAlignment="Center"
-      VerticalAlignment="Center"
-      Opacity="0.7" />
+  <Grid x:Name="Root">
+    <Canvas x:Name="TimelineCanvas" />
+    <TextBlock x:Name="EmptyText" Text="No timeline blocks" HorizontalAlignment="Center" VerticalAlignment="Center"
+      Opacity="0.6" Visibility="Collapsed" />
   </Grid>
 </UserControl>

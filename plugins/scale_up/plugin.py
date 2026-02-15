@@ -13,7 +13,7 @@ Multi-stage voice enhancement pipeline with:
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
@@ -55,10 +55,10 @@ class ScaleUpRequest(BaseModel):
     """Request model for scale up processing"""
 
     input_path: str
-    output_path: Optional[str] = None
+    output_path: str | None = None
     mode: str = "scale_up"
-    noise_reduction_strength: Optional[float] = None
-    enhancement_strength: Optional[float] = None
+    noise_reduction_strength: float | None = None
+    enhancement_strength: float | None = None
 
 
 class ScaleUpManager:
@@ -67,7 +67,7 @@ class ScaleUpManager:
     def __init__(self):
         """Initialize the Scale Up manager"""
         manifest_path = PLUGIN_DIR / "plugin.json"
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             self.manifest = json.load(f)
 
         self.sample_rate = 44100
@@ -89,7 +89,7 @@ class ScaleUpManager:
             "target_lufs": -16.0,
         }
 
-    def load_audio(self, file_path: str) -> Tuple[np.ndarray, int]:
+    def load_audio(self, file_path: str) -> tuple[np.ndarray, int]:
         """Load audio file with automatic resampling"""
         if not SOUNDFILE_AVAILABLE:
             raise RuntimeError("soundfile not installed. Run: pip install soundfile")
@@ -129,7 +129,7 @@ class ScaleUpManager:
 
     def scale_up(
         self, input_path: str, output_path: str, mode: str = "scale_up", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Main upscaling function with multiple modes.
 
@@ -370,7 +370,7 @@ class ScaleUpManager:
 
     def _calculate_metrics(
         self, original: np.ndarray, processed: np.ndarray, sr: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate quality improvement metrics"""
         metrics = {}
 
@@ -379,10 +379,7 @@ class ScaleUpManager:
         processed_rms = np.sqrt(np.mean(processed**2))
 
         noise_estimate = np.percentile(np.abs(original), 10)
-        if noise_estimate > 0:
-            original_snr = 20 * np.log10(original_rms / noise_estimate)
-        else:
-            original_snr = 60
+        original_snr = 20 * np.log10(original_rms / noise_estimate) if noise_estimate > 0 else 60
 
         noise_processed = np.percentile(np.abs(processed), 10)
         if noise_processed > 0:
@@ -456,7 +453,7 @@ class ScaleUpPlugin(BasePlugin):
             return result
         except Exception as e:
             logger.error(f"Scale up processing failed: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Processing failed: {e!s}")
 
     async def get_modes(self):
         """Get available processing modes"""

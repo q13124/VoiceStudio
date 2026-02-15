@@ -1,4 +1,6 @@
-"""
+
+from __future__ import annotations
+r"""
 So-VITS-SVC 4.0 Engine for VoiceStudio
 Voice conversion using So-VITS-SVC 4.0 checkpoints
 
@@ -17,7 +19,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -56,11 +58,7 @@ except ImportError:
 
 # Try importing audio utilities for quality enhancement
 try:
-    from ..audio.audio_utils import (
-        enhance_voice_quality,
-        normalize_lufs,
-        remove_artifacts,
-    )
+    from app.core.audio.audio_utils import enhance_voice_quality, normalize_lufs, remove_artifacts
 
     HAS_AUDIO_UTILS = True
 except ImportError:
@@ -92,7 +90,7 @@ except ImportError:
 
 
 class SoVITSSVCEngine(EngineProtocol):
-    """
+    r"""
     So-VITS-SVC 4.0 Voice Conversion Engine.
 
     Features:
@@ -106,14 +104,14 @@ class SoVITSSVCEngine(EngineProtocol):
 
     def __init__(
         self,
-        checkpoint_path: Optional[str] = None,
-        config_path: Optional[str] = None,
-        project_name: Optional[str] = None,
-        device: Optional[str] = None,
+        checkpoint_path: str | None = None,
+        config_path: str | None = None,
+        project_name: str | None = None,
+        device: str | None = None,
         gpu: bool = True,
         sample_rate: int = 22050,
-        infer_command: Optional[str] = None,
-        infer_workdir: Optional[str] = None,
+        infer_command: str | None = None,
+        infer_workdir: str | None = None,
         allow_passthrough: bool = False,
     ):
         """
@@ -173,8 +171,6 @@ class SoVITSSVCEngine(EngineProtocol):
         Returns:
             True if initialization successful, False otherwise
         """
-        temp_input_path = None
-        temp_output_path = None
         try:
             if self._initialized:
                 return True
@@ -205,7 +201,7 @@ class SoVITSSVCEngine(EngineProtocol):
 
             # Load config
             try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
+                with open(self.config_path, encoding="utf-8") as f:
                     self.config = json.load(f)
                 logger.info(f"Loaded So-VITS-SVC config from {self.config_path}")
             except Exception as e:
@@ -255,7 +251,7 @@ class SoVITSSVCEngine(EngineProtocol):
         self._initialized = False
         logger.info("So-VITS-SVC engine cleaned up")
 
-    def _load_audio_path(self, path: str) -> Optional[Tuple[np.ndarray, int]]:
+    def _load_audio_path(self, path: str) -> tuple[np.ndarray, int] | None:
         if HAS_LIBROSA and librosa is not None:
             return librosa.load(path, sr=self.sample_rate)
         if HAS_SOUNDFILE and sf is not None:
@@ -269,8 +265,8 @@ class SoVITSSVCEngine(EngineProtocol):
         output_path: str,
         pitch_shift: int,
         *,
-        checkpoint_path: Optional[Path] = None,
-        config_path: Optional[Path] = None,
+        checkpoint_path: Path | None = None,
+        config_path: Path | None = None,
     ) -> None:
         if not self.infer_command:
             raise RuntimeError("So-VITS-SVC inference command not configured.")
@@ -307,14 +303,14 @@ class SoVITSSVCEngine(EngineProtocol):
 
     def convert_voice(
         self,
-        source_audio: Union[str, Path, np.ndarray],
-        target_speaker_model: Optional[str] = None,
-        output_path: Optional[str] = None,
+        source_audio: str | Path | np.ndarray,
+        target_speaker_model: str | None = None,
+        output_path: str | None = None,
         pitch_shift: int = 0,
         enhance_quality: bool = True,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Optional[Union[np.ndarray, Tuple[np.ndarray, Dict[str, Any]]]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict[str, Any]] | None:
         """
         Convert voice using So-VITS-SVC 4.0 model.
 
@@ -335,9 +331,8 @@ class SoVITSSVCEngine(EngineProtocol):
         temp_output_path = None
 
         # Lazy load models if needed
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Load source audio
@@ -522,7 +517,7 @@ class SoVITSSVCEngine(EngineProtocol):
     def convert_realtime(
         self,
         audio_chunk: np.ndarray,
-        target_speaker_model: Optional[str] = None,
+        target_speaker_model: str | None = None,
         pitch_shift: int = 0,
         **kwargs,
     ) -> np.ndarray:
@@ -538,9 +533,8 @@ class SoVITSSVCEngine(EngineProtocol):
         Returns:
             Converted audio chunk
         """
-        if not self._initialized:
-            if not self.initialize():
-                return audio_chunk  # Return original if initialization fails
+        if not self._initialized and not self.initialize():
+            return audio_chunk  # Return original if initialization fails
 
         try:
             # Validate input
@@ -564,7 +558,7 @@ class SoVITSSVCEngine(EngineProtocol):
         sample_rate: int,
         enhance: bool,
         calculate: bool,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict[str, Any]]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict[str, Any]]:
         """
         Process audio for quality enhancement and/or metrics calculation.
 
@@ -638,7 +632,7 @@ class SoVITSSVCEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -658,10 +652,10 @@ class SoVITSSVCEngine(EngineProtocol):
 
 
 def create_sovits_svc_engine(
-    checkpoint_path: Optional[str] = None,
-    config_path: Optional[str] = None,
-    project_name: Optional[str] = None,
-    device: Optional[str] = None,
+    checkpoint_path: str | None = None,
+    config_path: str | None = None,
+    project_name: str | None = None,
+    device: str | None = None,
     gpu: bool = True,
     **kwargs,
 ) -> SoVITSSVCEngine:

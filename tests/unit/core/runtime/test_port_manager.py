@@ -5,7 +5,6 @@ Tests port management functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -42,7 +41,7 @@ class TestPortManagerClasses:
     def test_port_manager_class_exists(self):
         """Test PortManager class exists."""
         if hasattr(port_manager, "PortManager"):
-            cls = getattr(port_manager, "PortManager")
+            cls = port_manager.PortManager
             assert isinstance(cls, type), "PortManager should be a class"
 
 

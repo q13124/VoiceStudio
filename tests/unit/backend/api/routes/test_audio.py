@@ -6,11 +6,11 @@ Tests audio analysis endpoints comprehensively.
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent.parent.parent

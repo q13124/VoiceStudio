@@ -6,8 +6,9 @@ Provides endpoints for Whisper transcription, translation,
 and timing-preserving subtitle generation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -24,7 +25,7 @@ class TranscriptionRequest(BaseModel):
     """Request for audio transcription."""
     audio_id: str = Field(..., description="Audio file ID")
     model: str = Field("base", description="Whisper model: tiny, base, small, medium, large, large-v3")
-    language: Optional[str] = Field(None, description="Source language (auto-detect if not specified)")
+    language: str | None = Field(None, description="Source language (auto-detect if not specified)")
     word_timestamps: bool = Field(True, description="Include word-level timestamps")
 
 
@@ -41,7 +42,7 @@ class TranscriptionSegment(BaseModel):
 class TranscriptionResponse(BaseModel):
     """Response for transcription."""
     project_id: str
-    segments: List[TranscriptionSegment]
+    segments: list[TranscriptionSegment]
     detected_language: str
     total_duration: float
 
@@ -68,7 +69,7 @@ class TranslationResponse(BaseModel):
     project_id: str
     source_language: str
     target_language: str
-    segments: List[TranslatedSegment]
+    segments: list[TranslatedSegment]
 
 
 class ProjectCreateRequest(BaseModel):
@@ -76,7 +77,7 @@ class ProjectCreateRequest(BaseModel):
     name: str = Field(..., description="Project name")
     audio_id: str = Field(..., description="Source audio file ID")
     target_language: str = Field(..., description="Target language code")
-    source_language: Optional[str] = Field(None, description="Source language (auto-detect if None)")
+    source_language: str | None = Field(None, description="Source language (auto-detect if None)")
     transcription_model: str = Field("base", description="Whisper model")
     translation_provider: str = Field("local_nllb", description="Translation provider")
 
@@ -85,7 +86,7 @@ class ProjectInfo(BaseModel):
     """Translation project information."""
     project_id: str
     name: str
-    source_language: Optional[str]
+    source_language: str | None
     target_language: str
     status: str
     progress: float
@@ -119,24 +120,24 @@ class LanguageInfo(BaseModel):
 async def create_project(request: ProjectCreateRequest):
     """
     Create a new translation project.
-    
+
     Phase 10.3.1: Whisper integration.
-    
+
     Args:
         request: Project creation parameters
-        
+
     Returns:
         Created project info
     """
     try:
         from backend.services.translation_service import (
-            get_translation_service,
             TranscriptionModel,
             TranslationProvider,
+            get_translation_service,
         )
-        
+
         service = get_translation_service()
-        
+
         # Map model string to enum
         model_map = {
             "tiny": TranscriptionModel.WHISPER_TINY,
@@ -147,17 +148,17 @@ async def create_project(request: ProjectCreateRequest):
             "large-v3": TranscriptionModel.WHISPER_LARGE_V3,
             "vosk": TranscriptionModel.VOSK,
         }
-        
+
         provider_map = {
             "local_nllb": TranslationProvider.LOCAL_NLLB,
             "local_opus": TranslationProvider.LOCAL_OPUS,
             "libretranslate": TranslationProvider.LIBRETRANSLATE,
             "argos": TranslationProvider.ARGOS,
         }
-        
+
         model = model_map.get(request.transcription_model, TranscriptionModel.WHISPER_BASE)
         provider = provider_map.get(request.translation_provider, TranslationProvider.LOCAL_NLLB)
-        
+
         project = await service.create_project(
             name=request.name,
             source_audio_path=request.audio_id,  # Will be resolved by service
@@ -166,7 +167,7 @@ async def create_project(request: ProjectCreateRequest):
             transcription_model=model,
             translation_provider=provider,
         )
-        
+
         return ProjectInfo(
             project_id=project.project_id,
             name=project.name,
@@ -176,12 +177,12 @@ async def create_project(request: ProjectCreateRequest):
             progress=project.progress,
             segment_count=len(project.transcribed_segments),
         )
-    
+
     except Exception as e:
         logger.error(f"Failed to create translation project: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create project: {str(e)}"
+            detail=f"Failed to create project: {e!s}"
         ) from e
 
 
@@ -189,22 +190,22 @@ async def create_project(request: ProjectCreateRequest):
 async def transcribe_project(project_id: str, word_timestamps: bool = True):
     """
     Transcribe audio for a project.
-    
+
     Phase 10.3.1: Whisper integration with word timestamps.
-    
+
     Args:
         project_id: Project ID
         word_timestamps: Include word-level timestamps
-        
+
     Returns:
         Transcription segments
     """
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         segments = await service.transcribe(project_id, word_timestamps=word_timestamps)
-        
+
         if not segments:
             project = service.get_project(project_id)
             if not project:
@@ -217,9 +218,9 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
                     status_code=500,
                     detail="Transcription failed"
                 )
-        
+
         project = service.get_project(project_id)
-        
+
         return TranscriptionResponse(
             project_id=project_id,
             segments=[
@@ -236,14 +237,14 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
             detected_language=project.source_language or "unknown",
             total_duration=segments[-1].end_time if segments else 0.0,
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Transcription failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Transcription failed: {str(e)}"
+            detail=f"Transcription failed: {e!s}"
         ) from e
 
 
@@ -251,36 +252,36 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
 async def translate_project(project_id: str, preserve_timing: bool = True):
     """
     Translate transcribed segments.
-    
+
     Phase 10.3.2: Translation API hookup.
     Phase 10.3.3: Timing preservation.
-    
+
     Args:
         project_id: Project ID
         preserve_timing: Adjust translations for timing
-        
+
     Returns:
         Translated segments
     """
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         segments = await service.translate(project_id, preserve_timing=preserve_timing)
-        
+
         project = service.get_project(project_id)
         if not project:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         if not segments and project.status == "failed":
             raise HTTPException(
                 status_code=500,
                 detail="Translation failed"
             )
-        
+
         return TranslationResponse(
             project_id=project_id,
             source_language=project.source_language or "unknown",
@@ -297,14 +298,14 @@ async def translate_project(project_id: str, preserve_timing: bool = True):
                 for s in segments
             ],
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Translation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Translation failed: {str(e)}"
+            detail=f"Translation failed: {e!s}"
         ) from e
 
 
@@ -312,65 +313,65 @@ async def translate_project(project_id: str, preserve_timing: bool = True):
 async def export_subtitles(project_id: str, request: SubtitleExportRequest):
     """
     Export subtitles in various formats.
-    
+
     Args:
         project_id: Project ID
         request: Export parameters
-        
+
     Returns:
         Path to exported subtitle file
     """
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
-        
+
         if request.project_id != project_id:
             raise HTTPException(
                 status_code=400,
                 detail="Project ID mismatch"
             )
-        
+
         file_path = await service.export_subtitles(
             project_id=project_id,
             format=request.format,
             use_translation=request.use_translation,
         )
-        
+
         if not file_path:
             raise HTTPException(
                 status_code=500,
                 detail="Subtitle export failed"
             )
-        
+
         project = service.get_project(project_id)
         segment_count = len(project.translated_segments if request.use_translation else project.transcribed_segments)
-        
+
         return SubtitleExportResponse(
             file_path=file_path,
             format=request.format,
             segment_count=segment_count,
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Subtitle export failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Subtitle export failed: {str(e)}"
+            detail=f"Subtitle export failed: {e!s}"
         ) from e
 
 
-@router.get("/projects", response_model=List[ProjectInfo])
+@router.get("/projects", response_model=list[ProjectInfo])
 async def list_projects():
     """List all translation projects."""
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         projects = service.list_projects()
-        
+
         return [
             ProjectInfo(
                 project_id=p.project_id,
@@ -383,12 +384,12 @@ async def list_projects():
             )
             for p in projects
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list projects: {str(e)}"
+            detail=f"Failed to list projects: {e!s}"
         ) from e
 
 
@@ -397,16 +398,16 @@ async def get_project(project_id: str):
     """Get translation project details."""
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         project = service.get_project(project_id)
-        
+
         if not project:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         return ProjectInfo(
             project_id=project.project_id,
             name=project.name,
@@ -416,14 +417,14 @@ async def get_project(project_id: str):
             progress=project.progress,
             segment_count=len(project.transcribed_segments),
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get project: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get project: {str(e)}"
+            detail=f"Failed to get project: {e!s}"
         ) from e
 
 
@@ -432,47 +433,47 @@ async def delete_project(project_id: str):
     """Delete a translation project."""
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         success = service.delete_project(project_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Project '{project_id}' not found"
             )
-        
+
         return {"success": True, "message": f"Project '{project_id}' deleted"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to delete project: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete project: {str(e)}"
+            detail=f"Failed to delete project: {e!s}"
         ) from e
 
 
-@router.get("/languages", response_model=List[LanguageInfo])
+@router.get("/languages", response_model=list[LanguageInfo])
 async def list_languages():
     """List supported languages."""
     try:
         from backend.services.translation_service import get_translation_service
-        
+
         service = get_translation_service()
         languages = service.get_supported_languages()
-        
+
         return [
             LanguageInfo(code=code, name=name)
             for code, name in languages.items()
         ]
-    
+
     except Exception as e:
         logger.error(f"Failed to list languages: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list languages: {str(e)}"
+            detail=f"Failed to list languages: {e!s}"
         ) from e
 
 

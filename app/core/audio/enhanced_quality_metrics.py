@@ -9,8 +9,9 @@ Compatible with:
 - pyloudnorm>=0.1.1
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -36,7 +37,6 @@ except ImportError:
 try:
     # Import directly to avoid circular import issues
     import importlib.util
-    import sys
 
     # Try to import quality_metrics module
     spec = importlib.util.find_spec("app.core.engines.quality_metrics")
@@ -113,10 +113,10 @@ class EnhancedQualityMetrics:
     def calculate_all(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
-        reference_audio: Optional[Union[str, np.ndarray]] = None,
+        sample_rate: int | None = None,
+        reference_audio: str | np.ndarray | None = None,
         include_advanced: bool = True,
-    ) -> Dict[str, Union[float, Dict, List]]:
+    ) -> dict[str, float | dict | list]:
         """
         Calculate all quality metrics for audio.
 
@@ -187,7 +187,7 @@ class EnhancedQualityMetrics:
 
     def _calculate_lufs_metrics(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate LUFS-based loudness metrics."""
         if not self.lufs_meter:
             return {}
@@ -214,7 +214,7 @@ class EnhancedQualityMetrics:
 
     def _calculate_spectral_metrics(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate advanced spectral metrics."""
         if not HAS_LIBROSA:
             return {}
@@ -259,7 +259,7 @@ class EnhancedQualityMetrics:
 
     def _calculate_prosody_metrics(
         self, audio: np.ndarray, sample_rate: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate prosody-related metrics."""
         if not HAS_LIBROSA:
             return {}
@@ -270,7 +270,7 @@ class EnhancedQualityMetrics:
                 audio = np.mean(audio, axis=1)
 
             # Extract F0 (fundamental frequency)
-            f0, voiced_flag, voiced_probs = librosa.pyin(
+            f0, voiced_flag, _voiced_probs = librosa.pyin(
                 audio,
                 fmin=librosa.note_to_hz("C2"),
                 fmax=librosa.note_to_hz("C7"),
@@ -314,7 +314,7 @@ class EnhancedQualityMetrics:
             logger.warning(f"Prosody metrics failed: {e}")
             return {}
 
-    def _calculate_quality_score(self, metrics: Dict) -> float:
+    def _calculate_quality_score(self, metrics: dict) -> float:
         """Calculate overall quality score from all metrics."""
         score = 0.0
         weight_sum = 0.0
@@ -372,8 +372,8 @@ class EnhancedQualityMetrics:
         self,
         audio1: np.ndarray,
         audio2: np.ndarray,
-        sample_rate: Optional[int] = None,
-    ) -> Dict[str, Union[float, Dict]]:
+        sample_rate: int | None = None,
+    ) -> dict[str, float | dict]:
         """
         Compare two audio samples and calculate similarity metrics.
 
@@ -440,9 +440,9 @@ def create_enhanced_quality_metrics(
 def calculate_enhanced_quality_metrics(
     audio: np.ndarray,
     sample_rate: int = 24000,
-    reference_audio: Optional[Union[str, np.ndarray]] = None,
+    reference_audio: str | np.ndarray | None = None,
     include_advanced: bool = True,
-) -> Dict[str, Union[float, Dict, List]]:
+) -> dict[str, float | dict | list]:
     """
     Convenience function to calculate enhanced quality metrics.
 

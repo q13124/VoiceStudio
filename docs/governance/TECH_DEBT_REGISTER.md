@@ -1,6 +1,6 @@
 # VoiceStudio Technical Debt Register
 
-> **Last Updated**: 2026-02-09  
+> **Last Updated**: 2026-02-13  
 > **Owner**: Overseer (Role 0)  
 > **Purpose**: Canonical registry of all known technical debt, limitations, and future enhancements
 
@@ -8,72 +8,9 @@
 
 ## Active Technical Debt
 
-### HIGH Priority
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-001** | Chatterbox torch+SM120 | MITIGATED via TD-015 venv families. venv_advanced_tts uses torch 2.6.0+cu124. SM 120 GPU works with CUDA 12.4 driver. | Chatterbox usable | Role 5 | 2026-01-29 | CLOSED |
-| **TD-002** | Release build suppressions | Release build passes (0 warnings, 0 errors); no suppressions needed | Build clean | Role 2 | 2026-01-29 | CLOSED |
-| **TD-013** | VRAM Resource Scheduler | Implemented: per-engine VRAM budgets, eviction policy for low-priority jobs | OOM prevention implemented | Role 4/5 | 2026-01-30 | CLOSED |
-| **TD-014** | Circuit Breaker Pattern | Implemented and wired into voice, image_gen, video_gen, rvc routes | Cascading failures prevented | Role 4 | 2026-01-30 | CLOSED |
-| **TD-015** | Venv Families Strategy | Implemented: VenvFamilyManager, 3 families (core_tts, advanced_tts, stt), 10 engine manifests updated | Dependency isolation enabled | Role 5 | 2026-01-30 | CLOSED |
-
-### MEDIUM Priority
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-003** | Python CVE: protobuf | protobuf 6.33.4 installed (CVE fixed at 5.28.3) | Security RESOLVED | Role 4 | 2026-01-29 | CLOSED |
-| **TD-004** | ViewModel DI migration | All 68 ViewModels use IViewModelContext DI; legacy constructor unused | Migration complete | Role 3 | 2026-01-28 | CLOSED |
-| **TD-005** | Wizard e2e proof | Wizard flow proof passes (4 PASS, 2 SKIP due to engine deps) | QA complete | Role 3/5 | 2026-01-29 | CLOSED |
-| **TD-017** | OpenAPI spec regeneration | docs/api/openapi.json regenerated (508 paths) | Verification complete | Role 4 | 2026-02-02 | CLOSED |
-
-### Phase 7 Quality Infrastructure (from Error Pattern Retrospective)
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-018** | Empty Catch Remediation | All empty catches remediated: 118 C# + 57 Python = 175 total. C# uses ErrorLogger.LogWarning(); Python has allowlist comments. Scripts: fix_empty_catches.py, fix_bare_excepts.py. | Error visibility | Role 7 | 2026-02-04 | CLOSED |
-| **TD-019** | Python Path Standardization | **CLOSED.** 27 scripts migrated to use `_env_setup.py`. All manual `sys.path` manipulation removed. Standard pattern: `from _env_setup import PROJECT_ROOT`. 26 standalone scripts unchanged. | Import reliability | Role 4 | 2026-02-04 | CLOSED |
-| **TD-020** | XAML Safety Tooling | Infrastructure complete; remaining work is documentation | Build stability | Role 2 | 2026-02-04 | CLOSED |
-| **TD-021** | Observability Infrastructure | Phase 8: DiagnosticsPanel enhanced with correlation ID filtering, copy, search. Full trace view pending. | Debugging ease | Role 4 | 2026-02-04 | CLOSED |
-| **TD-022** | Contract Validation | Phase 8: 44 engine manifests now have contract specs. add_engine_contracts.py script available. | API consistency | Role 1/5 | 2026-02-04 | CLOSED |
-
-### Phase 8 Architecture Optimization
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-023** | Route Boundary Violations | **CLOSED.** All 37 violations in 20 files fixed. EngineService extended with quality metrics, engine accessors. All routes now use EngineService instead of direct app.core.engines imports. | Architecture | Role 4 | 2026-02-04 | CLOSED |
-| **TD-024** | Static ServiceProvider Calls | **CLOSED.** All 47 static calls in 43 ViewModels migrated to AppServices.TryGetXxx() pattern. fix_static_service_calls.py script created. migrate_di.py shows 0 remaining issues. | DI consistency | Role 3 | 2026-02-04 | CLOSED |
-| **TD-025** | ADR Formalization | ADR-017, ADR-008, ADR-011 formalized with decisions. All 22 ADRs now have formal decisions. | Documentation | Role 1 | 2026-02-04 | CLOSED |
-
-### Phase 9 Audit Remediation (2026-02-09)
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-026** | Route Ordering Fixes | **CLOSED.** Fixed FastAPI route ordering in shortcuts.py: /check-conflict, /categories, /reset-all moved before parameterized routes to prevent path conflicts. | Test reliability | Role 4 | 2026-02-09 | CLOSED |
-| **TD-027** | Build Warning Remediation | **CLOSED.** Fixed CS0108 (member hiding with `new` keyword), CS1998 (async without await converted to sync), CS0168 (unused variable discarded). BackendClient.cs syntax error fixed. | Build quality | Role 2 | 2026-02-09 | CLOSED |
-| **TD-028** | Test Fixture Improvements | **CLOSED.** Updated mixer test to properly initialize project state before simulate endpoint. Removed stale skip decorators from shortcut tests. | Test coverage | Role 4 | 2026-02-09 | CLOSED |
-
-### Phase 10 Stub/Placeholder Remediation (2026-02-12)
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-029** | Mock Translation Removal | **CLOSED.** Removed `_mock_translate()` from voice/translation/engine.py. Translation now returns original text with warning when models unavailable. | User clarity | Role 5 | 2026-02-12 | CLOSED |
-| **TD-030** | Sample Data Removal | **CLOSED.** Removed hardcoded sample plugins from PluginGateway.cs, hardcoded profiles from VoiceProfileViewModel.cs, sample SLO data from SLODashboardViewModel.cs. UI now shows empty state with error messages when backend unavailable. | Data integrity | Role 3 | 2026-02-12 | CLOSED |
-| **TD-031** | 501 Endpoint Fixes | **CLOSED.** Fixed feedback.py to use module-level imports (fail-fast). Fixed search.py to return 503 when storage unavailable. Fixed todo_panel.py to raise HTTPException on DB failure instead of returning None. | API reliability | Role 4 | 2026-02-12 | CLOSED |
-| **TD-032** | Engine Placeholder Updates | **CLOSED.** Updated s2s_translator.py to return original text instead of fake `[Translated to X]` prefix. Updated rvc_realtime.py to pass through audio unchanged when model unavailable (with logged warning). | User clarity | Role 5 | 2026-02-12 | CLOSED |
-| **TD-033** | Centralized Config Verification | **CLOSED.** Verified app_config.py and AppConfig.cs contain comprehensive timeout, port, URL, and buffer configurations with environment variable overrides. | Configuration | Role 4 | 2026-02-12 | CLOSED |
-
-### LOW Priority
-
-| ID | Title | Description | Impact | Owner | Created | Target |
-|----|-------|-------------|--------|-------|---------|--------|
-| **TD-006** | Ledger warnings | VS-0025 and VS-0032 are expected validation warnings | Documentation only | Role 0 | 2026-01-29 | CLOSED |
-| **TD-007** | Warning count | Debug build reduced 4990→2046 (54%); CI budget at 2500 | Code quality | Role 2 | 2026-01-29 | CLOSED |
-| **TD-008** | Git History Reconstruction | Documentation-git disconnect from branch divergence | Process failure | Role 0 | 2026-01-29 | CLOSED |
-| **TD-009** | Commit Discipline Enforcement | Pre-commit hooks verified (completion_guard, compatibility_matrix) | Process improvement | Role 0 | 2026-01-30 | CLOSED |
-| **TD-010** | Branch Merge Policy | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | Complete | Role 0 | 2026-01-30 | CLOSED |
-| **TD-011** | Interface Implementations | All interfaces implemented: ViewModelContext, TelemetryServiceStub, JsonProjectRepository | Complete | Role 3/4 | 2026-01-30 | CLOSED |
-| **TD-012** | Namespace Cleanup | UseCases namespace correctly defined and used; no issues | Verified correct | Role 2/3 | 2026-01-30 | CLOSED |
+| ID | Title | Priority | Added | Category | Description |
+|----|-------|----------|-------|----------|-------------|
+| **TD-039** | Dynamic Transcription Engine Discovery | Medium | 2026-02-14 | UI/Backend | Transcription engine dropdown currently hardcoded. Should dynamically query backend for available engines based on installed dependencies. WhisperX temporarily removed pending this implementation. See `TranscribeViewModel.cs` TODO comment. |
 
 ---
 
@@ -98,6 +35,27 @@
 | **TD-001** | Chatterbox torch+SM120 | 2026-02-02 | Mitigated via TD-015 venv families; venv_advanced_tts with torch 2.6.0+cu124 | proof_runs/chatterbox_baseline_20260202_080607 (4/4 PASS) |
 | **TD-012** | Namespace Cleanup | 2026-02-02 | UseCases namespace correctly defined and used; no issues found | Grep: App.UseCases |
 | **TD-010** | Branch Merge Policy | 2026-02-02 | Policy created: docs/governance/BRANCH_MERGE_POLICY.md | BRANCH_MERGE_POLICY.md |
+| **TD-018** | Empty Catch Remediation | 2026-02-04 | 118 C# + 57 Python remediated; ErrorLogger.LogWarning / allowlist | fix_empty_catches.py, fix_bare_excepts.py |
+| **TD-019** | Python Path Standardization | 2026-02-04 | 27 scripts use _env_setup.py; PROJECT_ROOT pattern | Grep: _env_setup |
+| **TD-020** | XAML Safety Tooling | 2026-02-04 | Infrastructure complete | Build stability |
+| **TD-021** | Observability Infrastructure | 2026-02-04 | DiagnosticsPanel correlation ID, copy, search | Role 4 |
+| **TD-022** | Contract Validation | 2026-02-04 | 44 engine manifests with contract specs | add_engine_contracts.py |
+| **TD-023** | Route Boundary Violations | 2026-02-04 | 37 violations fixed; EngineService extended | 20 files |
+| **TD-024** | Static ServiceProvider Calls | 2026-02-04 | 47 static calls migrated to AppServices.TryGetXxx | migrate_di.py 0 issues |
+| **TD-025** | ADR Formalization | 2026-02-04 | All 22 ADRs have formal decisions | ADR-017, ADR-008, ADR-011 |
+| **TD-026** | Route Ordering Fixes | 2026-02-09 | shortcuts.py parameterized routes fixed | Test reliability |
+| **TD-027** | Build Warning Remediation | 2026-02-09 | CS0108, CS1998, CS0168, BackendClient fix | dotnet build |
+| **TD-028** | Test Fixture Improvements | 2026-02-09 | Mixer test state; shortcut skip decorators removed | Test coverage |
+| **TD-029** | Mock Translation Removal | 2026-02-12 | voice/translation/engine.py returns original + warning | User clarity |
+| **TD-030** | Sample Data Removal | 2026-02-12 | PluginGateway, VoiceProfileViewModel, SLODashboardViewModel | Data integrity |
+| **TD-031** | 501 Endpoint Fixes | 2026-02-12 | feedback.py, search.py, todo_panel.py | API reliability |
+| **TD-032** | Engine Placeholder Updates | 2026-02-12 | s2s_translator, rvc_realtime pass-through | User clarity |
+| **TD-033** | Centralized Config Verification | 2026-02-12 | app_config.py, AppConfig.cs verified | Configuration |
+| **TD-034** | Deferred UI Controls | 2026-02-12 | 7 controls implemented (Canvas/Path/Shapes); no Win2D | Controls/*.xaml.cs |
+| **TD-035** | DAW Project Import | 2026-02-12 | REAPER RPP + Audacity AUP3/AUP in daw_integration.py | test_daw_integration.py 14/14 PASS |
+| **TD-036** | Workspace automated UI smoke step | 2026-02-12 | Gate C workspace switch + assert in MainWindow | ui_smoke_steps_latest.log |
+| **TD-037** | WhisperX Engine Implementation | 2026-02-12 | WhisperXEngine in app/core/engines/whisperx_engine.py; manifest engines/audio/whisperx; TranscribeViewModel.Engines includes "whisperx"; transcribe route supports diarization | whisperx_engine.py, transcribe.py, TranscribeViewModel.cs |
+| **TD-038** | DAW Export Presets | 2026-02-12 | Pre-configured presets in daw_integration.py (DAW_EXPORT_PRESETS, get_daw_export_presets, get_daw_export_preset_by_id); GET /api/integrations/daw/presets; export accepts preset_id | daw_integration.py, integrations.py, test_daw_integration.py |
 
 ---
 
@@ -247,3 +205,7 @@
 | 2026-02-02 | Closed TD-005 (Wizard e2e proof 4/4 PASS, 2 SKIP) |
 | 2026-02-04 | Added TD-018 through TD-022 from Phase 7 Quality Infrastructure plan |
 | 2026-02-04 | Closed TD-020 (XAML Safety Tooling infrastructure complete) |
+| 2026-02-12 | Register hygiene: moved all CLOSED items (TD-001–TD-036) to Closed section; Active contained only TD-037 (WhisperX) |
+| 2026-02-12 | Closed TD-034 (7 UI controls implemented), TD-035 (DAW import), TD-036 (workspace smoke); added resolution rows to Closed table |
+| 2026-02-12 | Closed TD-037 (WhisperX engine): whisperx_engine.py, manifest engines/audio/whisperx, TranscribeViewModel.Engines + "whisperx", transcribe route diarization; Active table now empty |
+| 2026-02-12 | TD-038 DAW Export Presets: implemented DAW_EXPORT_PRESETS, get_daw_export_presets, get_daw_export_preset_by_id; GET /daw/presets; export preset_id; tests in test_daw_integration.py; closed same day |

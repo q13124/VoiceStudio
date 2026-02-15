@@ -11,6 +11,8 @@ Compatible with:
 - Command-line interface for synthesis
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -19,7 +21,6 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import soundfile as sf
@@ -39,7 +40,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_quality,
         match_voice_profile,
         normalize_lufs,
@@ -75,8 +76,8 @@ class RHVoiceEngine(EngineProtocol):
 
     def __init__(
         self,
-        rhvoice_path: Optional[str] = None,
-        device: Optional[str] = None,
+        rhvoice_path: str | None = None,
+        device: str | None = None,
         gpu: bool = False,
     ):
         """
@@ -100,8 +101,8 @@ class RHVoiceEngine(EngineProtocol):
         self._cache_max_size = 100  # Maximum cached synthesis results
 
     def _find_executable(
-        self, name: str, custom_path: Optional[str] = None
-    ) -> Optional[str]:
+        self, name: str, custom_path: str | None = None
+    ) -> str | None:
         """Find executable in PATH or custom path."""
         if (
             custom_path
@@ -252,12 +253,12 @@ class RHVoiceEngine(EngineProtocol):
         self,
         text: str,
         language: str = "ru",
-        voice: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        voice: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using RHVoice.
 
@@ -278,9 +279,8 @@ class RHVoiceEngine(EngineProtocol):
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         try:
             # Use reusable temp directory for better performance
@@ -433,10 +433,10 @@ class RHVoiceEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -468,20 +468,18 @@ class RHVoiceEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_voices(self, language: Optional[str] = None) -> List[str]:
+    def get_voices(self, language: str | None = None) -> list[str]:
         """Get available voices."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
         if language:
             return [v for v in self.voices if f"({language})" in v]
         return self.voices
 
-    def get_languages(self) -> List[str]:
+    def get_languages(self) -> list[str]:
         """Get available languages."""
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
         return (
             self.available_languages
             if self.available_languages
@@ -519,15 +517,15 @@ class RHVoiceEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        text_list: List[str],
+        text_list: list[str],
         language: str = "ru",
-        voice: Optional[str] = None,
-        output_paths: Optional[List[Union[str, Path]]] = None,
+        voice: str | None = None,
+        output_paths: list[str | Path] | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized parallel processing.
 
@@ -545,9 +543,8 @@ class RHVoiceEngine(EngineProtocol):
             List of audio arrays (numpy) or None if synthesis failed,
             or tuples of (audio, quality_metrics) if calculate_quality=True
         """
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(text_list)
+        if not self._initialized and not self.initialize():
+            return [None] * len(text_list)
 
         # Use configured batch size if not specified
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
@@ -583,7 +580,7 @@ class RHVoiceEngine(EngineProtocol):
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             results = list(
-                executor.map(synthesize_single, zip(text_list, output_paths))
+                executor.map(synthesize_single, zip(text_list, output_paths, strict=False))
             )
 
         return results
@@ -593,14 +590,14 @@ class RHVoiceEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "synthesis_cache_size": len(self._synthesis_cache),
             "max_cache_size": self._cache_max_size,
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -615,7 +612,7 @@ class RHVoiceEngine(EngineProtocol):
 
 
 def create_rhvoice_engine(
-    rhvoice_path: Optional[str] = None, device: Optional[str] = None, gpu: bool = False
+    rhvoice_path: str | None = None, device: str | None = None, gpu: bool = False
 ) -> RHVoiceEngine:
     """Factory function to create an RHVoice engine instance."""
     return RHVoiceEngine(rhvoice_path=rhvoice_path, device=device, gpu=gpu)

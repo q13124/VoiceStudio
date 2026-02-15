@@ -4,9 +4,10 @@ Timeline Markers Routes
 Endpoints for managing timeline markers for navigation and organization.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, field_validator
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/markers", tags=["markers"])
 
 # In-memory markers storage (replace with database in production)
-_markers: Dict[str, Dict] = {}
+_markers: dict[str, dict] = {}
 _MAX_MARKERS = 10000  # Maximum number of markers to keep
 
 
@@ -29,8 +30,8 @@ class Marker(BaseModel):
     name: str
     time: float  # Time in seconds
     color: str = "#00FFFF"  # Hex color
-    category: Optional[str] = None
-    description: Optional[str] = None
+    category: str | None = None
+    description: str | None = None
     project_id: str
     created: str  # ISO datetime string
     modified: str  # ISO datetime string
@@ -41,9 +42,9 @@ class MarkerCreateRequest(BaseModel):
 
     name: str
     time: float
-    color: Optional[str] = None
-    category: Optional[str] = None
-    description: Optional[str] = None
+    color: str | None = None
+    category: str | None = None
+    description: str | None = None
     project_id: str
 
     @field_validator("name")
@@ -66,7 +67,7 @@ class MarkerCreateRequest(BaseModel):
 
     @field_validator("color")
     @classmethod
-    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+    def validate_color(cls, v: str | None) -> str | None:
         """Validate color format."""
         if v and not v.startswith("#"):
             raise ValueError("Color must be a hex code starting with #")
@@ -76,7 +77,7 @@ class MarkerCreateRequest(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate description length."""
         if v and len(v) > 500:
             raise ValueError("Description cannot exceed 500 characters")
@@ -86,15 +87,15 @@ class MarkerCreateRequest(BaseModel):
 class MarkerUpdateRequest(BaseModel):
     """Request to update a marker."""
 
-    name: Optional[str] = None
-    time: Optional[float] = None
-    color: Optional[str] = None
-    category: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = None
+    time: float | None = None
+    color: str | None = None
+    category: str | None = None
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+    def validate_name(cls, v: str | None) -> str | None:
         """Validate marker name."""
         if v is not None:
             if not v or not v.strip():
@@ -106,7 +107,7 @@ class MarkerUpdateRequest(BaseModel):
 
     @field_validator("time")
     @classmethod
-    def validate_time(cls, v: Optional[float]) -> Optional[float]:
+    def validate_time(cls, v: float | None) -> float | None:
         """Validate marker time."""
         if v is not None and v < 0.0:
             raise ValueError("Marker time cannot be negative")
@@ -114,7 +115,7 @@ class MarkerUpdateRequest(BaseModel):
 
     @field_validator("color")
     @classmethod
-    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+    def validate_color(cls, v: str | None) -> str | None:
         """Validate color format."""
         if v:
             if not v.startswith("#"):
@@ -125,18 +126,18 @@ class MarkerUpdateRequest(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate description length."""
         if v and len(v) > 500:
             raise ValueError("Description cannot exceed 500 characters")
         return v
 
 
-@router.get("", response_model=List[Marker])
+@router.get("", response_model=list[Marker])
 @cache_response(ttl=30)  # Cache for 30 seconds (markers may change frequently)
 async def get_markers(
-    project_id: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
+    project_id: str | None = Query(None),
+    category: str | None = Query(None),
 ):
     """Get all markers, optionally filtered."""
     try:
@@ -171,7 +172,7 @@ async def get_markers(
         logger.error(f"Failed to get markers: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve markers: {str(e)}",
+            detail=f"Failed to retrieve markers: {e!s}",
         ) from e
 
 
@@ -203,8 +204,8 @@ async def get_marker(marker_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting marker {marker_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get marker: {str(e)}")
+        logger.error(f"Error getting marker {marker_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get marker: {e!s}")
 
 
 @router.post("", response_model=Marker)
@@ -255,7 +256,7 @@ async def create_marker(request: MarkerCreateRequest):
         logger.error(f"Failed to create marker: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create marker: {str(e)}",
+            detail=f"Failed to create marker: {e!s}",
         ) from e
 
 
@@ -303,7 +304,7 @@ async def update_marker(marker_id: str, request: MarkerUpdateRequest):
         logger.error(f"Failed to update marker {marker_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update marker: {str(e)}",
+            detail=f"Failed to update marker: {e!s}",
         ) from e
 
 
@@ -327,13 +328,13 @@ async def delete_marker(marker_id: str):
         logger.error(f"Failed to delete marker {marker_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete marker: {str(e)}",
+            detail=f"Failed to delete marker: {e!s}",
         ) from e
 
 
 @router.get("/categories/list")
 @cache_response(ttl=300)  # Cache for 5 minutes (categories are relatively static)
-async def get_categories(project_id: Optional[str] = Query(None)):
+async def get_categories(project_id: str | None = Query(None)):
     """Get all marker categories for a project."""
     try:
         markers = list(_markers.values())
@@ -348,12 +349,12 @@ async def get_categories(project_id: Optional[str] = Query(None)):
                 categories.add(cat)
 
         logger.debug(f"Retrieved {len(categories)} categories for project: {project_id or 'all'}")
-        return {"categories": sorted(list(categories))}
+        return {"categories": sorted(categories)}
     except Exception as e:
-        logger.error(f"Error getting categories for project {project_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error getting categories for project {project_id}: {e!s}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get categories: {str(e)}",
+            detail=f"Failed to get categories: {e!s}",
         ) from e
 
 
@@ -364,7 +365,7 @@ async def get_categories(project_id: Optional[str] = Query(None)):
 project_markers_router = APIRouter(prefix="/api/projects", tags=["project-markers"])
 
 
-@project_markers_router.get("/{project_id}/markers", response_model=List[Marker])
+@project_markers_router.get("/{project_id}/markers", response_model=list[Marker])
 @cache_response(ttl=30)
 async def get_project_markers(project_id: str):
     """Get all markers for a specific project."""
@@ -383,7 +384,7 @@ async def get_project_markers(project_id: str):
         logger.error(f"Error getting markers for project {project_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get project markers: {str(e)}",
+            detail=f"Failed to get project markers: {e!s}",
         ) from e
 
 
@@ -413,5 +414,5 @@ async def get_project_marker(project_id: str, marker_id: str):
         logger.error(f"Error getting marker {marker_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get marker: {str(e)}",
+            detail=f"Failed to get marker: {e!s}",
         ) from e

@@ -9,7 +9,7 @@ For the core plugin base classes, see: backend.plugins.core
 Architecture:
     backend/plugins/core/ - Core plugin classes (Plugin, PluginMetadata)
     backend/api/plugins/ - FastAPI integration (THIS MODULE)
-    
+
 When creating a plugin:
 1. Define plugin.py with a class extending backend.plugins.Plugin
 2. Create manifest.json with entry_points.backend
@@ -34,20 +34,20 @@ from .integration import (
 from .loader import PluginLoader, get_plugin_loader, load_all_plugins
 
 __all__ = [
-    "PluginLoader",
-    "load_all_plugins",
-    "get_plugin_loader",
     "PluginHook",
-    "register_hook",
-    "unregister_hook",
+    "PluginLoader",
     "call_hook",
-    "register_event_handler",
-    "unregister_event_handler",
-    "emit_event",
-    "register_resource",
-    "unregister_resource",
-    "get_plugin_resources",
     "cleanup_plugin_resources",
-    "get_hook_count",
+    "emit_event",
     "get_event_handler_count",
+    "get_hook_count",
+    "get_plugin_loader",
+    "get_plugin_resources",
+    "load_all_plugins",
+    "register_event_handler",
+    "register_hook",
+    "register_resource",
+    "unregister_event_handler",
+    "unregister_hook",
+    "unregister_resource",
 ]

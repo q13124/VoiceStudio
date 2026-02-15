@@ -5,6 +5,8 @@ CRUD operations for model storage and management.
 Provides model fetching, updating, and checksum verification.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -12,25 +14,24 @@ import shutil
 import sys
 import tempfile
 import zipfile
-from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from ..auth import require_auth_if_enabled
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
 )
+
+from ..auth import require_auth_if_enabled
 from ..models import ApiOk
 from ..optimization import cache_response
 
 # Add app to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-from app.core.models.storage import ModelInfo, ModelStorage
+from app.core.models.storage import ModelStorage
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +59,10 @@ class ModelInfoResponse(BaseModel):
     model_path: str
     checksum: str
     size: int
-    version: Optional[str] = None
-    downloaded_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    metadata: Optional[dict] = None
+    version: str | None = None
+    downloaded_at: str | None = None
+    updated_at: str | None = None
+    metadata: dict | None = None
 
 
 class ModelRegisterRequest(BaseModel):
@@ -70,17 +71,17 @@ class ModelRegisterRequest(BaseModel):
     engine: str
     model_name: str
     model_path: str
-    version: Optional[str] = None
-    metadata: Optional[dict] = None
+    version: str | None = None
+    metadata: dict | None = None
 
 
 class ModelVerifyResponse(BaseModel):
     """Model verification response."""
 
     is_valid: bool
-    error_message: Optional[str] = None
-    expected_checksum: Optional[str] = None
-    current_checksum: Optional[str] = None
+    error_message: str | None = None
+    expected_checksum: str | None = None
+    current_checksum: str | None = None
 
 
 class StorageStatsResponse(BaseModel):
@@ -100,18 +101,18 @@ class CacheStatsResponse(BaseModel):
     cache_size: int
     max_models: int
     current_memory_mb: float
-    max_memory_mb: Optional[float]
+    max_memory_mb: float | None
     hits: int
     misses: int
     hit_rate: float
     evictions: int
     total_loaded: int
-    cached_models: List[dict]
+    cached_models: list[dict]
 
 
-@router.get("", response_model=List[ModelInfoResponse])
+@router.get("", response_model=list[ModelInfoResponse])
 @cache_response(ttl=60)  # Cache for 60 seconds (model list doesn't change frequently)
-async def list_models(engine: Optional[str] = None):
+async def list_models(engine: str | None = None):
     """List all registered models, optionally filtered by engine."""
     try:
         models = _model_storage.list_models(engine=engine)
@@ -287,7 +288,7 @@ async def export_model(engine: str, model_name: str, request: Request):
                     if model_path.is_file():
                         zipf.write(model_path, model_path.name)
                     elif model_path.is_dir():
-                        for root, dirs, files in os.walk(model_path):
+                        for root, _dirs, files in os.walk(model_path):
                             for file in files:
                                 file_path = Path(root) / file
                                 arcname = file_path.relative_to(model_path.parent)
@@ -326,7 +327,7 @@ async def export_model(engine: str, model_name: str, request: Request):
 async def import_model(
     request: Request,
     file: UploadFile = File(...),
-    engine: Optional[str] = None,
+    engine: str | None = None,
     _: None = Depends(require_auth_if_enabled),  # GAP-CRIT-004: Auth required
 ):
     """Import a model from a ZIP archive."""
@@ -381,7 +382,7 @@ async def import_model(
                         detail="Invalid model archive: missing model_info.json",
                     )
 
-                with open(metadata_file, "r") as f:
+                with open(metadata_file) as f:
                     metadata = json.load(f)
 
                 # Use provided engine or metadata engine

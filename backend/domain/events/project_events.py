@@ -7,7 +7,7 @@ Task 3.1.3: Events for project lifecycle.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
 
 from backend.domain.events.base import DomainEvent
 
@@ -15,15 +15,15 @@ from backend.domain.events.base import DomainEvent
 @dataclass
 class ProjectCreated(DomainEvent):
     """Event raised when a project is created."""
-    
+
     project_id: str = ""
     name: str = ""
-    created_by: Optional[str] = None
-    
+    created_by: str | None = None
+
     def __post_init__(self):
         self.aggregate_id = self.project_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "name": self.name,
@@ -34,15 +34,15 @@ class ProjectCreated(DomainEvent):
 @dataclass
 class ProjectUpdated(DomainEvent):
     """Event raised when a project is updated."""
-    
+
     project_id: str = ""
-    changes: Dict[str, Any] = field(default_factory=dict)
-    updated_by: Optional[str] = None
-    
+    changes: dict[str, Any] = field(default_factory=dict)
+    updated_by: str | None = None
+
     def __post_init__(self):
         self.aggregate_id = self.project_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "changes": self.changes,
@@ -53,15 +53,15 @@ class ProjectUpdated(DomainEvent):
 @dataclass
 class ProjectDeleted(DomainEvent):
     """Event raised when a project is deleted."""
-    
+
     project_id: str = ""
     name: str = ""
-    deleted_by: Optional[str] = None
-    
+    deleted_by: str | None = None
+
     def __post_init__(self):
         self.aggregate_id = self.project_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "name": self.name,
@@ -72,15 +72,15 @@ class ProjectDeleted(DomainEvent):
 @dataclass
 class ProjectStatusChanged(DomainEvent):
     """Event raised when project status changes."""
-    
+
     project_id: str = ""
     old_status: str = ""
     new_status: str = ""
-    
+
     def __post_init__(self):
         self.aggregate_id = self.project_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "old_status": self.old_status,

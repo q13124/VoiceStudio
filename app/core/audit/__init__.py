@@ -12,40 +12,40 @@ This module integrates with existing monitoring infrastructure
 (StructuredLogger, ErrorTracker) rather than replacing it.
 """
 
-from .schema import (
-    AuditEntry,
-    AuditEventType,
-    AuditActor,
-    AuditOperation,
-)
 from .audit_logger import AuditLogger, get_audit_logger, setup_audit_logger
 from .context_enricher import ContextEnricher
+from .debug_notifier import (
+    DebugRoleNotifier,
+    connect_to_issue_bridge,
+    get_debug_notifier,
+    setup_debug_notifier,
+)
 from .issue_bridge import (
     AuditIssueBridge,
     get_audit_issue_bridge,
     setup_audit_issue_bridge,
 )
-from .debug_notifier import (
-    DebugRoleNotifier,
-    get_debug_notifier,
-    setup_debug_notifier,
-    connect_to_issue_bridge,
+from .schema import (
+    AuditActor,
+    AuditEntry,
+    AuditEventType,
+    AuditOperation,
 )
 
 __all__ = [
+    "AuditActor",
     "AuditEntry",
     "AuditEventType",
-    "AuditActor",
-    "AuditOperation",
-    "AuditLogger",
-    "get_audit_logger",
-    "setup_audit_logger",
-    "ContextEnricher",
     "AuditIssueBridge",
-    "get_audit_issue_bridge",
-    "setup_audit_issue_bridge",
+    "AuditLogger",
+    "AuditOperation",
+    "ContextEnricher",
     "DebugRoleNotifier",
-    "get_debug_notifier",
-    "setup_debug_notifier",
     "connect_to_issue_bridge",
+    "get_audit_issue_bridge",
+    "get_audit_logger",
+    "get_debug_notifier",
+    "setup_audit_issue_bridge",
+    "setup_audit_logger",
+    "setup_debug_notifier",
 ]

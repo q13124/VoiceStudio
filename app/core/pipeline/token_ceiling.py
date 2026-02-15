@@ -6,11 +6,14 @@ cascaded pipeline when token usage exceeds a configurable threshold.
 This prevents runaway costs from context accumulation in S2S APIs.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -67,15 +70,15 @@ class TokenCeilingManager:
 
     def __init__(
         self,
-        config: Optional[CeilingConfig] = None,
-        on_switch: Optional[Callable] = None,
-        on_warning: Optional[Callable] = None,
+        config: CeilingConfig | None = None,
+        on_switch: Callable | None = None,
+        on_warning: Callable | None = None,
     ):
         self._config = config or CeilingConfig()
         self._on_switch = on_switch
         self._on_warning = on_warning
-        self._sessions: Dict[str, UsageRecord] = {}
-        self._switch_triggered: Dict[str, bool] = {}
+        self._sessions: dict[str, UsageRecord] = {}
+        self._switch_triggered: dict[str, bool] = {}
 
     def start_session(self, session_id: str, provider: str) -> None:
         """Start tracking a new session."""
@@ -95,7 +98,7 @@ class TokenCeilingManager:
         output_tokens: int = 0,
         audio_seconds_in: float = 0.0,
         audio_seconds_out: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Record usage and check ceiling.
 
@@ -115,14 +118,14 @@ class TokenCeilingManager:
 
         return self._check_ceiling(session_id)
 
-    def _check_ceiling(self, session_id: str) -> Dict[str, Any]:
+    def _check_ceiling(self, session_id: str) -> dict[str, Any]:
         """Check if any ceiling has been reached."""
         record = self._sessions[session_id]
         total_tokens = record.input_tokens + record.output_tokens
         elapsed_minutes = (time.time() - record.started_at) / 60.0
         estimated_cost = self._estimate_cost(record)
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "session_id": session_id,
             "total_tokens": total_tokens,
             "elapsed_minutes": round(elapsed_minutes, 1),
@@ -173,7 +176,7 @@ class TokenCeilingManager:
         )
         return token_cost + audio_cost
 
-    def get_session_status(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_session_status(self, session_id: str) -> dict[str, Any] | None:
         """Get usage status for a session."""
         if session_id not in self._sessions:
             return None
@@ -188,7 +191,7 @@ class TokenCeilingManager:
             "ceiling_reached": self._switch_triggered.get(session_id, False),
         }
 
-    def end_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def end_session(self, session_id: str) -> dict[str, Any] | None:
         """End a session and return final usage."""
         status = self.get_session_status(session_id)
         self._sessions.pop(session_id, None)

@@ -7,16 +7,18 @@ Compatible with:
 - whisper-cpp-python or direct whisper.cpp bindings
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 import subprocess
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional, Tuple, Union
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     # 1GB max
     _model_cache = get_model_cache(max_models=2, max_memory_mb=1024.0)
@@ -38,12 +40,12 @@ _WHISPER_CPP_MODEL_CACHE: OrderedDict = OrderedDict()
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 
 
-def _get_cache_key(model_path: str, language: Optional[str]) -> str:
+def _get_cache_key(model_path: str, language: str | None) -> str:
     """Generate cache key for Whisper CPP model."""
     return f"whisper_cpp::{model_path}::{language or 'auto'}"
 
 
-def _get_cached_whisper_cpp_model(model_path: str, language: Optional[str]):
+def _get_cached_whisper_cpp_model(model_path: str, language: str | None):
     """Get cached Whisper CPP model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -60,7 +62,7 @@ def _get_cached_whisper_cpp_model(model_path: str, language: Optional[str]):
     return None
 
 
-def _cache_whisper_cpp_model(model_path: str, language: Optional[str], ctx_data: Dict):
+def _cache_whisper_cpp_model(model_path: str, language: str | None, ctx_data: dict):
     """Cache Whisper CPP model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -85,10 +87,8 @@ def _cache_whisper_cpp_model(model_path: str, language: Optional[str], ctx_data:
         oldest_key, oldest_ctx = _WHISPER_CPP_MODEL_CACHE.popitem(last=False)
         try:
             if HAS_WHISPER_CPP and oldest_ctx.get("ctx") is not None:
-                try:
+                with contextlib.suppress(Exception):
                     oldest_ctx["ctx"].free()
-                except Exception:
-                    ...
             del oldest_ctx
             logger.debug(f"Evicted Whisper CPP model from cache: {oldest_key}")
         except Exception as e:
@@ -149,8 +149,8 @@ class WhisperCPPEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
-        language: Optional[str] = None,
+        model_path: str | None = None,
+        language: str | None = None,
         **kwargs,
     ):
         """
@@ -236,10 +236,8 @@ class WhisperCPPEngine(EngineProtocol):
         try:
             if self._ctx is not None:
                 if HAS_WHISPER_CPP:
-                    try:
+                    with contextlib.suppress(Exception):
                         self._ctx.free()
-                    except Exception:
-                        ...
                 self._ctx = None
 
             if self._model is not None:
@@ -260,7 +258,7 @@ class WhisperCPPEngine(EngineProtocol):
         """Get the device being used (whisper.cpp uses CPU by default)."""
         return "cpu"
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         return {
             "engine": "whisper_cpp",
@@ -277,11 +275,11 @@ class WhisperCPPEngine(EngineProtocol):
 
     def transcribe(
         self,
-        audio: Union[str, bytes],
-        language: Optional[str] = None,
+        audio: str | bytes,
+        language: str | None = None,
         output_format: str = "text",
         **kwargs,
-    ) -> Optional[Union[str, Dict]]:
+    ) -> str | dict | None:
         """
         Transcribe audio to text using whisper.cpp.
 
@@ -323,9 +321,8 @@ class WhisperCPPEngine(EngineProtocol):
                 return cached_result.get("text", "")
 
             # Lazy load model if needed
-            if self._model is None:
-                if not self._load_model():
-                    return None
+            if self._model is None and not self._load_model():
+                return None
 
             # Process audio
             audio_data, sample_rate = self._load_audio(audio)
@@ -447,7 +444,7 @@ class WhisperCPPEngine(EngineProtocol):
             logger.error(f"Failed to load whisper.cpp model: {e}", exc_info=True)
             return False
 
-    def _load_audio(self, audio: Union[str, bytes]) -> Tuple[Optional[np.ndarray], int]:
+    def _load_audio(self, audio: str | bytes) -> tuple[np.ndarray | None, int]:
         """Load audio file or bytes."""
         try:
             if isinstance(audio, str):
@@ -474,9 +471,9 @@ class WhisperCPPEngine(EngineProtocol):
         self,
         audio_data: np.ndarray,
         sample_rate: int,
-        language: Optional[str],
+        language: str | None,
         **kwargs,
-    ) -> Optional[Dict]:
+    ) -> dict | None:
         """Perform actual transcription using whisper.cpp."""
         try:
             if not HAS_NUMPY:
@@ -561,7 +558,7 @@ class WhisperCPPEngine(EngineProtocol):
                                         import json
 
                                         with open(
-                                            json_output_path, "r", encoding="utf-8"
+                                            json_output_path, encoding="utf-8"
                                         ) as f:
                                             json_result = json.load(f)
                                             # Handle multiple whisper.cpp JSON formats:
@@ -622,10 +619,8 @@ class WhisperCPPEngine(EngineProtocol):
                                     )
 
                                 # Clean up temp file
-                                try:
+                                with contextlib.suppress(Exception):
                                     os.unlink(tmp_path)
-                                except Exception:
-                                    ...
 
                                 return {
                                     "text": text_output,
@@ -645,10 +640,8 @@ class WhisperCPPEngine(EngineProtocol):
                                 except Exception:
                                     ...
                         # Clean up temp file
-                        try:
+                        with contextlib.suppress(Exception):
                             os.unlink(tmp_path)
-                        except Exception:
-                            ...
                     except Exception as e:
                         logger.warning(f"Binary transcription failed: {e}")
                         try:
@@ -692,7 +685,7 @@ class WhisperCPPEngine(EngineProtocol):
             logger.error(f"Transcription failed: {e}", exc_info=True)
             return None
 
-    def _parse_segments_from_text(self, text: str) -> List[Dict]:
+    def _parse_segments_from_text(self, text: str) -> list[dict]:
         """Parse segments from plain text transcription."""
         # Simple segmentation: split by sentences
         import re
@@ -717,7 +710,7 @@ class WhisperCPPEngine(EngineProtocol):
 
         return segments
 
-    def _find_whisper_cpp_binary(self) -> Optional[str]:
+    def _find_whisper_cpp_binary(self) -> str | None:
         """Find whisper.cpp binary in common locations."""
         import platform
         import shutil
@@ -787,7 +780,7 @@ class WhisperCPPEngine(EngineProtocol):
 
         return None
 
-    def _format_srt(self, result: Dict) -> str:
+    def _format_srt(self, result: dict) -> str:
         """Format transcription as SRT subtitles."""
         segments = result.get("segments", [])
         if not segments:
@@ -810,7 +803,7 @@ class WhisperCPPEngine(EngineProtocol):
 
         return "\n".join(srt_lines)
 
-    def _format_vtt(self, result: Dict) -> str:
+    def _format_vtt(self, result: dict) -> str:
         """Format transcription as VTT subtitles."""
         segments = result.get("segments", [])
         if not segments:
@@ -850,12 +843,12 @@ class WhisperCPPEngine(EngineProtocol):
 
     def batch_transcribe(
         self,
-        audio_list: List[Union[str, bytes]],
-        language: Optional[str] = None,
+        audio_list: list[str | bytes],
+        language: str | None = None,
         output_format: str = "text",
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Optional[Union[str, Dict]]]:
+    ) -> list[str | dict | None]:
         """
         Transcribe multiple audio files in batch with optimized processing.
 
@@ -872,13 +865,11 @@ class WhisperCPPEngine(EngineProtocol):
                 or None on error
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(audio_list)
+        if not self._initialized and not self.initialize():
+            return [None] * len(audio_list)
 
-        if self._model is None:
-            if not self._load_model():
-                return [None] * len(audio_list)
+        if self._model is None and not self._load_model():
+            return [None] * len(audio_list)
 
         # Use configured batch size if not specified
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
@@ -918,7 +909,7 @@ class WhisperCPPEngine(EngineProtocol):
         self._transcription_cache.clear()
         logger.info("Transcription cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "transcription_cache_size": len(self._transcription_cache),

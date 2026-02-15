@@ -7,11 +7,13 @@ language model inference. No API keys or cloud services required.
 Ollama must be running locally (default: http://localhost:11434).
 """
 
-import asyncio
+from __future__ import annotations
+
 import json
 import logging
 import time
-from typing import AsyncIterator, Dict, List, Optional, Any
+from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +49,13 @@ class OllamaLLMProvider(BaseLLMProvider):
     DEFAULT_MODEL = "llama3.2"
     DEFAULT_BASE_URL = "http://localhost:11434"
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: LLMConfig | None = None):
         super().__init__(config)
         if not self._config.model:
             self._config.model = self.DEFAULT_MODEL
         if not self._config.base_url:
             self._config.base_url = self.DEFAULT_BASE_URL
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
 
     @property
     def provider_name(self) -> str:
@@ -89,15 +91,15 @@ class OllamaLLMProvider(BaseLLMProvider):
 
     async def generate(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> LLMResponse:
         """Generate a response using Ollama's chat API."""
         cfg = self._merge_config(config)
         msgs = self._prepend_system_prompt(messages, cfg)
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": cfg.model,
             "messages": [m.to_dict() for m in msgs],
             "stream": False,
@@ -147,15 +149,15 @@ class OllamaLLMProvider(BaseLLMProvider):
 
     async def generate_stream(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         """Stream tokens from Ollama."""
         cfg = self._merge_config(config)
         msgs = self._prepend_system_prompt(messages, cfg)
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": cfg.model,
             "messages": [m.to_dict() for m in msgs],
             "stream": True,
@@ -258,13 +260,13 @@ class LocalAILLMProvider(BaseLLMProvider):
     DEFAULT_MODEL = "gpt-3.5-turbo"  # LocalAI model alias
     DEFAULT_BASE_URL = "http://localhost:8080"
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: LLMConfig | None = None):
         super().__init__(config)
         if not self._config.model:
             self._config.model = self.DEFAULT_MODEL
         if not self._config.base_url:
             self._config.base_url = self.DEFAULT_BASE_URL
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
 
     @property
     def provider_name(self) -> str:
@@ -295,15 +297,15 @@ class LocalAILLMProvider(BaseLLMProvider):
 
     async def generate(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> LLMResponse:
         """Generate using OpenAI-compatible chat completions API."""
         cfg = self._merge_config(config)
         msgs = self._prepend_system_prompt(messages, cfg)
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": cfg.model,
             "messages": [m.to_dict() for m in msgs],
             "temperature": cfg.temperature,
@@ -341,15 +343,15 @@ class LocalAILLMProvider(BaseLLMProvider):
 
     async def generate_stream(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         """Stream tokens using OpenAI-compatible SSE endpoint."""
         cfg = self._merge_config(config)
         msgs = self._prepend_system_prompt(messages, cfg)
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": cfg.model,
             "messages": [m.to_dict() for m in msgs],
             "temperature": cfg.temperature,

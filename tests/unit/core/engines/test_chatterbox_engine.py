@@ -5,7 +5,7 @@ Tests Chatterbox TTS engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestChatterboxEngineImports:
     def test_module_has_chatterbox_engine_class(self):
         """Test module has ChatterboxEngine class."""
         if hasattr(chatterbox_engine, "ChatterboxEngine"):
-            cls = getattr(chatterbox_engine, "ChatterboxEngine")
+            cls = chatterbox_engine.ChatterboxEngine
             assert isinstance(cls, type), "ChatterboxEngine should be a class"
 
 
@@ -41,15 +41,15 @@ class TestChatterboxEngineClass:
     def test_chatterbox_engine_class_exists(self):
         """Test ChatterboxEngine class exists."""
         if hasattr(chatterbox_engine, "ChatterboxEngine"):
-            cls = getattr(chatterbox_engine, "ChatterboxEngine")
+            cls = chatterbox_engine.ChatterboxEngine
             assert isinstance(cls, type), "ChatterboxEngine should be a class"
 
     def test_supported_languages_exists(self):
         """Test SUPPORTED_LANGUAGES constant exists."""
         if hasattr(chatterbox_engine, "ChatterboxEngine"):
-            cls = getattr(chatterbox_engine, "ChatterboxEngine")
+            cls = chatterbox_engine.ChatterboxEngine
             if hasattr(cls, "SUPPORTED_LANGUAGES"):
-                languages = getattr(cls, "SUPPORTED_LANGUAGES")
+                languages = cls.SUPPORTED_LANGUAGES
                 assert isinstance(
                     languages, list
                 ), "SUPPORTED_LANGUAGES should be a list"

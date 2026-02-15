@@ -6,11 +6,11 @@ Status: Ready for implementation
 See: docs/governance/SECURITY_FEATURES_IMPLEMENTATION_PLAN.md
 """
 
+from __future__ import annotations
+
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Import query optimizer for optimized database operations
 try:
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class WatermarkDatabase:
     """Database for storing watermark metadata with query optimization."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         """
         Initialize watermark database.
 
@@ -109,10 +109,10 @@ class WatermarkDatabase:
     def store_watermark(
         self,
         watermark_id: str,
-        watermark_data: Dict,
+        watermark_data: dict,
         method: str,
         strength: float,
-        audio_path: Optional[str] = None,
+        audio_path: str | None = None,
     ):
         """
         Store watermark metadata.
@@ -132,7 +132,7 @@ class WatermarkDatabase:
 
             self.optimizer.execute_query(
                 """
-                INSERT OR REPLACE INTO watermarks 
+                INSERT OR REPLACE INTO watermarks
                 (watermark_id, watermark_data, method, strength, audio_path)
                 VALUES (?, ?, ?, ?, ?)
                 """,
@@ -155,7 +155,7 @@ class WatermarkDatabase:
             logger.error(f"Failed to store watermark: {e}")
             raise
 
-    def get_watermark(self, watermark_id: str) -> Optional[Dict]:
+    def get_watermark(self, watermark_id: str) -> dict | None:
         """
         Retrieve watermark metadata.
 
@@ -197,7 +197,7 @@ class WatermarkDatabase:
         watermark_id: str,
         result: str,
         confidence: float,
-        verified_by: Optional[str] = None,
+        verified_by: str | None = None,
     ):
         """
         Log watermark verification.
@@ -214,7 +214,7 @@ class WatermarkDatabase:
         try:
             self.optimizer.execute_query(
                 """
-                INSERT INTO verification_logs 
+                INSERT INTO verification_logs
                 (watermark_id, result, confidence, verified_by)
                 VALUES (?, ?, ?, ?)
                 """,
@@ -229,7 +229,7 @@ class WatermarkDatabase:
 
     def get_verification_history(
         self, watermark_id: str, limit: int = 100
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Get verification history for a watermark.
 
@@ -246,9 +246,9 @@ class WatermarkDatabase:
         try:
             results = self.optimizer.execute_query(
                 """
-                SELECT * FROM verification_logs 
-                WHERE watermark_id = ? 
-                ORDER BY verified_at DESC 
+                SELECT * FROM verification_logs
+                WHERE watermark_id = ?
+                ORDER BY verified_at DESC
                 LIMIT ?
                 """,
                 parameters=(watermark_id, limit),

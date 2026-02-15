@@ -1,86 +1,171 @@
 ---
-description: "C# and WinUI 3 guidance for VoiceStudio frontend."
-globs: ["src/**/*.cs", "src/**/*.xaml"]
+description: "C# and WinUI 3 conventions for VoiceStudio frontend"
+globs: ["src/**/*.cs", "src/**/*.xaml", "**/*.csproj"]
 alwaysApply: false
 ---
-# C# and WinUI guidance
 
-## MVVM conventions
+# C# / WinUI 3 Frontend Conventions
 
-- Keep UI logic in ViewModels; keep code-behind minimal.
-- Prefer `ObservableObject` and `RelayCommand` from CommunityToolkit.Mvvm.
-- Use DI for services; avoid static service access in ViewModels.
+**ACTIVE WHEN:** Working on files in `src/VoiceStudio.App/` or `src/VoiceStudio.Core/`
 
-## Panels and Views
+## Language Requirements
 
-- Panels follow the `IPanelView` contract (see `src/VoiceStudio.Core/Panels/IPanelView.cs`).
-- New panels should include both `Views/Panels/` and `ViewModels/` entries.
+- **C# 12** with .NET 8.0
+- **WinUI 3** (Windows App SDK 1.6+)
+- **MVVM pattern** with CommunityToolkit.Mvvm
 
-## UI invariants (non-negotiable)
+## Critical Conventions
 
-- Preserve PanelHost usage and panel lattice layout.
-- Keep View and ViewModel files separate (no merges).
-- Use VSQ.* DesignTokens for all colors, typography, and spacing.
+### Naming
 
-## UI and XAML
+| Element | Convention | Example |
+|---------|------------|---------|
+| Classes | PascalCase | `VoiceCloneViewModel` |
+| Interfaces | IPascalCase | `IEngineService` |
+| Private fields | _camelCase | `_backendClient` |
+| Properties | PascalCase | `IsProcessing` |
+| Methods | PascalCase | `LoadVoicesAsync` |
+| Constants | PascalCase | `MaxRetryCount` |
+| Events | PascalCase | `PropertyChanged` |
 
-- Prefer bindings and commands over event handlers.
-- Use VSQ.* design tokens where applicable.
-- Keep XAML layouts simple and testable.
-- Follow `docs/design/UI_IMPLEMENTATION_SPEC.md` for layout and panel requirements.
+### Null Safety (CRITICAL)
 
-### XAML Binding Standards
+```csharp
+// ✅ CORRECT - Null-conditional and null-coalescing
+var name = user?.Name ?? "Unknown";
+if (service is not null) { ... }
 
-1. **Always use `{x:Bind}` with explicit Mode**:
-   ```xml
-   <!-- CORRECT -->
-   <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
-   <TextBox Text="{x:Bind ViewModel.Input, Mode=TwoWay}" />
-   
-   <!-- INCORRECT - No Mode specified -->
-   <TextBlock Text="{x:Bind ViewModel.Title}" />
-   ```
+// ❌ WRONG - Python-style None checks
+if (service != None) { ... }  // 'None' doesn't exist in C#
+if service is not None:       // Python syntax
+```
 
-2. **DataTemplates require `x:DataType`**:
-   ```xml
-   <DataTemplate x:DataType="models:MyItem">
-     <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
-   </DataTemplate>
-   ```
+### Async/Await
 
-3. **Add `d:DataContext` for design-time support**:
-   ```xml
-   <UserControl 
-     d:DataContext="{d:DesignInstance Type=vm:MyViewModel, IsDesignTimeCreatable=False}"
-     x:DataType="vm:MyViewModel">
-   ```
+```csharp
+// ✅ CORRECT - Async suffix, proper await
+public async Task<Voice> LoadVoiceAsync(string id)
+{
+    var result = await _backendClient.GetAsync<Voice>($"/api/voices/{id}");
+    return result;
+}
 
-4. **Use FallbackValue for defensive bindings**:
-   ```xml
-   <TextBlock Text="{x:Bind Name, Mode=OneWay, FallbackValue='Unknown'}" />
-   ```
+// ❌ WRONG - Missing Async suffix, blocking calls
+public Voice LoadVoice(string id)
+{
+    return _backendClient.GetAsync<Voice>(...).Result;  // Deadlock risk!
+}
+```
 
-5. **Reference `xaml-safety.mdc` for compiler-safe patterns**
+### MVVM Patterns
 
-### Command Patterns
+```csharp
+// ✅ CORRECT - ObservableProperty with CommunityToolkit
+[ObservableProperty]
+private string _statusMessage = string.Empty;
 
-- Use `IRelayCommand` and `IAsyncRelayCommand` from CommunityToolkit.Mvvm
-- Commands should have matching `CanExecute` logic when applicable
-- Button Command bindings: `Command="{x:Bind ViewModel.SaveCommand}"`
+[RelayCommand]
+private async Task RefreshAsync()
+{
+    await LoadDataAsync();
+}
 
-## Performance
+// ❌ WRONG - Manual INotifyPropertyChanged (verbose)
+private string _status;
+public string Status
+{
+    get => _status;
+    set { _status = value; OnPropertyChanged(); }
+}
+```
 
-- Virtualize long lists and avoid UI thread blocking.
-- Show loading states for async work.
+### Dependency Injection
 
-## Async and error handling
+```csharp
+// ✅ CORRECT - Constructor injection
+public class VoiceViewModel
+{
+    private readonly IBackendClient _backendClient;
+    private readonly ILogger<VoiceViewModel> _logger;
 
-- Use async/await for I/O and backend calls.
-- Throw specific exceptions with meaningful messages; log failures.
-- **No error suppression** — no `#pragma warning disable`, `SuppressMessage`, or empty catch blocks.
-- See `no-suppression.mdc` for full policy.
+    public VoiceViewModel(IBackendClient backendClient, ILogger<VoiceViewModel> logger)
+    {
+        _backendClient = backendClient;
+        _logger = logger;
+    }
+}
+```
 
-## Proof requirements
+### Exception Handling
 
-- Build succeeds with XAML compilation.
-- Smoke launch the affected UI area.
+```csharp
+// ✅ CORRECT - Specific exceptions, logging
+try
+{
+    await _service.ProcessAsync();
+}
+catch (HttpRequestException ex)
+{
+    _logger.LogWarning(ex, "Backend request failed");
+    StatusMessage = "Connection failed. Check backend.";
+}
+catch (OperationCanceledException)
+{
+    // Expected on cancellation - no logging needed
+}
+
+// ❌ WRONG - Empty catch, bare Exception
+try { ... }
+catch { }  // Silent failure - FORBIDDEN
+catch (Exception) { pass; }  // 'pass' is Python!
+```
+
+### XAML Binding
+
+```xml
+<!-- ✅ CORRECT - x:Bind with Mode -->
+<TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+<Button Command="{x:Bind ViewModel.RefreshCommand}" />
+
+<!-- ❌ WRONG - Old {Binding} syntax (slower, no compile-time check) -->
+<TextBlock Text="{Binding StatusMessage}" />
+```
+
+## File Structure
+
+```
+src/VoiceStudio.App/
+├── Views/           # XAML pages and controls
+├── ViewModels/      # MVVM ViewModels
+├── Services/        # App-level services
+├── Controls/        # Custom controls
+└── Converters/      # Value converters
+
+src/VoiceStudio.Core/
+├── Panels/          # Panel contracts (IPanelView)
+├── Services/        # Core service interfaces
+└── Events/          # Event definitions
+```
+
+## Common Mistakes to Avoid
+
+1. **Using Python syntax** — No `None`, `pass`, `def`, `import`
+2. **Blocking async** — Never use `.Result` or `.Wait()` on Tasks
+3. **Missing `readonly`** — DI fields should be `private readonly`
+4. **Wrong casing** — Methods are PascalCase, not snake_case
+5. **Old binding syntax** — Use `{x:Bind}` not `{Binding}`
+
+## Quick Reference
+
+| Python | C# Equivalent |
+|--------|---------------|
+| `None` | `null` |
+| `self` | `this` |
+| `def method():` | `void Method()` |
+| `pass` | `{ }` or remove |
+| `import module` | `using Namespace;` |
+| `snake_case` | `PascalCase` |
+| `# comment` | `// comment` |
+| `"""docstring"""` | `/// <summary>` |
+| `async def` | `async Task` |
+| `await func()` | `await FuncAsync()` |

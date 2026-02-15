@@ -210,7 +210,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("DeepfakeCreator.LoadEnginesFailed", ex.Message);
+        await HandleErrorAsync(ex, "LoadEngines");
       }
       finally
       {
@@ -311,7 +311,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("DeepfakeCreator.CreateFailed", ex.Message);
+        await HandleErrorAsync(ex, "CreateDeepfake");
       }
       finally
       {
@@ -352,7 +352,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("DeepfakeCreator.LoadJobsFailed", ex.Message);
+        await HandleErrorAsync(ex, "LoadJobs");
       }
       finally
       {
@@ -386,7 +386,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        ErrorMessage = ResourceHelper.FormatString("DeepfakeCreator.DeleteJobFailed", ex.Message);
+        await HandleErrorAsync(ex, "DeleteJob");
       }
       finally
       {

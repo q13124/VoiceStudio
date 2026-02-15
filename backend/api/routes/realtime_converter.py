@@ -4,11 +4,13 @@ Real-Time Voice Converter Routes
 Endpoints for real-time voice conversion and streaming.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+
 from backend.services.engine_service import get_engine_service
 
 from ..middleware.auth_middleware import require_auth_if_enabled
@@ -23,7 +25,7 @@ router = APIRouter(
 )
 
 # In-memory converter sessions (replace with database in production)
-_converter_sessions: Dict[str, Dict] = {}
+_converter_sessions: dict[str, dict] = {}
 
 
 class ConverterSession(BaseModel):
@@ -53,7 +55,7 @@ class ConverterStartResponse(BaseModel):
 class ConverterSessionListResponse(BaseModel):
     """Response from listing converter sessions."""
 
-    sessions: List[ConverterSession]
+    sessions: list[ConverterSession]
 
 
 @router.post("/start", response_model=ConverterStartResponse)
@@ -85,7 +87,7 @@ async def start_converter_session(request: ConverterStartRequest):
         logger.error(f"Failed to start converter session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start session: {str(e)}",
+            detail=f"Failed to start session: {e!s}",
         ) from e
 
 
@@ -184,7 +186,7 @@ async def converter_stream(websocket: WebSocket, session_id: str):
 
     try:
         session = _converter_sessions[session_id]
-        source_profile_id = session["source_profile_id"]
+        session["source_profile_id"]
         target_profile_id = session["target_profile_id"]
 
         # Try to get RVC engine for voice conversion (ADR-008 compliant)
@@ -257,7 +259,7 @@ async def converter_stream(websocket: WebSocket, session_id: str):
                         with tempfile.NamedTemporaryFile(
                             suffix=".wav", delete=False
                         ) as tmp_output:
-                            result = rvc_engine.convert_voice(
+                            rvc_engine.convert_voice(
                                 source_audio=tmp_input.name,
                                 target_speaker_model=target_profile_audio_path,
                                 output_path=tmp_output.name,

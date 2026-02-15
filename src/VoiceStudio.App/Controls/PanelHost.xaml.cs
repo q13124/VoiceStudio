@@ -363,6 +363,7 @@ namespace VoiceStudio.App.Controls
 
     /// <summary>
     /// Saves the current panel state before switching panels.
+    /// Backend-Frontend Integration Plan - Phase 2: Enhanced state persistence.
     /// </summary>
     private void SaveCurrentPanelState()
     {
@@ -373,18 +374,54 @@ namespace VoiceStudio.App.Controls
       {
         // Try to get ViewModel from content to save panel-specific state
         string? panelId = null;
-        VoiceStudio.Core.Models.PanelState? panelState = null;
 
         // Get panel ID from ViewModel if it implements IPanelView
         if (GetPanelIdFromContent(Content, out panelId) && !string.IsNullOrEmpty(panelId))
         {
-          panelState = new VoiceStudio.Core.Models.PanelState
+          var panelState = new VoiceStudio.Core.Models.PanelState
           {
             PanelId = panelId
           };
 
-          // If ViewModel implements state persistence, get custom state
-          // For now, just save basic state (can be extended later)
+          // Check if ViewModel implements IPanelStatePersistable for custom state
+          if (Content is UserControl userControl && userControl.DataContext is IPanelStatePersistable persistable)
+          {
+            var customState = persistable.GetCurrentState();
+            if (customState != null)
+            {
+              // Map PanelStateData to PanelState
+              panelState.ScrollPosition = customState.ScrollPosition;
+              panelState.SelectedItemId = customState.SelectedItemId;
+              
+              // Store custom data in the CustomState dictionary
+              panelState.CustomState = new Dictionary<string, object>();
+              
+              if (customState.SearchText != null)
+                panelState.CustomState["SearchText"] = customState.SearchText;
+              if (customState.SortColumn != null)
+                panelState.CustomState["SortColumn"] = customState.SortColumn;
+              if (customState.SortDescending.HasValue)
+                panelState.CustomState["SortDescending"] = customState.SortDescending.Value;
+              if (customState.ActiveTabIndex.HasValue)
+                panelState.CustomState["ActiveTabIndex"] = customState.ActiveTabIndex.Value;
+              if (customState.ZoomLevel.HasValue)
+                panelState.CustomState["ZoomLevel"] = customState.ZoomLevel.Value;
+              if (customState.HorizontalScrollPosition.HasValue)
+                panelState.CustomState["HorizontalScrollPosition"] = customState.HorizontalScrollPosition.Value;
+              if (customState.SelectedItemIds != null)
+                panelState.CustomState["SelectedItemIds"] = customState.SelectedItemIds;
+              if (customState.ExpandedSections != null)
+                panelState.CustomState["ExpandedSections"] = customState.ExpandedSections;
+              if (customState.CustomData != null)
+              {
+                foreach (var kvp in customState.CustomData)
+                  panelState.CustomState[kvp.Key] = kvp.Value;
+              }
+              
+              System.Diagnostics.Debug.WriteLine($"Saved custom state for panel: {panelId}");
+            }
+          }
+
           _panelStateService.SavePanelState(_region, panelId, panelState);
         }
       }
@@ -397,6 +434,7 @@ namespace VoiceStudio.App.Controls
 
     /// <summary>
     /// Restores panel state when a panel is loaded.
+    /// Backend-Frontend Integration Plan - Phase 2: Enhanced state restoration.
     /// </summary>
     private void RestorePanelState(UIElement? newContent)
     {
@@ -416,14 +454,78 @@ namespace VoiceStudio.App.Controls
         if (savedState == null)
           return;
 
-        // Restore panel-specific state if ViewModel supports it
-        // For now, basic restoration (can be extended with IPanelStatePersistable interface)
-        System.Diagnostics.Debug.WriteLine($"Restoring state for panel: {panelId}");
+        // Check if ViewModel implements IPanelStatePersistable for custom state restoration
+        if (newContent is UserControl userControl && userControl.DataContext is IPanelStatePersistable persistable)
+        {
+          // Convert PanelState to PanelStateData
+          var stateData = new PanelStateData
+          {
+            PanelId = savedState.PanelId,
+            ScrollPosition = savedState.ScrollPosition,
+            SelectedItemId = savedState.SelectedItemId
+          };
+          
+          // Extract custom state fields
+          if (savedState.CustomState != null)
+          {
+            if (savedState.CustomState.TryGetValue("SearchText", out var searchText))
+              stateData.SearchText = searchText as string;
+            if (savedState.CustomState.TryGetValue("SortColumn", out var sortColumn))
+              stateData.SortColumn = sortColumn as string;
+            if (savedState.CustomState.TryGetValue("SortDescending", out var sortDesc) && sortDesc is bool sortDescBool)
+              stateData.SortDescending = sortDescBool;
+            if (savedState.CustomState.TryGetValue("ActiveTabIndex", out var tabIndex) && tabIndex is int tabIndexInt)
+              stateData.ActiveTabIndex = tabIndexInt;
+            if (savedState.CustomState.TryGetValue("ZoomLevel", out var zoom) && zoom is double zoomDouble)
+              stateData.ZoomLevel = zoomDouble;
+            if (savedState.CustomState.TryGetValue("HorizontalScrollPosition", out var hScroll) && hScroll is double hScrollDouble)
+              stateData.HorizontalScrollPosition = hScrollDouble;
+            if (savedState.CustomState.TryGetValue("SelectedItemIds", out var selectedIds) && selectedIds is string[] idsArray)
+              stateData.SelectedItemIds = idsArray;
+            if (savedState.CustomState.TryGetValue("ExpandedSections", out var expanded) && expanded is Dictionary<string, bool> expandedDict)
+              stateData.ExpandedSections = expandedDict;
+            
+            // Gather remaining custom data
+            var knownKeys = new HashSet<string> { 
+              "SearchText", "SortColumn", "SortDescending", "ActiveTabIndex", 
+              "ZoomLevel", "HorizontalScrollPosition", "SelectedItemIds", "ExpandedSections" 
+            };
+            stateData.CustomData = new Dictionary<string, object>();
+            foreach (var kvp in savedState.CustomState)
+            {
+              if (!knownKeys.Contains(kvp.Key))
+                stateData.CustomData[kvp.Key] = kvp.Value;
+            }
+          }
+          
+          // Restore state asynchronously (fire and forget, but log errors)
+          _ = RestorePanelStateAsync(persistable, stateData, panelId);
+        }
+        else
+        {
+          System.Diagnostics.Debug.WriteLine($"Panel {panelId} does not implement IPanelStatePersistable - skipping custom state restoration");
+        }
       }
       catch (Exception ex)
       {
         // Don't break panel loading if state restoration fails
         System.Diagnostics.Debug.WriteLine($"Failed to restore panel state: {ex.Message}");
+      }
+    }
+    
+    /// <summary>
+    /// Async helper to restore panel state without blocking the UI thread.
+    /// </summary>
+    private async Task RestorePanelStateAsync(IPanelStatePersistable persistable, PanelStateData stateData, string panelId)
+    {
+      try
+      {
+        await persistable.RestoreStateAsync(stateData);
+        System.Diagnostics.Debug.WriteLine($"Successfully restored custom state for panel: {panelId}");
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Failed to restore custom state for panel {panelId}: {ex.Message}");
       }
     }
 

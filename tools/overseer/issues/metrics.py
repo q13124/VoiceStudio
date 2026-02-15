@@ -6,16 +6,17 @@ No optional dependency: emits Prometheus text format (RFC) directly.
 Links issue categories/severity to SLO definitions in docs/governance/SERVICE_LEVEL_OBJECTIVES.md.
 """
 
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tools.overseer.issues.store import IssueStore, get_feedback_file_path, iter_feedback_lines
-
 
 # Map issue category/context to affected SLO IDs (from SERVICE_LEVEL_OBJECTIVES.md)
 # Used for SLO-aware prioritization and metrics.
 # Extended with comprehensive keyword mappings for issue classification.
-ISSUE_CATEGORY_TO_SLO: Dict[str, list] = {
+ISSUE_CATEGORY_TO_SLO: dict[str, list] = {
     # SLO-1: Synthesis latency and reliability
     "synthesis": ["SLO-1"],
     "tts": ["SLO-1"],
@@ -134,9 +135,9 @@ def _escape_prometheus_label_value(s: str) -> str:
 
 
 def get_store_stats(
-    store: Optional[IssueStore] = None,
-    time_window_hours: Optional[int] = 24,
-) -> Dict[str, Any]:
+    store: IssueStore | None = None,
+    time_window_hours: int | None = 24,
+) -> dict[str, Any]:
     """
     Get issue store statistics for the optional time window.
     If time_window_hours is None, all-time stats are returned.
@@ -151,9 +152,9 @@ def get_store_stats(
     return stats
 
 
-def get_feedback_counts(days: int = 7) -> Dict[str, int]:
+def get_feedback_counts(days: int = 7) -> dict[str, int]:
     """Count recommendation feedback outcomes (success, failure, deferred) in the last N days."""
-    counts: Dict[str, int] = {"success": 0, "failure": 0, "deferred": 0}
+    counts: dict[str, int] = {"success": 0, "failure": 0, "deferred": 0}
     path = get_feedback_file_path()
     if not path.exists():
         return counts
@@ -165,7 +166,7 @@ def get_feedback_counts(days: int = 7) -> Dict[str, int]:
 
 
 def get_prometheus_metrics(
-    store: Optional[IssueStore] = None,
+    store: IssueStore | None = None,
     time_window_hours: int = 24,
     include_feedback: bool = True,
 ) -> str:

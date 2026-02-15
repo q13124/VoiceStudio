@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -23,7 +23,7 @@ HF_INFERENCE_API_LEGACY = "https://api-inference.huggingface.co"
 router = APIRouter(prefix="/api/huggingface-fix", tags=["huggingface-fix"])
 
 
-def apply_fix() -> Dict[str, Any]:
+def apply_fix() -> dict[str, Any]:
     """
     Apply the Hugging Face endpoint fix in a deterministic, low-risk way.
 
@@ -76,7 +76,7 @@ def apply_fix() -> Dict[str, Any]:
     except Exception as ex:
         logger.debug("transformers patch skipped: %s", ex)
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "hf_inference_api_base": os.environ.get("HF_INFERENCE_API_BASE"),
         "hf_endpoint": os.environ.get("HF_ENDPOINT"),
         "hub_constants_patched": hub_patched,
@@ -89,7 +89,7 @@ def apply_fix() -> Dict[str, Any]:
 
 
 @router.get("/status")
-def status() -> Dict[str, Any]:
+def status() -> dict[str, Any]:
     """Return current endpoint configuration (for smoke/proof diagnostics)."""
     return {
         "hf_inference_api_base": os.environ.get("HF_INFERENCE_API_BASE"),
@@ -98,7 +98,7 @@ def status() -> Dict[str, Any]:
 
 
 @router.post("/apply")
-def apply() -> Dict[str, Any]:
+def apply() -> dict[str, Any]:
     """Re-apply the fix at runtime (safe, idempotent)."""
     return apply_fix()
 

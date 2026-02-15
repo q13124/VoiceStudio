@@ -8,13 +8,11 @@ Date: 2025-01-28
 
 import importlib.util
 import inspect
-import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pytest
@@ -87,7 +85,7 @@ ALL_ENGINES = [
 ]
 
 # Test results storage
-test_results: Dict[str, Dict[str, Any]] = {}
+test_results: dict[str, dict[str, Any]] = {}
 
 
 def generate_test_audio(
@@ -132,13 +130,11 @@ def get_engine_class(module, class_name: str):
         return None
 
 
-def check_engine_initialization(engine_class, engine_type: str) -> Tuple[bool, str]:
+def check_engine_initialization(engine_class, engine_type: str) -> tuple[bool, str]:
     """Test if engine can be instantiated."""
     try:
         # Try to create engine instance
-        if engine_type in ["TTS", "STT", "VC"]:
-            engine = engine_class(device="cpu", gpu=False)
-        elif engine_type in ["IMAGE", "VIDEO"]:
+        if engine_type in ["TTS", "STT", "VC"] or engine_type in ["IMAGE", "VIDEO"]:
             engine = engine_class(device="cpu", gpu=False)
         else:
             engine = engine_class(device="cpu", gpu=False)
@@ -157,7 +153,7 @@ def check_engine_initialization(engine_class, engine_type: str) -> Tuple[bool, s
 
 def check_engine_functionality(
     engine, engine_type: str
-) -> Tuple[bool, str, Optional[Any]]:
+) -> tuple[bool, str, Any | None]:
     """Test basic engine functionality."""
     try:
         if engine_type == "TTS":
@@ -217,7 +213,7 @@ def check_engine_functionality(
         return False, f"Functionality test failed: {e}", None
 
 
-def check_for_forbidden_terms(file_path: Path) -> List[str]:
+def check_for_forbidden_terms(file_path: Path) -> list[str]:
     """Check file for forbidden placeholder terms."""
     violations = []
     forbidden_terms = [
@@ -239,7 +235,7 @@ def check_for_forbidden_terms(file_path: Path) -> List[str]:
     ]
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
             lines = content.split("\n")
 
@@ -431,18 +427,18 @@ def generate_test_report():
     report = f"""# Engine Integration Test Report
 ## Comprehensive Testing of All 48 Engines
 
-**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Worker:** Worker 3 (Testing/Quality/Documentation Specialist)  
+**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Worker:** Worker 3 (Testing/Quality/Documentation Specialist)
 **Test Suite:** Comprehensive Engine Integration Tests
 
 ---
 
 ## 📊 Executive Summary
 
-**Total Engines Tested:** {total_engines}  
-**Successfully Imported:** {imported} ({imported/total_engines*100:.1f}%)  
-**Successfully Initialized:** {initialized} ({initialized/total_engines*100:.1f}%)  
-**Functional:** {functional} ({functional/total_engines*100:.1f}%)  
+**Total Engines Tested:** {total_engines}
+**Successfully Imported:** {imported} ({imported/total_engines*100:.1f}%)
+**Successfully Initialized:** {initialized} ({initialized/total_engines*100:.1f}%)
+**Functional:** {functional} ({functional/total_engines*100:.1f}%)
 **Code Quality Violations:** {violations} ({violations/total_engines*100:.1f}%)
 
 ---

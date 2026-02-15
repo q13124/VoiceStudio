@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import errno
-import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -117,9 +116,8 @@ class TestAppendRaisesOnWriteFailure:
                 raise PermissionError("Permission denied")
             return open(*args, **kwargs)
 
-        with patch("builtins.open", permission_error_open):
-            with pytest.raises(PermissionError):
-                store.append(issue)
+        with patch("builtins.open", permission_error_open), pytest.raises(PermissionError):
+            store.append(issue)
 
 
 class TestFileLockTimeout:

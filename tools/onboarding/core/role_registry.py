@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from tools.onboarding.core.models import RoleConfig
-
 
 DEFAULT_ROLES_CONFIG = Path("tools/onboarding/config/roles.json")
 PROMPT_DIR = Path(".cursor/prompts")
@@ -28,14 +25,14 @@ def _format_role_name(raw: str) -> str:
     return " ".join(_title_case(w) for w in words if w)
 
 
-def _default_prompt_path(role_id: str, stem: str) -> Optional[str]:
+def _default_prompt_path(role_id: str, stem: str) -> str | None:
     candidate = PROMPT_DIR / f"ROLE_{role_id}_{stem}_PROMPT.md"
     if candidate.exists():
         return str(candidate)
     return None
 
 
-def _default_guide_path(role_id: str, stem: str) -> Optional[str]:
+def _default_guide_path(role_id: str, stem: str) -> str | None:
     candidate = GUIDE_DIR / f"ROLE_{role_id}_{stem}_GUIDE.md"
     if candidate.exists():
         return str(candidate)
@@ -45,13 +42,32 @@ def _default_guide_path(role_id: str, stem: str) -> Optional[str]:
 class RoleRegistry:
     """Registry for onboarding roles and prompt/guide paths."""
 
-    def __init__(self, roles: List[RoleConfig]):
+    def __init__(self, roles: list[RoleConfig]):
         self._roles = roles
         self._by_id = {r.id: r for r in roles}
         self._by_short = {r.short_name: r for r in roles}
 
     @classmethod
-    def from_config(cls, config_path: Path = DEFAULT_ROLES_CONFIG) -> "RoleRegistry":
+    def _resolve_path(cls, root: Path, value: str | None, base_dir: Path) -> str | None:
+        """Resolve relative path to project-root-relative path; return None if empty."""
+        if not value or not str(value).strip():
+            return None
+        raw = str(value).strip()
+        p = Path(raw)
+        if p.is_absolute() and p.exists():
+            return raw
+        # Try under base_dir (e.g. .cursor/prompts or docs/governance/roles)
+        candidate = root / base_dir / (p.name if p.name else raw)
+        if candidate.exists():
+            return str(candidate)
+        # Try as relative to root
+        candidate = root / raw
+        if candidate.exists():
+            return str(candidate)
+        return raw
+
+    @classmethod
+    def from_config(cls, config_path: Path = DEFAULT_ROLES_CONFIG) -> RoleRegistry:
         root = Path(__file__).resolve().parents[3]
         path = config_path if config_path.is_absolute() else root / config_path
         if path.exists():
@@ -63,13 +79,19 @@ class RoleRegistry:
                 for role_id, entry in roles_data.items():
                     if not isinstance(entry, dict):
                         continue
+                    prompt_raw = entry.get("prompt", entry.get("prompt_path", "")).strip()
+                    guide_raw = entry.get("guide", entry.get("guide_path"))
+                    if isinstance(guide_raw, str):
+                        guide_raw = guide_raw.strip() or None
+                    prompt_path = cls._resolve_path(root, prompt_raw, PROMPT_DIR) or prompt_raw
+                    guide_path = cls._resolve_path(root, guide_raw, GUIDE_DIR) if guide_raw else None
                     roles.append(
                         RoleConfig(
                             id=str(role_id),
                             short_name=entry.get("name", "").strip(),
                             name=entry.get("display_name", entry.get("name", "")).strip(),
-                            prompt_path=entry.get("prompt", entry.get("prompt_path", "")).strip(),
-                            guide_path=entry.get("guide", entry.get("guide_path")),
+                            prompt_path=prompt_path,
+                            guide_path=guide_path,
                             primary_gates=list(entry.get("gates", entry.get("primary_gates", []))),
                         )
                     )
@@ -78,13 +100,17 @@ class RoleRegistry:
                 for entry in roles_data:
                     if not isinstance(entry, dict):
                         continue
+                    prompt_raw = entry.get("prompt_path", "").strip()
+                    guide_raw = entry.get("guide_path")
+                    prompt_path = cls._resolve_path(root, prompt_raw, PROMPT_DIR) or prompt_raw
+                    guide_path = cls._resolve_path(root, guide_raw, GUIDE_DIR) if guide_raw else None
                     roles.append(
                         RoleConfig(
                             id=str(entry.get("id")),
                             short_name=entry.get("short_name", "").strip(),
                             name=entry.get("name", "").strip(),
-                            prompt_path=entry.get("prompt_path", "").strip(),
-                            guide_path=entry.get("guide_path"),
+                            prompt_path=prompt_path,
+                            guide_path=guide_path,
                             primary_gates=list(entry.get("primary_gates", [])),
                         )
                     )
@@ -92,8 +118,8 @@ class RoleRegistry:
         return cls(cls._scan_roles(root))
 
     @classmethod
-    def _scan_roles(cls, root: Path) -> List[RoleConfig]:
-        roles: List[RoleConfig] = []
+    def _scan_roles(cls, root: Path) -> list[RoleConfig]:
+        roles: list[RoleConfig] = []
         prompt_dir = root / PROMPT_DIR
         if not prompt_dir.exists():
             return roles
@@ -118,7 +144,7 @@ class RoleRegistry:
         return roles
 
     @classmethod
-    def _parse_primary_gates(cls, prompt_path: Path) -> List[str]:
+    def _parse_primary_gates(cls, prompt_path: Path) -> list[str]:
         try:
             text = prompt_path.read_text(encoding="utf-8")
         except Exception:
@@ -130,7 +156,7 @@ class RoleRegistry:
         gates = [g.strip().upper() for g in re.split(r"[,\s]+", raw) if g.strip()]
         return [g for g in gates if g]
 
-    def list_roles(self) -> List[RoleConfig]:
+    def list_roles(self) -> list[RoleConfig]:
         return list(self._roles)
 
     def resolve_role_id(self, role_id: str | int) -> str:

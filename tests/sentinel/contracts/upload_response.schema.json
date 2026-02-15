@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "upload_response.schema.json",
+  "title": "AudioUploadResponse",
+  "description": "Response schema for /api/audio/upload endpoint",
+  "type": "object",
+  "required": ["id", "filename", "path", "size"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for the uploaded audio"
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Original filename"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to canonical WAV file"
+    },
+    "original_path": {
+      "type": ["string", "null"],
+      "description": "Path to original uploaded file"
+    },
+    "canonical_path": {
+      "type": ["string", "null"],
+      "description": "Alias for path (WAV)"
+    },
+    "size": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "File size in bytes"
+    },
+    "original_size": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Original file size before conversion"
+    },
+    "content_type": {
+      "type": ["string", "null"],
+      "description": "MIME content type"
+    },
+    "detected_format": {
+      "type": ["string", "null"],
+      "description": "Detected audio format"
+    },
+    "converted": {
+      "type": "boolean",
+      "description": "True if conversion to WAV was performed"
+    }
+  },
+  "additionalProperties": false
+}

@@ -6,7 +6,7 @@ Tests engine protocol interface and base class.
 import sys
 from abc import ABC
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -68,7 +68,7 @@ class TestEngineProtocolInitialization:
 
         engine = TestEngine(device="cpu")
         assert engine.device == "cpu", "Device should be set to cpu"
-        assert engine._initialized == False, "Engine should not be initialized yet"
+        assert not engine._initialized, "Engine should not be initialized yet"
 
     def test_protocol_initialization_with_gpu(self):
         """Test protocol initialization with GPU parameter."""
@@ -120,12 +120,12 @@ class TestEngineProtocolMethods:
 
         engine = TestEngine(device="cpu")
         assert (
-            engine.is_initialized() == False
+            not engine.is_initialized()
         ), "Engine should not be initialized initially"
 
         engine.initialize()
         assert (
-            engine.is_initialized() == True
+            engine.is_initialized()
         ), "Engine should be initialized after initialize()"
 
     def test_get_device_method(self):
@@ -166,7 +166,7 @@ class TestEngineProtocolMethods:
         assert info["name"] == "TestEngine", "get_info name should be class name"
         assert info["device"] == "cpu", "get_info device should match engine device"
         assert (
-            info["initialized"] == False
+            not info["initialized"]
         ), "get_info initialized should match engine state"
 
 
@@ -206,12 +206,12 @@ class TestEngineProtocolAbstractMethods:
 
         engine = CompleteEngine(device="cpu")
         assert engine is not None, "Complete implementation should work"
-        assert engine.initialize() == True, "initialize should return True"
-        assert engine.is_initialized() == True, "Engine should be initialized"
+        assert engine.initialize(), "initialize should return True"
+        assert engine.is_initialized(), "Engine should be initialized"
 
         engine.cleanup()
         assert (
-            engine.is_initialized() == False
+            not engine.is_initialized()
         ), "Engine should not be initialized after cleanup"
 
 

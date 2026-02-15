@@ -5,7 +5,6 @@ RVC v2 uses the same engine class as RVC v1 but with a distinct manifest
 for separate configuration defaults and versioning.
 """
 
-import pytest
 import json
 from pathlib import Path
 
@@ -22,28 +21,28 @@ class TestRVCv2Manifest:
         """Manifest should be valid JSON."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert isinstance(manifest, dict)
 
     def test_manifest_engine_id(self):
         """Manifest should have engine_id = 'rvc_v2'."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert manifest["engine_id"] == "rvc_v2"
 
     def test_manifest_version_is_2(self):
         """Manifest version should be 2.x."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert manifest["version"].startswith("2.")
 
     def test_manifest_has_required_fields(self):
         """Manifest should have all required fields."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         required_fields = [
             "engine_id",
             "name",
@@ -54,7 +53,7 @@ class TestRVCv2Manifest:
             "entry_point",
             "capabilities",
         ]
-        
+
         for field in required_fields:
             assert field in manifest, f"Missing field: {field}"
 
@@ -62,7 +61,7 @@ class TestRVCv2Manifest:
         """Entry point should use the existing RVCEngine class."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         # RVC v2 uses the same engine class as v1
         assert "rvc_engine" in manifest["entry_point"]
         assert "RVCEngine" in manifest["entry_point"]
@@ -71,14 +70,14 @@ class TestRVCv2Manifest:
         """Subtype should be voice_conversion."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert manifest["subtype"] == "voice_conversion"
 
     def test_manifest_venv_family(self):
         """Venv family should be venv_voice_conversion."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert manifest["venv_family"] == "venv_voice_conversion"
 
 
@@ -89,21 +88,21 @@ class TestRVCv2Capabilities:
         """Should have v2_architecture capability."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert "v2_architecture" in manifest["capabilities"]
 
     def test_has_rmvpe_pitch_extraction(self):
         """Should have rmvpe_pitch_extraction capability."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert "rmvpe_pitch_extraction" in manifest["capabilities"]
 
     def test_has_voice_conversion_capability(self):
         """Should have voice_conversion capability."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         assert "voice_conversion" in manifest["capabilities"]
 
 
@@ -114,7 +113,7 @@ class TestRVCv2ConfigSchema:
         """Config should include pitch_extraction_method."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         config = manifest.get("config_schema", {})
         assert "pitch_extraction_method" in config
 
@@ -122,7 +121,7 @@ class TestRVCv2ConfigSchema:
         """RMVPE should be the default pitch extraction method."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         config = manifest.get("config_schema", {})
         assert config["pitch_extraction_method"]["default"] == "rmvpe"
 
@@ -130,7 +129,7 @@ class TestRVCv2ConfigSchema:
         """Config should include model_version."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         config = manifest.get("config_schema", {})
         assert "model_version" in config
         assert config["model_version"]["default"] == "v2"
@@ -145,14 +144,14 @@ class TestRVCv2VenvFamilyRegistration:
             ENGINE_TO_FAMILY,
             VenvFamily,
         )
-        
+
         assert "rvc_v2" in ENGINE_TO_FAMILY
         assert ENGINE_TO_FAMILY["rvc_v2"] == VenvFamily.VOICE_CONVERSION
 
     def test_rvc_v1_and_v2_in_same_family(self):
         """Both RVC v1 and v2 should be in same venv family."""
         from app.core.runtime.venv_family_manager import ENGINE_TO_FAMILY
-        
+
         assert ENGINE_TO_FAMILY.get("rvc") == ENGINE_TO_FAMILY.get("rvc_v2")
 
 
@@ -163,7 +162,7 @@ class TestRVCv2QualityFeatures:
         """Quality tier should be high for v2."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         quality = manifest.get("quality_features", {})
         assert quality.get("quality_tier") == "high"
 
@@ -171,9 +170,9 @@ class TestRVCv2QualityFeatures:
         """MOS estimate should be higher than v1 (4.0-4.5)."""
         manifest_path = Path("engines/audio/rvc_v2/engine.manifest.json")
         manifest = json.loads(manifest_path.read_text())
-        
+
         quality = manifest.get("quality_features", {})
         mos = quality.get("mos_estimate", "")
-        
+
         # v2 should have higher range than v1 (4.0-4.5)
         assert "4.2" in mos or "4.7" in mos

@@ -11,6 +11,8 @@ Compatible with:
 - PyTorch 2.0+
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -18,7 +20,6 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -72,10 +73,10 @@ class SDXLEngine(EngineProtocol):
     def __init__(
         self,
         model_id: str = ("stabilityai/stable-diffusion-xl-base-1.0"),
-        refiner_id: Optional[str] = ("stabilityai/stable-diffusion-xl-refiner-1.0"),
+        refiner_id: str | None = ("stabilityai/stable-diffusion-xl-refiner-1.0"),
         use_refiner: bool = True,
         resolution: str = "1024x1024",
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         lazy_load: bool = True,
         enable_model_cache: bool = True,
@@ -259,7 +260,7 @@ class SDXLEngine(EngineProtocol):
         height: int,
         steps: int,
         cfg_scale: float,
-        seed: Optional[int],
+        seed: int | None,
         **kwargs,
     ) -> str:
         """Generate cache key from generation parameters."""
@@ -281,20 +282,19 @@ class SDXLEngine(EngineProtocol):
         self,
         prompt: str,
         negative_prompt: str = "",
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
         steps: int = 50,
         cfg_scale: float = 7.0,
-        sampler: Optional[str] = None,
-        seed: Optional[int] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        sampler: str | None = None,
+        seed: int | None = None,
+        output_path: str | Path | None = None,
         **kwargs,
-    ) -> Union[Optional[Image.Image], Tuple[Optional[Image.Image], Dict]]:
+    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
         """Generate image using SDXL."""
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return None
+        if not self._initialized and not self.initialize():
+            return None
 
         # Record start time for metrics
         start_time = time.perf_counter()
@@ -439,18 +439,18 @@ class SDXLEngine(EngineProtocol):
 
     def batch_generate(
         self,
-        prompts: List[str],
+        prompts: list[str],
         negative_prompt: str = "",
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
         steps: int = 50,
         cfg_scale: float = 7.0,
-        sampler: Optional[str] = None,
-        seeds: Optional[List[Optional[int]]] = None,
-        output_paths: Optional[List[Optional[Union[str, Path]]]] = None,
-        batch_size: Optional[int] = None,
+        sampler: str | None = None,
+        seeds: list[int | None] | None = None,
+        output_paths: list[str | Path | None] | None = None,
+        batch_size: int | None = None,
         **kwargs,
-    ) -> List[Optional[Image.Image]]:
+    ) -> list[Image.Image | None]:
         """
         Generate multiple images using batch processing.
 
@@ -474,9 +474,8 @@ class SDXLEngine(EngineProtocol):
             return []
 
         # Lazy loading: initialize only when needed
-        if not self._initialized:
-            if not self.initialize():
-                return [None] * len(prompts)
+        if not self._initialized and not self.initialize():
+            return [None] * len(prompts)
 
         try:
             # Get resolution
@@ -570,7 +569,7 @@ class SDXLEngine(EngineProtocol):
 
             # Save images if paths provided
             if output_paths:
-                for image, path in zip(all_images, output_paths):
+                for image, path in zip(all_images, output_paths, strict=False):
                     if path and image:
                         image.save(path)
                         logger.info(f"Image saved to: {path}")
@@ -628,7 +627,7 @@ class SDXLEngine(EngineProtocol):
     @classmethod
     def clear_model_cache(cls):
         """Clear the shared model cache."""
-        for key, data in cls._model_cache.items():
+        for _key, data in cls._model_cache.items():
             if "pipe" in data:
                 del data["pipe"]
             if "refiner" in data:
@@ -638,7 +637,7 @@ class SDXLEngine(EngineProtocol):
             torch.cuda.empty_cache()
         logger.info("SDXL model cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str, bool]]:
+    def get_cache_stats(self) -> dict[str, int | float | str | bool]:
         """Get cache statistics (enhanced)."""
         if not self.enable_response_cache:
             return {"enabled": False}
@@ -666,7 +665,7 @@ class SDXLEngine(EngineProtocol):
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("SDXL response cache cleared")
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()
@@ -694,10 +693,10 @@ class SDXLEngine(EngineProtocol):
 
 def create_sdxl_engine(
     model_id: str = "stabilityai/stable-diffusion-xl-base-1.0",
-    refiner_id: Optional[str] = "stabilityai/stable-diffusion-xl-refiner-1.0",
+    refiner_id: str | None = "stabilityai/stable-diffusion-xl-refiner-1.0",
     use_refiner: bool = True,
     resolution: str = "1024x1024",
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> SDXLEngine:
     """Factory function to create an SDXL engine instance."""

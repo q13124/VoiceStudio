@@ -9,9 +9,11 @@ quality and DSP chain integration.
 This provides 500-800ms latency with robust tool integration.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +48,8 @@ class HalfCascadePipeline:
     async def process_audio(
         self,
         audio_data: bytes,
-        context: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        context: str | None = None,
+    ) -> dict[str, Any]:
         """
         Process audio through the half-cascade pipeline.
 
@@ -55,7 +57,7 @@ class HalfCascadePipeline:
         2. Traditional TTS synthesizes the response text
         """
         total_start = time.perf_counter()
-        metrics: Dict[str, float] = {}
+        metrics: dict[str, float] = {}
 
         # Stage 1: Audio input → text response (via S2S or STT+LLM)
         input_start = time.perf_counter()
@@ -118,7 +120,7 @@ class HalfCascadePipeline:
             logger.error(f"STT failed: {exc}")
             return ""
 
-    async def _synthesize(self, text: str) -> Optional[bytes]:
+    async def _synthesize(self, text: str) -> bytes | None:
         """Synthesize audio using traditional TTS."""
         if not text.strip():
             return None

@@ -5,9 +5,7 @@ Tests RHVoice engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestRHVoiceEngineImports:
     def test_module_has_rhvoice_engine_class(self):
         """Test module has RHVoiceEngine class."""
         if hasattr(rhvoice_engine, "RHVoiceEngine"):
-            cls = getattr(rhvoice_engine, "RHVoiceEngine")
+            cls = rhvoice_engine.RHVoiceEngine
             assert isinstance(cls, type), "RHVoiceEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestRHVoiceEngineClass:
     def test_rhvoice_engine_class_exists(self):
         """Test RHVoiceEngine class exists."""
         if hasattr(rhvoice_engine, "RHVoiceEngine"):
-            cls = getattr(rhvoice_engine, "RHVoiceEngine")
+            cls = rhvoice_engine.RHVoiceEngine
             assert isinstance(cls, type), "RHVoiceEngine should be a class"
 
     def test_rhvoice_engine_initialization(self):

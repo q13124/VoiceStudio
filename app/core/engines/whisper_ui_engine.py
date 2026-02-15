@@ -7,14 +7,16 @@ Compatible with:
 - openai-whisper or faster-whisper
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 from collections import OrderedDict
-from typing import Dict, Optional, Union
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     # 1GB max
     _model_cache = get_model_cache(max_models=2, max_memory_mb=1024.0)
@@ -43,7 +45,7 @@ def _get_cache_key(model_size: str, device: str, use_faster_whisper: bool) -> st
 
 def _get_cached_whisper_ui_model(
     model_size: str, device: str, use_faster_whisper: bool
-):  # noqa: E501
+):
     """Get cached Whisper UI model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -61,7 +63,7 @@ def _get_cached_whisper_ui_model(
 
 
 def _cache_whisper_ui_model(
-    model_size: str, device: str, use_faster_whisper: bool, model_data: Dict
+    model_size: str, device: str, use_faster_whisper: bool, model_data: dict
 ):
     """Cache Whisper UI model with LRU eviction."""
     # Try general model cache first
@@ -151,7 +153,7 @@ class WhisperUIEngine(EngineProtocol):
     def __init__(
         self,
         model_size: str = "base",
-        device: Optional[str] = None,
+        device: str | None = None,
         use_faster_whisper: bool = True,
         **kwargs,
     ):
@@ -242,7 +244,7 @@ class WhisperUIEngine(EngineProtocol):
         """Get the device being used."""
         return self.device
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         return {
             "engine": "whisper_ui",
@@ -261,11 +263,11 @@ class WhisperUIEngine(EngineProtocol):
 
     def transcribe(
         self,
-        audio: Union[str, bytes],
-        language: Optional[str] = None,
+        audio: str | bytes,
+        language: str | None = None,
         output_format: str = "text",
         **kwargs,
-    ) -> Optional[Union[str, Dict]]:
+    ) -> str | dict | None:
         """
         Transcribe audio to text using Whisper.
 
@@ -306,9 +308,8 @@ class WhisperUIEngine(EngineProtocol):
                 return cached_result.get("text", "")
 
             # Lazy load model if needed
-            if self._model is None:
-                if not self._load_model():
-                    return None
+            if self._model is None and not self._load_model():
+                return None
 
             # Process audio
             audio_path = self._prepare_audio(audio)
@@ -320,10 +321,8 @@ class WhisperUIEngine(EngineProtocol):
 
             # Cleanup temporary file if created
             if isinstance(audio, bytes) and os.path.exists(audio_path):
-                try:
+                with contextlib.suppress(Exception):
                     os.remove(audio_path)
-                except Exception:
-                    ...
 
             if result is None:
                 return None
@@ -404,7 +403,7 @@ class WhisperUIEngine(EngineProtocol):
             logger.error(f"Failed to load Whisper model: {e}", exc_info=True)
             return False
 
-    def _prepare_audio(self, audio: Union[str, bytes]) -> Optional[str]:
+    def _prepare_audio(self, audio: str | bytes) -> str | None:
         """Prepare audio file for transcription."""
         try:
             if isinstance(audio, str):
@@ -431,8 +430,8 @@ class WhisperUIEngine(EngineProtocol):
             return None
 
     def _perform_transcription(
-        self, audio_path: str, language: Optional[str], **kwargs
-    ) -> Optional[Dict]:
+        self, audio_path: str, language: str | None, **kwargs
+    ) -> dict | None:
         """Perform actual transcription using Whisper."""
         try:
             if (
@@ -481,7 +480,7 @@ class WhisperUIEngine(EngineProtocol):
             logger.error(f"Transcription failed: {e}", exc_info=True)
             return None
 
-    def _format_srt(self, result: Dict) -> str:
+    def _format_srt(self, result: dict) -> str:
         """Format transcription as SRT subtitles."""
         segments = result.get("segments", [])
         if not segments:
@@ -504,7 +503,7 @@ class WhisperUIEngine(EngineProtocol):
 
         return "\n".join(srt_lines)
 
-    def _format_vtt(self, result: Dict) -> str:
+    def _format_vtt(self, result: dict) -> str:
         """Format transcription as VTT subtitles."""
         segments = result.get("segments", [])
         if not segments:
@@ -553,7 +552,7 @@ class WhisperUIEngine(EngineProtocol):
         self._transcription_cache.clear()
         logger.info("Transcription cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "transcription_cache_size": len(self._transcription_cache),

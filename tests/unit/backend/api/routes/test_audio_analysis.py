@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock librosa incorrectly",
     allow_module_level=True,
@@ -71,83 +72,82 @@ class TestGetAudioAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
-                    )
-                    mock_read.return_value = (mock_audio, sample_rate)
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
 
-                    with patch("librosa.stft") as mock_stft:
-                        mock_stft.return_value = np.random.randn(1025, 87)
+                with patch("librosa.stft") as mock_stft:
+                    mock_stft.return_value = np.random.randn(1025, 87)
+
+                    with patch(
+                        "librosa.feature.spectral_centroid"
+                    ) as mock_sc:
+                        mock_sc.return_value = np.array([[2000.0]])
 
                         with patch(
-                            "librosa.feature.spectral_centroid"
-                        ) as mock_sc:
-                            mock_sc.return_value = np.array([[2000.0]])
+                            "librosa.feature.spectral_rolloff"
+                        ) as mock_sr:
+                            mock_sr.return_value = np.array([[4000.0]])
 
                             with patch(
-                                "librosa.feature.spectral_rolloff"
-                            ) as mock_sr:
-                                mock_sr.return_value = np.array([[4000.0]])
+                                "librosa.feature.zero_crossing_rate"
+                            ) as mock_zcr:
+                                mock_zcr.return_value = np.array(
+                                    [[0.1]]
+                                )
 
                                 with patch(
-                                    "librosa.feature.zero_crossing_rate"
-                                ) as mock_zcr:
-                                    mock_zcr.return_value = np.array(
-                                        [[0.1]]
+                                    "librosa.feature.spectral_bandwidth"
+                                ) as mock_sb:
+                                    mock_sb.return_value = np.array(
+                                        [[2000.0]]
                                     )
 
                                     with patch(
-                                        "librosa.feature.spectral_bandwidth"
-                                    ) as mock_sb:
-                                        mock_sb.return_value = np.array(
-                                            [[2000.0]]
+                                        "librosa.feature.spectral_flatness"
+                                    ) as mock_sf:
+                                        mock_sf.return_value = (
+                                            np.array([[0.5]])
                                         )
 
                                         with patch(
-                                            "librosa.feature.spectral_flatness"
-                                        ) as mock_sf:
-                                            mock_sf.return_value = (
+                                            "librosa.feature.rms"
+                                        ) as mock_rms:
+                                            mock_rms.return_value = (
                                                 np.array([[0.5]])
                                             )
 
                                             with patch(
-                                                "librosa.feature.rms"
-                                            ) as mock_rms:
-                                                mock_rms.return_value = (
-                                                    np.array([[0.5]])
+                                                "librosa.hilbert"
+                                            ) as mock_hilbert:
+                                                mock_hilbert.return_value = (
+                                                    np.random.randn(
+                                                        samples
+                                                    )
                                                 )
 
-                                                with patch(
-                                                    "librosa.hilbert"
-                                                ) as mock_hilbert:
-                                                    mock_hilbert.return_value = (
-                                                        np.random.randn(
-                                                            samples
-                                                        )
-                                                    )
+                                                response = client.get(
 
-                                                    response = client.get(
-                                                        (
-                                                            "/api/audio-analysis/"
-                                                            "audio-123"
-                                                        )
-                                                    )
-                                                    # May return 200 or 500
-                                                    # depending on dependencies
-                                                    assert (
-                                                        response.status_code
-                                                        in [200, 500]
-                                                    )
+                                                        "/api/audio-analysis/"
+                                                        "audio-123"
+
+                                                )
+                                                # May return 200 or 500
+                                                # depending on dependencies
+                                                assert (
+                                                    response.status_code
+                                                    in [200, 500]
+                                                )
 
     def test_get_audio_analysis_not_found(self):
         """Test getting analysis for non-existent audio."""
@@ -222,52 +222,51 @@ class TestGetAudioAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
-                    )
-                    mock_read.return_value = (mock_audio, sample_rate)
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
 
-                    with patch("librosa.stft"):
-                        with patch("librosa.feature.spectral_centroid"):
-                            with patch("librosa.feature.spectral_rolloff"):
+                with patch("librosa.stft"):
+                    with patch("librosa.feature.spectral_centroid"):
+                        with patch("librosa.feature.spectral_rolloff"):
+                            with patch(
+                                "librosa.feature.zero_crossing_rate"
+                            ):
                                 with patch(
-                                    "librosa.feature.zero_crossing_rate"
+                                    "librosa.feature.spectral_bandwidth"
                                 ):
                                     with patch(
-                                        "librosa.feature.spectral_bandwidth"
+                                        "librosa.feature.spectral_flatness"
                                     ):
                                         with patch(
-                                            "librosa.feature.spectral_flatness"
+                                            "librosa.feature.rms"
                                         ):
                                             with patch(
-                                                "librosa.feature.rms"
+                                                "librosa.hilbert"
                                             ):
-                                                with patch(
-                                                    "librosa.hilbert"
-                                                ):
-                                                    url = (
-                                                        "/api/audio-analysis/"
-                                                        "audio-123?"
-                                                        "include_spectral=false&"
-                                                        "include_temporal=true&"
-                                                        "include_perceptual=false"
-                                                    )
-                                                    response = client.get(url)
-                                                    # May return 200 or 500
-                                                    assert (
-                                                        response.status_code
-                                                        in [200, 500]
-                                                    )
+                                                url = (
+                                                    "/api/audio-analysis/"
+                                                    "audio-123?"
+                                                    "include_spectral=false&"
+                                                    "include_temporal=true&"
+                                                    "include_perceptual=false"
+                                                )
+                                                response = client.get(url)
+                                                # May return 200 or 500
+                                                assert (
+                                                    response.status_code
+                                                    in [200, 500]
+                                                )
 
 
 class TestAnalyzeAudio:
@@ -279,19 +278,18 @@ class TestAnalyzeAudio:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                response = client.post(
-                    "/api/audio-analysis/audio-123/analyze"
-                )
-                assert response.status_code == 200
-                data = response.json()
-                assert data["status"] == "queued"
-                assert "job_id" in data
+            response = client.post(
+                "/api/audio-analysis/audio-123/analyze"
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "queued"
+            assert "job_id" in data
 
     def test_analyze_audio_not_found(self):
         """Test analyzing non-existent audio."""
@@ -383,41 +381,40 @@ class TestGetPitchAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
+
+                with patch(
+                    "backend.api.routes.audio_processing.PitchTracker"
+                ) as mock_tracker:
+                    mock_instance = mock_tracker.return_value
+                    mock_instance.crepe_available = True
+                    mock_instance.track_pitch_crepe.return_value = (
+                        np.array([0.0, 0.1, 0.2]),
+                        np.array([150.0, 160.0, 155.0]),
                     )
-                    mock_read.return_value = (mock_audio, sample_rate)
+                    mock_instance.get_pitch_statistics.return_value = {
+                        "mean": 155.0,
+                        "std": 5.0,
+                    }
 
-                    with patch(
-                        "backend.api.routes.audio_processing.PitchTracker"
-                    ) as mock_tracker:
-                        mock_instance = mock_tracker.return_value
-                        mock_instance.crepe_available = True
-                        mock_instance.track_pitch_crepe.return_value = (
-                            np.array([0.0, 0.1, 0.2]),
-                            np.array([150.0, 160.0, 155.0]),
-                        )
-                        mock_instance.get_pitch_statistics.return_value = {
-                            "mean": 155.0,
-                            "std": 5.0,
-                        }
-
-                        response = client.get(
-                            "/api/audio-analysis/audio-123/pitch?"
-                            "method=crepe"
-                        )
-                        # May return 200 or 500 depending on dependencies
-                        assert response.status_code in [200, 500]
+                    response = client.get(
+                        "/api/audio-analysis/audio-123/pitch?"
+                        "method=crepe"
+                    )
+                    # May return 200 or 500 depending on dependencies
+                    assert response.status_code in [200, 500]
 
     def test_get_pitch_analysis_success_pyin(self):
         """Test successful pitch analysis with pyin method."""
@@ -425,42 +422,41 @@ class TestGetPitchAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
+
+                with patch(
+                    "backend.api.routes.audio_processing.PitchTracker"
+                ) as mock_tracker:
+                    mock_instance = mock_tracker.return_value
+                    mock_instance.pyin_available = True
+                    mock_instance.track_pitch_pyin.return_value = (
+                        np.array([150.0, 160.0, 155.0]),
+                        np.array([True, True, True]),
+                        np.array([0.9, 0.9, 0.9]),
                     )
-                    mock_read.return_value = (mock_audio, sample_rate)
+                    mock_instance.get_pitch_statistics.return_value = {
+                        "mean": 155.0,
+                        "std": 5.0,
+                    }
 
-                    with patch(
-                        "backend.api.routes.audio_processing.PitchTracker"
-                    ) as mock_tracker:
-                        mock_instance = mock_tracker.return_value
-                        mock_instance.pyin_available = True
-                        mock_instance.track_pitch_pyin.return_value = (
-                            np.array([150.0, 160.0, 155.0]),
-                            np.array([True, True, True]),
-                            np.array([0.9, 0.9, 0.9]),
-                        )
-                        mock_instance.get_pitch_statistics.return_value = {
-                            "mean": 155.0,
-                            "std": 5.0,
-                        }
-
-                        response = client.get(
-                            "/api/audio-analysis/audio-123/pitch?"
-                            "method=pyin"
-                        )
-                        # May return 200 or 500 depending on dependencies
-                        assert response.status_code in [200, 500]
+                    response = client.get(
+                        "/api/audio-analysis/audio-123/pitch?"
+                        "method=pyin"
+                    )
+                    # May return 200 or 500 depending on dependencies
+                    assert response.status_code in [200, 500]
 
     def test_get_pitch_analysis_not_found(self):
         """Test pitch analysis for non-existent audio."""
@@ -484,33 +480,32 @@ class TestGetPitchAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
+
+                with patch(
+                    "backend.api.routes.audio_processing.PitchTracker"
+                ) as mock_tracker:
+                    mock_instance = mock_tracker.return_value
+                    mock_instance.crepe_available = False
+                    mock_instance.pyin_available = False
+
+                    response = client.get(
+                        "/api/audio-analysis/audio-123/pitch?"
+                        "method=crepe"
                     )
-                    mock_read.return_value = (mock_audio, sample_rate)
-
-                    with patch(
-                        "backend.api.routes.audio_processing.PitchTracker"
-                    ) as mock_tracker:
-                        mock_instance = mock_tracker.return_value
-                        mock_instance.crepe_available = False
-                        mock_instance.pyin_available = False
-
-                        response = client.get(
-                            "/api/audio-analysis/audio-123/pitch?"
-                            "method=crepe"
-                        )
-                        assert response.status_code == 400
+                    assert response.status_code == 400
 
 
 @pytest.mark.skip(reason="Depends on non-existent backend.api.routes.audio_processing module")
@@ -523,29 +518,28 @@ class TestGetAudioMetadata:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
+
             with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+                "backend.api.routes.audio_processing."
+                "AudioMetadataExtractor"
+            ) as mock_extractor:
+                mock_instance = mock_extractor.return_value
+                mock_instance.extract_metadata.return_value = {
+                    "format": "WAV",
+                    "sample_rate": 44100,
+                    "channels": 1,
+                    "duration": 1.0,
+                }
 
-                with patch(
-                    "backend.api.routes.audio_processing."
-                    "AudioMetadataExtractor"
-                ) as mock_extractor:
-                    mock_instance = mock_extractor.return_value
-                    mock_instance.extract_metadata.return_value = {
-                        "format": "WAV",
-                        "sample_rate": 44100,
-                        "channels": 1,
-                        "duration": 1.0,
-                    }
-
-                    response = client.get(
-                        "/api/audio-analysis/audio-123/metadata"
-                    )
-                    # May return 200 or 500 depending on dependencies
-                    assert response.status_code in [200, 500]
+                response = client.get(
+                    "/api/audio-analysis/audio-123/metadata"
+                )
+                # May return 200 or 500 depending on dependencies
+                assert response.status_code in [200, 500]
 
     def test_get_audio_metadata_not_found(self):
         """Test metadata retrieval for non-existent audio."""
@@ -574,41 +568,40 @@ class TestGetWaveletAnalysis:
         app.include_router(audio_analysis.router)
         client = TestClient(app)
 
-        with patch("os.path.exists", return_value=True):
-            with patch(
-                "backend.api.routes.audio._get_audio_path"
-            ) as mock_path:
-                mock_path.return_value = "/path/to/audio.wav"
+        with patch("os.path.exists", return_value=True), patch(
+            "backend.api.routes.audio._get_audio_path"
+        ) as mock_path:
+            mock_path.return_value = "/path/to/audio.wav"
 
-                with patch("soundfile.read") as mock_read:
-                    sample_rate = 44100
-                    duration = 1.0
-                    samples = int(sample_rate * duration)
-                    mock_audio = np.random.randn(samples).astype(
-                        np.float32
+            with patch("soundfile.read") as mock_read:
+                sample_rate = 44100
+                duration = 1.0
+                samples = int(sample_rate * duration)
+                mock_audio = np.random.randn(samples).astype(
+                    np.float32
+                )
+                mock_read.return_value = (mock_audio, sample_rate)
+
+                with patch(
+                    "backend.api.routes.audio_processing."
+                    "WaveletAnalyzer"
+                ) as mock_analyzer:
+                    mock_instance = mock_analyzer.return_value
+                    mock_instance.get_available_wavelets.return_value = [
+                        "db4",
+                        "haar",
+                    ]
+                    mock_instance.get_wavelet_features.return_value = {
+                        "num_levels": 5,
+                        "energy": [1.0, 0.5, 0.25, 0.125, 0.0625],
+                    }
+
+                    response = client.get(
+                        "/api/audio-analysis/audio-123/wavelet?"
+                        "wavelet=db4"
                     )
-                    mock_read.return_value = (mock_audio, sample_rate)
-
-                    with patch(
-                        "backend.api.routes.audio_processing."
-                        "WaveletAnalyzer"
-                    ) as mock_analyzer:
-                        mock_instance = mock_analyzer.return_value
-                        mock_instance.get_available_wavelets.return_value = [
-                            "db4",
-                            "haar",
-                        ]
-                        mock_instance.get_wavelet_features.return_value = {
-                            "num_levels": 5,
-                            "energy": [1.0, 0.5, 0.25, 0.125, 0.0625],
-                        }
-
-                        response = client.get(
-                            "/api/audio-analysis/audio-123/wavelet?"
-                            "wavelet=db4"
-                        )
-                        # May return 200 or 500 depending on dependencies
-                        assert response.status_code in [200, 500]
+                    # May return 200 or 500 depending on dependencies
+                    assert response.status_code in [200, 500]
 
     def test_get_wavelet_analysis_not_found(self):
         """Test wavelet analysis for non-existent audio."""

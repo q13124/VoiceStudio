@@ -8,32 +8,32 @@ Optimizes Pydantic model validation through:
 - Performance monitoring
 """
 
-import functools
+from __future__ import annotations
+
 import hashlib
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
-from pydantic import BaseModel, ValidationError, create_model
-from pydantic.fields import FieldInfo
+from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
 # Schema cache: maps model class name to compiled schema
-_schema_cache: Dict[str, Any] = {}
+_schema_cache: dict[str, Any] = {}
 
 # Validation cache: maps (model_hash, data_hash) to validated instance
 _validation_cache: OrderedDict[str, BaseModel] = OrderedDict()
 _validation_cache_max_size: int = 1000
 
 # Validation statistics
-_validation_stats: Dict[str, Dict[str, Any]] = {}
+_validation_stats: dict[str, dict[str, Any]] = {}
 
 
-def _get_model_hash(model: Type[BaseModel]) -> str:
+def _get_model_hash(model: type[BaseModel]) -> str:
     """Generate hash for a Pydantic model."""
     try:
         # Use model's JSON schema as hash source
@@ -45,7 +45,7 @@ def _get_model_hash(model: Type[BaseModel]) -> str:
         return model.__name__
 
 
-def _get_data_hash(data: Dict[str, Any]) -> str:
+def _get_data_hash(data: dict[str, Any]) -> str:
     """Generate hash for validation data."""
     try:
         # Sort keys for consistent hashing
@@ -55,7 +55,7 @@ def _get_data_hash(data: Dict[str, Any]) -> str:
         return str(hash(str(data)))
 
 
-def _get_cached_schema(model: Type[BaseModel]) -> Any:
+def _get_cached_schema(model: type[BaseModel]) -> Any:
     """Get cached schema for a model."""
     model_name = model.__name__
     if model_name not in _schema_cache:
@@ -70,7 +70,7 @@ def _get_cached_schema(model: Type[BaseModel]) -> Any:
     return _schema_cache.get(model_name)
 
 
-def _validate_early(model: Type[BaseModel], data: Dict[str, Any]) -> Optional[str]:
+def _validate_early(model: type[BaseModel], data: dict[str, Any]) -> str | None:
     """
     Perform early validation checks before full Pydantic validation.
 
@@ -111,9 +111,8 @@ def _validate_early(model: Type[BaseModel], data: Dict[str, Any]) -> Optional[st
                 elif annotation == int:
                     if not isinstance(value, int):
                         return f"Field {field_name} must be an integer"
-                elif annotation == float:
-                    if not isinstance(value, (int, float)):
-                        return f"Field {field_name} must be a number"
+                elif annotation == float and not isinstance(value, (int, float)):
+                    return f"Field {field_name} must be a number"
 
         return None
     except Exception as e:
@@ -122,7 +121,7 @@ def _validate_early(model: Type[BaseModel], data: Dict[str, Any]) -> Optional[st
 
 
 def validate_optimized(
-    model: Type[T], data: Dict[str, Any], use_cache: bool = True
+    model: type[T], data: dict[str, Any], use_cache: bool = True
 ) -> T:
     """
     Optimized validation with caching and early failure detection.
@@ -197,14 +196,14 @@ def validate_optimized(
         stats["avg_time"] = stats["total_time"] / stats["total_validations"]
 
         return instance
-    except ValidationError as e:
+    except ValidationError:
         validation_time = time.perf_counter() - start_time
         stats["total_time"] += validation_time
         stats["avg_time"] = stats["total_time"] / stats["total_validations"]
         raise
 
 
-def optimize_model(model: Type[BaseModel]) -> Type[BaseModel]:
+def optimize_model(model: type[BaseModel]) -> type[BaseModel]:
     """
     Optimize a Pydantic model for faster validation.
 
@@ -221,7 +220,7 @@ def optimize_model(model: Type[BaseModel]) -> Type[BaseModel]:
     return model
 
 
-def get_validation_stats(model_name: Optional[str] = None) -> Dict[str, Any]:
+def get_validation_stats(model_name: str | None = None) -> dict[str, Any]:
     """
     Get validation statistics.
 
@@ -250,7 +249,7 @@ def clear_schema_cache():
     logger.info("Schema cache cleared")
 
 
-def get_cache_stats() -> Dict[str, Any]:
+def get_cache_stats() -> dict[str, Any]:
     """Get cache statistics."""
     return {
         "schema_cache_size": len(_schema_cache),

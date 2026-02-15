@@ -7,13 +7,13 @@ Compatible with:
 - vosk 0.3.45+
 """
 
+from __future__ import annotations
+
 import json
 import logging
-import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
     _model_cache = get_model_cache(max_models=3, max_memory_mb=1536.0)  # 1.5GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -31,17 +31,17 @@ except ImportError:
 
 # Fallback: Vosk-specific cache (for backward compatibility)
 _VOSK_MODEL_CACHE: OrderedDict = OrderedDict()
-_TRANSCRIPTION_CACHE: Dict[str, Dict] = {}
+_TRANSCRIPTION_CACHE: dict[str, dict] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_TRANSCRIPTION_CACHE_SIZE = 200  # Maximum number of transcriptions to cache
 
 
-def _get_cache_key(model_path: Optional[str], model_name: str) -> str:
+def _get_cache_key(model_path: str | None, model_name: str) -> str:
     """Generate cache key for Vosk model."""
     return f"vosk::{model_path or 'default'}::{model_name}"
 
 
-def _get_cached_vosk_model(model_path: Optional[str], model_name: str):
+def _get_cached_vosk_model(model_path: str | None, model_name: str):
     """Get cached Vosk model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -49,7 +49,7 @@ def _get_cached_vosk_model(model_path: Optional[str], model_name: str):
         cached = _model_cache.get("vosk", cache_key, device="cpu")
         if cached is not None:
             return cached
-    
+
     # Fallback to Vosk-specific cache
     cache_key = _get_cache_key(model_path, model_name)
     if cache_key in _VOSK_MODEL_CACHE:
@@ -59,7 +59,7 @@ def _get_cached_vosk_model(model_path: Optional[str], model_name: str):
     return None
 
 
-def _cache_vosk_model(model_path: Optional[str], model_name: str, model):
+def _cache_vosk_model(model_path: str | None, model_name: str, model):
     """Cache Vosk model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -69,18 +69,18 @@ def _cache_vosk_model(model_path: Optional[str], model_name: str, model):
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to Vosk-specific cache
     cache_key = _get_cache_key(model_path, model_name)
-    
+
     # Remove if already exists
     if cache_key in _VOSK_MODEL_CACHE:
         _VOSK_MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     # Add new model
     _VOSK_MODEL_CACHE[cache_key] = model
-    
+
     # Evict oldest if cache full
     if len(_VOSK_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, oldest_model = _VOSK_MODEL_CACHE.popitem(last=False)
@@ -90,14 +90,14 @@ def _cache_vosk_model(model_path: Optional[str], model_name: str, model):
             logger.debug(f"Evicted Vosk model from cache: {oldest_key}")
         except Exception as e:
             logger.warning(f"Error evicting Vosk model from cache: {e}")
-    
+
     logger.debug(f"Cached Vosk model: {cache_key} (cache size: {len(_VOSK_MODEL_CACHE)})")
 
 
 def _get_transcription_cache_key(
-    audio: Union[str, np.ndarray, Path],
+    audio: str | np.ndarray | Path,
     word_timestamps: bool,
-) -> Optional[str]:
+) -> str | None:
     """Generate cache key for transcription."""
     import hashlib
 
@@ -108,20 +108,20 @@ def _get_transcription_cache_key(
             mtime = audio_path.stat().st_mtime
             key_data = f"{audio_path}::{mtime}::{word_timestamps}"
             return hashlib.md5(key_data.encode()).hexdigest()
-    
+
     # For numpy arrays, use hash of audio data
     if isinstance(audio, np.ndarray):
         audio_hash = hashlib.md5(audio.tobytes()).hexdigest()
         key_data = f"{audio_hash}::{word_timestamps}"
         return hashlib.md5(key_data.encode()).hexdigest()
-    
+
     return None
 
 
 def _get_cached_transcription(
-    audio: Union[str, np.ndarray, Path],
+    audio: str | np.ndarray | Path,
     word_timestamps: bool,
-) -> Optional[Dict]:
+) -> dict | None:
     """Get cached transcription if available."""
     cache_key = _get_transcription_cache_key(audio, word_timestamps)
     if cache_key:
@@ -130,29 +130,29 @@ def _get_cached_transcription(
 
 
 def _cache_transcription(
-    audio: Union[str, np.ndarray, Path],
+    audio: str | np.ndarray | Path,
     word_timestamps: bool,
-    result: Dict,
+    result: dict,
 ):
     """Cache transcription with LRU eviction."""
     cache_key = _get_transcription_cache_key(audio, word_timestamps)
     if not cache_key:
         return
-    
+
     # Remove if already exists
     if cache_key in _TRANSCRIPTION_CACHE:
         return
-    
+
     # Add new transcription
     _TRANSCRIPTION_CACHE[cache_key] = result
-    
+
     # Evict oldest if cache full
     if len(_TRANSCRIPTION_CACHE) > _MAX_TRANSCRIPTION_CACHE_SIZE:
         # Remove first item (oldest)
         oldest_key = next(iter(_TRANSCRIPTION_CACHE))
         del _TRANSCRIPTION_CACHE[oldest_key]
         logger.debug(f"Evicted transcription from cache: {oldest_key[:8]}")
-    
+
     logger.debug(f"Cached transcription: {cache_key[:8]} (cache size: {len(_TRANSCRIPTION_CACHE)})")
 
 # Try importing vosk
@@ -185,10 +185,10 @@ class VoskEngine(EngineProtocol):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
         model_name: str = "vosk-model-en-us-0.22",
         sample_rate: int = 16000,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = False,  # Vosk doesn't use GPU
     ):
         """
@@ -229,7 +229,7 @@ class VoskEngine(EngineProtocol):
                 self.recognizer.SetWords(True)  # Enable word-level timestamps
                 self._initialized = True
                 return True
-        
+
         # Load model
         try:
             # Determine model path
@@ -262,20 +262,20 @@ class VoskEngine(EngineProtocol):
             logger.error(f"Failed to initialize Vosk engine: {e}")
             self._initialized = False
             return False
-    
+
     def initialize(self):
         """Initialize Vosk model."""
         if self._initialized:
             return True
-        
+
         # Lazy loading: defer until first use
         if self.lazy_load:
             logger.debug("Lazy loading enabled, model will be loaded on first use")
             return True
-        
+
         return self._load_model()
 
-    def _find_model(self) -> Optional[Path]:
+    def _find_model(self) -> Path | None:
         """Find vosk model in common locations."""
         # Common model locations
         search_paths = [
@@ -292,31 +292,30 @@ class VoskEngine(EngineProtocol):
 
     def batch_transcribe(
         self,
-        audio_files: List[Union[str, Path, np.ndarray]],
+        audio_files: list[str | Path | np.ndarray],
         word_timestamps: bool = True,
         **kwargs
-    ) -> List[Dict[str, any]]:
+    ) -> list[dict[str, any]]:
         """
         Transcribe multiple audio files in batch with optimized processing.
-        
+
         Args:
             audio_files: List of audio file paths or arrays
             word_timestamps: Whether to include word-level timestamps
             **kwargs: Additional parameters
-        
+
         Returns:
             List of transcription results
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return [{"text": "", "words": [], "confidence": 0.0}] * len(audio_files)
-        
+        if not self._initialized and not self._load_model():
+            return [{"text": "", "words": [], "confidence": 0.0}] * len(audio_files)
+
         results = []
-        
+
         # Process in batches with parallel processing
         batch_size = self.batch_size
-        
+
         def transcribe_single(audio_file):
             try:
                 return self.transcribe(
@@ -327,23 +326,23 @@ class VoskEngine(EngineProtocol):
             except Exception as e:
                 logger.error(f"Batch transcription failed for {audio_file}: {e}")
                 return {"text": "", "words": [], "confidence": 0.0}
-        
+
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=batch_size) as executor:
             results = list(executor.map(transcribe_single, audio_files))
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Transcription caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
+
     def cleanup(self):
         """Cleanup Vosk resources."""
         # Don't delete cached model, just clear reference
@@ -354,10 +353,10 @@ class VoskEngine(EngineProtocol):
 
     def transcribe(
         self,
-        audio: Union[str, Path, np.ndarray],
-        language: Optional[str] = None,
+        audio: str | Path | np.ndarray,
+        language: str | None = None,
         word_timestamps: bool = True,
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Transcribe audio to text.
 
@@ -373,10 +372,9 @@ class VoskEngine(EngineProtocol):
             - confidence: Overall confidence score
         """
         # Lazy load model if needed
-        if not self._initialized:
-            if not self._load_model():
-                return {"text": "", "words": [], "confidence": 0.0}
-        
+        if not self._initialized and not self._load_model():
+            return {"text": "", "words": [], "confidence": 0.0}
+
         # Check transcription cache
         if self.enable_caching:
             cached_result = _get_cached_transcription(audio, word_timestamps)
@@ -385,10 +383,7 @@ class VoskEngine(EngineProtocol):
                 return cached_result.copy()
 
         # Load audio if path provided
-        if isinstance(audio, (str, Path)):
-            audio_array = self._load_audio(audio)
-        else:
-            audio_array = audio
+        audio_array = self._load_audio(audio) if isinstance(audio, (str, Path)) else audio
 
         # Ensure audio is int16 PCM at 16kHz
         if audio_array.dtype != np.int16:
@@ -398,7 +393,7 @@ class VoskEngine(EngineProtocol):
         # Process audio in chunks (optimized chunk size)
         results = []
         chunk_size = 4000  # Process in chunks
-        
+
         # Create new recognizer for this transcription (thread-safe)
         recognizer = KaldiRecognizer(self.model, self.sample_rate)
         recognizer.SetWords(word_timestamps)
@@ -429,14 +424,14 @@ class VoskEngine(EngineProtocol):
             "words": all_words if word_timestamps else [],
             "confidence": self._calculate_confidence(all_words) if all_words else 0.0,
         }
-        
+
         # Cache transcription result
         if self.enable_caching:
             _cache_transcription(audio, word_timestamps, result)
-        
+
         return result
 
-    def _load_audio(self, audio_path: Union[str, Path]) -> np.ndarray:
+    def _load_audio(self, audio_path: str | Path) -> np.ndarray:
         """Load audio file and resample to 16kHz if needed."""
         try:
             import soundfile as sf
@@ -458,7 +453,7 @@ class VoskEngine(EngineProtocol):
             logger.error(f"Failed to load audio: {e}")
             raise
 
-    def _calculate_confidence(self, words: List[Dict]) -> float:
+    def _calculate_confidence(self, words: list[dict]) -> float:
         """Calculate overall confidence from word confidences."""
         if not words:
             return 0.0
@@ -469,7 +464,7 @@ class VoskEngine(EngineProtocol):
 
         return float(np.mean(confidences))
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """Get list of supported languages (depends on model)."""
         # Vosk supports many languages, but depends on model
         # Common models: en-us, es, fr, de, it, pt, ru, zh, ja, etc.
@@ -477,7 +472,7 @@ class VoskEngine(EngineProtocol):
 
 
 def create_vosk_engine(
-    model_path: Optional[str] = None,
+    model_path: str | None = None,
     model_name: str = "vosk-model-en-us-0.22",
     sample_rate: int = 16000,
 ) -> VoskEngine:

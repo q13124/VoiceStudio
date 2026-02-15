@@ -8,12 +8,14 @@ This module provides error boundary utilities that make logging the default path
 replacing bare except blocks with tracked, logged error handling.
 """
 
-import logging
-import traceback
-from dataclasses import dataclass
-from typing import TypeVar, Callable, Optional, Any, Generic
-from functools import wraps
+from __future__ import annotations
+
 import asyncio
+import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import wraps
+from typing import Any, Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +27,9 @@ class ErrorResult(Generic[T]):
     """Result of an operation that may fail."""
 
     success: bool
-    value: Optional[T] = None
-    error: Optional[Exception] = None
-    error_message: Optional[str] = None
+    value: T | None = None
+    error: Exception | None = None
+    error_message: str | None = None
 
     @classmethod
     def ok(cls, value: T) -> "ErrorResult[T]":
@@ -35,7 +37,7 @@ class ErrorResult(Generic[T]):
         return cls(success=True, value=value)
 
     @classmethod
-    def fail(cls, error: Exception, message: Optional[str] = None) -> "ErrorResult[T]":
+    def fail(cls, error: Exception, message: str | None = None) -> "ErrorResult[T]":
         """Create a failed result."""
         return cls(
             success=False,
@@ -192,7 +194,7 @@ def capture(
 
 def error_boundary(
     fallback: T = None,  # type: ignore
-    context: Optional[str] = None,
+    context: str | None = None,
     log_level: int = logging.WARNING,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
@@ -239,7 +241,7 @@ def error_boundary(
 
 def async_error_boundary(
     fallback: T = None,  # type: ignore
-    context: Optional[str] = None,
+    context: str | None = None,
     log_level: int = logging.WARNING,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """

@@ -1,15 +1,15 @@
 """Inter-Process Communication module."""
 
+from backend.ipc.audio_protocol import AudioFrame, AudioProtocol, AudioStreamConfig
 from backend.ipc.named_pipe_server import NamedPipeServer, PipeConfig
-from backend.ipc.audio_protocol import AudioProtocol, AudioFrame, AudioStreamConfig
 from backend.ipc.security import IPCSecurity, IPCToken
 
 __all__ = [
-    "NamedPipeServer",
-    "PipeConfig",
+    "AudioFrame",
     "AudioProtocol",
-    "AudioFrame", 
     "AudioStreamConfig",
     "IPCSecurity",
     "IPCToken",
+    "NamedPipeServer",
+    "PipeConfig",
 ]

@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tools.context.core.models import AllocationContext, RuleContext, SourceResult
 from tools.context.sources.base import BaseSourceAdapter
 
-
 DEFAULT_RULES_DIR = ".cursor/rules"
 
 
-def _parse_frontmatter(text: str) -> Dict[str, str]:
+def _parse_frontmatter(text: str) -> dict[str, str]:
     if not text.lstrip().startswith("---"):
         return {}
     lines = text.splitlines()
@@ -24,7 +22,7 @@ def _parse_frontmatter(text: str) -> Dict[str, str]:
             break
     if end_idx is None:
         return {}
-    data: Dict[str, str] = {}
+    data: dict[str, str] = {}
     for line in lines[1:end_idx]:
         if ":" not in line:
             continue
@@ -40,7 +38,7 @@ class RulesSourceAdapter(BaseSourceAdapter):
         self,
         rules_dir: str = DEFAULT_RULES_DIR,
         include_always_apply_only: bool = False,
-        max_rules: Optional[int] = None,
+        max_rules: int | None = None,
         offline: bool = True,
     ):
         super().__init__(source_name="rules", priority=90, offline=offline)
@@ -54,7 +52,7 @@ class RulesSourceAdapter(BaseSourceAdapter):
             p = root / p
         return p
 
-    def _read_rule(self, path: Path) -> Optional[RuleContext]:
+    def _read_rule(self, path: Path) -> RuleContext | None:
         try:
             text = path.read_text(encoding="utf-8")
         except Exception:
@@ -68,12 +66,12 @@ class RulesSourceAdapter(BaseSourceAdapter):
         return RuleContext(path=rel, description=desc, always_apply=always_apply)
 
     def fetch(self, context: AllocationContext) -> SourceResult:
-        def _load() -> Dict[str, Any]:
+        def _load() -> dict[str, Any]:
             root = Path(__file__).resolve().parents[4]
             rules_dir = self._resolve_dir(root)
             if not rules_dir.exists():
                 return {"rules": []}
-            rules: List[RuleContext] = []
+            rules: list[RuleContext] = []
             for path in sorted(rules_dir.rglob("*.mdc")):
                 rule = self._read_rule(path)
                 if rule:

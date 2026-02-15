@@ -9,9 +9,9 @@ from .voice_profile_manager import VoiceProfileManager, create_voice_profile_man
 
 __all__ = [
     "NeuralAudioProcessor",
-    "create_neural_audio_processor",
     "PhoenixPipelineCore",
-    "create_phoenix_pipeline_core",
     "VoiceProfileManager",
+    "create_neural_audio_processor",
+    "create_phoenix_pipeline_core",
     "create_voice_profile_manager",
 ]

@@ -5,10 +5,10 @@ Tests RVC (Retrieval-based Voice Conversion) endpoints in isolation.
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -16,7 +16,6 @@ sys.path.insert(0, str(project_root))
 
 # Mock dependencies before importing rvc
 import sys
-from unittest.mock import MagicMock
 
 # Create mock modules for dependencies that might not be available
 for module_name in ["torch", "torch.cuda"]:
@@ -209,8 +208,8 @@ class TestRVCRouteEndpoints:
     @patch("backend.api.routes.rvc._audio_storage")
     def test_get_audio_success(self, mock_storage, client):
         """Test getting converted audio file."""
-        import tempfile
         import os
+        import tempfile
 
         # Create a temporary audio file
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
@@ -283,8 +282,8 @@ class TestRVCRouteEndpoints:
     @patch("backend.api.routes.audio._get_audio_path")
     def test_convert_voice_with_parameters(self, mock_get_path, mock_router, client):
         """Test convert_voice with all parameters."""
-        import tempfile
         import os
+        import tempfile
 
         # Create mock engine
         mock_engine = MagicMock()

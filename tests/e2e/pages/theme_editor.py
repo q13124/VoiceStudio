@@ -4,10 +4,10 @@ Page object for Theme Editor panel.
 Provides methods to interact with the Theme Editor for E2E testing.
 """
 
-from typing import List, Optional
+
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class ThemeEditorPage:
@@ -50,7 +50,7 @@ class ThemeEditorPage:
             )
         )
 
-    def get_current_theme(self) -> Optional[str]:
+    def get_current_theme(self) -> str | None:
         """Get the currently selected theme."""
         try:
             combo = self.driver.find_element(
@@ -66,7 +66,7 @@ class ThemeEditorPage:
             AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID
         )
         combo.click()
-        
+
         theme_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, theme_name)
@@ -74,7 +74,7 @@ class ThemeEditorPage:
         )
         theme_item.click()
 
-    def get_accent_colors(self) -> List[str]:
+    def get_accent_colors(self) -> list[str]:
         """Get available accent color names."""
         try:
             grid = self.driver.find_element(
@@ -112,7 +112,7 @@ class ThemeEditorPage:
             AppiumBy.ACCESSIBILITY_ID, self.DENSITY_COMBO_ID
         )
         combo.click()
-        
+
         density_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, density_name)
@@ -127,7 +127,7 @@ class ThemeEditorPage:
         )
         name_input.clear()
         name_input.send_keys(name)
-        
+
         save_btn = self.driver.find_element(
             AppiumBy.ACCESSIBILITY_ID, self.SAVE_THEME_BUTTON_ID
         )
@@ -139,14 +139,14 @@ class ThemeEditorPage:
             AppiumBy.ACCESSIBILITY_ID, self.SAVED_THEMES_COMBO_ID
         )
         combo.click()
-        
+
         theme_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, name)
             )
         )
         theme_item.click()
-        
+
         load_btn = self.driver.find_element(
             AppiumBy.ACCESSIBILITY_ID, self.LOAD_THEME_BUTTON_ID
         )

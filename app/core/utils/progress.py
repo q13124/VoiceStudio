@@ -4,9 +4,12 @@ Integrates tqdm for progress tracking in training and processing.
 Part of FREE_LIBRARIES_INTEGRATION - Worker 3.
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
-import sys
-from typing import Any, Iterator, Optional, Union
+from collections.abc import Iterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ except ImportError:
     # Create dummy tqdm class for fallback
     class tqdm:
         def __init__(self, *args, **kwargs):
-            self.total = kwargs.get("total", None)
+            self.total = kwargs.get("total")
             self.n = 0
 
         def update(self, n=1):
@@ -43,7 +46,7 @@ except ImportError:
 
     class atqdm:
         def __init__(self, *args, **kwargs):
-            self.total = kwargs.get("total", None)
+            self.total = kwargs.get("total")
             self.n = 0
 
         async def update(self, n=1):
@@ -57,12 +60,12 @@ except ImportError:
 
 
 def create_progress_bar(
-    total: Optional[int] = None,
-    desc: Optional[str] = None,
+    total: int | None = None,
+    desc: str | None = None,
     unit: str = "it",
     disable: bool = False,
     **kwargs,
-) -> Union[tqdm, Any]:
+) -> tqdm | Any:
     """
     Create a progress bar using tqdm.
 
@@ -83,12 +86,12 @@ def create_progress_bar(
 
 
 def create_async_progress_bar(
-    total: Optional[int] = None,
-    desc: Optional[str] = None,
+    total: int | None = None,
+    desc: str | None = None,
     unit: str = "it",
     disable: bool = False,
     **kwargs,
-) -> Union[atqdm, Any]:
+) -> atqdm | Any:
     """
     Create an async progress bar using tqdm.
 
@@ -110,8 +113,8 @@ def create_async_progress_bar(
 
 def wrap_iterable(
     iterable: Iterator,
-    desc: Optional[str] = None,
-    total: Optional[int] = None,
+    desc: str | None = None,
+    total: int | None = None,
     disable: bool = False,
     **kwargs,
 ) -> Iterator:
@@ -134,7 +137,7 @@ def wrap_iterable(
     return tqdm(iterable, desc=desc, total=total, disable=disable, **kwargs)
 
 
-def update_progress(progress_bar: Any, n: int = 1, desc: Optional[str] = None):
+def update_progress(progress_bar: Any, n: int = 1, desc: str | None = None):
     """
     Update a progress bar.
 
@@ -164,7 +167,5 @@ def close_progress(progress_bar: Any):
     if progress_bar is None:
         return
 
-    try:
+    with contextlib.suppress(Exception):
         progress_bar.close()
-    except Exception:
-        ...

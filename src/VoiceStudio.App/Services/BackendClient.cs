@@ -617,6 +617,11 @@ namespace VoiceStudio.App.Services
           content.Add(new StringContent(request.ProjectId), "project_id");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.ProfileName))
+        {
+          content.Add(new StringContent(request.ProfileName), "profile_name");
+        }
+
         var response = await _httpClient.PostAsync("/api/voice/clone", content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -896,6 +901,66 @@ namespace VoiceStudio.App.Services
         }
 
         return await response.Content.ReadAsStreamAsync(cancellationToken);
+      });
+    }
+
+    /// <summary>
+    /// Exports an audio file to the specified format.
+    /// </summary>
+    public async Task<Stream> ExportAudioAsync(
+        string source,
+        string targetFormat,
+        int? sampleRate = null,
+        int? channels = null,
+        int? bitrateKbps = null,
+        bool normalize = false,
+        CancellationToken cancellationToken = default)
+    {
+      return await ExecuteWithRetryAsync(async () =>
+      {
+        var request = new VoiceStudio.App.Core.Models.AudioExportRequest
+        {
+          Source = source,
+          Format = targetFormat.TrimStart('.').ToLowerInvariant(),
+          SampleRate = sampleRate,
+          Channels = channels,
+          BitrateKbps = bitrateKbps,
+          Normalize = normalize
+        };
+
+        var jsonContent = new StringContent(
+            JsonSerializer.Serialize(request),
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync("/api/audio/export", jsonContent, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          throw await CreateExceptionFromResponseAsync(response);
+        }
+
+        return await response.Content.ReadAsStreamAsync(cancellationToken);
+      });
+    }
+
+    /// <summary>
+    /// Gets the list of supported audio formats for import/export.
+    /// </summary>
+    public async Task<List<VoiceStudio.App.Core.Models.AudioFormatInfo>> GetSupportedAudioFormatsAsync(CancellationToken cancellationToken = default)
+    {
+      return await ExecuteWithRetryAsync(async () =>
+      {
+        var response = await _httpClient.GetAsync("/api/audio/formats", cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          throw await CreateExceptionFromResponseAsync(response);
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+        var result = JsonSerializer.Deserialize<List<VoiceStudio.App.Core.Models.AudioFormatInfo>>(jsonString);
+        return result ?? [];
       });
     }
 

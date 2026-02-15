@@ -3,15 +3,13 @@ Test Utilities and Helpers
 Provides common utilities and helpers for VoiceStudio Quantum+ test suite.
 """
 
-import os
-import sys
-import tempfile
-import shutil
-from pathlib import Path
-from typing import Dict, Any, Optional, List
-from unittest.mock import Mock, MagicMock, AsyncMock
 import json
 import logging
+import shutil
+import tempfile
+from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, Mock
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,7 @@ logger = logging.getLogger(__name__)
 class TestDataManager:
     """Manages test data creation and cleanup."""
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         """
         Initialize test data manager.
 
@@ -32,7 +30,7 @@ class TestDataManager:
             self.base_dir = Path(base_dir)
             self.base_dir.mkdir(parents=True, exist_ok=True)
 
-        self.created_paths: List[Path] = []
+        self.created_paths: list[Path] = []
 
     def create_file(self, relative_path: str, content: str = "") -> Path:
         """
@@ -51,7 +49,7 @@ class TestDataManager:
         self.created_paths.append(file_path)
         return file_path
 
-    def create_json_file(self, relative_path: str, data: Dict[str, Any]) -> Path:
+    def create_json_file(self, relative_path: str, data: dict[str, Any]) -> Path:
         """
         Create a JSON test file.
 
@@ -107,8 +105,8 @@ class MockBackendClient:
 
     def __init__(self):
         """Initialize mock backend client."""
-        self.responses: Dict[str, Any] = {}
-        self.requests: List[Dict[str, Any]] = []
+        self.responses: dict[str, Any] = {}
+        self.requests: list[dict[str, Any]] = []
 
     def set_response(self, endpoint: str, response: Any, status_code: int = 200):
         """
@@ -121,7 +119,7 @@ class MockBackendClient:
         """
         self.responses[endpoint] = {"data": response, "status_code": status_code}
 
-    def get_response(self, endpoint: str) -> Optional[Dict[str, Any]]:
+    def get_response(self, endpoint: str) -> dict[str, Any] | None:
         """
         Get mock response for an endpoint.
 
@@ -148,7 +146,7 @@ class MockBackendClient:
         """Clear recorded requests."""
         self.requests.clear()
 
-    def get_requests(self) -> List[Dict[str, Any]]:
+    def get_requests(self) -> list[dict[str, Any]]:
         """Get all recorded requests."""
         return self.requests.copy()
 
@@ -157,7 +155,7 @@ class TestAssertions:
     """Enhanced test assertions for VoiceStudio."""
 
     @staticmethod
-    def assert_file_exists(file_path: Path, message: Optional[str] = None):
+    def assert_file_exists(file_path: Path, message: str | None = None):
         """
         Assert that a file exists.
 
@@ -168,7 +166,7 @@ class TestAssertions:
         assert file_path.exists(), message or f"File does not exist: {file_path}"
 
     @staticmethod
-    def assert_file_not_exists(file_path: Path, message: Optional[str] = None):
+    def assert_file_not_exists(file_path: Path, message: str | None = None):
         """
         Assert that a file does not exist.
 
@@ -179,7 +177,7 @@ class TestAssertions:
         assert not file_path.exists(), message or f"File should not exist: {file_path}"
 
     @staticmethod
-    def assert_directory_exists(dir_path: Path, message: Optional[str] = None):
+    def assert_directory_exists(dir_path: Path, message: str | None = None):
         """
         Assert that a directory exists.
 
@@ -192,7 +190,7 @@ class TestAssertions:
         )
 
     @staticmethod
-    def assert_valid_json(file_path: Path, message: Optional[str] = None):
+    def assert_valid_json(file_path: Path, message: str | None = None):
         """
         Assert that a file contains valid JSON.
 
@@ -203,11 +201,11 @@ class TestAssertions:
         try:
             json.loads(file_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
-            assert False, message or f"Invalid JSON in {file_path}: {e}"
+            raise AssertionError(message or f"Invalid JSON in {file_path}: {e}")
 
     @staticmethod
     def assert_dict_contains(
-        data: Dict[str, Any], keys: List[str], message: Optional[str] = None
+        data: dict[str, Any], keys: list[str], message: str | None = None
     ):
         """
         Assert that a dictionary contains specified keys.
@@ -255,7 +253,7 @@ def create_mock_engine(
 
 
 def create_mock_api_response(
-    data: Any, status_code: int = 200, headers: Optional[Dict[str, str]] = None
+    data: Any, status_code: int = 200, headers: dict[str, str] | None = None
 ) -> Mock:
     """
     Create a mock API response.

@@ -7,11 +7,9 @@ work correctly after being copied and adapted.
 """
 
 import logging
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import pytest
 

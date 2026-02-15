@@ -6,18 +6,18 @@ Compatible with:
 - Python 3.10+
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import time
 from collections import defaultdict
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import engine router
 try:
-    from ..engines.router import EngineRouter
+    from app.core.engines.router import EngineRouter
 
     HAS_ENGINE_ROUTER = True
 except ImportError:
@@ -41,7 +41,7 @@ class RealtimeRouter:
 
     def __init__(
         self,
-        engine_router: Optional[EngineRouter] = None,
+        engine_router: EngineRouter | None = None,
         latency_weight: float = 0.4,
         quality_weight: float = 0.4,
         load_weight: float = 0.2,
@@ -61,14 +61,14 @@ class RealtimeRouter:
         self.load_weight = load_weight
 
         # Performance tracking
-        self._latency_history: Dict[str, List[float]] = defaultdict(list)
-        self._quality_history: Dict[str, List[float]] = defaultdict(list)
-        self._request_counts: Dict[str, int] = defaultdict(int)
-        self._active_requests: Dict[str, int] = defaultdict(int)
-        self._last_request_time: Dict[str, float] = {}
+        self._latency_history: dict[str, list[float]] = defaultdict(list)
+        self._quality_history: dict[str, list[float]] = defaultdict(list)
+        self._request_counts: dict[str, int] = defaultdict(int)
+        self._active_requests: dict[str, int] = defaultdict(int)
+        self._last_request_time: dict[str, float] = {}
 
         # Routing statistics
-        self._routing_stats: Dict[str, Any] = {
+        self._routing_stats: dict[str, Any] = {
             "total_requests": 0,
             "routing_decisions": defaultdict(int),
             "average_latency": {},
@@ -78,12 +78,12 @@ class RealtimeRouter:
     def route_request(
         self,
         task_type: str,
-        engines: Optional[List[str]] = None,
+        engines: list[str] | None = None,
         quality_priority: float = 0.5,
         latency_priority: float = 0.5,
-        min_quality: Optional[float] = None,
-        max_latency: Optional[float] = None,
-    ) -> Optional[str]:
+        min_quality: float | None = None,
+        max_latency: float | None = None,
+    ) -> str | None:
         """
         Route a request to the best engine.
 
@@ -161,12 +161,12 @@ class RealtimeRouter:
     async def route_request_async(
         self,
         task_type: str,
-        engines: Optional[List[str]] = None,
+        engines: list[str] | None = None,
         quality_priority: float = 0.5,
         latency_priority: float = 0.5,
-        min_quality: Optional[float] = None,
-        max_latency: Optional[float] = None,
-    ) -> Optional[str]:
+        min_quality: float | None = None,
+        max_latency: float | None = None,
+    ) -> str | None:
         """
         Route a request asynchronously.
 
@@ -245,7 +245,7 @@ class RealtimeRouter:
         self._request_counts[engine_name] += 1
         self._last_request_time[engine_name] = time.time()
 
-    def end_request(self, engine_name: str, latency_ms: Optional[float] = None):
+    def end_request(self, engine_name: str, latency_ms: float | None = None):
         """
         Mark a request as ended for an engine.
 
@@ -259,7 +259,7 @@ class RealtimeRouter:
         if latency_ms is not None:
             self.record_latency(engine_name, latency_ms)
 
-    def _get_average_latency(self, engine_name: str) -> Optional[float]:
+    def _get_average_latency(self, engine_name: str) -> float | None:
         """
         Get average latency for an engine.
 
@@ -278,7 +278,7 @@ class RealtimeRouter:
             self._latency_history[engine_name]
         )
 
-    def _get_average_quality(self, engine_name: str) -> Optional[float]:
+    def _get_average_quality(self, engine_name: str) -> float | None:
         """
         Get average quality for an engine.
 
@@ -297,7 +297,7 @@ class RealtimeRouter:
             self._quality_history[engine_name]
         )
 
-    def get_routing_stats(self) -> Dict[str, Any]:
+    def get_routing_stats(self) -> dict[str, Any]:
         """
         Get routing statistics.
 
@@ -315,7 +315,7 @@ class RealtimeRouter:
 
         return stats
 
-    def get_engine_performance(self, engine_name: str) -> Dict[str, Any]:
+    def get_engine_performance(self, engine_name: str) -> dict[str, Any]:
         """
         Get performance metrics for an engine.
 
@@ -351,7 +351,7 @@ class RealtimeRouter:
 
 
 def create_realtime_router(
-    engine_router: Optional[EngineRouter] = None,
+    engine_router: EngineRouter | None = None,
     latency_weight: float = 0.4,
     quality_weight: float = 0.4,
     load_weight: float = 0.2,

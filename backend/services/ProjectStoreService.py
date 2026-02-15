@@ -21,7 +21,7 @@ import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -61,7 +61,7 @@ class ProjectStoreService:
         self._load_all_from_disk()
 
     @staticmethod
-    def _resolve_projects_dir(projects_dir: Optional[str]) -> Path:
+    def _resolve_projects_dir(projects_dir: str | None) -> Path:
         if projects_dir:
             return Path(projects_dir)
 
@@ -84,7 +84,7 @@ class ProjectStoreService:
         return project_dir
 
     def _normalize_audio_filename(
-        self, source_path: Path, audio_id: Optional[str], filename: Optional[str]
+        self, source_path: Path, audio_id: str | None, filename: str | None
     ) -> str:
         if filename:
             normalized = filename
@@ -104,10 +104,10 @@ class ProjectStoreService:
     def save_audio_file(
         self,
         project_id: str,
-        source_path: Union[Path, str],
+        source_path: Path | str,
         *,
-        audio_id: Optional[str] = None,
-        filename: Optional[str] = None,
+        audio_id: str | None = None,
+        filename: str | None = None,
     ) -> Path:
         if not self.exists(project_id):
             raise KeyError(project_id)
@@ -145,7 +145,7 @@ class ProjectStoreService:
         meta_path = self._project_meta_path(record.id)
         self._atomic_write_json(meta_path, record.model_dump(mode="json"))
 
-    def _load_record_from_dir(self, project_dir: Path) -> Optional[ProjectRecord]:
+    def _load_record_from_dir(self, project_dir: Path) -> ProjectRecord | None:
         if not project_dir.is_dir():
             return None
 
@@ -242,7 +242,7 @@ class ProjectStoreService:
             update={"schema_version": CURRENT_PROJECT_SCHEMA_VERSION}
         )
 
-    def list_projects(self) -> List[ProjectRecord]:
+    def list_projects(self) -> list[ProjectRecord]:
         with self._lock:
             return list(self._projects.values())
 
@@ -271,7 +271,7 @@ class ProjectStoreService:
             return record
 
     def create_project(
-        self, name: str, description: Optional[str] = None
+        self, name: str, description: str | None = None
     ) -> ProjectRecord:
         project_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat()
@@ -295,9 +295,9 @@ class ProjectStoreService:
     def update_project(
         self,
         project_id: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        voice_profile_ids: Optional[List[str]] = None,
+        name: str | None = None,
+        description: str | None = None,
+        voice_profile_ids: list[str] | None = None,
         description_provided: bool = False,
     ) -> ProjectRecord:
         with self._lock:
@@ -331,11 +331,11 @@ class ProjectStoreService:
             logger.warning(f"Failed to delete project directory {project_dir}: {e}")
 
 
-_service_instance: Optional[ProjectStoreService] = None
+_service_instance: ProjectStoreService | None = None
 
 
 def get_project_store_service(
-    projects_dir: Optional[str] = None,
+    projects_dir: str | None = None,
 ) -> ProjectStoreService:
     """
     Get a global ProjectStoreService instance.

@@ -36,36 +36,42 @@
           Spacing="4">
           <ToggleButton x:Name="NavStudio" ToolTipService.ToolTip="Studio" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavStudio"
             Click="NavStudio_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE80F;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavProfiles" ToolTipService.ToolTip="Profiles" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavProfiles"
             Click="NavProfiles_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE77B;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavLibrary" ToolTipService.ToolTip="Library" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavLibrary"
             Click="NavLibrary_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE8F1;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavEffects" ToolTipService.ToolTip="Effects" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavEffects"
             Click="NavEffects_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE9D9;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavTrain" ToolTipService.ToolTip="Train" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavTrain"
             Click="NavTrain_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE7BE;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavAnalyze" ToolTipService.ToolTip="Analyze" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavAnalyze"
             Click="NavAnalyze_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE9D9;" FontSize="18" FontFamily="Segoe Fluent Icons" />
@@ -74,12 +80,14 @@
           <Rectangle Width="32" Height="1" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="0,4,0,4" />
           <ToggleButton x:Name="NavSettings" ToolTipService.ToolTip="Settings" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavSettings"
             Click="NavSettings_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE713;" FontSize="18" FontFamily="Segoe Fluent Icons" />
           </ToggleButton>
           <ToggleButton x:Name="NavLogs" ToolTipService.ToolTip="Diagnostics" Width="44"
             Height="44" Style="{StaticResource VSQ.Button.NavToggle}"
+            AutomationProperties.AutomationId="NavLogs"
             Click="NavLogs_Click"
             PointerEntered="NavButton_PointerEntered" PointerExited="NavButton_PointerExited">
             <FontIcon Glyph="&#xE7BA;" FontSize="18" FontFamily="Segoe Fluent Icons" />
@@ -109,6 +117,7 @@
           <Border x:Name="ProcessingIndicator" Width="8" Height="8"
             CornerRadius="{StaticResource VSQ.CornerRadius.Small}"
             Background="{StaticResource VSQ.StatusIndicator.IdleBrush}"
+            AutomationProperties.AutomationId="StatusBar_ProcessingIndicator"
             ToolTipService.ToolTip="Processing: Idle">
           </Border>
           <Border x:Name="NetworkIndicator" Width="8" Height="8"
@@ -122,12 +131,15 @@
             ToolTipService.ToolTip="Engine: Ready">
           </Border>
         </StackPanel>
-        <TextBlock Grid.Column="1" x:Name="StatusText" Text="Ready" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" x:Name="StatusText" Text="Ready" VerticalAlignment="Center"
+          AutomationProperties.AutomationId="StatusBar_StatusText" />
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
           HorizontalAlignment="Center">
           <TextBlock Text="Job:" Margin="0,0,4,0" />
-          <TextBlock x:Name="JobStatusText" Text="Idle" />
-          <ProgressBar x:Name="JobProgressBar" Width="200" Height="6" Margin="12,0,0,0" Value="0" />
+          <TextBlock x:Name="JobStatusText" Text="Idle"
+            AutomationProperties.AutomationId="StatusBar_JobStatusText" />
+          <ProgressBar x:Name="JobProgressBar" Width="200" Height="6" Margin="12,0,0,0" Value="0"
+            AutomationProperties.AutomationId="StatusBar_JobProgressBar" />
         </StackPanel>
         <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right"
           VerticalAlignment="Center" Spacing="4">

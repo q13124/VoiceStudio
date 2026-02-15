@@ -5,14 +5,16 @@ Task 3.1: Domain-Driven Design implementation.
 Contains entities, value objects, domain services, and events.
 """
 
-from backend.domain.entities.base import Entity, AggregateRoot
-from backend.domain.value_objects.base import ValueObject
+from backend.domain.entities.base import AggregateRoot, Entity
 from backend.domain.events.base import DomainEvent, EventBus
 from backend.domain.services.base import DomainService
+from backend.domain.value_objects.base import ValueObject
 
 __all__ = [
-    "Entity", "AggregateRoot",
-    "ValueObject",
-    "DomainEvent", "EventBus",
+    "AggregateRoot",
+    "DomainEvent",
     "DomainService",
+    "Entity",
+    "EventBus",
+    "ValueObject",
 ]

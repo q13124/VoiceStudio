@@ -6,19 +6,20 @@ Supports both local (Ollama) and cloud (OpenAI) providers through
 a unified interface with streaming and function-calling support.
 """
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
+
+import logging
+from abc import abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
     Any,
-    AsyncIterator,
-    Dict,
-    List,
-    Optional,
     Protocol,
     runtime_checkable,
 )
-import logging
+
+from .base import EngineProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +38,14 @@ class Message:
     """A single message in a conversation."""
     role: MessageRole
     content: str
-    name: Optional[str] = None
-    function_call: Optional[Dict[str, Any]] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
-    tool_call_id: Optional[str] = None
+    name: str | None = None
+    function_call: dict[str, Any] | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_call_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary for API calls."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "role": self.role.value,
             "content": self.content,
         }
@@ -64,9 +65,9 @@ class FunctionSpec:
     """Specification for a callable function the LLM can invoke."""
     name: str
     description: str
-    parameters: Dict[str, Any]  # JSON Schema for parameters
+    parameters: dict[str, Any]  # JSON Schema for parameters
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary for API calls."""
         return {
             "type": "function",
@@ -83,9 +84,9 @@ class LLMResponse:
     """Response from an LLM provider."""
     content: str
     finish_reason: str = "stop"
-    function_call: Optional[Dict[str, Any]] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
-    usage: Optional[Dict[str, int]] = None  # prompt_tokens, completion_tokens, total_tokens
+    function_call: dict[str, Any] | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    usage: dict[str, int] | None = None  # prompt_tokens, completion_tokens, total_tokens
     model: str = ""
     latency_ms: float = 0.0
 
@@ -99,13 +100,13 @@ class LLMConfig:
     top_p: float = 1.0
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
-    stop_sequences: List[str] = field(default_factory=list)
-    system_prompt: Optional[str] = None
+    stop_sequences: list[str] = field(default_factory=list)
+    system_prompt: str | None = None
     timeout_seconds: float = 30.0
     # Provider-specific
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    api_key: str | None = None
+    base_url: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 class IntentType(str, Enum):
@@ -122,7 +123,7 @@ class Intent:
     """Detected intent from user text."""
     intent_type: IntentType
     confidence: float  # 0.0 to 1.0
-    entities: Dict[str, Any] = field(default_factory=dict)
+    entities: dict[str, Any] = field(default_factory=dict)
     raw_text: str = ""
 
 
@@ -147,9 +148,9 @@ class LLMProviderProtocol(Protocol):
 
     async def generate(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> LLMResponse:
         """
         Generate a single response from the LLM.
@@ -166,9 +167,9 @@ class LLMProviderProtocol(Protocol):
 
     async def generate_stream(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         """
         Stream tokens from the LLM as they are generated.
@@ -198,18 +199,48 @@ class LLMProviderProtocol(Protocol):
         ...
 
 
-class BaseLLMProvider(ABC):
+class BaseLLMProvider(EngineProtocol):
     """
     Abstract base class for LLM providers.
 
     Provides common functionality like configuration management,
     conversation history formatting, and intent classification fallback.
+
+    Inherits from EngineProtocol to integrate with VoiceStudio's
+    engine router and lifecycle management.
     """
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: LLMConfig | None = None, device: str | None = None, gpu: bool = False):
+        # LLM providers are typically cloud-based or use local servers (Ollama),
+        # so default to cpu (no local GPU management needed at provider level)
+        super().__init__(device=device, gpu=gpu)
         self._config = config or LLMConfig()
-        self._initialized = False
+        # _initialized is set by EngineProtocol.__init__
         logger.info(f"{self.__class__.__name__} provider created")
+
+    def initialize(self) -> bool:
+        """
+        Initialize the LLM provider.
+
+        For LLM providers, initialization typically involves verifying
+        the provider is available. Override in subclasses if needed.
+
+        Returns:
+            True if initialization successful
+        """
+        self._initialized = True
+        logger.info(f"{self.__class__.__name__} initialized")
+        return True
+
+    def cleanup(self) -> None:
+        """
+        Clean up LLM provider resources.
+
+        Closes any HTTP clients or connections. Override in subclasses
+        for provider-specific cleanup.
+        """
+        self._initialized = False
+        logger.info(f"{self.__class__.__name__} cleaned up")
 
     @property
     @abstractmethod
@@ -226,9 +257,9 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     async def generate(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> LLMResponse:
         """Generate a single response."""
         ...
@@ -236,9 +267,9 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     async def generate_stream(
         self,
-        messages: List[Message],
-        config: Optional[LLMConfig] = None,
-        functions: Optional[List[FunctionSpec]] = None,
+        messages: list[Message],
+        config: LLMConfig | None = None,
+        functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         """Stream tokens from the LLM."""
         ...
@@ -285,7 +316,7 @@ class BaseLLMProvider(ABC):
             raw_text=text,
         )
 
-    def _merge_config(self, override: Optional[LLMConfig] = None) -> LLMConfig:
+    def _merge_config(self, override: LLMConfig | None = None) -> LLMConfig:
         """Merge override config with default config."""
         if override is None:
             return self._config
@@ -306,8 +337,8 @@ class BaseLLMProvider(ABC):
         )
 
     def _prepend_system_prompt(
-        self, messages: List[Message], config: LLMConfig
-    ) -> List[Message]:
+        self, messages: list[Message], config: LLMConfig
+    ) -> list[Message]:
         """Prepend system prompt if configured and not already present."""
         if not config.system_prompt:
             return messages
@@ -319,4 +350,4 @@ class BaseLLMProvider(ABC):
             role=MessageRole.SYSTEM,
             content=config.system_prompt,
         )
-        return [system_msg] + list(messages)
+        return [system_msg, *list(messages)]

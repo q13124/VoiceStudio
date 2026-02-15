@@ -7,15 +7,17 @@ Compatible with:
 - All VoiceStudio engines
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from collections import defaultdict
 from contextlib import contextmanager
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
-    from ..monitoring.metrics import MetricsCollector, Timer, get_metrics_collector
+    from app.core.monitoring.metrics import MetricsCollector, Timer, get_metrics_collector
 
     HAS_METRICS = True
 except ImportError:
@@ -44,11 +46,11 @@ class EnginePerformanceMetrics:
         self._lock = Lock()
 
         # Per-engine metrics
-        self._synthesis_times: Dict[str, list] = defaultdict(list)
-        self._cache_hits: Dict[str, int] = defaultdict(int)
-        self._cache_misses: Dict[str, int] = defaultdict(int)
-        self._errors: Dict[str, int] = defaultdict(int)
-        self._total_requests: Dict[str, int] = defaultdict(int)
+        self._synthesis_times: dict[str, list] = defaultdict(list)
+        self._cache_hits: dict[str, int] = defaultdict(int)
+        self._cache_misses: dict[str, int] = defaultdict(int)
+        self._errors: dict[str, int] = defaultdict(int)
+        self._total_requests: dict[str, int] = defaultdict(int)
 
         # Timing data (last 1000 operations per engine)
         self._max_timing_history = 1000
@@ -145,7 +147,7 @@ class EnginePerformanceMetrics:
                     tags={"engine": engine_name},
                 )
 
-    def get_engine_stats(self, engine_name: str) -> Dict[str, Any]:
+    def get_engine_stats(self, engine_name: str) -> dict[str, Any]:
         """
         Get performance statistics for an engine.
 
@@ -206,7 +208,7 @@ class EnginePerformanceMetrics:
 
             return stats
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """
         Get performance statistics for all engines.
 
@@ -226,7 +228,7 @@ class EnginePerformanceMetrics:
                 for engine_name in all_engines
             }
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         Get summary statistics across all engines.
 
@@ -269,7 +271,7 @@ class EnginePerformanceMetrics:
                 "engines": all_stats,
             }
 
-    def clear(self, engine_name: Optional[str] = None):
+    def clear(self, engine_name: str | None = None):
         """
         Clear metrics for an engine or all engines.
 
@@ -312,7 +314,7 @@ class EnginePerformanceMetrics:
 
 
 # Global engine performance metrics instance
-_engine_metrics: Optional[EnginePerformanceMetrics] = None
+_engine_metrics: EnginePerformanceMetrics | None = None
 _metrics_lock = Lock()
 
 

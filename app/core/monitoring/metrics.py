@@ -4,13 +4,15 @@ Metrics Collection System
 Provides metrics collection for performance monitoring, error tracking, and system health.
 """
 
+from __future__ import annotations
+
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MetricType(Enum):
@@ -30,8 +32,8 @@ class Metric:
     type: MetricType
     value: float
     timestamp: datetime = field(default_factory=datetime.now)
-    tags: Dict[str, str] = field(default_factory=dict)
-    unit: Optional[str] = None
+    tags: dict[str, str] = field(default_factory=dict)
+    unit: str | None = None
 
 
 class MetricsCollector:
@@ -41,11 +43,11 @@ class MetricsCollector:
 
     def __init__(self):
         """Initialize metrics collector."""
-        self.metrics: List[Metric] = []
-        self.counters: Dict[str, float] = defaultdict(float)
-        self.gauges: Dict[str, float] = {}
-        self.histograms: Dict[str, List[float]] = defaultdict(list)
-        self.timers: Dict[str, List[float]] = defaultdict(list)
+        self.metrics: list[Metric] = []
+        self.counters: dict[str, float] = defaultdict(float)
+        self.gauges: dict[str, float] = {}
+        self.histograms: dict[str, list[float]] = defaultdict(list)
+        self.timers: dict[str, list[float]] = defaultdict(list)
         self.lock = Lock()
         self.max_metrics = 10000  # Maximum metrics to keep in memory
 
@@ -53,7 +55,7 @@ class MetricsCollector:
         self,
         name: str,
         value: float = 1.0,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ):
         """
         Increment a counter metric.
@@ -78,8 +80,8 @@ class MetricsCollector:
         self,
         name: str,
         value: float,
-        tags: Optional[Dict[str, str]] = None,
-        unit: Optional[str] = None,
+        tags: dict[str, str] | None = None,
+        unit: str | None = None,
     ):
         """
         Set a gauge metric.
@@ -106,7 +108,7 @@ class MetricsCollector:
         self,
         name: str,
         value: float,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ):
         """
         Record a histogram value.
@@ -135,7 +137,7 @@ class MetricsCollector:
         self,
         name: str,
         duration: float,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ):
         """
         Record a timer value.
@@ -174,12 +176,12 @@ class MetricsCollector:
         with self.lock:
             return self.counters.get(name, 0.0)
 
-    def get_gauge(self, name: str) -> Optional[float]:
+    def get_gauge(self, name: str) -> float | None:
         """Get gauge value."""
         with self.lock:
             return self.gauges.get(name)
 
-    def get_histogram_stats(self, name: str) -> Optional[Dict[str, float]]:
+    def get_histogram_stats(self, name: str) -> dict[str, float] | None:
         """Get histogram statistics."""
         with self.lock:
             values = self.histograms.get(name)
@@ -196,7 +198,7 @@ class MetricsCollector:
                 "p99": sorted(values)[int(len(values) * 0.99)] if values else 0.0,
             }
 
-    def get_timer_stats(self, name: str) -> Optional[Dict[str, float]]:
+    def get_timer_stats(self, name: str) -> dict[str, float] | None:
         """Get timer statistics."""
         with self.lock:
             values = self.timers.get(name)
@@ -213,7 +215,7 @@ class MetricsCollector:
                 "p99": sorted(values)[int(len(values) * 0.99)] if values else 0.0,
             }
 
-    def get_all_metrics(self) -> Dict[str, Any]:
+    def get_all_metrics(self) -> dict[str, Any]:
         """Get all metrics summary."""
         with self.lock:
             return {
@@ -221,10 +223,10 @@ class MetricsCollector:
                 "gauges": dict(self.gauges),
                 "histograms": {
                     name: self.get_histogram_stats(name)
-                    for name in self.histograms.keys()
+                    for name in self.histograms
                 },
                 "timers": {
-                    name: self.get_timer_stats(name) for name in self.timers.keys()
+                    name: self.get_timer_stats(name) for name in self.timers
                 },
             }
 
@@ -239,7 +241,7 @@ class MetricsCollector:
 
 
 # Global metrics collector
-_metrics_collector: Optional[MetricsCollector] = None
+_metrics_collector: MetricsCollector | None = None
 _collector_lock = Lock()
 
 
@@ -265,7 +267,7 @@ class Timer:
     def __init__(
         self,
         name: str,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
         auto_record: bool = True,
     ):
         """
@@ -279,8 +281,8 @@ class Timer:
         self.name = name
         self.tags = tags or {}
         self.auto_record = auto_record
-        self.start_time: Optional[float] = None
-        self.duration: Optional[float] = None
+        self.start_time: float | None = None
+        self.duration: float | None = None
 
     def __enter__(self):
         """Start timer."""
@@ -294,7 +296,7 @@ class Timer:
             if self.auto_record:
                 get_metrics_collector().timer(self.name, self.duration, self.tags)
 
-    def elapsed(self) -> Optional[float]:
+    def elapsed(self) -> float | None:
         """Get elapsed time."""
         if self.start_time is None:
             return None

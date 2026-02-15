@@ -183,6 +183,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "LoadMarkers");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.LoadMarkersFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.LoadMarkersFailed", "Failed to Load Markers"),
@@ -254,6 +255,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "CreateMarker");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.CreateMarkerFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.CreateMarkerFailed", "Failed to Create Marker"),
@@ -303,6 +305,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "UpdateMarker");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.UpdateMarkerFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.UpdateMarkerFailed", "Failed to Update Marker"),
@@ -365,6 +368,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "DeleteMarker");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.DeleteMarkerFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.DeleteMarkerFailed", "Failed to Delete Marker"),
@@ -400,6 +404,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "LoadCategories");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.LoadCategoriesFailed", ex.Message);
       }
     }
@@ -417,6 +422,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "Refresh");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.RefreshFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.RefreshFailed", "Refresh Failed"),
@@ -566,6 +572,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
+        ErrorLoggingService?.LogError(ex, "BatchDelete");
         ErrorMessage = ResourceHelper.FormatString("MarkerManager.BatchDeleteFailed", ex.Message);
         _toastNotificationService?.ShowError(
             ResourceHelper.GetString("Toast.Title.BatchDeleteFailed", "Batch Delete Failed"),

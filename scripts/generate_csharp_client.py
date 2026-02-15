@@ -4,7 +4,6 @@ Generate C# Client from OpenAPI Schema
 Generates a typed C# client from the OpenAPI schema using openapi-generator or similar.
 """
 
-import json
 import subprocess
 import sys
 from pathlib import Path

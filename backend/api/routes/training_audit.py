@@ -5,17 +5,17 @@ Provides endpoints for training module auditing and enhancement tracking.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.training.training_module_audit import TrainingModuleAuditor
 from app.core.training import (
-    UnifiedTrainer,
     AutoTrainer,
     ParameterOptimizer,
     TrainingProgressMonitor,
+    UnifiedTrainer,
 )
+from app.core.training.training_module_audit import TrainingModuleAuditor
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ TRAINING_MODULES = {
 
 
 @router.get("/all", summary="Audit all training modules")
-def audit_all_modules() -> Dict[str, Any]:
+def audit_all_modules() -> dict[str, Any]:
     """
     Audit all training modules for completeness and enhancements.
 
@@ -72,12 +72,12 @@ def audit_all_modules() -> Dict[str, Any]:
         logger.error(f"Failed to audit training modules: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to audit training modules: {str(e)}",
+            detail=f"Failed to audit training modules: {e!s}",
         )
 
 
 @router.get("/summary", summary="Get audit summary")
-def get_audit_summary() -> Dict[str, Any]:
+def get_audit_summary() -> dict[str, Any]:
     """
     Get summary of training module audits.
 
@@ -95,12 +95,12 @@ def get_audit_summary() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get audit summary: {str(e)}"
+            status_code=500, detail=f"Failed to get audit summary: {e!s}"
         )
 
 
 @router.get("/needing-attention", summary="Get modules needing attention")
-def get_modules_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
+def get_modules_needing_attention(min_score: float = 70.0) -> dict[str, Any]:
     """
     Get modules that need attention (score below threshold).
 
@@ -142,12 +142,12 @@ def get_modules_needing_attention(min_score: float = 70.0) -> Dict[str, Any]:
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get modules needing attention: {str(e)}",
+            detail=f"Failed to get modules needing attention: {e!s}",
         )
 
 
 @router.get("/report", summary="Generate enhancement report")
-def generate_enhancement_report() -> Dict[str, str]:
+def generate_enhancement_report() -> dict[str, str]:
     """
     Generate a markdown report of enhancement opportunities.
 
@@ -167,6 +167,6 @@ def generate_enhancement_report() -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate report: {str(e)}"
+            status_code=500, detail=f"Failed to generate report: {e!s}"
         )
 

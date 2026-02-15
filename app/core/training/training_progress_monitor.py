@@ -6,11 +6,14 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import logging
 from collections import deque
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +61,7 @@ class TrainingProgressMonitor:
     def __init__(
         self,
         max_history: int = 1000,
-        log_dir: Optional[Union[str, Path]] = None,
+        log_dir: str | Path | None = None,
         enable_tensorboard: bool = True,
     ):
         """
@@ -70,19 +73,16 @@ class TrainingProgressMonitor:
             enable_tensorboard: Whether to enable tensorboard logging
         """
         self.max_history = max_history
-        self.current_status: Dict[str, Any] = {}
+        self.current_status: dict[str, Any] = {}
         self.history: deque = deque(maxlen=max_history)
-        self.metrics_history: Dict[str, List[float]] = {}
-        self.callbacks: List[Callable[[Dict], None]] = []
+        self.metrics_history: dict[str, list[float]] = {}
+        self.callbacks: list[Callable[[dict], None]] = []
 
         # TensorBoard writer
-        self.tensorboard_writer: Optional[Any] = None
+        self.tensorboard_writer: Any | None = None
         if enable_tensorboard and HAS_TENSORBOARD:
             try:
-                if log_dir is None:
-                    log_dir = Path("logs/tensorboard")
-                else:
-                    log_dir = Path(log_dir)
+                log_dir = Path("logs/tensorboard") if log_dir is None else Path(log_dir)
                 log_dir.mkdir(parents=True, exist_ok=True)
                 self.tensorboard_writer = SummaryWriter(str(log_dir))
                 logger.info(f"TensorBoard logging enabled: {log_dir}")
@@ -91,17 +91,17 @@ class TrainingProgressMonitor:
                 self.tensorboard_writer = None
 
         # WandB run (optional, initialized in start_monitoring)
-        self.wandb_run: Optional[Any] = None
+        self.wandb_run: Any | None = None
         self.enable_wandb: bool = False
 
     def start_monitoring(
         self,
         training_id: str,
         total_epochs: int,
-        initial_params: Optional[Dict] = None,
+        initial_params: dict | None = None,
         enable_wandb: bool = False,
-        wandb_project: Optional[str] = None,
-        wandb_config: Optional[Dict] = None,
+        wandb_project: str | None = None,
+        wandb_config: dict | None = None,
     ):
         """
         Start monitoring a training session.
@@ -158,8 +158,8 @@ class TrainingProgressMonitor:
     def update_progress(
         self,
         epoch: int,
-        metrics: Optional[Dict[str, float]] = None,
-        additional_info: Optional[Dict] = None,
+        metrics: dict[str, float] | None = None,
+        additional_info: dict | None = None,
     ):
         """
         Update training progress.
@@ -232,9 +232,9 @@ class TrainingProgressMonitor:
 
     def complete_training(
         self,
-        final_metrics: Optional[Dict[str, float]] = None,
+        final_metrics: dict[str, float] | None = None,
         success: bool = True,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ):
         """
         Mark training as complete.
@@ -266,7 +266,7 @@ class TrainingProgressMonitor:
             f"Training {self.current_status.get('training_id')} completed: {self.current_status['status']}"
         )
 
-    def cancel_training(self, reason: Optional[str] = None):
+    def cancel_training(self, reason: str | None = None):
         """
         Mark training as cancelled.
 
@@ -291,7 +291,7 @@ class TrainingProgressMonitor:
             f"Training {self.current_status.get('training_id')} cancelled: {reason}"
         )
 
-    def get_current_status(self) -> Dict[str, Any]:
+    def get_current_status(self) -> dict[str, Any]:
         """
         Get current training status.
 
@@ -309,7 +309,7 @@ class TrainingProgressMonitor:
         """
         return self.current_status.get("progress", 0.0)
 
-    def get_metrics(self) -> Dict[str, float]:
+    def get_metrics(self) -> dict[str, float]:
         """
         Get current metrics.
 
@@ -319,8 +319,8 @@ class TrainingProgressMonitor:
         return self.current_status.get("metrics", {}).copy()
 
     def get_metrics_history(
-        self, metric_name: Optional[str] = None
-    ) -> Dict[str, List[float]]:
+        self, metric_name: str | None = None
+    ) -> dict[str, list[float]]:
         """
         Get metrics history.
 
@@ -334,7 +334,7 @@ class TrainingProgressMonitor:
             return {metric_name: self.metrics_history.get(metric_name, [])}
         return self.metrics_history.copy()
 
-    def get_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_history(self, limit: int | None = None) -> list[dict[str, Any]]:
         """
         Get training history.
 
@@ -349,7 +349,7 @@ class TrainingProgressMonitor:
             return history_list[-limit:]
         return history_list
 
-    def register_callback(self, callback: Callable[[Dict], None]):
+    def register_callback(self, callback: Callable[[dict], None]):
         """
         Register a callback for progress updates.
 
@@ -360,7 +360,7 @@ class TrainingProgressMonitor:
             self.callbacks.append(callback)
             logger.debug("Progress callback registered")
 
-    def unregister_callback(self, callback: Callable[[Dict], None]):
+    def unregister_callback(self, callback: Callable[[dict], None]):
         """
         Unregister a progress callback.
 
@@ -371,7 +371,7 @@ class TrainingProgressMonitor:
             self.callbacks.remove(callback)
             logger.debug("Progress callback unregistered")
 
-    def _notify_callbacks(self, status: Dict[str, Any]):
+    def _notify_callbacks(self, status: dict[str, Any]):
         """Notify all registered callbacks of status update."""
         for callback in self.callbacks:
             try:
@@ -379,7 +379,7 @@ class TrainingProgressMonitor:
             except Exception as e:
                 logger.warning(f"Callback notification failed: {e}")
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         Get training summary.
 
@@ -447,7 +447,7 @@ class TrainingProgressMonitor:
 
 def create_training_progress_monitor(
     max_history: int = 1000,
-    log_dir: Optional[Union[str, Path]] = None,
+    log_dir: str | Path | None = None,
     enable_tensorboard: bool = True,
 ) -> TrainingProgressMonitor:
     """

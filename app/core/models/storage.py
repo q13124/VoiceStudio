@@ -5,14 +5,15 @@ Manages model storage under %PROGRAMDATA%/VoiceStudio/models/<engine>/
 Provides model fetching, updating, and checksum verification.
 """
 
-import os
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+import os
+from dataclasses import asdict, dataclass
 from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +30,17 @@ class ModelInfo:
     model_path: str
     checksum: str
     size: int
-    version: Optional[str] = None
-    downloaded_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    metadata: Optional[Dict] = None
+    version: str | None = None
+    downloaded_at: str | None = None
+    updated_at: str | None = None
+    metadata: dict | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "ModelInfo":
+    def from_dict(cls, data: dict) -> "ModelInfo":
         """Create from dictionary."""
         return cls(**data)
 
@@ -47,24 +48,24 @@ class ModelInfo:
 class ModelStorage:
     """Manages model storage and retrieval."""
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         """
         Initialize model storage.
-        
+
         Args:
             base_dir: Base directory for models (defaults to %PROGRAMDATA%/VoiceStudio/models)
         """
         self.base_dir = base_dir or MODELS_BASE_DIR
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._registry_file = self.base_dir / "model_registry.json"
-        self._registry: Dict[str, ModelInfo] = {}
+        self._registry: dict[str, ModelInfo] = {}
         self._load_registry()
 
     def _load_registry(self):
         """Load model registry from disk."""
         if self._registry_file.exists():
             try:
-                with open(self._registry_file, "r", encoding="utf-8") as f:
+                with open(self._registry_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self._registry = {
                         key: ModelInfo.from_dict(value)
@@ -108,10 +109,10 @@ class ModelStorage:
     def calculate_checksum(self, file_path: Path) -> str:
         """
         Calculate SHA256 checksum of a file.
-        
+
         Args:
             file_path: Path to the file
-            
+
         Returns:
             SHA256 checksum as hex string
         """
@@ -126,19 +127,19 @@ class ModelStorage:
         engine: str,
         model_name: str,
         model_path: str,
-        version: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        version: str | None = None,
+        metadata: dict | None = None
     ) -> ModelInfo:
         """
         Register a model in the storage system.
-        
+
         Args:
             engine: Engine name (e.g., "xtts_v2")
             model_name: Name of the model
             model_path: Path to the model file/directory
             version: Model version (optional)
             metadata: Additional metadata (optional)
-            
+
         Returns:
             ModelInfo object
         """
@@ -158,7 +159,7 @@ class ModelStorage:
         # Create model info
         now = datetime.utcnow().isoformat()
         model_key = f"{engine}:{model_name}"
-        
+
         model_info = ModelInfo(
             engine=engine,
             model_name=model_name,
@@ -188,22 +189,22 @@ class ModelStorage:
                     sha256.update(f.read())
         return sha256.hexdigest()
 
-    def get_model(self, engine: str, model_name: str) -> Optional[ModelInfo]:
+    def get_model(self, engine: str, model_name: str) -> ModelInfo | None:
         """Get model information."""
         model_key = f"{engine}:{model_name}"
         return self._registry.get(model_key)
 
-    def list_models(self, engine: Optional[str] = None) -> List[ModelInfo]:
+    def list_models(self, engine: str | None = None) -> list[ModelInfo]:
         """List all registered models, optionally filtered by engine."""
         models = list(self._registry.values())
         if engine:
             models = [m for m in models if m.engine == engine]
         return models
 
-    def verify_model(self, engine: str, model_name: str) -> Tuple[bool, Optional[str]]:
+    def verify_model(self, engine: str, model_name: str) -> tuple[bool, str | None]:
         """
         Verify a model's checksum.
-        
+
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -226,9 +227,9 @@ class ModelStorage:
 
             return True, None
         except Exception as e:
-            return False, f"Verification error: {str(e)}"
+            return False, f"Verification error: {e!s}"
 
-    def update_model_checksum(self, engine: str, model_name: str) -> Optional[ModelInfo]:
+    def update_model_checksum(self, engine: str, model_name: str) -> ModelInfo | None:
         """Update model checksum (e.g., after model update)."""
         model_info = self.get_model(engine, model_name)
         if not model_info:
@@ -250,7 +251,7 @@ class ModelStorage:
         model_info.checksum = checksum
         model_info.size = size
         model_info.updated_at = datetime.utcnow().isoformat()
-        
+
         self._registry[f"{engine}:{model_name}"] = model_info
         self._save_registry()
 
@@ -267,7 +268,7 @@ class ModelStorage:
             return True
         return False
 
-    def get_storage_stats(self) -> Dict:
+    def get_storage_stats(self) -> dict:
         """Get storage statistics."""
         total_size = sum(m.size for m in self._registry.values())
         engine_counts = {}

@@ -4,23 +4,25 @@ Enhanced Health Check Routes
 Provides comprehensive health checking for the API and system components.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
-
-from backend.config.path_config import get_models_path
-from backend.services.circuit_breaker import get_engine_breaker_stats
-from backend.services.engine_service import get_engine_service
 
 from app.core.resilience.health_check import (
     HealthCheckResult,
     HealthStatus,
     get_health_checker,
 )
+from backend.config.path_config import get_models_path
+from backend.services.circuit_breaker import get_engine_breaker_stats
+from backend.services.engine_service import get_engine_service
+from backend.settings import config
 
 from ..optimization import cache_response
 
@@ -47,16 +49,12 @@ def _check_database() -> bool:
         return False
 
 
-def _check_gpu() -> Dict[str, Any]:
+def _check_gpu() -> dict[str, Any]:
     """Check GPU availability."""
     try:
         # NOTE: Importing torch (and friends) can hard-crash the process on some machines
         # due to native DLL/ABI mismatches. Keep this check safe-by-default.
-        if os.getenv("VOICESTUDIO_HEALTH_ENABLE_TORCH", "0") not in (
-            "1",
-            "true",
-            "TRUE",
-        ):
+        if not config.health.enable_torch_check:
             return {
                 "status": "degraded",
                 "available": False,
@@ -93,7 +91,7 @@ def _check_gpu() -> Dict[str, Any]:
         }
 
 
-def _check_engines() -> Dict[str, Any]:
+def _check_engines() -> dict[str, Any]:
     """Check engine availability with detailed information (enhanced)."""
     try:
         # Safe engine availability check: enumerate engine manifests
@@ -150,7 +148,7 @@ _health_checker.register_check(
 
 
 @router.get("/")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """
     Comprehensive health check endpoint.
 
@@ -239,7 +237,7 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get("/simple")
-def simple_health_check() -> Dict[str, str]:
+def simple_health_check() -> dict[str, str]:
     """
     Simple health check endpoint (fast, no detailed checks).
 
@@ -252,7 +250,7 @@ def simple_health_check() -> Dict[str, str]:
     }
 
 
-def _get_system_metrics() -> Dict[str, Any]:
+def _get_system_metrics() -> dict[str, Any]:
     """Get comprehensive system metrics."""
     metrics = {}
     try:
@@ -311,13 +309,13 @@ def _get_system_metrics() -> Dict[str, Any]:
     return metrics
 
 
-def _get_resource_usage() -> Dict[str, Any]:
+def _get_resource_usage() -> dict[str, Any]:
     """Get resource usage information (enhanced)."""
     resources = {}
 
     # Safe-by-default: avoid importing app.core.* modules that may pull in native ML stacks.
     # These imports can hard-crash the process on some machines due to DLL/ABI mismatches.
-    if os.getenv("VOICESTUDIO_HEALTH_SAFE_MODE", "1") not in ("0", "false", "FALSE"):
+    if config.health.safe_mode:
         try:
             from backend.api.validation_optimizer import (
                 get_cache_stats,
@@ -429,7 +427,7 @@ def _get_resource_usage() -> Dict[str, Any]:
 
 
 @router.get("/detailed")
-async def detailed_health_check() -> Dict[str, Any]:
+async def detailed_health_check() -> dict[str, Any]:
     """
     Detailed health check with all system information.
 
@@ -469,7 +467,7 @@ async def detailed_health_check() -> Dict[str, Any]:
 
 
 @router.get("/readiness")
-async def readiness_check() -> Dict[str, Any]:
+async def readiness_check() -> dict[str, Any]:
     """
     Readiness check (for Kubernetes, etc.).
 
@@ -525,13 +523,13 @@ async def readiness_check() -> Dict[str, Any]:
 
 
 @router.get("/ready")
-async def ready_check() -> Dict[str, Any]:
+async def ready_check() -> dict[str, Any]:
     """Alias for readiness check."""
     return await readiness_check()
 
 
 @router.get("/liveness")
-def liveness_check() -> Dict[str, Any]:
+def liveness_check() -> dict[str, Any]:
     """
     Liveness check (for Kubernetes, etc.).
 
@@ -546,7 +544,7 @@ def liveness_check() -> Dict[str, Any]:
 
 
 @router.get("/live")
-def live_check() -> Dict[str, Any]:
+def live_check() -> dict[str, Any]:
     """Alias for liveness check."""
     return liveness_check()
 
@@ -569,7 +567,7 @@ def get_performance_middleware():
 
 
 @router.get("/preflight")
-def preflight_check() -> Dict[str, Any]:
+def preflight_check() -> dict[str, Any]:
     """
     Operator-readable preflight report for local-first readiness.
 
@@ -582,7 +580,7 @@ def preflight_check() -> Dict[str, Any]:
     - basic native tool presence (ffmpeg)
     """
 
-    def ensure_dir(path: str) -> Dict[str, Any]:
+    def ensure_dir(path: str) -> dict[str, Any]:
         try:
             os.makedirs(path, exist_ok=True)
             # Write test
@@ -608,7 +606,7 @@ def preflight_check() -> Dict[str, Any]:
     jobs_root = str(get_job_state_store("voice_cloning_wizard").jobs_root)
 
     # Ensure dirs exist / writable
-    checks: Dict[str, Any] = {
+    checks: dict[str, Any] = {
         "projects_root": ensure_dir(projects_root),
         "cache_root": ensure_dir(cache_root),
         "model_root": ensure_dir(model_root),
@@ -637,7 +635,7 @@ def preflight_check() -> Dict[str, Any]:
 
     # XTTS preflight (deps + assets)
     try:
-        from backend.services.model_preflight import ensure_xtts, PreflightError
+        from backend.services.model_preflight import PreflightError, ensure_xtts
 
         checks["xtts_v2"] = ensure_xtts(auto_download=False)
     except PreflightError as exc:
@@ -667,7 +665,8 @@ def preflight_check() -> Dict[str, Any]:
 
     # So-VITS-SVC preflight (checkpoint + config)
     try:
-        from backend.services.model_preflight import ensure_sovits, PreflightError as PreflightErr
+        from backend.services.model_preflight import PreflightError as PreflightErr
+        from backend.services.model_preflight import ensure_sovits
 
         checks["sovits_svc"] = ensure_sovits(auto_download=False)
     except PreflightErr as exc:
@@ -738,7 +737,7 @@ def preflight_check() -> Dict[str, Any]:
 
 @router.get("/resources")
 @cache_response(ttl=5)  # Cache for 5 seconds
-def resource_usage() -> Dict[str, Any]:
+def resource_usage() -> dict[str, Any]:
     """
     Get detailed resource usage information.
 
@@ -763,7 +762,7 @@ def resource_usage() -> Dict[str, Any]:
 
 @router.get("/engines")
 @cache_response(ttl=10)  # Cache for 10 seconds
-def engine_health() -> Dict[str, Any]:
+def engine_health() -> dict[str, Any]:
     """
     Get detailed engine availability and health information.
 
@@ -780,7 +779,7 @@ def engine_health() -> Dict[str, Any]:
 
 @router.get("/circuit-breakers")
 @cache_response(ttl=5)
-def circuit_breaker_health() -> Dict[str, Any]:
+def circuit_breaker_health() -> dict[str, Any]:
     """
     Get circuit breaker status for all engines (TD-014).
 
@@ -817,7 +816,7 @@ def circuit_breaker_health() -> Dict[str, Any]:
 
 
 @router.get("/performance")
-def performance_metrics() -> Dict[str, Any]:
+def performance_metrics() -> dict[str, Any]:
     """
     Get API endpoint performance metrics.
 
@@ -845,12 +844,12 @@ def performance_metrics() -> Dict[str, Any]:
         logger.error(f"Failed to get performance metrics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get performance metrics: {str(e)}",
+            detail=f"Failed to get performance metrics: {e!s}",
         )
 
 
 @router.get("/performance/{endpoint:path}")
-def endpoint_performance_metrics(endpoint: str) -> Dict[str, Any]:
+def endpoint_performance_metrics(endpoint: str) -> dict[str, Any]:
     """
     Get performance metrics for a specific endpoint.
 
@@ -886,22 +885,22 @@ def endpoint_performance_metrics(endpoint: str) -> Dict[str, Any]:
         logger.error(f"Failed to get endpoint performance metrics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get endpoint metrics: {str(e)}",
+            detail=f"Failed to get endpoint metrics: {e!s}",
         )
 
 
 @router.get("/features")
 @cache_response(ttl=30)
-async def get_feature_status() -> Dict[str, Any]:
+async def get_feature_status() -> dict[str, Any]:
     """
     Get feature availability status for frontend display.
-    
+
     Reports which features are fully functional vs running in placeholder mode.
     This enables graceful UI degradation when models are not loaded.
-    
+
     Architecture note (GAP-ARCH-001): This endpoint uses a service layer abstraction
     rather than direct engine imports to maintain API-Engine boundary separation.
-    
+
     Returns:
         Feature status dictionary with:
         - feature name
@@ -909,13 +908,13 @@ async def get_feature_status() -> Dict[str, Any]:
         - message explaining status
     """
     from backend.services.feature_status_service import get_all_feature_statuses
-    
+
     features = await get_all_feature_statuses()
-    
+
     # Lip sync
     try:
         from backend.services.lip_sync_service import LipSyncService
-        service = LipSyncService()
+        LipSyncService()
         # LipSyncService uses multiple backends; check if any are available
         features["lip_sync"] = {
             "status": "placeholder",  # Most installations won't have these models
@@ -925,10 +924,10 @@ async def get_feature_status() -> Dict[str, Any]:
     except Exception as e:
         features["lip_sync"] = {
             "status": "unavailable",
-            "message": f"Lip sync service unavailable: {str(e)}",
+            "message": f"Lip sync service unavailable: {e!s}",
             "requires_model": True,
         }
-    
+
     # TTS (core functionality - should always be available)
     try:
         engine_service = get_engine_service()
@@ -944,10 +943,10 @@ async def get_feature_status() -> Dict[str, Any]:
     except Exception as e:
         features["text_to_speech"] = {
             "status": "unavailable",
-            "message": f"TTS engine unavailable: {str(e)}",
+            "message": f"TTS engine unavailable: {e!s}",
             "requires_model": True,
         }
-    
+
     # Count status summary
     summary = {
         "fully_functional": sum(1 for f in features.values() if f.get("status") == "fully_functional"),
@@ -955,7 +954,7 @@ async def get_feature_status() -> Dict[str, Any]:
         "unavailable": sum(1 for f in features.values() if f.get("status") == "unavailable"),
         "total": len(features),
     }
-    
+
     return {
         "timestamp": datetime.utcnow().isoformat(),
         "features": features,

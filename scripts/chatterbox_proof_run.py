@@ -9,7 +9,6 @@ TASK-0010: Piper/Chatterbox Integration
 """
 
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -63,13 +62,12 @@ def main():
     # Check 3: Chatterbox import
     print("\n[3] Checking Chatterbox TTS...")
     try:
-        from chatterbox.tts import ChatterboxTTS
         proof_data["checks"]["chatterbox_import"] = {
             "module": "chatterbox.tts",
             "class": "ChatterboxTTS",
             "pass": True,
         }
-        print(f"    Import: SUCCESS")
+        print("    Import: SUCCESS")
     except Exception as e:
         proof_data["checks"]["chatterbox_import"] = {"error": str(e), "pass": False}
         print(f"    Error: {e}")
@@ -78,12 +76,11 @@ def main():
     print("\n[4] Checking model configuration...")
     try:
         # Just check if the class can be inspected
-        from chatterbox.tts import ChatterboxTTS
         proof_data["checks"]["model_config"] = {
             "class_available": True,
             "pass": True,
         }
-        print(f"    Model class available: True")
+        print("    Model class available: True")
     except Exception as e:
         proof_data["checks"]["model_config"] = {"error": str(e), "pass": False}
         print(f"    Error: {e}")

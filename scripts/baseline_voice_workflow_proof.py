@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Baseline End-to-End Voice Workflow Proof
 Engine Engineer - Quality + Functions Tranche
@@ -18,12 +17,11 @@ import json
 import logging
 import os
 import sys
-import tempfile
 import time
 from datetime import datetime
 from importlib import metadata as importlib_metadata
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
@@ -71,7 +69,7 @@ class BaselineWorkflowProof:
     def __init__(
         self,
         backend_url: str = DEFAULT_BACKEND_URL,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         synthesis_engine: str = "xtts",
         strict_slo: bool = False,
     ):
@@ -86,12 +84,12 @@ class BaselineWorkflowProof:
         """
         self.backend_url_requested = backend_url.rstrip("/")
         self.backend_url = self.backend_url_requested
-        self._backend_resolution_error: Optional[str] = None
+        self._backend_resolution_error: str | None = None
         self.output_dir = output_dir or self._create_output_dir()
         self._synthesis_engine = (synthesis_engine or "xtts").strip().lower()
         self._strict_slo = bool(strict_slo)
         Path(self.output_dir).resolve().mkdir(parents=True, exist_ok=True)
-        self.proof_data: Dict[str, Any] = {
+        self.proof_data: dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
             "workflow": "baseline_voice_workflow",
             "steps": [],
@@ -125,7 +123,7 @@ class BaselineWorkflowProof:
         logger.info(f"Proof data saved to: {proof_file}")
 
     def _check_backend_health(
-        self, base_url: Optional[str] = None, log_failures: bool = True
+        self, base_url: str | None = None, log_failures: bool = True
     ) -> bool:
         """Check if backend API is accessible."""
         base_url = (base_url or self.backend_url).rstrip("/")
@@ -145,7 +143,7 @@ class BaselineWorkflowProof:
         return False
 
     def _check_voice_clone_route(
-        self, base_url: Optional[str] = None, log_missing: bool = True
+        self, base_url: str | None = None, log_missing: bool = True
     ) -> bool:
         """Verify the /api/voice/clone route is registered on the backend."""
         base_url = (base_url or self.backend_url).rstrip("/")
@@ -186,7 +184,7 @@ class BaselineWorkflowProof:
     def _check_engine_available(
         self,
         engine_id: str,
-        base_url: Optional[str] = None,
+        base_url: str | None = None,
         log_missing: bool = True,
     ) -> bool:
         """Verify the given synthesis engine is available on the backend."""
@@ -206,7 +204,7 @@ class BaselineWorkflowProof:
             engines_payload = (
                 payload.get("engines", []) if isinstance(payload, dict) else payload
             )
-            engine_ids: List[str] = []
+            engine_ids: list[str] = []
             if isinstance(engines_payload, list):
                 for item in engines_payload:
                     if isinstance(item, str):
@@ -286,8 +284,8 @@ class BaselineWorkflowProof:
         return False
 
     def _create_test_profile(
-        self, reference_audio_path: Optional[str] = None
-    ) -> Optional[str]:
+        self, reference_audio_path: str | None = None
+    ) -> str | None:
         """
         Create a test voice profile for synthesis.
 
@@ -407,13 +405,13 @@ class BaselineWorkflowProof:
     def synthesize_with_xtts(
         self,
         text: str,
-        reference_audio_paths: Optional[List[str]] = None,
+        reference_audio_paths: list[str] | None = None,
         language: str = DEFAULT_LANGUAGE,
         quality_mode: str = "standard",
         use_multi_reference: bool = False,
-        prosody_params: Optional[str] = None,
-        engine: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        prosody_params: str | None = None,
+        engine: str | None = None,
+    ) -> dict[str, Any]:
         """
         Synthesize audio via clone endpoint (accepts reference audio directly).
 
@@ -662,8 +660,8 @@ class BaselineWorkflowProof:
         self,
         audio_id: str,
         engine: str = "whisper_cpp",
-        language: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        language: str | None = None,
+    ) -> dict[str, Any]:
         """
         Transcribe audio using whisper.cpp.
 
@@ -755,10 +753,7 @@ class BaselineWorkflowProof:
         """Download audio file for evidence."""
         try:
             # Construct full URL if relative
-            if audio_url.startswith("/"):
-                full_url = f"{self.backend_url}{audio_url}"
-            else:
-                full_url = audio_url
+            full_url = f"{self.backend_url}{audio_url}" if audio_url.startswith("/") else audio_url
 
             response = requests.get(full_url, timeout=60)
             if response.status_code == 200:
@@ -770,7 +765,7 @@ class BaselineWorkflowProof:
         except Exception as e:
             logger.warning(f"Failed to download audio: {e}")
 
-    def _get_wav_duration_seconds(self, audio_path: str) -> Optional[float]:
+    def _get_wav_duration_seconds(self, audio_path: str) -> float | None:
         try:
             import wave
 
@@ -787,11 +782,11 @@ class BaselineWorkflowProof:
         self,
         text: str = DEFAULT_TEST_TEXT,
         language: str = DEFAULT_LANGUAGE,
-        reference_audio_paths: Optional[List[str]] = None,
+        reference_audio_paths: list[str] | None = None,
         quality_mode: str = "standard",
         use_multi_reference: bool = False,
-        prosody_params: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        prosody_params: str | None = None,
+    ) -> dict[str, Any]:
         """
         Run the complete baseline workflow proof.
 
@@ -969,7 +964,7 @@ class BaselineWorkflowProof:
 
     def _capture_dependency_versions(self):
         """Capture local dependency versions for evidence."""
-        versions: Dict[str, Any] = {
+        versions: dict[str, Any] = {
             "python": sys.version,
             "python_executable": sys.executable,
         }

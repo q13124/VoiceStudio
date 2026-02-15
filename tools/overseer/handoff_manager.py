@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Tuple
 
 from tools.overseer.ledger_parser import LedgerParser
-
 
 DEFAULT_HANDOFF_DIR = Path("docs/governance/overseer/handoffs")
 
@@ -16,7 +14,7 @@ class HandoffManager:
         self.handoff_dir = handoff_dir or DEFAULT_HANDOFF_DIR
         self.ledger_parser = ledger_parser or LedgerParser()
 
-    def list_handoffs(self) -> List[Path]:
+    def list_handoffs(self) -> list[Path]:
         if not self.handoff_dir.exists():
             return []
         return sorted(self.handoff_dir.glob("*.md"))
@@ -27,7 +25,7 @@ class HandoffManager:
             raise FileNotFoundError(f"Handoff not found: {name}")
         return path.read_text(encoding="utf-8")
 
-    def reconcile_with_ledger(self) -> Tuple[List[str], List[str], List[str]]:
+    def reconcile_with_ledger(self) -> tuple[list[str], list[str], list[str]]:
         entries = self.ledger_parser.parse()
         ledger_ids = {e.id for e in entries}
         handoff_ids = self._collect_handoff_ids()
@@ -36,8 +34,8 @@ class HandoffManager:
         orphan = sorted(handoff_ids - ledger_ids)
         return matched, missing, orphan
 
-    def validate(self) -> List[str]:
-        errors: List[str] = []
+    def validate(self) -> list[str]:
+        errors: list[str] = []
         if not self.handoff_dir.exists():
             errors.append(f"Handoff directory not found: {self.handoff_dir}")
             return errors

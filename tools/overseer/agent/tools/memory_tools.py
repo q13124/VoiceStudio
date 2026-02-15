@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from .base_tool import BaseTool, ToolResult
 
 DEFAULT_TOP_K = 5
 
 
-def _resolve_openmemory_path() -> Optional[Path]:
+def _resolve_openmemory_path() -> Path | None:
     """Resolve path to openmemory.md (same logic as context memory adapter)."""
     path_env = os.getenv("OPENMEMORY_PATH")
     if path_env:
@@ -77,7 +76,7 @@ class SearchMemoryTool(BaseTool):
             lines = content.split("\n")
             query_lower = query.lower()
             current_section = ""
-            matches: List[str] = []
+            matches: list[str] = []
             for line in lines:
                 if line.startswith("## "):
                     current_section = line[3:].strip()

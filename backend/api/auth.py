@@ -5,13 +5,14 @@ Provides API key authentication, JWT token support, role-based access control,
 and permission management for VoiceStudio API.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
 import secrets
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, Optional, Set
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ class Permission(str, Enum):
 
 
 # Role to permissions mapping
-ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
+ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
     UserRole.ADMIN: {
         Permission.PROFILE_READ,
         Permission.PROFILE_WRITE,
@@ -167,13 +168,13 @@ class User:
         self,
         user_id: str,
         username: str,
-        email: Optional[str] = None,
+        email: str | None = None,
         role: UserRole = UserRole.USER,
-        api_key: Optional[str] = None,
-        password_hash: Optional[str] = None,
-        permissions: Optional[Set[Permission]] = None,
+        api_key: str | None = None,
+        password_hash: str | None = None,
+        permissions: set[Permission] | None = None,
         is_active: bool = True,
-        created_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
     ):
         self.user_id = user_id
         self.username = username
@@ -184,7 +185,7 @@ class User:
         self.permissions = permissions or ROLE_PERMISSIONS.get(role, set())
         self.is_active = is_active
         self.created_at = created_at or datetime.utcnow()
-        self.last_login: Optional[datetime] = None
+        self.last_login: datetime | None = None
 
     def has_permission(self, permission: Permission) -> bool:
         """Check if user has a specific permission."""
@@ -192,13 +193,13 @@ class User:
             return False
         return permission in self.permissions
 
-    def has_any_permission(self, permissions: Set[Permission]) -> bool:
+    def has_any_permission(self, permissions: set[Permission]) -> bool:
         """Check if user has any of the specified permissions."""
         if not self.is_active:
             return False
         return bool(self.permissions & permissions)
 
-    def has_all_permissions(self, permissions: Set[Permission]) -> bool:
+    def has_all_permissions(self, permissions: set[Permission]) -> bool:
         """Check if user has all of the specified permissions."""
         if not self.is_active:
             return False
@@ -210,8 +211,8 @@ class APIKeyManager:
 
     def __init__(self):
         """Initialize API key manager."""
-        self._api_keys: Dict[str, User] = {}
-        self._users: Dict[str, User] = {}
+        self._api_keys: dict[str, User] = {}
+        self._users: dict[str, User] = {}
         self._secure_storage = SecureStorage() if HAS_SECURE_STORAGE else None
 
     def generate_api_key(self) -> str:
@@ -258,11 +259,11 @@ class APIKeyManager:
     def create_user(
         self,
         username: str,
-        email: Optional[str] = None,
+        email: str | None = None,
         role: UserRole = UserRole.USER,
-        password: Optional[str] = None,
+        password: str | None = None,
         generate_api_key: bool = True,
-    ) -> tuple[User, Optional[str]]:
+    ) -> tuple[User, str | None]:
         """
         Create a new user.
 
@@ -294,7 +295,7 @@ class APIKeyManager:
 
         return user, api_key
 
-    def authenticate_password(self, username: str, password: str) -> Optional[User]:
+    def authenticate_password(self, username: str, password: str) -> User | None:
         """Authenticate using username and password."""
         if not username or not password:
             return None
@@ -314,7 +315,7 @@ class APIKeyManager:
 
         return user
 
-    def authenticate_api_key(self, api_key: str) -> Optional[User]:
+    def authenticate_api_key(self, api_key: str) -> User | None:
         """Authenticate using API key."""
         if not api_key or not api_key.startswith(API_KEY_PREFIX):
             return None
@@ -328,7 +329,7 @@ class APIKeyManager:
 
         return None
 
-    def get_user(self, user_id: str) -> Optional[User]:
+    def get_user(self, user_id: str) -> User | None:
         """Get user by ID."""
         return self._users.get(user_id)
 
@@ -359,7 +360,7 @@ class JWTManager:
         user_id: str,
         username: str,
         role: UserRole,
-        expires_delta: Optional[timedelta] = None,
+        expires_delta: timedelta | None = None,
     ) -> str:
         """Create a JWT access token."""
         if expires_delta is None:
@@ -382,7 +383,7 @@ class JWTManager:
         self,
         user_id: str,
         username: str,
-        expires_delta: Optional[timedelta] = None,
+        expires_delta: timedelta | None = None,
     ) -> str:
         """Create a JWT refresh token."""
         if expires_delta is None:
@@ -400,7 +401,7 @@ class JWTManager:
 
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
-    def verify_token(self, token: str) -> Optional[Dict]:
+    def verify_token(self, token: str) -> dict | None:
         """Verify and decode a JWT token."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -409,7 +410,7 @@ class JWTManager:
             logger.warning(f"JWT verification failed: {e}")
             return None
 
-    def refresh_access_token(self, refresh_token: str) -> Optional[str]:
+    def refresh_access_token(self, refresh_token: str) -> str | None:
         """Refresh an access token using a refresh token."""
         payload = self.verify_token(refresh_token)
         if not payload or payload.get("type") != "refresh":
@@ -437,12 +438,12 @@ def get_api_key_manager() -> APIKeyManager:
     return _api_key_manager
 
 
-def get_jwt_manager() -> Optional[JWTManager]:
+def get_jwt_manager() -> JWTManager | None:
     """Get global JWT manager."""
     return _jwt_manager
 
 
-def get_current_user_from_token(token: str) -> Optional[User]:
+def get_current_user_from_token(token: str) -> User | None:
     """Get user from JWT token."""
     if not _jwt_manager:
         return None
@@ -458,7 +459,7 @@ def get_current_user_from_token(token: str) -> Optional[User]:
     return _api_key_manager.get_user(user_id)
 
 
-def get_current_user_from_api_key(api_key: str) -> Optional[User]:
+def get_current_user_from_api_key(api_key: str) -> User | None:
     """Get user from API key."""
     return _api_key_manager.authenticate_api_key(api_key)
 
@@ -473,7 +474,7 @@ def require_permission(permission: Permission):
     return decorator
 
 
-def require_any_permission(permissions: Set[Permission]):
+def require_any_permission(permissions: set[Permission]):
     """Decorator to require any of the specified permissions."""
 
     def decorator(func):
@@ -484,7 +485,7 @@ def require_any_permission(permissions: Set[Permission]):
     return decorator
 
 
-def require_all_permissions(permissions: Set[Permission]):
+def require_all_permissions(permissions: set[Permission]):
     """Decorator to require all of the specified permissions."""
 
     def decorator(func):
@@ -510,6 +511,8 @@ try:
     from .middleware.auth_middleware import require_auth_if_enabled
 except ImportError:
     # Fallback if middleware not available
-    async def require_auth_if_enabled(request):
+    from starlette.requests import Request
+
+    async def require_auth_if_enabled(request: Request = None):
         """Stub when middleware not available."""
         return None

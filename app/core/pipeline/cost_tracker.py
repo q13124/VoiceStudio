@@ -5,13 +5,14 @@ Tracks cumulative costs across S2S sessions and provides analytics
 on usage patterns for cost optimization.
 """
 
+from __future__ import annotations
+
 import json
 import logging
-import time
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +37,10 @@ class CostTracker:
     Persists cost data locally for analytics and reporting.
     """
 
-    def __init__(self, data_dir: Optional[str] = None, max_history: int = 1000):
+    def __init__(self, data_dir: str | None = None, max_history: int = 1000):
         self._data_dir = Path(data_dir or "~/.voicestudio/costs").expanduser()
         self._data_dir.mkdir(parents=True, exist_ok=True)
-        self._history: Deque[SessionCostEntry] = deque(maxlen=max_history)
+        self._history: deque[SessionCostEntry] = deque(maxlen=max_history)
         self._total_spent: float = 0.0
         self._load_history()
 
@@ -54,7 +55,7 @@ class CostTracker:
             f"total=${self._total_spent:.4f}"
         )
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get cost summary across all sessions."""
         if not self._history:
             return {
@@ -79,9 +80,9 @@ class CostTracker:
             "by_provider": self._group_by_provider(),
         }
 
-    def _group_by_provider(self) -> Dict[str, Dict[str, Any]]:
+    def _group_by_provider(self) -> dict[str, dict[str, Any]]:
         """Group costs by provider."""
-        providers: Dict[str, List[SessionCostEntry]] = {}
+        providers: dict[str, list[SessionCostEntry]] = {}
         for entry in self._history:
             providers.setdefault(entry.provider, []).append(entry)
 
@@ -120,7 +121,7 @@ class CostTracker:
         if not cost_file.exists():
             return
         try:
-            with open(cost_file, "r", encoding="utf-8") as f:
+            with open(cost_file, encoding="utf-8") as f:
                 for line in f:
                     try:
                         data = json.loads(line.strip())

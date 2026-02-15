@@ -8,8 +8,9 @@ Compatible with:
 - scipy>=1.9.0
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -75,7 +76,7 @@ class ParametricEQ:
         """
         self.sample_rate = sample_rate
         self.num_bands = num_bands
-        self.bands: List[EQBand] = []
+        self.bands: list[EQBand] = []
 
     def add_band(
         self,
@@ -118,7 +119,7 @@ class ParametricEQ:
     def process(
         self,
         audio: np.ndarray,
-        sample_rate: Optional[int] = None,
+        sample_rate: int | None = None,
         **kwargs,
     ) -> np.ndarray:
         """
@@ -267,7 +268,7 @@ class ParametricEQ:
 
         return processed
 
-    def get_preset(self, preset_name: str) -> List[EQBand]:
+    def get_preset(self, preset_name: str) -> list[EQBand]:
         """Get EQ preset bands."""
         presets = {
             "vocal_enhance": [
@@ -310,7 +311,7 @@ class ParametricEQ:
         self.bands.extend(preset_bands)
 
     def get_frequency_response(
-        self, frequencies: np.ndarray, sample_rate: Optional[int] = None
+        self, frequencies: np.ndarray, sample_rate: int | None = None
     ) -> np.ndarray:
         """
         Calculate frequency response of EQ.
@@ -398,7 +399,7 @@ def create_parametric_eq(
 
 def apply_eq(
     audio: np.ndarray,
-    bands: List[Dict],
+    bands: list[dict],
     sample_rate: int = 24000,
     **kwargs,
 ) -> np.ndarray:

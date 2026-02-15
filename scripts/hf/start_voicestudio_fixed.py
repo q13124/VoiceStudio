@@ -7,9 +7,10 @@ Run this instead of the normal startup script to ensure the fix is always applie
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def apply_hf_fix():
     """Apply the Hugging Face API endpoint fix."""
@@ -31,7 +32,7 @@ def apply_hf_fix():
                 patch_requests_if_needed,
                 patch_urllib_if_needed,
                 test_huggingface_hub,
-                test_transformers
+                test_transformers,
             )
 
             force_environment_variables()

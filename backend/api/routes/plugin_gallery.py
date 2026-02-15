@@ -4,8 +4,10 @@ Plugin Gallery API Routes.
 D.1 Enhancement: REST API for plugin catalog, installation, and management.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -28,14 +30,14 @@ class PluginSummary(BaseModel):
     category: str
     author: str
     license: str
-    latest_version: Optional[str]
-    tags: List[str]
+    latest_version: str | None
+    tags: list[str]
     featured: bool
     verified: bool
     rating: float
     downloads: int
     installed: bool = False
-    installed_version: Optional[str] = None
+    installed_version: str | None = None
     update_available: bool = False
 
 
@@ -50,19 +52,19 @@ class PluginDetails(BaseModel):
     license: str
     homepage: str
     icon_url: str
-    tags: List[str]
-    versions: List[Dict[str, Any]]
-    stats: Dict[str, Any]
+    tags: list[str]
+    versions: list[dict[str, Any]]
+    stats: dict[str, Any]
     featured: bool
     verified: bool
     installed: bool = False
-    installed_version: Optional[str] = None
+    installed_version: str | None = None
 
 
 class InstallRequest(BaseModel):
     """Plugin installation request."""
     plugin_id: str
-    version: Optional[str] = None
+    version: str | None = None
 
 
 class InstallResponse(BaseModel):
@@ -70,8 +72,8 @@ class InstallResponse(BaseModel):
     success: bool
     plugin_id: str
     version: str
-    install_path: Optional[str] = None
-    error: Optional[str] = None
+    install_path: str | None = None
+    error: str | None = None
 
 
 class InstalledPluginInfo(BaseModel):
@@ -81,13 +83,13 @@ class InstalledPluginInfo(BaseModel):
     installed_at: str
     install_path: str
     state: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
 
 
 class UpdateCheckResponse(BaseModel):
     """Update check response."""
     updates_available: int
-    updates: List[Dict[str, str]]
+    updates: list[dict[str, str]]
 
 
 # ============================================================================
@@ -95,25 +97,25 @@ class UpdateCheckResponse(BaseModel):
 # ============================================================================
 
 
-@router.get("/catalog", response_model=Dict[str, Any])
+@router.get("/catalog", response_model=dict[str, Any])
 async def get_catalog(refresh: bool = False):
     """
     Get the plugin catalog.
-    
+
     Args:
         refresh: Force refresh from remote
-        
+
     Returns:
         Plugin catalog with metadata
     """
     try:
         from backend.plugins.gallery import get_catalog_service, get_install_service
-        
+
         catalog_service = get_catalog_service()
         install_service = get_install_service()
-        
+
         catalog = await catalog_service.get_catalog(force_refresh=refresh)
-        
+
         # Build response with install status
         plugins = []
         for plugin in catalog.plugins:
@@ -140,7 +142,7 @@ async def get_catalog(refresh: bool = False):
                 ),
             )
             plugins.append(summary.model_dump())
-        
+
         return {
             "catalog_version": catalog.catalog_version,
             "last_updated": catalog.last_updated,
@@ -153,35 +155,35 @@ async def get_catalog(refresh: bool = False):
         }
     except Exception as e:
         logger.error(f"Failed to get catalog: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get catalog: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get catalog: {e!s}")
 
 
 @router.get("/catalog/search")
 async def search_plugins(
     q: str = Query(..., min_length=1, description="Search query"),
-    category: Optional[str] = None,
-) -> List[PluginSummary]:
+    category: str | None = None,
+) -> list[PluginSummary]:
     """
     Search plugins by query.
-    
+
     Args:
         q: Search query
         category: Optional category filter
-        
+
     Returns:
         Matching plugins
     """
     try:
         from backend.plugins.gallery import get_catalog_service, get_install_service
-        
+
         catalog_service = get_catalog_service()
         install_service = get_install_service()
-        
+
         results = await catalog_service.search_plugins(q)
-        
+
         if category:
             results = [p for p in results if p.category == category]
-        
+
         plugins = []
         for plugin in results:
             installed = install_service.get_installed_plugin(plugin.id)
@@ -202,36 +204,36 @@ async def search_plugins(
                 installed_version=installed.version if installed else None,
                 update_available=False,
             ))
-        
+
         return plugins
     except Exception as e:
         logger.error(f"Search failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {e!s}")
 
 
 @router.get("/catalog/{plugin_id}", response_model=PluginDetails)
 async def get_plugin_details(plugin_id: str):
     """
     Get detailed information about a plugin.
-    
+
     Args:
         plugin_id: Plugin identifier
-        
+
     Returns:
         Plugin details
     """
     try:
         from backend.plugins.gallery import get_catalog_service, get_install_service
-        
+
         catalog_service = get_catalog_service()
         install_service = get_install_service()
-        
+
         plugin = await catalog_service.get_plugin_details(plugin_id)
         if not plugin:
             raise HTTPException(status_code=404, detail=f"Plugin '{plugin_id}' not found")
-        
+
         installed = install_service.get_installed_plugin(plugin_id)
-        
+
         return PluginDetails(
             id=plugin.id,
             name=plugin.name,
@@ -270,17 +272,17 @@ async def get_plugin_details(plugin_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/catalog/featured", response_model=List[PluginSummary])
+@router.get("/catalog/featured", response_model=list[PluginSummary])
 async def get_featured_plugins():
     """Get featured plugins."""
     try:
         from backend.plugins.gallery import get_catalog_service, get_install_service
-        
+
         catalog_service = get_catalog_service()
         install_service = get_install_service()
-        
+
         featured = await catalog_service.get_featured()
-        
+
         return [
             PluginSummary(
                 id=p.id,
@@ -313,23 +315,23 @@ async def get_featured_plugins():
 async def install_plugin(request: InstallRequest):
     """
     Install a plugin.
-    
+
     Args:
         request: Installation request with plugin_id and optional version
-        
+
     Returns:
         Installation result
     """
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
-        
+
         result = await install_service.install_plugin(
             plugin_id=request.plugin_id,
             version=request.version,
         )
-        
+
         return InstallResponse(
             success=result.success,
             plugin_id=result.plugin_id,
@@ -348,22 +350,22 @@ async def install_plugin(request: InstallRequest):
 
 
 @router.delete("/install/{plugin_id}")
-async def uninstall_plugin(plugin_id: str) -> Dict[str, Any]:
+async def uninstall_plugin(plugin_id: str) -> dict[str, Any]:
     """
     Uninstall a plugin.
-    
+
     Args:
         plugin_id: Plugin identifier
-        
+
     Returns:
         Uninstall result
     """
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         success = await install_service.uninstall_plugin(plugin_id)
-        
+
         return {
             "success": success,
             "plugin_id": plugin_id,
@@ -374,15 +376,15 @@ async def uninstall_plugin(plugin_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/installed", response_model=List[InstalledPluginInfo])
+@router.get("/installed", response_model=list[InstalledPluginInfo])
 async def list_installed_plugins():
     """List all installed plugins."""
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         installed = install_service.get_installed_plugins()
-        
+
         return [
             InstalledPluginInfo(
                 id=p.id,
@@ -400,14 +402,14 @@ async def list_installed_plugins():
 
 
 @router.post("/installed/{plugin_id}/enable")
-async def enable_plugin(plugin_id: str) -> Dict[str, Any]:
+async def enable_plugin(plugin_id: str) -> dict[str, Any]:
     """Enable a disabled plugin."""
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         success = install_service.enable_plugin(plugin_id)
-        
+
         return {
             "success": success,
             "plugin_id": plugin_id,
@@ -419,14 +421,14 @@ async def enable_plugin(plugin_id: str) -> Dict[str, Any]:
 
 
 @router.post("/installed/{plugin_id}/disable")
-async def disable_plugin(plugin_id: str) -> Dict[str, Any]:
+async def disable_plugin(plugin_id: str) -> dict[str, Any]:
     """Disable a plugin."""
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         success = install_service.disable_plugin(plugin_id)
-        
+
         return {
             "success": success,
             "plugin_id": plugin_id,
@@ -447,10 +449,10 @@ async def check_for_updates():
     """Check for available plugin updates."""
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         updates = await install_service.check_for_updates()
-        
+
         return UpdateCheckResponse(
             updates_available=len(updates),
             updates=[
@@ -469,23 +471,23 @@ async def check_for_updates():
 
 
 @router.post("/updates/{plugin_id}")
-async def update_plugin(plugin_id: str, version: Optional[str] = None) -> InstallResponse:
+async def update_plugin(plugin_id: str, version: str | None = None) -> InstallResponse:
     """
     Update a plugin to a new version.
-    
+
     Args:
         plugin_id: Plugin identifier
         version: Target version (default: latest)
-        
+
     Returns:
         Update result
     """
     try:
         from backend.plugins.gallery import get_install_service
-        
+
         install_service = get_install_service()
         result = await install_service.update_plugin(plugin_id, version)
-        
+
         return InstallResponse(
             success=result.success,
             plugin_id=result.plugin_id,

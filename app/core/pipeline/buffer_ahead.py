@@ -11,8 +11,9 @@ import asyncio
 import logging
 import time
 from collections import deque
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Callable, Deque, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,9 @@ class SentenceDetector:
 
     def __init__(self):
         self._buffer = ""
-        self._sentences: Deque[str] = deque()
+        self._sentences: deque[str] = deque()
 
-    def add_token(self, token: str) -> Optional[str]:
+    def add_token(self, token: str) -> str | None:
         """
         Add a token and return a complete sentence if available.
 
@@ -60,7 +61,7 @@ class SentenceDetector:
 
         return None
 
-    def flush(self) -> Optional[str]:
+    def flush(self) -> str | None:
         """Flush any remaining text in the buffer."""
         if self._buffer.strip():
             sentence = self._buffer.strip()

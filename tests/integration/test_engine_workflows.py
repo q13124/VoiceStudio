@@ -4,11 +4,10 @@ Engine Workflow Integration Tests
 Tests complete engine workflows including initialization, synthesis, and cleanup.
 """
 
-import asyncio
+import contextlib
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
 
 import numpy as np
 import pytest
@@ -69,10 +68,8 @@ class TestEngineWorkflows:
         try:
             from app.core.runtime.engine_lifecycle import get_lifecycle_manager
             # Prefer EnhancedRuntimeEngine, fallback to RuntimeEngine
-            try:
-                from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngine as RuntimeEngine
-            except ImportError:
-                from app.core.runtime.runtime_engine import RuntimeEngine
+            with contextlib.suppress(ImportError):
+                pass
 
             lifecycle_manager = get_lifecycle_manager()
 
@@ -146,8 +143,8 @@ class TestEngineWorkflows:
     async def test_engine_error_recovery_workflow(self):
         """Test engine error recovery workflow."""
         try:
-            from app.core.resilience.retry import retry_with_backoff, RetryStrategy
             from app.core.engines.xtts_engine import XTTSEngine
+            from app.core.resilience.retry import RetryStrategy, retry_with_backoff
 
             # Create engine that may fail
             engine = XTTSEngine(device="cpu", gpu=False)

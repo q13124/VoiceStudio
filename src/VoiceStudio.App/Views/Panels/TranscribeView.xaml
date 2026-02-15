@@ -2,26 +2,455 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:VoiceStudio.App.Controls"
+    xmlns:converters="using:VoiceStudio.App.Converters"
     xmlns:local="using:VoiceStudio.App.Views.Panels"
     x:DataType="local:TranscribeView">
+    <UserControl.Resources>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
     <Grid x:Name="TranscribeView_Root" 
           AutomationProperties.AutomationId="TranscribeView_Root"
           Background="{StaticResource VSQ.Panel.Background}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Row 0: Header -->
         <Border Grid.Row="0" 
                 Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" 
                 Padding="{StaticResource VSQ.Spacing.Medium}">
-            <TextBlock Text="Transcribe" 
-                       FontSize="{StaticResource VSQ.FontSize.Title}" 
-                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Transcribe" 
+                           FontSize="{StaticResource VSQ.FontSize.Title}" 
+                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                           VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <Button AutomationProperties.AutomationId="TranscribeView_RefreshButton"
+                            ToolTipService.ToolTip="Refresh transcriptions (F5)"
+                            Command="{x:Bind ViewModel.LoadTranscriptionsCommand}"
+                            Padding="8,6">
+                        <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                    </Button>
+                    <Button AutomationProperties.AutomationId="TranscribeView_HelpButton"
+                            ToolTipService.ToolTip="Help"
+                            Click="HelpButton_Click"
+                            Padding="8,6">
+                        <FontIcon Glyph="&#xE897;" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
+        <!-- Row 1: Configuration Controls -->
+        <Border Grid.Row="1" 
+                Padding="{StaticResource VSQ.Spacing.Medium}"
+                BorderBrush="{StaticResource VSQ.Panel.Background.HeaderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Spacing="12">
+                <!-- Audio ID and Project ID inputs -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             AutomationProperties.AutomationId="TranscribeView_AudioIdInput"
+                             Header="Audio ID"
+                             PlaceholderText="Enter audio ID to transcribe"
+                             Text="{x:Bind ViewModel.SelectedAudioId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBox Grid.Column="2"
+                             AutomationProperties.AutomationId="TranscribeView_ProjectIdInput"
+                             Header="Project ID (optional)"
+                             PlaceholderText="Enter project ID"
+                             Text="{x:Bind ViewModel.SelectedProjectId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+
+                <!-- Engine and Language selection -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox Grid.Column="0"
+                              AutomationProperties.AutomationId="TranscribeView_EngineComboBox"
+                              Header="Engine"
+                              ItemsSource="{x:Bind ViewModel.Engines}"
+                              SelectedItem="{x:Bind ViewModel.SelectedEngine, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch">
+                    </ComboBox>
+
+                    <ComboBox Grid.Column="2"
+                              AutomationProperties.AutomationId="TranscribeView_LanguageComboBox"
+                              Header="Language"
+                              ItemsSource="{x:Bind ViewModel.Languages}"
+                              SelectedValuePath="Code"
+                              DisplayMemberPath="Name"
+                              SelectedValue="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch"
+                              PlaceholderText="Auto-detect">
+                    </ComboBox>
+
+                    <Button Grid.Column="4"
+                            AutomationProperties.AutomationId="TranscribeView_TranscribeButton"
+                            Content="Transcribe"
+                            Command="{x:Bind ViewModel.TranscribeCommand}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            VerticalAlignment="Bottom"
+                            Padding="24,8"
+                            MinWidth="120" />
+                </Grid>
+
+                <!-- Options toggles -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ToggleSwitch Grid.Column="0"
+                                  AutomationProperties.AutomationId="TranscribeView_WordTimestampsToggle"
+                                  Header="Word Timestamps"
+                                  IsOn="{x:Bind ViewModel.WordTimestamps, Mode=TwoWay}"
+                                  OffContent="Off"
+                                  OnContent="On" />
+
+                    <ToggleSwitch Grid.Column="2"
+                                  AutomationProperties.AutomationId="TranscribeView_DiarizationToggle"
+                                  Header="Diarization"
+                                  IsOn="{x:Bind ViewModel.Diarization, Mode=TwoWay}"
+                                  OffContent="Off"
+                                  OnContent="On"
+                                  ToolTipService.ToolTip="Speaker diarization - identifies different speakers (requires WhisperX engine)" />
+
+                    <ToggleSwitch Grid.Column="4"
+                                  AutomationProperties.AutomationId="TranscribeView_VadToggle"
+                                  Header="Voice Activity Detection"
+                                  IsOn="{x:Bind ViewModel.UseVad, Mode=TwoWay}"
+                                  OffContent="Off"
+                                  OnContent="On"
+                                  ToolTipService.ToolTip="Improves accuracy by detecting voice segments before transcription" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Row 2: Main content area (transcription list + detail) -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="250" />
+                <ColumnDefinition Width="3*" MinWidth="300" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Transcription list -->
+            <Grid Grid.Column="0" 
+                  BorderBrush="{StaticResource VSQ.Panel.Background.HeaderBrush}"
+                  BorderThickness="0,0,1,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- List header -->
+                <Border Grid.Row="0" Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Transcriptions: "
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                       FontSize="13" />
+                            <TextBlock Text="{x:Bind ViewModel.Transcriptions.Count, Mode=OneWay, FallbackValue='0'}"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button AutomationProperties.AutomationId="TranscribeView_SelectAllButton"
+                                    ToolTipService.ToolTip="Select all (Ctrl+A)"
+                                    Command="{x:Bind ViewModel.SelectAllTranscriptionsCommand}"
+                                    Padding="6,4"
+                                    FontSize="12">
+                                <FontIcon Glyph="&#xE8B3;" FontSize="12" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Transcription ListView -->
+                <ListView Grid.Row="1"
+                          AutomationProperties.AutomationId="TranscribeView_TranscriptionList"
+                          ItemsSource="{x:Bind ViewModel.Transcriptions, Mode=OneWay}"
+                          SelectedItem="{x:Bind ViewModel.SelectedTranscription, Mode=TwoWay}"
+                          SelectionMode="Single"
+                          CanDragItems="True"
+                          CanReorderItems="True"
+                          AllowDrop="True"
+                          IsItemClickEnabled="True"
+                          RightTapped="Transcription_RightTapped"
+                          Padding="4">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8,10" 
+                                  ColumnSpacing="8"
+                                  PointerPressed="Transcription_PointerPressed"
+                                  DragStarting="Transcription_DragStarting"
+                                  DragOver="Transcription_DragOver"
+                                  DragLeave="Transcription_DragLeave"
+                                  Drop="Transcription_Drop"
+                                  AllowDrop="True">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Row 0: Text preview -->
+                                <TextBlock Grid.Row="0"
+                                           Text="{Binding Text}"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxLines="2"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                                           FontSize="13" />
+
+                                <!-- Row 1: Metadata (engine, language, duration) -->
+                                <StackPanel Grid.Row="1" 
+                                            Orientation="Horizontal" 
+                                            Spacing="12"
+                                            Margin="0,4,0,0">
+                                    <TextBlock FontSize="11" Opacity="0.7">
+                                        <Run Text="Engine: " />
+                                        <Run Text="{Binding Engine}" FontWeight="SemiBold" />
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Opacity="0.7">
+                                        <Run Text="Lang: " />
+                                        <Run Text="{Binding Language}" FontWeight="SemiBold" />
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Opacity="0.7">
+                                        <Run Text="Duration: " />
+                                        <Run Text="{Binding Duration}" FontWeight="SemiBold" />
+                                        <Run Text="s" />
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Row 2: Created date -->
+                                <TextBlock Grid.Row="2"
+                                           FontSize="10"
+                                           Opacity="0.5"
+                                           Margin="0,2,0,0">
+                                    <Run Text="{Binding Created}" />
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!-- Empty state (visible when list is empty) -->
+                <StackPanel x:Name="EmptyTranscriptionState"
+                            Grid.Row="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <FontIcon Glyph="&#xEE56;" FontSize="32" Opacity="0.3" />
+                    <TextBlock Text="No transcriptions yet"
+                               FontSize="14"
+                               Opacity="0.5"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Enter an audio ID and click Transcribe"
+                               FontSize="12"
+                               Opacity="0.4"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Right: Transcription detail / text display -->
+            <Grid Grid.Column="1" Padding="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Detail header with actions -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Transcription Text"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                               VerticalAlignment="Center" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                                Visibility="{x:Bind ViewModel.SelectedTranscription, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay, FallbackValue=Collapsed}">
+                        <Button AutomationProperties.AutomationId="TranscribeView_SendToTimelineButton"
+                                ToolTipService.ToolTip="Send transcription segments to Timeline"
+                                Command="{x:Bind ViewModel.SendToTimelineCommand}"
+                                Padding="8,6">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon Glyph="&#xE71B;" FontSize="12" />
+                                <TextBlock Text="Timeline" FontSize="12" />
+                            </StackPanel>
+                        </Button>
+                        <Button AutomationProperties.AutomationId="TranscribeView_CopyButton"
+                                ToolTipService.ToolTip="Copy transcription text"
+                                Click="CopyTranscriptionText_Click"
+                                Padding="8,6">
+                            <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                        </Button>
+                        <Button AutomationProperties.AutomationId="TranscribeView_DeleteButton"
+                                ToolTipService.ToolTip="Delete selected transcription"
+                                Command="{x:Bind ViewModel.DeleteTranscriptionCommand}"
+                                CommandParameter="{x:Bind ViewModel.SelectedTranscription, Mode=OneWay}"
+                                Padding="8,6">
+                            <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Transcription text display -->
+                <ScrollViewer Grid.Row="1"
+                              AutomationProperties.AutomationId="TranscribeView_TextDisplay"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <TextBlock Text="{x:Bind ViewModel.TranscriptionText, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               IsTextSelectionEnabled="True"
+                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"
+                               FontSize="14"
+                               LineHeight="22"
+                               Padding="4" />
+                </ScrollViewer>
+
+                <!-- No selection state (visible when no transcription is selected) -->
+                <StackPanel Grid.Row="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.SelectedTranscription, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter='Invert', Mode=OneWay, FallbackValue=Visible}">
+                    <FontIcon Glyph="&#xE8BD;" FontSize="32" Opacity="0.3" />
+                    <TextBlock Text="Select a transcription to view"
+                               FontSize="14"
+                               Opacity="0.5"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Word timestamps display (when selected transcription has them) -->
+                <Border Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Padding="8"
+                        CornerRadius="4"
+                        BorderBrush="{StaticResource VSQ.Panel.Background.HeaderBrush}"
+                        BorderThickness="1"
+                        Visibility="{x:Bind ViewModel.SelectedTranscription, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay, FallbackValue=Collapsed}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Segments" FontSize="12" FontWeight="SemiBold" Opacity="0.7" />
+                        <ItemsRepeater AutomationProperties.AutomationId="TranscribeView_SegmentsList"
+                                       ItemsSource="{x:Bind ViewModel.SelectedTranscription.Segments, Mode=OneWay}"
+                                       MaxHeight="120">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical" Spacing="2" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4,2" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" FontSize="11" Opacity="0.6">
+                                            <Run Text="{Binding Start}" />
+                                            <Run Text="s" />
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="1" FontSize="11" Opacity="0.6">
+                                            <Run Text="{Binding End}" />
+                                            <Run Text="s" />
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Text}"
+                                                   FontSize="11"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Row 3: Status bar -->
+        <Border Grid.Row="3"
+                Padding="12,6"
+                Background="{StaticResource VSQ.Panel.Background.HeaderBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Loading indicator -->
+                <ProgressRing Grid.Column="0"
+                              AutomationProperties.AutomationId="TranscribeView_LoadingIndicator"
+                              IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                              Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                              Width="16" Height="16"
+                              Margin="0,0,8,0" />
+
+                <!-- Error or status message -->
+                <TextBlock Grid.Column="1"
+                           AutomationProperties.AutomationId="TranscribeView_StatusText"
+                           Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                           Foreground="IndianRed"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Visibility="{x:Bind ViewModel.ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay, FallbackValue=Collapsed}" />
+
+                <!-- Selection count -->
+                <TextBlock Grid.Column="2"
+                           FontSize="12"
+                           Opacity="0.6"
+                           VerticalAlignment="Center">
+                    <Run Text="{x:Bind ViewModel.SelectedTranscriptionCount, Mode=OneWay}" />
+                    <Run Text=" selected" />
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Help Overlay -->
         <controls:HelpOverlay x:Name="HelpOverlay" 
-                              Grid.RowSpan="2"
+                              Grid.RowSpan="4"
                               IsVisible="False" 
                               Visibility="Collapsed" />
     </Grid>

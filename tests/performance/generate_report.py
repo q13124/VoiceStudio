@@ -7,7 +7,7 @@ Can compare against baselines and detect regressions.
 
 Usage:
     python generate_report.py [options]
-    
+
 Options:
     --input PATH       Input JSON file or directory
     --output PATH      Output report path
@@ -21,33 +21,32 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 class PerformanceReportGenerator:
     """Generates performance reports from test results."""
-    
+
     def __init__(
         self,
-        baseline_path: Optional[Path] = None,
+        baseline_path: Path | None = None,
         regression_threshold: float = 0.2,
     ):
         """
         Initialize report generator.
-        
+
         Args:
             baseline_path: Path to baseline JSON file
             regression_threshold: Threshold for regression detection (0.2 = 20%)
         """
         self.baseline_path = baseline_path
         self.regression_threshold = regression_threshold
-        self.baseline: Optional[Dict] = None
-        
+        self.baseline: dict | None = None
+
         if baseline_path and baseline_path.exists():
             with open(baseline_path) as f:
                 self.baseline = json.load(f)
-    
-    def load_results(self, path: Path) -> Dict:
+
+    def load_results(self, path: Path) -> dict:
         """Load results from file or directory."""
         if path.is_file():
             with open(path) as f:
@@ -59,38 +58,38 @@ class PerformanceReportGenerator:
                 with open(reports[0]) as f:
                     return json.load(f)
         raise FileNotFoundError(f"No results found at {path}")
-    
-    def compare_with_baseline(self, results: Dict) -> List[Dict]:
+
+    def compare_with_baseline(self, results: dict) -> list[dict]:
         """Compare results with baseline and detect regressions."""
         if not self.baseline:
             return []
-        
+
         comparisons = []
         baseline_map = {r["name"]: r for r in self.baseline.get("results", [])}
-        
+
         for result in results.get("results", []):
             name = result["name"]
             if name not in baseline_map:
                 continue
-            
+
             baseline_result = baseline_map[name]
-            
+
             # Get times to compare
             current_time = (
-                result.get("metrics", {}).get("avg_time") or 
+                result.get("metrics", {}).get("avg_time") or
                 result.get("elapsed", 0)
             )
             baseline_time = (
-                baseline_result.get("metrics", {}).get("avg_time") or 
+                baseline_result.get("metrics", {}).get("avg_time") or
                 baseline_result.get("elapsed", 0)
             )
-            
+
             if baseline_time == 0:
                 continue
-            
+
             change = (current_time - baseline_time) / baseline_time
             is_regression = change > self.regression_threshold
-            
+
             comparisons.append({
                 "name": name,
                 "baseline_time": baseline_time,
@@ -98,14 +97,14 @@ class PerformanceReportGenerator:
                 "change_percent": change * 100,
                 "is_regression": is_regression,
             })
-        
+
         return comparisons
-    
-    def generate_html_report(self, results: Dict, output_path: Path) -> Path:
+
+    def generate_html_report(self, results: dict, output_path: Path) -> Path:
         """Generate HTML report."""
         comparisons = self.compare_with_baseline(results)
         regressions = [c for c in comparisons if c["is_regression"]]
-        
+
         html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -131,7 +130,7 @@ class PerformanceReportGenerator:
 <body>
     <h1>VoiceStudio Performance Report</h1>
     <p>Generated: {results.get('generated_at', 'Unknown')}</p>
-    
+
     <div class="summary">
         <div class="summary-card">
             <div class="summary-value">{results.get('total_tests', 0)}</div>
@@ -150,7 +149,7 @@ class PerformanceReportGenerator:
             <div class="summary-label">Regressions</div>
         </div>
     </div>
-    
+
     <h2>Performance Results</h2>
     <table>
         <tr>
@@ -160,17 +159,17 @@ class PerformanceReportGenerator:
             <th>Status</th>
         </tr>
 """
-        
+
         for result in results.get("results", []):
             time_val = (
-                result.get("metrics", {}).get("avg_time") or 
+                result.get("metrics", {}).get("avg_time") or
                 result.get("elapsed", 0)
             )
             max_time = result.get("max_time", "-")
             passed = result.get("passed", True)
             status_class = "passed" if passed else "failed"
             status_text = "PASS" if passed else "FAIL"
-            
+
             html += f"""        <tr>
             <td>{result['name']}</td>
             <td>{time_val:.3f}</td>
@@ -178,10 +177,10 @@ class PerformanceReportGenerator:
             <td class="{status_class}">{status_text}</td>
         </tr>
 """
-        
+
         html += """    </table>
 """
-        
+
         if comparisons:
             html += """
     <h2>Baseline Comparison</h2>
@@ -198,7 +197,7 @@ class PerformanceReportGenerator:
                     "improvement" if comp["change_percent"] < -10 else ""
                 )
                 change_sign = "+" if comp["change_percent"] > 0 else ""
-                
+
                 html += f"""        <tr class="{row_class}">
             <td>{comp['name']}</td>
             <td>{comp['baseline_time']:.3f}</td>
@@ -206,24 +205,24 @@ class PerformanceReportGenerator:
             <td>{change_sign}{comp['change_percent']:.1f}%</td>
         </tr>
 """
-            
+
             html += """    </table>
 """
-        
+
         html += """</body>
 </html>
 """
-        
+
         with open(output_path, "w") as f:
             f.write(html)
-        
+
         return output_path
-    
-    def generate_markdown_report(self, results: Dict, output_path: Path) -> Path:
+
+    def generate_markdown_report(self, results: dict, output_path: Path) -> Path:
         """Generate Markdown report."""
         comparisons = self.compare_with_baseline(results)
         regressions = [c for c in comparisons if c["is_regression"]]
-        
+
         md = f"""# VoiceStudio Performance Report
 
 **Generated:** {results.get('generated_at', 'Unknown')}
@@ -242,19 +241,19 @@ class PerformanceReportGenerator:
 | Test Name | Time (s) | Max Time (s) | Status |
 |-----------|----------|--------------|--------|
 """
-        
+
         for result in results.get("results", []):
             time_val = (
-                result.get("metrics", {}).get("avg_time") or 
+                result.get("metrics", {}).get("avg_time") or
                 result.get("elapsed", 0)
             )
             max_time = result.get("max_time", "-")
             passed = result.get("passed", True)
             status = ":white_check_mark:" if passed else ":x:"
-            
+
             max_time_str = max_time if isinstance(max_time, str) else f"{max_time:.3f}"
             md += f"| {result['name']} | {time_val:.3f} | {max_time_str} | {status} |\n"
-        
+
         if comparisons:
             md += """
 ## Baseline Comparison
@@ -265,30 +264,30 @@ class PerformanceReportGenerator:
             for comp in comparisons:
                 change_sign = "+" if comp["change_percent"] > 0 else ""
                 status = ":warning:" if comp["is_regression"] else ""
-                
+
                 md += (
                     f"| {comp['name']} | {comp['baseline_time']:.3f} | "
                     f"{comp['current_time']:.3f} | {change_sign}{comp['change_percent']:.1f}% {status} |\n"
                 )
-        
+
         with open(output_path, "w") as f:
             f.write(md)
-        
+
         return output_path
-    
-    def generate_json_report(self, results: Dict, output_path: Path) -> Path:
+
+    def generate_json_report(self, results: dict, output_path: Path) -> Path:
         """Generate JSON report with comparisons."""
         comparisons = self.compare_with_baseline(results)
-        
+
         report = {
             **results,
             "comparisons": comparisons,
             "regressions": [c for c in comparisons if c["is_regression"]],
         }
-        
+
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
-        
+
         return output_path
 
 
@@ -323,9 +322,9 @@ def main():
         default=0.2,
         help="Regression threshold (default: 0.2 = 20%%)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Determine output path
     if args.output:
         output_path = args.output
@@ -335,28 +334,28 @@ def main():
             "md" if args.format == "markdown" else "json"
         )
         output_path = Path(f".buildlogs/performance/report_{timestamp}.{ext}")
-    
+
     # Generate report
     generator = PerformanceReportGenerator(
         baseline_path=args.baseline,
         regression_threshold=args.threshold,
     )
-    
+
     try:
         results = generator.load_results(args.input)
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if args.format == "html":
         generator.generate_html_report(results, output_path)
     elif args.format == "markdown":
         generator.generate_markdown_report(results, output_path)
     else:
         generator.generate_json_report(results, output_path)
-    
+
     print(f"Report generated: {output_path}")
     return 0
 

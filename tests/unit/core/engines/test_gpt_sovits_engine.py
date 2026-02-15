@@ -5,9 +5,7 @@ Tests GPT-SoVITS engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -32,7 +30,7 @@ class TestGPTSovitsEngineImports:
     def test_module_has_gpt_sovits_engine_class(self):
         """Test module has GPTSoVITSEngine class."""
         if hasattr(gpt_sovits_engine, "GPTSoVITSEngine"):
-            cls = getattr(gpt_sovits_engine, "GPTSoVITSEngine")
+            cls = gpt_sovits_engine.GPTSoVITSEngine
             assert isinstance(cls, type), "GPTSoVITSEngine should be a class"
 
 
@@ -42,7 +40,7 @@ class TestGPTSovitsEngineClass:
     def test_gpt_sovits_engine_class_exists(self):
         """Test GPTSoVITSEngine class exists."""
         if hasattr(gpt_sovits_engine, "GPTSoVITSEngine"):
-            cls = getattr(gpt_sovits_engine, "GPTSoVITSEngine")
+            cls = gpt_sovits_engine.GPTSoVITSEngine
             assert isinstance(cls, type), "GPTSoVITSEngine should be a class"
 
     def test_gpt_sovits_engine_initialization(self):

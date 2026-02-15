@@ -5,7 +5,6 @@ Tests audio processing functions in isolation.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest

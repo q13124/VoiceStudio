@@ -3,6 +3,8 @@ Engine Lifecycle Management
 State machine and lifecycle management for engine processes with Governor awareness
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
@@ -10,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .port_manager import PortManager, get_port_manager
 from .resource_manager import ResourceManager, get_resource_manager
@@ -18,10 +20,10 @@ from .resource_manager import ResourceManager, get_resource_manager
 # Import venv family manager for engine isolation
 try:
     from .venv_family_manager import (
+        ENGINE_TO_FAMILY,
         VenvFamily,
         VenvFamilyManager,
         get_venv_manager,
-        ENGINE_TO_FAMILY,
     )
 
     HAS_VENV_FAMILIES = True
@@ -68,17 +70,17 @@ class EngineInstance:
     """Engine instance with lifecycle state."""
 
     engine_id: str
-    manifest: Dict[str, Any]
+    manifest: dict[str, Any]
     state: EngineState = EngineState.STOPPED
     state_changed_at: datetime = field(default_factory=datetime.now)
-    process: Optional[Any] = None
-    port: Optional[int] = None
-    pid: Optional[int] = None
+    process: Any | None = None
+    port: int | None = None
+    pid: int | None = None
     health_check_failures: int = 0
     max_health_failures: int = 3
-    idle_timeout_seconds: Optional[float] = None
-    last_activity: Optional[datetime] = None
-    job_lease: Optional[str] = None  # Current job ID holding lease
+    idle_timeout_seconds: float | None = None
+    last_activity: datetime | None = None
+    job_lease: str | None = None  # Current job ID holding lease
     drain_requested: bool = False
 
     def set_state(self, new_state: EngineState):
@@ -121,9 +123,9 @@ class EngineLifecycleManager:
     def __init__(
         self,
         workspace_root: str = ".",
-        audit_log_dir: Optional[str] = None,
-        port_manager: Optional[PortManager] = None,
-        resource_manager: Optional[ResourceManager] = None,
+        audit_log_dir: str | None = None,
+        port_manager: PortManager | None = None,
+        resource_manager: ResourceManager | None = None,
     ):
         """
         Initialize engine lifecycle manager.
@@ -149,21 +151,21 @@ class EngineLifecycleManager:
         self.audit_log_dir.mkdir(parents=True, exist_ok=True)
 
         # Engine instances
-        self.engines: Dict[str, EngineInstance] = {}
+        self.engines: dict[str, EngineInstance] = {}
 
         # Engine pools (for fast engines)
-        self.engine_pools: Dict[str, List[EngineInstance]] = {}
-        self.pool_sizes: Dict[str, int] = {}  # Max pool size per engine type
+        self.engine_pools: dict[str, list[EngineInstance]] = {}
+        self.pool_sizes: dict[str, int] = {}  # Max pool size per engine type
 
         # Singletons (for heavy engines like XTTS, ComfyUI)
-        self.singletons: Dict[str, EngineInstance] = {}
+        self.singletons: dict[str, EngineInstance] = {}
 
         # Threading
         self.lock = threading.Lock()
         self.running = True
 
         # Lifecycle monitoring thread
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
         self._start_monitor()
 
     def _start_monitor(self):
@@ -204,10 +206,10 @@ class EngineLifecycleManager:
     def register_engine(
         self,
         engine_id: str,
-        manifest: Dict[str, Any],
-        pool_size: Optional[int] = None,
+        manifest: dict[str, Any],
+        pool_size: int | None = None,
         is_singleton: bool = False,
-        idle_timeout_seconds: Optional[float] = None,
+        idle_timeout_seconds: float | None = None,
     ):
         """
         Register an engine with lifecycle management.
@@ -241,8 +243,8 @@ class EngineLifecycleManager:
             )
 
     def acquire_engine(
-        self, engine_id: str, job_id: Optional[str] = None, auto_start: bool = True
-    ) -> Optional[EngineInstance]:
+        self, engine_id: str, job_id: str | None = None, auto_start: bool = True
+    ) -> EngineInstance | None:
         """
         Acquire an engine instance for a job.
 
@@ -297,9 +299,8 @@ class EngineLifecycleManager:
                     )
                     pool.append(engine)
 
-                    if auto_start:
-                        if not self._start_engine(engine):
-                            return None
+                    if auto_start and not self._start_engine(engine):
+                        return None
 
                     engine.job_lease = job_id
                     engine.set_state(EngineState.BUSY)
@@ -353,7 +354,7 @@ class EngineLifecycleManager:
             else:
                 engine.set_state(EngineState.HEALTHY)
 
-    def _get_venv_family(self, engine: EngineInstance) -> Optional[VenvFamily]:
+    def _get_venv_family(self, engine: EngineInstance) -> VenvFamily | None:
         """
         Get the venv family for an engine.
 
@@ -413,7 +414,7 @@ class EngineLifecycleManager:
             logger.error(f"Error preparing venv for {engine.engine_id}: {e}")
             return False
 
-    def _get_venv_python(self, engine: EngineInstance) -> Optional[Path]:
+    def _get_venv_python(self, engine: EngineInstance) -> Path | None:
         """
         Get the Python executable for an engine's venv family.
 
@@ -642,9 +643,8 @@ class EngineLifecycleManager:
         logger.warning(
             f"Unknown health check kind '{health_kind}' for {engine.engine_id}, using process check"
         )
-        if engine.process is not None:
-            if hasattr(engine.process, "poll"):
-                return engine.process.poll() is None
+        if engine.process is not None and hasattr(engine.process, "poll"):
+            return engine.process.poll() is None
         return True
 
     def _request_drain(self, engine_id: str):
@@ -665,7 +665,7 @@ class EngineLifecycleManager:
                 engine.set_state(EngineState.DRAINING)
                 self._stop_engine(engine)
 
-    def kill_all(self, audit_log: bool = True) -> Dict[str, bool]:
+    def kill_all(self, audit_log: bool = True) -> dict[str, bool]:
         """
         Panic switch: kill all engine processes.
 
@@ -713,7 +713,7 @@ class EngineLifecycleManager:
         return results
 
     def _write_audit_log(
-        self, event_type: str, message: str, details: Optional[Dict[str, Any]] = None
+        self, event_type: str, message: str, details: dict[str, Any] | None = None
     ):
         """
         Write event to audit log file.
@@ -741,7 +741,7 @@ class EngineLifecycleManager:
             # Don't fail if audit logging fails, just log the error
             logger.warning(f"Failed to write audit log: {e}")
 
-    def get_engine_state(self, engine_id: str) -> Optional[EngineState]:
+    def get_engine_state(self, engine_id: str) -> EngineState | None:
         """Get current state of an engine."""
         with self.lock:
             engine = self.engines.get(engine_id)
@@ -749,7 +749,7 @@ class EngineLifecycleManager:
                 return engine.state
             return None
 
-    def get_all_states(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_states(self) -> dict[str, dict[str, Any]]:
         """Get state of all engines."""
         with self.lock:
             states = {}
@@ -767,7 +767,7 @@ class EngineLifecycleManager:
 
 
 # Global lifecycle manager instance
-_lifecycle_manager: Optional[EngineLifecycleManager] = None
+_lifecycle_manager: EngineLifecycleManager | None = None
 
 
 def get_lifecycle_manager(workspace_root: str = ".") -> EngineLifecycleManager:

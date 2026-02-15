@@ -1,0 +1,281 @@
+# Sentinel Backend Smoke Test Workflow
+# Phase 1: Sentinel Infrastructure
+# Based on: docs/design/DETERMINISTIC_SENTINEL_IMPLEMENTATION_PLAN.md
+#
+# This workflow runs the deterministic sentinel audio workflow to validate
+# the complete VoiceStudio pipeline from import through synthesis.
+
+name: Sentinel Backend Smoke
+
+on:
+  push:
+    branches: [main, develop, "release/*"]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      api_base:
+        description: 'API base URL (for manual runs)'
+        required: false
+        default: 'http://127.0.0.1:8000'
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ============================================================================
+  # Schema Validation (No Backend Required)
+  # ============================================================================
+  schema-validation:
+    name: Schema Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio jsonschema httpx
+      
+      - name: Run linting
+        run: |
+          pip install ruff
+          ruff check scripts/proof_runs tests/sentinel --ignore E501 || echo "::warning::Linting issues found"
+      
+      - name: Run type checking
+        run: |
+          pip install mypy types-jsonschema
+          mypy scripts/proof_runs --ignore-missing-imports --no-error-summary || echo "::warning::Type checking issues found"
+      
+      - name: Run schema validation tests
+        run: |
+          python -m pytest tests/sentinel/test_sentinel_audio_workflow.py \
+            -v \
+            -m "smoke and not backend_required" \
+            --tb=short
+      
+      - name: Install backend dependencies for OpenAPI generation
+        run: |
+          pip install fastapi uvicorn pydantic
+          pip install -r requirements.txt --quiet || echo "::warning::Some requirements may be missing"
+      
+      - name: Validate OpenAPI spec (drift detection)
+        run: |
+          # Generate fresh OpenAPI spec and check for drift against committed spec
+          python scripts/generate_openapi.py --check-drift || {
+            echo "::error::OpenAPI spec drift detected! Run 'python scripts/generate_openapi.py' locally and commit the updated spec."
+            exit 1
+          }
+          echo "OpenAPI spec is up to date"
+
+  # ============================================================================
+  # Sentinel Workflow Integration Test
+  # ============================================================================
+  sentinel-smoke:
+    name: Sentinel Workflow
+    runs-on: ubuntu-latest
+    needs: [schema-validation]
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt 2>/dev/null || echo "No requirements-dev.txt found"
+          pip install pytest pytest-asyncio jsonschema httpx
+      
+      - name: Create required directories
+        run: |
+          mkdir -p fixtures/audio
+          mkdir -p artifacts/sentinel_runs
+      
+      - name: Generate synthetic audio fixture
+        run: |
+          python -c "
+          import wave
+          import struct
+          import math
+          
+          sample_rate = 16000
+          duration = 5  # seconds
+          frequency = 440  # Hz (A4 note)
+          
+          n_samples = sample_rate * duration
+          
+          with wave.open('fixtures/audio/sentinel_16k_mono.wav', 'w') as wav:
+              wav.setnchannels(1)
+              wav.setsampwidth(2)
+              wav.setframerate(sample_rate)
+              
+              for i in range(n_samples):
+                  t = i / sample_rate
+                  # Generate a sine wave with envelope
+                  envelope = 0.5 * (1 - abs(2*t/duration - 1))  # Triangle envelope
+                  sample = int(32767 * envelope * math.sin(2 * math.pi * frequency * t))
+                  wav.writeframes(struct.pack('<h', sample))
+          
+          print('Generated fixtures/audio/sentinel_16k_mono.wav')
+          "
+      
+      - name: Start backend server
+        run: |
+          # Start backend in background
+          cd backend
+          python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+          
+          # Store PID for cleanup
+          echo $! > /tmp/backend.pid
+          
+          # Wait for server to be ready using the simple health endpoint
+          echo "Waiting for backend to start..."
+          for i in {1..60}; do
+            if curl -s -f http://127.0.0.1:8000/api/health/simple > /dev/null 2>&1; then
+              echo "Backend is ready!"
+              break
+            fi
+            echo "Attempt $i: Backend not ready yet..."
+            sleep 2
+          done
+          
+          # Verify health endpoint response
+          HEALTH_STATUS=$(curl -s http://127.0.0.1:8000/api/health/simple)
+          echo "Health check response: $HEALTH_STATUS"
+          
+          if [ -z "$HEALTH_STATUS" ]; then
+            echo "::error::Backend failed to start - health endpoint not responding"
+            cat /tmp/backend.log
+            exit 1
+          fi
+        env:
+          VOICESTUDIO_OFFLINE_MODE: "true"
+          VOICESTUDIO_SKIP_GPU: "true"
+      
+      - name: Run sentinel workflow
+        id: sentinel
+        run: |
+          # Run the sentinel workflow
+          python scripts/proof_runs/sentinel_audio_workflow.py \
+            --api-base http://127.0.0.1:8000 \
+            --output-dir artifacts/sentinel_runs \
+            -v
+      
+      - name: Run sentinel pytest suite
+        run: |
+          python -m pytest tests/sentinel/test_sentinel_audio_workflow.py \
+            -v \
+            -m "sentinel" \
+            --tb=short \
+            --junit-xml=artifacts/sentinel_runs/test-results.xml
+        env:
+          VOICESTUDIO_API_BASE: http://127.0.0.1:8000
+          VOICESTUDIO_KEEP_ARTIFACTS: "true"
+      
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f /tmp/backend.pid ]; then
+            kill $(cat /tmp/backend.pid) 2>/dev/null || true
+          fi
+      
+      - name: Upload sentinel artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-run-artifacts
+          path: |
+            artifacts/sentinel_runs/
+            /tmp/backend.log
+          retention-days: 7
+          if-no-files-found: warn
+      
+      - name: Check sentinel result
+        run: |
+          # Find the latest run directory
+          LATEST_RUN=$(ls -td artifacts/sentinel_runs/*/ 2>/dev/null | head -1)
+          
+          if [ -z "$LATEST_RUN" ]; then
+            echo "::error::No sentinel run artifacts found"
+            exit 1
+          fi
+          
+          # Check summary.json
+          SUMMARY="$LATEST_RUN/summary.json"
+          if [ -f "$SUMMARY" ]; then
+            echo "=== Sentinel Run Summary ==="
+            cat "$SUMMARY" | python -m json.tool
+            
+            # Check overall status
+            STATUS=$(python -c "import json; print(json.load(open('$SUMMARY'))['overall_status'])")
+            echo "Overall status: $STATUS"
+            
+            if [ "$STATUS" = "passed" ]; then
+              echo "Sentinel workflow PASSED"
+              exit 0
+            else
+              echo "::error::Sentinel workflow failed with status: $STATUS"
+              exit 1
+            fi
+          else
+            echo "::error::No summary.json found at $SUMMARY"
+            exit 1
+          fi
+
+  # ============================================================================
+  # Report Results
+  # ============================================================================
+  report:
+    name: Report Results
+    runs-on: ubuntu-latest
+    needs: [schema-validation, sentinel-smoke]
+    if: always()
+    
+    steps:
+      - name: Check job results
+        run: |
+          echo "Schema Validation: ${{ needs.schema-validation.result }}"
+          echo "Sentinel Smoke: ${{ needs.sentinel-smoke.result }}"
+          
+          if [ "${{ needs.schema-validation.result }}" = "failure" ]; then
+            echo "::error::Schema validation failed"
+            exit 1
+          fi
+          
+          if [ "${{ needs.sentinel-smoke.result }}" = "failure" ]; then
+            echo "::error::Sentinel smoke test failed"
+            exit 1
+          fi
+          
+          if [ "${{ needs.sentinel-smoke.result }}" = "skipped" ]; then
+            echo "::warning::Sentinel smoke test was skipped"
+          fi
+          
+          echo "All sentinel tests passed!"

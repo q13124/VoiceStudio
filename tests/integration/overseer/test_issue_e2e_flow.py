@@ -18,15 +18,21 @@ project_root = Path(__file__).resolve().parents[3]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Skip entire module if tools.overseer is not available
+try:
+    from tools.overseer.issues.aggregator import record_issue
+except ImportError:
+    pytest.skip("tools.overseer module not available", allow_module_level=True)
+
 from tools.overseer.issues.aggregator import record_issue
+from tools.overseer.issues.metrics import get_affected_slos, get_prometheus_metrics
 from tools.overseer.issues.models import InstanceType, IssueSeverity
 from tools.overseer.issues.recommendation_engine import (
     generate_recommendations,
     get_action_success_rate,
     record_recommendation_outcome,
 )
-from tools.overseer.issues.store import IssueStore, get_feedback_file_path
-from tools.overseer.issues.metrics import get_prometheus_metrics, get_affected_slos
+from tools.overseer.issues.store import IssueStore
 
 
 @pytest.fixture

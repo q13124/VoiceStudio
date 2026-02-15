@@ -5,7 +5,6 @@ Tests additional API model definitions.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 

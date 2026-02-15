@@ -5,7 +5,6 @@ Tests optimized engine lifecycle management functionality including optimization
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,9 +43,7 @@ class TestEngineLifecycleOptimizedClasses:
     def test_optimized_lifecycle_manager_class_exists(self):
         """Test OptimizedEngineLifecycleManager class exists."""
         if hasattr(engine_lifecycle_optimized, "OptimizedEngineLifecycleManager"):
-            cls = getattr(
-                engine_lifecycle_optimized, "OptimizedEngineLifecycleManager"
-            )
+            cls = engine_lifecycle_optimized.OptimizedEngineLifecycleManager
             assert isinstance(
                 cls, type
             ), "OptimizedEngineLifecycleManager should be a class"

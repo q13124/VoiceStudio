@@ -1,5 +1,9 @@
+
+from __future__ import annotations
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+
 
 class ApiOk(BaseModel):
     ok: bool = True

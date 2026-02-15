@@ -3,11 +3,12 @@ Phase 8: Dashboard Data Provider
 Task 8.7: Data provider for monitoring dashboards.
 """
 
-import asyncio
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from __future__ import annotations
+
 import logging
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
 import psutil
 
 logger = logging.getLogger(__name__)
@@ -24,8 +25,8 @@ class SystemMetrics:
     disk_percent: float
     disk_used_gb: float
     disk_total_gb: float
-    gpu_percent: Optional[float] = None
-    gpu_memory_mb: Optional[float] = None
+    gpu_percent: float | None = None
+    gpu_memory_mb: float | None = None
 
 
 @dataclass
@@ -53,14 +54,14 @@ class DashboardData:
 
 class DashboardDataProvider:
     """Provider for dashboard metrics and data."""
-    
+
     def __init__(self):
         self._start_time = datetime.now()
         self._synthesis_completed = 0
         self._synthesis_failed = 0
         self._request_times: list[datetime] = []
         self._active_sessions = 0
-    
+
     async def get_dashboard_data(self) -> DashboardData:
         """Get complete dashboard data."""
         return DashboardData(
@@ -70,13 +71,13 @@ class DashboardDataProvider:
             recent_errors=0,
             health_status="healthy",
         )
-    
+
     async def get_system_metrics(self) -> SystemMetrics:
         """Get current system metrics."""
         cpu_percent = psutil.cpu_percent(interval=0.1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
+
         metrics = SystemMetrics(
             timestamp=datetime.now(),
             cpu_percent=cpu_percent,
@@ -87,7 +88,7 @@ class DashboardDataProvider:
             disk_used_gb=disk.used / (1024 ** 3),
             disk_total_gb=disk.total / (1024 ** 3),
         )
-        
+
         # Try to get GPU metrics
         try:
             import torch
@@ -95,19 +96,19 @@ class DashboardDataProvider:
                 metrics.gpu_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024)
         except ImportError:
             logger.debug("PyTorch not available for GPU memory metrics")
-        
+
         return metrics
-    
+
     async def get_application_metrics(self) -> ApplicationMetrics:
         """Get application metrics."""
         uptime = (datetime.now() - self._start_time).total_seconds()
-        
+
         # Calculate requests per minute
         now = datetime.now()
         cutoff = now - timedelta(minutes=1)
         recent_requests = [t for t in self._request_times if t >= cutoff]
         rpm = len(recent_requests)
-        
+
         return ApplicationMetrics(
             timestamp=datetime.now(),
             uptime_seconds=uptime,
@@ -118,7 +119,7 @@ class DashboardDataProvider:
             engines_loaded=0,
             requests_per_minute=rpm,
         )
-    
+
     async def get_historical_metrics(
         self,
         metric_name: str,
@@ -128,23 +129,23 @@ class DashboardDataProvider:
         """Get historical metrics data."""
         # Placeholder - would query from metrics storage
         return []
-    
+
     def record_request(self) -> None:
         """Record an API request."""
         now = datetime.now()
         self._request_times.append(now)
-        
+
         # Trim old entries
         cutoff = now - timedelta(hours=1)
         self._request_times = [t for t in self._request_times if t >= cutoff]
-    
+
     def record_synthesis(self, success: bool) -> None:
         """Record a synthesis operation."""
         if success:
             self._synthesis_completed += 1
         else:
             self._synthesis_failed += 1
-    
+
     def set_active_sessions(self, count: int) -> None:
         """Set the number of active sessions."""
         self._active_sessions = count

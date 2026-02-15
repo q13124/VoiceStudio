@@ -8,7 +8,7 @@ from .tts_utilities import (
     Pyttsx3Wrapper,
     get_gtts,
     get_pyttsx3,
-    synthesize_with_utility
+    synthesize_with_utility,
 )
 
 __all__ = [

@@ -5,7 +5,7 @@ Tests ComfyUI image generation engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestComfyUIEngineImports:
     def test_module_has_comfyui_engine_class(self):
         """Test module has ComfyUIEngine class."""
         if hasattr(comfyui_engine, "ComfyUIEngine"):
-            cls = getattr(comfyui_engine, "ComfyUIEngine")
+            cls = comfyui_engine.ComfyUIEngine
             assert isinstance(cls, type), "ComfyUIEngine should be a class"
 
 
@@ -41,7 +41,7 @@ class TestComfyUIEngineClass:
     def test_comfyui_engine_class_exists(self):
         """Test ComfyUIEngine class exists."""
         if hasattr(comfyui_engine, "ComfyUIEngine"):
-            cls = getattr(comfyui_engine, "ComfyUIEngine")
+            cls = comfyui_engine.ComfyUIEngine
             assert isinstance(cls, type), "ComfyUIEngine should be a class"
 
     def test_comfyui_engine_initialization(self):

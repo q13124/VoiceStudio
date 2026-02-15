@@ -7,8 +7,7 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -17,7 +16,6 @@ sys.path.insert(0, str(project_root))
 
 # Mock dependencies before importing
 import sys
-from unittest.mock import MagicMock
 
 # Create mock modules for dependencies that might not be available
 for module_name in ["torch", "torch.cuda"]:

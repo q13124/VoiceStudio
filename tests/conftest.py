@@ -3,17 +3,36 @@ Phase 9: Test Configuration
 Task 9.1: Pytest configuration and fixtures.
 """
 
+# CRITICAL: Add project root to path BEFORE any imports
+# This ensures tools.*, scripts.* are importable during collection
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent
+_project_root_str = str(PROJECT_ROOT)
+# Force insert at position 0 to ensure it takes precedence
+sys.path.insert(0, _project_root_str)
+
+# Now import everything else
 import asyncio
 import os
-import sys
 import tempfile
-from pathlib import Path
-from typing import Generator, Any
+from collections.abc import Generator
+from typing import Any
+
 import pytest
 
-# Add project root to path
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+
+def pytest_configure(config):
+    """Ensure project root is in sys.path before collection begins."""
+    project_root = str(Path(__file__).parent.parent)
+    # Force insert at position 0 regardless of current state
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    else:
+        # Move to front if it exists but not at position 0
+        sys.path.remove(project_root)
+        sys.path.insert(0, project_root)
 
 
 # ============================================================================
@@ -57,6 +76,20 @@ def test_assets_dir(project_root: Path) -> Path:
 def sample_audio_path(test_assets_dir: Path) -> Path:
     """Get a sample audio file path."""
     return test_assets_dir / "sample.wav"
+
+
+@pytest.fixture
+def canonical_audio_path(project_root: Path) -> Path:
+    """Path to the standard canonical test audio (WAV). Use for voice cloning, transcription, synthesis tests."""
+    path = project_root / "tests" / "assets" / "canonical" / "standard" / "allan_watts.wav"
+    return path
+
+
+@pytest.fixture
+def canonical_audio_segment_path(project_root: Path) -> Path:
+    """Path to the 15-second canonical test audio segment (WAV). Use for quick tests."""
+    path = project_root / "tests" / "assets" / "canonical" / "standard" / "allan_watts_15s.wav"
+    return path
 
 
 # ============================================================================
@@ -168,9 +201,10 @@ def backend_config() -> dict[str, Any]:
 async def test_client():
     """Create a test client for the FastAPI backend."""
     try:
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.api.main import app
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test"
@@ -196,7 +230,7 @@ async def test_database(test_db_path: Path):
     # Create database tables
     # This would initialize the test database
     yield test_db_path
-    
+
     # Cleanup
     if test_db_path.exists():
         test_db_path.unlink()
@@ -244,6 +278,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "engine: marks tests that require a voice engine"
     )
+    config.addinivalue_line(
+        "markers", "canonical_audio: Tests that use the canonical test audio (Allan Watts)"
+    )
 
 
 # ============================================================================
@@ -254,14 +291,14 @@ def pytest_collection_modifyitems(config, items):
     """Modify test collection."""
     # Skip GPU tests if no GPU available
     skip_gpu = pytest.mark.skip(reason="GPU not available")
-    
+
     try:
         import torch
         has_gpu = torch.cuda.is_available()
     except (ImportError, AttributeError):
         # AttributeError can occur with partial torch initialization (circular import)
         has_gpu = False
-    
+
     for item in items:
         if "gpu" in item.keywords and not has_gpu:
             item.add_marker(skip_gpu)

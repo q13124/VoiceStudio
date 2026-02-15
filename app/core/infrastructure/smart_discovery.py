@@ -6,18 +6,19 @@ Compatible with:
 - Python 3.10+
 """
 
+from __future__ import annotations
+
 import importlib.util
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Import manifest loader
 try:
-    from ..engines.manifest_loader import (
+    from app.core.engines.manifest_loader import (
         find_engine_manifests,
         get_engine_entry_point,
         load_engine_manifest,
@@ -52,16 +53,16 @@ class SmartDiscovery:
         """
         self.engines_root = Path(engines_root)
         self.cache_enabled = cache_enabled
-        self.discovery_cache: Dict[str, Any] = {}
-        self.discovery_timestamp: Optional[str] = None
+        self.discovery_cache: dict[str, Any] = {}
+        self.discovery_timestamp: str | None = None
 
     def discover_engines(
         self,
-        engine_type: Optional[str] = None,
-        capabilities: Optional[List[str]] = None,
+        engine_type: str | None = None,
+        capabilities: list[str] | None = None,
         require_dependencies: bool = True,
         check_health: bool = False,
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Discover engines with intelligent filtering.
 
@@ -107,12 +108,11 @@ class SmartDiscovery:
                         continue
 
                 # Check dependencies
-                if require_dependencies:
-                    if not self._check_dependencies(manifest):
-                        logger.debug(
-                            f"Engine {engine_id} filtered out due to missing dependencies"
-                        )
-                        continue
+                if require_dependencies and not self._check_dependencies(manifest):
+                    logger.debug(
+                        f"Engine {engine_id} filtered out due to missing dependencies"
+                    )
+                    continue
 
                 # Health check
                 health_status = None
@@ -143,8 +143,8 @@ class SmartDiscovery:
         return discovered_engines
 
     def discover_by_capability(
-        self, capability: str, engine_type: Optional[str] = None
-    ) -> List[str]:
+        self, capability: str, engine_type: str | None = None
+    ) -> list[str]:
         """
         Discover engines by capability.
 
@@ -163,9 +163,9 @@ class SmartDiscovery:
     def discover_best_engine(
         self,
         task_type: str,
-        capabilities: Optional[List[str]] = None,
-        quality_requirements: Optional[Dict] = None,
-    ) -> Optional[str]:
+        capabilities: list[str] | None = None,
+        quality_requirements: dict | None = None,
+    ) -> str | None:
         """
         Discover the best engine for a task.
 
@@ -195,10 +195,7 @@ class SmartDiscovery:
             if "mos_estimate" in quality_features:
                 mos_str = quality_features["mos_estimate"]
                 try:
-                    if "-" in mos_str:
-                        mos_val = float(mos_str.split("-")[0])
-                    else:
-                        mos_val = float(mos_str)
+                    mos_val = float(mos_str.split("-")[0]) if "-" in mos_str else float(mos_str)
                     score += mos_val * 0.4
                 except (ValueError, AttributeError):
                     ...
@@ -223,7 +220,7 @@ class SmartDiscovery:
 
         return None
 
-    def _check_dependencies(self, manifest: Dict[str, Any]) -> bool:
+    def _check_dependencies(self, manifest: dict[str, Any]) -> bool:
         """
         Check if engine dependencies are available.
 
@@ -237,7 +234,7 @@ class SmartDiscovery:
         if not dependencies:
             return True
 
-        for dep_name, dep_version in dependencies.items():
+        for dep_name, _dep_version in dependencies.items():
             try:
                 # Try to import the dependency
                 spec = importlib.util.find_spec(dep_name)
@@ -250,7 +247,7 @@ class SmartDiscovery:
 
         return True
 
-    def _check_engine_health(self, manifest: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_engine_health(self, manifest: dict[str, Any]) -> dict[str, Any]:
         """
         Check engine health status.
 
@@ -274,14 +271,14 @@ class SmartDiscovery:
         entry_point = get_engine_entry_point(manifest)
         if entry_point:
             try:
-                module_path, class_name = entry_point.rsplit(".", 1)
+                module_path, _class_name = entry_point.rsplit(".", 1)
                 spec = importlib.util.find_spec(module_path)
                 if spec is not None:
                     health["entry_point_ok"] = True
                 else:
                     health["errors"].append(f"Entry point module not found: {module_path}")
             except Exception as e:
-                health["errors"].append(f"Entry point check failed: {str(e)}")
+                health["errors"].append(f"Entry point check failed: {e!s}")
 
         # Overall status
         if health["dependencies_ok"] and health["entry_point_ok"]:
@@ -294,7 +291,7 @@ class SmartDiscovery:
         return health
 
     def _meets_quality_requirements(
-        self, manifest: Dict[str, Any], requirements: Dict[str, Any]
+        self, manifest: dict[str, Any], requirements: dict[str, Any]
     ) -> bool:
         """
         Check if engine meets quality requirements.
@@ -338,7 +335,7 @@ class SmartDiscovery:
 
         return True
 
-    def get_discovery_summary(self) -> Dict[str, Any]:
+    def get_discovery_summary(self) -> dict[str, Any]:
         """
         Get summary of discovery results.
 
@@ -355,7 +352,7 @@ class SmartDiscovery:
             "unhealthy_count": 0,
         }
 
-        for engine_id, info in all_engines.items():
+        for _engine_id, info in all_engines.items():
             manifest = info["manifest"]
             engine_type = manifest.get("type", "unknown")
 

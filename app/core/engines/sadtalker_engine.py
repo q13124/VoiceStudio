@@ -9,10 +9,11 @@ Compatible with:
 - face-alignment 1.3.0+
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -61,9 +62,9 @@ class SadTalkerEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
     ):
         """
         Initialize SadTalker engine.
@@ -161,9 +162,9 @@ class SadTalkerEngine(EngineProtocol):
 
     def generate_talking_head(
         self,
-        image_path: Union[str, Path, Image.Image],
-        audio_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        image_path: str | Path | Image.Image,
+        audio_path: str | Path,
+        output_path: str | Path | None = None,
         fps: int = 25,
         still_mode: bool = False,
         preprocess: str = "full",
@@ -233,9 +234,8 @@ class SadTalkerEngine(EngineProtocol):
                 face_image, face_bbox = self._face_cache[image_hash]
             else:
                 face_image, face_bbox = self._extract_face(source_image)
-                if face_image is not None:
-                    if len(self._face_cache) < 100:
-                        self._face_cache[image_hash] = (face_image, face_bbox)
+                if face_image is not None and len(self._face_cache) < 100:
+                    self._face_cache[image_hash] = (face_image, face_bbox)
 
             if face_image is None:
                 raise ValueError("No face detected in source image")
@@ -303,7 +303,7 @@ class SadTalkerEngine(EngineProtocol):
             logger.error(f"Error generating talking head: {e}")
             raise RuntimeError(f"Failed to generate talking head: {e}")
 
-    def _load_audio(self, audio_path: str) -> Tuple[np.ndarray, int]:
+    def _load_audio(self, audio_path: str) -> tuple[np.ndarray, int]:
         """Load audio file."""
         try:
             import librosa
@@ -321,7 +321,7 @@ class SadTalkerEngine(EngineProtocol):
 
     def _extract_face(
         self, image: np.ndarray
-    ) -> Tuple[Optional[np.ndarray], Optional[Dict]]:
+    ) -> tuple[np.ndarray | None, dict | None]:
         """Extract face from image."""
         if self.face_aligner is not None:
             try:
@@ -364,7 +364,7 @@ class SadTalkerEngine(EngineProtocol):
 
     def _extract_audio_features(
         self, audio: np.ndarray, sample_rate: int, num_frames: int
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Extract audio features for lip-sync."""
         try:
             import librosa
@@ -440,7 +440,7 @@ class SadTalkerEngine(EngineProtocol):
     def _generate_frame(
         self,
         face_image: np.ndarray,
-        audio_features: Dict,
+        audio_features: dict,
         frame_idx: int,
         still_mode: bool,
     ) -> np.ndarray:
@@ -488,13 +488,12 @@ class SadTalkerEngine(EngineProtocol):
     def _generate_frame_with_model(
         self,
         face_image: np.ndarray,
-        audio_features: Dict,
+        audio_features: dict,
         frame_idx: int,
         still_mode: bool,
     ) -> np.ndarray:
         """Generate frame using loaded model."""
         try:
-            import torch.nn.functional as F
 
             model_data = self.model
             device = model_data["device"]
@@ -536,16 +535,16 @@ class SadTalkerEngine(EngineProtocol):
 
                 # Check for SadTalker model keys
                 has_audio_encoder = any(
-                    "audio_encoder" in k or "audio_net" in k for k in state_dict.keys()
+                    "audio_encoder" in k or "audio_net" in k for k in state_dict
                 )
                 has_face_encoder = any(
-                    "face_encoder" in k or "face_net" in k for k in state_dict.keys()
+                    "face_encoder" in k or "face_net" in k for k in state_dict
                 )
                 has_generator = any(
-                    "generator" in k or "renderer" in k for k in state_dict.keys()
+                    "generator" in k or "renderer" in k for k in state_dict
                 )
-                has_mapping = any(
-                    "mapping" in k or "mapping_net" in k for k in state_dict.keys()
+                any(
+                    "mapping" in k or "mapping_net" in k for k in state_dict
                 )
 
                 # Try to reconstruct model architecture
@@ -586,7 +585,7 @@ class SadTalkerEngine(EngineProtocol):
 
     def _infer_sadtalker_architecture(
         self,
-        state_dict: Dict,
+        state_dict: dict,
         face_tensor: torch.Tensor,
         audio_tensor: torch.Tensor,
         device: torch.device,
@@ -594,7 +593,6 @@ class SadTalkerEngine(EngineProtocol):
     ) -> torch.Tensor:
         """Infer using SadTalker-like architecture."""
         try:
-            import torch.nn as nn
 
             # Encode audio features
             if audio_tensor.shape[1] < 80:
@@ -697,7 +695,7 @@ class SadTalkerEngine(EngineProtocol):
 
     def _infer_generic_encoder_decoder(
         self,
-        state_dict: Dict,
+        state_dict: dict,
         face_tensor: torch.Tensor,
         audio_tensor: torch.Tensor,
         device: torch.device,
@@ -728,7 +726,7 @@ class SadTalkerEngine(EngineProtocol):
         self,
         face_tensor: torch.Tensor,
         audio_tensor: torch.Tensor,
-        audio_features: Dict,
+        audio_features: dict,
         still_mode: bool,
     ) -> torch.Tensor:
         """Apply audio-based transformations to face."""
@@ -750,7 +748,7 @@ class SadTalkerEngine(EngineProtocol):
 
             # Normalize energy for lip movement
             normalized_energy = min(1.0, max(0.0, energy * 5.0))
-            mel_normalized = min(1.0, max(0.0, (mel_mean + 1.0) / 2.0))
+            min(1.0, max(0.0, (mel_mean + 1.0) / 2.0))
 
             # Apply lip-sync transformation
             # Create lip region mask
@@ -806,7 +804,7 @@ class SadTalkerEngine(EngineProtocol):
     def _generate_frame_fallback(
         self,
         face_image: np.ndarray,
-        audio_features: Dict,
+        audio_features: dict,
         frame_idx: int,
         still_mode: bool,
     ) -> np.ndarray:
@@ -816,20 +814,19 @@ class SadTalkerEngine(EngineProtocol):
 
             # Extract audio characteristics
             energy = audio_features.get("energy", 0.0)
-            zero_crossing = audio_features.get("zero_crossing", 0.0)
+            audio_features.get("zero_crossing", 0.0)
 
             # Get mel features if available for better lip-sync
             if "mel_features" in audio_features:
                 mel_features = audio_features["mel_features"]
                 if isinstance(mel_features, np.ndarray):
                     mel_mean = float(mel_features.mean())
-                    mel_std = float(mel_features.std())
+                    float(mel_features.std())
                 else:
                     mel_mean = float(np.mean(mel_features))
-                    mel_std = float(np.std(mel_features))
+                    float(np.std(mel_features))
             else:
                 mel_mean = energy
-                mel_std = zero_crossing
 
             # Normalize features for lip movement
             normalized_energy = min(1.0, max(0.0, energy * 5.0))
@@ -911,7 +908,7 @@ class SadTalkerEngine(EngineProtocol):
             return face_image.copy()
 
     def _composite_frame(
-        self, background: np.ndarray, face_frame: np.ndarray, bbox: Dict
+        self, background: np.ndarray, face_frame: np.ndarray, bbox: dict
     ) -> np.ndarray:
         """Composite face frame back onto background."""
         result = background.copy()
@@ -927,7 +924,7 @@ class SadTalkerEngine(EngineProtocol):
 
         return result
 
-    def _save_video(self, frames: List[np.ndarray], output_path: str, fps: int):
+    def _save_video(self, frames: list[np.ndarray], output_path: str, fps: int):
         """Save frames as video."""
         if not HAS_CV2:
             raise ImportError("opencv-python required")
@@ -946,7 +943,7 @@ class SadTalkerEngine(EngineProtocol):
         finally:
             out.release()
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -959,7 +956,7 @@ class SadTalkerEngine(EngineProtocol):
 
 
 def create_sadtalker_engine(
-    device: Optional[str] = None, gpu: bool = True, model_path: Optional[str] = None
+    device: str | None = None, gpu: bool = True, model_path: str | None = None
 ) -> SadTalkerEngine:
     """
     Create and initialize SadTalker engine.

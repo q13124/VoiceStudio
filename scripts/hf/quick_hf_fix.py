@@ -6,7 +6,6 @@ A simplified version that focuses on the essential fixes without extensive cache
 """
 
 import os
-import sys
 
 # New router endpoint
 ROUTER_ENDPOINT = "https://router.huggingface.co"
@@ -73,7 +72,7 @@ def test_fix():
     # Test InferenceClient creation
     try:
         from huggingface_hub import InferenceClient
-        client = InferenceClient()
+        InferenceClient()
         print("✓ InferenceClient created successfully")
     except Exception as e:
         print(f"⚠ InferenceClient test failed: {e}")

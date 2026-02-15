@@ -12,16 +12,16 @@ This module includes:
 
 from .base import IntegrationTestBase
 from .fixtures import (
-    create_test_database,
-    create_test_client,
     DatabaseTestContext,
     ServiceTestContext,
+    create_test_client,
+    create_test_database,
 )
 
 __all__ = [
-    "IntegrationTestBase",
-    "create_test_database",
-    "create_test_client",
     "DatabaseTestContext",
+    "IntegrationTestBase",
     "ServiceTestContext",
+    "create_test_client",
+    "create_test_database",
 ]

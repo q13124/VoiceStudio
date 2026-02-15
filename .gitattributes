@@ -1,6 +1,5 @@
 # Auto-detect text files and normalize to LF on commit, CRLF on checkout (Windows)
 * text=auto
-
 # Force LF for cross-platform compatibility
 *.py text eol=lf
 *.md text eol=lf
@@ -12,12 +11,10 @@
 *.xml text eol=lf
 *.xaml text eol=lf
 *.cs text eol=lf
-
 # Force CRLF for Windows-specific files
 *.cmd text eol=crlf
 *.bat text eol=crlf
 *.ps1 text eol=crlf
-
 # Binary files (no normalization)
 *.png binary
 *.jpg binary
@@ -31,3 +28,6 @@
 *.whl binary
 *.onnx binary
 *.gguf binary
+# Large audio files - Git LFS
+tests/assets/canonical/**/*.wav filter=lfs diff=lfs merge=lfs -text
+tests/assets/canonical/**/*.m4a filter=lfs diff=lfs merge=lfs -text

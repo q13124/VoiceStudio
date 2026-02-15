@@ -8,11 +8,13 @@ Provides utilities for:
 - Keeping docs in sync with code
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -21,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 def add_examples_to_schema(
-    schema: Dict[str, Any], examples: Dict[str, Any]
-) -> Dict[str, Any]:
+    schema: dict[str, Any], examples: dict[str, Any]
+) -> dict[str, Any]:
     """
     Add examples to OpenAPI schema.
 
@@ -45,7 +47,7 @@ def add_examples_to_schema(
     return schema
 
 
-def enhance_openapi_schema(app: FastAPI) -> Dict[str, Any]:
+def enhance_openapi_schema(app: FastAPI) -> dict[str, Any]:
     """
     Enhance OpenAPI schema with additional documentation.
 
@@ -75,7 +77,7 @@ def enhance_openapi_schema(app: FastAPI) -> Dict[str, Any]:
     return openapi_schema
 
 
-def _add_common_examples(openapi_schema: Dict[str, Any]):
+def _add_common_examples(openapi_schema: dict[str, Any]):
     """Add examples to common request/response schemas."""
     if "components" not in openapi_schema:
         return
@@ -210,7 +212,7 @@ def _add_common_examples(openapi_schema: Dict[str, Any]):
         }
 
 
-def _add_response_examples(openapi_schema: Dict[str, Any]):
+def _add_response_examples(openapi_schema: dict[str, Any]):
     """Add response examples to endpoints."""
     if "paths" not in openapi_schema:
         return
@@ -435,7 +437,7 @@ def _add_response_examples(openapi_schema: Dict[str, Any]):
 
 
 def _add_endpoint_example(
-    paths: Dict[str, Any], path: str, method: str, example: Dict[str, Any]
+    paths: dict[str, Any], path: str, method: str, example: dict[str, Any]
 ):
     """Add example to specific endpoint."""
     if path not in paths:
@@ -465,7 +467,7 @@ def _add_endpoint_example(
                     }
 
 
-def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
+def _enhance_endpoint_descriptions(openapi_schema: dict[str, Any]):
     """Enhance endpoint descriptions with additional details."""
     if "paths" not in openapi_schema:
         return
@@ -479,16 +481,16 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List voice profiles",
                 "description": """
                 Retrieve a paginated list of all voice profiles.
-                
+
                 **Query Parameters:**
                 - `page`: Page number (default: 1)
                 - `page_size`: Items per page (default: 50, max: 1000)
                 - `language`: Filter by language code (optional)
                 - `tags`: Filter by tags (optional, comma-separated)
-                
+
                 **Response:**
                 Returns a paginated list of voice profiles with metadata including quality scores, tags, and reference audio URLs.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var profiles = await _backendClient.GetProfilesAsync(cancellationToken);
@@ -499,23 +501,23 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Create voice profile",
                 "description": """
                 Create a new voice profile from reference audio.
-                
+
                 **Request Body:**
                 - `name`: Profile name (required, max 100 characters)
                 - `language`: Language code (default: "en", ISO 639-1 format)
                 - `emotion`: Emotion type (optional: "neutral", "happy", "sad", "angry", "excited")
                 - `tags`: List of tags for categorization (optional, max 20 tags)
                 - `reference_audio_url`: URL to reference audio file (optional, can be uploaded separately)
-                
+
                 **Response:**
                 Returns the created voice profile with ID, quality metrics, and processing status.
-                
+
                 **Usage Example (C#):**
                 ```csharp
-                var request = new ProfileCreateRequest 
-                { 
-                    Name = "My Voice", 
-                    Language = "en" 
+                var request = new ProfileCreateRequest
+                {
+                    Name = "My Voice",
+                    Language = "en"
                 };
                 var profile = await _backendClient.CreateProfileAsync(request, cancellationToken);
                 ```
@@ -527,13 +529,13 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get voice profile",
                 "description": """
                 Retrieve a specific voice profile by ID.
-                
+
                 **Path Parameters:**
                 - `profile_id`: Unique profile identifier (required)
-                
+
                 **Response:**
                 Returns complete voice profile details including quality metrics, tags, and audio references.
-                
+
                 **Error Responses:**
                 - `404`: Profile not found
                 """,
@@ -542,16 +544,16 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Update voice profile",
                 "description": """
                 Update an existing voice profile.
-                
+
                 **Path Parameters:**
                 - `profile_id`: Unique profile identifier (required)
-                
+
                 **Request Body:**
                 - `name`: Updated profile name (optional)
                 - `language`: Updated language code (optional)
                 - `emotion`: Updated emotion type (optional)
                 - `tags`: Updated tag list (optional)
-                
+
                 **Response:**
                 Returns updated voice profile with refreshed quality metrics.
                 """,
@@ -560,13 +562,13 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Delete voice profile",
                 "description": """
                 Delete a voice profile and all associated data.
-                
+
                 **Path Parameters:**
                 - `profile_id`: Unique profile identifier (required)
-                
+
                 **Response:**
                 Returns success status. All associated audio files and training data are also deleted.
-                
+
                 **Warning:** This operation cannot be undone.
                 """,
             },
@@ -576,7 +578,7 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Synthesize voice",
                 "description": """
                 Synthesize speech using a voice profile.
-                
+
                 **Request Body:**
                 - `text`: Text to synthesize (required, max 10000 characters)
                 - `voice_profile_id`: Voice profile ID (required)
@@ -585,16 +587,16 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 - `pitch`: Pitch adjustment in semitones (default: 0.0, range: -12 to +12)
                 - `emotion`: Emotion type (optional, must match profile capabilities)
                 - `engine`: Specific engine to use (optional, defaults to profile default)
-                
+
                 **Response:**
                 Returns synthesized audio URL, quality metrics (MOS score, similarity, naturalness), and processing time.
-                
+
                 **Usage Example (C#):**
                 ```csharp
-                var request = new VoiceSynthesizeRequest 
-                { 
-                    Text = "Hello, world!", 
-                    VoiceProfileId = "profile_123" 
+                var request = new VoiceSynthesizeRequest
+                {
+                    Text = "Hello, world!",
+                    VoiceProfileId = "profile_123"
                 };
                 var response = await _backendClient.SynthesizeVoiceAsync(request, cancellationToken);
                 ```
@@ -606,12 +608,12 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List projects",
                 "description": """
                 Retrieve a paginated list of all projects.
-                
+
                 **Query Parameters:**
                 - `page`: Page number (default: 1)
                 - `page_size`: Items per page (default: 50, max: 1000)
                 - `status`: Filter by project status (optional)
-                
+
                 **Response:**
                 Returns a paginated list of projects with metadata.
                 """,
@@ -620,12 +622,12 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Create project",
                 "description": """
                 Create a new voice project.
-                
+
                 **Request Body:**
                 - `name`: Project name (required, max 100 characters)
                 - `description`: Project description (optional, max 1000 characters)
                 - `voice_profile_ids`: List of voice profile IDs to associate (optional)
-                
+
                 **Response:**
                 Returns the created project with ID and timestamps.
                 """,
@@ -636,10 +638,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get project",
                 "description": """
                 Retrieve a specific project by ID.
-                
+
                 **Path Parameters:**
                 - `project_id`: Unique project identifier (required)
-                
+
                 **Response:**
                 Returns complete project details including associated voice profiles and tracks.
                 """,
@@ -648,15 +650,15 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Update project",
                 "description": """
                 Update an existing project.
-                
+
                 **Path Parameters:**
                 - `project_id`: Unique project identifier (required)
-                
+
                 **Request Body:**
                 - `name`: Updated project name (optional)
                 - `description`: Updated project description (optional)
                 - `voice_profile_ids`: Updated list of voice profile IDs (optional)
-                
+
                 **Response:**
                 Returns updated project details.
                 """,
@@ -665,13 +667,13 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Delete project",
                 "description": """
                 Delete a project and all associated data.
-                
+
                 **Path Parameters:**
                 - `project_id`: Unique project identifier (required)
-                
+
                 **Response:**
                 Returns success status. All associated tracks, clips, and audio files are also deleted.
-                
+
                 **Warning:** This operation cannot be undone.
                 """,
             },
@@ -681,22 +683,22 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List batch jobs",
                 "description": """
                 Retrieve a list of batch processing jobs.
-                
+
                 **Query Parameters:**
                 - `job_type`: Filter by job type (optional: "synthesis", "training", "analysis")
                 - `status`: Filter by job status (optional: "pending", "running", "completed", "failed")
                 - `page`: Page number (default: 1)
                 - `page_size`: Items per page (default: 50)
-                
+
                 **Response:**
                 Returns a paginated list of jobs with status, progress, and metadata.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var jobs = await _backendClient.SendRequestAsync<object, Job[]>(
-                    "/api/jobs?status=running", 
-                    null, 
-                    HttpMethod.Get, 
+                    "/api/jobs?status=running",
+                    null,
+                    HttpMethod.Get,
                     cancellationToken
                 );
                 ```
@@ -708,10 +710,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get job status",
                 "description": """
                 Retrieve the status and progress of a specific batch job.
-                
+
                 **Path Parameters:**
                 - `job_id`: Unique job identifier (required)
-                
+
                 **Response:**
                 Returns job details including status, progress percentage, estimated completion time, and results.
                 """,
@@ -720,10 +722,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Cancel or delete job",
                 "description": """
                 Cancel a running job or delete a completed/failed job.
-                
+
                 **Path Parameters:**
                 - `job_id`: Unique job identifier (required)
-                
+
                 **Response:**
                 Returns success status. Running jobs are cancelled, completed/failed jobs are deleted.
                 """,
@@ -734,10 +736,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get batch queue status",
                 "description": """
                 Retrieve the current status of the batch processing queue.
-                
+
                 **Response:**
                 Returns queue statistics including pending jobs count, running jobs count, queue position estimates, and system load.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var queueStatus = await _backendClient.GetBatchQueueStatusAsync(cancellationToken);
@@ -750,14 +752,14 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get quality dashboard data",
                 "description": """
                 Retrieve comprehensive quality metrics and analytics.
-                
+
                 **Query Parameters:**
                 - `time_range`: Time range for metrics (optional: "24h", "7d", "30d", "all")
                 - `profile_id`: Filter by voice profile ID (optional)
-                
+
                 **Response:**
                 Returns quality dashboard data including trend analysis, engine performance, and quality distribution.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var dashboard = await _backendClient.GetQualityDashboardAsync(cancellationToken);
@@ -770,10 +772,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List quality presets",
                 "description": """
                 Retrieve available quality presets for voice synthesis.
-                
+
                 **Response:**
                 Returns a list of quality presets with descriptions and recommended use cases.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var presets = await _backendClient.GetQualityPresetsAsync(cancellationToken);
@@ -786,10 +788,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List training datasets",
                 "description": """
                 Retrieve all available training datasets.
-                
+
                 **Response:**
                 Returns a list of training datasets with metadata including size, quality scores, and status.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var datasets = await _backendClient.GetTrainingDatasetsAsync(cancellationToken);
@@ -802,13 +804,13 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get training dataset",
                 "description": """
                 Retrieve details of a specific training dataset.
-                
+
                 **Path Parameters:**
                 - `dataset_id`: Unique dataset identifier (required)
-                
+
                 **Response:**
                 Returns complete dataset details including file list, quality metrics, and training status.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var dataset = await _backendClient.GetTrainingDatasetAsync("dataset_123", cancellationToken);
@@ -821,7 +823,7 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List available engines",
                 "description": """
                 Retrieve all available voice synthesis engines.
-                
+
                 **Response:**
                 Returns a list of engines with capabilities, status, and performance metrics.
                 """,
@@ -832,10 +834,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get engine metrics",
                 "description": """
                 Retrieve performance metrics for a specific engine.
-                
+
                 **Path Parameters:**
                 - `engine_name`: Engine identifier (required, e.g., "xtts_v2", "chatterbox", "tortoise")
-                
+
                 **Response:**
                 Returns engine performance metrics including average processing time, quality scores, and usage statistics.
                 """,
@@ -846,11 +848,11 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "List lexicon entries",
                 "description": """
                 Retrieve pronunciation lexicon entries.
-                
+
                 **Query Parameters:**
                 - `search`: Search query (optional)
                 - `language`: Filter by language (optional)
-                
+
                 **Response:**
                 Returns a list of lexicon entries with word, pronunciation, and metadata.
                 """,
@@ -859,12 +861,12 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Add lexicon entry",
                 "description": """
                 Add a new pronunciation lexicon entry.
-                
+
                 **Request Body:**
                 - `word`: Word to add (required)
                 - `pronunciation`: Phonetic pronunciation (required, IPA format)
                 - `language`: Language code (required, default: "en")
-                
+
                 **Response:**
                 Returns the created lexicon entry.
                 """,
@@ -875,10 +877,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "Get telemetry data",
                 "description": """
                 Retrieve system telemetry and performance data.
-                
+
                 **Response:**
                 Returns telemetry data including system metrics, engine status, and performance statistics.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var telemetry = await _backendClient.GetTelemetryAsync(cancellationToken);
@@ -891,10 +893,10 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
                 "summary": "API health check",
                 "description": """
                 Comprehensive API health check with performance metrics.
-                
+
                 **Response:**
                 Returns API status, version, uptime, and system health indicators.
-                
+
                 **Usage Example (C#):**
                 ```csharp
                 var health = await _backendClient.GetApiHealthAsync(cancellationToken);
@@ -913,8 +915,8 @@ def _enhance_endpoint_descriptions(openapi_schema: Dict[str, Any]):
 
 
 def generate_api_documentation(
-    app: FastAPI, output_path: Optional[str] = None
-) -> Dict[str, Any]:
+    app: FastAPI, output_path: str | None = None
+) -> dict[str, Any]:
     """
     Generate enhanced API documentation.
 
@@ -950,7 +952,7 @@ def generate_api_documentation(
     return openapi_schema
 
 
-def validate_documentation(app: FastAPI) -> List[str]:
+def validate_documentation(app: FastAPI) -> list[str]:
     """
     Validate that all endpoints are properly documented.
 
@@ -992,27 +994,26 @@ def validate_documentation(app: FastAPI) -> List[str]:
                     warnings.append(f"Missing description for {method.upper()} {path}")
 
                 # Check for response examples
-                if "responses" in operation:
-                    if "200" in operation["responses"]:
-                        response = operation["responses"]["200"]
-                        if "content" in response:
-                            has_example = False
-                            for content_type, content in response["content"].items():
-                                if "example" in content or "examples" in content:
-                                    has_example = True
-                                    break
-                            if not has_example:
-                                warnings.append(
-                                    f"Missing example for {method.upper()} {path}"
-                                )
+                if "responses" in operation and "200" in operation["responses"]:
+                    response = operation["responses"]["200"]
+                    if "content" in response:
+                        has_example = False
+                        for _content_type, content in response["content"].items():
+                            if "example" in content or "examples" in content:
+                                has_example = True
+                                break
+                        if not has_example:
+                            warnings.append(
+                                f"Missing example for {method.upper()} {path}"
+                            )
 
     return warnings
 
 
 # Export
 __all__ = [
+    "add_examples_to_schema",
     "enhance_openapi_schema",
     "generate_api_documentation",
     "validate_documentation",
-    "add_examples_to_schema",
 ]

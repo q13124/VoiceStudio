@@ -13,12 +13,11 @@ Usage:
     python scripts/audit_route_boundaries.py --fix  # Show fix suggestions
 """
 
-from _env_setup import PROJECT_ROOT
-
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+
+from _env_setup import PROJECT_ROOT
 
 # Forbidden patterns for route files
 FORBIDDEN_PATTERNS = [
@@ -34,31 +33,31 @@ ALLOWED_EXEMPTIONS = [
 ]
 
 
-def audit_file(path: Path) -> List[Tuple[int, str, str]]:
+def audit_file(path: Path) -> list[tuple[int, str, str]]:
     """
     Audit a single file for boundary violations.
-    
+
     Returns:
         List of (line_number, pattern_description, matched_line)
     """
     violations = []
-    
+
     try:
         content = path.read_text(encoding="utf-8")
         lines = content.split("\n")
     except Exception as e:
         print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
         return violations
-    
+
     for pattern, description in FORBIDDEN_PATTERNS:
         for i, line in enumerate(lines, start=1):
             if re.search(pattern, line):
                 violations.append((i, description, line.strip()))
-    
+
     return violations
 
 
-def get_route_files() -> List[Path]:
+def get_route_files() -> list[Path]:
     """Get all Python files in the routes directory."""
     routes_dir = PROJECT_ROOT / "backend" / "api" / "routes"
     return list(routes_dir.glob("*.py"))
@@ -66,26 +65,26 @@ def get_route_files() -> List[Path]:
 
 def main():
     show_fix = "--fix" in sys.argv
-    
+
     print("=" * 70)
     print("Route Boundary Audit (ADR-008)")
     print("=" * 70)
     print()
-    
+
     route_files = get_route_files()
     print(f"Scanning {len(route_files)} route files...")
     print()
-    
+
     total_violations = 0
     files_with_violations = 0
-    
+
     for path in sorted(route_files):
         # Check exemptions
         if path.name in ALLOWED_EXEMPTIONS:
             continue
-        
+
         violations = audit_file(path)
-        
+
         if violations:
             files_with_violations += 1
             print(f"  {path.name}:")
@@ -94,11 +93,11 @@ def main():
                 print(f"      {line[:60]}...")
                 total_violations += 1
             print()
-    
+
     print("-" * 70)
     print(f"Total: {total_violations} violations in {files_with_violations} files")
     print("-" * 70)
-    
+
     if total_violations > 0 and show_fix:
         print()
         print("SUGGESTED FIX PATTERN:")
@@ -114,7 +113,7 @@ def main():
         print("  engine = engine_service.get_engine(engine_id)")
         print()
         print("See backend/services/engine_service.py for available methods.")
-    
+
     if total_violations > 0:
         print()
         print("NOTE: These violations are documented for tracking (TD-023).")

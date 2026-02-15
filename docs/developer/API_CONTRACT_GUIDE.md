@@ -105,8 +105,9 @@ Update this guide with specific migration steps for the change.
 
 VoiceStudio uses **URL-based versioning**:
 
-- Current: `/api/v1/...`
-- Next: `/api/v2/...` (when breaking changes accumulate)
+- V1: `/api/v1/...` (deprecated as of 2026-07-01)
+- V2: `/api/v2/...` (supported)
+- V3: `/api/v3/...` (**current**, StandardResponse format)
 
 ### When to Version
 
@@ -128,6 +129,16 @@ Both versions run simultaneously during transition:
 ### Export OpenAPI Schema
 
 ```bash
+# Preferred method - uses dedicated generation script
+python scripts/generate_openapi.py
+
+# With validation
+python scripts/generate_openapi.py --validate
+
+# Check for drift (CI usage)
+python scripts/generate_openapi.py --check-drift
+
+# Alternative - direct export (legacy)
 cd backend
 python -c "from api.main import app; import json; print(json.dumps(app.openapi(), indent=2))" > ../docs/api/openapi.json
 ```
@@ -226,9 +237,148 @@ pre-commit run contract-validation --all-files
 
 ### Error Handling
 
-1. **Consistent error format** - Use standard error response schema
+1. **Consistent error format** - Use StandardResponse envelope for all errors
 2. **Document error codes** - Include in OpenAPI schema
 3. **Graceful degradation** - Handle version mismatches
+
+## V3 StandardResponse Format
+
+V3 API uses a consistent response envelope for all responses:
+
+### Success Response
+
+```python
+from backend.api.v3.models import StandardResponse, ResponseStatus
+
+# In endpoint implementation
+return StandardResponse(
+    status=ResponseStatus.SUCCESS,
+    data={"items": [...], "count": 42},
+    message="Operation completed successfully",
+)
+```
+
+### Error Response
+
+```python
+from backend.api.v3.models import StandardResponse, ResponseStatus, ErrorDetail, ErrorCode
+
+# In exception handler
+return StandardResponse(
+    status=ResponseStatus.ERROR,
+    errors=[
+        ErrorDetail(
+            code=ErrorCode.INVALID_INPUT,
+            message="Invalid audio format",
+            field="audio_file",
+            recovery_suggestion="Please upload a WAV or MP3 file",
+        )
+    ],
+    message="Validation failed",
+)
+```
+
+### StandardResponse Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `ResponseStatus` | `SUCCESS`, `ERROR`, or `PARTIAL` |
+| `data` | `T` | Response payload (success only) |
+| `errors` | `List[ErrorDetail]` | Error details (error only) |
+| `message` | `str` | Human-readable summary |
+| `meta` | `RequestMeta` | Request ID, correlation ID, timestamp |
+| `pagination` | `PaginationMeta` | Pagination info (if applicable) |
+
+### ErrorDetail Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | `ErrorCode` | Machine-readable error code |
+| `message` | `str` | Human-readable error message |
+| `field` | `str` | Field that caused the error (optional) |
+| `details` | `Dict` | Additional context (optional) |
+| `recovery_suggestion` | `str` | How to fix the error (optional) |
+
+### Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_INPUT` | 400 | Validation failed |
+| `NOT_FOUND` | 404 | Resource not found |
+| `UNAUTHORIZED` | 401 | Authentication required |
+| `FORBIDDEN` | 403 | Permission denied |
+| `RATE_LIMITED` | 429 | Too many requests |
+| `INTERNAL_ERROR` | 500 | Server error |
+| `SERVICE_UNAVAILABLE` | 503 | Backend unavailable |
+
+### Legacy Error Migration
+
+All exception handlers now return v3 StandardResponse format. Legacy error codes are automatically mapped:
+
+```python
+from backend.api.error_handling import map_legacy_error_code, to_v3_error_response
+
+# Map legacy code
+v3_code = map_legacy_error_code(ErrorCodes.INVALID_INPUT)  # → "INVALID_INPUT"
+
+# Create v3 error response
+response = to_v3_error_response(
+    error_code=ErrorCodes.VALIDATION_ERROR,
+    message="Validation failed",
+    request_id=request_id,
+)
+```
+
+## Centralized Upload Service
+
+Phase 2.3 introduced a centralized `UploadService` for handling multipart file uploads with consistent validation.
+
+### Usage
+
+```python
+from fastapi import Depends, File, UploadFile
+from backend.api.services.upload_service import (
+    UploadService,
+    UploadResult,
+    UploadValidationConfig,
+    get_upload_service,
+)
+
+@router.post("/upload", response_model=UploadResult)
+async def upload_audio(
+    file: UploadFile = File(...),
+    upload_service: UploadService = Depends(get_upload_service),
+) -> UploadResult:
+    config = UploadValidationConfig(
+        allowed_mime_types=["audio/wav", "audio/mpeg", "audio/ogg"],
+        max_size_bytes=100 * 1024 * 1024,  # 100MB
+        allowed_categories=["audio"],
+    )
+    
+    return await upload_service.process_upload(file, config)
+```
+
+### Features
+
+- **File type detection**: Magic bytes + MIME type validation
+- **Size validation**: Configurable min/max limits
+- **Category filtering**: audio, video, image, document, model
+- **Checksum generation**: SHA-256 for integrity
+- **Secure storage**: UUID-based filenames
+- **Temp file cleanup**: Automatic cleanup of stale uploads
+
+### UploadResult Model
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_id` | `str` | Unique file identifier (UUID) |
+| `filename` | `str` | Original filename |
+| `stored_path` | `str` | Storage location path |
+| `size_bytes` | `int` | File size |
+| `mime_type` | `str` | Detected MIME type |
+| `category` | `str` | File category |
+| `checksum` | `str` | SHA-256 checksum (optional) |
+| `upload_timestamp` | `str` | ISO timestamp |
 
 ## Related Documentation
 

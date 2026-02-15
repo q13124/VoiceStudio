@@ -1,7 +1,7 @@
 import json
 import sys
 
-with open(sys.argv[1], "r", encoding="utf-8-sig") as f:
+with open(sys.argv[1], encoding="utf-8-sig") as f:
     d = json.load(f)
 
 pages = d.get("Pages", [])

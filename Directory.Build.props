@@ -8,10 +8,12 @@
   <!-- XAML compiler routing (VS-0035 fix) -->
   <!-- Use the WinUI XamlCompiler executable via our wrapper to avoid WMC9999 in-process failures -->
   <!-- See: https://github.com/microsoft/microsoft-ui-xaml/issues/9813 -->
+  <!-- XAML compiler routing (VS-0035 fix): Route via wrapper for false-positive handling.
+       The WinUI SDK forces UseXamlCompilerExecutable=true regardless of project settings.
+       The wrapper handles exit code 1 by generating output.json from discovered .g.i.cs files. -->
+  <!-- Use executable XAML compiler -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
     <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
-    <!-- Route Exec to repo-local wrapper for better diagnostics + false-positive exit code handling -->
-    <XamlCompilerExePath>$(MSBuildThisFileDirectory)tools\xaml-compiler-wrapper.cmd</XamlCompilerExePath>
   </PropertyGroup>
 
   <!-- Force WinAppSDK version to override transitive dependencies -->

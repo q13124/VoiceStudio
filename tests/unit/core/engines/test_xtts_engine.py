@@ -5,7 +5,6 @@ Tests XTTS engine functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -29,7 +28,7 @@ class TestXTTSEngineImports:
     def test_module_has_xtts_engine_class(self):
         """Test module has XTTSEngine class."""
         if hasattr(xtts_engine, "XTTSEngine"):
-            cls = getattr(xtts_engine, "XTTSEngine")
+            cls = xtts_engine.XTTSEngine
             assert isinstance(cls, type), "XTTSEngine should be a class"
 
 
@@ -39,7 +38,7 @@ class TestXTTSEngineClass:
     def test_xtts_engine_class_exists(self):
         """Test XTTSEngine class exists."""
         if hasattr(xtts_engine, "XTTSEngine"):
-            cls = getattr(xtts_engine, "XTTSEngine")
+            cls = xtts_engine.XTTSEngine
             assert isinstance(cls, type), "XTTSEngine should be a class"
 
 

@@ -9,21 +9,19 @@ High-performance engine lifecycle management with:
 - Pre-warming support
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set
-from queue import Queue, Empty
+from queue import Empty, Queue
+from typing import Any
 
 from .engine_lifecycle import (
-    EngineState,
     EngineInstance,
     EngineLifecycleManager,
+    EngineState,
     PortManager,
     ResourceManager,
 )
@@ -47,7 +45,7 @@ except ImportError:
 class OptimizedEngineLifecycleManager(EngineLifecycleManager):
     """
     Optimized engine lifecycle manager with performance improvements.
-    
+
     Optimizations:
     - Parallel health checks
     - Health check caching with TTL
@@ -60,8 +58,8 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
     def __init__(
         self,
         workspace_root: str = ".",
-        port_manager: Optional[PortManager] = None,
-        resource_manager: Optional[ResourceManager] = None,
+        port_manager: PortManager | None = None,
+        resource_manager: ResourceManager | None = None,
         health_check_workers: int = 4,
         health_check_cache_ttl: float = 2.0,  # Cache health checks for 2 seconds
         enable_prewarming: bool = True,
@@ -78,27 +76,27 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             enable_prewarming: Enable engine pre-warming
         """
         super().__init__(workspace_root, port_manager, resource_manager)
-        
+
         self.health_check_workers = health_check_workers
         self.health_check_cache_ttl = health_check_cache_ttl
         self.enable_prewarming = enable_prewarming
 
         # Health check cache: {engine_id: (is_healthy, timestamp)}
-        self._health_cache: Dict[str, tuple[bool, float]] = {}
-        
+        self._health_cache: dict[str, tuple[bool, float]] = {}
+
         # Event queue for event-driven monitoring
         self._event_queue: Queue = Queue()
-        
+
         # Read-write lock for better concurrency
         self._read_lock = threading.RLock()  # Reentrant read lock
         self._write_lock = threading.Lock()  # Write lock
-        
+
         # Health check executor
-        self._health_executor: Optional[ThreadPoolExecutor] = None
-        
+        self._health_executor: ThreadPoolExecutor | None = None
+
         # Pre-warming configuration
-        self._prewarm_configs: Dict[str, Dict[str, Any]] = {}
-        
+        self._prewarm_configs: dict[str, dict[str, Any]] = {}
+
         # Statistics
         self._stats = {
             "health_checks": 0,
@@ -138,11 +136,11 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         # Cache miss or expired, perform actual check
         self._stats["health_cache_misses"] += 1
         is_healthy = super()._check_health(engine)
-        
+
         # Update cache
         self._health_cache[engine_id] = (is_healthy, now)
         self._stats["health_checks"] += 1
-        
+
         return is_healthy
 
     def _monitor_engines_optimized(self):
@@ -216,7 +214,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
 
                     # Periodic monitoring (optimized)
                     self._monitor_engines_optimized()
-                    
+
                     # Adaptive sleep based on activity
                     sleep_time = 5.0  # Default
                     with self._read_lock:
@@ -228,7 +226,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
                             sleep_time = 10.0  # Sleep longer when idle
                         elif active_engines > 5:
                             sleep_time = 2.0  # Check more frequently when busy
-                    
+
                     time.sleep(sleep_time)
                 except Exception as e:
                     logger.error(f"Error in lifecycle monitor: {e}")
@@ -237,10 +235,10 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         self.monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
         self.monitor_thread.start()
 
-    def _handle_event(self, event: Dict[str, Any]):
+    def _handle_event(self, event: dict[str, Any]):
         """Handle lifecycle event."""
         event_type = event.get("type")
-        
+
         if event_type == "health_check":
             engine_id = event.get("engine_id")
             with self._read_lock:
@@ -253,8 +251,8 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             self._health_cache.pop(engine_id, None)
 
     def acquire_engine(
-        self, engine_id: str, job_id: Optional[str] = None, auto_start: bool = True
-    ) -> Optional[EngineInstance]:
+        self, engine_id: str, job_id: str | None = None, auto_start: bool = True
+    ) -> EngineInstance | None:
         """
         Acquire engine with optimized locking.
         """
@@ -279,7 +277,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
     def _start_engine(self, engine: EngineInstance) -> bool:
         """Start engine with optimized health check."""
         result = super()._start_engine(engine)
-        
+
         if result:
             # Invalidate health cache
             self._health_cache.pop(engine.engine_id, None)
@@ -288,14 +286,14 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
                 "type": "health_check",
                 "engine_id": engine.engine_id,
             })
-        
+
         return result
 
     def prewarm_engine(
         self,
         engine_id: str,
         count: int = 1,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> int:
         """
         Pre-warm engine instances for faster access.
@@ -321,17 +319,17 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             if engine_id in self.engine_pools:
                 pool = self.engine_pools[engine_id]
                 pool_size = self.pool_sizes.get(engine_id, 1)
-                
+
                 # Pre-warm up to pool size
                 target_count = min(count, pool_size - len(pool))
-                
-                for i in range(target_count):
+
+                for _i in range(target_count):
                     engine = EngineInstance(
                         engine_id=f"{engine_id}_prewarm_{len(pool)}",
                         manifest=self.engines[engine_id].manifest,
                     )
                     pool.append(engine)
-                    
+
                     if self._start_engine(engine):
                         prewarmed += 1
                         self._stats["prewarmed_engines"] += 1
@@ -348,7 +346,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         logger.info(f"Pre-warmed {prewarmed} instances of engine {engine_id}")
         return prewarmed
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get lifecycle manager statistics.
 
@@ -369,7 +367,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             "health_cache_hits": self._stats["health_cache_hits"],
             "health_cache_misses": self._stats["health_cache_misses"],
             "health_cache_hit_rate": (
-                self._stats["health_cache_hits"] / 
+                self._stats["health_cache_hits"] /
                 (self._stats["health_cache_hits"] + self._stats["health_cache_misses"])
                 if (self._stats["health_cache_hits"] + self._stats["health_cache_misses"]) > 0
                 else 0.0
@@ -387,12 +385,12 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
     def shutdown(self):
         """Shutdown lifecycle manager."""
         self.running = False
-        
+
         # Shutdown health check executor
         if self._health_executor:
             self._health_executor.shutdown(wait=True)
             self._health_executor = None
-        
+
         # Call parent shutdown
         if hasattr(super(), "shutdown"):
             super().shutdown()

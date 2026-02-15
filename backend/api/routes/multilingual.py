@@ -4,8 +4,9 @@ Multilingual Support Routes
 Endpoints for managing multi-language voice synthesis and translation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/multilingual", tags=["multilingual"])
 
 # In-memory language configurations (replace with database in production)
-_language_configs: Dict[str, Dict] = {}
+_language_configs: dict[str, dict] = {}
 
 
 class LanguageConfig(BaseModel):
@@ -25,7 +26,7 @@ class LanguageConfig(BaseModel):
     language_code: str  # ISO 639-1 code (e.g., "en", "es", "fr")
     language_name: str
     profile_id: str
-    voice_settings: Dict[str, float] = {}
+    voice_settings: dict[str, float] = {}
     created: str  # ISO datetime string
 
 
@@ -33,9 +34,9 @@ class MultilingualSynthesisRequest(BaseModel):
     """Request for multilingual synthesis."""
 
     text: str
-    source_language: Optional[str] = None  # Auto-detect if None
-    target_languages: List[str]  # List of language codes
-    profile_ids: Dict[str, str] = {}  # language_code -> profile_id
+    source_language: str | None = None  # Auto-detect if None
+    target_languages: list[str]  # List of language codes
+    profile_ids: dict[str, str] = {}  # language_code -> profile_id
     preserve_emotion: bool = True
     preserve_style: bool = True
 
@@ -43,8 +44,8 @@ class MultilingualSynthesisRequest(BaseModel):
 class MultilingualSynthesisResponse(BaseModel):
     """Response from multilingual synthesis."""
 
-    audio_ids: Dict[str, str]  # language_code -> audio_id
-    detected_language: Optional[str] = None
+    audio_ids: dict[str, str]  # language_code -> audio_id
+    detected_language: str | None = None
     message: str
 
 
@@ -65,8 +66,8 @@ class TranslationResponse(BaseModel):
     confidence: float
 
 
-@router.get("/languages", response_model=List[LanguageConfig])
-async def get_language_configs(profile_id: Optional[str] = None):
+@router.get("/languages", response_model=list[LanguageConfig])
+async def get_language_configs(profile_id: str | None = None):
     """Get all language configurations, optionally filtered by profile."""
     configs = list(_language_configs.values())
 
@@ -253,7 +254,7 @@ async def translate_text(request: TranslationRequest):
             logger.error(f"Argos Translate failed: {argos_error}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Translation failed: {str(argos_error)}. "
+                detail=f"Translation failed: {argos_error!s}. "
                 f"Please ensure language packages are installed.",
             )
     except Exception as e:
@@ -261,7 +262,7 @@ async def translate_text(request: TranslationRequest):
         raise HTTPException(
             status_code=500,
             detail=(
-                f"Translation failed: {str(e)}. "
+                f"Translation failed: {e!s}. "
                 "Please check your internet connection "
                 "or install translation packages."
             ),

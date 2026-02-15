@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class InMemoryCache:
         self._max_entries = max(1, int(max_entries))
         self._store: OrderedDict[str, CacheEntry] = OrderedDict()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         entry = self._store.get(key)
         if not entry:
             return None

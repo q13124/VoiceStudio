@@ -4,8 +4,10 @@ Video Face Enhancement API Routes.
 D.2 Enhancement: REST API for frame-by-frame face enhancement.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -26,7 +28,7 @@ class EnhanceRequest(BaseModel):
     output_path: str
     mode: str = "lip_sync"  # lip_sync, expression, restoration, deaging, composite
     quality: str = "standard"  # preview, standard, high, ultra
-    audio_path: Optional[str] = None
+    audio_path: str | None = None
 
 
 class EnhanceResponse(BaseModel):
@@ -43,8 +45,8 @@ class JobStatusResponse(BaseModel):
     progress: float
     frames_processed: int
     total_frames: int
-    output_path: Optional[str] = None
-    error: Optional[str] = None
+    output_path: str | None = None
+    error: str | None = None
 
 
 class FaceDetectionRequest(BaseModel):
@@ -70,10 +72,10 @@ class FaceRegionResponse(BaseModel):
 async def start_enhancement(request: EnhanceRequest):
     """
     Start a face enhancement job.
-    
+
     Args:
         request: Enhancement request
-        
+
     Returns:
         Job information
     """
@@ -83,21 +85,21 @@ async def start_enhancement(request: EnhanceRequest):
             QualityPreset,
             get_video_face_enhancer,
         )
-        
+
         enhancer = get_video_face_enhancer()
-        
+
         # Parse mode
         try:
             mode = EnhancementMode(request.mode)
         except ValueError:
             mode = EnhancementMode.LIP_SYNC
-        
+
         # Parse quality
         try:
             quality = QualityPreset(request.quality)
         except ValueError:
             quality = QualityPreset.STANDARD
-        
+
         # Create job
         job = await enhancer.create_job(
             input_path=request.input_path,
@@ -106,17 +108,17 @@ async def start_enhancement(request: EnhanceRequest):
             quality=quality,
             audio_path=request.audio_path,
         )
-        
+
         # Start processing in background
         import asyncio
         asyncio.create_task(enhancer.process_job(job.job_id))
-        
+
         return EnhanceResponse(
             job_id=job.job_id,
             status=job.status,
             message=f"Enhancement job started with {job.total_frames} frames",
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to start enhancement: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -126,22 +128,22 @@ async def start_enhancement(request: EnhanceRequest):
 async def get_job_status(job_id: str):
     """
     Get the status of an enhancement job.
-    
+
     Args:
         job_id: Job identifier
-        
+
     Returns:
         Job status
     """
     try:
         from backend.services.video_face_enhancer import get_video_face_enhancer
-        
+
         enhancer = get_video_face_enhancer()
         job = enhancer.get_job(job_id)
-        
+
         if not job:
             raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
-        
+
         return JobStatusResponse(
             job_id=job.job_id,
             status=job.status,
@@ -151,7 +153,7 @@ async def get_job_status(job_id: str):
             output_path=job.output_path if job.status == "completed" else None,
             error=job.error,
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -160,42 +162,42 @@ async def get_job_status(job_id: str):
 
 
 @router.delete("/cancel/{job_id}")
-async def cancel_job(job_id: str) -> Dict[str, Any]:
+async def cancel_job(job_id: str) -> dict[str, Any]:
     """
     Cancel an enhancement job.
-    
+
     Args:
         job_id: Job identifier
-        
+
     Returns:
         Cancellation result
     """
     try:
         from backend.services.video_face_enhancer import get_video_face_enhancer
-        
+
         enhancer = get_video_face_enhancer()
         success = await enhancer.cancel_job(job_id)
-        
+
         return {
             "success": success,
             "job_id": job_id,
             "message": "Job cancelled" if success else "Failed to cancel job",
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to cancel job: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/jobs", response_model=List[JobStatusResponse])
+@router.get("/jobs", response_model=list[JobStatusResponse])
 async def list_jobs():
     """List all enhancement jobs."""
     try:
         from backend.services.video_face_enhancer import get_video_face_enhancer
-        
+
         enhancer = get_video_face_enhancer()
         jobs = enhancer.list_jobs()
-        
+
         return [
             JobStatusResponse(
                 job_id=job.job_id,
@@ -208,7 +210,7 @@ async def list_jobs():
             )
             for job in jobs
         ]
-        
+
     except Exception as e:
         logger.error(f"Failed to list jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -219,31 +221,31 @@ async def list_jobs():
 # ============================================================================
 
 
-@router.post("/detect-faces", response_model=List[FaceRegionResponse])
+@router.post("/detect-faces", response_model=list[FaceRegionResponse])
 async def detect_faces(request: FaceDetectionRequest):
     """
     Detect faces in an image.
-    
+
     Args:
         request: Detection request with image path
-        
+
     Returns:
         List of detected face regions
     """
     try:
         import cv2
         import numpy as np
-        
+
         from backend.services.video_face_enhancer import get_video_face_enhancer
-        
+
         # Load image
         image = cv2.imread(request.image_path)
         if image is None:
             raise HTTPException(status_code=404, detail="Image not found")
-        
+
         enhancer = get_video_face_enhancer()
         faces = await enhancer.detect_faces(image)
-        
+
         return [
             FaceRegionResponse(
                 x=face.x,
@@ -254,7 +256,7 @@ async def detect_faces(request: FaceDetectionRequest):
             )
             for face in faces
         ]
-        
+
     except HTTPException:
         raise
     except ImportError:
@@ -270,24 +272,24 @@ async def detect_faces(request: FaceDetectionRequest):
 
 
 @router.get("/capabilities")
-async def get_capabilities() -> Dict[str, Any]:
+async def get_capabilities() -> dict[str, Any]:
     """
     Get video enhancement capabilities.
-    
+
     Returns:
         Available modes, quality presets, and requirements
     """
     # Check for available dependencies
     opencv_available = False
     ffmpeg_available = False
-    
+
     try:
         import cv2
         opencv_available = True
     except ImportError:
         # ALLOWED: OpenCV is optional - continue with opencv_available=False
         logger.debug("OpenCV not available for video enhancement")
-    
+
     try:
         import subprocess
         result = subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=5)
@@ -295,7 +297,7 @@ async def get_capabilities() -> Dict[str, Any]:
     except Exception as e:
         # ALLOWED: ffmpeg check may fail - continue with ffmpeg_available=False
         logger.debug(f"FFmpeg availability check failed: {e}")
-    
+
     return {
         "modes": [
             {"id": "lip_sync", "name": "Lip Sync", "description": "Enhance lip movements for dubbing"},

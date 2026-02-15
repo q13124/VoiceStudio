@@ -10,12 +10,11 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
 
 ENV_FFMPEG_PATH = "VOICESTUDIO_FFMPEG_PATH"
 
 
-def find_ffmpeg() -> Optional[str]:
+def find_ffmpeg() -> str | None:
     """
     Locate ffmpeg executable deterministically.
 

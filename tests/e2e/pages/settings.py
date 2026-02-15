@@ -4,10 +4,10 @@ Page object for Settings panel.
 Provides methods to interact with the Settings view for E2E testing.
 """
 
-from typing import Optional
+
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class SettingsPage:
@@ -46,7 +46,7 @@ class SettingsPage:
             )
         )
 
-    def get_current_theme(self) -> Optional[str]:
+    def get_current_theme(self) -> str | None:
         """Get the currently selected theme."""
         try:
             combo = self.driver.find_element(
@@ -62,7 +62,7 @@ class SettingsPage:
             AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID
         )
         combo.click()
-        
+
         # Find and click the theme item
         theme_item = self.wait.until(
             EC.element_to_be_clickable(
@@ -71,7 +71,7 @@ class SettingsPage:
         )
         theme_item.click()
 
-    def get_current_density(self) -> Optional[str]:
+    def get_current_density(self) -> str | None:
         """Get the currently selected density."""
         try:
             combo = self.driver.find_element(
@@ -87,7 +87,7 @@ class SettingsPage:
             AppiumBy.ACCESSIBILITY_ID, self.DENSITY_COMBO_ID
         )
         combo.click()
-        
+
         density_item = self.wait.until(
             EC.element_to_be_clickable(
                 (AppiumBy.NAME, density_name)
@@ -95,7 +95,7 @@ class SettingsPage:
         )
         density_item.click()
 
-    def get_backend_url(self) -> Optional[str]:
+    def get_backend_url(self) -> str | None:
         """Get the current backend URL."""
         try:
             textbox = self.driver.find_element(

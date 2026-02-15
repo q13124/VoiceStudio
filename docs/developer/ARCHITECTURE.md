@@ -969,6 +969,15 @@ public interface IPlugin
 }
 ```
 
+### Workspace Profiles
+
+Workspace profiles determine which panels appear in each region (Left, Center, Right, Bottom). The toolbar workspace dropdown (Studio, Recording, Mixing, Synthesis, Training, Analysis, Batch Lab, Pro Mix) switches the active profile.
+
+- **Persistence:** Profiles are persisted under `%LocalAppData%/VoiceStudio/WorkspaceProfiles/`. The current workspace is also stored in app settings.
+- **Embedded layouts:** When a profile has no saved file or its layout has no regions, the app loads a matching embedded layout from `Resources/Workspaces/*.json` (e.g. `Studio.json`, `Recording.json`). These JSON files use panel IDs that match the panel registry in MainWindow so that `RestorePanelsFromLayout()` can resolve every panel. Embedded workspace JSON is loaded from the application base directory (Content with CopyToOutputDirectory). Packaged (MSIX) deployment may require an additional fallback (e.g. ms-appx or Package.Current.InstalledLocation) if content is not placed in the same path; currently unpackaged and self-contained deployments are the primary target.
+- **Single path:** The toolbar workspace switcher uses only PanelStateService; WorkspaceManager is a separate system and is not used for the toolbar. WorkspaceManager (Features/Workspaces) is deprecated for toolbar use; the toolbar and app settings use only PanelStateService and IUnifiedWorkspaceService.
+- **Restore scope:** Restore applies only the active panel per region; OpenedPanels is saved but not yet restored (PanelHost single-content model). Multi-tab restore is a future enhancement.
+
 ---
 
 ## Quality Features Architecture

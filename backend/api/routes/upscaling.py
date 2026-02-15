@@ -4,10 +4,11 @@ Upscaling Routes
 Endpoints for image and video upscaling.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/upscaling", tags=["upscaling"])
 
 # In-memory storage for upscaling jobs (replace with database in production)
-_upscaling_jobs: Dict[str, "UpscalingJob"] = {}
+_upscaling_jobs: dict[str, "UpscalingJob"] = {}
 
 
 class UpscalingJob(BaseModel):
@@ -34,19 +35,19 @@ class UpscalingJob(BaseModel):
 
     job_id: str
     input_file: str
-    output_file: Optional[str] = None
+    output_file: str | None = None
     media_type: str  # image, video
     engine: str  # realesrgan, esrgan, waifu2x, etc.
     scale_factor: float  # 2.0, 4.0, etc.
     status: str  # pending, processing, completed, failed
     progress: float = 0.0  # 0.0 to 100.0
-    original_width: Optional[int] = None
-    original_height: Optional[int] = None
-    upscaled_width: Optional[int] = None
-    upscaled_height: Optional[int] = None
-    error_message: Optional[str] = None
+    original_width: int | None = None
+    original_height: int | None = None
+    upscaled_width: int | None = None
+    upscaled_height: int | None = None
+    error_message: str | None = None
     created_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class UpscalingRequest(BaseModel):
@@ -55,8 +56,8 @@ class UpscalingRequest(BaseModel):
     media_type: str  # image, video
     engine: str = "realesrgan"  # realesrgan, esrgan, waifu2x
     scale_factor: float = 2.0  # 2.0, 4.0, etc.
-    output_format: Optional[str] = None  # png, jpg, mp4, etc.
-    additional_params: Dict[str, str] = {}
+    output_format: str | None = None  # png, jpg, mp4, etc.
+    additional_params: dict[str, str] = {}
 
 
 class UpscalingResponse(BaseModel):
@@ -65,12 +66,12 @@ class UpscalingResponse(BaseModel):
     job_id: str
     status: str
     progress: float
-    output_file: Optional[str] = None
-    original_width: Optional[int] = None
-    original_height: Optional[int] = None
-    upscaled_width: Optional[int] = None
-    upscaled_height: Optional[int] = None
-    error_message: Optional[str] = None
+    output_file: str | None = None
+    original_width: int | None = None
+    original_height: int | None = None
+    upscaled_width: int | None = None
+    upscaled_height: int | None = None
+    error_message: str | None = None
 
 
 class UpscalingEngine(BaseModel):
@@ -79,8 +80,8 @@ class UpscalingEngine(BaseModel):
     engine_id: str
     name: str
     description: str
-    supported_types: List[str]  # image, video
-    supported_scales: List[float]  # [2.0, 4.0]
+    supported_types: list[str]  # image, video
+    supported_scales: list[float]  # [2.0, 4.0]
     is_available: bool = True
 
 
@@ -164,7 +165,7 @@ async def upscale_media(
         logger.error(f"Failed to upscale media: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to upscale media: {str(e)}",
+            detail=f"Failed to upscale media: {e!s}",
         ) from e
 
 
@@ -197,11 +198,11 @@ async def get_upscaling_job(job_id: str):
         logger.error(f"Failed to get upscaling job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get upscaling job: {str(e)}",
+            detail=f"Failed to get upscaling job: {e!s}",
         ) from e
 
 
-@router.get("/jobs", response_model=List[UpscalingResponse])
+@router.get("/jobs", response_model=list[UpscalingResponse])
 @cache_response(ttl=10)  # Cache for 10 seconds (job list may change frequently)
 async def list_upscaling_jobs():
     """List all upscaling jobs."""
@@ -226,7 +227,7 @@ async def list_upscaling_jobs():
         logger.error(f"Failed to list upscaling jobs: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list upscaling jobs: {str(e)}",
+            detail=f"Failed to list upscaling jobs: {e!s}",
         ) from e
 
 
@@ -249,7 +250,7 @@ async def delete_upscaling_job(job_id: str):
         logger.error(f"Failed to delete upscaling job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete upscaling job: {str(e)}",
+            detail=f"Failed to delete upscaling job: {e!s}",
         ) from e
 
 
@@ -317,11 +318,11 @@ async def export_upscaled_media(job_id: str):
         logger.error(f"Failed to export upscaled media: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export upscaled media: {str(e)}",
+            detail=f"Failed to export upscaled media: {e!s}",
         ) from e
 
 
-@router.get("/engines", response_model=List[UpscalingEngine])
+@router.get("/engines", response_model=list[UpscalingEngine])
 @cache_response(ttl=300)  # Cache for 5 minutes (engine list is relatively static)
 async def list_upscaling_engines():
     """List all available upscaling engines."""
@@ -561,7 +562,7 @@ async def _process_upscaling_job(
                     logger.error(f"Fallback upscaling failed: {e2}")
                     raise
 
-            raise Exception(f"Upscaling failed: {str(e)}")
+            raise Exception(f"Upscaling failed: {e!s}")
 
     except Exception as e:
         logger.error(f"Upscaling job {job_id} failed: {e}", exc_info=True)

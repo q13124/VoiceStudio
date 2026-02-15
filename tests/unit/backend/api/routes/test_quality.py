@@ -8,6 +8,7 @@ attributes that don't exist in the actual implementation.
 These tests need refactoring to match the real API.
 """
 import pytest
+
 pytest.skip(
     "Tests mock non-existent module attributes - needs test refactoring",
     allow_module_level=True,
@@ -16,7 +17,7 @@ pytest.skip(
 
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -145,23 +146,22 @@ class TestQualityAnalysis:
             "target_tier": "standard",
         }
 
-        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True):
-            with patch(
-                "backend.api.routes.quality.QualityOptimizer"
-            ) as mock_optimizer:
-                mock_instance = MagicMock()
-                mock_instance.analyze_quality.return_value = {
-                    "meets_target": True,
-                    "quality_score": 4.0,
-                    "deficiencies": [],
-                    "recommendations": [],
-                }
-                mock_optimizer.return_value = mock_instance
+        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True), patch(
+            "backend.api.routes.quality.QualityOptimizer"
+        ) as mock_optimizer:
+            mock_instance = MagicMock()
+            mock_instance.analyze_quality.return_value = {
+                "meets_target": True,
+                "quality_score": 4.0,
+                "deficiencies": [],
+                "recommendations": [],
+            }
+            mock_optimizer.return_value = mock_instance
 
-                response = client.post("/api/quality/analyze", json=request_data)
-                assert response.status_code == 200
-                data = response.json()
-                assert "meets_target" in data
+            response = client.post("/api/quality/analyze", json=request_data)
+            assert response.status_code == 200
+            data = response.json()
+            assert "meets_target" in data
 
     def test_analyze_quality_not_available(self):
         """Test quality analysis when not available."""
@@ -187,16 +187,15 @@ class TestQualityAnalysis:
             "target_tier": "standard",
         }
 
-        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True):
-            with patch(
-                "backend.api.routes.quality.optimize_synthesis_for_quality"
-            ) as mock_optimize:
-                mock_optimize.return_value = ({}, {})
+        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True), patch(
+            "backend.api.routes.quality.optimize_synthesis_for_quality"
+        ) as mock_optimize:
+            mock_optimize.return_value = ({}, {})
 
-                response = client.post("/api/quality/optimize", json=request_data)
-                assert response.status_code == 200
-                data = response.json()
-                assert "optimized_params" in data
+            response = client.post("/api/quality/optimize", json=request_data)
+            assert response.status_code == 200
+            data = response.json()
+            assert "optimized_params" in data
 
 
 class TestQualityHistory:

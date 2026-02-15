@@ -4,16 +4,19 @@ Handles workflow creation, execution, and management.
 Implements backend for IDEA 33: Workflow Automation UI.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.core.security.expression_evaluator import evaluate_condition
+
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
@@ -21,48 +24,48 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/workflows", tags=["workflows"])
 
 # In-memory storage (ready for database migration)
-_workflows: Dict[str, "Workflow"] = {}
+_workflows: dict[str, "Workflow"] = {}
 
 
-def _validate_workflow(workflow: "Workflow") -> List[str]:
+def _validate_workflow(workflow: "Workflow") -> list[str]:
     """
     Validate a workflow structure and return list of validation errors.
-    
+
     Returns:
         List of error messages (empty if valid)
     """
     errors = []
-    
+
     # Validate basic structure
     if not workflow.name or not workflow.name.strip():
         errors.append("Workflow name is required")
-    
+
     if len(workflow.name) > 200:
         errors.append("Workflow name must be 200 characters or less")
-    
+
     # Validate steps
     if workflow.steps:
         step_ids = set()
         step_orders = set()
-        
+
         for i, step in enumerate(workflow.steps):
             # Check for duplicate step IDs
             if step.id in step_ids:
                 errors.append(f"Duplicate step ID: {step.id}")
             step_ids.add(step.id)
-            
+
             # Check for duplicate orders
             if step.order in step_orders:
                 errors.append(f"Duplicate step order: {step.order}")
             step_orders.add(step.order)
-            
+
             # Validate step structure
             if not step.name or not step.name.strip():
                 errors.append(f"Step {i+1} (ID: {step.id}) must have a name")
-            
+
             if not step.type or not step.type.strip():
                 errors.append(f"Step {i+1} (ID: {step.id}) must have a type")
-            
+
             # Validate step type
             valid_types = ["synthesize", "effect", "export", "control"]
             if step.type.lower() not in valid_types:
@@ -70,7 +73,7 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
                     f"Step {i+1} (ID: {step.id}) has invalid type '{step.type}'. "
                     f"Valid types: {', '.join(valid_types)}"
                 )
-            
+
             # Validate step-specific properties
             step_type = step.type.lower()
             if step_type == "synthesize":
@@ -89,7 +92,7 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
                         f"Synthesize step {i+1} (ID: {step.id}) requires 'profile_id' "
                         "property or workflow variable"
                     )
-            
+
             elif step_type == "effect":
                 # Effect step requires audio_id or previous step output
                 if "audio_id" not in step.properties:
@@ -104,7 +107,7 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
                             f"Effect step {i+1} (ID: {step.id}) requires 'audio_id' "
                             "property or previous step that produces audio"
                         )
-            
+
             elif step_type == "export":
                 # Export step requires audio_id or previous step output
                 if "audio_id" not in step.properties:
@@ -119,7 +122,7 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
                             f"Export step {i+1} (ID: {step.id}) requires 'audio_id' "
                             "property or previous step that produces audio"
                         )
-            
+
             elif step_type == "control":
                 # Control step requires control_type
                 if "control_type" not in step.properties:
@@ -134,7 +137,7 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
                             f"Control step {i+1} (ID: {step.id}) has invalid "
                             f"control_type '{control_type}'. Valid types: {', '.join(valid_control_types)}"
                         )
-    
+
     # Validate variables
     if workflow.variables:
         var_names = set()
@@ -144,26 +147,26 @@ def _validate_workflow(workflow: "Workflow") -> List[str]:
             if var.name in var_names:
                 errors.append(f"Duplicate variable name: {var.name}")
             var_names.add(var.name)
-    
+
     return errors
 
 
 def _validate_audio_id(audio_id: str) -> bool:
     """
     Validate that an audio ID exists in storage.
-    
+
     Args:
         audio_id: Audio ID to validate
-        
+
     Returns:
         True if audio ID is valid, False otherwise
     """
     try:
         from .voice import _audio_storage
-        
+
         if audio_id not in _audio_storage:
             return False
-        
+
         audio_path = _audio_storage[audio_id]
         return os.path.exists(audio_path)
     except Exception:
@@ -183,7 +186,7 @@ class WorkflowStep(BaseModel):
     id: str
     type: str  # "synthesize", "effect", "export", "control"
     name: str
-    properties: Dict[str, Any] = {}
+    properties: dict[str, Any] = {}
     order: int = 0  # Execution order
 
 
@@ -192,9 +195,9 @@ class Workflow(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    steps: List[WorkflowStep] = []
-    variables: List[WorkflowVariable] = []
+    description: str | None = None
+    steps: list[WorkflowStep] = []
+    variables: list[WorkflowVariable] = []
     is_enabled: bool = True
     created: str
     modified: str
@@ -204,27 +207,27 @@ class WorkflowCreateRequest(BaseModel):
     """Request to create a workflow."""
 
     name: str
-    description: Optional[str] = None
-    steps: Optional[List[WorkflowStep]] = None
-    variables: Optional[List[WorkflowVariable]] = None
+    description: str | None = None
+    steps: list[WorkflowStep] | None = None
+    variables: list[WorkflowVariable] | None = None
     is_enabled: bool = True
 
 
 class WorkflowUpdateRequest(BaseModel):
     """Request to update a workflow."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    steps: Optional[List[WorkflowStep]] = None
-    variables: Optional[List[WorkflowVariable]] = None
-    is_enabled: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    steps: list[WorkflowStep] | None = None
+    variables: list[WorkflowVariable] | None = None
+    is_enabled: bool | None = None
 
 
 class WorkflowExecutionRequest(BaseModel):
     """Request to execute a workflow."""
 
     workflow_id: str
-    input_data: Optional[Dict[str, Any]] = None  # Input variables/parameters
+    input_data: dict[str, Any] | None = None  # Input variables/parameters
 
 
 class WorkflowExecutionResult(BaseModel):
@@ -234,15 +237,15 @@ class WorkflowExecutionResult(BaseModel):
     status: str  # "completed", "failed", "cancelled"
     current_step: int = 0
     total_steps: int = 0
-    current_step_name: Optional[str] = None
+    current_step_name: str | None = None
     progress: float = 0.0  # 0.0 to 1.0
-    error_message: Optional[str] = None
-    outputs: Dict[str, Any] = {}  # Output data from workflow
+    error_message: str | None = None
+    outputs: dict[str, Any] = {}  # Output data from workflow
     started_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
-@router.get("", response_model=List[Workflow])
+@router.get("", response_model=list[Workflow])
 @cache_response(ttl=30)  # Cache for 30 seconds (workflows may change frequently)
 async def list_workflows(
     skip: int = Query(0, ge=0),
@@ -263,7 +266,7 @@ async def list_workflows(
     except Exception as e:
         logger.error(f"Failed to list workflows: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list workflows: {str(e)}"
+            status_code=500, detail=f"Failed to list workflows: {e!s}"
         )
 
 
@@ -282,7 +285,7 @@ async def get_workflow(workflow_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workflow '{workflow_id}': {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get workflow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get workflow: {e!s}")
 
 
 @router.post("", response_model=Workflow, status_code=201)
@@ -335,7 +338,7 @@ async def create_workflow(request: WorkflowCreateRequest):
     except Exception as e:
         logger.error(f"Failed to create workflow: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create workflow: {str(e)}"
+            status_code=500, detail=f"Failed to create workflow: {e!s}"
         )
 
 
@@ -393,7 +396,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
     except Exception as e:
         logger.error(f"Failed to update workflow '{workflow_id}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to update workflow: {str(e)}"
+            status_code=500, detail=f"Failed to update workflow: {e!s}"
         )
 
 
@@ -415,13 +418,13 @@ async def delete_workflow(workflow_id: str):
     except Exception as e:
         logger.error(f"Failed to delete workflow '{workflow_id}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete workflow: {str(e)}"
+            status_code=500, detail=f"Failed to delete workflow: {e!s}"
         )
 
 
 @router.post("/{workflow_id}/execute", response_model=WorkflowExecutionResult)
 async def execute_workflow(
-    workflow_id: str, request: Optional[WorkflowExecutionRequest] = None
+    workflow_id: str, request: WorkflowExecutionRequest | None = None
 ):
     """Execute a workflow."""
     try:
@@ -446,7 +449,7 @@ async def execute_workflow(
         sorted_steps = sorted(workflow.steps, key=lambda s: s.order)
 
         # Prepare execution context
-        context: Dict[str, Any] = {}
+        context: dict[str, Any] = {}
 
         # Add workflow variables to context
         for var in workflow.variables:
@@ -458,8 +461,8 @@ async def execute_workflow(
 
         # Execute steps in order
         started_at = datetime.utcnow().isoformat()
-        outputs: Dict[str, Any] = {}
-        error_message: Optional[str] = None
+        outputs: dict[str, Any] = {}
+        error_message: str | None = None
         current_step_index = 0
 
         try:
@@ -517,13 +520,13 @@ async def execute_workflow(
     except Exception as e:
         logger.error(f"Failed to execute workflow '{workflow_id}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to execute workflow: {str(e)}"
+            status_code=500, detail=f"Failed to execute workflow: {e!s}"
         )
 
 
 async def _execute_workflow_step(
-    step: WorkflowStep, context: Dict[str, Any]
-) -> Dict[str, Any]:
+    step: WorkflowStep, context: dict[str, Any]
+) -> dict[str, Any]:
     """Execute a single workflow step."""
     step_type = step.type.lower()
 
@@ -540,8 +543,8 @@ async def _execute_workflow_step(
 
 
 async def _execute_synthesize_step(
-    step: WorkflowStep, context: Dict[str, Any]
-) -> Dict[str, Any]:
+    step: WorkflowStep, context: dict[str, Any]
+) -> dict[str, Any]:
     """Execute a synthesize step."""
     # Get text from properties or context
     text = step.properties.get("text", "")
@@ -606,12 +609,12 @@ async def _execute_synthesize_step(
         }
     except Exception as e:
         logger.error(f"Failed to synthesize in workflow step: {e}", exc_info=True)
-        raise ValueError(f"Synthesis failed: {str(e)}")
+        raise ValueError(f"Synthesis failed: {e!s}")
 
 
 async def _execute_effect_step(
-    step: WorkflowStep, context: Dict[str, Any]
-) -> Dict[str, Any]:
+    step: WorkflowStep, context: dict[str, Any]
+) -> dict[str, Any]:
     """Execute an effect step."""
     # Get audio input from previous step or context
     audio_id = step.properties.get("audio_id", "")
@@ -733,12 +736,12 @@ async def _execute_effect_step(
         }
     except Exception as e:
         logger.error(f"Failed to apply effect in workflow step: {e}", exc_info=True)
-        raise ValueError(f"Effect application failed: {str(e)}")
+        raise ValueError(f"Effect application failed: {e!s}")
 
 
 async def _execute_export_step(
-    step: WorkflowStep, context: Dict[str, Any]
-) -> Dict[str, Any]:
+    step: WorkflowStep, context: dict[str, Any]
+) -> dict[str, Any]:
     """Execute an export step."""
     # Get audio input from previous step or context
     audio_id = step.properties.get("audio_id", "")
@@ -799,12 +802,12 @@ async def _execute_export_step(
         }
     except Exception as e:
         logger.error(f"Failed to export audio in workflow step: {e}", exc_info=True)
-        raise ValueError(f"Export failed: {str(e)}")
+        raise ValueError(f"Export failed: {e!s}")
 
 
 async def _execute_control_step(
-    step: WorkflowStep, context: Dict[str, Any]
-) -> Dict[str, Any]:
+    step: WorkflowStep, context: dict[str, Any]
+) -> dict[str, Any]:
     """Execute a control step (delay, condition, etc.)."""
     control_type = step.properties.get("control_type", "delay")
 

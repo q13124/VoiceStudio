@@ -5,17 +5,23 @@ Endpoints for training reward models (used in reinforcement learning
 for voice synthesis) and predicting reward scores.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
 from ..models_additional import (
-    RmTrainRequest, RmTrainResponse, RmPredictRequest, RmPredictResponse,
-    RmModelsListResponse, RmModelInfo, RmTrainingJobResponse
+    RmModelInfo,
+    RmModelsListResponse,
+    RmPredictRequest,
+    RmPredictResponse,
+    RmTrainingJobResponse,
+    RmTrainRequest,
+    RmTrainResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,8 +29,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/rm", tags=["reward"])
 
 # In-memory reward model storage (replace with database in production)
-_reward_models: Dict[str, Dict] = {}
-_reward_training_jobs: Dict[str, Dict] = {}
+_reward_models: dict[str, dict] = {}
+_reward_training_jobs: dict[str, dict] = {}
 
 
 @router.post("/train", response_model=RmTrainResponse)
@@ -119,7 +125,7 @@ async def train(req: RmTrainRequest) -> RmTrainResponse:
     except Exception as e:
         logger.error(f"Reward model training failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Reward model training failed: {str(e)}"
+            status_code=500, detail=f"Reward model training failed: {e!s}"
         ) from e
 
 
@@ -197,21 +203,21 @@ async def predict(req: RmPredictRequest) -> RmPredictResponse:
         # 3. Model has lower standard deviation (more consistent)
         sample_count = model.get("training_samples", 0)
         model_std = model.get("std_score", 1.0)
-        
+
         # Base confidence from sample count (more samples = higher confidence)
         sample_confidence = min(1.0, sample_count / 100.0)  # Max confidence at 100+ samples
-        
+
         # Variance confidence (lower std = higher confidence)
         std_confidence = max(0.3, 1.0 - (model_std / 2.0))  # Min 0.3, decreases with higher std
-        
+
         # Prediction confidence (closer to mean = higher confidence)
         score_diff = abs(predicted_score - model["mean_score"])
         prediction_confidence = max(0.5, 1.0 - (score_diff / model_std) if model_std > 0 else 1.0)
-        
+
         # Weighted combination
         confidence = (sample_confidence * 0.4) + (std_confidence * 0.3) + (prediction_confidence * 0.3)
         confidence = max(0.3, min(1.0, confidence))  # Clamp to [0.3, 1.0]
-        
+
         logger.info(
             f"Reward prediction: model={model_id}, "
             f"audio_id={audio_id}, score={predicted_score:.2f}, confidence={confidence:.2f}"
@@ -229,7 +235,7 @@ async def predict(req: RmPredictRequest) -> RmPredictResponse:
     except Exception as e:
         logger.error(f"Reward prediction failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Reward prediction failed: {str(e)}"
+            status_code=500, detail=f"Reward prediction failed: {e!s}"
         ) from e
 
 

@@ -510,7 +510,7 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
         
         savePicker.SuggestedFileName = $"voicestudio_logs_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
@@ -550,7 +550,7 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
         
         savePicker.SuggestedFileName = $"voicestudio_traces_{DateTime.Now:yyyyMMdd_HHmmss}.json";
@@ -577,7 +577,7 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var backendClient = ServiceProvider.GetBackendClient();
-        var isConnected = await backendClient.TestConnectionAsync();
+        var isConnected = await backendClient.CheckHealthAsync();
         
         if (isConnected)
           _toastService?.ShowToast(ToastType.Success, "Connection OK", "Backend connection successful");
@@ -596,8 +596,12 @@ namespace VoiceStudio.App.Views.Panels
       try
       {
         var backendClient = ServiceProvider.GetBackendClient();
-        await backendClient.ReconnectAsync();
-        _toastService?.ShowToast(ToastType.Success, "Reconnected", "Backend connection re-established");
+        // Attempt reconnection by checking health - this will establish connection if needed
+        var isConnected = await backendClient.CheckHealthAsync();
+        if (isConnected)
+          _toastService?.ShowToast(ToastType.Success, "Reconnected", "Backend connection re-established");
+        else
+          _toastService?.ShowToast(ToastType.Warning, "Reconnect Failed", "Unable to reach backend");
       }
       catch (Exception ex)
       {

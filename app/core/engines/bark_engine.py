@@ -8,18 +8,19 @@ Compatible with:
 - bark or suno-bark package
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -29,7 +30,7 @@ except ImportError:
 
 # Fallback: Bark-specific cache (for backward compatibility)
 _BARK_MODEL_CACHE: OrderedDict = OrderedDict()
-_VOICE_CLONING_CACHE: Dict[str, any] = {}
+_VOICE_CLONING_CACHE: dict[str, any] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_VOICE_CLONING_CACHE_SIZE = 50  # Maximum number of voice embeddings to cache
 
@@ -41,7 +42,7 @@ def _get_cached_bark_model(cache_key: str):
         cached = _model_cache.get("bark", cache_key, device="cpu")
         if cached is not None:
             return cached
-    
+
     # Fallback to Bark-specific cache
     if cache_key in _BARK_MODEL_CACHE:
         _BARK_MODEL_CACHE.move_to_end(cache_key)
@@ -49,7 +50,7 @@ def _get_cached_bark_model(cache_key: str):
     return None
 
 
-def _cache_bark_model(cache_key: str, model_state: Dict):
+def _cache_bark_model(cache_key: str, model_state: dict):
     """Cache Bark model state with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -58,35 +59,35 @@ def _cache_bark_model(cache_key: str, model_state: Dict):
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
-    
+
     # Fallback to Bark-specific cache
     if cache_key in _BARK_MODEL_CACHE:
         _BARK_MODEL_CACHE.move_to_end(cache_key)
         return
-    
+
     _BARK_MODEL_CACHE[cache_key] = model_state
-    
+
     # Evict oldest if cache full
     if len(_BARK_MODEL_CACHE) > _MAX_CACHE_SIZE:
         oldest_key, _ = _BARK_MODEL_CACHE.popitem(last=False)
         logger.debug(f"Evicted Bark model from cache: {oldest_key}")
-    
+
     logger.debug(f"Cached Bark model: {cache_key} (cache size: {len(_BARK_MODEL_CACHE)})")
 
 
-def _get_voice_cloning_cache_key(reference_audio: Union[str, Path, np.ndarray]) -> Optional[str]:
+def _get_voice_cloning_cache_key(reference_audio: str | Path | np.ndarray) -> str | None:
     """Generate cache key for voice cloning."""
     import hashlib
-    
+
     if isinstance(reference_audio, (str, Path)):
         audio_path = Path(reference_audio)
         if audio_path.exists():
             mtime = audio_path.stat().st_mtime
             return hashlib.md5(f"{audio_path}::{mtime}".encode()).hexdigest()
-    
+
     if isinstance(reference_audio, np.ndarray):
         return hashlib.md5(reference_audio.tobytes()).hexdigest()
-    
+
     return None
 
 
@@ -99,15 +100,15 @@ def _cache_voice_cloning(cache_key: str, prompt: any):
     """Cache voice cloning prompt with LRU eviction."""
     if cache_key in _VOICE_CLONING_CACHE:
         return
-    
+
     _VOICE_CLONING_CACHE[cache_key] = prompt
-    
+
     # Evict oldest if cache full
     if len(_VOICE_CLONING_CACHE) > _MAX_VOICE_CLONING_CACHE_SIZE:
         oldest_key = next(iter(_VOICE_CLONING_CACHE))
         del _VOICE_CLONING_CACHE[oldest_key]
         logger.debug(f"Evicted voice cloning from cache: {oldest_key[:8]}")
-    
+
     logger.debug(f"Cached voice cloning: {cache_key[:8]} (cache size: {len(_VOICE_CLONING_CACHE)})")
 
 # Import base protocol
@@ -208,9 +209,9 @@ class BarkEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
     ):
         """
         Initialize Bark engine.
@@ -247,7 +248,7 @@ class BarkEngine(EngineProtocol):
         """Load models with caching support."""
         # Check if models are already cached/loaded globally
         cache_key = f"bark::{self.device}::{self.model_path or 'default'}"
-        
+
         if self.enable_caching:
             cached_state = _get_cached_bark_model(cache_key)
             if cached_state is not None:
@@ -255,7 +256,7 @@ class BarkEngine(EngineProtocol):
                 self._models_loaded = cached_state.get("models_loaded", False)
                 self._initialized = True
                 return True
-        
+
         # Use model cache directory if available
         model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
         if not model_cache_dir:
@@ -272,7 +273,7 @@ class BarkEngine(EngineProtocol):
             preload_models()
             self._models_loaded = True
             logger.info("Bark models preloaded successfully")
-            
+
             # Cache model state
             if self.enable_caching:
                 _cache_bark_model(cache_key, {"models_loaded": True})
@@ -283,17 +284,17 @@ class BarkEngine(EngineProtocol):
         self._initialized = True
         logger.info(f"Bark engine initialized (device: {self.device})")
         return True
-    
+
     def initialize(self) -> bool:
         """Initialize the Bark model."""
         try:
             if self._initialized:
                 return True
-            
+
             if not HAS_BARK:
                 logger.error("Bark package not installed")
                 return False
-            
+
             # Lazy loading: defer until first use
             if self.lazy_load:
                 logger.debug("Lazy loading enabled, models will be loaded on first use")
@@ -325,22 +326,22 @@ class BarkEngine(EngineProtocol):
             logger.info("Bark engine cleaned up")
         except Exception as e:
             logger.error(f"Error during Bark engine cleanup: {e}", exc_info=True)
-    
+
     def batch_synthesize(
         self,
-        texts: List[str],
-        reference_audio: Optional[Union[str, Path, np.ndarray]] = None,
+        texts: list[str],
+        reference_audio: str | Path | np.ndarray | None = None,
         language: str = "en",
-        speaker: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        speaker: str | None = None,
+        output_dir: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
         **kwargs
-    ) -> List[Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
-        
+
         Args:
             texts: List of texts to synthesize
             reference_audio: Reference audio for voice cloning
@@ -351,21 +352,20 @@ class BarkEngine(EngineProtocol):
             calculate_quality: If True, return quality metrics
             batch_size: Number of texts to process in a single batch
             **kwargs: Additional synthesis parameters
-        
+
         Returns:
             List of audio arrays or tuples of (audio, quality_metrics)
         """
         # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return [None] * len(texts)
-        
+        if not self._initialized and not self._load_models():
+            return [None] * len(texts)
+
         results = []
-        
+
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
-        num_batches = (len(texts) + actual_batch_size - 1) // actual_batch_size
-        
+        (len(texts) + actual_batch_size - 1) // actual_batch_size
+
         def synthesize_single(text):
             try:
                 return self.synthesize(
@@ -380,11 +380,11 @@ class BarkEngine(EngineProtocol):
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
                 return None
-        
+
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             batch_results = list(executor.map(synthesize_single, texts))
-        
+
         # Handle output directory if provided
         if output_dir:
             output_dir = Path(output_dir)
@@ -411,28 +411,28 @@ class BarkEngine(EngineProtocol):
                     results.append(None)
         else:
             results = batch_results
-        
+
         # Clear GPU cache periodically
         if HAS_TORCH and torch.cuda.is_available() and (len(texts) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
-        
+
         return results
-    
+
     def enable_caching(self, enable: bool = True):
         """Enable or disable caching."""
         self.enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
-    
+
     def set_batch_size(self, batch_size: int):
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
-    
-    def _get_memory_usage(self) -> Dict[str, float]:
+
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not HAS_TORCH or not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}
-        
+
         return {
             "gpu_memory_mb": torch.cuda.get_device_properties(0).total_memory / 1024**2,
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
@@ -441,15 +441,15 @@ class BarkEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        reference_audio: Optional[Union[str, Path, np.ndarray]] = None,
+        reference_audio: str | Path | np.ndarray | None = None,
         language: str = "en",
-        speaker: Optional[str] = None,
-        emotion: Optional[str] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        speaker: str | None = None,
+        emotion: str | None = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Bark.
 
@@ -476,9 +476,8 @@ class BarkEngine(EngineProtocol):
             or tuple of (audio, quality_metrics) if calculate_quality=True
         """
         # Lazy load models if needed
-        if not self._initialized:
-            if not self._load_models():
-                return None
+        if not self._initialized and not self._load_models():
+            return None
 
         try:
             if not HAS_BARK:
@@ -497,7 +496,7 @@ class BarkEngine(EngineProtocol):
             if effective_emotion not in self.SUPPORTED_EMOTIONS:
                 logger.warning(f"Emotion '{effective_emotion}' not supported, using 'neutral'")
                 effective_emotion = "neutral"
-            
+
             cache_key = hashlib.md5(
                 f"{text}_{speaker}_{effective_emotion}_{language}_{ref_key}_{kwargs.get('temperature', 0.7)}_{kwargs.get('fine_temperature', 0.7)}_{enhance_quality}_{calculate_quality}".encode()
             ).hexdigest()
@@ -638,16 +637,16 @@ class BarkEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path, np.ndarray]],
+        reference_audio: str | Path | np.ndarray | None,
         enhance: bool,
         calculate: bool,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
         if enhance:
             try:
-                from ..audio.audio_utils import (
+                from app.core.audio.audio_utils import (
                     enhance_voice_quality,
                     normalize_lufs,
                     remove_artifacts,
@@ -672,13 +671,13 @@ class BarkEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """Get list of supported languages."""
         if HAS_BARK:
             return list(SUPPORTED_LANGS) if SUPPORTED_LANGS else ["en"]
         return ["en"]
 
-    def get_supported_emotions(self) -> List[str]:
+    def get_supported_emotions(self) -> list[str]:
         """
         Get list of supported emotions.
 
@@ -687,7 +686,7 @@ class BarkEngine(EngineProtocol):
         """
         return self.SUPPORTED_EMOTIONS.copy()
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
         info.update(
@@ -704,9 +703,9 @@ class BarkEngine(EngineProtocol):
 
 
 def create_bark_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
-    model_path: Optional[str] = None,
+    model_path: str | None = None,
 ) -> BarkEngine:
     """Factory function to create a Bark engine instance."""
     return BarkEngine(device=device, gpu=gpu, model_path=model_path)

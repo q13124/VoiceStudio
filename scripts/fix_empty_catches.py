@@ -14,12 +14,11 @@ Usage:
     python scripts/fix_empty_catches.py --all  # Fix all C# files
 """
 
-from _env_setup import PROJECT_ROOT
-
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+
+from _env_setup import PROJECT_ROOT
 
 
 def get_class_name(content: str, pos: int) -> str:
@@ -44,17 +43,17 @@ def get_method_name(content: str, pos: int) -> str:
     return "Unknown"
 
 
-def fix_empty_catches(content: str, filename: str) -> Tuple[str, int]:
+def fix_empty_catches(content: str, filename: str) -> tuple[str, int]:
     """
     Fix empty catch blocks in C# content.
-    
+
     Returns tuple of (fixed_content, number_of_fixes)
     """
     fixes = 0
-    
+
     # Pattern 1: catch { /* comment */ }
     pattern1 = r'catch\s*\{\s*/\*[^*]*\*/\s*\}'
-    
+
     def replace1(match):
         nonlocal fixes
         fixes += 1
@@ -63,12 +62,12 @@ def fix_empty_catches(content: str, filename: str) -> Tuple[str, int]:
         method_name = get_method_name(content, pos)
         context = f"{class_name}.{method_name}"
         return f'catch (Exception ex) {{ ErrorLogger.LogWarning($"Best effort operation failed: {{ex.Message}}", "{context}"); }}'
-    
+
     content = re.sub(pattern1, replace1, content)
-    
+
     # Pattern 2: catch { // comment \n }
     pattern2 = r'catch\s*\n?\s*\{\s*\n?\s*//[^\n]*\n\s*\}'
-    
+
     def replace2(match):
         nonlocal fixes
         fixes += 1
@@ -80,12 +79,12 @@ def fix_empty_catches(content: str, filename: str) -> Tuple[str, int]:
       {{
         ErrorLogger.LogWarning($"Best effort operation failed: {{ex.Message}}", "{context}");
       }}'''
-    
+
     content = re.sub(pattern2, replace2, content)
-    
+
     # Pattern 3: catch (Exception) { // comment \n }
     pattern3 = r'catch\s*\([^)]*\)\s*\n?\s*\{\s*\n?\s*//[^\n]*\n\s*\}'
-    
+
     def replace3(match):
         nonlocal fixes
         fixes += 1
@@ -97,12 +96,12 @@ def fix_empty_catches(content: str, filename: str) -> Tuple[str, int]:
       {{
         ErrorLogger.LogWarning($"Best effort operation failed: {{ex.Message}}", "{context}");
       }}'''
-    
+
     content = re.sub(pattern3, replace3, content)
-    
+
     # Pattern 4: Multi-line indented catch blocks
     pattern4 = r'catch\s*\n\s*\{\s*\n\s*//[^\n]*\n\s*\}'
-    
+
     def replace4(match):
         nonlocal fixes
         fixes += 1
@@ -118,27 +117,27 @@ def fix_empty_catches(content: str, filename: str) -> Tuple[str, int]:
 {indent_str}{{
 {indent_str}  ErrorLogger.LogWarning($"Best effort operation failed: {{ex.Message}}", "{context}");
 {indent_str}}}'''
-    
+
     content = re.sub(pattern4, replace4, content)
-    
+
     return content, fixes
 
 
 def ensure_using_statement(content: str) -> str:
     """Ensure the ErrorLogger using statement is present."""
     using_statement = "using VoiceStudio.App.Logging;"
-    
+
     # Check if already present
     if using_statement in content:
         return content
-    
+
     # Find the last using statement and add after it
     using_pattern = r'(using [^;]+;)\n(?!using)'
     match = re.search(using_pattern, content)
     if match:
         insert_pos = match.end()
         content = content[:insert_pos] + using_statement + "\n" + content[insert_pos:]
-    
+
     return content
 
 
@@ -149,19 +148,19 @@ def process_file(filepath: Path, dry_run: bool = False) -> int:
     except Exception as e:
         print(f"  Error reading {filepath}: {e}")
         return 0
-    
+
     fixed_content, fixes = fix_empty_catches(content, filepath.name)
-    
+
     if fixes == 0:
         return 0
-    
+
     if fixes > 0:
         fixed_content = ensure_using_statement(fixed_content)
-    
+
     if dry_run:
         print(f"  Would fix {fixes} empty catch(es) in {filepath.name}")
         return fixes
-    
+
     try:
         filepath.write_text(fixed_content, encoding="utf-8")
         print(f"  Fixed {fixes} empty catch(es) in {filepath.name}")
@@ -174,7 +173,7 @@ def process_file(filepath: Path, dry_run: bool = False) -> int:
 def main():
     dry_run = "--dry-run" in sys.argv
     fix_all = "--all" in sys.argv
-    
+
     # Get files to process
     if fix_all:
         src_dir = PROJECT_ROOT / "src" / "VoiceStudio.App"
@@ -187,34 +186,34 @@ def main():
             path = Path(arg)
             if path.exists():
                 files.append(path)
-    
+
     if not files:
         print("Usage: python scripts/fix_empty_catches.py [--dry-run] [--all] [files...]")
         return 1
-    
+
     print("=" * 70)
     print("Empty Catch Block Fixer (TD-018)")
     print("=" * 70)
     print()
-    
+
     if dry_run:
         print("DRY RUN - No files will be modified")
         print()
-    
+
     total_fixes = 0
     files_fixed = 0
-    
+
     for filepath in sorted(files):
         fixes = process_file(filepath, dry_run)
         total_fixes += fixes
         if fixes > 0:
             files_fixed += 1
-    
+
     print()
     print("-" * 70)
     print(f"Total fixes: {total_fixes} in {files_fixed} files")
     print("-" * 70)
-    
+
     return 0
 
 

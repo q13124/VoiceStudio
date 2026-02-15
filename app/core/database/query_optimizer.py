@@ -9,15 +9,17 @@ Provides:
 - Query monitoring
 """
 
+from __future__ import annotations
+
 import logging
 import sqlite3
 import threading
 import time
 from collections import deque
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ class QueryStats:
     min_time: float = float("inf")
     max_time: float = 0.0
     average_time: float = 0.0
-    last_execution: Optional[datetime] = None
+    last_execution: datetime | None = None
     cache_hits: int = 0
     cache_misses: int = 0
 
@@ -74,11 +76,11 @@ class QueryCache:
         """
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
-        self.cache: Dict[str, Tuple[Any, float]] = {}
+        self.cache: dict[str, tuple[Any, float]] = {}
         self.access_order: deque = deque()
         self.lock = threading.Lock()
 
-    def get(self, cache_key: str) -> Optional[Any]:
+    def get(self, cache_key: str) -> Any | None:
         """
         Get cached result.
 
@@ -134,7 +136,7 @@ class QueryCache:
             self.cache.clear()
             self.access_order.clear()
 
-    def invalidate(self, pattern: Optional[str] = None):
+    def invalidate(self, pattern: str | None = None):
         """
         Invalidate cache entries.
 
@@ -145,13 +147,13 @@ class QueryCache:
             if pattern is None:
                 self.clear()
             else:
-                keys_to_remove = [key for key in self.cache.keys() if pattern in key]
+                keys_to_remove = [key for key in self.cache if pattern in key]
                 for key in keys_to_remove:
                     del self.cache[key]
                     if key in self.access_order:
                         self.access_order.remove(key)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         with self.lock:
             return {
@@ -229,7 +231,7 @@ class ConnectionPool:
         self.total_health_checks: int = 0
         self.total_health_check_failures: int = 0
         self.total_connection_errors: int = 0
-        self.last_health_check: Optional[datetime] = None
+        self.last_health_check: datetime | None = None
 
         self.lock = threading.Lock()
 
@@ -378,10 +380,8 @@ class ConnectionPool:
                     if self._should_check_health():
                         if not self._is_connection_healthy(conn_info.connection):
                             self.total_health_check_failures += 1
-                            try:
+                            with suppress(Exception):
                                 conn_info.connection.close()
-                            except Exception:
-                                ...
                             conn_info = None
                             continue
 
@@ -476,7 +476,7 @@ class ConnectionPool:
                 except Exception:
                     ...
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get connection pool statistics (enhanced)."""
         with self.lock:
             total_operations = (
@@ -536,10 +536,8 @@ class ConnectionPool:
         with self.lock:
             while self.pool:
                 conn_info = self.pool.popleft()
-                try:
+                with suppress(Exception):
                     conn_info.connection.close()
-                except Exception:
-                    ...
             self.active_connections = 0
 
 
@@ -581,7 +579,7 @@ class DatabaseQueryOptimizer:
             else None
         )
         self.pool = ConnectionPool(db_path, max_connections=max_connections)
-        self.query_stats: Dict[str, QueryStats] = {}
+        self.query_stats: dict[str, QueryStats] = {}
         self.lock = threading.Lock()
 
         # SQLAlchemy engine if available
@@ -600,10 +598,10 @@ class DatabaseQueryOptimizer:
     def execute_query(
         self,
         query: str,
-        parameters: Optional[Tuple] = None,
+        parameters: tuple | None = None,
         use_cache: bool = True,
         fetch_all: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Execute a query with optimization.
 
@@ -643,7 +641,7 @@ class DatabaseQueryOptimizer:
                         else []
                     )
                     rows = cursor.fetchall()
-                    results = [dict(zip(columns, row)) for row in rows]
+                    results = [dict(zip(columns, row, strict=False)) for row in rows]
                 else:
                     results = []
 
@@ -664,7 +662,7 @@ class DatabaseQueryOptimizer:
             logger.error(f"Query execution failed: {e}")
             raise
 
-    def _generate_cache_key(self, query: str, parameters: Optional[Tuple]) -> str:
+    def _generate_cache_key(self, query: str, parameters: tuple | None) -> str:
         """Generate cache key for query."""
         key = query
         if parameters:
@@ -681,7 +679,7 @@ class DatabaseQueryOptimizer:
     def create_index(
         self,
         table: str,
-        columns: Union[str, List[str]],
+        columns: str | list[str],
         unique: bool = False,
     ):
         """
@@ -713,7 +711,7 @@ class DatabaseQueryOptimizer:
             logger.error(f"Failed to create index: {e}")
             raise
 
-    def analyze_table(self, table: str) -> Dict[str, Any]:
+    def analyze_table(self, table: str) -> dict[str, Any]:
         """
         Analyze a table for optimization opportunities.
 
@@ -748,7 +746,7 @@ class DatabaseQueryOptimizer:
             logger.error(f"Table analysis failed: {e}")
             return {"table": table, "error": str(e)}
 
-    def get_slow_queries(self, threshold_ms: float = 100.0) -> List[Dict[str, Any]]:
+    def get_slow_queries(self, threshold_ms: float = 100.0) -> list[dict[str, Any]]:
         """
         Get queries that exceed execution time threshold.
 
@@ -779,7 +777,7 @@ class DatabaseQueryOptimizer:
             )
             return slow_queries
 
-    def get_query_stats(self) -> Dict[str, Any]:
+    def get_query_stats(self) -> dict[str, Any]:
         """Get query statistics."""
         with self.lock:
             total_queries = sum(s.execution_count for s in self.query_stats.values())
@@ -846,9 +844,9 @@ def create_query_optimizer(
 
 # Export
 __all__ = [
+    "ConnectionPool",
     "DatabaseQueryOptimizer",
     "QueryCache",
-    "ConnectionPool",
     "QueryStats",
     "create_query_optimizer",
 ]

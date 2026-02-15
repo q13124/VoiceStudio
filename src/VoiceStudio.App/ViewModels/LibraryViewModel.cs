@@ -15,17 +15,24 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.App.Utilities;
 using VoiceStudio.App.Logging;
+using VoiceStudio.Core.Events;
 
 namespace VoiceStudio.App.ViewModels
 {
   /// <summary>
   /// ViewModel for the LibraryView panel - Asset library browser.
+  /// Backend-Frontend Integration Plan - Phase 2: Implements state persistence.
+  /// Panel Workflow Integration: Uses WorkflowCoordinatorService for multi-panel workflows.
   /// </summary>
-  public partial class LibraryViewModel : BaseViewModel, IPanelView
+  public partial class LibraryViewModel : BaseViewModel, IPanelView, IPanelStatePersistable
   {
     private readonly IBackendClient _backendClient;
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly UndoRedoService? _undoRedoService;
+    private readonly IEventAggregator? _eventAggregator;
+    private readonly IContextManager? _contextManager;
+    private readonly IWorkflowCoordinatorService? _workflowCoordinator;
+    private ISubscriptionToken? _profileSelectedToken;
 
     public string PanelId => "library";
     public string DisplayName => ResourceHelper.GetString("Panel.Library.DisplayName", "Library");
@@ -81,6 +88,7 @@ namespace VoiceStudio.App.ViewModels
       // Get optional services using helper (reduces code duplication)
       _toastNotificationService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetToastNotificationService());
       _undoRedoService = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetUndoRedoService());
+      _workflowCoordinator = ServiceInitializationHelper.TryGetService(() => AppServices.TryGetWorkflowCoordinatorService());
 
       LoadFoldersCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -127,6 +135,11 @@ namespace VoiceStudio.App.ViewModels
         await DeleteSelectedAssetsAsync(ct);
       }, () => SelectedAssetCount > 0);
 
+      // Context menu commands (Audit remediation C.2: Clone Reference, Use Voice Now)
+      UseAsCloneReferenceCommand = new RelayCommand<LibraryAsset>(UseAsCloneReference, CanUseAsCloneReference);
+      UseSynthesisVoiceCommand = new RelayCommand<LibraryAsset>(UseSynthesisVoice, CanUseSynthesisVoice);
+      PlayAssetCommand = new RelayCommand<LibraryAsset>(PlayAsset, CanPlayAsset);
+
       // Subscribe to selection changes
       _multiSelectService.SelectionChanged += (_, e) =>
       {
@@ -138,9 +151,58 @@ namespace VoiceStudio.App.ViewModels
         }
       };
 
+      // Initialize EventAggregator and ContextManager for cross-panel coordination
+      _eventAggregator = AppServices.TryGetEventAggregator();
+      _contextManager = AppServices.TryGetContextManager();
+      if (_eventAggregator != null)
+      {
+        _profileSelectedToken = _eventAggregator.Subscribe<ProfileSelectedEvent>(OnProfileSelected);
+
+        // Subscribe to AssetAddedEvent to auto-refresh when audio is imported
+        // (Audit remediation X-1: imported audio visible in Library)
+        _eventAggregator.Subscribe<AssetAddedEvent>(OnAssetAdded);
+
+        // Subscribe to ProfileCreatedEvent to show cloned voice in Library
+        // (Audit remediation X-2: cloned voice output visible in Library)
+        _eventAggregator.Subscribe<ProfileCreatedEvent>(OnProfileCreatedRefresh);
+      }
+
       // Load initial data
       _ = LoadAssetTypesAsync(CancellationToken.None);
       _ = LoadFoldersAsync(CancellationToken.None);
+      _ = LoadAssetsAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Handles profile selection events from other panels.
+    /// Backend-Frontend Integration Plan - Phase 4: Cross-panel synchronization.
+    /// </summary>
+    private void OnProfileSelected(ProfileSelectedEvent e)
+    {
+      // When a profile is selected in ProfilesPanel, filter library to show profile-related assets
+      System.Diagnostics.Debug.WriteLine($"LibraryViewModel: Profile selected - {e.ProfileId} ({e.ProfileName})");
+      // Future enhancement: could filter assets by profile or highlight related items
+    }
+
+    /// <summary>
+    /// Auto-refresh library when an audio asset is added (import, drag-drop, recording).
+    /// Audit remediation X-1: Imported audio now automatically visible in Library.
+    /// </summary>
+    private void OnAssetAdded(AssetAddedEvent e)
+    {
+      System.Diagnostics.Debug.WriteLine(
+          $"LibraryViewModel: Asset added - {e.AssetId} ({e.AssetType}) from {e.SourcePanelId}");
+      _ = LoadAssetsAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Auto-refresh library when a voice profile is created (clone wizard).
+    /// Audit remediation X-2: Cloned voice output now visible in Library.
+    /// </summary>
+    private void OnProfileCreatedRefresh(ProfileCreatedEvent e)
+    {
+      System.Diagnostics.Debug.WriteLine(
+          $"LibraryViewModel: Profile created - {e.ProfileId} ({e.ProfileName}) from {e.SourcePanelId}");
       _ = LoadAssetsAsync(CancellationToken.None);
     }
 
@@ -156,6 +218,11 @@ namespace VoiceStudio.App.ViewModels
     public IRelayCommand SelectAllAssetsCommand { get; }
     public IRelayCommand ClearAssetSelectionCommand { get; }
     public IAsyncRelayCommand DeleteSelectedAssetsCommand { get; }
+
+    // Context menu commands (Audit remediation C.2)
+    public IRelayCommand<LibraryAsset> UseAsCloneReferenceCommand { get; }
+    public IRelayCommand<LibraryAsset> UseSynthesisVoiceCommand { get; }
+    public IRelayCommand<LibraryAsset> PlayAssetCommand { get; }
 
     private async Task LoadFoldersAsync(CancellationToken cancellationToken)
     {
@@ -448,6 +515,33 @@ namespace VoiceStudio.App.ViewModels
       _ = SearchAssetsAsync(CancellationToken.None);
     }
 
+    /// <summary>
+    /// Called when the selected asset changes.
+    /// Backend-Frontend Integration Plan - Phase 4: Publishes asset selection event.
+    /// Panel Architecture Phase 2: Uses ContextManager for centralized state.
+    /// </summary>
+    partial void OnSelectedAssetChanged(LibraryAsset? value)
+    {
+      // Use ContextManager for centralized asset state (preferred path)
+      // Falls back to direct event publishing if context manager unavailable
+      if (value != null)
+      {
+        if (_contextManager != null)
+        {
+          _contextManager.SetActiveAsset(value.Id, value.Type ?? "unknown", value.Name, InteractionIntent.Navigation);
+        }
+        else
+        {
+          _eventAggregator?.Publish(new AssetSelectedEvent(PanelId, value.Id, value.Type ?? "unknown", value.Name));
+        }
+      }
+      else if (_contextManager != null)
+      {
+        // Clear the active asset when deselected
+        _contextManager.SetActiveAsset(null, null, null);
+      }
+    }
+
     private async Task<string?> ShowFolderNameDialogAsync()
     {
       var textBox = new TextBox
@@ -501,6 +595,150 @@ namespace VoiceStudio.App.ViewModels
       // Falls back to null if not set
       return XamlRoot;
     }
+
+    #region Context Menu Commands (Audit remediation C.2)
+
+    /// <summary>
+    /// Use the selected audio asset as a reference for voice cloning.
+    /// Uses WorkflowCoordinatorService for multi-panel workflow orchestration.
+    /// </summary>
+    private async void UseAsCloneReference(LibraryAsset? asset)
+    {
+      if (asset == null) return;
+
+      System.Diagnostics.Debug.WriteLine($"LibraryViewModel: UseAsCloneReference - {asset.Id} ({asset.Name})");
+
+      // Use workflow coordinator for orchestrated multi-panel workflow
+      if (_workflowCoordinator != null)
+      {
+        var context = await _workflowCoordinator.StartCloneFromLibraryAsync(
+          asset.Id,
+          asset.Path,
+          asset.Name,
+          useQuickClone: true);
+
+        if (context.Status == WorkflowStatus.Completed)
+        {
+          _toastNotificationService?.ShowInfo(
+              $"'{asset.Name}' set as clone reference. Quick Clone panel ready.",
+              "Clone Reference Set");
+        }
+        else
+        {
+          _toastNotificationService?.ShowWarning(
+              $"Failed to start clone workflow: {context.ErrorMessage}",
+              "Workflow Error");
+        }
+      }
+      else
+      {
+        // Fallback: Publish event directly
+        _eventAggregator?.Publish(new CloneReferenceSelectedEvent(PanelId, asset.Id, asset.Path, asset.Name));
+        _toastNotificationService?.ShowInfo(
+            $"'{asset.Name}' set as clone reference. Open Quick Clone or Cloning Wizard to continue.",
+            "Clone Reference Set");
+      }
+    }
+
+    private bool CanUseAsCloneReference(LibraryAsset? asset)
+    {
+      // Only audio assets can be used as clone references
+      return asset != null && IsAudioAsset(asset);
+    }
+
+    /// <summary>
+    /// Use the selected voice profile for immediate synthesis.
+    /// Uses WorkflowCoordinatorService for multi-panel workflow orchestration.
+    /// </summary>
+    private async void UseSynthesisVoice(LibraryAsset? asset)
+    {
+      if (asset == null) return;
+
+      System.Diagnostics.Debug.WriteLine($"LibraryViewModel: UseSynthesisVoice - {asset.Id} ({asset.Name})");
+
+      // Use workflow coordinator for orchestrated multi-panel workflow
+      if (_workflowCoordinator != null)
+      {
+        var context = await _workflowCoordinator.StartSynthesizeWithVoiceAsync(
+          asset.Id,
+          asset.Name);
+
+        if (context.Status == WorkflowStatus.Completed)
+        {
+          _toastNotificationService?.ShowInfo(
+              $"'{asset.Name}' selected for synthesis. Synthesis panel ready.",
+              "Voice Selected");
+        }
+        else
+        {
+          _toastNotificationService?.ShowWarning(
+              $"Failed to start synthesis workflow: {context.ErrorMessage}",
+              "Workflow Error");
+        }
+      }
+      else
+      {
+        // Fallback: Publish event directly
+        _eventAggregator?.Publish(new VoiceProfileSelectedEvent(PanelId, asset.Id, asset.Name));
+        _toastNotificationService?.ShowInfo(
+            $"'{asset.Name}' selected for synthesis. Open Synthesis panel to use.",
+            "Voice Selected");
+      }
+    }
+
+    private bool CanUseSynthesisVoice(LibraryAsset? asset)
+    {
+      // Only voice profile assets can be used for synthesis
+      return asset != null && IsVoiceProfileAsset(asset);
+    }
+
+    /// <summary>
+    /// Play the selected audio asset.
+    /// Uses WorkflowCoordinatorService for consistent playback workflow.
+    /// </summary>
+    private async void PlayAsset(LibraryAsset? asset)
+    {
+      if (asset == null) return;
+
+      System.Diagnostics.Debug.WriteLine($"LibraryViewModel: PlayAsset - {asset.Id} ({asset.Name})");
+
+      // Use workflow coordinator for playback
+      if (_workflowCoordinator != null)
+      {
+        await _workflowCoordinator.StartPlayFromLibraryAsync(
+          asset.Id,
+          asset.Path,
+          asset.Name);
+      }
+      else
+      {
+        // Fallback: Publish playback request event directly
+        _eventAggregator?.Publish(new PlaybackRequestedEvent(PanelId, asset.Id, asset.Path, asset.Name));
+      }
+    }
+
+    private bool CanPlayAsset(LibraryAsset? asset)
+    {
+      // Only audio/voice assets can be played
+      return asset != null && (IsAudioAsset(asset) || IsVoiceProfileAsset(asset));
+    }
+
+    private static bool IsAudioAsset(LibraryAsset asset)
+    {
+      var audioTypes = new[] { "audio", "wav", "mp3", "flac", "ogg", "m4a", "recording" };
+      return audioTypes.Contains(asset.Type?.ToLowerInvariant() ?? "") ||
+             asset.Path?.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) == true ||
+             asset.Path?.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) == true ||
+             asset.Path?.EndsWith(".flac", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private static bool IsVoiceProfileAsset(LibraryAsset asset)
+    {
+      var voiceTypes = new[] { "voice", "voice_profile", "profile", "clone", "xtts", "rvc" };
+      return voiceTypes.Contains(asset.Type?.ToLowerInvariant() ?? "");
+    }
+
+    #endregion
 
     // Multi-select methods
     public void ToggleAssetSelection(string assetId, bool isCtrlPressed, bool isShiftPressed)
@@ -691,6 +929,110 @@ namespace VoiceStudio.App.ViewModels
       OnPropertyChanged(nameof(HasMultipleAssetSelection));
       DeleteSelectedAssetsCommand.NotifyCanExecuteChanged();
     }
+
+    #region IPanelStatePersistable Implementation
+
+    /// <summary>
+    /// Gets the current panel state for persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public PanelStateData? GetCurrentState()
+    {
+      try
+      {
+        var state = new PanelStateData
+        {
+          PanelId = PanelId,
+          SelectedItemId = SelectedAsset?.Id,
+          SearchText = SearchQuery,
+          CapturedAt = DateTime.UtcNow,
+          CustomData = new Dictionary<string, object>()
+        };
+
+        // Store folder selection
+        if (SelectedFolder != null)
+          state.CustomData["SelectedFolderId"] = SelectedFolder.Id;
+
+        // Store asset type filter
+        if (!string.IsNullOrEmpty(SelectedAssetType))
+          state.CustomData["SelectedAssetType"] = SelectedAssetType;
+
+        // Store view settings
+        state.CustomData["ShowFolders"] = ShowFolders;
+
+        // Store multi-select state
+        if (_multiSelectState?.SelectedIds.Count > 0)
+          state.SelectedItemIds = _multiSelectState.SelectedIds.ToArray();
+
+        return state;
+      }
+      catch (Exception ex)
+      {
+        // Log state persistence failure silently (non-critical)
+        ErrorLoggingService?.LogWarning($"Failed to get LibraryViewModel state: {ex.Message}", "GetPanelState");
+        return null;
+      }
+    }
+
+    /// <summary>
+    /// Restores panel state from persistence.
+    /// Backend-Frontend Integration Plan - Phase 2.
+    /// </summary>
+    public async Task RestoreStateAsync(PanelStateData state, CancellationToken cancellationToken = default)
+    {
+      if (state == null) return;
+
+      try
+      {
+        // Restore search query
+        if (!string.IsNullOrEmpty(state.SearchText))
+          SearchQuery = state.SearchText;
+
+        // Restore asset type filter
+        if (state.CustomData?.TryGetValue("SelectedAssetType", out var assetType) == true && assetType is string assetTypeStr)
+          SelectedAssetType = assetTypeStr;
+
+        // Restore view settings
+        if (state.CustomData?.TryGetValue("ShowFolders", out var showFolders) == true && showFolders is bool showFoldersBool)
+          ShowFolders = showFoldersBool;
+
+        // Restore folder selection (need to wait for folders to load)
+        if (state.CustomData?.TryGetValue("SelectedFolderId", out var folderId) == true && folderId is string folderIdStr)
+        {
+          var folder = Folders.FirstOrDefault(f => f.Id == folderIdStr);
+          if (folder != null)
+            SelectedFolder = folder;
+        }
+
+        // Restore asset selection (need to wait for assets to load)
+        if (!string.IsNullOrEmpty(state.SelectedItemId))
+        {
+          var asset = Assets.FirstOrDefault(a => a.Id == state.SelectedItemId);
+          if (asset != null)
+            SelectedAsset = asset;
+        }
+
+        // Restore multi-select state
+        if (state.SelectedItemIds?.Length > 0 && _multiSelectState != null)
+        {
+          foreach (var id in state.SelectedItemIds)
+          {
+            _multiSelectState.Add(id);
+          }
+          _multiSelectService.OnSelectionChanged(PanelId, _multiSelectState);
+          UpdateAssetSelectionProperties();
+        }
+
+        await Task.CompletedTask;
+      }
+      catch (Exception ex)
+      {
+        // Log state restoration failure silently (non-critical)
+        ErrorLoggingService?.LogWarning($"Failed to restore LibraryViewModel state: {ex.Message}", "RestoreState");
+      }
+    }
+
+    #endregion
 
     // Response models
     private class LibraryFoldersResponse

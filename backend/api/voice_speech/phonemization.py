@@ -4,7 +4,6 @@ Integrates phonemizer and gruut libraries for text-to-phoneme conversion.
 """
 
 import logging
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ class Phonemizer:
         self,
         text: str,
         language: str = "en-us",
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Convert text to phonemes using gruut library.
 
@@ -122,7 +121,7 @@ class Phonemizer:
             logger.error(f"Error in gruut phonemization: {e}", exc_info=True)
             raise
 
-    def get_available_backends(self) -> List[str]:
+    def get_available_backends(self) -> list[str]:
         """
         Get list of available phonemization backends.
 

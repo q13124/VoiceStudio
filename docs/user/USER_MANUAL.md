@@ -135,27 +135,29 @@ Press **Ctrl+P** to open the command palette. Search for any command or feature.
 
 ### Panel State Persistence and Workspace Profiles
 
-VoiceStudio remembers your panel layout and selections for each project.
+VoiceStudio remembers your panel layout and selections. Switching workspaces changes which panels appear in each region (left, center, right, bottom).
 
-**Workspace Profiles:**
-- **Default Profile:** Standard layout for general use
-- **Custom Profiles:** Create custom layouts for specific workflows
-  - Recording: Optimized for recording workflows
-  - Mixing: Optimized for mixing and effects
-  - Analysis: Optimized for audio analysis
-  - Custom: Your own custom layouts
+**Workspace dropdown (toolbar):** Use the **Workspace** combo in the Command Deck to switch between:
+
+- **Studio** — Default layout (e.g. Profiles, Timeline, Effects, Macro)
+- **Recording** — Recording-focused panels
+- **Mixing** — Mixing and effects workflow
+- **Synthesis** — Voice synthesis and script editing
+- **Training** — Model training and dataset panels
+- **Analysis** — Audio analysis and diagnostics
+- **Batch Lab** — Batch processing workflow
+- **Pro Mix** — Advanced mixing layout
+
+Selecting a workspace applies its layout immediately; the layout is saved per workspace and persists when you close and reopen the app.
 
 **Using Workspace Profiles:**
-1. Arrange panels as desired
-2. Open **Settings > Workspace Profiles**
-3. Click **"Save Current Layout"**
-4. Enter profile name
-5. Layout saved automatically
+1. Choose a workspace from the toolbar dropdown, or arrange panels as desired and save (see Settings).
+2. Open **Settings > Workspace Profiles** to save or manage custom layouts.
+3. Layout restores automatically when you switch workspace or reopen the app.
 
 **Switching Profiles:**
-- Select profile from **Settings > Workspace Profiles**
-- Or use command palette (Ctrl+P) → "Switch Workspace Profile"
-- Layout restores automatically
+- Select a workspace from the **Workspace** dropdown in the toolbar (fastest), or
+- Use **Settings > Workspace Profiles** or command palette (Ctrl+P) → "Switch Workspace Profile"
 
 **Project-Specific Layouts:**
 - Each project remembers its own panel layout
@@ -2236,13 +2238,13 @@ Configure VoiceStudio to your preferences.
 ### Workspace Settings
 
 **Panel State Persistence:**
-VoiceStudio can save and restore your workspace layout, including panel positions, sizes, and states.
+VoiceStudio saves and restores your workspace layout (panel positions, sizes, and which panels are open in each region). Workspace profiles are stored under `%LocalAppData%/VoiceStudio/WorkspaceProfiles/`. When a workspace has no saved file or an empty layout, the app uses a built-in layout from embedded resources (e.g. Studio, Recording, Training).
 
 **Workspace Profiles:**
-- **Save Workspace:** Save current panel layout as a profile
-- **Load Workspace:** Restore a saved workspace profile
-- **Default Profile:** Auto-created profile that saves automatically
-- **Custom Profiles:** Create named profiles for different workflows
+- **Toolbar dropdown:** Switch workspace instantly via the Workspace combo in the Command Deck (Studio, Recording, Mixing, Synthesis, Training, Analysis, Batch Lab, Pro Mix).
+- **Save Workspace:** Save current panel layout as a profile (Settings or after customizing).
+- **Load Workspace:** Restore a saved workspace profile; or select from the toolbar dropdown.
+- **Default (first run):** The Studio workspace and its embedded layout load when no saved layout exists.
 
 **What Gets Saved:**
 - Panel positions and sizes

@@ -5,13 +5,11 @@ Common operations and utilities for WinAppDriver UI tests.
 """
 
 import time
-from typing import List, Optional, Tuple
 from dataclasses import dataclass
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
-
+from selenium.webdriver.support.ui import WebDriverWait
 
 # =============================================================================
 # Panel Configuration
@@ -54,10 +52,10 @@ ALL_PANELS = CORE_PANELS + EXTENDED_PANELS
 
 class ElementHelper:
     """Helper class for element operations."""
-    
+
     def __init__(self, driver):
         self.driver = driver
-    
+
     def find_by_id(self, automation_id: str, timeout: int = 10):
         """Find element by AutomationId."""
         try:
@@ -67,7 +65,7 @@ class ElementHelper:
             )
         except TimeoutException:
             return None
-    
+
     def click_button(self, automation_id: str, wait_after: float = 0.5) -> bool:
         """Click a button by AutomationId."""
         element = self.find_by_id(automation_id)
@@ -76,12 +74,12 @@ class ElementHelper:
             time.sleep(wait_after)
             return True
         return False
-    
-    def get_text(self, automation_id: str) -> Optional[str]:
+
+    def get_text(self, automation_id: str) -> str | None:
         """Get text content of an element."""
         element = self.find_by_id(automation_id)
         return element.text if element else None
-    
+
     def is_visible(self, automation_id: str, timeout: int = 5) -> bool:
         """Check if element is visible."""
         try:
@@ -89,8 +87,8 @@ class ElementHelper:
             return element is not None and element.is_displayed()
         except Exception:
             return False
-    
-    def wait_for_condition(self, condition_fn, timeout: int = 10, 
+
+    def wait_for_condition(self, condition_fn, timeout: int = 10,
                            poll_interval: float = 0.5) -> bool:
         """Wait for a custom condition to be true."""
         start = time.time()
@@ -103,8 +101,8 @@ class ElementHelper:
                 pass
             time.sleep(poll_interval)
         return False
-    
-    def get_children(self, parent_id: str) -> List:
+
+    def get_children(self, parent_id: str) -> list:
         """Get child elements of a parent."""
         parent = self.find_by_id(parent_id)
         if parent:
@@ -118,32 +116,32 @@ class ElementHelper:
 
 class NavigationHelper:
     """Helper class for navigation operations."""
-    
+
     def __init__(self, driver):
         self.driver = driver
         self.element = ElementHelper(driver)
-    
+
     def navigate_to_panel(self, panel: PanelConfig) -> bool:
         """Navigate to a specific panel."""
         if not self.element.click_button(panel.nav_button_id):
             return False
         return self.element.is_visible(panel.view_root_id, panel.load_timeout)
-    
+
     def navigate_to_panel_by_name(self, name: str) -> bool:
         """Navigate to a panel by its name."""
         panel = next((p for p in ALL_PANELS if p.name == name), None)
         if panel:
             return self.navigate_to_panel(panel)
         return False
-    
-    def get_current_panel(self) -> Optional[str]:
+
+    def get_current_panel(self) -> str | None:
         """Get the currently active panel."""
         for panel in ALL_PANELS:
             if self.element.is_visible(panel.view_root_id, timeout=1):
                 return panel.name
         return None
-    
-    def cycle_all_panels(self) -> List[Tuple[str, bool]]:
+
+    def cycle_all_panels(self) -> list[tuple[str, bool]]:
         """Navigate through all panels and return results."""
         results = []
         for panel in ALL_PANELS:
@@ -158,12 +156,12 @@ class NavigationHelper:
 
 class FormHelper:
     """Helper class for form interactions."""
-    
+
     def __init__(self, driver):
         self.driver = driver
         self.element = ElementHelper(driver)
-    
-    def fill_text_field(self, automation_id: str, text: str, 
+
+    def fill_text_field(self, automation_id: str, text: str,
                         clear_first: bool = True) -> bool:
         """Fill a text field."""
         element = self.element.find_by_id(automation_id)
@@ -173,18 +171,18 @@ class FormHelper:
             element.send_keys(text)
             return True
         return False
-    
+
     def toggle_checkbox(self, automation_id: str) -> bool:
         """Toggle a checkbox."""
         return self.element.click_button(automation_id)
-    
+
     def select_dropdown_item(self, dropdown_id: str, item_id: str) -> bool:
         """Select an item from a dropdown."""
         if not self.element.click_button(dropdown_id):
             return False
         time.sleep(0.3)  # Wait for dropdown to open
         return self.element.click_button(item_id)
-    
+
     def submit_form(self, submit_button_id: str) -> bool:
         """Submit a form by clicking submit button."""
         return self.element.click_button(submit_button_id)
@@ -194,21 +192,21 @@ class FormHelper:
 # Assertion Helpers
 # =============================================================================
 
-def assert_element_visible(driver, automation_id: str, message: str = None):
+def assert_element_visible(driver, automation_id: str, message: str | None = None):
     """Assert that an element is visible."""
     helper = ElementHelper(driver)
     assert helper.is_visible(automation_id), \
         message or f"Element '{automation_id}' should be visible"
 
 
-def assert_element_not_visible(driver, automation_id: str, message: str = None):
+def assert_element_not_visible(driver, automation_id: str, message: str | None = None):
     """Assert that an element is not visible."""
     helper = ElementHelper(driver)
     assert not helper.is_visible(automation_id, timeout=2), \
         message or f"Element '{automation_id}' should not be visible"
 
 
-def assert_text_equals(driver, automation_id: str, expected: str, message: str = None):
+def assert_text_equals(driver, automation_id: str, expected: str, message: str | None = None):
     """Assert that element text equals expected value."""
     helper = ElementHelper(driver)
     actual = helper.get_text(automation_id)
@@ -216,9 +214,9 @@ def assert_text_equals(driver, automation_id: str, expected: str, message: str =
         message or f"Expected text '{expected}' but got '{actual}'"
 
 
-def assert_panel_loaded(driver, panel: PanelConfig, message: str = None):
+def assert_panel_loaded(driver, panel: PanelConfig, message: str | None = None):
     """Assert that a panel has loaded."""
-    assert_element_visible(driver, panel.view_root_id, 
+    assert_element_visible(driver, panel.view_root_id,
         message or f"Panel '{panel.name}' should be loaded")
 
 

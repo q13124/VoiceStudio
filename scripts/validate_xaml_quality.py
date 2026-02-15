@@ -28,7 +28,6 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
 # Project root detection
@@ -51,8 +50,8 @@ class CheckResult:
     name: str
     passed: bool
     message: str
-    details: List[str] = field(default_factory=list)
-    
+    details: list[str] = field(default_factory=list)
+
     def to_dict(self) -> dict:
         return {
             "name": self.name,
@@ -67,13 +66,13 @@ class QualityReport:
     """Overall XAML quality report."""
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     passed: bool = True
-    checks: List[CheckResult] = field(default_factory=list)
-    
+    checks: list[CheckResult] = field(default_factory=list)
+
     def add_check(self, result: CheckResult):
         self.checks.append(result)
         if not result.passed:
             self.passed = False
-    
+
     def to_dict(self) -> dict:
         return {
             "timestamp": self.timestamp,
@@ -102,7 +101,7 @@ RESOURCE_REF_PATTERN = re.compile(r'\{(?:Static|Theme)Resource\s+(VSQ\.[A-Za-z0-
 def check_resources(project_root: Path, verbose: bool = False) -> CheckResult:
     """Validate that all VSQ.* StaticResource references are defined."""
     # Collect defined resources
-    defined: Dict[str, Path] = {}
+    defined: dict[str, Path] = {}
     for res_dir in RESOURCE_DIRS:
         res_path = project_root / res_dir
         if not res_path.exists():
@@ -112,11 +111,11 @@ def check_resources(project_root: Path, verbose: bool = False) -> CheckResult:
                 content = xaml_file.read_text(encoding="utf-8")
                 for match in RESOURCE_DEF_PATTERN.finditer(content):
                     defined[match.group(1)] = xaml_file
-            except (IOError, UnicodeDecodeError):
+            except (OSError, UnicodeDecodeError):
                 pass
-    
+
     # Collect referenced resources
-    referenced: Dict[str, List[Tuple[Path, int]]] = {}
+    referenced: dict[str, list[tuple[Path, int]]] = {}
     for xaml_dir in XAML_SCAN_DIRS:
         dir_path = project_root / xaml_dir
         if not dir_path.exists():
@@ -130,12 +129,12 @@ def check_resources(project_root: Path, verbose: bool = False) -> CheckResult:
                         if key not in referenced:
                             referenced[key] = []
                         referenced[key].append((xaml_file, i))
-            except (IOError, UnicodeDecodeError):
+            except (OSError, UnicodeDecodeError):
                 pass
-    
+
     # Find missing resources
     missing = set(referenced.keys()) - set(defined.keys())
-    
+
     details = []
     if verbose:
         for key in sorted(missing)[:10]:
@@ -144,7 +143,7 @@ def check_resources(project_root: Path, verbose: bool = False) -> CheckResult:
             details.append(f"  Missing: {key} (used in: {', '.join(loc_strs)})")
         if len(missing) > 10:
             details.append(f"  ... and {len(missing) - 10} more")
-    
+
     if missing:
         return CheckResult(
             name="resources",
@@ -152,7 +151,7 @@ def check_resources(project_root: Path, verbose: bool = False) -> CheckResult:
             message=f"Found {len(missing)} undefined VSQ.* resources",
             details=details
         )
-    
+
     return CheckResult(
         name="resources",
         passed=True,
@@ -182,7 +181,7 @@ def count_xaml_pages(project_dir: Path) -> int:
             content = xaml_file.read_text(encoding="utf-8")[:500]
             if "<ResourceDictionary" not in content:
                 count += 1
-        except (IOError, UnicodeDecodeError):
+        except (OSError, UnicodeDecodeError):
             count += 1  # Conservative: count unreadable files
     return count
 
@@ -196,24 +195,24 @@ def check_page_count(project_root: Path, verbose: bool = False) -> CheckResult:
             passed=True,
             message="No src directory found"
         )
-    
+
     violations = []
     details = []
-    
+
     for project, threshold in PAGE_THRESHOLDS.items():
         path = src_dir / project
         if not path.exists():
             continue
-        
+
         count = count_xaml_pages(path)
         status = "PASS" if count <= threshold else "FAIL"
-        
+
         if verbose or count > threshold:
             details.append(f"  {project}: {count}/{threshold} [{status}]")
-        
+
         if count > threshold:
             violations.append((project, count, threshold))
-    
+
     if violations:
         return CheckResult(
             name="pages",
@@ -221,7 +220,7 @@ def check_page_count(project_root: Path, verbose: bool = False) -> CheckResult:
             message=f"{len(violations)} projects exceed XAML page thresholds",
             details=details
         )
-    
+
     return CheckResult(
         name="pages",
         passed=True,
@@ -252,43 +251,43 @@ def check_naming(project_root: Path, verbose: bool = False) -> CheckResult:
     """Check XAML file naming conventions."""
     violations = []
     checked = 0
-    
+
     for xaml_dir in NAMING_CONVENTION_DIRS:
         dir_path = project_root / xaml_dir
         if not dir_path.exists():
             continue
-        
+
         for xaml_file in dir_path.rglob("*.xaml"):
             # Skip resource dictionaries and App.xaml
             if xaml_file.name in ("App.xaml",):
                 continue
-            
+
             try:
                 content = xaml_file.read_text(encoding="utf-8")[:500]
                 if "<ResourceDictionary" in content:
                     continue
-            except (IOError, UnicodeDecodeError):
+            except (OSError, UnicodeDecodeError):
                 continue
-            
+
             checked += 1
-            
+
             # Check if file matches any expected pattern
             matches_pattern = False
-            for pattern_name, pattern in NAMING_PATTERNS.items():
+            for _pattern_name, pattern in NAMING_PATTERNS.items():
                 if re.match(pattern, xaml_file.name, re.IGNORECASE):
                     matches_pattern = True
                     break
-            
+
             if not matches_pattern:
                 violations.append(xaml_file)
-    
+
     details = []
     if violations:
         for f in violations[:10]:
             details.append(f"  Non-standard name: {f.name}")
         if len(violations) > 10:
             details.append(f"  ... and {len(violations) - 10} more")
-    
+
     if violations:
         return CheckResult(
             name="naming",
@@ -296,7 +295,7 @@ def check_naming(project_root: Path, verbose: bool = False) -> CheckResult:
             message=f"{len(violations)} files don't follow naming conventions",
             details=details
         )
-    
+
     return CheckResult(
         name="naming",
         passed=True,
@@ -330,23 +329,23 @@ def check_accessibility(project_root: Path, verbose: bool = False) -> CheckResul
     checked_files = 0
     total_elements = 0
     elements_with_uid = 0
-    
+
     for xaml_dir in XAML_SCAN_DIRS:
         dir_path = project_root / xaml_dir
         if not dir_path.exists():
             continue
-        
+
         for xaml_file in dir_path.rglob("*.xaml"):
             try:
                 content = xaml_file.read_text(encoding="utf-8")
-            except (IOError, UnicodeDecodeError):
+            except (OSError, UnicodeDecodeError):
                 continue
-            
+
             if "<ResourceDictionary" in content[:500]:
                 continue
-            
+
             checked_files += 1
-            
+
             # Find accessible elements
             for match in ELEMENT_PATTERN.finditer(content):
                 total_elements += 1
@@ -354,7 +353,7 @@ def check_accessibility(project_root: Path, verbose: bool = False) -> CheckResul
                 start = max(0, match.start() - 10)
                 end = min(len(content), match.end() + 100)
                 context = content[start:end]
-                
+
                 if X_UID_PATTERN.search(context):
                     elements_with_uid += 1
                 else:
@@ -362,16 +361,16 @@ def check_accessibility(project_root: Path, verbose: bool = False) -> CheckResul
                     if len(issues) < 20:
                         line_num = content[:match.start()].count('\n') + 1
                         issues.append((xaml_file.name, line_num, match.group(1)))
-    
+
     coverage = (elements_with_uid / total_elements * 100) if total_elements > 0 else 100
-    
+
     details = []
     if verbose and issues:
         for file_name, line_num, element in issues[:10]:
             details.append(f"  {file_name}:{line_num} - <{element}> missing x:Uid")
         if len(issues) > 10:
             details.append(f"  ... and {len(issues) - 10} more")
-    
+
     # We don't fail for accessibility - it's informational
     return CheckResult(
         name="accessibility",
@@ -418,26 +417,26 @@ def main() -> int:
         type=str,
         help="Output file path"
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         project_root = get_project_root()
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    
+
     # Determine which checks to run
     checks_to_run = args.check if args.check else list(ALL_CHECKS.keys())
-    
+
     # Run checks
     report = QualityReport()
-    
+
     for check_name in checks_to_run:
         check_fn = ALL_CHECKS[check_name]
         result = check_fn(project_root, verbose=args.verbose)
         report.add_check(result)
-    
+
     # Generate output
     if args.json:
         output = json.dumps(report.to_dict(), indent=2)
@@ -448,14 +447,14 @@ def main() -> int:
             "=" * 60,
             "",
         ]
-        
+
         for check in report.checks:
             status = "[PASS]" if check.passed else "[FAIL]"
             lines.append(f"{status} {check.name}: {check.message}")
             for detail in check.details:
                 lines.append(detail)
             lines.append("")
-        
+
         lines.append("=" * 60)
         if report.passed:
             lines.append("Overall: PASS - All checks passed")
@@ -463,9 +462,9 @@ def main() -> int:
             failed = [c.name for c in report.checks if not c.passed]
             lines.append(f"Overall: FAIL - Failed checks: {', '.join(failed)}")
         lines.append("=" * 60)
-        
+
         output = "\n".join(lines)
-    
+
     # Output results
     if args.output:
         output_path = Path(args.output)
@@ -474,13 +473,13 @@ def main() -> int:
         print(f"Report written to: {args.output}", file=sys.stderr)
     else:
         print(output)
-    
+
     # Also save JSON to buildlogs
     buildlogs_dir = project_root / ".buildlogs"
     buildlogs_dir.mkdir(exist_ok=True)
     json_path = buildlogs_dir / "xaml-quality.json"
     json_path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
-    
+
     return 0 if report.passed else 1
 
 

@@ -5,13 +5,15 @@ Matches issues against learned failure patterns for recommendation generation.
 Supports simple word-overlap and TF-IDF scoring for better precision.
 """
 
+from __future__ import annotations
+
 import math
 import os
 import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from tools.overseer.issues.config import MAX_LEARNED_PATTERNS
 from tools.overseer.issues.models import Issue
@@ -24,11 +26,11 @@ class FailurePattern:
     pattern: str
     normalized_message: str
     message_snippet: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
     timestamp: str
-    issue_id: Optional[str] = None
+    issue_id: str | None = None
     resolution_confirmed: bool = False
-    fix_id: Optional[str] = None
+    fix_id: str | None = None
     resolution_strategy: str = ""
 
 
@@ -45,7 +47,7 @@ def _normalize_message(message: str) -> str:
     return s[:500]
 
 
-def _tokenize(text: str) -> List[str]:
+def _tokenize(text: str) -> list[str]:
     """Normalize and tokenize text into words."""
     norm = _normalize_message(text)
     return [w for w in norm.split() if w]
@@ -58,7 +60,7 @@ _STACK_FILE_LINE = re.compile(
 )
 
 
-def extract_stack_frames(text: str) -> List[str]:
+def extract_stack_frames(text: str) -> list[str]:
     """
     Extract stack trace frame identifiers from traceback/stack text.
     Returns list of normalized frame strings: "filename:line" or "filename:line:func".
@@ -66,7 +68,7 @@ def extract_stack_frames(text: str) -> List[str]:
     """
     if not text or not isinstance(text, str):
         return []
-    frames: List[str] = []
+    frames: list[str] = []
     for m in _STACK_FILE_LINE.finditer(text):
         path1, path2, line1, line2 = m.groups()
         path = (path1 or path2 or "").strip()
@@ -83,7 +85,7 @@ def extract_stack_frames(text: str) -> List[str]:
     return frames[:50]
 
 
-def stack_frame_similarity(frames_a: List[str], frames_b: List[str]) -> float:
+def stack_frame_similarity(frames_a: list[str], frames_b: list[str]) -> float:
     """
     Similarity between two lists of stack frames (0.0-1.0).
     Uses Jaccard on frame set and optionally sequence overlap.
@@ -121,7 +123,7 @@ def _simple_similarity(a: str, b: str) -> float:
     return round(overlap, 4)
 
 
-def _tfidf_similarity(msg_a: str, msg_b: str, corpus: Optional[List[str]] = None) -> float:
+def _tfidf_similarity(msg_a: str, msg_b: str, corpus: list[str] | None = None) -> float:
     """
     TF-IDF-weighted similarity between two messages (0.0-1.0).
     Uses corpus for IDF when provided; otherwise uses [msg_a, msg_b].
@@ -136,7 +138,7 @@ def _tfidf_similarity(msg_a: str, msg_b: str, corpus: Optional[List[str]] = None
     doc_freq: Counter[str] = Counter()
     for doc in corpus:
         doc_freq.update(set(_tokenize(doc)))
-    idf: Dict[str, float] = {}
+    idf: dict[str, float] = {}
     for term, df in doc_freq.items():
         idf[term] = math.log((n_docs + 1) / (df + 1)) + 1.0
     tf_a: Counter[str] = Counter(tokens_a)
@@ -153,10 +155,10 @@ def _tfidf_similarity(msg_a: str, msg_b: str, corpus: Optional[List[str]] = None
 
 
 def load_learned_patterns(
-    patterns_path: Optional[Path] = None,
-    root: Optional[Path] = None,
-    limit: Optional[int] = None,
-) -> List[FailurePattern]:
+    patterns_path: Path | None = None,
+    root: Path | None = None,
+    limit: int | None = None,
+) -> list[FailurePattern]:
     """
     Load learned patterns from failure_analyzer JSONL.
 
@@ -195,7 +197,7 @@ def load_learned_patterns(
     return result
 
 
-def _issue_stack_frames(issue: Issue) -> List[str]:
+def _issue_stack_frames(issue: Issue) -> list[str]:
     """Extract stack frames from issue context (stack, traceback, error_stack)."""
     ctx = issue.context or {}
     for key in ("stack", "traceback", "error_stack"):
@@ -208,11 +210,11 @@ def _issue_stack_frames(issue: Issue) -> List[str]:
 
 def match_patterns(
     issue: Issue,
-    learned: Optional[List[FailurePattern]] = None,
+    learned: list[FailurePattern] | None = None,
     threshold: float = 0.5,
     use_tfidf: bool = True,
     use_stack_boost: bool = True,
-) -> List[Tuple[FailurePattern, float]]:
+) -> list[tuple[FailurePattern, float]]:
     """
     Find learned patterns similar to this issue.
 
@@ -225,7 +227,7 @@ def match_patterns(
     """
     if learned is None:
         learned = load_learned_patterns(limit=200)
-    corpus: Optional[List[str]] = None
+    corpus: list[str] | None = None
     if use_tfidf and len(learned) > 0:
         corpus = [issue.message] + [fp.message_snippet for fp in learned]
     issue_frames = _issue_stack_frames(issue) if use_stack_boost else []

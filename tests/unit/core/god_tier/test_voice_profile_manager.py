@@ -5,7 +5,6 @@ Tests voice profile management functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestVoiceProfileManagerClasses:
     def test_voice_profile_manager_class_exists(self):
         """Test VoiceProfileManager class exists."""
         if hasattr(voice_profile_manager, "VoiceProfileManager"):
-            cls = getattr(voice_profile_manager, "VoiceProfileManager")
+            cls = voice_profile_manager.VoiceProfileManager
             assert isinstance(cls, type), "VoiceProfileManager should be a class"
 
 

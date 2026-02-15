@@ -5,15 +5,20 @@ Provides API endpoints for SLO status, alerts, and management.
 All operations are local-first and require no external dependencies.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.services.slo_monitor import (
-    SLOStatus as SLOStatusModel,
     SLOAlert as SLOAlertModel,
+)
+from backend.services.slo_monitor import (
+    SLOStatus as SLOStatusModel,
+)
+from backend.services.slo_monitor import (
     get_slo_monitor,
 )
 
@@ -29,13 +34,13 @@ router = APIRouter(prefix="/api/slo", tags=["slo"])
 
 class SLOStatusResponse(BaseModel):
     """Response model for SLO status."""
-    
+
     slo_id: str
     slo_name: str
     target: float
     current_value: float
     is_met: bool
-    alert_severity: Optional[str] = None
+    alert_severity: str | None = None
     window_hours: int
     sample_count: int
     last_updated: str
@@ -45,7 +50,7 @@ class SLOStatusResponse(BaseModel):
 
 class SLOAlertResponse(BaseModel):
     """Response model for SLO alert."""
-    
+
     alert_id: str
     slo_id: str
     slo_name: str
@@ -55,15 +60,15 @@ class SLOAlertResponse(BaseModel):
     target: float
     timestamp: str
     acknowledged: bool
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[str] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: str | None = None
     resolved: bool
-    resolved_at: Optional[str] = None
+    resolved_at: str | None = None
 
 
 class SLOOverviewResponse(BaseModel):
     """Response model for SLO overview."""
-    
+
     overall_health: str
     total_slos: int
     slos_met: int
@@ -75,27 +80,27 @@ class SLOOverviewResponse(BaseModel):
 
 class SLOListResponse(BaseModel):
     """Response model for SLO list."""
-    
+
     overview: SLOOverviewResponse
-    slos: List[SLOStatusResponse]
+    slos: list[SLOStatusResponse]
 
 
 class AlertListResponse(BaseModel):
     """Response model for alert list."""
-    
+
     active_count: int
-    alerts: List[SLOAlertResponse]
+    alerts: list[SLOAlertResponse]
 
 
 class AcknowledgeRequest(BaseModel):
     """Request model for acknowledging an alert."""
-    
+
     acknowledged_by: str = "api"
 
 
 class AcknowledgeResponse(BaseModel):
     """Response model for acknowledge operation."""
-    
+
     success: bool
     alert_id: str
     message: str
@@ -103,7 +108,7 @@ class AcknowledgeResponse(BaseModel):
 
 class ExportResponse(BaseModel):
     """Response model for export operation."""
-    
+
     success: bool
     filepath: str
     message: str
@@ -159,18 +164,18 @@ def _convert_alert(alert: SLOAlertModel) -> SLOAlertResponse:
 async def get_all_slos():
     """
     Get all SLO statuses with overview.
-    
+
     Returns current status of all defined SLOs along with an overview summary.
     """
     try:
         monitor = get_slo_monitor()
         statuses = monitor.get_all_slo_statuses()
         active_alerts = monitor.get_active_alerts()
-        
+
         met_count = sum(1 for s in statuses if s.is_met)
         critical_count = sum(1 for a in active_alerts if a.severity.value == "critical")
         warning_count = sum(1 for a in active_alerts if a.severity.value == "warning")
-        
+
         overview = SLOOverviewResponse(
             overall_health=monitor.get_overall_health(),
             total_slos=len(statuses),
@@ -180,7 +185,7 @@ async def get_all_slos():
             critical_alerts=critical_count,
             warning_alerts=warning_count,
         )
-        
+
         return SLOListResponse(
             overview=overview,
             slos=[_convert_status(s) for s in statuses],
@@ -194,14 +199,14 @@ async def get_all_slos():
 async def get_slo_health():
     """
     Get overall SLO health status.
-    
+
     Returns a simple health indicator: "healthy", "degraded", or "unhealthy".
     """
     try:
         monitor = get_slo_monitor()
         return {
             "status": monitor.get_overall_health(),
-            "timestamp": monitor.get_all_slo_statuses()[0].last_updated 
+            "timestamp": monitor.get_all_slo_statuses()[0].last_updated
                 if monitor.get_all_slo_statuses() else None,
         }
     except Exception as e:
@@ -213,20 +218,20 @@ async def get_slo_health():
 async def get_slo_status(slo_id: str):
     """
     Get status of a specific SLO.
-    
+
     Args:
         slo_id: The SLO identifier
-        
+
     Returns:
         Current status of the specified SLO
     """
     try:
         monitor = get_slo_monitor()
         status = monitor.get_slo_status(slo_id)
-        
+
         if not status:
             raise HTTPException(status_code=404, detail=f"SLO {slo_id} not found")
-        
+
         return _convert_status(status)
     except HTTPException:
         raise
@@ -239,13 +244,13 @@ async def get_slo_status(slo_id: str):
 async def get_active_alerts():
     """
     Get all active (unresolved) alerts.
-    
+
     Returns list of alerts that have not been resolved.
     """
     try:
         monitor = get_slo_monitor()
         alerts = monitor.get_active_alerts()
-        
+
         return AlertListResponse(
             active_count=len(alerts),
             alerts=[_convert_alert(a) for a in alerts],
@@ -258,17 +263,17 @@ async def get_active_alerts():
 @router.get("/alerts/history", response_model=AlertListResponse)
 async def get_alert_history(
     limit: int = Query(100, ge=1, le=1000, description="Maximum alerts to return"),
-    slo_id: Optional[str] = Query(None, description="Filter by SLO ID"),
+    slo_id: str | None = Query(None, description="Filter by SLO ID"),
 ):
     """
     Get alert history.
-    
+
     Returns historical alerts including both active and resolved.
     """
     try:
         monitor = get_slo_monitor()
         alerts = monitor.get_alert_history(limit=limit, slo_id=slo_id)
-        
+
         return AlertListResponse(
             active_count=sum(1 for a in alerts if not a.resolved),
             alerts=[_convert_alert(a) for a in alerts],
@@ -285,13 +290,13 @@ async def acknowledge_alert(
 ):
     """
     Acknowledge an alert.
-    
+
     Acknowledging an alert indicates it has been seen and is being addressed.
     """
     try:
         monitor = get_slo_monitor()
         success = monitor.acknowledge_alert(alert_id, request.acknowledged_by)
-        
+
         if success:
             return AcknowledgeResponse(
                 success=True,
@@ -300,7 +305,7 @@ async def acknowledge_alert(
             )
         else:
             raise HTTPException(
-                status_code=404, 
+                status_code=404,
                 detail=f"Alert {alert_id} not found or already acknowledged"
             )
     except HTTPException:
@@ -314,13 +319,13 @@ async def acknowledge_alert(
 async def export_slo_status():
     """
     Export current SLO status to a JSON file.
-    
+
     The file is saved to .buildlogs/slo/ directory.
     """
     try:
         monitor = get_slo_monitor()
         filepath = monitor.export_status()
-        
+
         return ExportResponse(
             success=True,
             filepath=str(filepath),
@@ -338,14 +343,14 @@ async def record_metric(
 ):
     """
     Record a metric value for SLO tracking.
-    
+
     This endpoint allows external systems to record metrics that are
     tracked by SLOs.
     """
     try:
         monitor = get_slo_monitor()
         monitor.record_metric(metric_name, value)
-        
+
         return {
             "success": True,
             "metric_name": metric_name,

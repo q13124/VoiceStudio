@@ -5,6 +5,8 @@ Provides caching, compression, pagination, and async processing
 for FastAPI endpoints to achieve 50%+ response time improvement.
 """
 
+from __future__ import annotations
+
 import functools
 import gzip
 import hashlib
@@ -13,7 +15,8 @@ import json
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -42,11 +45,11 @@ class ResponseCache:
         self.cache: OrderedDict = OrderedDict()
         self.max_size = max_size
         self.default_ttl = default_ttl
-        self.timestamps: Dict[str, float] = {}
-        self.ttls: Dict[str, int] = {}
+        self.timestamps: dict[str, float] = {}
+        self.ttls: dict[str, int] = {}
 
     def _generate_key(
-        self, path: str, query_params: str, body: Optional[bytes] = None
+        self, path: str, query_params: str, body: bytes | None = None
     ) -> str:
         """Generate cache key from request."""
         key_data = f"{path}?{query_params}"
@@ -54,7 +57,7 @@ class ResponseCache:
             key_data += body.hex()
         return hashlib.md5(key_data.encode()).hexdigest()
 
-    def get(self, key: str) -> Optional[Tuple[Any, Dict[str, str]]]:
+    def get(self, key: str) -> tuple[Any, dict[str, str]] | None:
         """
         Get cached response if available and not expired.
 
@@ -87,8 +90,8 @@ class ResponseCache:
         self,
         key: str,
         response_data: Any,
-        headers: Dict[str, str],
-        ttl: Optional[int] = None,
+        headers: dict[str, str],
+        ttl: int | None = None,
     ):
         """
         Cache response.
@@ -127,7 +130,7 @@ class ResponseCache:
 _response_cache = ResponseCache(max_size=_MAX_CACHE_SIZE, default_ttl=_CACHE_TTL)
 
 
-def cache_response(ttl: int = 300, key_func: Optional[Callable] = None):
+def cache_response(ttl: int = 300, key_func: Callable | None = None):
     """
     Decorator to cache API responses.
 
@@ -206,7 +209,7 @@ def cache_response(ttl: int = 300, key_func: Optional[Callable] = None):
                     return [_to_jsonable(v) for v in value]
                 return value
 
-            headers: Dict[str, str] = {}
+            headers: dict[str, str] = {}
 
             if isinstance(result, JSONResponse):
                 try:
@@ -286,7 +289,7 @@ class PaginationParams:
         self.skip = (self.page - 1) * self.page_size
         self.limit = self.page_size
 
-    def paginate(self, items: List[Any]) -> Dict[str, Any]:
+    def paginate(self, items: list[Any]) -> dict[str, Any]:
         """
         Paginate a list of items.
 
@@ -336,7 +339,7 @@ class AsyncTaskManager:
 
     def __init__(self):
         """Initialize async task manager."""
-        self.tasks: Dict[str, Dict[str, Any]] = {}
+        self.tasks: dict[str, dict[str, Any]] = {}
 
     def create_task(self, task_id: str, task_func: Callable, *args, **kwargs) -> str:
         """
@@ -376,7 +379,7 @@ class AsyncTaskManager:
         asyncio.create_task(run_task())
         return task_id
 
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task_status(self, task_id: str) -> dict[str, Any] | None:
         """
         Get task status.
 
@@ -388,7 +391,7 @@ class AsyncTaskManager:
         """
         return self.tasks.get(task_id)
 
-    def get_result(self, task_id: str) -> Optional[Any]:
+    def get_result(self, task_id: str) -> Any | None:
         """
         Get task result if completed.
 
@@ -459,14 +462,14 @@ def get_pagination_params(
 
 # Export utilities
 __all__ = [
-    "ResponseCache",
-    "cache_response",
+    "AsyncTaskManager",
     "CompressionMiddleware",
     "PaginationParams",
-    "optimize_json_serialization",
-    "AsyncTaskManager",
-    "async_task",
-    "get_pagination_params",
-    "_response_cache",
+    "ResponseCache",
     "_async_task_manager",
+    "_response_cache",
+    "async_task",
+    "cache_response",
+    "get_pagination_params",
+    "optimize_json_serialization",
 ]

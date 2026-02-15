@@ -6,9 +6,10 @@ Status: Ready for implementation
 See: docs/governance/SECURITY_FEATURES_IMPLEMENTATION_PLAN.md
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 
@@ -36,8 +37,8 @@ class DeepfakeDetector:
         # Load models (Week 4-5)
 
     def detect(
-        self, audio: np.ndarray, sample_rate: int, methods: Optional[List[str]] = None
-    ) -> Dict[str, any]:
+        self, audio: np.ndarray, sample_rate: int, methods: list[str] | None = None
+    ) -> dict[str, any]:
         """
         Detect if audio is a deepfake.
 
@@ -57,10 +58,10 @@ class DeepfakeDetector:
 
     def batch_detect(
         self,
-        audio_files: List[Union[str, Path]],
-        methods: Optional[List[str]] = None,
+        audio_files: list[str | Path],
+        methods: list[str] | None = None,
         parallel: bool = True,
-    ) -> List[Dict[str, any]]:
+    ) -> list[dict[str, any]]:
         """
         Detect deepfakes in multiple audio files.
 

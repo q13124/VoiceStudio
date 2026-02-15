@@ -4,11 +4,18 @@ Dubbing Routes
 Endpoints for video dubbing operations including translation and synchronization.
 """
 
-from fastapi import APIRouter, HTTPException
-from ..models_additional import DubTranslateRequest, DubTranslateResponse, DubSyncRequest, DubSyncResponse
-from ..models import ApiOk
-from backend.services.engine_service import get_engine_service
 import logging
+
+from fastapi import APIRouter, HTTPException
+
+from backend.services.engine_service import get_engine_service
+
+from ..models_additional import (
+    DubSyncRequest,
+    DubSyncResponse,
+    DubTranslateRequest,
+    DubTranslateResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +26,7 @@ router = APIRouter(prefix="/api/dub", tags=["dub"])
 async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
     """
     Translate audio transcription for dubbing purposes.
-    
+
     First transcribes the audio, then translates the text to the target language
     for dubbing workflows.
     """
@@ -27,30 +34,30 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
         # First, get transcription of the audio
         audio_id = req.audio_id
         target_lang = req.lang
-        
+
         if not audio_id or not target_lang:
             raise HTTPException(
                 status_code=400,
                 detail="audio_id and lang are required"
             )
-        
+
         # Get audio transcription
         from .transcribe import _transcriptions
         transcription = None
-        
+
         # Check if transcription exists for this audio
-        for trans_id, trans_data in _transcriptions.items():
+        for _trans_id, trans_data in _transcriptions.items():
             if trans_data.get("audio_id") == audio_id:
                 transcription = trans_data
                 break
-        
+
         # If no transcription exists, create one
         if not transcription:
             try:
                 # Use transcription service
-                from .transcribe import transcribe_audio
                 from ..models_additional import TranscriptionRequest
-                
+                from .transcribe import transcribe_audio
+
                 transcribe_req = TranscriptionRequest(
                     audio_id=audio_id,
                     engine="whisper",
@@ -63,45 +70,45 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
                 logger.error(f"Failed to transcribe audio: {e}")
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to transcribe audio for translation: {str(e)}"
+                    detail=f"Failed to transcribe audio for translation: {e!s}"
                 )
         else:
             source_text = transcription.get("text", "")
             detected_lang = transcription.get("language", "auto")
-        
+
         if not source_text:
             raise HTTPException(
                 status_code=404,
                 detail="No transcription found for audio. Cannot translate empty text."
             )
-        
+
         # Translate the transcription
-        from .multilingual import translate_text
         from ..models_additional import TranslationRequest
-        
+        from .multilingual import translate_text
+
         translation_req = TranslationRequest(
             text=source_text,
             source_language=detected_lang if detected_lang != "auto" else "auto",
             target_language=target_lang
         )
-        
+
         # Use real translation service
         translation_result = await translate_text(translation_req)
-        
+
         return DubTranslateResponse(
             text=translation_result.translated_text,
             source_language=translation_result.source_language,
             target_language=translation_result.target_language,
             confidence=translation_result.confidence
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Translation failed for dubbing: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Translation failed: {str(e)}"
+            detail=f"Translation failed: {e!s}"
         )
 
 
@@ -109,7 +116,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
 async def sync(req: DubSyncRequest) -> DubSyncResponse:
     """
     Synchronize translated text with audio/video timing.
-    
+
     Aligns translated dialogue with original audio timing for dubbing.
     Uses audio-text alignment to create timing segments for translated text.
     """
@@ -119,7 +126,6 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
 
         audio_id = req.audio_id
         translated_text = req.translated_text
-        original_text = req.original_text
         original_timing = req.original_timing
         target_language = req.target_language
 
@@ -178,7 +184,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
                 if original_timing and isinstance(original_timing, list):
                     # Map translated text to original timing
                     timing_segments = []
-                    total_original_duration = sum(
+                    sum(
                         seg.get("end", 0) - seg.get("start", 0)
                         for seg in original_timing
                     )
@@ -304,6 +310,6 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
         logger.error(f"Dubbing sync failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Dubbing synchronization failed: {str(e)}",
+            detail=f"Dubbing synchronization failed: {e!s}",
         ) from e
 

@@ -1,26 +1,35 @@
 """Domain events package."""
 
+from backend.domain.events.audio_events import (
+    AudioClipCreated,
+    AudioClipFailed,
+    AudioClipProcessed,
+)
 from backend.domain.events.base import DomainEvent, EventBus, EventHandler
 from backend.domain.events.project_events import (
     ProjectCreated,
-    ProjectUpdated,
     ProjectDeleted,
     ProjectStatusChanged,
-)
-from backend.domain.events.audio_events import (
-    AudioClipCreated,
-    AudioClipProcessed,
-    AudioClipFailed,
+    ProjectUpdated,
 )
 from backend.domain.events.voice_events import (
     VoiceProfileCreated,
-    VoiceTrainingStarted,
     VoiceTrainingCompleted,
+    VoiceTrainingStarted,
 )
 
 __all__ = [
-    "DomainEvent", "EventBus", "EventHandler",
-    "ProjectCreated", "ProjectUpdated", "ProjectDeleted", "ProjectStatusChanged",
-    "AudioClipCreated", "AudioClipProcessed", "AudioClipFailed",
-    "VoiceProfileCreated", "VoiceTrainingStarted", "VoiceTrainingCompleted",
+    "AudioClipCreated",
+    "AudioClipFailed",
+    "AudioClipProcessed",
+    "DomainEvent",
+    "EventBus",
+    "EventHandler",
+    "ProjectCreated",
+    "ProjectDeleted",
+    "ProjectStatusChanged",
+    "ProjectUpdated",
+    "VoiceProfileCreated",
+    "VoiceTrainingCompleted",
+    "VoiceTrainingStarted",
 ]

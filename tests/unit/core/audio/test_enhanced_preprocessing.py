@@ -5,9 +5,7 @@ Tests enhanced audio preprocessing functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -47,7 +45,7 @@ class TestEnhancedPreprocessingClasses:
     def test_enhanced_preprocessor_class_exists(self):
         """Test EnhancedPreprocessor class exists."""
         if hasattr(enhanced_preprocessing, "EnhancedPreprocessor"):
-            cls = getattr(enhanced_preprocessing, "EnhancedPreprocessor")
+            cls = enhanced_preprocessing.EnhancedPreprocessor
             assert isinstance(
                 cls, type
             ), "EnhancedPreprocessor should be a class"

@@ -5,7 +5,6 @@ Tests circuit breaker functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -47,7 +46,7 @@ class TestCircuitBreakerClasses:
     def test_circuit_breaker_class_exists(self):
         """Test CircuitBreaker class exists."""
         if hasattr(circuit_breaker, "CircuitBreaker"):
-            cls = getattr(circuit_breaker, "CircuitBreaker")
+            cls = circuit_breaker.CircuitBreaker
             assert isinstance(cls, type), "CircuitBreaker should be a class"
 
 

@@ -4,9 +4,9 @@ Analytics Dashboard Routes
 Endpoints for application analytics and usage statistics.
 """
 
+from __future__ import annotations
+
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -61,7 +61,7 @@ except ImportError:
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 # In-memory analytics data (replace with database in production)
-_analytics_data: Dict[str, Dict] = {}
+_analytics_data: dict[str, dict] = {}
 
 
 class AnalyticsMetric(BaseModel):
@@ -69,7 +69,7 @@ class AnalyticsMetric(BaseModel):
 
     timestamp: str
     value: float
-    label: Optional[str] = None
+    label: str | None = None
 
 
 class AnalyticsCategory(BaseModel):
@@ -94,7 +94,7 @@ class AnalyticsSummary(BaseModel):
     total_audio_processed: int
     total_processing_time: float
     average_quality_score: float
-    categories: List[AnalyticsCategory]
+    categories: list[AnalyticsCategory]
 
 
 class AnalyticsTimeRange(BaseModel):
@@ -108,8 +108,8 @@ class AnalyticsTimeRange(BaseModel):
 @router.get("/summary", response_model=AnalyticsSummary)
 @cache_response(ttl=60)  # Cache for 60 seconds (analytics summary aggregates data)
 async def get_analytics_summary(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
 ):
     """Get analytics summary for a time period."""
     try:
@@ -156,7 +156,7 @@ async def get_analytics_summary(
             from .quality import _quality_history
 
             all_entries = []
-            for profile_id, entries in _quality_history.items():
+            for _profile_id, entries in _quality_history.items():
                 all_entries.extend(entries)
 
             quality_scores = [
@@ -232,16 +232,16 @@ async def get_analytics_summary(
         logger.error(f"Failed to get analytics summary: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get summary: {str(e)}",
+            detail=f"Failed to get summary: {e!s}",
         ) from e
 
 
-@router.get("/metrics/{category}", response_model=List[AnalyticsMetric])
+@router.get("/metrics/{category}", response_model=list[AnalyticsMetric])
 @cache_response(ttl=60)  # Cache for 60 seconds (metrics aggregate data)
 async def get_category_metrics(
     category: str,
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
     interval: str = Query("day"),
 ):
     """Get metrics for a specific category."""
@@ -308,7 +308,7 @@ async def get_category_metrics(
                     from .quality import _quality_history
 
                     all_entries = []
-                    for profile_id, entries in _quality_history.items():
+                    for _profile_id, entries in _quality_history.items():
                         all_entries.extend(entries)
 
                     interval_entries = [
@@ -356,11 +356,11 @@ async def get_category_metrics(
         logger.error(f"Failed to get category metrics: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get metrics: {str(e)}",
+            detail=f"Failed to get metrics: {e!s}",
         ) from e
 
 
-@router.get("/categories", response_model=List[str])
+@router.get("/categories", response_model=list[str])
 @cache_response(ttl=300)  # Cache for 5 minutes (categories are relatively static)
 async def list_analytics_categories():
     """List all available analytics categories."""
@@ -435,7 +435,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                     # Find quality entry for this audio
                     # Check audio_url or metadata for audio_id match
                     quality_entry = None
-                    for profile_id, entries in _quality_history.items():
+                    for _profile_id, entries in _quality_history.items():
                         for entry in entries:
                             # Check if audio_id matches in audio_url or metadata
                             if (entry.audio_url and audio_id in entry.audio_url) or (
@@ -476,7 +476,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                         base_value = 3.5  # Average baseline
                     else:
                         # No quality entry found, calculate from audio
-                        audio, sample_rate = load_audio(audio_path)
+                        audio, _sample_rate = load_audio(audio_path)
                         # Simple feature extraction
                         import numpy as np
 
@@ -518,7 +518,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
             except Exception as e:
                 logger.error(f"SHAP explanation failed: {e}")
                 raise HTTPException(
-                    status_code=500, detail=f"SHAP explanation failed: {str(e)}"
+                    status_code=500, detail=f"SHAP explanation failed: {e!s}"
                 )
 
         elif method == "lime" and explainer.lime_available:
@@ -551,7 +551,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                     # Find quality entry for this audio
                     # Check audio_url or metadata for audio_id match
                     quality_entry = None
-                    for profile_id, entries in _quality_history.items():
+                    for _profile_id, entries in _quality_history.items():
                         for entry in entries:
                             # Check if audio_id matches in audio_url or metadata
                             if (entry.audio_url and audio_id in entry.audio_url) or (
@@ -622,7 +622,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                 logger.error(f"LIME explanation failed: {e}")
                 raise HTTPException(
                     status_code=500,
-                    detail=f"LIME explanation failed: {str(e)}",
+                    detail=f"LIME explanation failed: {e!s}",
                 )
 
         else:
@@ -639,13 +639,13 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
         logger.error(f"Failed to explain quality prediction: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to explain quality prediction: {str(e)}",
+            detail=f"Failed to explain quality prediction: {e!s}",
         ) from e
 
 
 @router.get("/visualize-quality")
 async def visualize_quality_metrics(
-    project_id: Optional[str] = None, visualization_type: str = "residuals"
+    project_id: str | None = None, visualization_type: str = "residuals"
 ):
     """
     Generate quality metrics visualizations using yellowbrick.
@@ -675,7 +675,7 @@ async def visualize_quality_metrics(
             from .quality import _quality_history
 
             all_entries = []
-            for profile_id, entries in _quality_history.items():
+            for _profile_id, entries in _quality_history.items():
                 for entry in entries:
                     if project_id is None or entry.project_id == project_id:
                         all_entries.append(entry)
@@ -724,7 +724,7 @@ async def visualize_quality_metrics(
                 else:
                     # Fallback to matplotlib
                     residuals = [
-                        actual - pred for actual, pred in zip(mos_scores, predicted)
+                        actual - pred for actual, pred in zip(mos_scores, predicted, strict=False)
                     ]
                     plt.figure(figsize=(10, 6))
                     plt.scatter(predicted, residuals, alpha=0.6)
@@ -805,7 +805,7 @@ async def visualize_quality_metrics(
                     model.fit(X, y_encoded)
 
                     # Create classification report using yellowbrick
-                    fig, ax = plt.subplots(figsize=(10, 6))
+                    _fig, ax = plt.subplots(figsize=(10, 6))
                     visualizer = ClassificationReport(model, classes=le.classes_, ax=ax)
                     visualizer.fit(X, y_encoded)
                     visualizer.score(X, y_encoded)
@@ -870,14 +870,14 @@ async def visualize_quality_metrics(
     except Exception as e:
         logger.error(f"Visualization generation failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Visualization generation failed: {str(e)}"
+            status_code=500, detail=f"Visualization generation failed: {e!s}"
         ) from e
 
 
 @router.get("/export/summary")
 async def export_analytics_summary(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
     format: str = Query("json"),
 ):
     """
@@ -966,15 +966,15 @@ async def export_analytics_summary(
         logger.error(f"Failed to export analytics summary: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export analytics summary: {str(e)}",
+            detail=f"Failed to export analytics summary: {e!s}",
         ) from e
 
 
 @router.get("/export/metrics/{category}")
 async def export_category_metrics(
     category: str,
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
     interval: str = Query("day"),
     format: str = Query("json"),
 ):
@@ -1029,5 +1029,5 @@ async def export_category_metrics(
         logger.error(f"Failed to export category metrics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export category metrics: {str(e)}",
+            detail=f"Failed to export category metrics: {e!s}",
         ) from e

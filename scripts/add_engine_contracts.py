@@ -12,12 +12,12 @@ Usage:
     python scripts/add_engine_contracts.py --dry-run  # Preview changes
 """
 
-from _env_setup import PROJECT_ROOT
-
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
+from _env_setup import PROJECT_ROOT
 
 # Default contract templates by engine type
 CONTRACT_TEMPLATES = {
@@ -111,11 +111,11 @@ CONTRACT_TEMPLATES = {
 }
 
 
-def get_engine_type(manifest: Dict[str, Any]) -> str:
+def get_engine_type(manifest: dict[str, Any]) -> str:
     """Determine engine type from manifest."""
     engine_type = manifest.get("type", "audio")
     subtype = manifest.get("subtype", "")
-    
+
     if subtype == "tts":
         return "tts"
     elif subtype == "stt" or subtype == "transcription":
@@ -133,24 +133,24 @@ def get_engine_type(manifest: Dict[str, Any]) -> str:
 def add_contract_to_manifest(manifest_path: Path, dry_run: bool = False) -> bool:
     """
     Add contract to a manifest file if it doesn't have one.
-    
+
     Returns True if contract was added (or would be added in dry-run).
     """
     try:
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             manifest = json.load(f)
     except Exception as e:
         print(f"  Error reading {manifest_path}: {e}")
         return False
-    
+
     # Skip if already has contract
     if "contract" in manifest:
         return False
-    
+
     # Determine engine type and get template
     engine_type = get_engine_type(manifest)
     contract = CONTRACT_TEMPLATES.get(engine_type, CONTRACT_TEMPLATES["tts"])
-    
+
     # Customize based on manifest hints
     if "device_requirements" in manifest:
         req = manifest["device_requirements"]
@@ -158,14 +158,14 @@ def add_contract_to_manifest(manifest_path: Path, dry_run: bool = False) -> bool
             contract["resources"]["vram_mb"] = req["vram_min_gb"] * 1024
         if "ram_min_gb" in req:
             contract["resources"]["ram_mb"] = req["ram_min_gb"] * 1024
-    
+
     # Add contract to manifest
     manifest["contract"] = contract
-    
+
     if dry_run:
         print(f"  Would add contract to {manifest_path.name} ({engine_type})")
         return True
-    
+
     # Write updated manifest
     try:
         with open(manifest_path, "w", encoding="utf-8") as f:
@@ -180,41 +180,41 @@ def add_contract_to_manifest(manifest_path: Path, dry_run: bool = False) -> bool
 
 def main():
     dry_run = "--dry-run" in sys.argv
-    
+
     print("=" * 70)
     print("Engine Manifest Contract Addition")
     print("=" * 70)
     print()
-    
+
     if dry_run:
         print("DRY RUN - No files will be modified")
         print()
-    
+
     engines_dir = PROJECT_ROOT / "engines"
     manifest_files = list(engines_dir.rglob("engine.manifest.json"))
-    
+
     print(f"Found {len(manifest_files)} engine manifests")
     print()
-    
+
     added = 0
     skipped = 0
-    
+
     for manifest_path in sorted(manifest_files):
         if add_contract_to_manifest(manifest_path, dry_run):
             added += 1
         else:
             skipped += 1
-    
+
     print()
     print("-" * 70)
     print(f"Added contracts: {added}")
     print(f"Already had contracts: {skipped}")
     print("-" * 70)
-    
+
     if dry_run and added > 0:
         print()
         print("Run without --dry-run to apply changes.")
-    
+
     return 0
 
 

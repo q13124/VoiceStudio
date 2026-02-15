@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-11 (Clarified docs/design/ superseded files, updated VOICESTUDIO_COMPLETE_IMPLEMENTATION_SPEC MCP paths)
+> **Last Updated**: 2026-02-14 (Added Security Configuration Guide, UI Automation Guide)
 
 ---
 
@@ -72,6 +72,11 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Unified Command Architecture ADR** | `docs/architecture/decisions/ADR-028-unified-command-architecture.md` | 2026-02-08 | Hybrid command system: Registry for global/routed, ViewModel for panel-local |
 | Hybrid Supervisor ADR | `docs/architecture/decisions/ADR-029-hybrid-supervisor.md` | 2026-02-09 | Hybrid supervisor architecture |
 | **ViewModel DI Migration ADR** | `docs/architecture/decisions/ADR-030-viewmodel-di-migration.md` | 2026-02-09 | ViewModel constructor DI migration from service locator |
+| API Versioning Strategy ADR | `docs/architecture/decisions/ADR-031-api-versioning-strategy.md` | 2026-02-10 | API versioning and evolution strategy |
+| Middleware Stack ADR | `docs/architecture/decisions/ADR-032-middleware-stack.md` | 2026-02-10 | FastAPI middleware ordering and architecture |
+| Config Consolidation ADR | `docs/architecture/decisions/ADR-033-config-consolidation.md` | 2026-02-10 | Configuration management consolidation |
+| Enhanced Engine Routing ADR | `docs/architecture/decisions/ADR-034-enhanced-engine-routing.md` | 2026-02-11 | Enhanced engine routing and selection |
+| **Sentinel Deterministic Workflow ADR** | `docs/architecture/decisions/ADR-035-sentinel-deterministic-workflow.md` | 2026-02-12 | 7-step sentinel workflow for reproducible pipeline validation |
 
 ## Planning and Roadmaps
 
@@ -173,6 +178,20 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **UI Virtualization Guide** | `docs/developer/UI_VIRTUALIZATION_GUIDE.md` | 2026-02-04 | List virtualization patterns, incremental loading, performance guidelines (GAP-014) |
 | **Command Palette Guide** | `docs/developer/COMMAND_PALETTE_GUIDE.md` | 2026-02-04 | Command registry, keyboard shortcuts, search algorithm (GAP-015) |
 | **Schema Sync Workflow** | `docs/developer/SCHEMA_SYNC.md` | 2026-02-11 | Schema ownership, validation, and synchronization workflow; shared/schemas/ governance |
+| **Workspace manual test steps** | `docs/testing/WORKSPACE_MANUAL_TEST_STEPS.md` | 2026-02-12 | Manual verification steps for workspace dropdown and profile switching; optional Gate C note |
+| **Sentinel Testing Guide** | `docs/developer/SENTINEL_TESTING_GUIDE.md` | 2026-02-12 | Sentinel workflow usage, configuration, test writing, debugging with repro packets |
+| **UI Automation Guide** | `docs/developer/UI_AUTOMATION_GUIDE.md` | 2026-02-13 | **NEW** — WinAppDriver + Page Object Model, AutomationId standards, smoke tests, CI integration |
+| **Architecture Foundations Guide** | `docs/developer/ARCHITECTURE_FOUNDATIONS_GUIDE.md` | 2026-02-14 | DI system, API versioning, caching layer, message queue, database migrations |
+| **Scalability & Resilience Guide** | `docs/developer/SCALABILITY_RESILIENCE_GUIDE.md` | 2026-02-14 | Circuit breakers, rate limiting, retry logic, timeout config, horizontal scaling |
+| **Production Readiness Guide** | `docs/operations/PRODUCTION_READINESS_GUIDE.md` | 2026-02-14 | Installer system, crash recovery, error handling, performance optimization, deployment checklist |
+| **API Contract Tests** | `tests/integration/test_api_contracts.py` | 2026-02-14 | JSON Schema validation for API contracts against sentinel schemas |
+| **Continuous Improvement Guide** | `docs/developer/CONTINUOUS_IMPROVEMENT_GUIDE.md` | 2026-02-14 | **NEW** — Feature flags, feedback collection, quality automation, documentation as code (Phase 8) |
+
+## Reference Documentation
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Sentinel Contract Schemas** | `docs/REFERENCE/SENTINEL_CONTRACT_SCHEMAS.md` | 2026-02-12 | JSON Schema contracts for sentinel workflow; versioning policy, validation examples |
 
 ## Build and Diagnostic Tools
 
@@ -220,12 +239,14 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Reorg Log | `docs/governance/PROJECT_REORG_LOG.md` | 2026-01-25 | Reorganization history |
 | Compatibility Matrix (Design) | `docs/design/COMPATIBILITY_MATRIX.md` | 2026-01-30 | Human-readable compatibility matrix; see also `config/compatibility_matrix.yml` |
 | Production Build | `docs/governance/VoiceStudio_Production_Build_Plan.md` | 2026-01-25 | Production build plan |
+| **Deterministic Sentinel Implementation Plan** | `docs/design/DETERMINISTIC_SENTINEL_IMPLEMENTATION_PLAN.md` | 2026-02-13 | **NEW** — 6-phase implementation plan for sentinel workflow, API hardening, UI automation, security/stability, architecture foundations, scalability |
 
 ## Security
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | Threat Model | `docs/reports/security/THREAT_MODEL.md` | 2026-01-25 | Baseline security threat model |
+| **Security Configuration Guide** | `docs/operations/SECURITY_CONFIGURATION.md` | 2026-02-14 | **NEW** — Credential storage (DPAPI), error boundaries, health checks, graceful shutdown, correlation ID logging |
 
 ## Reports
 
@@ -259,6 +280,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Phase 5 Observability Audit** | `docs/reports/audit/PHASE5_OBSERVABILITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 5 completion audit: 15/15 tasks complete; OpenTelemetry, trace propagation, SLO dashboard, Prometheus export, diagnostics, error tracking; gate_status PASS, ledger_validate PASS |
 | **Phase 6 Security Audit** | `docs/reports/audit/PHASE6_SECURITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 6 completion audit: 7/7 tasks complete; HMAC request signing (40 tests), file validation by magic bytes (58 tests), dependency policy, Dependabot config, SBOM generation, CVE monitoring workflow, secrets rotation guide; 98 tests PASS |
 | **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release: Installer enhancements (prerequisites, silent mode, upgrade validation), Error recovery (crash recovery, error reporting, data backup), Performance optimization (UI virtualization, lazy loading, response caching), Release documentation |
+| **Core Workflow Audit** | `docs/reports/audit/CORE_WORKFLOW_AUDIT_2026-02-12.md` | 2026-02-12 | End-to-end workflow audit: Audio Import → Voice Cloning → Transcription → Playback; 35 issues (3 Critical, 7 High, 7 Medium, 5 Low, 6 Cross-workflow); 4-phase remediation roadmap; panel-by-panel feature matrix |
 
 ## Overseer Tooling
 

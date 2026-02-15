@@ -3,9 +3,11 @@ PII and Secret Redaction Helper
 Redacts PII and secrets from logs and test data.
 """
 
+from __future__ import annotations
+
 import logging
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +106,8 @@ class Redactor:
         return result
 
     def redact_dict(
-        self, data: Dict[str, Any], keys_to_redact: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], keys_to_redact: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Redact PII and secrets from dictionary.
 
@@ -156,9 +158,9 @@ class Redactor:
 
     def redact(
         self,
-        data: Union[str, Dict[str, Any], List[Any]],
-        keys_to_redact: Optional[List[str]] = None,
-    ) -> Union[str, Dict[str, Any], List[Any]]:
+        data: str | dict[str, Any] | list[Any],
+        keys_to_redact: list[str] | None = None,
+    ) -> str | dict[str, Any] | list[Any]:
         """
         Redact PII and secrets from data.
 
@@ -184,11 +186,11 @@ _redactor = Redactor()
 
 
 def redact(
-    data: Union[str, Dict[str, Any], List[Any]],
-    keys_to_redact: Optional[List[str]] = None,
+    data: str | dict[str, Any] | list[Any],
+    keys_to_redact: list[str] | None = None,
     redact_pii: bool = True,
     redact_secrets: bool = True,
-) -> Union[str, Dict[str, Any], List[Any]]:
+) -> str | dict[str, Any] | list[Any]:
     """
     Redact PII and secrets from data.
 

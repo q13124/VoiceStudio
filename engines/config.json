@@ -13,6 +13,103 @@
     "sdxl_comfy",
     "realesrgan",
     "svd"
-  ]
+  ],
+  "engine_capabilities": {
+    "xtts_v2": {
+      "capabilities": ["tts", "clone", "multilingual"],
+      "multi_reference": true,
+      "languages": ["en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh", "ar", "hi", "nl", "pl", "tr"],
+      "description": "XTTS v2 - High quality multilingual TTS with voice cloning and multi-reference ensemble"
+    },
+    "chatterbox": {
+      "capabilities": ["tts", "clone"],
+      "multi_reference": false,
+      "languages": ["en"],
+      "description": "Chatterbox - Fast voice cloning with natural speech"
+    },
+    "openvoice": {
+      "capabilities": ["tts", "style_transfer"],
+      "multi_reference": false,
+      "languages": ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh"],
+      "description": "OpenVoice - Style transfer and tone color cloning"
+    },
+    "tortoise": {
+      "capabilities": ["tts", "clone"],
+      "multi_reference": false,
+      "languages": ["en"],
+      "description": "Tortoise TTS - High quality slow generation with voice cloning"
+    },
+    "bark": {
+      "capabilities": ["tts"],
+      "multi_reference": false,
+      "languages": ["en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh"],
+      "description": "Bark - Expressive text-to-speech with sound effects"
+    },
+    "fish_speech": {
+      "capabilities": ["tts", "clone"],
+      "multi_reference": false,
+      "languages": ["en", "zh", "ja"],
+      "description": "Fish Speech - Fast voice cloning with few-shot learning"
+    },
+    "higgs_audio": {
+      "capabilities": ["tts"],
+      "multi_reference": false,
+      "languages": ["en"],
+      "description": "Higgs Audio - Neural text-to-speech"
+    },
+    "gpt_sovits": {
+      "capabilities": ["tts", "clone"],
+      "multi_reference": false,
+      "languages": ["en", "zh", "ja"],
+      "description": "GPT-SoVITS - Voice cloning requiring training data"
+    },
+    "piper": {
+      "capabilities": ["tts"],
+      "multi_reference": false,
+      "languages": ["en", "es", "fr", "de", "it", "pt", "ru", "nl", "pl", "sv", "no", "fi", "da"],
+      "description": "Piper - Lightweight local TTS with ONNX models"
+    },
+    "whisper": {
+      "capabilities": ["stt"],
+      "multi_reference": false,
+      "languages": ["auto"],
+      "description": "Whisper (faster-whisper) - Speech-to-text with GPU acceleration"
+    },
+    "whisper_cpp": {
+      "capabilities": ["stt"],
+      "multi_reference": false,
+      "languages": ["auto"],
+      "description": "WhisperCPP - Optimized whisper.cpp for CPU/GPU transcription"
+    },
+    "vosk": {
+      "capabilities": ["stt"],
+      "multi_reference": false,
+      "languages": ["en", "es", "fr", "de", "ru", "zh"],
+      "description": "Vosk - Lightweight offline speech recognition (CPU only)"
+    },
+    "rvc": {
+      "capabilities": ["voice_conversion"],
+      "multi_reference": false,
+      "languages": ["any"],
+      "description": "RVC - Real-time voice conversion"
+    },
+    "sdxl_comfy": {
+      "capabilities": ["image_gen"],
+      "multi_reference": false,
+      "languages": [],
+      "description": "SDXL via ComfyUI - Image generation"
+    },
+    "realesrgan": {
+      "capabilities": ["image_upscale"],
+      "multi_reference": false,
+      "languages": [],
+      "description": "Real-ESRGAN - Image upscaling"
+    },
+    "svd": {
+      "capabilities": ["video_gen"],
+      "multi_reference": false,
+      "languages": [],
+      "description": "Stable Video Diffusion - Video generation from images"
+    }
+  }
 }
-

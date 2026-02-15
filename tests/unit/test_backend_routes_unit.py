@@ -4,15 +4,11 @@ Tests individual route handlers in isolation.
 """
 
 import importlib.util
-import json
 import logging
-import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))

@@ -4,10 +4,15 @@ Project Management Routes
 CRUD operations for projects.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
+
+from typing import List, Optional
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -103,7 +108,7 @@ def list_projects(request: Request) -> dict:
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to list projects: {str(e)}"
+            status_code=500, detail=f"Failed to list projects: {e!s}"
         ) from e
 
 
@@ -122,7 +127,7 @@ def get_project(project_id: str) -> Project:
     except Exception as e:
         logger.error(f"Failed to get project {project_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get project: {str(e)}"
+            status_code=500, detail=f"Failed to get project: {e!s}"
         ) from e
 
 
@@ -146,7 +151,7 @@ def create_project(req: ProjectCreateRequest) -> Project:
     except Exception as e:
         logger.error(f"Failed to create project: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create project: {str(e)}"
+            status_code=500, detail=f"Failed to create project: {e!s}"
         ) from e
 
 
@@ -179,7 +184,7 @@ def update_project(project_id: str, req: ProjectUpdateRequest) -> Project:
     except Exception as e:
         logger.error(f"Failed to update project {project_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to update project: {str(e)}"
+            status_code=500, detail=f"Failed to update project: {e!s}"
         ) from e
 
 
@@ -198,7 +203,7 @@ def delete_project(project_id: str) -> ApiOk:
     except Exception as e:
         logger.error(f"Failed to delete project {project_id}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to delete project: {str(e)}"
+            status_code=500, detail=f"Failed to delete project: {e!s}"
         ) from e
 
 
@@ -280,7 +285,7 @@ def save_audio_to_project(
                     detail="Disk full. Please free up space and try again.",
                 )
             raise HTTPException(
-                status_code=500, detail=f"Failed to save audio file: {str(e)}"
+                status_code=500, detail=f"Failed to save audio file: {e!s}"
             )
 
         # Get file stats
@@ -310,7 +315,7 @@ def save_audio_to_project(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred while saving the audio file: {str(e)}",
+            detail=f"An unexpected error occurred while saving the audio file: {e!s}",
         )
 
 
@@ -369,7 +374,7 @@ def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
         except OSError as e:
             logger.error(f"Failed to list audio files in {audio_dir}: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Failed to list audio files: {str(e)}"
+                status_code=500, detail=f"Failed to list audio files: {e!s}"
             )
 
         return audio_files
@@ -382,7 +387,7 @@ def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
         )
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred while listing audio files: {str(e)}",
+            detail=f"An unexpected error occurred while listing audio files: {e!s}",
         )
 
 
@@ -424,7 +429,7 @@ def get_project_audio(project_id: str, filename: str):
         except Exception as e:
             logger.error(f"Failed to serve file {file_path}: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Failed to serve audio file: {str(e)}"
+                status_code=500, detail=f"Failed to serve audio file: {e!s}"
             )
     except HTTPException:
         raise
@@ -435,5 +440,5 @@ def get_project_audio(project_id: str, filename: str):
         )
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred while retrieving the audio file: {str(e)}",
+            detail=f"An unexpected error occurred while retrieving the audio file: {e!s}",
         )

@@ -5,18 +5,19 @@ Provides API endpoints for error tracking and analysis.
 All operations are local-first and require no external dependencies.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.services.error_tracker import (
-    ErrorSeverity,
-    ErrorCategory,
-    TrackedError,
     ErrorAggregate,
+    ErrorCategory,
+    ErrorSeverity,
     ErrorSummary,
+    TrackedError,
     get_error_tracker,
 )
 
@@ -32,16 +33,16 @@ router = APIRouter(prefix="/api/errors", tags=["errors"])
 
 class ErrorContextResponse(BaseModel):
     """Response model for error context."""
-    
-    request_id: Optional[str] = None
-    user_id: Optional[str] = None
-    endpoint: Optional[str] = None
-    method: Optional[str] = None
+
+    request_id: str | None = None
+    user_id: str | None = None
+    endpoint: str | None = None
+    method: str | None = None
 
 
 class TrackedErrorResponse(BaseModel):
     """Response model for a tracked error."""
-    
+
     error_id: str
     fingerprint: str
     timestamp: str
@@ -49,15 +50,15 @@ class TrackedErrorResponse(BaseModel):
     category: str
     message: str
     exception_type: str
-    stacktrace: Optional[str] = None
-    context: Optional[ErrorContextResponse] = None
-    tags: List[str] = []
+    stacktrace: str | None = None
+    context: ErrorContextResponse | None = None
+    tags: list[str] = []
     resolved: bool = False
 
 
 class ErrorAggregateResponse(BaseModel):
     """Response model for error aggregate."""
-    
+
     fingerprint: str
     first_seen: str
     last_seen: str
@@ -66,29 +67,29 @@ class ErrorAggregateResponse(BaseModel):
     category: str
     message: str
     exception_type: str
-    affected_endpoints: List[str] = []
+    affected_endpoints: list[str] = []
 
 
 class ErrorSummaryResponse(BaseModel):
     """Response model for error summary."""
-    
+
     total_errors: int
     unique_errors: int
-    errors_by_severity: Dict[str, int]
-    errors_by_category: Dict[str, int]
+    errors_by_severity: dict[str, int]
+    errors_by_category: dict[str, int]
     error_rate: float
-    top_errors: List[ErrorAggregateResponse]
+    top_errors: list[ErrorAggregateResponse]
 
 
 class ResolveRequest(BaseModel):
     """Request model for resolving an error."""
-    
+
     resolution_notes: str = ""
 
 
 class ResolveResponse(BaseModel):
     """Response model for resolve operation."""
-    
+
     success: bool
     error_id: str
     message: str
@@ -96,7 +97,7 @@ class ResolveResponse(BaseModel):
 
 class ExportResponse(BaseModel):
     """Response model for export operation."""
-    
+
     success: bool
     filepath: str
     message: str
@@ -165,7 +166,7 @@ def _convert_summary(summary: ErrorSummary) -> ErrorSummaryResponse:
 async def get_error_summary():
     """
     Get error summary statistics.
-    
+
     Returns aggregated error statistics including:
     - Total error count
     - Unique error count
@@ -182,21 +183,21 @@ async def get_error_summary():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/recent", response_model=List[TrackedErrorResponse])
+@router.get("/recent", response_model=list[TrackedErrorResponse])
 async def get_recent_errors(
     limit: int = Query(100, ge=1, le=500, description="Maximum errors to return"),
-    severity: Optional[str] = Query(None, description="Filter by severity"),
-    category: Optional[str] = Query(None, description="Filter by category"),
+    severity: str | None = Query(None, description="Filter by severity"),
+    category: str | None = Query(None, description="Filter by category"),
 ):
     """
     Get recent errors with optional filtering.
-    
+
     Returns the most recent tracked errors, optionally filtered by severity
     or category.
     """
     try:
         tracker = get_error_tracker()
-        
+
         # Convert string to enum if provided
         severity_enum = None
         if severity:
@@ -207,7 +208,7 @@ async def get_recent_errors(
                     status_code=400,
                     detail=f"Invalid severity: {severity}"
                 )
-        
+
         category_enum = None
         if category:
             try:
@@ -217,13 +218,13 @@ async def get_recent_errors(
                     status_code=400,
                     detail=f"Invalid category: {category}"
                 )
-        
+
         errors = tracker.get_errors(
             limit=limit,
             severity=severity_enum,
             category=category_enum,
         )
-        
+
         return [_convert_error(e) for e in errors]
     except HTTPException:
         raise
@@ -232,14 +233,14 @@ async def get_recent_errors(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/aggregates", response_model=List[ErrorAggregateResponse])
+@router.get("/aggregates", response_model=list[ErrorAggregateResponse])
 async def get_error_aggregates(
     limit: int = Query(50, ge=1, le=200, description="Maximum aggregates to return"),
     sort_by: str = Query("count", description="Sort by: count or recent"),
 ):
     """
     Get aggregated error statistics.
-    
+
     Returns unique errors grouped by fingerprint with occurrence counts.
     """
     try:
@@ -248,7 +249,7 @@ async def get_error_aggregates(
                 status_code=400,
                 detail="sort_by must be 'count' or 'recent'"
             )
-        
+
         tracker = get_error_tracker()
         aggregates = tracker.get_aggregates(limit=limit, sort_by=sort_by)
         return [_convert_aggregate(a) for a in aggregates]
@@ -277,20 +278,20 @@ async def resolve_error(
 ):
     """
     Mark an error as resolved.
-    
+
     Resolving an error removes it from active tracking but keeps it in
     history for analysis.
     """
     try:
         tracker = get_error_tracker()
         success = tracker.resolve_error(error_id, request.resolution_notes)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail=f"Error not found: {error_id}"
             )
-        
+
         return ResolveResponse(
             success=True,
             error_id=error_id,
@@ -305,12 +306,12 @@ async def resolve_error(
 
 @router.post("/export", response_model=ExportResponse)
 async def export_error_report(
-    filename: Optional[str] = Query(None, description="Custom filename"),
+    filename: str | None = Query(None, description="Custom filename"),
     include_stacktraces: bool = Query(False, description="Include stacktraces"),
 ):
     """
     Export error report to JSON file.
-    
+
     The report is saved to .buildlogs/errors/ directory.
     """
     try:
@@ -319,7 +320,7 @@ async def export_error_report(
             filename=filename,
             include_stacktraces=include_stacktraces,
         )
-        
+
         return ExportResponse(
             success=True,
             filepath=str(filepath),
@@ -334,13 +335,13 @@ async def export_error_report(
 async def clear_resolved_errors():
     """
     Clear all resolved errors from tracking.
-    
+
     Returns the number of errors removed.
     """
     try:
         tracker = get_error_tracker()
         removed = tracker.clear_resolved()
-        
+
         return {
             "success": True,
             "removed": removed,
@@ -355,13 +356,13 @@ async def clear_resolved_errors():
 async def get_error_rate():
     """
     Get current error rate.
-    
+
     Returns the error rate as a percentage of total requests.
     """
     try:
         tracker = get_error_tracker()
         summary = tracker.get_summary()
-        
+
         return {
             "error_rate": summary.error_rate,
             "total_errors": summary.total_errors,

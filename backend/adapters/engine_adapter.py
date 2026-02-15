@@ -12,7 +12,7 @@ implementations. This adapter provides:
 
 Usage:
     from backend.adapters.engine_adapter import get_engine_service
-    
+
     engine_service = get_engine_service()
     tts_engine = engine_service.get_synthesis_engine("xtts")
     result = await tts_engine.synthesize(request)
@@ -20,23 +20,17 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import numpy as np
 
 from backend.interfaces.engine_port import (
-    IEnginePort,
-    ISynthesisEngine,
-    ITranscriptionEngine,
-    IVoiceConversionEngine,
-    IEmotionEngine,
-    ITranslationEngine,
     EngineCapability,
-    EngineStatus,
     EngineInfo,
+    EngineStatus,
     SynthesisRequest,
     SynthesisResult,
     TranscriptionRequest,
@@ -50,25 +44,25 @@ logger = logging.getLogger(__name__)
 
 class SynthesisEngineAdapter:
     """Adapter for TTS engines implementing ISynthesisEngine."""
-    
+
     def __init__(self, engine_id: str = "xtts"):
         self._engine_id = engine_id
         self._engine = None
         self._loaded = False
-    
+
     @property
     def engine_id(self) -> str:
         return self._engine_id
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded and self._engine is not None
-    
+
     async def _ensure_loaded(self) -> None:
         """Lazy load the engine on first use."""
         if self._loaded:
             return
-        
+
         try:
             if self._engine_id == "xtts":
                 from app.core.engines.xtts_engine import XTTSEngine
@@ -84,22 +78,22 @@ class SynthesisEngineAdapter:
                 self._engine = get_engine_by_id(self._engine_id)
                 if self._engine and hasattr(self._engine, 'load'):
                     await self._engine.load()
-            
+
             self._loaded = self._engine is not None
-            
+
         except ImportError as e:
             logger.warning(f"Engine {self._engine_id} not available: {e}")
             self._loaded = False
         except Exception as e:
             logger.error(f"Failed to load engine {self._engine_id}: {e}")
             self._loaded = False
-    
+
     async def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         """Synthesize speech from text."""
         await self._ensure_loaded()
-        
+
         start_time = time.time()
-        
+
         if not self._loaded or self._engine is None:
             # Return empty result on failure
             return SynthesisResult(
@@ -110,7 +104,7 @@ class SynthesisEngineAdapter:
                 latency_ms=(time.time() - start_time) * 1000,
                 metadata={"error": "Engine not loaded"}
             )
-        
+
         try:
             # Call the underlying engine
             if hasattr(self._engine, 'synthesize'):
@@ -119,10 +113,10 @@ class SynthesisEngineAdapter:
                     speaker_wav=request.speaker_embedding,
                     language=request.language,
                 )
-                
+
                 audio_data = result.get("audio", np.zeros(16000))
                 sample_rate = result.get("sample_rate", 22050)
-                
+
             elif hasattr(self._engine, 'process'):
                 audio_data = await self._engine.process({
                     "text": request.text,
@@ -131,10 +125,10 @@ class SynthesisEngineAdapter:
                 sample_rate = 22050
             else:
                 raise RuntimeError(f"Engine {self._engine_id} has no synthesize method")
-            
+
             latency_ms = (time.time() - start_time) * 1000
             duration = len(audio_data) / sample_rate if sample_rate > 0 else 0
-            
+
             return SynthesisResult(
                 audio_data=audio_data,
                 sample_rate=sample_rate,
@@ -142,7 +136,7 @@ class SynthesisEngineAdapter:
                 engine_used=self._engine_id,
                 latency_ms=latency_ms,
             )
-            
+
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
             return SynthesisResult(
@@ -153,7 +147,7 @@ class SynthesisEngineAdapter:
                 latency_ms=(time.time() - start_time) * 1000,
                 metadata={"error": str(e)}
             )
-    
+
     async def synthesize_streaming(
         self,
         request: SynthesisRequest,
@@ -161,20 +155,20 @@ class SynthesisEngineAdapter:
         """Synthesize speech with streaming output."""
         # For now, synthesize and yield in chunks
         result = await self.synthesize(request)
-        
+
         chunk_size = 4096
         audio = result.audio_data
-        
+
         for i in range(0, len(audio), chunk_size):
             yield audio[i:i + chunk_size]
-    
-    def get_voices(self) -> List[Dict[str, Any]]:
+
+    def get_voices(self) -> list[dict[str, Any]]:
         """Get available voices for this engine."""
         if self._engine and hasattr(self._engine, 'get_voices'):
             return self._engine.get_voices()
         return [{"id": "default", "name": "Default Voice"}]
-    
-    def get_languages(self) -> List[str]:
+
+    def get_languages(self) -> list[str]:
         """Get supported languages."""
         if self._engine and hasattr(self._engine, 'get_languages'):
             return self._engine.get_languages()
@@ -183,25 +177,25 @@ class SynthesisEngineAdapter:
 
 class TranscriptionEngineAdapter:
     """Adapter for STT engines implementing ITranscriptionEngine."""
-    
+
     def __init__(self, engine_id: str = "whisper"):
         self._engine_id = engine_id
         self._engine = None
         self._loaded = False
-    
+
     @property
     def engine_id(self) -> str:
         return self._engine_id
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded and self._engine is not None
-    
+
     async def _ensure_loaded(self) -> None:
         """Lazy load the engine on first use."""
         if self._loaded:
             return
-        
+
         try:
             if self._engine_id == "whisper":
                 from app.core.engines.whisper_engine import WhisperEngine
@@ -212,20 +206,20 @@ class TranscriptionEngineAdapter:
                 self._engine = get_engine_by_id(self._engine_id)
                 if self._engine and hasattr(self._engine, 'load'):
                     await self._engine.load()
-            
+
             self._loaded = self._engine is not None
-            
+
         except ImportError as e:
             logger.warning(f"Engine {self._engine_id} not available: {e}")
         except Exception as e:
             logger.error(f"Failed to load engine {self._engine_id}: {e}")
-    
+
     async def transcribe(self, request: TranscriptionRequest) -> TranscriptionResult:
         """Transcribe audio to text."""
         await self._ensure_loaded()
-        
+
         start_time = time.time()
-        
+
         if not self._loaded or self._engine is None:
             return TranscriptionResult(
                 text="",
@@ -234,7 +228,7 @@ class TranscriptionEngineAdapter:
                 engine_used=self._engine_id,
                 latency_ms=(time.time() - start_time) * 1000,
             )
-        
+
         try:
             if hasattr(self._engine, 'transcribe'):
                 result = await self._engine.transcribe(
@@ -242,7 +236,7 @@ class TranscriptionEngineAdapter:
                     language=request.language,
                     task=request.task,
                 )
-                
+
                 return TranscriptionResult(
                     text=result.get("text", ""),
                     language=result.get("language", "en"),
@@ -253,7 +247,7 @@ class TranscriptionEngineAdapter:
                 )
             else:
                 raise RuntimeError(f"Engine {self._engine_id} has no transcribe method")
-                
+
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
             return TranscriptionResult(
@@ -263,7 +257,7 @@ class TranscriptionEngineAdapter:
                 engine_used=self._engine_id,
                 latency_ms=(time.time() - start_time) * 1000,
             )
-    
+
     async def transcribe_streaming(
         self,
         audio_stream: AsyncIterator[np.ndarray],
@@ -273,7 +267,7 @@ class TranscriptionEngineAdapter:
         buffer = []
         async for chunk in audio_stream:
             buffer.append(chunk)
-            
+
             if len(buffer) >= 10:  # Process every ~10 chunks
                 combined = np.concatenate(buffer)
                 result = await self.transcribe(TranscriptionRequest(
@@ -282,49 +276,49 @@ class TranscriptionEngineAdapter:
                 ))
                 buffer = []
                 yield result
-    
-    def get_languages(self) -> List[str]:
+
+    def get_languages(self) -> list[str]:
         """Get supported languages."""
         return ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "hi"]
 
 
 class VoiceConversionEngineAdapter:
     """Adapter for voice conversion engines implementing IVoiceConversionEngine."""
-    
+
     def __init__(self, engine_id: str = "rvc"):
         self._engine_id = engine_id
         self._engine = None
         self._loaded = False
-    
+
     @property
     def engine_id(self) -> str:
         return self._engine_id
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded and self._engine is not None
-    
+
     async def _ensure_loaded(self) -> None:
         """Lazy load the engine on first use."""
         if self._loaded:
             return
-        
+
         try:
             from backend.voice.rvc.engine import RVCEngine
             self._engine = RVCEngine()
             self._loaded = True
-            
+
         except ImportError as e:
             logger.warning(f"RVC engine not available: {e}")
         except Exception as e:
             logger.error(f"Failed to load RVC engine: {e}")
-    
+
     async def convert(self, request: VoiceConversionRequest) -> VoiceConversionResult:
         """Convert voice in audio."""
         await self._ensure_loaded()
-        
+
         start_time = time.time()
-        
+
         if not self._loaded or self._engine is None:
             return VoiceConversionResult(
                 audio_data=request.audio_data,
@@ -332,14 +326,14 @@ class VoiceConversionEngineAdapter:
                 engine_used=self._engine_id,
                 latency_ms=(time.time() - start_time) * 1000,
             )
-        
+
         try:
             result = await self._engine.convert(
                 audio_data=request.audio_data,
                 sample_rate=request.sample_rate,
                 pitch_shift=request.pitch_shift,
             )
-            
+
             return VoiceConversionResult(
                 audio_data=result.audio_data,
                 sample_rate=result.sample_rate,
@@ -347,7 +341,7 @@ class VoiceConversionEngineAdapter:
                 latency_ms=(time.time() - start_time) * 1000,
                 quality_score=0.85,
             )
-            
+
         except Exception as e:
             logger.error(f"Voice conversion failed: {e}")
             return VoiceConversionResult(
@@ -356,17 +350,17 @@ class VoiceConversionEngineAdapter:
                 engine_used=self._engine_id,
                 latency_ms=(time.time() - start_time) * 1000,
             )
-    
-    async def load_model(self, model_path: str, index_path: Optional[str] = None) -> bool:
+
+    async def load_model(self, model_path: str, index_path: str | None = None) -> bool:
         """Load a voice model."""
         await self._ensure_loaded()
-        
+
         if self._engine is None:
             return False
-        
+
         return await self._engine.load_model(model_path, index_path)
-    
-    def get_models(self) -> List[Dict[str, Any]]:
+
+    def get_models(self) -> list[dict[str, Any]]:
         """Get available voice models."""
         return [
             {"id": "default", "name": "Default RVC Model"},
@@ -375,49 +369,49 @@ class VoiceConversionEngineAdapter:
 
 class EmotionEngineAdapter:
     """Adapter for emotion engine implementing IEmotionEngine."""
-    
+
     def __init__(self):
         self._engine = None
         self._loaded = False
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded and self._engine is not None
-    
+
     async def _ensure_loaded(self) -> None:
         """Lazy load the engine on first use."""
         if self._loaded:
             return
-        
+
         try:
             from backend.voice.emotion.engine import EmotionEngine
             self._engine = EmotionEngine()
             await self._engine.load()
             self._loaded = True
-            
+
         except ImportError as e:
             logger.warning(f"Emotion engine not available: {e}")
         except Exception as e:
             logger.error(f"Failed to load emotion engine: {e}")
-    
+
     async def detect(
         self,
         audio_data: np.ndarray,
         sample_rate: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect emotion in audio."""
         await self._ensure_loaded()
-        
+
         if not self._loaded or self._engine is None:
             return {"emotion": "neutral", "confidence": 0.5}
-        
+
         result = await self._engine.detect(audio_data, sample_rate)
         return {
             "emotion": result.detected_emotion.value,
             "confidence": result.confidence,
             "scores": result.emotion_scores,
         }
-    
+
     async def apply_emotion(
         self,
         audio_data: np.ndarray,
@@ -427,57 +421,57 @@ class EmotionEngineAdapter:
     ) -> np.ndarray:
         """Apply emotion to audio."""
         await self._ensure_loaded()
-        
+
         if not self._loaded or self._engine is None:
             return audio_data
-        
+
         from backend.voice.emotion.types import EmotionType
         emotion_type = EmotionType(emotion) if emotion in [e.value for e in EmotionType] else EmotionType.NEUTRAL
-        
+
         return await self._engine.apply_emotion(audio_data, sample_rate, emotion_type, intensity)
-    
-    def get_emotions(self) -> List[str]:
+
+    def get_emotions(self) -> list[str]:
         """Get supported emotions."""
         return ["neutral", "happy", "sad", "angry", "fearful", "surprised"]
 
 
 class TranslationEngineAdapter:
     """Adapter for translation engine implementing ITranslationEngine."""
-    
+
     def __init__(self):
         self._engine = None
         self._loaded = False
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded and self._engine is not None
-    
+
     async def _ensure_loaded(self) -> None:
         """Lazy load the engine on first use."""
         if self._loaded:
             return
-        
+
         try:
             from backend.voice.translation.engine import TranslationEngine
             self._engine = TranslationEngine()
             await self._engine.load()
             self._loaded = True
-            
+
         except ImportError as e:
             logger.warning(f"Translation engine not available: {e}")
         except Exception as e:
             logger.error(f"Failed to load translation engine: {e}")
-    
+
     async def translate(
         self,
         audio_data: np.ndarray,
         sample_rate: int,
         target_language: str,
-        source_language: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        source_language: str | None = None,
+    ) -> dict[str, Any]:
         """Translate voice to target language."""
         await self._ensure_loaded()
-        
+
         if not self._loaded or self._engine is None:
             return {
                 "audio_data": audio_data,
@@ -485,13 +479,13 @@ class TranslationEngineAdapter:
                 "source_text": "",
                 "translated_text": "",
             }
-        
+
         result = await self._engine.translate(
             audio_data, sample_rate,
             target_language=target_language,
             source_language=source_language,
         )
-        
+
         return {
             "audio_data": result.audio_data,
             "sample_rate": result.sample_rate,
@@ -500,12 +494,12 @@ class TranslationEngineAdapter:
             "source_language": result.source_language,
             "target_language": result.target_language,
         }
-    
+
     async def translate_text(
         self,
         text: str,
         target_language: str,
-        source_language: Optional[str] = None,
+        source_language: str | None = None,
     ) -> str:
         """Translate text to target language."""
         try:
@@ -517,8 +511,8 @@ class TranslationEngineAdapter:
         except Exception as e:
             logger.error(f"Text translation failed: {e}")
             return text
-    
-    def get_languages(self) -> List[str]:
+
+    def get_languages(self) -> list[str]:
         """Get supported languages."""
         return [
             "en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko",
@@ -529,19 +523,19 @@ class TranslationEngineAdapter:
 class EngineAdapter:
     """
     Main engine adapter implementing IEnginePort.
-    
+
     Provides unified access to all engine types with lazy loading
     and resource management.
     """
-    
+
     def __init__(self):
-        self._synthesis_engines: Dict[str, SynthesisEngineAdapter] = {}
-        self._transcription_engines: Dict[str, TranscriptionEngineAdapter] = {}
-        self._voice_conversion_engines: Dict[str, VoiceConversionEngineAdapter] = {}
-        self._emotion_engine: Optional[EmotionEngineAdapter] = None
-        self._translation_engine: Optional[TranslationEngineAdapter] = None
-    
-    def get_available_engines(self) -> List[EngineInfo]:
+        self._synthesis_engines: dict[str, SynthesisEngineAdapter] = {}
+        self._transcription_engines: dict[str, TranscriptionEngineAdapter] = {}
+        self._voice_conversion_engines: dict[str, VoiceConversionEngineAdapter] = {}
+        self._emotion_engine: EmotionEngineAdapter | None = None
+        self._translation_engine: TranslationEngineAdapter | None = None
+
+    def get_available_engines(self) -> list[EngineInfo]:
         """Get list of available engines with their status."""
         engines = [
             EngineInfo(
@@ -581,7 +575,7 @@ class EngineAdapter:
             ),
         ]
         return engines
-    
+
     def get_engine_status(self, engine_id: str) -> EngineStatus:
         """Get status of a specific engine."""
         if engine_id in self._synthesis_engines:
@@ -591,7 +585,7 @@ class EngineAdapter:
         if engine_id in self._voice_conversion_engines:
             return EngineStatus.READY if self._voice_conversion_engines[engine_id].is_loaded else EngineStatus.UNLOADED
         return EngineStatus.UNLOADED
-    
+
     async def load_engine(self, engine_id: str) -> bool:
         """Load an engine into memory."""
         try:
@@ -619,7 +613,7 @@ class EngineAdapter:
         except Exception as e:
             logger.error(f"Failed to load engine {engine_id}: {e}")
             return False
-    
+
     async def unload_engine(self, engine_id: str) -> bool:
         """Unload an engine from memory."""
         try:
@@ -637,34 +631,34 @@ class EngineAdapter:
         except Exception as e:
             logger.error(f"Failed to unload engine {engine_id}: {e}")
             return False
-    
-    def get_synthesis_engine(self, engine_id: Optional[str] = None) -> SynthesisEngineAdapter:
+
+    def get_synthesis_engine(self, engine_id: str | None = None) -> SynthesisEngineAdapter:
         """Get a synthesis engine instance."""
         engine_id = engine_id or "xtts"
         if engine_id not in self._synthesis_engines:
             self._synthesis_engines[engine_id] = SynthesisEngineAdapter(engine_id)
         return self._synthesis_engines[engine_id]
-    
-    def get_transcription_engine(self, engine_id: Optional[str] = None) -> TranscriptionEngineAdapter:
+
+    def get_transcription_engine(self, engine_id: str | None = None) -> TranscriptionEngineAdapter:
         """Get a transcription engine instance."""
         engine_id = engine_id or "whisper"
         if engine_id not in self._transcription_engines:
             self._transcription_engines[engine_id] = TranscriptionEngineAdapter(engine_id)
         return self._transcription_engines[engine_id]
-    
-    def get_voice_conversion_engine(self, engine_id: Optional[str] = None) -> VoiceConversionEngineAdapter:
+
+    def get_voice_conversion_engine(self, engine_id: str | None = None) -> VoiceConversionEngineAdapter:
         """Get a voice conversion engine instance."""
         engine_id = engine_id or "rvc"
         if engine_id not in self._voice_conversion_engines:
             self._voice_conversion_engines[engine_id] = VoiceConversionEngineAdapter(engine_id)
         return self._voice_conversion_engines[engine_id]
-    
+
     def get_emotion_engine(self) -> EmotionEngineAdapter:
         """Get the emotion engine instance."""
         if self._emotion_engine is None:
             self._emotion_engine = EmotionEngineAdapter()
         return self._emotion_engine
-    
+
     def get_translation_engine(self) -> TranslationEngineAdapter:
         """Get the translation engine instance."""
         if self._translation_engine is None:
@@ -673,18 +667,18 @@ class EngineAdapter:
 
 
 # Singleton instance
-_engine_adapter: Optional[EngineAdapter] = None
+_engine_adapter: EngineAdapter | None = None
 
 
 def get_engine_service() -> EngineAdapter:
     """
     Get the singleton engine adapter instance.
-    
+
     This is the primary entry point for routes to access engines.
-    
+
     Usage:
         from backend.adapters.engine_adapter import get_engine_service
-        
+
         engine_service = get_engine_service()
         tts_engine = engine_service.get_synthesis_engine()
         result = await tts_engine.synthesize(request)

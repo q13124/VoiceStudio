@@ -8,9 +8,10 @@ WebSocket Protocol (GAP-INT-002):
     See backend/api/ws/protocol.py for specification.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -19,10 +20,10 @@ from ..middleware.auth_middleware import require_auth_if_enabled
 
 # WebSocket protocol for standardized messaging (GAP-CRIT-002)
 from ..ws.protocol import (
-    create_message,
-    create_error,
-    MessageType,
     ErrorCode,
+    MessageType,
+    create_error,
+    create_message,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ router = APIRouter(
 )
 
 # In-memory visualizer sessions (replace with database in production)
-_visualizer_sessions: Dict[str, Dict] = {}
+_visualizer_sessions: dict[str, dict] = {}
 
 
 class VisualizerConfig(BaseModel):
@@ -53,10 +54,10 @@ class VisualizerFrame(BaseModel):
     """A single visualization frame."""
 
     timestamp: float
-    samples: Optional[List[float]] = None  # For waveform
-    frequencies: Optional[List[float]] = None  # For spectrum
-    magnitudes: Optional[List[float]] = None  # For spectrum/spectrogram
-    spectrogram_frame: Optional[List[List[float]]] = None  # For spectrogram
+    samples: list[float] | None = None  # For waveform
+    frequencies: list[float] | None = None  # For spectrum
+    magnitudes: list[float] | None = None  # For spectrum/spectrogram
+    spectrogram_frame: list[list[float]] | None = None  # For spectrogram
 
 
 class VisualizerStartRequest(BaseModel):
@@ -112,7 +113,7 @@ async def start_visualizer_session(
         logger.error(f"Failed to start visualizer session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start session: {str(e)}",
+            detail=f"Failed to start session: {e!s}",
         ) from e
 
 
@@ -188,8 +189,8 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
             if os.path.exists(app_path) and app_path not in sys.path:
                 sys.path.insert(0, app_path)
 
-            import numpy as np
             import librosa
+            import numpy as np
         except ImportError:
             await websocket.send_json(
                 create_error(

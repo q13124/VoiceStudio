@@ -4,12 +4,13 @@ Voice Cloning Wizard Routes
 Endpoints for the step-by-step voice cloning wizard interface.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, Optional
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...services.JobStateStore import get_job_state_store
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/api/voice/clone/wizard", tags=["voice-cloning-wizard
 
 # Disk-backed wizard job state (durable across backend restarts)
 _wizard_store = get_job_state_store("voice_cloning_wizard")
-_wizard_jobs: Dict[str, "WizardJob"] = {}
+_wizard_jobs: dict[str, "WizardJob"] = {}
 
 
 class WizardJob(BaseModel):
@@ -28,20 +29,20 @@ class WizardJob(BaseModel):
 
     job_id: str
     step: int  # 1=Upload, 2=Configure, 3=Process, 4=Review
-    reference_audio_id: Optional[str] = None
-    reference_audio_url: Optional[str] = None
-    audio_validation: Optional[Dict] = None
-    engine: Optional[str] = None
-    quality_mode: Optional[str] = None
-    profile_name: Optional[str] = None
-    profile_description: Optional[str] = None
-    processing_status: str = "pending"  # pending, processing, completed, failed
+    reference_audio_id: str | None = None
+    reference_audio_url: str | None = None
+    audio_validation: dict | None = None
+    engine: str | None = None
+    quality_mode: str | None = None
+    profile_name: str | None = None
+    profile_description: str | None = None
+    processing_status: str = "pending"  # pending, processing, writing, completed, failed
     progress: float = 0.0
-    profile_id: Optional[str] = None
-    quality_metrics: Optional[Dict] = None
-    test_synthesis_audio_id: Optional[str] = None
-    test_synthesis_audio_url: Optional[str] = None
-    error_message: Optional[str] = None
+    profile_id: str | None = None
+    quality_metrics: dict | None = None
+    test_synthesis_audio_id: str | None = None
+    test_synthesis_audio_url: str | None = None
+    error_message: str | None = None
     created_at: str
     updated_at: str
 
@@ -92,7 +93,7 @@ class AudioValidationResponse(BaseModel):
     channels: int
     issues: list[str] = []
     recommendations: list[str] = []
-    quality_score: Optional[float] = None
+    quality_score: float | None = None
 
 
 class WizardStartRequest(BaseModel):
@@ -102,7 +103,7 @@ class WizardStartRequest(BaseModel):
     engine: str = "xtts"
     quality_mode: str = "standard"
     profile_name: str
-    profile_description: Optional[str] = None
+    profile_description: str | None = None
 
 
 class WizardStartResponse(BaseModel):
@@ -120,18 +121,18 @@ class WizardStatusResponse(BaseModel):
     step: int
     status: str
     progress: float
-    profile_id: Optional[str] = None
-    quality_metrics: Optional[Dict] = None
-    test_synthesis_audio_url: Optional[str] = None
-    error_message: Optional[str] = None
+    profile_id: str | None = None
+    quality_metrics: dict | None = None
+    test_synthesis_audio_url: str | None = None
+    error_message: str | None = None
 
 
 class WizardFinalizeRequest(BaseModel):
     """Request to finalize wizard and create profile."""
 
     job_id: str
-    profile_name: Optional[str] = None
-    profile_description: Optional[str] = None
+    profile_name: str | None = None
+    profile_description: str | None = None
 
 
 class WizardFinalizeResponse(BaseModel):
@@ -171,7 +172,7 @@ async def validate_audio(request: AudioValidationRequest):
             audio, sample_rate = audio_utils.load_audio(audio_path)
         except Exception as e:
             raise HTTPException(
-                status_code=400, detail=f"Failed to load audio file: {str(e)}"
+                status_code=400, detail=f"Failed to load audio file: {e!s}"
             )
 
         # Calculate duration
@@ -242,16 +243,13 @@ async def validate_audio(request: AudioValidationRequest):
         try:
             # Convert to mono for analysis if needed
             if channels > 1:
-                if len(audio.shape) == 2:
-                    audio_mono = np.mean(audio, axis=1)
-                else:
-                    audio_mono = audio
+                audio_mono = np.mean(audio, axis=1) if len(audio.shape) == 2 else audio
             else:
                 audio_mono = audio
 
             # Calculate quality metrics
             try:
-                characteristics = audio_utils.analyze_voice_characteristics(
+                audio_utils.analyze_voice_characteristics(
                     audio_mono, sample_rate
                 )
 
@@ -354,7 +352,7 @@ async def validate_audio(request: AudioValidationRequest):
         logger.error(f"Failed to validate audio: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to validate audio: {str(e)}",
+            detail=f"Failed to validate audio: {e!s}",
         ) from e
 
 
@@ -393,7 +391,7 @@ async def start_wizard(request: WizardStartRequest):
         logger.error(f"Failed to start wizard: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start wizard: {str(e)}",
+            detail=f"Failed to start wizard: {e!s}",
         ) from e
 
 
@@ -424,7 +422,7 @@ async def get_wizard_status(job_id: str):
         logger.error(f"Failed to get wizard status: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get wizard status: {str(e)}",
+            detail=f"Failed to get wizard status: {e!s}",
         ) from e
 
 
@@ -456,9 +454,8 @@ async def process_wizard(job_id: str):
         # Process in background
         import asyncio
         import os
-        import tempfile
 
-        from .voice import _audio_storage, _register_audio_file
+        from .voice import _audio_storage
 
         async def process_voice_cloning():
             try:
@@ -535,15 +532,24 @@ async def process_wizard(job_id: str):
                         "snr_db": 25.0,
                     }
 
-                # Complete
-                job.progress = 1.0
+                # Finalizing: write all data before marking complete (Audit M-3)
+                # Use intermediate "writing" status to prevent polling race
+                job.progress = 0.99
                 job.step = 4
+                job.processing_status = "writing"
+                job.updated_at = datetime.utcnow().isoformat()
+                _wizard_jobs[job_id] = job
+
+                # All data is now persisted; mark as completed
+                job.progress = 1.0
                 job.processing_status = "completed"
                 job.updated_at = datetime.utcnow().isoformat()
                 _wizard_jobs[job_id] = job
 
                 logger.info(
-                    f"Voice cloning wizard completed: {job_id}, profile: {job.profile_id}"
+                    "Voice cloning wizard completed: %s, profile: %s",
+                    job_id,
+                    job.profile_id,
                 )
 
             except Exception as e:
@@ -565,7 +571,7 @@ async def process_wizard(job_id: str):
         logger.error(f"Failed to process wizard: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process wizard: {str(e)}",
+            detail=f"Failed to process wizard: {e!s}",
         ) from e
 
 
@@ -580,10 +586,13 @@ async def finalize_wizard(job_id: str, request: WizardFinalizeRequest):
 
         job = _wizard_jobs[job_id]
 
-        if job.processing_status != "completed":
+        if job.processing_status not in ("completed", "writing"):
             raise HTTPException(
                 status_code=400,
-                detail="Wizard job must be completed before finalizing",
+                detail=(
+                    f"Wizard job must be completed before finalizing "
+                    f"(current status: {job.processing_status})"
+                ),
             )
 
         # In a real implementation, this would:
@@ -613,7 +622,7 @@ async def finalize_wizard(job_id: str, request: WizardFinalizeRequest):
         logger.error(f"Failed to finalize wizard: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to finalize wizard: {str(e)}",
+            detail=f"Failed to finalize wizard: {e!s}",
         ) from e
 
 
@@ -636,5 +645,5 @@ async def delete_wizard_job(job_id: str):
         logger.error(f"Failed to delete wizard job: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete wizard job: {str(e)}",
+            detail=f"Failed to delete wizard job: {e!s}",
         ) from e

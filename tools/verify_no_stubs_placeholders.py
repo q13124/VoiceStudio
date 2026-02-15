@@ -15,7 +15,6 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Union
 
 # Project root (tools/verify_no_stubs_placeholders.py -> parent of tools)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -55,13 +54,13 @@ EXCLUDE_FILES = {
 }
 
 
-def _compile_patterns() -> List[Tuple[re.Pattern[str], str, str]]:
+def _compile_patterns() -> list[tuple[re.Pattern[str], str, str]]:
     return [(re.compile(pat, re.IGNORECASE), tid, desc) for pat, tid, desc in FORBIDDEN]
 
 
-def _load_allowlist(path: Path) -> Set[Tuple[str, int]]:
+def _load_allowlist(path: Path) -> set[tuple[str, int]]:
     """Load (path, line) allowlist; line 0 means whole file. Paths repo-relative, normalized."""
-    out: Set[Tuple[str, int]] = set()
+    out: set[tuple[str, int]] = set()
     if not path.exists():
         return out
     for raw in path.read_text(encoding="utf-8", errors="ignore").splitlines():
@@ -78,20 +77,18 @@ def _load_allowlist(path: Path) -> Set[Tuple[str, int]]:
     return out
 
 
-def _is_allowed(rel_path: str, line_num: int, allowlist: Set[Tuple[str, int]]) -> bool:
+def _is_allowed(rel_path: str, line_num: int, allowlist: set[tuple[str, int]]) -> bool:
     norm = rel_path.replace("\\", "/")
-    if (norm, 0) in allowlist or (norm, line_num) in allowlist:
-        return True
-    return False
+    return bool((norm, 0) in allowlist or (norm, line_num) in allowlist)
 
 
 def scan_file(
     path: Path,
     rel_path: str,
-    patterns: List[Tuple[re.Pattern[str], str, str]],
-    allowlist: Set[Tuple[str, int]],
-) -> List[Dict[str, Union[str, int]]]:
-    violations: List[Dict[str, str | int]] = []
+    patterns: list[tuple[re.Pattern[str], str, str]],
+    allowlist: set[tuple[str, int]],
+) -> list[dict[str, str | int]]:
+    violations: list[dict[str, str | int]] = []
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -130,8 +127,8 @@ def main() -> int:
     allowlist = _load_allowlist(allowlist_path)
 
     patterns = _compile_patterns()
-    all_violations: List[Dict[str, Union[str, int]]] = []
-    root_str = str(PROJECT_ROOT)
+    all_violations: list[dict[str, str | int]] = []
+    str(PROJECT_ROOT)
 
     if args.path is not None:
         start = (PROJECT_ROOT / args.path).resolve() if not Path(args.path).is_absolute() else Path(args.path).resolve()
@@ -145,10 +142,7 @@ def main() -> int:
     for base in dirs_to_scan:
         if not base.exists():
             continue
-        if base.is_file():
-            files = [base]
-        else:
-            files = [f for f in base.rglob("*") if f.is_file()]
+        files = [base] if base.is_file() else [f for f in base.rglob("*") if f.is_file()]
         for f in files:
             if any(ex in f.parts for ex in EXCLUDE_DIRS):
                 continue

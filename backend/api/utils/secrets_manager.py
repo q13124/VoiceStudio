@@ -3,10 +3,10 @@ Secrets Manager
 Centralizes secrets management using environment variables and secure storage.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,15 +39,15 @@ class SecretsManager:
             service_name: Service name for keyring storage
         """
         self.service_name = service_name
-        self._cache: Dict[str, Optional[str]] = {}
+        self._cache: dict[str, str | None] = {}
 
     def get_secret(
         self,
         key: str,
-        default: Optional[str] = None,
+        default: str | None = None,
         use_keyring: bool = True,
         use_env: bool = True,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get secret value.
 
@@ -174,7 +174,7 @@ def get_secrets_manager() -> SecretsManager:
     return _secrets_manager
 
 
-def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_secret(key: str, default: str | None = None) -> str | None:
     """
     Get secret value (convenience function).
 

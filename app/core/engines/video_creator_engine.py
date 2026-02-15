@@ -8,6 +8,8 @@ Compatible with:
 - PIL/Pillow 9.0.0+
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -17,7 +19,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 # Import base protocol
 try:
@@ -56,7 +57,7 @@ class VideoCreatorEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 100,
@@ -92,7 +93,7 @@ class VideoCreatorEngine(EngineProtocol):
             "misses": 0,
         }
         # Image clip pool for reuse (limited pool size)
-        self._clip_pool: Dict[str, object] = {}
+        self._clip_pool: dict[str, object] = {}
         self._max_pool_size = 20
 
     def initialize(self) -> bool:
@@ -106,7 +107,7 @@ class VideoCreatorEngine(EngineProtocol):
             # Create reusable temp directory
             # (using temp file manager if available)
             try:
-                from ..utils.temp_file_manager import get_temp_file_manager
+                from app.core.utils.temp_file_manager import get_temp_file_manager
 
                 temp_manager = get_temp_file_manager()
                 self._temp_dir = temp_manager.create_temp_directory(
@@ -149,7 +150,7 @@ class VideoCreatorEngine(EngineProtocol):
             # Cleanup temp directory (using temp file manager if available)
             if self._temp_dir:
                 try:
-                    from ..utils.temp_file_manager import get_temp_file_manager
+                    from app.core.utils.temp_file_manager import get_temp_file_manager
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
@@ -174,12 +175,12 @@ class VideoCreatorEngine(EngineProtocol):
 
     def create_video_from_images(
         self,
-        image_paths: List[Union[str, Path]],
-        audio_path: Optional[Union[str, Path]] = None,
-        output_path: Optional[Union[str, Path]] = None,
+        image_paths: list[str | Path],
+        audio_path: str | Path | None = None,
+        output_path: str | Path | None = None,
         duration_per_image: float = 3.0,
         fps: int = 30,
-        transition: Optional[str] = None,
+        transition: str | None = None,
         **kwargs,
     ) -> str:
         """
@@ -197,11 +198,10 @@ class VideoCreatorEngine(EngineProtocol):
         Returns:
             Path to created video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError(
-                    "Engine not initialized. " "Call initialize() first."
-                )
+        if not self._initialized and not self.initialize():
+            raise RuntimeError(
+                "Engine not initialized. " "Call initialize() first."
+            )
 
         try:
             # Validate inputs
@@ -250,10 +250,7 @@ class VideoCreatorEngine(EngineProtocol):
                     clips[i + 1] = clips[i + 1].fadein(0.5)
 
             # Concatenate clips
-            if len(clips) > 1:
-                video = concatenate_videoclips(clips, method="compose")
-            else:
-                video = clips[0]
+            video = concatenate_videoclips(clips, method="compose") if len(clips) > 1 else clips[0]
 
             # Add audio if provided
             audio = None
@@ -319,9 +316,9 @@ class VideoCreatorEngine(EngineProtocol):
 
     def create_slideshow(
         self,
-        image_paths: List[Union[str, Path]],
-        audio_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        image_paths: list[str | Path],
+        audio_path: str | Path,
+        output_path: str | Path | None = None,
         fps: int = 30,
         **kwargs,
     ) -> str:
@@ -338,11 +335,10 @@ class VideoCreatorEngine(EngineProtocol):
         Returns:
             Path to created slideshow video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError(
-                    "Engine not initialized. " "Call initialize() first."
-                )
+        if not self._initialized and not self.initialize():
+            raise RuntimeError(
+                "Engine not initialized. " "Call initialize() first."
+            )
 
         try:
             # Load audio to get duration
@@ -375,16 +371,16 @@ class VideoCreatorEngine(EngineProtocol):
 
     def batch_create_videos(
         self,
-        videos: List[
-            Tuple[
-                List[Union[str, Path]],
-                Optional[Union[str, Path]],
-                Optional[Union[str, Path]],
-                Optional[Dict],
+        videos: list[
+            tuple[
+                list[str | Path],
+                str | Path | None,
+                str | Path | None,
+                dict | None,
             ]
         ],
-        batch_size: Optional[int] = None,
-    ) -> List[str]:
+        batch_size: int | None = None,
+    ) -> list[str]:
         """
         Create multiple videos in batch with parallel processing.
 
@@ -397,9 +393,8 @@ class VideoCreatorEngine(EngineProtocol):
         Returns:
             List of output paths
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -472,10 +467,10 @@ class VideoCreatorEngine(EngineProtocol):
 
         # Evict oldest if cache full
         if len(self._generation_cache) > self.cache_size:
-            oldest_key, oldest_path = self._generation_cache.popitem(last=False)
+            oldest_key, _oldest_path = self._generation_cache.popitem(last=False)
             logger.debug(f"Evicted from cache: {oldest_key[:8]}")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str]]:
+    def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (
@@ -492,7 +487,7 @@ class VideoCreatorEngine(EngineProtocol):
             "cache_hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information (enhanced)."""
         info = super().get_info()
         info.update(
@@ -512,7 +507,7 @@ class VideoCreatorEngine(EngineProtocol):
 
 
 def create_video_creator_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> VideoCreatorEngine:
     """

@@ -6,8 +6,8 @@ Task 3.1.3: Events for audio processing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from dataclasses import dataclass
+from typing import Any
 
 from backend.domain.events.base import DomainEvent
 
@@ -15,16 +15,16 @@ from backend.domain.events.base import DomainEvent
 @dataclass
 class AudioClipCreated(DomainEvent):
     """Event raised when an audio clip is created."""
-    
+
     clip_id: str = ""
-    project_id: Optional[str] = None
+    project_id: str | None = None
     name: str = ""
     source: str = ""  # "import", "record", "synthesis"
-    
+
     def __post_init__(self):
         self.aggregate_id = self.clip_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "clip_id": self.clip_id,
             "project_id": self.project_id,
@@ -36,17 +36,17 @@ class AudioClipCreated(DomainEvent):
 @dataclass
 class AudioClipProcessed(DomainEvent):
     """Event raised when audio processing completes."""
-    
+
     clip_id: str = ""
-    project_id: Optional[str] = None
+    project_id: str | None = None
     duration_seconds: float = 0.0
     file_path: str = ""
-    engine_id: Optional[str] = None
-    
+    engine_id: str | None = None
+
     def __post_init__(self):
         self.aggregate_id = self.clip_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "clip_id": self.clip_id,
             "project_id": self.project_id,
@@ -59,16 +59,16 @@ class AudioClipProcessed(DomainEvent):
 @dataclass
 class AudioClipFailed(DomainEvent):
     """Event raised when audio processing fails."""
-    
+
     clip_id: str = ""
-    project_id: Optional[str] = None
+    project_id: str | None = None
     error_message: str = ""
     error_type: str = ""
-    
+
     def __post_init__(self):
         self.aggregate_id = self.clip_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "clip_id": self.clip_id,
             "project_id": self.project_id,
@@ -80,17 +80,17 @@ class AudioClipFailed(DomainEvent):
 @dataclass
 class AudioExportCompleted(DomainEvent):
     """Event raised when audio export completes."""
-    
+
     project_id: str = ""
     output_path: str = ""
     format: str = ""
     duration_seconds: float = 0.0
     file_size_bytes: int = 0
-    
+
     def __post_init__(self):
         self.aggregate_id = self.project_id
-    
-    def _get_payload(self) -> Dict[str, Any]:
+
+    def _get_payload(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "output_path": self.output_path,

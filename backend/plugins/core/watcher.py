@@ -8,12 +8,14 @@ Uses watchdog for cross-platform file system monitoring.
 Integrates with SafePluginReloader (Phase 23.1) for safe reload handling.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
-import os
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from backend.plugins.core.safe_reload import SafePluginReloader
@@ -21,14 +23,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 try:
-    from watchdog.observers import Observer
     from watchdog.events import (
-        FileSystemEventHandler,
         FileCreatedEvent,
-        FileModifiedEvent,
         FileDeletedEvent,
+        FileModifiedEvent,
         FileMovedEvent,
+        FileSystemEventHandler,
     )
+    from watchdog.observers import Observer
     _HAS_WATCHDOG = True
 except ImportError:
     _HAS_WATCHDOG = False
@@ -57,9 +59,9 @@ class PluginFileWatcher:
         self._plugins_dir = Path(plugins_dir).resolve()
         self._debounce_ms = debounce_ms
         self._observer = None
-        self._handlers: List[Callable] = []
-        self._pending_changes: Dict[str, float] = {}
-        self._debounce_task: Optional[asyncio.Task] = None
+        self._handlers: list[Callable] = []
+        self._pending_changes: dict[str, float] = {}
+        self._debounce_task: asyncio.Task | None = None
         self._running = False
         self._safe_reloader = safe_reloader
         self._auto_reload = auto_reload
@@ -195,7 +197,7 @@ class PluginFileWatcher:
                     else:
                         logger.error(
                             f"Plugin reload failed: {plugin_id} - {result.error}"
-                            + (f" (rolled back)" if result.rolled_back else "")
+                            + (" (rolled back)" if result.rolled_back else "")
                         )
                 except Exception as exc:
                     logger.error(f"Safe reload failed for {plugin_id}: {exc}")

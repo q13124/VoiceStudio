@@ -247,6 +247,85 @@ jobs:
             **/screenshots/*.png
 
   # ============================================================================
+  # Python WinAppDriver UI Tests
+  # ============================================================================
+  python-ui-tests:
+    name: Python WinAppDriver UI Tests
+    runs-on: windows-latest
+    needs: [dotnet-build]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: voicestudio-build
+          path: build/
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install selenium requests pytest-html pytest-rerunfailures
+        shell: pwsh
+      
+      - name: Install WinAppDriver
+        run: |
+          $wadUrl = "https://github.com/microsoft/WinAppDriver/releases/download/v1.2.99/WindowsApplicationDriver-1.2.99-win-x64.exe"
+          $wadPath = "$env:TEMP\WinAppDriver.exe"
+          Invoke-WebRequest -Uri $wadUrl -OutFile $wadPath
+          Start-Process -FilePath $wadPath -ArgumentList "/S" -Wait
+          Write-Host "WinAppDriver installed"
+        shell: pwsh
+      
+      - name: Start WinAppDriver
+        run: |
+          Start-Process -FilePath "C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe" -PassThru
+          Start-Sleep -Seconds 3
+          Write-Host "WinAppDriver started"
+        shell: pwsh
+      
+      - name: Set application path
+        run: |
+          $appPath = (Get-ChildItem -Path build -Filter "VoiceStudio.App.exe" -Recurse | Select-Object -First 1).FullName
+          echo "VS_APP_PATH=$appPath" >> $env:GITHUB_ENV
+          Write-Host "App path: $appPath"
+        shell: pwsh
+      
+      - name: Create output directories
+        run: |
+          New-Item -ItemType Directory -Force -Path .buildlogs/ui_tests/screenshots
+        shell: pwsh
+      
+      - name: Run Python UI smoke tests
+        run: |
+          python -m pytest tests/ui -m "smoke" -v `
+            --html=.buildlogs/ui_tests/report.html `
+            --self-contained-html `
+            --reruns 2 `
+            --reruns-delay 1 `
+            --tb=short
+        shell: pwsh
+        continue-on-error: true
+      
+      - name: Upload UI test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-ui-test-results
+          path: |
+            .buildlogs/ui_tests/
+            **/screenshots/*.png
+
+  # ============================================================================
   # C.3 Enhancement: Performance Regression Detection
   # ============================================================================
   performance-tests:

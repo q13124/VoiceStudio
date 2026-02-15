@@ -5,14 +5,17 @@ Implements a comprehensive task scheduling system with priority management,
 periodic execution, and resource-aware scheduling.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 try:
     import psutil
@@ -72,19 +75,19 @@ class Task:
     name: str
     func: Callable
     args: tuple = field(default_factory=tuple)
-    kwargs: Dict[str, Any] = field(default_factory=dict)
+    kwargs: dict[str, Any] = field(default_factory=dict)
     priority: TaskPriority = TaskPriority.NORMAL
     status: TaskStatus = TaskStatus.PENDING
     created_at: datetime = field(default_factory=datetime.now)
-    scheduled_at: Optional[datetime] = None
-    interval: Optional[float] = None  # Repeat interval in seconds
+    scheduled_at: datetime | None = None
+    interval: float | None = None  # Repeat interval in seconds
     max_retries: int = 0
     retry_count: int = 0
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
     result: Any = None
-    error: Optional[str] = None
-    resource_requirements: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    resource_requirements: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Initialize next_run based on scheduled_at or interval."""
@@ -142,11 +145,11 @@ class BackgroundTaskScheduler:
             max_cpu_percent: Maximum CPU usage before throttling (0-100)
             max_memory_percent: Maximum memory usage before throttling (0-100)
         """
-        self._tasks: Dict[str, Task] = {}
-        self._running_tasks: Dict[str, asyncio.Task] = {}
+        self._tasks: dict[str, Task] = {}
+        self._running_tasks: dict[str, asyncio.Task] = {}
         self._max_concurrent_tasks = max_concurrent_tasks
         self._check_interval = check_interval
-        self._scheduler_task: Optional[asyncio.Task] = None
+        self._scheduler_task: asyncio.Task | None = None
         self._running = False
         self._task_count = 0
         self._completed_count = 0
@@ -155,7 +158,7 @@ class BackgroundTaskScheduler:
         self._max_cpu_percent = max_cpu_percent
         self._max_memory_percent = max_memory_percent
         self._total_execution_time = 0.0
-        self._task_execution_times: Dict[str, List[float]] = {}
+        self._task_execution_times: dict[str, list[float]] = {}
 
     def add_task(
         self,
@@ -163,10 +166,10 @@ class BackgroundTaskScheduler:
         func: Callable,
         *args,
         priority: TaskPriority = TaskPriority.NORMAL,
-        scheduled_at: Optional[datetime] = None,
-        interval: Optional[float] = None,
+        scheduled_at: datetime | None = None,
+        interval: float | None = None,
         max_retries: int = 0,
-        resource_requirements: Optional[Dict[str, Any]] = None,
+        resource_requirements: dict[str, Any] | None = None,
         **kwargs,
     ) -> str:
         """
@@ -246,15 +249,15 @@ class BackgroundTaskScheduler:
             return True
         return False
 
-    def get_task(self, task_id: str) -> Optional[Task]:
+    def get_task(self, task_id: str) -> Task | None:
         """Get task by ID."""
         return self._tasks.get(task_id)
 
     def list_tasks(
         self,
-        status: Optional[TaskStatus] = None,
-        priority: Optional[TaskPriority] = None,
-    ) -> List[Task]:
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+    ) -> list[Task]:
         """
         List tasks with optional filtering.
 
@@ -473,7 +476,7 @@ class BackgroundTaskScheduler:
         self._running_tasks.clear()
         logger.info("Background task scheduler stopped")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get scheduler statistics (enhanced)."""
         status_counts = {}
         priority_counts = {}
@@ -522,7 +525,7 @@ class BackgroundTaskScheduler:
 
 
 # Global scheduler instance
-_scheduler: Optional[BackgroundTaskScheduler] = None
+_scheduler: BackgroundTaskScheduler | None = None
 
 
 def get_scheduler() -> BackgroundTaskScheduler:

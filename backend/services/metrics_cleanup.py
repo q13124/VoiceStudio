@@ -6,6 +6,8 @@ Automatically cleans up old metrics files to prevent unbounded disk growth.
 All operations are local-first with no external dependencies.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -13,7 +15,7 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ class RetentionPolicy:
     file_pattern: str = "*"
     enabled: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "directory": str(self.directory),
@@ -51,7 +53,7 @@ class RetentionPolicy:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RetentionPolicy":
+    def from_dict(cls, data: dict[str, Any]) -> "RetentionPolicy":
         """Create from dictionary."""
         return cls(
             directory=Path(data["directory"]),
@@ -70,10 +72,10 @@ class CleanupResult:
     directory: Path
     files_deleted: int = 0
     bytes_freed: int = 0
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     skipped: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "directory": str(self.directory),
@@ -105,8 +107,8 @@ class MetricsCleanupService:
             with cls._lock:
                 if cls._instance is None:
                     instance = super().__new__(cls)
-                    instance._policies: Dict[str, RetentionPolicy] = {}
-                    instance._last_cleanup: Optional[datetime] = None
+                    instance._policies: dict[str, RetentionPolicy] = {}
+                    instance._last_cleanup: datetime | None = None
                     instance._init_default_policies()
                     cls._instance = instance
         return cls._instance
@@ -208,11 +210,11 @@ class MetricsCleanupService:
 
         logger.info("Set retention policy '%s' for %s", name, directory)
 
-    def get_policy(self, name: str) -> Optional[RetentionPolicy]:
+    def get_policy(self, name: str) -> RetentionPolicy | None:
         """Get a retention policy by name."""
         return self._policies.get(name)
 
-    def list_policies(self) -> Dict[str, RetentionPolicy]:
+    def list_policies(self) -> dict[str, RetentionPolicy]:
         """List all retention policies."""
         return dict(self._policies)
 
@@ -241,7 +243,7 @@ class MetricsCleanupService:
 
         return self._cleanup_directory(policy)
 
-    def cleanup_all(self) -> List[CleanupResult]:
+    def cleanup_all(self) -> list[CleanupResult]:
         """
         Run cleanup for all policies.
 
@@ -322,7 +324,7 @@ class MetricsCleanupService:
 
     def _get_files_with_stats(
         self, directory: Path, pattern: str
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """Get list of (path, mtime, size) tuples for matching files."""
         files = []
         for filepath in directory.glob(pattern):
@@ -349,7 +351,7 @@ class MetricsCleanupService:
             result.errors.append(f"Failed to delete {filepath}: {exc}")
             return False
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current status of all managed directories."""
         status = {
             "last_cleanup": (

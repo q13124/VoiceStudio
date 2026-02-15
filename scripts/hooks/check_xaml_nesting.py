@@ -15,8 +15,6 @@ Exit codes:
 
 import re
 import sys
-from pathlib import Path
-
 
 # Pattern to detect deeply nested Views subfolders
 # Views/{category}/{subcategory}/{file}.xaml is too deep
@@ -26,18 +24,18 @@ NESTED_VIEWS_PATTERN = re.compile(r'Views[/\\][^/\\]+[/\\][^/\\]+[/\\][^/\\]+\.x
 def main() -> int:
     if len(sys.argv) < 2:
         return 0
-    
+
     files = sys.argv[1:]
     nested_files = []
-    
+
     for file_path_str in files:
         # Only check .xaml files
         if not file_path_str.endswith('.xaml'):
             continue
-        
+
         if NESTED_VIEWS_PATTERN.search(file_path_str):
             nested_files.append(file_path_str)
-    
+
     if nested_files:
         print("\nERROR: Deeply nested XAML files in Views/ detected!")
         print("This can cause silent XamlCompiler.exe failures.")
@@ -48,7 +46,7 @@ def main() -> int:
         print("\nFix: Move to Views/ root or Views/{Category}/ (max 1 level deep)")
         print("\nTo bypass: git commit --no-verify")
         return 1
-    
+
     return 0
 
 

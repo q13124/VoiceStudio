@@ -30,15 +30,16 @@ text (passthrough) with a logged warning. This prevents [PLACEHOLDER:] text
 from appearing in user-facing outputs.
 """
 
+from __future__ import annotations
+
 import logging
-import os
 import tempfile
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -73,13 +74,13 @@ class TranscriptionSegment:
     text: str
     language: str
     confidence: float
-    words: List[Dict[str, Any]] = field(default_factory=list)
-    
+    words: list[dict[str, Any]] = field(default_factory=list)
+
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "segment_id": self.segment_id,
             "start_time": self.start_time,
@@ -103,8 +104,8 @@ class TranslatedSegment:
     start_time: float
     end_time: float
     timing_adjusted: bool  # Whether timing was adjusted for length
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "segment_id": self.segment_id,
             "original_text": self.original_text,
@@ -123,18 +124,18 @@ class TranslationProject:
     project_id: str
     name: str
     source_audio_path: str
-    source_language: Optional[str]  # Auto-detect if None
+    source_language: str | None  # Auto-detect if None
     target_language: str
     transcription_model: TranscriptionModel
     translation_provider: TranslationProvider
-    transcribed_segments: List[TranscriptionSegment]
-    translated_segments: List[TranslatedSegment]
+    transcribed_segments: list[TranscriptionSegment]
+    translated_segments: list[TranslatedSegment]
     status: str  # pending, transcribing, translating, complete, failed
     progress: float
     created_at: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "name": self.name,
@@ -196,52 +197,52 @@ SUPPORTED_LANGUAGES = {
 class TranslationService:
     """
     Service for transcription and translation.
-    
+
     Implements Phase 10.3 features:
     - 10.3.1: Whisper integration
     - 10.3.2: Translation API hookup
     - 10.3.3: Timing preservation
     """
-    
+
     def __init__(self):
         self._initialized = False
-        self._projects: Dict[str, TranslationProject] = {}
+        self._projects: dict[str, TranslationProject] = {}
         self._output_dir = Path(tempfile.gettempdir()) / "voicestudio" / "translation"
         self._whisper_model = None
-        self._translation_models: Dict[str, Any] = {}
-        
+        self._translation_models: dict[str, Any] = {}
+
         logger.info("TranslationService created")
-    
+
     async def initialize(self) -> bool:
         """Initialize the translation service."""
         if self._initialized:
             return True
-        
+
         try:
             self._output_dir.mkdir(parents=True, exist_ok=True)
             self._initialized = True
             logger.info("TranslationService initialized")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize TranslationService: {e}")
             return False
-    
+
     async def create_project(
         self,
         name: str,
         source_audio_path: str,
         target_language: str,
-        source_language: Optional[str] = None,
+        source_language: str | None = None,
         transcription_model: TranscriptionModel = TranscriptionModel.WHISPER_BASE,
         translation_provider: TranslationProvider = TranslationProvider.LOCAL_NLLB,
     ) -> TranslationProject:
         """Create a new translation project."""
         if not self._initialized:
             await self.initialize()
-        
+
         project_id = f"trans_{uuid.uuid4().hex[:8]}"
-        
+
         project = TranslationProject(
             project_id=project_id,
             name=name,
@@ -256,41 +257,41 @@ class TranslationService:
             progress=0.0,
             created_at=datetime.now(),
         )
-        
+
         self._projects[project_id] = project
         logger.info(f"Created translation project: {project_id}")
-        
+
         return project
-    
+
     async def transcribe(
         self,
         project_id: str,
         word_timestamps: bool = True,
-    ) -> List[TranscriptionSegment]:
+    ) -> list[TranscriptionSegment]:
         """
         Transcribe audio to text with timestamps.
-        
+
         Phase 10.3.1: Whisper integration
-        
+
         Args:
             project_id: Project ID
             word_timestamps: Include word-level timestamps
-            
+
         Returns:
             List of transcription segments
         """
         project = self._projects.get(project_id)
         if not project:
             return []
-        
+
         try:
             project.status = "transcribing"
             project.progress = 0.1
-            
+
             # Load Whisper model
             model = await self._load_whisper_model(project.transcription_model)
             project.progress = 0.3
-            
+
             # Transcribe
             segments = await self._run_whisper(
                 project.source_audio_path,
@@ -299,53 +300,53 @@ class TranslationService:
                 word_timestamps,
             )
             project.progress = 0.8
-            
+
             # Detect source language if not specified
             if not project.source_language and segments:
                 project.source_language = segments[0].language
-            
+
             project.transcribed_segments = segments
             project.status = "transcribed"
             project.progress = 1.0
-            
+
             logger.info(f"Transcribed {len(segments)} segments for project {project_id}")
             return segments
-        
+
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
             project.status = "failed"
             return []
-    
+
     async def translate(
         self,
         project_id: str,
         preserve_timing: bool = True,
-    ) -> List[TranslatedSegment]:
+    ) -> list[TranslatedSegment]:
         """
         Translate transcribed segments.
-        
+
         Phase 10.3.2: Translation API hookup
         Phase 10.3.3: Timing preservation
-        
+
         Args:
             project_id: Project ID
             preserve_timing: Adjust translations for timing
-            
+
         Returns:
             List of translated segments
         """
         project = self._projects.get(project_id)
         if not project:
             return []
-        
+
         if not project.transcribed_segments:
             logger.warning("No transcribed segments to translate")
             return []
-        
+
         try:
             project.status = "translating"
             project.progress = 0.1
-            
+
             # Load translation model
             translator = await self._load_translation_model(
                 project.translation_provider,
@@ -353,11 +354,11 @@ class TranslationService:
                 project.target_language,
             )
             project.progress = 0.3
-            
+
             # Translate segments
             translated_segments = []
             total = len(project.transcribed_segments)
-            
+
             for i, segment in enumerate(project.transcribed_segments):
                 translated_text = await self._translate_text(
                     translator,
@@ -365,24 +366,23 @@ class TranslationService:
                     project.source_language,
                     project.target_language,
                 )
-                
+
                 # Adjust timing if needed
                 timing_adjusted = False
                 start_time = segment.start_time
                 end_time = segment.end_time
-                
+
                 if preserve_timing:
                     # Estimate speaking duration for translation
-                    original_duration = segment.duration
                     original_chars = len(segment.text)
                     translated_chars = len(translated_text)
-                    
+
                     # If translation is significantly longer, may need adjustment
                     char_ratio = translated_chars / max(original_chars, 1)
                     if char_ratio > 1.3:  # Translation is 30% longer
                         timing_adjusted = True
                         # Keep same duration but note adjustment needed
-                
+
                 translated_segments.append(TranslatedSegment(
                     segment_id=segment.segment_id,
                     original_text=segment.text,
@@ -393,54 +393,54 @@ class TranslationService:
                     end_time=end_time,
                     timing_adjusted=timing_adjusted,
                 ))
-                
+
                 project.progress = 0.3 + (i / total) * 0.6
-            
+
             project.translated_segments = translated_segments
             project.status = "complete"
             project.progress = 1.0
-            
+
             logger.info(f"Translated {len(translated_segments)} segments")
             return translated_segments
-        
+
         except Exception as e:
             logger.error(f"Translation failed: {e}")
             project.status = "failed"
             return []
-    
+
     async def transcribe_and_translate(
         self,
         project_id: str,
-    ) -> Tuple[List[TranscriptionSegment], List[TranslatedSegment]]:
+    ) -> tuple[list[TranscriptionSegment], list[TranslatedSegment]]:
         """Full pipeline: transcribe and translate."""
         transcribed = await self.transcribe(project_id)
         if not transcribed:
             return [], []
-        
+
         translated = await self.translate(project_id)
         return transcribed, translated
-    
+
     async def export_subtitles(
         self,
         project_id: str,
         format: str = "srt",
         use_translation: bool = True,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Export subtitles file.
-        
+
         Args:
             project_id: Project ID
             format: Subtitle format (srt, vtt, ass)
             use_translation: Use translated text if available
-            
+
         Returns:
             Path to exported subtitle file
         """
         project = self._projects.get(project_id)
         if not project:
             return None
-        
+
         # Get segments to export
         if use_translation and project.translated_segments:
             segments = [
@@ -462,7 +462,7 @@ class TranslationService:
             ]
         else:
             return None
-        
+
         # Generate subtitle content
         if format == "srt":
             content = self._generate_srt(segments)
@@ -475,51 +475,51 @@ class TranslationService:
             ext = ".ass"
         else:
             return None
-        
+
         # Save file
         output_path = str(self._output_dir / f"{project_id}_subtitles{ext}")
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
-        
+
         return output_path
-    
-    def get_project(self, project_id: str) -> Optional[TranslationProject]:
+
+    def get_project(self, project_id: str) -> TranslationProject | None:
         """Get a project by ID."""
         return self._projects.get(project_id)
-    
-    def list_projects(self) -> List[TranslationProject]:
+
+    def list_projects(self) -> list[TranslationProject]:
         """List all projects."""
         return list(self._projects.values())
-    
-    def get_supported_languages(self) -> Dict[str, str]:
+
+    def get_supported_languages(self) -> dict[str, str]:
         """Get supported language codes and names."""
         return SUPPORTED_LANGUAGES.copy()
-    
+
     def delete_project(self, project_id: str) -> bool:
         """Delete a project."""
         if project_id in self._projects:
             self._projects.pop(project_id)
             return True
         return False
-    
+
     # Internal methods
-    
+
     async def _load_whisper_model(self, model: TranscriptionModel) -> Any:
         """Load Whisper model."""
         # Placeholder for actual model loading
         # In production, load via whisper or faster-whisper
         logger.info(f"Loading Whisper model: {model.value}")
         return {"model": model.value}
-    
+
     async def _run_whisper(
         self,
         audio_path: str,
         model: Any,
-        language: Optional[str],
+        language: str | None,
         word_timestamps: bool,
-    ) -> List[TranscriptionSegment]:
+    ) -> list[TranscriptionSegment]:
         """Run Whisper transcription."""
         try:
             # Load audio for duration
@@ -527,17 +527,17 @@ class TranslationService:
             audio, sample_rate = sf.read(audio_path)
             if len(audio.shape) > 1:
                 audio = np.mean(audio, axis=1)
-            
+
             duration = len(audio) / sample_rate
-            
+
             # Simulate transcription results
             # In production, use actual Whisper inference
             segments = []
             segment_duration = 5.0  # 5 second segments
-            
+
             current_time = 0.0
             segment_id = 0
-            
+
             # Sample text for simulation
             sample_texts = [
                 "Hello, this is a transcribed segment.",
@@ -546,12 +546,12 @@ class TranslationService:
                 "Multiple languages are supported.",
                 "Timing information is preserved.",
             ]
-            
+
             while current_time < duration:
                 end_time = min(current_time + segment_duration, duration)
-                
+
                 text = sample_texts[segment_id % len(sample_texts)]
-                
+
                 words = []
                 if word_timestamps:
                     word_list = text.split()
@@ -562,7 +562,7 @@ class TranslationService:
                             "start": current_time + j * word_duration,
                             "end": current_time + (j + 1) * word_duration,
                         })
-                
+
                 segments.append(TranscriptionSegment(
                     segment_id=f"seg_{segment_id}",
                     start_time=current_time,
@@ -572,16 +572,16 @@ class TranslationService:
                     confidence=0.92,
                     words=words,
                 ))
-                
+
                 current_time = end_time
                 segment_id += 1
-            
+
             return segments
-        
+
         except Exception as e:
             logger.error(f"Whisper transcription failed: {e}")
             return []
-    
+
     async def _load_translation_model(
         self,
         provider: TranslationProvider,
@@ -595,7 +595,7 @@ class TranslationService:
             "source": source_lang,
             "target": target_lang,
         }
-    
+
     async def _translate_text(
         self,
         translator: Any,
@@ -604,32 +604,32 @@ class TranslationService:
         target_lang: str,
     ) -> str:
         """Translate text using the loaded model.
-        
+
         Gap Analysis Fix: Improved placeholder with clear status indicators.
         In production, integrate with NLLB, OPUS-MT, MarianMT, or other models.
         """
         # Try to use actual translation if transformers is available
         try:
             from transformers import pipeline
-            
+
             # Check if we have the model cached
             model_name = f"Helsinki-NLP/opus-mt-{source_lang}-{target_lang}"
-            
+
             # Attempt to use the translation pipeline
             # This will work if the model is downloaded
             translator_pipeline = pipeline("translation", model=model_name)
             result = translator_pipeline(text, max_length=512)
-            
+
             if result and len(result) > 0:
                 return result[0].get("translation_text", text)
-                
+
         except ImportError:
             logger.debug("transformers not available, trying alternative")
         except Exception as e:
             logger.debug(f"Translation model not available: {e}")
-        
+
         # Task 4.2.10: Try additional translation methods before placeholder
-        
+
         # Try googletrans (free, no API key)
         try:
             from googletrans import Translator
@@ -641,7 +641,7 @@ class TranslationService:
             logger.debug("googletrans not available")
         except Exception as e:
             logger.debug(f"googletrans failed: {e}")
-        
+
         # Try deep-translator
         try:
             from deep_translator import GoogleTranslator
@@ -652,7 +652,7 @@ class TranslationService:
             logger.debug("deep-translator not available")
         except Exception as e:
             logger.debug(f"deep-translator failed: {e}")
-        
+
         # Final fallback: passthrough with logged warning
         # Phase 9 Gap Fix: Return original text instead of [PLACEHOLDER:] prefix
         # to avoid placeholder text appearing in user-facing outputs
@@ -661,18 +661,18 @@ class TranslationService:
             "it": "Italian", "pt": "Portuguese", "zh": "Chinese",
             "ja": "Japanese", "ko": "Korean", "ru": "Russian",
         }
-        
+
         lang_name = lang_names.get(target_lang, target_lang.upper())
         logger.warning(
             f"Translation to {lang_name} not available - returning original text. "
             f"Install translation support: pip install googletrans==4.0.0-rc1 "
             f"or pip install deep-translator"
         )
-        
+
         # Return original text (passthrough) - allows workflow to continue
         # The warning is logged for administrators to see
         return text
-    
+
     def _format_timestamp_srt(self, seconds: float) -> str:
         """Format timestamp for SRT format."""
         hours = int(seconds // 3600)
@@ -680,7 +680,7 @@ class TranslationService:
         secs = int(seconds % 60)
         millis = int((seconds % 1) * 1000)
         return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
-    
+
     def _format_timestamp_vtt(self, seconds: float) -> str:
         """Format timestamp for VTT format."""
         hours = int(seconds // 3600)
@@ -688,8 +688,8 @@ class TranslationService:
         secs = int(seconds % 60)
         millis = int((seconds % 1) * 1000)
         return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
-    
-    def _generate_srt(self, segments: List[Dict[str, Any]]) -> str:
+
+    def _generate_srt(self, segments: list[dict[str, Any]]) -> str:
         """Generate SRT subtitle content."""
         lines = []
         for i, seg in enumerate(segments, 1):
@@ -700,8 +700,8 @@ class TranslationService:
             lines.append(seg["text"])
             lines.append("")
         return "\n".join(lines)
-    
-    def _generate_vtt(self, segments: List[Dict[str, Any]]) -> str:
+
+    def _generate_vtt(self, segments: list[dict[str, Any]]) -> str:
         """Generate WebVTT subtitle content."""
         lines = ["WEBVTT", ""]
         for i, seg in enumerate(segments, 1):
@@ -712,8 +712,8 @@ class TranslationService:
             lines.append(seg["text"])
             lines.append("")
         return "\n".join(lines)
-    
-    def _generate_ass(self, segments: List[Dict[str, Any]]) -> str:
+
+    def _generate_ass(self, segments: list[dict[str, Any]]) -> str:
         """Generate ASS subtitle content."""
         header = """[Script Info]
 Title: VoiceStudio Subtitles
@@ -728,25 +728,25 @@ Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
-        
+
         def format_ass_time(seconds: float) -> str:
             hours = int(seconds // 3600)
             minutes = int((seconds % 3600) // 60)
             secs = seconds % 60
             return f"{hours}:{minutes:02d}:{secs:05.2f}"
-        
+
         events = []
         for seg in segments:
             start = format_ass_time(seg["start"])
             end = format_ass_time(seg["end"])
             text = seg["text"].replace("\n", "\\N")
             events.append(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text}")
-        
+
         return header + "\n".join(events)
 
 
 # Singleton instance
-_translation_service: Optional[TranslationService] = None
+_translation_service: TranslationService | None = None
 
 
 def get_translation_service() -> TranslationService:

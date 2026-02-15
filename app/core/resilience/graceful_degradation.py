@@ -4,11 +4,14 @@ Graceful Degradation System
 Provides graceful degradation when services are unavailable or degraded.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
+from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +44,7 @@ class GracefulDegradation:
         """
         self.name = name
         self.level = DegradationLevel.NONE
-        self.fallbacks: Dict[DegradationLevel, Callable] = {}
+        self.fallbacks: dict[DegradationLevel, Callable] = {}
 
     def set_level(self, level: DegradationLevel):
         """
@@ -116,7 +119,7 @@ class GracefulDegradation:
 
 def graceful_degradation(
     name: str,
-    fallback_func: Optional[Callable] = None,
+    fallback_func: Callable | None = None,
     level: DegradationLevel = DegradationLevel.DEGRADED,
 ):
     """

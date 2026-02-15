@@ -5,10 +5,13 @@ Handles immediate AI audio stop when the user begins speaking.
 Coordinates with the interruption FSM to determine the appropriate response.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +30,9 @@ class BargeInHandler:
 
     def __init__(
         self,
-        interruption_fsm: Optional[InterruptionFSM] = None,
-        on_stop: Optional[Callable] = None,
-        on_buffer: Optional[Callable] = None,
+        interruption_fsm: InterruptionFSM | None = None,
+        on_stop: Callable | None = None,
+        on_buffer: Callable | None = None,
     ):
         self._fsm = interruption_fsm or InterruptionFSM()
         self._on_stop = on_stop
@@ -48,7 +51,7 @@ class BargeInHandler:
         self,
         text: str,
         audio_energy: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Handle detected user speech.
 

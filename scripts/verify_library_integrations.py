@@ -6,12 +6,8 @@ Tests all integrated libraries from OLD_PROJECT_INTEGRATION
 This script verifies that all libraries are properly installed and integrated.
 """
 
-import sys
-from pathlib import Path
-
-from _env_setup import PROJECT_ROOT
-
 import logging
+import sys
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -259,7 +255,6 @@ def main():
     # Test audio_utils integrations
     try:
         from app.core.audio.audio_utils import (
-            HAS_CREPE,
             HAS_DEEPFILTERNET,
             HAS_PYRUBBERBAND,
             HAS_RESAMPY,

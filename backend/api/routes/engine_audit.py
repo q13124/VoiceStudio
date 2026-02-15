@@ -9,7 +9,7 @@ Architecture Note:
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/engines/audit", tags=["engines"])
 @router.get("/all", summary="Audit all engines")
 def audit_all_engines(
     engine_service: IEngineService = Depends(get_engine_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Audit all registered engines for completeness and enhancements.
 
@@ -40,14 +40,14 @@ def audit_all_engines(
     except Exception as e:
         logger.error(f"Failed to audit engines: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to audit engines: {str(e)}"
+            status_code=500, detail=f"Failed to audit engines: {e!s}"
         )
 
 
 @router.get("/summary", summary="Get audit summary")
 def get_audit_summary(
     engine_service: IEngineService = Depends(get_engine_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get summary of engine audits.
 
@@ -64,7 +64,7 @@ def get_audit_summary(
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to get audit summary: {str(e)}"
+            status_code=500, detail=f"Failed to get audit summary: {e!s}"
         )
 
 
@@ -72,7 +72,7 @@ def get_audit_summary(
 def get_engines_needing_attention(
     min_score: float = 70.0,
     engine_service: IEngineService = Depends(get_engine_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get engines that need attention (score below threshold).
 
@@ -85,7 +85,7 @@ def get_engines_needing_attention(
     try:
         registry = engine_service.get_engine_registry()
         auditor = engine_service.get_engine_auditor()
-        
+
         if registry is None or auditor is None:
             raise HTTPException(status_code=500, detail="Engine audit not available")
 
@@ -123,14 +123,14 @@ def get_engines_needing_attention(
         logger.error(f"Failed to get engines needing attention: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get engines needing attention: {str(e)}",
+            detail=f"Failed to get engines needing attention: {e!s}",
         )
 
 
 @router.get("/report", summary="Generate enhancement report")
 def generate_enhancement_report(
     engine_service: IEngineService = Depends(get_engine_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Generate a markdown report of enhancement opportunities.
 
@@ -140,7 +140,7 @@ def generate_enhancement_report(
     try:
         registry = engine_service.get_engine_registry()
         auditor = engine_service.get_engine_auditor()
-        
+
         if registry is None or auditor is None:
             raise HTTPException(status_code=500, detail="Engine audit not available")
 
@@ -159,5 +159,5 @@ def generate_enhancement_report(
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate report: {str(e)}"
+            status_code=500, detail=f"Failed to generate report: {e!s}"
         )

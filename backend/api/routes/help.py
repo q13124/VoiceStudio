@@ -5,11 +5,11 @@ Endpoints for help content, tutorials, and documentation.
 Supports help topics, keyboard shortcuts, and search.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/help", tags=["help"])
 
 # Help content storage with JSON persistence
-_help_topics: Dict[str, Dict] = {}
-_keyboard_shortcuts: Dict[str, Dict] = {}
-_help_data_file: Optional[str] = None
+_help_topics: dict[str, dict] = {}
+_keyboard_shortcuts: dict[str, dict] = {}
+_help_data_file: str | None = None
 
 
 def _get_help_data_path() -> str:
@@ -40,10 +40,10 @@ def _load_help_data():
     """Load help topics and shortcuts from JSON file."""
     global _help_topics, _keyboard_shortcuts
     help_file = _get_help_data_path()
-    
+
     if os.path.exists(help_file):
         try:
-            with open(help_file, "r", encoding="utf-8") as f:
+            with open(help_file, encoding="utf-8") as f:
                 data = json.load(f)
                 _help_topics = data.get("topics", {})
                 _keyboard_shortcuts = data.get("shortcuts", {})
@@ -79,9 +79,9 @@ class HelpTopic(BaseModel):
     title: str
     category: str
     content: str
-    keywords: List[str] = []
-    related_topics: List[str] = []
-    panel_id: Optional[str] = None  # Associated panel
+    keywords: list[str] = []
+    related_topics: list[str] = []
+    panel_id: str | None = None  # Associated panel
 
 
 class KeyboardShortcut(BaseModel):
@@ -90,22 +90,22 @@ class KeyboardShortcut(BaseModel):
     key: str
     description: str
     category: str
-    panel_id: Optional[str] = None  # Panel-specific shortcut
+    panel_id: str | None = None  # Panel-specific shortcut
 
 
 class HelpSearchRequest(BaseModel):
     """Request to search help content."""
 
     query: str
-    category: Optional[str] = None
-    panel_id: Optional[str] = None
+    category: str | None = None
+    panel_id: str | None = None
     limit: int = 50
 
 
 class HelpSearchResponse(BaseModel):
     """Response from help search."""
 
-    topics: List[HelpTopic]
+    topics: list[HelpTopic]
     total: int
 
 
@@ -317,10 +317,10 @@ if not _help_topics:
     _save_help_data()  # Save defaults on first run
 
 
-@router.get("/topics", response_model=List[HelpTopic])
+@router.get("/topics", response_model=list[HelpTopic])
 @cache_response(ttl=300)  # Cache for 5 minutes (help topics are relatively static)
 async def get_help_topics(
-    category: Optional[str] = Query(None), panel_id: Optional[str] = Query(None)
+    category: str | None = Query(None), panel_id: str | None = Query(None)
 ):
     """Get all help topics, optionally filtered."""
     topics = list(_help_topics.values())
@@ -361,10 +361,10 @@ async def update_help_topic(topic_id: str, topic: HelpTopic):
     """Update a help topic."""
     if topic_id != topic.id:
         raise HTTPException(status_code=400, detail="Topic ID mismatch")
-    
+
     if topic_id not in _help_topics:
         raise HTTPException(status_code=404, detail="Help topic not found")
-    
+
     _help_topics[topic_id] = topic.dict()
     _save_help_data()
     return topic
@@ -375,7 +375,7 @@ async def delete_help_topic(topic_id: str):
     """Delete a help topic."""
     if topic_id not in _help_topics:
         raise HTTPException(status_code=404, detail="Help topic not found")
-    
+
     del _help_topics[topic_id]
     _save_help_data()
     return {"message": "Help topic deleted"}
@@ -394,10 +394,10 @@ async def update_keyboard_shortcut(key: str, shortcut: KeyboardShortcut):
     """Update a keyboard shortcut."""
     if key != shortcut.key:
         raise HTTPException(status_code=400, detail="Shortcut key mismatch")
-    
+
     if key not in _keyboard_shortcuts:
         raise HTTPException(status_code=404, detail="Keyboard shortcut not found")
-    
+
     _keyboard_shortcuts[key] = shortcut.dict()
     _save_help_data()
     return shortcut
@@ -408,7 +408,7 @@ async def delete_keyboard_shortcut(key: str):
     """Delete a keyboard shortcut."""
     if key not in _keyboard_shortcuts:
         raise HTTPException(status_code=404, detail="Keyboard shortcut not found")
-    
+
     del _keyboard_shortcuts[key]
     _save_help_data()
     return {"message": "Keyboard shortcut deleted"}
@@ -418,8 +418,8 @@ async def delete_keyboard_shortcut(key: str):
 @cache_response(ttl=300)  # Cache for 5 minutes (search results are relatively static)
 async def search_help(
     query: str = Query(..., description="Search query"),
-    category: Optional[str] = Query(None),
-    panel_id: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    panel_id: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
 ):
     """Search help topics."""
@@ -461,10 +461,10 @@ async def search_help(
     )
 
 
-@router.get("/shortcuts", response_model=List[KeyboardShortcut])
+@router.get("/shortcuts", response_model=list[KeyboardShortcut])
 @cache_response(ttl=300)  # Cache for 5 minutes (shortcuts are relatively static)
 async def get_keyboard_shortcuts(
-    category: Optional[str] = Query(None), panel_id: Optional[str] = Query(None)
+    category: str | None = Query(None), panel_id: str | None = Query(None)
 ):
     """Get keyboard shortcuts, optionally filtered."""
     shortcuts = list(_keyboard_shortcuts.values())
@@ -492,7 +492,7 @@ async def get_help_categories():
         if cat:
             categories.add(cat)
 
-    return {"categories": sorted(list(categories))}
+    return {"categories": sorted(categories)}
 
 
 @router.get("/panel/{panel_id}")

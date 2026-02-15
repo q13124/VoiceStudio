@@ -9,10 +9,9 @@ All engines must implement this protocol/interface.
 
 # Canonical definition is in base.py - re-export for backward compatibility
 from .base import (
-    EngineProtocol,
     CancellationToken,
+    EngineProtocol,
     OperationCancelledError,
-    _get_torch,
 )
 
-__all__ = ["EngineProtocol", "CancellationToken", "OperationCancelledError"]
+__all__ = ["CancellationToken", "EngineProtocol", "OperationCancelledError"]

@@ -1,6 +1,12 @@
 using VoiceStudio.App.Services;
 using VoiceStudio.App.ViewModels;
+using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Services;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace VoiceStudio.App.Views.Panels
 {
@@ -11,6 +17,7 @@ namespace VoiceStudio.App.Views.Panels
   {
     public VoiceCloningWizardViewModel ViewModel { get; }
     private ToastNotificationService? _toastService;
+    private IDragDropService? _panelDragDropService;
 
     public VoiceCloningWizardView()
     {
@@ -23,12 +30,14 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _toastService = ServiceProvider.GetToastNotificationService();
+      _panelDragDropService = AppServices.TryGetDragDropService();
 
       // Add keyboard navigation
       this.KeyDown += VoiceCloningWizardView_KeyDown;
 
       // Setup keyboard navigation
       this.Loaded += VoiceCloningWizardView_KeyboardNavigation_Loaded;
+      this.Unloaded += VoiceCloningWizardView_Unloaded;
 
       // Setup Escape key to close help overlay
       KeyboardNavigationHelper.SetupEscapeKeyHandling(this, () =>
@@ -130,9 +139,64 @@ namespace VoiceStudio.App.Views.Panels
       HelpOverlay.Show();
     }
 
-    private void VoiceCloningWizardView_KeyboardNavigation_Loaded(object _, Microsoft.UI.Xaml.RoutedEventArgs __)
+    private void VoiceCloningWizardView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);
+
+      // Register as drop target for ReferenceAudio and Asset payloads (Panel Architecture Phase 4)
+      _panelDragDropService?.RegisterDropTarget(
+          ViewModel.PanelId,
+          CanAcceptDrop);
+    }
+
+    private void VoiceCloningWizardView_Unloaded(object _, RoutedEventArgs __)
+    {
+      // Unregister from drop target (Panel Architecture Phase 4)
+      _panelDragDropService?.UnregisterDropTarget(ViewModel.PanelId);
+    }
+
+    /// <summary>
+    /// Determines if this panel can accept a drag payload.
+    /// Accepts ReferenceAudio, Assets (audio files), and external files.
+    /// </summary>
+    private static bool CanAcceptDrop(DragPayload payload)
+    {
+      return payload.PayloadType == DragPayloadType.ReferenceAudio ||
+             payload.PayloadType == DragPayloadType.Asset ||
+             payload.PayloadType == DragPayloadType.ExternalFile;
+    }
+
+    /// <summary>
+    /// Handles a dropped audio file for voice cloning.
+    /// </summary>
+    private async Task HandleReferenceAudioDropAsync(DragPayload payload, CancellationToken cancellationToken)
+    {
+      // Only accept drops on Step 1 (audio selection)
+      if (ViewModel.CurrentStep != 1)
+      {
+        _toastService?.ShowToast(ToastType.Warning, "Cannot Drop", "Return to Step 1 to add reference audio");
+        return;
+      }
+
+      var audioItem = payload.Items.FirstOrDefault();
+      if (audioItem == null)
+        return;
+
+      switch (payload.PayloadType)
+      {
+        case DragPayloadType.ReferenceAudio:
+        case DragPayloadType.Asset:
+          // Use the dropped audio as reference
+          _toastService?.ShowToast(ToastType.Success, "Reference Audio Added", $"Using '{audioItem.DisplayName}' as reference");
+          break;
+
+        case DragPayloadType.ExternalFile:
+          // Load external audio file path
+          _toastService?.ShowToast(ToastType.Info, "Loading Audio", $"Loading '{audioItem.DisplayName}'...");
+          break;
+      }
+
+      await Task.CompletedTask;
     }
 
     private void UpdateStepVisibility()

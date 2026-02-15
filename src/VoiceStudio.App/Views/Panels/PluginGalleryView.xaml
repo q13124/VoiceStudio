@@ -5,7 +5,7 @@
     xmlns:local="using:VoiceStudio.App.Views.Panels"
     xmlns:controls="using:VoiceStudio.App.Controls"
     xmlns:models="using:VoiceStudio.Core.Plugins.Models"
-    AutomationProperties.AutomationId="PluginGalleryView">
+    AutomationProperties.AutomationId="PluginGalleryView_Root">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>

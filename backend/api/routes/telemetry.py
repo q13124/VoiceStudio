@@ -8,7 +8,7 @@ Part of the infrastructure remediation plan to activate dormant telemetry system
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -20,18 +20,18 @@ router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 
 class MetricSummary(BaseModel):
     """Summary of a single metric."""
-    
+
     name: str
     type: str
     count: int
     sum: float
-    min: Optional[float] = None
-    max: Optional[float] = None
+    min: float | None = None
+    max: float | None = None
 
 
 class SLOStatus(BaseModel):
     """SLO status for a metric."""
-    
+
     name: str
     target: float
     current: float
@@ -41,16 +41,16 @@ class SLOStatus(BaseModel):
 
 class TelemetryResponse(BaseModel):
     """Response containing telemetry metrics."""
-    
-    metrics: Dict[str, Any]
+
+    metrics: dict[str, Any]
     spans_recorded: int
     uptime_seconds: float
 
 
 class SLOResponse(BaseModel):
     """Response containing SLO statuses."""
-    
-    slos: List[SLOStatus]
+
+    slos: list[SLOStatus]
     overall_health: str  # "healthy", "degraded", "unhealthy"
 
 
@@ -58,7 +58,7 @@ class SLOResponse(BaseModel):
 async def get_metrics():
     """
     Get current telemetry metrics.
-    
+
     Returns aggregated metrics from the TelemetryService including:
     - Request counts and latencies
     - Engine operation metrics
@@ -66,10 +66,10 @@ async def get_metrics():
     """
     try:
         from backend.services.telemetry import get_telemetry_service
-        
+
         service = get_telemetry_service()
         metrics = service.get_metrics()
-        
+
         return TelemetryResponse(
             metrics=metrics.get("metrics", {}),
             spans_recorded=metrics.get("spans_recorded", 0),
@@ -88,7 +88,7 @@ async def get_metrics():
 async def get_slos():
     """
     Get current SLO status.
-    
+
     Returns status of all defined Service Level Objectives including:
     - Voice synthesis latency (p95 < 2s)
     - Transcription accuracy (> 95%)
@@ -96,13 +96,13 @@ async def get_slos():
     """
     try:
         from backend.services.telemetry import get_telemetry_service
-        
+
         service = get_telemetry_service()
         metrics = service.get_metrics()
-        
+
         # Define SLOs based on metrics
-        slos: List[SLOStatus] = []
-        
+        slos: list[SLOStatus] = []
+
         # Synthesis latency SLO
         synthesis_metrics = metrics.get("metrics", {}).get("voice_synthesis_latency", {})
         if synthesis_metrics:
@@ -114,7 +114,7 @@ async def get_slos():
                 met=current_p95 <= 2.0,
                 window_hours=24,
             ))
-        
+
         # Request success rate SLO
         request_metrics = metrics.get("metrics", {}).get("http_requests", {})
         if request_metrics:
@@ -128,7 +128,7 @@ async def get_slos():
                 met=success_rate >= 0.995,
                 window_hours=24,
             ))
-        
+
         # Determine overall health
         if not slos:
             health = "healthy"  # No SLOs defined = healthy by default
@@ -138,9 +138,9 @@ async def get_slos():
             health = "degraded"
         else:
             health = "unhealthy"
-        
+
         return SLOResponse(slos=slos, overall_health=health)
-        
+
     except Exception as e:
         logger.warning("Failed to get SLO status: %s", e)
         return SLOResponse(slos=[], overall_health="unknown")
@@ -149,25 +149,25 @@ async def get_slos():
 @router.get("/spans")
 async def get_recent_spans(
     limit: int = Query(default=50, ge=1, le=500),
-    operation: Optional[str] = Query(default=None, description="Filter by operation name"),
+    operation: str | None = Query(default=None, description="Filter by operation name"),
 ):
     """
     Get recent trace spans.
-    
+
     Returns the most recent spans for debugging and analysis.
     """
     try:
         from backend.services.telemetry import get_telemetry_service
-        
+
         service = get_telemetry_service()
         spans = service.get_recent_spans(limit=limit)
-        
+
         # Filter by operation if specified
         if operation:
             spans = [s for s in spans if s.get("name", "").startswith(operation)]
-        
+
         return {"spans": spans, "count": len(spans)}
-        
+
     except Exception as e:
         logger.warning("Failed to get spans: %s", e)
         return {"spans": [], "count": 0, "error": str(e)}
@@ -177,17 +177,17 @@ async def get_recent_spans(
 async def reset_metrics():
     """
     Reset telemetry metrics.
-    
+
     Clears all accumulated metrics. Useful for testing or after deployments.
     """
     try:
         from backend.services.telemetry import get_telemetry_service
-        
+
         service = get_telemetry_service()
         service.reset()
-        
+
         return {"status": "reset", "message": "All metrics cleared"}
-        
+
     except Exception as e:
         logger.warning("Failed to reset metrics: %s", e)
         return {"status": "error", "message": str(e)}

@@ -13,17 +13,19 @@ Supports both:
 - Legacy JSON config (fallback for migration)
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from backend.config.path_config import get_models_path
 
 # Try importing UnifiedConfigService
 try:
-    from backend.services.unified_config import get_config, UnifiedConfigService
+    from backend.services.unified_config import UnifiedConfigService, get_config
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
@@ -53,7 +55,7 @@ class EngineConfigService:
             config_path: Path to engine configuration file
         """
         self.config_path = Path(config_path)
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         self.load()
 
     def load(self):
@@ -68,11 +70,11 @@ class EngineConfigService:
                     return
             except Exception as e:
                 logger.debug(f"UnifiedConfigService not available, falling back to JSON: {e}")
-        
+
         # Fallback to legacy JSON file
         if self.config_path.exists():
             try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
+                with open(self.config_path, encoding="utf-8") as f:
                     self.config = json.load(f)
                 logger.info(f"Loaded engine configuration from {self.config_path}")
             except Exception as e:
@@ -85,11 +87,11 @@ class EngineConfigService:
             )
             self.config = self._get_default_config()
             self.save()
-    
-    def _load_from_unified_config(self, unified) -> Dict[str, Any]:
+
+    def _load_from_unified_config(self, unified) -> dict[str, Any]:
         """Transform UnifiedConfigService.engines to legacy config format."""
         engines_config = unified.engines
-        
+
         return {
             "defaults": engines_config.defaults if hasattr(engines_config, 'defaults') else {},
             "overrides": {},
@@ -130,14 +132,11 @@ class EngineConfigService:
             except Exception as cleanup_e:
                 logger.debug(f"Cleanup of temp file failed (non-critical): {cleanup_e}")
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default configuration structure."""
         # Get default models path
         env_models_root = os.getenv("VOICESTUDIO_MODELS_PATH")
-        if env_models_root:
-            models_base = Path(env_models_root)
-        else:
-            models_base = Path(get_models_path())
+        models_base = Path(env_models_root) if env_models_root else Path(get_models_path())
 
         return {
             "defaults": {
@@ -163,7 +162,7 @@ class EngineConfigService:
             },
         }
 
-    def get_default_engine(self, task_type: str) -> Optional[str]:
+    def get_default_engine(self, task_type: str) -> str | None:
         """
         Get default engine for a task type.
 
@@ -246,7 +245,7 @@ class EngineConfigService:
         self.save()
         logger.info(f"Set model path for {engine_id}.{path_type}: {path}")
 
-    def get_gpu_settings(self) -> Dict[str, Any]:
+    def get_gpu_settings(self) -> dict[str, Any]:
         """
         Get global GPU settings.
 
@@ -263,7 +262,7 @@ class EngineConfigService:
             },
         ).copy()
 
-    def set_gpu_settings(self, settings: Dict[str, Any]):
+    def set_gpu_settings(self, settings: dict[str, Any]):
         """
         Set global GPU settings.
 
@@ -277,7 +276,7 @@ class EngineConfigService:
         self.save()
         logger.info(f"Updated GPU settings: {settings}")
 
-    def get_engine_config(self, engine_id: str) -> Dict[str, Any]:
+    def get_engine_config(self, engine_id: str) -> dict[str, Any]:
         """
         Get complete configuration for an engine.
 
@@ -291,8 +290,8 @@ class EngineConfigService:
         return engine_configs.get(engine_id, {}).copy()
 
     def get_engine_init_kwargs(
-        self, engine_id: str, manifest: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, engine_id: str, manifest: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Build engine initialization kwargs from config and manifest schema.
 
@@ -325,20 +324,18 @@ class EngineConfigService:
             params = {key: value for key, value in params.items() if key in schema_keys}
 
         gpu_settings = self.get_gpu_settings()
-        if schema_keys is None or "device" in schema_keys:
-            if "device" not in params:
-                params["device"] = (
-                    gpu_settings.get("device", "cuda")
-                    if gpu_settings.get("enabled", True)
-                    else "cpu"
-                )
-        if schema_keys is None or "gpu" in schema_keys:
-            if "gpu" not in params:
-                params["gpu"] = bool(gpu_settings.get("enabled", True))
+        if (schema_keys is None or "device" in schema_keys) and "device" not in params:
+            params["device"] = (
+                gpu_settings.get("device", "cuda")
+                if gpu_settings.get("enabled", True)
+                else "cpu"
+            )
+        if (schema_keys is None or "gpu" in schema_keys) and "gpu" not in params:
+            params["gpu"] = bool(gpu_settings.get("enabled", True))
 
         return params
 
-    def set_engine_config(self, engine_id: str, config: Dict[str, Any]):
+    def set_engine_config(self, engine_id: str, config: dict[str, Any]):
         """
         Set configuration for an engine.
 
@@ -395,7 +392,7 @@ class EngineConfigService:
         self.save()
         logger.info(f"Set parameter {engine_id}.{parameter} = {value}")
 
-    def validate_config(self) -> Tuple[bool, List[str]]:
+    def validate_config(self) -> tuple[bool, list[str]]:
         """
         Validate configuration.
 
@@ -504,7 +501,7 @@ class EngineConfigService:
 
         return len(errors) == 0, errors
 
-    def get_installed_engines(self) -> List[str]:
+    def get_installed_engines(self) -> list[str]:
         """
         Get list of installed engine IDs.
 
@@ -535,11 +532,10 @@ class EngineConfigService:
         Args:
             engine_id: Engine ID
         """
-        if "installed" in self.config:
-            if engine_id in self.config["installed"]:
-                self.config["installed"].remove(engine_id)
-                self.save()
-                logger.info(f"Removed installed engine: {engine_id}")
+        if "installed" in self.config and engine_id in self.config["installed"]:
+            self.config["installed"].remove(engine_id)
+            self.save()
+            logger.info(f"Removed installed engine: {engine_id}")
 
     def is_installed(self, engine_id: str) -> bool:
         """
@@ -553,7 +549,7 @@ class EngineConfigService:
         """
         return engine_id in self.get_installed_engines()
 
-    def get_all_config(self) -> Dict[str, Any]:
+    def get_all_config(self) -> dict[str, Any]:
         """Get complete configuration dictionary."""
         return self.config.copy()
 
@@ -563,7 +559,7 @@ class EngineConfigService:
         self.save()
         logger.info("Reset engine configuration to defaults")
 
-    def get_global_settings(self) -> Dict[str, Any]:
+    def get_global_settings(self) -> dict[str, Any]:
         """
         Get global engine settings.
 
@@ -579,7 +575,7 @@ class EngineConfigService:
             },
         ).copy()
 
-    def set_global_settings(self, settings: Dict[str, Any]):
+    def set_global_settings(self, settings: dict[str, Any]):
         """
         Set global engine settings.
 
@@ -593,7 +589,7 @@ class EngineConfigService:
         self.save()
         logger.info(f"Updated global settings: {settings}")
 
-    def get_all_engine_configs(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_engine_configs(self) -> dict[str, dict[str, Any]]:
         """
         Get all engine configurations.
 
@@ -602,7 +598,7 @@ class EngineConfigService:
         """
         return self.config.get("engine_configs", {}).copy()
 
-    def ensure_engine_config(self, engine_id: str) -> Dict[str, Any]:
+    def ensure_engine_config(self, engine_id: str) -> dict[str, Any]:
         """
         Ensure engine has a configuration entry, creating default if missing.
 
@@ -629,7 +625,7 @@ class EngineConfigService:
 
 
 # Global service instance
-_service_instance: Optional[EngineConfigService] = None
+_service_instance: EngineConfigService | None = None
 
 
 def get_engine_config_service(

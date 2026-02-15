@@ -206,6 +206,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Resources\Workspaces\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\..\shared\schemas\*.schema.json" Link="shared\schemas\%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

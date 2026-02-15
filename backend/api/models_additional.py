@@ -1,11 +1,13 @@
+
+from __future__ import annotations
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, validator
 
 
 class AbxStartRequest(BaseModel):
-    items: List[str]
+    items: list[str]
 
 
 class AbxResult(BaseModel):
@@ -15,7 +17,7 @@ class AbxResult(BaseModel):
 
 
 class DatasetScoreRequest(BaseModel):
-    clips: List[str]
+    clips: list[str]
 
 
 class ScoreResult(BaseModel):
@@ -43,12 +45,12 @@ class ProsodyQuantizeRequest(BaseModel):
 
 class EmotionApplyRequest(BaseModel):
     audio_id: str
-    curve: List[float]
+    curve: list[float]
 
 
 class FormantEditRequest(BaseModel):
     audio_id: str
-    shifts: Dict[str, float]
+    shifts: dict[str, float]
 
 
 class SpectralInpaintRequest(BaseModel):
@@ -62,7 +64,7 @@ class ModelInspectRequest(BaseModel):
 
 class GranularRenderRequest(BaseModel):
     audio_id: str
-    params: Dict[str, Any]
+    params: dict[str, Any]
 
 
 class RvcStartRequest(BaseModel):
@@ -88,11 +90,11 @@ class RepairClippingRequest(BaseModel):
 
 
 class SceneMixAnalyzeRequest(BaseModel):
-    tracks: List[str]
+    tracks: list[str]
 
 
 class RmTrainRequest(BaseModel):
-    ratings: List[Dict[str, Any]]
+    ratings: list[dict[str, Any]]
 
 
 class SafetyScanRequest(BaseModel):
@@ -106,7 +108,7 @@ class ImgSamplerRequest(BaseModel):
 
 class AssistantRunRequest(BaseModel):
     action_id: str
-    params: Optional[Dict[str, Any]] = None
+    params: dict[str, Any] | None = None
 
 
 # Voice Cloning Models
@@ -121,7 +123,7 @@ class VoiceSynthesizeRequest(BaseModel):
         validate_default=False,  # Skip validation for default values
     )
 
-    engine: Optional[str] = Field(
+    engine: str | None = Field(
         default=None,
         description=(
             "Engine name (e.g., xtts_v2, piper, chatterbox). "
@@ -142,17 +144,17 @@ class VoiceSynthesizeRequest(BaseModel):
         min_length=1,
         max_length=10000,
     )
-    language: Optional[str] = Field(
+    language: str | None = Field(
         default="en",
         description="Language code (ISO 639-1)",
         max_length=10,
     )
-    emotion: Optional[str] = Field(
+    emotion: str | None = Field(
         default=None,
         description="Emotion to apply",
         max_length=50,
     )
-    enhance_quality: Optional[bool] = Field(
+    enhance_quality: bool | None = Field(
         default=False,
         description="Enable quality enhancement pipeline",
     )
@@ -200,20 +202,20 @@ class QualityMetrics(BaseModel):
     """Detailed quality metrics for voice cloning."""
 
     # Mean Opinion Score (1.0-5.0)
-    mos_score: Optional[float] = None
+    mos_score: float | None = None
     # Voice similarity (0.0-1.0)
-    similarity: Optional[float] = None
+    similarity: float | None = None
     # Naturalness score (0.0-1.0)
-    naturalness: Optional[float] = None
+    naturalness: float | None = None
     # Signal-to-noise ratio (dB)
-    snr_db: Optional[float] = None
+    snr_db: float | None = None
     # Artifact score (0.0-1.0, lower is better)
-    artifact_score: Optional[float] = None
+    artifact_score: float | None = None
     # Whether clicks detected
-    has_clicks: Optional[bool] = None
+    has_clicks: bool | None = None
     # Whether distortion detected
-    has_distortion: Optional[bool] = None
-    voice_profile_match: Optional[Dict[str, Any]] = (
+    has_distortion: bool | None = None
+    voice_profile_match: dict[str, Any] | None = (
         None  # Voice profile matching results
     )
 
@@ -225,7 +227,7 @@ class VoiceSynthesizeResponse(BaseModel):
     # Overall quality score (0.0-1.0)
     quality_score: float
     # Detailed quality metrics
-    quality_metrics: Optional[QualityMetrics] = None
+    quality_metrics: QualityMetrics | None = None
 
 
 class ABTestRequest(BaseModel):
@@ -239,14 +241,14 @@ class ABTestRequest(BaseModel):
         ...,
         description="Text to synthesize for both A and B",
     )
-    language: Optional[str] = Field(
+    language: str | None = Field(
         default="en",
         description="Language code",
     )
 
     # Configuration A
     engine_a: str = Field(..., description="Engine for sample A")
-    emotion_a: Optional[str] = Field(
+    emotion_a: str | None = Field(
         None,
         description="Emotion for sample A",
     )
@@ -257,7 +259,7 @@ class ABTestRequest(BaseModel):
 
     # Configuration B
     engine_b: str = Field(..., description="Engine for sample B")
-    emotion_b: Optional[str] = Field(
+    emotion_b: str | None = Field(
         None,
         description="Emotion for sample B",
     )
@@ -281,15 +283,15 @@ class ABTestResult(BaseModel):
         description="Audio duration in seconds",
     )
     engine: str = Field(..., description="Engine used")
-    emotion: Optional[str] = Field(
+    emotion: str | None = Field(
         None,
         description="Emotion applied",
     )
-    quality_score: Optional[float] = Field(
+    quality_score: float | None = Field(
         None,
         description="Overall quality score",
     )
-    quality_metrics: Optional[QualityMetrics] = Field(
+    quality_metrics: QualityMetrics | None = Field(
         None, description="Detailed quality metrics"
     )
 
@@ -299,7 +301,7 @@ class ABTestResponse(BaseModel):
 
     sample_a: ABTestResult = Field(..., description="Result for sample A")
     sample_b: ABTestResult = Field(..., description="Result for sample B")
-    comparison: Dict[str, Any] = Field(
+    comparison: dict[str, Any] = Field(
         default_factory=dict,
         description="Quality comparison metrics",
     )
@@ -308,20 +310,20 @@ class ABTestResponse(BaseModel):
 
 class VoiceAnalyzeResponse(BaseModel):
     # mos, similarity, naturalness, snr, lufs, etc.
-    metrics: Dict[str, float]
-    quality_score: Optional[float] = None
-    missing_dependencies: List[str] = Field(default_factory=list)
+    metrics: dict[str, float]
+    quality_score: float | None = None
+    missing_dependencies: list[str] = Field(default_factory=list)
 
 
 class VoiceCloneRequest(BaseModel):
     """Request model for voice cloning with validation and advanced features."""
 
-    reference_audio: Union[str, List[str]] = Field(
+    reference_audio: str | list[str] = Field(
         ...,
         description="Reference audio file path(s) or ID(s) for single or multi-reference cloning",
         min_length=1,
     )
-    text: Optional[str] = Field(
+    text: str | None = Field(
         default=None, description="Optional text for synthesis", max_length=10000
     )
     engine: str = Field(
@@ -337,7 +339,7 @@ class VoiceCloneRequest(BaseModel):
         default=False,
         description="Use ensemble approach when multiple references provided",
     )
-    prosody_params: Optional[Dict[str, float]] = Field(
+    prosody_params: dict[str, float] | None = Field(
         default=None,
         description="Advanced prosody control: pitch (semitones), tempo (multiplier), formant_shift (factor), energy (multiplier)",
     )
@@ -401,13 +403,13 @@ class VoiceCloneRequest(BaseModel):
 
 class VoiceCloneResponse(BaseModel):
     profile_id: str
-    audio_id: Optional[str] = None
-    audio_url: Optional[str] = None
-    duration: Optional[float] = None
+    audio_id: str | None = None
+    audio_url: str | None = None
+    duration: float | None = None
     quality_score: float  # Overall quality score (0.0-1.0)
-    quality_metrics: Optional[QualityMetrics] = None  # Detailed quality metrics
-    device: Optional[str] = None
-    candidate_metrics: Optional[List[Dict[str, Any]]] = None
+    quality_metrics: QualityMetrics | None = None  # Detailed quality metrics
+    device: str | None = None
+    candidate_metrics: list[dict[str, Any]] | None = None
 
 
 # Quality Improvement Models (IDEA 61-70)
@@ -432,33 +434,33 @@ class MultiPassSynthesisRequest(BaseModel):
         min_length=1,
         max_length=10000,
     )
-    language: Optional[str] = Field(
+    language: str | None = Field(
         default="en",
         description="Language code",
     )
-    emotion: Optional[str] = Field(
+    emotion: str | None = Field(
         default=None,
         description="Emotion to apply",
     )
-    max_passes: Optional[int] = Field(
+    max_passes: int | None = Field(
         default=3,
         description="Maximum number of passes",
         ge=1,
         le=10,
     )
-    min_quality_improvement: Optional[float] = Field(
+    min_quality_improvement: float | None = Field(
         default=0.02,
         description="Minimum quality improvement to continue (0.0-1.0)",
         ge=0.0,
         le=1.0,
     )
-    pass_preset: Optional[str] = Field(
+    pass_preset: str | None = Field(
         default=None,
         description=(
             "Pass preset: naturalness_focus, similarity_focus, artifact_focus"
         ),
     )
-    adaptive: Optional[bool] = Field(
+    adaptive: bool | None = Field(
         default=True,
         description="Adaptively determine optimal pass count",
     )
@@ -481,7 +483,7 @@ class PassResult(BaseModel):
     audio_url: str
     quality_metrics: QualityMetrics
     quality_score: float
-    improvement: Optional[float] = None  # Improvement over previous pass
+    improvement: float | None = None  # Improvement over previous pass
 
 
 class MultiPassSynthesisResponse(BaseModel):
@@ -493,37 +495,37 @@ class MultiPassSynthesisResponse(BaseModel):
     quality_score: float
     quality_metrics: QualityMetrics
     passes_completed: int
-    passes: List[PassResult]  # All passes for comparison
+    passes: list[PassResult]  # All passes for comparison
     best_pass: int  # Pass number with best quality
-    improvement_tracking: List[float]  # Quality improvement per pass
+    improvement_tracking: list[float]  # Quality improvement per pass
 
 
 class ReferenceAudioPreprocessRequest(BaseModel):
     """Request model for reference audio pre-processing."""
 
-    profile_id: Optional[str] = Field(
+    profile_id: str | None = Field(
         default=None,
         description="Profile ID if processing existing profile",
     )
-    reference_audio_path: Optional[str] = Field(
+    reference_audio_path: str | None = Field(
         default=None,
         description="Path to reference audio file",
     )
-    auto_enhance: Optional[bool] = Field(
+    auto_enhance: bool | None = Field(
         default=True,
         description="Automatically enhance reference audio",
     )
-    select_optimal_segments: Optional[bool] = Field(
+    select_optimal_segments: bool | None = Field(
         default=True,
         description="Select optimal segments for cloning",
     )
-    min_segment_duration: Optional[float] = Field(
+    min_segment_duration: float | None = Field(
         default=1.0,
         description="Minimum segment duration in seconds",
         ge=0.5,
         le=10.0,
     )
-    max_segments: Optional[int] = Field(
+    max_segments: int | None = Field(
         default=5,
         description="Maximum number of segments to select",
         ge=1,
@@ -541,9 +543,9 @@ class ReferenceAudioAnalysis(BaseModel):
     sample_rate: int
     duration: float
     channels: int
-    recommendations: List[str]  # List of recommended improvements
+    recommendations: list[str]  # List of recommended improvements
     # Selected optimal segments
-    optimal_segments: Optional[List[Dict[str, Any]]] = None
+    optimal_segments: list[dict[str, Any]] | None = None
 
 
 class ReferenceAudioPreprocessResponse(BaseModel):
@@ -552,8 +554,8 @@ class ReferenceAudioPreprocessResponse(BaseModel):
     processed_audio_id: str
     processed_audio_url: str
     original_analysis: ReferenceAudioAnalysis
-    processed_analysis: Optional[ReferenceAudioAnalysis] = None
-    improvements_applied: List[str]  # List of enhancements applied
+    processed_analysis: ReferenceAudioAnalysis | None = None
+    improvements_applied: list[str]  # List of enhancements applied
     quality_improvement: float  # Quality improvement score (0.0-1.0)
 
 
@@ -561,17 +563,17 @@ class ArtifactRemovalRequest(BaseModel):
     """Request model for artifact removal."""
 
     audio_id: str = Field(..., description="Audio ID to process")
-    artifact_types: Optional[List[str]] = Field(
+    artifact_types: list[str] | None = Field(
         default=None,
         description=(
             "Specific artifact types to remove: clicks, pops, distortion, "
             "glitches, phase_issues"
         ),
     )
-    preview: Optional[bool] = Field(
+    preview: bool | None = Field(
         default=False, description="Preview removal without applying"
     )
-    repair_preset: Optional[str] = Field(
+    repair_preset: str | None = Field(
         default=None,
         description="Repair preset: click_removal, distortion_repair, comprehensive",
     )
@@ -582,7 +584,7 @@ class ArtifactDetection(BaseModel):
 
     artifact_type: str
     severity: float  # Severity score (1-10)
-    location: Optional[float] = None  # Time location in seconds
+    location: float | None = None  # Time location in seconds
     confidence: float  # Detection confidence (0.0-1.0)
 
 
@@ -590,10 +592,10 @@ class ArtifactRemovalResponse(BaseModel):
     """Response model for artifact removal."""
 
     audio_id: str  # Original audio ID
-    repaired_audio_id: Optional[str] = None  # Repaired audio ID (if not preview)
-    repaired_audio_url: Optional[str] = None
-    artifacts_detected: List[ArtifactDetection]
-    artifacts_removed: List[str]  # Types of artifacts removed
+    repaired_audio_id: str | None = None  # Repaired audio ID (if not preview)
+    repaired_audio_url: str | None = None
+    artifacts_detected: list[ArtifactDetection]
+    artifacts_removed: list[str]  # Types of artifacts removed
     quality_improvement: float  # Quality improvement score (0.0-1.0)
     preview_available: bool  # Whether preview is available
 
@@ -614,41 +616,41 @@ class ImageGenerateRequest(BaseModel):
         min_length=1,
         max_length=2000,
     )
-    negative_prompt: Optional[str] = Field(
+    negative_prompt: str | None = Field(
         default="",
         description="Negative prompt",
         max_length=2000,
     )
-    width: Optional[int] = Field(
+    width: int | None = Field(
         default=512,
         description="Image width",
         ge=64,
         le=2048,
     )
-    height: Optional[int] = Field(
+    height: int | None = Field(
         default=512,
         description="Image height",
         ge=64,
         le=2048,
     )
-    steps: Optional[int] = Field(
+    steps: int | None = Field(
         default=20,
         description="Number of sampling steps",
         ge=1,
         le=150,
     )
-    cfg_scale: Optional[float] = Field(
+    cfg_scale: float | None = Field(
         default=7.0,
         description="Classifier-free guidance scale",
         ge=1.0,
         le=30.0,
     )
-    sampler: Optional[str] = Field(default=None, description="Sampling method")
-    seed: Optional[int] = Field(
+    sampler: str | None = Field(default=None, description="Sampling method")
+    seed: int | None = Field(
         default=None,
         description="Random seed (-1 for random)",
     )
-    additional_params: Optional[Dict[str, Any]] = Field(
+    additional_params: dict[str, Any] | None = Field(
         default=None,
         description="Additional engine-specific parameters",
     )
@@ -682,27 +684,27 @@ class ImageGenerateResponse(BaseModel):
     width: int
     height: int
     format: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class ImageUpscaleRequest(BaseModel):
     """Request model for image upscaling."""
 
-    engine: Optional[str] = Field(
+    engine: str | None = Field(
         default="realesrgan",
         description="Upscaling engine name",
     )
-    image_id: Optional[str] = Field(
+    image_id: str | None = Field(
         default=None,
         description="ID of stored image to upscale",
     )
-    scale: Optional[int] = Field(
+    scale: int | None = Field(
         default=4,
         description="Upscaling factor",
         ge=2,
         le=8,
     )
-    additional_params: Optional[Dict[str, Any]] = Field(
+    additional_params: dict[str, Any] | None = Field(
         default=None,
         description="Additional parameters",
     )
@@ -729,60 +731,60 @@ class VideoGenerateRequest(BaseModel):
         min_length=1,
         max_length=50,
     )
-    prompt: Optional[str] = Field(
+    prompt: str | None = Field(
         default=None,
         description="Text prompt for video generation",
         max_length=2000,
     )
-    image_id: Optional[str] = Field(
+    image_id: str | None = Field(
         default=None,
         description="ID of input image (for image-to-video)",
     )
-    audio_id: Optional[str] = Field(
+    audio_id: str | None = Field(
         default=None,
         description="ID of input audio (for audio-to-video)",
     )
-    width: Optional[int] = Field(
+    width: int | None = Field(
         default=512,
         description="Video width",
         ge=64,
         le=2048,
     )
-    height: Optional[int] = Field(
+    height: int | None = Field(
         default=512,
         description="Video height",
         ge=64,
         le=2048,
     )
-    fps: Optional[float] = Field(
+    fps: float | None = Field(
         default=24,
         description="Frames per second",
         ge=1,
         le=120,
     )
-    duration: Optional[float] = Field(
+    duration: float | None = Field(
         default=5.0,
         description="Video duration in seconds",
         ge=0.1,
         le=60,
     )
-    steps: Optional[int] = Field(
+    steps: int | None = Field(
         default=20,
         description="Number of sampling steps",
         ge=1,
         le=150,
     )
-    cfg_scale: Optional[float] = Field(
+    cfg_scale: float | None = Field(
         default=7.0,
         description="Classifier-free guidance scale",
         ge=1.0,
         le=30.0,
     )
-    seed: Optional[int] = Field(
+    seed: int | None = Field(
         default=None,
         description="Random seed (-1 for random)",
     )
-    additional_params: Optional[Dict[str, Any]] = Field(
+    additional_params: dict[str, Any] | None = Field(
         default=None,
         description="Additional engine-specific parameters",
     )
@@ -808,27 +810,27 @@ class VideoGenerateResponse(BaseModel):
     fps: float
     duration: float
     format: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class VideoUpscaleRequest(BaseModel):
     """Request model for video upscaling."""
 
-    engine: Optional[str] = Field(
+    engine: str | None = Field(
         default="realesrgan",
         description="Upscaling engine name",
     )
-    video_id: Optional[str] = Field(
+    video_id: str | None = Field(
         default=None,
         description="ID of stored video to upscale",
     )
-    scale: Optional[int] = Field(
+    scale: int | None = Field(
         default=4,
         description="Upscaling factor",
         ge=2,
         le=8,
     )
-    additional_params: Optional[Dict[str, Any]] = Field(
+    additional_params: dict[str, Any] | None = Field(
         default=None,
         description="Additional parameters",
     )
@@ -851,23 +853,23 @@ class VoiceCharacteristicAnalysisRequest(BaseModel):
     """Request model for voice characteristic analysis."""
 
     audio_id: str = Field(..., description="Audio ID to analyze")
-    reference_audio_id: Optional[str] = Field(
+    reference_audio_id: str | None = Field(
         default=None,
         description="Reference audio for comparison",
     )
-    include_pitch: Optional[bool] = Field(
+    include_pitch: bool | None = Field(
         default=True,
         description="Include pitch analysis",
     )
-    include_formants: Optional[bool] = Field(
+    include_formants: bool | None = Field(
         default=True,
         description="Include formant analysis",
     )
-    include_timbre: Optional[bool] = Field(
+    include_timbre: bool | None = Field(
         default=True,
         description="Include timbre analysis",
     )
-    include_prosody: Optional[bool] = Field(
+    include_prosody: bool | None = Field(
         default=True,
         description="Include prosody analysis",
     )
@@ -876,13 +878,13 @@ class VoiceCharacteristicAnalysisRequest(BaseModel):
 class VoiceCharacteristicData(BaseModel):
     """Voice characteristic data."""
 
-    pitch_mean: Optional[float] = None
-    pitch_std: Optional[float] = None
-    formants: Optional[List[float]] = None  # F1, F2, F3
-    spectral_centroid: Optional[float] = None
-    spectral_rolloff: Optional[float] = None
-    mfcc: Optional[List[float]] = None
-    prosody_patterns: Optional[Dict[str, Any]] = None
+    pitch_mean: float | None = None
+    pitch_std: float | None = None
+    formants: list[float] | None = None  # F1, F2, F3
+    spectral_centroid: float | None = None
+    spectral_rolloff: float | None = None
+    mfcc: list[float] | None = None
+    prosody_patterns: dict[str, Any] | None = None
 
 
 class VoiceCharacteristicAnalysisResponse(BaseModel):
@@ -890,33 +892,33 @@ class VoiceCharacteristicAnalysisResponse(BaseModel):
 
     audio_id: str
     characteristics: VoiceCharacteristicData
-    reference_characteristics: Optional[VoiceCharacteristicData] = None
-    similarity_score: Optional[float] = None  # 0.0-1.0
-    preservation_score: Optional[float] = None  # 0.0-1.0
-    recommendations: List[str] = []
+    reference_characteristics: VoiceCharacteristicData | None = None
+    similarity_score: float | None = None  # 0.0-1.0
+    preservation_score: float | None = None  # 0.0-1.0
+    recommendations: list[str] = []
 
 
 class ProsodyControlRequest(BaseModel):
     """Request model for prosody and intonation control."""
 
     audio_id: str = Field(..., description="Audio ID to process")
-    pitch_contour: Optional[List[float]] = Field(
+    pitch_contour: list[float] | None = Field(
         default=None,
         description="Pitch contour adjustments",
     )
-    rhythm_adjustments: Optional[Dict[str, float]] = Field(
+    rhythm_adjustments: dict[str, float] | None = Field(
         default=None,
         description="Rhythm adjustments",
     )
-    stress_markers: Optional[List[Dict[str, Any]]] = Field(
+    stress_markers: list[dict[str, Any]] | None = Field(
         default=None,
         description="Word stress markers",
     )
-    intonation_pattern: Optional[str] = Field(
+    intonation_pattern: str | None = Field(
         default=None,
         description="Intonation pattern: rising, falling, flat",
     )
-    prosody_template: Optional[str] = Field(
+    prosody_template: str | None = Field(
         default=None,
         description="Prosody template name",
     )
@@ -928,30 +930,30 @@ class ProsodyControlResponse(BaseModel):
     audio_id: str
     processed_audio_id: str
     processed_audio_url: str
-    prosody_applied: Dict[str, Any]
+    prosody_applied: dict[str, Any]
     quality_improvement: float  # 0.0-1.0
 
 
 class FaceEnhancementRequest(BaseModel):
     """Request model for face quality enhancement."""
 
-    image_id: Optional[str] = Field(
+    image_id: str | None = Field(
         default=None,
         description="Image ID to enhance",
     )
-    video_id: Optional[str] = Field(
+    video_id: str | None = Field(
         default=None,
         description="Video ID to enhance",
     )
-    enhancement_preset: Optional[str] = Field(
+    enhancement_preset: str | None = Field(
         default=None,
         description="Enhancement preset: portrait, full_body, close_up",
     )
-    multi_stage: Optional[bool] = Field(
+    multi_stage: bool | None = Field(
         default=True,
         description="Apply multi-stage enhancement",
     )
-    face_specific: Optional[bool] = Field(
+    face_specific: bool | None = Field(
         default=True,
         description="Apply face-specific enhancement",
     )
@@ -965,20 +967,20 @@ class FaceQualityAnalysis(BaseModel):
     alignment_score: float  # 1-10
     realism_score: float  # 1-10
     overall_quality: float  # 1-10
-    recommendations: List[str] = []
+    recommendations: list[str] = []
 
 
 class FaceEnhancementResponse(BaseModel):
     """Response model for face enhancement."""
 
-    image_id: Optional[str] = None
-    video_id: Optional[str] = None
-    enhanced_image_id: Optional[str] = None
-    enhanced_video_id: Optional[str] = None
-    enhanced_image_url: Optional[str] = None
-    enhanced_video_url: Optional[str] = None
+    image_id: str | None = None
+    video_id: str | None = None
+    enhanced_image_id: str | None = None
+    enhanced_video_id: str | None = None
+    enhanced_image_url: str | None = None
+    enhanced_video_url: str | None = None
     original_analysis: FaceQualityAnalysis
-    enhanced_analysis: Optional[FaceQualityAnalysis] = None
+    enhanced_analysis: FaceQualityAnalysis | None = None
     quality_improvement: float  # 0.0-1.0
 
 
@@ -986,17 +988,17 @@ class TemporalConsistencyRequest(BaseModel):
     """Request model for temporal consistency enhancement."""
 
     video_id: str = Field(..., description="Video ID to process")
-    smoothing_strength: Optional[float] = Field(
+    smoothing_strength: float | None = Field(
         default=0.5,
         description="Temporal smoothing strength (0.0-1.0)",
         ge=0.0,
         le=1.0,
     )
-    motion_consistency: Optional[bool] = Field(
+    motion_consistency: bool | None = Field(
         default=True,
         description="Ensure motion consistency",
     )
-    detect_artifacts: Optional[bool] = Field(
+    detect_artifacts: bool | None = Field(
         default=True,
         description="Detect temporal artifacts",
     )
@@ -1010,7 +1012,7 @@ class TemporalAnalysis(BaseModel):
     flicker_score: float  # 0.0-1.0 (lower is better)
     jitter_score: float  # 0.0-1.0 (lower is better)
     overall_consistency: float  # 0.0-1.0
-    artifacts_detected: List[str] = []
+    artifacts_detected: list[str] = []
 
 
 class TemporalConsistencyResponse(BaseModel):
@@ -1020,7 +1022,7 @@ class TemporalConsistencyResponse(BaseModel):
     processed_video_id: str
     processed_video_url: str
     original_analysis: TemporalAnalysis
-    processed_analysis: Optional[TemporalAnalysis] = None
+    processed_analysis: TemporalAnalysis | None = None
     quality_improvement: float  # 0.0-1.0
 
 
@@ -1028,19 +1030,19 @@ class TrainingDataOptimizationRequest(BaseModel):
     """Request model for training data optimization."""
 
     dataset_id: str = Field(..., description="Dataset ID to optimize")
-    analyze_quality: Optional[bool] = Field(
+    analyze_quality: bool | None = Field(
         default=True,
         description="Analyze data quality",
     )
-    select_optimal: Optional[bool] = Field(
+    select_optimal: bool | None = Field(
         default=True,
         description="Select optimal samples",
     )
-    suggest_augmentation: Optional[bool] = Field(
+    suggest_augmentation: bool | None = Field(
         default=True,
         description="Suggest augmentation strategies",
     )
-    analyze_diversity: Optional[bool] = Field(
+    analyze_diversity: bool | None = Field(
         default=True,
         description="Analyze data diversity",
     )
@@ -1052,9 +1054,9 @@ class TrainingDataAnalysis(BaseModel):
     quality_score: float  # 1-10
     diversity_score: float  # 1-10
     coverage_score: float  # 1-10
-    optimal_samples: List[str] = []  # Sample IDs
-    recommendations: List[str] = []
-    augmentation_suggestions: List[str] = []
+    optimal_samples: list[str] = []  # Sample IDs
+    recommendations: list[str] = []
+    augmentation_suggestions: list[str] = []
 
 
 class TrainingDataOptimizationResponse(BaseModel):
@@ -1062,34 +1064,34 @@ class TrainingDataOptimizationResponse(BaseModel):
 
     dataset_id: str
     analysis: TrainingDataAnalysis
-    optimized_dataset_id: Optional[str] = None
+    optimized_dataset_id: str | None = None
     quality_improvement: float  # 0.0-1.0
 
 
 class PostProcessingPipelineRequest(BaseModel):
     """Request model for post-processing enhancement pipeline."""
 
-    audio_id: Optional[str] = Field(
+    audio_id: str | None = Field(
         default=None,
         description="Audio ID to process",
     )
-    image_id: Optional[str] = Field(
+    image_id: str | None = Field(
         default=None,
         description="Image ID to process",
     )
-    video_id: Optional[str] = Field(
+    video_id: str | None = Field(
         default=None,
         description="Video ID to process",
     )
-    enhancement_stages: Optional[List[str]] = Field(
+    enhancement_stages: list[str] | None = Field(
         default=None,
         description="Enhancement stages: denoise, normalize, enhance, repair",
     )
-    optimize_order: Optional[bool] = Field(
+    optimize_order: bool | None = Field(
         default=True,
         description="Optimize enhancement order",
     )
-    preview: Optional[bool] = Field(
+    preview: bool | None = Field(
         default=False,
         description="Preview without applying",
     )
@@ -1107,16 +1109,16 @@ class EnhancementStageResult(BaseModel):
 class PostProcessingPipelineResponse(BaseModel):
     """Response model for post-processing pipeline."""
 
-    audio_id: Optional[str] = None
-    image_id: Optional[str] = None
-    video_id: Optional[str] = None
-    processed_audio_id: Optional[str] = None
-    processed_image_id: Optional[str] = None
-    processed_video_id: Optional[str] = None
-    processed_audio_url: Optional[str] = None
-    processed_image_url: Optional[str] = None
-    processed_video_url: Optional[str] = None
-    stages_applied: List[EnhancementStageResult]
+    audio_id: str | None = None
+    image_id: str | None = None
+    video_id: str | None = None
+    processed_audio_id: str | None = None
+    processed_image_id: str | None = None
+    processed_video_id: str | None = None
+    processed_audio_url: str | None = None
+    processed_image_url: str | None = None
+    processed_video_url: str | None = None
+    stages_applied: list[EnhancementStageResult]
     total_quality_improvement: float  # 0.0-1.0
     preview_available: bool
 
@@ -1131,10 +1133,10 @@ class DubSyncRequest(BaseModel):
 
     audio_id: str = Field(..., description="Audio ID to sync")
     translated_text: str = Field(..., description="Translated text to sync")
-    original_text: Optional[str] = Field(
+    original_text: str | None = Field(
         default=None, description="Original text (optional)"
     )
-    original_timing: Optional[List[Dict[str, Any]]] = Field(
+    original_timing: list[dict[str, Any]] | None = Field(
         default=None, description="Original timing segments"
     )
     target_language: str = Field(default="en", description="Target language code")
@@ -1145,7 +1147,7 @@ class DubSyncResponse(BaseModel):
 
     audio_id: str
     translated_text: str
-    alignment: Dict[str, Any]
+    alignment: dict[str, Any]
     message: str
 
 
@@ -1158,7 +1160,7 @@ class DatasetCullRequest(BaseModel):
     """Request model for dataset culling."""
 
     dataset_id: str = Field(..., description="Dataset ID to cull")
-    clips: Optional[List[str]] = Field(
+    clips: list[str] | None = Field(
         default=None, description="List of clips to evaluate"
     )
     min_quality: float = Field(
@@ -1176,13 +1178,13 @@ class DatasetCullRequest(BaseModel):
 class RmPredictRequest(BaseModel):
     """Request model for reward model prediction."""
 
-    model_id: Optional[str] = Field(
+    model_id: str | None = Field(
         default=None, description="Model ID to use (uses latest if not specified)"
     )
-    audio_id: Optional[str] = Field(
+    audio_id: str | None = Field(
         default=None, description="Audio ID to predict score for"
     )
-    features: Optional[List[float]] = Field(
+    features: list[float] | None = Field(
         default=None, description="Pre-computed features"
     )
 
@@ -1192,7 +1194,7 @@ class RmPredictResponse(BaseModel):
 
     score: float
     model_id: str
-    audio_id: Optional[str] = None
+    audio_id: str | None = None
     confidence: float
 
 
@@ -1238,7 +1240,7 @@ class RmModelInfo(BaseModel):
 class RmModelsListResponse(BaseModel):
     """Response model for listing reward models."""
 
-    models: List[RmModelInfo]
+    models: list[RmModelInfo]
     count: int
 
 
@@ -1250,7 +1252,7 @@ class RmTrainingJobResponse(BaseModel):
     status: str
     samples: int
     started: str
-    completed: Optional[str] = None
+    completed: str | None = None
 
 
 # ============================================================================
@@ -1263,15 +1265,15 @@ class EngineInfo(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str = "available"
-    capabilities: Optional[List[str]] = None
+    capabilities: list[str] | None = None
 
 
 class EngineListResponse(BaseModel):
     """Response model for listing engines."""
 
-    engines: List[EngineInfo]
+    engines: list[EngineInfo]
     count: int
 
 
@@ -1289,14 +1291,14 @@ class PreflightResponse(BaseModel):
     status: str
     engines_ready: int
     engines_missing: int
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 class GPUSettingsResponse(BaseModel):
     """Response model for GPU settings update."""
 
     status: str
-    settings: Dict[str, Any]
+    settings: dict[str, Any]
 
 
 class DefaultEngineResponse(BaseModel):
@@ -1311,8 +1313,8 @@ class ConfigValidationResponse(BaseModel):
     """Response model for configuration validation."""
 
     valid: bool
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
 
 
 # ============================================================================
@@ -1385,9 +1387,9 @@ class FormantAnalyzeResponse(BaseModel):
     """Response model for formant analysis."""
 
     audio_id: str
-    formants: List[Dict[str, float]]
-    f0_mean: Optional[float] = None
-    f0_std: Optional[float] = None
+    formants: list[dict[str, float]]
+    f0_mean: float | None = None
+    f0_std: float | None = None
 
 
 class ArticulationAnalyzeResponse(BaseModel):
@@ -1397,7 +1399,7 @@ class ArticulationAnalyzeResponse(BaseModel):
     articulation_rate: float
     pause_ratio: float
     syllable_count: int
-    phoneme_distribution: Optional[Dict[str, int]] = None
+    phoneme_distribution: dict[str, int] | None = None
 
 
 # ============================================================================
@@ -1410,14 +1412,14 @@ class SafetyScanResponse(BaseModel):
 
     text: str
     is_safe: bool
-    violations: List[Dict[str, Any]]
-    categories: Dict[str, float]
+    violations: list[dict[str, Any]]
+    categories: dict[str, float]
 
 
 class SafetyCategoriesResponse(BaseModel):
     """Response model for safety categories."""
 
-    categories: List[Dict[str, Any]]
+    categories: list[dict[str, Any]]
 
 
 # ============================================================================
@@ -1431,17 +1433,17 @@ class ModelInspectResponse(BaseModel):
     layer: int
     layer_name: str
     layer_type: str
-    input_shape: Optional[List[int]] = None
-    output_shape: Optional[List[int]] = None
+    input_shape: list[int] | None = None
+    output_shape: list[int] | None = None
     parameters: int
-    activations: Optional[Dict[str, Any]] = None
+    activations: dict[str, Any] | None = None
 
 
 class ModelLayersResponse(BaseModel):
     """Response model for listing model layers."""
 
     model_name: str
-    layers: List[Dict[str, Any]]
+    layers: list[dict[str, Any]]
     total_parameters: int
 
 
@@ -1464,7 +1466,7 @@ class SamplerInfo(BaseModel):
     """Info about a sampler."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     supports_cfg: bool = True
     default_steps: int = 20
 
@@ -1472,7 +1474,7 @@ class SamplerInfo(BaseModel):
 class SamplersListResponse(BaseModel):
     """Response model for listing samplers."""
 
-    samplers: List[SamplerInfo]
+    samplers: list[SamplerInfo]
 
 
 # ============================================================================
@@ -1499,7 +1501,7 @@ class EmotionAnalyzeResponse(BaseModel):
     """Response model for emotion analysis."""
 
     audio_id: str
-    emotions: Dict[str, float]
+    emotions: dict[str, float]
     dominant_emotion: str
     confidence: float
 
@@ -1514,8 +1516,8 @@ class AssistantRunResponse(BaseModel):
 
     run_id: str
     status: str
-    output: Optional[str] = None
-    actions_taken: List[str]
+    output: str | None = None
+    actions_taken: list[str]
     execution_time_ms: int
 
 
@@ -1524,12 +1526,12 @@ class ActionInfo(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    parameters: Optional[Dict[str, Any]] = None
+    description: str | None = None
+    parameters: dict[str, Any] | None = None
 
 
 class ActionsListResponse(BaseModel):
     """Response model for listing actions."""
 
-    actions: List[ActionInfo]
+    actions: list[ActionInfo]
     count: int

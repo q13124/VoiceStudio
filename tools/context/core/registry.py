@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from collections.abc import Iterable
 
-from tools.context.core.models import AllocationContext
 from tools.context.core.protocols import ContextSourceProtocol
 
 
@@ -10,28 +9,26 @@ class SourceRegistry:
     """Registry and lifecycle for context source adapters."""
 
     def __init__(self, sources: Iterable[ContextSourceProtocol] | None = None):
-        self._sources: List[ContextSourceProtocol] = list(sources or [])
+        self._sources: list[ContextSourceProtocol] = list(sources or [])
 
     def register(self, source: ContextSourceProtocol) -> None:
         self._sources.append(source)
         self._sources.sort(key=lambda s: s.priority, reverse=True)
 
-    def all(self) -> List[ContextSourceProtocol]:
+    def all(self) -> list[ContextSourceProtocol]:
         return list(self._sources)
 
-    def by_name(self) -> Dict[str, ContextSourceProtocol]:
+    def by_name(self) -> dict[str, ContextSourceProtocol]:
         return {s.source_name: s for s in self._sources}
 
 
 def build_default_registry(config: dict) -> SourceRegistry:
     """Instantiate the default source registry from configuration."""
+    from tools.context.sources.file_context_adapter import FileContextAdapter
     from tools.context.sources.git_adapter import GitSourceAdapter
     from tools.context.sources.memory_adapter import MemorySourceAdapter
     from tools.context.sources.rules_adapter import RulesSourceAdapter
     from tools.context.sources.state_adapter import StateSourceAdapter
-    from tools.context.sources.context7_adapter import Context7Adapter
-    from tools.context.sources.linear_adapter import LinearAdapter
-    from tools.context.sources.github_adapter import GitHubAdapter
     from tools.context.sources.task_adapter import TaskSourceAdapter
 
     registry = SourceRegistry()
@@ -43,10 +40,15 @@ def build_default_registry(config: dict) -> SourceRegistry:
     ledger_cfg = config.get("ledger", {})
     telemetry_cfg = config.get("telemetry", {})
     gitkraken_cfg = config.get("gitkraken", {})
+    file_context_cfg = config.get("file_context", {})
 
     # Core adapters (always enabled)
     registry.register(StateSourceAdapter())
     registry.register(TaskSourceAdapter())
+
+    # File context adapter (language detection) - enabled by default
+    if file_context_cfg.get("enabled", True):
+        registry.register(FileContextAdapter())
     registry.register(
         RulesSourceAdapter(
             include_always_apply_only=rules_cfg.get("include_always_apply_only", False),
@@ -105,7 +107,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     # Quality Ledger adapter (enabled by default)
     if ledger_cfg.get("enabled", True):
         from tools.context.sources.ledger_adapter import LedgerSourceAdapter
-        
+
         registry.register(
             LedgerSourceAdapter(
                 include_done=ledger_cfg.get("include_done", False),
@@ -115,7 +117,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     # Telemetry/SLO adapter (disabled by default - requires backend)
     if telemetry_cfg.get("enabled", False):
         from tools.context.sources.telemetry_adapter import TelemetrySourceAdapter
-        
+
         registry.register(
             TelemetrySourceAdapter(
                 endpoint=telemetry_cfg.get("endpoint", "http://localhost:8000/api/telemetry/slos"),
@@ -127,7 +129,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     # GitKraken enhanced adapter (disabled by default - requires gh CLI)
     if gitkraken_cfg.get("enabled", False):
         from tools.context.sources.gitkraken_adapter import GitKrakenAdapter
-        
+
         registry.register(
             GitKrakenAdapter(
                 include_issues=gitkraken_cfg.get("include_issues", True),
@@ -140,7 +142,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     issues_cfg = config.get("issues", {})
     if issues_cfg.get("enabled", False):
         from tools.context.sources.issues_adapter import IssuesSourceAdapter
-        
+
         registry.register(
             IssuesSourceAdapter(
                 max_issues=issues_cfg.get("max_issues", 10),
@@ -154,7 +156,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     audit_cfg = config.get("audit", {})
     if audit_cfg.get("enabled", True):
         from tools.context.sources.audit_adapter import AuditSourceAdapter
-        
+
         registry.register(
             AuditSourceAdapter(
                 max_entries=audit_cfg.get("max_entries", 20),
@@ -167,7 +169,7 @@ def build_default_registry(config: dict) -> SourceRegistry:
     progress_cfg = config.get("progress", {})
     if progress_cfg.get("enabled", True):
         from tools.context.sources.progress_adapter import ProgressSourceAdapter
-        
+
         registry.register(
             ProgressSourceAdapter(
                 include_gate_details=progress_cfg.get("include_gate_details", True),

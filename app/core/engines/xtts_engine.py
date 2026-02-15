@@ -9,14 +9,15 @@ Compatible with:
 - PyTorch 2.5.1+cu128
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import sys
 import time
 from collections import OrderedDict
-from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -36,7 +37,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         match_voice_profile,
@@ -125,7 +126,7 @@ _XTTS_MODEL_NAME_ALIASES = {
 }
 
 
-def _normalize_xtts_model_name(model_name: Optional[str]) -> str:
+def _normalize_xtts_model_name(model_name: str | None) -> str:
     """
     Normalize XTTS model identifiers to a Coqui-TTS-compatible model id.
 
@@ -143,7 +144,7 @@ def _normalize_xtts_model_name(model_name: Optional[str]) -> str:
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=5, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -233,7 +234,7 @@ class XTTSEngine(EngineProtocol):
     def __init__(
         self,
         model_name: str = XTTS_DEFAULT_MODEL_NAME,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
     ):
         """
@@ -291,7 +292,7 @@ class XTTSEngine(EngineProtocol):
         self._use_cache = True  # Enable model caching by default
         self._lazy_load = False  # Lazy loading flag
         self._batch_size = 1  # Default batch size for batch processing
-        self._last_multi_reference_metrics: Optional[Dict[str, Any]] = None
+        self._last_multi_reference_metrics: dict[str, Any] | None = None
 
     def initialize(self, lazy: bool = False) -> bool:
         """
@@ -413,14 +414,14 @@ class XTTSEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        speaker_wav: Union[str, Path, List[Union[str, Path]]],
+        speaker_wav: str | Path | list[str | Path],
         language: str = "en",
-        output_path: Optional[Union[str, Path]] = None,
+        output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        cancellation_token: Optional[CancellationToken] = None,
+        cancellation_token: CancellationToken | None = None,
         **kwargs,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using voice cloning.
 
@@ -437,13 +438,13 @@ class XTTSEngine(EngineProtocol):
         Returns:
             Audio array (numpy) or None if synthesis failed,
             or tuple of (audio, quality_metrics) if calculate_quality=True
-            
+
         Raises:
             OperationCancelledError: If cancellation is requested via token
         """
         # Set cancellation token for cooperative cancellation
         self.set_cancellation_token(cancellation_token)
-        
+
         try:
             # Handle lazy loading
             if self._lazy_load or not self._initialized:
@@ -453,7 +454,7 @@ class XTTSEngine(EngineProtocol):
 
             # Check cancellation before synthesis
             self.check_cancellation()
-            
+
             # Convert speaker_wav to list if single path
             if isinstance(speaker_wav, (str, Path)):
                 speaker_wav = [speaker_wav]
@@ -543,8 +544,8 @@ class XTTSEngine(EngineProtocol):
         self,
         processed_audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]],
-    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        reference_audio: str | Path | None,
+    ) -> tuple[dict[str, Any] | None, str | None]:
         """
         Compute voice profile match metrics against the reference audio when available.
 
@@ -571,10 +572,10 @@ class XTTSEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        reference_audio: Optional[Union[str, Path]] = None,
+        reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate_metrics: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """
         Process audio with quality enhancement and/or metrics calculation.
 
@@ -650,18 +651,18 @@ class XTTSEngine(EngineProtocol):
 
     def clone_voice(
         self,
-        reference_audio: Union[str, Path, List[Union[str, Path]]],
+        reference_audio: str | Path | list[str | Path],
         text: str,
         language: str = "en",
-        output_path: Optional[Union[str, Path]] = None,
-        emotion: Optional[str] = None,
+        output_path: str | Path | None = None,
+        emotion: str | None = None,
         speed: float = 1.0,
         calculate_quality: bool = False,
         enhance_quality: bool = False,
-        quality_preset: Optional[str] = None,
-        prosody_params: Optional[Dict[str, float]] = None,
+        quality_preset: str | None = None,
+        prosody_params: dict[str, float] | None = None,
         use_multi_reference: bool = False,
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Clone voice from reference audio and synthesize text with advanced quality features.
 
@@ -770,13 +771,13 @@ class XTTSEngine(EngineProtocol):
         )
 
         if isinstance(reference_audio, list):
-            ref_for_metrics: Optional[Union[str, Path]] = (
+            ref_for_metrics: str | Path | None = (
                 reference_audio[0] if reference_audio else None
             )
         else:
             ref_for_metrics = reference_audio
 
-        audio_out: Union[np.ndarray, Tuple[np.ndarray, Dict]] = audio_after_prosody
+        audio_out: np.ndarray | tuple[np.ndarray, dict] = audio_after_prosody
         if enhance_quality or calculate_quality:
             audio_out = self._process_audio_quality(
                 audio_after_prosody,
@@ -804,17 +805,17 @@ class XTTSEngine(EngineProtocol):
 
     def _clone_voice_multi_reference(
         self,
-        reference_audios: List[Union[str, Path]],
+        reference_audios: list[str | Path],
         text: str,
         language: str,
-        output_path: Optional[Union[str, Path]],
-        emotion: Optional[str],
+        output_path: str | Path | None,
+        emotion: str | None,
         speed: float,
         calculate_quality: bool,
         enhance_quality: bool,
-        quality_preset: Optional[str],
-        prosody_params: Optional[Dict[str, float]],
-    ) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Dict]]:
+        quality_preset: str | None,
+        prosody_params: dict[str, float] | None,
+    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Clone voice using multiple reference audios for improved quality and stability.
 
@@ -823,7 +824,7 @@ class XTTSEngine(EngineProtocol):
         logger.info(f"Multi-reference cloning with {len(reference_audios)} references")
 
         # Synthesize with each reference and compute metrics
-        candidates: List[Dict[str, Any]] = []
+        candidates: list[dict[str, Any]] = []
         for i, ref_audio in enumerate(reference_audios):
             try:
                 audio_result = self.synthesize(
@@ -892,10 +893,7 @@ class XTTSEngine(EngineProtocol):
             return None
 
         scored = [c for c in candidates if c.get("score") is not None]
-        if scored:
-            selected = max(scored, key=lambda c: float(c["score"]))
-        else:
-            selected = candidates[0]
+        selected = max(scored, key=lambda c: float(c["score"])) if scored else candidates[0]
 
         self._last_multi_reference_metrics = {
             "strategy": "metrics_best",
@@ -945,7 +943,7 @@ class XTTSEngine(EngineProtocol):
         self,
         audio: np.ndarray,
         sample_rate: int,
-        prosody_params: Dict[str, float],
+        prosody_params: dict[str, float],
     ) -> np.ndarray:
         """
         Apply advanced prosody control to audio.
@@ -1019,14 +1017,14 @@ class XTTSEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        speaker_wav: Union[str, Path],
+        texts: list[str],
+        speaker_wav: str | Path,
         language: str = "en",
-        output_dir: Optional[Union[str, Path]] = None,
-        batch_size: Optional[int] = None,
+        output_dir: str | Path | None = None,
+        batch_size: int | None = None,
         parallel: bool = False,
         **kwargs,
-    ) -> List[Optional[np.ndarray]]:
+    ) -> list[np.ndarray | None]:
         """
         Synthesize multiple texts in batch with optimizations.
 
@@ -1046,9 +1044,8 @@ class XTTSEngine(EngineProtocol):
             return []
 
         # Ensure initialized
-        if not self._initialized:
-            if not self._load_model():
-                return [None] * len(texts)
+        if not self._initialized and not self._load_model():
+            return [None] * len(texts)
 
         batch_size = batch_size or self._batch_size
         results = []
@@ -1115,7 +1112,7 @@ class XTTSEngine(EngineProtocol):
         logger.info(f"Batch synthesis complete: {len(results)} results")
         return results
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         """
         Get list of supported language codes.
 
@@ -1189,7 +1186,7 @@ class XTTSEngine(EngineProtocol):
         self._use_cache = enable
         logger.debug(f"Model caching {'enabled' if enable else 'disabled'}")
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """
         Get current GPU memory usage if using CUDA.
 
@@ -1220,7 +1217,7 @@ class XTTSEngine(EngineProtocol):
 # Factory function for easy instantiation
 def create_xtts_engine(
     model_name: str = XTTS_DEFAULT_MODEL_NAME,
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> XTTSEngine:
     """

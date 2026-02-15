@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -31,27 +31,27 @@ class ParlerTTSConfig:
 class ParlerTTSEngine(EngineProtocol):
     """
     Parler-TTS expressive text-to-speech.
-    
+
     Features:
     - Text-described voice control
     - Natural prosody
     - High-quality 44.1kHz output
     - Controllable style via descriptions
-    
+
     Reference: https://github.com/huggingface/parler-tts
     """
-    
+
     ENGINE_ID = "parler_tts"
     ENGINE_NAME = "Parler-TTS"
     SUPPORTED_LANGUAGES = ["en"]
-    
-    def __init__(self, config: Optional[ParlerTTSConfig] = None):
+
+    def __init__(self, config: ParlerTTSConfig | None = None):
         super().__init__()
         self.config = config or ParlerTTSConfig()
         self._model = None
         self._tokenizer = None
         self._loaded = False
-    
+
     def initialize(self) -> bool:
         """Sync wrapper for EngineProtocol compliance."""
         loop = asyncio.new_event_loop()
@@ -59,7 +59,7 @@ class ParlerTTSEngine(EngineProtocol):
             return loop.run_until_complete(self._async_initialize())
         finally:
             loop.close()
-    
+
     def cleanup(self) -> None:
         """Sync wrapper for EngineProtocol compliance."""
         loop = asyncio.new_event_loop()
@@ -67,52 +67,52 @@ class ParlerTTSEngine(EngineProtocol):
             loop.run_until_complete(self.shutdown())
         finally:
             loop.close()
-    
+
     async def _async_initialize(self) -> bool:
         """Initialize Parler-TTS."""
         try:
             logger.info("Loading Parler-TTS engine...")
-            
+
             try:
+                import torch
                 from parler_tts import ParlerTTSForConditionalGeneration
                 from transformers import AutoTokenizer
-                import torch
-                
+
                 device = "cuda" if self.config.use_gpu and torch.cuda.is_available() else "cpu"
-                
+
                 self._model = ParlerTTSForConditionalGeneration.from_pretrained(
                     self.config.model_name
                 ).to(device)
-                
+
                 self._tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
                 self._device = device
-                
+
                 logger.info(f"Parler-TTS loaded on {device}")
-                
+
             except ImportError:
                 logger.warning("parler-tts not installed, using placeholder")
                 self._model = None
-            
+
             self._loaded = True
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load Parler-TTS: {e}")
             return False
-    
+
     async def shutdown(self) -> None:
         """Shutdown and cleanup."""
         self._model = None
         self._tokenizer = None
         self._loaded = False
-        
+
         try:
             import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
             logger.debug("torch not available for CUDA cache cleanup")
-    
+
     async def synthesize(
         self,
         text: str,
@@ -120,20 +120,20 @@ class ParlerTTSEngine(EngineProtocol):
     ) -> np.ndarray:
         """
         Synthesize speech with style description.
-        
+
         Args:
             text: Text to synthesize
             description: Voice style description
-            
+
         Returns:
             Synthesized audio at 44.1kHz
         """
         if not self._loaded:
             await self.initialize()
-        
+
         if self._model is not None and self._tokenizer is not None:
             return await self._synthesize_real(text, description)
-        
+
         # Graceful degradation: Generate silence when parler-tts library is not installed.
         # To enable full functionality, install parler-tts: pip install parler-tts
         # See: https://github.com/huggingface/parler-tts for installation instructions.
@@ -141,15 +141,15 @@ class ParlerTTSEngine(EngineProtocol):
         duration = len(text) * 0.06
         samples = int(duration * self.config.sample_rate)
         return np.zeros(samples, dtype=np.float32)
-    
+
     async def _synthesize_real(self, text: str, description: str) -> np.ndarray:
         """Real synthesis using Parler-TTS."""
         import torch
-        
+
         # Tokenize
         input_ids = self._tokenizer(description, return_tensors="pt").input_ids.to(self._device)
         prompt_input_ids = self._tokenizer(text, return_tensors="pt").input_ids.to(self._device)
-        
+
         # Generate
         with torch.no_grad():
             generation = self._model.generate(
@@ -157,15 +157,15 @@ class ParlerTTSEngine(EngineProtocol):
                 prompt_input_ids=prompt_input_ids,
                 max_new_tokens=self.config.max_length,
             )
-        
+
         audio = generation.cpu().numpy().squeeze()
         return audio.astype(np.float32)
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded
-    
-    def get_capabilities(self) -> Dict[str, Any]:
+
+    def get_capabilities(self) -> dict[str, Any]:
         return {
             "description_control": True,
             "languages": self.SUPPORTED_LANGUAGES,

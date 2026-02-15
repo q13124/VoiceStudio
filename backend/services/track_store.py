@@ -5,14 +5,16 @@ Persists audio tracks to project directories instead of in-memory storage.
 Tracks are stored as part of the project structure.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
-import time
 import threading
+import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class TrackStore:
         ├── {track_id}.json
     """
 
-    def __init__(self, projects_dir: Optional[str] = None):
+    def __init__(self, projects_dir: str | None = None):
         self._projects_dir = Path(
             projects_dir or os.getenv("VOICESTUDIO_PROJECTS_PATH", "")
             or Path.home() / ".voicestudio" / "projects"
@@ -34,7 +36,7 @@ class TrackStore:
         self._projects_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
 
-    def save_track(self, project_id: str, track: Dict[str, Any]) -> str:
+    def save_track(self, project_id: str, track: dict[str, Any]) -> str:
         """Save a track to a project."""
         track_id = track.get("id", "")
         if not track_id:
@@ -62,7 +64,7 @@ class TrackStore:
         logger.debug(f"Track saved: {track_id} in project {project_id}")
         return track_id
 
-    def get_track(self, project_id: str, track_id: str) -> Optional[Dict[str, Any]]:
+    def get_track(self, project_id: str, track_id: str) -> dict[str, Any] | None:
         """Get a track by ID from a project."""
         track_file = self._projects_dir / project_id / "tracks" / f"{track_id}.json"
 
@@ -70,13 +72,13 @@ class TrackStore:
             return None
 
         try:
-            with open(track_file, "r", encoding="utf-8") as f:
+            with open(track_file, encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning(f"Failed to load track {track_id}: {exc}")
             return None
 
-    def list_tracks(self, project_id: str) -> List[Dict[str, Any]]:
+    def list_tracks(self, project_id: str) -> list[dict[str, Any]]:
         """List all tracks for a project."""
         tracks_dir = self._projects_dir / project_id / "tracks"
         if not tracks_dir.exists():
@@ -85,7 +87,7 @@ class TrackStore:
         tracks = []
         for track_file in tracks_dir.glob("*.json"):
             try:
-                with open(track_file, "r", encoding="utf-8") as f:
+                with open(track_file, encoding="utf-8") as f:
                     tracks.append(json.load(f))
             except (json.JSONDecodeError, OSError):
                 continue
@@ -109,8 +111,8 @@ class TrackStore:
             return False
 
     def update_track(
-        self, project_id: str, track_id: str, updates: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        self, project_id: str, track_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """Update specific fields of a track."""
         track = self.get_track(project_id, track_id)
         if not track:
@@ -123,7 +125,7 @@ class TrackStore:
 
 
 # Singleton
-_store: Optional[TrackStore] = None
+_store: TrackStore | None = None
 
 
 def get_track_store() -> TrackStore:

@@ -30,17 +30,17 @@ for fpath, reason in additional_skips.items():
     if not os.path.exists(fpath):
         print(f'Not found: {fpath}')
         continue
-    
-    with open(fpath, 'r', encoding='utf-8') as f:
+
+    with open(fpath, encoding='utf-8') as f:
         content = f.read()
-    
+
     # Check if already has our skip block
     if 'allow_module_level=True' in content and 'pytest.skip' in content[:500]:
         print(f'Already has skip: {fpath}')
         continue
-    
+
     block = skip_block.format(reason=reason)
-    
+
     # Find the module docstring (first """)
     if content.startswith('"""'):
         # Find end of docstring
@@ -50,10 +50,10 @@ for fpath, reason in additional_skips.items():
     else:
         # No docstring, insert at beginning
         new_content = block + '\n' + content
-    
+
     with open(fpath, 'w', encoding='utf-8') as f:
         f.write(new_content)
-    
+
     count += 1
     print(f'Skipped: {fpath}')
 

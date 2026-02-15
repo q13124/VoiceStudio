@@ -18,7 +18,6 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 def get_project_root() -> Path:
@@ -46,13 +45,13 @@ def run_command(cmd: list[str], capture: bool = True) -> tuple[int, str, str]:
 def collect_build_evidence(evidence_dir: Path, version: str) -> dict:
     """Collect build-related evidence."""
     print("Collecting build evidence...")
-    
+
     evidence = {
         "build_success": False,
         "test_success": False,
         "artifacts": [],
     }
-    
+
     # Copy build logs if they exist
     buildlogs = get_project_root() / ".buildlogs"
     if buildlogs.exists():
@@ -61,14 +60,14 @@ def collect_build_evidence(evidence_dir: Path, version: str) -> dict:
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(log_file, dest)
             evidence["artifacts"].append(str(dest.relative_to(evidence_dir)))
-        
+
         # Check for test results
         for xml_file in buildlogs.glob("*.xml"):
             dest = evidence_dir / "test_results" / xml_file.name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(xml_file, dest)
             evidence["artifacts"].append(str(dest.relative_to(evidence_dir)))
-    
+
     # Run verification if no logs exist
     if not evidence["artifacts"]:
         print("  Running build verification...")
@@ -78,30 +77,30 @@ def collect_build_evidence(evidence_dir: Path, version: str) -> dict:
         ])
         evidence["build_success"] = code == 0
         evidence["build_output"] = stdout if stdout else stderr
-        
+
         # Save build output
         build_log = evidence_dir / "build_logs" / f"build_{datetime.now():%Y%m%d_%H%M%S}.log"
         build_log.parent.mkdir(parents=True, exist_ok=True)
         build_log.write_text(evidence.get("build_output", ""))
         evidence["artifacts"].append(str(build_log.relative_to(evidence_dir)))
-    
+
     return evidence
 
 
 def collect_test_evidence(evidence_dir: Path) -> dict:
     """Collect test-related evidence."""
     print("Collecting test evidence...")
-    
+
     evidence = {
         "csharp_tests": {"passed": 0, "failed": 0, "total": 0},
         "python_tests": {"passed": 0, "failed": 0, "total": 0},
         "artifacts": [],
     }
-    
+
     # Check for existing test results
     test_results_dir = evidence_dir / "test_results"
     test_results_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Run C# tests if no results exist
     print("  Running C# tests...")
     code, stdout, stderr = run_command([
@@ -111,36 +110,36 @@ def collect_test_evidence(evidence_dir: Path) -> dict:
         "--logger", "trx",
         "--no-build"
     ])
-    
+
     evidence["csharp_tests"]["success"] = code == 0
-    
+
     # Run Python tests
     print("  Running Python tests...")
-    code, stdout, stderr = run_command([
+    code, _stdout, _stderr = run_command([
         sys.executable, "-m", "pytest",
         "tests/", "-v", "--tb=short",
         f"--junitxml={test_results_dir / 'pytest_results.xml'}"
     ])
-    
+
     evidence["python_tests"]["success"] = code == 0
-    
+
     return evidence
 
 
 def collect_quality_ledger(evidence_dir: Path) -> dict:
     """Extract Quality Ledger status."""
     print("Collecting Quality Ledger status...")
-    
+
     ledger_path = get_project_root() / "Recovery Plan" / "QUALITY_LEDGER.md"
     evidence = {
         "open_p0": 0,
         "open_p1": 0,
         "total_issues": 0,
     }
-    
+
     if ledger_path.exists():
         content = ledger_path.read_text(encoding="utf-8")
-        
+
         # Count open P0/P1 issues
         lines = content.split("\n")
         for line in lines:
@@ -150,12 +149,12 @@ def collect_quality_ledger(evidence_dir: Path) -> dict:
                     evidence["open_p0"] += 1
                 elif "S1 Critical" in line:
                     evidence["open_p1"] += 1
-        
+
         # Copy ledger to evidence
         dest = evidence_dir / "quality" / "QUALITY_LEDGER_SNAPSHOT.md"
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ledger_path, dest)
-    
+
     return evidence
 
 
@@ -168,20 +167,20 @@ def generate_evidence_pack(
 ) -> Path:
     """Generate the final evidence pack markdown."""
     print("Generating evidence pack...")
-    
+
     template_path = get_project_root() / "docs" / "release" / "EVIDENCE_PACK_TEMPLATE.md"
-    
+
     if template_path.exists():
         template = template_path.read_text(encoding="utf-8")
     else:
         template = "# Release Evidence Pack - v{VERSION}\n\nNo template found."
-    
+
     # Replace placeholders
     now = datetime.now()
     content = template.replace("{VERSION}", version)
     content = content.replace("{DATE}", now.strftime("%Y-%m-%d"))
     content = content.replace("{AGENT_NAME}", os.getenv("COMPUTERNAME", "Unknown"))
-    
+
     # Add summary section
     summary = f"""
 
@@ -203,7 +202,7 @@ def generate_evidence_pack(
 - Total open issues: {ledger_evidence.get('total_issues', 0)}
 
 """
-    
+
     # Insert summary after the header
     lines = content.split("\n")
     output_lines = []
@@ -213,13 +212,13 @@ def generate_evidence_pack(
         if line.startswith("**Build Agent:**") and not inserted:
             output_lines.append(summary)
             inserted = True
-    
+
     output_content = "\n".join(output_lines)
-    
+
     # Save evidence pack
     pack_path = evidence_dir / f"EVIDENCE_PACK_v{version}.md"
     pack_path.write_text(output_content, encoding="utf-8")
-    
+
     # Save metadata
     metadata = {
         "version": version,
@@ -228,10 +227,10 @@ def generate_evidence_pack(
         "tests": test_evidence,
         "quality_ledger": ledger_evidence,
     }
-    
+
     metadata_path = evidence_dir / "evidence_metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-    
+
     return pack_path
 
 
@@ -258,35 +257,35 @@ def main():
         action="store_true",
         help="Skip running tests (use existing results only)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup evidence directory
     if args.output_dir:
         evidence_dir = Path(args.output_dir)
     else:
         evidence_dir = get_project_root() / "docs" / "release" / "evidence" / f"v{args.version}"
-    
+
     if args.dry_run:
         print(f"[DRY RUN] Would collect evidence to: {evidence_dir}")
         print(f"[DRY RUN] Version: {args.version}")
         return
-    
+
     print(f"Collecting evidence for version {args.version}")
     print(f"Output directory: {evidence_dir}")
-    
+
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Collect evidence
     build_evidence = collect_build_evidence(evidence_dir, args.version)
-    
+
     if args.skip_tests:
         test_evidence = {"csharp_tests": {}, "python_tests": {}}
     else:
         test_evidence = collect_test_evidence(evidence_dir)
-    
+
     ledger_evidence = collect_quality_ledger(evidence_dir)
-    
+
     # Generate evidence pack
     pack_path = generate_evidence_pack(
         args.version,
@@ -295,9 +294,9 @@ def main():
         test_evidence,
         ledger_evidence,
     )
-    
+
     print(f"\n{'='*60}")
-    print(f"Evidence collection complete!")
+    print("Evidence collection complete!")
     print(f"Evidence pack: {pack_path}")
     print(f"Evidence directory: {evidence_dir}")
     print(f"{'='*60}")

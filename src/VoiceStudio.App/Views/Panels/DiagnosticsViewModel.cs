@@ -839,6 +839,14 @@ namespace VoiceStudio.App.Views.Panels
     }
 
     /// <summary>
+    /// Refreshes telemetry data from the backend.
+    /// </summary>
+    public async Task RefreshTelemetryAsync()
+    {
+      await LoadTelemetryAsync(CancellationToken.None);
+    }
+
+    /// <summary>
     /// Load audit log entries from the audit service.
     /// </summary>
     public async Task LoadAuditEntriesAsync()

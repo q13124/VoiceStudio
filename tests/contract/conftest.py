@@ -7,6 +7,8 @@ Provides fixtures for contract testing including:
 - Contract drift detection
 """
 
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -30,10 +32,22 @@ SHARED_SCHEMAS_DIR = PROJECT_ROOT / "shared"
 
 def pytest_configure(config):
     """Configure pytest with custom markers."""
+    import logging
+
+    # Suppress logging errors during test collection and imports
+    # This prevents correlation_id formatter issues from failing tests
+    logging.disable(logging.CRITICAL)
+
     config.addinivalue_line("markers", "contract: marks tests as contract tests")
     config.addinivalue_line("markers", "schema: marks tests as schema validation tests")
     config.addinivalue_line("markers", "drift: marks tests as drift detection tests")
     config.addinivalue_line("markers", "response: marks tests as response validation tests")
+
+
+def pytest_unconfigure(config):
+    """Re-enable logging after test session."""
+    import logging
+    logging.disable(logging.NOTSET)
 
 
 # =============================================================================
@@ -41,26 +55,26 @@ def pytest_configure(config):
 # =============================================================================
 
 @pytest.fixture(scope="session")
-def openapi_schema() -> Optional[Dict]:
+def openapi_schema() -> dict | None:
     """Load OpenAPI schema from live FastAPI app or static file.
-    
+
     Routes are registered lazily on startup, so we must trigger
     _register_all_routes() before generating the schema.
     """
     import logging
-    
+
     # Suppress logging errors during route registration (correlation_id formatter issue)
     logging.disable(logging.CRITICAL)
-    
+
     try:
-        from backend.api.main import app, _register_all_routes
-        
+        from backend.api.main import _register_all_routes, app
+
         # Routes are loaded lazily - trigger registration now
         _register_all_routes()
-        
+
         # Clear any cached schema to regenerate with all routes
         app.openapi_schema = None
-        
+
         schema = app.openapi()
         if schema and schema.get("paths"):
             return schema
@@ -69,34 +83,34 @@ def openapi_schema() -> Optional[Dict]:
     finally:
         # Re-enable logging
         logging.disable(logging.NOTSET)
-    
+
     # Fall back to static file
     if not SCHEMA_FILE.exists():
         pytest.skip(f"OpenAPI schema not found: {SCHEMA_FILE}")
-    
-    with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
+
+    with open(SCHEMA_FILE, encoding="utf-8") as f:
         return json.load(f)
 
 
 @pytest.fixture(scope="session")
-def shared_schemas() -> Dict[str, Dict]:
+def shared_schemas() -> dict[str, dict]:
     """Load shared JSON schemas."""
     schemas = {}
     if SHARED_SCHEMAS_DIR.exists():
         for schema_file in SHARED_SCHEMAS_DIR.glob("*.json"):
-            with open(schema_file, "r", encoding="utf-8") as f:
+            with open(schema_file, encoding="utf-8") as f:
                 schemas[schema_file.stem] = json.load(f)
     return schemas
 
 
 @pytest.fixture(scope="session")
-def api_paths(openapi_schema) -> Dict:
+def api_paths(openapi_schema) -> dict:
     """Get API paths from schema."""
     return openapi_schema.get("paths", {})
 
 
 @pytest.fixture(scope="session")
-def api_components(openapi_schema) -> Dict:
+def api_components(openapi_schema) -> dict:
     """Get API components from schema."""
     return openapi_schema.get("components", {})
 
@@ -107,18 +121,18 @@ def api_components(openapi_schema) -> Dict:
 
 class SchemaValidator:
     """Validates data against OpenAPI schema components."""
-    
-    def __init__(self, components: Dict):
+
+    def __init__(self, components: dict):
         self.components = components
         self.schemas = components.get("schemas", {})
-    
-    def get_schema(self, ref: str) -> Optional[Dict]:
+
+    def get_schema(self, ref: str) -> dict | None:
         """Get schema from $ref."""
         if ref.startswith("#/components/schemas/"):
             name = ref.split("/")[-1]
             return self.schemas.get(name)
         return None
-    
+
     def validate_type(self, value: Any, expected_type: str) -> bool:
         """Validate value matches expected type."""
         type_map = {
@@ -133,47 +147,47 @@ class SchemaValidator:
         if expected is None:
             return True  # Unknown type, skip validation
         return isinstance(value, expected)
-    
+
     def validate_object(
-        self, 
-        data: Dict, 
-        schema: Dict,
+        self,
+        data: dict,
+        schema: dict,
         strict: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Validate object against schema.
-        
+
         Returns list of validation errors.
         """
         errors = []
-        
+
         if not isinstance(data, dict):
             return [f"Expected object, got {type(data).__name__}"]
-        
+
         properties = schema.get("properties", {})
         required = schema.get("required", [])
-        
+
         # Check required fields
         for field in required:
             if field not in data:
                 errors.append(f"Missing required field: {field}")
-        
+
         # Validate each field
         for field, value in data.items():
             if field not in properties:
                 if strict:
                     errors.append(f"Unknown field: {field}")
                 continue
-            
+
             field_schema = properties[field]
-            
+
             # Handle $ref
             if "$ref" in field_schema:
                 ref_schema = self.get_schema(field_schema["$ref"])
                 if ref_schema:
                     errors.extend(self.validate_object(value, ref_schema, strict))
                 continue
-            
+
             # Validate type
             expected_type = field_schema.get("type")
             if expected_type and not self.validate_type(value, expected_type):
@@ -181,7 +195,7 @@ class SchemaValidator:
                     f"Field '{field}': expected {expected_type}, "
                     f"got {type(value).__name__}"
                 )
-            
+
             # Validate array items
             if expected_type == "array" and "items" in field_schema:
                 items_schema = field_schema["items"]
@@ -197,7 +211,7 @@ class SchemaValidator:
                                 f"Field '{field}[{i}]': expected {items_schema['type']}, "
                                 f"got {type(item).__name__}"
                             )
-        
+
         return errors
 
 
@@ -215,10 +229,10 @@ def schema_validator(api_components) -> SchemaValidator:
 def validate_response(schema_validator):
     """Fixture to validate API response against schema."""
     def _validate(
-        response_data: Dict,
+        response_data: dict,
         schema_name: str,
         strict: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         schema = schema_validator.schemas.get(schema_name)
         if not schema:
             return [f"Schema not found: {schema_name}"]
@@ -230,12 +244,12 @@ def validate_response(schema_validator):
 def assert_valid_response(validate_response):
     """Fixture to assert response is valid."""
     def _assert(
-        response_data: Dict,
+        response_data: dict,
         schema_name: str,
         strict: bool = False,
     ):
         errors = validate_response(response_data, schema_name, strict)
-        assert not errors, f"Response validation failed:\n" + "\n".join(errors)
+        assert not errors, "Response validation failed:\n" + "\n".join(errors)
     return _assert
 
 
@@ -247,12 +261,12 @@ def assert_valid_response(validate_response):
 def compare_endpoints():
     """Compare expected endpoints with actual schema."""
     def _compare(
-        expected: List[Dict],
-        api_paths: Dict,
-    ) -> Dict[str, List[str]]:
+        expected: list[dict],
+        api_paths: dict,
+    ) -> dict[str, list[str]]:
         """
         Compare expected endpoints with schema.
-        
+
         Returns dict with 'missing', 'extra', 'mismatched' keys.
         """
         result = {
@@ -260,18 +274,18 @@ def compare_endpoints():
             "extra": [],
             "mismatched": [],
         }
-        
+
         expected_set = {(e["path"], e["method"].lower()) for e in expected}
-        
+
         actual_set = set()
         for path, methods in api_paths.items():
             for method in methods:
                 if method.lower() in ["get", "post", "put", "delete", "patch"]:
                     actual_set.add((path, method.lower()))
-        
+
         result["missing"] = list(expected_set - actual_set)
         result["extra"] = list(actual_set - expected_set)
-        
+
         return result
     return _compare
 
@@ -283,17 +297,26 @@ def compare_endpoints():
 @pytest.fixture(scope="session")
 def contract_client():
     """Create test client for contract testing.
-    
+
     Routes are registered lazily on startup, so we trigger
     _register_all_routes() before creating the client.
     """
+    import logging
+
+    # Suppress logging errors during app initialization (correlation_id formatter issue)
+    logging.disable(logging.CRITICAL)
+
     try:
         from fastapi.testclient import TestClient
-        from backend.api.main import app, _register_all_routes
-        
+
+        from backend.api.main import _register_all_routes, app
+
         # Ensure routes are loaded (lazy initialization)
         _register_all_routes()
-        
+
         return TestClient(app)
     except ImportError:
         pytest.skip("FastAPI or backend not available")
+    finally:
+        # Re-enable logging
+        logging.disable(logging.NOTSET)

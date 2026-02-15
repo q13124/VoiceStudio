@@ -4,13 +4,15 @@ Mixer Management Routes
 CRUD operations for mixer state, routing, sends/returns, sub-groups, and presets.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -36,6 +38,39 @@ _mixer_states: dict[str, dict] = {}
 _mixer_presets: dict[str, dict] = {}
 
 
+def _validate_effect_chain_id(effect_chain_id: str | None, project_id: str) -> None:
+    """
+    Validate that an effect_chain_id exists if provided.
+
+    Args:
+        effect_chain_id: The effect chain ID to validate (can be None)
+        project_id: The project context for the effect chain
+
+    Raises:
+        HTTPException: 400 if effect_chain_id is provided but doesn't exist
+    """
+    if not effect_chain_id:
+        return  # None is valid - no effect chain assigned
+
+    try:
+        from backend.services.effect_chain_store import get_effect_chain_store
+        store = get_effect_chain_store()
+        chain = store.get(effect_chain_id)
+        if not chain:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Effect chain '{effect_chain_id}' not found"
+            )
+    except ImportError:
+        # Effects module not available - skip validation
+        logger.debug("Effects module not available for validation")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Failed to validate effect_chain_id: {e}")
+        # Continue without validation on error
+
+
 # Pydantic models matching C# models
 class MixerSend(BaseModel):
     id: str
@@ -52,7 +87,7 @@ class MixerReturn(BaseModel):
     volume: float = 1.0
     pan: float = 0.0
     is_enabled: bool = True
-    effect_chain_id: Optional[str] = None
+    effect_chain_id: str | None = None
 
 
 class MixerSubGroup(BaseModel):
@@ -63,8 +98,8 @@ class MixerSubGroup(BaseModel):
     pan: float = 0.0
     is_muted: bool = False
     is_soloed: bool = False
-    effect_chain_id: Optional[str] = None
-    channel_ids: List[str] = []
+    effect_chain_id: str | None = None
+    channel_ids: list[str] = []
 
 
 class MixerMaster(BaseModel):
@@ -72,7 +107,7 @@ class MixerMaster(BaseModel):
     volume: float = 1.0
     pan: float = 0.0
     is_muted: bool = False
-    effect_chain_id: Optional[str] = None
+    effect_chain_id: str | None = None
 
 
 class RoutingDestination(str, Enum):
@@ -83,9 +118,9 @@ class RoutingDestination(str, Enum):
 class ChannelRouting(BaseModel):
     channel_id: str
     main_destination: str = "Master"  # "Master" or "SubGroup"
-    sub_group_id: Optional[str] = None
-    send_levels: Dict[str, float] = {}  # send_id -> level (0.0-1.0)
-    send_enabled: Dict[str, bool] = {}  # send_id -> enabled
+    sub_group_id: str | None = None
+    send_levels: dict[str, float] = {}  # send_id -> level (0.0-1.0)
+    send_enabled: dict[str, bool] = {}  # send_id -> enabled
 
 
 class MixerChannel(BaseModel):
@@ -99,19 +134,19 @@ class MixerChannel(BaseModel):
     is_muted: bool = False
     is_soloed: bool = False
     main_destination: str = "Master"
-    sub_group_id: Optional[str] = None
-    send_levels: Dict[str, float] = {}
-    send_enabled: Dict[str, bool] = {}
+    sub_group_id: str | None = None
+    send_levels: dict[str, float] = {}
+    send_enabled: dict[str, bool] = {}
 
 
 class MixerState(BaseModel):
     id: str
     project_id: str
-    channels: List[MixerChannel] = []
-    channel_routing: List[ChannelRouting] = []
-    sends: List[MixerSend] = []
-    returns: List[MixerReturn] = []
-    sub_groups: List[MixerSubGroup] = []
+    channels: list[MixerChannel] = []
+    channel_routing: list[ChannelRouting] = []
+    sends: list[MixerSend] = []
+    returns: list[MixerReturn] = []
+    sub_groups: list[MixerSubGroup] = []
     master: MixerMaster = MixerMaster()
     created: str
     modified: str
@@ -120,7 +155,7 @@ class MixerState(BaseModel):
 class MixerPreset(BaseModel):
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: str
     state: MixerState
     created: str
@@ -266,6 +301,9 @@ async def delete_send(project_id: str, send_id: str):
 async def create_return(project_id: str, return_bus: MixerReturn):
     """Create a new return bus."""
     try:
+        # Validate effect_chain_id if provided
+        _validate_effect_chain_id(return_bus.effect_chain_id, project_id)
+
         if project_id not in _mixer_states:
             _mixer_states[project_id] = _create_default_mixer_state(
                 project_id
@@ -282,6 +320,8 @@ async def create_return(project_id: str, return_bus: MixerReturn):
 
         logger.info(f"Created return bus: {return_dict['id']}")
         return return_dict
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to create return: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -291,6 +331,9 @@ async def create_return(project_id: str, return_bus: MixerReturn):
 async def update_return(project_id: str, return_id: str, return_bus: MixerReturn):
     """Update a return bus."""
     try:
+        # Validate effect_chain_id if provided
+        _validate_effect_chain_id(return_bus.effect_chain_id, project_id)
+
         if project_id not in _mixer_states:
             raise HTTPException(status_code=404, detail="Mixer state not found")
 
@@ -344,6 +387,9 @@ async def delete_return(project_id: str, return_id: str):
 async def create_subgroup(project_id: str, subgroup: MixerSubGroup):
     """Create a new sub-group bus."""
     try:
+        # Validate effect_chain_id if provided
+        _validate_effect_chain_id(subgroup.effect_chain_id, project_id)
+
         if project_id not in _mixer_states:
             _mixer_states[project_id] = _create_default_mixer_state(
                 project_id
@@ -360,6 +406,8 @@ async def create_subgroup(project_id: str, subgroup: MixerSubGroup):
 
         logger.info(f"Created sub-group: {subgroup_dict['id']}")
         return subgroup_dict
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to create sub-group: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -369,6 +417,9 @@ async def create_subgroup(project_id: str, subgroup: MixerSubGroup):
 async def update_subgroup(project_id: str, subgroup_id: str, subgroup: MixerSubGroup):
     """Update a sub-group bus."""
     try:
+        # Validate effect_chain_id if provided
+        _validate_effect_chain_id(subgroup.effect_chain_id, project_id)
+
         if project_id not in _mixer_states:
             raise HTTPException(status_code=404, detail="Mixer state not found")
 
@@ -422,6 +473,9 @@ async def delete_subgroup(project_id: str, subgroup_id: str):
 async def update_master(project_id: str, master: MixerMaster):
     """Update master bus settings."""
     try:
+        # Validate effect_chain_id if provided
+        _validate_effect_chain_id(master.effect_chain_id, project_id)
+
         if project_id not in _mixer_states:
             _mixer_states[project_id] = _create_default_mixer_state(
                 project_id
@@ -436,6 +490,8 @@ async def update_master(project_id: str, master: MixerMaster):
 
         logger.info(f"Updated master bus for project: {project_id}")
         return master_dict
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to update master: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -488,7 +544,7 @@ async def update_channel_routing(
 # Mixer Preset Endpoints
 
 
-@router.get("/presets/{project_id}", response_model=List[MixerPreset])
+@router.get("/presets/{project_id}", response_model=list[MixerPreset])
 @cache_response(ttl=60)  # Cache for 60 seconds (presets may change)
 async def list_presets(project_id: str):
     """List all mixer presets for a project."""
@@ -640,7 +696,7 @@ def _create_default_mixer_state(project_id: str) -> MixerState:
     )
 
 
-@router.get("/meters/{project_id}", response_model=Dict[str, Any])
+@router.get("/meters/{project_id}", response_model=dict[str, Any])
 @cache_response(ttl=1)  # Cache for 1 second (meters update very frequently)
 async def get_mixer_meters(project_id: str):
     """
@@ -682,7 +738,13 @@ async def simulate_meter_updates(project_id: str, duration: int = 10):
     Updates meters every 100ms for the specified duration.
     """
     if not HAS_WEBSOCKET:
-        raise HTTPException(status_code=501, detail="WebSocket streaming not available")
+        return {
+            "message": (
+                "WebSocket streaming not available in this environment. "
+                "Use GET /api/mixer/meters/{project_id} for polling instead."
+            ),
+            "fallback": f"/api/mixer/meters/{project_id}",
+        }
 
     try:
         if project_id not in _mixer_states:
@@ -705,7 +767,7 @@ async def simulate_meter_updates(project_id: str, duration: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _simulate_meters(project_id: str, channels: List[Dict], duration: int):
+async def _simulate_meters(project_id: str, channels: list[dict], duration: int):
     """Background task to simulate meter updates."""
     import math
     import random

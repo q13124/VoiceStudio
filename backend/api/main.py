@@ -1,5 +1,7 @@
 # IMPORTANT: Import Hugging Face fix FIRST to set environment variables
 # before any huggingface_hub imports
+
+from __future__ import annotations
 import os
 from datetime import datetime
 
@@ -23,7 +25,7 @@ def _configure_hf_endpoints() -> None:
 
 
 try:
-    from .routes import huggingface_fix  # noqa: F401
+    from .routes import huggingface_fix
 except ImportError:
     _configure_hf_endpoints()
 
@@ -65,7 +67,6 @@ import importlib
 import logging
 import os
 import time
-from typing import Optional
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.exceptions import RequestValidationError
@@ -116,14 +117,11 @@ from .error_handling import (
 )
 from .version_info import get_version_info, get_version_string
 from .versioning import (
-    APIVersion,
     CURRENT_VERSION,
     MIN_SUPPORTED_VERSION,
-    HEADER_API_VERSION,
-    HEADER_MIN_VERSION,
-    VersionNegotiator,
-    get_version_headers,
+    APIVersion,
     get_version_from_request,
+    get_version_headers,
 )
 
 # API versioning
@@ -268,31 +266,31 @@ _ROUTES_LOADED = False
 def _perform_contract_validation():
     """
     Validate OpenAPI contract at startup.
-    
+
     Checks:
     - Schema is well-formed
     - Schema has required fields
     - Compare with exported schema for drift detection
     """
     from pathlib import Path
-    
+
     try:
         from .contract_validation import (
             compare_with_exported_schema,
             validate_schema_at_startup,
         )
-        
+
         # Path to exported schema (used for drift detection)
         project_root = Path(__file__).parent.parent.parent
         schema_path = project_root / "docs" / "api" / "openapi.json"
-        
+
         # Validate the current schema
         validate_schema_at_startup(
             app,
             export_path=None,  # Don't auto-export at startup
             fail_on_error=False,  # Log errors but don't fail startup
         )
-        
+
         # Check for drift against exported schema
         if schema_path.exists():
             compare_with_exported_schema(app, schema_path)
@@ -301,7 +299,7 @@ def _perform_contract_validation():
                 f"No exported schema at {schema_path}. "
                 "Run 'python scripts/export_openapi_schema.py' to create baseline."
             )
-            
+
     except ImportError as e:
         logger.debug(f"Contract validation not available: {e}")
     except Exception as e:
@@ -324,17 +322,59 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Failed to initialize temp file manager: {e}")
 
+    # Initialize database and run migrations (Phase 1 - Backend-Frontend Integration)
+    try:
+        # Create database connection for migrations
+        import aiosqlite
+
+        from backend.data.migrations import (
+            MigrationRunner,
+            get_all_migrations,
+        )
+        from backend.data.repository_base import ConnectionConfig
+        config = ConnectionConfig()
+        db_path = config.sqlite_path
+
+        # Ensure data directory exists
+        from pathlib import Path
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
+        async with aiosqlite.connect(db_path) as connection:
+            connection.row_factory = aiosqlite.Row
+
+            # Initialize and run migrations
+            runner = MigrationRunner(connection)
+            await runner.initialize()
+
+            # Register all migrations
+            for migration_class in get_all_migrations():
+                runner.register_class(migration_class)
+
+            # Run pending migrations
+            results = await runner.migrate()
+
+            if results:
+                logger.info(f"Applied {len(results)} database migration(s)")
+                for result in results:
+                    logger.info(f"  - v{result.version}: {result.name} ({result.status.value})")
+            else:
+                status = runner.get_status()
+                logger.info(f"Database ready: {status['applied_count']} migration(s) applied, 0 pending")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}", exc_info=True)
+        # Don't fail startup - fall back to in-memory if database unavailable
+
     # Initialize security services (Gap Analysis Fix - Phase 2)
     try:
-        from backend.security.session import get_session_manager
-        from backend.security.rbac import get_rbac_service
         from backend.security.key_rotation import get_key_rotation_service
+        from backend.security.rbac import get_rbac_service
+        from backend.security.session import get_session_manager
 
         session_mgr = get_session_manager()
         await session_mgr.start()
         logger.info("Session manager started")
 
-        rbac_service = get_rbac_service()
+        get_rbac_service()
         logger.info("RBAC service initialized")
 
         key_rotation = get_key_rotation_service()
@@ -379,7 +419,7 @@ async def startup_event():
 
         # Startup sanity checks: verify critical dependencies and assets
         _perform_startup_sanity_checks()
-        
+
         # Load all engines from manifests
         try:
             from app.core.engines.router import router as engine_router
@@ -387,7 +427,7 @@ async def startup_event():
             engine_count = len(engine_router.list_engines())
             failed_engines = engine_router.get_failed_engines()
             failed_count = len(failed_engines)
-            
+
             if failed_count == 0:
                 logger.info(f"Engine status: {engine_count} loaded, 0 failed")
             else:
@@ -396,7 +436,7 @@ async def startup_event():
                     logger.warning(f"  - {engine_id}: {error}")
         except Exception as e:
             logger.warning(f"Failed to load engines from manifests: {e}")
-        
+
         # Validate OpenAPI contract at startup
         _perform_contract_validation()
 
@@ -415,16 +455,16 @@ async def startup_event():
 async def shutdown_event():
     """Graceful shutdown with engine cleanup and 30-second timeout."""
     import asyncio
-    
+
     # Get shutdown timeout from configuration
     shutdown_timeout = app_config.timeouts.shutdown if app_config else 30.0
     logger.info("Initiating graceful shutdown (timeout: %ds)", shutdown_timeout)
-    
+
     async def _shutdown_engines():
         """Shutdown all running engines gracefully."""
         try:
             from app.core.runtime.runtime_engine_enhanced import get_engine_lifecycle_manager
-            
+
             manager = get_engine_lifecycle_manager()
             if manager:
                 running_engines = manager.get_running_engines()
@@ -443,12 +483,12 @@ async def shutdown_event():
             logger.debug("Engine lifecycle manager not available")
         except Exception as e:
             logger.warning("Engine shutdown error: %s", e)
-    
+
     async def _shutdown_job_queue():
         """Wait for in-flight jobs to complete."""
         try:
             from app.core.runtime.job_queue_enhanced import get_job_queue
-            
+
             queue = get_job_queue()
             if queue:
                 pending = queue.get_pending_count()
@@ -464,34 +504,34 @@ async def shutdown_event():
             pass
         except Exception as e:
             logger.warning("Job queue shutdown error: %s", e)
-    
+
     async def _shutdown_temp_files():
         """Cleanup temp files."""
         try:
             from app.core.utils.temp_file_manager import get_temp_file_manager
-            
+
             temp_manager = get_temp_file_manager()
             temp_manager.cleanup_on_shutdown()
             logger.info("Temp file cleanup completed")
         except Exception as e:
             logger.warning("Failed to cleanup temp files: %s", e)
-    
+
     async def _shutdown_scheduler():
         """Stop background task scheduler."""
         try:
             from app.core.tasks.scheduler import get_scheduler
-            
+
             scheduler = get_scheduler()
             scheduler.stop()
             logger.info("Background task scheduler stopped")
         except Exception as e:
             logger.warning("Failed to stop task scheduler: %s", e)
-    
+
     async def _shutdown_database():
         """Close database connections."""
         try:
             from app.core.database.query_optimizer import close_database_connections
-            
+
             await close_database_connections()
             logger.info("Database connections closed")
         # ALLOWED: bare except - Optional dependency, import failure is acceptable
@@ -499,12 +539,12 @@ async def shutdown_event():
             pass
         except Exception as e:
             logger.warning("Failed to close database connections: %s", e)
-    
+
     async def _shutdown_security_services():
         """Stop security services (Gap Analysis Fix - Phase 2)."""
         try:
-            from backend.security.session import get_session_manager
             from backend.security.key_rotation import get_key_rotation_service
+            from backend.security.session import get_session_manager
 
             session_mgr = get_session_manager()
             await session_mgr.stop()
@@ -517,7 +557,7 @@ async def shutdown_event():
             logger.debug("Security services module not available")
         except Exception as e:
             logger.warning("Failed to stop security services: %s", e)
-    
+
     async def _shutdown_lifecycle_orchestrator():
         """Run graceful shutdown orchestrator (Gap Analysis Fix - Phase 2)."""
         try:
@@ -530,15 +570,15 @@ async def shutdown_event():
             logger.debug("Lifecycle orchestrator module not available")
         except Exception as e:
             logger.warning("Lifecycle orchestrator shutdown error: %s", e)
-    
+
     # Run shutdown sequence with timeout
     try:
         # Phase 1: Wait for in-flight jobs
         await asyncio.wait_for(_shutdown_job_queue(), timeout=shutdown_timeout * 0.3)
-        
+
         # Phase 2: Shutdown engines
         await asyncio.wait_for(_shutdown_engines(), timeout=shutdown_timeout * 0.4)
-        
+
         # Phase 3: Cleanup and scheduler
         await asyncio.wait_for(
             asyncio.gather(
@@ -550,10 +590,10 @@ async def shutdown_event():
             ),
             timeout=shutdown_timeout * 0.3
         )
-        
+
         # Phase 4: Lifecycle orchestrator (final cleanup)
         await asyncio.wait_for(_shutdown_lifecycle_orchestrator(), timeout=5)
-        
+
         logger.info("Graceful shutdown completed successfully")
     except asyncio.TimeoutError:
         logger.warning("Shutdown timed out after %ds - forcing exit", shutdown_timeout)
@@ -787,14 +827,14 @@ async def request_id_middleware(request: Request, call_next):
 @app.middleware("http")
 async def api_versioning_middleware(request: Request, call_next):
     path = request.scope.get("path", "")
-    
+
     # Negotiate API version from request (path, headers, or default)
     negotiated_version = get_version_from_request(request)
-    
+
     # Store negotiated version in request state for endpoint access
     request.state.api_version = negotiated_version
     request.state.api_version_warnings = []  # Warnings can be added if deprecated
-    
+
     if path.startswith(API_VERSION_PREFIX):
         versioned_path = path[len(API_VERSION_PREFIX) :] or "/"
         request.scope["path"] = versioned_path
@@ -808,12 +848,12 @@ async def api_versioning_middleware(request: Request, call_next):
             response.headers[
                 "Link"
             ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
-    
+
     # Add version headers to all responses
     version_headers = get_version_headers(negotiated_version)
     for header_name, header_value in version_headers.items():
         response.headers[header_name] = header_value
-    
+
     return response
 
 
@@ -862,7 +902,7 @@ if ('serviceWorker' in navigator) {
         console.log('[Swagger UI] Service worker registration disabled to prevent errors');
         return Promise.reject(new Error('Service worker registration disabled'));
     };
-    
+
     // Also unregister any existing service workers
     navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
@@ -966,10 +1006,10 @@ def _initialize_rate_limiting():
 # Configure CORS with security best practices
 # CORS Configuration
 # Security: Restrict origins. In production, set CORS_ALLOWED_ORIGINS explicitly.
-_cors_env = os.getenv("CORS_ALLOWED_ORIGINS")
+_cors_env = app_config.cors.allowed_origins if app_config else None
 if _cors_env:
     allowed_origins = [origin.strip() for origin in _cors_env.split(",")]
-elif os.getenv("VOICESTUDIO_ENV") == "production":
+elif (app_config and app_config.cors.environment == "production"):
     # Production without explicit origins: restrictive default
     allowed_origins = ["http://localhost:8001"]
     logger.warning("CORS_ALLOWED_ORIGINS not set in production; using restrictive default")
@@ -1432,6 +1472,15 @@ def _register_all_routes():
     except Exception as e:
         logger.warning(f"Failed to register v2 routes: {e}")
 
+    # Register API v3 routes (StandardResponse envelope format)
+    try:
+        from .v3 import router as v3_router
+
+        app.include_router(v3_router, prefix="/api")
+        logger.debug("Registered v3 router with StandardResponse envelope")
+    except Exception as e:
+        logger.warning(f"Failed to register v3 routes: {e}")
+
     # Timeline routes (GAP-API-001)
     try:
         from .routes.timeline import router as timeline_router
@@ -1443,7 +1492,7 @@ def _register_all_routes():
 
     # Gateway alias routes (GAP-CRIT-001: Endpoint alignment for frontend gateways)
     try:
-        from .routes.gateway_aliases import voice_alias_router, timeline_alias_router
+        from .routes.gateway_aliases import timeline_alias_router, voice_alias_router
 
         app.include_router(voice_alias_router)
         app.include_router(timeline_alias_router)
@@ -1466,7 +1515,7 @@ async def ws_events(ws: WebSocket):
 
 
 @app.websocket("/ws/realtime")
-async def ws_realtime(ws: WebSocket, topics: Optional[str] = None):
+async def ws_realtime(ws: WebSocket, topics: str | None = None):
     """
     Enhanced WebSocket endpoint for real-time updates.
 
@@ -1496,7 +1545,7 @@ def root():
 def api_version_info(request: Request):
     """
     Get API version information including negotiated version and compatibility.
-    
+
     Returns:
         - current_version: The current API version
         - min_supported_version: Minimum supported API version
@@ -1507,7 +1556,7 @@ def api_version_info(request: Request):
     version_info = get_version_info()
     negotiated = getattr(request.state, "api_version", CURRENT_VERSION)
     warnings = getattr(request.state, "api_version_warnings", [])
-    
+
     return {
         "current_version": CURRENT_VERSION.value,
         "min_supported_version": MIN_SUPPORTED_VERSION.value,
@@ -1526,7 +1575,12 @@ def api_version_info(request: Request):
 @app.get("/health")
 def health():
     """Basic health check endpoint."""
-    return {"status": "ok", "version": "1.0"}
+    from backend.settings import config
+    return {
+        "status": "ok",
+        "version": "1.0",
+        "portable_mode": config.portable_mode,
+    }
 
 
 @app.get("/api/health")
@@ -1701,7 +1755,7 @@ def engine_metrics_detail(engine_name: str):
 
 
 @app.post("/api/engines/metrics/reset")
-def engine_metrics_reset(engine_name: Optional[str] = None):
+def engine_metrics_reset(engine_name: str | None = None):
     """Reset engine performance metrics."""
     try:
         from app.core.engines.performance_metrics import get_engine_metrics
@@ -1756,9 +1810,9 @@ def endpoint_metrics_reset():
 
 @app.post("/api/cache/invalidate")
 def invalidate_cache(
-    pattern: Optional[str] = None,
-    tags: Optional[str] = None,
-    path_prefix: Optional[str] = None,
+    pattern: str | None = None,
+    tags: str | None = None,
+    path_prefix: str | None = None,
 ):
     """
     Invalidate cache entries by pattern, tags, or path prefix.
@@ -1791,7 +1845,7 @@ def invalidate_cache(
 
 
 @app.get("/api/validation/stats")
-def validation_stats(model_name: Optional[str] = None):
+def validation_stats(model_name: str | None = None):
     """Get validation statistics."""
     try:
         from .validation_optimizer import get_cache_stats, get_validation_stats
@@ -1835,7 +1889,7 @@ def scheduler_stats():
 
 
 @app.get("/api/scheduler/tasks")
-def scheduler_tasks(status: Optional[str] = None, priority: Optional[str] = None):
+def scheduler_tasks(status: str | None = None, priority: str | None = None):
     """List scheduled tasks."""
     try:
         from app.core.tasks.scheduler import TaskPriority, TaskStatus, get_scheduler

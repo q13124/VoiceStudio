@@ -11,13 +11,11 @@ import hashlib
 import json
 import threading
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Any
 
 from tools.onboarding.core.models import OnboardingPacket
-
 
 # Default cache TTL in seconds (5 minutes)
 DEFAULT_TTL_SECONDS = 300
@@ -47,7 +45,7 @@ class CacheEntry:
         """Get the age of this entry in seconds."""
         return time.time() - self.created_at
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary for persistence."""
         return {
             "role_id": self.role_id,
@@ -59,7 +57,7 @@ class CacheEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], packet: OnboardingPacket) -> "CacheEntry":
+    def from_dict(cls, data: dict[str, Any], packet: OnboardingPacket) -> CacheEntry:
         """Deserialize from dictionary."""
         return cls(
             packet=packet,
@@ -74,7 +72,7 @@ class CacheEntry:
 class OnboardingCache:
     """
     Cache for onboarding packets with TTL and invalidation.
-    
+
     Features:
     - In-memory cache with optional file persistence
     - Time-to-live (TTL) expiration
@@ -87,11 +85,11 @@ class OnboardingCache:
         self,
         ttl_seconds: float = DEFAULT_TTL_SECONDS,
         persist: bool = True,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
     ):
         """
         Initialize the cache.
-        
+
         Args:
             ttl_seconds: Default time-to-live for cache entries
             persist: Whether to persist cache to disk
@@ -101,7 +99,7 @@ class OnboardingCache:
         self.persist = persist
         self.cache_dir = cache_dir or CACHE_DIR
 
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._lock = threading.RLock()
         self._stats = {
             "hits": 0,
@@ -117,15 +115,15 @@ class OnboardingCache:
     def get(
         self,
         role_id: str,
-        source_hash: Optional[str] = None,
-    ) -> Optional[OnboardingPacket]:
+        source_hash: str | None = None,
+    ) -> OnboardingPacket | None:
         """
         Get a cached packet for a role.
-        
+
         Args:
             role_id: The role ID to look up
             source_hash: Optional source hash for validation
-            
+
         Returns:
             Cached OnboardingPacket or None if not found/expired
         """
@@ -157,12 +155,12 @@ class OnboardingCache:
         self,
         role_id: str,
         packet: OnboardingPacket,
-        source_hash: Optional[str] = None,
-        ttl_seconds: Optional[float] = None,
+        source_hash: str | None = None,
+        ttl_seconds: float | None = None,
     ) -> None:
         """
         Cache a packet for a role.
-        
+
         Args:
             role_id: The role ID
             packet: The packet to cache
@@ -185,10 +183,10 @@ class OnboardingCache:
     def invalidate(self, role_id: str) -> bool:
         """
         Invalidate a cached entry.
-        
+
         Args:
             role_id: The role to invalidate
-            
+
         Returns:
             True if entry was found and removed
         """
@@ -202,7 +200,7 @@ class OnboardingCache:
     def invalidate_all(self) -> int:
         """
         Invalidate all cached entries.
-        
+
         Returns:
             Number of entries invalidated
         """
@@ -219,12 +217,12 @@ class OnboardingCache:
     def invalidate_by_source(self, source_pattern: str) -> int:
         """
         Invalidate entries whose source hash contains a pattern.
-        
+
         Useful for invalidating when specific files change.
-        
+
         Args:
             source_pattern: Pattern to match in source hashes
-            
+
         Returns:
             Number of entries invalidated
         """
@@ -274,7 +272,7 @@ class OnboardingCache:
     def cleanup_expired(self) -> int:
         """
         Remove all expired entries from the cache.
-        
+
         Returns:
             Number of entries cleaned up
         """
@@ -290,7 +288,7 @@ class OnboardingCache:
 
             return len(expired)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         with self._lock:
             total_requests = self._stats["hits"] + self._stats["misses"]
@@ -320,11 +318,11 @@ class OnboardingCache:
     def warm(self, role_ids: list[str], assembler: Any) -> int:
         """
         Pre-warm the cache for specified roles.
-        
+
         Args:
             role_ids: List of role IDs to warm
             assembler: OnboardingAssembler instance
-            
+
         Returns:
             Number of entries warmed
         """
@@ -341,7 +339,7 @@ class OnboardingCache:
 
 
 # Global cache instance
-_cache_instance: Optional[OnboardingCache] = None
+_cache_instance: OnboardingCache | None = None
 _cache_lock = threading.Lock()
 
 
@@ -364,7 +362,7 @@ def get_cache(
 def compute_source_hash(*paths: Path) -> str:
     """
     Compute a hash of source file modification times.
-    
+
     Use this to create source_hash values for cache invalidation.
     """
     parts = []
@@ -372,6 +370,6 @@ def compute_source_hash(*paths: Path) -> str:
         if path.exists():
             mtime = path.stat().st_mtime
             parts.append(f"{path}:{mtime}")
-    
+
     combined = "|".join(sorted(parts))
     return hashlib.md5(combined.encode()).hexdigest()[:16]

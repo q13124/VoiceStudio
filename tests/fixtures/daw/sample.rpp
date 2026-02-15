@@ -1,0 +1,23 @@
+<REAPER_PROJECT 0.1 "6.0" 1234567890
+  SAMPLERATE 48000 0 0
+  TEMPO 140 4 4 30 960 0.04 4
+  <TRACK {AAAA-BBBB-0001}
+    NAME "Vocals"
+    <ITEM
+      <SOURCE WAVE
+        FILE "audio/vocals.wav"
+      >
+    >
+  >
+  <TRACK {AAAA-BBBB-0002}
+    NAME "Instrumental"
+    <ITEM
+      <SOURCE WAVE
+        FILE "audio/instrumental.wav"
+      >
+    >
+  >
+  <TRACK {AAAA-BBBB-0003}
+    NAME "MIDI Only"
+  >
+>

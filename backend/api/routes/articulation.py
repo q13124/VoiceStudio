@@ -4,12 +4,13 @@ Articulation Analysis Routes
 Endpoints for analyzing speech articulation patterns and identifying issues.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 
-from typing import List, Dict, Any
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..models_additional import ArticulationAnalyzeRequest
 
@@ -24,7 +25,7 @@ class ArticulationIssue(BaseModel):
 
 class ArticulationAnalyzeResponse(BaseModel):
     """Response model for articulation analysis."""
-    issues: List[ArticulationIssue]
+    issues: list[ArticulationIssue]
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
                 f0 = frequency_array
             elif pitch_tracker.pyin_available:
                 # pyin returns (time, frequency, voiced) tuple
-                time_array, frequency_array, voiced = pitch_tracker.track_pitch_pyin(
+                _time_array, frequency_array, _voiced = pitch_tracker.track_pitch_pyin(
                     audio, sample_rate, fmin=50, fmax=400
                 )
                 f0 = frequency_array
@@ -239,5 +240,5 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
     except Exception as e:
         logger.error(f"Articulation analysis failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Articulation analysis failed: {str(e)}"
+            status_code=500, detail=f"Articulation analysis failed: {e!s}"
         )

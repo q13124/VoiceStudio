@@ -4,20 +4,19 @@ Extract all pending brainstormer ideas (non-implemented) from BRAINSTORMER_IDEAS
 """
 
 import re
-import sys
 
 
 def extract_pending_ideas(input_file, output_file):
     """Extract all ideas that are not marked as implemented."""
 
-    with open(input_file, "r", encoding="utf-8") as f:
+    with open(input_file, encoding="utf-8") as f:
         content = f.read()
 
     # Split content by idea headers
     # Pattern: ## IDEA <number>: <title> [optional status]
     idea_pattern = r"## IDEA (\d+):(.*?)(?=## IDEA \d+:|$)"
 
-    ideas = re.finditer(idea_pattern, content, re.DOTALL)
+    re.finditer(idea_pattern, content, re.DOTALL)
 
     pending_ideas = []
     implemented_ids = set()

@@ -5,8 +5,10 @@ Migrates macros, automation curves, and execution state from in-memory
 storage to durable disk-backed JsonFileStore. Data persists across restarts.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .json_file_store import JsonFileStore
 
@@ -26,11 +28,11 @@ class MacroStore:
     def __init__(self, max_macros: int = 2000):
         self._store = JsonFileStore("macros", max_items=max_macros)
 
-    def get(self, macro_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, macro_id: str) -> dict[str, Any] | None:
         """Get a macro by ID."""
         return self._store.get(macro_id)
 
-    def save(self, macro: Dict[str, Any]) -> str:
+    def save(self, macro: dict[str, Any]) -> str:
         """
         Save a macro.
 
@@ -57,13 +59,13 @@ class MacroStore:
             logger.debug(f"MacroStore: Deleted macro {macro_id}")
         return result
 
-    def list_all(self) -> List[Dict[str, Any]]:
+    def list_all(self) -> list[dict[str, Any]]:
         """List all macros."""
         return self._store.list()
 
-    def search(self, name: Optional[str] = None, category: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search(self, name: str | None = None, category: str | None = None) -> list[dict[str, Any]]:
         """Search macros by name or category."""
-        def predicate(macro: Dict[str, Any]) -> bool:
+        def predicate(macro: dict[str, Any]) -> bool:
             if name:
                 macro_name = macro.get("name", "").lower()
                 if name.lower() not in macro_name:
@@ -73,7 +75,7 @@ class MacroStore:
                 if category.lower() != macro_category:
                     return False
             return True
-        
+
         return self._store.search(predicate)
 
     def count(self) -> int:
@@ -97,7 +99,7 @@ class AutomationCurveStore:
 
     def __init__(self, max_curves: int = 5000):
         self._store = JsonFileStore("automation_curves", max_items=max_curves)
-        self._project_index: Dict[str, List[str]] = {}
+        self._project_index: dict[str, list[str]] = {}
         self._rebuild_project_index()
 
     def _rebuild_project_index(self) -> None:
@@ -116,11 +118,11 @@ class AutomationCurveStore:
             f"across {len(self._project_index)} projects"
         )
 
-    def get(self, curve_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, curve_id: str) -> dict[str, Any] | None:
         """Get an automation curve by ID."""
         return self._store.get(curve_id)
 
-    def save(self, curve: Dict[str, Any]) -> str:
+    def save(self, curve: dict[str, Any]) -> str:
         """
         Save an automation curve.
 
@@ -137,7 +139,7 @@ class AutomationCurveStore:
             curve["id"] = curve_id
 
         project_id = curve.get("project_id", "")
-        
+
         # Save to store
         self._store.put(curve_id, curve)
 
@@ -158,7 +160,7 @@ class AutomationCurveStore:
             return False
 
         project_id = curve.get("project_id", "")
-        
+
         # Remove from store
         result = self._store.delete(curve_id)
 
@@ -172,7 +174,7 @@ class AutomationCurveStore:
         logger.debug(f"AutomationCurveStore: Deleted curve {curve_id}")
         return result
 
-    def list_by_project(self, project_id: str) -> List[Dict[str, Any]]:
+    def list_by_project(self, project_id: str) -> list[dict[str, Any]]:
         """List all curves for a project."""
         curve_ids = self._project_index.get(project_id, [])
         curves = []
@@ -182,7 +184,7 @@ class AutomationCurveStore:
                 curves.append(curve)
         return curves
 
-    def list_all(self) -> List[Dict[str, Any]]:
+    def list_all(self) -> list[dict[str, Any]]:
         """List all automation curves."""
         return self._store.list()
 
@@ -208,27 +210,27 @@ class MacroExecutionStore:
     def __init__(self, max_entries: int = 2000):
         self._store = JsonFileStore("macro_execution", max_items=max_entries)
 
-    def get_status(self, macro_id: str) -> Optional[Dict[str, Any]]:
+    def get_status(self, macro_id: str) -> dict[str, Any] | None:
         """Get execution status for a macro."""
         entry = self._store.get(macro_id)
         if entry:
             return entry.get("status")
         return None
 
-    def set_status(self, macro_id: str, status: Dict[str, Any]) -> None:
+    def set_status(self, macro_id: str, status: dict[str, Any]) -> None:
         """Set execution status for a macro."""
         entry = self._store.get(macro_id) or {"id": macro_id}
         entry["status"] = status
         self._store.put(macro_id, entry)
 
-    def get_schedule(self, macro_id: str) -> Optional[Dict[str, Any]]:
+    def get_schedule(self, macro_id: str) -> dict[str, Any] | None:
         """Get schedule for a macro."""
         entry = self._store.get(macro_id)
         if entry:
             return entry.get("schedule")
         return None
 
-    def set_schedule(self, macro_id: str, schedule: Dict[str, Any]) -> None:
+    def set_schedule(self, macro_id: str, schedule: dict[str, Any]) -> None:
         """Set schedule for a macro."""
         entry = self._store.get(macro_id) or {"id": macro_id}
         entry["schedule"] = schedule
@@ -248,18 +250,18 @@ class MacroExecutionStore:
         """Delete all execution data for a macro."""
         return self._store.delete(macro_id)
 
-    def list_scheduled(self) -> List[Dict[str, Any]]:
+    def list_scheduled(self) -> list[dict[str, Any]]:
         """List all macros with schedules."""
-        def has_schedule(entry: Dict[str, Any]) -> bool:
+        def has_schedule(entry: dict[str, Any]) -> bool:
             return "schedule" in entry
-        
+
         return self._store.search(has_schedule)
 
 
 # Singletons
-_macro_store: Optional[MacroStore] = None
-_curve_store: Optional[AutomationCurveStore] = None
-_execution_store: Optional[MacroExecutionStore] = None
+_macro_store: MacroStore | None = None
+_curve_store: AutomationCurveStore | None = None
+_execution_store: MacroExecutionStore | None = None
 
 
 def get_macro_store() -> MacroStore:

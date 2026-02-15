@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml;
 using VoiceStudio.App.Services;
 using VoiceStudio.Core.Models;
+using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using Windows.Foundation;
 using Windows.System;
@@ -21,6 +22,7 @@ namespace VoiceStudio.App.Views.Panels
     private VoiceProfile? _lastSelectedProfile;
     private VoiceProfile? _draggedProfile;
     private DragDropVisualFeedbackService? _dragDropService;
+    private VoiceStudio.Core.Services.IDragDropService? _panelDragDropService;
     private ToastNotificationService? _toastService;
     private IErrorLoggingService? _errorLoggingService;
 
@@ -42,6 +44,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _dragDropService = AppServices.GetDragDropVisualFeedbackService();
+      _panelDragDropService = AppServices.TryGetDragDropService();
       _toastService = AppServices.TryGetToastNotificationService();
       _errorLoggingService = AppServices.TryGetErrorLoggingService();
 
@@ -477,6 +480,14 @@ namespace VoiceStudio.App.Views.Panels
 
         // Reduce opacity of source element
         border.Opacity = 0.5;
+
+        // Notify cross-panel drag service (Panel Architecture Phase 4)
+        var payload = DragPayload.FromProfile(
+          ViewModel.PanelId,
+          profile.Id,
+          profile.Name ?? "Unnamed Profile",
+          profile.Language);
+        _panelDragDropService?.StartDrag(payload);
       }
     }
 
@@ -489,6 +500,12 @@ namespace VoiceStudio.App.Views.Panels
       }
 
       _dragDropService?.Cleanup();
+
+      // Cancel cross-panel drag if it wasn't completed by a drop target (Panel Architecture Phase 4)
+      if (_panelDragDropService?.IsDragging == true)
+      {
+        _panelDragDropService.CancelDrag();
+      }
 
       _draggedProfile = null;
     }

@@ -16,7 +16,7 @@ DEFAULT_SERVER_URL = "http://localhost:8000"
 DEFAULT_OUTPUT_FILE = "openapi.json"
 
 
-def export_openapi_spec(server_url: str = DEFAULT_SERVER_URL, output_file: str = None):
+def export_openapi_spec(server_url: str = DEFAULT_SERVER_URL, output_file: str | None = None):
     """
     Export OpenAPI specification from running server.
 
@@ -89,7 +89,7 @@ def validate_openapi_spec(spec_file: str):
         import jsonschema
 
         # Load OpenAPI spec
-        with open(spec_file, "r", encoding="utf-8") as f:
+        with open(spec_file, encoding="utf-8") as f:
             spec = json.load(f)
 
         # Basic validation
@@ -105,7 +105,7 @@ def validate_openapi_spec(spec_file: str):
         if not openapi_version.startswith("3."):
             print(f"⚠️  Warning: OpenAPI version is {openapi_version}, expected 3.x")
 
-        print(f"✅ OpenAPI spec is valid")
+        print("✅ OpenAPI spec is valid")
         print(f"   Version: {openapi_version}")
         print(f"   Title: {spec.get('info', {}).get('title', 'Unknown')}")
         print(f"   Endpoints: {len(spec.get('paths', {}))}")

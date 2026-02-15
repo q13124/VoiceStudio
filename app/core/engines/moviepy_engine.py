@@ -8,6 +8,8 @@ Compatible with:
 - imageio 2.9.0+
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -17,7 +19,6 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 # Import base protocol
 try:
@@ -52,7 +53,7 @@ class MoviePyEngine(EngineProtocol):
 
     def __init__(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         gpu: bool = True,
         enable_cache: bool = True,
         cache_size: int = 100,
@@ -88,7 +89,7 @@ class MoviePyEngine(EngineProtocol):
             "misses": 0,
         }
         # Video clip pool for reuse (limited pool size)
-        self._clip_pool: Dict[str, object] = {}
+        self._clip_pool: dict[str, object] = {}
         self._max_pool_size = 10
 
     def initialize(self) -> bool:
@@ -101,7 +102,7 @@ class MoviePyEngine(EngineProtocol):
 
             # Create reusable temp directory (using temp file manager if available)
             try:
-                from ..utils.temp_file_manager import get_temp_file_manager
+                from app.core.utils.temp_file_manager import get_temp_file_manager
 
                 temp_manager = get_temp_file_manager()
                 self._temp_dir = temp_manager.create_temp_directory(
@@ -143,7 +144,7 @@ class MoviePyEngine(EngineProtocol):
             # Cleanup temp directory (using temp file manager if available)
             if self._temp_dir:
                 try:
-                    from ..utils.temp_file_manager import get_temp_file_manager
+                    from app.core.utils.temp_file_manager import get_temp_file_manager
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
@@ -170,9 +171,9 @@ class MoviePyEngine(EngineProtocol):
 
     def edit_video(
         self,
-        video_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
-        operations: Optional[List[Dict]] = None,
+        video_path: str | Path,
+        output_path: str | Path | None = None,
+        operations: list[dict] | None = None,
         **kwargs,
     ) -> str:
         """
@@ -187,9 +188,8 @@ class MoviePyEngine(EngineProtocol):
         Returns:
             Path to edited video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Engine not initialized. Call initialize() first.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Engine not initialized. Call initialize() first.")
 
         try:
             video_path = Path(video_path)
@@ -263,8 +263,8 @@ class MoviePyEngine(EngineProtocol):
 
     def concatenate_videos(
         self,
-        video_paths: List[Union[str, Path]],
-        output_path: Optional[Union[str, Path]] = None,
+        video_paths: list[str | Path],
+        output_path: str | Path | None = None,
         method: str = "compose",
         **kwargs,
     ) -> str:
@@ -280,9 +280,8 @@ class MoviePyEngine(EngineProtocol):
         Returns:
             Path to concatenated video
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Engine not initialized. Call initialize() first.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Engine not initialized. Call initialize() first.")
 
         try:
             # Check cache (LRU) - optimized
@@ -353,9 +352,9 @@ class MoviePyEngine(EngineProtocol):
 
     def add_audio(
         self,
-        video_path: Union[str, Path],
-        audio_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        video_path: str | Path,
+        audio_path: str | Path,
+        output_path: str | Path | None = None,
         **kwargs,
     ) -> str:
         """
@@ -370,9 +369,8 @@ class MoviePyEngine(EngineProtocol):
         Returns:
             Path to video with audio
         """
-        if not self._initialized:
-            if not self.initialize():
-                raise RuntimeError("Engine not initialized. Call initialize() first.")
+        if not self._initialized and not self.initialize():
+            raise RuntimeError("Engine not initialized. Call initialize() first.")
 
         try:
             video_path = Path(video_path)
@@ -455,7 +453,7 @@ class MoviePyEngine(EngineProtocol):
             logger.error(f"Error adding audio: {e}")
             raise RuntimeError(f"Failed to add audio: {e}")
 
-    def _apply_operation(self, video, operation: Dict):
+    def _apply_operation(self, video, operation: dict):
         """Apply a single editing operation to video."""
         op_type = operation.get("type")
 
@@ -503,16 +501,16 @@ class MoviePyEngine(EngineProtocol):
 
     def batch_edit(
         self,
-        videos: List[
-            Tuple[
-                Union[str, Path],
-                Optional[Union[str, Path]],
-                Optional[List[Dict]],
-                Optional[Dict],
+        videos: list[
+            tuple[
+                str | Path,
+                str | Path | None,
+                list[dict] | None,
+                dict | None,
             ]
         ],
-        batch_size: Optional[int] = None,
-    ) -> List[str]:
+        batch_size: int | None = None,
+    ) -> list[str]:
         """
         Edit multiple videos in batch with parallel processing.
 
@@ -525,9 +523,8 @@ class MoviePyEngine(EngineProtocol):
         Returns:
             List of output paths
         """
-        if not self._initialized:
-            if not self.initialize():
-                return []
+        if not self._initialized and not self.initialize():
+            return []
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
@@ -598,10 +595,10 @@ class MoviePyEngine(EngineProtocol):
 
         # Evict oldest if cache full
         if len(self._processing_cache) > self.cache_size:
-            oldest_key, oldest_path = self._processing_cache.popitem(last=False)
+            oldest_key, _oldest_path = self._processing_cache.popitem(last=False)
             logger.debug(f"Evicted from cache: {oldest_key[:8]}")
 
-    def get_cache_stats(self) -> Dict[str, Union[int, float, str]]:
+    def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (
@@ -618,7 +615,7 @@ class MoviePyEngine(EngineProtocol):
             "cache_hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information (enhanced)."""
         info = super().get_info()
         info.update(
@@ -638,7 +635,7 @@ class MoviePyEngine(EngineProtocol):
 
 
 def create_moviepy_engine(
-    device: Optional[str] = None,
+    device: str | None = None,
     gpu: bool = True,
 ) -> MoviePyEngine:
     """

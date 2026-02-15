@@ -5,7 +5,6 @@ Tests content hash caching functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -46,7 +45,7 @@ class TestContentHashCacheClasses:
     def test_content_hash_cache_class_exists(self):
         """Test ContentHashCache class exists."""
         if hasattr(content_hash_cache, "ContentHashCache"):
-            cls = getattr(content_hash_cache, "ContentHashCache")
+            cls = content_hash_cache.ContentHashCache
             assert isinstance(
                 cls, type
             ), "ContentHashCache should be a class"

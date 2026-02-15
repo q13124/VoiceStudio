@@ -8,11 +8,13 @@ Compatible with:
 - MockingBird package
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional, Tuple, Union
 
 # Import base protocol
 try:
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing general model cache
 try:
-    from ..models.cache import get_model_cache
+    from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
@@ -59,7 +61,7 @@ def _get_cached_mockingbird_model(model_path: str, device: str):
     return None
 
 
-def _cache_mockingbird_model(model_path: str, device: str, model_data: Dict):
+def _cache_mockingbird_model(model_path: str, device: str, model_data: dict):
     """Cache MockingBird model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -137,7 +139,7 @@ except ImportError:
 
 # Optional audio utilities import for quality enhancement
 try:
-    from ..audio.audio_utils import (
+    from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
         enhance_voice_quality,
         normalize_lufs,
@@ -162,7 +164,7 @@ class MockingBirdEngine(EngineProtocol):
     """
 
     def __init__(
-        self, model_path: Optional[str] = None, device: Optional[str] = None, **kwargs
+        self, model_path: str | None = None, device: str | None = None, **kwargs
     ):
         """
         Initialize MockingBird engine.
@@ -264,7 +266,7 @@ class MockingBirdEngine(EngineProtocol):
         """Get the device being used."""
         return self.device
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """Get engine information."""
         return {
             "engine": "mockingbird",
@@ -281,11 +283,11 @@ class MockingBirdEngine(EngineProtocol):
     def synthesize(
         self,
         text: str,
-        reference_audio: Optional[Union[str, bytes]] = None,
+        reference_audio: str | bytes | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         **kwargs,
-    ) -> Union[Optional[bytes], Tuple[Optional[bytes], Dict]]:
+    ) -> bytes | None | tuple[bytes | None, dict]:
         """
         Synthesize speech from text using MockingBird.
 
@@ -314,9 +316,8 @@ class MockingBirdEngine(EngineProtocol):
                 return self._response_cache[cache_key]
 
             # Lazy load model if needed
-            if self._model is None:
-                if not self._load_model():
-                    return None
+            if self._model is None and not self._load_model():
+                return None
 
             # Process reference audio if provided
             ref_audio_data = None
@@ -332,7 +333,7 @@ class MockingBirdEngine(EngineProtocol):
                 elif isinstance(reference_audio, bytes):
                     import io
 
-                    ref_audio_data, sr = sf.read(io.BytesIO(reference_audio))
+                    ref_audio_data, _sr = sf.read(io.BytesIO(reference_audio))
                 else:
                     logger.error("Invalid reference_audio type")
                     return None
@@ -490,8 +491,8 @@ class MockingBirdEngine(EngineProtocol):
             return False
 
     def _perform_synthesis(
-        self, text: str, ref_audio: Optional[np.ndarray], **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, **kwargs
+    ) -> np.ndarray | None:
         """Perform actual synthesis using MockingBird."""
         try:
             if not HAS_NUMPY:
@@ -518,8 +519,8 @@ class MockingBirdEngine(EngineProtocol):
             return None
 
     def _synthesize_with_model(
-        self, text: str, ref_audio: Optional[np.ndarray], sample_rate: int, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, sample_rate: int, **kwargs
+    ) -> np.ndarray | None:
         """Synthesize using loaded MockingBird models."""
         try:
             if not HAS_TORCH or torch is None:
@@ -678,8 +679,8 @@ class MockingBirdEngine(EngineProtocol):
             return None
 
     def _synthesize_via_api(
-        self, text: str, ref_audio: Optional[np.ndarray], api_url: str, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, api_url: str, **kwargs
+    ) -> np.ndarray | None:
         """Synthesize using MockingBird API server."""
         try:
             import base64
@@ -718,7 +719,7 @@ class MockingBirdEngine(EngineProtocol):
                     audio, sr = sf.read(io.BytesIO(audio_bytes))
                     return audio.astype(np.float32)
                 elif "audio_path" in result:
-                    audio, sr = sf.read(result["audio_path"])
+                    audio, _sr = sf.read(result["audio_path"])
                     return audio.astype(np.float32)
 
             logger.error(f"API request failed: {response.status_code}")
@@ -732,8 +733,8 @@ class MockingBirdEngine(EngineProtocol):
             return None
 
     def _synthesize_fallback(
-        self, text: str, ref_audio: Optional[np.ndarray], sample_rate: int, **kwargs
-    ) -> Optional[np.ndarray]:
+        self, text: str, ref_audio: np.ndarray | None, sample_rate: int, **kwargs
+    ) -> np.ndarray | None:
         """Fallback synthesis using other engines or basic waveform."""
         try:
             # Try to use other available TTS engines as fallback
@@ -770,10 +771,8 @@ class MockingBirdEngine(EngineProtocol):
                     )
 
                     if ref_audio is not None and isinstance(ref_audio, np.ndarray):
-                        try:
+                        with contextlib.suppress(BaseException):
                             os.remove(ref_path)
-                        except:
-                            ...
 
                     if result is not None:
                         return result
@@ -793,15 +792,14 @@ class MockingBirdEngine(EngineProtocol):
                 audio += amplitude * np.sin(2 * np.pi * f0 * harmonic * t)
 
             # Apply speaker characteristics if reference audio available
-            if ref_audio is not None and len(ref_audio) > 0:
-                if HAS_LIBROSA:
-                    # Extract pitch characteristics
-                    f0_ref, voiced_flag, voiced_probs = librosa.pyin(
-                        ref_audio, fmin=50, fmax=400
-                    )
-                    f0_mean = np.nanmean(f0_ref) if np.any(~np.isnan(f0_ref)) else 150
-                    # Adjust generated pitch
-                    f0 = f0_mean + 20 * np.sin(2 * np.pi * 0.5 * t)
+            if ref_audio is not None and len(ref_audio) > 0 and HAS_LIBROSA:
+                # Extract pitch characteristics
+                f0_ref, _voiced_flag, _voiced_probs = librosa.pyin(
+                    ref_audio, fmin=50, fmax=400
+                )
+                f0_mean = np.nanmean(f0_ref) if np.any(~np.isnan(f0_ref)) else 150
+                # Adjust generated pitch
+                f0 = f0_mean + 20 * np.sin(2 * np.pi * 0.5 * t)
 
             envelope = np.exp(-t * 2) * (1 - np.exp(-t * 10))
             audio *= envelope
@@ -818,12 +816,12 @@ class MockingBirdEngine(EngineProtocol):
 
     def batch_synthesize(
         self,
-        texts: List[str],
-        reference_audio: Optional[Union[str, bytes]] = None,
-        output_dir: Optional[str] = None,
+        texts: list[str],
+        reference_audio: str | bytes | None = None,
+        output_dir: str | None = None,
         batch_size: int = 2,
         **kwargs,
-    ) -> List[Optional[bytes]]:
+    ) -> list[bytes | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -899,7 +897,7 @@ class MockingBirdEngine(EngineProtocol):
         sample_rate: int,
         enhance: bool,
         calculate: bool,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Dict]]:
+    ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -941,7 +939,7 @@ class MockingBirdEngine(EngineProtocol):
             return audio, quality_metrics
         return audio
 
-    def _get_memory_usage(self) -> Dict[str, float]:
+    def _get_memory_usage(self) -> dict[str, float]:
         """Get GPU memory usage in MB."""
         if not HAS_TORCH or not torch.cuda.is_available():
             return {"gpu_memory_mb": 0.0, "gpu_memory_allocated_mb": 0.0}

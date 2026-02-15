@@ -5,10 +5,11 @@ Endpoints for AI-driven helper that users can interact with via natural language
 Context-aware chatbot that can answer questions, suggest workflows, and execute tasks.
 """
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/assistant", tags=["ai-production-assistant"])
 
 # In-memory storage for chat sessions (replace with database in production)
-_chat_sessions: Dict[str, "ChatSession"] = {}
+_chat_sessions: dict[str, "ChatSession"] = {}
 
 
 class ChatMessage(BaseModel):
@@ -28,15 +29,15 @@ class ChatMessage(BaseModel):
     role: str  # user, assistant, system
     content: str
     timestamp: str
-    action_data: Optional[Dict] = None  # For action-oriented responses
+    action_data: dict | None = None  # For action-oriented responses
 
 
 class ChatSession(BaseModel):
     """Chat session with conversation history."""
 
     session_id: str
-    messages: List[ChatMessage]
-    context: Dict  # App context (open panels, project data, etc.)
+    messages: list[ChatMessage]
+    context: dict  # App context (open panels, project data, etc.)
     created_at: str
     updated_at: str
 
@@ -45,8 +46,8 @@ class AssistantQueryRequest(BaseModel):
     """Request to process natural language query."""
 
     query: str
-    session_id: Optional[str] = None
-    context: Optional[Dict] = None
+    session_id: str | None = None
+    context: dict | None = None
 
 
 class AssistantQueryResponse(BaseModel):
@@ -55,8 +56,8 @@ class AssistantQueryResponse(BaseModel):
     session_id: str
     response: str
     message_id: str
-    action_data: Optional[Dict] = None  # For executable actions
-    suggestions: List[str] = []  # Suggested follow-up queries
+    action_data: dict | None = None  # For executable actions
+    suggestions: list[str] = []  # Suggested follow-up queries
     confidence: float = 0.0
 
 
@@ -66,26 +67,26 @@ class AssistantExecuteRequest(BaseModel):
     session_id: str
     action_id: str
     action_type: str
-    parameters: Dict
+    parameters: dict
 
 
 class AssistantExecuteResponse(BaseModel):
     """Response from command execution."""
 
     success: bool
-    result: Optional[Dict] = None
+    result: dict | None = None
     message: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class AssistantContextResponse(BaseModel):
     """Response with current app context."""
 
-    open_panels: List[str]
-    current_project: Optional[str] = None
-    active_audio_id: Optional[str] = None
-    available_profiles: List[str] = []
-    recent_operations: List[str] = []
+    open_panels: list[str]
+    current_project: str | None = None
+    active_audio_id: str | None = None
+    available_profiles: list[str] = []
+    recent_operations: list[str] = []
 
 
 @router.post("/query", response_model=AssistantQueryResponse)
@@ -225,7 +226,7 @@ async def process_query(request: AssistantQueryRequest):
         logger.error(f"Failed to process query: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process query: {str(e)}",
+            detail=f"Failed to process query: {e!s}",
         ) from e
 
 
@@ -294,7 +295,7 @@ async def execute_command(request: AssistantExecuteRequest):
         logger.error(f"Failed to execute command: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to execute command: {str(e)}",
+            detail=f"Failed to execute command: {e!s}",
         ) from e
 
 
@@ -322,7 +323,7 @@ async def get_context():
         logger.error(f"Failed to get context: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get context: {str(e)}",
+            detail=f"Failed to get context: {e!s}",
         ) from e
 
 
@@ -360,7 +361,7 @@ async def get_session(session_id: str):
         logger.error(f"Failed to get session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to get session: {str(e)}",
+            detail=f"Failed to get session: {e!s}",
         ) from e
 
 
@@ -382,6 +383,6 @@ async def delete_session(session_id: str):
         logger.error(f"Failed to delete session: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete session: {str(e)}",
+            detail=f"Failed to delete session: {e!s}",
         ) from e
 

@@ -249,7 +249,8 @@ function Invoke-Stage {
     )
     
     $stageNumber = $script:Stages.Count + 1
-    $logFile = Join-Path $StageLogsDir "$($Name.ToLower().Replace(' ', '_')).log"
+    $sanitizedName = $Name.ToLower().Replace(' ', '_').Replace('/', '_').Replace('\', '_')
+    $logFile = Join-Path $StageLogsDir "$sanitizedName.log"
     
     Write-Host ""
     Write-Host "=" * 70 -ForegroundColor Cyan
@@ -267,8 +268,29 @@ function Invoke-Stage {
     
     try {
         # Execute the action and capture output
+        # The scriptblock may return an exit code as its last output item
         $output = & $Action 2>&1
-        $exitCode = $LASTEXITCODE
+        $rawExitCode = $LASTEXITCODE
+        
+        # If the last item in output is a numeric exit code from the scriptblock's return statement,
+        # use that instead of $LASTEXITCODE (which may be stale from an earlier external command)
+        $exitCode = $rawExitCode
+        if ($output -is [array] -and $output.Count -gt 0) {
+            $lastItem = $output[-1]
+            if ($lastItem -is [int] -or ($lastItem -is [string] -and $lastItem -match '^\d+$')) {
+                $exitCode = [int]$lastItem
+                # Remove the exit code from output (it's metadata, not display content)
+                if ($output.Count -gt 1) {
+                    $output = $output[0..($output.Count - 2)]
+                } else {
+                    $output = @()
+                }
+            }
+        } elseif ($output -is [int] -or ($output -is [string] -and $output -match '^\d+$')) {
+            # Single item output that is just the exit code
+            $exitCode = [int]$output
+            $output = @()
+        }
         if ($null -eq $exitCode) { $exitCode = 0 }
         
         # Save output to log file
@@ -472,7 +494,7 @@ if (-not $stage1Passed -and -not $SkipBuild) {
 
 $stage2Passed = Invoke-Stage -Name "Python Quality" -Description "Lint and type-check Python code (ruff, mypy)" -Skip:$SkipPythonLint -Action {
     Write-Host "Running ruff..."
-    $ruffResult = & python -m ruff check backend app tests --output-format=text 2>&1
+    $ruffResult = & python -m ruff check backend app tests --output-format=concise 2>&1
     $ruffExit = $LASTEXITCODE
     $ruffResult | Write-Host
     

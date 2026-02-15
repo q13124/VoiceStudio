@@ -7,12 +7,11 @@ Translates spoken audio while preserving speaker characteristics.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -32,16 +31,16 @@ class S2SConfig:
     # Languages
     source_language: str = "auto"
     target_language: str = "en"
-    
+
     # Voice preservation
     preserve_voice: bool = True
     voice_similarity: float = 0.8  # 0-1, how closely to match original
-    
+
     # Processing
     mode: TranslationMode = TranslationMode.BATCH
     sample_rate: int = 16000
     chunk_size_ms: int = 2000
-    
+
     # Quality
     beam_size: int = 5
     temperature: float = 0.6
@@ -57,7 +56,7 @@ class S2SResult:
     translated_text: str
     source_language: str
     target_language: str
-    speaker_embedding: Optional[np.ndarray] = None
+    speaker_embedding: np.ndarray | None = None
     latency_ms: float = 0.0
     confidence: float = 0.0
 
@@ -65,53 +64,53 @@ class S2SResult:
 class SpeechToSpeechTranslator:
     """
     Complete speech-to-speech translation pipeline.
-    
+
     Pipeline:
     1. ASR (Automatic Speech Recognition)
     2. Translation
     3. TTS with voice cloning
-    
+
     Features:
     - Voice-preserving translation
     - Multi-language support (99+ languages)
     - Real-time and batch processing
     - Accent preservation
     """
-    
-    def __init__(self, config: Optional[S2SConfig] = None):
+
+    def __init__(self, config: S2SConfig | None = None):
         self.config = config or S2SConfig()
         self._asr_model = None
         self._translation_model = None
         self._tts_model = None
         self._speaker_encoder = None
         self._loaded = False
-    
+
     async def load(self) -> bool:
         """Load all pipeline models."""
         try:
             logger.info("Loading S2S translation pipeline...")
-            
+
             # Load ASR (Whisper)
             self._asr_model = await self._load_asr()
-            
+
             # Load translation model
             self._translation_model = await self._load_translator()
-            
+
             # Load TTS with voice cloning
             self._tts_model = await self._load_tts()
-            
+
             # Load speaker encoder
             self._speaker_encoder = await self._load_speaker_encoder()
-            
+
             self._loaded = True
             logger.info("S2S pipeline loaded successfully")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load S2S pipeline: {e}")
             return False
-    
-    async def _load_asr(self) -> Optional[Dict[str, Any]]:
+
+    async def _load_asr(self) -> dict[str, Any] | None:
         """Load ASR model."""
         try:
             import whisper
@@ -120,17 +119,17 @@ class SpeechToSpeechTranslator:
         except ImportError:
             logger.warning("Whisper not available")
             return {"type": "placeholder"}
-    
-    async def _load_translator(self) -> Optional[Dict[str, Any]]:
+
+    async def _load_translator(self) -> dict[str, Any] | None:
         """Load translation model."""
         try:
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-            
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
             # NLLB (No Language Left Behind) supports 200+ languages
             model_name = "facebook/nllb-200-distilled-600M"
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-            
+
             return {
                 "model": model,
                 "tokenizer": tokenizer,
@@ -139,8 +138,8 @@ class SpeechToSpeechTranslator:
         except ImportError:
             logger.warning("transformers not available")
             return {"type": "placeholder"}
-    
-    async def _load_tts(self) -> Optional[Dict[str, Any]]:
+
+    async def _load_tts(self) -> dict[str, Any] | None:
         """Load TTS model with voice cloning support."""
         try:
             # Try XTTS
@@ -149,7 +148,7 @@ class SpeechToSpeechTranslator:
             return {"model": tts, "type": "xtts"}
         except ImportError:
             logger.debug("TTS XTTS not available")
-        
+
         try:
             # Try Coqui TTS
             from TTS.api import TTS
@@ -157,11 +156,11 @@ class SpeechToSpeechTranslator:
             return {"model": tts, "type": "coqui"}
         except ImportError:
             logger.debug("TTS Coqui not available")
-        
+
         logger.warning("No TTS available")
         return {"type": "placeholder"}
-    
-    async def _load_speaker_encoder(self) -> Optional[Dict[str, Any]]:
+
+    async def _load_speaker_encoder(self) -> dict[str, Any] | None:
         """Load speaker encoder for voice cloning."""
         try:
             from resemblyzer import VoiceEncoder
@@ -169,9 +168,9 @@ class SpeechToSpeechTranslator:
             return {"model": encoder, "type": "resemblyzer"}
         except ImportError:
             logger.debug("resemblyzer not available for speaker encoding")
-        
+
         return {"type": "placeholder"}
-    
+
     async def unload(self) -> None:
         """Unload all models."""
         self._asr_model = None
@@ -179,54 +178,54 @@ class SpeechToSpeechTranslator:
         self._tts_model = None
         self._speaker_encoder = None
         self._loaded = False
-        
+
         try:
             import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
             logger.debug("torch not available for CUDA cache cleanup")
-        
+
         logger.info("S2S pipeline unloaded")
-    
+
     async def translate(
         self,
         audio: np.ndarray,
         sample_rate: int,
-        target_language: Optional[str] = None,
-        reference_audio: Optional[np.ndarray] = None,
+        target_language: str | None = None,
+        reference_audio: np.ndarray | None = None,
     ) -> S2SResult:
         """
         Translate speech to speech.
-        
+
         Args:
             audio: Source audio
             sample_rate: Sample rate
             target_language: Override target language
             reference_audio: Optional reference for voice cloning
-            
+
         Returns:
             S2SResult with translated audio
         """
         if not self._loaded:
             await self.load()
-        
+
         start_time = time.time()
         target = target_language or self.config.target_language
-        
+
         # Step 1: Extract speaker embedding for voice preservation
         speaker_embedding = None
         if self.config.preserve_voice:
             reference = reference_audio if reference_audio is not None else audio
             speaker_embedding = self._extract_speaker_embedding(reference, sample_rate)
-        
+
         # Step 2: Transcribe source audio
         source_text, detected_lang = await self._transcribe(audio, sample_rate)
         source_lang = detected_lang if self.config.source_language == "auto" else self.config.source_language
-        
+
         # Step 3: Translate text
         translated_text = await self._translate_text(source_text, source_lang, target)
-        
+
         # Step 4: Synthesize in target language with voice cloning
         output_audio = await self._synthesize(
             translated_text,
@@ -234,9 +233,9 @@ class SpeechToSpeechTranslator:
             sample_rate,
             speaker_embedding,
         )
-        
+
         latency = (time.time() - start_time) * 1000
-        
+
         return S2SResult(
             audio=output_audio,
             sample_rate=sample_rate,
@@ -248,7 +247,7 @@ class SpeechToSpeechTranslator:
             latency_ms=latency,
             confidence=0.9,
         )
-    
+
     def _extract_speaker_embedding(
         self,
         audio: np.ndarray,
@@ -260,7 +259,7 @@ class SpeechToSpeechTranslator:
             encoder = self._speaker_encoder["model"]
             wav = preprocess_wav(audio, source_sr=sample_rate)
             return encoder.embed_utterance(wav)
-        
+
         # Placeholder: return mel-based pseudo-embedding
         try:
             import librosa
@@ -269,16 +268,16 @@ class SpeechToSpeechTranslator:
             return embedding / (np.linalg.norm(embedding) + 1e-8)
         except ImportError:
             return np.zeros(256)
-    
+
     async def _transcribe(
         self,
         audio: np.ndarray,
         sample_rate: int,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Transcribe audio to text."""
         if self._asr_model and self._asr_model.get("type") == "whisper":
             model = self._asr_model["model"]
-            
+
             # Resample to 16kHz if needed
             if sample_rate != 16000:
                 try:
@@ -286,12 +285,12 @@ class SpeechToSpeechTranslator:
                     audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
                 except ImportError:
                     logger.debug("librosa not available for resampling")
-            
+
             result = model.transcribe(audio)
             return result["text"], result.get("language", "en")
-        
+
         return "Hello, this is a test.", "en"
-    
+
     async def _translate_text(
         self,
         text: str,
@@ -301,10 +300,10 @@ class SpeechToSpeechTranslator:
         """Translate text."""
         if self._translation_model and self._translation_model.get("type") == "nllb":
             import torch
-            
+
             tokenizer = self._translation_model["tokenizer"]
             model = self._translation_model["model"]
-            
+
             # NLLB language codes
             nllb_codes = {
                 "en": "eng_Latn", "es": "spa_Latn", "fr": "fra_Latn",
@@ -312,22 +311,22 @@ class SpeechToSpeechTranslator:
                 "zh": "zho_Hans", "ja": "jpn_Jpan", "ko": "kor_Hang",
                 "ru": "rus_Cyrl", "ar": "arb_Arab",
             }
-            
+
             src_code = nllb_codes.get(source_lang, "eng_Latn")
             tgt_code = nllb_codes.get(target_lang, "eng_Latn")
-            
+
             tokenizer.src_lang = src_code
             inputs = tokenizer(text, return_tensors="pt")
-            
+
             with torch.no_grad():
                 translated = model.generate(
                     **inputs,
                     forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_code),
                     max_length=512,
                 )
-            
+
             return tokenizer.decode(translated[0], skip_special_tokens=True)
-        
+
         # No translation model available - return original text unchanged
         # This is NOT a translation - the text is returned as-is because
         # no translation capability is installed
@@ -336,18 +335,18 @@ class SpeechToSpeechTranslator:
             "Install transformers and torch for translation support."
         )
         return text  # Return original, do NOT fabricate fake translations
-    
+
     async def _synthesize(
         self,
         text: str,
         language: str,
         sample_rate: int,
-        speaker_embedding: Optional[np.ndarray],
+        speaker_embedding: np.ndarray | None,
     ) -> np.ndarray:
         """Synthesize speech with optional voice cloning."""
         if self._tts_model and self._tts_model.get("type") == "xtts":
             tts = self._tts_model["model"]
-            
+
             # XTTS supports voice cloning via speaker embedding
             audio = tts.tts(
                 text=text,
@@ -355,7 +354,7 @@ class SpeechToSpeechTranslator:
                 speaker_wav=None,  # Would use reference audio
             )
             return np.array(audio)
-        
+
         # No TTS model available - raise proper error instead of generating silence
         # Callers should check is_loaded or capabilities before calling
         logger.error(
@@ -366,13 +365,13 @@ class SpeechToSpeechTranslator:
             "Speech synthesis unavailable: TTS model not installed. "
             "See docs/engines/tts.md for installation instructions."
         )
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded
-    
+
     @property
-    def supported_languages(self) -> List[str]:
+    def supported_languages(self) -> list[str]:
         """Get list of supported languages."""
         return [
             "en", "es", "fr", "de", "it", "pt", "nl", "pl", "ru", "uk",

@@ -10,10 +10,9 @@ This script generates:
 """
 
 import json
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # Get script directory
 SCRIPT_DIR = Path(__file__).parent
@@ -39,12 +38,12 @@ def create_test_profile(
     language: str,
     emotion: str = "neutral",
     quality_score: float = 0.85,
-    tags: List[str] = None,
-) -> Dict[str, Any]:
+    tags: list[str] | None = None,
+) -> dict[str, Any]:
     """Create a test voice profile."""
     if tags is None:
         tags = ["test"]
-    
+
     return {
         "id": generate_profile_id(index),
         "name": name,
@@ -56,7 +55,7 @@ def create_test_profile(
     }
 
 
-def create_test_profiles() -> List[Dict[str, Any]]:
+def create_test_profiles() -> list[dict[str, Any]]:
     """Create test voice profiles."""
     profiles = [
         create_test_profile(
@@ -124,7 +123,7 @@ def create_test_profiles() -> List[Dict[str, Any]]:
             tags=["test", "female", "italian", "neutral"],
         ),
     ]
-    
+
     return profiles
 
 
@@ -132,12 +131,12 @@ def create_test_project(
     index: int,
     name: str,
     description: str,
-    profile_ids: List[str],
+    profile_ids: list[str],
     num_tracks: int = 1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a test project."""
     now = datetime.now(timezone.utc).isoformat()
-    
+
     tracks = []
     for i in range(num_tracks):
         tracks.append({
@@ -147,7 +146,7 @@ def create_test_project(
             "track_number": i + 1,
             "clips": [],
         })
-    
+
     return {
         "id": generate_project_id(index),
         "name": name,
@@ -159,10 +158,10 @@ def create_test_project(
     }
 
 
-def create_test_projects(profiles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def create_test_projects(profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Create test projects."""
     profile_ids = [p["id"] for p in profiles]
-    
+
     projects = [
         create_test_project(
             index=1,
@@ -200,14 +199,14 @@ def create_test_projects(profiles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
             num_tracks=5,
         ),
     ]
-    
+
     return projects
 
 
-def create_audio_metadata() -> List[Dict[str, Any]]:
+def create_audio_metadata() -> list[dict[str, Any]]:
     """Create audio file metadata."""
     metadata = []
-    
+
     # Reference audio files
     for i in range(1, 9):
         metadata.append({
@@ -221,7 +220,7 @@ def create_audio_metadata() -> List[Dict[str, Any]]:
             "bit_depth": 16,
             "size_bytes": 500000 + (i * 50000),  # Approximate
         })
-    
+
     # Synthesized audio files
     for i in range(1, 6):
         metadata.append({
@@ -235,15 +234,15 @@ def create_audio_metadata() -> List[Dict[str, Any]]:
             "bit_depth": 16,
             "size_bytes": 200000 + (i * 20000),
         })
-    
+
     return metadata
 
 
 def create_test_data_index(
-    profiles: List[Dict[str, Any]],
-    projects: List[Dict[str, Any]],
-    audio_metadata: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    profiles: list[dict[str, Any]],
+    projects: list[dict[str, Any]],
+    audio_metadata: list[dict[str, Any]],
+) -> dict[str, Any]:
     """Create test data index."""
     return {
         "version": "1.0",
@@ -271,12 +270,12 @@ def create_test_data_index(
 def main():
     """Generate all test data."""
     print("Generating test data for VoiceStudio Quantum+...")
-    
+
     # Create directories
     PROFILES_DIR.mkdir(parents=True, exist_ok=True)
     PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
     METADATA_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Generate profiles
     print("Generating test profiles...")
     profiles = create_test_profiles()
@@ -284,7 +283,7 @@ def main():
     with open(profiles_path, "w", encoding="utf-8") as f:
         json.dump(profiles, f, indent=2, ensure_ascii=False)
     print(f"  Created {len(profiles)} profiles: {profiles_path}")
-    
+
     # Generate projects
     print("Generating test projects...")
     projects = create_test_projects(profiles)
@@ -292,7 +291,7 @@ def main():
     with open(projects_path, "w", encoding="utf-8") as f:
         json.dump(projects, f, indent=2, ensure_ascii=False)
     print(f"  Created {len(projects)} projects: {projects_path}")
-    
+
     # Generate audio metadata
     print("Generating audio metadata...")
     audio_metadata = create_audio_metadata()
@@ -300,7 +299,7 @@ def main():
     with open(audio_metadata_path, "w", encoding="utf-8") as f:
         json.dump(audio_metadata, f, indent=2, ensure_ascii=False)
     print(f"  Created metadata for {len(audio_metadata)} audio files: {audio_metadata_path}")
-    
+
     # Generate test data index
     print("Generating test data index...")
     index = create_test_data_index(profiles, projects, audio_metadata)
@@ -308,7 +307,7 @@ def main():
     with open(index_path, "w", encoding="utf-8") as f:
         json.dump(index, f, indent=2, ensure_ascii=False)
     print(f"  Created test data index: {index_path}")
-    
+
     print("\nTest data generation complete!")
     print(f"  Profiles: {len(profiles)}")
     print(f"  Projects: {len(projects)}")

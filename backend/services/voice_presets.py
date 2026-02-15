@@ -7,16 +7,14 @@ Enables instant switching between configured voice profiles.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-import os
-import time
-from dataclasses import dataclass, field, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
-from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,19 +33,19 @@ class VoicePresetSettings:
     # Voice conversion
     pitch_shift: int = 0
     formant_shift: float = 0.0
-    
+
     # RVC settings
-    rvc_model: Optional[str] = None
-    rvc_index: Optional[str] = None
+    rvc_model: str | None = None
+    rvc_index: str | None = None
     rvc_index_rate: float = 0.75
     rvc_protect: float = 0.33
     rvc_f0_method: str = "rmvpe"
-    
+
     # Processing
     sample_rate: int = 16000
     denoise: bool = False
     normalize: bool = True
-    
+
     # Effects
     reverb: float = 0.0
     eq_low: float = 0.0
@@ -64,19 +62,19 @@ class VoicePreset:
     description: str = ""
     category: PresetCategory = PresetCategory.USER_CREATED
     settings: VoicePresetSettings = field(default_factory=VoicePresetSettings)
-    thumbnail: Optional[str] = None
+    thumbnail: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     is_favorite: bool = False
-    tags: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    tags: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["category"] = self.category.value
         return data
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "VoicePreset":
+    def from_dict(cls, data: dict[str, Any]) -> VoicePreset:
         if "category" in data:
             data["category"] = PresetCategory(data["category"])
         if "settings" in data and isinstance(data["settings"], dict):
@@ -87,49 +85,49 @@ class VoicePreset:
 class VoicePresetManager:
     """
     Manages voice presets for quick switching.
-    
+
     Features:
     - Create, edit, delete presets
     - Quick loading with caching
     - Preset organization (favorites, categories)
     - Import/export
     """
-    
+
     def __init__(
         self,
-        presets_dir: Optional[str] = None,
+        presets_dir: str | None = None,
         cache_loaded_models: bool = True,
     ):
         self._presets_dir = Path(presets_dir or "data/voice_presets")
         self._cache_models = cache_loaded_models
-        self._presets: Dict[str, VoicePreset] = {}
-        self._active_preset: Optional[str] = None
-        self._model_cache: Dict[str, Any] = {}
-        self._load_callbacks: List[Callable] = []
-        
+        self._presets: dict[str, VoicePreset] = {}
+        self._active_preset: str | None = None
+        self._model_cache: dict[str, Any] = {}
+        self._load_callbacks: list[Callable] = []
+
         # Ensure directory exists
         self._presets_dir.mkdir(parents=True, exist_ok=True)
-    
+
     async def initialize(self) -> None:
         """Load all presets from disk."""
         logger.info(f"Initializing voice presets from {self._presets_dir}")
-        
+
         # Load user presets
         for preset_file in self._presets_dir.glob("*.json"):
             try:
-                with open(preset_file, "r", encoding="utf-8") as f:
+                with open(preset_file, encoding="utf-8") as f:
                     data = json.load(f)
                     preset = VoicePreset.from_dict(data)
                     self._presets[preset.id] = preset
             except Exception as e:
                 logger.warning(f"Failed to load preset {preset_file}: {e}")
-        
+
         # Create default presets if none exist
         if not self._presets:
             await self._create_default_presets()
-        
+
         logger.info(f"Loaded {len(self._presets)} voice presets")
-    
+
     async def _create_default_presets(self) -> None:
         """Create default system presets."""
         defaults = [
@@ -177,88 +175,88 @@ class VoicePresetManager:
                 ),
             ),
         ]
-        
+
         for preset in defaults:
             await self.save_preset(preset)
-    
-    async def get_preset(self, preset_id: str) -> Optional[VoicePreset]:
+
+    async def get_preset(self, preset_id: str) -> VoicePreset | None:
         """Get a preset by ID."""
         return self._presets.get(preset_id)
-    
-    async def get_all_presets(self) -> List[VoicePreset]:
+
+    async def get_all_presets(self) -> list[VoicePreset]:
         """Get all presets."""
         return list(self._presets.values())
-    
+
     async def get_presets_by_category(
         self,
         category: PresetCategory,
-    ) -> List[VoicePreset]:
+    ) -> list[VoicePreset]:
         """Get presets filtered by category."""
         return [p for p in self._presets.values() if p.category == category]
-    
-    async def get_favorite_presets(self) -> List[VoicePreset]:
+
+    async def get_favorite_presets(self) -> list[VoicePreset]:
         """Get favorite presets."""
         return [p for p in self._presets.values() if p.is_favorite]
-    
+
     async def save_preset(self, preset: VoicePreset) -> bool:
         """Save a preset to disk."""
         try:
             preset.updated_at = datetime.now().isoformat()
-            
+
             preset_file = self._presets_dir / f"{preset.id}.json"
             with open(preset_file, "w", encoding="utf-8") as f:
                 json.dump(preset.to_dict(), f, indent=2)
-            
+
             self._presets[preset.id] = preset
             logger.info(f"Saved preset: {preset.name}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to save preset: {e}")
             return False
-    
+
     async def delete_preset(self, preset_id: str) -> bool:
         """Delete a preset."""
         preset = self._presets.get(preset_id)
         if not preset:
             return False
-        
+
         # Don't allow deleting system presets
         if preset.category == PresetCategory.SYSTEM_DEFAULT:
             logger.warning("Cannot delete system preset")
             return False
-        
+
         try:
             preset_file = self._presets_dir / f"{preset_id}.json"
             if preset_file.exists():
                 preset_file.unlink()
-            
+
             del self._presets[preset_id]
-            
+
             # Clear from cache
             if preset_id in self._model_cache:
                 del self._model_cache[preset_id]
-            
+
             logger.info(f"Deleted preset: {preset.name}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to delete preset: {e}")
             return False
-    
+
     async def duplicate_preset(
         self,
         preset_id: str,
         new_name: str,
-    ) -> Optional[VoicePreset]:
+    ) -> VoicePreset | None:
         """Duplicate an existing preset."""
         source = self._presets.get(preset_id)
         if not source:
             return None
-        
+
         import uuid
         new_id = str(uuid.uuid4())[:8]
-        
+
         new_preset = VoicePreset(
             id=new_id,
             name=new_name,
@@ -267,80 +265,79 @@ class VoicePresetManager:
             settings=VoicePresetSettings(**asdict(source.settings)),
             tags=source.tags.copy(),
         )
-        
+
         if await self.save_preset(new_preset):
             return new_preset
         return None
-    
+
     async def activate_preset(self, preset_id: str) -> bool:
         """
         Activate a preset for use.
-        
+
         Loads associated models if needed.
         """
         preset = self._presets.get(preset_id)
         if not preset:
             return False
-        
+
         logger.info(f"Activating preset: {preset.name}")
-        
+
         # Load RVC model if specified
-        if preset.settings.rvc_model:
-            if not await self._load_rvc_model(preset):
-                logger.warning("Failed to load RVC model for preset")
-        
+        if preset.settings.rvc_model and not await self._load_rvc_model(preset):
+            logger.warning("Failed to load RVC model for preset")
+
         self._active_preset = preset_id
-        
+
         # Notify callbacks
         for callback in self._load_callbacks:
             try:
                 callback(preset)
             except Exception as e:
                 logger.error(f"Preset callback error: {e}")
-        
+
         return True
-    
+
     async def _load_rvc_model(self, preset: VoicePreset) -> bool:
         """Load RVC model for preset."""
         model_path = preset.settings.rvc_model
         if not model_path:
             return True
-        
+
         # Check cache
         if self._cache_models and model_path in self._model_cache:
             logger.debug("Using cached RVC model")
             return True
-        
+
         try:
             # Load model (placeholder - actual loading depends on RVC engine)
             # In production: self._rvc_engine.load_model(model_path)
-            
+
             if self._cache_models:
                 self._model_cache[model_path] = True
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load RVC model: {e}")
             return False
-    
+
     def on_preset_activated(self, callback: Callable[[VoicePreset], None]) -> None:
         """Register callback for preset activation."""
         self._load_callbacks.append(callback)
-    
+
     @property
-    def active_preset(self) -> Optional[VoicePreset]:
+    def active_preset(self) -> VoicePreset | None:
         """Get currently active preset."""
         if self._active_preset:
             return self._presets.get(self._active_preset)
         return None
-    
+
     async def export_preset(self, preset_id: str, output_path: str) -> bool:
         """Export a preset to a file."""
         preset = self._presets.get(preset_id)
         if not preset:
             return False
-        
+
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(preset.to_dict(), f, indent=2)
@@ -348,55 +345,55 @@ class VoicePresetManager:
         except Exception as e:
             logger.error(f"Failed to export preset: {e}")
             return False
-    
-    async def import_preset(self, file_path: str) -> Optional[VoicePreset]:
+
+    async def import_preset(self, file_path: str) -> VoicePreset | None:
         """Import a preset from a file."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             # Generate new ID to avoid conflicts
             import uuid
             data["id"] = str(uuid.uuid4())[:8]
             data["category"] = PresetCategory.IMPORTED.value
-            
+
             preset = VoicePreset.from_dict(data)
-            
+
             if await self.save_preset(preset):
                 return preset
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to import preset: {e}")
             return None
-    
+
     async def search_presets(
         self,
         query: str,
-        category: Optional[PresetCategory] = None,
-    ) -> List[VoicePreset]:
+        category: PresetCategory | None = None,
+    ) -> list[VoicePreset]:
         """Search presets by name, description, or tags."""
         query_lower = query.lower()
         results = []
-        
+
         for preset in self._presets.values():
             if category and preset.category != category:
                 continue
-            
+
             if (
                 query_lower in preset.name.lower()
                 or query_lower in preset.description.lower()
                 or any(query_lower in tag.lower() for tag in preset.tags)
             ):
                 results.append(preset)
-        
+
         return results
-    
+
     async def toggle_favorite(self, preset_id: str) -> bool:
         """Toggle favorite status of a preset."""
         preset = self._presets.get(preset_id)
         if not preset:
             return False
-        
+
         preset.is_favorite = not preset.is_favorite
         return await self.save_preset(preset)

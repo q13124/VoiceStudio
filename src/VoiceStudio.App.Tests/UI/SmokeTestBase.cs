@@ -161,6 +161,17 @@ namespace VoiceStudio.App.Tests.UI
       { "EngineParameterTuning", "EngineParameterTuningView_Root" },
       { "EngineRecommendation", "EngineRecommendationView_Root" },
       { "TextHighlighting", "TextHighlightingView_Root" },
+      
+      // Additional panels (Phase 4A expansion)
+      { "AIMixingMastering", "AIMixingMasteringView_Root" },
+      { "Assistant", "AssistantView_Root" },
+      { "DeepfakeCreator", "DeepfakeCreatorView_Root" },
+      { "HealthCheck", "HealthCheckView_Root" },
+      { "MiniTimeline", "MiniTimelineView_Root" },
+      { "PipelineConversation", "PipelineConversationView_Root" },
+      { "PluginDetail", "PluginDetailView_Root" },
+      { "PluginGallery", "PluginGalleryView_Root" },
+      { "SLODashboard", "SLODashboardView_Root" },
     };
 
     /// <summary>

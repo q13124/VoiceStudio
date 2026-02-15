@@ -13,12 +13,11 @@ Usage:
     python scripts/migrate_di.py --fix  # Apply fixes
 """
 
-from _env_setup import PROJECT_ROOT
-
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+
+from _env_setup import PROJECT_ROOT
 
 # Mapping of static calls to IViewModelContext properties
 SERVICE_MAPPINGS = {
@@ -34,32 +33,32 @@ SERVICE_MAPPINGS = {
 }
 
 
-def audit_file(filepath: Path) -> List[Tuple[int, str, str]]:
+def audit_file(filepath: Path) -> list[tuple[int, str, str]]:
     """
     Audit a file for static ServiceProvider calls.
-    
+
     Returns list of (line_number, call, suggested_replacement)
     """
     issues = []
-    
+
     try:
         content = filepath.read_text(encoding="utf-8")
         lines = content.split("\n")
     except Exception as e:
         print(f"  Error reading {filepath}: {e}")
         return issues
-    
+
     for i, line in enumerate(lines, start=1):
         for static_call, replacement in SERVICE_MAPPINGS.items():
             if static_call in line:
                 issues.append((i, static_call, replacement))
-        
+
         # Check for other ServiceProvider calls not in mapping
         if "ServiceProvider.Get" in line and not any(call in line for call in SERVICE_MAPPINGS):
             match = re.search(r'ServiceProvider\.Get\w+\([^)]*\)', line)
             if match:
                 issues.append((i, match.group(0), "MANUAL: Add to IViewModelContext"))
-    
+
     return issues
 
 
@@ -68,19 +67,19 @@ def main():
     print("DI Migration Audit (Phase 8)")
     print("=" * 70)
     print()
-    
+
     viewmodels_dir = PROJECT_ROOT / "src" / "VoiceStudio.App" / "ViewModels"
     files = list(viewmodels_dir.glob("*.cs"))
-    
+
     print(f"Scanning {len(files)} ViewModel files...")
     print()
-    
+
     total_issues = 0
     files_with_issues = 0
-    
+
     for filepath in sorted(files):
         issues = audit_file(filepath)
-        
+
         if issues:
             files_with_issues += 1
             print(f"  {filepath.name}:")
@@ -89,7 +88,7 @@ def main():
                 print(f"      -> {replacement}")
                 total_issues += 1
             print()
-    
+
     print("-" * 70)
     print(f"Total: {total_issues} static calls in {files_with_issues} files")
     print("-" * 70)
@@ -108,7 +107,7 @@ def main():
     print("    private readonly IViewModelContext _context;")
     print("    public MyViewModel(IViewModelContext context) => _context = context;")
     print("    // Use: _context.BackendClient")
-    
+
     return 0
 
 

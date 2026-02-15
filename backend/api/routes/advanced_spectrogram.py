@@ -5,8 +5,10 @@ Endpoints for advanced spectrogram analysis with multiple views, comparisons,
 and advanced processing options.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -21,7 +23,7 @@ router = APIRouter(
 )
 
 # In-memory spectrogram data (replace with database in production)
-_spectrogram_data: Dict[str, Dict] = {}
+_spectrogram_data: dict[str, dict] = {}
 
 
 class SpectrogramView(BaseModel):
@@ -33,8 +35,8 @@ class SpectrogramView(BaseModel):
     window_size: int
     hop_length: int
     n_fft: int
-    frequency_range: Optional[Dict[str, float]] = None
-    time_range: Optional[Dict[str, float]] = None
+    frequency_range: dict[str, float] | None = None
+    time_range: dict[str, float] | None = None
     color_scheme: str
     created: str  # ISO datetime string
 
@@ -43,9 +45,9 @@ class SpectrogramComparison(BaseModel):
     """Comparison between multiple spectrograms."""
 
     id: str
-    audio_ids: List[str]
+    audio_ids: list[str]
     comparison_type: str  # difference, ratio, correlation
-    result_data: Dict
+    result_data: dict
     created: str  # ISO datetime string
 
 
@@ -57,26 +59,26 @@ class AdvancedSpectrogramRequest(BaseModel):
     window_size: int = 2048
     hop_length: int = 512
     n_fft: int = 2048
-    frequency_range: Optional[Dict[str, float]] = None
-    time_range: Optional[Dict[str, float]] = None
+    frequency_range: dict[str, float] | None = None
+    time_range: dict[str, float] | None = None
     color_scheme: str = "viridis"
     apply_filters: bool = False
-    filters: Optional[List[str]] = None
+    filters: list[str] | None = None
 
 
 class AdvancedSpectrogramResponse(BaseModel):
     """Response from advanced spectrogram generation."""
 
     view_id: str
-    data_url: Optional[str] = None
-    metadata: Dict
+    data_url: str | None = None
+    metadata: dict
     message: str
 
 
 class SpectrogramCompareRequest(BaseModel):
     """Request for spectrogram comparison."""
 
-    audio_ids: List[str]
+    audio_ids: list[str]
     comparison_type: str = "difference"
 
 
@@ -253,7 +255,7 @@ async def generate_advanced_spectrogram(request: AdvancedSpectrogramRequest):
         logger.error(f"Failed to generate spectrogram: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate spectrogram: {str(e)}",
+            detail=f"Failed to generate spectrogram: {e!s}",
         ) from e
 
 
@@ -331,7 +333,7 @@ async def compare_spectrograms(request: SpectrogramCompareRequest):
             sample_rates.append(sample_rate)
 
         # Perform comparison based on type
-        result_data: Dict[str, Any] = {}
+        result_data: dict[str, Any] = {}
 
         if request.comparison_type == "difference":
             # Calculate difference between first two spectrograms
@@ -423,7 +425,7 @@ async def compare_spectrograms(request: SpectrogramCompareRequest):
         logger.error(f"Failed to compare spectrograms: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compare: {str(e)}",
+            detail=f"Failed to compare: {e!s}",
         ) from e
 
 
@@ -609,5 +611,5 @@ async def export_spectrogram(
         logger.error(f"Failed to export spectrogram: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export spectrogram: {str(e)}",
+            detail=f"Failed to export spectrogram: {e!s}",
         ) from e

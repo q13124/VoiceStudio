@@ -4,7 +4,6 @@ Integration tests for Quality Dashboard endpoint.
 Tests the /api/quality/dashboard endpoint.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 

@@ -13,9 +13,8 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
 
-from .reflexion_loop import ReflexionResult, build_reflection_prompt, run_verification_step
+from .reflexion_loop import ReflexionResult, run_verification_step
 
 DEFAULT_VERIFICATION_SCRIPT = "scripts/run_verification.py"
 LAST_RUN_JSON = ".buildlogs/verification/last_run.json"
@@ -27,9 +26,9 @@ def _project_root() -> Path:
 
 
 def run_verification_step_impl(
-    root: Optional[Path] = None,
+    root: Path | None = None,
     build: bool = False,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     Run the verification script and return (passed, diagnosis).
 
@@ -78,7 +77,7 @@ def run_verification_step_impl(
 
 
 def run_auto_verify(
-    root: Optional[Path] = None,
+    root: Path | None = None,
     build: bool = False,
     attempt: int = 1,
     max_retries: int = 3,
@@ -89,6 +88,6 @@ def run_auto_verify(
     Caller can use result.reflection_prompt(max_retries) to re-prompt the agent,
     then call again with attempt+1 until result.passed or result.should_escalate(max_retries).
     """
-    def verify_fn() -> Tuple[bool, str]:
+    def verify_fn() -> tuple[bool, str]:
         return run_verification_step_impl(root=root, build=build)
     return run_verification_step(verify_fn, attempt=attempt)

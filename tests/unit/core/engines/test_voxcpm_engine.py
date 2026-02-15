@@ -5,9 +5,7 @@ Tests VoxCPM engine functionality including optimizations.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -30,7 +28,7 @@ class TestVoxCPMEngineImports:
     def test_module_has_voxcpm_engine_class(self):
         """Test module has VoxCPMEngine class."""
         if hasattr(voxcpm_engine, "VoxCPMEngine"):
-            cls = getattr(voxcpm_engine, "VoxCPMEngine")
+            cls = voxcpm_engine.VoxCPMEngine
             assert isinstance(cls, type), "VoxCPMEngine should be a class"
 
 
@@ -40,7 +38,7 @@ class TestVoxCPMEngineClass:
     def test_voxcpm_engine_class_exists(self):
         """Test VoxCPMEngine class exists."""
         if hasattr(voxcpm_engine, "VoxCPMEngine"):
-            cls = getattr(voxcpm_engine, "VoxCPMEngine")
+            cls = voxcpm_engine.VoxCPMEngine
             assert isinstance(cls, type), "VoxCPMEngine should be a class"
 
     def test_voxcpm_engine_initialization(self):

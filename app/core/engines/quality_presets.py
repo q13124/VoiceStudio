@@ -3,8 +3,10 @@ Quality Presets for Voice Cloning
 Unified quality preset system across all engines
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -118,13 +120,13 @@ ENGINE_PRESET_MAPPINGS = {
 }
 
 
-def get_quality_preset(preset_name: str) -> Optional[Dict[str, Any]]:
+def get_quality_preset(preset_name: str) -> dict[str, Any] | None:
     """
     Get quality preset configuration.
-    
+
     Args:
         preset_name: Preset name ("fast", "standard", "high", "ultra", "professional")
-    
+
     Returns:
         Preset configuration dictionary or None if not found
     """
@@ -133,14 +135,14 @@ def get_quality_preset(preset_name: str) -> Optional[Dict[str, Any]]:
 
 def get_engine_preset(
     engine_name: str, quality_preset: str
-) -> Optional[str]:
+) -> str | None:
     """
     Get engine-specific preset name for a quality preset.
-    
+
     Args:
         engine_name: Engine name ("tortoise", "xtts", "chatterbox")
         quality_preset: Quality preset name
-    
+
     Returns:
         Engine-specific preset name or None
     """
@@ -152,15 +154,15 @@ def get_engine_preset(
 
 
 def get_synthesis_params_from_preset(
-    preset_name: str, engine_name: Optional[str] = None
-) -> Dict[str, Any]:
+    preset_name: str, engine_name: str | None = None
+) -> dict[str, Any]:
     """
     Get synthesis parameters from quality preset.
-    
+
     Args:
         preset_name: Quality preset name
         engine_name: Optional engine name for engine-specific presets
-    
+
     Returns:
         Dictionary of synthesis parameters
     """
@@ -194,10 +196,10 @@ def get_synthesis_params_from_preset(
     return params
 
 
-def list_quality_presets() -> Dict[str, Dict[str, Any]]:
+def list_quality_presets() -> dict[str, dict[str, Any]]:
     """
     List all available quality presets.
-    
+
     Returns:
         Dictionary of preset names to preset configurations
     """
@@ -207,10 +209,10 @@ def list_quality_presets() -> Dict[str, Dict[str, Any]]:
 def get_preset_description(preset_name: str) -> str:
     """
     Get description for a quality preset.
-    
+
     Args:
         preset_name: Preset name
-    
+
     Returns:
         Preset description
     """
@@ -220,13 +222,13 @@ def get_preset_description(preset_name: str) -> str:
     return ""
 
 
-def get_preset_target_metrics(preset_name: str) -> Dict[str, float]:
+def get_preset_target_metrics(preset_name: str) -> dict[str, float]:
     """
     Get target quality metrics for a preset.
-    
+
     Args:
         preset_name: Preset name
-    
+
     Returns:
         Dictionary of target metrics
     """

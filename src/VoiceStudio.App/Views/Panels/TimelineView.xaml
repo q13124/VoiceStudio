@@ -17,6 +17,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="160" />
         </Grid.RowDefinitions>
 
@@ -129,15 +130,91 @@
             <Canvas x:Name="DragDropCanvas" IsHitTestVisible="False" Background="Transparent" />
         </Grid>
 
+        <!-- Transcript Track (Audit M-1 + X-3: Transcript display in Timeline) -->
+        <Border Grid.Row="4"
+                AutomationProperties.AutomationId="TimelineView_TranscriptTrack"
+                Background="{StaticResource VSQ.Panel.Background.DarkerBrush}"
+                BorderBrush="{StaticResource VSQ.Panel.BorderBrush}"
+                BorderThickness="0,1,0,0"
+                MinHeight="0"
+                MaxHeight="120"
+                Visibility="{x:Bind ViewModel.HasTranscriptSegments, Mode=OneWay}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Transcript track header -->
+                <Border Grid.Row="0" Padding="8,4"
+                        Background="{StaticResource VSQ.Panel.Background.HeaderBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xEE56;" FontSize="12" Opacity="0.7" />
+                            <TextBlock Text="Transcript" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                            <TextBlock Text="{x:Bind ViewModel.TranscriptSegmentCount, Mode=OneWay}"
+                                       FontSize="11" Opacity="0.5" />
+                            <TextBlock Text="segments" FontSize="11" Opacity="0.5" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Padding="4,2"
+                                AutomationProperties.AutomationId="TimelineView_ClearTranscriptButton"
+                                ToolTipService.ToolTip="Clear transcript from timeline"
+                                Command="{x:Bind ViewModel.ClearTranscriptCommand}">
+                            <FontIcon Glyph="&#xE711;" FontSize="10" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Transcript segments display -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="8,4">
+                    <ItemsRepeater AutomationProperties.AutomationId="TimelineView_TranscriptSegments"
+                                   ItemsSource="{x:Bind ViewModel.TranscriptSegments, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="2" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="6,3" CornerRadius="3"
+                                        Background="{StaticResource VSQ.Panel.Background}"
+                                        PointerPressed="TranscriptSegment_PointerPressed">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="55" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" FontSize="10" Opacity="0.6"
+                                                   FontFamily="Consolas">
+                                            <Run Text="{Binding StartFormatted}" />
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="1" FontSize="11"
+                                                   Text="{Binding Text}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
         <!-- Visualizer Row -->
-        <Grid Grid.Row="4" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}">
+        <Grid Grid.Row="5" Background="{StaticResource VSQ.Panel.Background.DarkerBrush}">
             <controls:SpectrogramControl x:Name="SpectrogramVisualizer" />
             <controls:WaveformControl x:Name="WaveformVisualizer" />
         </Grid>
 
         <!-- Help Overlay -->
         <controls:HelpOverlay x:Name="HelpOverlay" 
-                              Grid.RowSpan="5"
+                              Grid.RowSpan="6"
                               IsVisible="False" 
                               Visibility="Collapsed"
                               d:Visibility="Collapsed" />

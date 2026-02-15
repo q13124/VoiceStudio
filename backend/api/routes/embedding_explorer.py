@@ -4,14 +4,14 @@ Speaker Embedding Explorer Routes
 Endpoints for exploring and visualizing speaker embeddings.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -48,7 +48,7 @@ except ImportError:
 router = APIRouter(prefix="/api/embedding-explorer", tags=["embedding-explorer"])
 
 # In-memory embedding data (replace with database in production)
-_embeddings: Dict[str, Dict] = {}
+_embeddings: dict[str, dict] = {}
 
 
 class EmbeddingVector(BaseModel):
@@ -56,7 +56,7 @@ class EmbeddingVector(BaseModel):
 
     embedding_id: str
     voice_profile_id: str
-    vector: List[float]  # Embedding vector (typically 256-512 dimensions)
+    vector: list[float]  # Embedding vector (typically 256-512 dimensions)
     dimension: int
     created: str
 
@@ -74,8 +74,8 @@ class EmbeddingCluster(BaseModel):
     """Cluster of similar embeddings."""
 
     cluster_id: str
-    embedding_ids: List[str]
-    centroid: List[float]
+    embedding_ids: list[str]
+    centroid: list[float]
     size: int
 
 
@@ -85,15 +85,15 @@ class EmbeddingVisualization(BaseModel):
     embedding_id: str
     x: float  # 2D/3D projection coordinate
     y: float
-    z: Optional[float] = None
-    color: Optional[str] = None
+    z: float | None = None
+    color: str | None = None
 
 
 class EmbeddingExtractRequest(BaseModel):
     """Request to extract embedding from audio."""
 
     audio_id: str
-    voice_profile_id: Optional[str] = None
+    voice_profile_id: str | None = None
     method: str = "default"  # Extraction method
 
 
@@ -118,7 +118,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
     # Check if any embedding library is available
     if not (HAS_RESEMBLYZER or HAS_SPEECHBRAIN):
         raise HTTPException(
-            status_code=501,
+            status_code=400,
             detail=(
                 "Speaker embedding extraction requires an embedding library. "
                 "Install one of: pip install resemblyzer OR pip install speechbrain"
@@ -127,7 +127,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
 
     if not HAS_LIBROSA:
         raise HTTPException(
-            status_code=501,
+            status_code=400,
             detail="Audio loading requires librosa. Install with: pip install librosa",
         )
 
@@ -136,7 +136,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
         # In a real implementation, this would look up the audio file in a database/storage
         audio_storage_path = os.environ.get("VOICESTUDIO_AUDIO_STORAGE", "data/audio")
         audio_path = Path(audio_storage_path) / f"{request.audio_id}.wav"
-        
+
         # Try alternative extensions if .wav not found
         if not audio_path.exists():
             for ext in [".mp3", ".flac", ".ogg", ""]:
@@ -152,31 +152,31 @@ async def extract_embedding(request: EmbeddingExtractRequest):
             )
 
         # Extract embedding based on available library
-        embedding_vector: List[float] = []
-        
+        embedding_vector: list[float] = []
+
         if HAS_RESEMBLYZER and (request.method == "default" or request.method == "resemblyzer"):
             # Use Resemblyzer for embedding extraction
             if _voice_encoder is None:
                 _voice_encoder = VoiceEncoder()
                 logger.info("Loaded Resemblyzer VoiceEncoder")
-            
+
             # Load and preprocess audio
             wav = preprocess_wav(str(audio_path))
-            
+
             # Extract embedding (256-dimensional)
             embedding = _voice_encoder.embed_utterance(wav)
             embedding_vector = embedding.tolist()
-            
+
         elif HAS_SPEECHBRAIN and (request.method == "default" or request.method == "speechbrain"):
             # Use SpeechBrain for embedding extraction
             classifier = EncoderClassifier.from_hparams(
                 source="speechbrain/spkrec-ecapa-voxceleb",
                 savedir="models/speechbrain_speaker",
             )
-            
+
             # Load audio
-            audio, sr = librosa.load(str(audio_path), sr=16000)
-            
+            audio, _sr = librosa.load(str(audio_path), sr=16000)
+
             # Extract embedding (192-dimensional for ECAPA-TDNN)
             import torch
             audio_tensor = torch.tensor(audio).unsqueeze(0)
@@ -224,12 +224,12 @@ async def extract_embedding(request: EmbeddingExtractRequest):
         logger.error(f"Failed to extract embedding: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to extract embedding: {str(e)}",
+            detail=f"Failed to extract embedding: {e!s}",
         ) from e
 
 
-@router.get("/embeddings", response_model=List[EmbeddingVector])
-async def list_embeddings(voice_profile_id: Optional[str] = None):
+@router.get("/embeddings", response_model=list[EmbeddingVector])
+async def list_embeddings(voice_profile_id: str | None = None):
     """List all embeddings."""
     embeddings = list(_embeddings.values())
 
@@ -276,7 +276,7 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     # Calculate cosine similarity
     import math
 
-    dot_product = sum(a * b for a, b in zip(emb1.vector, emb2.vector))
+    dot_product = sum(a * b for a, b in zip(emb1.vector, emb2.vector, strict=False))
     magnitude1 = math.sqrt(sum(a * a for a in emb1.vector))
     magnitude2 = math.sqrt(sum(a * a for a in emb2.vector))
 
@@ -287,7 +287,7 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     )
 
     # Calculate Euclidean distance
-    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(emb1.vector, emb2.vector)))
+    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(emb1.vector, emb2.vector, strict=False)))
 
     return EmbeddingSimilarity(
         embedding_id_1=request.embedding_id_1,
@@ -297,9 +297,9 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     )
 
 
-@router.post("/visualize", response_model=List[EmbeddingVisualization])
+@router.post("/visualize", response_model=list[EmbeddingVisualization])
 async def visualize_embeddings(
-    embedding_ids: List[str],
+    embedding_ids: list[str],
     method: str = "pca",  # pca, t-sne, umap
     dimensions: int = 2,  # 2 or 3
 ):
@@ -307,7 +307,7 @@ async def visualize_embeddings(
     if not embedding_ids:
         # Return empty list with proper error handling
         logger.warning(
-            f"List embeddings requested - returning empty list. "
+            "List embeddings requested - returning empty list. "
             "Real implementation needed."
         )
         return []
@@ -321,33 +321,74 @@ async def visualize_embeddings(
     if not embeddings_data:
         raise HTTPException(status_code=404, detail="No embeddings found")
 
-    # Embedding visualization requires dimensionality reduction:
-    # - PCA (Principal Component Analysis) for linear projection
-    # - t-SNE for nonlinear projection
-    # - UMAP for nonlinear projection
-    #
-    # Real implementation would:
-    # 1. Convert embeddings to numpy array
-    # 2. Apply dimensionality reduction (PCA/t-SNE/UMAP)
-    # 3. Project to 2D (x, y) or 3D (x, y, z) coordinates
-    # 4. Optionally assign colors based on clusters
-    # 5. Return visualization coordinates for each embedding
-    #
-    # This feature requires dimensionality reduction libraries.
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "Embedding visualization is not yet fully implemented. "
-            "Visualization requires dimensionality reduction algorithms. "
-            "To enable: install scikit-learn (for PCA/t-SNE) or "
-            "umap-learn (for UMAP). Example: pip install scikit-learn umap-learn"
-        ),
-    )
+    # Perform dimensionality reduction
+    try:
+        import numpy as np
+    except ImportError:
+        raise HTTPException(
+            status_code=400,
+            detail="numpy is required for visualization. Install with: pip install numpy",
+        )
+
+    vectors = np.array([e.vector for e in embeddings_data])
+
+    if method == "pca":
+        try:
+            from sklearn.decomposition import PCA
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="PCA requires scikit-learn. Install with: pip install scikit-learn",
+            )
+        reducer = PCA(n_components=min(dimensions, vectors.shape[1], vectors.shape[0]))
+        coords = reducer.fit_transform(vectors)
+    elif method == "t-sne" or method == "tsne":
+        try:
+            from sklearn.manifold import TSNE
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="t-SNE requires scikit-learn. Install with: pip install scikit-learn",
+            )
+        perplexity = min(30, max(1, len(vectors) - 1))
+        reducer = TSNE(n_components=dimensions, perplexity=perplexity, random_state=42)
+        coords = reducer.fit_transform(vectors)
+    elif method == "umap":
+        try:
+            import umap
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="UMAP requires umap-learn. Install with: pip install umap-learn",
+            )
+        n_neighbors = min(15, max(2, len(vectors) - 1))
+        reducer = umap.UMAP(n_components=dimensions, n_neighbors=n_neighbors, random_state=42)
+        coords = reducer.fit_transform(vectors)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown method '{method}'. Use 'pca', 't-sne', or 'umap'.",
+        )
+
+    results = []
+    for i, emb in enumerate(embeddings_data):
+        point = coords[i].tolist()
+        results.append(
+            EmbeddingVisualization(
+                embedding_id=emb.embedding_id,
+                x=point[0],
+                y=point[1] if len(point) > 1 else 0.0,
+                z=point[2] if len(point) > 2 else None,
+                label=emb.voice_profile_id or emb.embedding_id,
+                cluster=None,
+            )
+        )
+    return results
 
 
-@router.post("/cluster", response_model=List[EmbeddingCluster])
+@router.post("/cluster", response_model=list[EmbeddingCluster])
 async def cluster_embeddings(
-    embedding_ids: List[str],
+    embedding_ids: list[str],
     num_clusters: int = 5,
     method: str = "kmeans",  # kmeans, dbscan, hierarchical
 ):
@@ -355,7 +396,7 @@ async def cluster_embeddings(
     if not embedding_ids:
         # Return empty list with proper error handling
         logger.warning(
-            f"List embeddings requested - returning empty list. "
+            "List embeddings requested - returning empty list. "
             "Real implementation needed."
         )
         return []
@@ -369,25 +410,78 @@ async def cluster_embeddings(
     if not embeddings_data:
         raise HTTPException(status_code=404, detail="No embeddings found")
 
-    # Embedding clustering requires clustering algorithms:
-    # - K-means for centroid-based clustering
-    # - DBSCAN for density-based clustering
-    # - Hierarchical clustering for tree-based clustering
-    #
-    # Real implementation would:
-    # 1. Convert embeddings to numpy array
-    # 2. Apply clustering algorithm (K-means, DBSCAN, hierarchical)
-    # 3. Group embeddings by cluster assignment
-    # 4. Calculate cluster centroids (mean of vectors in cluster)
-    # 5. Return cluster assignments and centroids
-    #
-    # This feature requires clustering libraries.
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "Embedding clustering is not yet fully implemented. "
-            "Clustering requires clustering algorithms. "
-            "To enable: install scikit-learn for K-means, DBSCAN, or "
-            "hierarchical clustering. Example: pip install scikit-learn"
-        ),
-    )
+    try:
+        import numpy as np
+    except ImportError:
+        raise HTTPException(
+            status_code=400,
+            detail="numpy is required for clustering. Install with: pip install numpy",
+        )
+
+    vectors = np.array([e.vector for e in embeddings_data])
+
+    if method == "kmeans":
+        try:
+            from sklearn.cluster import KMeans
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="K-Means requires scikit-learn. Install with: pip install scikit-learn",
+            )
+        k = min(num_clusters, len(vectors))
+        model = KMeans(n_clusters=k, random_state=42, n_init="auto")
+        labels = model.fit_predict(vectors)
+        centroids = model.cluster_centers_
+    elif method == "dbscan":
+        try:
+            from sklearn.cluster import DBSCAN
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="DBSCAN requires scikit-learn. Install with: pip install scikit-learn",
+            )
+        model = DBSCAN(eps=0.5, min_samples=2)
+        labels = model.fit_predict(vectors)
+        unique_labels = set(labels)
+        centroids = np.array([
+            vectors[labels == lbl].mean(axis=0)
+            for lbl in sorted(unique_labels) if lbl != -1
+        ]) if any(lbl != -1 for lbl in unique_labels) else np.empty((0, vectors.shape[1]))
+    elif method == "hierarchical":
+        try:
+            from sklearn.cluster import AgglomerativeClustering
+        except ImportError:
+            raise HTTPException(
+                status_code=400,
+                detail="Hierarchical clustering requires scikit-learn. Install with: pip install scikit-learn",
+            )
+        k = min(num_clusters, len(vectors))
+        model = AgglomerativeClustering(n_clusters=k)
+        labels = model.fit_predict(vectors)
+        centroids = np.array([
+            vectors[labels == lbl].mean(axis=0) for lbl in range(k)
+        ])
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown method '{method}'. Use 'kmeans', 'dbscan', or 'hierarchical'.",
+        )
+
+    # Group embeddings by cluster
+    from collections import defaultdict
+    cluster_groups: dict[int, list[str]] = defaultdict(list)
+    for i, emb in enumerate(embeddings_data):
+        cluster_groups[int(labels[i])].append(emb.embedding_id)
+
+    results = []
+    for cluster_id in sorted(cluster_groups.keys()):
+        centroid = centroids[cluster_id].tolist() if cluster_id < len(centroids) else []
+        results.append(
+            EmbeddingCluster(
+                cluster_id=cluster_id,
+                embedding_ids=cluster_groups[cluster_id],
+                centroid=centroid,
+                size=len(cluster_groups[cluster_id]),
+            )
+        )
+    return results

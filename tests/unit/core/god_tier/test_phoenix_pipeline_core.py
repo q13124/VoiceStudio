@@ -5,7 +5,6 @@ Tests Phoenix pipeline core functionality.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ class TestPhoenixPipelineCoreClasses:
     def test_phoenix_pipeline_class_exists(self):
         """Test PhoenixPipeline class exists."""
         if hasattr(phoenix_pipeline_core, "PhoenixPipeline"):
-            cls = getattr(phoenix_pipeline_core, "PhoenixPipeline")
+            cls = phoenix_pipeline_core.PhoenixPipeline
             assert isinstance(cls, type), "PhoenixPipeline should be a class"
 
 

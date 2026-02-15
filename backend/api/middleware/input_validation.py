@@ -6,9 +6,11 @@ validation. Protects against common injection attacks, path traversal, and
 malicious input.
 """
 
+from __future__ import annotations
+
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import unquote
 
 from fastapi import HTTPException, Request, status
@@ -57,7 +59,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         app,
         enabled: bool = True,
         strict_mode: bool = False,
-        skip_paths: Optional[List[str]] = None,
+        skip_paths: list[str] | None = None,
     ):
         """
         Initialize input validation middleware.
@@ -96,10 +98,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
             return False
 
         value_lower = value.lower()
-        for pattern in INJECTION_PATTERNS:
-            if re.search(pattern, value_lower, re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(pattern, value_lower, re.IGNORECASE) for pattern in INJECTION_PATTERNS)
 
     def _check_sql_injection(self, value: str) -> bool:
         """Check for SQL injection attempts."""
@@ -172,7 +171,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
                     detail=detail,
                 )
 
-    def _validate_dict(self, data: Dict[str, Any], prefix: str = "") -> None:
+    def _validate_dict(self, data: dict[str, Any], prefix: str = "") -> None:
         """Recursively validate dictionary values."""
         for key, value in data.items():
             field_name = f"{prefix}.{key}" if prefix else key

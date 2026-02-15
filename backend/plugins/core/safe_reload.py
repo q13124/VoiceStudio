@@ -5,13 +5,14 @@ Manages the safe unload → reload → reinitialize cycle for plugins
 with proper error handling and rollback capability.
 """
 
-import asyncio
+from __future__ import annotations
+
 import importlib
 import logging
 import sys
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class ReloadResult:
     plugin_id: str
     success: bool
     duration_ms: float
-    error: Optional[str] = None
+    error: str | None = None
     rolled_back: bool = False
 
 
@@ -40,7 +41,7 @@ class SafePluginReloader:
     """
 
     def __init__(self):
-        self._snapshots: Dict[str, Dict[str, Any]] = {}
+        self._snapshots: dict[str, dict[str, Any]] = {}
         self._reload_history: list = []
 
     async def reload_plugin(

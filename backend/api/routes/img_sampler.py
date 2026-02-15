@@ -5,10 +5,11 @@ Endpoints for image sampling/rendering with different samplers
 for diffusion models (DDIM, Euler, etc.).
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 import os
-from typing import Dict
 
 from fastapi import APIRouter, HTTPException
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/img/sampler", tags=["img", "sampler"])
 
 # In-memory storage for sampled images
-_image_storage: Dict[str, str] = {}  # image_id -> file_path
+_image_storage: dict[str, str] = {}  # image_id -> file_path
 
 # Supported samplers
 SUPPORTED_SAMPLERS = [
@@ -174,7 +175,7 @@ async def render(req: ImgSamplerRequest) -> dict:
     except Exception as e:
         logger.error(f"Image sampling failed: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Image sampling failed: {str(e)}"
+            status_code=500, detail=f"Image sampling failed: {e!s}"
         ) from e
 
 

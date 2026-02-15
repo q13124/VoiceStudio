@@ -23,7 +23,6 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,36 +46,36 @@ ADDITIONAL_EXCLUDES = [
 ]
 
 
-def load_baseline() -> Dict:
+def load_baseline() -> dict:
     """Load the existing secrets baseline file."""
     if not BASELINE_FILE.exists():
         logger.error(f"Baseline file not found: {BASELINE_FILE}")
         return {}
-    
-    with open(BASELINE_FILE, "r", encoding="utf-8") as f:
+
+    with open(BASELINE_FILE, encoding="utf-8") as f:
         return json.load(f)
 
 
-def run_secrets_scan(update_baseline: bool = False) -> Tuple[int, str, str]:
+def run_secrets_scan(update_baseline: bool = False) -> tuple[int, str, str]:
     """
     Run detect-secrets scan against the repository.
-    
+
     Args:
         update_baseline: If True, update the baseline with new findings
-        
+
     Returns:
         Tuple of (return_code, stdout, stderr)
     """
     cmd = ["detect-secrets", "scan"]
-    
+
     if BASELINE_FILE.exists():
         cmd.extend(["--baseline", str(BASELINE_FILE)])
-    
+
     if update_baseline:
         cmd.append("--update")
-    
+
     logger.info(f"Running: {' '.join(cmd)}")
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -95,25 +94,25 @@ def run_secrets_scan(update_baseline: bool = False) -> Tuple[int, str, str]:
 
 
 def compare_results(
-    baseline: Dict,
+    baseline: dict,
     scan_output: str,
-) -> Tuple[List[Dict], List[Dict]]:
+) -> tuple[list[dict], list[dict]]:
     """
     Compare scan results against baseline.
-    
+
     Returns:
         Tuple of (new_secrets, resolved_secrets)
     """
     baseline_results = baseline.get("results", {})
-    baseline_hashes: Set[str] = set()
-    
+    baseline_hashes: set[str] = set()
+
     # Collect all hashed secrets from baseline
     for file_results in baseline_results.values():
         for result in file_results:
             baseline_hashes.add(result.get("hashed_secret", ""))
-    
+
     new_secrets = []
-    
+
     # Parse scan output if it's JSON
     try:
         if scan_output.strip():
@@ -130,37 +129,37 @@ def compare_results(
     except json.JSONDecodeError:
         # Scan output may be empty or non-JSON on success
         pass
-    
+
     return new_secrets, []
 
 
-def get_baseline_stats(baseline: Dict) -> Dict[str, int]:
+def get_baseline_stats(baseline: dict) -> dict[str, int]:
     """Get statistics about the current baseline."""
     results = baseline.get("results", {})
-    
+
     stats = {
         "total_files": len(results),
         "total_findings": sum(len(v) for v in results.values()),
         "by_type": {},
     }
-    
+
     for file_results in results.values():
         for result in file_results:
             secret_type = result.get("type", "Unknown")
             stats["by_type"][secret_type] = stats["by_type"].get(secret_type, 0) + 1
-    
+
     return stats
 
 
-def verify_false_positives(baseline: Dict) -> List[str]:
+def verify_false_positives(baseline: dict) -> list[str]:
     """
     Verify that all findings in baseline are documented false positives.
-    
+
     Returns list of undocumented findings that need justification.
     """
     undocumented = []
     results = baseline.get("results", {})
-    
+
     # Known false positive patterns
     known_fp_patterns = [
         # Build logs with base64 encoded content
@@ -170,11 +169,11 @@ def verify_false_positives(baseline: Dict) -> List[str]:
         # Config templates
         ".continue/",
     ]
-    
+
     for file_path, findings in results.items():
         # Check if file matches known false positive patterns
         is_known_fp = any(pattern in file_path for pattern in known_fp_patterns)
-        
+
         for finding in findings:
             if not finding.get("is_verified", False) and not is_known_fp:
                 # Check if it's a high-risk type
@@ -183,12 +182,12 @@ def verify_false_positives(baseline: Dict) -> List[str]:
                     "AWS", "Private", "API", "Bearer", "OAuth",
                     "GitHub", "GitLab", "Stripe", "Twilio",
                 ]
-                
+
                 if any(risk in secret_type for risk in high_risk_types):
                     undocumented.append(
                         f"{file_path}:{finding.get('line_number')} - {secret_type}"
                     )
-    
+
     return undocumented
 
 
@@ -214,47 +213,47 @@ def main() -> int:
         help="Only show baseline statistics",
     )
     args = parser.parse_args()
-    
+
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     # Load existing baseline
     baseline = load_baseline()
     if not baseline:
         logger.error("No baseline found. Run: detect-secrets scan > .secrets.baseline")
         return 2
-    
+
     # Show baseline stats
     stats = get_baseline_stats(baseline)
-    logger.info(f"Baseline statistics:")
+    logger.info("Baseline statistics:")
     logger.info(f"  Files with findings: {stats['total_files']}")
     logger.info(f"  Total findings: {stats['total_findings']}")
     for secret_type, count in stats["by_type"].items():
         logger.info(f"    {secret_type}: {count}")
-    
+
     if args.stats_only:
         return 0
-    
+
     # Check for undocumented high-risk findings
     undocumented = verify_false_positives(baseline)
     if undocumented:
         logger.warning(f"Found {len(undocumented)} high-risk undocumented findings:")
         for finding in undocumented:
             logger.warning(f"  - {finding}")
-    
+
     # Run secrets scan
     logger.info("Running secrets scan...")
     return_code, stdout, stderr = run_secrets_scan(update_baseline=args.update)
-    
+
     if return_code != 0:
         logger.error(f"Secrets scan failed with return code {return_code}")
         if stderr:
             logger.error(f"Error: {stderr}")
         return 1
-    
+
     # Compare results
     new_secrets, resolved = compare_results(baseline, stdout)
-    
+
     if new_secrets:
         logger.error(f"FAIL: Found {len(new_secrets)} new potential secrets:")
         for secret in new_secrets:
@@ -269,14 +268,14 @@ def main() -> int:
         logger.error("To update baseline (after verification):")
         logger.error("  detect-secrets scan --baseline .secrets.baseline --update")
         return 1
-    
+
     if resolved:
         logger.info(f"INFO: {len(resolved)} secrets were resolved (no longer detected)")
-    
+
     logger.info("PASS: No new secrets detected")
     logger.info(f"Baseline version: {baseline.get('version', 'unknown')}")
     logger.info(f"Generated: {baseline.get('generated_at', 'unknown')}")
-    
+
     return 0
 
 

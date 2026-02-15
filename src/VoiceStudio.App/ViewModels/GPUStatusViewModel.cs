@@ -105,7 +105,7 @@ namespace VoiceStudio.App.ViewModels
           Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(async () =>
           {
             try { await LoadGPUStatusAsync(CancellationToken.None); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"GPU refresh error: {ex.Message}"); }
+            catch (Exception ex) { await HandleErrorAsync(ex, "GPURefresh", showDialog: false); }
           });
         };
         _refreshTimer.AutoReset = true;

@@ -20,29 +20,29 @@ class LinearAdapter(BaseSourceAdapter):
     def fetch(self, context: AllocationContext) -> SourceResult:
         """
         Fetch task/issue data from Linear via MCP.
-        
+
         When enabled, queries Linear for:
         - Task details and status
         - Related issues and PRs
         - Team assignments
         - Sprint/milestone context
-        
+
         Falls back gracefully if MCP unavailable.
         """
         def _load() -> dict:
             if not self._mcp_enabled:
                 return {"linear_tasks": [], "note": "Linear MCP disabled"}
-            
+
             # Attempt MCP call to Linear
             tasks = self._query_linear(context)
             return {"linear_tasks": tasks}
-        
+
         return self._measure(_load, context)
 
     def _query_linear(self, context: AllocationContext) -> list:
         """
         Query Linear for task/issue data.
-        
+
         Implementation notes:
         - Use task_id to query Linear for task details
         - Fetch related issues, blockers, dependencies

@@ -299,6 +299,14 @@ namespace VoiceStudio.App.ViewModels
         openPicker.FileTypeFilter.Add(".mkv");
         openPicker.FileTypeFilter.Add(".webm");
 
+        // WinUI 3 requires initializing the picker with the window handle
+        var window = App.MainWindowInstance;
+        if (window != null)
+        {
+          var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+          WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
         var file = await openPicker.PickSingleFileAsync();
         cancellationToken.ThrowIfCancellationRequested();

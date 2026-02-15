@@ -77,9 +77,11 @@
           <Button Content="Save"
             Command="{x:Bind ViewModel.SaveSettingsCommand, Mode=OneWay}"
             IsEnabled="{x:Bind ViewModel.HasUnsavedChanges, Mode=OneWay}"
-            Margin="0,0,8,0" />
+            Margin="0,0,8,0"
+            AutomationProperties.AutomationId="SettingsView_SaveButton" />
           <Button Content="Reset"
-            Command="{x:Bind ViewModel.ResetSettingsCommand, Mode=OneWay}" />
+            Command="{x:Bind ViewModel.ResetSettingsCommand, Mode=OneWay}"
+            AutomationProperties.AutomationId="SettingsView_ResetButton" />
           <Button Content="?"
             Click="HelpButton_Click"
             Style="{StaticResource VSQ.Button.Icon}"
@@ -106,13 +108,15 @@
             Tag="General"
             Click="CategoryButton_Click"
             RightTapped="CategoryButton_RightTapped"
-            Style="{StaticResource CategoryButtonStyle}" />
+            Style="{StaticResource CategoryButtonStyle}"
+            AutomationProperties.AutomationId="SettingsView_GeneralCategoryButton" />
           <Button x:Name="EngineCategory"
             Content="Engine"
             Tag="Engine"
             Click="CategoryButton_Click"
             RightTapped="CategoryButton_RightTapped"
-            Style="{StaticResource CategoryButtonStyle}" />
+            Style="{StaticResource CategoryButtonStyle}"
+            AutomationProperties.AutomationId="SettingsView_EngineCategoryButton" />
           <Button x:Name="AudioCategory"
             Content="Audio"
             Tag="Audio"
@@ -154,7 +158,8 @@
             Tag="Privacy"
             Click="CategoryButton_Click"
             RightTapped="CategoryButton_RightTapped"
-            Style="{StaticResource CategoryButtonStyle}" />
+            Style="{StaticResource CategoryButtonStyle}"
+            AutomationProperties.AutomationId="SettingsView_PrivacyCategoryButton" />
           <Button x:Name="SystemCategory"
             Content="System"
             Tag="System"
@@ -179,7 +184,8 @@
                   VerticalAlignment="Center" />
                 <ComboBox ItemsSource="{x:Bind ViewModel.AvailableThemes, Mode=OneWay}"
                   SelectedItem="{x:Bind ViewModel.Theme, Mode=TwoWay}"
-                  Width="200" />
+                  Width="200"
+                  AutomationProperties.AutomationId="SettingsView_ThemeComboBox" />
               </StackPanel>
 
               <StackPanel Orientation="Horizontal"
@@ -188,14 +194,16 @@
                   VerticalAlignment="Center" />
                 <ComboBox ItemsSource="{x:Bind ViewModel.AvailableLanguages, Mode=OneWay}"
                   SelectedItem="{x:Bind ViewModel.Language, Mode=TwoWay}"
-                  Width="200" />
+                  Width="200"
+                  AutomationProperties.AutomationId="SettingsView_LanguageComboBox" />
               </StackPanel>
 
               <StackPanel Orientation="Horizontal"
                 Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                 <TextBlock Text="Auto-save:" Width="150" Style="{StaticResource VSQ.Text.Body}"
                   VerticalAlignment="Center" />
-                <ToggleSwitch IsOn="{x:Bind ViewModel.AutoSave, Mode=TwoWay}" />
+                <ToggleSwitch IsOn="{x:Bind ViewModel.AutoSave, Mode=TwoWay}"
+                  AutomationProperties.AutomationId="SettingsView_AutoSaveToggle" />
               </StackPanel>
 
               <StackPanel Orientation="Horizontal"
@@ -544,7 +552,8 @@
                 Spacing="{StaticResource VSQ.Spacing.Value.Small}">
                 <TextBlock Text="Usage Analytics:" Width="150"
                   Style="{StaticResource VSQ.Text.Body}" VerticalAlignment="Center" />
-                <ToggleSwitch IsOn="{x:Bind ViewModel.TelemetryEnabled, Mode=TwoWay}" />
+                <ToggleSwitch IsOn="{x:Bind ViewModel.TelemetryEnabled, Mode=TwoWay}"
+                  AutomationProperties.AutomationId="SettingsView_TelemetryToggle" />
               </StackPanel>
 
               <TextBlock Text="Help improve VoiceStudio by sharing anonymous usage data. No personal information, audio files, or project content is ever collected."

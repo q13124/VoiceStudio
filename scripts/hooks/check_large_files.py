@@ -13,7 +13,6 @@ Exit codes:
 import sys
 from pathlib import Path
 
-
 MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
 MAX_SIZE_DISPLAY = "10MB"
 
@@ -30,19 +29,19 @@ def format_size(size_bytes: int) -> str:
 def main() -> int:
     if len(sys.argv) < 2:
         return 0
-    
+
     files = sys.argv[1:]
     large_files = []
-    
+
     for file_path_str in files:
         file_path = Path(file_path_str)
         if not file_path.exists() or file_path.is_dir():
             continue
-        
+
         size = file_path.stat().st_size
         if size > MAX_SIZE_BYTES:
             large_files.append((file_path, size))
-    
+
     if large_files:
         print(f"\nERROR: Files larger than {MAX_SIZE_DISPLAY} detected:")
         for file_path, size in large_files:
@@ -53,7 +52,7 @@ def main() -> int:
         print("  - Storing large assets externally")
         print("\nTo bypass: git commit --no-verify")
         return 1
-    
+
     return 0
 
 

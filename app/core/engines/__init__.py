@@ -10,28 +10,28 @@ import re
 from typing import Any
 
 __all__ = [
-    "RVCEngine",
-    "create_rvc_engine",
-    "get_engine_class",
-    "EngineRouter",
-    "router",
-    "QualityOptimizer",
-    "get_synthesis_params_from_preset",
-    "optimize_synthesis_for_quality",
-    "calculate_all_metrics",
-    "calculate_similarity",
-    "calculate_mos_score",
-    "calculate_naturalness",
-    "calculate_snr",
-    "detect_artifacts",
-    "clear_metrics_cache",
-    "get_cache_stats",
-    "QualityComparison",
-    "compare_audio_samples",
     # Cancellation support
     "CancellationToken",
-    "OperationCancelledError",
     "EngineProtocol",
+    "EngineRouter",
+    "OperationCancelledError",
+    "QualityComparison",
+    "QualityOptimizer",
+    "RVCEngine",
+    "calculate_all_metrics",
+    "calculate_mos_score",
+    "calculate_naturalness",
+    "calculate_similarity",
+    "calculate_snr",
+    "clear_metrics_cache",
+    "compare_audio_samples",
+    "create_rvc_engine",
+    "detect_artifacts",
+    "get_cache_stats",
+    "get_engine_class",
+    "get_synthesis_params_from_preset",
+    "optimize_synthesis_for_quality",
+    "router",
 ]
 
 
@@ -65,22 +65,26 @@ def _discover_engines_from_manifests():
     global _ENGINE_CLASSES_DISCOVERED
     if _ENGINE_CLASSES_DISCOVERED:
         return
-    
+
     try:
-        from .manifest_loader import find_engine_manifests, get_engine_entry_point, load_engine_manifest
-        
+        from .manifest_loader import (
+            find_engine_manifests,
+            get_engine_entry_point,
+            load_engine_manifest,
+        )
+
         # Find all engine manifests
         manifests = find_engine_manifests("engines")
-        
+
         for engine_id, manifest_path in manifests.items():
             # Skip if already registered
             if engine_id in _ENGINE_CLASSES:
                 continue
-            
+
             try:
                 manifest = load_engine_manifest(manifest_path)
                 entry_point = get_engine_entry_point(manifest)
-                
+
                 if entry_point:
                     # Add to registry in format "module:class"
                     _ENGINE_CLASSES[engine_id] = entry_point
@@ -89,7 +93,7 @@ def _discover_engines_from_manifests():
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to discover engine {engine_id} from manifest: {e}")
-        
+
         _ENGINE_CLASSES_DISCOVERED = True
     except Exception as e:
         # If manifest discovery fails, engines will still work via explicit registration
@@ -147,7 +151,7 @@ def get_engine_class(engine_id: str):
     """Return an engine class by id using lazy import."""
     # Auto-discover engines from manifests on first call
     _discover_engines_from_manifests()
-    
+
     try:
         dotted = _ENGINE_CLASSES[engine_id]
     except KeyError as exc:
@@ -178,7 +182,7 @@ def _resolve_module_for_attr(name: str) -> str | None:
 def __getattr__(name: str) -> Any:
     # Auto-discover engines from manifests on first access
     _discover_engines_from_manifests()
-    
+
     module_path = _resolve_module_for_attr(name)
     if not module_path:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -188,7 +192,7 @@ def __getattr__(name: str) -> Any:
         value = getattr(module, name)
         globals()[name] = value
         return value
-    except Exception as exc:  # noqa: BLE001 - propagate detailed errors
+    except Exception as exc:
         raise AttributeError(
             f"module {__name__!r} has no attribute {name!r} (import failed from {module_path})"
         ) from exc

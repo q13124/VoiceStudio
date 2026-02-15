@@ -16,9 +16,9 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
-from backend.services.ContentAddressedAudioCache import ENV_CACHE_DIR, get_audio_cache
+from backend.config.path_config import get_path
+from backend.services.ContentAddressedAudioCache import get_audio_cache
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,9 @@ DEFAULT_REGISTRY_FILENAME = "audio_registry.json"
 class AudioArtifactRecord:
     path: str
     created_at_epoch: float
-    project_id: Optional[str] = None
-    source: Optional[str] = None
-    hash_value: Optional[str] = None
+    project_id: str | None = None
+    source: str | None = None
+    hash_value: str | None = None
 
 
 class AudioArtifactRegistry:
@@ -43,14 +43,14 @@ class AudioArtifactRegistry:
     - Stores audio into ContentAddressedAudioCache and records the cached path.
     """
 
-    def __init__(self, registry_path: Optional[str] = None):
+    def __init__(self, registry_path: str | None = None):
         self._lock = threading.RLock()
         self._registry_path = self._resolve_registry_path(registry_path)
-        self._records: Dict[str, AudioArtifactRecord] = {}
+        self._records: dict[str, AudioArtifactRecord] = {}
         self._load()
 
     @staticmethod
-    def _resolve_registry_path(registry_path: Optional[str]) -> Path:
+    def _resolve_registry_path(registry_path: str | None) -> Path:
         if registry_path:
             return Path(registry_path)
 
@@ -58,11 +58,8 @@ class AudioArtifactRegistry:
         if env_path:
             return Path(env_path)
 
-        cache_dir = os.getenv(ENV_CACHE_DIR)
-        if cache_dir:
-            return Path(cache_dir) / DEFAULT_REGISTRY_FILENAME
-
-        return Path.home() / ".voicestudio" / "cache" / DEFAULT_REGISTRY_FILENAME
+        # Use centralized cache path
+        return get_path("cache") / DEFAULT_REGISTRY_FILENAME
 
     @property
     def registry_path(self) -> Path:
@@ -89,7 +86,7 @@ class AudioArtifactRegistry:
                 self._records = {}
                 return
 
-            records: Dict[str, AudioArtifactRecord] = {}
+            records: dict[str, AudioArtifactRecord] = {}
             if isinstance(raw, dict):
                 for audio_id, entry in raw.items():
                     try:
@@ -133,16 +130,16 @@ class AudioArtifactRegistry:
                 payload[audio_id] = entry
             self._atomic_write_json(self._registry_path, payload)
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         with self._lock:
             return {k: v.path for k, v in self._records.items()}
 
-    def get(self, audio_id: str) -> Optional[str]:
+    def get(self, audio_id: str) -> str | None:
         with self._lock:
             rec = self._records.get(audio_id)
             return rec.path if rec else None
 
-    def get_record(self, audio_id: str) -> Optional[AudioArtifactRecord]:
+    def get_record(self, audio_id: str) -> AudioArtifactRecord | None:
         with self._lock:
             return self._records.get(audio_id)
 
@@ -157,9 +154,9 @@ class AudioArtifactRegistry:
         audio_id: str,
         file_path: str,
         *,
-        project_id: Optional[str] = None,
-        source: Optional[str] = None,
-    ) -> Tuple[str, str]:
+        project_id: str | None = None,
+        source: str | None = None,
+    ) -> tuple[str, str]:
         """
         Register an audio file under audio_id.
 
@@ -188,10 +185,10 @@ class AudioArtifactRegistry:
         return str(cached_path), hash_value
 
 
-_service_instance: Optional[AudioArtifactRegistry] = None
+_service_instance: AudioArtifactRegistry | None = None
 
 
-def get_audio_registry(registry_path: Optional[str] = None) -> AudioArtifactRegistry:
+def get_audio_registry(registry_path: str | None = None) -> AudioArtifactRegistry:
     global _service_instance
     if _service_instance is None:
         _service_instance = AudioArtifactRegistry(registry_path=registry_path)

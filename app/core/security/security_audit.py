@@ -10,14 +10,14 @@ Comprehensive security utilities for:
 - Vulnerability scanning
 """
 
-import hashlib
+from __future__ import annotations
+
 import logging
 import os
 import re
 import secrets
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import quote, unquote
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +43,12 @@ class SecurityAuditor:
 
     def __init__(self):
         """Initialize security auditor."""
-        self.vulnerabilities: List[Dict[str, Any]] = []
-        self.security_log: List[Dict[str, Any]] = []
+        self.vulnerabilities: list[dict[str, Any]] = []
+        self.security_log: list[dict[str, Any]] = []
 
     def audit_file_operations(
         self, file_path: str, base_path: str
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Audit file operation for path traversal vulnerabilities.
 
@@ -89,11 +89,11 @@ class SecurityAuditor:
 
         except Exception as e:
             logger.error(f"Error auditing file operation: {e}")
-            return False, f"Error validating path: {str(e)}"
+            return False, f"Error validating path: {e!s}"
 
     def audit_input(
-        self, value: Any, field_name: str, max_length: Optional[int] = None
-    ) -> Tuple[bool, Optional[str]]:
+        self, value: Any, field_name: str, max_length: int | None = None
+    ) -> tuple[bool, str | None]:
         """
         Audit input value for security issues.
 
@@ -154,7 +154,7 @@ class SecurityAuditor:
         event_type: str,
         severity: str,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ):
         """
         Log security event.
@@ -196,7 +196,7 @@ class InputValidator:
     """Input validation utilities."""
 
     @staticmethod
-    def sanitize_path(file_path: str, base_path: str) -> Optional[str]:
+    def sanitize_path(file_path: str, base_path: str) -> str | None:
         """
         Sanitize file path to prevent path traversal.
 
@@ -233,7 +233,7 @@ class InputValidator:
             return None
 
     @staticmethod
-    def sanitize_string(value: str, max_length: Optional[int] = None) -> str:
+    def sanitize_string(value: str, max_length: int | None = None) -> str:
         """
         Sanitize string input.
 
@@ -298,10 +298,7 @@ class InputValidator:
             return False
 
         # Check length
-        if len(filename) > 255:
-            return False
-
-        return True
+        return not len(filename) > 255
 
 
 class OutputSanitizer:
@@ -374,7 +371,7 @@ class SecureFileOperations:
         self.base_path = Path(base_path).resolve()
         self.base_path.mkdir(parents=True, exist_ok=True)
 
-    def safe_open(self, file_path: str, mode: str = "r") -> Optional[Any]:
+    def safe_open(self, file_path: str, mode: str = "r") -> Any | None:
         """
         Safely open a file with path validation.
 
@@ -431,7 +428,7 @@ class SecureFileOperations:
 class SecureStorage:
     """Secure storage for sensitive data (API keys, tokens, etc.)."""
 
-    def __init__(self, master_key: Optional[bytes] = None):
+    def __init__(self, master_key: bytes | None = None):
         """
         Initialize secure storage.
 
@@ -487,7 +484,7 @@ class SecureStorage:
 
 
 # Global security auditor instance
-_security_auditor: Optional[SecurityAuditor] = None
+_security_auditor: SecurityAuditor | None = None
 
 
 def get_security_auditor() -> SecurityAuditor:
@@ -500,10 +497,10 @@ def get_security_auditor() -> SecurityAuditor:
 
 # Export
 __all__ = [
-    "SecurityAuditor",
     "InputValidator",
     "OutputSanitizer",
     "SecureFileOperations",
     "SecureStorage",
+    "SecurityAuditor",
     "get_security_auditor",
 ]

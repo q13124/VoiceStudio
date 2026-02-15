@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
+using VoiceStudio.Core.Events;
 using VoiceStudio.Core.Models;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
@@ -72,10 +74,12 @@ namespace VoiceStudio.App.Views.Panels
 
     public bool IsTranscriptionSelected(string transcriptionId) => _multiSelectState?.SelectedIds.Contains(transcriptionId) ?? false;
 
+    // TODO: TECH-DEBT - Implement dynamic engine discovery from backend manifests
+    // WhisperX removed until proper availability detection is implemented
+    // See: docs/governance/TECH_DEBT_REGISTER.md entry VS-TRANSC-001
     public ObservableCollection<string> Engines { get; } = new()
         {
             "whisper",
-            "whisperx",
             "whisper-cpp",
             "vosk"
         };
@@ -130,6 +134,11 @@ namespace VoiceStudio.App.Views.Panels
       SelectAllTranscriptionsCommand = new RelayCommand(SelectAllTranscriptions, () => Transcriptions?.Count > 0);
       ClearTranscriptionSelectionCommand = new RelayCommand(ClearTranscriptionSelection);
 
+      // Send to Timeline command (Audit X-3: Transcribe -> Timeline)
+      SendToTimelineCommand = new RelayCommand(
+          SendSelectedTranscriptionToTimeline,
+          () => SelectedTranscription != null);
+
       // Subscribe to selection changes
       _multiSelectService.SelectionChanged += (s, e) =>
       {
@@ -150,6 +159,9 @@ namespace VoiceStudio.App.Views.Panels
     // Multi-select commands
     public IRelayCommand SelectAllTranscriptionsCommand { get; }
     public IRelayCommand ClearTranscriptionSelectionCommand { get; }
+
+    /// <summary>Send selected transcription to Timeline as a subtitle track.</summary>
+    public IRelayCommand SendToTimelineCommand { get; }
 
     private bool CanTranscribe()
     {
@@ -238,6 +250,24 @@ namespace VoiceStudio.App.Views.Panels
 
         // Reload transcriptions list
         await LoadTranscriptionsAsync(cancellationToken);
+
+        // C.4: Publish TranscriptionCompletedEvent for timeline subtitle track
+        var eventAggregator = AppServices.TryGetEventAggregator();
+        if (eventAggregator != null && transcription.Segments.Count > 0)
+        {
+          var subtitleSegments = transcription.Segments
+            .Select(s => new VoiceStudio.Core.Events.SubtitleSegment(s.Start, s.End, s.Text))
+            .ToList();
+
+          eventAggregator.Publish(new VoiceStudio.Core.Events.TranscriptionCompletedEvent(
+            PanelId,
+            transcription.AudioId,
+            transcription.Id,
+            transcription.Text,
+            subtitleSegments,
+            TimeSpan.FromSeconds(transcription.Duration),
+            transcription.Language));
+        }
 
         _toastNotificationService?.ShowSuccess("Transcription Complete", $"Transcribed audio using {SelectedEngine} engine");
       }
@@ -362,6 +392,39 @@ namespace VoiceStudio.App.Views.Panels
       {
         TranscriptionText = string.Empty;
       }
+
+      SendToTimelineCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Send the selected transcription's segments to the Timeline panel
+    /// as a subtitle track overlay.
+    /// Audit remediation X-3: Transcription -> Timeline integration.
+    /// </summary>
+    private void SendSelectedTranscriptionToTimeline()
+    {
+      if (SelectedTranscription == null)
+        return;
+
+      var eventAggregator = AppServices.TryGetEventAggregator();
+      if (eventAggregator == null)
+      {
+        _toastNotificationService?.ShowWarning("Timeline", "Event system unavailable");
+        return;
+      }
+
+      eventAggregator.Publish(new NavigateToEvent(
+          PanelId,
+          "timeline",
+          new Dictionary<string, object>
+          {
+            { "action", "loadTranscript" },
+            { "transcriptionId", SelectedTranscription.Id }
+          }));
+
+      _toastNotificationService?.ShowSuccess(
+          "Sent to Timeline",
+          "Transcript segments loaded in Timeline as subtitle track");
     }
 
     // Multi-select methods

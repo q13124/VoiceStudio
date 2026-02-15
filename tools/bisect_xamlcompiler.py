@@ -23,7 +23,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple
 
 REPO_ROOT = Path(r"e:\VoiceStudio")
 APP_CSPROJ = REPO_ROOT / r"src\VoiceStudio.App\VoiceStudio.App.csproj"
@@ -37,7 +36,7 @@ def _find_input_json() -> Path:
     if not candidates:
         raise FileNotFoundError(f"No input.json found under {OBJ_DIR}")
 
-    def score(p: Path) -> Tuple[int, float]:
+    def score(p: Path) -> tuple[int, float]:
         s = 0
         ps = str(p).lower()
         if "\\debug\\" in ps:
@@ -50,7 +49,7 @@ def _find_input_json() -> Path:
     return candidates[0]
 
 
-def _load_xaml_pages(input_json: Path) -> List[str]:
+def _load_xaml_pages(input_json: Path) -> list[str]:
     data = json.loads(input_json.read_text(encoding="utf-8"))
     pages = data.get("XamlPages") or []
     # Pages are objects with ItemSpec
@@ -64,7 +63,7 @@ def _load_xaml_pages(input_json: Path) -> List[str]:
     return items
 
 
-def _write_include_file(items: List[str]) -> Path:
+def _write_include_file(items: list[str]) -> Path:
     INCLUDE_DIR.mkdir(parents=True, exist_ok=True)
     stamp = f"{int(time.time() * 1000)}_{os.getpid()}"
     path = INCLUDE_DIR / f"include_{stamp}.txt"
@@ -103,7 +102,7 @@ def _run_pass1(include_file: Path) -> int:
     return proc.returncode
 
 
-def _repro(items: List[str]) -> bool:
+def _repro(items: list[str]) -> bool:
     include = _write_include_file(items)
     rc1 = _run_pass1(include)
     if rc1 == 0:
@@ -130,8 +129,7 @@ def main() -> int:
         print("Full set did NOT reproduce consistently; aborting bisect.")
         return 1
 
-    lo = 0
-    hi = len(pages)
+    len(pages)
     current = pages
 
     # Binary search: find a failing half.
